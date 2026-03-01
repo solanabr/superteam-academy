@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Flag } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Flag } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,10 +13,10 @@ import {
 } from "@/components/ui/dialog";
 
 const FLAG_REASONS = [
-  { value: "spam", label: "Spam" },
-  { value: "offensive", label: "Offensive" },
-  { value: "off-topic", label: "Off-topic" },
-  { value: "other", label: "Other" },
+  { value: "spam", labelKey: "reasonSpam" },
+  { value: "offensive", labelKey: "reasonOffensive" },
+  { value: "off-topic", labelKey: "reasonOffTopic" },
+  { value: "other", labelKey: "reasonOther" },
 ] as const;
 
 interface FlagButtonProps {
@@ -24,6 +25,7 @@ interface FlagButtonProps {
 }
 
 export function FlagButton({ threadId, answerId }: FlagButtonProps) {
+  const t = useTranslations("community");
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<string>("");
   const [details, setDetails] = useState("");
@@ -65,18 +67,18 @@ export function FlagButton({ threadId, answerId }: FlagButtonProps) {
         <button
           type="button"
           className="text-[var(--text-2)] transition-colors hover:text-[var(--danger)]"
-          aria-label="Report"
+          aria-label={t("report")}
         >
           <Flag size={14} />
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report Content</DialogTitle>
+          <DialogTitle>{t("reportContent")}</DialogTitle>
         </DialogHeader>
         {submitted ? (
           <p className="py-4 text-sm text-[var(--primary)]">
-            Report submitted. Thank you.
+            {t("reportSubmitted")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -94,14 +96,16 @@ export function FlagButton({ threadId, answerId }: FlagButtonProps) {
                     onChange={() => setReason(r.value)}
                     className="accent-[var(--primary)]"
                   />
-                  <span className="text-sm text-[var(--text)]">{r.label}</span>
+                  <span className="text-sm text-[var(--text)]">
+                    {t(r.labelKey)}
+                  </span>
                 </label>
               ))}
             </div>
             <textarea
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              placeholder="Additional details (optional)"
+              placeholder={t("additionalDetails")}
               className="w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] p-2 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none"
               rows={3}
               maxLength={1000}
@@ -112,7 +116,7 @@ export function FlagButton({ threadId, answerId }: FlagButtonProps) {
                 onClick={handleSubmit}
                 disabled={!reason || isSubmitting}
               >
-                Submit Report
+                {t("submitReport")}
               </Button>
             </div>
           </div>

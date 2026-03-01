@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -19,6 +20,7 @@ interface CategoryPageClientProps {
 
 export function CategoryPageClient({ category }: CategoryPageClientProps) {
   const { user } = useAuth();
+  const t = useTranslations("community");
 
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -30,7 +32,7 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
         className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--text-2)] transition-colors hover:text-[var(--primary)]"
       >
         <ArrowLeft size={14} />
-        Community
+        {t("title")}
       </Link>
 
       {/* Header */}
@@ -46,7 +48,7 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
         {user && (
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={18} />
-            New Thread
+            {t("newThread")}
           </Button>
         )}
       </div>

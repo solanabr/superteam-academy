@@ -1,6 +1,7 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Check } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface AcceptAnswerButtonProps {
@@ -12,6 +13,8 @@ export function AcceptAnswerButton({
   isAccepted,
   onAccept,
 }: AcceptAnswerButtonProps) {
+  const t = useTranslations("community");
+
   return (
     <button
       type="button"
@@ -22,10 +25,10 @@ export function AcceptAnswerButton({
           ? "bg-[var(--primary-dim)] text-[var(--primary)]"
           : "text-[var(--text-2)] hover:bg-[var(--primary-dim)] hover:text-[var(--primary)]"
       )}
-      aria-label={isAccepted ? "Accepted answer" : "Accept this answer"}
-      title={isAccepted ? "Accepted answer" : "Accept this answer"}
+      aria-label={isAccepted ? t("acceptedAnswer") : t("acceptThisAnswer")}
+      title={isAccepted ? t("acceptedAnswer") : t("acceptThisAnswer")}
     >
-      <Check size={16} strokeWidth={isAccepted ? 3 : 2} />
+      <Check size={16} weight={isAccepted ? "fill" : "bold"} />
     </button>
   );
 }

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Pin, MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { PushPin, ChatCircle } from "@phosphor-icons/react";
 import { VoteButton } from "./vote-button";
 import { ThreadStatusBadge } from "./thread-status-badge";
 
@@ -29,17 +30,20 @@ interface ThreadCardProps {
   onVote: (value: 0 | 1 | -1) => void;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string
+): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return t("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t("daysAgo", { count: days });
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t("monthsAgo", { count: months });
 }
 
 export function ThreadCard({
@@ -56,6 +60,7 @@ export function ThreadCard({
   createdAt,
   onVote,
 }: ThreadCardProps) {
+  const t = useTranslations("community");
   const href = categorySlug
     ? `/community/${categorySlug}/${slug}`
     : `/community/general/${slug}`;
@@ -72,7 +77,11 @@ export function ThreadCard({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           {isPinned && (
-            <Pin size={14} className="shrink-0 text-[var(--primary)]" />
+            <PushPin
+              size={14}
+              weight="fill"
+              className="shrink-0 text-[var(--primary)]"
+            />
           )}
           <Link
             href={href}
@@ -96,16 +105,16 @@ export function ThreadCard({
             ) : (
               <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
             )}
-            <span>{author.username || "Anonymous"}</span>
+            <span>{author.username || t("anonymous")}</span>
             {author.level > 0 && (
               <span className="font-semibold text-[var(--level)]">
-                Lv.{author.level}
+                {t("level", { level: author.level })}
               </span>
             )}
           </span>
-          <span>{timeAgo(createdAt)}</span>
+          <span>{timeAgo(createdAt, t)}</span>
           <span className="flex items-center gap-1">
-            <MessageCircle size={12} />
+            <ChatCircle size={12} />
             {answerCount}
           </span>
         </div>

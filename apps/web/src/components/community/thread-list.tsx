@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CircleNotch } from "@phosphor-icons/react";
 import { ThreadCard } from "./thread-card";
 import { ThreadFilters } from "./thread-filters";
 import { useThreads } from "@/hooks/use-threads";
@@ -22,8 +23,9 @@ interface ThreadListProps {
 export function ThreadList({
   scope,
   showFilters = true,
-  emptyMessage = "No threads yet. Be the first to start a discussion!",
+  emptyMessage,
 }: ThreadListProps) {
+  const t = useTranslations("community");
   const [sort, setSort] = useState("latest");
   const [type, setType] = useState<string | undefined>(undefined);
 
@@ -65,7 +67,7 @@ export function ThreadList({
 
       {!isLoading && threads.length === 0 && !error && (
         <p className="py-12 text-center text-sm text-[var(--text-2)]">
-          {emptyMessage}
+          {emptyMessage || t("noThreads")}
         </p>
       )}
 
@@ -93,14 +95,14 @@ export function ThreadList({
 
       {isLoading && (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-[var(--primary)]" />
+          <CircleNotch className="h-6 w-6 animate-spin text-[var(--primary)]" />
         </div>
       )}
 
       {hasMore && !isLoading && (
         <div className="flex justify-center pt-4">
           <Button variant="secondary" onClick={loadMore}>
-            Load More
+            {t("loadMore")}
           </Button>
         </div>
       )}

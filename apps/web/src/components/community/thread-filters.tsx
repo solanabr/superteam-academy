@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface ThreadFiltersProps {
@@ -11,15 +12,15 @@ interface ThreadFiltersProps {
 }
 
 const SORT_OPTIONS = [
-  { value: "latest", label: "Latest" },
-  { value: "top", label: "Top" },
-  { value: "unanswered", label: "Unanswered" },
+  { value: "latest", labelKey: "sortLatest" },
+  { value: "top", labelKey: "sortTop" },
+  { value: "unanswered", labelKey: "sortUnanswered" },
 ] as const;
 
 const TYPE_OPTIONS = [
-  { value: undefined, label: "All" },
-  { value: "question", label: "Questions" },
-  { value: "discussion", label: "Discussions" },
+  { value: undefined, labelKey: "filterAll" },
+  { value: "question", labelKey: "filterQuestions" },
+  { value: "discussion", labelKey: "filterDiscussions" },
 ] as const;
 
 export function ThreadFilters({
@@ -29,6 +30,8 @@ export function ThreadFilters({
   onTypeChange,
   showTypeFilter = true,
 }: ThreadFiltersProps) {
+  const t = useTranslations("community");
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       {/* Sort tabs */}
@@ -45,7 +48,7 @@ export function ThreadFilters({
                 : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
             )}
           >
-            {opt.label}
+            {t(opt.labelKey)}
           </button>
         ))}
       </div>
@@ -55,7 +58,7 @@ export function ThreadFilters({
         <div className="flex gap-1">
           {TYPE_OPTIONS.map((opt) => (
             <button
-              key={opt.label}
+              key={opt.labelKey}
               type="button"
               onClick={() => onTypeChange(opt.value)}
               className={cn(
@@ -65,7 +68,7 @@ export function ThreadFilters({
                   : "text-[var(--text-2)] hover:text-[var(--text)]"
               )}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>
