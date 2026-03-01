@@ -12,6 +12,7 @@ import {
     Shield,
     Trophy,
     Target,
+    MessageSquare,
 } from "lucide-react";
 
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -32,11 +33,12 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const staticNavItems: { href: string; key: "dashboard" | "courses" | "leaderboard" | "challenges" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
+const staticNavItems: { href: string; key: "dashboard" | "courses" | "leaderboard" | "challenges" | "discussions" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
     { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
     { href: "/courses", key: "courses", icon: BookOpen },
     { href: "/leaderboard", key: "leaderboard", icon: Trophy },
     { href: "/challenges", key: "challenges", icon: Target },
+    { href: "/discussions", key: "discussions", icon: MessageSquare },
     { href: "/certificates", key: "certificates", icon: Award },
     { href: "/settings", key: "settings", icon: Settings },
 ];

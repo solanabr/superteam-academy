@@ -8,7 +8,7 @@ import {
 import { AdminAuthProvider } from "@/providers/AdminAuthProvider";
 
 /**
- * Main app layout: dashboard, courses, certificates, settings, profile, leaderboard, admin.
+ * Main app layout: dashboard, courses, discussions, certificates, settings, profile, leaderboard, admin.
  * Only used by routes under (app). Do not use test-page-only behavior here; /test has its own layout.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {

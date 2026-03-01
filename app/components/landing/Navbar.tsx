@@ -29,6 +29,7 @@ const NAV_LINKS = [
   { key: "courses" as const, href: "/courses" },
   { key: "leaderboard" as const, href: "/leaderboard" },
   { key: "challenges" as const, href: "/challenges" },
+  { key: "discussions" as const, href: "/discussions" },
 ];
 
 export function Navbar() {

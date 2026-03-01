@@ -9,6 +9,7 @@
     "leaderboard": "Ranking",
     "admin": "Admin",
     "challenges": "Desafios",
+    "discussions": "Discussões",
     "exploreCourses": "Explorar Cursos",
     "signUp": "Cadastrar",
     "level": "Nível",
@@ -32,6 +33,7 @@
     "leaderboard": "Ranking",
     "challenges": "Desafios",
     "courses": "Cursos",
+    "discussions": "Discussões",
     "beginner": "Iniciante",
     "advanced": "Avançado",
     "intermediate": "Intermediário"

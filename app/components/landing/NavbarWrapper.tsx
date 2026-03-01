@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 
-const APP_PATHS = ["/dashboard", "/courses", "/leaderboard", "/challenges", "/certificates", "/settings", "/admin"];
+const APP_PATHS = ["/dashboard", "/courses", "/leaderboard", "/challenges", "/discussions", "/certificates", "/settings", "/admin"];
 const TEST_PATHS = ["/test"];
 const HIDE_NAVBAR_PATHS = ["/studio", "/structure"];
 

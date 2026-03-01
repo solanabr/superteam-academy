@@ -9,6 +9,7 @@
     "leaderboard": "Leaderboard",
     "admin": "Admin",
     "challenges": "Challenges",
+    "discussions": "Discussions",
     "exploreCourses": "Explore Courses",
     "signUp": "Sign Up",
     "level": "Level",
@@ -32,6 +33,7 @@
     "leaderboard": "Leaderboard",
     "challenges": "Challenges",
     "courses": "Courses",
+    "discussions": "Discussions",
     "beginner": "Beginner",
     "advanced": "Advanced",
     "intermediate": "Intermediate"
