@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="g" x1="4" y1="6" x2="28" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#0a0118"/>
+  <!-- Graduation cap -->
+  <polygon points="16,7 4,14 16,21 28,14" fill="url(#g)"/>
+  <polygon points="16,21 4,14 4,18 16,25 28,18 28,14" fill="#7c3aed" opacity="0.6"/>
+  <!-- Tassel -->
+  <line x1="26" y1="14" x2="26" y2="22" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="26" cy="23" r="1.5" fill="#c084fc"/>
+</svg>

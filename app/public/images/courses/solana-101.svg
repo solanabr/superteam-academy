@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a0533"/>
+      <stop offset="100%" stop-color="#0d0219"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="200" y1="100" x2="600" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#9333ea" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <ellipse cx="400" cy="200" rx="280" ry="160" fill="url(#glow)"/>
+  <!-- Network nodes -->
+  <circle cx="400" cy="180" r="28" fill="#9333ea" opacity="0.25" stroke="#9333ea" stroke-width="1.5" stroke-opacity="0.5"/>
+  <circle cx="400" cy="180" r="12" fill="#a855f7" opacity="0.6"/>
+  <circle cx="260" cy="120" r="20" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="1" stroke-opacity="0.4"/>
+  <circle cx="260" cy="120" r="8" fill="#a855f7" opacity="0.5"/>
+  <circle cx="540" cy="120" r="20" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="1" stroke-opacity="0.4"/>
+  <circle cx="540" cy="120" r="8" fill="#a855f7" opacity="0.5"/>
+  <circle cx="300" cy="270" r="22" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="1" stroke-opacity="0.4"/>
+  <circle cx="300" cy="270" r="9" fill="#a855f7" opacity="0.5"/>
+  <circle cx="520" cy="260" r="18" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="1" stroke-opacity="0.4"/>
+  <circle cx="520" cy="260" r="7" fill="#a855f7" opacity="0.5"/>
+  <circle cx="160" cy="200" r="15" fill="#9333ea" opacity="0.15" stroke="#9333ea" stroke-width="1" stroke-opacity="0.3"/>
+  <circle cx="160" cy="200" r="6" fill="#a855f7" opacity="0.4"/>
+  <circle cx="640" cy="190" r="16" fill="#9333ea" opacity="0.15" stroke="#9333ea" stroke-width="1" stroke-opacity="0.3"/>
+  <circle cx="640" cy="190" r="6" fill="#a855f7" opacity="0.4"/>
+  <circle cx="200" cy="320" r="12" fill="#9333ea" opacity="0.12" stroke="#9333ea" stroke-width="1" stroke-opacity="0.25"/>
+  <circle cx="200" cy="320" r="5" fill="#a855f7" opacity="0.35"/>
+  <circle cx="620" cy="310" r="14" fill="#9333ea" opacity="0.12" stroke="#9333ea" stroke-width="1" stroke-opacity="0.25"/>
+  <circle cx="620" cy="310" r="5" fill="#a855f7" opacity="0.35"/>
+  <!-- Connections -->
+  <line x1="400" y1="180" x2="260" y2="120" stroke="#9333ea" stroke-width="1.2" stroke-opacity="0.25"/>
+  <line x1="400" y1="180" x2="540" y2="120" stroke="#9333ea" stroke-width="1.2" stroke-opacity="0.25"/>
+  <line x1="400" y1="180" x2="300" y2="270" stroke="#9333ea" stroke-width="1.2" stroke-opacity="0.25"/>
+  <line x1="400" y1="180" x2="520" y2="260" stroke="#9333ea" stroke-width="1.2" stroke-opacity="0.25"/>
+  <line x1="260" y1="120" x2="160" y2="200" stroke="#9333ea" stroke-width="0.8" stroke-opacity="0.18"/>
+  <line x1="540" y1="120" x2="640" y2="190" stroke="#9333ea" stroke-width="0.8" stroke-opacity="0.18"/>
+  <line x1="300" y1="270" x2="200" y2="320" stroke="#9333ea" stroke-width="0.8" stroke-opacity="0.15"/>
+  <line x1="520" y1="260" x2="620" y2="310" stroke="#9333ea" stroke-width="0.8" stroke-opacity="0.15"/>
+  <line x1="260" y1="120" x2="300" y2="270" stroke="#9333ea" stroke-width="0.6" stroke-opacity="0.12"/>
+  <line x1="540" y1="120" x2="520" y2="260" stroke="#9333ea" stroke-width="0.6" stroke-opacity="0.12"/>
+  <line x1="160" y1="200" x2="200" y2="320" stroke="#9333ea" stroke-width="0.5" stroke-opacity="0.1"/>
+  <line x1="640" y1="190" x2="620" y2="310" stroke="#9333ea" stroke-width="0.5" stroke-opacity="0.1"/>
+  <!-- Data flow particles -->
+  <circle cx="330" cy="150" r="2.5" fill="#c084fc" opacity="0.7"/>
+  <circle cx="470" cy="150" r="2" fill="#c084fc" opacity="0.6"/>
+  <circle cx="350" cy="225" r="2.5" fill="#c084fc" opacity="0.65"/>
+  <circle cx="460" cy="220" r="2" fill="#c084fc" opacity="0.55"/>
+  <!-- Decorative grid dots -->
+  <g opacity="0.08" fill="#a855f7">
+    <circle cx="80" cy="60" r="1.5"/><circle cx="120" cy="60" r="1.5"/><circle cx="160" cy="60" r="1.5"/>
+    <circle cx="80" cy="100" r="1.5"/><circle cx="120" cy="100" r="1.5"/>
+    <circle cx="680" cy="60" r="1.5"/><circle cx="720" cy="60" r="1.5"/>
+    <circle cx="680" cy="100" r="1.5"/><circle cx="720" cy="100" r="1.5"/><circle cx="760" cy="100" r="1.5"/>
+    <circle cx="80" cy="340" r="1.5"/><circle cx="120" cy="340" r="1.5"/>
+    <circle cx="720" cy="340" r="1.5"/><circle cx="760" cy="340" r="1.5"/>
+  </g>
+</svg>
