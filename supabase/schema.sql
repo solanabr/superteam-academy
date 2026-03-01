@@ -1158,3 +1158,85 @@ GRANT EXECUTE ON FUNCTION revoke_community_xp(UUID, TEXT) TO service_role;
 
 REVOKE ALL ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) TO service_role;
+
+-- ============================================================
+-- Community Forum: RLS Policies
+-- ============================================================
+
+ALTER TABLE forum_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE threads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE flags ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view categories"
+  ON forum_categories FOR SELECT USING (true);
+
+CREATE POLICY "Anyone can view threads"
+  ON threads FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can create threads"
+  ON threads FOR INSERT
+  TO authenticated
+  WITH CHECK (author_id = auth.uid());
+
+CREATE POLICY "Authors can update own threads"
+  ON threads FOR UPDATE
+  TO authenticated
+  USING (author_id = auth.uid())
+  WITH CHECK (author_id = auth.uid());
+
+CREATE POLICY "Anyone can view answers"
+  ON answers FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can create answers"
+  ON answers FOR INSERT
+  TO authenticated
+  WITH CHECK (author_id = auth.uid());
+
+CREATE POLICY "Authors can update own answers"
+  ON answers FOR UPDATE
+  TO authenticated
+  USING (author_id = auth.uid())
+  WITH CHECK (author_id = auth.uid());
+
+CREATE POLICY "Anyone can view votes"
+  ON votes FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can vote"
+  ON votes FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own votes"
+  ON votes FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own votes"
+  ON votes FOR DELETE
+  TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Authenticated users can create flags"
+  ON flags FOR INSERT
+  TO authenticated
+  WITH CHECK (reporter_id = auth.uid());
+
+-- ============================================================
+-- Community Stats View
+-- ============================================================
+
+CREATE VIEW community_stats AS
+SELECT
+  p.id AS user_id,
+  COUNT(DISTINCT t.id) AS total_threads,
+  COUNT(DISTINCT a.id) AS total_answers,
+  COUNT(DISTINCT a.id) FILTER (WHERE a.is_accepted) AS accepted_answers,
+  COALESCE(SUM(xt.amount) FILTER (WHERE xt.reason LIKE 'community:%'), 0) AS total_community_xp
+FROM profiles p
+LEFT JOIN threads t ON t.author_id = p.id
+LEFT JOIN answers a ON a.author_id = p.id
+LEFT JOIN xp_transactions xt ON xt.user_id = p.id
+GROUP BY p.id;
