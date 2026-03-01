@@ -1,0 +1,160 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "close": "Close",
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "viewAll": "View All"
+  },
+  "nav": {
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings",
+    "connectWallet": "Connect Wallet"
+  },
+  "home": {
+    "hero": {
+      "title": "Master Solana Development",
+      "subtitle": "The decentralized learning platform where developers earn soulbound XP tokens and verifiable credentials.",
+      "cta": "Start Learning",
+      "explore": "Explore Courses"
+    },
+    "features": {
+      "title": "Why Superteam Academy?",
+      "xp": {
+        "title": "Earn XP",
+        "description": "Complete lessons and challenges to earn soulbound XP tokens"
+      },
+      "credentials": {
+        "title": "Get Credentials",
+        "description": "Earn verifiable on-chain credentials for your achievements"
+      },
+      "community": {
+        "title": "Join Community",
+        "description": "Learn alongside other developers in the Superteam ecosystem"
+      }
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Curated learning paths from beginner to expert",
+    "searchPlaceholder": "Search courses...",
+    "filters": {
+      "all": "All",
+      "track": "Track",
+      "difficulty": "Difficulty",
+      "duration": "Duration"
+    },
+    "cards": {
+      "lessons": "lessons",
+      "xp": "XP",
+      "enroll": "Enroll Now",
+      "continue": "Continue",
+      "preview": "Preview"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "tracks": {
+      "development": "Development",
+      "advanced": "Advanced",
+      "infrastructure": "Infrastructure",
+      "security": "Security",
+      "defi": "DeFi",
+      "nfts": "NFTs"
+    }
+  },
+  "lesson": {
+    "lesson": "Lesson",
+    "of": "of",
+    "completed": "Completed",
+    "preview": "Preview",
+    "challenge": "Challenge",
+    "video": "Video",
+    "reading": "Reading",
+    "markComplete": "Mark as Complete",
+    "xpReward": "+{{xp}} XP reward",
+    "runTests": "Run Tests",
+    "showSolution": "Show Solution",
+    "hideSolution": "Hide Solution",
+    "resetCode": "Reset Code",
+    "testResults": "Test Results",
+    "console": "Console",
+    "allTestsPassed": "All tests passed!",
+    "testsFailed": "{{count}} test(s) failed",
+    "locked": "Lesson Locked",
+    "enrollToUnlock": "Enroll in this course to unlock all lessons",
+    "backToCourse": "Back to course"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back!",
+    "stats": {
+      "totalXP": "Total XP",
+      "level": "Level",
+      "rank": "Rank",
+      "streak": "Streak",
+      "achievements": "Achievements"
+    },
+    "enrolledCourses": "Enrolled Courses",
+    "continueLearning": "Continue Learning",
+    "noCourses": "No courses yet",
+    "startLearning": "Start learning today!"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top learners by XP",
+    "filters": {
+      "allTime": "All Time",
+      "monthly": "Monthly",
+      "weekly": "Weekly"
+    },
+    "rank": "Rank",
+    "user": "User",
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak"
+  },
+  "profile": {
+    "title": "Profile",
+    "memberSince": "Member since",
+    "completedCourses": "Completed Courses",
+    "credentials": "Credentials",
+    "achievements": "Achievements",
+    "skills": "Skills"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications"
+  },
+  "certificates": {
+    "title": "Certificate",
+    "earnedOn": "Earned on",
+    "verify": "Verify on Solana",
+    "share": "Share",
+    "download": "Download"
+  }
+}

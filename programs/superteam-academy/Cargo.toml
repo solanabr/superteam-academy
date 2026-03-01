@@ -1,0 +1,25 @@
+[package]
+name = "superteam-academy"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true, features = ["token_2022", "token_2022_extensions"] }
+
+[dev-dependencies]
+# Temporarily disabled due to version conflicts
+# litesvm = "0.6"
+# solana-sdk = "~2.1"
+# solana-program-test = "~2.1"

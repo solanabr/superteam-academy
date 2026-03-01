@@ -1,0 +1,10 @@
+[workspace]
+members = ["programs/superteam-academy"]
+resolver = "2"
+
+[workspace.dependencies]
+anchor-lang = "0.31.0"
+anchor-spl = "0.31.0"
+
+[profile.release]
+overflow-checks = true # Enable overflow checks for Anchor

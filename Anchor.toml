@@ -1,0 +1,32 @@
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+superteam_academy = "Acad111111111111111111111111111111111111111"
+
+[programs.devnet]
+superteam_academy = "Acad111111111111111111111111111111111111111"
+
+[programs.mainnet]
+superteam_academy = "Acad111111111111111111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
+
+[test]
+startup_wait = 10000
+
+[test.validator]
+bind_address = "0.0.0.0"
+
+[[test.genesis]]
+address = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+program = "./deps/token_2022.so"

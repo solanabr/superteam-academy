@@ -1,0 +1,160 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "close": "Cerrar",
+    "learnMore": "Saber Más",
+    "getStarted": "Comenzar",
+    "viewAll": "Ver Todo"
+  },
+  "nav": {
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "leaderboard": "Clasificación",
+    "settings": "Configuración",
+    "connectWallet": "Conectar Billetera"
+  },
+  "home": {
+    "hero": {
+      "title": "Domina el Desarrollo en Solana",
+      "subtitle": "La plataforma de aprendizaje descentralizada donde los desarrolladores ganan tokens XP soulbound y credenciales verificables.",
+      "cta": "Comenzar a Aprender",
+      "explore": "Explorar Cursos"
+    },
+    "features": {
+      "title": "¿Por qué Superteam Academy?",
+      "xp": {
+        "title": "Gana XP",
+        "description": "Completa lecciones y desafíos para ganar tokens XP soulbound"
+      },
+      "credentials": {
+        "title": "Obtén Credenciales",
+        "description": "Gana credenciales verificables en cadena por tus logros"
+      },
+      "community": {
+        "title": "Únete a la Comunidad",
+        "description": "Aprende junto a otros desarrolladores en el ecosistema Superteam"
+      }
+    }
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Rutas de aprendizaje desde principiante hasta experto",
+    "searchPlaceholder": "Buscar cursos...",
+    "filters": {
+      "all": "Todos",
+      "track": "Ruta",
+      "difficulty": "Dificultad",
+      "duration": "Duración"
+    },
+    "cards": {
+      "lessons": "lecciones",
+      "xp": "XP",
+      "enroll": "Inscribirse",
+      "continue": "Continuar",
+      "preview": "Vista Previa"
+    },
+    "difficulty": {
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "tracks": {
+      "development": "Desarrollo",
+      "advanced": "Avanzado",
+      "infrastructure": "Infraestructura",
+      "security": "Seguridad",
+      "defi": "DeFi",
+      "nfts": "NFTs"
+    }
+  },
+  "lesson": {
+    "lesson": "Lección",
+    "of": "de",
+    "completed": "Completado",
+    "preview": "Vista Previa",
+    "challenge": "Desafío",
+    "video": "Video",
+    "reading": "Lectura",
+    "markComplete": "Marcar como Completado",
+    "xpReward": "+{{xp}} XP de recompensa",
+    "runTests": "Ejecutar Pruebas",
+    "showSolution": "Mostrar Solución",
+    "hideSolution": "Ocultar Solución",
+    "resetCode": "Reiniciar Código",
+    "testResults": "Resultados de Pruebas",
+    "console": "Consola",
+    "allTestsPassed": "¡Todas las pruebas pasaron!",
+    "testsFailed": "{{count}} prueba(s) fallida(s)",
+    "locked": "Lección Bloqueada",
+    "enrollToUnlock": "Inscríbete en el curso para desbloquear todas las lecciones",
+    "backToCourse": "Volver al curso"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "¡Bienvenido de nuevo!",
+    "stats": {
+      "totalXP": "XP Total",
+      "level": "Nivel",
+      "rank": "Rango",
+      "streak": "Racha",
+      "achievements": "Logros"
+    },
+    "enrolledCourses": "Cursos Inscritos",
+    "continueLearning": "Continuar Aprendiendo",
+    "noCourses": "Sin cursos aún",
+    "startLearning": "¡Comienza a aprender hoy!"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Mejores aprendices por XP",
+    "filters": {
+      "allTime": "Todo el Tiempo",
+      "monthly": "Mensual",
+      "weekly": "Semanal"
+    },
+    "rank": "Posición",
+    "user": "Usuario",
+    "xp": "XP",
+    "level": "Nivel",
+    "streak": "Racha"
+  },
+  "profile": {
+    "title": "Perfil",
+    "memberSince": "Miembro desde",
+    "completedCourses": "Cursos Completados",
+    "credentials": "Credenciales",
+    "achievements": "Logros",
+    "skills": "Habilidades"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "language": "Idioma",
+    "theme": "Tema",
+    "notifications": "Notificaciones"
+  },
+  "certificates": {
+    "title": "Certificado",
+    "earnedOn": "Obtenido el",
+    "verify": "Verificar en Solana",
+    "share": "Compartir",
+    "download": "Descargar"
+  }
+}

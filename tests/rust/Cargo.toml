@@ -1,0 +1,15 @@
+[package]
+name = "superteam-academy-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
+solana-sdk = "~2.1"
+litesvm = "0.6"
+solana-program-test = "~2.1"
+superteam-academy = { path = "../../programs/superteam-academy" }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }

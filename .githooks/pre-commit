@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Pre-commit hook to prevent committing build artifacts and sensitive files
+# Install: cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for build artifacts
+if git diff --cached --name-only | grep -E "^target/"; then
+    echo "❌ ERROR: Attempting to commit build artifacts in target/"
+    echo "   These should not be committed to git."
+    exit 1
+fi
+
+# Check for Cargo.lock in library crates
+if git diff --cached --name-only | grep -E "^Cargo.lock$"; then
+    echo "⚠️  WARNING: Committing Cargo.lock"
+    echo "   For library crates, Cargo.lock should typically not be committed."
+    echo "   Commit anyway? (y/n)"
+    read -r response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Check for sensitive files
+if git diff --cached --name-only | grep -E "\.key$|\.env$|id.json$"; then
+    echo "❌ ERROR: Attempting to commit sensitive files (keys, env files)"
+    exit 1
+fi
+
+# Check Rust formatting
+echo "📦 Checking Rust formatting..."
+if ! cargo fmt -- --check 2>/dev/null; then
+    echo "❌ ERROR: Rust code is not formatted"
+    echo "   Run: cargo fmt"
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0
