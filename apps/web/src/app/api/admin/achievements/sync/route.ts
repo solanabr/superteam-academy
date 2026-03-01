@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {
   requireAdminAuth,
   adminUnauthorizedResponse,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin/auth";
 import { getAllAchievementsAdmin } from "@/lib/sanity/queries";
 import { findAchievementTypePDA, getProgramId } from "@/lib/solana/pda";
+import { fetchAchievementType } from "@/lib/solana/academy-reads";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
 import { getMissingAchievementFields, isDraftId } from "@/lib/admin/sync-diff";
 import { writeAchievementOnChainStatus } from "@/lib/sanity/admin-mutations";
@@ -73,7 +74,44 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const accountInfo = await connection.getAccountInfo(achPda);
 
   if (accountInfo) {
-    return NextResponse.json({ action: "noop", message: "Already deployed" });
+    // PDA exists — recover collection address from on-chain if missing in Sanity
+    const existingCollection = ach.onChainStatus?.collectionAddress;
+    if (!existingCollection) {
+      try {
+        const decoded = await fetchAchievementType(
+          achievementId,
+          connection,
+          getProgramId()
+        );
+        if (decoded?.collection) {
+          const collectionAddr =
+            typeof decoded.collection === "string"
+              ? decoded.collection
+              : new PublicKey(decoded.collection as Uint8Array).toBase58();
+          await writeAchievementOnChainStatus(
+            achievementId,
+            achPda.toBase58(),
+            collectionAddr
+          );
+          return NextResponse.json({
+            action: "recovered",
+            message: "Collection address recovered from on-chain data",
+            achievementPda: achPda.toBase58(),
+            collectionAddress: collectionAddr,
+          });
+        }
+      } catch (recoverErr) {
+        console.error(
+          "[admin/achievements/sync] Collection recovery failed:",
+          recoverErr
+        );
+      }
+    }
+    return NextResponse.json({
+      action: "noop",
+      message: "Already deployed",
+      collectionAddress: existingCollection ?? null,
+    });
   }
 
   const metadataUri =

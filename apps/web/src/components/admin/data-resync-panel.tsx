@@ -62,8 +62,9 @@ export function DataResyncPanel({ adminToken }: DataResyncPanelProps) {
       <p className="text-sm text-text-3">
         Rebuild a user&apos;s Supabase data from on-chain state: XP balance
         (Token-2022 ATA), enrollments &amp; lesson progress (Enrollment PDAs +
-        bitmap), achievements &amp; certificates (Helius DAS API). Use after
-        webhook failures or for migration.
+        bitmap), achievements (AchievementReceipt PDAs) &amp; certificates
+        (Enrollment credential_asset). Use after webhook failures or for
+        migration.
       </p>
 
       <div className="flex gap-2">

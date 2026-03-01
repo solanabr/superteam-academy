@@ -24,6 +24,7 @@ export function AchievementSyncTable({
   onRefresh,
 }: AchievementSyncTableProps) {
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSync(achievementId: string) {
@@ -51,11 +52,68 @@ export function AchievementSyncTable({
     }
   }
 
+  async function handleSyncAll() {
+    setSyncingAll(true);
+    setError(null);
+    const syncable = achievements.filter(
+      (a) =>
+        a.missingFields.length === 0 &&
+        (a.onChainStatus === "not_deployed" ||
+          (a.onChainStatus === "synced" && !a.collectionAddress))
+    );
+    for (const ach of syncable) {
+      setSyncing(ach.sanityId);
+      try {
+        const res = await fetch("/api/admin/achievements/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ achievementId: ach.sanityId }),
+        });
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          setError(data.error ?? `Sync failed for ${ach.name}`);
+          onRefresh();
+          break;
+        }
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : `Sync failed for ${ach.name}`
+        );
+        onRefresh();
+        break;
+      }
+    }
+    setSyncing(null);
+    setSyncingAll(false);
+    onRefresh();
+  }
+
+  const syncableCount = achievements.filter(
+    (a) =>
+      a.missingFields.length === 0 &&
+      (a.onChainStatus === "not_deployed" ||
+        (a.onChainStatus === "synced" && !a.collectionAddress))
+  ).length;
+
   return (
     <div>
       {error && (
         <div className="mb-3 rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
           {error}
+        </div>
+      )}
+      {syncableCount > 0 && (
+        <div className="mb-3 flex justify-end">
+          <button
+            onClick={() => void handleSyncAll()}
+            disabled={syncingAll}
+            className="rounded-md border border-border bg-card px-4 py-1.5 text-xs font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active disabled:pointer-events-none disabled:opacity-50"
+          >
+            {syncingAll ? "Syncing..." : `Sync All (${syncableCount})`}
+          </button>
         </div>
       )}
       <table className="w-full text-sm">
@@ -73,6 +131,8 @@ export function AchievementSyncTable({
             const canDeploy =
               ach.onChainStatus === "not_deployed" &&
               ach.missingFields.length === 0;
+            const needsCollectionRecovery =
+              ach.onChainStatus === "synced" && !ach.collectionAddress;
 
             return (
               <tr
@@ -96,13 +156,17 @@ export function AchievementSyncTable({
                     : "—"}
                 </td>
                 <td className="py-3">
-                  {canDeploy && (
+                  {(canDeploy || needsCollectionRecovery) && (
                     <button
                       onClick={() => void handleSync(ach.sanityId)}
                       disabled={isSyncing}
                       className="rounded-md bg-primary px-3 py-1 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover active:translate-y-[3px] active:shadow-push-active disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {isSyncing ? "..." : "Deploy"}
+                      {isSyncing
+                        ? "..."
+                        : needsCollectionRecovery
+                          ? "Sync"
+                          : "Deploy"}
                     </button>
                   )}
                 </td>

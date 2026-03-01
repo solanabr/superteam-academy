@@ -1,3 +1,5 @@
+import "server-only";
+
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
@@ -7,9 +9,12 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { fetchEnrollment } from "@/lib/solana/academy-reads";
+import {
+  fetchEnrollment,
+  fetchAchievementReceiptData,
+} from "@/lib/solana/academy-reads";
 import { decodeLessonBitmap } from "@/lib/solana/bitmap";
-import { getAllCourses, getDeployedAchievements } from "@/lib/sanity/queries";
+import { getAllCourses, getAllAchievements } from "@/lib/sanity/queries";
 import { calculateLevel } from "@/lib/gamification/xp";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
@@ -193,6 +198,28 @@ export async function POST(req: NextRequest) {
           .eq("course_id", course._id);
         results.coursesCompleted++;
       }
+
+      // Check credential NFT (on-chain PDA field, no DAS needed)
+      if (enrollment.credential_asset) {
+        const mintAddr =
+          typeof enrollment.credential_asset === "string"
+            ? enrollment.credential_asset
+            : new PublicKey(
+                enrollment.credential_asset as Uint8Array
+              ).toBase58();
+
+        await supabase.from("certificates").upsert(
+          {
+            user_id: profile.id,
+            course_id: course._id,
+            course_title: course.title,
+            mint_address: mintAddr,
+            credential_type: "core",
+          },
+          { onConflict: "user_id,course_id" }
+        );
+        results.certificates++;
+      }
     } catch (err) {
       console.error(
         `[resync] Error syncing enrollment for course ${course._id}:`,
@@ -201,92 +228,50 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3. Sync NFT assets via Helius DAS API (achievements + certificates)
-  // Pre-fetch achievement definitions from Sanity for XP lookup
-  const deployedAchievements = await getDeployedAchievements();
-  const achievementXpMap = new Map(
-    deployedAchievements.map((a) => [a.id, a.xpReward])
-  );
+  // 3. Sync achievements from on-chain AchievementReceipt PDAs
+  // Use getAllAchievements (not getDeployedAchievements) because receipt PDAs
+  // can exist even if the AchievementType wasn't admin-synced to Sanity yet.
+  const allAchievements = await getAllAchievements();
 
-  try {
-    const dasRes = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "resync",
-        method: "getAssetsByOwner",
-        params: {
-          ownerAddress: walletAddress,
-          page: 1,
-          limit: 1000,
-        },
-      }),
-    });
+  for (const achievement of allAchievements) {
+    try {
+      const receipt = await fetchAchievementReceiptData(
+        achievement.id,
+        walletAddress,
+        connection
+      );
+      if (!receipt) continue;
 
-    const dasData = await dasRes.json();
-    const assets = dasData.result?.items ?? [];
+      const assetAddr =
+        typeof receipt.asset === "string"
+          ? receipt.asset
+          : new PublicKey(receipt.asset as Uint8Array).toBase58();
 
-    for (const asset of assets) {
-      try {
-        const attrs =
-          (asset.content?.metadata?.attributes as
-            | { trait_type: string; value: string }[]
-            | undefined) ?? [];
+      await supabase.rpc("unlock_achievement", {
+        p_user_id: profile.id,
+        p_achievement_id: achievement.id,
+        p_tx_signature: `resync:${assetAddr}`,
+        p_asset_address: assetAddr,
+      });
 
-        // Achievement NFTs have achievement_id attribute
-        const achievementAttr = attrs.find(
-          (a) => a.trait_type === "achievement_id"
-        );
-        if (achievementAttr) {
-          const achievementId = achievementAttr.value;
-          await supabase.rpc("unlock_achievement", {
-            p_user_id: profile.id,
-            p_achievement_id: achievementId,
-            p_tx_signature: `resync:${asset.id as string}`,
-            p_asset_address: asset.id as string,
-          });
-
-          // Mirror achievement XP to Supabase (idempotency key prevents duplicates)
-          const xpReward = achievementXpMap.get(achievementId) ?? 0;
-          if (xpReward > 0) {
-            await supabase.rpc("award_xp", {
-              p_user_id: profile.id,
-              p_amount: xpReward,
-              p_reason: `Achievement reward: ${achievementId}`,
-              p_idempotency_key: `resync:${asset.id as string}:xp`,
-              p_tx_signature: `resync:${asset.id as string}`,
-            });
-          }
-
-          results.achievements++;
-          continue;
-        }
-
-        // Certificate NFTs have Platform = "Superteam Academy" and Course attributes
-        const platformAttr = attrs.find((a) => a.trait_type === "Platform");
-        const courseAttr = attrs.find((a) => a.trait_type === "Course");
-        if (platformAttr?.value === "Superteam Academy" && courseAttr) {
-          await supabase.from("certificates").upsert(
-            {
-              user_id: profile.id,
-              course_id: courseAttr.value,
-              course_title: courseAttr.value,
-              mint_address: asset.id as string,
-              metadata_uri: asset.content?.json_uri ?? "",
-              minted_at: new Date().toISOString(),
-              credential_type: "core",
-            },
-            { onConflict: "user_id,course_id" }
-          );
-          results.certificates++;
-        }
-      } catch (assetErr) {
-        console.error(`[resync] Error processing asset ${asset.id}:`, assetErr);
+      const xpReward = achievement.xpReward ?? 0;
+      if (xpReward > 0) {
+        await supabase.rpc("award_xp", {
+          p_user_id: profile.id,
+          p_amount: xpReward,
+          p_reason: `Achievement reward: ${achievement.id}`,
+          p_idempotency_key: `resync:${assetAddr}:xp`,
+          p_tx_signature: `resync:${assetAddr}`,
+        });
       }
+
+      results.achievements++;
+    } catch (err) {
+      console.error(
+        `[resync] Error syncing achievement ${achievement.id}:`,
+        err
+      );
     }
-  } catch (err) {
-    console.error("[resync] DAS API error:", err);
   }
 
   // 4. Final correction: overwrite total_xp + level from on-chain balance

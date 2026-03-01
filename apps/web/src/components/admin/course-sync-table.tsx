@@ -42,6 +42,7 @@ export function CourseSyncTable({
   onRefresh,
 }: CourseSyncTableProps) {
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSync(courseId: string) {
@@ -100,11 +101,68 @@ export function CourseSyncTable({
     }
   }
 
+  async function handleSyncAll() {
+    setSyncingAll(true);
+    setError(null);
+    const syncable = courses.filter(
+      (c) =>
+        !c.isDraft &&
+        c.missingFields.length === 0 &&
+        !c.differences.some((d) => !d.updateable)
+    );
+    for (const course of syncable) {
+      setSyncing(course.sanityId);
+      try {
+        const res = await fetch("/api/admin/courses/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({ courseId: course.sanityId }),
+        });
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          setError(data.error ?? `Sync failed for ${course.title}`);
+          onRefresh();
+          break;
+        }
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : `Sync failed for ${course.title}`
+        );
+        onRefresh();
+        break;
+      }
+    }
+    setSyncing(null);
+    setSyncingAll(false);
+    onRefresh();
+  }
+
+  const syncableCount = courses.filter(
+    (c) =>
+      !c.isDraft &&
+      c.missingFields.length === 0 &&
+      !c.differences.some((d) => !d.updateable)
+  ).length;
+
   return (
     <div>
       {error && (
         <div className="mb-3 rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
           {error}
+        </div>
+      )}
+      {syncableCount > 0 && (
+        <div className="mb-3 flex justify-end">
+          <button
+            onClick={() => void handleSyncAll()}
+            disabled={syncingAll}
+            className="rounded-md border border-border bg-card px-4 py-1.5 text-xs font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active disabled:pointer-events-none disabled:opacity-50"
+          >
+            {syncingAll ? "Syncing..." : `Sync All (${syncableCount})`}
+          </button>
         </div>
       )}
       <table className="w-full text-sm">

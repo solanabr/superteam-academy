@@ -170,7 +170,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // Course PDA exists — update mutable fields
+  // Course PDA exists — ensure Metaplex collection was created.
+  // If the initial sync succeeded for the PDA but failed for the collection,
+  // this retry path creates it so certificates can be minted.
+  let trackCollectionAddress = course.trackCollectionAddress;
+  if (!trackCollectionAddress) {
+    try {
+      const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
+      const collectionResult = await deployCourseTrackCollection({
+        courseId,
+        courseName: course.title,
+        metadataUri,
+      });
+      if (collectionResult.success && collectionResult.collectionAddress) {
+        trackCollectionAddress = collectionResult.collectionAddress;
+        await writeCourseTrackCollection(courseId, trackCollectionAddress);
+      } else {
+        console.error(
+          "[admin/courses/sync] Collection retry failed:",
+          collectionResult.error
+        );
+      }
+    } catch (collectionErr) {
+      console.error(
+        "[admin/courses/sync] Collection retry threw:",
+        collectionErr
+      );
+    }
+  }
+
+  // Update mutable fields
   const updateParams: {
     courseId: string;
     newXpPerLesson?: number;
@@ -211,7 +240,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         );
       }
     }
-    return NextResponse.json({ action: "noop", message: "Already synced" });
+    return NextResponse.json({
+      action: "noop",
+      message: "Already synced",
+      trackCollectionAddress: trackCollectionAddress ?? null,
+    });
   }
 
   const result = await updateCoursePda(updateParams);
