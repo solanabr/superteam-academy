@@ -50,9 +50,10 @@ export function LeaderboardSection() {
                     className="flex flex-col gap-3 rounded-2xl border-4 p-6 sm:p-8"
                 >
                     {top3.map((entry, i) => (
-                        <div
+                        <Link
                             key={entry.wallet}
-                            className="flex items-center gap-4 rounded-xl border-2 border-zinc-700 px-5 py-4"
+                            href={`/profile/${entry.wallet}`}
+                            className="flex items-center gap-4 rounded-xl border-2 border-zinc-700 px-5 py-4 hover:border-zinc-600 transition-colors"
                         >
                             <PixelAvatar wallet={entry.wallet} size="md" />
                             <span className="w-10 font-game text-xl text-gray-500">
@@ -64,7 +65,7 @@ export function LeaderboardSection() {
                             <span className="font-game text-xl text-yellow-400">
                                 {entry.xp.toLocaleString()} XP
                             </span>
-                        </div>
+                        </Link>
                     ))}
                     <Link href="/leaderboard" className="mt-4">
                         <Button variant="pixel" className="w-full font-game text-xl" size="lg">

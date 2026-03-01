@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import Link from "next/link";
 import {
@@ -20,10 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixelAvatar, setAvatarVersion } from "@/components/app/PixelAvatar";
 import { CredentialImage } from "@/components/app/CredentialImage";
-import { useXpBalanceFor, useCredentialsFor, useTrackImageMap } from "@/hooks";
+import { useXpBalanceFor, useCredentialsFor, useTrackImageMap, useLeaderboardRank, useCoursesCompletedFor } from "@/hooks";
 import { levelFromXp, xpProgressInLevel } from "@/lib/level";
 import { getDisplayName, setDisplayName, onDisplayNameChanged } from "@/lib/display-name";
-import { getMockLeaderboard } from "@/lib/services/mock-leaderboard";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -32,15 +31,22 @@ function truncateWallet(address: string): string {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export default function PublicProfilePage() {
-    const params = useParams<{ wallet: string }>();
-    const walletAddress = params.wallet;
+function normalizeWallet(v: string | string[] | undefined): string {
+    if (!v) return "";
+    const s = Array.isArray(v) ? v[0] : v;
+    return typeof s === "string" ? s.trim() : "";
+}
+
+function PublicProfileContent({ walletAddress }: { walletAddress: string }) {
     const { publicKey } = useWallet();
-    const isOwner = publicKey?.toBase58() === walletAddress;
+    const myWallet = publicKey?.toBase58() ?? "";
+    const isOwner = myWallet === walletAddress;
 
     const { data: xp, isLoading: xpLoading } = useXpBalanceFor(walletAddress);
     const { data: credentials, isLoading: credsLoading } = useCredentialsFor(walletAddress);
     const trackImageMap = useTrackImageMap();
+    const leaderboardRank = useLeaderboardRank(walletAddress);
+    const { data: coursesCompleted, isLoading: coursesLoading } = useCoursesCompletedFor(walletAddress);
     const t = useTranslations("profile");
     const tCommon = useTranslations("common");
 
@@ -54,7 +60,6 @@ export default function PublicProfilePage() {
     }, [walletAddress]);
 
     useEffect(() => {
-        if (!walletAddress) return;
         const unsubscribe = onDisplayNameChanged(() => {
             setDisplayNameState(getDisplayName(walletAddress));
         });
@@ -62,15 +67,10 @@ export default function PublicProfilePage() {
     }, [walletAddress]);
 
     const displayLabel = displayName?.trim() || truncateWallet(walletAddress);
+    const isLoading = xpLoading || credsLoading || coursesLoading;
     const xpValue = xp ?? 0;
     const level = levelFromXp(xpValue);
     const progress = xpProgressInLevel(xpValue);
-
-    const leaderboardRank = useMemo(() => {
-        const entries = getMockLeaderboard("all-time");
-        const entry = entries.find((e) => e.wallet === walletAddress);
-        return entry?.rank ?? null;
-    }, [walletAddress]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(walletAddress);
@@ -104,8 +104,6 @@ export default function PublicProfilePage() {
         setAvatarKey(newVersion);
         toast.success(t("avatarShuffled"));
     };
-
-    const isLoading = xpLoading || credsLoading;
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -248,7 +246,7 @@ export default function PublicProfilePage() {
                 <div className="p-4 border-4 rounded-2xl text-center bg-card">
                     <BookOpen className="mx-auto mb-2 h-7 w-7 text-yellow-400" />
                     <h2 className="font-game text-2xl sm:text-3xl">
-                        {isLoading ? "–" : "0"}
+                        {isLoading ? "–" : coursesCompleted.toLocaleString()}
                     </h2>
                     <p className="font-game text-sm sm:text-base text-muted-foreground">{t("coursesCompleted")}</p>
                 </div>
@@ -320,4 +318,25 @@ export default function PublicProfilePage() {
             </div>
         </div>
     );
+}
+
+export default function PublicProfilePage() {
+    const params = useParams<{ wallet: string | string[] }>();
+    const router = useRouter();
+    const walletAddress = normalizeWallet(params.wallet);
+    const { publicKey } = useWallet();
+    const myWallet = publicKey?.toBase58() ?? "";
+    const isSameUser = !!walletAddress && !!myWallet && myWallet === walletAddress;
+
+    useEffect(() => {
+        if (isSameUser) {
+            router.replace("/profile");
+        }
+    }, [isSameUser, router]);
+
+    if (isSameUser || !walletAddress) {
+        return null;
+    }
+
+    return <PublicProfileContent walletAddress={walletAddress} />;
 }

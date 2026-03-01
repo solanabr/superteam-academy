@@ -194,7 +194,7 @@ export function DiscussionsListContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6 pt-6 sm:pt-8">
       <section className="rounded-2xl border bg-card p-5 sm:p-6">
         <h1 className="font-game text-4xl sm:text-5xl">Discussions</h1>
         <p className="mt-2 font-game text-muted-foreground">

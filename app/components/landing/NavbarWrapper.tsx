@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Navbar } from "./Navbar";
 
 const APP_PATHS = ["/dashboard", "/courses", "/leaderboard", "/challenges", "/discussions", "/certificates", "/settings", "/admin"];
@@ -25,6 +26,9 @@ function isHideNavbarRoute(pathname: string | null) {
 
 export function NavbarWrapper() {
   const pathname = usePathname();
-  if (isAppRoute(pathname) || isTestRoute(pathname) || isHideNavbarRoute(pathname)) return null;
+  const { connected } = useWallet();
+
+  if (isTestRoute(pathname) || isHideNavbarRoute(pathname)) return null;
+  if (connected && isAppRoute(pathname)) return null;
   return <Navbar />;
 }

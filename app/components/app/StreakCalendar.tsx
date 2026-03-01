@@ -15,9 +15,9 @@ export function StreakCalendar({ currentStreak }: StreakCalendarProps) {
     const todayIdx = today === 0 ? 6 : today - 1;
 
     return (
-        <div className="p-4 border-4 rounded-2xl mt-6">
-            <h2 className="font-game text-2xl mb-3">Weekly Streak</h2>
-            <div className="flex gap-3 justify-between">
+        <div className="p-3 sm:p-4 border-4 rounded-2xl">
+            <h2 className="font-game text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3">Weekly Streak</h2>
+            <div className="flex gap-1 sm:gap-2 lg:gap-3 justify-between">
                 {DAYS.map((day, i) => {
                     // A day is "active" if it's within the current streak window
                     const isActive = i <= todayIdx && todayIdx - i < currentStreak;
@@ -39,7 +39,7 @@ export function StreakCalendar({ currentStreak }: StreakCalendarProps) {
                                 />
                             </div>
                             <span
-                                className={`font-game text-sm ${isToday
+                                className={`font-game text-xs sm:text-sm ${isToday
                                         ? "text-yellow-400"
                                         : isActive
                                             ? "text-white"

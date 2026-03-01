@@ -48,11 +48,15 @@ export function WalletConnectButton() {
   }, [open]);
 
   // Redirect to dashboard only on the *moment* of connection (false → true),
-  // and only when not already on a page that should stay (e.g. /studio, /admin).
+  // and only when not already on a page that should stay (e.g. /studio, /admin, /profile).
   const prevConnected = useRef(connected);
   useEffect(() => {
     if (connected && !prevConnected.current) {
-      const stayOn = pathname === "/studio" || pathname?.startsWith("/studio/") || pathname?.startsWith("/admin");
+      const stayOn =
+        pathname === "/studio" ||
+        pathname?.startsWith("/studio/") ||
+        pathname?.startsWith("/admin") ||
+        pathname?.startsWith("/profile");
       if (!stayOn) {
         router.push("/dashboard");
       }

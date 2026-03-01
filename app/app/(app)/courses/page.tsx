@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
-import { Search, BookOpen, Sparkles, Clock, ChartNoAxesColumnIncreasing } from "lucide-react";
+import { EmptyState } from "@/components/app";
 import { Input } from "@/components/ui/input";
-import { PageHeader, EmptyState } from "@/components/app";
-import { getAllCourses, type MockCourse } from "@/lib/services/content-service";
+import { useEnrollment } from "@/hooks";
+import { getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
+import { getAllCourses, getCourseIdForProgram, type MockCourse } from "@/lib/services/content-service";
+import { BookOpen, CheckCircle2, Gauge, Search, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 function CourseCard({ course }: { course: MockCourse }) {
+    const courseId = getCourseIdForProgram(course);
+    const { data: enrollment } = useEnrollment(courseId);
+    const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
+    const isCompleted = completedAt != null;
+
     return (
         <Link href={`/courses/${course.slug}`} className="block h-full">
-            <div className="border-4 rounded-2xl border-border hover:bg-accent cursor-pointer h-full transition-colors">
+            <div className="relative border-4 rounded-2xl border-border hover:bg-accent cursor-pointer h-full transition-colors">
+                {isCompleted && (
+                    <div className="absolute top-3 right-3 p-1.5 text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                )}
                 <div className="p-4 h-full flex flex-col font-game">
-                    {/* Title + description */}
                     <div className="min-w-0">
                         <h2 className="font-game text-2xl sm:text-3xl line-clamp-2">
                             {course.title}
@@ -23,10 +34,9 @@ function CourseCard({ course }: { course: MockCourse }) {
                         </p>
                     </div>
 
-                    {/* Push this to bottom */}
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-auto pt-4">
-                        <h2 className="bg-muted gap-2 font-game text-base sm:text-lg p-1.5 px-4 rounded-2xl inline-flex items-center whitespace-nowrap">
-                            <ChartNoAxesColumnIncreasing className="h-5 w-5" />
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-auto pt-4">
+                        <h2 className="bg-muted gap-2 font-game text-md sm:text-lg p-1.5 px-4 rounded-2xl inline-flex items-center whitespace-nowrap">
+                            <Gauge className="h-5 w-5" />
                             {course.difficulty}
                         </h2>
 

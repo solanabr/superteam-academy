@@ -73,9 +73,9 @@ export default function DashboardPage() {
     const level = levelFromXp(xpValue);
 
     return (
-        <>
+        <div className="flex h-full min-h-0 flex-col overflow-hidden -m-4 sm:-m-6">
             <DailyReward streakCount={streak.current} />
-            <div className="space-y-5 sm:space-y-7">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-7">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-7">
                     {/* Main column (2/3) */}
                     <div className="lg:col-span-2">
@@ -164,52 +164,52 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Side column (1/3) */}
-                    <div className="lg:col-span-1">
+                    {/* Side column (1/3) — stats, certify, streak */}
+                    <div className="lg:col-span-1 flex flex-col gap-5 sm:gap-6 lg:gap-8">
                         {/* User Status — with pixel art icons */}
-                        <div className="p-4 border-4 rounded-2xl">
-                            <div className="flex gap-3 items-center mb-4">
+                        <div className="p-4 sm:p-5 border-4 rounded-2xl">
+                            <div className="flex gap-3 items-center mb-3 sm:mb-4">
                                 <Image src="/alex_walk.gif" alt="Alex walking" width={70} height={70} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0" unoptimized />
-                                <h2 className="font-game text-xl sm:text-2xl">{t("yourStats")}</h2>
+                                <h2 className="font-game text-lg sm:text-xl lg:text-2xl">{t("yourStats")}</h2>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 sm:gap-5">
-                                <div className="flex gap-3 items-center">
-                                    <Image src="/star.png" alt="Star" width={35} height={35} />
-                                    <div>
-                                        <h2 className="font-game text-3xl">{xpValue}</h2>
-                                        <h2 className="font-game text-xl text-muted-foreground">{t("totalXp")}</h2>
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-5">
+                                <div className="flex gap-2 sm:gap-3 items-center min-w-0">
+                                    <Image src="/star.png" alt="Star" width={35} height={35} className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 shrink-0" />
+                                    <div className="min-w-0">
+                                        <h2 className="font-game text-xl sm:text-2xl lg:text-3xl">{xpValue}</h2>
+                                        <h2 className="font-game text-sm sm:text-base lg:text-xl text-muted-foreground truncate">{t("totalXp")}</h2>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 items-center">
-                                    <Image src="/badge.png" alt="Badge" width={35} height={35} />
-                                    <div>
-                                        <h2 className="font-game text-3xl">0</h2>
-                                        <h2 className="font-game text-xl text-muted-foreground">{t("badge")}</h2>
+                                <div className="flex gap-2 sm:gap-3 items-center min-w-0">
+                                    <Image src="/badge.png" alt="Badge" width={35} height={35} className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 shrink-0" />
+                                    <div className="min-w-0">
+                                        <h2 className="font-game text-xl sm:text-2xl lg:text-3xl">0</h2>
+                                        <h2 className="font-game text-sm sm:text-base lg:text-xl text-muted-foreground truncate">{t("badge")}</h2>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 items-center">
-                                    <Image src="/fire.png" alt="fire" width={35} height={35} />
-                                    <div>
-                                        <h2 className="font-game text-3xl">{streak.current}</h2>
-                                        <h2 className="font-game text-xl text-muted-foreground">{t("dailyStreak")}</h2>
+                                <div className="flex gap-2 sm:gap-3 items-center min-w-0">
+                                    <Image src="/fire.png" alt="fire" width={35} height={35} className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 shrink-0" />
+                                    <div className="min-w-0">
+                                        <h2 className="font-game text-xl sm:text-2xl lg:text-3xl">{streak.current}</h2>
+                                        <h2 className="font-game text-sm sm:text-base lg:text-xl text-muted-foreground truncate">{t("dailyStreak")}</h2>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 items-center">
-                                    <Image src="/book.png" alt="level" width={35} height={35} />
-                                    <div>
-                                        <h2 className="font-game text-3xl">Lv.{level}</h2>
-                                        <h2 className="font-game text-xl text-muted-foreground">{tCommon("rank")}</h2>
+                                <div className="flex gap-2 sm:gap-3 items-center min-w-0">
+                                    <Image src="/book.png" alt="level" width={35} height={35} className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 shrink-0" />
+                                    <div className="min-w-0">
+                                        <h2 className="font-game text-xl sm:text-2xl lg:text-3xl">Lv.{level}</h2>
+                                        <h2 className="font-game text-sm sm:text-base lg:text-xl text-muted-foreground truncate">{tCommon("rank")}</h2>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Upgrade to Pro / Get Certified */}
-                        <div className="flex p-4 items-center flex-col border-4 rounded-2xl mt-6 sm:mt-8">
-                            <h2 className="text-2xl sm:text-3xl font-game text-center">{t("getCertified")}</h2>
-                            <p className="font-game text-muted-foreground text-base sm:text-xl text-center mt-1">{t("getCertifiedHint")}</p>
-                            <Link href="/certificates">
-                                <Button className="font-game text-2xl mt-3" variant="pixel" size="lg">
+                        <div className="flex p-4 sm:p-5 items-center flex-col border-4 rounded-2xl">
+                            <h2 className="text-xl sm:text-2xl lg:text-3xl font-game text-center">{t("getCertified")}</h2>
+                            <p className="font-game text-muted-foreground text-sm sm:text-base lg:text-lg text-center mt-1">{t("getCertifiedHint")}</p>
+                            <Link href="/certificates" className="w-full sm:w-auto">
+                                <Button className="font-game text-lg sm:text-xl lg:text-2xl mt-3 w-full sm:w-auto" variant="pixel" size="lg">
                                     {t("viewCerts")}
                                 </Button>
                             </Link>
@@ -220,6 +220,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

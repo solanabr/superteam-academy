@@ -16,7 +16,7 @@ export function WalletGuard({ children }: WalletGuardProps) {
 
     if (!connected) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
+            <div className="flex h-[100vh] min-h-[100vh] max-h-[100vh] items-center justify-center overflow-hidden">
                 <div className="mx-auto flex max-w-md flex-col items-center gap-6 px-6 text-center">
                     <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted">
                         <Wallet className="h-10 w-10 text-yellow-400" />

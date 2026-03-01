@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { Search, ChevronLeft, ChevronRight, Trophy, Crown, Medal } from "lucide-react";
 import { PixelAvatar } from "@/components/app";
 import { getMockLeaderboard } from "@/lib/services/mock-leaderboard";
@@ -44,7 +47,11 @@ async function fetchLeaderboard(timeframe: LeaderboardTimeframe): Promise<Leader
     return data.entries ?? [];
 }
 
+const NAVBAR_HEIGHT = "5.5rem";
+
 export function LeaderboardContent() {
+    const router = useRouter();
+    const { connected } = useWallet();
     const [timeframe, setTimeframe] = useState<LeaderboardTimeframe>("all-time");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -76,9 +83,12 @@ export function LeaderboardContent() {
     const handlePrev = () => setPage((p) => Math.max(1, p - 1));
     const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
+    const containerHeight = connected ? "100vh" : `calc(100vh - ${NAVBAR_HEIGHT})`;
+
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-            <div className="text-center mb-8 sm:mb-10">
+        <div className="flex min-h-0 flex-col overflow-hidden" style={{ height: containerHeight, maxHeight: containerHeight }}>
+            <div className="max-w-6xl mx-auto w-full flex-1 flex min-h-0 flex-col overflow-y-auto px-4 sm:px-6 py-6 sm:py-10">
+            <div className="shrink-0 text-center mb-6 sm:mb-8">
                 <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-4 sm:px-5 py-2 mb-3 sm:mb-4">
                     <Trophy className="h-4 w-4 text-yellow-400 shrink-0" />
                     <span className="font-game text-base sm:text-lg text-yellow-400">Global Rankings</span>
@@ -92,8 +102,8 @@ export function LeaderboardContent() {
             </div>
 
             {entries.length >= 3 && (
-                <div className="flex items-end justify-center gap-4 md:gap-8 mb-12 pt-10">
-                    <div className="flex flex-col items-center">
+                <div className="flex shrink-0 items-end justify-center gap-4 md:gap-8 mb-6 sm:mb-8 pt-4">
+                    <Link href={`/profile/${entries[1].wallet}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                         <PixelAvatar wallet={entries[1].wallet} size="lg" />
                         <p className="font-game text-lg mt-2 truncate max-w-[120px] text-center">
                             {truncateWallet(entries[1].wallet)}
@@ -107,9 +117,9 @@ export function LeaderboardContent() {
                                 <span className="font-game text-2xl text-muted-foreground">#2</span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
-                    <div className="flex flex-col items-center -mt-6">
+                    <Link href={`/profile/${entries[0].wallet}`} className="flex flex-col items-center -mt-6 hover:opacity-90 transition-opacity">
                         <div className="relative">
                             <Crown className="h-8 w-8 text-yellow-400 absolute -top-8 left-1/2 -translate-x-1/2" />
                             <PixelAvatar wallet={entries[0].wallet} size="lg" />
@@ -126,9 +136,9 @@ export function LeaderboardContent() {
                                 <span className="font-game text-3xl text-yellow-400">#1</span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
-                    <div className="flex flex-col items-center">
+                    <Link href={`/profile/${entries[2].wallet}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                         <PixelAvatar wallet={entries[2].wallet} size="lg" />
                         <p className="font-game text-lg mt-2 truncate max-w-[120px] text-center">
                             {truncateWallet(entries[2].wallet)}
@@ -142,11 +152,11 @@ export function LeaderboardContent() {
                                 <span className="font-game text-2xl text-orange-400">#3</span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
             )}
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div className="shrink-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div className="flex gap-2 overflow-x-auto">
                     {timeframes.map(({ value, label }) => (
                         <button
@@ -180,7 +190,7 @@ export function LeaderboardContent() {
                 </div>
             </div>
 
-            <div className="rounded-2xl border-4 overflow-x-auto overflow-y-hidden">
+            <div className="min-h-0 flex-1 overflow-auto rounded-2xl border-4">
                 {filtered.length === 0 ? (
                     <div className="flex items-center justify-center p-12">
                         <p className="font-game text-xl text-muted-foreground">No results found</p>
@@ -206,8 +216,9 @@ export function LeaderboardContent() {
                                 return (
                                     <TableRow
                                         key={entry.wallet}
+                                        onClick={() => router.push(`/profile/${entry.wallet}`)}
                                         className={cn(
-                                            "border-b border-border last:border-b-0 transition-colors hover:bg-muted/50",
+                                            "border-b border-border last:border-b-0 transition-colors hover:bg-muted/50 cursor-pointer",
                                             isTop3 && "bg-muted/30"
                                         )}
                                     >
@@ -241,7 +252,7 @@ export function LeaderboardContent() {
             </div>
 
             {filtered.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-4 px-1">
+                <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 mt-4 px-1">
                     <div className="flex items-center gap-4 font-game text-lg text-muted-foreground">
                         <span>
                             {start + 1}–{Math.min(start + pageSize, filtered.length)} of{" "}
@@ -294,6 +305,7 @@ export function LeaderboardContent() {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 }

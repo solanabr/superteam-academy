@@ -38,3 +38,5 @@ export { useCredentialsFor } from "./useCredentialsFor";
 export { useCreateCredentialCollection } from "./useCreateCredentialCollection";
 export { useIssueCredentialForCompletion } from "./useIssueCredentialForCompletion";
 export { useCredentialCollectionsList, useTrackImageMap } from "./useCredentialCollectionsList";
+export { useLeaderboardRank } from "./useLeaderboardRank";
+export { useCoursesCompletedFor } from "./useCoursesCompletedFor";

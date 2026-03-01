@@ -49,6 +49,19 @@ export interface LeaderboardEntryRow {
   coursesCompleted?: number;
 }
 
+export async function getCoursesCompletedForWallet(wallet: string): Promise<number> {
+  const prisma = getCommunityPrisma();
+  try {
+    const user = await prisma.indexedUser.findUnique({
+      where: { wallet: wallet },
+      select: { coursesCompleted: true },
+    });
+    return user?.coursesCompleted ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getLeaderboardFromDb(limit = 100): Promise<LeaderboardEntryRow[] | null> {
   const prisma = getCommunityPrisma();
   try {
