@@ -1,10 +1,9 @@
 // Superteam Academy — Service Worker
 // Provides offline shell + caches static assets
 
-const CACHE_NAME = 'superteam-academy-v1';
+const CACHE_NAME = 'superteam-academy-v2';
 const SHELL_URLS = [
-  '/',
-  '/pt-BR',
+  '/en/',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -57,17 +56,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for HTML pages
+  // Network-first for HTML pages (ensures fresh redirects and content)
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const networkFetch = fetch(request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      });
-      return cached || networkFetch;
-    })
+    fetch(request).then((response) => {
+      if (response.ok || response.type === 'opaqueredirect' || response.status === 307) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(request))
   );
 });
