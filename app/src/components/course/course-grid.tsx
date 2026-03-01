@@ -25,7 +25,7 @@ export function CourseGrid({ courses, progressMap }: CourseGridProps) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">
       {courses.map((course) => (
         <CourseCard
           key={course.slug}

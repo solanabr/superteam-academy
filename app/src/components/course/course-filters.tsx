@@ -1,114 +1,86 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Search, X, Loader2 } from "lucide-react";
 import { TRACKS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-const DIFFICULTIES = ["all", "beginner", "intermediate", "advanced"] as const;
-
-const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
-  all: "filters.allDifficulties",
-  beginner: "filters.difficultyBeginner",
-  intermediate: "filters.difficultyIntermediate",
-  advanced: "filters.difficultyAdvanced",
-};
+export type Duration = "all" | "lt2" | "2to5" | "gt5";
+export type Sort = "newest" | "popular" | "xp";
 
 export interface CourseFiltersProps {
-  search: string;
-  onSearchChange: (value: string) => void;
-  selectedDifficulty: string;
-  onDifficultyChange: (difficulty: string) => void;
   selectedTrack: number | null;
-  onTrackChange: (trackId: number | null) => void;
-  activeFilters: number;
-  onClearFilters: () => void;
-  isSearchPending?: boolean;
+  onTrackChange: (id: number | null) => void;
 }
 
-export function CourseFilters({
-  search,
-  onSearchChange,
-  selectedDifficulty,
-  onDifficultyChange,
-  selectedTrack,
-  onTrackChange,
-  activeFilters,
-  onClearFilters,
-  isSearchPending,
-}: CourseFiltersProps) {
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function CourseFilters({ selectedTrack, onTrackChange }: CourseFiltersProps) {
   const t = useTranslations("courses");
+  const tracks = Object.entries(TRACKS).filter(([id]) => Number(id) !== 0);
 
   return (
-    <div className="mb-8 space-y-4">
-      {/* Search bar */}
-      <div className="relative">
-        {isSearchPending ? (
-          <Loader2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" />
-        ) : (
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        )}
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={t("catalog.searchPlaceholder")}
-          className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        {search && (
-          <button
-            onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter pills */}
-      <div className="flex flex-wrap gap-2">
-        {/* Difficulty */}
-        {DIFFICULTIES.map((d) => (
-          <button
-            key={d}
-            onClick={() => onDifficultyChange(d)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              selectedDifficulty === d
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            {t(DIFFICULTY_LABEL_KEYS[d])}
-          </button>
-        ))}
-
-        <div className="mx-1 h-6 w-px bg-border" />
-
-        {/* Tracks */}
-        {Object.entries(TRACKS).map(([id, track]) => (
-          <button
+    <>
+      {/* Mobile: horizontal scrollable row */}
+      <div className="flex lg:hidden items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full">
+        <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+          Track
+        </span>
+        <Pill active={selectedTrack === null} onClick={() => onTrackChange(null)}>
+          {t("filters.allTracks")}
+        </Pill>
+        {tracks.map(([id, track]) => (
+          <Pill
             key={id}
-            onClick={() =>
-              onTrackChange(selectedTrack === Number(id) ? null : Number(id))
-            }
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              selectedTrack === Number(id)
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
+            active={selectedTrack === Number(id)}
+            onClick={() => onTrackChange(selectedTrack === Number(id) ? null : Number(id))}
           >
-            {track.display}
-          </button>
+            {track.short}
+          </Pill>
         ))}
-
-        {(activeFilters > 0 || search) && (
-          <button
-            onClick={onClearFilters}
-            className="rounded-full px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-          >
-            {t("catalog.clearFilters")}
-          </button>
-        )}
       </div>
-    </div>
+
+      {/* Desktop: vertical sidebar */}
+      <aside className="hidden lg:block w-44 shrink-0">
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+          Track
+        </p>
+        <div className="flex flex-col gap-1.5">
+          <Pill active={selectedTrack === null} onClick={() => onTrackChange(null)}>
+            {t("filters.allTracks")}
+          </Pill>
+          {tracks.map(([id, track]) => (
+            <Pill
+              key={id}
+              active={selectedTrack === Number(id)}
+              onClick={() => onTrackChange(selectedTrack === Number(id) ? null : Number(id))}
+            >
+              {track.display}
+            </Pill>
+          ))}
+        </div>
+      </aside>
+    </>
   );
 }
