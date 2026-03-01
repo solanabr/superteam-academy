@@ -18,14 +18,12 @@ export function GamificationOverlays() {
       {/* Toast container always renders — works for auth and non-auth contexts */}
       <ToastContainer />
       {!userId ? null : (
-        <>
-          <LevelUpOverlay />
-          {/* Single stacking container for all bottom-right popups */}
-          <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-            <CertificatePopup className="pointer-events-auto" />
-            <AchievementPopup className="pointer-events-auto" />
-          </div>
-        </>
+        /* Single stacking container for all bottom-right popups */
+        <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+          <LevelUpOverlay className="pointer-events-auto" />
+          <CertificatePopup className="pointer-events-auto" />
+          <AchievementPopup className="pointer-events-auto" />
+        </div>
       )}
     </>
   );

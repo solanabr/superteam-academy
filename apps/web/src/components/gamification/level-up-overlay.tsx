@@ -25,7 +25,7 @@ export function dispatchLevelUp(newLevel: number): void {
   );
 }
 
-export function LevelUpOverlay() {
+export function LevelUpOverlay({ className }: { className?: string }) {
   const t = useTranslations("gamification");
   const [events, setEvents] = useState<{ level: number; uid: number }[]>([]);
 
@@ -49,15 +49,12 @@ export function LevelUpOverlay() {
   if (events.length === 0) return null;
 
   return (
-    <div
-      className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2"
-      aria-live="polite"
-    >
+    <div className={cn("flex flex-col gap-2", className)} aria-live="polite">
       {events.map((ev) => (
         <div
           key={ev.uid}
           className={cn(
-            "pointer-events-auto inline-flex items-center gap-3",
+            "inline-flex items-center gap-3",
             "rounded-[var(--r-full)] border border-[var(--border)] bg-[var(--card)] px-5 py-3",
             "shadow-[var(--shadow),0_0_24px_var(--level-dim)]"
           )}

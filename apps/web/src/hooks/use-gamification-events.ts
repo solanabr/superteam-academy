@@ -28,14 +28,18 @@ export function useGamificationEvents(userId: string | undefined) {
 
     const supabase = createClient();
 
-    // Seed the ref with the current level so the first UPDATE doesn't false-trigger
+    // Seed the ref with the current level so the first UPDATE doesn't false-trigger.
+    // Guard: only write the seed if no Realtime event has already set the ref —
+    // a stale seed overwriting a newer Realtime value causes false level-ups.
     supabase
       .from("user_xp")
       .select("level")
       .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) lastKnownLevelRef.current = data.level ?? 0;
+        if (data && lastKnownLevelRef.current === null) {
+          lastKnownLevelRef.current = data.level ?? 0;
+        }
       });
 
     const channel = supabase
@@ -92,8 +96,12 @@ export function useGamificationEvents(userId: string | undefined) {
           );
           if (achievementMatch?.[1]) {
             dispatchAchievementXp(achievementMatch[1], amount);
+            dispatchXpGain(amount);
             return;
           }
+
+          // Daily quest XP → suppress popup (quests panel already shows the reward)
+          if (row.reason?.startsWith("daily_quest:")) return;
 
           dispatchXpGain(amount);
         }
