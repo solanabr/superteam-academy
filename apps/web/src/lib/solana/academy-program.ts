@@ -70,6 +70,7 @@ interface AcademyMethods {
     totalXp: BN
   ): MethodBuilder;
   awardAchievement(): MethodBuilder;
+  rewardXp(amount: BN, memo: string): MethodBuilder;
 }
 
 // ---------------------------------------------------------------------------
@@ -408,4 +409,56 @@ export async function awardAchievement(
     .rpc();
 
   return { signature: sig, assetAddress: assetKeypair.publicKey };
+}
+
+export async function rewardXp(
+  recipient: PublicKey,
+  amount: number,
+  memo: string
+): Promise<string> {
+  const program = getProgram();
+  const signer = getBackendSigner();
+  const [configPDA] = findConfigPDA(program.programId);
+  const [minterRolePDA] = findMinterRolePDA(
+    signer.publicKey,
+    program.programId
+  );
+
+  const accounts = program.account as unknown as AcademyAccounts;
+  const methods = program.methods as unknown as AcademyMethods;
+
+  const config = await accounts.config.fetch(configPDA);
+  const xpMint = config.xpMint as PublicKey;
+
+  const recipientTokenAccount = getAssociatedTokenAddressSync(
+    xpMint,
+    recipient,
+    false,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
+  const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    signer.publicKey,
+    recipientTokenAccount,
+    recipient,
+    xpMint,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
+  const sig = await methods
+    .rewardXp(new BN(amount), memo)
+    .preInstructions([createAtaIx])
+    .accountsPartial({
+      config: configPDA,
+      minterRole: minterRolePDA,
+      xpMint: xpMint,
+      recipientTokenAccount: recipientTokenAccount,
+      minter: signer.publicKey,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+    })
+    .rpc();
+
+  return sig;
 }
