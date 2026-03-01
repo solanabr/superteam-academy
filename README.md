@@ -20,8 +20,7 @@
 **Production-ready Learning Management System dApp for Solana developer education.**
 Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integrated code editor.
 
-https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
-
+[![Live Demo](https://img.shields.io/badge/Live_Demo-superteam--academy.rectorspace.com-9333EA?style=for-the-badge&logo=vercel)](https://superteam-academy.rectorspace.com)
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_|_Zero_Any-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.json)
@@ -40,16 +39,9 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/demo-video.mp4
+https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 
 > 3-minute walkthrough covering course enrollment, lesson completion, code editor, leaderboard, dashboard, and settings.
-
-<details>
-<summary>Can't play the video above? Download it directly.</summary>
-
-[Download demo-video.mp4](assets/demo-video.mp4) (4.8 MB)
-
-</details>
 
 ---
 
