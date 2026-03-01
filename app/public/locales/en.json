@@ -1,0 +1,9 @@
+{
+  "common": {
+    "connectWallet": "Connect Wallet",
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "achievements": "Achievements",
+    "profile": "Profile"
+  }
+}

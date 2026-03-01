@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --solana-purple: #9945FF;
+  --solana-green: #14F195;
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #111127;
+  --bg-card: #16162a;
+}
+
+body {
+  background: var(--bg-primary);
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(22, 22, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 42, 0.8);
+}
+
+/* Glow effects */
+.glow-purple {
+  box-shadow: 0 0 40px rgba(153, 69, 255, 0.15);
+}
+
+.glow-green {
+  box-shadow: 0 0 40px rgba(20, 241, 149, 0.15);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+  background-size: 200% auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Wallet adapter overrides */
+.wallet-adapter-button {
+  background: linear-gradient(135deg, #9945FF, #14F195) !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: #16162a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1rem !important;
+}
