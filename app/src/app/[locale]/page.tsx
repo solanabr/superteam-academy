@@ -149,14 +149,14 @@ export default function HomePage() {
       <section className="border-t bg-muted/20">
         <div className="container py-20">
           <h2 className="text-3xl font-bold text-center mb-12">
-            How It Works
+            {t('howItWorks.title')}
           </h2>
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              { step: '01', title: 'Connect Wallet', desc: 'Link your Solana wallet to start your learning journey' },
-              { step: '02', title: 'Enroll in Courses', desc: 'Choose from beginner to advanced Solana development tracks' },
-              { step: '03', title: 'Learn & Earn XP', desc: 'Complete lessons and code challenges to earn soulbound XP tokens' },
-              { step: '04', title: 'Get Credentials', desc: 'Receive verifiable Metaplex Core NFT credentials in your wallet' },
+              { step: '01', title: t('howItWorks.step1Title'), desc: t('howItWorks.step1Desc') },
+              { step: '02', title: t('howItWorks.step2Title'), desc: t('howItWorks.step2Desc') },
+              { step: '03', title: t('howItWorks.step3Title'), desc: t('howItWorks.step3Desc') },
+              { step: '04', title: t('howItWorks.step4Title'), desc: t('howItWorks.step4Desc') },
             ].map((item) => (
               <div key={item.step} className="space-y-3">
                 <span className="text-4xl font-bold text-solana-purple/30">

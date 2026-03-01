@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-select": "^2.1.1",

@@ -43,6 +43,17 @@
       "xpDesc": "Completa lecciones para ganar tokens XP Token-2022. Sube de nivel y escala la clasificación",
       "codeTitle": "Programación Interactiva",
       "codeDesc": "Escribe y prueba programas Solana directamente en tu navegador con Monaco Editor"
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona",
+      "step1Title": "Conecta tu Billetera",
+      "step1Desc": "Vincula tu billetera Solana para comenzar tu viaje de aprendizaje",
+      "step2Title": "Inscríbete en Cursos",
+      "step2Desc": "Elige entre rutas de desarrollo Solana desde principiante hasta avanzado",
+      "step3Title": "Aprende y Gana XP",
+      "step3Desc": "Completa lecciones y desafíos de código para ganar tokens XP soulbound",
+      "step4Title": "Obtén Credenciales",
+      "step4Desc": "Recibe credenciales NFT verificables Metaplex Core en tu billetera"
     }
   },
   "courses": {

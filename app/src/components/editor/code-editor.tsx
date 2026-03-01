@@ -2,17 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Play, RotateCcw, Check, Code } from 'lucide-react';
-
-/**
- * Code Editor component
- *
- * For Monaco Editor integration:
- * 1. npm install @monaco-editor/react
- * 2. Replace the textarea below with the Monaco component
- */
 
 interface Props {
   starterCode: string;
@@ -21,6 +14,22 @@ interface Props {
   instructions: string;
   onSuccess?: () => void;
 }
+
+/** Solana-specific code snippets for Monaco completions */
+const SOLANA_SNIPPETS = {
+  rust: [
+    { label: 'anchor-program', insertText: 'use anchor_lang::prelude::*;\n\ndeclare_id!("${1:PROGRAM_ID}");\n\n#[program]\npub mod ${2:my_program} {\n    use super::*;\n\n    pub fn ${3:initialize}(ctx: Context<${4:Initialize}>) -> Result<()> {\n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct ${4:Initialize} {}\n', detail: 'Anchor program scaffold' },
+    { label: 'account-struct', insertText: '#[account]\npub struct ${1:MyAccount} {\n    pub authority: Pubkey,\n    pub ${2:data}: ${3:u64},\n}\n', detail: 'Anchor account struct' },
+    { label: 'error-code', insertText: '#[error_code]\npub enum ${1:ErrorCode} {\n    #[msg("${2:Description}")]\n    ${3:CustomError},\n}\n', detail: 'Anchor error codes' },
+    { label: 'pda-seeds', insertText: 'seeds = [b"${1:seed}", ${2:authority}.key().as_ref()],\nbump,', detail: 'PDA seeds constraint' },
+  ],
+  typescript: [
+    { label: 'connection', insertText: 'const connection = new Connection("${1:https://api.devnet.solana.com}", "confirmed");\n', detail: 'Solana connection' },
+    { label: 'get-balance', insertText: 'const balance = await connection.getBalance(${1:publicKey});\nconsole.log(`Balance: ${balance / LAMPORTS_PER_SOL} SOL`);\n', detail: 'Get SOL balance' },
+    { label: 'send-tx', insertText: 'const tx = new Transaction().add(\n  SystemProgram.transfer({\n    fromPubkey: ${1:sender}.publicKey,\n    toPubkey: ${2:recipient},\n    lamports: ${3:amount} * LAMPORTS_PER_SOL,\n  })\n);\nconst sig = await sendAndConfirmTransaction(connection, tx, [${1:sender}]);\n', detail: 'Send SOL transaction' },
+    { label: 'anchor-setup', insertText: 'const provider = anchor.AnchorProvider.env();\nanchor.setProvider(provider);\nconst program = new anchor.Program(${1:IDL}, ${2:PROGRAM_ID}, provider);\n', detail: 'Anchor client setup' },
+  ],
+};
 
 export function CodeEditor({
   starterCode,
@@ -54,6 +63,29 @@ export function CodeEditor({
     setIsCorrect(false);
   }, [starterCode]);
 
+  const handleEditorMount = useCallback(
+    (editor: unknown, monaco: { languages: { registerCompletionItemProvider: (lang: string, provider: { provideCompletionItems: () => { suggestions: Array<{ label: string; kind: number; insertText: string; insertTextRules: number; detail: string }> } }) => void }; CompletionItemKind: { Snippet: number }; CompletionItemInsertTextRule: { InsertAsSnippet: number } }) => {
+      const lang = language === 'rust' ? 'rust' : 'typescript';
+      const snippets = SOLANA_SNIPPETS[language] || [];
+
+      monaco.languages.registerCompletionItemProvider(lang, {
+        provideCompletionItems: () => ({
+          suggestions: snippets.map((s) => ({
+            label: s.label,
+            kind: monaco.CompletionItemKind.Snippet,
+            insertText: s.insertText,
+            insertTextRules: monaco.CompletionItemInsertTextRule.InsertAsSnippet,
+            detail: s.detail,
+          })),
+        }),
+      });
+
+      // Focus the editor
+      (editor as { focus: () => void }).focus();
+    },
+    [language]
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -65,12 +97,23 @@ export function CodeEditor({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-md border overflow-hidden">
-          <textarea
+          <Editor
+            height="400px"
+            language={language === 'rust' ? 'rust' : 'typescript'}
+            theme="vs-dark"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="w-full h-[400px] bg-[#1e1e1e] text-green-400 font-mono text-sm p-4 resize-none focus:outline-none"
-            spellCheck={false}
-            aria-label={`Code editor - ${language}`}
+            onChange={(value) => setCode(value ?? '')}
+            onMount={handleEditorMount}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              tabSize: 2,
+              automaticLayout: true,
+              padding: { top: 16, bottom: 16 },
+            }}
           />
         </div>
 

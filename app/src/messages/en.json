@@ -43,6 +43,17 @@
       "xpDesc": "Complete lessons to earn Token-2022 XP tokens. Level up and climb the leaderboard",
       "codeTitle": "Interactive Coding",
       "codeDesc": "Write and test Solana programs directly in your browser with Monaco Editor"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1Title": "Connect Wallet",
+      "step1Desc": "Link your Solana wallet to start your learning journey",
+      "step2Title": "Enroll in Courses",
+      "step2Desc": "Choose from beginner to advanced Solana development tracks",
+      "step3Title": "Learn & Earn XP",
+      "step3Desc": "Complete lessons and code challenges to earn soulbound XP tokens",
+      "step4Title": "Get Credentials",
+      "step4Desc": "Receive verifiable Metaplex Core NFT credentials in your wallet"
     }
   },
   "courses": {
