@@ -33,6 +33,7 @@
     "courses": "Courses",
     "dashboard": "Dashboard",
     "leaderboard": "Leaderboard",
+    "community": "Community",
     "profile": "Profile",
     "settings": "Settings",
     "certificates": "Certificates"
@@ -160,7 +161,10 @@
     "buildSuccess": "Program compiled successfully!",
     "buildFailed": "Build failed. Check compiler output for errors.",
     "linkWalletToEarnXp": "Link your wallet to earn on-chain XP.",
-    "linkWalletSettings": "Go to Settings →"
+    "linkWalletSettings": "Go to Settings →",
+    "discussion": "Discussion",
+    "askQuestion": "Ask a Question",
+    "signInToAsk": "Sign in to ask a question"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
@@ -543,5 +547,59 @@
     "invalidAmount": "Amount must be greater than zero.",
     "invalidXpReward": "XP reward must be greater than zero.",
     "unknown": "Transaction failed. Please try again."
+  },
+  "community": {
+    "title": "Community",
+    "description": "Discuss, ask questions, and share with fellow learners",
+    "askQuestion": "Ask a Question",
+    "startDiscussion": "Start a Discussion",
+    "allThreads": "All Threads",
+    "answers": "{count, plural, zero {No answers yet} one {# answer} other {# answers}}",
+    "views": "{count, plural, one {# view} other {# views}}",
+    "accepted": "Accepted Answer",
+    "solved": "Solved",
+    "unanswered": "Unanswered",
+    "pinned": "Pinned",
+    "locked": "Locked",
+    "filterLatest": "Latest",
+    "filterTop": "Top",
+    "filterUnanswered": "Unanswered",
+    "typeAll": "All",
+    "typeQuestions": "Questions",
+    "typeDiscussions": "Discussions",
+    "postAnswer": "Post Answer",
+    "acceptAnswer": "Accept Answer",
+    "flagContent": "Report",
+    "flagReasons": {
+      "spam": "Spam",
+      "offensive": "Offensive",
+      "off-topic": "Off-topic",
+      "other": "Other"
+    },
+    "flagSubmitted": "Report submitted. Thank you.",
+    "threadCreated": "Thread created successfully",
+    "answerPosted": "Answer posted",
+    "stats": {
+      "threads": "Threads",
+      "answers": "Answers",
+      "accepted": "Accepted",
+      "communityXp": "Community XP"
+    },
+    "editor": {
+      "titlePlaceholder": "What's your question or topic?",
+      "bodyPlaceholder": "Describe your question or topic in detail. Use Markdown for formatting.",
+      "preview": "Preview",
+      "write": "Write"
+    },
+    "search": {
+      "placeholder": "Search discussions...",
+      "noResults": "No threads found"
+    },
+    "empty": {
+      "global": "No threads yet. Be the first to start a discussion!",
+      "category": "No threads in this category yet.",
+      "course": "No discussions about this course yet.",
+      "lesson": "No questions about this lesson yet. Ask one!"
+    }
   }
 }
