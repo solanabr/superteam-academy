@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkCommunityAchievements } from "@/lib/gamification/achievements";
 
 export async function GET(request: NextRequest) {
   try {
@@ -262,6 +263,9 @@ export async function POST(request: NextRequest) {
       p_reason: "community:thread_created",
       p_idempotency_key: `thread:${thread.id}`,
     });
+
+    // Fire-and-forget achievement check
+    checkCommunityAchievements(admin, user.id).catch(() => {});
 
     return NextResponse.json(thread, { status: 201 });
   } catch {
