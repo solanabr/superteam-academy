@@ -11,6 +11,7 @@ import {
   awardAchievement,
   finalizeCourse,
   issueCredential,
+  rewardXp,
 } from "./academy-program";
 import { getProgramId } from "./pda";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +24,7 @@ type OnchainActionType =
   | "certificate"
   | "course_finalize"
   | "xp"
+  | "quest_xp"
   | "enroll";
 
 // ---------------------------------------------------------------------------
@@ -312,6 +314,15 @@ export async function retryPendingOnchainActions(
             p_idempotency_key: row.reference_id,
           });
           if (xpRpcError) throw new Error(xpRpcError.message);
+          break;
+        }
+
+        case "quest_xp": {
+          const questId = row.reference_id;
+          const xpAmount = payload.xpAmount as number;
+          const memo = (payload.memo as string) ?? `daily_quest:${questId}`;
+
+          await withRetry(() => rewardXp(wallet, xpAmount, memo));
           break;
         }
 
