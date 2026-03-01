@@ -26,7 +26,7 @@ Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integ
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_|_Zero_Any-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg?logo=next.js)](https://nextjs.org)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-14F195.svg?logo=solana)](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet)
-[![Tests](https://img.shields.io/badge/Tests-351_Unit_|_36_E2E-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-356_Unit_|_36_E2E-brightgreen.svg)]()
 [![i18n](https://img.shields.io/badge/i18n-EN_|_PT--BR_|_ES-orange.svg)]()
 
 </div>
@@ -158,6 +158,14 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 - **PWA Support** — Installable, offline-capable with service worker
 - **Course Creator Dashboard** — Content creation tools for instructors
 - **Google + GitHub OAuth** — Conditional providers (graceful when unconfigured)
+- **AI Code Hints** — Claude-powered contextual hints in the Monaco editor (3 per challenge)
+- **Server-Side Quiz Validation** — Secure answer checking with `server-only` guard
+- **On-Chain Achievement Claiming** — Claim achievements as soulbound NFTs via wallet signing
+- **Arweave Content Storage** — Permanent course content with verifiable on-chain links
+- **JSON-LD Structured Data** — Schema.org EducationalOrganization + Course for SEO
+- **17 API Routes** — Search, courses, reviews, notifications, stats, profile, AI hints, quiz validation
+- **CSP Security Headers** — Content-Security-Policy, X-Frame-Options, HSTS, and more
+- **5-Job CI/CD Pipeline** — Parallel TypeScript, ESLint, Vitest, Build, and E2E jobs
 - **E2E Test Suite** — 36 Playwright specs across 8 test files
 
 ---
@@ -176,7 +184,9 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 | **On-Chain** | Anchor 0.31+, Token-2022 (soulbound XP), Metaplex Core (credential NFTs) |
 | **RPC/Indexing** | Helius DAS API (credential queries, XP leaderboard) |
 | **Analytics** | GA4 + Microsoft Clarity (heatmaps) + Sentry (error monitoring) + Vercel Analytics |
-| **Testing** | Vitest (348 unit tests) + Playwright (36 E2E specs) |
+| **AI** | Anthropic Claude (contextual code hints in editor) |
+| **Storage** | Arweave (permanent course content via Irys) |
+| **Testing** | Vitest (356 unit tests) + Playwright (36 E2E specs) |
 | **Deployment** | Vercel with preview builds |
 | **PWA** | Service worker (multi-strategy caching) + Web App Manifest |
 
@@ -276,7 +286,7 @@ superteam-academy/
 │   │   │   ├── [locale]/(marketing)/   ← Landing page
 │   │   │   ├── [locale]/(platform)/    ← Dashboard, courses, leaderboard, etc.
 │   │   │   ├── [locale]/(admin)/       ← Admin panel
-│   │   │   └── api/                    ← API routes (leaderboard, auth, etc.)
+│   │   │   └── api/                    ← 17 API routes (search, AI, quiz, etc.)
 │   │   ├── components/                 ← 139 React components (shadcn/ui based)
 │   │   ├── lib/
 │   │   │   ├── sanity/                 ← CMS client + mock-client + seed data
@@ -285,7 +295,7 @@ superteam-academy/
 │   │   │   ├── hooks/                  ← 9 React hooks (enrollment, XP, streak, etc.)
 │   │   │   └── services/              ← Service interfaces (learning progress)
 │   │   ├── i18n/                       ← next-intl routing config
-│   │   └── messages/                   ← en.json, pt.json, es.json (375 keys each)
+│   │   └── messages/                   ← en.json, pt.json, es.json (358 keys each)
 │   ├── e2e/                            ← Playwright E2E specs
 │   └── public/                         ← Static assets, PWA manifest, service worker
 ├── docs/                               ← Program & architecture documentation
@@ -305,6 +315,9 @@ Credentials: wallet → user-store → Helius DAS getAssetsByOwner()
 Leaderboard: /api/leaderboard → Helius DAS getTokenAccounts → 60s cache
 Enrollment:  use-enrollment hook → buildEnrollInstruction() → wallet signing
 Auth:        NextAuth → conditional Google/GitHub → /api/auth/providers-status
+AI Hints:    Monaco editor → /api/ai/hint → Claude Haiku → contextual guidance
+Quiz:        Lesson quiz → /api/quiz/validate → server-only answer keys → XP award
+Arweave:     Course content → Irys upload → arweave.net/{txId} → permanent storage
 ```
 
 ---
@@ -362,14 +375,14 @@ The Anchor program is deployed on Solana devnet with 16 instructions covering th
 | **Zustand Stores** | 100% | 75 tests (course-store, user-store) |
 | **React Hooks** | 100% | 35 tests (all 9 hooks) |
 | **Services & Utils** | 85% | 42 tests (learning progress, recommendations, forum) |
-| **API Routes** | Partial | 8 tests (leaderboard API) |
+| **API Routes** | Partial | 13 tests (leaderboard, quiz validation) |
 | **E2E (Playwright)** | 8 specs | 36 tests (navigation, courses, i18n, responsive, a11y) |
 | **On-Chain (Anchor)** | Full | 77 Rust + 62 TypeScript tests |
 
 ```bash
 # Frontend tests
 cd app
-pnpm test:run          # Run all 348 unit tests
+pnpm test:run          # Run all 356 unit tests
 pnpm test              # Watch mode
 
 # E2E tests
