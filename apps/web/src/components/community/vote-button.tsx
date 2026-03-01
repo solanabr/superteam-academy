@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CaretUp, CaretDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface VoteButtonProps {
@@ -18,6 +19,7 @@ export function VoteButton({
   disabled = false,
   size = "default",
 }: VoteButtonProps) {
+  const t = useTranslations("community");
   const iconSize = size === "sm" ? 18 : 22;
 
   return (
@@ -33,9 +35,9 @@ export function VoteButton({
             ? "text-[var(--primary)]"
             : "text-[var(--text-2)] hover:text-[var(--primary)]"
         )}
-        aria-label="Upvote"
+        aria-label={t("upvote")}
       >
-        <ChevronUp size={iconSize} strokeWidth={userVote === 1 ? 3 : 2} />
+        <CaretUp size={iconSize} weight={userVote === 1 ? "fill" : "bold"} />
       </button>
 
       <span
@@ -61,9 +63,9 @@ export function VoteButton({
             ? "text-[var(--danger)]"
             : "text-[var(--text-2)] hover:text-[var(--danger)]"
         )}
-        aria-label="Downvote"
+        aria-label={t("downvote")}
       >
-        <ChevronDown size={iconSize} strokeWidth={userVote === -1 ? 3 : 2} />
+        <CaretDown size={iconSize} weight={userVote === -1 ? "fill" : "bold"} />
       </button>
     </div>
   );

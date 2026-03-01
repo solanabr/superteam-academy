@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThreadList } from "@/components/community/thread-list";
@@ -34,6 +35,7 @@ const CATEGORIES = [
 
 export default function CommunityPage() {
   const { user } = useAuth();
+  const t = useTranslations("community");
 
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -43,16 +45,14 @@ export default function CommunityPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-[var(--text)]">
-            Community
+            {t("title")}
           </h1>
-          <p className="mt-1 text-[var(--text-2)]">
-            Discuss, ask questions, and share with fellow learners
-          </p>
+          <p className="mt-1 text-[var(--text-2)]">{t("subtitle")}</p>
         </div>
         {user && (
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={18} />
-            Ask a Question
+            {t("askQuestion")}
           </Button>
         )}
       </div>
@@ -74,7 +74,7 @@ export default function CommunityPage() {
 
           {/* Recent threads */}
           <h2 className="mb-4 font-display text-xl font-bold text-[var(--text)]">
-            Recent Threads
+            {t("recentThreads")}
           </h2>
           <ThreadList showFilters />
         </div>
@@ -83,7 +83,7 @@ export default function CommunityPage() {
         {user && (
           <aside className="hidden w-72 shrink-0 lg:block">
             <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wider text-[var(--text-2)]">
-              Your Stats
+              {t("yourStats")}
             </h3>
             <CommunityStats userId={user.id} />
           </aside>

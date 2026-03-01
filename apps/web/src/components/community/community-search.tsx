@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { MagnifyingGlass, CircleNotch } from "@phosphor-icons/react";
 import { ThreadCard } from "./thread-card";
 
 interface ThreadAuthor {
@@ -33,6 +34,7 @@ interface SearchThread {
 }
 
 export function CommunitySearch() {
+  const t = useTranslations("community");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchThread[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -84,7 +86,7 @@ export function CommunitySearch() {
   return (
     <div>
       <div className="relative">
-        <Search
+        <MagnifyingGlass
           size={16}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-2)]"
         />
@@ -92,7 +94,7 @@ export function CommunitySearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search discussions..."
+          placeholder={t("searchPlaceholder")}
           className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--input)] py-2 pl-9 pr-4 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:border-[var(--primary)] focus:outline-none"
         />
       </div>
@@ -101,11 +103,11 @@ export function CommunitySearch() {
         <div className="mt-4">
           {isSearching ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+              <CircleNotch className="h-5 w-5 animate-spin text-[var(--primary)]" />
             </div>
           ) : results.length === 0 ? (
             <p className="py-8 text-center text-sm text-[var(--text-2)]">
-              No threads found
+              {t("noResults")}
             </p>
           ) : (
             <div className="space-y-2">

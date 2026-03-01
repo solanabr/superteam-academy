@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CircleNotch } from "@phosphor-icons/react";
 import { MarkdownEditor } from "./markdown-editor";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,7 @@ interface AnswerEditorProps {
 }
 
 export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
+  const t = useTranslations("community");
   const [body, setBody] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +46,12 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
   return (
     <div>
       <h3 className="mb-2 font-display font-bold text-[var(--text)]">
-        Your Answer
+        {t("yourAnswer")}
       </h3>
       <MarkdownEditor
         value={body}
         onChange={setBody}
-        placeholder="Write your answer using Markdown..."
+        placeholder={t("writeAnswer")}
         minHeight="150px"
       />
       {error && <p className="mt-2 text-sm text-[var(--danger)]">{error}</p>}
@@ -59,8 +61,8 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
           onClick={handleSubmit}
           disabled={isSubmitting || !body.trim()}
         >
-          {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-          Post Answer
+          {isSubmitting && <CircleNotch size={16} className="animate-spin" />}
+          {t("postAnswer")}
         </Button>
       </div>
     </div>
