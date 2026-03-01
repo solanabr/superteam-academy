@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "connectWallet": "Conectar Billetera"
+  },
+  "home": {
+    "hero": "Domina el Desarrollo en Solana",
+    "heroSub": "Gana credenciales verificables y tokens XP on-chain. Aprende, construye y demuestra tus habilidades.",
+    "browseCourses": "Ver Cursos",
+    "stats": {
+      "courses": "Cursos",
+      "learners": "Estudiantes",
+      "xpMinted": "XP Emitido",
+      "credentials": "Credenciales Emitidas"
+    }
+  },
+  "courses": {
+    "title": "Catálogo de Cursos",
+    "subtitle": "Elige tu ruta de aprendizaje",
+    "enrollNow": "Inscribirse",
+    "continue": "Continuar Aprendiendo",
+    "completed": "Completado",
+    "lessons": "lecciones",
+    "difficulty": {
+      "1": "Principiante",
+      "2": "Intermedio",
+      "3": "Avanzado"
+    },
+    "xpPerLesson": "XP por lección",
+    "totalXp": "XP Total",
+    "prerequisite": "Requisito previo necesario",
+    "enrolled": "inscritos",
+    "completions": "completaciones"
+  },
+  "course": {
+    "lessonProgress": "Progreso de Lecciones",
+    "lesson": "Lección",
+    "complete": "Marcar Completa",
+    "finalize": "Finalizar Curso",
+    "claim": "Reclamar Credencial",
+    "alreadyComplete": "Ya completado",
+    "notEnrolled": "Necesitas inscribirte primero",
+    "enrollToStart": "Inscríbete para empezar",
+    "courseCompleted": "¡Curso completado!",
+    "claimYourCredential": "Reclama tu credencial NFT"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Mejores estudiantes por XP",
+    "rank": "Posición",
+    "wallet": "Billetera",
+    "xp": "XP",
+    "level": "Nivel"
+  },
+  "profile": {
+    "title": "Tu Perfil",
+    "xpBalance": "Balance XP",
+    "level": "Nivel",
+    "streak": "Días Seguidos",
+    "credentials": "Credenciales",
+    "achievements": "Logros",
+    "enrollments": "Inscripciones Activas",
+    "noCredentials": "Completa cursos para ganar credenciales",
+    "noEnrollments": "Inscríbete en un curso para empezar"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "retry": "Reintentar",
+    "back": "Volver",
+    "viewAll": "Ver Todos"
+  }
+}

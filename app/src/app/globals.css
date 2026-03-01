@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #0a0a14;
+    --foreground: #fafafa;
+  }
+
+  body {
+    @apply bg-surface-950 text-surface-50 antialiased;
+  }
+
+  * {
+    @apply border-surface-800;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-surface-800 bg-surface-900 px-6 py-3 text-sm font-semibold text-surface-50 transition-all hover:bg-surface-800 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-surface-200 transition-all hover:bg-surface-800 hover:text-surface-50;
+  }
+
+  .card {
+    @apply rounded-2xl border border-surface-800 bg-surface-900 p-6 transition-all;
+  }
+
+  .card-hover {
+    @apply card hover:border-brand-600/40 hover:shadow-lg hover:shadow-brand-600/5;
+  }
+
+  .glass {
+    @apply rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-400 via-accent-400 to-brand-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-surface-800 bg-surface-950 px-4 py-3 text-sm text-surface-50 placeholder:text-surface-200/40 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600;
+  }
+}
+
+/* Wallet adapter overrides */
+.wallet-adapter-button {
+  @apply !rounded-xl !bg-brand-600 !font-semibold hover:!bg-brand-500 !transition-all;
+}
+
+.wallet-adapter-modal-wrapper {
+  @apply !bg-surface-900 !border !border-surface-800 !rounded-2xl;
+}

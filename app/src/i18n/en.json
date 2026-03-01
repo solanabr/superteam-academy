@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "connectWallet": "Connect Wallet"
+  },
+  "home": {
+    "hero": "Master Solana Development",
+    "heroSub": "Earn verifiable credentials and XP tokens on-chain. Learn, build, and prove your skills.",
+    "browseCourses": "Browse Courses",
+    "stats": {
+      "courses": "Courses",
+      "learners": "Learners",
+      "xpMinted": "XP Minted",
+      "credentials": "Credentials Issued"
+    }
+  },
+  "courses": {
+    "title": "Course Catalog",
+    "subtitle": "Choose your learning path",
+    "enrollNow": "Enroll Now",
+    "continue": "Continue Learning",
+    "completed": "Completed",
+    "lessons": "lessons",
+    "difficulty": {
+      "1": "Beginner",
+      "2": "Intermediate",
+      "3": "Advanced"
+    },
+    "xpPerLesson": "XP per lesson",
+    "totalXp": "Total XP",
+    "prerequisite": "Prerequisite required",
+    "enrolled": "enrolled",
+    "completions": "completions"
+  },
+  "course": {
+    "lessonProgress": "Lesson Progress",
+    "lesson": "Lesson",
+    "complete": "Mark Complete",
+    "finalize": "Finalize Course",
+    "claim": "Claim Credential",
+    "alreadyComplete": "Already completed",
+    "notEnrolled": "You need to enroll first",
+    "enrollToStart": "Enroll to start learning",
+    "courseCompleted": "Course completed!",
+    "claimYourCredential": "Claim your credential NFT"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top learners ranked by XP",
+    "rank": "Rank",
+    "wallet": "Wallet",
+    "xp": "XP",
+    "level": "Level"
+  },
+  "profile": {
+    "title": "Your Profile",
+    "xpBalance": "XP Balance",
+    "level": "Level",
+    "streak": "Day Streak",
+    "credentials": "Credentials",
+    "achievements": "Achievements",
+    "enrollments": "Active Enrollments",
+    "noCredentials": "Complete courses to earn credentials",
+    "noEnrollments": "Enroll in a course to get started"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "back": "Back",
+    "viewAll": "View All"
+  }
+}
