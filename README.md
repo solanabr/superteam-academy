@@ -289,12 +289,12 @@ superteam-academy/
 │   │   │   ├── [locale]/(platform)/    ← Dashboard, courses, leaderboard, etc.
 │   │   │   ├── [locale]/(admin)/       ← Admin panel
 │   │   │   └── api/                    ← 17 API routes (search, AI, quiz, etc.)
-│   │   ├── components/                 ← 139 React components (shadcn/ui based)
+│   │   ├── components/                 ← 141 React components (shadcn/ui based)
 │   │   ├── lib/
 │   │   │   ├── sanity/                 ← CMS client + mock-client + seed data
 │   │   │   ├── solana/                 ← On-chain: accounts, PDAs, XP, credentials
 │   │   │   ├── stores/                 ← Zustand: course-store, user-store
-│   │   │   ├── hooks/                  ← 9 React hooks (enrollment, XP, streak, etc.)
+│   │   │   ├── hooks/                  ← 10 React hooks (enrollment, XP, streak, etc.)
 │   │   │   └── services/              ← Service interfaces (learning progress)
 │   │   ├── i18n/                       ← next-intl routing config
 │   │   └── messages/                   ← en/pt/es/hi.json (627 keys each)

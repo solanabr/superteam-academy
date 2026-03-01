@@ -56,12 +56,12 @@ superteam-academy/
 │   └── package.json
 ├── app/                         ← Next.js 15 frontend (LIVE)
 │   ├── src/
-│   │   ├── app/[locale]/        ← 23 routes across 4 route groups
-│   │   ├── components/          ← 50+ components (landing, courses, layout, ui)
+│   │   ├── app/[locale]/        ← 24 pages across 4 route groups + 17 API routes
+│   │   ├── components/          ← 141 components (landing, courses, layout, ui, admin)
 │   │   ├── lib/
 │   │   │   ├── sanity/          ← CMS client + mock-client + seed data
 │   │   │   ├── stores/          ← Zustand (course-store, user-store)
-│   │   │   ├── hooks/           ← Custom hooks (use-course, use-mobile)
+│   │   │   ├── hooks/           ← 10 custom hooks (use-course, use-mobile, etc.)
 │   │   │   ├── challenges/      ← 100 coding challenges (5 categories x 20)
 │   │   │   └── solana/          ← Constants, Helius DAS integration
 │   │   ├── i18n/                ← Routing + request config
@@ -118,7 +118,7 @@ See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend
 
 **Production**: `https://superteam-academy.rectorspace.com` (Vercel, auto-deploys from `main`)
 
-### Pages (23 routes)
+### Pages (24 pages + 17 API routes)
 
 | Group | Pages |
 |-------|-------|
