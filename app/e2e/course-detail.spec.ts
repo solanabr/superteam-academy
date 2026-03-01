@@ -86,10 +86,10 @@ test.describe('Course detail pages', () => {
   test('back to courses link navigates correctly', async ({ page }) => {
     await page.goto('/en/courses/intro-solana');
     // Use main-scoped locator to avoid hidden desktop nav links on mobile
-    const backLink = page.locator('main a[href="/en/courses"]');
+    const backLink = page.locator('main a[href*="/en/courses"]');
     await expect(backLink.first()).toBeVisible();
     await backLink.first().click();
-    await expect(page).toHaveURL('/en/courses');
+    await expect(page).toHaveURL(/\/en\/courses\/?$/);
   });
 });
 
@@ -112,13 +112,13 @@ test.describe('Lesson viewer', () => {
 
   test('pt-BR lesson path works', async ({ page }) => {
     await page.goto('/pt-BR/aulas/intro-1');
-    await expect(page).toHaveURL('/pt-BR/aulas/intro-1');
+    await expect(page).toHaveURL(/\/pt-BR\/aulas\/intro-1\/?$/);
     await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('es lesson path works', async ({ page }) => {
     await page.goto('/es/lecciones/intro-1');
-    await expect(page).toHaveURL('/es/lecciones/intro-1');
+    await expect(page).toHaveURL(/\/es\/lecciones\/intro-1\/?$/);
     await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 

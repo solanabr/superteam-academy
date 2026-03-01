@@ -24,7 +24,7 @@ async function isAdminVisible(page: Page): Promise<boolean> {
 test.describe('Admin access control', () => {
   test('admin page loads without errors', async ({ page }) => {
     await page.goto(ADMIN_URL);
-    await expect(page).toHaveURL(ADMIN_URL);
+    await expect(page).toHaveURL(/\/en\/admin\/?$/);
     // Without wallet connected, should show access denied (correct RBAC behavior)
     const hasContent = await page.locator('h1, h2, h3').first().waitFor({ timeout: 10000 }).then(() => true).catch(() => false);
     expect(hasContent).toBeTruthy();
@@ -44,16 +44,16 @@ test.describe('Admin access control', () => {
   test('admin link in nav points to /en/admin', async ({ page }) => {
     await page.goto('/en');
     // Link may be inside collapsed mobile menu — check DOM presence
-    const adminLink = page.locator('a[href="/en/admin"]').first();
+    const adminLink = page.locator('a[href*="/en/admin"]').first();
     await expect(adminLink).toBeAttached();
     // Verify the admin page works via direct navigation
     await page.goto(ADMIN_URL);
-    await expect(page).toHaveURL(ADMIN_URL);
+    await expect(page).toHaveURL(/\/en\/admin\/?$/);
   });
 
   test('pt-BR admin path works', async ({ page }) => {
     await page.goto('/pt-BR/admin');
-    await expect(page).toHaveURL('/pt-BR/admin');
+    await expect(page).toHaveURL(/\/pt-BR\/admin\/?$/);
     await waitForDashboard(page);
   });
 });

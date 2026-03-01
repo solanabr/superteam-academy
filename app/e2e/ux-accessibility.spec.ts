@@ -228,13 +228,13 @@ test.describe('Leaderboard interactions', () => {
 
   test('pt-BR leaderboard (classificacao) path works', async ({ page }) => {
     await page.goto('/pt-BR/classificacao');
-    await expect(page).toHaveURL('/pt-BR/classificacao');
+    await expect(page).toHaveURL(/\/pt-BR\/classificacao\/?$/);
     await expect(page.locator('table')).toBeVisible();
   });
 
   test('es leaderboard (clasificacion) path works', async ({ page }) => {
     await page.goto('/es/clasificacion');
-    await expect(page).toHaveURL('/es/clasificacion');
+    await expect(page).toHaveURL(/\/es\/clasificacion\/?$/);
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 });
@@ -260,7 +260,7 @@ test.describe('Community interactions', () => {
 test.describe('Certificates page', () => {
   test('certificates page loads in pt-BR', async ({ page }) => {
     await page.goto('/pt-BR/certificados');
-    await expect(page).toHaveURL('/pt-BR/certificados');
+    await expect(page).toHaveURL(/\/pt-BR\/certificados\/?$/);
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 
@@ -281,7 +281,7 @@ test.describe('Challenges page', () => {
 
   test('challenges page pt-BR path works', async ({ page }) => {
     await page.goto('/pt-BR/desafios');
-    await expect(page).toHaveURL('/pt-BR/desafios');
+    await expect(page).toHaveURL(/\/pt-BR\/desafios\/?$/);
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 });

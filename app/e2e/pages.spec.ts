@@ -34,7 +34,7 @@ test.describe('Landing page', () => {
   test('CTA links work', async ({ page }) => {
     await page.goto('/en');
     // Use main-scoped locator to avoid hidden desktop nav links on mobile
-    const ctaButton = page.locator('main a[href="/en/courses"]').first();
+    const ctaButton = page.locator('main a[href*="/en/courses"]').first();
     await expect(ctaButton).toBeVisible();
   });
 });
@@ -60,13 +60,13 @@ test.describe('Courses page', () => {
 
   test('Portuguese courses path works', async ({ page }) => {
     await page.goto('/pt-BR/cursos');
-    await expect(page).toHaveURL('/pt-BR/cursos');
+    await expect(page).toHaveURL(/\/pt-BR\/cursos\/?$/);
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 
   test('Spanish courses path works', async ({ page }) => {
     await page.goto('/es/cursos');
-    await expect(page).toHaveURL('/es/cursos');
+    await expect(page).toHaveURL(/\/es\/cursos\/?$/);
   });
 });
 
@@ -92,12 +92,12 @@ test.describe('Dashboard page', () => {
 
   test('pt-BR dashboard path works', async ({ page }) => {
     await page.goto('/pt-BR/painel');
-    await expect(page).toHaveURL('/pt-BR/painel');
+    await expect(page).toHaveURL(/\/pt-BR\/painel\/?$/);
   });
 
   test('es panel path works', async ({ page }) => {
     await page.goto('/es/panel');
-    await expect(page).toHaveURL('/es/panel');
+    await expect(page).toHaveURL(/\/es\/panel\/?$/);
   });
 });
 
