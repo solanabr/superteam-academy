@@ -231,7 +231,8 @@
     "tier_canopy": "Dosel",
     "viewOnExplorer": "Ver en Explorer",
     "onChain": "on-chain",
-    "you": "Tú"
+    "you": "Tú",
+    "xpRemaining": "<em>{xp} {xpLabel}</em> para {levelLabel} {level}"
   },
   "certificates": {
     "title": "Certificado de Finalización",
