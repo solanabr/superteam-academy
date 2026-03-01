@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CircleNotch } from "@phosphor-icons/react";
 import { MarkdownEditor } from "./markdown-editor";
 import { Button } from "@/components/ui/button";
 
@@ -61,7 +60,9 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
           onClick={handleSubmit}
           disabled={isSubmitting || !body.trim()}
         >
-          {isSubmitting && <CircleNotch size={16} className="animate-spin" />}
+          {isSubmitting && (
+            <div className="sol-spinner !h-4 !w-4" aria-hidden="true" />
+          )}
           {t("postAnswer")}
         </Button>
       </div>

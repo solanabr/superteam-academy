@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CircleNotch } from "@phosphor-icons/react";
 import { MarkdownEditor } from "./markdown-editor";
 import {
   Dialog,
@@ -216,7 +215,7 @@ export function CreateThreadModal({
               disabled={!isValid || isSubmitting}
             >
               {isSubmitting && (
-                <CircleNotch size={16} className="animate-spin" />
+                <div className="sol-spinner !h-4 !w-4" aria-hidden="true" />
               )}
               {t("post")}
             </Button>

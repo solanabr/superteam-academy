@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { MagnifyingGlass, CircleNotch } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@phosphor-icons/react";
 import { ThreadCard } from "./thread-card";
 
 interface ThreadAuthor {
@@ -103,7 +103,7 @@ export function CommunitySearch() {
         <div className="mt-4">
           {isSearching ? (
             <div className="flex justify-center py-8">
-              <CircleNotch className="h-5 w-5 animate-spin text-[var(--primary)]" />
+              <div className="sol-spinner" aria-hidden="true" />
             </div>
           ) : results.length === 0 ? (
             <p className="py-8 text-center text-sm text-[var(--text-2)]">
