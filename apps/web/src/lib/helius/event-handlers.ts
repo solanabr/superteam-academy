@@ -53,7 +53,7 @@ async function queueFailedAction(
         user_id: userId,
         action_type: actionType,
         reference_id: referenceId,
-        payload,
+        payload: payload as unknown as import("@/lib/supabase/types").Json,
         last_error: message,
         failed_at: new Date().toISOString(),
       },
@@ -749,6 +749,10 @@ async function checkAndAwardAchievements(
         courseCompletionTimeHours: null,
         allTestsPassedFirstTry: false,
         userNumber: userNumber ?? 999,
+        totalThreads: 0,
+        totalAnswers: 0,
+        acceptedAnswers: 0,
+        totalCommunityXp: 0,
       },
       alreadyUnlocked
     );

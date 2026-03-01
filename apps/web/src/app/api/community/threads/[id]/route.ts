@@ -59,10 +59,7 @@ export async function GET(
       .select("user_id, level")
       .in("user_id", uniqueAuthorIds);
     const authorLevels: Record<string, number> = Object.fromEntries(
-      (xpData || []).map((x: { user_id: string; level: number }) => [
-        x.user_id,
-        x.level,
-      ])
+      (xpData || []).map((x) => [x.user_id ?? "", x.level ?? 0])
     );
 
     // Fetch user's votes (if authenticated)
@@ -86,10 +83,7 @@ export async function GET(
           .in("answer_id", answerIds);
         if (answerVotes) {
           userAnswerVotes = Object.fromEntries(
-            answerVotes.map((v: { answer_id: string; value: number }) => [
-              v.answer_id,
-              v.value,
-            ])
+            answerVotes.map((v) => [v.answer_id ?? "", v.value])
           );
         }
       }

@@ -14,10 +14,10 @@ import {
   rewardXp,
 } from "./academy-program";
 import { getProgramId } from "./pda";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById } from "@/lib/sanity/queries";
-import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { logError } from "@/lib/logging";
+import { getCourseById } from "@/lib/sanity/queries";
 
 type OnchainActionType =
   | "achievement"
@@ -65,7 +65,7 @@ export async function queueFailedOnchainAction(
         user_id: userId,
         action_type: actionType,
         reference_id: referenceId,
-        payload,
+        payload: payload as unknown as import("@/lib/supabase/types").Json,
         last_error: error,
         failed_at: new Date().toISOString(),
       },
@@ -139,8 +139,8 @@ export async function retryPendingOnchainActions(
             {
               p_user_id: userId,
               p_achievement_id: achievementId,
-              p_tx_signature: txSignature ?? null,
-              p_asset_address: assetAddress ?? null,
+              p_tx_signature: txSignature,
+              p_asset_address: assetAddress,
             }
           );
           if (unlockRpcError) throw new Error(unlockRpcError.message);
@@ -383,7 +383,7 @@ export async function retryPendingOnchainActions(
       await adminClient
         .from("pending_onchain_actions")
         .update({
-          retry_count: row.retry_count + 1,
+          retry_count: (row.retry_count ?? 0) + 1,
           last_error: message,
         })
         .eq("id", row.id);

@@ -133,21 +133,21 @@ function useProfileData(): ProfileData {
               username: profile.username,
               bio: profile.bio ?? "",
               avatarUrl: profile.avatar_url ?? "",
-              joinedAt: new Date(profile.created_at),
+              joinedAt: new Date(profile.created_at ?? Date.now()),
               socialLinks,
-              isPublic: profile.is_public,
+              isPublic: profile.is_public ?? true,
             }
           : null;
 
         const certificates: Certificate[] =
           certRows?.map((row) => ({
             id: row.id,
-            userId: row.user_id,
+            userId: row.user_id ?? "",
             courseId: row.course_id,
             courseTitle: row.course_title,
             mintAddress: row.mint_address ?? "",
             metadataUri: row.metadata_uri ?? "",
-            mintedAt: new Date(row.minted_at),
+            mintedAt: new Date(row.minted_at ?? Date.now()),
           })) ?? [];
 
         // Total unique completed lessons (one row per lesson)
@@ -197,7 +197,7 @@ function useProfileData(): ProfileData {
               description: def?.description ?? "",
               icon: def?.icon ?? "Award",
               category: (def?.category as Achievement["category"]) ?? "special",
-              unlockedAt: new Date(row.unlocked_at),
+              unlockedAt: new Date(row.unlocked_at ?? Date.now()),
               explorerUrl,
               assetAddress: row.asset_address ?? undefined,
             };
@@ -218,7 +218,7 @@ function useProfileData(): ProfileData {
               title: sanity?.title ?? enrollment.course_id,
               slug: sanity?.slug ?? enrollment.course_id,
               completedAt: new Date(
-                enrollment.enrolled_at
+                enrollment.enrolled_at ?? Date.now()
               ).toLocaleDateString(),
               xpEarned: 0,
             });

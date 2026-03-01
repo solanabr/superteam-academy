@@ -155,9 +155,10 @@ export function useGamificationEvents(userId: string | undefined) {
       )
       .subscribe();
 
+    const seenIds = seenIdsRef.current;
     return () => {
       supabase.removeChannel(channel);
-      seenIdsRef.current.clear();
+      seenIds.clear();
     };
   }, [userId]);
 }

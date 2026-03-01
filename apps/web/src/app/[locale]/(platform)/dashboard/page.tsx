@@ -194,7 +194,7 @@ function useDashboardData(
 
         const streakHistory: Record<string, number> = {};
         for (const row of activityRows ?? []) {
-          const dateStr = row.created_at.split("T")[0] as string;
+          const dateStr = (row.created_at ?? "").split("T")[0] as string;
           streakHistory[dateStr] = (streakHistory[dateStr] ?? 0) + 1;
         }
 
@@ -362,7 +362,7 @@ function useDashboardData(
               type: "lesson",
               action: lesson ? `Completed lesson: ${lesson.title}` : tx.reason,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href:
                 lesson && course
@@ -379,7 +379,7 @@ function useDashboardData(
                 ? `Completed challenge: ${lesson.title}`
                 : tx.reason,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href:
                 lesson && course
@@ -392,7 +392,7 @@ function useDashboardData(
               type: "course_complete",
               action: course ? `Completed course: ${course.title}` : tx.reason,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: course ? `/courses/${course.slug}` : null,
             });
@@ -406,7 +406,7 @@ function useDashboardData(
               type: "xp_other",
               action: `Achievement reward: ${name}`,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: null,
             });
@@ -419,7 +419,7 @@ function useDashboardData(
                 ? `Course completion bonus: ${course.title}`
                 : tx.reason,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: course ? `/courses/${course.slug}` : null,
             });
@@ -433,7 +433,7 @@ function useDashboardData(
               type: "xp_other",
               action: `Daily Quest: ${questName}`, // TODO: i18n
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: null,
             });
@@ -442,7 +442,7 @@ function useDashboardData(
               type: "xp_other",
               action: tx.reason,
               xp: tx.amount,
-              time: tx.created_at,
+              time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: null,
             });
@@ -459,7 +459,7 @@ function useDashboardData(
             type: "achievement",
             action: `Achievement unlocked: ${name}`,
             xp: 0,
-            time: row.unlocked_at,
+            time: row.unlocked_at ?? new Date().toISOString(),
             txSignature: row.tx_signature ?? null,
             href: null,
           });
