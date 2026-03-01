@@ -414,6 +414,79 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
   }));
 }
 
+/* ── Daily Quests ──────────────────────────────────────────────── */
+
+export interface SanityQuest {
+  id: string;
+  name: string;
+  description: string;
+  type: "lesson" | "lesson_batch" | "challenge" | "login_streak" | "module";
+  icon: string;
+  xpReward: number;
+  targetValue: number;
+  resetType: "daily" | "multi_day";
+}
+
+export interface QuestData {
+  quests: SanityQuest[];
+  challengeLessonIds: string[];
+  moduleLessonMap: Array<{ id: string; lessonIds: string[] }>;
+}
+
+/**
+ * Fetches all active quest definitions, challenge lesson IDs, and module→lesson
+ * mappings in a single Sanity round trip. Used by the /api/quests/daily route.
+ */
+export async function getAllQuests(): Promise<QuestData> {
+  const raw = await sanityFetch<{
+    quests: Array<{
+      _id: string;
+      name: string;
+      description: string | null;
+      type: string;
+      icon: string | null;
+      xpReward: number;
+      targetValue: number;
+      resetType: string;
+    }>;
+    challengeLessonIds: string[];
+    moduleLessonMap: Array<{ _id: string; lessonIds: (string | null)[] }>;
+  }>(
+    `{
+      "quests": *[_type == "quest" && active == true && !(_id in path("drafts.**"))] {
+        _id, name, description, type, icon, xpReward, targetValue, resetType
+      },
+      "challengeLessonIds": *[_type == "lesson" && type == "challenge"]._id,
+      "moduleLessonMap": *[_type == "module"] {
+        "_id": _id,
+        "lessonIds": lessons[]->_id
+      }
+    }`
+  );
+
+  return {
+    quests: (raw.quests ?? []).map((q) => ({
+      id: q._id,
+      name: q.name,
+      description: q.description ?? "",
+      type: q.type as SanityQuest["type"],
+      icon: q.icon ?? "CircleDashed",
+      xpReward: q.xpReward,
+      targetValue: q.targetValue,
+      resetType: q.resetType as SanityQuest["resetType"],
+    })),
+    challengeLessonIds: (raw.challengeLessonIds ?? []).filter(
+      Boolean
+    ) as string[],
+    moduleLessonMap: (raw.moduleLessonMap ?? [])
+      .filter((m) => m.lessonIds && m.lessonIds.length > 0)
+      .map((m) => ({
+        id: m._id,
+        lessonIds: m.lessonIds.filter(Boolean) as string[],
+      })),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Admin queries (server-side only, includes on-chain status fields)
 // ---------------------------------------------------------------------------
