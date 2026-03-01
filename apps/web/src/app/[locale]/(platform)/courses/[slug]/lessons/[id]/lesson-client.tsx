@@ -14,7 +14,12 @@ import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Lightning, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import {
+  Lightning,
+  CheckCircle,
+  ArrowLeft,
+  ChatCircle,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -22,6 +27,8 @@ import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { ThreadList } from "@/components/community/thread-list";
+import { CreateThreadModal } from "@/components/community/create-thread-modal";
 import type { Lesson } from "@/lib/sanity/types";
 
 function CodeBlockWithCopy({
@@ -178,6 +185,7 @@ export function LessonPageClient({
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
+  const tCommunity = useTranslations("community");
 
   const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
 
@@ -186,6 +194,7 @@ export function LessonPageClient({
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
+  const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -432,6 +441,43 @@ export function LessonPageClient({
                   </Button>
                 )}
               </div>
+
+              {/* Discussion */}
+              <div className="border-t border-border pt-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
+                    <ChatCircle size={20} weight="duotone" />
+                    {t("discussion")}
+                  </h3>
+                  {userId ? (
+                    <Button
+                      variant="pushOutline"
+                      size="sm"
+                      onClick={() => setIsDiscussionOpen(true)}
+                    >
+                      {t("askQuestion")}
+                    </Button>
+                  ) : (
+                    <AuthModal
+                      trigger={
+                        <Button variant="pushOutline" size="sm">
+                          {t("signInToAsk")}
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
+                <ThreadList
+                  scope={{ courseId, lessonId: lesson._id }}
+                  showFilters
+                  emptyMessage={tCommunity("empty.lesson")}
+                />
+                <CreateThreadModal
+                  open={isDiscussionOpen}
+                  onOpenChange={setIsDiscussionOpen}
+                  defaultScope={{ courseId, lessonId: lesson._id }}
+                />
+              </div>
             </div>
           </div>
 
@@ -676,6 +722,43 @@ export function LessonPageClient({
             </Link>
           </p>
         )}
+      </div>
+
+      {/* Discussion */}
+      <div className="border-t border-border pt-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
+            <ChatCircle size={20} weight="duotone" />
+            {t("discussion")}
+          </h3>
+          {userId ? (
+            <Button
+              variant="pushOutline"
+              size="sm"
+              onClick={() => setIsDiscussionOpen(true)}
+            >
+              {t("askQuestion")}
+            </Button>
+          ) : (
+            <AuthModal
+              trigger={
+                <Button variant="pushOutline" size="sm">
+                  {t("signInToAsk")}
+                </Button>
+              }
+            />
+          )}
+        </div>
+        <ThreadList
+          scope={{ courseId, lessonId: lesson._id }}
+          showFilters
+          emptyMessage={tCommunity("empty.lesson")}
+        />
+        <CreateThreadModal
+          open={isDiscussionOpen}
+          onOpenChange={setIsDiscussionOpen}
+          defaultScope={{ courseId, lessonId: lesson._id }}
+        />
       </div>
     </div>
   );
