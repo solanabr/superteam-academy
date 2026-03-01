@@ -179,8 +179,26 @@ app/
 | `NEXT_PUBLIC_SOLANA_RPC_URL` | Yes | Solana JSON-RPC endpoint. Use `https://api.devnet.solana.com` for development. |
 | `NEXT_PUBLIC_PROGRAM_ID` | Yes | On-chain program address. Default: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf` |
 | `NEXT_PUBLIC_SOLANA_NETWORK` | No | Network name (`devnet`, `mainnet-beta`). Defaults to `devnet`. |
+| `NEXT_PUBLIC_SITE_URL` | No | Public URL for OpenGraph tags. Defaults to Vercel deployment URL. |
+| **Analytics** | | |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | Google Analytics 4 measurement ID (e.g., `G-XXXXXXXXXX`). |
+| `NEXT_PUBLIC_CLARITY_ID` | No | Microsoft Clarity project ID for heatmaps and session recordings. |
+| `NEXT_PUBLIC_HOTJAR_ID` | No | Hotjar site ID for additional heatmap analytics. |
+| `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN for error tracking. When absent, Sentry SDK is stubbed out (~120 KB bundle savings). |
+| `SENTRY_ORG` | No | Sentry organization slug (enables source map uploads during build). |
+| `SENTRY_PROJECT` | No | Sentry project name. |
+| `SENTRY_AUTH_TOKEN` | No | Sentry auth token for CI source map uploads. |
+| **Authentication** | | |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth 2.0 client ID for Google sign-in. |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth 2.0 client secret. |
+| `NEXTAUTH_SECRET` | No | Random 32-char string for NextAuth.js session encryption. Required in production. |
+| `NEXTAUTH_URL` | No | Canonical URL of the deployment (e.g., `https://superteam-academy-five.vercel.app`). |
+| `NEXT_PUBLIC_GOOGLE_ENABLED` | No | Set to `true` to show Google sign-in button in the UI. |
+| **CMS** | | |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | No | Sanity project ID. When absent, the app uses built-in mock data. |
+| `NEXT_PUBLIC_SANITY_DATASET` | No | Sanity dataset name. Defaults to `production`. |
 
-All client-side variables use the `NEXT_PUBLIC_` prefix so they are available in the browser.
+All client-side variables use the `NEXT_PUBLIC_` prefix so they are available in the browser. Analytics, auth, and CMS integrations are all optional — the app works fully with mock data and wallet-only auth when these are not configured.
 
 ---
 
