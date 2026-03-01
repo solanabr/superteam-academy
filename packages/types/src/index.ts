@@ -4,6 +4,7 @@ export type {
   LeaderboardEntry,
   XpTransaction,
   Credential,
+  DailyQuest,
   LearningProgressService,
 } from "./progress";
 

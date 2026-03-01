@@ -43,6 +43,18 @@ export interface Credential {
   metadataUri?: string;
 }
 
+export interface DailyQuest {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  xpReward: number;
+  targetValue: number;
+  currentValue: number;
+  completed: boolean;
+  resetType: "daily" | "multi_day";
+}
+
 export interface LearningProgressService {
   // Layer 1: Direct reads
   getProgress(userId: string, courseId: string): Promise<Progress>;
