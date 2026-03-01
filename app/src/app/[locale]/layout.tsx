@@ -11,11 +11,19 @@ import { NextIntlClientProvider } from 'next-intl';
 import { GoogleAnalytics } from '@next/third-parties/google'
 
 
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Superteam Academy",
+  title: "Superteam Academy LMS",
   description: "Learn Solana Development",
+  manifest: "../../../public/manifest.json", // <-- Прямая ссылка на манифест
+  themeColor: "#a855f7",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Academy",
+  },
 };
 
 export default async function RootLayout({

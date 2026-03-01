@@ -1,9 +1,17 @@
 // app/next.config.js
 /** @type {import('next').NextConfig} */
 const createNextIntlPlugin = require('next-intl/plugin');
+const withPWAInit = require('next-pwa');
 
 // Без аргументов плагин сам найдет ./src/i18n/request.ts
 const withNextIntl = createNextIntlPlugin();
+
+const withPWA = withPWAInit({
+  dest: 'public', // Папка для сервис-воркеров
+  disable: process.env.NODE_ENV === 'development', // Отключаем в Dev режиме, чтобы не мешало
+  register: true,
+  skipWaiting: true,
+});
 
 const nextConfig = {
   reactStrictMode: true,
@@ -26,9 +34,10 @@ const nextConfig = {
 // Injected content via Sentry wizard below
 
 const { withSentryConfig } = require("@sentry/nextjs");
+let configWithPlugins = withPWA(withNextIntl(nextConfig));
 
 module.exports = withSentryConfig(
-  withNextIntl(nextConfig), 
+  configWithPlugins, 
   {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options

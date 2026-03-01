@@ -11,6 +11,7 @@ import { Link } from "@/i18n/navigation";
 import { AuthGuard } from "@/components/auth-guard";
 import {LanguageSwitcher} from "@/components/language-switcher"
 import {NotificationsPopover} from "@/components/notifications-popover"
+import Image from "next/image";
 
 // Провайдеры
 import { SessionProvider } from "next-auth/react";
@@ -46,8 +47,15 @@ export default function DashboardLayout({
                   </SheetContent>
                 </Sheet>
 
-                <Link href="/" className="flex items-center space-x-2">
-                  <span className="inline-block font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent hidden md:inline-block">
+                <Link href="/" className="flex items-center space-x-3">
+                  <Image 
+                    src="/icons/icon-192x192.png" 
+                    alt="Superteam Academy Logo" 
+                    width={32} 
+                    height={32} 
+                    className="rounded-md"
+                  />
+                  <span className="hidden md:inline-block font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                     Superteam Academy
                   </span>
                   <span className="inline-block font-bold text-xl md:hidden">
