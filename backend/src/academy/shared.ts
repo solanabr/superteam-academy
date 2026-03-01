@@ -1,4 +1,5 @@
 import type { Program } from "@coral-xyz/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   createAssociatedTokenAccountInstruction,
@@ -220,4 +221,94 @@ export async function sendLegacyTransaction(
   await program.provider.connection.confirmTransaction(signature, "confirmed");
 
   return signature;
+}
+
+/** Lesson flags: BN[] or number[]. Returns count of completed lessons in [0, lessonCount). */
+export function countCompletedLessonsInRange(
+  flags: BN[] | number[],
+  lessonCount: number
+): number {
+  let count = 0;
+  for (let i = 0; i < lessonCount; i++) {
+    if (isLessonCompleteInFlags(flags, i)) count++;
+  }
+  return count;
+}
+
+/** Lesson flags: BN[] or number[]. Returns true if bit at lessonIndex is set. */
+export function isLessonCompleteInFlags(
+  flags: BN[] | number[],
+  lessonIndex: number
+): boolean {
+  const wordIndex = Math.floor(lessonIndex / 64);
+  const bitIndex = lessonIndex % 64;
+  const word = flags[wordIndex];
+  if (word == null) return false;
+  const w = typeof word === "number" ? new BN(word) : word;
+  return !w.and(new BN(1).shln(bitIndex)).isZero();
+}
+
+export async function fetchEnrollment(
+  program: Program,
+  courseId: string,
+  learner: PublicKey
+): Promise<{ enrollmentPda: PublicKey; enrollment: Record<string, unknown> } | null> {
+  const { getEnrollmentPda } = await import("@/pdas.js");
+  const enrollmentPda = getEnrollmentPda(courseId, learner, program.programId);
+  try {
+    const enrollment = await withRpcRetry(
+      () =>
+        (
+          program.account as {
+            enrollment: { fetch: (pda: PublicKey) => Promise<Record<string, unknown>> };
+          }
+        ).enrollment.fetch(enrollmentPda),
+      { label: "fetchEnrollment" }
+    );
+    return { enrollmentPda, enrollment };
+  } catch {
+    return null;
+  }
+}
+
+export function getEnrollmentCredentialAsset(
+  enrollment: Record<string, unknown>
+): PublicKey | null {
+  const asset =
+    (enrollment.credential_asset as PublicKey | undefined) ??
+    (enrollment.credentialAsset as PublicKey | undefined);
+  if (!asset) return null;
+  if (asset instanceof PublicKey) return asset;
+  if (typeof asset === "string") {
+    try {
+      return new PublicKey(asset);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export async function getAllXpHolders(
+  program: Program,
+  xpMint: PublicKey
+): Promise<{ wallet: string; balance: number }[]> {
+  const conn = program.provider.connection;
+  const accounts = await conn.getProgramAccounts(TOKEN_2022_PROGRAM_ID, {
+    filters: [
+      { dataSize: 165 },
+      { memcmp: { offset: 0, bytes: xpMint.toBase58() } },
+    ],
+  });
+  const holders: { wallet: string; balance: number }[] = [];
+  for (const acc of accounts) {
+    const data = acc.account.data;
+    if (data.length < 72) continue;
+    const owner = new PublicKey(data.subarray(32, 64));
+    const amount = data.readBigUInt64LE(64);
+    if (amount > 0n) {
+      holders.push({ wallet: owner.toBase58(), balance: Number(amount) });
+    }
+  }
+  return holders;
 }
