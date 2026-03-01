@@ -30,6 +30,10 @@ const nextConfig: NextConfig = {
 				as: "*.js",
 			},
 		},
+		resolveAlias: {
+			"../build/polyfills/polyfill-module": "./polyfill-stub.js",
+			"next/dist/build/polyfills/polyfill-module": "./polyfill-stub.js",
+		},
 	},
 	experimental: {
 		optimizeCss: true,

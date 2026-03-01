@@ -1,20 +1,12 @@
 "use client";
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import {
-	AlphaWalletAdapter,
-	PhantomWalletAdapter,
-	SolflareWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
 import { walletEmail } from "@superteam-academy/auth";
 import { syncAuthSession } from "../app/api/auth/sync/action";
 import { AuthContext, type AuthSession, type AuthUser, type AuthContextType } from "./auth-context";
 import { getGravatarUrl } from "@/lib/utils";
-
-import "@solana/wallet-adapter-react-ui/styles.css";
 
 const authClient: AuthClient = createAuthClient({
 	baseURL: process.env.NEXT_PUBLIC_AUTH_URL || "",
@@ -23,9 +15,13 @@ const authClient: AuthClient = createAuthClient({
 function AuthProviderInner({
 	children,
 	initialSession,
+	walletAdaptersLoaded,
+	ensureWalletAdaptersLoaded,
 }: {
 	children: ReactNode;
 	initialSession: Record<string, Record<string, unknown>> | null;
+	walletAdaptersLoaded: boolean;
+	ensureWalletAdaptersLoaded: () => Promise<void>;
 }) {
 	const wallet = useWallet();
 	const [session, setSession] = useState<AuthSession | null>(
@@ -85,7 +81,8 @@ function AuthProviderInner({
 					email: syncedData?.email || result.data.user.email,
 					image,
 					role: serverRole,
-					onboardingCompleted: syncedData?.onboardingCompleted ?? false,
+					onboardingCompleted:
+						syncedData?.onboardingCompleted ?? user?.onboardingCompleted,
 				};
 
 				setUser(userData);
@@ -100,7 +97,7 @@ function AuthProviderInner({
 
 		pendingRefreshRef.current = doRefresh();
 		return pendingRefreshRef.current;
-	}, []);
+	}, [user?.onboardingCompleted]);
 
 	useEffect(() => {
 		if (!initialSession) {
@@ -188,6 +185,7 @@ function AuthProviderInner({
 			wallet: wallet as AuthContextType["wallet"],
 			isWalletConnected,
 			isWalletVerified,
+			isWalletAdaptersReady: walletAdaptersLoaded,
 			session,
 			user,
 			isAuthenticated: (isWalletConnected && isWalletVerified) || isOAuthAuthenticated,
@@ -195,6 +193,7 @@ function AuthProviderInner({
 			isSuperAdmin: user?.role === "superadmin",
 			authMethod,
 			refreshSession,
+			ensureWalletAdaptersLoaded,
 			verifyWallet,
 			signInWithOAuth,
 			signOut,
@@ -203,11 +202,13 @@ function AuthProviderInner({
 			wallet,
 			isWalletConnected,
 			isWalletVerified,
+			walletAdaptersLoaded,
 			session,
 			user,
 			isOAuthAuthenticated,
 			authMethod,
 			refreshSession,
+			ensureWalletAdaptersLoaded,
 			verifyWallet,
 			signInWithOAuth,
 			signOut,
@@ -218,7 +219,6 @@ function AuthProviderInner({
 }
 
 const ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
-const WALLETS = [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new AlphaWalletAdapter()];
 
 export function AuthWalletProvider({
 	children,
@@ -227,14 +227,51 @@ export function AuthWalletProvider({
 	children: ReactNode;
 	initialSession: Record<string, Record<string, unknown>> | null;
 }) {
+	const [wallets, setWallets] = useState<Parameters<typeof WalletProvider>[0]["wallets"]>([]);
+	const [walletAdaptersLoaded, setWalletAdaptersLoaded] = useState(false);
+	const loadingWalletAdaptersRef = useRef<Promise<void> | null>(null);
+
+	const ensureWalletAdaptersLoaded = useCallback(async () => {
+		if (walletAdaptersLoaded || wallets.length > 0) {
+			return;
+		}
+
+		if (loadingWalletAdaptersRef.current) {
+			return loadingWalletAdaptersRef.current;
+		}
+
+		const load = Promise.all([
+			import("@solana/wallet-adapter-phantom"),
+			import("@solana/wallet-adapter-solflare"),
+		])
+			.then(([phantom, solflare]) => {
+				setWallets([
+					new phantom.PhantomWalletAdapter(),
+					new solflare.SolflareWalletAdapter(),
+				]);
+				setWalletAdaptersLoaded(true);
+			})
+			.catch(() => {
+				setWallets([]);
+			})
+			.finally(() => {
+				loadingWalletAdaptersRef.current = null;
+			});
+
+		loadingWalletAdaptersRef.current = load;
+		return load;
+	}, [walletAdaptersLoaded, wallets.length]);
+
 	return (
 		<ConnectionProvider endpoint={ENDPOINT}>
-			<WalletProvider wallets={WALLETS} autoConnect>
-				<WalletModalProvider>
-					<AuthProviderInner initialSession={initialSession}>
-						{children}
-					</AuthProviderInner>
-				</WalletModalProvider>
+			<WalletProvider wallets={wallets} autoConnect={wallets.length > 0}>
+				<AuthProviderInner
+					initialSession={initialSession}
+					walletAdaptersLoaded={walletAdaptersLoaded}
+					ensureWalletAdaptersLoaded={ensureWalletAdaptersLoaded}
+				>
+					{children}
+				</AuthProviderInner>
 			</WalletProvider>
 		</ConnectionProvider>
 	);

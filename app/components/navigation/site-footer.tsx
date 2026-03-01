@@ -1,7 +1,5 @@
-"use client";
-
 import { Link } from "@superteam-academy/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { GitHubIcon, DiscordIcon, XIcon } from "@/components/ui/social-icons";
 import Logo from "@/public/logo.svg";
@@ -39,8 +37,8 @@ const SECTION_KEYS = {
 	resources: "resources",
 } as const;
 
-export function SiteFooter() {
-	const t = useTranslations("footer");
+export async function SiteFooter() {
+	const t = await getTranslations("footer");
 
 	return (
 		<footer className="border-t border-border bg-muted/30">

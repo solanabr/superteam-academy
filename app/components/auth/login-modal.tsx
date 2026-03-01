@@ -30,7 +30,13 @@ interface LoginModalProps {
 type Step = "choose" | "wallet-verify";
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
-	const { signInWithOAuth, wallet, verifyWallet, isWalletConnected } = useAuth();
+	const {
+		signInWithOAuth,
+		wallet,
+		verifyWallet,
+		isWalletConnected,
+		ensureWalletAdaptersLoaded,
+	} = useAuth();
 	const t = useTranslations("auth");
 	const [step, setStep] = useState<Step>("choose");
 	const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -70,11 +76,21 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
 	const handleWalletConnect = useCallback(async () => {
 		setError(null);
+		setIsLoading("wallet");
+
+		try {
+			await ensureWalletAdaptersLoaded();
+		} catch {
+			setError(t("walletConnectError"));
+			setIsLoading(null);
+			return;
+		}
+
 		if (!isWalletConnected) {
-			setIsLoading("wallet");
 			try {
-				await wallet.select(wallet.wallets[0]?.adapter.name ?? null);
-				await wallet.connect();
+				const defaultWallet = wallet.wallets[0]?.adapter.name ?? null;
+				await wallet.select(defaultWallet);
+				await wallet?.connect();
 				setStep("wallet-verify");
 			} catch {
 				setError(t("walletConnectError"));
@@ -83,17 +99,19 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 			}
 			return;
 		}
+		setIsLoading(null);
 		setStep("wallet-verify");
-	}, [wallet, isWalletConnected, t]);
+	}, [wallet, isWalletConnected, t, ensureWalletAdaptersLoaded]);
 
 	const handleSelectSpecificWallet = useCallback(
 		async (walletName: string) => {
 			setError(null);
 			setIsLoading(`wallet-switch-${walletName}`);
 			try {
+				await ensureWalletAdaptersLoaded();
 				await wallet.disconnect();
 				await wallet.select(walletName as WalletName);
-				await wallet.connect();
+				await wallet?.connect();
 				setShowWalletPicker(false);
 			} catch {
 				setError(t("walletConnectError"));
@@ -101,7 +119,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 				setIsLoading(null);
 			}
 		},
-		[wallet, t]
+		[wallet, t, ensureWalletAdaptersLoaded]
 	);
 
 	const handleWalletVerify = useCallback(async () => {

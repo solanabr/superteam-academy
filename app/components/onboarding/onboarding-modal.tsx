@@ -1,7 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
+
+const OnboardingFlow = dynamic(
+	() => import("@/components/onboarding/onboarding-flow").then((m) => m.OnboardingFlow),
+	{ ssr: false }
+);
 
 interface OnboardingModalProps {
 	onCompleted?: () => void;

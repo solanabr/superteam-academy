@@ -67,7 +67,9 @@ export default async function LocaleLayout({
 			...initialSession.user,
 			email: syncData?.email || initialSession.user.email,
 			role: syncData?.role,
-			onboardingCompleted: syncData?.onboardingCompleted ?? false,
+			onboardingCompleted:
+				syncData?.onboardingCompleted ??
+				(initialSession.user.onboardingCompleted as boolean | undefined),
 			image:
 				initialSession.user.image ||
 				getGravatarUrl(syncData?.email || initialSession.user.email),

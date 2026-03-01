@@ -34,6 +34,7 @@ export interface AuthContextType {
 	wallet: WalletState;
 	isWalletConnected: boolean;
 	isWalletVerified: boolean;
+	isWalletAdaptersReady: boolean;
 
 	session: AuthSession | null;
 	user: AuthUser | null;
@@ -44,6 +45,7 @@ export interface AuthContextType {
 	authMethod: "wallet" | "oauth" | "linked" | null;
 
 	refreshSession: () => Promise<void>;
+	ensureWalletAdaptersLoaded: () => Promise<void>;
 	verifyWallet: () => Promise<void>;
 	signInWithOAuth: (provider: "google" | "github") => Promise<void>;
 	signOut: () => Promise<void>;
@@ -65,6 +67,7 @@ const defaultAuth: AuthContextType = {
 	},
 	isWalletConnected: false,
 	isWalletVerified: false,
+	isWalletAdaptersReady: false,
 	session: null,
 	user: null,
 	isAuthenticated: false,
@@ -72,6 +75,7 @@ const defaultAuth: AuthContextType = {
 	isSuperAdmin: false,
 	authMethod: null,
 	refreshSession: noop,
+	ensureWalletAdaptersLoaded: noop,
 	verifyWallet: noop,
 	signInWithOAuth: noop,
 	signOut: noop,
