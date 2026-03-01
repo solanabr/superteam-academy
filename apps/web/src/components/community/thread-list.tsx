@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { CircleNotch } from "@phosphor-icons/react";
 import { ThreadCard } from "./thread-card";
 import { ThreadFilters } from "./thread-filters";
 import { useThreads } from "@/hooks/use-threads";
@@ -95,7 +94,7 @@ export function ThreadList({
 
       {isLoading && (
         <div className="flex justify-center py-8">
-          <CircleNotch className="h-6 w-6 animate-spin text-[var(--primary)]" />
+          <div className="sol-spinner" aria-hidden="true" />
         </div>
       )}
 
