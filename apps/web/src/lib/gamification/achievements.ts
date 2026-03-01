@@ -1,3 +1,5 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+
 export interface AchievementDefinition {
   id: string;
   name: string;
@@ -10,7 +12,7 @@ export interface AchievementDefinition {
   category: string;
 }
 
-interface UserState {
+export interface UserState {
   completedLessons: number;
   completedCourses: number;
   currentStreak: number;
@@ -20,6 +22,10 @@ interface UserState {
   courseCompletionTimeHours: number | null;
   allTestsPassedFirstTry: boolean;
   userNumber: number;
+  totalThreads: number;
+  totalAnswers: number;
+  acceptedAnswers: number;
+  totalCommunityXp: number;
 }
 
 /**
@@ -40,6 +46,11 @@ const UNLOCK_CHECKS: Record<string, (state: UserState) => boolean> = {
   "achievement-full-stack-solana": (s) => s.hasCompletedAllTracks,
   "achievement-early-adopter": (s) => s.userNumber <= 100,
   "achievement-perfect-score": (s) => s.allTestsPassedFirstTry,
+  "achievement-first-comment": (s) =>
+    s.totalThreads >= 1 || s.totalAnswers >= 1,
+  "achievement-curious-mind": (s) => s.totalThreads >= 10,
+  "achievement-helper": (s) => s.acceptedAnswers >= 5,
+  "achievement-top-contributor": (s) => s.totalCommunityXp >= 500,
 };
 
 /**
@@ -65,4 +76,24 @@ export function checkNewAchievements(
   }
 
   return newlyUnlocked;
+}
+
+export async function buildCommunityUserState(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  baseState: UserState
+): Promise<UserState> {
+  const { data: stats } = await admin
+    .from("community_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  return {
+    ...baseState,
+    totalThreads: stats?.total_threads ?? 0,
+    totalAnswers: stats?.total_answers ?? 0,
+    acceptedAnswers: stats?.accepted_answers ?? 0,
+    totalCommunityXp: stats?.total_community_xp ?? 0,
+  };
 }
