@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface ThreadStatusBadgeProps {
@@ -6,6 +9,7 @@ interface ThreadStatusBadgeProps {
 }
 
 export function ThreadStatusBadge({ type, isSolved }: ThreadStatusBadgeProps) {
+  const t = useTranslations("community");
   if (type === "discussion") return null;
 
   return (
@@ -17,7 +21,7 @@ export function ThreadStatusBadge({ type, isSolved }: ThreadStatusBadgeProps) {
           : "bg-[var(--xp-dim)] text-[var(--xp)]"
       )}
     >
-      {isSolved ? "Solved" : "Unanswered"}
+      {isSolved ? t("solved") : t("unanswered")}
     </span>
   );
 }

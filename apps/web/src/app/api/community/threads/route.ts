@@ -74,7 +74,11 @@ export async function GET(request: NextRequest) {
     // Cursor-based pagination (last_activity_at|id for 'latest' sort)
     if (cursor) {
       const [ts, id] = cursor.split("|");
-      if (ts && id) {
+      const uuidRe =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const tsValid =
+        sort === "top" ? /^-?\d+$/.test(ts) : /^\d{4}-\d{2}-\d{2}T/.test(ts);
+      if (ts && id && uuidRe.test(id) && tsValid) {
         if (sort === "latest") {
           query = query.or(
             `last_activity_at.lt.${ts},and(last_activity_at.eq.${ts},id.lt.${id})`
