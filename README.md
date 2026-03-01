@@ -26,7 +26,7 @@ Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integ
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_|_Zero_Any-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg?logo=next.js)](https://nextjs.org)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-14F195.svg?logo=solana)](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet)
-[![Tests](https://img.shields.io/badge/Tests-348_Unit_|_36_E2E-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-351_Unit_|_36_E2E-brightgreen.svg)]()
 [![i18n](https://img.shields.io/badge/i18n-EN_|_PT--BR_|_ES-orange.svg)]()
 
 </div>
@@ -37,8 +37,24 @@ Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integ
 
 ---
 
+## Demo Video
+
+https://github.com/user-attachments/assets/demo-video.mp4
+
+> 3-minute walkthrough covering course enrollment, lesson completion, code editor, leaderboard, dashboard, and settings.
+
+<details>
+<summary>Can't play the video above? Download it directly.</summary>
+
+[Download demo-video.mp4](assets/demo-video.mp4) (4.8 MB)
+
+</details>
+
+---
+
 ## Table of Contents
 
+- [Demo Video](#demo-video)
 - [Screenshots](#-screenshots)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
