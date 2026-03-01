@@ -121,6 +121,16 @@ export default function LessonPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // НОВАЯ ЛОГИКА ОШИБОК: Если есть details (от нашего валидатора)
+        if (data.details) {
+            setLogs(prev => [
+                ...prev, 
+                `❌ [Error] ${data.error}`, 
+                `❌ [Hint] ${data.details}` // Показываем подсказку юзеру
+            ]);
+            toast.error("Compilation Failed", { description: data.details });
+            return; // Выходим, не выбрасываем Error
+        }
         throw new Error(data.error || "Verification failed");
       }
 

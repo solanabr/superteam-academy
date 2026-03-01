@@ -9,9 +9,9 @@ import { Keypair } from "@solana/web3.js";
 import { SystemProgram } from "@solana/web3.js";
 import { ACHIEVEMENTS_COLLECTION } from "@/lib/constants";
 import { checkAndAwardAchievement } from "@/lib/achievements";
+import { validateCode } from "@/lib/code-validator";
 
-// Точная награда по ТЗ
-const XP_REWARD = 50; 
+// Точная награда по ТЗ 
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 const TRACK_COLLECTION = new PublicKey("29yDngMCMH3y3AP26iGkgjsU8uU19H2FFkuTrXM33eSS");
 const MPL_CORE_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
@@ -26,12 +26,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Answer too short" }, { status: 400 });
     }
 
+    // 2. ИНТЕЛЛЕКТУАЛЬНАЯ ВАЛИДАЦИЯ (Anti-Cheat)
+    const validation = validateCode(courseId, lessonIndex, codeAnswer);
+        if (!validation.isValid) {
+            // Возвращаем 400 Bad Request с конкретным текстом ошибки
+            return NextResponse.json({ 
+                error: "Syntax Error / Requirement Missing", 
+                details: validation.error 
+        }, { status: 400 });
+    }
+
     // 2. [ANTI-FARMING CHECK] Проверяем БД перед блокчейном
     // Находим юзера
     const user = await prisma.user.findUnique({ 
         where: { walletAddress },
         include: { progress: true } // Подгружаем прогресс
     });
+
+    const courseDb = await prisma.course.findUnique({ where: { slug: courseId }});
+    const xpRewardAmount = courseDb?.xpPerLesson || 25; // Fallback на 100, если вдруг нет в БД
 
     if (!user) {
         return NextResponse.json({ error: "User not found. Please sync wallet first." }, { status: 404 });
@@ -155,20 +168,19 @@ export async function POST(request: Request) {
         if (shouldAwardXp) {
             await tx.user.update({
                 where: { walletAddress },
-                data: { xp: { increment: XP_REWARD } }
+                // ИСПОЛЬЗУЕМ ДИНАМИЧЕСКОЕ ЗНАЧЕНИЕ:
+                data: { xp: { increment: xpRewardAmount } } 
             });
 
-            // НОВОЕ: Пишем в историю
             await tx.xPHistory.create({
                 data: {
                     userId: user.id,
-                    amount: XP_REWARD,
+                    amount: xpRewardAmount, // ИСПОЛЬЗУЕМ ДИНАМИЧЕСКОЕ ЗНАЧЕНИЕ
                     source: "lesson",
                     description: `Completed lesson ${lessonIndex + 1} in course ${courseId}`
                 }
             });
-                
-            // TODO: В будущем здесь будет вызов сервиса отправки уведомлений (Notification Service)
+                // TODO удален. Уведомления уже работают, так как они просто читают XPHistory!
         }
 
         // НОВОЕ: Трекинг Daily Challenges

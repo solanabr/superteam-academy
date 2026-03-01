@@ -26,7 +26,8 @@ export function NotificationsPopover() {
           fetch(`/api/user/history?wallet=${userDb.walletAddress}`)
             .then(res => res.json())
             .then((data: XPEvent[]) => {
-                setNotifications(data);
+                const displayData = data.filter(n => n.source !== "sync");
+                setNotifications(displayData);
                 
                 // ЛОГИКА "ПРОЧИТАННОГО":
                 // 1. Берем дату последнего просмотренного из localStorage (ключ уникален для юзера)
@@ -35,11 +36,11 @@ export function NotificationsPopover() {
 
                 if (!lastSeenDate) {
                     // Если никогда не открывал, показываем, что есть новые (до 5 шт)
-                    setUnreadCount(Math.min(data.length, 5));
+                    setUnreadCount(Math.min(displayData.length, 5));
                 } else {
                     // Если открывал, считаем только те, что НОВЕЕ чем lastSeenDate
                     const seenDateObj = new Date(lastSeenDate);
-                    const newUnread = data.filter(n => new Date(n.createdAt) > seenDateObj).length;
+                    const newUnread = displayData.filter(n => new Date(n.createdAt) > seenDateObj).length;
                     setUnreadCount(newUnread);
                 }
             });

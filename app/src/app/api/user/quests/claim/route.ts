@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+import { getServerProgram, getBackendWallet } from "@/lib/server";
+import { PublicKey } from "@solana/web3.js";
+import { PROGRAM_ID, XP_MINT } from "@/lib/constants";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { BN } from "@coral-xyz/anchor";
+
+const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -42,25 +50,56 @@ export async function POST(request: Request) {
     // 3. Выполняем транзакцию: Помечаем как собранное + Выдаем XP + Пишем в историю
     const xpReward = userChallenge.challenge.xpReward;
 
+    // НОВОЕ: 3. МИНТИМ XP В БЛОКЧЕЙНЕ (Reward XP Instruction)
+    const program = getServerProgram();
+    const backendWallet = getBackendWallet();
+    const learnerPubkey = new PublicKey(walletAddress);
+    
+    // Minter Role (Backend Signer был зарегистрирован как минтер при инициализации)
+    const [minterRolePda] = PublicKey.findProgramAddressSync([Buffer.from("minter"), backendWallet.publicKey.toBuffer()], PROGRAM_ID);
+    const learnerXpAta = getAssociatedTokenAddressSync(XP_MINT, learnerPubkey, false, TOKEN_2022_PROGRAM_ID);
+    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID);
+
+    try {
+        await program.methods.rewardXp(
+            new BN(xpReward), 
+            `Claimed Quest: ${userChallenge.challenge.title}`
+        )
+        .accountsPartial({
+            config: configPda,
+            minterRole: minterRolePda,
+            xpMint: XP_MINT,
+            recipientTokenAccount: learnerXpAta,
+            minter: backendWallet.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendWallet.payer])
+        .rpc();
+        
+        console.log(`[Quest] Successfully minted ${xpReward} XP on-chain for quest claim.`);
+    } catch (chainError) {
+        console.error("[Quest] Failed to mint XP on-chain:", chainError);
+        // Если блокчейн упал, мы НЕ даем заклеймить в БД, чтобы не было рассинхрона
+        return NextResponse.json({ error: "Blockchain transaction failed" }, { status: 500 });
+    }
+
+    // 4. Выполняем транзакцию в БД: Помечаем как собранное + Выдаем XP + Пишем в историю
     await prisma.$transaction(async (tx) => {
-        // А. Помечаем как Claimed
         await tx.userChallenge.update({
             where: { id: userChallengeId },
             data: { claimedAt: new Date() }
         });
 
-        // Б. Начисляем XP
         await tx.user.update({
             where: { id: user.id },
             data: { xp: { increment: xpReward } }
         });
 
-        // В. Пишем в историю уведомлений
         await tx.xPHistory.create({
             data: {
                 userId: user.id,
                 amount: xpReward,
-                source: "bonus", // Это бонус/дейлик
+                source: "bonus", 
                 description: `Claimed Daily Quest: ${userChallenge.challenge.title}`
             }
         });
