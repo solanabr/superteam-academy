@@ -129,6 +129,15 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 
 </td>
 </tr>
+<tr>
+<td colspan="2">
+
+**Lighthouse Audit** — Performance 94, Accessibility 93, Best Practices 96, SEO 100
+
+![Lighthouse](assets/screenshots/lighthouse.png)
+
+</td>
+</tr>
 </table>
 
 ---
