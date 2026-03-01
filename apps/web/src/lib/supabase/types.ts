@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export interface SocialLinks {
   twitter?: string;
   github?: string;
@@ -375,6 +383,47 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_daily_quests: {
+        Row: {
+          id: string;
+          user_id: string;
+          quest_id: string;
+          current_value: number;
+          completed: boolean;
+          completed_at: string | null;
+          xp_granted: boolean;
+          period_start: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          quest_id: string;
+          current_value?: number;
+          completed?: boolean;
+          completed_at?: string | null;
+          xp_granted?: boolean;
+          period_start: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          quest_id?: string;
+          current_value?: number;
+          completed?: boolean;
+          completed_at?: string | null;
+          xp_granted?: boolean;
+          period_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_quests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -407,6 +456,15 @@ export interface Database {
           level: number;
           rank: number;
         }[];
+      };
+      get_daily_quest_state: {
+        Args: {
+          p_user_id: string;
+          p_quest_definitions: Json;
+          p_challenge_ids: string[];
+          p_module_lesson_map: Json;
+        };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;
