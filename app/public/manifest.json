@@ -1,0 +1,12 @@
+{
+  "name": "Superteam Academy",
+  "short_name": "ST Academy",
+  "description": "The most advanced on-chain learning platform for Solana builders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020202",
+  "theme_color": "#9945ff",
+  "orientation": "portrait",
+  "categories": ["education", "productivity"],
+  "lang": "en"
+}

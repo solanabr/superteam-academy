@@ -186,3 +186,66 @@ body {
   font-family: "Space Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
+
+.light {
+  --bg: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --border: #e0e0e0;
+  --text-primary: #020202;
+  --text-secondary: #444444;
+  --text-muted: #888888;
+}
+
+.dark {
+  --bg: #020202;
+  --bg-secondary: #0a0a0a;
+  --border: #1a1a1a;
+  --text-primary: #f5f5f0;
+  --text-secondary: #444444;
+  --text-muted: #333333;
+}
+
+body.light-mode {
+  background-color: #f5f2eb !important;
+  color: #020202 !important;
+  filter: none !important;
+}
+
+body.light-mode nav {
+  background-color: #ede9e0 !important;
+  border-color: #d4cfc4 !important;
+}
+
+body.light-mode [class*="bg-[#020202]"],
+body.light-mode [class*="bg-[#0a0a0a]"],
+body.light-mode [class*="bg-[#0d0d0d]"] {
+  background-color: #f5f2eb !important;
+}
+
+body.light-mode [class*="bg-[#1a1a1a]"] {
+  background-color: #e8e3d8 !important;
+}
+
+body.light-mode * {
+  border-color: #d4cfc4 !important;
+}
+
+body.light-mode [class*="text-[#f5f5f0]"],
+body.light-mode [class*="text-[#f5f5f5]"] {
+  color: #111111 !important;
+}
+
+body.light-mode [class*="text-[#444]"],
+body.light-mode [class*="text-[#333]"],
+body.light-mode [class*="text-[#555]"] {
+  color: #555555 !important;
+  
+}body.light-mode {
+  background-color: #f5f2eb !important;
+  color: #020202 !important;
+  filter: none !important;
+  background-image: 
+    linear-gradient(rgba(153,69,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153,69,255,0.06) 1px, transparent 1px) !important;
+  background-size: 60px 60px !important;
+}
