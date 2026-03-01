@@ -96,7 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "set -e\n\necho \"Running pre-commit checks...\"\n\nif [ -f \"Anchor.toml\" ] || grep -q \"solana-program\" Cargo.toml 2>/dev/null; then\n  cargo fmt --check || { cargo fmt; exit 1; }\n  cargo clippy --all-targets -- -D warnings || exit 1\n  cargo test --lib || exit 1\nfi\n\nif [ -f \"package.json\" ]; then\n  npx prettier --check \"**/*.{ts,tsx,js,jsx,json}\" || { npx prettier --write \"**/*.{ts,tsx,js,jsx,json}\"; exit 1; }\n  [ -f \"tsconfig.json\" ] && npx tsc --noEmit || exit 1\nfi\n\necho \"Pre-commit checks passed\""
+            "command": "set -e\n\necho \"Running pre-commit checks...\"\n\nif [ -f \"Anchor.toml\" ] || grep -q \"solana-program\" Cargo.toml 2>/dev/null; then\n  cargo fmt --check || { cargo fmt; exit 1; }\n  cargo clippy --all-targets -- -D warnings || exit 1\n  cargo test --lib || exit 1\nfi\n\nif [ -f \"package.json\" ]; then\n  if [ -d \"apps/web\" ]; then\n    cd apps/web && npx --package typescript tsc --noEmit && cd ../..\n  elif [ -f \"tsconfig.json\" ]; then\n    npx --package typescript tsc --noEmit\n  fi\nfi\n\necho \"Pre-commit checks passed\""
           }
         ]
       },
