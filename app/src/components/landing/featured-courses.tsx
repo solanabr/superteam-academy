@@ -130,70 +130,66 @@ export function FeaturedCourses() {
         {/* Course grid */}
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURED_COURSES.map((course) => (
-            <Card
+            <Link
               key={course.title}
-              className="group relative overflow-hidden transition-shadow hover:shadow-lg"
+              href={`/courses/${course.slug}`}
+              className="group block"
             >
-              {/* Gradient image placeholder */}
-              <div
-                className={`h-32 bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo} relative flex items-center justify-center overflow-hidden`}
-              >
-                {course.image ? (
-                  <img
-                    src={course.image}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <course.icon className="h-10 w-10 text-foreground/20" />
-                )}
-                {/* XP badge */}
-                <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium backdrop-blur-sm">
-                  <Zap className="h-3 w-3 text-accent" />
-                  {course.xp.toLocaleString()} XP
-                </div>
-              </div>
-
-              <CardHeader className="pb-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge
-                    variant={DIFFICULTY_VARIANT[course.difficulty]}
-                    className="text-[10px]"
-                  >
-                    {course.difficulty}
-                  </Badge>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${course.trackColor}`}>
-                    {course.track}
-                  </span>
-                </div>
-                <CardTitle className="line-clamp-2 text-base">
-                  {course.title}
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="pb-2">
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {course.description}
-                </p>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {course.lessons} lessons
-                </p>
-              </CardContent>
-
-              <CardFooter>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full gap-1.5 text-primary"
-                  asChild
+              <Card className="relative overflow-hidden transition-shadow hover:shadow-lg hover:border-primary/20 dark:hover:border-primary/30 group-hover:scale-[1.01] transition-all duration-200">
+                {/* Gradient image placeholder */}
+                <div
+                  className={`h-32 bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo} relative flex items-center justify-center overflow-hidden`}
                 >
-                  <Link href={`/courses/${course.slug}`}>
+                  {course.image ? (
+                    <img
+                      src={course.image}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <course.icon className="h-10 w-10 text-foreground/20" />
+                  )}
+                  {/* XP badge */}
+                  <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium backdrop-blur-sm">
+                    <Zap className="h-3 w-3 text-accent" />
+                    {course.xp.toLocaleString()} XP
+                  </div>
+                </div>
+
+                <CardHeader className="pb-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant={DIFFICULTY_VARIANT[course.difficulty]}
+                      className="text-[10px]"
+                    >
+                      {course.difficulty}
+                    </Badge>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${course.trackColor}`}>
+                      {course.track}
+                    </span>
+                  </div>
+                  <CardTitle className="line-clamp-2 text-base">
+                    {course.title}
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="pb-2">
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {course.description}
+                  </p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {course.lessons} lessons
+                  </p>
+                </CardContent>
+
+                <CardFooter>
+                  <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-primary">
                     Start Course
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+                  </span>
+                </CardFooter>
+              </Card>
+            </Link>
           ))}
         </div>
 

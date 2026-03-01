@@ -10,7 +10,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
   Blocks,
@@ -104,45 +103,39 @@ export function TracksOverview() {
         {/* Tracks grid */}
         <div className="mt-12 grid gap-6 sm:grid-cols-2">
           {TRACKS.map((track) => (
-            <Card
-              key={track.title}
-              className={`group border-l-4 ${track.accentBorder} transition-shadow hover:shadow-md`}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-xl ${track.iconBg}`}
-                  >
-                    <track.icon className={`h-6 w-6 ${track.iconColor}`} />
+            <Link key={track.title} href="/courses" className="group block">
+              <Card
+                className={`border-l-4 ${track.accentBorder} transition-all duration-200 hover:shadow-md group-hover:border-primary/20`}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${track.iconBg}`}
+                    >
+                      <track.icon className={`h-6 w-6 ${track.iconColor}`} />
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {track.courseCount} courses
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {track.courseCount} courses
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg">{track.title}</CardTitle>
-                <CardDescription className="leading-relaxed">
-                  {track.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {track.difficultyRange}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1 text-xs text-primary"
-                    asChild
-                  >
-                    <Link href="/courses">
+                  <CardTitle className="text-lg">{track.title}</CardTitle>
+                  <CardDescription className="leading-relaxed">
+                    {track.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {track.difficultyRange}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
                       Explore
                       <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>
