@@ -105,7 +105,7 @@ export function ThreeHeroBackground() {
     // Create main tube curve - S-wave / ocean swell
     const createWaveCurve = (offset = 0, amplitude = 1) => {
       const points = [];
-      for (let i = 0; i <= 100; i++) {
+      for (let i = -150; i <= 250; i++) {
         const t = i / 100;
         const x = 40 - t * 60; // From right to left
         const y = (Math.sin(t * Math.PI * 1.5 + offset) * 12 - 5) * amplitude;
@@ -117,7 +117,7 @@ export function ThreeHeroBackground() {
 
     // Main tube geometry with wave
     let mainCurve = createWaveCurve(0, 1);
-    const mainTubeGeometry = new THREE.TubeGeometry(mainCurve, 200, 1.2, 32, false);
+    const mainTubeGeometry = new THREE.TubeGeometry(mainCurve, 600, 1.2, 32, false);
 
     // Custom shader material for iridescence - Solana purple
     const mainTubeMaterial = new THREE.MeshPhysicalMaterial({
@@ -137,7 +137,7 @@ export function ThreeHeroBackground() {
     // Second thinner teal tube
     const createSecondaryCurve = (offset = 0) => {
       const points = [];
-      for (let i = 0; i <= 100; i++) {
+      for (let i = -150; i <= 250; i++) {
         const t = i / 100;
         const x = 38 - t * 58;
         const y = Math.sin(t * Math.PI * 1.5 + offset) * 10 - 3 + Math.sin(t * 3 + offset) * 2;
@@ -148,7 +148,7 @@ export function ThreeHeroBackground() {
     };
 
     let secondaryCurve = createSecondaryCurve(0);
-    const secondaryTubeGeometry = new THREE.TubeGeometry(secondaryCurve, 200, 0.35, 16, false);
+    const secondaryTubeGeometry = new THREE.TubeGeometry(secondaryCurve, 600, 0.35, 16, false);
     const secondaryTubeMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x14f195,
       metalness: 0.8,
@@ -225,16 +225,16 @@ export function ThreeHeroBackground() {
 
       // Wave animation - update tube geometry each frame
       const waveOffset = time * 0.8;
-      
+
       // Recreate main tube with wave
       mainTube.geometry.dispose();
       const newMainCurve = createWaveCurve(waveOffset, 1);
-      mainTube.geometry = new THREE.TubeGeometry(newMainCurve, 200, 1.2, 32, false);
+      mainTube.geometry = new THREE.TubeGeometry(newMainCurve, 600, 1.2, 32, false);
 
       // Recreate secondary tube with wave
       secondaryTube.geometry.dispose();
       const newSecondaryCurve = createSecondaryCurve(waveOffset * 1.2);
-      secondaryTube.geometry = new THREE.TubeGeometry(newSecondaryCurve, 200, 0.35, 16, false);
+      secondaryTube.geometry = new THREE.TubeGeometry(newSecondaryCurve, 600, 0.35, 16, false);
 
       // Tube gentle rotation
       tubeGroup.rotation.y += 0.0003;

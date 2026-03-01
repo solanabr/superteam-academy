@@ -12,6 +12,7 @@ import {
 import { useState, useEffect } from "react";
 import { getCourseById } from "@/data/courses";
 import { useI18n } from "@/components/I18nProvider";
+import { enrollmentService } from "@/services/learning";
 
 const DIFFICULTY_COLORS = {
   Beginner: "bg-green-500/20 text-green-400",
@@ -31,11 +32,14 @@ export default function CourseDetailPage() {
 
   // Check enrollment status on load
   useEffect(() => {
-    if (course) {
-      const userId = publicKey?.toString() || 'guest';
-      const enrolled = localStorage.getItem(`enrolled_${userId}_${course.id}`);
-      setIsEnrolled(!!enrolled);
-    }
+    const checkEnrollment = async () => {
+      if (course) {
+        const userId = publicKey?.toString() || 'guest';
+        const enrolled = await enrollmentService.isEnrolled(userId, course.id);
+        setIsEnrolled(enrolled);
+      }
+    };
+    checkEnrollment();
   }, [publicKey, course]);
 
   if (!course) {
@@ -57,12 +61,9 @@ export default function CourseDetailPage() {
     );
   };
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     const userId = publicKey?.toString() || 'guest';
-    localStorage.setItem(`enrolled_${userId}_${course.id}`, JSON.stringify({
-      enrolledAt: new Date().toISOString(),
-      progress: 0
-    }));
+    await enrollmentService.enroll(userId, course.id);
     setIsEnrolled(true);
 
     const firstLesson = course.modules[0]?.lessons[0];
@@ -197,8 +198,8 @@ export default function CourseDetailPage() {
                                 }
                               }}
                               className={`w-full flex items-center justify-between p-4 border-b border-white/5 last:border-0 transition-colors text-left ${canAccess
-                                  ? "hover:bg-white/5 cursor-pointer"
-                                  : "opacity-50 cursor-not-allowed"
+                                ? "hover:bg-white/5 cursor-pointer"
+                                : "opacity-50 cursor-not-allowed"
                                 }`}
                             >
                               <div className="flex items-center gap-3">

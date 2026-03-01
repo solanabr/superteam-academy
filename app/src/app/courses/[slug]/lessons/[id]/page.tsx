@@ -56,7 +56,7 @@ export default function LessonPage() {
 
   const slug = params.slug as string;
   const lessonId = params.id as string;
-  const userId = publicKey?.toString() || null;
+  const userId = publicKey?.toString() || 'guest';
 
   const lessonAccess = useLessonAccess(course, lessonId, userId, isEnrolled);
   const lessonNumber = course ? getLessonNumber(course, lessonId) : 0;
@@ -317,8 +317,8 @@ export default function LessonPage() {
         </div>
       </div>
 
-      <div className="pt-[4.5rem] flex">
-        <aside className="relative z-10 fixed left-0 top-14 bottom-0 w-64 border-r border-white/10 bg-black/50 overflow-y-auto hidden lg:block">
+      <div className="pt-[4.5rem] flex items-start max-w-full">
+        <aside className="sticky top-[4.5rem] h-[calc(100vh-4.5rem)] z-10 w-64 shrink-0 border-r border-white/10 bg-black/50 overflow-y-auto hidden lg:block">
           <div className="p-4">
             <Link href={`/courses/${slug}`} className="flex items-center gap-2 text-white/60 hover:text-white mb-6 text-sm">
               <ArrowLeft className="w-4 h-4" />
@@ -346,7 +346,7 @@ export default function LessonPage() {
           </div>
         </aside>
 
-        <main className="relative z-10 flex-1 lg:ml-64">
+        <main className="relative z-10 flex-1 min-w-0">
           <div className="max-w-6xl mx-auto p-6">
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-4 flex-wrap">

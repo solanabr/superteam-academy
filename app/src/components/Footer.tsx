@@ -87,17 +87,17 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="https://discord.gg/superteambrasil" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://discord.gg/superteambrasil" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Discord
                 </a>
               </li>
               <li>
-                <a href="https://twitter.com/SuperteamBR" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://twitter.com/SuperteamBR" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Twitter
                 </a>
               </li>
               <li>
-                <a href="https://github.com/AbhijeetKakade2004/superteam-academy" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://github.com/AbhijeetKakade2004/superteam-academy" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   GitHub
                 </a>
               </li>
@@ -109,22 +109,22 @@ export function Footer() {
             <h4 className="text-white font-semibold mb-4">{t("footer.resources")}</h4>
             <ul className="space-y-3">
               <li>
-                <a href="https://solana.com/docs" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://solana.com/docs" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Solana Docs
                 </a>
               </li>
               <li>
-                <a href="https://book.anchor-lang.com" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://book.anchor-lang.com" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Anchor Book
                 </a>
               </li>
               <li>
-                <a href="https://docs.metaplex.com" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://docs.metaplex.com" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Metaplex
                 </a>
               </li>
               <li>
-                <a href="https://helius.xyz" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
+                <a href="https://helius.xyz" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors" rel="noreferrer">
                   Helius
                 </a>
               </li>
