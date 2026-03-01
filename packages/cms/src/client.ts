@@ -16,12 +16,3 @@ const defaults = {
 export function createSanityClient(config: SanityClientConfig) {
 	return createClient({ ...defaults, ...config });
 }
-
-export function createPreviewClient(config: SanityClientConfig) {
-	return createClient({
-		...defaults,
-		...config,
-		useCdn: false,
-		perspective: "previewDrafts",
-	});
-}

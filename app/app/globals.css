@@ -30,7 +30,6 @@
 	--color-input: #e2d9c4;
 	--color-ring: #008c4c;
 	--color-surface: #f5efe2;
-	--color-surface-foreground: #1b231d;
 	--color-highlight: #eafff2;
 	--color-highlight-foreground: #006b3a;
 
@@ -137,14 +136,13 @@
 	--color-input: #263029;
 	--color-ring: #ffd23f;
 	--color-surface: #1a2a1d;
-	--color-surface-foreground: #f0ead8;
 	--color-highlight: #1a3326;
 	--color-highlight-foreground: #4ade80;
 }
 
 @layer base {
 	* {
-		@apply border-border;
+		border-color: var(--color-border);
 	}
 	html {
 		scroll-behavior: smooth;
@@ -153,7 +151,6 @@
 		text-rendering: optimizeLegibility;
 	}
 	body {
-		@apply bg-background text-foreground font-sans;
 		font-feature-settings: "ss01", "ss02", "cv01";
 	}
 	h1,
@@ -176,21 +173,6 @@
 @layer utilities {
 	.text-balance {
 		text-wrap: balance;
-	}
-	.text-gradient {
-		@apply bg-clip-text text-transparent bg-linear-to-r from-green to-forest;
-	}
-	.text-gradient-gold {
-		@apply bg-clip-text text-transparent bg-linear-to-r from-gold via-amber-400 to-gold;
-	}
-	.glass {
-		@apply bg-background/80 backdrop-blur-xl border border-border/50;
-	}
-	.surface-elevated {
-		@apply bg-card shadow-md shadow-black/4 border border-border/60;
-	}
-	.surface-inset {
-		@apply bg-surface border border-border/40;
 	}
 	.pattern-dots {
 		background-image: radial-gradient(circle, var(--color-border) 1px, transparent 1px);

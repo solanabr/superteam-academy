@@ -105,7 +105,7 @@ export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
 	);
 }
 
-export function deriveSkillsFromCourses(
+function deriveSkillsFromCourses(
 	courses: Array<{
 		id: string;
 		status: "completed" | "in_progress" | "not_started";

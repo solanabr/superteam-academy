@@ -129,7 +129,7 @@ export function SiteHeader() {
 
 	return (
 		<>
-			<header className="sticky top-0 z-50 w-full glass border-b border-border/40">
+			<header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border border-b border-border/40">
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
 						<Link

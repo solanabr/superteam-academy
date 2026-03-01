@@ -1,6 +1,6 @@
 /** Sanity document type definitions for the academy CMS */
 
-export type SanityDocument = {
+type SanityDocument = {
 	_id: string;
 	_type: string;
 	_rev: string;
@@ -8,7 +8,7 @@ export type SanityDocument = {
 	_updatedAt: string;
 };
 
-export type SanitySlug = {
+type SanitySlug = {
 	_type: "slug";
 	current: string;
 };
@@ -80,7 +80,7 @@ export type Lesson = SanityDocument & {
 	duration?: string;
 };
 
-export type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
+type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
 
 export type ChallengeInstruction = {
 	title: string;
@@ -161,7 +161,7 @@ export type Track = SanityDocument & {
 
 export type UserRole = "learner" | "admin" | "superadmin";
 
-export interface UserNotificationSettings {
+interface UserNotificationSettings {
 	emailNotifications: boolean;
 	pushNotifications: boolean;
 	courseUpdates: boolean;
@@ -182,13 +182,13 @@ export interface UserPrivacySettings {
 	analyticsTracking: boolean;
 }
 
-export interface UserAppearanceSettings {
+interface UserAppearanceSettings {
 	theme: "light" | "dark" | "system";
 	fontSize: "small" | "medium" | "large";
 	reducedMotion: boolean;
 }
 
-export interface UserLanguageSettings {
+interface UserLanguageSettings {
 	language: "en" | "pt-BR" | "es";
 	dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
 	timeFormat: "12h" | "24h";
@@ -196,7 +196,7 @@ export interface UserLanguageSettings {
 	timezone: string;
 }
 
-export interface UserWalletSettings {
+interface UserWalletSettings {
 	autoConnect: boolean;
 }
 
@@ -327,14 +327,6 @@ export type Event = SanityDocument & {
 	}>;
 	tags: string[];
 	publishedAt: string;
-};
-
-export type EventRegistration = SanityDocument & {
-	_type: "eventRegistration";
-	event: { _ref: string };
-	user: { _ref: string };
-	registeredAt: string;
-	attended?: boolean;
 };
 
 export type ProjectCategory = "defi" | "nft" | "tooling" | "gaming" | "social" | "infra";

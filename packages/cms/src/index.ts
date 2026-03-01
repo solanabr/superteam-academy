@@ -1,7 +1,6 @@
 export { createSanityClient } from "./client";
 export type { SanityClientConfig } from "./client";
 export type {
-	FrontendSeedCourse,
 	OnchainCourseStub,
 	SeedCourseLevel,
 	SeedLessonKind,

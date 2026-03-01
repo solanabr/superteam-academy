@@ -2,7 +2,7 @@
 
 import { forwardRef, type InputHTMLAttributes } from "react";
 
-export interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
 	checked?: boolean;
 	onCheckedChange?: (checked: boolean) => void;
 }

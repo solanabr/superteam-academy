@@ -26,7 +26,7 @@ export function CertificateActions({
 	const pageUrl =
 		typeof window !== "undefined"
 			? window.location.href
-			: `https://academy.superteam.fun/certificates/${certificateId}`;
+			: `https://superteam.com.br/certificates/${certificateId}`;
 
 	const tweetText = encodeURIComponent(
 		`I just earned "${title}" on @SuperteamAcademy! 🎓\n\n` +
@@ -96,7 +96,7 @@ export function CertificateActions({
 
 		ctx.fillStyle = "#4a6a55";
 		ctx.font = "12px sans-serif";
-		ctx.fillText("Verified on Solana · academy.superteam.fun", 600, 560);
+		ctx.fillText("Verified on Solana · superteam.com.br", 600, 560);
 
 		const link = document.createElement("a");
 		link.download = `superteam-certificate-${certificateId.slice(0, 8)}.png`;

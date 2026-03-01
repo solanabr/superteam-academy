@@ -1,13 +1,13 @@
-export type ModerationTarget = "discussion" | "event" | "project" | "comment";
-export type ModerationStatus = "approved" | "needs_review" | "rejected";
+type ModerationTarget = "discussion" | "event" | "project" | "comment";
+type ModerationStatus = "approved" | "needs_review" | "rejected";
 
-export interface ModerationDecision {
+interface ModerationDecision {
 	status: ModerationStatus;
 	reasons: string[];
 	score: number;
 }
 
-export interface ModerationQueueItem {
+interface ModerationQueueItem {
 	id: string;
 	target: ModerationTarget;
 	title: string;

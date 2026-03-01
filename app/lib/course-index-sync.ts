@@ -28,7 +28,7 @@ type CourseReconcileItem = {
 	error?: string;
 };
 
-export type CourseIndexReconcileReport = {
+type CourseIndexReconcileReport = {
 	applied: boolean;
 	totalSanityCourses: number;
 	totalOnchainCourses: number;
@@ -51,7 +51,7 @@ type CourseIndexSyncState = {
 	};
 };
 
-export type CourseIndexAutoRunResult = {
+type CourseIndexAutoRunResult = {
 	executed: boolean;
 	skippedReason?: "cooldown" | "already-running";
 	lastRunAt?: string;

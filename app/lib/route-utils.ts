@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { Keypair } from "@solana/web3.js";
-import { createHash } from "node:crypto";
 import { serverAuth } from "@/lib/auth";
 import { readClient, writeClient } from "@/lib/cms-context";
 import { syncAuthSession } from "../app/api/auth/sync/action";
@@ -45,10 +44,6 @@ export function loadBackendSigner(): Keypair {
 	return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret)));
 }
 
-export function instructionDiscriminator(name: string): Buffer {
-	return createHash("sha256").update(`global:${name}`).digest().subarray(0, 8);
-}
-
 export function encodeBorshString(value: string): Buffer {
 	const bytes = Buffer.from(value, "utf8");
 	const len = Buffer.alloc(4);
@@ -83,7 +78,7 @@ export function encodeOptionU16(value: number | null): Buffer {
 export const MAX_TITLE_LENGTH = 200;
 export const MAX_DESCRIPTION_LENGTH = 10_000;
 export const MAX_TAGS = 5;
-export const MAX_TAG_LENGTH = 50;
+const MAX_TAG_LENGTH = 50;
 
 export function parseTags(tags: unknown): string[] {
 	if (!Array.isArray(tags)) return [];

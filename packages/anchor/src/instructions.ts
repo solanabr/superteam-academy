@@ -33,7 +33,7 @@ function encodeBorshString(value: string): Buffer {
 	return Buffer.concat([len, bytes]);
 }
 
-export interface EnrollInstructionParams {
+interface EnrollInstructionParams {
 	courseId: string;
 	learner: PublicKey;
 	programId: PublicKey;
@@ -70,7 +70,7 @@ export function buildEnrollInstruction({
 	return new TransactionInstruction({ keys, programId, data });
 }
 
-export interface CloseEnrollmentInstructionParams {
+interface CloseEnrollmentInstructionParams {
 	courseId: string;
 	learner: PublicKey;
 	programId: PublicKey;
@@ -97,7 +97,7 @@ export function buildCloseEnrollmentInstruction({
 	});
 }
 
-export interface CompleteLessonParams {
+interface CompleteLessonParams {
 	courseId: string;
 	lessonIndex: number;
 	learner: PublicKey;
@@ -136,7 +136,7 @@ export function buildCompleteLessonInstruction({
 	return new TransactionInstruction({ keys, programId, data });
 }
 
-export interface FinalizeCourseParams {
+interface FinalizeCourseParams {
 	courseId: string;
 	learner: PublicKey;
 	learnerTokenAccount: PublicKey;
@@ -177,7 +177,7 @@ export function buildFinalizeCourseInstruction({
 	return new TransactionInstruction({ keys, programId, data: DISCRIMINATOR_FINALIZE_COURSE });
 }
 
-export interface IssueCredentialParams {
+interface IssueCredentialParams {
 	courseId: string;
 	learner: PublicKey;
 	credentialAsset: PublicKey;
@@ -232,7 +232,7 @@ export function buildIssueCredentialInstruction({
 	return new TransactionInstruction({ keys, programId, data });
 }
 
-export interface UpgradeCredentialParams {
+interface UpgradeCredentialParams {
 	courseId: string;
 	learner: PublicKey;
 	credentialAsset: PublicKey;
@@ -291,7 +291,7 @@ const DISCRIMINATOR_AWARD_ACHIEVEMENT = Buffer.from([
 	0x9a, 0x7e, 0x3b, 0x82, 0x46, 0x72, 0xd2, 0x4f,
 ]);
 
-export interface AwardAchievementParams {
+interface AwardAchievementParams {
 	achievementId: string;
 	recipient: PublicKey;
 	asset: PublicKey;
@@ -346,7 +346,7 @@ export function buildAwardAchievementInstruction({
 const DISCRIMINATOR_CREATE_COURSE = Buffer.from([0x78, 0x79, 0x9a, 0xa4, 0x6b, 0xb4, 0xa7, 0xf1]);
 const DISCRIMINATOR_UPDATE_COURSE = Buffer.from([0x51, 0xd9, 0x12, 0xc0, 0x81, 0xe9, 0x81, 0xe7]);
 
-export interface CreateCourseInstructionParams {
+interface CreateCourseInstructionParams {
 	courseId: string;
 	creator: PublicKey;
 	contentTxId: Uint8Array | number[];
@@ -411,7 +411,7 @@ export function buildCreateCourseInstruction({
 	});
 }
 
-export interface UpdateCourseInstructionParams {
+interface UpdateCourseInstructionParams {
 	courseId: string;
 	newContentTxId?: Uint8Array | number[] | null;
 	newIsActive?: boolean | null;

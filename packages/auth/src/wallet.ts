@@ -8,7 +8,7 @@ export const walletAuthSchema = z.object({
 	message: z.string(),
 });
 
-export type WalletAuthPayload = z.infer<typeof walletAuthSchema>;
+type WalletAuthPayload = z.infer<typeof walletAuthSchema>;
 
 export function createSignInMessage(nonce: string, domain: string): string {
 	return [

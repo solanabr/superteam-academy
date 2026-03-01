@@ -1,4 +1,4 @@
-export interface EditorLanguage {
+interface EditorLanguage {
 	id: string;
 	displayName: string;
 	extensions: string[];
@@ -44,23 +44,11 @@ export const SUPPORTED_LANGUAGES: EditorLanguage[] = [
 	},
 ];
 
-export function getLanguageById(id: string): EditorLanguage | undefined {
-	return SUPPORTED_LANGUAGES.find((lang) => lang.id === id);
-}
-
-export function getLanguageByExtension(extension: string): EditorLanguage | undefined {
+function getLanguageByExtension(extension: string): EditorLanguage | undefined {
 	return SUPPORTED_LANGUAGES.find((lang) => lang.extensions.some((ext) => ext === extension));
-}
-
-export function getLanguageByAlias(alias: string): EditorLanguage | undefined {
-	return SUPPORTED_LANGUAGES.find((lang) => lang.aliases?.includes(alias));
 }
 
 export function detectLanguage(filename: string): EditorLanguage | undefined {
 	const extension = filename.substring(filename.lastIndexOf("."));
 	return getLanguageByExtension(extension);
-}
-
-export function getDefaultLanguage(): EditorLanguage {
-	return SUPPORTED_LANGUAGES[0]; // TypeScript
 }

@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 			template: "%s | Superteam Academy",
 		},
 		description,
-		metadataBase: new URL("https://academy.superteam.fun"),
+		metadataBase: new URL("https://superteam.com.br"),
 		openGraph: {
 			type: "website",
 			siteName: "Superteam Academy",
@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 			</head>
 			<body
-				className={`min-h-screen flex flex-col ${dmSans.variable} ${bricolageGrotesque.variable}`}
+				className={`min-h-screen flex flex-col bg-background text-foreground font-sans ${dmSans.variable} ${bricolageGrotesque.variable}`}
 			>
 				{children}
 			</body>

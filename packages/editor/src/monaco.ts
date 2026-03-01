@@ -29,7 +29,7 @@ export interface MonacoEditorInstance {
 	onSave: (callback: () => void) => monaco.IDisposable;
 }
 
-export class MonacoEditorAdapter {
+class MonacoEditorAdapter {
 	private static instance: MonacoEditorAdapter;
 	private monaco: typeof monaco | null = null;
 

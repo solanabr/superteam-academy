@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext } from "react";
 
 export interface AuthSession {
 	id: string;
@@ -16,7 +16,7 @@ export interface AuthUser {
 	onboardingCompleted?: boolean;
 }
 
-export interface WalletState {
+interface WalletState {
 	connected: boolean;
 	connecting: boolean;
 	disconnecting: boolean;
@@ -82,10 +82,6 @@ const defaultAuth: AuthContextType = {
 };
 
 export const AuthContext = createContext<AuthContextType>(defaultAuth);
-
-export function AuthFallbackProvider({ children }: { children: ReactNode }) {
-	return <AuthContext.Provider value={defaultAuth}>{children}</AuthContext.Provider>;
-}
 
 export function useAuth() {
 	return useContext(AuthContext);

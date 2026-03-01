@@ -15,7 +15,7 @@ export enum StreakEventType {
 	STREAK_RECOVERED = "streak_recovered",
 }
 
-export interface StreakConfig {
+interface StreakConfig {
 	activityWindowHours: number;
 	freezeDurationDays: number;
 	maxFreezes: number;

@@ -1,6 +1,5 @@
 "use server";
 
-import type { AcademyUser } from "@superteam-academy/cms";
 import { readClient } from "@/lib/cms-context";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -60,24 +59,6 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
 		{ username }
 	);
 	return existing === 0;
-}
-
-export async function calculateProfileCompleteness(user: AcademyUser): Promise<number> {
-	const fields = [
-		user.name,
-		user.bio,
-		user.location,
-		user.title,
-		user.experienceLevel,
-		(user.learningGoals?.length ?? 0) > 0,
-		(user.skills?.length ?? 0) > 0,
-		user.github,
-		user.linkedin,
-		user.username,
-	];
-
-	const filledFields = fields.filter(Boolean).length;
-	return Math.round((filledFields / fields.length) * 100);
 }
 
 export async function getUsernameSuggestions(user: {

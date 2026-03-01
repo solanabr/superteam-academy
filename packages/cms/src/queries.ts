@@ -100,7 +100,7 @@ export const allTracksQuery = /* groq */ `
   }
 `;
 
-export const userFields = /* groq */ `
+const userFields = /* groq */ `
   _id,
   _type,
   _createdAt,
@@ -191,7 +191,7 @@ export const userStatsQuery = /* groq */ `
   }
 `;
 
-export const discussionFields = /* groq */ `
+const discussionFields = /* groq */ `
   _id,
   _type,
   _createdAt,
@@ -252,7 +252,7 @@ export const discussionsByTagQuery = /* groq */ `
   }
 `;
 
-export const eventFields = /* groq */ `
+const eventFields = /* groq */ `
   _id,
   _type,
   _createdAt,
@@ -295,7 +295,7 @@ export const eventBySlugQuery = /* groq */ `
   }
 `;
 
-export const projectFields = /* groq */ `
+const projectFields = /* groq */ `
   _id,
   _type,
   _createdAt,
@@ -344,7 +344,7 @@ export const projectsByCategoryQuery = /* groq */ `
   }
 `;
 
-export const memberFields = /* groq */ `
+const memberFields = /* groq */ `
   _id,
   _type,
   title,
@@ -381,7 +381,7 @@ export const membersByBadgeQuery = /* groq */ `
   }
 `;
 
-export const lessonNoteFields = /* groq */ `
+const lessonNoteFields = /* groq */ `
   _id,
   _type,
   _createdAt,

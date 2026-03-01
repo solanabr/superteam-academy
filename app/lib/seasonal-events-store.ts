@@ -3,7 +3,7 @@ type SeasonalProgress = {
 	completedChallenges: number;
 };
 
-export type SeasonalChallenge = {
+type SeasonalChallenge = {
 	id: string;
 	title: string;
 	description: string;
@@ -12,7 +12,7 @@ export type SeasonalChallenge = {
 	timeLimit?: number;
 };
 
-export type SeasonalReward = {
+type SeasonalReward = {
 	id: string;
 	name: string;
 	description: string;

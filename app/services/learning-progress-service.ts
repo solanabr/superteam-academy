@@ -11,7 +11,7 @@ export interface LearnerStats {
 	totalLessonsCompleted: number;
 }
 
-export interface LearnerCourseSummary {
+interface LearnerCourseSummary {
 	courseId: string;
 	coursePubkey: PublicKey;
 	totalLessons: number;

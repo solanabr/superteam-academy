@@ -4,7 +4,7 @@ import { AcademyClient, PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam-acad
 let cachedConnection: Connection | null = null;
 let cachedClient: AcademyClient | null = null;
 
-export function getRpcUrl(): string {
+function getRpcUrl(): string {
 	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
 }
 
@@ -107,18 +107,4 @@ export function contentTxIdToArweaveUrl(contentTxId: Uint8Array): string {
 
 export function arweaveTxIdToBytes(txId: string): number[] {
 	return Array.from(decodeBase64Url(txId));
-}
-
-export async function fetchArweaveJson<T>(contentTxId: Uint8Array): Promise<T | null> {
-	try {
-		const url = contentTxIdToArweaveUrl(contentTxId);
-		const response = await fetch(url, {
-			next: { revalidate: 300 },
-			headers: { "Content-Type": "application/json" },
-		});
-		if (!response.ok) return null;
-		return (await response.json()) as T;
-	} catch {
-		return null;
-	}
 }

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /_next/
 
-Sitemap: https://academy.superteam.fun/sitemap.xml
+Sitemap: https://superteam.com.br/sitemap.xml

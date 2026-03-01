@@ -29,11 +29,6 @@ export interface VerifyResult {
 	error?: string;
 }
 
-export interface RevokeResult {
-	success: boolean;
-	error?: string;
-}
-
 export interface TrackRequirements {
 	courses: number;
 	xp: number;

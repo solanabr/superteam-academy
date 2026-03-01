@@ -3,7 +3,7 @@ import { resolveCourseImageUrl } from "@/lib/cms";
 import { getGravatarUrl } from "@/lib/utils";
 import { getUserByWallet } from "@/lib/sanity-users";
 
-export type CourseReviewView = {
+type CourseReviewView = {
 	id: string;
 	user: {
 		name: string;

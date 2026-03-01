@@ -8,7 +8,6 @@ import {
 	allUsersQuery,
 	adminUsersQuery,
 	userStatsQuery,
-	userCountQuery,
 } from "@superteam-academy/cms/queries";
 import { generateUsername } from "./username-utils";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
@@ -25,7 +24,7 @@ type SyncUserParams = {
 	image?: string;
 };
 
-export function isSuperAdminIdentifier(emailOrWallet: string): boolean {
+function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 	const identifier = process.env.SUPER_ADMIN_IDENTIFIER;
 	if (!identifier) return false;
 	const normalizedInput = emailOrWallet.trim().replace(WALLET_EMAIL_DOMAIN, "");
@@ -233,11 +232,6 @@ export async function getUserByAuthId(authId: string): Promise<AcademyUser | nul
 	return readClient.fetch<AcademyUser | null>(userByAuthIdQuery, { authId });
 }
 
-export async function getUserByEmail(email: string): Promise<AcademyUser | null> {
-	if (!readClient) return null;
-	return readClient.fetch<AcademyUser | null>(userByEmailQuery, { email });
-}
-
 export async function getUserByWallet(walletAddress: string): Promise<AcademyUser | null> {
 	if (!readClient) return null;
 	return readClient.fetch<AcademyUser | null>(userByWalletQuery, { walletAddress });
@@ -257,11 +251,6 @@ export async function getAllUsers(limit = 100, offset = 0): Promise<AcademyUser[
 export async function getAdminUsers(): Promise<AcademyUser[]> {
 	if (!readClient) return [];
 	return readClient.fetch<AcademyUser[]>(adminUsersQuery);
-}
-
-export async function getUserCount(): Promise<number> {
-	if (!readClient) return 0;
-	return readClient.fetch<number>(userCountQuery);
 }
 
 export async function getUserStats(): Promise<{

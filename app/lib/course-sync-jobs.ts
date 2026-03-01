@@ -6,7 +6,7 @@ import { writeClient } from "@/lib/cms-context";
 
 const execFileAsync = promisify(execFile);
 
-export type CourseSyncStatus = "queued" | "running" | "succeeded" | "failed";
+type CourseSyncStatus = "queued" | "running" | "succeeded" | "failed";
 
 export type CourseSyncJob = {
 	id: string;

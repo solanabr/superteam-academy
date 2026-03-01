@@ -103,7 +103,9 @@ async function HeroSection() {
 
 						<h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-balance animate-fade-up">
 							{t("title")}{" "}
-							<span className="text-gradient">{t("titleHighlight")}</span>{" "}
+							<span className="bg-clip-text text-transparent bg-linear-to-r from-green to-forest">
+								{t("titleHighlight")}
+							</span>{" "}
 							{t("titleSuffix")}
 						</h1>
 
@@ -256,7 +258,10 @@ async function FeaturesSection() {
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="max-w-2xl mb-14">
 					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-						{t("title")} <span className="text-gradient">{t("titleHighlight")}</span>
+						{t("title")}{" "}
+						<span className="bg-clip-text text-transparent bg-linear-to-r from-green to-forest">
+							{t("titleHighlight")}
+						</span>
 					</h2>
 					<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
 						{t("description")}
@@ -267,7 +272,7 @@ async function FeaturesSection() {
 					{FEATURES.map((feature) => (
 						<div
 							key={feature.title}
-							className="group relative p-6 rounded-2xl surface-inset hover:surface-elevated transition-all duration-300"
+							className="group relative p-6 rounded-2xl bg-surface border border-border/40 hover:bg-card hover:shadow-md hover:shadow-black/4 hover:border hover:border-border/60 transition-all duration-300"
 						>
 							<div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors">
 								<feature.icon className="h-5 w-5 text-primary" />
@@ -358,7 +363,7 @@ async function FeaturedCoursesSection() {
 						<Link
 							key={course.slug}
 							href={`/courses/${course.slug}`}
-							className="group relative flex flex-col rounded-2xl surface-elevated overflow-hidden hover:shadow-lg transition-all duration-300"
+							className="group relative flex flex-col rounded-2xl bg-card shadow-md shadow-black/4 border border-border/60 overflow-hidden hover:shadow-lg transition-all duration-300"
 						>
 							<div
 								className={`h-40 bg-linear-to-br ${course.gradient} relative overflow-hidden`}

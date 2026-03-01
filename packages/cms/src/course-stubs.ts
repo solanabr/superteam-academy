@@ -239,26 +239,6 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 	},
 ];
 
-export const FRONTEND_SEED_COURSES = COURSE_SEEDS.map((course) => ({
-	id: course.id,
-	title: course.title,
-	description: course.description,
-	category: course.category,
-	level: course.level,
-	duration: course.duration,
-	students: course.students,
-	instructor: course.instructor,
-	image: course.image,
-	tags: course.tags,
-	topics: course.topics,
-	xpReward: course.xpReward,
-	price: course.price,
-	featured: course.featured,
-	gradient: course.gradient,
-}));
-
-export type FrontendSeedCourse = (typeof FRONTEND_SEED_COURSES)[number];
-
 export const ONCHAIN_COURSE_STUBS = COURSE_SEEDS.map((course) => ({
 	courseId: course.courseId,
 	title: course.title,
