@@ -1,6 +1,7 @@
 // apps/web/src/app/api/community/threads/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
   try {
@@ -156,6 +157,113 @@ export async function GET(request: NextRequest) {
         : null;
 
     return NextResponse.json({ threads: result, nextCursor });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.SUPABASE_SERVICE_ROLE_KEY
+    ) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { title, body: content, type, categoryId, courseId, lessonId } = body;
+
+    // Validate
+    if (
+      !title ||
+      typeof title !== "string" ||
+      title.length < 5 ||
+      title.length > 200
+    ) {
+      return NextResponse.json(
+        { error: "Title must be 5-200 characters" },
+        { status: 400 }
+      );
+    }
+    if (
+      !content ||
+      typeof content !== "string" ||
+      content.length < 10 ||
+      content.length > 10000
+    ) {
+      return NextResponse.json(
+        { error: "Body must be 10-10000 characters" },
+        { status: 400 }
+      );
+    }
+    if (!type || !["question", "discussion"].includes(type)) {
+      return NextResponse.json(
+        { error: "Type must be question or discussion" },
+        { status: 400 }
+      );
+    }
+    // Global threads must have a category
+    if (!courseId && !categoryId) {
+      return NextResponse.json(
+        { error: "Global threads require a category" },
+        { status: 400 }
+      );
+    }
+
+    // Generate slug base from title (cosmetic only — short_id resolves the thread)
+    const slugBase = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 70); // Leave room for -{short_id} suffix
+
+    // Atomic insert + slug update via SECURITY DEFINER function
+    const admin = createAdminClient();
+    const { data: thread, error } = await admin
+      .rpc("create_thread", {
+        p_author_id: user.id,
+        p_title: title,
+        p_body: content,
+        p_type: type,
+        p_category_id: categoryId || null,
+        p_course_id: courseId || null,
+        p_lesson_id: lessonId || null,
+        p_slug_base: slugBase,
+      })
+      .single();
+
+    if (error || !thread) {
+      return NextResponse.json(
+        { error: "Failed to create thread" },
+        { status: 500 }
+      );
+    }
+
+    // Award community XP (5 XP for creating thread)
+    await admin.rpc("award_community_xp", {
+      p_user_id: user.id,
+      p_amount: 5,
+      p_reason: "community:thread_created",
+      p_idempotency_key: `thread:${thread.id}`,
+    });
+
+    return NextResponse.json(thread, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },
