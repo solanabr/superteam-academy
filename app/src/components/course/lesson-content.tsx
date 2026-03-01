@@ -15,6 +15,7 @@ export interface LessonContentProps {
   nextLesson: LessonNavItem | null;
   onComplete: () => Promise<void>;
   initialCompleted: boolean;
+  onChainSig?: string | null;
 }
 
 export function LessonContent({
@@ -24,6 +25,7 @@ export function LessonContent({
   nextLesson,
   onComplete,
   initialCompleted,
+  onChainSig,
 }: LessonContentProps) {
   const [completed, setCompleted] = useState(initialCompleted);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -83,6 +85,7 @@ export function LessonContent({
             xpReward={lesson.xpReward}
             xpAnimating={xpAnimating}
             onMarkComplete={handleMarkComplete}
+            onChainSig={onChainSig}
           />
         </LessonNavigation>
       </div>

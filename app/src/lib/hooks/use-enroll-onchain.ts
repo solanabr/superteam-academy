@@ -2,9 +2,12 @@
 
 import { useState, useCallback } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
+import type { PublicKey } from "@solana/web3.js";
 import { useWalletCompat } from "@/lib/hooks/use-wallet-compat";
 import { useSignAndSendTransaction } from "@privy-io/react-auth/solana";
 import { buildEnrollTransaction, isEnrolledOnChain } from "@/lib/onchain/enroll-tx";
+import { getCoursePda, getEnrollmentPda } from "@/lib/onchain/pda";
+import { deserializeCourse } from "@/lib/onchain/deserializers";
 import bs58 from "bs58";
 
 export type OnChainEnrollState =
@@ -59,7 +62,24 @@ export function useEnrollOnChain(): UseEnrollOnChainReturn {
         }
 
         setState("building");
-        const tx = await buildEnrollTransaction(courseId, publicKey, connection);
+
+        // Fetch the course account to check for a prerequisite
+        const [coursePda] = getCoursePda(courseId);
+        const courseInfo = await connection.getAccountInfo(coursePda);
+        if (!courseInfo) throw new Error("Course not found on-chain");
+
+        const course = deserializeCourse(Buffer.from(courseInfo.data));
+        let prerequisite: { coursePda: PublicKey; enrollmentPda: PublicKey } | null = null;
+
+        if (course.prerequisite) {
+          const prereqCourseInfo = await connection.getAccountInfo(course.prerequisite);
+          if (!prereqCourseInfo) throw new Error("Prerequisite course not found on-chain");
+          const prereqCourse = deserializeCourse(Buffer.from(prereqCourseInfo.data));
+          const [prereqEnrollmentPda] = getEnrollmentPda(prereqCourse.courseId, publicKey);
+          prerequisite = { coursePda: course.prerequisite, enrollmentPda: prereqEnrollmentPda };
+        }
+
+        const tx = await buildEnrollTransaction(courseId, publicKey, connection, prerequisite);
 
         setState("signing");
         const serialized = tx.serialize({ requireAllSignatures: false });

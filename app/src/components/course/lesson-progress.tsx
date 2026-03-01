@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2, Sparkles, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface LessonProgressProps {
@@ -8,6 +8,7 @@ export interface LessonProgressProps {
   xpReward: number;
   xpAnimating: boolean;
   onMarkComplete: () => void;
+  onChainSig?: string | null;
 }
 
 export function LessonProgress({
@@ -15,6 +16,7 @@ export function LessonProgress({
   xpReward,
   xpAnimating,
   onMarkComplete,
+  onChainSig,
 }: LessonProgressProps) {
   const t = useTranslations("lesson");
   return (
@@ -26,9 +28,22 @@ export function LessonProgress({
       )}
 
       {completed ? (
-        <div className="flex items-center gap-1.5 rounded-md bg-brazil-green/10 px-4 py-2 text-sm font-medium text-brazil-green animate-celebration-bounce">
-          <CheckCircle2 className="h-4 w-4" />
-          {t("completed")}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-md bg-brazil-green/10 px-4 py-2 text-sm font-medium text-brazil-green animate-celebration-bounce">
+            <CheckCircle2 className="h-4 w-4" />
+            {t("completed")}
+          </div>
+          {onChainSig && (
+            <a
+              href={`https://explorer.solana.com/tx/${onChainSig}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Verified on-chain
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
         </div>
       ) : (
         <button

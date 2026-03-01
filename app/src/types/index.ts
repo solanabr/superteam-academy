@@ -112,7 +112,7 @@ export interface Credential {
   currentLevel: number;
   coursesCompleted: number;
   totalXpEarned: number;
-  firstEarned: string;
+  firstEarned?: string;
   lastUpdated: string;
   metadataUri?: string;
   badgeImage?: string;

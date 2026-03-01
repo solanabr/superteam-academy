@@ -64,6 +64,8 @@ export interface CourseData {
   trackLevel: number;
   /** Whether the course is open for new enrollments */
   isActive: boolean;
+  /** Prerequisite course PDA pubkey, or null if no prerequisite */
+  prerequisite: PublicKey | null;
 }
 
 /** Minimal deserialized Enrollment account (PDA seeded by course + learner). */
@@ -76,6 +78,8 @@ export interface EnrollmentData {
   completedAt: number | null;
   /** Bitmap array [u64; 4] tracking completed lessons (up to 256 lessons) */
   lessonFlags: BN[];
+  /** Metaplex Core credential asset address, or null if not yet issued */
+  credentialAsset: PublicKey | null;
 }
 
 // ── Deserializers ───────────────────────────────────────────────────────────
@@ -87,6 +91,15 @@ export function deserializeConfig(data: Buffer): ConfigData {
   const backendSigner = readPubkey(data, offset); offset += 32;
   const xpMint = readPubkey(data, offset);
   return { authority, backendSigner, xpMint };
+}
+
+/**
+ * Read the `creator` public key from a raw Course account buffer.
+ * Layout after discriminator (8 bytes): courseId string (4 + len bytes), then creator (32 bytes).
+ */
+export function readCreatorFromCourse(data: Buffer): PublicKey {
+  const courseIdLen = data.readUInt32LE(8);
+  return readPubkey(data, 8 + 4 + courseIdLen);
 }
 
 /** Deserialize a Course account from its raw Borsh-encoded buffer (skips 8-byte discriminator). */
@@ -105,13 +118,17 @@ export function deserializeCourse(data: Buffer): CourseData {
   const trackLevel = readU8(data, offset); offset += 1;
   // prerequisite: Option<Pubkey> — 1 byte tag + optional 32 bytes
   const hasPrereq = readU8(data, offset); offset += 1;
-  if (hasPrereq) offset += 32;
+  let prerequisite: PublicKey | null = null;
+  if (hasPrereq) {
+    prerequisite = readPubkey(data, offset);
+    offset += 32;
+  }
   offset += 4; // creatorRewardXp
   offset += 2; // minCompletionsForReward
   offset += 4; // totalCompletions
   offset += 4; // totalEnrollments
   const isActive = readU8(data, offset) === 1;
-  return { courseId, lessonCount, xpPerLesson, trackId, trackLevel, isActive };
+  return { courseId, lessonCount, xpPerLesson, trackId, trackLevel, isActive, prerequisite };
 }
 
 /** Deserialize an Enrollment account from its raw Borsh-encoded buffer (skips 8-byte discriminator). */
@@ -134,5 +151,8 @@ export function deserializeEnrollment(data: Buffer): EnrollmentData {
     offset += 8;
   }
   const lessonFlags = readLessonFlags(data, offset);
-  return { course, enrolledAt, completedAt, lessonFlags };
+  offset += 32; // [u64; 4]
+  const hasCredential = readU8(data, offset); offset += 1;
+  const credentialAsset = hasCredential ? readPubkey(data, offset) : null;
+  return { course, enrolledAt, completedAt, lessonFlags, credentialAsset };
 }

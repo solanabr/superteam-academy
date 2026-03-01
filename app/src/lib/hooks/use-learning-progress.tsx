@@ -31,6 +31,7 @@ interface LearningProgressState {
   progressMap: Record<string, Progress>;
   isLoaded: boolean;
   isOnChain: boolean;
+  onChainLessonSig: string | null;
 }
 
 interface ActivityMeta {
@@ -44,6 +45,7 @@ interface LearningProgressActions {
   getLeaderboard(timeframe: "weekly" | "monthly" | "alltime", courseId?: string): Promise<LeaderboardEntry[]>;
   claimAchievement(achievementId: number): Promise<void>;
   refreshAll(): Promise<void>;
+  walletAddress: string | null;
 }
 
 type LearningProgressCtx = LearningProgressState & LearningProgressActions;
@@ -70,6 +72,7 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
     progressMap: {},
     isLoaded: false,
     isOnChain: false,
+    onChainLessonSig: null,
   });
 
   const loadAll = useCallback(async () => {
@@ -98,6 +101,7 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
         progressMap,
         isLoaded: true,
         isOnChain: !!walletUserId,
+        onChainLessonSig: null,
       });
     } catch {
       setState((prev) => ({ ...prev, isLoaded: true }));
@@ -140,6 +144,7 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
           progressMap: pMap,
           isLoaded: true,
           isOnChain: !!walletUserId,
+          onChainLessonSig: null,
         });
       } catch {
         if (!cancelled) {
@@ -174,6 +179,26 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
         course: meta?.courseTitle ?? courseId,
         courseSlug: courseId,
       });
+
+      // Fire on-chain complete_lesson (non-blocking — failure does not affect UI)
+      if (walletUserId) {
+        fetch("/api/onchain/complete-lesson", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId, lessonIndex, learnerWallet: walletUserId }),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`${res.status}`);
+            return res.json();
+          })
+          .then((data: { success?: boolean; signature?: string }) => {
+            if (data.signature) {
+              setState((prev) => ({ ...prev, onChainLessonSig: data.signature ?? null }));
+            }
+          })
+          .catch((err) => console.warn("[onchain/complete-lesson]", err));
+      }
+
       // Check if course was just completed
       const updatedProgress = await progressService.getProgress(state.userId, courseId);
       if (updatedProgress?.percentage === 100 && !state.progressMap[courseId]?.completedAt) {
@@ -181,10 +206,40 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
           course: meta?.courseTitle ?? courseId,
           courseSlug: courseId,
         });
+
+        // Fire on-chain finalize_course + issue_credential cascade (non-blocking)
+        if (walletUserId) {
+          fetch("/api/onchain/finalize-course", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseId, learnerWallet: walletUserId }),
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error(`finalize-course ${res.status}`);
+              return res.json();
+            })
+            .then((data: { success?: boolean }) => {
+              if (!data.success) throw new Error("finalize-course returned failure");
+              return fetch("/api/onchain/issue-credential", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  courseId,
+                  learnerWallet: walletUserId,
+                  name: meta?.courseTitle ?? courseId,
+                }),
+              });
+            })
+            .then((res) => {
+              if (res && !res.ok) throw new Error(`issue-credential ${res.status}`);
+            })
+            .catch((err) => console.warn("[onchain/finalize+issue-credential]", err));
+        }
       }
+
       await loadAll();
     },
-    [state.userId, state.progressMap, loadAll],
+    [state.userId, state.progressMap, walletUserId, loadAll],
   );
 
   const getLeaderboard = useCallback(
@@ -213,8 +268,9 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
       getLeaderboard,
       claimAchievement,
       refreshAll: loadAll,
+      walletAddress: walletUserId,
     }),
-    [state, enrollInCourse, completeLesson, getLeaderboard, claimAchievement, loadAll],
+    [state, enrollInCourse, completeLesson, getLeaderboard, claimAchievement, loadAll, walletUserId],
   );
 
   return <Context.Provider value={ctx}>{children}</Context.Provider>;

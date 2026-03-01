@@ -35,6 +35,8 @@ async function getDbCredentials(walletAddress: string): Promise<Credential[]> {
 /** Raw asset shape returned by the Helius DAS `getAssetsByOwner` endpoint. */
 interface DASAsset {
   id: string;
+  /** Unix timestamp (seconds) when the asset was created on-chain. */
+  created_at?: number;
   content?: {
     metadata?: {
       name?: string;
@@ -132,7 +134,7 @@ export async function getOnChainCredentials(
         currentLevel: level,
         coursesCompleted,
         totalXpEarned: totalXp,
-        firstEarned: new Date().toISOString(), // DAS doesn't provide this directly
+        firstEarned: asset.created_at ? new Date(asset.created_at * 1000).toISOString() : undefined,
         lastUpdated: new Date().toISOString(),
         metadataUri: asset.content?.json_uri,
         badgeImage: asset.content?.links?.image,

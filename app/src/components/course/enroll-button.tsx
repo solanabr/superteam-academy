@@ -9,6 +9,7 @@ import { formatXP } from "@/lib/utils";
 import { TRACKS } from "@/lib/constants";
 import { CourseIllustration } from "@/components/icons/course-illustration";
 import { useEnrollOnChain } from "@/lib/hooks/use-enroll-onchain";
+import { CloseEnrollmentButton } from "@/components/course/close-enrollment-button";
 import type { Course } from "@/types";
 
 export interface EnrollButtonProps {
@@ -113,6 +114,12 @@ export function EnrollButton({
           >
             {progressPct === 100 ? t("detail.completedMessage") : t("catalog.continueLesson")}
           </Link>
+
+          {progressPct === 100 && (
+            <div className="mt-3">
+              <CloseEnrollmentButton course={course} />
+            </div>
+          )}
         </>
       ) : !connected ? (
         /* Wallet not connected — enrollment requires wallet signature */

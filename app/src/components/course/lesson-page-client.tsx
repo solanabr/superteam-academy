@@ -56,7 +56,7 @@ export default function LessonPageClient({ slug, lessonId }: LessonPageClientPro
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
   const isChallenge = lesson.type === "challenge" && lesson.challenge != null;
 
-  const { completeLesson, progressMap, xp } = useLearningProgress();
+  const { completeLesson, progressMap, xp, onChainLessonSig } = useLearningProgress();
   const { showXPGain, showLevelUp } = useXPNotification();
   const {
     recordCombo, addDailyXP, completeQuestProgress, triggerCelebration, dailyGoal, combo,
@@ -130,6 +130,7 @@ export default function LessonPageClient({ slug, lessonId }: LessonPageClientPro
           nextLesson={nextLesson}
           onComplete={handleComplete}
           initialCompleted={isLessonCompleted}
+          onChainSig={onChainLessonSig}
         />
       )}
     </div>

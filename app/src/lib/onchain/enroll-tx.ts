@@ -1,10 +1,9 @@
 /**
  * Build the on-chain `enroll` transaction for a learner to sign directly.
  * The learner pays rent for the Enrollment PDA — no backend needed.
- *
- * Instruction discriminator: sha256("global:enroll")[0:8] = [58,12,36,3,142,28,1,43]
  */
 
+import { createHash } from "crypto";
 import {
   Connection,
   PublicKey,
@@ -15,8 +14,9 @@ import {
 import { PROGRAM_ID } from "./constants";
 import { getCoursePda, getEnrollmentPda } from "./pda";
 
-// Anchor discriminator for `enroll` = sha256("global:enroll")[0:8]
-const ENROLL_DISCRIMINATOR = Buffer.from([58, 12, 36, 3, 142, 28, 1, 43]);
+const ENROLL_DISCRIMINATOR = Buffer.from(
+  createHash("sha256").update("global:enroll").digest()
+).subarray(0, 8);
 
 /** Borsh-encode a string: 4-byte LE u32 length prefix + UTF-8 bytes. */
 function encodeString(s: string): Buffer {
@@ -28,14 +28,19 @@ function encodeString(s: string): Buffer {
 
 /**
  * Build a ready-to-sign `enroll` transaction.
- * @param courseId  Course slug as stored on-chain (e.g. "intro-to-solana")
- * @param learner   Learner's wallet public key (will be the fee payer + signer)
- * @param connection  Solana RPC connection (needed for blockhash)
+ * @param courseId       Course slug as stored on-chain (e.g. "intro-to-solana")
+ * @param learner        Learner's wallet public key (fee payer + signer)
+ * @param connection     Solana RPC connection (needed for blockhash)
+ * @param prerequisite   If the course has a prerequisite, provide its Course PDA and the
+ *                       learner's completed Enrollment PDA for that prerequisite course.
+ *                       These are passed as remaining_accounts so the program can verify
+ *                       PrerequisiteNotMet on-chain.
  */
 export async function buildEnrollTransaction(
   courseId: string,
   learner: PublicKey,
   connection: Connection,
+  prerequisite?: { coursePda: PublicKey; enrollmentPda: PublicKey } | null,
 ): Promise<Transaction> {
   // Instruction data: discriminator + borsh-encoded courseId string
   const data = Buffer.concat([ENROLL_DISCRIMINATOR, encodeString(courseId)]);
@@ -43,16 +48,19 @@ export async function buildEnrollTransaction(
   const [coursePda] = getCoursePda(courseId);
   const [enrollmentPda] = getEnrollmentPda(courseId, learner);
 
-  const ix = new TransactionInstruction({
-    programId: PROGRAM_ID,
-    keys: [
-      { pubkey: coursePda, isSigner: false, isWritable: true },
-      { pubkey: enrollmentPda, isSigner: false, isWritable: true },
-      { pubkey: learner, isSigner: true, isWritable: true },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    ],
-    data,
-  });
+  const keys: Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }> = [
+    { pubkey: coursePda, isSigner: false, isWritable: true },
+    { pubkey: enrollmentPda, isSigner: false, isWritable: true },
+    { pubkey: learner, isSigner: true, isWritable: true },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+  ];
+
+  if (prerequisite) {
+    keys.push({ pubkey: prerequisite.coursePda, isSigner: false, isWritable: false });
+    keys.push({ pubkey: prerequisite.enrollmentPda, isSigner: false, isWritable: false });
+  }
+
+  const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
   const tx = new Transaction({ feePayer: learner, blockhash, lastValidBlockHeight });

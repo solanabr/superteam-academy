@@ -6,3 +6,7 @@ export { IDL } from "./idl";
 export type { OnchainAcademy } from "./idl";
 export { getOnChainXpBalance, getXpMintFromChain, getXpLeaderboard } from "./xp-balance";
 export { buildEnrollTransaction, isEnrolledOnChain } from "./enroll-tx";
+export { buildCompleteLessonTransaction } from "./instructions/complete-lesson";
+export { buildFinalizeCourseTransaction } from "./instructions/finalize-course";
+export { buildIssueCredentialTransaction } from "./instructions/issue-credential";
+export { buildCloseEnrollmentTransaction } from "./instructions/close-enrollment";

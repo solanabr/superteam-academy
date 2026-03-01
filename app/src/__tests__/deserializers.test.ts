@@ -188,8 +188,11 @@ describe("deserializers", () => {
       enrolledAt: number;
       completedAt: number | null;
       lessonFlags: BN[];
+      credentialAsset?: PublicKey | null;
     }): Buffer {
       const completedSize = opts.completedAt !== null ? 8 : 0;
+      const credentialAsset = opts.credentialAsset ?? null;
+      const credentialSize = credentialAsset !== null ? 32 : 0;
       const size =
         DISCRIMINATOR_SIZE +
         32 +        // course pubkey
@@ -197,7 +200,9 @@ describe("deserializers", () => {
         8 +         // enrolledAt (i64)
         1 +         // hasCompleted flag
         completedSize + // completedAt (optional i64)
-        32;         // lessonFlags [u64; 4]
+        32 +        // lessonFlags [u64; 4]
+        1 +         // hasCredential flag
+        credentialSize; // credentialAsset (optional pubkey)
 
       const buf = Buffer.alloc(size);
       let offset = DISCRIMINATOR_SIZE;
@@ -217,6 +222,13 @@ describe("deserializers", () => {
         const bn = opts.lessonFlags[i] || new BN(0);
         writeU64LE(buf, offset, bn);
         offset += 8;
+      }
+
+      if (credentialAsset !== null) {
+        writeU8(buf, offset, 1); offset += 1;
+        writePubkey(buf, offset, credentialAsset);
+      } else {
+        writeU8(buf, offset, 0);
       }
 
       return buf;
@@ -271,6 +283,33 @@ describe("deserializers", () => {
       // First flag should equal 7 (bits 0,1,2 set)
       expect(enrollment.lessonFlags[0].toNumber()).toBe(7);
       expect(enrollment.lessonFlags[1].toNumber()).toBe(0);
+    });
+
+    it("deserializes credentialAsset when present", () => {
+      const buf = buildEnrollmentBuf({
+        course: KEY_A,
+        enrolledAt: 1700000000,
+        completedAt: 1700100000,
+        lessonFlags: [new BN(0), new BN(0), new BN(0), new BN(0)],
+        credentialAsset: KEY_C,
+      });
+
+      const enrollment = deserializeEnrollment(buf);
+      expect(enrollment.credentialAsset).not.toBeNull();
+      expect(enrollment.credentialAsset?.equals(KEY_C)).toBe(true);
+    });
+
+    it("deserializes null credentialAsset when absent", () => {
+      const buf = buildEnrollmentBuf({
+        course: KEY_A,
+        enrolledAt: 1700000000,
+        completedAt: null,
+        lessonFlags: [new BN(0), new BN(0), new BN(0), new BN(0)],
+        credentialAsset: null,
+      });
+
+      const enrollment = deserializeEnrollment(buf);
+      expect(enrollment.credentialAsset).toBeNull();
     });
   });
 });
