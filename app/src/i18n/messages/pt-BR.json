@@ -1,0 +1,188 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "community": "Comunidade",
+    "dashboard": "Painel",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "connectWallet": "Conectar Carteira",
+    "disconnectWallet": "Desconectar",
+    "signIn": "Entrar"
+  },
+  "home": {
+    "hero": {
+      "badge": "Bounty Hackathon · Superteam Brazil",
+      "title": "Domine o Desenvolvimento Solana",
+      "subtitle": "Ganhe credenciais verificáveis e XP on-chain. O primeiro LMS descentralizado construído para o ecossistema Solana.",
+      "cta": "Começar a Aprender",
+      "ctaSecondary": "Ver Cursos",
+      "stats": {
+        "developers": "Desenvolvedores",
+        "courses": "Cursos",
+        "xpMinted": "XP Cunhado"
+      }
+    },
+    "tracks": {
+      "title": "Trilhas de Aprendizado",
+      "subtitle": "Caminhos estruturados do zero ao desenvolvedor Solana pronto para produção"
+    },
+    "features": {
+      "title": "Construído Diferente",
+      "onChain": {
+        "title": "Progresso On-Chain",
+        "description": "Cada conclusão de aula cunha tokens XP na sua carteira. O progresso vive na Solana — não em um banco de dados."
+      },
+      "credentials": {
+        "title": "Credenciais Soulbound",
+        "description": "Conclua uma trilha para ganhar uma credencial NFT não transferível. Verificável por qualquer um, possuída para sempre."
+      },
+      "editor": {
+        "title": "IDE no Navegador",
+        "description": "Escreva e teste código Rust/TypeScript diretamente no navegador com o editor Monaco. Sem configuração necessária."
+      },
+      "rewards": {
+        "title": "Recompensas para Criadores",
+        "description": "Criadores de cursos ganham XP quando seus cursos são concluídos. Incentivos alinhados, on-chain."
+      }
+    },
+    "socialProof": {
+      "title": "Junte-se à Comunidade",
+      "testimonials": "Depoimentos de Alunos"
+    }
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Do básico de Solana a programas on-chain avançados",
+    "searchPlaceholder": "Pesquisar cursos...",
+    "filters": {
+      "all": "Todos",
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado"
+    },
+    "sort": {
+      "newest": "Mais recente",
+      "xpReward": "XP",
+      "difficulty": "Dificuldade"
+    },
+    "empty": "Nenhum curso encontrado",
+    "enroll": "Inscrever-se",
+    "enrolled": "Inscrito",
+    "continue": "Continuar",
+    "completed": "Concluído",
+    "lessons": "{count} aulas",
+    "hours": "{count}h",
+    "xp": "{amount} XP",
+    "difficulty": {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado"
+    }
+  },
+  "lesson": {
+    "complete": "Marcar como Concluído",
+    "completing": "Concluindo...",
+    "completed": "Concluído",
+    "next": "Próxima Aula",
+    "previous": "Anterior",
+    "runCode": "Executar Código",
+    "resetCode": "Resetar",
+    "testPassing": "Todos os testes passando",
+    "testFailing": "{count} teste(s) falhando",
+    "xpEarned": "+{amount} XP ganho!"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "level": "Nível {level}",
+    "xpToNext": "{xp} XP para o nível {next}",
+    "streak": {
+      "day": "dia de sequência",
+      "days": "dias de sequência",
+      "longest": "maior sequência"
+    },
+    "activeCourses": "Cursos Ativos",
+    "completedCourses": "Concluídos",
+    "credentials": "Credenciais",
+    "recentActivity": "Atividade Recente",
+    "noActivity": "Nenhuma atividade ainda. Comece um curso!",
+    "continueLearning": "Continuar Aprendendo"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Os melhores aprendizes Solana classificados por XP",
+    "timeframes": {
+      "weekly": "Semanal",
+      "monthly": "Mensal",
+      "allTime": "Todos os Tempos"
+    },
+    "rank": "Posição",
+    "learner": "Aprendiz",
+    "level": "Nível",
+    "xp": "XP",
+    "you": "Você"
+  },
+  "profile": {
+    "title": "Perfil",
+    "editProfile": "Editar Perfil",
+    "credentials": "Credenciais",
+    "achievements": "Conquistas",
+    "courses": "Cursos",
+    "noCredentials": "Nenhuma credencial ainda",
+    "noAchievements": "Nenhuma conquista ainda",
+    "joinedDate": "Entrou em {date}",
+    "xpTotal": "{xp} XP total",
+    "level": "Nível {level}"
+  },
+  "settings": {
+    "title": "Configurações",
+    "profile": {
+      "title": "Perfil",
+      "username": "Nome de usuário",
+      "displayName": "Nome de exibição",
+      "bio": "Bio",
+      "save": "Salvar Alterações",
+      "saved": "Salvo!"
+    },
+    "accounts": {
+      "title": "Contas Vinculadas",
+      "wallet": "Carteira Solana",
+      "google": "Google",
+      "github": "GitHub",
+      "connect": "Conectar",
+      "disconnect": "Desconectar"
+    },
+    "appearance": {
+      "title": "Aparência",
+      "theme": "Tema",
+      "dark": "Escuro",
+      "light": "Claro"
+    },
+    "language": {
+      "title": "Idioma",
+      "select": "Selecionar Idioma"
+    }
+  },
+  "certificate": {
+    "title": "Certificado",
+    "verified": "Verificado na Solana",
+    "share": "Compartilhar",
+    "download": "Baixar",
+    "viewOnExplorer": "Ver no Explorer",
+    "completedOn": "Concluído em {date}",
+    "earnedBy": "Ganho por",
+    "track": "Trilha"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "retry": "Tentar novamente",
+    "back": "Voltar",
+    "close": "Fechar",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "walletRequired": "Conecte sua carteira para continuar",
+    "notFound": "Não encontrado",
+    "comingSoon": "Em breve"
+  }
+}
