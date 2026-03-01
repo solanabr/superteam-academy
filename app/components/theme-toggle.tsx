@@ -3,6 +3,7 @@
 import * as React from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,12 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const themeOptions = [
-  { value: "light", label: "Light", icon: SunIcon },
-  { value: "dark", label: "Dark", icon: MoonIcon },
-  { value: "system", label: "System", icon: MonitorIcon },
+  { value: "light", labelKey: "light", icon: SunIcon },
+  { value: "dark", labelKey: "dark", icon: MoonIcon },
+  { value: "system", labelKey: "system", icon: MonitorIcon },
 ] as const;
 
 export function ThemeToggle() {
+  const t = useTranslations("theme");
   const { resolvedTheme, theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -34,7 +36,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="Select theme">
+        <Button variant="outline" size="icon" aria-label={t("label")}>
           <ActiveIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -47,7 +49,7 @@ export function ThemeToggle() {
               onClick={() => setTheme(option.value)}
             >
               <OptionIcon />
-              {option.label}
+              {t(option.labelKey)}
             </DropdownMenuItem>
           );
         })}

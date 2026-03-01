@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "title": "Superteam Academy",
+    "description": "Decentralized learning platform on Solana"
+  },
+  "header": {
+    "goHome": "Go to home"
+  },
+  "theme": {
+    "label": "Select theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "wallet": {
+    "connect": "Connect wallet",
+    "connectPrompt": "Connect your wallet",
+    "connecting": "Connecting…",
+    "disconnect": "Disconnect",
+    "copied": "Copied!"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Espanol",
+    "ptBR": "Portugues"
+  }
+}

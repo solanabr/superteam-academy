@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   useWallet,
   useConnectWallet,
@@ -20,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 
 function ConnectButton() {
+  const t = useTranslations("wallet");
   const [open, setOpen] = useState(false);
   const { isConnected } = useWallet();
   const { connect, isConnecting } = useConnectWallet();
@@ -45,7 +47,7 @@ function ConnectButton() {
             "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none",
           )}
         >
-          {copied ? "Copied!" : formatted}
+          {copied ? t("copied") : formatted}
         </button>
         <Button
           variant="outline"
@@ -53,7 +55,7 @@ function ConnectButton() {
           onClick={() => disconnect()}
           disabled={isDisconnecting}
         >
-          Disconnect
+          {t("disconnect")}
         </Button>
       </div>
     );
@@ -63,12 +65,12 @@ function ConnectButton() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button disabled={isConnecting}>
-          {isConnecting ? "Connecting…" : "Connect wallet"}
+          {isConnecting ? t("connecting") : t("connect")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Connect your wallet</DialogTitle>
+          <DialogTitle>{t("connectPrompt")}</DialogTitle>
         </DialogHeader>
         <WalletListElement
           installedOnly
