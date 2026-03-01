@@ -1,6 +1,7 @@
 "use client";
 
 import { AppProvider, getDefaultConfig } from "@solana/connector/react";
+import { ThemeProvider } from "next-themes";
 import { env } from "@/lib/env";
 
 const connectorConfig = getDefaultConfig({
@@ -11,6 +12,8 @@ const connectorConfig = getDefaultConfig({
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AppProvider connectorConfig={connectorConfig}>{children}</AppProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AppProvider connectorConfig={connectorConfig}>{children}</AppProvider>
+    </ThemeProvider>
   );
 }

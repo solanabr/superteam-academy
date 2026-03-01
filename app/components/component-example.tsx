@@ -93,9 +93,28 @@ import {
   SignOutIcon,
 } from "@phosphor-icons/react";
 
+function FontExample() {
+  return (
+    <Example title="Typography — Archivo + Inter + Commit Mono">
+      <div className="flex flex-col gap-3">
+        <p className="text-xl font-bold font-heading">
+          Heading (Archivo) — The quick brown fox
+        </p>
+        <p className="text-sm font-normal font-sans">
+          Body (Inter) — The quick brown fox
+        </p>
+        <p className="text-sm font-medium font-mono">
+          Code (Commit Mono) — const lessonXp = 100;
+        </p>
+      </div>
+    </Example>
+  );
+}
+
 export function ComponentExample() {
   return (
     <ExampleWrapper>
+      <FontExample />
       <CardExample />
       <FormExample />
     </ExampleWrapper>

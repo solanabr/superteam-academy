@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
 import { Providers } from "@/components/providers";
 import { ConnectButton } from "@/components/connect-wallet";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Superteam Academy",
@@ -23,18 +17,39 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased">
         <Providers>
-          <header className="border-b border-border px-4 py-3">
-            <div className="mx-auto flex max-w-6xl items-center justify-between">
-              <span className="font-semibold">Superteam Academy</span>
-              <ConnectButton />
-            </div>
-          </header>
-          {children}
+          <TooltipProvider>
+            <header className="border-b border-border px-4 py-3">
+              <div className="mx-auto flex max-w-6xl items-center justify-between">
+                <Link href="/" aria-label="Go to home">
+                  <Image
+                    src="/logo-green.svg"
+                    alt="Superteam Academy"
+                    width={176}
+                    height={30}
+                    className="h-8 w-auto dark:hidden"
+                    priority
+                  />
+                  <Image
+                    src="/logo-white.svg"
+                    alt="Superteam Academy"
+                    width={176}
+                    height={30}
+                    className="hidden h-8 w-auto dark:block"
+                    priority
+                  />
+                </Link>
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <ConnectButton />
+                </div>
+              </div>
+            </header>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </Providers>
       </body>
     </html>
