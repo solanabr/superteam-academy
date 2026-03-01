@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { ArrowLeft, CircleNotch } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { VoteButton } from "@/components/community/vote-button";
 import { ThreadStatusBadge } from "@/components/community/thread-status-badge";
@@ -129,7 +129,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <CircleNotch className="h-8 w-8 animate-spin text-[var(--primary)]" />
+        <div className="sol-spinner" aria-hidden="true" />
       </div>
     );
   }
