@@ -8,13 +8,15 @@
     "postinstall": "pnpm db:generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
     "build": "tsc && tsc-alias -p tsconfig.json",
     "lint": "eslint src",
     "start": "node dist/index.js",
     "copy-idl": "mkdir -p src/idl && cp ../onchain-academy/target/idl/onchain_academy.json src/idl/ 2>/dev/null || true",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "tsx scripts/smoke-test-academy.ts"
+    "smoke": "tsx scripts/smoke-test-academy.ts",
+    "cron:leaderboard": "tsx src/jobs/sync-leaderboard.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

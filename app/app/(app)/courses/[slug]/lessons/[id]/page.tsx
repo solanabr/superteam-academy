@@ -8,6 +8,7 @@ import {
     ChevronRight,
     CheckCircle2,
     Code2,
+    Loader2,
     RotateCcw,
     BookOpen,
 } from "lucide-react";
@@ -19,12 +20,10 @@ import {
     getLessonById,
     getAllLessonsFlat,
     getCourseIdForProgram,
-    getEffectiveLessonCount,
-    getEffectiveLessons,
 } from "@/lib/services/content-service";
 import { useEnrollment, useCompleteLesson, useCourse } from "@/hooks";
-import { getLessonFlagsFromEnrollment, isLessonComplete } from "@/lib/lesson-bitmap";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { getLessonFlagsFromEnrollment, isLessonComplete, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
+import { getEffectiveLessonCount } from "@/lib/services/content-service";
 import { toast } from "sonner";
 
 export default function LessonPage({
@@ -33,15 +32,15 @@ export default function LessonPage({
     params: Promise<{ slug: string; id: string }>;
 }) {
     const { slug, id } = use(params);
-    const { publicKey } = useWallet();
     const [result, setResult] = useState<Awaited<ReturnType<typeof getLessonById>>>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [testOutput, setTestOutput] = useState<string | null>(null);
     const [code, setCode] = useState("");
-    const [showCompletionModal, setShowCompletionModal] = useState(false);
-
-    // Derive track collection from env (first address if comma-separated)
-    const trackCollection = (process.env.NEXT_PUBLIC_CREDENTIAL_TRACK_COLLECTIONS ?? "").split(",")[0]?.trim() ?? "";
+    const [courseCompleteData, setCourseCompleteData] = useState<{
+        courseId: string;
+        courseName: string;
+        xpEarned: number;
+    } | null>(null);
 
     const courseId = result?.course ? getCourseIdForProgram(result.course) : null;
     const { data: enrollment } = useEnrollment(courseId);
@@ -72,32 +71,16 @@ export default function LessonPage({
     const { course, lesson, moduleTitle, lessonIndex } = result;
     const allLessons = getAllLessonsFlat(course);
     const contentCount = allLessons.length;
-    const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
-    const effectiveLessons = getEffectiveLessons(course, onChainCourse ?? null);
-    const onChainLessonCount = course.onChainCourseId && onChainCourse != null && typeof (onChainCourse as { lesson_count?: number }).lesson_count === 'number'
-        ? (onChainCourse as { lesson_count: number }).lesson_count
-        : null;
-    const canCompleteOnChain = onChainLessonCount == null || lessonIndex < onChainLessonCount;
-
     const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
     const nextLesson = lessonIndex < contentCount - 1 ? allLessons[lessonIndex + 1] : null;
 
     const isChallenge = lesson.type === "challenge";
     const isEnrolled = !!enrollment;
     const isCompleted = isEnrolled && lessonFlags.length > 0 && isLessonComplete(lessonFlags, lessonIndex);
-    const canMarkComplete = isEnrolled && !!publicKey && !isCompleted;
-
-    const handleMarkComplete = () => {
-        if (!publicKey || !course.id) return;
-        const programCourseId = getCourseIdForProgram(course);
-        completeLesson.mutate({
-            courseId: programCourseId,
-            learner: publicKey.toBase58(),
-            lessonIndex,
-            effectiveCount,
-            onCourseComplete: () => setShowCompletionModal(true),
-        });
-    };
+    const prevLessonCompleted = lessonIndex === 0 || (isEnrolled && lessonFlags.length > 0 && isLessonComplete(lessonFlags, lessonIndex - 1));
+    const canAccessLesson = !isEnrolled || prevLessonCompleted;
+    const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
+    const isCourseComplete = completedAt != null;
 
     const handleRunTests = () => {
         setTestOutput("Running tests...\n\n✅ All tests passed!");
@@ -142,10 +125,10 @@ export default function LessonPage({
                 <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
                     {/* Left: Content pane */}
                     <div
-                        className={`flex flex-col overflow-y-auto border-b md:border-b-0 md:border-r border-border bg-background ${isChallenge ? "w-full md:w-1/2 md:min-w-0" : "w-full max-w-3xl mx-auto"
+                        className={`flex flex-col overflow-y-auto border-b md:border-b-0 md:border-r border-border bg-background ${isChallenge ? "w-full md:w-1/2 md:min-w-0" : "w-full min-w-0"
                             }`}
                     >
-                        <div className="p-4 sm:p-6 space-y-4">
+                        <div className="p-4 sm:p-6 lg:p-8 space-y-4">
                             <div className="flex items-center gap-2">
                                 {isChallenge ? (
                                     <Badge
@@ -182,70 +165,150 @@ export default function LessonPage({
                                 </Card>
                             )}
 
-                            {/* Mark complete */}
+                            {/* Access / Completion status */}
                             {!isEnrolled ? (
                                 <Card className="bg-amber-500/10 border-amber-500/20 p-4">
                                     <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
                                         Enroll in this course to track progress and earn XP.
                                     </p>
-                                    <Button asChild variant="outline" size="sm">
+                                    <Button asChild variant="pixel" size="sm" className="font-game">
                                         <Link href={`/courses/${slug}`}>Enroll on course page</Link>
                                     </Button>
                                 </Card>
+                            ) : !canAccessLesson ? (
+                                <Card className="bg-amber-500/10 border-amber-500/20 p-4">
+                                    <p className="text-sm text-amber-600 dark:text-amber-400 mb-2 font-game">
+                                        Complete the previous lesson to unlock this one.
+                                    </p>
+                                    <Button asChild variant="pixel" size="sm" className="font-game">
+                                        <Link href={prevLesson ? `/courses/${slug}/lessons/${prevLesson.id}` : `/courses/${slug}`}>
+                                            {prevLesson ? "Go to previous lesson" : "Back to course"}
+                                        </Link>
+                                    </Button>
+                                </Card>
                             ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-3">
                                     {isCompleted ? (
-                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 gap-1">
+                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 gap-1 font-game">
                                             <CheckCircle2 className="h-3 w-3" />
                                             Completed
                                         </Badge>
                                     ) : (
                                         <Button
+                                            variant="pixel"
                                             size="sm"
-                                            onClick={handleMarkComplete}
-                                            disabled={!canMarkComplete || !canCompleteOnChain || completeLesson.isPending}
+                                            className="font-game text-md"
+                                            onClick={() => {
+                                                if (!courseId) return;
+                                                const course = result?.course;
+                                                const effectiveCount = course
+                                                    ? getEffectiveLessonCount(course, onChainCourse ?? null)
+                                                    : contentCount;
+                                                const xpPerLesson = course?.xpPerLesson ?? 0;
+                                                const isLastLesson =
+                                                    effectiveCount > 0 && lessonIndex === effectiveCount - 1;
+                                                const xpEarned = isLastLesson
+                                                    ? xpPerLesson +
+                                                      Math.floor((xpPerLesson * effectiveCount) / 2)
+                                                    : xpPerLesson;
+                                                completeLesson.mutate({
+                                                    courseId,
+                                                    lessonIndex,
+                                                    xpEarned: xpEarned > 0 ? xpEarned : undefined,
+                                                    effectiveCount,
+                                                    onCourseComplete: isLastLesson
+                                                        ? () => {
+                                                              if (!courseId || !result?.course) return;
+                                                              const xp =
+                                                                  (result.course.xpPerLesson ?? 0);
+                                                              const totalXp =
+                                                                  effectiveCount * xp +
+                                                                  Math.floor((xp * effectiveCount) / 2);
+                                                              setCourseCompleteData({
+                                                                  courseId,
+                                                                  courseName: result.course.title,
+                                                                  xpEarned: totalXp,
+                                                              });
+                                                          }
+                                                        : undefined,
+                                                });
+                                            }}
+                                            disabled={completeLesson.isPending}
                                         >
-                                            {completeLesson.isPending ? "Completing..." : "Mark complete"}
+                                            {completeLesson.isPending ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Completing…
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                    Complete lesson
+                                                </>
+                                            )}
                                         </Button>
-                                    )}
-                                    {isEnrolled && !canCompleteOnChain && onChainLessonCount != null && (
-                                        <span className="text-xs text-muted-foreground">
-                                            This lesson is not available on-chain (course has {onChainLessonCount} lessons).
-                                        </span>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Bottom nav */}
-                        <div className="mt-auto border-t border-border p-4 flex items-center justify-between">
+                        {/* Bottom nav — Previous/Next cards like reference */}
+                        <div className="mt-auto border-t border-border p-4 sm:p-6 lg:p-8 flex items-center justify-between gap-4">
                             {prevLesson ? (
-                                <Button asChild variant="ghost" size="sm">
-                                    <Link href={`/courses/${slug}/lessons/${prevLesson.id}`}>
-                                        <ChevronLeft className="mr-1 h-4 w-4" />
+                                <Link
+                                    href={`/courses/${slug}/lessons/${prevLesson.id}`}
+                                    className="flex-1 min-w-0 rounded-xl border-2 border-border bg-card p-4 transition-colors hover:bg-muted/50 hover:border-primary/30"
+                                >
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1 mb-1">
+                                        <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
                                         Previous
-                                    </Link>
-                                </Button>
+                                    </p>
+                                    <p className="font-game text-base sm:text-lg text-primary truncate">
+                                        {prevLesson.title}
+                                    </p>
+                                </Link>
                             ) : (
-                                <div />
+                                <div className="flex-1 min-w-0" />
                             )}
 
-                            {nextLesson ? (
-                                <Button asChild size="sm">
-                                    <Link href={`/courses/${slug}/lessons/${nextLesson.id}`}>
-                                        Next Lesson
-                                        <ChevronRight className="ml-1 h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={handleMarkComplete}
-                                    disabled={completeLesson.isPending}
+                            {nextLesson && isCompleted ? (
+                                <Link
+                                    href={`/courses/${slug}/lessons/${nextLesson.id}`}
+                                    className="flex-1 min-w-0 rounded-xl border-2 border-border bg-card p-4 transition-colors hover:bg-muted/50 hover:border-primary/30 text-right"
                                 >
-                                    <CheckCircle2 className="mr-1 h-4 w-4" />
-                                    {completeLesson.isPending ? "Completing…" : "Complete Course"}
-                                </Button>
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center justify-end gap-1 mb-1">
+                                        Next
+                                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                                    </p>
+                                    <p className="font-game text-base sm:text-lg text-primary truncate">
+                                        {nextLesson.title}
+                                    </p>
+                                </Link>
+                            ) : nextLesson && !isCompleted ? (
+                                <div className="flex-1 min-w-0 rounded-xl border-2 border-border bg-muted/30 p-4 text-right opacity-75">
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">
+                                        Next
+                                    </p>
+                                    <p className="font-game text-base sm:text-lg text-muted-foreground truncate">
+                                        {nextLesson.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">Complete this lesson to unlock</p>
+                                </div>
+                            ) : !nextLesson ? (
+                                <Link
+                                    href={`/courses/${slug}`}
+                                    className="flex-1 min-w-0 rounded-xl border-2 border-border bg-card p-4 transition-colors hover:bg-muted/50 hover:border-primary/30 text-right"
+                                >
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center justify-end gap-1 mb-1">
+                                        {isCourseComplete ? "Course complete — " : ""}Back to course
+                                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                                    </p>
+                                    <p className="font-game text-base sm:text-lg text-primary truncate">
+                                        {course.title}
+                                    </p>
+                                </Link>
+                            ) : (
+                                <div className="flex-1 min-w-0" />
                             )}
                         </div>
                     </div>
@@ -291,13 +354,13 @@ export default function LessonPage({
                 </div>
             </div>
 
-            {showCompletionModal && (
+            {courseCompleteData && (
                 <CourseCompleteModal
-                    courseId={getCourseIdForProgram(course)}
-                    courseName={course.title}
-                    xpEarned={effectiveCount * (course.xpPerLesson ?? 100)}
-                    trackCollection={trackCollection}
-                    onClose={() => setShowCompletionModal(false)}
+                    courseId={courseCompleteData.courseId}
+                    courseName={courseCompleteData.courseName}
+                    xpEarned={courseCompleteData.xpEarned}
+                    trackCollection=""
+                    onClose={() => setCourseCompleteData(null)}
                 />
             )}
         </>

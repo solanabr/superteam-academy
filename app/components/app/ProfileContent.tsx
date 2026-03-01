@@ -287,7 +287,7 @@ export function ProfileContent({ walletAddress, isOwner: isOwnerProp }: ProfileC
                                             fallbackImageUrl={trackImageMap[cred.trackId]}
                                             size="sm"
                                         />
-                                        <span className="font-game text-xl">Track {cred.trackId}</span>
+                                        <span className="font-game text-xl">{cred.name ?? `Track ${cred.trackId}`}</span>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="font-game text-muted-foreground">

@@ -23,6 +23,8 @@ export interface CredentialInfo {
   totalXp: number;
   /** Resolved image URL from DAS content.links.image or metadata */
   imageUrl?: string | null;
+  /** Credential name from DAS content.metadata.name */
+  name?: string | null;
   /** On-chain metadata JSON URI */
   metadataUri?: string | null;
 }

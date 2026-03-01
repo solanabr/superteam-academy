@@ -12,6 +12,7 @@ import { buildCredentialMetadata } from "@/academy/credential-metadata.js";
 import { uploadCredentialMetadataToPinata } from "@/academy/pinata.js";
 import { getCredentialCollectionsListAsync } from "@/academy/credential-collections-store.js";
 import { getTrackCourseIds } from "@/academy/track-config.js";
+import { badRequest } from "@/lib/errors.js";
 
 const PLACEHOLDER_URI = process.env.CREDENTIAL_PLACEHOLDER_URI?.trim() ?? null;
 
@@ -51,6 +52,13 @@ export async function runCredentialAfterFinalize(
     trackCollection = row?.collectionAddress ?? null;
   }
   if (!trackCollection) return;
+
+  const collectionRow = list.find((r) => r.collectionAddress === trackCollection);
+  if (trackIdNum != null && collectionRow && collectionRow.trackId !== trackIdNum) {
+    throw badRequest(
+      `Selected collection is for track ${collectionRow.trackId} but the course is track ${trackIdNum}. Use a collection for the same track.`
+    );
+  }
 
   const trackId = trackIdNum ?? 0;
   const trackCollectionPk = new PublicKey(trackCollection);

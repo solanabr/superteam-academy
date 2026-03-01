@@ -80,7 +80,7 @@ export default function AdminAchievementsPage() {
               <div className="space-y-2 w-full min-w-0 flex-1 sm:min-w-[200px]">
                 <Label className="font-game">metadataUri</Label>
                 <Input
-                  placeholder="https://arweave.net/..."
+                  placeholder="https://… (Pinata or other gateway)"
                   value={createForm.metadataUri}
                   onChange={(e) =>
                     setCreateForm((f) => ({

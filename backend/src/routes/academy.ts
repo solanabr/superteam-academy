@@ -4,6 +4,7 @@ import { registerCourseRoutes } from "@/academy/routes/course-routes.js";
 import { registerCredentialRoutes } from "@/academy/routes/credential-routes.js";
 import { registerMinterRoutes } from "@/academy/routes/minter-routes.js";
 import { registerAchievementRoutes } from "@/academy/routes/achievement-routes.js";
+import { registerLeaderboardRoutes } from "@/academy/routes/leaderboard-routes.js";
 
 const app = new Hono();
 
@@ -12,5 +13,6 @@ registerCourseRoutes(app);
 registerCredentialRoutes(app);
 registerMinterRoutes(app);
 registerAchievementRoutes(app);
+registerLeaderboardRoutes(app);
 
 export default app;

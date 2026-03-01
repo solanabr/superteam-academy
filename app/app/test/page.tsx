@@ -616,7 +616,9 @@ function AdminApiSection() {
       courseId: "test-course-1",
       learner: "",
       credentialName: "Anchor Track Level 1",
-      metadataUri: "https://arweave.net/placeholder",
+      metadataUri:
+        process.env.NEXT_PUBLIC_CREDENTIAL_PLACEHOLDER_URI ||
+        "https://example.com/credential-metadata.json",
       coursesCompleted: 1,
       totalXp: 0,
       trackCollection: "",
@@ -637,7 +639,9 @@ function AdminApiSection() {
     createAchievementType: {
       achievementId: "hackathon-winner",
       name: "Hackathon Winner",
-      metadataUri: "https://arweave.net/placeholder",
+      metadataUri:
+        process.env.NEXT_PUBLIC_CREDENTIAL_PLACEHOLDER_URI ||
+        "https://example.com/credential-metadata.json",
       maxSupply: 0,
       xpReward: 500,
     },

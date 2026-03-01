@@ -1,5 +1,5 @@
 import type { Program } from "@coral-xyz/anchor";
-import { BN } from "@coral-xyz/anchor";
+import BN from "bn.js";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   createAssociatedTokenAccountInstruction,
@@ -30,6 +30,14 @@ type ConfigAccount = {
 
 type CourseAccount = {
   creator: PublicKey;
+  lesson_count?: number;
+  lessonCount?: number;
+  xp_per_lesson?: number;
+  xpPerLesson?: number;
+  track_id?: number;
+  trackId?: number;
+  track_level?: number;
+  trackLevel?: number;
 };
 
 type AchievementTypeAccount = {

@@ -9,6 +9,8 @@ export interface CreateCourseParams {
   courseId?: string;
   lessonCount?: number;
   xpPerLesson?: number;
+  trackId?: number;
+  trackLevel?: number;
   creator?: string;
 }
 
@@ -178,6 +180,18 @@ export const deactivateAchievementType = (
   params: DeactivateAchievementTypeParams,
   token?: string | null
 ) => postBff("/deactivate-achievement-type", params, token);
+
+export interface IndexEnrollmentParams {
+  learner: string;
+  courseId: string;
+  txSignature: string;
+}
+
+export async function indexEnrollment(
+  params: IndexEnrollmentParams
+): Promise<void> {
+  await postBff("/index-enrollment", params);
+}
 
 // Credential collections (authority only)
 export interface CreateCredentialCollectionParams {

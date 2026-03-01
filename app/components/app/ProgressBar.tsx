@@ -1,8 +1,11 @@
+import { cn } from "@/lib/utils";
+
 interface ProgressBarProps {
     value: number;
     max: number;
     label?: string;
     size?: "sm" | "md";
+    className?: string;
 }
 
 export function ProgressBar({
@@ -10,14 +13,15 @@ export function ProgressBar({
     max,
     label,
     size = "md",
+    className,
 }: ProgressBarProps) {
     const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
     const h = size === "sm" ? "h-1.5" : "h-2.5";
 
     return (
-        <div className="w-full space-y-1">
+        <div className={cn("w-full space-y-1", className)}>
             {label && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center justify-between text-sm text-muted-foreground font-game">
                     <span>{label}</span>
                     <span>
                         {value}/{max}

@@ -21,6 +21,7 @@ const adminNavItems = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/config", label: "Config", icon: Settings },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
+  { href: "/admin/credentials", label: "Credentials", icon: Award },
   { href: "/admin/minters", label: "Minters", icon: KeyRound },
   { href: "/admin/achievements", label: "Achievements", icon: Award },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart2 },

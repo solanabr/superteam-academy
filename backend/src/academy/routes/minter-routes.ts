@@ -1,5 +1,4 @@
-import anchor from "@coral-xyz/anchor";
-import type { BN as BNType } from "@coral-xyz/anchor";
+import BN from "bn.js";
 import type { Hono } from "hono";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
@@ -20,13 +19,11 @@ import {
   requireProviderPublicKey,
 } from "@/academy/shared.js";
 
-const { BN } = anchor;
-
 type RegisterMinterMethods = {
   registerMinter: (params: {
     minter: PublicKey;
     label: string;
-    maxXpPerCall: BNType;
+    maxXpPerCall: BN;
   }) => {
     accountsPartial: (accounts: Record<string, PublicKey>) => {
       rpc: () => Promise<string>;
@@ -43,7 +40,7 @@ type RevokeMinterMethods = {
 };
 
 type RewardXpMethods = {
-  rewardXp: (amount: BNType, memo: string) => {
+  rewardXp: (amount: BN, memo: string) => {
     accountsPartial: (accounts: Record<string, PublicKey>) => {
       rpc: () => Promise<string>;
     };

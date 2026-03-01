@@ -197,7 +197,7 @@ export function DiscussionsListContent() {
     <div className="mx-auto w-full max-w-6xl space-y-6">
       <section className="rounded-2xl border bg-card p-5 sm:p-6">
         <h1 className="font-game text-4xl sm:text-5xl">Discussions</h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 font-game text-muted-foreground">
           Ask questions, start discussions, and help other builders. A lightweight
           Stack Overflow-style community for Superteam Academy.
         </p>
@@ -211,6 +211,7 @@ export function DiscussionsListContent() {
                 key={filter.value}
                 variant={activeFilter === filter.value ? "default" : "outline"}
                 size="sm"
+                className="font-game text-md"
                 onClick={() => setActiveFilter(filter.value)}
               >
                 {filter.label}
@@ -224,13 +225,13 @@ export function DiscussionsListContent() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="pl-9"
+                className="pl-9 font-game text-md"
                 placeholder="Search threads..."
               />
             </div>
             <Button
               variant="pixel"
-              className="shrink-0 font-game"
+              className="shrink-0 font-game text-md"
               onClick={() => {
                 if (!requireWallet(() => setIsCreateModalOpen(true))) return;
               }}
@@ -242,11 +243,11 @@ export function DiscussionsListContent() {
         </div>
 
         {loading ? (
-          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+          <div className="rounded-xl border border-dashed p-8 text-center text-md font-game text-muted-foreground">
             Loading discussions...
           </div>
         ) : threads.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+          <div className="rounded-xl border border-dashed p-8 text-center text-md font-game text-muted-foreground">
             No threads found for this filter.
           </div>
         ) : (
@@ -259,22 +260,22 @@ export function DiscussionsListContent() {
               >
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={thread.type === "question" ? "secondary" : "outline"}>
+                    <Badge variant={thread.type === "question" ? "secondary" : "outline"} className="font-game text-md">
                       {thread.type === "question" ? "Question" : "Discussion"}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="font-game text-sm text-muted-foreground">
                       {thread.replyCount} {thread.replyCount === 1 ? "reply" : "replies"}
                     </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="font-game text-xs text-muted-foreground">
                     {formatRelativeTime(thread.createdAt)}
                   </span>
                 </div>
 
                 <h3 className="font-game text-2xl leading-tight">{thread.title}</h3>
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{thread.body}</p>
+                <p className="mt-1 line-clamp-2 font-game text-sm text-muted-foreground">{thread.body}</p>
 
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-3 flex items-center gap-2 font-game text-xs text-muted-foreground">
                   <MessageSquareText className="size-3.5" />
                   <span>
                     by {thread.authorName || walletToLabel(thread.walletAddress)}
@@ -315,14 +316,14 @@ export function DiscussionsListContent() {
             <form onSubmit={onCreateThread} className="space-y-4 p-5">
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-1">
-                  <Label htmlFor="thread-type" className="mb-2 block">
+                  <Label htmlFor="thread-type" className="mb-2 block font-game">
                     Type
                   </Label>
                   <Select
                     value={threadType}
                     onValueChange={(value) => setThreadType(value as ThreadType)}
                   >
-                    <SelectTrigger id="thread-type" className="w-full">
+                    <SelectTrigger id="thread-type" className="w-full font-game">
                       <SelectValue placeholder="Pick a type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -333,13 +334,14 @@ export function DiscussionsListContent() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="thread-title" className="mb-2 block">
+                  <Label htmlFor="thread-title" className="mb-2 block font-game">
                     Title
                   </Label>
                   <Input
                     id="thread-title"
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
+                    className="font-game"
                     placeholder="e.g. Best way to structure Anchor account validation?"
                     maxLength={160}
                     required
@@ -348,7 +350,7 @@ export function DiscussionsListContent() {
               </div>
 
               <div>
-                <Label htmlFor="thread-body" className="mb-2 block">
+                <Label htmlFor="thread-body" className="mb-2 block font-game">
                   Details
                 </Label>
                 <textarea
@@ -359,20 +361,21 @@ export function DiscussionsListContent() {
                   required
                   rows={6}
                   maxLength={10000}
-                  className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+                  className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 font-game w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 font-game text-xs text-muted-foreground">
                   Minimum 10 characters.
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="thread-author" className="mb-2 block">
+                  <Label htmlFor="thread-author" className="mb-2 block font-game">
                     Display Name (optional)
                   </Label>
                   <Input
                     id="thread-author"
+                    className="font-game"
                     value={authorName}
                     onChange={(event) => setAuthorName(event.target.value)}
                     placeholder="Anonymous"
@@ -383,7 +386,7 @@ export function DiscussionsListContent() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 font-game"
                     onClick={() => setIsCreateModalOpen(false)}
                     disabled={isCreating}
                   >

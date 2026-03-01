@@ -1,5 +1,18 @@
 import { BN } from "@coral-xyz/anchor";
 
+/** Enrollment account may have completedAt (camelCase) or completed_at (snake_case) from IDL. Returns unix timestamp if set, else null. */
+export function getCompletedAtFromEnrollment(enrollment: unknown): number | null {
+  if (!enrollment || typeof enrollment !== "object") return null;
+  const acc = enrollment as Record<string, unknown>;
+  const val = acc.completedAt ?? acc.completed_at;
+  if (val == null) return null;
+  if (typeof val === "number") return val;
+  if (typeof val === "object" && "toNumber" in val && typeof (val as { toNumber: () => number }).toNumber === "function") {
+    return (val as { toNumber: () => number }).toNumber();
+  }
+  return null;
+}
+
 /** Enrollment account may have lessonFlags (camelCase) or lesson_flags (snake_case) from IDL */
 export function getLessonFlagsFromEnrollment(enrollment: unknown): BN[] {
   if (!enrollment || typeof enrollment !== "object") return [];

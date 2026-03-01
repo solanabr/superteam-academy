@@ -6,6 +6,7 @@ import {
   useCreateCourse,
   useUpdateCourse,
   useIsAdmin,
+  useCredentialCollectionsList,
 } from "@/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 type CourseAccount = {
@@ -32,12 +33,16 @@ type CourseAccount = {
 export default function AdminCoursesPage() {
   const { role } = useIsAdmin();
   const { data: courses } = useAllCourses();
+  const { data: collectionsList } = useCredentialCollectionsList();
   const { mutate: createCourse, isPending: creating } = useCreateCourse();
   const { mutate: updateCourse, isPending: updating } = useUpdateCourse();
+  const collectionsData = Array.isArray(collectionsList) ? collectionsList : [];
   const [createForm, setCreateForm] = useState({
     courseId: "",
     lessonCount: 3,
     xpPerLesson: 100,
+    trackId: 1,
+    trackLevel: 1,
   });
   const [updateForm, setUpdateForm] = useState({
     courseId: "",
@@ -47,6 +52,12 @@ export default function AdminCoursesPage() {
 
   const isAuthority = role === "authority";
   const courseList = (courses ?? []).map((c) => c.account as CourseAccount);
+
+  useEffect(() => {
+    if (collectionsData.length > 0 && !collectionsData.some((c) => c.trackId === createForm.trackId)) {
+      setCreateForm((f) => ({ ...f, trackId: collectionsData[0].trackId }));
+    }
+  }, [collectionsData]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -112,7 +123,7 @@ export default function AdminCoursesPage() {
           <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
             <h2 className="font-game text-xl mb-1">Create course</h2>
             <p className="font-game text-muted-foreground text-sm mb-4">
-              Register a new course PDA. Requires authority via backend.
+              Register a new course PDA. Create at least one track collection under Credentials first. Requires authority via backend.
             </p>
             <div className="flex flex-wrap gap-3 sm:gap-4">
               <div className="space-y-2 w-full min-w-0 sm:min-w-[160px] sm:max-w-[220px]">
@@ -153,16 +164,61 @@ export default function AdminCoursesPage() {
                   }
                 />
               </div>
+              <div className="space-y-2 w-full min-w-0 sm:min-w-[140px] sm:max-w-[200px]">
+                <Label className="font-game">Credential track</Label>
+                <Select
+                  value={collectionsData.length > 0 ? String(createForm.trackId) : ""}
+                  onValueChange={(v) =>
+                    setCreateForm((f) => ({ ...f, trackId: +v || 1 }))
+                  }
+                >
+                  <SelectTrigger className="font-game">
+                    <SelectValue placeholder="Select track" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {collectionsData.map((c) => (
+                      <SelectItem key={c.trackId} value={String(c.trackId)}>
+                        <div className="flex items-center gap-2">
+                          {c.imageUrl ? (
+                            <img
+                              src={c.imageUrl}
+                              alt=""
+                              className="h-6 w-6 rounded object-cover shrink-0"
+                            />
+                          ) : null}
+                          <span>{c.name ?? `Track ${c.trackId}`}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 w-full min-w-0 sm:w-20">
+                <Label className="font-game">trackLevel</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={createForm.trackLevel}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({
+                      ...f,
+                      trackLevel: Math.max(1, +e.target.value || 1),
+                    }))
+                  }
+                />
+              </div>
               <div className="flex items-end">
                 <Button
                   variant="pixel"
                   className="font-game"
-                  disabled={!createForm.courseId || creating}
+                  disabled={!createForm.courseId || collectionsData.length === 0 || creating}
                   onClick={() =>
                     createCourse({
                       courseId: createForm.courseId,
                       lessonCount: createForm.lessonCount,
                       xpPerLesson: createForm.xpPerLesson,
+                      trackId: createForm.trackId,
+                      trackLevel: createForm.trackLevel,
                     })
                   }
                 >
