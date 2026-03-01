@@ -1,7 +1,11 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { fetchAchievementReceipt, fetchEnrollment } from "./academy-reads";
+import {
+  fetchAchievementReceipt,
+  fetchEnrollment,
+  fetchCourse,
+} from "./academy-reads";
 import {
   getConnection,
   awardAchievement,
@@ -10,6 +14,7 @@ import {
 } from "./academy-program";
 import { getProgramId } from "./pda";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getCourseById } from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -142,12 +147,6 @@ export async function retryPendingOnchainActions(
 
         case "certificate": {
           const courseId = payload.courseId as string;
-          const metadataId = payload.metadataId as string | undefined;
-          if (!metadataId) {
-            throw new Error(
-              "Cannot retry certificate: missing metadataId in payload"
-            );
-          }
 
           const enrollment = (await fetchEnrollment(
             courseId,
@@ -156,40 +155,120 @@ export async function retryPendingOnchainActions(
             getProgramId()
           )) as Record<string, unknown> | null;
 
-          if (!enrollment?.credential_asset) {
-            const credentialName = payload.credentialName as string;
-            const metadataUri = payload.metadataUri as string;
-            const coursesCompleted = (payload.coursesCompleted as number) ?? 1;
-            const totalXp = (payload.totalXp as number) ?? 0;
-            const trackCollection = new PublicKey(
-              payload.trackCollection as string
-            );
+          // Already issued on-chain — just resolve the queue entry
+          if (enrollment?.credential_asset) break;
 
-            const { mintAddress, signature } = await withRetry(() =>
+          // Derive all fields fresh from Sanity + on-chain (self-sufficient retry)
+          const sanityCourse = await getCourseById(courseId);
+          if (!sanityCourse) {
+            throw new Error(`Course "${courseId}" not found in Sanity`);
+          }
+
+          const trackCollectionAddress = sanityCourse.trackCollectionAddress as
+            | string
+            | undefined;
+          if (!trackCollectionAddress) {
+            throw new Error(
+              `Course "${courseId}" has no trackCollectionAddress — sync the course first`
+            );
+          }
+
+          const courseName = sanityCourse.title ?? courseId;
+
+          let credentialName = `Superteam Academy: ${courseName}`;
+          const encoder = new TextEncoder();
+          while (encoder.encode(credentialName).length > 32) {
+            credentialName = credentialName.slice(0, -1);
+          }
+
+          const onChainCourse = await fetchCourse(
+            courseId,
+            connection,
+            getProgramId()
+          );
+          const totalXp = onChainCourse
+            ? Number(onChainCourse.xp_per_lesson) *
+              (Number(onChainCourse.lesson_count) || 1)
+            : 0;
+
+          const { count: existingCerts } = await adminClient
+            .from("certificates")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userId);
+
+          const metadataJson = {
+            name: credentialName,
+            symbol: "STACAD",
+            description: `Certificate of completion for ${courseName} on Superteam Academy.`,
+            image: "",
+            attributes: [
+              { trait_type: "Course", value: courseName },
+              {
+                trait_type: "Completion Date",
+                value: new Date().toISOString().split("T")[0],
+              },
+              {
+                trait_type: "Recipient",
+                value: profile.wallet_address,
+              },
+              { trait_type: "Platform", value: "Superteam Academy" },
+            ],
+            properties: { category: "certificate", creators: [] },
+            external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
+            seller_fee_basis_points: 0,
+          };
+
+          const { data: metadataRow, error: metaError } = await adminClient
+            .from("nft_metadata")
+            .insert({ data: metadataJson })
+            .select("id")
+            .single();
+
+          if (metaError || !metadataRow) {
+            throw new Error(
+              metaError?.message ?? "Failed to store NFT metadata"
+            );
+          }
+
+          const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+
+          let mintAddress: PublicKey;
+          let mintSignature: string;
+          try {
+            const result = await withRetry(() =>
               issueCredential(
                 courseId,
                 wallet,
                 credentialName,
                 metadataUri,
-                coursesCompleted,
+                (existingCerts ?? 0) + 1,
                 totalXp,
-                trackCollection
+                new PublicKey(trackCollectionAddress)
               )
             );
-
-            await adminClient.from("certificates").upsert(
-              {
-                user_id: userId,
-                course_id: courseId,
-                course_title: (payload.courseTitle as string) ?? "",
-                mint_address: mintAddress.toBase58(),
-                metadata_uri: metadataUri,
-                tx_signature: signature,
-                credential_type: "core",
-              },
-              { onConflict: "user_id,course_id" }
-            );
+            mintAddress = result.mintAddress;
+            mintSignature = result.signature;
+          } catch (mintErr) {
+            // Clean up orphaned metadata row
+            await adminClient
+              .from("nft_metadata")
+              .delete()
+              .eq("id", metadataRow.id);
+            throw mintErr;
           }
+
+          await adminClient.from("certificates").upsert(
+            {
+              user_id: userId,
+              course_id: courseId,
+              course_title: courseName,
+              mint_address: mintAddress.toBase58(),
+              metadata_uri: metadataUri,
+              tx_signature: mintSignature,
+              credential_type: "core",
+            },
+            { onConflict: "user_id,course_id" }
+          );
           break;
         }
 
