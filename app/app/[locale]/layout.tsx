@@ -5,11 +5,15 @@ import { notFound } from 'next/navigation';
 import { routing } from '../../i18n/routing';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
+import dynamic from 'next/dynamic';
 import Nav from '../../components/Nav';
-import Footer from '../../components/Footer';
 import LazyWalletProvider from '../../components/LazyWalletProvider';
 import AuthProviderWrapper from '../../components/AuthProviderWrapper';
 import Analytics from '../../components/Analytics';
+
+const Footer = dynamic(() => import('../../components/Footer'), {
+  loading: () => <footer className="border-t border-gray-800 bg-gray-950 h-64" />,
+});
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'], display: 'optional' });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'], display: 'optional' });
@@ -102,7 +106,6 @@ export default async function LocaleLayout({
           }}
         />
         <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
-        <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>

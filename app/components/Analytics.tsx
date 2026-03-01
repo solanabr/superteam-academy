@@ -23,9 +23,17 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
 export default function Analytics() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // SW registration failure is non-critical
-      });
+      const register = () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // SW registration failure is non-critical
+        });
+      };
+      if ('requestIdleCallback' in window) {
+        (window as typeof window & { requestIdleCallback: (cb: () => void, opts?: object) => number })
+          .requestIdleCallback(register, { timeout: 5000 });
+      } else {
+        setTimeout(register, 3000);
+      }
     }
   }, []);
 

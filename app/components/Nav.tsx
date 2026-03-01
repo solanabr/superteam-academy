@@ -6,7 +6,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useTranslations, useLocale } from 'next-intl';
 import dynamic from 'next/dynamic';
-import GoogleSignInButton from './GoogleSignInButton';
+
+const GoogleSignInButton = dynamic(() => import('./GoogleSignInButton'), {
+  ssr: false,
+  loading: () => null,
+});
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
@@ -35,6 +39,22 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
+
+const WALLET_BUTTON_STYLE = {
+  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+  borderRadius: '0.5rem',
+  fontSize: '0.875rem',
+  padding: '0.5rem 1rem',
+  height: '2.25rem',
+} as const;
+
+const WALLET_BUTTON_MOBILE_STYLE = {
+  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+  borderRadius: '0.5rem',
+  fontSize: '0.875rem',
+  width: '100%',
+  height: '2.5rem',
+} as const;
 
 const LOCALES = [
   { code: 'pt-BR', label: 'PT', flag: '🇧🇷' },
@@ -180,15 +200,7 @@ export default function Nav() {
 
             {/* Wallet button */}
             <div className="hidden sm:block">
-              <WalletMultiButton
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  height: '2.25rem',
-                }}
-              />
+              <WalletMultiButton style={WALLET_BUTTON_STYLE} />
             </div>
 
             {/* Mobile hamburger */}
@@ -254,15 +266,7 @@ export default function Nav() {
           <div className="flex items-center gap-2 pt-1 pb-2">
             <GoogleSignInButton compact />
             <div className="flex-1">
-              <WalletMultiButton
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.875rem',
-                  width: '100%',
-                  height: '2.5rem',
-                }}
-              />
+              <WalletMultiButton style={WALLET_BUTTON_MOBILE_STYLE} />
             </div>
           </div>
         </div>
