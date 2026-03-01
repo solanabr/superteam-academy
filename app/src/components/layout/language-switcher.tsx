@@ -23,6 +23,7 @@ const languages: LanguageOption[] = [
   { locale: 'en', label: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
   { locale: 'pt', label: 'Portugu\u00EAs', flag: '\u{1F1E7}\u{1F1F7}' },
   { locale: 'es', label: 'Espa\u00F1ol', flag: '\u{1F1EA}\u{1F1F8}' },
+  { locale: 'hi', label: '\u0939\u093F\u0928\u094D\u0926\u0940', flag: '\u{1F1EE}\u{1F1F3}' },
 ];
 
 export function LanguageSwitcher() {
