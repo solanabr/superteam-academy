@@ -10,6 +10,7 @@ import {
   Lightning,
   User,
   Wallet,
+  ChatCircleDots,
 } from "@phosphor-icons/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { ThreadList } from "@/components/community/thread-list";
+import { CreateThreadModal } from "@/components/community/create-thread-modal";
 import type { Course } from "@/lib/sanity/types";
 
 interface CourseDetailClientProps {
@@ -45,6 +48,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [discussionModalOpen, setDiscussionModalOpen] = useState(false);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
     if (!userId) {
@@ -282,6 +286,36 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           locale={locale}
           completedLessons={completedLessons}
         />
+      </div>
+
+      {/* Discussions */}
+      <div className="space-y-4 border-t border-border pt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display text-2xl font-extrabold">
+            <ChatCircleDots size={24} weight="duotone" className="text-primary" />
+            {t("discussions")}
+          </h2>
+          {userId && (
+            <Button
+              variant="push"
+              size="sm"
+              onClick={() => setDiscussionModalOpen(true)}
+            >
+              {t("startDiscussion")}
+            </Button>
+          )}
+        </div>
+        <ThreadList
+          scope={{ courseId: course._id }}
+          showFilters
+        />
+        {userId && (
+          <CreateThreadModal
+            open={discussionModalOpen}
+            onOpenChange={setDiscussionModalOpen}
+            defaultScope={{ courseId: course._id }}
+          />
+        )}
       </div>
     </div>
   );

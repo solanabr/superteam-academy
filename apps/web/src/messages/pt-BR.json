@@ -124,7 +124,9 @@
     "locked": "Bloqueado",
     "notStarted": "Não iniciado",
     "ofXp": "de {total} XP",
-    "coursesCount": "{count} de {total} concluídos"
+    "coursesCount": "{count} de {total} concluídos",
+    "discussions": "Discussões do Curso",
+    "startDiscussion": "Iniciar uma Discussão"
   },
   "lesson": {
     "content": "Conteúdo",
