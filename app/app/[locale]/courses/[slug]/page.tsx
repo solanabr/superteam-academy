@@ -279,7 +279,7 @@ const REVIEWS = [
   },
 ];
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app-roan-iota-58.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superteam-academy-five.vercel.app';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;

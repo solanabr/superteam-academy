@@ -32,7 +32,7 @@ const META: Record<string, { title: string; description: string; ogDesc: string 
   },
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app-roan-iota-58.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superteam-academy-five.vercel.app';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -95,7 +95,7 @@ export default async function LocaleLayout({
               '@context': 'https://schema.org',
               '@type': 'EducationalOrganization',
               name: 'Superteam Academy',
-              url: 'https://app-roan-iota-58.vercel.app',
+              url: 'https://superteam-academy-five.vercel.app',
               description: 'Web3 and Solana education platform for Brazilian developers',
               sameAs: ['https://github.com/solanabr/superteam-academy'],
             }),
