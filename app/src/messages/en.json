@@ -453,7 +453,21 @@
     "time_taken": "Time: {minutes} min",
     "success_rate": "Success Rate: {rate}%",
     "leaderboard_rank": "Your Rank: #{rank}",
-    "no_challenges": "No challenges match your filters."
+    "no_challenges": "No challenges match your filters.",
+    "try_different_filters": "Try adjusting your filters or search query.",
+    "filters": "Filters",
+    "reset": "Reset",
+    "category": "Category",
+    "difficulty": "Difficulty",
+    "language": "Language",
+    "sort": "Sort By",
+    "sort_default": "Default",
+    "sort_xp": "XP Reward",
+    "sort_time": "Est. Time",
+    "daily_tab": "Daily Challenge",
+    "library_tab": "Challenge Library",
+    "library_title": "Challenge Library",
+    "library_description": "Browse all 100 coding challenges across 5 categories. Each includes starter code, solution, tests, and hints."
   },
   "achievements": {
     "title": "Achievements",

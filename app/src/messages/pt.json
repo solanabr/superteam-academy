@@ -453,7 +453,21 @@
     "time_taken": "Tempo: {minutes} min",
     "success_rate": "Taxa de Sucesso: {rate}%",
     "leaderboard_rank": "Sua Posição: #{rank}",
-    "no_challenges": "Nenhum desafio corresponde aos seus filtros."
+    "no_challenges": "Nenhum desafio corresponde aos seus filtros.",
+    "try_different_filters": "Tente ajustar seus filtros ou termo de busca.",
+    "filters": "Filtros",
+    "reset": "Limpar",
+    "category": "Categoria",
+    "difficulty": "Dificuldade",
+    "language": "Linguagem",
+    "sort": "Ordenar Por",
+    "sort_default": "Padrão",
+    "sort_xp": "Recompensa XP",
+    "sort_time": "Tempo Est.",
+    "daily_tab": "Desafio Diário",
+    "library_tab": "Biblioteca de Desafios",
+    "library_title": "Biblioteca de Desafios",
+    "library_description": "Explore todos os 100 desafios de programação em 5 categorias. Cada um inclui código inicial, solução, testes e dicas."
   },
   "achievements": {
     "title": "Conquistas",

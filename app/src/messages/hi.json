@@ -453,7 +453,21 @@
     "time_taken": "समय: {minutes} मिनट",
     "success_rate": "सफलता दर: {rate}%",
     "leaderboard_rank": "आपकी रैंक: #{rank}",
-    "no_challenges": "आपके फ़िल्टर से मेल खाती कोई चुनौती नहीं।"
+    "no_challenges": "आपके फ़िल्टर से मेल खाती कोई चुनौती नहीं।",
+    "try_different_filters": "अपने फ़िल्टर या खोज शब्द बदलकर देखें।",
+    "filters": "फ़िल्टर",
+    "reset": "रीसेट",
+    "category": "श्रेणी",
+    "difficulty": "कठिनाई",
+    "language": "भाषा",
+    "sort": "क्रमबद्ध करें",
+    "sort_default": "डिफ़ॉल्ट",
+    "sort_xp": "XP पुरस्कार",
+    "sort_time": "अनुमानित समय",
+    "daily_tab": "दैनिक चुनौती",
+    "library_tab": "चुनौती लाइब्रेरी",
+    "library_title": "चुनौती लाइब्रेरी",
+    "library_description": "5 श्रेणियों में सभी 100 कोडिंग चुनौतियाँ ब्राउज़ करें। प्रत्येक में स्टार्टर कोड, समाधान, परीक्षण और संकेत शामिल हैं।"
   },
   "achievements": {
     "title": "उपलब्धियाँ",

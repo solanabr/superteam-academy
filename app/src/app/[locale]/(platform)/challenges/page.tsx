@@ -1,6 +1,9 @@
 'use client';
 
-import { Zap, Calendar } from 'lucide-react';
+import { Zap, Calendar, Code2 } from 'lucide-react';
+import { Link } from '@/i18n/routing';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DailyChallengeCard } from '@/components/challenges/daily-challenge-card';
 import { PastChallenges } from '@/components/challenges/past-challenges';
 import { SpeedLeaderboard } from '@/components/challenges/speed-leaderboard';
@@ -19,6 +22,23 @@ export default function ChallengesPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Tab navigation */}
+      <div className="flex items-center gap-2">
+        <Button variant="secondary" size="sm" className="gap-1.5">
+          <Zap className="size-4" />
+          Daily Challenge
+        </Button>
+        <Link href="/challenges/library">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
+            <Code2 className="size-4" />
+            Challenge Library
+            <Badge variant="outline" className="ml-1 text-[10px]">
+              100
+            </Badge>
+          </Button>
+        </Link>
+      </div>
+
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2">
