@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleLogo } from "@/components/icons/google-logo";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ export function AccountTab({
   const searchParams = useSearchParams();
   const { publicKey, signMessage, connected } = useWallet();
   const { setVisible: openWalletModal } = useWalletModal();
+  const { refreshProfile } = useAuth();
 
   // ── Local state ───────────────────────────────────────────────
   const [walletAddress, setWalletAddress] = useState(initialWalletAddress);
@@ -246,6 +248,7 @@ export function AccountTab({
 
         setWalletAddress(address);
         setLinkMessage({ type: "success", text: t("walletLinked") });
+        await refreshProfile();
       } catch {
         if (!cancelled) {
           setLinkMessage({ type: "error", text: t("linkFailed") });
@@ -262,7 +265,7 @@ export function AccountTab({
     return () => {
       cancelled = true;
     };
-  }, [publicKey, signMessage, t]);
+  }, [publicKey, signMessage, t, refreshProfile]);
 
   // ── Link handlers ─────────────────────────────────────────────
   const handleLinkWallet = async () => {
@@ -319,6 +322,7 @@ export function AccountTab({
 
         setWalletAddress(address);
         setLinkMessage({ type: "success", text: t("walletLinked") });
+        await refreshProfile();
       } catch {
         setLinkMessage({ type: "error", text: t("linkFailed") });
       } finally {

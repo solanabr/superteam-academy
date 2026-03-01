@@ -11,6 +11,7 @@ import {
   SignOut,
   UserCircle,
 } from "@phosphor-icons/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,13 +36,21 @@ export function UserMenu({
   locale,
 }: UserMenuProps) {
   const tCommon = useTranslations("common");
+  const { disconnect, connected } = useWallet();
   const [copied, setCopied] = useState(false);
 
   const handleSignOut = useCallback(async () => {
+    if (connected) {
+      try {
+        await disconnect();
+      } catch {
+        // Wallet may already be disconnected — proceed with sign-out
+      }
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = `/${locale}`;
-  }, [locale]);
+  }, [locale, connected, disconnect]);
 
   const handleCopyAddress = useCallback(
     (e: React.MouseEvent) => {

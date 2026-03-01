@@ -361,23 +361,14 @@ export const FORM_STYLES = {
 // ─── TOAST / NOTIFICATIONS ──────────────────────────────────────────────────
 
 const TOAST_BASE =
-  "flex items-center gap-2 px-3.5 py-2.5 rounded-md border-[2px] font-body text-xs font-semibold";
+  "flex items-center gap-2 px-3.5 py-2.5 rounded-md border-[2px] bg-card font-body text-xs font-semibold";
 
 export const TOAST_STYLES = {
   base: TOAST_BASE,
-  success: cx(
-    TOAST_BASE,
-    "bg-success-bg border-success text-success-dark dark:text-success"
-  ),
-  warning: cx(
-    TOAST_BASE,
-    "bg-accent-bg border-accent text-accent-dark dark:text-accent"
-  ),
-  error: cx(TOAST_BASE, "bg-danger-light border-danger text-danger"),
-  info: cx(
-    TOAST_BASE,
-    "bg-primary-bg border-primary text-primary-dark dark:text-primary"
-  ),
+  success: cx(TOAST_BASE, "border-success text-success-dark dark:text-success"),
+  warning: cx(TOAST_BASE, "border-accent text-accent-dark dark:text-accent"),
+  error: cx(TOAST_BASE, "border-danger text-danger"),
+  info: cx(TOAST_BASE, "border-primary text-primary-dark dark:text-primary"),
 } as const;
 
 // ─── MODAL ──────────────────────────────────────────────────────────────────

@@ -231,7 +231,8 @@
     "tier_canopy": "Canopy",
     "viewOnExplorer": "View on Explorer",
     "onChain": "on-chain",
-    "you": "You"
+    "you": "You",
+    "xpRemaining": "<em>{xp} {xpLabel}</em> to {levelLabel} {level}"
   },
   "certificates": {
     "title": "Certificate of Completion",
