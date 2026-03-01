@@ -1360,6 +1360,65 @@
   }
 }
 
+/* ── Branded gradient spinner ── */
+.sol-spinner {
+  --spinner-size: 40px;
+  --spinner-weight: 3.5px;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  border-radius: 50%;
+  position: relative;
+  animation: sol-spin 0.9s linear infinite;
+}
+.sol-spinner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: var(--spinner-weight);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 40deg,
+    var(--sol-purple) 90deg,
+    #00c2ff 180deg,
+    var(--sol-green) 270deg,
+    transparent 320deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+}
+.sol-spinner::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 60deg,
+    rgba(153, 69, 255, 0.25) 120deg,
+    rgba(0, 194, 255, 0.15) 200deg,
+    rgba(20, 241, 149, 0.25) 280deg,
+    transparent 330deg,
+    transparent 360deg
+  );
+  filter: blur(6px);
+  animation: sol-spin 0.9s linear infinite;
+}
+@keyframes sol-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Staggered card entrance animation ── */
 @keyframes card-in {
   from {
