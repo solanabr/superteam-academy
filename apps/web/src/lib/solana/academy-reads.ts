@@ -12,11 +12,30 @@ import {
   findConfigPDA,
   findCoursePDA,
   findEnrollmentPDA,
+  findAchievementTypePDA,
   findAchievementReceiptPDA,
   getProgramId,
 } from "./pda";
 
 const coder = new BorshCoder(IDL as unknown as Idl);
+
+/** Decoded AchievementReceipt PDA (raw BorshCoder returns snake_case). */
+export interface AchievementReceiptDecoded {
+  asset: Uint8Array | string;
+  awarded_at: bigint | number;
+  bump: number;
+}
+
+/** Decoded AchievementType PDA (raw BorshCoder returns snake_case). */
+export interface AchievementTypeDecoded {
+  collection: Uint8Array | string;
+  xp_reward: number;
+  max_supply: number;
+  name: string;
+  metadata_uri: string;
+  minted_count: number;
+  bump: number;
+}
 
 export async function fetchConfig(
   connection: Connection,
@@ -37,6 +56,20 @@ export async function fetchCourse(
   const accountInfo = await connection.getAccountInfo(pda);
   if (!accountInfo) return null;
   return coder.accounts.decode("Course", accountInfo.data);
+}
+
+export async function fetchAchievementType(
+  achievementId: string,
+  connection: Connection,
+  programId: PublicKey = getProgramId()
+): Promise<AchievementTypeDecoded | null> {
+  const [pda] = findAchievementTypePDA(achievementId, programId);
+  const accountInfo = await connection.getAccountInfo(pda);
+  if (!accountInfo) return null;
+  return coder.accounts.decode(
+    "AchievementType",
+    accountInfo.data
+  ) as AchievementTypeDecoded;
 }
 
 export async function fetchEnrollment(
@@ -102,5 +135,33 @@ export async function fetchAchievementReceipt(
     return accountInfo !== null;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Fetch and decode a full AchievementReceipt PDA.
+ * Returns the decoded data (asset, awarded_at, bump) or null if it doesn't exist.
+ */
+export async function fetchAchievementReceiptData(
+  achievementId: string,
+  recipientAddress: string,
+  connection: Connection,
+  programId: PublicKey = getProgramId()
+): Promise<AchievementReceiptDecoded | null> {
+  try {
+    const recipient = new PublicKey(recipientAddress);
+    const [receiptPda] = findAchievementReceiptPDA(
+      achievementId,
+      recipient,
+      programId
+    );
+    const accountInfo = await connection.getAccountInfo(receiptPda);
+    if (!accountInfo) return null;
+    return coder.accounts.decode(
+      "AchievementReceipt",
+      accountInfo.data
+    ) as AchievementReceiptDecoded;
+  } catch {
+    return null;
   }
 }
