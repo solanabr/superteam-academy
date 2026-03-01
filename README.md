@@ -60,7 +60,7 @@ Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) o
 | **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
 | **Testing** | ts-mocha/Chai, Cargo test |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
+| **Frontend** | Next.js 16, React, Tailwind CSS |
 | **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
 | **Content** | Arweave (immutable course content) |
 | **Multisig** | Squads (platform authority) |
