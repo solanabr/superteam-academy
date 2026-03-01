@@ -54,7 +54,20 @@ superteam-academy/
 │   ├── Anchor.toml
 │   ├── Cargo.toml               ← Workspace root
 │   └── package.json
-├── app/                         ← Next.js frontend (future)
+├── app/                         ← Next.js 15 frontend (LIVE)
+│   ├── src/
+│   │   ├── app/[locale]/        ← 23 routes across 4 route groups
+│   │   ├── components/          ← 50+ components (landing, courses, layout, ui)
+│   │   ├── lib/
+│   │   │   ├── sanity/          ← CMS client + mock-client + seed data
+│   │   │   ├── stores/          ← Zustand (course-store, user-store)
+│   │   │   ├── hooks/           ← Custom hooks (use-course, use-mobile)
+│   │   │   ├── challenges/      ← 100 coding challenges (5 categories x 20)
+│   │   │   └── solana/          ← Constants, Helius DAS integration
+│   │   ├── i18n/                ← Routing + request config
+│   │   └── messages/            ← EN, PT, ES, HI translations (627 keys each)
+│   ├── public/images/courses/   ← 5 custom SVG course thumbnails
+│   └── e2e/                     ← 36 Playwright E2E tests
 ├── sdk/                         ← TypeScript SDK (future)
 ├── wallets/                     ← Keypairs (gitignored)
 ├── scripts/                     ← Helper scripts
@@ -75,9 +88,15 @@ superteam-academy/
 | **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
 | **Testing** | Mollusk, LiteSVM, ts-mocha/Chai |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
+| **Frontend** | Next.js 15 (App Router), React 19, TypeScript (strict, zero `any`) |
+| **Styling** | Tailwind CSS v4, shadcn/ui, OKLch design tokens |
+| **State** | Zustand stores (course, user, enrollment) |
+| **i18n** | next-intl — 627 keys x 4 locales (EN, PT-BR, ES, HI) |
+| **CMS** | Sanity v3 with mock-client fallback for zero-config dev |
+| **Auth** | NextAuth v5 beta (Google + GitHub, conditional on env vars) |
+| **Code Editor** | Monaco — Rust, TypeScript, JavaScript, Python, Solidity, JSON |
+| **RPC** | Helius DAS API (credential queries, XP leaderboard with 60s cache) |
+| **Content** | Arweave/Irys (permanent course content with on-chain verification) |
 | **Multisig** | Squads (platform authority) |
 
 ## Program Overview
@@ -94,6 +113,49 @@ See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend
 - **`finalize_course` / `issue_credential` split** — XP awards independent of credential CPI
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
 - **Reserved bytes** on all accounts for future-proofing
+
+## Frontend Overview
+
+**Production**: `https://superteam-academy.rectorspace.com` (Vercel, auto-deploys from `main`)
+
+### Pages (23 routes)
+
+| Group | Pages |
+|-------|-------|
+| **Public** | Landing (`/`), Sign-in |
+| **Platform** | Course Catalog, Course Detail, Lesson Viewer, Dashboard, Profile, Leaderboard, Settings, Credentials, Community Forum, Daily Challenges |
+| **Admin** | Admin Panel (Overview, Courses, Users, Achievements, Analytics, Config) |
+| **Onboarding** | 5-step wizard |
+| **Legal/Info** | Terms, Privacy, Contact, Docs |
+
+### Key Architecture Patterns
+
+- **Mock-client pattern**: `lib/sanity/client.ts` checks `NEXT_PUBLIC_SANITY_PROJECT_ID` — uses real Sanity or `mock-client.ts` with seed data. Full app works with zero env vars.
+- **Seed data**: 5 courses across 4 tracks in `lib/sanity/seed-data.ts` (solana-101, defi-201, nft-201, sec-301, token-201)
+- **100 coding challenges**: `lib/challenges/` — 5 categories (solana-fundamentals, defi, nft-metaplex, security, token-extensions) x 20 each. Each has starter code, solution, 3 test cases, 3 hints, XP reward.
+- **Conditional OAuth**: `lib/auth.ts` only registers providers when env vars exist; buttons auto-hidden when no creds
+- **Real on-chain leaderboard**: Helius DAS `getTokenAccounts` with 60s cache (`api/leaderboard/route.ts`)
+- **i18n**: 627 keys x 4 locales (EN, PT-BR, ES, HI) in `messages/` — 30 namespaces covering every surface
+
+### Frontend Testing
+
+```bash
+cd app
+pnpm test:run          # 364 Vitest unit tests
+pnpm test:e2e          # 36 Playwright E2E tests
+pnpm tsc --noEmit      # TypeScript strict check
+pnpm lint              # ESLint
+```
+
+### Frontend Env Vars
+
+| Var | Required | Notes |
+|-----|----------|-------|
+| `HELIUS_RPC_URL` | For leaderboard | Real on-chain data |
+| `NEXT_PUBLIC_CLUSTER` | Yes | `devnet` |
+| `NEXTAUTH_SECRET` | For auth | Session encryption |
+| `NEXT_PUBLIC_SANITY_*` | No | Falls back to mock-client |
+| `GOOGLE_CLIENT_ID` / `GITHUB_CLIENT_ID` | No | Buttons auto-hidden |
 
 ## Agents
 
@@ -115,6 +177,15 @@ Every program change:
 4. **Test**: `cargo test --manifest-path tests/rust/Cargo.toml && anchor test`
 5. **Quality**: Remove AI slop (see below)
 6. **Deploy**: Devnet first, mainnet with explicit confirmation
+
+## Mandatory Workflow (Frontend)
+
+Every frontend change:
+1. **Type check**: `cd app && pnpm tsc --noEmit`
+2. **Lint**: `pnpm lint`
+3. **Test**: `pnpm test:run`
+4. **Build**: `pnpm build`
+5. **Push**: Auto-deploys to Vercel from `main`
 
 ## Security Principles
 
@@ -216,14 +287,26 @@ anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypai
 ## Quick Reference
 
 ```bash
-# Build + test
+# On-chain: Build + test
 anchor build && cargo fmt && cargo clippy -- -W clippy::all
 cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
 anchor test
 
-# Deploy flow
-/deploy  # Always devnet first
+# Frontend: Build + test
+cd app && pnpm tsc --noEmit && pnpm lint && pnpm test:run && pnpm build
+
+# Deploy
+/deploy  # On-chain: Always devnet first
+# Frontend: Push to main → Vercel auto-deploys
 ```
+
+## On-Chain Constants
+
+| Constant | Value |
+|----------|-------|
+| **Program ID** | `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf` |
+| **XP Mint** | `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3` |
+| **Cluster** | Devnet |
 
 ---
 
