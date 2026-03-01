@@ -2,7 +2,7 @@
 
 **Purpose**: Feature walkthrough for bounty submission (Mar 5 deadline)
 **Format**: Screen recording with narration, ~3-5 minutes
-**URL**: https://app-roan-iota-58.vercel.app
+**URL**: https://superteam-academy-five.vercel.app
 
 ---
 

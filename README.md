@@ -2,7 +2,7 @@
 
 Full-stack learning platform for Solana developers. On-chain Anchor program + production Next.js 15 frontend with wallet integration, trilingual i18n, code challenges, certificates, and offline support.
 
-**[Live Demo](https://app-roan-iota-58.vercel.app)** · **[Demo Video](https://streamable.com/nealvo)**
+**[Live Demo](https://superteam-academy-five.vercel.app)** · **[Demo Video](https://streamable.com/nealvo)**
 
 ## Features
 
