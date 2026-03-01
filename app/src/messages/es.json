@@ -9,7 +9,9 @@
     "cancel": "Cancelar",
     "search": "Buscar...",
     "view_all": "Ver Todo",
-    "coming_soon": "Próximamente"
+    "coming_soon": "Próximamente",
+    "no_results": "No se encontraron resultados",
+    "platform_stats": "Estadísticas de la Plataforma"
   },
   "nav": {
     "courses": "Cursos",
@@ -139,7 +141,14 @@
     "line": "Ln {line}",
     "show_solution": "Mostrar Solución",
     "solution_warning": "¿Estás seguro? Ver la solución significa que no ganarás XP completo en esta lección.",
-    "solution": "Solución"
+    "solution": "Solución",
+    "ai_hint": "Pista IA",
+    "ai_hint_remaining": "{count} pistas restantes",
+    "ai_hint_loading": "Pensando...",
+    "ai_hint_unavailable": "Pistas IA no disponibles",
+    "quiz_correct": "¡Correcto! XP otorgado.",
+    "quiz_incorrect": "No exactamente. Inténtalo de nuevo.",
+    "quiz_score": "Puntuación: {score}/{total}"
   },
   "challenge": {
     "title": "Desafío de Código",
@@ -179,7 +188,9 @@
     "recent_activity": "Actividad Reciente",
     "claim_onchain": "Reclamar On-Chain",
     "achievement_claimed": "Reclamado",
-    "view_on_explorer": "Ver en Explorer"
+    "view_on_explorer": "Ver en Explorer",
+    "no_notifications": "Sin notificaciones nuevas",
+    "mark_read": "Marcar como leído"
   },
   "leaderboard": {
     "title": "Clasificación",

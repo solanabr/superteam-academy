@@ -9,7 +9,9 @@
     "cancel": "Cancel",
     "search": "Search...",
     "view_all": "View All",
-    "coming_soon": "Coming Soon"
+    "coming_soon": "Coming Soon",
+    "no_results": "No results found",
+    "platform_stats": "Platform Statistics"
   },
   "nav": {
     "courses": "Courses",
@@ -139,7 +141,14 @@
     "line": "Ln {line}",
     "show_solution": "Show Solution",
     "solution_warning": "Are you sure? Viewing the solution means you won't earn full XP for this lesson.",
-    "solution": "Solution"
+    "solution": "Solution",
+    "ai_hint": "AI Hint",
+    "ai_hint_remaining": "{count} hints remaining",
+    "ai_hint_loading": "Thinking...",
+    "ai_hint_unavailable": "AI hints not available",
+    "quiz_correct": "Correct! XP awarded.",
+    "quiz_incorrect": "Not quite. Try again.",
+    "quiz_score": "Score: {score}/{total}"
   },
   "challenge": {
     "title": "Code Challenge",
@@ -179,7 +188,9 @@
     "recent_activity": "Recent Activity",
     "claim_onchain": "Claim On-Chain",
     "achievement_claimed": "Claimed",
-    "view_on_explorer": "View on Explorer"
+    "view_on_explorer": "View on Explorer",
+    "no_notifications": "No new notifications",
+    "mark_read": "Mark as read"
   },
   "leaderboard": {
     "title": "Leaderboard",
