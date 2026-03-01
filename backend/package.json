@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "postinstall": "pnpm db:generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
     "build": "tsc && tsc-alias -p tsconfig.json",
     "lint": "eslint src",
     "start": "node dist/index.js",
@@ -16,8 +19,11 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@hono/node-server": "^1.19.0",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.4",
+    "bn.js": "^5.2.3",
     "dotenv": "^17.3.1",
     "hono": "^4.6.0",
     "hono-rate-limiter": "^0.5.3",
@@ -25,8 +31,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/bn.js": "^5.2.0",
     "@types/node": "^25.3.0",
     "eslint": "^10.0.0",
+    "prisma": "^7.4.2",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3",
