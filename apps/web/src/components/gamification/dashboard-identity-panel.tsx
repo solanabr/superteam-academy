@@ -9,9 +9,12 @@ import {
   Code,
   Lightning,
   Trophy,
+  Scroll,
+  CircleDashed,
 } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type { StreakData } from "@superteam-lms/types";
+import type { StreakData, DailyQuest } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import type { AchievementDefinition } from "@/lib/gamification";
 import { xpToNextLevel } from "@/lib/gamification/xp";
@@ -215,55 +218,25 @@ function AchievementToken({
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
 
 /* ---------------------------------------------------------------
-   MOCK DAILY QUESTS — placeholder until real quest system
+   QUEST ICON MAP — maps Sanity icon strings to Phosphor components
 --------------------------------------------------------------- */
-const MOCK_QUESTS = [
-  {
-    id: "q1",
-    name: "Complete a Lesson",
-    description: "Finish any lesson today",
-    xp: 25,
-    icon: <BookOpen size={16} weight="duotone" />,
-    done: true,
-    progressLabel: "1/1",
-  },
-  {
-    id: "q2",
-    name: "Pass a Challenge",
-    description: "Submit a correct challenge solution",
-    xp: 50,
-    icon: <Code size={16} weight="duotone" />,
-    done: false,
-    progressLabel: "0/1",
-  },
-  {
-    id: "q3",
-    name: "Learning Streak",
-    description: "Complete 3 lessons in one session",
-    xp: 35,
-    icon: <Lightning size={16} weight="duotone" />,
-    done: false,
-    progressLabel: "1/3",
-  },
-  {
-    id: "q4",
-    name: "Earn 100 XP",
-    description: "Accumulate 100 XP in a single day",
-    xp: 40,
-    icon: <Trophy size={16} weight="duotone" />,
-    done: false,
-    progressLabel: "42/100",
-  },
-  {
-    id: "q5",
-    name: "Start a New Course",
-    description: "Enroll in a course you haven't tried",
-    xp: 30,
-    icon: <BookOpen size={16} weight="duotone" />,
-    done: false,
-    progressLabel: "0/1",
-  },
-];
+const QUEST_ICONS: Record<string, Icon> = {
+  BookOpen,
+  Code,
+  Lightning,
+  Trophy,
+  Scroll,
+};
+
+function getQuestIcon(iconName: string): Icon {
+  return QUEST_ICONS[iconName] ?? CircleDashed;
+}
+
+function getHoursUntilReset(resetTime: string): number {
+  if (!resetTime) return 0;
+  const diff = new Date(resetTime).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60)));
+}
 
 /* ---------------------------------------------------------------
    DASHBOARD IDENTITY PANEL (V9 .dash-panel)
@@ -277,6 +250,8 @@ export interface DashboardIdentityPanelProps {
   unlockedAchievementIds: string[];
   /** Sanity achievement catalog — single source of truth for total count + token list */
   catalog: AchievementDefinition[];
+  quests: DailyQuest[];
+  questsResetTime: string;
   className?: string;
 }
 
@@ -287,6 +262,8 @@ export function DashboardIdentityPanel({
   achievementsCount,
   unlockedAchievementIds,
   catalog,
+  quests,
+  questsResetTime,
   className,
 }: DashboardIdentityPanelProps) {
   const t = useTranslations("gamification");
@@ -587,7 +564,9 @@ export function DashboardIdentityPanel({
           <div className="dash-quests-head">
             <span className="dash-quests-title">{tDash("dailyQuests")}</span>
             <span className="dash-quests-reset">
-              {tDash("resetsIn", { hours: 14 })}
+              {tDash("resetsIn", {
+                hours: getHoursUntilReset(questsResetTime),
+              })}
             </span>
           </div>
 
@@ -599,25 +578,35 @@ export function DashboardIdentityPanel({
             onPointerUp={onQuestsUp}
             onPointerCancel={onQuestsUp}
           >
-            {MOCK_QUESTS.map((quest) => (
-              <div key={quest.id} className={cn("dq", quest.done && "done")}>
-                <div className="dq-icon">{quest.icon}</div>
-                <div className="dq-info">
-                  <span className="dq-name">{quest.name}</span>
-                  <span className="dq-desc">{quest.description}</span>
-                </div>
-                <div className="dq-reward">
-                  <Lightning size={12} weight="fill" />+{quest.xp}
-                </div>
-                {quest.done ? (
-                  <div className="dq-check">
-                    <CheckCircle size={18} weight="fill" />
+            {quests.map((quest) => {
+              const IconComp = getQuestIcon(quest.icon);
+              return (
+                <div
+                  key={quest.id}
+                  className={cn("dq", quest.completed && "done")}
+                >
+                  <div className="dq-icon">
+                    <IconComp size={16} weight="duotone" />
                   </div>
-                ) : (
-                  <span className="dq-progress-lbl">{quest.progressLabel}</span>
-                )}
-              </div>
-            ))}
+                  <div className="dq-info">
+                    <span className="dq-name">{quest.name}</span>
+                    <span className="dq-desc">{quest.description}</span>
+                  </div>
+                  <div className="dq-reward">
+                    <Lightning size={12} weight="fill" />+{quest.xpReward}
+                  </div>
+                  {quest.completed ? (
+                    <div className="dq-check">
+                      <CheckCircle size={18} weight="fill" />
+                    </div>
+                  ) : (
+                    <span className="dq-progress-lbl">
+                      {quest.currentValue}/{quest.targetValue}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

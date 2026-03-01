@@ -18,7 +18,7 @@ import {
   X,
   WarningOctagon,
 } from "@phosphor-icons/react";
-import type { StreakData } from "@superteam-lms/types";
+import type { StreakData, DailyQuest } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -80,6 +80,8 @@ interface DashboardData {
   unlockedAchievementIds: string[];
   /** All achievements from Sanity — single source of truth for catalog */
   achievementCatalog: DeployedAchievement[];
+  quests: DailyQuest[];
+  questsResetTime: string;
   currentCourses: CurrentCourse[];
   recommendedCourses: RecommendedCourse[];
   recentActivity: {
@@ -115,6 +117,8 @@ function useDashboardData(
     achievementsCount: 0,
     unlockedAchievementIds: [],
     achievementCatalog: [],
+    quests: [],
+    questsResetTime: "",
     currentCourses: [],
     recommendedCourses: [],
     recentActivity: [],
@@ -136,6 +140,13 @@ function useDashboardData(
         }
 
         const supabase = createClient();
+
+        // Kick off quest fetch immediately — runs in parallel with all Supabase queries below
+        const questsPromise = fetch("/api/quests/daily")
+          .then((res) =>
+            res.ok ? res.json() : { quests: [], nextResetTime: "" }
+          )
+          .catch(() => ({ quests: [], nextResetTime: "" }));
 
         // Fetch XP + streak via service layer (on-chain first, Supabase fallback)
         const service = getProgressService(supabase);
@@ -213,6 +224,9 @@ function useDashboardData(
             .order("unlocked_at", { ascending: false })
             .limit(10),
         ]);
+
+        // Await quest data (already running in parallel since fetchData start)
+        const questsResult = await questsPromise;
 
         // Courses with minted certificates should not appear in "Current Courses"
         const mintedCourseIds = new Set(
@@ -490,6 +504,8 @@ function useDashboardData(
             (r) => r.achievement_id
           ),
           achievementCatalog,
+          quests: questsResult.quests ?? [],
+          questsResetTime: questsResult.nextResetTime ?? "",
           currentCourses,
           recommendedCourses: recommended,
           recentActivity,
@@ -726,6 +742,8 @@ export default function DashboardPage() {
         achievementsCount={data.achievementsCount}
         unlockedAchievementIds={data.unlockedAchievementIds}
         catalog={data.achievementCatalog}
+        quests={data.quests}
+        questsResetTime={data.questsResetTime}
       />
 
       {/* ═══ Current Courses ═══ */}
