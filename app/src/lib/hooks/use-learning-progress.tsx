@@ -76,36 +76,34 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
   });
 
   const loadAll = useCallback(async () => {
-    try {
-      const uid = activeUserId;
-      const [xp, streak, achievements, allProgress] = await Promise.all([
-        progressService.getXP(uid),
-        progressService.getStreak(uid),
-        progressService.getAchievements(uid),
-        progressService.getAllProgress(uid),
-      ]);
+    const uid = activeUserId;
+    const [xpRes, streakRes, achievementsRes, allProgressRes] = await Promise.allSettled([
+      progressService.getXP(uid),
+      progressService.getStreak(uid),
+      progressService.getAchievements(uid),
+      progressService.getAllProgress(uid),
+    ]);
 
-      const progressMap: Record<string, Progress> = {};
-      const enrolledCourseIds: string[] = [];
-      for (const p of allProgress) {
-        progressMap[p.courseId] = p;
-        enrolledCourseIds.push(p.courseId);
-      }
-
-      setState({
-        userId: uid,
-        xp,
-        streak,
-        achievements,
-        enrolledCourseIds,
-        progressMap,
-        isLoaded: true,
-        isOnChain: !!walletUserId,
-        onChainLessonSig: null,
-      });
-    } catch {
-      setState((prev) => ({ ...prev, isLoaded: true }));
+    const progressMap: Record<string, Progress> = {};
+    const enrolledCourseIds: string[] = [];
+    const allProgress = allProgressRes.status === "fulfilled" ? allProgressRes.value : [];
+    for (const p of allProgress) {
+      progressMap[p.courseId] = p;
+      enrolledCourseIds.push(p.courseId);
     }
+
+    setState((prev) => ({
+      ...prev,
+      userId: uid,
+      xp: xpRes.status === "fulfilled" ? xpRes.value : prev.xp,
+      streak: streakRes.status === "fulfilled" ? streakRes.value : prev.streak,
+      achievements: achievementsRes.status === "fulfilled" ? achievementsRes.value : prev.achievements,
+      enrolledCourseIds,
+      progressMap,
+      isLoaded: true,
+      isOnChain: !!walletUserId,
+      onChainLessonSig: null,
+    }));
   }, [activeUserId, walletUserId]);
 
   useEffect(() => {
@@ -118,39 +116,35 @@ export function LearningProgressProvider({ children }: { children: React.ReactNo
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const uid = activeUserId;
-        const [xpVal, streakVal, achievementsVal, allProgressVal] = await Promise.all([
-          progressService.getXP(uid),
-          progressService.getStreak(uid),
-          progressService.getAchievements(uid),
-          progressService.getAllProgress(uid),
-        ]);
-        if (cancelled) return;
+      const uid = activeUserId;
+      const [xpRes, streakRes, achievementsRes, allProgressRes] = await Promise.allSettled([
+        progressService.getXP(uid),
+        progressService.getStreak(uid),
+        progressService.getAchievements(uid),
+        progressService.getAllProgress(uid),
+      ]);
+      if (cancelled) return;
 
-        const pMap: Record<string, Progress> = {};
-        const eIds: string[] = [];
-        for (const p of allProgressVal) {
-          pMap[p.courseId] = p;
-          eIds.push(p.courseId);
-        }
-
-        setState({
-          userId: uid,
-          xp: xpVal,
-          streak: streakVal,
-          achievements: achievementsVal,
-          enrolledCourseIds: eIds,
-          progressMap: pMap,
-          isLoaded: true,
-          isOnChain: !!walletUserId,
-          onChainLessonSig: null,
-        });
-      } catch {
-        if (!cancelled) {
-          setState((prev) => ({ ...prev, isLoaded: true }));
-        }
+      const pMap: Record<string, Progress> = {};
+      const eIds: string[] = [];
+      const allProgressVal = allProgressRes.status === "fulfilled" ? allProgressRes.value : [];
+      for (const p of allProgressVal) {
+        pMap[p.courseId] = p;
+        eIds.push(p.courseId);
       }
+
+      setState((prev) => ({
+        ...prev,
+        userId: uid,
+        xp: xpRes.status === "fulfilled" ? xpRes.value : prev.xp,
+        streak: streakRes.status === "fulfilled" ? streakRes.value : prev.streak,
+        achievements: achievementsRes.status === "fulfilled" ? achievementsRes.value : prev.achievements,
+        enrolledCourseIds: eIds,
+        progressMap: pMap,
+        isLoaded: true,
+        isOnChain: !!walletUserId,
+        onChainLessonSig: null,
+      }));
     })();
     return () => { cancelled = true; };
   }, [activeUserId, walletUserId]);

@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db";
 import type { Progress, StreakData, LeaderboardEntry, Credential, Achievement } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
+import { NotificationService } from "./notification-service";
+import { getAchievements as getSeedAchievements } from "../../../prisma/seed-data/achievements";
+
+const notifService = new NotificationService();
 
 function toDateKey(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10);
@@ -121,8 +125,14 @@ export class PrismaProgressService implements LearningProgressService {
       update: {},
     });
 
-    // Award XP
-    await this.addXP(userId, lesson.xpReward);
+    // Award XP — snapshot level before/after for level-up notification
+    const xpBefore = await this.getXP(userId);
+    const prevLevel = levelFromXP(xpBefore);
+    const newTotal = await this.addXP(userId, lesson.xpReward);
+    const newLevel = levelFromXP(newTotal);
+    if (newLevel > prevLevel) {
+      notifService.createLevelUp(userId, prevLevel, newLevel).catch(() => undefined);
+    }
 
     // Record activity for streak
     await this.recordActivity(userId);
@@ -187,7 +197,10 @@ export class PrismaProgressService implements LearningProgressService {
         source: "lesson",
       },
     });
-    return this.getXP(userId);
+    const newTotal = await this.getXP(userId);
+    // Fire-and-forget milestone notification
+    notifService.maybeCreateXpMilestone(userId, newTotal).catch(() => undefined);
+    return newTotal;
   }
 
   // ── Streaks ─────────────────────────────────────────────────────────────────
@@ -391,6 +404,7 @@ export class PrismaProgressService implements LearningProgressService {
       totalXpEarned: c.totalXpEarned,
       firstEarned: c.firstEarned.toISOString(),
       lastUpdated: c.lastUpdated.toISOString(),
+      mintAddress: c.mintAddress ?? undefined,
       metadataUri: c.metadataUri ?? undefined,
       badgeImage: c.badgeImage ?? undefined,
     }));
@@ -398,17 +412,19 @@ export class PrismaProgressService implements LearningProgressService {
 
   // ── Achievements ────────────────────────────────────────────────────────────
 
-  async getAchievements(userId: string): Promise<Achievement[]> {
-    const [allAchievements, userClaims] = await Promise.all([
-      prisma.achievement.findMany({ orderBy: { id: "asc" } }),
-      prisma.userAchievement.findMany({ where: { userId } }),
-    ]);
+  async getAchievements(userId: string | null): Promise<Achievement[]> {
+    // Always use seed data for achievement definitions — DB may have stale/wrong data
+    const seedAchievements = getSeedAchievements();
+
+    const userClaims = userId
+      ? await prisma.userAchievement.findMany({ where: { userId } }).catch(() => [])
+      : [];
 
     const claimMap = new Map(
       userClaims.map((c) => [c.achievementId, c.claimedAt.toISOString()]),
     );
 
-    return allAchievements.map((a) => ({
+    return seedAchievements.map((a) => ({
       id: a.id,
       name: a.name,
       description: a.description,
@@ -452,5 +468,14 @@ export class PrismaProgressService implements LearningProgressService {
         },
       }),
     ]);
+
+    notifService
+      .createAchievementNotification(userId, {
+        achievementId,
+        achievementName: achievement.name,
+        xpReward: achievement.xpReward,
+        icon: achievement.icon,
+      })
+      .catch(() => undefined);
   }
 }
