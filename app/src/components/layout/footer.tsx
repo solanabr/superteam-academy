@@ -122,17 +122,17 @@ interface SocialLink {
 const socialLinks: SocialLink[] = [
   {
     label: 'Twitter',
-    href: 'https://twitter.com/SuperteamDAO',
+    href: 'https://x.com/SuperteamBR',
     icon: XIcon,
   },
   {
     label: 'Discord',
-    href: 'https://discord.gg/superteam',
+    href: 'https://discord.gg',
     icon: DiscordIcon,
   },
   {
     label: 'GitHub',
-    href: 'https://github.com/superteam-fun',
+    href: 'https://github.com/solanabr/superteam-academy',
     icon: GitHubIcon,
   },
 ];
@@ -207,7 +207,7 @@ export function Footer() {
         { label: t('link_documentation'), href: '/docs' },
         {
           label: 'GitHub',
-          href: 'https://github.com/superteam-fun',
+          href: 'https://github.com/solanabr/superteam-academy',
           external: true,
         },
         {
