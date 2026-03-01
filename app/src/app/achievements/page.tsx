@@ -1,248 +1,209 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MeshGradient } from "@/components/MeshGradient";
-import { GridPattern } from "@/components/GridPattern";
-import { 
-  Trophy, Medal, Star, Flame, Zap, Target, 
-  BookOpen, Code, Shield, Crown, Award, Lock
-} from "lucide-react";
-import { Badge } from "@/components/ui";
+import { Trophy, Medal, Star, Shield, Zap, Lock, ExternalLink, Share2, Award } from "lucide-react";
+import { motion } from "framer-motion";
+import { useI18n } from "@/components/I18nProvider";
+import Link from "next/link";
 
 interface Achievement {
   id: string;
-  name: string;
+  title: string;
   description: string;
   icon: any;
-  category: "progress" | "streak" | "skill" | "community" | "special";
-  earned: boolean;
-  earnedAt?: string;
-  xpReward: number;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  unlockedAt?: string;
+  isSoulbound?: boolean;
+  mintAddress?: string;
+  progress?: number;
 }
 
 const ACHIEVEMENTS: Achievement[] = [
-  // Progress
-  { id: "first-steps", name: "First Steps", description: "Complete your first lesson", icon: BookOpen, category: "progress", earned: false, xpReward: 50 },
-  { id: "course-completer", name: "Course Completer", description: "Complete your first course", icon: Trophy, category: "progress", earned: false, xpReward: 200 },
-  { id: "five-courses", name: "Knowledge Seeker", description: "Complete 5 courses", icon: Star, category: "progress", earned: false, xpReward: 500 },
-  
-  // Streaks
-  { id: "week-warrior", name: "Week Warrior", description: "Maintain a 7-day streak", icon: Flame, category: "streak", earned: false, xpReward: 100 },
-  { id: "monthly-master", name: "Monthly Master", description: "Maintain a 30-day streak", icon: Crown, category: "streak", earned: false, xpReward: 300 },
-  { id: "consistency-king", name: "Consistency King", description: "Maintain a 100-day streak", icon: Award, category: "streak", earned: false, xpReward: 1000 },
-  
-  // Skills
-  { id: "rust-rookie", name: "Rust Rookie", description: "Complete all Rust lessons", icon: Code, category: "skill", earned: false, xpReward: 150 },
-  { id: "anchor-expert", name: "Anchor Expert", description: "Complete the Anchor course", icon: Shield, category: "skill", earned: false, xpReward: 250 },
-  { id: "full-stack", name: "Full Stack Solana", description: "Complete courses in 3 different tracks", icon: Zap, category: "skill", earned: false, xpReward: 400 },
-  
-  // Community
-  { id: "first-comment", name: "First Comment", description: "Leave your first comment", icon: MessageCircle, category: "community", earned: false, xpReward: 25 },
-  { id: "helper", name: "Helper", description: "Help another developer", icon: Users, category: "community", earned: false, xpReward: 75 },
-  
-  // Special
-  { id: "early-adopter", name: "Early Adopter", description: "Join during beta", icon: Rocket, category: "special", earned: false, xpReward: 200 },
-  { id: "bug-hunter", name: "Bug Hunter", description: "Report a bug", icon: Bug, category: "special", earned: false, xpReward: 150 },
-  { id: "perfect-score", name: "Perfect Score", description: "Pass all tests on first try", icon: Target, category: "special", earned: false, xpReward: 200 },
+  {
+    id: "first-step",
+    title: "achievements.firstStep.title",
+    description: "achievements.firstStep.desc",
+    icon: Star,
+    rarity: "common",
+    unlockedAt: "2024-03-01T12:00:00Z",
+    progress: 100,
+  },
+  {
+    id: "anchor-master",
+    title: "achievements.anchorMaster.title",
+    description: "achievements.anchorMaster.desc",
+    icon: Shield,
+    rarity: "rare",
+    isSoulbound: true,
+    mintAddress: "H7x...9v2",
+    unlockedAt: "2024-03-15T15:30:00Z",
+    progress: 100,
+  },
+  {
+    id: "streak-7",
+    title: "achievements.streak7.title",
+    description: "achievements.streak7.desc",
+    icon: Zap,
+    rarity: "epic",
+    progress: 60,
+  },
+  {
+    id: "top-leaderboard",
+    title: "achievements.topLeaderboard.title",
+    description: "achievements.topLeaderboard.desc",
+    icon: Trophy,
+    rarity: "legendary",
+    progress: 10,
+  },
 ];
 
-function MessageCircle({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-    </svg>
-  );
-}
-
-function Users({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function Rocket({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-    </svg>
-  );
-}
-
-function Bug({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect width="8" height="14" x="8" y="6" rx="4" />
-      <path d="m19 7-3 2" />
-      <path d="m5 7 3 2" />
-      <path d="m19 19-3-2" />
-      <path d="m5 19 3-2" />
-      <path d="M20 13h-4" />
-      <path d="M4 13h4" />
-      <path d="m10 4 1 2" />
-    </svg>
-  );
-}
-
-const CATEGORY_CONFIG = {
-  progress: { label: "Progress", color: "text-blue-400", bg: "bg-blue-500/20" },
-  streak: { label: "Streaks", color: "text-orange-400", bg: "bg-orange-500/20" },
-  skill: { label: "Skills", color: "text-purple-400", bg: "bg-purple-500/20" },
-  community: { label: "Community", color: "text-green-400", bg: "bg-green-500/20" },
-  special: { label: "Special", color: "text-yellow-400", bg: "bg-yellow-500/20" },
-};
-
 export default function AchievementsPage() {
+  const { t } = useI18n();
   const { connected } = useWallet();
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const filteredAchievements = selectedCategory === "all" 
-    ? ACHIEVEMENTS 
-    : ACHIEVEMENTS.filter(a => a.category === selectedCategory);
-
-  const earnedCount = ACHIEVEMENTS.filter(a => a.earned).length;
-  const totalXP = ACHIEVEMENTS.filter(a => a.earned).reduce((acc, a) => acc + a.xpReward, 0);
-
-  if (!connected) {
-    return (
-      <div className="min-h-screen bg-black text-white relative">
-        <MeshGradient />
-        <GridPattern />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <Trophy className="w-16 h-16 mx-auto mb-4 text-white/20" />
-            <h1 className="text-2xl font-semibold mb-2">Achievements</h1>
-            <p className="text-white/60">Connect your wallet to view achievements</p>
-            <Link href="/" className="inline-block mt-6 px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-white/90">
-              Go Home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const getRarityColor = (rarity: Achievement["rarity"]) => {
+    switch (rarity) {
+      case "common": return "text-zinc-400 bg-zinc-400/10 border-zinc-400/20";
+      case "rare": return "text-blue-400 bg-blue-400/10 border-blue-400/20";
+      case "epic": return "text-purple-400 bg-purple-400/10 border-purple-400/20";
+      case "legendary": return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white relative">
-      <MeshGradient />
-      <GridPattern />
+    <div className="min-h-screen bg-black text-white">
+      <div className="fixed inset-0 z-0">
+        <MeshGradient />
+      </div>
 
-      <main className="pt-20 pb-12 relative z-10">
-        <div className="max-w-6xl mx-auto px-6">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Achievements</h1>
-            <p className="text-white/60">Earn badges and XP by completing challenges</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-                <span className="text-white/60 text-sm">Earned</span>
-              </div>
-              <div className="text-3xl font-bold">{earnedCount} / {ACHIEVEMENTS.length}</div>
+      <main className="relative z-10 pt-24 pb-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <h1 className="text-4xl font-bold mb-4">{t("nav.achievements")}</h1>
+              <p className="text-white/60 max-w-2xl">
+                {t("achievements.subtitle")}
+              </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Zap className="w-5 h-5 text-purple-400" />
-                <span className="text-white/60 text-sm">XP Earned</span>
-              </div>
-              <div className="text-3xl font-bold">+{totalXP}</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Target className="w-5 h-5 text-green-400" />
-                <span className="text-white/60 text-sm">Progress</span>
-              </div>
-              <div className="text-3xl font-bold">{Math.round((earnedCount / ACHIEVEMENTS.length) * 100)}%</div>
-            </div>
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === "all" 
-                  ? "bg-white text-black" 
-                  : "bg-white/5 text-white/60 hover:text-white"
-              }`}
-            >
-              All
-            </button>
-            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedCategory(key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === key 
-                    ? config.bg + " " + config.color
-                    : "bg-white/5 text-white/60 hover:text-white"
-                }`}
-              >
-                {config.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Achievements Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredAchievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`relative bg-white/5 border rounded-xl p-6 transition-all ${
-                  achievement.earned 
-                    ? "border-white/20 hover:border-white/40" 
-                    : "border-white/5 opacity-60"
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    achievement.earned 
-                      ? "bg-gradient-to-br from-yellow-400/20 to-orange-400/20" 
-                      : "bg-white/5"
-                  }`}>
-                    <achievement.icon className={`w-6 h-6 ${
-                      achievement.earned ? "text-yellow-400" : "text-white/30"
-                    }`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`font-medium ${achievement.earned ? "text-white" : "text-white/50"}`}>
-                        {achievement.name}
-                      </h3>
-                      {!achievement.earned && <Lock className="w-3 h-3 text-white/30" />}
-                    </div>
-                    <p className="text-sm text-white/50 mb-2">{achievement.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        CATEGORY_CONFIG[achievement.category].bg + " " + CATEGORY_CONFIG[achievement.category].color
-                      }`}>
-                        {CATEGORY_CONFIG[achievement.category].label}
-                      </span>
-                      <span className="text-xs text-yellow-400">+{achievement.xpReward} XP</span>
-                    </div>
-                  </div>
+            {connected && (
+              <div className="flex gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-center px-4">
+                  <div className="text-sm text-white/40 mb-1">{t("achievements.total")}</div>
+                  <div className="text-2xl font-bold">12</div>
                 </div>
-                {achievement.earned && (
-                  <div className="absolute top-2 right-2">
-                    <Medal className="w-5 h-5 text-yellow-400" />
-                  </div>
-                )}
+                <div className="w-px h-10 bg-white/10" />
+                <div className="text-center px-4">
+                  <div className="text-sm text-white/40 mb-1">{t("achievements.soulbound")}</div>
+                  <div className="text-2xl font-bold text-blue-400">3</div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
+
+          {!connected ? (
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-12 text-center max-w-md mx-auto">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-10 h-10 text-white/20" />
+              </div>
+              <h2 className="text-2xl font-bold mb-4">{t("achievements.connectWallet")}</h2>
+              <p className="text-white/60 mb-8">
+                {t("achievements.connectWalletDesc")}
+              </p>
+              <button className="w-full py-4 bg-white text-black rounded-xl font-bold hover:bg-white/90 transition-colors">
+                {t("nav.connectWallet")}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ACHIEVEMENTS.map((achievement, idx) => {
+                const Icon = achievement.icon;
+                const isUnlocked = achievement.unlockedAt;
+
+                return (
+                  <motion.div
+                    key={achievement.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className={`group relative bg-zinc-900/50 border rounded-3xl p-6 transition-all hover:bg-zinc-900/80 ${isUnlocked ? "border-white/10" : "border-white/5 opacity-60"}`}
+                  >
+                    <div className="flex items-start justify-between mb-6">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isUnlocked ? "bg-white/10" : "bg-white/5"}`}>
+                        <Icon className={`w-8 h-8 ${isUnlocked ? "text-white" : "text-white/20"}`} />
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRarityColor(achievement.rarity)}`}>
+                        {t(`achievements.rarity.${achievement.rarity}`)}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                      {t(achievement.title)}
+                      {achievement.isSoulbound && (
+                        <div className="group/sb relative">
+                          <Shield className="w-4 h-4 text-blue-400" />
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-blue-500 text-white text-[10px] rounded opacity-0 group-hover/sb:opacity-100 transition-opacity whitespace-nowrap">
+                            {t("achievements.soulboundToken")}
+                          </div>
+                        </div>
+                      )}
+                    </h3>
+                    <p className="text-white/50 text-sm mb-6 line-clamp-2">
+                      {t(achievement.description)}
+                    </p>
+
+                    {isUnlocked ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between text-xs text-white/40">
+                          <span>{t("achievements.unlocked")}</span>
+                          <span>{new Date(achievement.unlockedAt!).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          {achievement.isSoulbound && (
+                            <Link
+                              href={`https://solscan.io/token/${achievement.mintAddress}`}
+                              target="_blank"
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-500/10 text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-500/20 transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              View NFT
+                            </Link>
+                          )}
+                          <button className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white/5 text-white/60 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors">
+                            <Share2 className="w-3.5 h-3.5" />
+                            {t("achievements.share")}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-white/40">{t("achievements.progress")}</span>
+                          <span className="text-white/60 font-medium">{achievement.progress}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${achievement.progress}%` }}
+                            className="h-full bg-white/20"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl">
+                        <div className="bg-zinc-900 border border-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-white/40" />
+                          <span className="text-sm font-medium">{t("achievements.locked")}</span>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>

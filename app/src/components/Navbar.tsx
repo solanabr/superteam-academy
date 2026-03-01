@@ -24,23 +24,7 @@ function NavLink({ href, icon: Icon, label }: { href: string; icon: any; label: 
   );
 }
 
-function WalletButton() {
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="px-4 py-2 bg-white text-black rounded-md text-sm font-medium">
-        Select Wallet
-      </div>
-    );
-  }
-
-  return <WalletMultiButton />;
-}
 
 export function Navbar({ showNavLinks = true }: NavbarProps) {
   const { connected } = useWallet();
@@ -63,7 +47,7 @@ export function Navbar({ showNavLinks = true }: NavbarProps) {
             <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <SolanaLogo className="w-6 h-6" />
             </div>
-            <span className="font-serif italic text-base tracking-tight text-white hidden sm:block">Superteam Academy</span>
+            <span className="font-serif italic text-base tracking-tight text-white hidden sm:block">{t("nav.superteamAcademy")}</span>
           </Link>
 
           {/* Navigation Links */}
@@ -103,11 +87,10 @@ export function Navbar({ showNavLinks = true }: NavbarProps) {
                         setLanguage(lang.code);
                         setShowLangDropdown(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-xs transition-colors ${
-                        language === lang.code
-                          ? "bg-white/10 text-white"
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
+                      className={`w-full text-left px-3 py-2 text-xs transition-colors ${language === lang.code
+                        ? "bg-white/10 text-white"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                        }`}
                     >
                       <span className="font-medium">{lang.label}</span>
                       <span className="ml-2 text-white/40">{lang.name}</span>
@@ -118,7 +101,9 @@ export function Navbar({ showNavLinks = true }: NavbarProps) {
             </div>
 
             {/* Wallet Button */}
-            <WalletButton />
+            {mounted && (
+              <WalletMultiButton className="!bg-white !text-black !rounded-full !px-6 !py-2 !h-10 !text-sm !font-bold hover:!opacity-90 transition-opacity" />
+            )}
           </div>
         </div>
       </div>

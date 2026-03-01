@@ -13,6 +13,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getXPBalance, calculateLevel, getCredentials } from "@/lib/blockchain";
 import { useLearningService } from "@/contexts/ServicesContext";
 import { Credential } from "@/types";
+import { useI18n } from "@/components/I18nProvider";
 
 const COMPLETED_COURSES = [
   { id: "anchor-fundamentals", title: "Anchor Fundamentals", completedAt: "2026-01-15", xp: 1200 },
@@ -27,6 +28,7 @@ const SKILLS = [
 ];
 
 export default function ProfilePage() {
+  const { t } = useI18n();
   const { connected, publicKey } = useWallet();
   const learningService = useLearningService();
 
@@ -79,8 +81,8 @@ export default function ProfilePage() {
         <GridPattern />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold mb-4">Connect Wallet</h1>
-            <p className="text-white/60 mb-8">Connect your wallet to view your profile</p>
+            <h1 className="text-2xl font-semibold mb-4">{t("nav.connectWallet")}</h1>
+            <p className="text-white/60 mb-8">{t("lesson.enrollToUnlock")}</p>
             <Link href="/" className="px-6 py-3 bg-white text-black rounded-md font-medium hover:bg-white/90 transition-colors">
               Go Home
             </Link>
@@ -99,26 +101,26 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Profile Header */}
           <div className="flex flex-col md:flex-row gap-8 mb-12">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-4xl font-bold text-black">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-4xl font-bold text-black border-4 border-black ring-2 ring-yellow-400/20">
               {publicKey?.toString().slice(0, 2).toUpperCase()}
             </div>
 
             <div className="flex-1">
               <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-3xl font-semibold">Solana Developer</h1>
+                <h1 className="text-3xl font-semibold">{t("profile.solanaDev")}</h1>
                 <span className="px-3 py-1 bg-yellow-400/20 text-yellow-400 rounded-full text-sm font-medium">
-                  Level {stats.level}
+                  {t("dashboard.level")} {stats.level}
                 </span>
               </div>
 
               <p className="text-white/60 mb-4">
-                Building the future of decentralized applications. Passionate about Solana ecosystem.
+                {t("profile.bio")}
               </p>
 
               <div className="flex flex-wrap gap-4 text-sm text-white/40 mb-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  Joined January 2026
+                  {t("profile.joined", { date: "January 2026" })}
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4" />
@@ -126,7 +128,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Trophy className="w-4 h-4" />
-                  {stats.achievements} achievements
+                  {t("profile.achievementsCount", { count: stats.achievements })}
                 </div>
               </div>
 
@@ -146,7 +148,7 @@ export default function ProfilePage() {
 
           {/* Credentials (cNFTs) - REAL DATA FROM BLOCKCHAIN */}
           <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-6">Credentials</h2>
+            <h2 className="text-xl font-semibold mb-6">{t("profile.credentials")}</h2>
             {credentials.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-4">
                 {credentials.map((cred) => (
@@ -159,7 +161,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium">{cred.track}</h3>
-                      <p className="text-white/40 text-sm">Level {cred.level}</p>
+                      <p className="text-white/40 text-sm">{t("dashboard.level")} {cred.level}</p>
                       <p className="text-white/40 text-sm">{cred.xp} XP earned</p>
                     </div>
                     <a
@@ -175,14 +177,14 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-white/40">
-                No credentials yet. Complete courses to earn cNFTs!
+                {t("profile.noCredentials")}
               </div>
             )}
           </section>
 
           {/* Skills */}
           <section className="mb-12">
-            <h2 className="text-xl font-semibold mb-6">Skills</h2>
+            <h2 className="text-xl font-semibold mb-6">{t("profile.skills")}</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {SKILLS.map((skill) => (
                 <div key={skill.name} className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -203,7 +205,7 @@ export default function ProfilePage() {
 
           {/* Completed Courses */}
           <section>
-            <h2 className="text-xl font-semibold mb-6">Completed Courses</h2>
+            <h2 className="text-xl font-semibold mb-6">{t("profile.completedCourses")}</h2>
             <div className="space-y-4">
               {COMPLETED_COURSES.map((course) => (
                 <div
@@ -220,7 +222,7 @@ export default function ProfilePage() {
                       href={`/certificates/${course.id}`}
                       className="text-white/40 text-sm hover:text-white"
                     >
-                      View Certificate
+                      {t("profile.viewCertificate")}
                     </Link>
                   </div>
                 </div>

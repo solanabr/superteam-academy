@@ -1,133 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap');
-
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 4%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 0 0% 100%;
-    --radius: 0.5rem;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
+    --radius: 0.75rem;
+    --solana-purple: 265 100% 64%;
+    --solana-green: 155 89% 51%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground selection:bg-purple-500/30;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "ss02" 1;
   }
 }
 
-/* Grainy texture overlay */
-.grain-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+/* Glassmorphism */
+.glass {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10;
+}
+
+.glass-card {
+  @apply bg-zinc-950/50 backdrop-blur-md border border-white/5 hover:border-white/10 transition-all duration-300;
+}
+
+/* Gradients */
+.bg-solana-gradient {
+  background: radial-gradient(circle at top left, hsla(var(--solana-purple), 0.15), transparent),
+    radial-gradient(circle at bottom right, hsla(var(--solana-green), 0.1), transparent);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, hsla(var(--solana-purple), 0.3) 0%, transparent 70%);
+  filter: blur(100px);
   pointer-events: none;
-  z-index: 100;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
-
-/* Warm gradient background */
-.warm-gradient {
-  background: linear-gradient(180deg, 
-    #1a2f1a 0%, 
-    #0f1f0f 25%,
-    #1a1510 50%,
-    #2d1810 75%,
-    #4a2818 100%
-  );
-}
-
-/* Typography mix */
-.font-serif {
-  font-family: 'Playfair Display', serif;
+  z-index: 0;
 }
 
 .font-sans {
   font-family: 'Inter', sans-serif;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "ss02" 1;
-  }
-}
-
-/* Selection */
-::selection {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Custom Scrollbar - Minimal */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  @apply bg-white/10 rounded-full border-2 border-transparent bg-clip-padding;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  @apply bg-white/20;
 }
 
-/* Wallet Adapter Styles */
+/* Wallet Adapter Overrides */
 .wallet-adapter-button {
-  @apply !bg-white !text-black !font-medium !rounded-md !px-4 !py-2 !h-auto !text-sm;
-  @apply hover:!bg-white/90 !transition-colors;
+  @apply !bg-white !text-black !font-bold !rounded-full !px-6 !py-2 !h-11 !text-sm !shadow-lg !shadow-white/5;
+  transition: transform 0.15s ease;
+}
+
+.wallet-adapter-button:hover {
+  transform: scale(1.05);
+}
+
+.wallet-adapter-button:active {
+  transform: scale(0.95);
 }
 
 .wallet-adapter-modal-wrapper {
-  @apply !bg-black/95 !backdrop-blur-xl !border !border-white/10;
+  @apply !bg-[#030303] !backdrop-blur-2xl !border !border-white/10 !rounded-3xl !p-6;
+}
+
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.15s ease;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button {
-  @apply !bg-transparent !text-white !border !border-white/10 !rounded-md;
-  @apply hover:!bg-white/5;
+  @apply !bg-white/5 !text-white !border !border-white/5 !rounded-xl !mb-2 !font-medium;
 }
 
-/* Gradient Text */
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Utilities */
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-white/70;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195];
 }
 
-/* Focus styles */
+.hover-glow {
+  transition: box-shadow 300ms ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px -5px rgba(153, 69, 255, 0.3);
+}
+
+/* Focus */
 button:focus-visible,
 a:focus-visible {
-  @apply outline-none ring-1 ring-white/30 ring-offset-0;
-}
-
-/* Disabled states */
-button:disabled {
-  @apply opacity-50 cursor-not-allowed;
+  @apply outline-none ring-2 ring-purple-500/50 ring-offset-2 ring-offset-background;
 }

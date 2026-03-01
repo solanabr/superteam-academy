@@ -5,19 +5,21 @@ import { Footer } from "@/components/Footer";
 import { Search, Filter, BookOpen, Grid3X3, List, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { COURSES } from "@/data/courses";
+import { useI18n } from "@/components/I18nProvider";
 
 const TRACKS = ["All", "Development", "Advanced", "Infrastructure", "Security", "DeFi", "NFTs"];
 const DIFFICULTIES = ["All", "Beginner", "Intermediate", "Advanced"];
 
 export default function CoursesPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredCourses = COURSES.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) ||
-      course.description.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = t(course.title).toLowerCase().includes(search.toLowerCase()) ||
+      t(course.description).toLowerCase().includes(search.toLowerCase());
     const matchesTrack = selectedTrack === "All" || course.track === selectedTrack;
     const matchesDifficulty = selectedDifficulty === "All" || course.difficulty === selectedDifficulty;
     return matchesSearch && matchesTrack && matchesDifficulty;
@@ -31,22 +33,21 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <main className="pt-16">
+      <main className="pt-16 text-white text-white">
         {/* Header Section - UNIQUE */}
         <div className="px-6 py-16 border-b border-white/5">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-3 mb-4">
               <Sparkles className="w-5 h-5 text-purple-400" />
               <span className="text-purple-400 text-sm font-medium uppercase tracking-wider">
-                Curriculum
+                {t("courses.subtitle")}
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Learn by Building
+              {t("courses.title")}
             </h1>
             <p className="text-white/50 text-lg max-w-2xl">
-              No theory-heavy videos. Every course ends with code deployed to devnet.
-              Start with foundations, ship real programs.
+              {t("courses.subtitle")}
             </p>
           </div>
         </div>
@@ -59,7 +60,7 @@ export default function CoursesPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
               <input
                 type="text"
-                placeholder="Search concepts, programs, or tracks..."
+                placeholder={t("courses.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50 transition-colors"
@@ -77,7 +78,7 @@ export default function CoursesPage() {
                 >
                   {TRACKS.map((track) => (
                     <option key={track} value={track} className="bg-zinc-900">
-                      Track: {track}
+                      Track: {track === "All" ? t("courses.beginner") : track}
                     </option>
                   ))}
                 </select>
@@ -92,7 +93,7 @@ export default function CoursesPage() {
                 >
                   {DIFFICULTIES.map((diff) => (
                     <option key={diff} value={diff} className="bg-zinc-900">
-                      Level: {diff}
+                      Level: {diff === "All" ? t("courses.beginner") : t(`courses.${diff.toLowerCase()}`)}
                     </option>
                   ))}
                 </select>
@@ -125,18 +126,18 @@ export default function CoursesPage() {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-8">
               <p className="text-white/50">
-                <span className="text-white font-bold">{filteredCourses.length}</span> courses ready to ship
+                <span className="text-white font-bold">{filteredCourses.length}</span> {t("courses.title").toLowerCase()}
               </p>
               <p className="text-white/30 text-sm">
-                {totalLessons} lessons · {totalHours} hours of hands-on coding
+                {totalLessons} {t("courses.lessons")} · {totalHours} hours
               </p>
             </div>
 
             {/* Course Grid */}
             {filteredCourses.length > 0 ? (
               <div className={`grid gap-6 ${viewMode === "grid"
-                  ? "md:grid-cols-2 lg:grid-cols-3"
-                  : "grid-cols-1"
+                ? "md:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1"
                 }`}>
                 {filteredCourses.map((course, i) => (
                   <CourseCard key={course.id} course={course} index={i} />

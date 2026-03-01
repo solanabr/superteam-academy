@@ -10,12 +10,16 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
+  // Silence the Turbopack/webpack conflict warning (Next.js 16 defaults to Turbopack)
+  turbopack: {},
+
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
+  // Kept for production builds (next build uses webpack)
   webpack: (config, { isServer }) => {
     config.resolve.fallback = {
       fs: false,

@@ -5,8 +5,10 @@ import { ArrowRight, Play, Code2, Trophy, Users, Zap, Sparkles, Terminal, Target
 import Link from "next/link";
 import { ThreeHeroBackground } from "./ThreeHeroBackground";
 import { useState, useEffect } from "react";
+import { useI18n } from "./I18nProvider";
 
 export function Hero() {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState(0);
   const [displayedCode, setDisplayedCode] = useState("");
   const [isTyping, setIsTyping] = useState(true);
@@ -43,7 +45,7 @@ const progress = await connection.getAccountInfo(
     const code = codeSnippets[activeTab].code;
     setDisplayedCode("");
     setIsTyping(true);
-    
+
     let index = 0;
     const timer = setInterval(() => {
       if (index <= code.length) {
@@ -96,7 +98,7 @@ const progress = await connection.getAccountInfo(
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-green-500/20 border border-purple-500/30 text-sm">
                 <Sparkles className="w-4 h-4 text-yellow-400 animate-pulse" />
                 <span className="bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent font-medium">
-                  Next-Gen Solana Education
+                  {t("home.hero.title")}
                 </span>
               </span>
             </motion.div>
@@ -121,8 +123,7 @@ const progress = await connection.getAccountInfo(
                 </span>
               </h1>
               <p className="text-xl md:text-2xl text-white/50 max-w-2xl mx-auto">
-                The developer platform that turns concepts into on-chain reality.
-                No fluff. Just code that works.
+                {t("home.hero.subtitle")}
               </p>
             </motion.div>
 
@@ -134,17 +135,15 @@ const progress = await connection.getAccountInfo(
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <Play className="w-5 h-5 fill-black" />
-                  Start Building
+                  {t("home.hero.cta")}
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-green-400 opacity-0 group-hover:opacity-20 transition-opacity" />
               </Link>
               <Link
-                href="https://github.com/AbhijeetKakade2004/superteam-academy"
-                target="_blank"
+                href="/courses"
                 className="group flex items-center gap-2 px-8 py-4 text-white/70 hover:text-white font-medium transition-colors"
               >
-                <Github className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                View on GitHub
+                {t("home.hero.explore")}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
@@ -165,11 +164,10 @@ const progress = await connection.getAccountInfo(
                       <button
                         key={lang}
                         onClick={() => setActiveTab(idx)}
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                          activeTab === idx
+                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeTab === idx
                             ? "bg-white/10 text-white shadow-sm"
                             : "text-white/40 hover:text-white/60"
-                        }`}
+                          }`}
                       >
                         {lang}
                       </button>
@@ -280,9 +278,9 @@ const progress = await connection.getAccountInfo(
                   className="group p-6 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-purple-500/30 transition-all duration-300"
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.color === "purple" ? "bg-purple-500/20 text-purple-400" :
-                      feature.color === "green" ? "bg-green-500/20 text-green-400" :
-                        feature.color === "yellow" ? "bg-yellow-500/20 text-yellow-400" :
-                          "bg-blue-500/20 text-blue-400"
+                    feature.color === "green" ? "bg-green-500/20 text-green-400" :
+                      feature.color === "yellow" ? "bg-yellow-500/20 text-yellow-400" :
+                        "bg-blue-500/20 text-blue-400"
                     }`}>
                     <feature.icon className="w-6 h-6" />
                   </div>
@@ -320,7 +318,7 @@ const progress = await connection.getAccountInfo(
                 {
                   emoji: "⚡",
                   title: "Core Protocol",
-                  description: "Master accounts, PDAs, CPIs, and the runtime. The foundation everything builds on.",
+                  description: "Master accounts, PDAs, CPIs, and the denominator. The foundation everything builds on.",
                   courses: "4 courses",
                   hours: "24 hours",
                   color: "from-yellow-500 to-orange-500",

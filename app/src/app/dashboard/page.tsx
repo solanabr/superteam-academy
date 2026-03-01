@@ -6,11 +6,12 @@ import { MeshGradient } from "@/components/MeshGradient";
 import { GridPattern } from "@/components/GridPattern";
 import {
   Trophy, Zap, Flame, BookOpen,
-  Target, Calendar, ArrowRight, Lock, Star
+  Target, ArrowRight, Star
 } from "lucide-react";
 import Link from "next/link";
 import { getXPBalance, calculateLevel, getXPToNextLevel, getProgressToNextLevel } from "@/lib/blockchain";
 import { useLearningService, useEnrollmentService } from "@/contexts/ServicesContext";
+import { useI18n } from "@/components/I18nProvider";
 
 const ENROLLED_COURSES = [
   {
@@ -23,6 +24,7 @@ const ENROLLED_COURSES = [
 ];
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const { connected, publicKey } = useWallet();
   const learningService = useLearningService();
   const enrollmentService = useEnrollmentService();
@@ -77,8 +79,8 @@ export default function DashboardPage() {
         <GridPattern />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold mb-4">Connect Wallet</h1>
-            <p className="text-white/60 mb-8">Connect your wallet to view your dashboard</p>
+            <h1 className="text-2xl font-semibold mb-4">{t("nav.connectWallet")}</h1>
+            <p className="text-white/60 mb-8">{t("lesson.enrollToUnlock")}</p>
             <Link href="/" className="px-6 py-3 bg-white text-black rounded-md font-medium hover:bg-white/90 transition-colors">
               Go Home
             </Link>
@@ -101,8 +103,8 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Welcome */}
           <div className="mb-12">
-            <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
-            <p className="text-white/60">Track your progress and achievements</p>
+            <h1 className="text-3xl font-semibold mb-2">{t("dashboard.title")}</h1>
+            <p className="text-white/60">{t("dashboard.welcome")}</p>
           </div>
 
           {/* Stats Grid */}
@@ -110,7 +112,7 @@ export default function DashboardPage() {
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Zap className="w-5 h-5 text-yellow-400" />
-                <span className="text-white/60 text-sm">Total XP</span>
+                <span className="text-white/60 text-sm">{t("dashboard.totalXP")}</span>
               </div>
               <div className="text-3xl font-semibold">{stats.xp.toLocaleString()}</div>
             </div>
@@ -118,7 +120,7 @@ export default function DashboardPage() {
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Trophy className="w-5 h-5 text-purple-400" />
-                <span className="text-white/60 text-sm">Level</span>
+                <span className="text-white/60 text-sm">{t("dashboard.level")}</span>
               </div>
               <div className="text-3xl font-semibold">{stats.level}</div>
             </div>
@@ -126,15 +128,15 @@ export default function DashboardPage() {
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Flame className="w-5 h-5 text-orange-400" />
-                <span className="text-white/60 text-sm">Streak</span>
+                <span className="text-white/60 text-sm">{t("dashboard.streak")}</span>
               </div>
-              <div className="text-3xl font-semibold">{stats.streak} days</div>
+              <div className="text-3xl font-semibold">{stats.streak} {t("courses.lessons")}</div>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Target className="w-5 h-5 text-green-400" />
-                <span className="text-white/60 text-sm">Rank</span>
+                <span className="text-white/60 text-sm">{t("dashboard.rank")}</span>
               </div>
               <div className="text-3xl font-semibold">#{stats.rank}</div>
             </div>
@@ -179,7 +181,7 @@ export default function DashboardPage() {
                         href={`/courses/${course.id}`}
                         className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white"
                       >
-                        Continue
+                        {t("courses.continue")}
                         <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>
@@ -225,7 +227,7 @@ export default function DashboardPage() {
               {/* Streak */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium">Streak</h3>
+                  <h3 className="font-medium">{t("dashboard.streak")}</h3>
                   <Flame className="w-5 h-5 text-orange-400" />
                 </div>
                 <div className="flex gap-2">
@@ -244,7 +246,7 @@ export default function DashboardPage() {
 
               {/* Achievements */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="font-medium mb-4">Achievements</h3>
+                <h3 className="font-medium mb-4">{t("dashboard.achievements")}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-yellow-400/20 flex items-center justify-center">

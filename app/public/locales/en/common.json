@@ -1,85 +1,51 @@
 {
-  "common": {
-    "appName": "Superteam Academy",
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous",
-    "submit": "Submit",
-    "search": "Search",
-    "filter": "Filter",
-    "clear": "Clear",
-    "close": "Close",
-    "learnMore": "Learn More",
-    "getStarted": "Get Started",
-    "viewAll": "View All"
-  },
   "nav": {
     "courses": "Courses",
     "dashboard": "Dashboard",
     "profile": "Profile",
     "leaderboard": "Leaderboard",
     "settings": "Settings",
-    "connectWallet": "Connect Wallet"
+    "achievements": "Achievements",
+    "connectWallet": "Connect Wallet",
+    "superteamAcademy": "Superteam Academy"
   },
-  "home": {
-    "hero": {
-      "title": "Master Solana Development",
-      "subtitle": "The decentralized learning platform where developers earn soulbound XP tokens and verifiable credentials.",
-      "cta": "Start Learning",
-      "explore": "Explore Courses"
-    },
-    "features": {
-      "title": "Why Superteam Academy?",
-      "xp": {
-        "title": "Earn XP",
-        "description": "Complete lessons and challenges to earn soulbound XP tokens"
-      },
-      "credentials": {
-        "title": "Get Credentials",
-        "description": "Earn verifiable on-chain credentials for your achievements"
-      },
-      "community": {
-        "title": "Join Community",
-        "description": "Learn alongside other developers in the Superteam ecosystem"
-      }
-    }
+  "footer": {
+    "community": "Community",
+    "resources": "Resources",
+    "builtWith": "Built with",
+    "copyright": "© 2026 Superteam Academy. All rights reserved.",
+    "coreProtocol": "Core Protocol",
+    "anchorFramework": "Anchor Framework",
+    "fullStackDapps": "Full Stack dApps"
   },
   "courses": {
     "title": "Courses",
     "subtitle": "Curated learning paths from beginner to expert",
     "searchPlaceholder": "Search courses...",
-    "filters": {
-      "all": "All",
-      "track": "Track",
-      "difficulty": "Difficulty",
-      "duration": "Duration"
-    },
-    "cards": {
-      "lessons": "lessons",
-      "xp": "XP",
-      "enroll": "Enroll Now",
-      "continue": "Continue",
-      "preview": "Preview"
-    },
-    "difficulty": {
-      "beginner": "Beginner",
-      "intermediate": "Intermediate",
-      "advanced": "Advanced"
-    },
-    "tracks": {
+    "enroll": "Enroll Now",
+    "continue": "Continue",
+    "preview": "Preview",
+    "lessons": "lessons",
+    "xp": "XP",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "onCompletion": "on completion",
+    "track": {
       "development": "Development",
       "advanced": "Advanced",
       "infrastructure": "Infrastructure",
       "security": "Security",
       "defi": "DeFi",
       "nfts": "NFTs"
+    },
+    "anchor-fundamentals": {
+      "title": "Anchor Fundamentals",
+      "desc": "Build secure Solana programs with the industry-standard framework. From PDA basics to complex instruction flows."
+    },
+    "token-2022": {
+      "title": "Token-2022 Mastery",
+      "desc": "Master the latest Solana token standard with customized transfer hooks and extensions."
     }
   },
   "lesson": {
@@ -99,7 +65,6 @@
     "testResults": "Test Results",
     "console": "Console",
     "allTestsPassed": "All tests passed!",
-    "testsFailed": "{{count}} test(s) failed",
     "locked": "Lesson Locked",
     "enrollToUnlock": "Enroll in this course to unlock all lessons",
     "backToCourse": "Back to course"
@@ -107,54 +72,113 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back!",
-    "stats": {
-      "totalXP": "Total XP",
-      "level": "Level",
-      "rank": "Rank",
-      "streak": "Streak",
-      "achievements": "Achievements"
-    },
-    "enrolledCourses": "Enrolled Courses",
-    "continueLearning": "Continue Learning",
-    "noCourses": "No courses yet",
-    "startLearning": "Start learning today!"
+    "totalXP": "Total XP",
+    "level": "Level",
+    "rank": "Rank",
+    "streak": "Streak",
+    "achievements": "Achievements"
   },
   "leaderboard": {
     "title": "Leaderboard",
     "subtitle": "Top learners by XP",
-    "filters": {
-      "allTime": "All Time",
-      "monthly": "Monthly",
-      "weekly": "Weekly"
-    },
+    "allTime": "All Time",
+    "monthly": "Monthly",
+    "weekly": "Weekly",
     "rank": "Rank",
     "user": "User",
-    "xp": "XP",
-    "level": "Level",
-    "streak": "Streak"
+    "xp": "XP"
   },
   "profile": {
     "title": "Profile",
     "memberSince": "Member since",
     "completedCourses": "Completed Courses",
+    "skills": "Skills",
     "credentials": "Credentials",
-    "achievements": "Achievements",
-    "skills": "Skills"
+    "achievementsCount": "{{count}} achievements",
+    "viewCertificate": "View Certificate",
+    "noCredentials": "No credentials yet. Complete courses to earn cNFTs!",
+    "joined": "Joined {{date}}",
+    "solanaDev": "Solana Developer",
+    "bio": "Building the future of decentralized applications. Passionate about Solana ecosystem."
+  },
+  "achievements": {
+    "subtitle": "Track your milestones and collect soulbound trophies as you master Solana development.",
+    "total": "Total Achievements",
+    "soulbound": "Soulbound Tokens",
+    "connectWallet": "Connect to View Achievements",
+    "connectWalletDesc": "Please connect your wallet to see your progress and unlocked trophies.",
+    "unlocked": "Unlocked on",
+    "locked": "Locked",
+    "progress": "Progress",
+    "share": "Share",
+    "viewNft": "View NFT",
+    "soulboundToken": "SBT Verified",
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "firstStep": {
+      "title": "First Step",
+      "desc": "Complete your first lesson on Superteam Academy."
+    },
+    "anchorMaster": {
+      "title": "Anchor Master",
+      "desc": "Complete the Anchor Fundamentals course with all challenges passed."
+    },
+    "streak7": {
+      "title": "Week Warrior",
+      "desc": "Maintain a 7-day learning streak."
+    },
+    "topLeaderboard": {
+      "title": "Elite Builder",
+      "desc": "Reach the Top 10 on the Global Leaderboard."
+    }
   },
   "settings": {
     "title": "Settings",
-    "profile": "Profile",
-    "account": "Account",
-    "preferences": "Preferences",
-    "language": "Language",
-    "theme": "Theme",
-    "notifications": "Notifications"
+    "profile": {
+      "title": "Profile Settings",
+      "username": "Username",
+      "bio": "Bio",
+      "save": "Save Changes"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "notifications": "Email Notifications",
+      "marketing": "Marketing Emails",
+      "language": "Display Language"
+    },
+    "wallet": {
+      "title": "Wallet",
+      "connected": "Connected as",
+      "disconnect": "Disconnect Wallet"
+    }
   },
-  "certificates": {
+  "certificate": {
     "title": "Certificate",
-    "earnedOn": "Earned on",
-    "verify": "Verify on Solana",
+    "subtitle": "Developer Credential",
+    "notFound": "Certificate Not Found",
+    "backToProfile": "Back to Profile",
+    "level": "Level {{level}}",
+    "levelLabel": "Credential Level",
+    "xpEarned": "XP Earned",
+    "dateEarned": "Date Earned",
+    "mintAddress": "Mint Address",
     "share": "Share",
-    "download": "Download"
+    "download": "Download Image",
+    "verifyOnChain": "Verify on-chain",
+    "verificationTitle": "On-Chain Verification",
+    "verificationDesc": "This credential is stored as a compressed NFT on Solana Devnet. You can verify its authenticity by checking the mint address on the blockchain.",
+    "verifiedOnSolana": "Verified on Solana Devnet"
+  },
+  "home": {
+    "hero": {
+      "title": "Master Solana Development",
+      "subtitle": "The decentralized learning platform where developers earn soulbound XP tokens and verifiable credentials.",
+      "cta": "Start Learning",
+      "explore": "Explore Courses"
+    }
   }
 }

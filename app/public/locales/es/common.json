@@ -1,85 +1,51 @@
 {
-  "common": {
-    "appName": "Superteam Academy",
-    "loading": "Cargando...",
-    "error": "Error",
-    "success": "Éxito",
-    "cancel": "Cancelar",
-    "save": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "back": "Volver",
-    "next": "Siguiente",
-    "previous": "Anterior",
-    "submit": "Enviar",
-    "search": "Buscar",
-    "filter": "Filtrar",
-    "clear": "Limpiar",
-    "close": "Cerrar",
-    "learnMore": "Saber Más",
-    "getStarted": "Comenzar",
-    "viewAll": "Ver Todo"
-  },
   "nav": {
     "courses": "Cursos",
     "dashboard": "Panel",
     "profile": "Perfil",
     "leaderboard": "Clasificación",
     "settings": "Configuración",
-    "connectWallet": "Conectar Billetera"
+    "achievements": "Logros",
+    "connectWallet": "Conectar Billetera",
+    "superteamAcademy": "Superteam Academy"
   },
-  "home": {
-    "hero": {
-      "title": "Domina el Desarrollo en Solana",
-      "subtitle": "La plataforma de aprendizaje descentralizada donde los desarrolladores ganan tokens XP soulbound y credenciales verificables.",
-      "cta": "Comenzar a Aprender",
-      "explore": "Explorar Cursos"
-    },
-    "features": {
-      "title": "¿Por qué Superteam Academy?",
-      "xp": {
-        "title": "Gana XP",
-        "description": "Completa lecciones y desafíos para ganar tokens XP soulbound"
-      },
-      "credentials": {
-        "title": "Obtén Credenciales",
-        "description": "Gana credenciales verificables en cadena por tus logros"
-      },
-      "community": {
-        "title": "Únete a la Comunidad",
-        "description": "Aprende junto a otros desarrolladores en el ecosistema Superteam"
-      }
-    }
+  "footer": {
+    "community": "Comunidad",
+    "resources": "Recursos",
+    "builtWith": "Construido con",
+    "copyright": "© 2026 Superteam Academy. Todos los derechos reservados.",
+    "coreProtocol": "Protocolo Core",
+    "anchorFramework": "Framework Anchor",
+    "fullStackDapps": "dApps Full Stack"
   },
   "courses": {
     "title": "Cursos",
     "subtitle": "Rutas de aprendizaje desde principiante hasta experto",
     "searchPlaceholder": "Buscar cursos...",
-    "filters": {
-      "all": "Todos",
-      "track": "Ruta",
-      "difficulty": "Dificultad",
-      "duration": "Duración"
-    },
-    "cards": {
-      "lessons": "lecciones",
-      "xp": "XP",
-      "enroll": "Inscribirse",
-      "continue": "Continuar",
-      "preview": "Vista Previa"
-    },
-    "difficulty": {
-      "beginner": "Principiante",
-      "intermediate": "Intermedio",
-      "advanced": "Avanzado"
-    },
-    "tracks": {
+    "enroll": "Inscribirse",
+    "continue": "Continuar",
+    "preview": "Vista Previa",
+    "lessons": "lecciones",
+    "xp": "XP",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado",
+    "onCompletion": "al completar",
+    "track": {
       "development": "Desarrollo",
       "advanced": "Avanzado",
       "infrastructure": "Infraestructura",
       "security": "Seguridad",
       "defi": "DeFi",
       "nfts": "NFTs"
+    },
+    "anchor-fundamentals": {
+      "title": "Fundamentos de Anchor",
+      "desc": "Cree programas Solana seguros con el framework estándar de la industria. Desde conceptos básicos de PDA hasta flujos de instrucciones complejos."
+    },
+    "token-2022": {
+      "title": "Maestría de Token-2022",
+      "desc": "Domine el último estándar de tokens de Solana con ganchos de transferencia y extensiones personalizados."
     }
   },
   "lesson": {
@@ -99,7 +65,6 @@
     "testResults": "Resultados de Pruebas",
     "console": "Consola",
     "allTestsPassed": "¡Todas las pruebas pasaron!",
-    "testsFailed": "{{count}} prueba(s) fallida(s)",
     "locked": "Lección Bloqueada",
     "enrollToUnlock": "Inscríbete en el curso para desbloquear todas las lecciones",
     "backToCourse": "Volver al curso"
@@ -107,54 +72,113 @@
   "dashboard": {
     "title": "Panel",
     "welcome": "¡Bienvenido de nuevo!",
-    "stats": {
-      "totalXP": "XP Total",
-      "level": "Nivel",
-      "rank": "Rango",
-      "streak": "Racha",
-      "achievements": "Logros"
-    },
-    "enrolledCourses": "Cursos Inscritos",
-    "continueLearning": "Continuar Aprendiendo",
-    "noCourses": "Sin cursos aún",
-    "startLearning": "¡Comienza a aprender hoy!"
+    "totalXP": "XP Total",
+    "level": "Nivel",
+    "rank": "Rango",
+    "streak": "Racha",
+    "achievements": "Logros"
   },
   "leaderboard": {
     "title": "Clasificación",
     "subtitle": "Mejores aprendices por XP",
-    "filters": {
-      "allTime": "Todo el Tiempo",
-      "monthly": "Mensual",
-      "weekly": "Semanal"
-    },
+    "allTime": "Todo el Tiempo",
+    "monthly": "Mensual",
+    "weekly": "Semanal",
     "rank": "Posición",
     "user": "Usuario",
-    "xp": "XP",
-    "level": "Nivel",
-    "streak": "Racha"
+    "xp": "XP"
   },
   "profile": {
     "title": "Perfil",
     "memberSince": "Miembro desde",
     "completedCourses": "Cursos Completados",
+    "skills": "Habilidades",
     "credentials": "Credenciales",
-    "achievements": "Logros",
-    "skills": "Habilidades"
+    "achievementsCount": "{{count}} logros",
+    "viewCertificate": "Ver Certificado",
+    "noCredentials": "Aún no hay credenciales. ¡Completa cursos para ganar cNFTs!",
+    "joined": "Se unió en {{date}}",
+    "solanaDev": "Desarrollador Solana",
+    "bio": "Construyendo el futuro de las aplicaciones descentralizadas. Apasionado por el ecosistema de Solana."
+  },
+  "achievements": {
+    "subtitle": "Realiza un seguimiento de tus hitos y colecciona trofeos soulbound mientras dominas el desarrollo en Solana.",
+    "total": "Total de Logros",
+    "soulbound": "Tokens Soulbound",
+    "connectWallet": "Conéctate para ver los logros",
+    "connectWalletDesc": "Conecta tu billetera para ver tu progreso y los trofeos desbloqueados.",
+    "unlocked": "Desbloqueado el",
+    "locked": "Bloqueado",
+    "progress": "Progreso",
+    "share": "Compartir",
+    "viewNft": "Ver NFT",
+    "soulboundToken": "SBT Verificado",
+    "rarity": {
+      "common": "Común",
+      "rare": "Raro",
+      "epic": "Épico",
+      "legendary": "Legendario"
+    },
+    "firstStep": {
+      "title": "Primer Paso",
+      "desc": "Completa tu primera lección en Superteam Academy."
+    },
+    "anchorMaster": {
+      "title": "Maestro de Anchor",
+      "desc": "Completa el curso Fundamentos de Anchor con todos los desafíos superados."
+    },
+    "streak7": {
+      "title": "Guerrero de la Semana",
+      "desc": "Mantén una racha de aprendizaje de 7 días."
+    },
+    "topLeaderboard": {
+      "title": "Constructor de Élite",
+      "desc": "Alcanza el Top 10 en la Clasificación Global."
+    }
   },
   "settings": {
     "title": "Configuración",
-    "profile": "Perfil",
-    "account": "Cuenta",
-    "preferences": "Preferencias",
-    "language": "Idioma",
-    "theme": "Tema",
-    "notifications": "Notificaciones"
+    "profile": {
+      "title": "Ajustes del Perfil",
+      "username": "Nombre de usuario",
+      "bio": "Biografía",
+      "save": "Guardar cambios"
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "notifications": "Notificaciones por correo",
+      "marketing": "Correos de marketing",
+      "language": "Idioma de pantalla"
+    },
+    "wallet": {
+      "title": "Billetera",
+      "connected": "Conectado como",
+      "disconnect": "Desconectar billetera"
+    }
   },
-  "certificates": {
+  "certificate": {
     "title": "Certificado",
-    "earnedOn": "Obtenido el",
-    "verify": "Verificar en Solana",
+    "subtitle": "Credencial de Desarrollador",
+    "notFound": "Certificado No Encontrado",
+    "backToProfile": "Volver al Perfil",
+    "level": "Nivel {{level}}",
+    "levelLabel": "Nivel de Credencial",
+    "xpEarned": "XP Ganado",
+    "dateEarned": "Fecha de Obtención",
+    "mintAddress": "Dirección de Mint",
     "share": "Compartir",
-    "download": "Descargar"
+    "download": "Descargar Imagen",
+    "verifyOnChain": "Verificar on-chain",
+    "verificationTitle": "Verificación On-Chain",
+    "verificationDesc": "Esta credencial se almacena como un NFT comprimido en Solana Devnet. Puedes verificar su autenticidad comprobando la dirección de mint en la cadena de bloques.",
+    "verifiedOnSolana": "Verificado en Solana Devnet"
+  },
+  "home": {
+    "hero": {
+      "title": "Domina el Desarrollo en Solana",
+      "subtitle": "La plataforma de aprendizaje descentralizada donde los desarrolladores ganan tokens XP soulbound y credenciales verificables.",
+      "cta": "Comenzar a Aprender",
+      "explore": "Explorar Cursos"
+    }
   }
 }

@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { Github, Twitter, MessageCircle } from "lucide-react";
+import { useI18n } from "./I18nProvider";
 
 export function Footer() {
+  const { t } = useI18n();
+
   return (
     <footer className="border-t border-white/5 bg-zinc-950">
       <div className="max-w-6xl mx-auto px-6 py-16">
@@ -12,7 +17,7 @@ export function Footer() {
               Superteam<span className="text-purple-400">.</span>Academy
             </h3>
             <p className="text-white/40 text-sm mb-6 leading-relaxed">
-              Learn Solana development by shipping real code. Open-source, community-driven, and always free.
+              {t("home.hero.subtitle")}
             </p>
             <div className="flex gap-3">
               <a
@@ -21,6 +26,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
               >
+                <div className="sr-only">GitHub</div>
                 <Github className="w-5 h-5" />
               </a>
               <a
@@ -29,6 +35,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
               >
+                <div className="sr-only">Twitter</div>
                 <Twitter className="w-5 h-5" />
               </a>
               <a
@@ -37,6 +44,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
               >
+                <div className="sr-only">Discord</div>
                 <MessageCircle className="w-5 h-5" />
               </a>
             </div>
@@ -44,26 +52,26 @@ export function Footer() {
 
           {/* Learn */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Learn</h4>
+            <h4 className="text-white font-semibold mb-4">{t("nav.courses")}</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="/courses" className="text-sm text-white/40 hover:text-white transition-colors">
-                  All Courses
+                  {t("nav.courses")}
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="text-sm text-white/40 hover:text-white transition-colors">
-                  Core Protocol
+                  {t("footer.coreProtocol")}
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="text-sm text-white/40 hover:text-white transition-colors">
-                  Anchor Framework
+                  {t("footer.anchorFramework")}
                 </Link>
               </li>
               <li>
                 <Link href="/courses" className="text-sm text-white/40 hover:text-white transition-colors">
-                  Full Stack dApps
+                  {t("footer.fullStackDapps")}
                 </Link>
               </li>
             </ul>
@@ -71,11 +79,11 @@ export function Footer() {
 
           {/* Community */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Community</h4>
+            <h4 className="text-white font-semibold mb-4">{t("footer.community")}</h4>
             <ul className="space-y-3">
               <li>
                 <Link href="/leaderboard" className="text-sm text-white/40 hover:text-white transition-colors">
-                  Leaderboard
+                  {t("leaderboard.title")}
                 </Link>
               </li>
               <li>
@@ -98,7 +106,7 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Resources</h4>
+            <h4 className="text-white font-semibold mb-4">{t("footer.resources")}</h4>
             <ul className="space-y-3">
               <li>
                 <a href="https://solana.com/docs" target="_blank" className="text-sm text-white/40 hover:text-white transition-colors">
@@ -127,10 +135,10 @@ export function Footer() {
         {/* Bottom */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-white/30">
-            © 2026 Superteam Academy. Open source under MIT License.
+            {t("footer.copyright")}
           </p>
-          <p className="text-sm text-white/30">
-            Built with{" "}
+          <p className="text-sm text-white/30 truncate">
+            {t("footer.builtWith")}{" "}
             <span className="text-purple-400">Rust</span>
             {" "}•{" "}
             <span className="text-green-400">Anchor</span>

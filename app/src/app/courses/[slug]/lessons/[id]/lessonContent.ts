@@ -1,4 +1,4 @@
-import { TestCase } from "./page";
+import type { TestCase } from "./page";
 
 export interface LessonContentData {
   content: string;
@@ -7,10 +7,15 @@ export interface LessonContentData {
   testCases?: TestCase[];
 }
 
+export type CourseLessons = Record<string, LessonContentData>;
+export type LanguageLessons = Record<string, CourseLessons>;
+export type LessonDatabase = Record<string, LanguageLessons>;
+
 // Comprehensive lesson content for all courses
-export const LESSON_DATABASE: Record<string, Record<string, LessonContentData>> = {
-  // ANCHOR FUNDAMENTALS COURSE
-  "anchor-fundamentals": {
+export const LESSON_DATABASE: LessonDatabase = {
+  "en": {
+    // ANCHOR FUNDAMENTALS COURSE
+    "anchor-fundamentals": {
     "1": {
       content: `# Introduction to Anchor
 
@@ -845,6 +850,131 @@ anchor test --provider.cluster devnet
 Now that you're set up, we'll create your first compressed account and learn to prove ownership with zero-knowledge proofs!`,
     },
   },
+},
+"pt-BR": {
+    "anchor-fundamentals": {
+      "1": {
+        content: `# Introdução ao Anchor
+
+Bem-vindo ao **Fundamentos do Anchor**! Este curso abrangente irá transformá-lo de um iniciante em blockchain em um desenvolvedor confiante de programas Solana.
+
+## O que é Anchor?
+
+Anchor é um framework poderoso para o desenvolvimento de programas Solana que simplifica drasticamente o processo de desenvolvimento. Pense nele como o Rails ou Django da Solana - ele fornece:
+
+### Principais Benefícios
+
+**🛡️ Segurança em Primeiro Lugar**
+- A validação automática de contas previne vulnerabilidades de segurança comuns
+- Invocações entre programas (CPI) com tipagem segura
+- Verificações integradas de propriedade de conta e signatários
+
+**⚡ Experiência do Desenvolvedor**
+- Geração de IDL (Interface Definition Language) para fácil integração com o frontend
+- Inicialização e gerenciamento de contas simplificados
+- Macros Rust declarativas e limpas que reduzem o código boilerplate
+
+**🚀 Pronto para Produção**
+- Testado em batalha pelos principais protocolos da Solana (Jupiter, Marinade, Drift)
+- Uso otimizado de unidades de computação
+- Utilitários de teste abrangentes
+
+## Visão Geral do Curso
+
+Este curso contém **12 lições** em 4 módulos cuidadosamente elaborados:
+
+### Módulo 1: Primeiros Passos
+Aprenda os fundamentos do desenvolvimento com Anchor, desde a configuração até seu primeiro programa implantado.
+
+### Módulo 2: PDAs e Contas
+Domine os Program Derived Addresses (PDAs) - a espinha dorsal do modelo de contas da Solana.
+
+### Módulo 3: Instruções e CPI
+Construa interações complexas entre programas usando Cross-Program Invocations.
+
+### Módulo 4: Tópicos Avançados
+Mergulhe em eventos, erros personalizados e melhores práticas de produção.
+
+## Pré-requisitos
+
+- Conhecimento básico da sintaxe Rust
+- Solana CLI instalada em sua máquina
+- Node.js para desenvolvimento frontend (opcional, mas recomendado)
+
+## O que Você Irá Construir
+
+Ao final deste curso, você terá construído:
+1. Um programa de cofre de tokens
+2. Um sistema de votação descentralizado
+3. Um mecanismo de staking
+4. Integrações entre programas
+
+Pronto para se tornar um desenvolvedor Solana? Vamos começar!`,
+      }
+    }
+  },
+  "es": {
+    "anchor-fundamentals": {
+      "1": {
+        content: `# Introducción a Anchor
+
+¡Bienvenido a **Fundamentos de Anchor**! Este curso integral te transformará de un principiante en blockchain a un desarrollador de programas Solana seguro de sí mismo.
+
+## ¿Qué es Anchor?
+
+Anchor es un framework potente para el desarrollo de programas Solana que simplifica drásticamente el proceso de desarrollo. Piense en él como el Rails o Django de Solana: proporciona:
+
+### Beneficios Clave
+
+**🛡️ La Seguridad es lo Primero**
+- La validación automática de cuentas evita vulnerabilidades de seguridad comunes
+- Invocaciones entre programas (CPI) con tipos seguros
+- Verificaciones integradas de propiedad de cuenta y firmantes
+
+**⚡ Experiencia del Desarrollador**
+- Generación de IDL (Interface Definition Language) para una fácil integración con el frontend
+- Inicialización y gestión de cuentas simplificadas
+- Macros de Rust declarativas y limpias que reducen el código repetitivo
+
+**🚀 Listo para Producción**
+- Probado en batalla por los principales protocolos de Solana (Jupiter, Marinade, Drift)
+- Uso optimizado de unidades de cómputo
+- Utilidades de prueba integrales
+
+## Resumen del Curso
+
+Este curso contiene **12 lecciones** a través de 4 módulos cuidadosamente diseñados:
+
+### Módulo 1: Primeros Pasos
+Aprenda los fundamentos del desarrollo de Anchor, desde la configuración hasta su primer programa implementado.
+
+### Módulo 2: PDAs y Cuentas
+Domine las Direcciones Derivadas del Programa (PDA), la columna vertebral del modelo de cuentas de Solana.
+
+### Módulo 3: Instrucciones y CPI
+Cree interacciones complejas entre programas utilizando Invocaciones entre Programas.
+
+### Módulo 4: Temas Avanzados
+Sumérjase en eventos, errores personalizados y mejores prácticas de producción.
+
+## Requisitos Previos
+
+- Conocimiento básico de la sintaxis de Rust
+- Solana CLI instalado en su máquina
+- Node.js para el desarrollo frontend (opcional pero recomendado)
+
+## Qué Construirás
+
+Al final de este curso, habrás construido:
+1. Un programa de bóveda de tokens
+2. Un sistema de votación descentralizado
+3. Un mecanismo de staking
+4. Integraciones entre programas
+
+¿Listo para convertirte en desarrollador de Solana? ¡Vamos a sumergirnos!`,
+      }
+    }
+  }
 };
 
 // Fallback content generator for missing lessons
@@ -879,15 +1009,21 @@ This course is designed to take you from beginner to expert. Each lesson builds 
 Ready to continue? Click "Next Lesson" or "Mark as Complete" to earn your XP!`;
 }
 
-// Get lesson content with fallback
-export function getLessonContent(courseId: string, lessonId: string, lessonTitle: string = "Lesson"): LessonContentData {
-  const courseContent = LESSON_DATABASE[courseId];
-  
-  if (courseContent && courseContent[lessonId]) {
-    return courseContent[lessonId];
+// Get lesson content with language support and fallback
+export function getLessonContent(courseId: string, lessonId: string, lessonTitle: string = "Lesson", lang: string = "en"): LessonContentData {
+  // Try to find localized content
+  const langCourseContent = LESSON_DATABASE[lang]?.[courseId];
+  if (langCourseContent && langCourseContent[lessonId]) {
+    return langCourseContent[lessonId];
+  }
+
+  // Fallback to English
+  const enCourseContent = LESSON_DATABASE["en"]?.[courseId];
+  if (enCourseContent && enCourseContent[lessonId]) {
+    return enCourseContent[lessonId];
   }
   
-  // Return fallback content if specific content doesn't exist
+  // Return fallback content (auto-generated) if no database entry exists
   return {
     content: generateFallbackContent(courseId, lessonId, lessonTitle),
   };
