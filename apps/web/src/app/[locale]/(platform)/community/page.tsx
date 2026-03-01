@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThreadList } from "@/components/community/thread-list";
 import { CommunityStats } from "@/components/community/community-stats";
 import { CategoryCard } from "@/components/community/category-card";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
 import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
@@ -34,7 +32,11 @@ const CATEGORIES = [
 
 export default function CommunityPage() {
   const { user } = useAuth();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // TODO: Wire to CreateThreadModal (Task 16)
+  const handleCreateThread = () => {
+    // Will open CreateThreadModal once implemented
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -49,7 +51,7 @@ export default function CommunityPage() {
           </p>
         </div>
         {user && (
-          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+          <Button variant="primary" onClick={handleCreateThread}>
             <Plus size={18} />
             Ask a Question
           </Button>
@@ -88,11 +90,6 @@ export default function CommunityPage() {
           </aside>
         )}
       </div>
-
-      <CreateThreadModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-      />
     </div>
   );
 }
