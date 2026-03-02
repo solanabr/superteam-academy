@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import {
   getConfigPda,
   getCoursePda,
@@ -8,6 +8,9 @@ import {
   getAchievementTypePda,
   getAchievementReceiptPda,
 } from "@/lib/solana/pda";
+
+// Use a real keypair for test wallet to avoid nonce-not-found edge cases
+const testWallet = Keypair.generate().publicKey;
 
 describe("PDA derivation", () => {
   it("derives config PDA deterministically", () => {
@@ -26,42 +29,44 @@ describe("PDA derivation", () => {
   });
 
   it("derives enrollment PDA with courseId and learner", () => {
-    const learner = PublicKey.default;
-    const [pda1] = getEnrollmentPda("solana-101", learner);
-    const [pda2] = getEnrollmentPda("solana-101", learner);
+    const [pda1] = getEnrollmentPda("solana-101", testWallet);
+    const [pda2] = getEnrollmentPda("solana-101", testWallet);
     expect(pda1.equals(pda2)).toBe(true);
   });
 
   it("different learners get different enrollment PDAs", () => {
-    const learner1 = new PublicKey("11111111111111111111111111111111");
-    const learner2 = new PublicKey("22222222222222222222222222222222");
+    const learner1 = Keypair.generate().publicKey;
+    const learner2 = Keypair.generate().publicKey;
     const [pda1] = getEnrollmentPda("solana-101", learner1);
     const [pda2] = getEnrollmentPda("solana-101", learner2);
     expect(pda1.equals(pda2)).toBe(false);
   });
 
   it("derives minter role PDA", () => {
-    const minter = PublicKey.default;
-    const [pda] = getMinterRolePda(minter);
+    const [pda, bump] = getMinterRolePda(testWallet);
     expect(pda).toBeInstanceOf(PublicKey);
+    expect(typeof bump).toBe("number");
   });
 
   it("derives achievement type PDA", () => {
-    const [pda] = getAchievementTypePda("hackathon-winner");
+    const [pda, bump] = getAchievementTypePda("hackathon-winner");
     expect(pda).toBeInstanceOf(PublicKey);
+    expect(bump).toBeGreaterThanOrEqual(0);
+    expect(bump).toBeLessThanOrEqual(255);
   });
 
   it("derives achievement receipt PDA", () => {
-    const recipient = PublicKey.default;
-    const [pda] = getAchievementReceiptPda("hackathon-winner", recipient);
+    const [pda, bump] = getAchievementReceiptPda(
+      "hackathon-winner",
+      testWallet,
+    );
     expect(pda).toBeInstanceOf(PublicKey);
+    expect(bump).toBeGreaterThanOrEqual(0);
   });
 
-  it("returns bump as second element", () => {
-    const result = getConfigPda();
-    expect(result).toHaveLength(2);
-    expect(typeof result[1]).toBe("number");
-    expect(result[1]).toBeGreaterThanOrEqual(0);
-    expect(result[1]).toBeLessThanOrEqual(255);
+  it("config PDA returns bump in valid range", () => {
+    const [, bump] = getConfigPda();
+    expect(bump).toBeGreaterThanOrEqual(0);
+    expect(bump).toBeLessThanOrEqual(255);
   });
 });
