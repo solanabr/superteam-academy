@@ -3,6 +3,56 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { locales, defaultLocale } from "@/lib/i18n/config";
 
+const ADMIN_SESSION_MAX_AGE_MS = 86400 * 1000;
+
+function hexEncode(buf: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+async function isValidAdminSession(
+  cookieValue: string | undefined
+): Promise<boolean> {
+  if (!cookieValue) return false;
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return false;
+
+  const dotIndex = cookieValue.indexOf(".");
+  if (dotIndex === -1) return false;
+
+  const timestamp = cookieValue.slice(0, dotIndex);
+  const signature = cookieValue.slice(dotIndex + 1);
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(timestamp));
+  const expectedSig = hexEncode(sig);
+
+  if (!timingSafeEqual(signature, expectedSig)) return false;
+
+  const age = Date.now() - Number(timestamp);
+  if (Number.isNaN(age) || age < 0 || age > ADMIN_SESSION_MAX_AGE_MS)
+    return false;
+
+  return true;
+}
+
 const intlMiddleware = createIntlMiddleware({
   locales,
   defaultLocale,
@@ -92,7 +142,7 @@ export async function middleware(request: NextRequest) {
   if (isAdminRoute(request.nextUrl.pathname)) {
     const adminSession = request.cookies.get("admin_session");
     const isAdminRoot = /^\/[a-z-]+\/admin\/?$/.test(request.nextUrl.pathname);
-    if (!adminSession || adminSession.value !== "1") {
+    if (!(await isValidAdminSession(adminSession?.value))) {
       if (!isAdminRoot) {
         const locale =
           locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
