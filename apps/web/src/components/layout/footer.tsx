@@ -7,6 +7,7 @@ import { GithubLogo, XLogo, DiscordLogo } from "@phosphor-icons/react";
 
 export function Footer() {
   const t = useTranslations("footer");
+  const tNav = useTranslations("nav");
   const tA11y = useTranslations("a11y");
   const locale = useLocale();
 
@@ -34,36 +35,62 @@ export function Footer() {
             <p className="text-sm leading-relaxed text-text-2">
               {t("tagline")}
             </p>
+            <p className="text-xs text-text-3">{t("languages")}</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/solanabr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-3 transition-colors hover:text-text"
-              aria-label={tA11y("github")}
-            >
-              <GithubLogo size={20} weight="bold" />
-            </a>
-            <a
-              href="https://x.com/superteambr"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-3 transition-colors hover:text-text"
-              aria-label={tA11y("twitter")}
-            >
-              <XLogo size={20} weight="bold" />
-            </a>
-            <a
-              href="https://discord.gg/superteam"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-3 transition-colors hover:text-text"
-              aria-label={tA11y("discord")}
-            >
-              <DiscordLogo size={20} weight="bold" />
-            </a>
+          <div className="flex flex-col items-center gap-4 md:items-end">
+            {/* Quick links */}
+            <nav className="flex items-center gap-4 text-sm font-medium">
+              <Link
+                href={`/${locale}/courses`}
+                className="text-text-3 transition-colors hover:text-text"
+              >
+                {t("platform")}
+              </Link>
+              <Link
+                href={`/${locale}/community`}
+                className="text-text-3 transition-colors hover:text-text"
+              >
+                {t("community")}
+              </Link>
+              <Link
+                href={`/${locale}/leaderboard`}
+                className="text-text-3 transition-colors hover:text-text"
+              >
+                {tNav("leaderboard")}
+              </Link>
+            </nav>
+
+            {/* Social icons */}
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/solanabr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-3 transition-colors hover:text-text"
+                aria-label={tA11y("github")}
+              >
+                <GithubLogo size={20} weight="bold" />
+              </a>
+              <a
+                href="https://x.com/superteambr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-3 transition-colors hover:text-text"
+                aria-label={tA11y("twitter")}
+              >
+                <XLogo size={20} weight="bold" />
+              </a>
+              <a
+                href="https://discord.gg/superteam"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-3 transition-colors hover:text-text"
+                aria-label={tA11y("discord")}
+              >
+                <DiscordLogo size={20} weight="bold" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
