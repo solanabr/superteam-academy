@@ -83,14 +83,6 @@ const testimonials = [
   },
 ];
 
-const partners = [
-  { name: "Solana Foundation", abbr: "SF" },
-  { name: "Superteam Brazil", abbr: "SB" },
-  { name: "Metaplex", abbr: "MX" },
-  { name: "Helius", abbr: "HL" },
-  { name: "Anchor", abbr: "AN" },
-  { name: "Dialect", abbr: "DL" },
-];
 
 const learningPaths = [
   {
@@ -260,7 +252,7 @@ export default function HomePage() {
       {/* Solana */}
 <a href="https://solana.com" target="_blank" rel="noopener noreferrer"
   className="flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity">
-  <img src="/solana-wordmark.svg" alt="Solana" className="h-6 invert" />
+  <img src="/solana-wordmark.svg" alt="Solana" className="h-6 brightness-0 invert" />
 </a>
 
 {/* Superteam Brazil */}
