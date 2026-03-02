@@ -145,7 +145,7 @@ export function Header() {
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Superteam Brazil logo (desktop) */}
           <Link
-            href={user ? `/${locale}/dashboard` : `/${locale}`}
+            href={`/${locale}`}
             className="relative z-10 mr-auto hidden shrink-0 md:flex"
           >
             <Image
