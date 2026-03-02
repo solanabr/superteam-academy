@@ -59,6 +59,7 @@ export function Navigation() {
         { href: "/courses", label: t("courses") },
         { href: "/leaderboard", label: t("leaderboard") },
         { href: "/certificates", label: t("credentials") },
+        { href: "/community", label: t("community") },
         { href: "/dashboard", label: t("dashboard") },
     ];
 

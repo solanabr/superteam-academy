@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { motion } from "framer-motion";
+import { useState, useTransition, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, usePathname, useRouter } from "@/src/i18n/routing";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -27,43 +27,86 @@ import {
     User,
     Wallet,
     Zap,
-    Terminal
+    Terminal,
+    Loader2,
+    CheckCircle2,
+    AlertCircle
 } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-context";
+import { profileApi } from "@/lib/profile";
 
 const tabs = ["Profile", "Account", "Preferences", "Privacy"] as const;
 
 export default function SettingsPage() {
+    const { user, updateUser } = useAuth();
     const [activeTab, setActiveTab] = useState<typeof tabs[number]>("Profile");
 
     /* Profile form state */
-    const [name, setName] = useState("Alex Rivera");
-    const [bio, setBio] = useState("Full-stack Solana builder. Passionate about DeFi and on-chain governance.");
-    const [twitter, setTwitter] = useState("alex_sol");
-    const [github, setGithub] = useState("alexrivera");
-    const [website, setWebsite] = useState("https://alexrivera.dev");
+    const [name, setName] = useState("");
+    const [bio, setBio] = useState("");
+    const [twitter, setTwitter] = useState("");
+    const [github, setGithub] = useState("");
+    const [website, setWebsite] = useState("");
+    const [avatar, setAvatar] = useState("");
 
     /* Preferences state */
     const [theme, setTheme] = useState<"dark" | "light" | "system">("dark");
-
-    // i18n hooks
-    const locale = useLocale();
-    const router = useRouter();
-    const pathname = usePathname();
-    const [isPending, startTransition] = useTransition();
-
-    const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const nextLocale = e.target.value;
-        startTransition(() => {
-            router.replace(pathname, { locale: nextLocale });
-        });
-    };
-
-    const [notifications, setNotifications] = useState({ streaks: true, achievements: true, updates: false, marketing: false });
+    const [lang, setLang] = useState("en");
 
     /* Privacy state */
     const [profileVisibility, setProfileVisibility] = useState(true);
-    const [showXP, setShowXP] = useState(true);
-    const [showStreak, setShowStreak] = useState(true);
+
+    /* UI State */
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    // Hydrate form from API
+    useEffect(() => {
+        profileApi.getMe().then(res => {
+            const p = res.data.profile;
+            setName(p.name || "");
+            setBio(p.bio || "");
+            setTwitter(p.twitter || "");
+            setGithub(p.github || "");
+            setWebsite(p.website || "");
+            setAvatar(p.avatar || "");
+            setTheme((p.theme as any) || "dark");
+            setLang(p.language || "en");
+            setProfileVisibility(p.isPublic ?? true);
+            setLoading(false);
+        }).catch(err => {
+            console.error("Failed to fetch settings:", err);
+            setLoading(false);
+        });
+    }, []);
+
+    const handleSave = async (data: any) => {
+        setSaving(true);
+        setError(null);
+        setSuccess(null);
+        try {
+            const res = await profileApi.updateMe(data);
+            if (res.success) {
+                setSuccess("Protocol updated successfully.");
+                // Sync global auth state
+                if (user) {
+                    updateUser({
+                        ...user,
+                        name: res.data.profile.name,
+                        avatar: res.data.profile.avatar,
+                        username: res.data.profile.username
+                    } as any);
+                }
+                setTimeout(() => setSuccess(null), 3000);
+            }
+        } catch (err: any) {
+            setError(err.message || "Protocol update failed.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const tabIcons: Record<typeof tabs[number], typeof User> = {
         Profile: User,
@@ -71,6 +114,14 @@ export default function SettingsPage() {
         Preferences: Palette,
         Privacy: Shield,
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#050810] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-neon-cyan/20 border-t-neon-cyan rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#050810] flex flex-col font-sans relative overflow-hidden">
@@ -104,10 +155,36 @@ export default function SettingsPage() {
                         </span>
                         <div className="hidden sm:block w-24 h-px bg-white/[0.06]" />
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase">Configuration</h1>
-                    <p className="text-sm text-zinc-400 font-mono mt-2 flex items-center gap-2">
-                        <span className="text-neon-cyan/60">// </span> Manage your account protocols and preferences
-                    </p>
+                    <div className="flex items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase">Configuration</h1>
+                            <p className="text-sm text-zinc-400 font-mono mt-2 flex items-center gap-2">
+                                <span className="text-neon-cyan/60">// </span> Manage your account protocols and preferences
+                            </p>
+                        </div>
+                        <AnimatePresence>
+                            {success && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 flex items-center gap-2 text-emerald-400 font-mono text-[10px] uppercase font-bold tracking-widest"
+                                >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> {success}
+                                </motion.div>
+                            )}
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="bg-red-500/10 border border-red-500/20 px-4 py-2 flex items-center gap-2 text-red-400 font-mono text-[10px] uppercase font-bold tracking-widest"
+                                >
+                                    <AlertCircle className="w-3.5 h-3.5" /> {error}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </motion.div>
 
                 <div className="flex flex-col md:flex-row gap-8">
@@ -156,11 +233,14 @@ export default function SettingsPage() {
                                         <span className="text-sm font-bold text-white uppercase tracking-wider">Identity Details</span>
                                     </div>
 
-                                    {/* Avatar */}
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-6">
                                         <div className="relative group shrink-0">
-                                            <div className="w-24 h-24 bg-white/[0.02] border border-white/10 flex items-center justify-center">
-                                                <User className="w-8 h-8 text-zinc-600" />
+                                            <div className="w-24 h-24 bg-white/[0.02] border border-white/10 flex items-center justify-center overflow-hidden">
+                                                {avatar ? (
+                                                    <img src={avatar} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User className="w-8 h-8 text-zinc-600" />
+                                                )}
                                             </div>
                                             <button className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 border border-neon-cyan/50">
                                                 <Camera className="w-5 h-5 text-neon-cyan" />
@@ -243,9 +323,12 @@ export default function SettingsPage() {
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="btn-hacker bg-white/10 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
+                                        disabled={saving}
+                                        onClick={() => handleSave({ name, bio, twitter, github, website })}
+                                        className="btn-hacker bg-white/10 disabled:opacity-50 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
                                     >
-                                        <Save className="w-4 h-4" /> Save Identity
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin text-neon-cyan" /> : <Save className="w-4 h-4" />}
+                                        Save Identity
                                     </motion.button>
                                 </div>
                             </div>
@@ -391,13 +474,12 @@ export default function SettingsPage() {
                                     </div>
                                     <div className="relative">
                                         <select
-                                            value={locale}
-                                            onChange={handleLanguageChange}
-                                            disabled={isPending}
+                                            value={lang}
+                                            onChange={(e) => setLang(e.target.value)}
                                             className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.08] text-xs font-bold uppercase tracking-widest text-white focus:outline-none focus:border-neon-purple/50 transition-colors appearance-none cursor-pointer"
                                         >
                                             <option value="en">English (US)</option>
-                                            <option value="pt-BR">Português (BR)</option>
+                                            <option value="pt-br">Português (BR)</option>
                                             <option value="es">Español (ES)</option>
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
@@ -443,9 +525,12 @@ export default function SettingsPage() {
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="btn-hacker bg-white/10 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
+                                        disabled={saving}
+                                        onClick={() => handleSave({ theme, language: lang })}
+                                        className="btn-hacker bg-white/10 disabled:opacity-50 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
                                     >
-                                        <Save className="w-4 h-4" /> Save Config
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin text-neon-green" /> : <Save className="w-4 h-4" />}
+                                        Save Config
                                     </motion.button>
                                 </div>
                             </div>
@@ -506,9 +591,12 @@ export default function SettingsPage() {
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="btn-hacker bg-white/10 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
+                                        disabled={saving}
+                                        onClick={() => handleSave({ isPublic: profileVisibility })}
+                                        className="btn-hacker bg-white/10 disabled:opacity-50 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
                                     >
-                                        <Save className="w-4 h-4" /> Save Security Rules
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin text-neon-cyan" /> : <Save className="w-4 h-4" />}
+                                        Save Security Rules
                                     </motion.button>
                                 </div>
                             </div>

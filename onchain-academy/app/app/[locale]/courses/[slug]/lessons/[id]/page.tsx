@@ -152,9 +152,9 @@ export default function LessonPage() {
                 let allItems: any[] = [];
 
                 c.milestones.forEach((m: any) => {
-                    const sortedLessons = [...(m.lessons || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
-                    const sortedTests = [...(m.tests || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
-                    const items = [...sortedLessons, ...sortedTests].map(i => ({
+                    const lessons = m.lessons || [];
+                    const tests = m.tests || [];
+                    const items = [...lessons, ...tests].map(i => ({
                         ...i,
                         milestoneId: m._id,
                         mTitle: m.title,
@@ -182,7 +182,7 @@ export default function LessonPage() {
                     const mItems = [
                         ...(currentMilestone.lessons || []).map((l: any) => ({ ...l, type: l.type || 'video', completed: checkCompleted(l), isTest: false })),
                         ...(currentMilestone.tests || []).map((t: any) => ({ ...t, type: t.type || 'test', completed: checkCompleted(t), isTest: true }))
-                    ].sort((a, b) => (a.order || 0) - (b.order || 0));
+                    ];
 
                     setSidebarLessons(mItems);
 
@@ -324,7 +324,7 @@ export default function LessonPage() {
                             <div className="mb-12 relative group shadow-2xl">
                                 <div className="absolute -inset-1 bg-gradient-to-r from-neon-cyan/20 to-neon-purple/20 blur-xl opacity-20" />
                                 <div className="relative border border-white/[0.08] bg-black aspect-video overflow-hidden">
-                                     <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.08] bg-black/40 font-mono">
+                                    <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.08] bg-black/40 font-mono">
                                         <div className="flex items-center gap-2">
                                             <Play className="w-3.5 h-3.5 text-neon-cyan" />
                                             <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">node_playback_raw</span>
@@ -341,6 +341,22 @@ export default function LessonPage() {
                                         <div className="w-full h-full flex items-center justify-center text-zinc-600 italic">Invalid Video Stream</div>
                                     )}
                                 </div>
+                            </div>
+                        )}
+
+                        {lesson.type === "video" && milestone?.description && (
+                            <div className="mb-10 p-6 border border-white/[0.08] bg-white/[0.02] font-mono relative group">
+                                <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-neon-cyan/30" />
+                                <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-neon-cyan/30" />
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em]">
+                                        <span className="text-neon-cyan/40">$ </span>briefing
+                                    </span>
+                                    <div className="flex-1 h-px bg-white/[0.04]" />
+                                </div>
+                                <p className="text-sm text-zinc-400 leading-relaxed">
+                                    {milestone.description}
+                                </p>
                             </div>
                         )}
 

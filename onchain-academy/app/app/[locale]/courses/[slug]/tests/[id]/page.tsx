@@ -144,11 +144,16 @@ export default function TestPage() {
 
                 const allPassed = animatedResults.every(r => r.passed);
                 if (allPassed) {
-                    await coursesApi.completeMilestone(slug as string, milestone._id, id, {
-                        codeResults: submissionResults
-                    });
-                    setIsPassed(true);
-                    setOutput(prev => (prev ? prev + "\n\n" : "") + "DECIPHERING COMPLETE. ACCESS GRANTED.");
+                    try {
+                        await coursesApi.completeMilestone(slug as string, milestone._id, id, {
+                            codeResults: submissionResults
+                        });
+                        setIsPassed(true);
+                        setOutput(prev => (prev ? prev + "\n\n" : "") + "DECIPHERING COMPLETE. ACCESS GRANTED.");
+                    } catch (err: any) {
+                        console.error("Submission failed:", err);
+                        setOutput(prev => (prev ? prev + "\n\n" : "") + `[BREACH SYSTEM ERROR]: ${err.message || "PROTOCOL_SYNC_FAILED"}`);
+                    }
                 } else {
                     setOutput(prev => (prev ? prev + "\n\n" : "") + "SEQUENCE ERROR. BREACH FAILED.");
                 }

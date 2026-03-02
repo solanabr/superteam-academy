@@ -11,6 +11,7 @@ interface AuthState {
     isLoading: boolean;
     login: (token: string, user: AuthUser) => void;
     logout: () => void;
+    updateUser: (user: AuthUser) => void;
 }
 
 const AuthContext = createContext<AuthState>({
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthState>({
     isLoading: true,
     login: () => { },
     logout: () => { },
+    updateUser: () => { },
 });
 
 /* ─── Storage Keys ─── */
@@ -64,6 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
     }, []);
+    const updateUser = useCallback((newUser: AuthUser) => {
+        setUser(newUser);
+        localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    }, []);
 
     return (
         <AuthContext.Provider
@@ -74,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 login,
                 logout,
+                updateUser,
             }}
         >
             {children}

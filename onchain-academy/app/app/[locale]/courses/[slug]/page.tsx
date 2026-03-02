@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/src/i18n/routing";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/auth-context";
@@ -21,7 +21,13 @@ import {
     Users,
     Zap,
     List,
+    Sparkles,
+    AlertCircle,
+    Loader2,
+    Video,
+    Phone,
 } from "lucide-react";
+import VideoCallModal from "@/components/courses/VideoCallModal";
 
 /* ── stub data ───────────────────────────────────────────── */
 const courseData: Record<string, typeof defaultCourse> = {};
@@ -37,7 +43,8 @@ const defaultCourse = {
     students: "12.4K",
     xp: 200,
     rating: 4.8,
-    reviews: 342,
+    ratingCount: 342,
+    reviews: [],
     enrolled: false,
     progress: 35,
     milestones: [
@@ -117,6 +124,14 @@ export default function CourseDetailPage() {
     const [loading, setLoading] = useState(true);
     const [expandedMilestone, setExpandedMilestone] = useState<string | null>(null);
 
+    // Rating State
+    const [userRating, setUserRating] = useState(0);
+    const [userComment, setUserComment] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [ratingError, setRatingError] = useState<string | null>(null);
+    const [showRatingSuccess, setShowRatingSuccess] = useState(false);
+    const [showVideoCall, setShowVideoCall] = useState(false);
+
     useEffect(() => {
         if (!isLoading) {
             coursesApi.getCourseBySlug(slug as string).then(res => {
@@ -143,6 +158,8 @@ export default function CourseDetailPage() {
                     duration: formatDuration(c.duration),
                     students: formatStudents(c.enrollmentCount || 0),
                     xp: c.totalXP || 0,
+                    reviews: res.data.reviews || [],
+                    userEnrollment: enrollment,
                 };
 
                 // Update milestone and lesson progress
@@ -161,7 +178,7 @@ export default function CourseDetailPage() {
                                 type: t.type || 'test',
                                 completed: prog?.testAttempts?.find((a: any) => a.testId === t._id)?.passed || false
                             }))
-                        ].sort((a, b) => (a.order || 0) - (b.order || 0));
+                        ];
 
                         return {
                             ...m,
@@ -198,6 +215,39 @@ export default function CourseDetailPage() {
     }
 
     const course = courseState || defaultCourse;
+
+    const handleRate = async () => {
+        if (userRating === 0) {
+            setRatingError("Please select a rating.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setRatingError(null);
+
+        try {
+            const res = await coursesApi.rateCourse(slug as string, userRating, userComment);
+            if (res.success) {
+                setShowRatingSuccess(true);
+                // Refresh course data to show new rating and review
+                const updatedRes = await coursesApi.getCourseBySlug(slug as string);
+                const { course: c, reviews } = updatedRes.data;
+                setCourseState((prev: any) => ({
+                    ...prev,
+                    rating: c.rating,
+                    ratingCount: c.ratingCount,
+                    reviews: reviews
+                }));
+            }
+        } catch (err: any) {
+            setRatingError(err.message || "Failed to submit rating.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const isCompleted = course.userEnrollment?.completedAt || course.progress === 100;
+    const canRate = course.enrolled && isCompleted && !course.userEnrollment?.rating;
     const diff = diffColors[course.difficulty] || diffColors.Beginner;
     const completedItemsCount = course.milestones.flatMap((m: any) => m.allItems || []).filter((i: any) => i.completed).length;
     const totalItemsCount = course.milestones.flatMap((m: any) => m.allItems || []).length;
@@ -253,7 +303,7 @@ export default function CourseDetailPage() {
                             <Users className="w-3.5 h-3.5" /> {course.students} students
                         </span>
                         <span className="flex items-center gap-1 text-[10px] text-amber-400 font-bold font-mono">
-                            <Star className="w-3.5 h-3.5 fill-amber-400" /> {course.rating} ({course.reviews})
+                            <Star className="w-3.5 h-3.5 fill-amber-400" /> {course.rating} ({course.ratingCount})
                         </span>
                     </div>
 
@@ -433,6 +483,19 @@ export default function CourseDetailPage() {
                                 <ChevronRight className="w-4 h-4" />
                             </motion.button>
 
+                            {/* Video Call Simulation CTA */}
+                            {course.enrolled && (
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => setShowVideoCall(true)}
+                                    className="w-full py-3 bg-white/[0.04] border border-white/10 text-white text-[10px] font-black font-mono uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-white/[0.08] hover:border-neon-cyan/50 transition-all group"
+                                >
+                                    <Video className="w-3.5 h-3.5 text-neon-cyan group-hover:animate-pulse" />
+                                    JOIN_VIDEO_CALL
+                                </motion.button>
+                            )}
+
                             {/* Quick stats */}
                             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/[0.05] font-mono">
                                 {[
@@ -480,7 +543,73 @@ export default function CourseDetailPage() {
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-4">
-                        {staticReviews.map((review, i) => (
+                        {/* Rating Form for completed users who haven't rated yet */}
+                        {canRate && !showRatingSuccess && (
+                            <div className="md:col-span-3 border border-neon-cyan/20 bg-neon-cyan/5 p-6 space-y-4 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                    <Star className="w-20 h-20 text-neon-cyan fill-neon-cyan" />
+                                </div>
+                                <div className="relative z-10 space-y-4 font-mono">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-neon-cyan" />
+                                        <span className="text-xs font-black uppercase tracking-widest text-white">Share Your Experience</span>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-400 uppercase">You have completed this course. Your feedback helps other academy students.</p>
+
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                onClick={() => setUserRating(star)}
+                                                onMouseEnter={() => setUserRating(star)}
+                                                className="transition-transform hover:scale-110"
+                                            >
+                                                <Star
+                                                    className={`w-6 h-6 ${star <= userRating ? "text-amber-400 fill-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]" : "text-zinc-700 hover:text-zinc-500"}`}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <textarea
+                                            placeholder="DESCRIBE YOUR JOURNEY (OPTIONAL)..."
+                                            value={userComment}
+                                            onChange={(e) => setUserComment(e.target.value)}
+                                            className="w-full bg-black/40 border border-white/10 p-3 text-[10px] uppercase tracking-widest text-white focus:border-neon-cyan outline-none transition-colors min-h-[80px]"
+                                        />
+                                    </div>
+
+                                    {ratingError && (
+                                        <div className="text-[9px] text-red-500 flex items-center gap-1.5 uppercase font-black">
+                                            <AlertCircle className="w-3 h-3" /> {ratingError}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        disabled={isSubmitting}
+                                        onClick={handleRate}
+                                        className="px-6 py-2 bg-neon-cyan/20 border border-neon-cyan/30 text-neon-cyan text-[10px] font-black uppercase tracking-[0.2em] hover:bg-neon-cyan/30 transition-all flex items-center gap-2"
+                                    >
+                                        {isSubmitting ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                            <Zap className="w-3 h-3" />
+                                        )}
+                                        SUBMIT_FEEDBACK
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {showRatingSuccess && (
+                            <div className="md:col-span-3 border border-neon-green/20 bg-neon-green/5 p-6 text-center space-y-2 relative overflow-hidden">
+                                <div className="font-mono text-xs font-black text-neon-green uppercase tracking-widest">Feedback Transmitted Successfully</div>
+                                <div className="font-mono text-[10px] text-zinc-500 uppercase">Your insights have been recorded in the academy archives.</div>
+                            </div>
+                        )}
+
+                        {(course.reviews || []).map((review: any, i: number) => (
                             <div key={i} className="border border-white/[0.06] bg-white/[0.02] p-5 space-y-3 relative group">
                                 {/* Corner brackets */}
                                 <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-neon-green/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -493,17 +622,38 @@ export default function CourseDetailPage() {
                                 </div>
                                 <p className="text-xs text-zinc-400 leading-relaxed font-mono">
                                     <span className="text-neon-green/40">{"> "}</span>
-                                    &quot;{review.text}&quot;
+                                    &quot;{review.comment || review.text}&quot;
                                 </p>
                                 <div className="flex items-center justify-between font-mono">
-                                    <span className="text-[10px] font-bold text-white">{review.name}</span>
-                                    <span className="text-[10px] text-zinc-600">{review.date}</span>
+                                    <div className="flex items-center gap-2">
+                                        {review.avatar && (
+                                            <img src={review.avatar} alt={review.user} className="w-4 h-4 rounded-full border border-white/10" />
+                                        )}
+                                        <span className="text-[10px] font-bold text-white">{review.user || review.name}</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-600">
+                                        {review.ratedAt ? new Date(review.ratedAt).toLocaleDateString() : (review.date || "recent")}
+                                    </span>
                                 </div>
                             </div>
                         ))}
+
+                        {(!course.reviews || course.reviews.length === 0) && !canRate && (
+                            <div className="md:col-span-3 border border-dashed border-white/5 p-10 text-center">
+                                <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest text-center block">No field reports available for this course yet.</span>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             </main>
+
+            {/* Video Call Simulation Modal */}
+            <VideoCallModal
+                isOpen={showVideoCall}
+                onClose={() => setShowVideoCall(false)}
+                courseTitle={course.title}
+                instructorName={course.instructor.name}
+            />
         </div>
     );
 }

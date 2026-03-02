@@ -21,7 +21,8 @@ import {
     Zap,
     Target,
     Activity,
-    Shield
+    Shield,
+    MessageSquare
 } from "lucide-react";
 import { dashboardApi, DashboardData } from "@/lib/dashboard";
 import { achievementsApi, AchievementReceipt } from "@/lib/achievements";
@@ -107,6 +108,9 @@ export default function DashboardPage() {
                         </Link>
                         <Link href="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
                             <BarChart3 className="w-3.5 h-3.5" /> {t("leaderboard")}
+                        </Link>
+                        <Link href="/community" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
+                            <MessageSquare className="w-3.5 h-3.5" /> {t("community")}
                         </Link>
                         <Link href="/profile" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
                             <User className="w-3.5 h-3.5" /> {t("profile")}
