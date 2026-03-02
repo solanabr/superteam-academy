@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { ExternalLink, Shield } from "lucide-react";
-import { solanaExplorerUrl } from "@/lib/solana";
+import { solanaExplorerUrl } from "@/lib/explorer";
 import { TRACKS } from "@/types";
 import type { Metadata } from "next";
 import { DownloadButton } from "./DownloadButton";

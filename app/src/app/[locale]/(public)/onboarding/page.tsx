@@ -1,8 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { ChevronRight, CheckCircle } from "lucide-react";
+import { createClient } from "@sanity/client";
+
+const sanity = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+  apiVersion: "2024-01-01",
+  useCdn: true,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +93,20 @@ function computeResult(answers: Answers): TrackResult {
     xpReward: 600,
     slug: "solana-program-security",
   };
+}
+
+// ─── Resolve slug to nearest real course ─────────────────────────────────────
+
+async function resolveSlug(preferredSlug: string): Promise<string> {
+  try {
+    const slugs: string[] = await sanity.fetch(
+      `*[_type == "course"]{ "slug": slug.current }.slug`
+    );
+    if (slugs.includes(preferredSlug)) return preferredSlug;
+    return slugs[0] ?? "/courses";
+  } catch {
+    return "/courses";
+  }
 }
 
 // ─── Option card ──────────────────────────────────────────────────────────────

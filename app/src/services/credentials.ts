@@ -1,5 +1,12 @@
-import { HELIUS_RPC_URL } from "@/lib/solana";
 import type { Credential, Achievement } from "@/types";
+
+const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER ?? "devnet";
+const HELIUS_API_KEY = process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? "";
+const HELIUS_RPC_URL =
+  process.env.NEXT_PUBLIC_HELIUS_RPC_URL ??
+  (CLUSTER === "devnet"
+    ? `https://devnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`
+    : `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`);
 
 interface DasAsset {
   id: string;

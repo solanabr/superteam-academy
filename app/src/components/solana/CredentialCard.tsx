@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ExternalLink, Shield } from "lucide-react";
-import { solanaExplorerUrl } from "@/lib/solana";
+import { solanaExplorerUrl } from "@/lib/explorer";
 import { TRACKS } from "@/types";
 import type { Credential } from "@/types";
 
