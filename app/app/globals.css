@@ -239,6 +239,23 @@
     0 0 0 1px rgba(250, 204, 21, 0.04);
 }
 
+.floating-content-panel {
+  background: color-mix(in oklch, var(--sidebar) 92%, transparent) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--sidebar-border) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px -20px oklch(0 0 0 / 0.25);
+}
+
+.dark .floating-content-panel {
+  background: var(--sidebar) !important;
+  border-color: var(--sidebar-border) !important;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(250, 204, 21, 0.04);
+}
+
 .animate-badge-shake {
   animation: badge-shake 0.8s ease-in-out;
 }

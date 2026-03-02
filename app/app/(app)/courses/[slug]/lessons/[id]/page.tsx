@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,10 +21,41 @@ import {
     getAllLessonsFlat,
     getCourseIdForProgram,
 } from "@/lib/services/content-service";
-import { useEnrollment, useCompleteLesson, useCourse } from "@/hooks";
+import { useEnrollment, useCompleteLesson, useCourse, useCredentialCollectionsList } from "@/hooks";
 import { getLessonFlagsFromEnrollment, isLessonComplete, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
 import { getEffectiveLessonCount } from "@/lib/services/content-service";
 import { toast } from "sonner";
+
+function toSafeNumber(value: unknown): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
+    if (typeof value === "bigint") return Number(value);
+    if (typeof value === "string" && value.trim()) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) return Math.trunc(parsed);
+    }
+    if (
+        value &&
+        typeof value === "object" &&
+        "toNumber" in value &&
+        typeof (value as { toNumber?: unknown }).toNumber === "function"
+    ) {
+        try {
+            const parsed = (value as { toNumber: () => number }).toNumber();
+            if (Number.isFinite(parsed)) return Math.trunc(parsed);
+        } catch {
+            return null;
+        }
+    }
+    return null;
+}
+
+function resolveTrackIdFromCourseAccount(courseAccount: unknown): number | null {
+    if (!courseAccount || typeof courseAccount !== "object") return null;
+    const account = courseAccount as Record<string, unknown>;
+    const value = account.track_id ?? account.trackId;
+    const parsed = toSafeNumber(value);
+    return parsed != null && parsed >= 0 ? parsed : null;
+}
 
 export default function LessonPage({
     params,
@@ -44,9 +75,16 @@ export default function LessonPage({
 
     const courseId = result?.course ? getCourseIdForProgram(result.course) : null;
     const { data: enrollment } = useEnrollment(courseId);
-    const { data: onChainCourse } = useCourse(courseId);
+    const { data: onChainCourse, isLoading: isCourseLoading } = useCourse(courseId);
+    const { data: credentialCollectionsList, isLoading: isCollectionsLoading } = useCredentialCollectionsList();
     const completeLesson = useCompleteLesson();
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
+    const trackId = useMemo(() => resolveTrackIdFromCourseAccount(onChainCourse), [onChainCourse]);
+    const trackCollection = useMemo(() => {
+        if (trackId == null || !credentialCollectionsList?.length) return "";
+        const row = credentialCollectionsList.find((item) => item.trackId === trackId);
+        return row?.collectionAddress ?? "";
+    }, [credentialCollectionsList, trackId]);
 
     useEffect(() => {
         getLessonById(slug, id).then((data) => {
@@ -359,7 +397,11 @@ export default function LessonPage({
                     courseId={courseCompleteData.courseId}
                     courseName={courseCompleteData.courseName}
                     xpEarned={courseCompleteData.xpEarned}
-                    trackCollection=""
+                    trackCollection={trackCollection}
+                    isTrackCollectionLoading={
+                        (isCourseLoading && !!courseId) ||
+                        (isCollectionsLoading && trackId != null)
+                    }
                     onClose={() => setCourseCompleteData(null)}
                 />
             )}
