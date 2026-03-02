@@ -392,6 +392,10 @@
     "longestStreak": "Maior Streak",
     "streakFreezes": "{count} streak freezes disponíveis",
     "noStreak": "Comece um streak concluindo uma aula hoje!",
+    "skillLevelLabel": "Nível de Habilidade",
+    "skillBeginner": "Iniciante",
+    "skillIntermediate": "Intermediário",
+    "skillAdvanced": "Avançado",
     "achievements": "Conquistas",
     "achievementsUnlocked": "{unlocked} de {total} desbloqueadas",
     "viewAllAchievements": "Ver Todas as Conquistas",
@@ -1083,11 +1087,13 @@
     "title": "Encontre Seu Caminho de Aprendizado",
     "subtitle": "Responda algumas perguntas e recomendaremos os melhores cursos para você",
     "seeResults": "Ver Meus Resultados",
+    "skipOnboarding": "Pular por enquanto",
     "steps": {
       "experience": "Experiência",
       "interests": "Interesses",
       "goal": "Objetivo",
-      "pace": "Ritmo"
+      "pace": "Ritmo",
+      "assessment": "Avaliação"
     },
     "questions": {
       "experience": {
@@ -1183,6 +1189,52 @@
         }
       }
     },
+    "assessment": {
+      "title": "Teste Seus Conhecimentos",
+      "subtitle": "Responda 6 perguntas rápidas para avaliarmos seu nível inicial",
+      "q1": {
+        "question": "O que async/await faz em JavaScript?",
+        "a": "Faz o código rodar em threads paralelas",
+        "b": "Pausa a execução até que uma promise seja resolvida",
+        "c": "Converte código síncrono em callbacks",
+        "d": "Acelera a execução de funções"
+      },
+      "q2": {
+        "question": "Em blockchain, o que é uma transação?",
+        "a": "Um arquivo armazenado em um banco de dados distribuído",
+        "b": "Uma conexão de rede peer-to-peer",
+        "c": "Instrução(ões) assinada(s) enviada(s) para a rede",
+        "d": "Uma recompensa de mineração distribuída aos validadores"
+      },
+      "q3": {
+        "question": "O que é um Program Derived Address (PDA) na Solana?",
+        "a": "Um endereço de carteira gerado a partir de uma seed phrase",
+        "b": "Um endereço determinístico derivado de seeds, sem chave privada",
+        "c": "O endereço de um programa Solana implantado",
+        "d": "Um endereço usado apenas para transferências de tokens"
+      },
+      "q4": {
+        "question": "Qual é o propósito principal do sistema de ownership do Rust?",
+        "a": "Otimizar o uso de largura de banda da rede",
+        "b": "Gerenciar controle de acesso em aplicações web",
+        "c": "Garantir segurança de memória sem garbage collector",
+        "d": "Habilitar compilação multiplataforma"
+      },
+      "q5": {
+        "question": "No Anchor, o que o atributo #[account] faz?",
+        "a": "Define como uma conta é desserializada e validada",
+        "b": "Cria um novo endereço de carteira Solana",
+        "c": "Especifica o saldo rent-exempt para uma conta",
+        "d": "Marca uma função como endpoint RPC público"
+      },
+      "q6": {
+        "question": "Como um AMM (Automated Market Maker) determina preços de tokens?",
+        "a": "Combinando ordens de compra e venda em um livro de ordens",
+        "b": "Através de uma fórmula algorítmica baseada nas proporções do pool",
+        "c": "Consultando um oráculo de preço off-chain",
+        "d": "Por consenso entre provedores de liquidez"
+      }
+    },
     "results": {
       "title": "Seu Caminho Personalizado",
       "subtitle": "Com base nas suas respostas, aqui está por onde começar",
@@ -1193,6 +1245,15 @@
       "startWith": "Comece com estes cursos",
       "startFirstCourse": "Começar Primeiro Curso",
       "browseAll": "Explorar Todos os Cursos",
+      "goToDashboard": "Ir para o Painel",
+      "skillLevel": "Seu Nível Avaliado",
+      "skillScore": "Você acertou {score} de 6",
+      "levelBeginner": "Iniciante",
+      "levelIntermediate": "Intermediário",
+      "levelAdvanced": "Avançado",
+      "levelDescriptionBeginner": "Ótimo ponto de partida — vamos recomendar cursos fundamentais para construir suas habilidades do zero.",
+      "levelDescriptionIntermediate": "Base sólida — você está pronto para cursos específicos de frameworks e projetos práticos.",
+      "levelDescriptionAdvanced": "Conhecimento impressionante — mergulhe em tópicos avançados como auditoria de segurança e design de protocolos DeFi.",
       "paths": {
         "fundamentals": {
           "name": "Fundamentos Solana",

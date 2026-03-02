@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { usePrivy } from "@privy-io/react-auth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,12 +31,13 @@ import { QuizStep } from "./quiz-step";
 import type { QuizOption } from "./quiz-step";
 import { QuizResults } from "./quiz-results";
 import type { QuizAnswers } from "./quiz-results";
+import { AssessmentStep } from "./assessment-step";
 
 interface OnboardingQuizProps {
   courses: Course[];
 }
 
-const STEP_KEYS = ["experience", "interests", "goal", "pace"] as const;
+const STEP_KEYS = ["experience", "interests", "goal", "pace", "assessment"] as const;
 
 function buildExperienceOptions(t: (key: string) => string): QuizOption[] {
   return [
@@ -78,6 +81,8 @@ function buildPaceOptions(t: (key: string) => string): QuizOption[] {
 export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
   const t = useTranslations("onboarding");
   const tc = useTranslations("common");
+  const router = useRouter();
+  const { authenticated } = usePrivy();
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>({
@@ -86,6 +91,10 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     goal: "",
     pace: "",
   });
+  const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
+  const [skillLevel, setSkillLevel] = useState<string | null>(null);
+  const [skillScore, setSkillScore] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const showResults = step === STEP_KEYS.length;
 
@@ -107,6 +116,12 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     }));
   }, []);
 
+  const handleAssessmentAnswer = useCallback((questionId: string, optionId: string) => {
+    setAssessmentAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+  }, []);
+
+  const assessmentComplete = Object.keys(assessmentAnswers).length === 6;
+
   const canProceed =
     step === 0
       ? answers.experience !== ""
@@ -116,20 +131,73 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
           ? answers.goal !== ""
           : step === 3
             ? answers.pace !== ""
-            : false;
+            : step === 4
+              ? assessmentComplete
+              : false;
 
-  const handleNext = () => {
-    if (canProceed && step < STEP_KEYS.length) {
-      // Save answers to localStorage for future reference
-      if (step === STEP_KEYS.length - 1) {
+  const handleSkip = async () => {
+    if (!authenticated) {
+      router.push("/dashboard");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skip: true }),
+      });
+      sessionStorage.setItem("sta-onboarding-checked", "true");
+      router.push("/dashboard");
+    } catch {
+      router.push("/dashboard");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (!canProceed || step >= STEP_KEYS.length) return;
+
+    // Last step (assessment) — submit everything
+    if (step === STEP_KEYS.length - 1) {
+      const preferences = {
+        experience: answers.experience,
+        interests: answers.interests,
+        goal: answers.goal,
+        pace: answers.pace,
+      };
+
+      if (authenticated) {
+        setSubmitting(true);
         try {
-          localStorage.setItem("sta-onboarding", JSON.stringify(answers));
+          const res = await fetch("/api/onboarding", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ preferences, assessment: assessmentAnswers }),
+          });
+          const data = await res.json();
+          setSkillLevel(data.skillLevel ?? null);
+          setSkillScore(data.skillScore ?? null);
+          sessionStorage.setItem("sta-onboarding-checked", "true");
+        } catch {
+          // Fall through to show results even on error
+        } finally {
+          setSubmitting(false);
+        }
+      } else {
+        // Unauthenticated — save to localStorage
+        try {
+          localStorage.setItem("sta-onboarding", JSON.stringify({ ...preferences, assessment: assessmentAnswers }));
         } catch {
           // Silently ignore storage errors
         }
       }
       setStep(step + 1);
+      return;
     }
+
+    setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -196,7 +264,22 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
         />
       )}
 
-      {showResults && <QuizResults answers={answers} courses={courses} />}
+      {step === 4 && (
+        <AssessmentStep
+          answers={assessmentAnswers}
+          onAnswer={handleAssessmentAnswer}
+        />
+      )}
+
+      {showResults && (
+        <QuizResults
+          answers={answers}
+          courses={courses}
+          skillLevel={skillLevel}
+          skillScore={skillScore}
+          authenticated={authenticated}
+        />
+      )}
 
       {/* Navigation buttons */}
       {!showResults && (
@@ -211,15 +294,30 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
             {tc("back")}
           </button>
 
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canProceed}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
-          >
-            {step === STEP_KEYS.length - 1 ? t("seeResults") : tc("next")}
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={submitting}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              {t("skipOnboarding")}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!canProceed || submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
+            >
+              {submitting
+                ? "..."
+                : step === STEP_KEYS.length - 1
+                  ? t("seeResults")
+                  : tc("next")}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -8,10 +8,12 @@ import {
   Zap,
   Clock,
   Sparkles,
+  Award,
 } from "lucide-react";
 import type { Course } from "@/types";
 import { TRACKS } from "@/lib/constants";
 import { CourseIllustration } from "@/components/icons/course-illustration";
+import { cn } from "@/lib/utils";
 
 export interface QuizAnswers {
   experience: string;
@@ -29,6 +31,9 @@ interface RecommendedPath {
 interface QuizResultsProps {
   answers: QuizAnswers;
   courses: Course[];
+  skillLevel?: string | null;
+  skillScore?: number | null;
+  authenticated?: boolean;
 }
 
 function getRecommendedPath(answers: QuizAnswers): RecommendedPath {
@@ -73,21 +78,35 @@ function getRecommendedPath(answers: QuizAnswers): RecommendedPath {
   };
 }
 
-function getRecommendedCourses(answers: QuizAnswers, courses: Course[]): Course[] {
+function getRecommendedCourses(
+  answers: QuizAnswers,
+  courses: Course[],
+  skillLevel?: string | null,
+): Course[] {
   const { experience, interests } = answers;
+  const level = skillLevel ?? (experience === "beginner" ? "beginner" : experience === "solana-dev" ? "advanced" : "intermediate");
 
   const scored = courses.map((course) => {
     let score = 0;
 
-    // Experience match
-    if (experience === "beginner" && course.difficulty === "beginner") score += 3;
-    if (experience === "web-dev" && course.difficulty === "beginner") score += 2;
-    if (experience === "dev-new-solana" && course.difficulty === "intermediate") score += 3;
-    if (experience === "solana-dev" && course.difficulty === "advanced") score += 3;
+    // Skill level ↔ difficulty match
+    if (course.difficulty === level) {
+      score += 5;
+    } else if (
+      (level === "beginner" && course.difficulty === "intermediate") ||
+      (level === "intermediate" && (course.difficulty === "beginner" || course.difficulty === "advanced")) ||
+      (level === "advanced" && course.difficulty === "intermediate")
+    ) {
+      score += 2;
+    }
 
-    // Interest match
+    // Experience match (legacy scoring, lower priority)
+    if (experience === "beginner" && course.difficulty === "beginner") score += 1;
+    if (experience === "solana-dev" && course.difficulty === "advanced") score += 1;
+
+    // Interest ↔ track match
     const track = TRACKS[course.trackId];
-    if (track && interests.includes(track.name)) score += 2;
+    if (track && interests.includes(track.name)) score += 4;
 
     return { course, score };
   });
@@ -108,13 +127,27 @@ function getEstimatedWeeks(answers: QuizAnswers): number {
   return paceWeeks[answers.pace] ?? 4;
 }
 
-export function QuizResults({ answers, courses }: QuizResultsProps) {
+const LEVEL_COLORS = {
+  beginner: "bg-brazil-green/10 text-brazil-green border-brazil-green/30",
+  intermediate: "bg-brazil-gold/10 text-brazil-gold border-brazil-gold/30",
+  advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
+} as const;
+
+export function QuizResults({ answers, courses, skillLevel, skillScore, authenticated }: QuizResultsProps) {
   const t = useTranslations("onboarding.results");
   const tc = useTranslations("courses.catalog");
   const td = useTranslations("courses.detail");
   const recommendedPath = getRecommendedPath(answers);
-  const recommendedCourses = getRecommendedCourses(answers, courses);
+  const recommendedCourses = getRecommendedCourses(answers, courses, skillLevel);
   const estimatedWeeks = getEstimatedWeeks(answers);
+
+  const levelKey = skillLevel as keyof typeof LEVEL_COLORS | undefined;
+  const levelLabel = levelKey
+    ? t(`level${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as "levelBeginner" | "levelIntermediate" | "levelAdvanced")
+    : null;
+  const levelDescription = levelKey
+    ? t(`levelDescription${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as "levelDescriptionBeginner" | "levelDescriptionIntermediate" | "levelDescriptionAdvanced")
+    : null;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -128,6 +161,36 @@ export function QuizResults({ answers, courses }: QuizResultsProps) {
         </h2>
         <p className="mt-2 text-muted-foreground">{t("subtitle")}</p>
       </div>
+
+      {/* Skill Level Assessment Card */}
+      {skillLevel && skillScore !== null && skillScore !== undefined && (
+        <div className="mb-6 rounded-xl border-2 border-border bg-card p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Award className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("skillLevel")}
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-flex rounded-full border px-3 py-0.5 text-sm font-bold",
+                    LEVEL_COLORS[levelKey!] ?? "bg-muted text-foreground"
+                  )}
+                >
+                  {levelLabel}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {t("skillScore", { score: skillScore })}
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">{levelDescription}</p>
+        </div>
+      )}
 
       {/* Recommended Path Card */}
       <div className="mb-6 rounded-xl border-2 border-primary/30 bg-primary/5 p-6">
@@ -197,13 +260,23 @@ export function QuizResults({ answers, courses }: QuizResultsProps) {
 
       {/* CTA Buttons */}
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Link
-          href={recommendedCourses[0] ? `/courses/${recommendedCourses[0].slug}` : "/courses"}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]"
-        >
-          {t("startFirstCourse")}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        {authenticated ? (
+          <Link
+            href="/dashboard"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]"
+          >
+            {t("goToDashboard")}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <Link
+            href={recommendedCourses[0] ? `/courses/${recommendedCourses[0].slug}` : "/courses"}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]"
+          >
+            {t("startFirstCourse")}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
         <Link
           href="/courses"
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-sm font-semibold transition-all duration-200 hover:bg-muted hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97]"

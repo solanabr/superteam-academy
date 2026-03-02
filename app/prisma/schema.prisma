@@ -24,6 +24,14 @@ model User {
   isPublic    Boolean  @default(true)
   isAdmin     Boolean  @default(false)
 
+  // Onboarding
+  onboardingCompleted    Boolean   @default(false)
+  onboardingData         Json?     // { experience, interests, goal, pace }
+  skillLevel             String?   // "beginner" | "intermediate" | "advanced"
+  skillScore             Int?      // 0-6 raw score
+  assessmentAnswers      Json?     // { q1: "b", q2: "a", ... }
+  onboardingCompletedAt  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -56,6 +56,9 @@ export async function GET() {
       .map((e) => e.courseId),
     enrolledCourses: user.enrollments.map((e) => e.courseId),
     skills: {},
+    onboardingCompleted: user.onboardingCompleted,
+    skillLevel: user.skillLevel,
+    onboardingData: user.onboardingData,
   });
 }
 

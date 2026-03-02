@@ -392,6 +392,10 @@
     "longestStreak": "Longest Streak",
     "streakFreezes": "{count} streak freezes available",
     "noStreak": "Start a streak by completing a lesson today!",
+    "skillLevelLabel": "Skill Level",
+    "skillBeginner": "Beginner",
+    "skillIntermediate": "Intermediate",
+    "skillAdvanced": "Advanced",
     "achievements": "Achievements",
     "achievementsUnlocked": "{unlocked} of {total} unlocked",
     "viewAllAchievements": "View All Achievements",
@@ -1083,11 +1087,13 @@
     "title": "Find Your Learning Path",
     "subtitle": "Answer a few questions and we'll recommend the best courses for you",
     "seeResults": "See My Results",
+    "skipOnboarding": "Skip for now",
     "steps": {
       "experience": "Experience",
       "interests": "Interests",
       "goal": "Goal",
-      "pace": "Pace"
+      "pace": "Pace",
+      "assessment": "Assessment"
     },
     "questions": {
       "experience": {
@@ -1183,6 +1189,52 @@
         }
       }
     },
+    "assessment": {
+      "title": "Test Your Knowledge",
+      "subtitle": "Answer 6 quick questions so we can gauge your starting level",
+      "q1": {
+        "question": "What does async/await do in JavaScript?",
+        "a": "Makes code run in parallel threads",
+        "b": "Pauses execution until a promise resolves",
+        "c": "Converts synchronous code to callbacks",
+        "d": "Speeds up function execution"
+      },
+      "q2": {
+        "question": "In blockchain, what is a transaction?",
+        "a": "A file stored on a distributed database",
+        "b": "A peer-to-peer network connection",
+        "c": "Signed instruction(s) submitted to the network",
+        "d": "A mining reward distributed to validators"
+      },
+      "q3": {
+        "question": "What is a Program Derived Address (PDA) on Solana?",
+        "a": "A wallet address generated from a seed phrase",
+        "b": "A deterministic address derived from seeds, without a private key",
+        "c": "The address of a deployed Solana program",
+        "d": "An address used only for token transfers"
+      },
+      "q4": {
+        "question": "What is the primary purpose of Rust's ownership system?",
+        "a": "Optimizing network bandwidth usage",
+        "b": "Managing access control in web applications",
+        "c": "Guaranteeing memory safety without a garbage collector",
+        "d": "Enabling cross-platform compilation"
+      },
+      "q5": {
+        "question": "In Anchor, what does the #[account] attribute do?",
+        "a": "Defines how an account is deserialized and validated",
+        "b": "Creates a new Solana wallet address",
+        "c": "Specifies the rent-exempt balance for an account",
+        "d": "Marks a function as a public RPC endpoint"
+      },
+      "q6": {
+        "question": "How does an AMM (Automated Market Maker) determine token prices?",
+        "a": "By matching buy and sell orders in an order book",
+        "b": "Through an algorithmic formula based on pool ratios",
+        "c": "By querying an off-chain price oracle",
+        "d": "By consensus among liquidity providers"
+      }
+    },
     "results": {
       "title": "Your Personalized Path",
       "subtitle": "Based on your answers, here's where to start",
@@ -1193,6 +1245,15 @@
       "startWith": "Start with these courses",
       "startFirstCourse": "Start First Course",
       "browseAll": "Browse All Courses",
+      "goToDashboard": "Go to Dashboard",
+      "skillLevel": "Your Assessed Level",
+      "skillScore": "You answered {score} of 6 correctly",
+      "levelBeginner": "Beginner",
+      "levelIntermediate": "Intermediate",
+      "levelAdvanced": "Advanced",
+      "levelDescriptionBeginner": "Great starting point — we'll recommend foundational courses to build your skills from the ground up.",
+      "levelDescriptionIntermediate": "Solid foundation — you're ready for framework-specific courses and hands-on projects.",
+      "levelDescriptionAdvanced": "Impressive knowledge — dive into advanced topics like security auditing and DeFi protocol design.",
       "paths": {
         "fundamentals": {
           "name": "Solana Fundamentals",

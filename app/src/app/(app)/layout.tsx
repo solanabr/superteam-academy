@@ -10,6 +10,7 @@ import { XPNotificationProvider } from "@/components/gamification/xp-notificatio
 import { GamificationProvider } from "@/lib/hooks/use-gamification";
 import { CoursesProvider } from "@/lib/hooks/use-courses";
 import { ConditionalSidebar } from "@/components/layout/conditional-sidebar";
+import { OnboardingGate } from "@/components/auth/onboarding-gate";
 
 export const metadata = appMetadata;
 export const viewport = appViewport;
@@ -38,7 +39,9 @@ export default function AppLayout({
                 <div className="flex flex-1">
                   <ConditionalSidebar />
                   <main id="main-content" className="flex-1 min-w-0">
-                    {children}
+                    <OnboardingGate>
+                      {children}
+                    </OnboardingGate>
                   </main>
                 </div>
                 <Footer />

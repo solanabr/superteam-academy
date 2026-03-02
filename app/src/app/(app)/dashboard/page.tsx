@@ -1,12 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { usePrivy } from "@privy-io/react-auth";
 import {
   Flame,
   BookOpen,
   Zap,
   ChevronRight,
+  Award,
 } from "lucide-react";
 import { formatXP, xpProgress, getUserDisplayName } from "@/lib/utils";
 import { useCourses } from "@/lib/hooks/use-courses";
@@ -20,10 +23,23 @@ import { StreakFreezeCard } from "@/components/gamification/streak-freeze-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EmptyCoursesIllustration, EmptyAchievementsIllustration } from "@/components/icons";
 import { DashboardPageSkeleton, ActivityFeed, SeasonalEventBanner, DailyChallengePreview } from "@/components/dashboard";
+import { getPersonalizedRecommendations } from "@/lib/recommendations";
+
+const SKILL_BADGE_COLORS = {
+  beginner: "bg-brazil-green/10 text-brazil-green border-brazil-green/30",
+  intermediate: "bg-brazil-gold/10 text-brazil-gold border-brazil-gold/30",
+  advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
+} as const;
+
+interface UserOnboardingData {
+  skillLevel?: string | null;
+  onboardingData?: { experience?: string; interests?: string[]; goal?: string; pace?: string } | null;
+}
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
+  const { authenticated } = usePrivy();
   const { courses: allCourses } = useCourses();
   const {
     xp,
@@ -34,6 +50,23 @@ export default function DashboardPage() {
     isLoaded,
     isOnChain,
   } = useLearningProgress();
+
+  const [onboarding, setOnboarding] = useState<UserOnboardingData>({});
+
+  useEffect(() => {
+    if (!authenticated) return;
+    fetch("/api/user")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setOnboarding({
+            skillLevel: data.skillLevel,
+            onboardingData: data.onboardingData,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [authenticated]);
 
   const progress = xpProgress(xp);
 
@@ -48,19 +81,23 @@ export default function DashboardPage() {
   const claimedAchievements = achievements.filter((a) => a.claimed);
   const recentAchievements = claimedAchievements.slice(0, 6);
 
-  const recommendedCourses = allCourses.filter(
-    (c) =>
-      !enrolledCourseIds.includes(c.slug) &&
-      !enrolledCourseIds.includes(c.id) &&
-      !completedCourseIds.includes(c.slug) &&
-      !completedCourseIds.includes(c.id)
-  ).slice(0, 3);
+  const allEnrolledAndCompleted = [
+    ...enrolledCourseIds,
+    ...completedCourseIds,
+  ];
+
+  const recommendedCourses = getPersonalizedRecommendations(allCourses, {
+    skillLevel: onboarding.skillLevel,
+    preferences: onboarding.onboardingData,
+    enrolledIds: allEnrolledAndCompleted,
+  });
 
   if (!isLoaded) {
     return <DashboardPageSkeleton />;
   }
 
   const displayName = getUserDisplayName();
+  const skillLevel = onboarding.skillLevel as keyof typeof SKILL_BADGE_COLORS | undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -121,6 +158,23 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Skill Level Badge (if assessed) */}
+        {skillLevel && SKILL_BADGE_COLORS[skillLevel] && (
+          <div className="glass rounded-xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{t("skillLevelLabel")}</p>
+                <p className={`mt-1 inline-flex rounded-full border px-3 py-1 text-lg font-bold ${SKILL_BADGE_COLORS[skillLevel]}`}>
+                  {t(`skill${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as "skillBeginner" | "skillIntermediate" | "skillAdvanced")}
+                </p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Award className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Streak Card */}
         <div className="glass rounded-xl p-6">
