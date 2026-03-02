@@ -15,7 +15,10 @@ import {
 import { getXPBalance } from "@/lib/services/xp";
 import { calculateLevel } from "@/lib/constants";
 import { learningService } from "@/lib/services/learning-progress";
-import { achievements as achievementDefs, courses } from "@/lib/services/courses";
+import {
+  achievements as achievementDefs,
+  courses,
+} from "@/lib/services/courses";
 import { analytics } from "@/providers/analytics-provider";
 
 const ACHIEVEMENT_STORAGE = "stacad:achievements:";
@@ -130,7 +133,13 @@ async function computeLearningStats(wallet: string): Promise<LearningStats> {
     }
   }
 
-  return { totalLessons, totalCourses, totalChallenges, tracksCompleted, completedCourseIds };
+  return {
+    totalLessons,
+    totalCourses,
+    totalChallenges,
+    tracksCompleted,
+    completedCourseIds,
+  };
 }
 
 function evaluateAchievements(
@@ -141,7 +150,9 @@ function evaluateAchievements(
 ): Achievement[] {
   const referralCount = getReferralCount(wallet);
 
-  const rustTrackCourseIds = courses.filter((c) => c.track === "rust").map((c) => c.id);
+  const rustTrackCourseIds = courses
+    .filter((c) => c.track === "rust")
+    .map((c) => c.id);
 
   const checks: Record<string, boolean> = {
     "first-lesson": stats.totalLessons >= 1,
@@ -155,9 +166,14 @@ function evaluateAchievements(
     "top-10": (leaderboardRank ?? Infinity) <= 10,
     "security-audit": stats.tracksCompleted.has("security"),
     "speed-run": hasSpeedRun(wallet),
-    "rust-rookie": rustTrackCourseIds.some((id) => stats.completedCourseIds.has(id)),
+    "rust-rookie": rustTrackCourseIds.some((id) =>
+      stats.completedCourseIds.has(id),
+    ),
     "anchor-expert": stats.completedCourseIds.has("anchor-dev"),
-    "full-stack-solana": stats.tracksCompleted.has("rust") && stats.tracksCompleted.has("frontend") && stats.tracksCompleted.has("defi"),
+    "full-stack-solana":
+      stats.tracksCompleted.has("rust") &&
+      stats.tracksCompleted.has("frontend") &&
+      stats.tracksCompleted.has("defi"),
   };
 
   return achievementDefs.map((def) => {
@@ -207,15 +223,30 @@ export function useUser() {
     const enrollmentCredentials =
       enrollmentResult.status === "fulfilled" ? enrollmentResult.value : [];
 
+    // Build enrollment lookup for XP enrichment
+    const enrollmentById = new Map(enrollmentCredentials.map((c) => [c.id, c]));
+
     const dasIds = new Set(dasCredentials.map((c) => c.id));
     credentials = [
-      ...dasCredentials,
+      ...dasCredentials.map((c) => {
+        if (c.xpEarned > 0) return c;
+        // DAS returned 0 XP — enrich from enrollment or course data
+        const enrolled = enrollmentById.get(c.id);
+        if (enrolled && enrolled.xpEarned > 0) {
+          return { ...c, xpEarned: enrolled.xpEarned };
+        }
+        const matchedCourse = courses.find((co) => co.track === c.track);
+        if (matchedCourse) return { ...c, xpEarned: matchedCourse.xpReward };
+        return c;
+      }),
       ...enrollmentCredentials.filter((c) => !dasIds.has(c.id)),
     ];
 
     // Cache on-chain XP locally; only fall back to local cache if on-chain fetch failed
     if (xp > 0) {
-      try { localStorage.setItem(`stacad:xp:${walletAddress}`, String(xp)); } catch {}
+      try {
+        localStorage.setItem(`stacad:xp:${walletAddress}`, String(xp));
+      } catch {}
     } else if (xpResult.status === "rejected") {
       try {
         const cached = localStorage.getItem(`stacad:xp:${walletAddress}`);
@@ -242,7 +273,12 @@ export function useUser() {
 
     const streak = await learningService.getStreak(walletAddress);
     const stats = await computeLearningStats(walletAddress);
-    const achievements = evaluateAchievements(walletAddress, stats, streak, null);
+    const achievements = evaluateAchievements(
+      walletAddress,
+      stats,
+      streak,
+      null,
+    );
 
     // Detect newly unlocked achievements
     const prevIds = previousAchievementIds.current;
