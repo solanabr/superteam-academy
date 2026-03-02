@@ -10,6 +10,7 @@ import {
   BookOpen,
   CaretLeft,
   CaretRight,
+  ChatCircle,
   Lightning,
   Medal,
   Scroll,
@@ -92,6 +93,7 @@ interface DashboardData {
       | "achievement"
       | "certificate"
       | "enrollment"
+      | "community"
       | "xp_other";
     action: string;
     xp: number;
@@ -110,6 +112,7 @@ function useDashboardData(
   authUserId: string | null,
   authLoading: boolean
 ): DashboardData {
+  const tDash = useTranslations("dashboard");
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -253,6 +256,7 @@ function useDashboardData(
         const courseCompletionBonusPattern =
           /^Course completion bonus:\s*(.+)$/;
         const dailyQuestPattern = /^daily_quest:(.+)$/;
+        const communityPattern = /^community:(.+)$/;
         const lessonIdsFromTx: string[] = [];
         const courseCompleteIdsFromTx: string[] = [];
         for (const tx of transactions ?? []) {
@@ -337,6 +341,7 @@ function useDashboardData(
           | "achievement"
           | "certificate"
           | "enrollment"
+          | "community"
           | "xp_other";
         type RawActivity = {
           type: ActivityType;
@@ -431,11 +436,22 @@ function useDashboardData(
               .replace(/\b\w/g, (c: string) => c.toUpperCase());
             raw.push({
               type: "xp_other",
-              action: `Daily Quest: ${questName}`, // TODO: i18n
+              action: tDash("dailyQuest", { name: questName }),
               xp: tx.amount,
               time: tx.created_at ?? new Date().toISOString(),
               txSignature: tx.tx_signature ?? null,
               href: null,
+            });
+          } else if (communityPattern.exec(tx.reason)?.[1]) {
+            const suffix = tx.reason.match(communityPattern)![1]!;
+            const i18nKey = `communityActivity_${suffix}` as const;
+            raw.push({
+              type: "community",
+              action: tDash(i18nKey),
+              xp: tx.amount,
+              time: tx.created_at ?? new Date().toISOString(),
+              txSignature: tx.tx_signature ?? null,
+              href: "/community",
             });
           } else {
             raw.push({
@@ -540,7 +556,7 @@ function useDashboardData(
     }
 
     fetchData();
-  }, [authUserId, authLoading]);
+  }, [authUserId, authLoading, tDash]);
 
   return data;
 }
@@ -563,9 +579,14 @@ export default function DashboardPage() {
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
   const [activityPage, setActivityPage] = useState(0);
   const ACTIVITY_PAGE_SIZE = 10;
-  const totalActivityPages = Math.ceil(
-    data.recentActivity.length / ACTIVITY_PAGE_SIZE
-  );
+
+  // Reset to page 1 when the activity list changes (e.g., after quest completion)
+  const activityCount = data.recentActivity.length;
+  useEffect(() => {
+    setActivityPage(0);
+  }, [activityCount]);
+
+  const totalActivityPages = Math.ceil(activityCount / ACTIVITY_PAGE_SIZE);
 
   // Group paginated activity items by date for history-style browsing
   const activityPageItems = data.recentActivity.slice(
@@ -708,7 +729,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="sol-spinner" />
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">{tCommon("loading")}</span>
       </div>
     );
   }
@@ -908,6 +929,7 @@ export default function DashboardPage() {
                   achievement: Medal,
                   certificate: Scroll,
                   enrollment: BookOpen,
+                  community: ChatCircle,
                   xp_other: Lightning,
                 };
                 const ActivityIcon = iconMap[activity.type] ?? Lightning;
