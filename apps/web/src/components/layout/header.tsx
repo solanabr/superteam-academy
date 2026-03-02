@@ -5,14 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import {
-  House,
-  Book,
-  Trophy,
-  ChatCircle,
-  List,
-  X,
-} from "@phosphor-icons/react";
+import { House, Book, Trophy, ChatCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -43,7 +36,6 @@ export function Header() {
   const locale = useLocale();
   const pathname = usePathname();
   const { user, profile, isLoading: authLoading } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // XP state
   const [displayedXp, setDisplayedXp] = useState(0);
@@ -74,7 +66,6 @@ export function Header() {
 
     if (data) {
       const supabaseXp = data.total_xp ?? 0;
-      // Preserve any higher on-chain value that was previously reconciled
       const newXp = Math.max(supabaseXp, targetXpRef.current);
       const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
@@ -146,13 +137,12 @@ export function Header() {
 
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
-      {/* Main header bar — bottom border is XP progress */}
       <div className="relative bg-transparent backdrop-blur-md">
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
-          {/* Left: Superteam Brazil logo (desktop) */}
+          {/* Left: Logo (desktop lg+) */}
           <Link
             href={`/${locale}`}
-            className="relative z-10 mr-auto hidden shrink-0 md:flex"
+            className="relative z-10 mr-auto hidden shrink-0 lg:flex"
           >
             <Image
               src="/ST-DARK-GREEN-HORIZONTAL.png"
@@ -170,10 +160,10 @@ export function Header() {
             />
           </Link>
 
-          {/* Center: nav pill bar (desktop) */}
+          {/* Center: nav pill bar (desktop lg+) */}
           {authLoading ? (
             <nav
-              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              className="nav-bar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               aria-hidden="true"
             >
               {navItems.map((item) => (
@@ -185,7 +175,7 @@ export function Header() {
             </nav>
           ) : isLoggedIn ? (
             <nav
-              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              className="nav-bar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               aria-label={tA11y("platformNavigation")}
             >
               {navItems.map((item) => {
@@ -208,7 +198,7 @@ export function Header() {
             </nav>
           ) : (
             <nav
-              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              className="nav-bar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               aria-label={tA11y("platformNavigation")}
             >
               {publicNavItems.map((item) => {
@@ -231,8 +221,8 @@ export function Header() {
             </nav>
           )}
 
-          {/* Right: XP ring → lang → theme → user (desktop) */}
-          <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] md:flex">
+          {/* Right: XP ring → lang → theme → user (desktop lg+) */}
+          <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] lg:flex">
             {isLoggedIn && (
               <div
                 className={cn(
@@ -243,7 +233,6 @@ export function Header() {
               >
                 <LevelBadge level={level} size="sm" />
 
-                {/* XP count */}
                 <span
                   className={cn(
                     "font-display text-[13px] font-black tabular-nums text-[var(--xp)] transition-transform duration-300",
@@ -256,7 +245,6 @@ export function Header() {
                   </span>
                 </span>
 
-                {/* Floating +XP gain indicator */}
                 {xpGainAmount !== null && (
                   <span
                     key={xpGainKeyRef.current}
@@ -287,11 +275,11 @@ export function Header() {
             )}
           </div>
 
-          {/* Mobile: logo + hamburger */}
-          <div className="flex flex-1 items-center justify-between gap-[12px] md:hidden">
+          {/* Mobile/tablet top bar (< lg) — logo + compact utils */}
+          <div className="flex flex-1 items-center justify-between gap-3 lg:hidden">
             <Link
               href={user ? `/${locale}/dashboard` : `/${locale}`}
-              className="flex items-center"
+              className="flex min-h-[44px] items-center"
             >
               <Image
                 src="/ST-DARK-GREEN-HORIZONTAL.png"
@@ -308,66 +296,12 @@ export function Header() {
                 className="hidden h-6 w-auto dark:block"
               />
             </Link>
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--r-sm)] border border-[var(--border-default)] bg-[var(--card)] text-[var(--text-2)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={
-                mobileMenuOpen ? tA11y("closeMenu") : tA11y("openMenu")
-              }
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? (
-                <X size={24} weight="bold" />
-              ) : (
-                <List size={24} weight="bold" />
-              )}
-            </button>
-          </div>
-        </div>
 
-        {/* Bottom border */}
-        <div className="h-px w-full bg-[var(--border-default)]" />
-      </div>
-
-      {/* Mobile menu dropdown */}
-      {mobileMenuOpen && (
-        <div className="mx-[12px] mt-[4px] rounded-[var(--r-lg)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] md:hidden">
-          <div className="space-y-2 px-[16px] py-4">
-            <nav className="flex flex-col gap-[2px]">
-              {(isLoggedIn ? navItems : publicNavItems).map((item) => {
-                const fullHref = `/${locale}${item.href}`;
-                const isActive = pathname.startsWith(fullHref);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.key}
-                    href={fullHref}
-                    onClick={() => setMobileMenuOpen(false)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-[10px] rounded-[var(--r-md)] px-[10px] py-[9px] text-[14px] font-semibold no-underline transition-all duration-150",
-                      isActive
-                        ? "bg-[var(--primary-dim)] text-[var(--primary)]"
-                        : "text-[var(--text-3)] hover:bg-[var(--card-hover)] hover:text-[var(--text-2)]"
-                    )}
-                  >
-                    <Icon size={18} weight="bold" />
-                    <span>{t(item.key)}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="h-px bg-[var(--border)]" />
-
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggle />
-            </div>
-            <div className="pt-1">
               {authLoading ? (
-                <div className="h-9 w-20 animate-pulse rounded-[var(--r-sm)] bg-[var(--input)]" />
+                <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--card)]" />
               ) : isLoggedIn ? (
                 <UserMenu
                   username={profile.username}
@@ -381,7 +315,10 @@ export function Header() {
             </div>
           </div>
         </div>
-      )}
+
+        {/* Bottom border */}
+        <div className="h-px w-full bg-[var(--border-default)]" />
+      </div>
     </header>
   );
 }

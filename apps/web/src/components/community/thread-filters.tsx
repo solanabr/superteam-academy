@@ -33,16 +33,16 @@ export function ThreadFilters({
   const t = useTranslations("community");
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       {/* Sort tabs */}
-      <div className="flex gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-lg border border-[var(--border-default)] bg-[var(--surface)] p-1">
         {SORT_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onSortChange(opt.value)}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors",
               sort === opt.value
                 ? "bg-[var(--primary)] text-white"
                 : "text-[var(--text-2)] hover:bg-[var(--card-hover)] hover:text-[var(--text)]"
@@ -62,7 +62,7 @@ export function ThreadFilters({
               type="button"
               onClick={() => onTypeChange(opt.value)}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                "whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 type === opt.value
                   ? "font-bold text-[var(--primary)]"
                   : "text-[var(--text-2)] hover:text-[var(--text)]"

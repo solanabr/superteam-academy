@@ -26,7 +26,7 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
   const todayDate = todayDateString();
 
   return (
-    <div className={cn("card-chunky p-6", className)}>
+    <div className={cn("card-chunky p-4 sm:p-6", className)}>
       {/* Header: flame icon + streak count */}
       <div className="mb-4 flex items-center gap-3.5">
         <div className="flex h-12 w-12 animate-breathe items-center justify-center rounded-[14px] bg-streak-light">
@@ -43,7 +43,11 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
       </div>
 
       {/* Weekly day circles */}
-      <div className="flex gap-1.5" role="img" aria-label={t("streak")}>
+      <div
+        className="flex justify-between gap-1 sm:gap-1.5"
+        role="img"
+        aria-label={t("streak")}
+      >
         {calendar.map((day) => {
           const isToday = day.date === todayDate;
           const dayLabel = new Date(day.date + "T12:00:00").toLocaleDateString(
@@ -54,7 +58,7 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
             <div
               key={day.date}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full border-[2.5px] font-display text-[13px] font-extrabold transition-colors",
+                "flex h-8 w-8 items-center justify-center rounded-full border-[2.5px] font-display text-[11px] font-extrabold transition-colors sm:h-10 sm:w-10 sm:text-[13px]",
                 isToday
                   ? "animate-pulse-ring border-primary-dark bg-primary text-white shadow-[0_2px_0_0_var(--primary-dark)]"
                   : day.active

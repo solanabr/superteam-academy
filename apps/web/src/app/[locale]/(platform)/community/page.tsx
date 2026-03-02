@@ -42,15 +42,19 @@ export default function CommunityPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-extrabold text-[var(--text)]">
+          <h1 className="font-display text-2xl font-extrabold text-[var(--text)] sm:text-3xl">
             {t("title")}
           </h1>
           <p className="mt-1 text-[var(--text-2)]">{t("subtitle")}</p>
         </div>
         {user && (
-          <Button variant="primary" onClick={() => setCreateOpen(true)}>
+          <Button
+            variant="primary"
+            onClick={() => setCreateOpen(true)}
+            className="w-full sm:w-auto"
+          >
             <Plus size={18} />
             {t("askQuestion")}
           </Button>
@@ -61,7 +65,7 @@ export default function CommunityPage() {
         {/* Main content */}
         <div className="min-w-0 flex-1">
           {/* Categories */}
-          <div className="mb-8 grid grid-cols-2 gap-3">
+          <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {CATEGORIES.map((cat) => (
               <CategoryCard
                 key={cat.slug}

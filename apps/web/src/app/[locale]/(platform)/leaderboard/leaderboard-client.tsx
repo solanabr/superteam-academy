@@ -202,7 +202,7 @@ export function LeaderboardClient({
     <div className="lb-page">
       {/* Header */}
       <div className="lb-header">
-        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+        <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
           {t("leaderboard")}
         </h1>
         <p className="mt-1 text-text-3">

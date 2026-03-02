@@ -13,7 +13,7 @@ export function Footer() {
 
   return (
     <footer className="border-t-[2.5px] border-border bg-subtle">
-      <div className="container py-10 md:py-12">
+      <div className="container px-4 py-10 sm:px-8 md:py-12">
         <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
           <div className="flex flex-col items-center gap-3 md:items-start">
             <Link href={`/${locale}`} className="flex items-center gap-2">
@@ -32,7 +32,7 @@ export function Footer() {
                 className="hidden h-6 w-auto dark:block"
               />
             </Link>
-            <p className="text-sm leading-relaxed text-text-2">
+            <p className="max-w-[280px] text-center text-sm leading-relaxed text-text-2 md:max-w-none md:text-left">
               {t("tagline")}
             </p>
             <p className="text-xs text-text-3">{t("languages")}</p>
@@ -40,34 +40,34 @@ export function Footer() {
 
           <div className="flex flex-col items-center gap-4 md:items-end">
             {/* Quick links */}
-            <nav className="flex items-center gap-4 text-sm font-medium">
+            <nav className="flex flex-wrap items-center gap-1 text-sm font-medium">
               <Link
                 href={`/${locale}/courses`}
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex min-h-[44px] items-center px-3 text-text-3 transition-colors hover:text-text"
               >
                 {t("platform")}
               </Link>
               <Link
                 href={`/${locale}/community`}
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex min-h-[44px] items-center px-3 text-text-3 transition-colors hover:text-text"
               >
                 {t("community")}
               </Link>
               <Link
                 href={`/${locale}/leaderboard`}
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex min-h-[44px] items-center px-3 text-text-3 transition-colors hover:text-text"
               >
                 {tNav("leaderboard")}
               </Link>
             </nav>
 
             {/* Social icons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <a
                 href="https://github.com/solanabr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex h-11 w-11 items-center justify-center text-text-3 transition-colors hover:text-text"
                 aria-label={tA11y("github")}
               >
                 <GithubLogo size={20} weight="bold" />
@@ -76,7 +76,7 @@ export function Footer() {
                 href="https://x.com/superteambr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex h-11 w-11 items-center justify-center text-text-3 transition-colors hover:text-text"
                 aria-label={tA11y("twitter")}
               >
                 <XLogo size={20} weight="bold" />
@@ -85,7 +85,7 @@ export function Footer() {
                 href="https://discord.gg/superteam"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-text-3 transition-colors hover:text-text"
+                className="inline-flex h-11 w-11 items-center justify-center text-text-3 transition-colors hover:text-text"
                 aria-label={tA11y("discord")}
               >
                 <DiscordLogo size={20} weight="bold" />
