@@ -8,6 +8,67 @@ import type { Profile, UserProgress, Achievement, UserAchievement } from '@/lib/
 
 export type LeaderboardRange = 'global' | 'monthly' | 'weekly' | 'daily';
 
+type AchievementStatusItem = Achievement & { unlocked: boolean; earned_at?: string };
+
+const FALLBACK_ACHIEVEMENTS = [
+  {
+    id: 'fallback-first-lesson',
+    code: 'first_lesson',
+    title: 'First Steps',
+    description: 'Complete your first lesson',
+    icon: 'FS'
+  },
+  {
+    id: 'fallback-xp-100',
+    code: 'xp_100',
+    title: 'Rising Star',
+    description: 'Earn 100 XP',
+    icon: '100'
+  },
+  {
+    id: 'fallback-xp-500',
+    code: 'xp_500',
+    title: 'Knowledge Seeker',
+    description: 'Earn 500 XP',
+    icon: '500'
+  },
+  {
+    id: 'fallback-xp-1000',
+    code: 'xp_1000',
+    title: 'Expert Learner',
+    description: 'Earn 1000 XP',
+    icon: '1K'
+  },
+  {
+    id: 'fallback-streak-3',
+    code: 'streak_3',
+    title: '3-Day Streak',
+    description: 'Learn for 3 days in a row',
+    icon: '3D'
+  },
+  {
+    id: 'fallback-streak-7',
+    code: 'streak_7',
+    title: 'Week Warrior',
+    description: 'Learn for 7 days in a row',
+    icon: '7D'
+  },
+  {
+    id: 'fallback-streak-30',
+    code: 'streak_30',
+    title: 'Monthly Master',
+    description: 'Learn for 30 days in a row',
+    icon: '30D'
+  },
+  {
+    id: 'fallback-course-complete',
+    code: 'course_complete',
+    title: 'Course Conqueror',
+    description: 'Complete your first course',
+    icon: 'CC'
+  }
+] as const;
+
 export class UserService {
   private toUTCDateString(input: Date | string): string {
     const d = new Date(input);
@@ -375,6 +436,89 @@ export class UserService {
       ...item.achievements,
       earned_at: item.earned_at
     })) as any;
+  }
+
+  /**
+   * Get all achievements with unlocked/locked state for a user
+   */
+  async getAchievementsWithStatus(
+    userId: string
+  ): Promise<AchievementStatusItem[]> {
+    const supabase = await createClient();
+
+    const [{ data: allAchievements, error: allError }, { data: earnedRows, error: earnedError }] = await Promise.all([
+      supabase
+        .from('achievements')
+        .select('*')
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('user_achievements')
+        .select('achievement_id, earned_at')
+        .eq('user_id', userId)
+    ]);
+
+    if (allError) {
+      console.error('[v0] Error fetching achievements:', allError);
+      return this.getFallbackAchievementsWithStatus(userId, supabase);
+    }
+
+    if (!allAchievements || allAchievements.length === 0) {
+      return this.getFallbackAchievementsWithStatus(userId, supabase);
+    }
+    if (earnedError) {
+      console.error('[v0] Error fetching user achievement status:', earnedError);
+      return (allAchievements || []).map((achievement: any) => ({
+        ...achievement,
+        unlocked: false
+      })) as any;
+    }
+
+    const earnedById = new Map<string, string>(
+      (earnedRows || []).map((row: any) => [row.achievement_id, row.earned_at])
+    );
+
+    return (allAchievements || []).map((achievement: any) => ({
+      ...achievement,
+      unlocked: earnedById.has(achievement.id),
+      earned_at: earnedById.get(achievement.id)
+    })) as any;
+  }
+
+  private async getFallbackAchievementsWithStatus(userId: string, supabase: any): Promise<AchievementStatusItem[]> {
+    const [{ data: progress }, { data: enrollments }] = await Promise.all([
+      supabase
+        .from('user_progress')
+        .select('total_xp, current_streak')
+        .eq('user_id', userId)
+        .single(),
+      supabase
+        .from('enrollments')
+        .select('completed_at, progress_percentage')
+        .eq('user_id', userId)
+    ]);
+
+    const xp = Number(progress?.total_xp || 0);
+    const streak = Number(progress?.current_streak || 0);
+    const completedCourses = (enrollments || []).filter(
+      (enrollment: any) => enrollment.completed_at || Number(enrollment.progress_percentage || 0) >= 100
+    ).length;
+
+    const unlockedByCode: Record<string, boolean> = {
+      first_lesson: xp > 0,
+      xp_100: xp >= 100,
+      xp_500: xp >= 500,
+      xp_1000: xp >= 1000,
+      streak_3: streak >= 3,
+      streak_7: streak >= 7,
+      streak_30: streak >= 30,
+      course_complete: completedCourses >= 1
+    };
+
+    return FALLBACK_ACHIEVEMENTS.map((achievement) => ({
+      ...(achievement as any),
+      unlocked: Boolean(unlockedByCode[achievement.code]),
+      earned_at: undefined
+    }));
   }
 
   /**

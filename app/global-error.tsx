@@ -30,6 +30,12 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             >
               Go Home
             </Link>
+            <Link
+              href="/en/docs"
+              className="inline-flex h-10 items-center rounded-xl border border-border px-5 font-semibold hover:bg-muted/40"
+            >
+              View Docs
+            </Link>
           </div>
         </div>
       </body>

@@ -403,6 +403,21 @@ export class BlockchainService {
   }
 
   /**
+   * Build a wallet-sign transaction for achievement minting.
+   */
+  async prepareAchievementCertificateTransaction(
+    walletAddress: string,
+    achievementId: string,
+    achievementTitle: string
+  ): Promise<{ serializedTransaction: string; mintAddress: string }> {
+    return this.prepareCourseCertificateTransaction(
+      walletAddress,
+      `achievement:${achievementId}`,
+      achievementTitle
+    );
+  }
+
+  /**
    * REAL: Get user's XP balance from Devnet (if implemented on-chain)
    * For MVP, this will read from Supabase instead
    */

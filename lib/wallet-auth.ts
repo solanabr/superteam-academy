@@ -1,8 +1,13 @@
 export const WALLET_AUTH_MESSAGE = 'Superteam Academy wallet auth v1'
 
 export function walletToEmail(walletAddress: string): string {
-  // Must be a standards-compliant domain for Supabase Auth validation.
-  return `${walletAddress.toLowerCase()}@wallet.superteamacademy.app`
+  // Build a deterministic, RFC-safe local part (<=64 chars), prefixed with a letter.
+  // This avoids validator edge-cases with long/raw wallet strings.
+  const normalized = String(walletAddress || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+  const local = `w${normalized.slice(0, 30)}${normalized.slice(-20)}`.slice(0, 64)
+  return `${local}@superteamacademy.app`
 }
 
 export function signatureToPassword(signature: Uint8Array): string {

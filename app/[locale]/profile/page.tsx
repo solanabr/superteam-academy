@@ -6,8 +6,9 @@ import { courseService } from '@/lib/services/course.service';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Award, Calendar, Flame, Medal, Star, Trophy, Wallet, Zap } from 'lucide-react';
+import { Calendar, Flame, Medal, Star, Trophy, Wallet, Zap } from 'lucide-react';
 import Image from 'next/image';
+import { AchievementMintGrid } from '@/components/profile/achievement-mint-grid';
 
 function levelRange(level: number) {
   const safe = Math.max(1, level || 1);
@@ -24,20 +25,25 @@ export default async function ProfilePage() {
     redirect('/auth/login');
   }
 
-  const [profile, progress, achievements, rank, enrollments, certificatesResponse] = await Promise.all([
+  const [profile, progress, achievements, rank, enrollments, certificatesResponse, achievementMintsResponse] = await Promise.all([
     userService.getProfile(user.id),
     userService.getUserProgress(user.id),
-    userService.getUserAchievements(user.id),
+    userService.getAchievementsWithStatus(user.id),
     userService.getUserRank(user.id),
     courseService.getUserEnrollments(user.id),
     supabase
       .from('course_certificates')
       .select('id, mint_address, signature, issued_at, courses(title)')
       .eq('user_id', user.id)
-      .order('issued_at', { ascending: false })
+      .order('issued_at', { ascending: false }),
+    supabase
+      .from('user_achievement_certificates')
+      .select('achievement_id')
+      .eq('user_id', user.id)
   ]);
 
   const certificates = certificatesResponse.data || [];
+  const achievementMintedIds = (achievementMintsResponse.data || []).map((row: any) => row.achievement_id);
   const xp = progress?.total_xp || 0;
   const level = progress?.level || 1;
   const streak = progress?.current_streak || 0;
@@ -92,8 +98,8 @@ export default async function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" className="rounded-xl border-white/15 bg-white/5 hover:bg-white/10">
-              Edit Profile
+            <Button asChild variant="outline" className="rounded-xl border-white/15 bg-white/5 hover:bg-white/10">
+              <Link href="/settings">Edit Profile</Link>
             </Button>
           </div>
         </section>
@@ -179,21 +185,7 @@ export default async function ProfilePage() {
           </Card>
 
           <div className="space-y-6">
-            <Card className="rounded-2xl border-white/10 bg-white/[0.02]">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-xl font-black">Achievements</p>
-                  <span className="text-xs text-muted-foreground">{achievements.length} unlocked</span>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {achievements.slice(0, 4).map((achievement: any) => (
-                    <div key={achievement.id} className="flex h-14 items-center justify-center rounded-xl border border-white/10 bg-black/25 text-xl">
-                      {achievement.icon || '🏆'}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <AchievementMintGrid achievements={achievements as any} initialMintedIds={achievementMintedIds} />
 
             <Card className="rounded-2xl border-white/10 bg-white/[0.02]">
               <CardContent className="p-6">

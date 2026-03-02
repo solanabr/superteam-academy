@@ -24,14 +24,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     }).format(Math.max(0, value));
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen animate-page-enter">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-background">
         {/* Advanced Background Effects */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(20,241,149,0.08)_0%,transparent_70%)]" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse opacity-50" />
-          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/15 rounded-full blur-[150px] animate-pulse delay-1000 opacity-50" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] hero-orb-float opacity-50" />
+          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/15 rounded-full blur-[150px] hero-orb-float-delayed opacity-50" />
           <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)] opacity-20" />
         </div>
 
@@ -40,7 +40,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs sm:text-sm font-bold text-primary backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-1000">
               <Zap className="h-4 w-4 fill-primary animate-pulse" />
               <span className="uppercase tracking-widest">
-                {commonT('home')} • {t('heroBadgeSuffix')}
+                {commonT('home')} | {t('heroBadgeSuffix')}
               </span>
             </div>
             
@@ -77,7 +77,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 { label: t('statsCnftsMinted'), value: formatCompact(platformStats.totalCnftsMinted) },
                 { label: t('statsXpEarned'), value: formatCompact(platformStats.totalXpEarned) },
               ].map((stat, i) => (
-                <div key={i} className="space-y-1">
+                <div key={i} className="space-y-1 stat-pop" style={{ animationDelay: `${i * 120}ms` }}>
                   <div className="text-3xl font-black gradient-text">{stat.value}</div>
                   <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</div>
                 </div>

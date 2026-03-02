@@ -10,6 +10,7 @@ import { ActivityCalendar } from '@/components/dashboard/activity-calendar';
 import {
   ArrowRight,
   Flame,
+  Lock,
   Star,
   Trophy,
   BookOpen,
@@ -45,10 +46,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     userService.getProfile(userId),
     userService.getUserProgress(userId),
     courseService.getUserEnrollments(userId),
-    userService.getUserAchievements(userId),
+    userService.getAchievementsWithStatus(userId),
     userService.getUserRank(userId),
     courseService.getCourses()
   ]);
+  const unlockedCount = (achievements || []).filter((achievement: any) => achievement.unlocked).length;
 
   const days = 365;
   const start = new Date();
@@ -259,14 +261,30 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 </Link>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {(achievements || []).slice(0, 4).map((achievement: any) => (
-                  <div key={achievement.id} className="flex h-16 items-center justify-center rounded-xl border border-white/10 bg-black/25 text-2xl">
-                    {achievement.icon || '🏆'}
+                {(achievements || []).slice(0, 4).map((achievement: any) => {
+                  const tileLocked = !achievement.unlocked;
+                  return (
+                    <div
+                      key={achievement.id}
+                      className={`flex h-16 items-center justify-center rounded-xl border border-white/10 text-2xl ${
+                        tileLocked ? 'bg-black/10 opacity-60' : 'bg-black/25'
+                      }`}
+                    >
+                      {achievement.icon || 'T'}
+                    </div>
+                  );
+                })}
+                {(achievements || []).length === 0 && Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={`achievement-placeholder-${index}`}
+                    className="flex h-16 items-center justify-center rounded-xl border border-white/10 bg-black/10 text-base font-bold opacity-60"
+                  >
+                    LOCK
                   </div>
                 ))}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                {(achievements || []).length} achievements unlocked
+                {unlockedCount} achievements unlocked
               </p>
             </div>
 

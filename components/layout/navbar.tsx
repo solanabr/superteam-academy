@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletConnectModal } from '@/components/wallet/wallet-connect-modal';
+import Image from 'next/image';
 
 const navigationKeys = [
   { name: 'courses', href: '/courses', icon: BookOpen },
@@ -94,8 +95,8 @@ export function Navbar() {
       <div className="container flex h-14 items-center justify-between gap-2 overflow-hidden">
         <Link href="/" className="flex items-center space-x-2 group">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-black shadow-[0_0_16px_rgba(20,241,149,0.25)] group-hover:scale-110 transition-transform">
-              S
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-primary/30 shadow-[0_0_16px_rgba(20,241,149,0.25)] group-hover:scale-110 transition-transform">
+              <Image src="/image.png" alt="Superteam Academy" fill className="object-cover" />
             </div>
             <span className="hidden font-black sm:inline-block text-sm tracking-tight uppercase group-hover:text-primary transition-colors">
               Superteam Academy
@@ -121,6 +122,17 @@ export function Navbar() {
               </span>
             </Link>
           ))}
+          <Link
+            href="/docs"
+            className={cn(
+              'text-[10px] font-black uppercase tracking-[0.18em] transition-all hover:text-primary relative py-0.5',
+              pathname === '/docs'
+                ? 'text-foreground after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full'
+                : 'text-muted-foreground'
+            )}
+          >
+            Docs
+          </Link>
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">

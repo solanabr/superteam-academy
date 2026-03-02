@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/routing';
+import Image from 'next/image';
 
 export function Footer() {
   return (
@@ -7,8 +8,8 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-black shadow-[0_0_18px_rgba(20,241,149,0.25)]">
-                SA
+              <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-primary/30 shadow-[0_0_18px_rgba(20,241,149,0.25)]">
+                <Image src="/image.png" alt="Superteam Academy" fill className="object-cover" />
               </div>
               <span className="font-black text-lg tracking-tighter uppercase">
                 Superteam Academy
@@ -39,6 +40,7 @@ export function Footer() {
             <h3 className="mb-6 text-[10px] font-black uppercase tracking-[0.2em] text-primary">Resources</h3>
             <ul className="space-y-4 text-[11px] font-bold uppercase tracking-widest">
               <li><a href="https://docs.solana.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">Solana Docs</a></li>
+              <li><Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors">Platform Docs</Link></li>
               <li><a href="https://superteam.fun" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">Superteam</a></li>
               <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
