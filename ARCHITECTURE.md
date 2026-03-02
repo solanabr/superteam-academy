@@ -54,8 +54,10 @@ messages/              # Translation JSON files
 ## On-Chain Integration Flow
 1. **Wallet Connection**: Users connect via `WalletMultiButton`.
 2. **Account Linking**: The wallet address is automatically linked to the Supabase profile.
-3. **Completion**: Upon finishing a course, the backend triggers a cNFT minting process.
-4. **Display**: The `Certificates` page fetches cNFTs from Devnet using the Metaplex DAS API (Helius/Metaplex).
+3. **Completion Prompt**: On final lesson completion, client-side UI prompts the user to get certificate immediately.
+4. **Mint Transaction**: Client calls `/api/certificates/mint/prepare`, signs with wallet, then calls `/api/certificates/mint/confirm`.
+5. **Post-Mint Routing**: User gets a confirmation popup to open `Certificates` page instantly.
+6. **Display**: The `Certificates` page renders minted credentials from Supabase + wallet on Devnet.
 
 ## Security & Performance
 - **SSR**: Server-side rendering for course catalogs and SEO.

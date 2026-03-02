@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { PublicKey } from '@solana/web3.js'
 
 export async function POST(req: Request) {
   try {
     const { walletAddress } = await req.json()
-    if (!walletAddress || typeof walletAddress !== 'string') {
+    const wallet = String(walletAddress || '').trim()
+    if (!wallet) {
       return NextResponse.json({ error: 'walletAddress is required' }, { status: 400 })
+    }
+    try {
+      new PublicKey(wallet)
+    } catch {
+      return NextResponse.json({ error: 'Invalid wallet address' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -21,11 +28,15 @@ export async function POST(req: Request) {
     const { data: walletOwner } = await db
       .from('profiles')
       .select('id')
-      .eq('wallet_address', walletAddress)
+      .eq('wallet_address', wallet)
       .maybeSingle()
 
     if (walletOwner && walletOwner.id !== user.id) {
-      return NextResponse.json({ error: 'Wallet already linked to another user' }, { status: 409 })
+      return NextResponse.json({
+        ok: false,
+        conflict: true,
+        error: 'Wallet already linked to another user'
+      })
     }
 
     const { data: profile } = await db
@@ -37,7 +48,7 @@ export async function POST(req: Request) {
     const usernameFallback = user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`
     const payload: any = {
       id: user.id,
-      wallet_address: walletAddress,
+      wallet_address: wallet,
       updated_at: new Date().toISOString()
     }
     if (!profile?.username) {
@@ -52,10 +63,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, walletAddress: wallet })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to link wallet'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
-

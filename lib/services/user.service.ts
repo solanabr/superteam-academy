@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Profile, UserProgress, Achievement, UserAchievement } from '@/lib/types';
 
+export type LeaderboardRange = 'global' | 'monthly' | 'weekly' | 'daily';
+
 export class UserService {
   private toUTCDateString(input: Date | string): string {
     const d = new Date(input);
@@ -211,41 +213,123 @@ export class UserService {
     return { checkedIn: true, xpAwarded: 10, progress: updated || streak };
   }
 
+  private getRangeStart(range: LeaderboardRange): string {
+    const now = new Date();
+    if (range === 'daily') {
+      const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+      return start.toISOString();
+    }
+    if (range === 'weekly') {
+      const utcDay = now.getUTCDay();
+      const diffToMonday = (utcDay + 6) % 7;
+      const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diffToMonday, 0, 0, 0, 0));
+      return start.toISOString();
+    }
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+    return start.toISOString();
+  }
+
   /**
    * Get leaderboard data
    */
-  async getLeaderboard(limit = 10): Promise<any[]> {
+  async getLeaderboard(limit = 10, range: LeaderboardRange = 'global'): Promise<any[]> {
     const supabase = createAdminClient() || await createClient();
-    const { data: progressRows, error } = await supabase
-      .from('user_progress')
-      .select('*')
-      .order('total_xp', { ascending: false })
-      .limit(limit);
 
-    if (error) {
-      console.error('[v0] Error fetching leaderboard:', error);
+    if (range === 'global') {
+      const { data: progressRows, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .order('total_xp', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('[v0] Error fetching leaderboard:', error);
+        return [];
+      }
+
+      if (!progressRows || progressRows.length === 0) {
+        return [];
+      }
+
+      const userIds = progressRows.map((row: any) => row.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, wallet_address')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.warn('[v0] Error fetching leaderboard profiles:', profilesError);
+      }
+
+      const profileById = new Map((profiles || []).map((profile: any) => [profile.id, profile]));
+      return progressRows.map((row: any) => ({
+        ...row,
+        score_xp: row.total_xp || 0,
+        profiles: profileById.get(row.user_id) || null
+      }));
+    }
+
+    const since = this.getRangeStart(range);
+    const { data: completionRows, error: completionError } = await supabase
+      .from('lesson_completions')
+      .select('user_id, xp_earned, completed_at')
+      .gte('completed_at', since);
+
+    if (completionError) {
+      console.error('[v0] Error fetching period leaderboard data:', completionError);
       return [];
     }
 
-    if (!progressRows || progressRows.length === 0) {
+    const byUser = new Map<string, number>();
+    for (const row of completionRows || []) {
+      const userId = (row as any).user_id as string | undefined;
+      if (!userId) continue;
+      const earned = Number((row as any).xp_earned || 0);
+      byUser.set(userId, (byUser.get(userId) || 0) + earned);
+    }
+
+    const ranked = Array.from(byUser.entries())
+      .map(([user_id, score_xp]) => ({ user_id, score_xp }))
+      .sort((a, b) => b.score_xp - a.score_xp)
+      .slice(0, limit);
+
+    if (ranked.length === 0) {
       return [];
     }
 
-    const userIds = progressRows.map((row: any) => row.user_id);
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url, wallet_address')
-      .in('id', userIds);
+    const userIds = ranked.map((row) => row.user_id);
+    const [{ data: profiles, error: profilesError }, { data: progressRows, error: progressError }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, username, avatar_url, wallet_address')
+        .in('id', userIds),
+      supabase
+        .from('user_progress')
+        .select('user_id, total_xp, level, current_streak')
+        .in('user_id', userIds)
+    ]);
 
     if (profilesError) {
       console.warn('[v0] Error fetching leaderboard profiles:', profilesError);
     }
+    if (progressError) {
+      console.warn('[v0] Error fetching leaderboard user progress:', progressError);
+    }
 
     const profileById = new Map((profiles || []).map((profile: any) => [profile.id, profile]));
-    return progressRows.map((row: any) => ({
-      ...row,
-      profiles: profileById.get(row.user_id) || null
-    }));
+    const progressById = new Map((progressRows || []).map((row: any) => [row.user_id, row]));
+
+    return ranked.map((row) => {
+      const progress = progressById.get(row.user_id) || {};
+      return {
+        user_id: row.user_id,
+        total_xp: progress.total_xp || 0,
+        level: progress.level || 1,
+        current_streak: progress.current_streak || 0,
+        score_xp: row.score_xp,
+        profiles: profileById.get(row.user_id) || null
+      };
+    });
   }
 
   async getUserRank(userId: string): Promise<number> {

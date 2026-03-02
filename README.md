@@ -152,6 +152,12 @@ All tables have Row Level Security (RLS) enabled.
 - Service layer abstractions ready for future on-chain writes
 - Enrollment and lesson completion use Supabase
 
+### Course Completion & Certificate Flow
+- On the final lesson, completion prompts the learner to get the certificate immediately.
+- If course progress is below 100%, the user sees the exact completion percentage and missing lessons.
+- If completion is valid, certificate mint transaction is prepared and signed from the connected wallet.
+- After successful mint/save (or if certificate already exists), the user gets a popup to open `/certificates` directly.
+
 ### Enrollment Flow
 - Enroll via `/api/enroll` with duplicate enrollment protection
 - Courses synced from Sanity to Supabase when needed

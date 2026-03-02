@@ -17,13 +17,38 @@ function formatWallet(wallet?: string | null) {
 
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params
+  const identifier = username?.trim()
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
+  const profileFields = 'id, username, bio, avatar_url, wallet_address, created_at'
+  let profile: any = null
+
+  const usernameLookup = await supabase
     .from('profiles')
-    .select('id, username, bio, avatar_url, wallet_address, created_at')
-    .ilike('username', username)
-    .single()
+    .select(profileFields)
+    .ilike('username', identifier)
+    .maybeSingle()
+
+  if (usernameLookup.data) {
+    profile = usernameLookup.data
+  } else {
+    const walletLookup = await supabase
+      .from('profiles')
+      .select(profileFields)
+      .eq('wallet_address', identifier)
+      .maybeSingle()
+
+    if (walletLookup.data) {
+      profile = walletLookup.data
+    } else {
+      const idLookup = await supabase
+        .from('profiles')
+        .select(profileFields)
+        .eq('id', identifier)
+        .maybeSingle()
+      profile = idLookup.data || null
+    }
+  }
 
   if (!profile) {
     notFound()

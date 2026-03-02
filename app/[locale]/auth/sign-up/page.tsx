@@ -115,7 +115,9 @@ export default function SignUpPage() {
           body: JSON.stringify({ walletAddress: wallet })
         })
         const linkPayload = await linkRes.json().catch(() => ({}))
-        if (!linkRes.ok && !String(linkPayload?.error || '').toLowerCase().includes('already linked')) {
+        if (linkPayload?.conflict) {
+          console.warn('[Auth] Wallet link conflict:', linkPayload?.error || 'Wallet already linked')
+        } else if (!linkRes.ok && !String(linkPayload?.error || '').toLowerCase().includes('already linked')) {
           throw new Error(linkPayload?.error || 'Failed to link wallet')
         }
       }

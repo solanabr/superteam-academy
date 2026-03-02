@@ -37,9 +37,18 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: If you remove getUser() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user: any = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result?.data?.user || null
+  } catch (error) {
+    const msg = error instanceof Error ? error.message.toLowerCase() : ''
+    const isMissingRefresh = msg.includes('refresh token') && msg.includes('not found')
+    if (!isMissingRefresh) {
+      console.error('[Supabase proxy] getUser failed:', error)
+    }
+    user = null
+  }
 
   if (
     // if the user is not logged in and the app path, in this case, /protected, is accessed, redirect to the login page

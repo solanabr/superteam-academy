@@ -6,12 +6,38 @@ import { Trophy, Medal, Award, Star, Flame, User as UserIcon, ArrowRight } from 
 import { getTranslations } from 'next-intl/server';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Link } from '@/i18n/routing';
 
-export default async function LeaderboardPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const topUsers = await userService.getLeaderboard(100);
+type LeaderboardRange = 'global' | 'monthly' | 'weekly' | 'daily';
+
+function normalizeRange(value?: string): LeaderboardRange {
+  if (value === 'daily' || value === 'weekly' || value === 'monthly' || value === 'global') return value;
+  return 'global';
+}
+
+export default async function LeaderboardPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ range?: string }>;
+}) {
+  await params;
+  const query = await searchParams;
+  const range = normalizeRange(query?.range);
+  const topUsers = await userService.getLeaderboard(100, range);
   const t = await getTranslations('Leaderboard');
   const hasPodium = topUsers.length >= 3;
+  const scoreLabel =
+    range === 'global' ? 'Points' :
+    range === 'monthly' ? 'Monthly XP' :
+    range === 'weekly' ? 'Weekly XP' :
+    'Daily XP';
+  const rankingLabel =
+    range === 'global' ? 'Global Rankings' :
+    range === 'monthly' ? 'Monthly Rankings' :
+    range === 'weekly' ? 'Weekly Rankings' :
+    'Daily Rankings';
 
   const formatWallet = (wallet?: string | null) => {
     if (!wallet) return null;
@@ -21,6 +47,17 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
 
   const displayName = (user: any) =>
     user?.profiles?.username || formatWallet(user?.profiles?.wallet_address) || 'Anonymous';
+  const walletDisplay = (user: any) =>
+    formatWallet(user?.profiles?.wallet_address) || 'Wallet not linked';
+  const getProfileHref = (user: any) => {
+    const username = user?.profiles?.username?.trim();
+    if (username) return `/profile/${encodeURIComponent(username)}`;
+    const wallet = user?.profiles?.wallet_address?.trim();
+    if (wallet) return `/profile/${encodeURIComponent(wallet)}`;
+    const userId = user?.user_id?.trim?.();
+    if (userId) return `/profile/${encodeURIComponent(userId)}`;
+    return null;
+  };
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-yellow-500" />;
@@ -43,7 +80,21 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.2em] text-primary uppercase">
             <Trophy className="h-3.5 w-3.5" />
-            Global Rankings
+            {rankingLabel}
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <Link href="/leaderboard?range=global" className={cn('rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest', range === 'global' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-white/10 text-muted-foreground hover:text-foreground')}>
+              Global
+            </Link>
+            <Link href="/leaderboard?range=monthly" className={cn('rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest', range === 'monthly' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-white/10 text-muted-foreground hover:text-foreground')}>
+              Monthly
+            </Link>
+            <Link href="/leaderboard?range=weekly" className={cn('rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest', range === 'weekly' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-white/10 text-muted-foreground hover:text-foreground')}>
+              Weekly
+            </Link>
+            <Link href="/leaderboard?range=daily" className={cn('rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest', range === 'daily' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-white/10 text-muted-foreground hover:text-foreground')}>
+              Daily
+            </Link>
           </div>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9]">
             THE <span className="gradient-text">HALL OF FAME</span>
@@ -79,14 +130,21 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
                     )}
                   </div>
                 </div>
-                <h3 className="text-2xl font-black truncate tracking-tight">{displayName(topUsers[1])}</h3>
+                {getProfileHref(topUsers[1]) ? (
+                  <Link href={getProfileHref(topUsers[1]) as any} className="text-2xl font-black truncate tracking-tight hover:text-primary">
+                    {displayName(topUsers[1])}
+                  </Link>
+                ) : (
+                  <h3 className="text-2xl font-black truncate tracking-tight">{displayName(topUsers[1])}</h3>
+                )}
+                <p className="mt-1 text-[10px] font-mono text-muted-foreground">{walletDisplay(topUsers[1])}</p>
                 <div className="mt-6 flex flex-col items-center gap-3">
                   <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-widest uppercase text-muted-foreground">
                     Level {(topUsers[1] as any).level}
                   </div>
                   <div className="flex items-center gap-2 text-xl font-black text-white">
                     <Star className="h-5 w-5 fill-white" />
-                    <span>{(topUsers[1] as any).total_xp.toLocaleString()} XP</span>
+                    <span>{(((topUsers[1] as any).score_xp ?? (topUsers[1] as any).total_xp) || 0).toLocaleString()} XP</span>
                   </div>
                 </div>
               </div>
@@ -114,14 +172,21 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
                     )}
                   </div>
                 </div>
-                <h3 className="text-3xl font-black truncate tracking-tighter">{displayName(topUsers[0])}</h3>
+                {getProfileHref(topUsers[0]) ? (
+                  <Link href={getProfileHref(topUsers[0]) as any} className="text-3xl font-black truncate tracking-tighter hover:text-primary">
+                    {displayName(topUsers[0])}
+                  </Link>
+                ) : (
+                  <h3 className="text-3xl font-black truncate tracking-tighter">{displayName(topUsers[0])}</h3>
+                )}
+                <p className="mt-1 text-[10px] font-mono text-muted-foreground">{walletDisplay(topUsers[0])}</p>
                 <div className="mt-8 flex flex-col items-center gap-4">
                   <div className="px-6 py-2 rounded-full bg-primary text-primary-foreground text-[12px] font-black tracking-[0.2em] uppercase">
                     Level {(topUsers[0] as any).level}
                   </div>
                   <div className="flex items-center gap-3 text-3xl font-black text-primary">
                     <Star className="h-8 w-8 fill-primary" />
-                    <span>{(topUsers[0] as any).total_xp.toLocaleString()} XP</span>
+                    <span>{(((topUsers[0] as any).score_xp ?? (topUsers[0] as any).total_xp) || 0).toLocaleString()} XP</span>
                   </div>
                 </div>
               </div>
@@ -149,14 +214,21 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
                     )}
                   </div>
                 </div>
-                <h3 className="text-2xl font-black truncate tracking-tight">{displayName(topUsers[2])}</h3>
+                {getProfileHref(topUsers[2]) ? (
+                  <Link href={getProfileHref(topUsers[2]) as any} className="text-2xl font-black truncate tracking-tight hover:text-primary">
+                    {displayName(topUsers[2])}
+                  </Link>
+                ) : (
+                  <h3 className="text-2xl font-black truncate tracking-tight">{displayName(topUsers[2])}</h3>
+                )}
+                <p className="mt-1 text-[10px] font-mono text-muted-foreground">{walletDisplay(topUsers[2])}</p>
                 <div className="mt-6 flex flex-col items-center gap-3">
                   <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-widest uppercase text-muted-foreground">
                     Level {(topUsers[2] as any).level}
                   </div>
                   <div className="flex items-center gap-2 text-xl font-black text-white">
                     <Star className="h-5 w-5 fill-white" />
-                    <span>{(topUsers[2] as any).total_xp.toLocaleString()} XP</span>
+                    <span>{(((topUsers[2] as any).score_xp ?? (topUsers[2] as any).total_xp) || 0).toLocaleString()} XP</span>
                   </div>
                 </div>
               </div>
@@ -202,8 +274,20 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xl truncate tracking-tight group-hover:text-primary transition-colors">
-                        {displayName(user)}
+                      {getProfileHref(user) ? (
+                        <Link
+                          href={getProfileHref(user) as any}
+                          className="block font-bold text-xl truncate tracking-tight group-hover:text-primary transition-colors"
+                        >
+                          {displayName(user)}
+                        </Link>
+                      ) : (
+                        <p className="font-bold text-xl truncate tracking-tight group-hover:text-primary transition-colors">
+                          {displayName(user)}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-[10px] font-mono text-muted-foreground truncate">
+                        {walletDisplay(user)}
                       </p>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -219,15 +303,21 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ lo
 
                     <div className="flex items-center gap-8">
                       <div className="hidden sm:flex flex-col items-end">
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-50">Points</span>
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-50">{scoreLabel}</span>
                         <div className="flex items-center gap-1.5 font-black text-2xl text-white">
                           <Star className="h-5 w-5 fill-primary text-primary" />
-                          {user.total_xp.toLocaleString()}
+                          {((user.score_xp ?? user.total_xp) || 0).toLocaleString()}
                         </div>
                       </div>
-                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      {getProfileHref(user) ? (
+                        <Link href={getProfileHref(user) as any} className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))

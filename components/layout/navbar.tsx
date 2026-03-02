@@ -66,10 +66,11 @@ export function Navbar() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         console.warn('[v0] Failed to link wallet to profile:', payload?.error || response.statusText);
-        if (response.status === 409) {
-          // Avoid repeated conflict spam while connected with same wallet.
-          setLastLinkedWallet(walletAddr);
-        }
+        return;
+      }
+      if (payload?.conflict) {
+        console.warn('[v0] Wallet conflict:', payload?.error || 'Wallet already linked');
+        setLastLinkedWallet(walletAddr);
         return;
       }
       setLastLinkedWallet(walletAddr);

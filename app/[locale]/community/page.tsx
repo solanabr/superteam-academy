@@ -1,41 +1,84 @@
 import { createClient } from '@/lib/supabase/server'
-import { MessageSquare } from 'lucide-react'
+import { CreatePostModal } from '@/components/community/create-post-modal'
+import { CommunityPostList } from '@/components/community/community-post-list'
+
+function shortWallet(wallet?: string | null) {
+  if (!wallet) return null
+  if (wallet.length <= 16) return wallet
+  return `${wallet.slice(0, 6)}...${wallet.slice(-6)}`
+}
+
+function authorName(profile?: any) {
+  return profile?.username || shortWallet(profile?.wallet_address) || 'Anonymous'
+}
 
 export default async function CommunityPage() {
   const supabase = await createClient()
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
   const { data: posts } = await supabase
     .from('community_posts')
-    .select('id, title, category, upvotes, replies_count, created_at')
+    .select('id, user_id, title, content, category, upvotes, created_at')
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(30)
+
+  const postIds = (posts || []).map((post: any) => post.id)
+  const userIds = Array.from(new Set((posts || []).map((post: any) => post.user_id).filter(Boolean)))
+
+  const [{ data: profiles }, { data: comments }, voteQuery] = await Promise.all([
+    userIds.length
+      ? supabase
+          .from('profiles')
+          .select('id, username, wallet_address')
+          .in('id', userIds)
+      : Promise.resolve({ data: [] as any[] } as any),
+    postIds.length
+      ? supabase
+          .from('community_comments')
+          .select('id, post_id')
+          .in('post_id', postIds)
+      : Promise.resolve({ data: [] as any[] } as any),
+    user && postIds.length
+      ? supabase
+          .from('community_post_votes')
+          .select('post_id')
+          .eq('user_id', user.id)
+          .in('post_id', postIds)
+      : Promise.resolve({ data: [] as any[] } as any)
+  ])
+
+  const profileById = new Map((profiles || []).map((profile: any) => [profile.id, profile]))
+  const repliesCountByPostId = new Map<string, number>()
+  for (const comment of comments || []) {
+    const key = (comment as any).post_id
+    repliesCountByPostId.set(key, (repliesCountByPostId.get(key) || 0) + 1)
+  }
+  const upvotedPostIds = new Set((voteQuery?.data || []).map((row: any) => row.post_id))
+  const normalizedPosts = (posts || []).map((post: any) => ({
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    category: post.category || 'General',
+    upvotes: Number(post.upvotes || 0),
+    created_at: post.created_at,
+    repliesCount: repliesCountByPostId.get(post.id) || 0,
+    authorName: authorName(profileById.get(post.user_id)),
+    isUpvoted: upvotedPostIds.has(post.id)
+  }))
 
   return (
     <div className="container py-12 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-black tracking-tight">Community</h1>
-        <p className="text-muted-foreground">Discuss courses, ask questions, and share solutions.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-black tracking-tight">Community</h1>
+          <p className="text-muted-foreground">Discuss courses, ask questions, and share solutions.</p>
+        </div>
+        <CreatePostModal canPost={Boolean(user)} />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-6">
-        <div className="space-y-3">
-          {(posts || []).length > 0 ? (
-            (posts || []).map((post: any) => (
-              <article key={post.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
-                <p className="font-bold">{post.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground uppercase tracking-widest">
-                  {post.category || 'General'} · {post.upvotes || 0} upvotes · {post.replies_count || 0} replies
-                </p>
-              </article>
-            ))
-          ) : (
-            <div className="flex items-center gap-3 rounded-xl border border-dashed border-white/10 p-6 text-muted-foreground">
-              <MessageSquare className="h-5 w-5" />
-              No posts yet.
-            </div>
-          )}
-        </div>
-      </div>
+      <CommunityPostList posts={normalizedPosts} canVote={Boolean(user)} />
     </div>
   )
 }
-

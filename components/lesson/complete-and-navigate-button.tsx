@@ -21,6 +21,15 @@ interface CompleteAndNavigateButtonProps {
   className?: string
 }
 
+type PopupState = {
+  title: string
+  message: string
+  primaryLabel?: string
+  secondaryLabel?: string
+  onPrimary?: () => void
+  onSecondary?: () => void
+}
+
 export function CompleteAndNavigateButton({
   lessonId,
   lessonSlug,
@@ -36,18 +45,34 @@ export function CompleteAndNavigateButton({
 }: CompleteAndNavigateButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [popup, setPopup] = useState<PopupState | null>(null)
   const router = useRouter()
   const { connection } = useConnection()
   const { connected, publicKey, sendTransaction } = useWallet()
 
-  const onClick = async () => {
-    if (issueCertificateOnComplete && typeof window !== 'undefined') {
-      const shouldGenerate = window.confirm('Generate your course certificate now?')
-      if (!shouldGenerate) {
-        return
-      }
-    }
+  const toErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) return err.message
+    return String(err || 'Unknown error')
+  }
 
+  const isWalletSendError = (err: unknown): boolean => {
+    const msg = toErrorMessage(err).toLowerCase()
+    return (
+      msg.includes('walletsendtransactionerror') ||
+      msg.includes('sendtransaction') ||
+      msg.includes('unexpected error') ||
+      msg.includes('evmask')
+    )
+  }
+
+  const showPopup = (state: PopupState) => {
+    setPopup(state)
+  }
+
+  const closePopup = () => setPopup(null)
+
+  const completeFlow = async (withCertificate: boolean) => {
     setLoading(true)
     setError(null)
     try {
@@ -66,44 +91,81 @@ export function CompleteAndNavigateButton({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ lessonId, lessonSlug, courseId, xpEarned, issueCertificateOnComplete, courseTitle })
+        body: JSON.stringify({
+          lessonId,
+          lessonSlug,
+          courseId,
+          xpEarned,
+          issueCertificateOnComplete: withCertificate,
+          courseTitle
+        })
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         const msg = payload?.error || 'Failed to save lesson progress'
         setError(msg)
-        if (typeof window !== 'undefined') {
-          window.alert(msg)
-        }
+        showPopup({
+          title: 'Unable To Complete Lesson',
+          message: msg,
+          primaryLabel: 'Close',
+          onPrimary: closePopup
+        })
         return
       }
 
-      if (issueCertificateOnComplete && payload?.certificateError && typeof window !== 'undefined') {
+      if (!withCertificate) {
+        router.push(href as any)
+        return
+      }
+
+      if (payload?.certificateError) {
         const prefix = payload?.courseCompleted
           ? 'Course completed, but certificate was not minted'
           : 'Course is not fully completed yet'
-        window.alert(`${prefix}: ${payload.certificateError}`)
+        showPopup({
+          title: 'Certificate Status',
+          message: `${prefix}: ${payload.certificateError}`,
+          primaryLabel: 'Continue',
+          onPrimary: () => {
+            closePopup()
+            router.push(href as any)
+          }
+        })
+        return
       }
 
-      if (issueCertificateOnComplete) {
-        if (!payload?.courseCompleted) {
-          if (typeof window !== 'undefined') {
-            const pct = typeof payload?.progressPercentage === 'number' ? payload.progressPercentage : null
-            window.alert(
-              pct !== null
-                ? `Course is not fully completed yet (${pct}%). Complete all lessons first.${Array.isArray(payload?.missingLessonSlugs) && payload.missingLessonSlugs.length > 0 ? ` Missing: ${payload.missingLessonSlugs.join(', ')}` : ''}`
-                : 'Course is not fully completed yet. Complete all lessons first.'
-            )
-          }
-          return
-        }
+      if (!payload?.courseCompleted) {
+        const pct = typeof payload?.progressPercentage === 'number' ? payload.progressPercentage : null
+        const message = pct !== null
+          ? `Course is not fully completed yet (${pct}%). Complete all lessons first.${Array.isArray(payload?.missingLessonSlugs) && payload.missingLessonSlugs.length > 0 ? ` Missing: ${payload.missingLessonSlugs.join(', ')}` : ''}`
+          : 'Course is not fully completed yet. Complete all lessons first.'
 
-        const hasMintedCertificate = Boolean(payload?.certificate?.mintAddress && payload?.certificate?.signature)
-        if (!hasMintedCertificate) {
+        showPopup({
+          title: 'Course Not Completed',
+          message,
+          primaryLabel: 'Continue',
+          onPrimary: () => {
+            closePopup()
+            router.push(href as any)
+          }
+        })
+        return
+      }
+
+      let certificateReady = Boolean(payload?.certificate?.mintAddress && payload?.certificate?.signature)
+
+      if (!certificateReady) {
+        try {
           if (!connected || !publicKey) {
-            if (typeof window !== 'undefined') {
-              window.alert('Connect your wallet to sign certificate mint transaction.')
-            }
+            showPopup({
+              title: 'Wallet Required',
+              message: 'Lesson progress was saved. Connect a Solana wallet (Phantom/Solflare) to mint your certificate.',
+              primaryLabel: 'Continue',
+              onPrimary: () => {
+                closePopup()
+                router.push(href as any)
+              }
+            })
             return
           }
 
@@ -117,22 +179,38 @@ export function CompleteAndNavigateButton({
             })
           })
           const preparePayload = await prepareResponse.json().catch(() => ({}))
+
           if (!prepareResponse.ok) {
             const msg = preparePayload?.error || 'Failed to prepare certificate transaction'
             setError(msg)
-            if (typeof window !== 'undefined') {
-              window.alert(msg)
-            }
+            showPopup({
+              title: 'Certificate Mint Failed',
+              message: `Lesson progress was saved, but certificate mint failed: ${msg}`,
+              primaryLabel: 'Continue',
+              onPrimary: () => {
+                closePopup()
+                router.push(href as any)
+              }
+            })
             return
           }
 
-          if (!preparePayload?.alreadyIssued) {
+          if (preparePayload?.alreadyIssued) {
+            certificateReady = true
+          } else {
             const serialized = preparePayload?.serializedTransaction as string | undefined
             const mintAddress = preparePayload?.mintAddress as string | undefined
+
             if (!serialized || !mintAddress) {
-              if (typeof window !== 'undefined') {
-                window.alert('Invalid certificate transaction payload')
-              }
+              showPopup({
+                title: 'Certificate Mint Failed',
+                message: 'Lesson progress was saved, but certificate transaction payload is invalid.',
+                primaryLabel: 'Continue',
+                onPrimary: () => {
+                  closePopup()
+                  router.push(href as any)
+                }
+              })
               return
             }
 
@@ -158,29 +236,77 @@ export function CompleteAndNavigateButton({
             if (!confirmResponse.ok) {
               const msg = confirmPayload?.error || 'Failed to save certificate after minting'
               setError(msg)
-              if (typeof window !== 'undefined') {
-                window.alert(msg)
-              }
+              showPopup({
+                title: 'Certificate Mint Failed',
+                message: `Lesson progress was saved, but certificate mint failed: ${msg}`,
+                primaryLabel: 'Continue',
+                onPrimary: () => {
+                  closePopup()
+                  router.push(href as any)
+                }
+              })
               return
             }
+            certificateReady = true
           }
-
-          if (typeof window !== 'undefined' && preparePayload?.alreadyIssued) {
-            window.alert('Certificate already issued. Opening certificates page.')
-          }
+        } catch (mintError) {
+          const mintMessage = toErrorMessage(mintError)
+          const walletHelp = isWalletSendError(mintError)
+            ? 'Wallet transaction failed. Use a Solana wallet (Phantom/Solflare) and retry from Certificates page.'
+            : mintMessage
+          setError(walletHelp)
+          showPopup({
+            title: 'Certificate Mint Failed',
+            message: `Lesson progress was saved, but certificate mint failed: ${walletHelp}`,
+            primaryLabel: 'Continue',
+            onPrimary: () => {
+              closePopup()
+              router.push(href as any)
+            }
+          })
+          return
         }
       }
 
-      router.push(href as any)
-    } catch (error) {
-      console.error('Failed to complete lesson:', error)
-      setError('Failed to save lesson progress')
-      if (typeof window !== 'undefined') {
-        window.alert('Failed to save lesson progress')
+      if (certificateReady) {
+        showPopup({
+          title: 'Certificate Ready',
+          message: 'Your course certificate is ready. Open Certificates now?',
+          primaryLabel: 'Open Certificates',
+          secondaryLabel: 'Continue',
+          onPrimary: () => {
+            closePopup()
+            router.push('/certificates' as any)
+          },
+          onSecondary: () => {
+            closePopup()
+            router.push(href as any)
+          }
+        })
+        return
       }
+
+      router.push(href as any)
+    } catch (err) {
+      const message = toErrorMessage(err)
+      setError(message)
+      showPopup({
+        title: 'Unable To Complete Lesson',
+        message,
+        primaryLabel: 'Close',
+        onPrimary: closePopup
+      })
     } finally {
       setLoading(false)
     }
+  }
+
+  const onClick = async () => {
+    if (issueCertificateOnComplete) {
+      setConfirmOpen(true)
+      return
+    }
+    await completeFlow(false)
   }
 
   return (
@@ -196,6 +322,50 @@ export function CompleteAndNavigateButton({
         {children}
       </Button>
       {error && <span className="sr-only">{error}</span>}
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-background p-5">
+            <h3 className="text-xl font-black">Get Certificate</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You are completing this course. Do you want to get your certificate now?
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={loading}>
+                Not Now
+              </Button>
+              <Button
+                onClick={async () => {
+                  setConfirmOpen(false)
+                  await completeFlow(true)
+                }}
+                disabled={loading}
+              >
+                Get Certificate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {popup && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-background p-5">
+            <h3 className="text-xl font-black">{popup.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{popup.message}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              {popup.secondaryLabel && (
+                <Button variant="outline" onClick={popup.onSecondary || closePopup}>
+                  {popup.secondaryLabel}
+                </Button>
+              )}
+              <Button onClick={popup.onPrimary || closePopup}>
+                {popup.primaryLabel || 'OK'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

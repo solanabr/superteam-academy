@@ -48,6 +48,9 @@ export default function SettingsPage() {
     if (!response.ok) {
       return { ok: false, message: payload?.error || 'Failed to link wallet' }
     }
+    if (payload?.conflict) {
+      return { ok: false, message: payload?.error || 'Wallet already linked to another user' }
+    }
     return { ok: true }
   }
 
@@ -78,6 +81,9 @@ export default function SettingsPage() {
     async function linkWalletAuto() {
       const { data: { user } } = await supabase.auth.getUser()
       if (connected && publicKey && user) {
+        if (profile?.wallet_address) {
+          return
+        }
         const result = await linkWalletWithApi(publicKey.toString())
         if (!result.ok) {
           if ((result.message || '').toLowerCase().includes('already linked to another user')) {
@@ -90,7 +96,7 @@ export default function SettingsPage() {
       }
     }
     linkWalletAuto()
-  }, [connected, publicKey, supabase])
+  }, [connected, publicKey, supabase, profile?.wallet_address])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
