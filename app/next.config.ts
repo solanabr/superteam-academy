@@ -7,7 +7,19 @@ const withPWA = require("next-pwa")({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "solana.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "smithii.io" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "www.anchor-lang.com" },
+      { protocol: "https", hostname: "play-lh.googleusercontent.com" },
+      { protocol: "https", hostname: "pbs.twimg.com" },
+    ],
+  },
+};
 
 const config = withPWA(nextConfig);
 

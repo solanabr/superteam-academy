@@ -258,50 +258,45 @@ export default function HomePage() {
     <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12">
       
       {/* Solana */}
-      <a href="https://solana.com" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
-        <img src="https://solana.com/src/img/branding/solanaWordMark.svg" alt="Solana" className="h-6 invert" />
-      </a>
+<a href="https://solana.com" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/solana-wordmark.svg" alt="Solana" className="h-6 invert" />
+</a>
 
-      {/* Superteam Brazil */}
-      <a href="https://superteam.fun/br" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <img src="https://res.cloudinary.com/dgvnuwspr/image/upload/earn-sponsors/photo_2023-12-18_14-04-44_i87q35.jpg"
-          alt="Superteam Brazil" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
-        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Superteam Brazil</span>
-      </a>
+{/* Superteam Brazil */}
+<a href="https://superteam.fun/br" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/superteam-br.jpg" alt="Superteam Brazil" className="h-7 w-7 rounded-sm object-cover" />
+  <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Superteam Brazil</span>
+</a>
 
-      {/* Metaplex */}
-      <a href="https://metaplex.com" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <img src="https://smithii.io/wp-content/uploads/2023/04/3DKCXD-K_400x400.jpeg"
-          alt="Metaplex" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
-        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Metaplex</span>
-      </a>
+{/* Metaplex */}
+<a href="https://metaplex.com" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/metaplex.jpg" alt="Metaplex" className="h-7 w-7 rounded-sm object-cover" />
+  <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Metaplex</span>
+</a>
 
-      {/* Helius */}
-      <a href="https://helius.dev" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <img src="https://avatars.githubusercontent.com/u/107892413?s=280&v=4"
-          alt="Helius" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
-        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Helius</span>
-      </a>
+{/* Helius */}
+<a href="https://helius.dev" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/helius.jpg" alt="Helius" className="h-7 w-7 rounded-sm object-cover" />
+  <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Helius</span>
+</a>
 
-      {/* Anchor */}
-      <a href="https://anchor-lang.com" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <img src="https://www.anchor-lang.com/icons/anchor.png"
-          alt="Anchor" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
-        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Anchor</span>
-      </a>
+{/* Anchor */}
+<a href="https://anchor-lang.com" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/anchor.png" alt="Anchor" className="h-7 w-7 rounded-sm object-cover" />
+  <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Anchor</span>
+</a>
 
-      {/* Phantom */}
-      <a href="https://phantom.app" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-        <img src="https://play-lh.googleusercontent.com/obRvW02OTYLzJuvic1ZbVDVXLXzI0Vt_JGOjlxZ92XMdBF_i3kqU92u9SgHvJ5pySdM=w480-h960-rw"
-          alt="Phantom" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
-        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Phantom</span>
-      </a>
+{/* Phantom */}
+<a href="https://phantom.app" target="_blank" rel="noopener noreferrer"
+  className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+  <img src="/phantom.jpg" alt="Phantom" className="h-7 w-7 rounded-sm object-cover" />
+  <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Phantom</span>
+</a>
 
     </div>
   </div>
@@ -551,18 +546,18 @@ export default function HomePage() {
 <section className="border-t border-[#1a1a1a] overflow-hidden relative">
   <div className="relative h-48 md:h-64">
     <img
-      src="https://pbs.twimg.com/profile_banners/1716076980121030656/1767439974/1080x360"
-      alt="Superteam Brazil"
-      className="w-full h-full object-cover opacity-30"
-    />
+  src="/superteam-banner.jpg"
+  alt="Superteam Brazil"
+  className="w-full h-full object-cover opacity-30"
+/>
     <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-[#020202]/60 to-transparent" />
     <div className="absolute inset-0 flex items-center px-6 md:px-12 max-w-7xl mx-auto">
       <div className="flex items-center gap-4 md:gap-6">
         <img
-          src="https://res.cloudinary.com/dgvnuwspr/image/upload/earn-sponsors/photo_2023-12-18_14-04-44_i87q35.jpg"
-          alt="Superteam Brazil"
-          className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-sm border border-[#9945ff]/40"
-        />
+  src="/superteam-br.jpg"
+  alt="Superteam Brazil"
+  className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-sm border border-[#9945ff]/40"
+/>
         <div>
           <div className="text-[9px] font-mono text-[#9945ff] uppercase tracking-widest mb-1">
             // BUILT BY
