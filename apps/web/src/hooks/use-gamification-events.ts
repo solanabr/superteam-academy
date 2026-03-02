@@ -2,13 +2,23 @@
 
 import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { dispatchXpGain } from "@/components/gamification/xp-popup";
-import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import {
   dispatchAchievementUnlock,
   dispatchAchievementXp,
 } from "@/components/gamification/achievement-popup";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
+
+let xpEventCounter = 0;
+
+export function dispatchXpGain(amount: number): void {
+  if (typeof window === "undefined") return;
+  xpEventCounter++;
+  window.dispatchEvent(
+    new CustomEvent("xp-gain", {
+      detail: { amount, id: xpEventCounter },
+    })
+  );
+}
 
 /**
  * Subscribe to Supabase Realtime for gamification events.
@@ -55,10 +65,6 @@ export function useGamificationEvents(userId: string | undefined) {
         },
         (payload) => {
           const newLevel = (payload.new as { level?: number }).level ?? 0;
-          const prev = lastKnownLevelRef.current;
-          if (prev !== null && newLevel > prev) {
-            dispatchLevelUp(newLevel);
-          }
           lastKnownLevelRef.current = newLevel;
         }
       )

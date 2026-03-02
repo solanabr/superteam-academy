@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn, truncateAddress } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { ProofPill } from "@/components/ui/proof-pill";
 
 interface AchievementCardProps {
   name: string;
@@ -31,9 +32,8 @@ export function AchievementCard({
   const isSol = isUnlocked && !!solTier;
 
   const medalState = isUnlocked ? (isSol ? "sol" : "earned") : "locked";
-  const pillLabel = assetAddress
-    ? truncateAddress(assetAddress, 5)
-    : t("onChain");
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
+  const cluster = network === "mainnet" ? "mainnet-beta" : network;
 
   const medal = (
     <div className={cn("ach-medal", medalState)} aria-hidden="true">
@@ -61,26 +61,14 @@ export function AchievementCard({
       <div className="ach-info">
         <p className="ach-name">{name}</p>
 
-        {isUnlocked && (
+        {isUnlocked && assetAddress && (
           <div className="ach-proof">
-            {explorerUrl ? (
-              <a
-                href={explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="proof-pill"
-                aria-label={`${name} — ${t("viewOnExplorer")}`}
-                tabIndex={-1}
-              >
-                <span className="proof-dot" aria-hidden="true" />
-                {pillLabel}
-              </a>
-            ) : (
-              <span className="proof-pill">
-                <span className="proof-dot" aria-hidden="true" />
-                {pillLabel}
-              </span>
-            )}
+            <ProofPill
+              address={assetAddress}
+              type="account"
+              network={cluster}
+              className="text-[10px]"
+            />
           </div>
         )}
 
