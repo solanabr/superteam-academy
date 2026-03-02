@@ -9,9 +9,9 @@ test.describe("Course Catalog", () => {
     // The catalog shows the "Curriculum" heading
     await expect(page.getByText("Curriculum")).toBeVisible({ timeout: 15_000 });
     // At least one course should be listed
-    await expect(
-      page.getByText("Introduction to Solana").first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Introduction to Solana").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("search filters courses by title", async ({ page }) => {
@@ -24,9 +24,9 @@ test.describe("Course Catalog", () => {
     await searchInput.fill("Anchor");
 
     // Anchor course should be visible
-    await expect(
-      page.getByText("Anchor Development").first(),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText("Anchor Development").first()).toBeVisible({
+      timeout: 5_000,
+    });
 
     // Introduction to Solana should be hidden since it doesn't match "Anchor"
     await expect(
@@ -50,7 +50,9 @@ test.describe("Course Catalog", () => {
 
     // Difficulty filter pills
     await expect(page.getByText("ALL LEVELS")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("BEGINNER").first()).toBeVisible();
+    await expect(page.getByText("BEGINNER").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("course section shows title, track, and XP info", async ({ page }) => {
@@ -75,7 +77,7 @@ test.describe("Course Catalog", () => {
       .getByRole("link", { name: /Introduction to Solana/i })
       .first();
     await courseLink.waitFor({ state: "visible", timeout: 10_000 });
-    await courseLink.click();
+    await courseLink.click({ timeout: 15_000 });
 
     // Should navigate to course detail
     await page.waitForURL("**/courses/intro-to-solana", { timeout: 15_000 });
@@ -110,7 +112,9 @@ test.describe("Course Catalog", () => {
     );
 
     // Stats strip should show lesson count, duration, XP
-    await expect(page.getByText(/hrs/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/hrs/).first()).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByText(/XP/).first()).toBeVisible();
   });
 });

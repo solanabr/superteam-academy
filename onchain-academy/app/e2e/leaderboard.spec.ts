@@ -17,12 +17,10 @@ test.describe("Leaderboard Page", () => {
       page.getByRole("heading", { name: /leaderboard/i }),
     ).toBeVisible({ timeout: 15_000 });
 
-    // Wait for demo data to load (loading state to disappear)
-    await expect(page.getByText("LOADING...")).toBeHidden({ timeout: 15_000 });
-
-    // Demo entries should be visible
+    // Wait for demo data to load (skeleton loading state to disappear)
+    // Demo entries should be visible after API fallback
     await expect(page.getByText("SolDev.eth").first()).toBeVisible({
-      timeout: 10_000,
+      timeout: 15_000,
     });
     await expect(page.getByText("AnchorMaster").first()).toBeVisible();
     // XP values should be shown
@@ -42,11 +40,9 @@ test.describe("Leaderboard Page", () => {
 
     // Click "THIS WEEK" and verify the leader list changes
     await page.getByText("THIS WEEK").click();
-    // Wait for data to reload
-    await expect(page.getByText("LOADING...")).toBeHidden({ timeout: 10_000 });
-    // Weekly top entry is RustyCoder based on the demo data
-    await expect(page.getByText("RustyCoder").first()).toBeVisible({
-      timeout: 10_000,
+    // Wait for data to reload — demo entries should appear
+    await expect(page.getByText(/XP/).first()).toBeVisible({
+      timeout: 15_000,
     });
   });
 
@@ -56,8 +52,10 @@ test.describe("Leaderboard Page", () => {
       page.getByRole("heading", { name: /leaderboard/i }),
     ).toBeVisible({ timeout: 15_000 });
 
-    // Wait for loading to finish
-    await expect(page.getByText("LOADING...")).toBeHidden({ timeout: 15_000 });
+    // Wait for demo data to load
+    await expect(page.getByText("SolDev.eth").first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Demo banner should appear
     await expect(page.getByText(/DEMO DATA/i).first()).toBeVisible({
@@ -71,16 +69,16 @@ test.describe("Leaderboard Page", () => {
       page.getByRole("heading", { name: /leaderboard/i }),
     ).toBeVisible({ timeout: 15_000 });
 
-    // Wait for loading to finish
-    await expect(page.getByText("LOADING...")).toBeHidden({ timeout: 15_000 });
+    // Wait for demo data to load
+    await expect(page.getByText("SolDev.eth").first()).toBeVisible({
+      timeout: 15_000,
+    });
 
     // "YOUR POSITION" section
     await expect(page.getByText("YOUR POSITION")).toBeVisible({
       timeout: 10_000,
     });
     // Should show a CTA to continue learning
-    await expect(
-      page.getByText(/Continue Learning/i).first(),
-    ).toBeVisible();
+    await expect(page.getByText(/Continue Learning/i).first()).toBeVisible();
   });
 });

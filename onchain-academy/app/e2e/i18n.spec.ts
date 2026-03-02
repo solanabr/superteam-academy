@@ -3,23 +3,23 @@ import { test, expect } from "@playwright/test";
 test.describe("Internationalization", () => {
   test("English landing page shows English content", async ({ page }) => {
     await page.goto("/en");
-    await expect(page.getByText("Master Solana Development")).toBeVisible();
+    // Hero renders heroHeadline ("Learn") + heroOnChain ("on-chain.")
+    await expect(page.getByText("Learn").first()).toBeVisible();
+    await expect(page.getByText("on-chain.").first()).toBeVisible();
     await expect(page.getByText("Explore Courses")).toBeVisible();
   });
 
   test("Spanish landing page shows Spanish content", async ({ page }) => {
     await page.goto("/es");
-    await expect(
-      page.getByText("Domina el Desarrollo en Solana"),
-    ).toBeVisible();
+    // Hero renders heroHeadline ("Aprende") + heroOnChain ("on-chain.")
+    await expect(page.getByText("Aprende").first()).toBeVisible();
     await expect(page.getByText("Explorar Cursos")).toBeVisible();
   });
 
   test("Portuguese landing page shows Portuguese content", async ({ page }) => {
     await page.goto("/pt-br");
-    await expect(
-      page.getByText("Domine o Desenvolvimento Solana"),
-    ).toBeVisible();
+    // Hero renders heroHeadline ("Aprenda") + heroOnChain ("on-chain.")
+    await expect(page.getByText("Aprenda").first()).toBeVisible();
     await expect(page.getByText("Explorar Cursos")).toBeVisible();
   });
 
@@ -60,8 +60,10 @@ test.describe("Internationalization", () => {
   }) => {
     await page.goto("/en/settings");
     // Click the Spanish locale link
-    await page.getByRole("link", { name: /Espa[nñ]ol/ }).click();
-    await page.waitForURL("**/es/settings");
+    await page
+      .getByRole("link", { name: /Espa[nñ]ol/ })
+      .click({ timeout: 15_000 });
+    await page.waitForURL("**/es/settings", { timeout: 15_000 });
     // Settings heading should now be in Spanish
     await expect(page.getByRole("heading", { name: /Ajustes/i })).toBeVisible();
   });

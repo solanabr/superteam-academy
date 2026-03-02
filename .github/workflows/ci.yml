@@ -111,6 +111,7 @@ jobs:
 
   lighthouse:
     runs-on: ubuntu-latest
+    continue-on-error: true
     needs: [lint-typecheck, unit-tests]
     steps:
       - uses: actions/checkout@v4

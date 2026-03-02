@@ -5,7 +5,8 @@ test.describe("Navigation", () => {
   test("home page renders with hero content", async ({ page }) => {
     await page.goto("/en");
     await expect(page).toHaveTitle(/Superteam Academy/, { timeout: 15_000 });
-    await expect(page.getByText("Master Solana Development")).toBeVisible({
+    // Hero renders heroHeadline ("Learn") + heroOnChain ("on-chain.")
+    await expect(page.getByText("Learn").first()).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -17,7 +18,7 @@ test.describe("Navigation", () => {
     // Click "Courses" link in nav
     const coursesLink = page.getByRole("link", { name: /courses/i }).first();
     await expect(coursesLink).toBeVisible({ timeout: 10_000 });
-    await coursesLink.click();
+    await coursesLink.click({ timeout: 15_000 });
     await page.waitForURL("**/courses", { timeout: 15_000 });
     await expect(page.getByText("Curriculum")).toBeVisible({ timeout: 15_000 });
   });
@@ -31,9 +32,9 @@ test.describe("Navigation", () => {
     const bodyText = await page.locator("body").textContent();
     expect(
       bodyText!.includes("404") ||
-      bodyText!.includes("not found") ||
-      bodyText!.includes("Not Found") ||
-      bodyText!.includes("Page not found"),
+        bodyText!.includes("not found") ||
+        bodyText!.includes("Not Found") ||
+        bodyText!.includes("Page not found"),
     ).toBeTruthy();
   });
 
@@ -41,18 +42,20 @@ test.describe("Navigation", () => {
     page,
   }) => {
     await gotoWithLocale(page, "/settings");
-    await expect(
-      page.getByRole("heading", { name: /settings/i }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /settings/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Click Spanish locale link
-    await page.getByRole("link", { name: /Espa[nñ]ol/ }).click();
+    await page
+      .getByRole("link", { name: /Espa[nñ]ol/ })
+      .click({ timeout: 15_000 });
     await page.waitForURL("**/es/settings", { timeout: 15_000 });
 
     // Settings heading should be in Spanish
-    await expect(
-      page.getByRole("heading", { name: /Ajustes/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: /Ajustes/i })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("mobile menu hamburger button exists in mobile viewport", async ({
@@ -71,14 +74,29 @@ test.describe("Navigation", () => {
     // Alternatively check for any button with aria-label containing "menu" or the Menu icon
     if (!hasMenuButton) {
       // Check if there's a button that toggles mobile navigation
-      const anyMenuTrigger = page.locator("button").filter({ hasText: /menu/i });
-      const hamburgerButton = page.locator("[aria-label*='menu' i], [aria-label*='Menu' i], [aria-label*='navigation' i]");
-      const hasHamburger = await hamburgerButton.first().isVisible().catch(() => false);
-      const hasTrigger = await anyMenuTrigger.first().isVisible().catch(() => false);
+      const anyMenuTrigger = page
+        .locator("button")
+        .filter({ hasText: /menu/i });
+      const hamburgerButton = page.locator(
+        "[aria-label*='menu' i], [aria-label*='Menu' i], [aria-label*='navigation' i]",
+      );
+      const hasHamburger = await hamburgerButton
+        .first()
+        .isVisible()
+        .catch(() => false);
+      const hasTrigger = await anyMenuTrigger
+        .first()
+        .isVisible()
+        .catch(() => false);
 
       // On mobile, the desktop nav links should be hidden
-      const desktopNav = page.locator(".hidden.md\\:flex, .hidden.items-center.gap-8.md\\:flex");
-      const isDesktopNavHidden = await desktopNav.first().isHidden().catch(() => true);
+      const desktopNav = page.locator(
+        ".hidden.md\\:flex, .hidden.items-center.gap-8.md\\:flex",
+      );
+      const isDesktopNavHidden = await desktopNav
+        .first()
+        .isHidden()
+        .catch(() => true);
 
       // Either we find a hamburger button or desktop nav is hidden (mobile mode active)
       expect(hasHamburger || hasTrigger || isDesktopNavHidden).toBeTruthy();
