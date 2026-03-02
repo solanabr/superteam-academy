@@ -1053,10 +1053,16 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   line-height: 0.8;
   letter-spacing: -0.05em;
   font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85);
+  -webkit-text-stroke: none;
   transition: color 0.2s ease-out, -webkit-text-stroke 0.2s ease-out, transform 0.3s cubic-bezier(0.76, 0, 0.24, 1);
   transform-origin: left center;
+}
+@media (min-width: 768px) {
+  .path-title {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+  }
 }
 .path-row:hover .path-title {
   -webkit-text-stroke: 1px transparent;
