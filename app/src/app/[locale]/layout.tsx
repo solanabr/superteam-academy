@@ -6,6 +6,8 @@ import { getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CommandSearch } from "@/components/layout/command-search";
+import { XpAnimation } from "@/components/gamification/xp-animation";
 import { Toaster } from "sonner";
 import "../globals.css";
 
@@ -38,6 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: "@superaborabrasil",
   },
+  manifest: "/manifest.json",
 };
 
 const locales = ["en", "pt-BR", "es"];
@@ -69,6 +72,8 @@ export default async function LocaleLayout({
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <CommandSearch />
+            <XpAnimation />
             <Toaster
               theme="system"
               position="bottom-right"
