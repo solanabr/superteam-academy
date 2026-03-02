@@ -26,7 +26,8 @@
     "profile": "Perfil",
     "certificates": "Certificados",
     "courses": "cursos",
-    "all": "Todos"
+    "all": "Todos",
+    "viewOnSolanaExplorer": "Ver no Solana Explorer: {address}"
   },
   "nav": {
     "home": "Início",
@@ -151,6 +152,7 @@
     "noOutput": "Sem saída no console. Confira a aba Casos de Teste para os resultados.",
     "runCodePrompt": "Execute seu código para ver a saída aqui.",
     "testCasesPrompt": "Os casos de teste aparecerão aqui após executar seu código.",
+    "clearOutput": "Limpar",
     "input": "Entrada",
     "signInToTrack": "Entrar para Acompanhar Progresso",
     "compilingRust": "Compilando código Rust...",
@@ -191,9 +193,15 @@
     "less": "Menos",
     "more": "Mais",
     "todayLabel": "Hoje",
+    "dailyQuest": "Missão Diária: {name}",
     "dailyQuests": "Missões Diárias",
     "resetsIn": "Reseta em {hours}h",
-    "allQuestsBonus": "Complete todas para bônus"
+    "allQuestsBonus": "Complete todas para bônus",
+    "communityActivity_thread_created": "Criou uma nova discussão",
+    "communityActivity_answer_posted": "Postou uma resposta",
+    "communityActivity_answer_accepted": "Resposta aceita",
+    "communityActivity_upvote_thread": "Recebeu um voto positivo na discussão",
+    "communityActivity_upvote_answer": "Recebeu um voto positivo na resposta"
   },
   "gamification": {
     "xp": "XP",
@@ -624,6 +632,11 @@
     "communityXp": "XP da Comunidade",
     "searchPlaceholder": "Buscar discussões...",
     "noResults": "Nenhum tópico encontrado",
+    "delete": "Excluir",
+    "deleteThread": "Excluir Tópico",
+    "deleteAnswer": "Excluir Resposta",
+    "confirmDelete": "Tem certeza que deseja excluir? Esta ação não pode ser desfeita.",
+    "deleted": "Excluído com sucesso",
     "flagContent": "Denunciar",
     "flagReasons": {
       "spam": "Spam",

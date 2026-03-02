@@ -26,7 +26,8 @@
     "profile": "Profile",
     "certificates": "Certificates",
     "courses": "courses",
-    "all": "All"
+    "all": "All",
+    "viewOnSolanaExplorer": "View on Solana Explorer: {address}"
   },
   "nav": {
     "home": "Home",
@@ -151,6 +152,7 @@
     "noOutput": "No console output. Check the Test Cases tab for results.",
     "runCodePrompt": "Run your code to see output here.",
     "testCasesPrompt": "Test cases will appear here after running your code.",
+    "clearOutput": "Clear",
     "input": "Input",
     "signInToTrack": "Sign In to Track Progress",
     "compilingRust": "Compiling Rust code...",
@@ -191,9 +193,15 @@
     "less": "Less",
     "more": "More",
     "todayLabel": "Today",
+    "dailyQuest": "Daily Quest: {name}",
     "dailyQuests": "Daily Quests",
     "resetsIn": "Resets in {hours}h",
-    "allQuestsBonus": "Complete all for bonus"
+    "allQuestsBonus": "Complete all for bonus",
+    "communityActivity_thread_created": "Posted a new thread",
+    "communityActivity_answer_posted": "Posted an answer",
+    "communityActivity_answer_accepted": "Answer accepted",
+    "communityActivity_upvote_thread": "Received a thread upvote",
+    "communityActivity_upvote_answer": "Received an answer upvote"
   },
   "gamification": {
     "xp": "XP",
@@ -624,6 +632,11 @@
     "communityXp": "Community XP",
     "searchPlaceholder": "Search discussions...",
     "noResults": "No threads found",
+    "delete": "Delete",
+    "deleteThread": "Delete Thread",
+    "deleteAnswer": "Delete Answer",
+    "confirmDelete": "Are you sure you want to delete this? This action cannot be undone.",
+    "deleted": "Deleted successfully",
     "flagContent": "Report",
     "flagReasons": {
       "spam": "Spam",

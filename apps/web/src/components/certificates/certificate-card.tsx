@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { Certificate } from "@superteam-lms/types";
 import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
+import { ProofPill } from "@/components/ui/proof-pill";
 
 interface CertificateCardProps {
   certificate: Certificate;
@@ -29,9 +30,6 @@ export function CertificateCard({
 
   const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
   const cluster = network === "mainnet" ? "mainnet-beta" : network;
-  const explorerUrl = mintAddress
-    ? `https://explorer.solana.com/address/${mintAddress}?cluster=${cluster}`
-    : null;
 
   return (
     <div className={cx(wrapClass, className)}>
@@ -58,11 +56,7 @@ export function CertificateCard({
               </div>
             )}
             <div className={CS.metaItem}>
-              <div className={CS.metaKey}>
-                {isCompact
-                  ? t("completed")
-                  : t("completedOn", { date: "" }).trimEnd()}
-              </div>
+              <div className={CS.metaKey}>{t("completed")}</div>
               <div className={CS.metaVal}>
                 {certificate.mintedAt.toLocaleDateString()}
               </div>
@@ -83,17 +77,13 @@ export function CertificateCard({
 
           {/* Footer — proof pill + network */}
           <div className={CS.foot}>
-            {explorerUrl ? (
-              <a
-                href={explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={CS.proofPill}
+            {mintAddress ? (
+              <ProofPill
+                address={mintAddress}
+                type="account"
+                network={cluster}
                 onClick={(e) => e.stopPropagation()}
-              >
-                <span className={CS.proofDot} />
-                {t("onChain")}
-              </a>
+              />
             ) : (
               <div className={CS.proofPill}>
                 <span className={CS.proofDot} />

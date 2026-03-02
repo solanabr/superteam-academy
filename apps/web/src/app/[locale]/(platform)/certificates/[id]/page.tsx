@@ -122,6 +122,7 @@ function CopyableValue({ value, full }: { value: string; full: string }) {
 
 export default function CertificateViewPage() {
   const t = useTranslations("certificates");
+  const tCommon = useTranslations("common");
   const params = useParams();
   const certId = typeof params.id === "string" ? params.id : "";
   const { data, notFound: certNotFound } = useCertificateData(certId);
@@ -139,7 +140,7 @@ export default function CertificateViewPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="sol-spinner" />
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">{tCommon("loading")}</span>
       </div>
     );
   }
