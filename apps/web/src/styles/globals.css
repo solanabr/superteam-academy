@@ -8,7 +8,7 @@
 /* ============================================================
    SOLARIUM DESIGN SYSTEM v9 — CSS Custom Properties
    Light mode: :root (default baseline)
-   Dark mode:  .dark (next-themes class attribute)
+   Dark mode:  [data-theme="dark"] (next-themes data attribute)
    Source of truth: docs/design-system.html
    ============================================================ */
 
@@ -161,9 +161,9 @@
   }
 
   /* ── Dark mode ──
-     next-themes toggles .dark on <html>; Tailwind's dark: variant
-     and dark:* utilities depend on this class selector.             */
-  .dark {
+     next-themes toggles data-theme="dark" on <html>; Tailwind's dark: variant
+     and dark:* utilities depend on this data-attribute selector.    */
+  [data-theme="dark"] {
     --bg: #0e1117;
     --surface: #131920;
     --card: #161b27;
@@ -371,7 +371,7 @@
       #f0fdf4 100%
     );
   }
-  .dark .banner-beginner {
+  [data-theme="dark"] .banner-beginner {
     background: linear-gradient(
       135deg,
       rgba(46, 204, 142, 0.12) 0%,
@@ -387,7 +387,7 @@
       #e6fffb 100%
     );
   }
-  .dark .banner-intermediate {
+  [data-theme="dark"] .banner-intermediate {
     background: linear-gradient(
       135deg,
       rgba(10, 112, 85, 0.15) 0%,
@@ -403,7 +403,7 @@
       #fff7ed 100%
     );
   }
-  .dark .banner-advanced {
+  [data-theme="dark"] .banner-advanced {
     background: linear-gradient(
       135deg,
       rgba(234, 88, 12, 0.15) 0%,
@@ -991,7 +991,7 @@
     color: #7c3aed;
     text-decoration: none;
   }
-  :is(.dark, [data-theme="dark"]) .proof-pill {
+  [data-theme="dark"] .proof-pill {
     color: #c4b5fd;
   }
   a.proof-pill {
@@ -1390,7 +1390,7 @@
 /* ═══════════════════════════════════════════════════════════════
    COURSE CARDS — atmospheric left-accent editorial style (V9)
    Left 3px accent bar + radial glow + large ghost background number
-   Light mode = default (:root), Dark mode = .dark class (next-themes)
+   Light mode = default (:root), Dark mode = [data-theme="dark"] (next-themes)
 ═══════════════════════════════════════════════════════════════ */
 @layer components {
   .course-card {
@@ -2864,6 +2864,9 @@ a.path-step-card:hover .path-step-thumb img {
   font-size: 14px;
   font-weight: 800;
   color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cert-meta-val.highlight {
   color: var(--xp);
@@ -2897,11 +2900,12 @@ a.path-step-card:hover .path-step-thumb img {
 }
 .cert-meta-row {
   display: flex;
-  gap: 0;
+  gap: 12px;
   margin-bottom: 22px;
 }
 .cert-meta-item {
   flex: 1;
+  min-width: 0;
 }
 .cert-foot {
   display: flex;
@@ -4309,6 +4313,11 @@ a.path-step-card:hover .path-step-title {
   border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   color: var(--primary);
 }
+.act-icon.community {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
 .act-icon.xp_other {
   background: rgba(245, 166, 35, 0.08);
   border-color: rgba(245, 166, 35, 0.2);
@@ -4437,7 +4446,7 @@ a.path-step-card:hover .path-step-title {
   color: var(--primary-dark);
   border-color: rgba(10, 112, 85, 0.2);
 }
-.dark .pill-int {
+[data-theme="dark"] .pill-int {
   color: var(--primary);
 }
 .pill-adv {
@@ -4644,5 +4653,16 @@ a.path-step-card:hover .path-step-title {
     left: 0;
     top: 0;
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
