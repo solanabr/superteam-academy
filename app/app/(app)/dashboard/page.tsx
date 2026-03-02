@@ -152,16 +152,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Invite Friend */}
-                        <div className="flex flex-col items-center mt-6 sm:mt-8 p-4 border rounded-2xl bg-card">
-                            <Image src="/mail.png" alt="invite friend" width={80} height={80} className="w-16 h-16 sm:w-20 sm:h-20" />
-                            <h2 className="text-2xl sm:text-3xl font-game text-center mt-2">Invite Friend</h2>
-                            <p className="font-game text-center text-sm sm:text-base mt-1">Having Fun? Share the love with a friend! Enter an email and we will send them a personal invite</p>
-                            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto max-w-sm mt-4">
-                                <input placeholder="Enter Invitee Email" className="border border-input rounded-md bg-background px-3 py-2 font-game w-full min-w-0" />
-                                <Button variant="pixel" className="font-game shrink-0">Invite</Button>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Side column (1/3) — stats, certify, streak */}

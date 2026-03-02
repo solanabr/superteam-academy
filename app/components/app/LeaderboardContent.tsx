@@ -57,11 +57,12 @@ export function LeaderboardContent() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState<number>(10);
 
-    const { data: entries = [] } = useQuery({
+    const { data: entries = [], isLoading } = useQuery({
         queryKey: ["leaderboard", timeframe],
         queryFn: () => fetchLeaderboard(timeframe),
         placeholderData: (prev) => prev,
     });
+    const isInitialLoading = isLoading && entries.length === 0;
 
     const filtered = useMemo(
         () =>
@@ -101,7 +102,28 @@ export function LeaderboardContent() {
                 </p>
             </div>
 
-            {entries.length >= 3 && (
+            {isInitialLoading ? (
+                <div className="flex shrink-0 items-end justify-center gap-4 md:gap-8 mb-6 sm:mb-8 pt-4 animate-pulse">
+                    <div className="flex flex-col items-center">
+                        <div className="h-16 w-16 rounded-full bg-muted border-2 border-border" />
+                        <div className="mt-2 h-5 w-20 rounded bg-muted" />
+                        <div className="mt-2 h-5 w-24 rounded bg-muted" />
+                        <div className="w-28 md:w-36 h-20 bg-muted border-4 border-border rounded-t-xl mt-2" />
+                    </div>
+                    <div className="flex flex-col items-center -mt-6">
+                        <div className="h-16 w-16 rounded-full bg-muted border-2 border-border" />
+                        <div className="mt-2 h-5 w-20 rounded bg-muted" />
+                        <div className="mt-2 h-5 w-24 rounded bg-muted" />
+                        <div className="w-32 md:w-40 h-28 bg-muted border-4 border-border rounded-t-xl mt-2" />
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <div className="h-16 w-16 rounded-full bg-muted border-2 border-border" />
+                        <div className="mt-2 h-5 w-20 rounded bg-muted" />
+                        <div className="mt-2 h-5 w-24 rounded bg-muted" />
+                        <div className="w-28 md:w-36 h-16 bg-muted border-4 border-border rounded-t-xl mt-2" />
+                    </div>
+                </div>
+            ) : entries.length >= 3 ? (
                 <div className="flex shrink-0 items-end justify-center gap-4 md:gap-8 mb-6 sm:mb-8 pt-4">
                     <Link href={`/profile/${entries[1].wallet}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                         <PixelAvatar wallet={entries[1].wallet} size="lg" />
@@ -154,7 +176,7 @@ export function LeaderboardContent() {
                         </div>
                     </Link>
                 </div>
-            )}
+            ) : null}
 
             <div className="shrink-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div className="flex gap-2 overflow-x-auto">
@@ -191,7 +213,30 @@ export function LeaderboardContent() {
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto rounded-2xl border-4">
-                {filtered.length === 0 ? (
+                {isInitialLoading ? (
+                    <div className="p-4 sm:p-5 animate-pulse">
+                        <div className="overflow-hidden rounded-xl border border-border">
+                            <div className="grid grid-cols-[80px_1fr_120px] border-b border-border bg-muted/40 px-3 sm:px-5 py-3 sm:py-4">
+                                <div className="h-5 w-12 rounded bg-muted" />
+                                <div className="h-5 w-16 rounded bg-muted" />
+                                <div className="ml-auto h-5 w-10 rounded bg-muted" />
+                            </div>
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="grid grid-cols-[80px_1fr_120px] items-center border-b border-border/60 px-3 sm:px-5 py-3 sm:py-4 last:border-b-0"
+                                >
+                                    <div className="h-5 w-10 rounded bg-muted" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-muted" />
+                                        <div className="h-5 w-24 rounded bg-muted" />
+                                    </div>
+                                    <div className="ml-auto h-5 w-16 rounded bg-muted" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : filtered.length === 0 ? (
                     <div className="flex items-center justify-center p-12">
                         <p className="font-game text-xl text-muted-foreground">No results found</p>
                     </div>

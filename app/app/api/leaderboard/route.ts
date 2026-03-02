@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { LeaderboardEntry } from "@/lib/services/learning-progress";
 import { getLeaderboardFromDb } from "@/lib/services/indexing-db";
+import { getHeliusRpcConfig } from "@/lib/server/helius";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 const BACKEND_API_TOKEN = process.env.BACKEND_API_TOKEN ?? "";
 const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT ?? "";
-const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC ?? "";
-const HELIUS_API_KEY = process.env.HELIUS_API_KEY ?? "";
-const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER ?? "devnet";
-
-function getHeliusUrl(): string | null {
-  if (HELIUS_RPC) return HELIUS_RPC;
-  if (HELIUS_API_KEY) {
-    const base = CLUSTER === "mainnet-beta"
-      ? "https://mainnet.helius-rpc.com"
-      : "https://devnet.helius-rpc.com";
-    return `${base}/?api-key=${HELIUS_API_KEY}`;
-  }
-  return null;
-}
 
 interface TokenAccountItem {
   owner?: string;
@@ -57,7 +44,7 @@ async function fetchFromBackend(): Promise<LeaderboardEntry[] | null> {
 
 async function fetchFromHelius(): Promise<LeaderboardEntry[]> {
   if (!XP_MINT) return [];
-  const url = getHeliusUrl();
+  const url = getHeliusRpcConfig().url;
   if (!url) return [];
   try {
     const response = await fetch(url, {
