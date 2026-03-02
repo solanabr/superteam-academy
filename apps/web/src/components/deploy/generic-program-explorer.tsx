@@ -778,9 +778,9 @@ export function GenericProgramExplorer({
                         return (
                           <div
                             key={arg.name}
-                            className="flex items-center gap-2"
+                            className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2"
                           >
-                            <label className="w-24 shrink-0 text-xs text-muted-foreground">
+                            <label className="shrink-0 text-xs text-muted-foreground sm:w-24">
                               {arg.name}
                               <span className="text-muted-foreground/60 ml-1 text-[10px]">
                                 ({rawType})
@@ -915,7 +915,7 @@ export function GenericProgramExplorer({
                                 }));
                               }}
                               placeholder="PublicKey..."
-                              className="w-32 rounded border border-orange-500/30 bg-background px-1 py-0.5 font-mono text-[10px]"
+                              className="w-full rounded border border-orange-500/30 bg-background px-1 py-0.5 font-mono text-[10px] sm:w-32"
                             />
                           </div>
                         );
@@ -1029,7 +1029,7 @@ export function GenericProgramExplorer({
                   key={`${entry.signature}-${idx}`}
                   className="bg-muted/30 rounded-md px-3 py-2"
                 >
-                  <div className="flex items-center gap-2 text-[11px]">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
                     <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
                       {formatInstructionName(entry.instruction)}
                     </span>

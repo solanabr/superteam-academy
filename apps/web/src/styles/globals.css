@@ -817,166 +817,7 @@
     color: var(--text-3);
   }
 
-  /* ── Dashboard Mini Achievement Tokens (.dm) ── */
-  .dm {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: default;
-    animation: dm-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-  .dm:nth-child(1) {
-    animation-delay: 0.05s;
-  }
-  .dm:nth-child(2) {
-    animation-delay: 0.1s;
-  }
-  .dm:nth-child(3) {
-    animation-delay: 0.15s;
-  }
-  .dm:nth-child(4) {
-    animation-delay: 0.2s;
-  }
-  .dm:nth-child(5) {
-    animation-delay: 0.25s;
-  }
-  .dm:nth-child(6) {
-    animation-delay: 0.3s;
-  }
-
-  .dm-oct {
-    width: 52px;
-    height: 52px;
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 25%,
-      100% 75%,
-      75% 100%,
-      25% 100%,
-      0% 75%,
-      0% 25%
-    );
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition:
-      transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-      filter 0.22s;
-  }
-  .dm:hover .dm-oct {
-    transform: scale(1.14) translateY(-3px);
-  }
-  .dm-oct.earned {
-    background: linear-gradient(
-      145deg,
-      #7a3e00 0%,
-      #b45309 18%,
-      #f5a623 40%,
-      #fde68a 52%,
-      #f5a623 65%,
-      #b45309 84%,
-      #7a3e00 100%
-    );
-    filter: drop-shadow(0 4px 10px rgba(245, 166, 35, 0.3));
-    animation: dm-glow 3.5s ease-in-out infinite;
-  }
-  .dm-oct.sol {
-    background: var(--sol-grad);
-    animation: dm-sol 3.5s ease-in-out infinite;
-  }
-  .dm-oct.locked {
-    background: var(--border-strong);
-    filter: none;
-    opacity: 0.25;
-  }
-  .dm:hover .dm-oct.locked {
-    transform: none;
-  }
-
-  .dm-face {
-    width: 42px;
-    height: 42px;
-    clip-path: polygon(
-      25% 0%,
-      75% 0%,
-      100% 25%,
-      100% 75%,
-      75% 100%,
-      25% 100%,
-      0% 75%,
-      0% 25%
-    );
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .dm-oct.earned .dm-face {
-    background: linear-gradient(
-      155deg,
-      rgba(0, 0, 0, 0.2) 0%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(0, 0, 0, 0.16) 100%
-    );
-  }
-  .dm-oct.sol .dm-face {
-    background: linear-gradient(
-      155deg,
-      rgba(0, 0, 0, 0.24) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(0, 0, 0, 0.2) 100%
-    );
-  }
-  .dm-oct.locked .dm-face {
-    background: var(--card);
-    width: 46px;
-    height: 46px;
-  }
-
-  .dm-glyph {
-    font-family: var(--font-mono), "JetBrains Mono", monospace;
-    font-weight: 600;
-    font-size: 14px;
-    position: relative;
-    z-index: 1;
-    line-height: 1;
-    user-select: none;
-    letter-spacing: -0.5px;
-  }
-  .dm-oct.earned .dm-glyph {
-    color: rgba(0, 0, 0, 0.56);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
-  }
-  .dm-oct.sol .dm-glyph {
-    color: rgba(0, 0, 0, 0.52);
-    font-size: 17px;
-    letter-spacing: 0;
-  }
-  .dm-oct.locked .dm-glyph {
-    color: var(--text-disabled);
-  }
-
-  .dm-name {
-    font-family: var(--font-mono), "JetBrains Mono", monospace;
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    color: var(--text-3);
-    text-align: center;
-    text-transform: uppercase;
-    max-width: 56px;
-  }
-  .dm-oct.locked ~ .dm-name {
-    color: var(--text-disabled);
-  }
-  .dm-oct.earned ~ .dm-name,
-  .dm-oct.sol ~ .dm-name {
-    color: var(--text-2);
-  }
-
+  /* ── Dashboard Mini Achievement Tokens (.dm) — moved to Solarium v9 section below ── */
   /* NFT proof pill */
   .proof-pill {
     display: inline-flex;
@@ -1397,6 +1238,25 @@
   }
 }
 
+/* ── Responsive achievement medals for marquee on small screens ── */
+@media (max-width: 480px) {
+  .ach-medal {
+    width: 54px;
+    height: 54px;
+  }
+  .ach-face {
+    width: 42px;
+    height: 42px;
+  }
+  .ach-medal.earned .ach-glyph,
+  .ach-medal.sol .ach-glyph {
+    font-size: 16px;
+  }
+  .ach-name {
+    font-size: 10px;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    COURSE CARDS — atmospheric left-accent editorial style (V9)
    Left 3px accent bar + radial glow + large ghost background number
@@ -1534,6 +1394,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .course-card-xp {
     font-family: var(--font-display, var(--font-d));
@@ -1608,18 +1469,21 @@
 .catalog-tabs {
   display: flex;
   gap: 4px;
+  overflow-x: auto;
 }
 .catalog-tab {
   font-family: var(--font-display, var(--font-d));
   font-weight: 800;
   font-size: 14px;
-  padding: 10px 20px;
+  padding: 12px 20px;
+  min-height: 44px;
   border: none;
   background: none;
   color: var(--text-3);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .catalog-tab:hover {
   color: var(--text);
@@ -1647,7 +1511,8 @@
   font-family: var(--font-display, var(--font-d));
   font-weight: 700;
   font-size: 12px;
-  padding: 6px 14px;
+  padding: 8px 14px;
+  min-height: 44px;
   border: 2.5px solid var(--border);
   border-radius: 99px;
   cursor: pointer;
@@ -1656,6 +1521,7 @@
   box-shadow: 0 2px 0 0 var(--border);
   transition: all 0.15s;
   user-select: none;
+  white-space: nowrap;
 }
 .filter-pill:hover {
   border-color: var(--border-hover, var(--border));
@@ -1681,7 +1547,8 @@
   font-family: var(--font-display, var(--font-d));
   font-weight: 700;
   font-size: 12px;
-  padding: 6px 14px;
+  padding: 8px 14px;
+  min-height: 44px;
   border: 2.5px solid var(--border);
   border-radius: 99px;
   cursor: pointer;
@@ -1690,6 +1557,7 @@
   box-shadow: 0 2px 0 0 var(--border);
   transition: all 0.15s;
   user-select: none;
+  white-space: nowrap;
 }
 .path-pill:hover {
   border-color: var(--border-hover, var(--border));
@@ -1724,8 +1592,14 @@
   cursor: pointer;
   transition: all 0.22s ease;
   position: relative;
-  padding: 20px 24px 18px;
-  gap: 16px;
+  padding: 16px 16px 14px;
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .path-header {
+    padding: 20px 24px 18px;
+    gap: 16px;
+  }
 }
 
 /* Ambient glow blobs — breathing atmosphere like dashboard */
@@ -1812,13 +1686,21 @@
 .path-name {
   font-family: var(--font-display, var(--font-d));
   font-weight: 900;
-  font-size: 20px;
+  font-size: 17px;
   letter-spacing: -0.3px;
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
   margin: 0;
+}
+@media (min-width: 640px) {
+  .path-name {
+    font-size: 20px;
+    gap: 10px;
+  }
 }
 
 .path-tag {
@@ -1895,6 +1777,7 @@
   gap: 8px;
   font-size: 12px;
   color: var(--text-3);
+  flex-wrap: wrap;
 }
 .path-foot-progress {
   font-family: var(--font-display, var(--font-d));
@@ -2144,6 +2027,7 @@ a.path-step-card:hover .path-step-thumb img {
   gap: 5px;
   font-size: 11px;
   color: var(--text-3);
+  flex-wrap: wrap;
 }
 .path-step-meta-xp {
   color: var(--xp);
@@ -2369,6 +2253,104 @@ a.path-step-card:hover .path-step-thumb img {
   font-size: 15px;
   color: var(--text);
 }
+/* Mobile-responsive popups */
+@media (max-width: 480px) {
+  .popup-grad {
+    max-width: calc(100vw - 48px);
+  }
+  .popup-grad-inner {
+    padding: 10px 14px 10px 10px;
+    gap: 10px;
+  }
+  .popup-name {
+    font-size: 13px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE BOTTOM NAV — fixed tab bar for < lg screens
+   ══════════════════════════════════════════════════════════════ */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--card-glass-blur);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-default);
+}
+@media (min-width: 1024px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+.mobile-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-height: 44px;
+  padding: 6px 0;
+  font-family: var(--font-display, var(--font-d));
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.mobile-bottom-nav-item.active {
+  color: var(--primary);
+}
+.mobile-bottom-nav-item:hover {
+  color: var(--text-2);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RECOMMENDED COURSES CAROUSEL — swipeable on mobile, grid on lg+
+   ══════════════════════════════════════════════════════════════ */
+.recommended-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  padding-bottom: 4px;
+}
+.recommended-carousel::-webkit-scrollbar {
+  display: none;
+}
+.recommended-carousel-item {
+  flex: 0 0 85%;
+  max-width: 340px;
+  scroll-snap-align: start;
+}
+@media (min-width: 640px) {
+  .recommended-carousel-item {
+    flex: 0 0 48%;
+    max-width: none;
+  }
+}
+@media (min-width: 1024px) {
+  .recommended-carousel {
+    display: grid;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .recommended-carousel-item {
+    flex: none;
+    max-width: none;
+  }
+}
 
 /* ══════════════════════════════════════════════════════════════
    TOASTS — v9 semantic color system
@@ -2422,18 +2404,21 @@ a.path-step-card:hover .path-step-thumb img {
 .lb-timeframe-tabs {
   display: flex;
   gap: 4px;
+  overflow-x: auto;
 }
 .lb-tf-tab {
   font-family: var(--font-display, var(--font-d));
   font-weight: 800;
   font-size: 14px;
-  padding: 10px 20px;
+  padding: 12px 20px;
+  min-height: 44px;
   border: none;
   background: none;
   color: var(--text-3);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .lb-tf-tab:hover {
   color: var(--text);
@@ -2771,6 +2756,21 @@ a.path-step-card:hover .path-step-thumb img {
   }
 }
 
+/* ── Responsive: leaderboard rows on small screens ── */
+@media (max-width: 480px) {
+  .lb-row {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .lb-wallet {
+    display: none;
+  }
+  .lb-xp {
+    font-size: 12px;
+    min-width: 44px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    CERTIFICATE CARD — v9 Solana gradient border, dot-grid texture
    ══════════════════════════════════════════════════════════════ */
@@ -2948,6 +2948,28 @@ a.path-step-card:hover .path-step-thumb img {
 .cert-wrap-compact .cert-subtitle {
   margin-bottom: 20px;
 }
+@media (max-width: 480px) {
+  .cert-inner {
+    padding: 20px 18px;
+  }
+  .cert-wrap-compact .cert-inner {
+    padding: 16px 14px;
+  }
+  .cert-meta-row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+  .cert-meta-item {
+    min-width: 80px;
+  }
+  .cert-course {
+    font-size: 20px;
+  }
+  .cert-foot {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
 /* Static variant — verification / detail page (no hover lift) */
 .cert-wrap-static {
   max-width: none;
@@ -3003,7 +3025,7 @@ a.path-step-card:hover .path-step-thumb img {
    HEADER NAV — floating pill bar with glow active states
    ═══════════════════════════════════════════════════════════════ */
 .nav-bar {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 2px;
   padding: 3px;
@@ -3013,6 +3035,11 @@ a.path-step-card:hover .path-step-thumb img {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+@media (min-width: 1024px) {
+  .nav-bar {
+    display: flex;
+  }
 }
 .nav-bar::before {
   content: "";
@@ -3079,6 +3106,8 @@ a.path-step-card:hover .path-step-thumb img {
   border-radius: var(--r-xl);
   box-shadow: var(--shadow);
   position: relative;
+  overflow: hidden;
+  min-width: 0;
 }
 .dash-panel::before {
   content: "";
@@ -3134,6 +3163,8 @@ a.path-step-card:hover .path-step-thumb img {
   border-bottom: 1px solid var(--border);
   position: relative;
   z-index: 1;
+  min-width: 0;
+  overflow: clip;
 }
 @media (min-width: 768px) {
   .dash-top {
@@ -3141,14 +3172,41 @@ a.path-step-card:hover .path-step-thumb img {
   }
 }
 .dash-identity {
-  padding: 28px 28px 26px;
+  padding: 20px 16px 18px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 16px;
   justify-content: center;
   position: relative;
   z-index: 1;
+  min-width: 0;
+}
+@media (max-width: 639px) {
+  .dash-identity {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    padding: 28px 20px 24px;
+  }
+  .dash-identity .level-badge {
+    width: 88px !important;
+    height: 88px !important;
+    font-size: 38px !important;
+  }
+  .dash-xp-num {
+    font-size: 42px;
+    letter-spacing: -2px;
+  }
+  .dash-xp-track {
+    margin: 0 auto;
+  }
+}
+@media (min-width: 640px) {
+  .dash-identity {
+    padding: 28px 28px 26px;
+    gap: 22px;
+  }
 }
 @media (min-width: 768px) {
   .dash-identity {
@@ -3159,11 +3217,17 @@ a.path-step-card:hover .path-step-thumb img {
 .dash-xp-num {
   font-family: var(--font-display, var(--font-d));
   font-weight: 900;
-  font-size: 44px;
+  font-size: 34px;
   color: var(--xp);
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
   line-height: 1;
   margin-bottom: 2px;
+}
+@media (min-width: 640px) {
+  .dash-xp-num {
+    font-size: 44px;
+    letter-spacing: -2px;
+  }
 }
 .dash-xp-unit {
   font-family: var(--font-mono, var(--font-m));
@@ -3216,9 +3280,15 @@ a.path-step-card:hover .path-step-thumb img {
   animation: shimmer 2.4s ease-in-out infinite;
 }
 .dash-ach {
-  padding: 24px 26px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+@media (min-width: 640px) {
+  .dash-ach {
+    padding: 24px 26px;
+  }
 }
 .dash-ach-head {
   display: flex;
@@ -3457,6 +3527,45 @@ a.path-step-card:hover .path-step-thumb img {
   color: var(--text-2);
 }
 
+/* Mobile: bigger achievement tokens for better readability + touch */
+@media (max-width: 639px) {
+  .dash-ach {
+    padding: 20px 16px;
+  }
+  .dash-ach-row {
+    gap: 16px;
+    padding: 12px 6px 14px;
+  }
+  .dm {
+    gap: 8px;
+  }
+  .dm-oct {
+    width: 68px;
+    height: 68px;
+  }
+  .dm-face {
+    width: 56px;
+    height: 56px;
+  }
+  .dm-oct.locked .dm-face {
+    width: 60px;
+    height: 60px;
+  }
+  .dm-oct.locked {
+    opacity: 0.35;
+  }
+  .dm-glyph {
+    font-size: 18px;
+  }
+  .dm-oct.sol .dm-glyph {
+    font-size: 21px;
+  }
+  .dm-name {
+    font-size: 11px;
+    max-width: 72px;
+  }
+}
+
 /* Bottom row — heatmap bigger, quests smaller (flipped from top) */
 .dash-bottom {
   display: grid;
@@ -3476,6 +3585,12 @@ a.path-step-card:hover .path-step-thumb img {
   position: relative;
   z-index: 1;
   min-width: 0;
+  overflow: hidden;
+}
+@media (max-width: 480px) {
+  .dash-grid {
+    padding: 14px 16px 16px;
+  }
 }
 .dash-grid::before {
   content: "";
@@ -3507,6 +3622,15 @@ a.path-step-card:hover .path-step-thumb img {
 .dash-grid-stats {
   display: flex;
   gap: 16px;
+}
+@media (max-width: 480px) {
+  .dash-grid-stats {
+    gap: 10px;
+  }
+  .dash-grid-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }
 .dgs {
   text-align: center;
@@ -3638,13 +3762,18 @@ a.path-step-card:hover .path-step-thumb img {
 
 /* ── Daily Quests Panel ── */
 .dash-quests {
-  padding: 18px 24px 20px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   position: relative;
   z-index: 1;
   border-top: 1px solid var(--border);
+}
+@media (min-width: 640px) {
+  .dash-quests {
+    padding: 18px 24px 20px;
+  }
 }
 @media (min-width: 768px) {
   .dash-quests {
@@ -3775,7 +3904,7 @@ a.path-step-card:hover .path-step-thumb img {
   font-weight: 700;
   border-radius: var(--r-sm);
   white-space: nowrap;
-  z-index: 50;
+  z-index: 210;
   box-shadow: var(--shadow);
   animation: tooltip-in 0.12s ease-out;
 }
@@ -3819,13 +3948,19 @@ a.path-step-card:hover .path-step-thumb img {
   }
 }
 .prof-identity {
-  padding: 28px;
+  padding: 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
-  gap: 20px;
+  gap: 14px;
   align-items: flex-start;
   position: relative;
   z-index: 1;
+}
+@media (min-width: 640px) {
+  .prof-identity {
+    padding: 28px;
+    gap: 20px;
+  }
 }
 @media (min-width: 768px) {
   .prof-identity {
@@ -3834,13 +3969,19 @@ a.path-step-card:hover .path-step-thumb img {
   }
 }
 .prof-xp {
-  padding: 28px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 16px;
   position: relative;
   z-index: 1;
+}
+@media (min-width: 640px) {
+  .prof-xp {
+    padding: 28px;
+    gap: 22px;
+  }
 }
 .prof-stats {
   display: grid;
@@ -4384,6 +4525,19 @@ a.path-step-card:hover .path-step-title {
   }
   .act-row {
     padding: 8px 14px;
+    flex-wrap: wrap;
+  }
+  .act-right {
+    gap: 6px;
+  }
+  .act-time {
+    font-size: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .act-right {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -4400,8 +4554,8 @@ a.path-step-card:hover .path-step-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
@@ -4416,6 +4570,12 @@ a.path-step-card:hover .path-step-title {
 .act-pager-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+@media (min-width: 768px) {
+  .act-pager-btn {
+    width: 32px;
+    height: 32px;
+  }
 }
 .act-pager-label {
   font-family: var(--font-mono, var(--font-m));

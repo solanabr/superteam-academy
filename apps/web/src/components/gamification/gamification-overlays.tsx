@@ -18,7 +18,7 @@ export function GamificationOverlays() {
       <ToastContainer />
       {!userId ? null : (
         /* Single stacking container for all bottom-right popups */
-        <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        <div className="pointer-events-none fixed bottom-4 right-3 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
           <CertificatePopup className="pointer-events-auto" />
           <AchievementPopup className="pointer-events-auto" />
         </div>
