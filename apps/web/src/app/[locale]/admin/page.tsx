@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
 import { AdminClient } from "./admin-client";
 import { AdminLoginForm } from "./admin-login-form";
+import { isValidAdminSession } from "@/lib/admin/auth";
 
 export default async function AdminPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
   const adminSecret = process.env.ADMIN_SECRET;
 
-  if (!session || session.value !== "1" || !adminSecret) {
+  if (!adminSecret || !isValidAdminSession(session?.value)) {
     return <AdminLoginForm />;
   }
 

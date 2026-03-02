@@ -307,11 +307,13 @@ See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for fro
 
 The middleware (`apps/web/src/middleware.ts`) chains two concerns:
 
-1. **next-intl**: Adds locale prefix to all routes (default: `en`)
-2. **Supabase auth**: Checks session for platform routes; redirects to landing if unauthenticated
+1. **Supabase auth**: Creates server client, calls `getUser()` (may refresh tokens)
+2. **next-intl**: Adds locale prefix to all routes (default: `en`)
 
-**Auth-gated routes** (require login): `/dashboard`, `/profile`, `/certificates`, `/settings`
-**Public routes** (no auth required): `/` (landing), `/courses`, `/leaderboard`
+**Auth-gated routes** (redirect to landing if unauthenticated): `/dashboard`, `/settings`, `/profile` (exact — own profile only)
+**Public routes** (no auth required): `/` (landing), `/courses`, `/leaderboard`, `/community`, `/certificates`, `/profile/[username]`
+**Admin routes**: Checked against HMAC-signed `admin_session` cookie (separate from Supabase auth). Sub-routes redirect to `/admin` login form if cookie is absent or expired.
+**Excluded from middleware**: `/api/*`, `/_next`, `/_vercel`, `/studio/*` (Sanity Studio embed), static assets
 
 ## Environment Variables
 
@@ -328,6 +330,15 @@ NEXT_PUBLIC_SANITY_DATASET=production
 # Required — Solana
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_PROGRAM_ID=            # Deployed program ID (used by webhook decoder + frontend)
+
+# Required — Admin & Backend (server-only, never NEXT_PUBLIC_)
+ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
+BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
+BUILD_SERVER_API_KEY=              # Build server authentication key
+HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
+XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (base58)
+PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (base58)
 
 # Optional — Analytics (platform works without these)
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=

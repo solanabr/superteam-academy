@@ -26,7 +26,7 @@ export default async function LocaleLayout({
 
   return (
     <ThemeProvider
-      attribute="class"
+      attribute="data-theme"
       defaultTheme="light"
       enableSystem
       disableTransitionOnChange

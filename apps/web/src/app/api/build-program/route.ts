@@ -78,7 +78,7 @@ interface BuildProgramResponse {
 
 // --- Config ------------------------------------------------------------------
 
-const BUILD_SERVER_URL = process.env.NEXT_PUBLIC_BUILD_SERVER_URL;
+const BUILD_SERVER_URL = process.env.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = process.env.BUILD_SERVER_API_KEY;
 const UPSTREAM_TIMEOUT_MS = 130_000; // slightly above the 120s build timeout
 const MAX_TOTAL_SIZE = 500 * 1024; // 500KB, matches build server limit

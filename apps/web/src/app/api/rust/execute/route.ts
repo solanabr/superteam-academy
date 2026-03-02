@@ -81,24 +81,25 @@ export async function POST(
   request: NextRequest
 ): Promise<NextResponse<RustExecuteResponse>> {
   try {
-    // 1. Determine rate-limit key (user ID if authenticated, else IP)
-    let rateLimitKey: string;
-    try {
-      const supabase = await createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      rateLimitKey = user
-        ? `user:${user.id}`
-        : `ip:${request.headers.get("x-forwarded-for") ?? "unknown"}`;
-    } catch (err: unknown) {
-      logError({
-        errorId: ERROR_IDS.RUST_EXECUTE_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: { route: "/api/rust/execute", phase: "auth-lookup" },
-      });
-      rateLimitKey = `ip:${request.headers.get("x-forwarded-for") ?? "unknown"}`;
+    // 1. Auth — require authenticated user
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          stdout: "",
+          stderr: "",
+          error: "Authentication required",
+        },
+        { status: 401 }
+      );
     }
+
+    const rateLimitKey = `user:${user.id}`;
 
     if (isRateLimited(rateLimitKey)) {
       return NextResponse.json(

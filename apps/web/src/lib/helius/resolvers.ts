@@ -30,8 +30,8 @@ export async function resolveUserId(
     return null;
   }
 
-  if (!data) {
-    console.log(
+  if (!data && process.env.NODE_ENV === "development") {
+    console.debug(
       `[resolver] No profile found for wallet ${walletAddress} — skipping event`
     );
   }

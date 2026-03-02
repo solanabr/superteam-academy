@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedBinary } from "@/lib/build-server/binary-cache";
 
-const BUILD_SERVER_URL = process.env.NEXT_PUBLIC_BUILD_SERVER_URL;
+const BUILD_SERVER_URL = process.env.BUILD_SERVER_URL;
 const BUILD_SERVER_API_KEY = process.env.BUILD_SERVER_API_KEY;
 const UPSTREAM_TIMEOUT_MS = 30_000;
 

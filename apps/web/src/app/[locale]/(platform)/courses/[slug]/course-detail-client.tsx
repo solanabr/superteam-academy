@@ -245,7 +245,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       {isEnrolling && (
                         <>
                           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                          <span className="sr-only">Loading...</span>
+                          <span className="sr-only">{tCommon("loading")}</span>
                         </>
                       )}
                       {t("enrollNow")}
@@ -292,7 +292,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       <div className="space-y-4 border-t border-border pt-6">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-2xl font-extrabold">
-            <ChatCircleDots size={24} weight="duotone" className="text-primary" />
+            <ChatCircleDots
+              size={24}
+              weight="duotone"
+              className="text-primary"
+            />
             {t("discussions")}
           </h2>
           {userId && (
@@ -305,10 +309,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             </Button>
           )}
         </div>
-        <ThreadList
-          scope={{ courseId: course._id }}
-          showFilters
-        />
+        <ThreadList scope={{ courseId: course._id }} showFilters />
         {userId && (
           <CreateThreadModal
             open={discussionModalOpen}

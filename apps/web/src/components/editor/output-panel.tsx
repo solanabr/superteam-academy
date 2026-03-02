@@ -128,7 +128,7 @@ export function OutputPanel({
             onClick={onClear}
             aria-label={tA11y("clearOutput")}
           >
-            Clear
+            {t("clearOutput")}
           </Button>
         </div>
 

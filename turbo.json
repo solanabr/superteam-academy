@@ -28,7 +28,7 @@
         "NEXT_PUBLIC_POSTHOG_HOST",
         "SENTRY_DSN",
         "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
-        "NEXT_PUBLIC_BUILD_SERVER_URL",
+        "BUILD_SERVER_URL",
         "BUILD_SERVER_API_KEY",
         "NEXT_PUBLIC_APP_URL"
       ]
