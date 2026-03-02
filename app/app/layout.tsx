@@ -7,8 +7,9 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { GoogleAnalytics } from '@next/third-parties/google';
 import "@solana/wallet-adapter-react-ui/styles.css";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 
 export const metadata: Metadata = {
   title: "Superteam Academy – Learn Solana Development",
@@ -30,11 +31,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AuthProvider>
               <WalletProviderWrapper>
                 <XPProvider>
-                  <div className="flex flex-col min-h-screen">
-                    <Navbar />
-                    <main className="flex-1 pt-14">{children}</main>
-                    <Footer />
-                  </div>
+                  <PostHogProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Navbar />
+                      <main className="flex-1 pt-14">{children}</main>
+                      <Footer />
+                    </div>
+                  </PostHogProvider>
                 </XPProvider>
               </WalletProviderWrapper>
             </AuthProvider>
