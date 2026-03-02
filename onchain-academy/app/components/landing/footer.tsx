@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 export function Footer() {
     const t = useTranslations("Footer");
-    
+
     const platformLinks = [
         { labelKey: "courses", href: "/auth" },
         { labelKey: "leaderboard", href: "/auth" },
@@ -47,9 +47,8 @@ export function Footer() {
                                 <div className="absolute inset-0 bg-neon-green/20 blur-md group-hover:bg-neon-green/40 transition-all" />
                                 <Hexagon className="w-7 h-7 text-neon-green relative z-10 fill-neon-green/10" />
                             </div>
-                            <span className="font-bold font-mono text-lg tracking-tighter">
-                                SUPERTEAM{" "}
-                                <span className="text-neon-green">ACADEMY</span>
+                            <span className="font-bold font-mono text-lg tracking-tighter text-white">
+                                Osmos
                             </span>
                         </Link>
                         <p className="text-sm text-zinc-500 max-w-xs leading-relaxed font-mono">

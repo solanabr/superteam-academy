@@ -25,13 +25,13 @@ export default {
             name: 'milestones',
             title: 'Milestones',
             type: 'array',
-            of: [{ type: 'milestone' }]
+            of: [{ type: 'reference', to: [{ type: 'milestone' }] }]
         },
         { name: 'author', title: 'Author', type: 'reference', to: [{ type: 'author' }] },
         { name: 'track', title: 'Track', type: 'reference', to: [{ type: 'track' }] },
         { name: 'createdAt', title: 'Created At', type: 'datetime' },
         { name: 'totalXP', title: 'Total XP', type: 'number' },
-        { name: 'duration', title: 'Duration', type: 'string', description: 'Total estimated duration (e.g. 2h 30m)' },
+        { name: 'duration', title: 'Duration (minutes)', type: 'number', description: 'Total estimated duration in minutes' },
         { name: 'enrollmentCount', title: 'Enrollment Count', type: 'number' },
     ]
 }

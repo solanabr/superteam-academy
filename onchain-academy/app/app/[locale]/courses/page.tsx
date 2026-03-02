@@ -144,7 +144,7 @@ export default function CoursesPage() {
                         <div className="w-8 h-8 border border-neon-green/30 bg-[#080c14] flex items-center justify-center">
                             <Zap className="w-4 h-4 text-neon-green" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-tight font-mono">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-tight font-mono">Osmos</span>
                     </div>
                 </div>
             </header>

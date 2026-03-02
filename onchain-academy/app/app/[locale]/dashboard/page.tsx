@@ -100,7 +100,7 @@ export default function DashboardPage() {
                         <div className="w-8 h-8 flex items-center justify-center border border-white/10 bg-white/5 text-white">
                             <Zap className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">Osmos</span>
                     </div>
                     <nav className="flex items-center gap-2">
                         <Link href="/courses" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">

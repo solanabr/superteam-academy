@@ -1,7 +1,7 @@
 export default {
     name: 'lesson',
     title: 'Lesson',
-    type: 'object',
+    type: 'document',
     fields: [
         { name: 'title', title: 'Title', type: 'string' },
         {
@@ -10,7 +10,8 @@ export default {
             type: 'string',
             options: { list: ['video', 'reading', 'challenge'] }
         },
-        { name: 'duration', title: 'Duration', type: 'string' },
+        { name: 'order', title: 'Order', type: 'number' },
+        { name: 'duration', title: 'Duration (minutes)', type: 'number' },
         { name: 'videoUrl', title: 'Video URL', type: 'url', hidden: ({ parent }) => parent?.type !== 'video' },
         { name: 'content', title: 'Content', type: 'blockContent', hidden: ({ parent }) => parent?.type === 'video' },
         {

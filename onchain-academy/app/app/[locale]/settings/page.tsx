@@ -55,6 +55,16 @@ export default function SettingsPage() {
 
     /* Privacy state */
     const [profileVisibility, setProfileVisibility] = useState(true);
+    const [showXP, setShowXP] = useState(true);
+    const [showStreak, setShowStreak] = useState(true);
+
+    /* Notification state */
+    const [notifications, setNotifications] = useState({
+        streaks: true,
+        achievements: true,
+        updates: true,
+        marketing: true,
+    });
 
     /* UI State */
     const [loading, setLoading] = useState(true);
@@ -141,7 +151,7 @@ export default function SettingsPage() {
                         <div className="w-8 h-8 border border-white/10 bg-white/5 flex items-center justify-center text-white">
                             <Zap className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">Osmos</span>
                     </div>
                 </div>
             </header>
@@ -499,7 +509,7 @@ export default function SettingsPage() {
                                             { key: "streaks" as const, label: "Streak Reminders", desc: "Get notified before you lose your daily streak" },
                                             { key: "achievements" as const, label: "Loot & Badges", desc: "Alerts when you unlock new achievements" },
                                             { key: "updates" as const, label: "System Updates", desc: "New course drops and platform changes" },
-                                            { key: "marketing" as const, label: "Ecosystem News", desc: "General Solana and Superteam updates" },
+                                            { key: "marketing" as const, label: "Ecosystem News", desc: "General Solana and Osmos updates" },
                                         ].map((n, i) => (
                                             <div key={n.key} className={`flex items-center justify-between p-3 ${i !== 0 ? 'border-t border-white/5' : ''}`}>
                                                 <div>

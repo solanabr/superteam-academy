@@ -43,7 +43,7 @@ async function post<T>(endpoint: string, body: Record<string, unknown>): Promise
 }
 
 export async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = localStorage.getItem("sollearn_token");
+    const token = localStorage.getItem("osmos_token");
 
     const headers = new Headers(options.headers || {});
     if (token) {

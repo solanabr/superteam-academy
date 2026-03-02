@@ -26,7 +26,7 @@ const certificateData = {
     mintAddress: "SoLx7KpbR9qmNfT4wE3vYhJ8dZ2cA5gL6nK9pR3qMvW",
     metadataUri: "https://arweave.net/abc123...",
     ownerWallet: "8xK3mNpQ7rW5tY2vB4cF6jH9kL1nP3sR7uV0wX9yZa",
-    collection: "Superteam Academy Credentials",
+    collection: "Osmos Credentials",
     standard: "Metaplex Core (Soulbound)",
     explorerUrl: "https://explorer.solana.com/address/SoLx7KpbR9qmNfT4wE3vYhJ8dZ2cA5gL6nK9pR3qMvW",
 };
@@ -55,7 +55,7 @@ export default function CertificatePage() {
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-green to-emerald-400 flex items-center justify-center">
                             <Zap className="w-4 h-4 text-black" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-tight">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-tight">Osmos</span>
                     </div>
                 </div>
             </header>
@@ -88,7 +88,7 @@ export default function CertificatePage() {
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-green to-emerald-400 flex items-center justify-center">
                                     <Zap className="w-4 h-4 text-black" />
                                 </div>
-                                <span className="text-sm font-black text-white tracking-tight">Superteam Academy</span>
+                                <span className="text-sm font-black text-white tracking-tight">Osmos</span>
                             </div>
 
                             {/* Badge */}
@@ -116,7 +116,7 @@ export default function CertificatePage() {
                                     transition={{ delay: 0.4 }}
                                     className="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-green via-neon-cyan to-neon-purple"
                                 >
-                                    {cert.course}
+                                    Osmos
                                 </motion.h1>
                             </div>
 

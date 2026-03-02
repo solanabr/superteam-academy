@@ -1,16 +1,17 @@
 export default {
     name: 'milestone',
     title: 'Milestone',
-    type: 'object',
+    type: 'document',
     fields: [
         { name: 'title', title: 'Title', type: 'string' },
         { name: 'description', title: 'Description', type: 'text' },
-        { name: 'xp', title: 'XP', type: 'number' },
+        { name: 'order', title: 'Order', type: 'number' },
+        { name: 'xpReward', title: 'XP Reward', type: 'number' },
         {
             name: 'lessons',
             title: 'Lessons',
             type: 'array',
-            of: [{ type: 'lesson' }]
+            of: [{ type: 'reference', to: [{ type: 'lesson' }] }]
         }
     ]
 }

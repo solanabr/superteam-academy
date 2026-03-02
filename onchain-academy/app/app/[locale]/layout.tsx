@@ -18,9 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Superteam Academy | Master Solana Development",
+  title: "Osmos | Master Solana Development",
   description:
-    "The ultimate interactive learning platform for Solana developers. Build real projects, earn on-chain credentials, and get paid to code.",
+    "The ultimate interactive learning platform for Solana developers on Osmos. Build real projects, earn on-chain credentials, and get paid to code.",
 };
 
 export default async function RootLayout({

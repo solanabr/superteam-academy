@@ -20,12 +20,12 @@ export const allCoursesQuery = groq`
       color,
       icon
     },
-    milestones[] {
+    milestones[]-> {
       _id,
       title,
       description,
-      xp,
-      lessons[] {
+      xpReward,
+      lessons[]-> {
         _id,
         title,
         type,
@@ -68,12 +68,12 @@ export const courseBySlugQuery = groq`
       color,
       icon
     },
-    milestones[] {
+    milestones[]-> {
       _id,
       title,
       description,
-      xp,
-      lessons[] {
+      xpReward,
+      lessons[]-> {
         _id,
         title,
         type,

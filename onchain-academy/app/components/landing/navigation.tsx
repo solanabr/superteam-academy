@@ -90,10 +90,7 @@ export function Navigation() {
                             <Hexagon className="w-8 h-8 text-neon-green relative z-10 fill-neon-green/10 group-hover:scale-110 transition-transform duration-300" />
                         </div>
                         <span className="font-mono font-bold text-xl tracking-tighter">
-                            SUPERTEAM{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-green to-neon-cyan">
-                                ACADEMY
-                            </span>
+                            Osmos
                         </span>
                     </Link>
 

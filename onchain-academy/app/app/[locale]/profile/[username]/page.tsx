@@ -202,7 +202,7 @@ export default function ProfilePage() {
                         <div className="w-8 h-8 border border-white/10 bg-white/5 flex items-center justify-center text-white">
                             <Zap className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono">Osmos</span>
                     </div>
                 </div>
             </header>

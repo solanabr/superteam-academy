@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useEffect, useCallback, useState } from "react";
@@ -193,14 +192,14 @@ function TechBadge({
       initial={{ opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, delay, type: "spring", bounce: 0.3 }}
-      className={`absolute z-20 hidden lg:flex ${className}`}
+      className={`absolute z-20 hidden lg:flex will-change-transform ${className}`}
     >
       <motion.div
-        animate={{ y: [0, -6, 0] }}
+        animate={{ y: [0, -5, 0] }}
         transition={{
-          duration: 5,
+          duration: 6,
           repeat: Infinity,
-          ease: "easeInOut",
+          ease: [0.45, 0, 0.55, 1],
           delay: delay * 0.5,
         }}
         className="flex items-center gap-2 px-3 py-1.5 border border-white/[0.08] bg-[#0a0f1a]/80 backdrop-blur-sm"
@@ -219,41 +218,7 @@ function TechBadge({
   );
 }
 
-/* ─── Hero Visual ─── */
-function HeroVisual() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] mx-auto mb-4"
-    >
-      {/* Glow behind image */}
-      <div className="absolute inset-0 bg-neon-green/[0.08] blur-[60px] scale-75" />
-      <div className="absolute inset-0 bg-neon-cyan/[0.05] blur-[80px] scale-50 translate-y-4" />
 
-      {/* Floating animation wrapper */}
-      <motion.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="relative w-full h-full"
-      >
-        <Image
-          src="/hero-solana.png"
-          alt="Solana Development"
-          fill
-          className="object-contain drop-shadow-[0_0_40px_rgba(0,255,163,0.15)]"
-          style={{ mixBlendMode: "screen" }}
-          priority
-        />
-      </motion.div>
-    </motion.div>
-  );
-}
 
 /* ─── Hacker Button with Text Scramble ─── */
 const GLITCH_CHARS = "!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789ABCDEF";
@@ -432,7 +397,7 @@ function MouseGlow() {
 
 /* ─── Scrolling Code Lines (background decoration) ─── */
 function ScrollingCode() {
-  const lines = [
+  const linesLeft = [
     'use solana_program::account_info::AccountInfo;',
     'use anchor_lang::prelude::*;',
     'pub fn initialize(ctx: Context<Initialize>) -> Result<()> {',
@@ -451,17 +416,51 @@ function ScrollingCode() {
     '}',
   ];
 
+  const linesRight = [
+    'const connection = new Connection(clusterApiUrl("devnet"));',
+    'const wallet = useWallet();',
+    'const program = new Program(idl, programId, provider);',
+    'await program.methods.initialize()',
+    '  .accounts({ dataAccount: pda, user: wallet.publicKey })',
+    '  .rpc();',
+    'const account = await program.account.dataAccount.fetch(pda);',
+    'console.log("Data:", account.data.toString());',
+    'const tx = new Transaction().add(',
+    '  SystemProgram.transfer({',
+    '    fromPubkey: sender, toPubkey: receiver,',
+    '    lamports: LAMPORTS_PER_SOL * 0.1,',
+    '  })',
+    ');',
+    'await sendAndConfirmTransaction(connection, tx, [payer]);',
+    'console.log("Transfer confirmed");',
+  ];
+
   return (
-    <div className="absolute left-4 top-[15%] bottom-[15%] w-[300px] hidden xl:block overflow-hidden opacity-[0.07] pointer-events-none z-[2]">
-      <motion.div
-        animate={{ y: [0, -400] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="space-y-1 font-mono text-[10px] text-neon-green whitespace-nowrap"
-      >
-        {[...lines, ...lines, ...lines].map((line, i) => (
-          <div key={i}>{line}</div>
-        ))}
-      </motion.div>
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]">
+      {/* Left column - scrolls up */}
+      <div className="absolute left-1/2 -translate-x-[calc(50%+140px)] top-[10%] bottom-[10%] w-[280px] hidden md:block overflow-hidden opacity-[0.10]">
+        <motion.div
+          animate={{ y: [0, -400] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="space-y-1.5 font-mono text-[10px] text-neon-green whitespace-nowrap will-change-transform"
+        >
+          {[...linesLeft, ...linesLeft, ...linesLeft, ...linesLeft].map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </motion.div>
+      </div>
+      {/* Right column - scrolls down */}
+      <div className="absolute left-1/2 translate-x-[calc(50%-140px)] top-[10%] bottom-[10%] w-[280px] hidden md:block overflow-hidden opacity-[0.10]">
+        <motion.div
+          animate={{ y: [-400, 0] }}
+          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+          className="space-y-1.5 font-mono text-[10px] text-neon-green whitespace-nowrap will-change-transform"
+        >
+          {[...linesRight, ...linesRight, ...linesRight, ...linesRight].map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </motion.div>
+      </div>
     </div>
   );
 }
@@ -480,7 +479,7 @@ export function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center pt-20 pb-12 overflow-hidden"
+      className="relative h-screen flex items-center justify-center pt-16 pb-6 overflow-hidden"
     >
       {/* Background */}
       <div className="absolute inset-0">
@@ -539,15 +538,13 @@ export function Hero() {
         className="container px-4 md:px-6 relative z-10"
       >
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-          {/* Hero Visual */}
-          <HeroVisual />
 
           {/* Terminal prompt header */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center gap-3 mb-6"
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="flex items-center gap-3 mb-3"
           >
             <span className="text-neon-green font-mono text-sm">{t("terminalPrefix")}</span>
             <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
@@ -558,10 +555,10 @@ export function Hero() {
 
           {/* Main Headline */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="space-y-2 mb-6"
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-1 mb-3"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] font-mono">
               <span className="text-zinc-400 block">{t("headlinePrefix")}</span>
@@ -578,10 +575,10 @@ export function Hero() {
 
           {/* Terminal-style Subtitle */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mb-8"
+            transition={{ duration: 0.7, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="mb-4"
           >
             <div className="text-sm sm:text-base text-zinc-500 max-w-lg leading-relaxed font-mono text-center">
               <span className="text-neon-green/60">{t("subtitleComment")} </span>
@@ -591,10 +588,10 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row items-center gap-5 mb-12"
+            transition={{ duration: 0.7, delay: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="flex flex-col sm:flex-row items-center gap-4 mb-6"
           >
             <Link href="/auth">
               <HackerButton text={t("ctaStart")} />
@@ -610,10 +607,10 @@ export function Hero() {
 
           {/* Animated Stats — in a bordered container */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="relative border border-white/[0.06] bg-[#0a0f1a]/60 backdrop-blur-sm px-8 py-5"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 1.0, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="relative border border-white/[0.06] bg-[#0a0f1a]/60 backdrop-blur-sm px-6 py-3"
           >
             {/* Corner brackets */}
             <span className="absolute top-0 left-0 w-3 h-3 border-t border-l border-neon-green/30" />
@@ -621,7 +618,7 @@ export function Hero() {
             <span className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-neon-green/30" />
             <span className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-neon-green/30" />
 
-            <div className="text-[9px] text-zinc-600 font-mono uppercase tracking-[0.2em] text-center mb-3">
+            <div className="text-[9px] text-zinc-600 font-mono uppercase tracking-[0.2em] text-center mb-2">
               <span className="text-neon-green/40">$ </span>{t("statsCommand")}
             </div>
             <div className="flex items-center gap-8 sm:gap-12">

@@ -170,7 +170,7 @@ export default function ThreadDetailPage({ params }: { params: Promise<{ id: str
                         <div className="w-8 h-8 flex items-center justify-center border border-white/10 bg-white/5 text-white group-hover:border-neon-cyan/50 transition-colors">
                             <Zap className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono group-hover:text-neon-cyan transition-colors">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono group-hover:text-neon-cyan transition-colors">Osmos</span>
                     </Link>
                     <nav className="flex items-center gap-4">
                         <Link href="/community" className="text-zinc-500 hover:text-white transition-colors">

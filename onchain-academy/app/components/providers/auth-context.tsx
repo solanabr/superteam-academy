@@ -25,8 +25,8 @@ const AuthContext = createContext<AuthState>({
 });
 
 /* ─── Storage Keys ─── */
-const TOKEN_KEY = "sollearn_token";
-const USER_KEY = "sollearn_user";
+const TOKEN_KEY = "osmos_token";
+const USER_KEY = "osmos_user";
 
 /* ─── Provider ─── */
 export function AuthProvider({ children }: { children: ReactNode }) {

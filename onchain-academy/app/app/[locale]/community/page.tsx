@@ -101,7 +101,7 @@ export default function CommunityPage() {
                         <div className="w-8 h-8 flex items-center justify-center border border-white/10 bg-white/5 text-white group-hover:border-neon-cyan/50 transition-colors">
                             <Zap className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono group-hover:text-neon-cyan transition-colors">SolLearn</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase font-mono group-hover:text-neon-cyan transition-colors">Osmos</span>
                     </Link>
                     <nav className="flex items-center gap-2">
                         <Link href="/courses" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
@@ -246,8 +246,8 @@ export default function CommunityPage() {
                                             key={i + 1}
                                             onClick={() => handleFilterChange("page", i + 1)}
                                             className={`w-8 h-8 flex items-center justify-center font-mono text-xs font-black border transition-all ${filters.page === i + 1
-                                                    ? "bg-neon-cyan text-black border-neon-cyan"
-                                                    : "bg-white/5 text-zinc-500 border-white/10 hover:border-white/20"
+                                                ? "bg-neon-cyan text-black border-neon-cyan"
+                                                : "bg-white/5 text-zinc-500 border-white/10 hover:border-white/20"
                                                 }`}
                                         >
                                             {i + 1}
