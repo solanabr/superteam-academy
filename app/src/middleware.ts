@@ -3,19 +3,12 @@ import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 import type { NextRequest } from "next/server";
 
-const intlMiddleware = createIntlMiddleware(routing);
+const handleI18nRouting = createIntlMiddleware(routing);
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
-  // Skip intl routing for API routes
-  if (request.nextUrl.pathname.startsWith("/api/")) {
-    return;
-  }
-  return intlMiddleware(request);
+  return handleI18nRouting(request);
 });
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
-    "/(api|trpc)(.*)",
-  ],
+  matcher: "/((?!api|trpc|_next|_vercel|.*\\..*).*)",
 };
