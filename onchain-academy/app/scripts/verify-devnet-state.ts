@@ -46,12 +46,39 @@ const DUMMY_WALLET = {
   signAllTransactions: async <T>(txs: T[]) => txs,
 };
 
+interface AccountNamespace<T> {
+  fetch: (key: PublicKey) => Promise<T>;
+}
+
+interface ConfigAccount {
+  authority: PublicKey;
+  backendSigner: PublicKey;
+  xpMint: PublicKey;
+  bump: number;
+}
+
+interface CourseAccount {
+  courseId: string;
+  trackId: number;
+  difficulty: number;
+  lessonCount: number;
+  xpPerLesson: number;
+  totalEnrollments: number;
+  totalCompletions: number;
+  isActive: boolean;
+  prerequisite: PublicKey | null;
+}
+
 async function main() {
   const rpcUrl = getRpcUrl();
   const connection = new Connection(rpcUrl, "confirmed");
-  const provider = new AnchorProvider(connection, DUMMY_WALLET as any, {
-    commitment: "confirmed",
-  });
+  const provider = new AnchorProvider(
+    connection,
+    DUMMY_WALLET as unknown as AnchorProvider["wallet"],
+    {
+      commitment: "confirmed",
+    },
+  );
   const program = new Program(IDL_JSON as Idl, provider);
 
   console.log("=== Superteam Academy Devnet State ===");
@@ -63,7 +90,12 @@ async function main() {
   console.log("\n--- Config PDA:", configPDA.toBase58(), "---");
 
   try {
-    const config = await (program.account as any).config.fetch(configPDA);
+    const config = await (
+      program.account as unknown as Record<
+        string,
+        AccountNamespace<ConfigAccount>
+      >
+    ).config.fetch(configPDA);
     console.table({
       authority: config.authority.toBase58(),
       backendSigner: config.backendSigner.toBase58(),
@@ -102,7 +134,12 @@ async function main() {
   for (const c of courses) {
     const [coursePDA] = findCoursePDA(c.id);
     try {
-      const onChain = await (program.account as any).course.fetch(coursePDA);
+      const onChain = await (
+        program.account as unknown as Record<
+          string,
+          AccountNamespace<CourseAccount>
+        >
+      ).course.fetch(coursePDA);
       totalEnrollments += onChain.totalEnrollments;
       courseRows.push({
         courseId: onChain.courseId,
@@ -142,7 +179,10 @@ async function main() {
   console.log(`Courses registered: ${found}/${courseRows.length}`);
   if (missing > 0) {
     console.log(
-      `Missing courses: ${courseRows.filter((r) => r.active === "NOT FOUND").map((r) => r.courseId).join(", ")}`,
+      `Missing courses: ${courseRows
+        .filter((r) => r.active === "NOT FOUND")
+        .map((r) => r.courseId)
+        .join(", ")}`,
     );
   }
   console.log("=== Done ===");

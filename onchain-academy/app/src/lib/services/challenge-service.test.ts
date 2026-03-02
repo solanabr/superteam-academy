@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { challengeService } from "./challenge-service";
 
 const WALLET = "TestWallet111111111111111111111111111111111";

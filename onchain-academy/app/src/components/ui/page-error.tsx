@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 interface PageErrorProps {
@@ -8,7 +9,11 @@ interface PageErrorProps {
   showGoHome?: boolean;
 }
 
-export function PageError({ section, reset, showGoHome = false }: PageErrorProps) {
+export function PageError({
+  section,
+  reset,
+  showGoHome = false,
+}: PageErrorProps) {
   const t = useTranslations("errors");
   const title = section ? t(`${section}Title`) : t("title");
   const description = section ? t(`${section}Description`) : t("description");
@@ -28,12 +33,12 @@ export function PageError({ section, reset, showGoHome = false }: PageErrorProps
             {t("tryAgain")}
           </button>
           {showGoHome && (
-            <a
+            <Link
               href="/"
               className="rounded-[2px] border border-[var(--c-border)] bg-transparent px-6 py-2.5 text-sm font-medium text-[var(--c-text-2)] transition-colors hover:border-[var(--c-border-hovered)] hover:text-[var(--c-text)]"
             >
               {t("goHome")}
-            </a>
+            </Link>
           )}
         </div>
       </div>

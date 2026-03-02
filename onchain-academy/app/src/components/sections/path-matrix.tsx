@@ -101,7 +101,7 @@ export function PathMatrix({ locale }: PathMatrixProps) {
             className="text-xs text-white/70 mb-2"
             style={{ fontFamily: "var(--font-mono)" }}
           >
-            // SELECT PROTOCOL PATH
+            {/* SELECT PROTOCOL PATH */}
           </p>
           <div className="flex gap-2 justify-end">
             {["#EF4444", "#9945FF", "#0ea5e9"].map((c) => (

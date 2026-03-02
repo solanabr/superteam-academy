@@ -6,7 +6,7 @@ export { MOCK_WALLET };
 
 export async function mockWalletConnected(page: Page) {
   await page.addInitScript(() => {
-    (window as any).__MOCK_WALLET = {
+    (window as unknown as Record<string, unknown>).__MOCK_WALLET = {
       publicKey: "7Rq1abcdefghijklmnopqrstuvwxyz1234dK4f",
       connected: true,
     };
@@ -15,7 +15,7 @@ export async function mockWalletConnected(page: Page) {
 
 export async function mockWalletDisconnected(page: Page) {
   await page.addInitScript(() => {
-    (window as any).__MOCK_WALLET = {
+    (window as unknown as Record<string, unknown>).__MOCK_WALLET = {
       publicKey: null,
       connected: false,
     };

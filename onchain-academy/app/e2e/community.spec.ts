@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { gotoWithLocale } from "./fixtures/test-helpers";
 import { mockApiRoutes } from "./fixtures/wallet-mock";
 
 test.describe("Community Page", () => {

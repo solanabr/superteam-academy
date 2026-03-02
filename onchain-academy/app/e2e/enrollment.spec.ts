@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { gotoWithLocale } from "./fixtures/test-helpers";
-import { mockApiRoutes } from "./fixtures/wallet-mock";
 
 test.describe("Enrollment Flow", () => {
   test("enroll button is visible on course detail page", async ({ page }) => {
@@ -41,9 +40,7 @@ test.describe("Enrollment Flow", () => {
     });
   });
 
-  test("course detail page shows student reviews section", async ({
-    page,
-  }) => {
+  test("course detail page shows student reviews section", async ({ page }) => {
     await gotoWithLocale(page, "/courses/intro-to-solana");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Introduction to Solana",
@@ -58,9 +55,7 @@ test.describe("Enrollment Flow", () => {
     await expect(page.getByText("Carlos R.")).toBeVisible();
   });
 
-  test("enroll section renders on different course slugs", async ({
-    page,
-  }) => {
+  test("enroll section renders on different course slugs", async ({ page }) => {
     await gotoWithLocale(page, "/courses/anchor-development");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Anchor Development",

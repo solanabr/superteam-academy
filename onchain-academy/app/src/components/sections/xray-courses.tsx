@@ -143,7 +143,7 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
           className="text-xs text-white/70 hidden md:block"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          // HOVER TO REVEAL SOURCE DATA
+          {/* HOVER TO REVEAL SOURCE DATA */}
         </p>
       </div>
 

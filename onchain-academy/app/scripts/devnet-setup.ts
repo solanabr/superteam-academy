@@ -88,9 +88,13 @@ async function main() {
   const rpcUrl = getRpcUrl();
   const connection = new Connection(rpcUrl, "confirmed");
   const wallet = new NodeWallet(signer);
-  const provider = new AnchorProvider(connection, wallet as any, {
-    commitment: "confirmed",
-  });
+  const provider = new AnchorProvider(
+    connection,
+    wallet as unknown as AnchorProvider["wallet"],
+    {
+      commitment: "confirmed",
+    },
+  );
   const program = new Program(IDL_JSON as Idl, provider);
 
   console.log("=== Superteam Academy Devnet Setup ===");
@@ -152,7 +156,8 @@ async function main() {
     const difficulty = DIFFICULTY_IDS[c.difficulty] ?? 1;
     const xpPerLesson = Math.floor(c.xpReward / c.lessonCount);
     const contentTxId = new Array(32).fill(0);
-    const trackLevel = c.difficulty === "beginner" ? 1 : c.difficulty === "intermediate" ? 2 : 3;
+    const trackLevel =
+      c.difficulty === "beginner" ? 1 : c.difficulty === "intermediate" ? 2 : 3;
 
     let prerequisite: PublicKey | null = null;
     if (c.prerequisiteId) {

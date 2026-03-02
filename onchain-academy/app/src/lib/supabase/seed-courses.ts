@@ -14,7 +14,8 @@ import { createHash } from "crypto";
 // Supabase client (service_role bypasses RLS)
 // ---------------------------------------------------------------------------
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -177,7 +178,7 @@ async function seed() {
       learning_outcomes: [],
       total_completions: course.totalCompletions,
       enrolled_count: course.enrolledCount,
-      image_url: (course as any).imageUrl ?? null,
+      image_url: (course as unknown as { imageUrl?: string }).imageUrl ?? null,
     });
 
     for (let mi = 0; mi < course.modules.length; mi++) {

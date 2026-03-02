@@ -1,26 +1,33 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
+import Link from "next/link";
 import { useEffect, useMemo } from "react";
 
 // Inline translations — this error boundary is outside NextIntlClientProvider
 // so useTranslations() is unavailable. We detect locale from the URL pathname.
-const messages: Record<string, { title: string; description: string; tryAgain: string; goHome: string }> = {
+const messages: Record<
+  string,
+  { title: string; description: string; tryAgain: string; goHome: string }
+> = {
   en: {
     title: "Something went wrong",
-    description: "An unexpected error occurred. Please try again or return to the home page.",
+    description:
+      "An unexpected error occurred. Please try again or return to the home page.",
     tryAgain: "Try again",
     goHome: "Go home",
   },
   es: {
     title: "Algo salio mal",
-    description: "Ocurrio un error inesperado. Intenta de nuevo o vuelve a la pagina principal.",
+    description:
+      "Ocurrio un error inesperado. Intenta de nuevo o vuelve a la pagina principal.",
     tryAgain: "Intentar de nuevo",
     goHome: "Ir al inicio",
   },
   "pt-br": {
     title: "Algo deu errado",
-    description: "Ocorreu um erro inesperado. Tente novamente ou volte para a pagina inicial.",
+    description:
+      "Ocorreu um erro inesperado. Tente novamente ou volte para a pagina inicial.",
     tryAgain: "Tentar novamente",
     goHome: "Ir ao inicio",
   },
@@ -62,12 +69,12 @@ export default function RootError({
           >
             {t.tryAgain}
           </button>
-          <a
+          <Link
             href="/"
             className="rounded-[2px] border border-[var(--c-border)] bg-transparent px-6 py-2.5 text-sm font-medium text-[var(--c-text-2)] transition-colors hover:border-[var(--c-border-hovered)] hover:text-[var(--c-text)]"
           >
             {t.goHome}
-          </a>
+          </Link>
         </div>
       </div>
     </div>

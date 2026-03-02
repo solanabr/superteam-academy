@@ -33,7 +33,7 @@ export const sanityClient: SanityClient = new Proxy({} as SanityClient, {
     }
     const value = _client[prop as keyof SanityClient];
     if (typeof value === "function") {
-      return (value as Function).bind(_client);
+      return (value as (...args: unknown[]) => unknown).bind(_client);
     }
     return value;
   },
