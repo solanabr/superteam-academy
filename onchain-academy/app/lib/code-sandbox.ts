@@ -14,7 +14,7 @@ export interface SandboxResult {
     success: boolean;
     output: string[];
     error: string | null;
-    testResults: { id: string; passed: boolean; error?: string }[];
+    testResults: { id: string; passed: boolean; actualOutput?: string; error?: string }[];
 }
 
 // ─── Solana SDK Mocks ─────────────────────────────────────────────────────────

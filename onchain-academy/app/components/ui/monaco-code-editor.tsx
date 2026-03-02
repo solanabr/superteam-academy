@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+// import type { editor } from "monaco-editor";
 import { Loader2 } from "lucide-react";
 
 interface MonacoCodeEditorProps {
@@ -18,7 +18,7 @@ export function MonacoCodeEditor({
     onChange,
     readOnly = false,
 }: MonacoCodeEditorProps) {
-    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    const editorRef = useRef<any>(null);
 
     const handleEditorDidMount: OnMount = useCallback((editor, monaco) => {
         // Define custom theme on mount (client-side only)

@@ -179,6 +179,11 @@ export default function LessonPage() {
                         return progress?.completedLessons?.includes(item._id) || false;
                     };
 
+                    if (!currentMilestone) {
+                        setLoading(false);
+                        return;
+                    }
+
                     const mItems = [
                         ...(currentMilestone.lessons || []).map((l: any) => ({ ...l, type: l.type || 'video', completed: checkCompleted(l), isTest: false })),
                         ...(currentMilestone.tests || []).map((t: any) => ({ ...t, type: t.type || 'test', completed: checkCompleted(t), isTest: true }))
