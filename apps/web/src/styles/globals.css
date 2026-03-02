@@ -1387,6 +1387,16 @@
   }
 }
 
+/* Infinite horizontal scroll for achievement marquee */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-25%);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    COURSE CARDS — atmospheric left-accent editorial style (V9)
    Left 3px accent bar + radial glow + large ghost background number

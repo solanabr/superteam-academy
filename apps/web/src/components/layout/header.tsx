@@ -31,6 +31,12 @@ const navItems = [
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
+const publicNavItems = [
+  { key: "courses", icon: Book, href: "/courses" },
+  { key: "community", icon: ChatCircle, href: "/community" },
+  { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
+] as const;
+
 export function Header() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
@@ -200,7 +206,30 @@ export function Header() {
                 );
               })}
             </nav>
-          ) : null}
+          ) : (
+            <nav
+              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              aria-label={tA11y("platformNavigation")}
+            >
+              {publicNavItems.map((item) => {
+                const fullHref = `/${locale}${item.href}`;
+                const isActive = pathname.startsWith(fullHref);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.key}
+                    href={fullHref}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn("nav-link", isActive && "active")}
+                  >
+                    <Icon size={16} weight={isActive ? "fill" : "bold"} />
+                    <span>{t(item.key)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           {/* Right: XP ring → lang → theme → user (desktop) */}
           <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] md:flex">
@@ -304,33 +333,31 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="mx-[12px] mt-[4px] rounded-[var(--r-lg)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow)] md:hidden">
           <div className="space-y-2 px-[16px] py-4">
-            {isLoggedIn && (
-              <nav className="flex flex-col gap-[2px]">
-                {navItems.map((item) => {
-                  const fullHref = `/${locale}${item.href}`;
-                  const isActive = pathname.startsWith(fullHref);
-                  const Icon = item.icon;
+            <nav className="flex flex-col gap-[2px]">
+              {(isLoggedIn ? navItems : publicNavItems).map((item) => {
+                const fullHref = `/${locale}${item.href}`;
+                const isActive = pathname.startsWith(fullHref);
+                const Icon = item.icon;
 
-                  return (
-                    <Link
-                      key={item.key}
-                      href={fullHref}
-                      onClick={() => setMobileMenuOpen(false)}
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "flex items-center gap-[10px] rounded-[var(--r-md)] px-[10px] py-[9px] text-[14px] font-semibold no-underline transition-all duration-150",
-                        isActive
-                          ? "bg-[var(--primary-dim)] text-[var(--primary)]"
-                          : "text-[var(--text-3)] hover:bg-[var(--card-hover)] hover:text-[var(--text-2)]"
-                      )}
-                    >
-                      <Icon size={18} weight="bold" />
-                      <span>{t(item.key)}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
+                return (
+                  <Link
+                    key={item.key}
+                    href={fullHref}
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-[10px] rounded-[var(--r-md)] px-[10px] py-[9px] text-[14px] font-semibold no-underline transition-all duration-150",
+                      isActive
+                        ? "bg-[var(--primary-dim)] text-[var(--primary)]"
+                        : "text-[var(--text-3)] hover:bg-[var(--card-hover)] hover:text-[var(--text-2)]"
+                    )}
+                  >
+                    <Icon size={18} weight="bold" />
+                    <span>{t(item.key)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
 
             <div className="h-px bg-[var(--border)]" />
 
