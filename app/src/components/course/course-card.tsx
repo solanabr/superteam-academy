@@ -3,9 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { BookOpen, Clock, Zap, CheckCircle2 } from "lucide-react";
 import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
 import { CourseIllustration } from "@/components/icons/course-illustration";
+import { cn } from "@/lib/utils";
 import type { Course } from "@/types";
 
 export interface CourseCardProps {
@@ -13,17 +14,28 @@ export interface CourseCardProps {
   progressPct: number;
 }
 
+const DIFFICULTY_LABEL: Record<string, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
 export function CourseCard({ course, progressPct }: CourseCardProps) {
   const t = useTranslations("courses");
   const track = TRACKS[course.trackId];
 
+  const ctaLabel =
+    progressPct === 100 ? "Completed" :
+    progressPct > 0     ? "Continue"  :
+                          "Start Course";
+
   return (
     <Link
       href={`/courses/${course.slug}`}
-      className="group flex flex-col rounded-2xl border border-border bg-card transition-all duration-300 hover-gold hover:-translate-y-1 hover:shadow-lg hover:shadow-black/10"
+      className="group flex flex-col rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-border/80 hover:shadow-xl hover:shadow-black/20"
     >
       {/* Thumbnail */}
-      <div className="relative h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-st-green-dark to-primary/20">
+      <div className="relative h-44 overflow-hidden rounded-t-2xl bg-gradient-to-br from-st-green-dark to-primary/20">
         {course.thumbnail && !course.thumbnail.startsWith("/images/") ? (
           <Image
             src={course.thumbnail}
@@ -39,67 +51,97 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
             variant={course.trackId}
           />
         )}
-        <div className="absolute left-3 top-3 flex gap-2">
-          <span
-            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_BG[course.difficulty]}`}
-          >
-            {course.difficulty}
-          </span>
-        </div>
+
+        {/* Track badge — left */}
         {track && (
-          <div className="absolute right-3 top-3">
+          <div className="absolute left-3 top-3">
             <span
-              className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
               style={{
-                backgroundColor: `${track.color}15`,
+                backgroundColor: `${track.color}25`,
                 color: track.color,
+                border: `1px solid ${track.color}40`,
               }}
             >
-              {track.display}
+              <span
+                className="h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: track.color }}
+              />
+              {track.short}
             </span>
+          </div>
+        )}
+
+        {/* Difficulty badge — right */}
+        <div className="absolute right-3 top-3">
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm",
+              DIFFICULTY_BG[course.difficulty]
+            )}
+          >
+            {DIFFICULTY_LABEL[course.difficulty] ?? course.difficulty}
+          </span>
+        </div>
+
+        {/* Progress bar overlay at bottom of thumbnail */}
+        {progressPct > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+            <div
+              className={cn(
+                "h-full transition-all duration-500",
+                progressPct === 100
+                  ? "bg-brazil-green"
+                  : "bg-gradient-to-r from-st-green to-brazil-teal"
+              )}
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
         )}
       </div>
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-heading text-base font-semibold group-hover:text-primary">
+        <h3 className="font-heading text-base font-semibold leading-snug group-hover:text-primary transition-colors">
           {course.title}
         </h3>
-        <p className="mt-2 line-clamp-2 flex-1 text-sm text-muted-foreground">
+        <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">
           {course.description}
         </p>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span>{t("catalog.lessonsCount", { count: course.lessonCount })}</span>
-            <span>{course.duration}</span>
-          </div>
-          <span className="font-medium text-xp">{t("catalog.xpReward", { amount: course.xpTotal })}</span>
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              progressPct === 100
-                ? "bg-brazil-green"
-                : progressPct > 0
-                  ? "bg-gradient-to-r from-st-green to-brazil-teal progress-bar-animated"
-                  : "bg-primary"
-            }`}
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {t("catalog.studentsCount", { count: course.totalEnrollments.toLocaleString() })}
+        {/* Meta row */}
+        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5 shrink-0" />
+            {t("catalog.lessonsCount", { count: course.lessonCount })}
           </span>
-          <div className="flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-all duration-300 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0">
-            {t("catalog.viewCourse")}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-          </div>
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
+            {course.duration}
+          </span>
+          <span className="ml-auto flex items-center gap-1.5 font-medium text-xp">
+            <Zap className="h-3.5 w-3.5 shrink-0" />
+            {t("catalog.xpReward", { amount: course.xpTotal })}
+          </span>
+        </div>
+
+        {/* CTA button */}
+        <div className="mt-4">
+          <span
+            className={cn(
+              "flex w-full items-center justify-center rounded-xl border py-2.5 text-sm font-medium transition-colors",
+              progressPct === 100
+                ? "border-brazil-green/40 bg-brazil-green/10 text-brazil-green"
+                : progressPct > 0
+                  ? "border-primary/40 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                  : "border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground"
+            )}
+          >
+            {progressPct === 100 && (
+              <CheckCircle2 className="mr-1.5 h-4 w-4" />
+            )}
+            {ctaLabel}
+          </span>
         </div>
       </div>
     </Link>

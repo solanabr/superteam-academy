@@ -7,7 +7,7 @@ import { PrivyAuthProvider } from "@/components/layout/wallet-provider";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { PostHogProvider } from "@/components/layout/posthog-provider";
 import { ClarityScript } from "@/components/layout/clarity-script";
-import "./globals.css";
+import "@/app/globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const viewport = {
+export const appViewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -31,7 +31,7 @@ export const viewport = {
   ],
 };
 
-export const metadata: Metadata = {
+export const appMetadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "https://academy.superteam.fun"
   ),
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default async function AppRootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

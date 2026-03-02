@@ -2,6 +2,7 @@
 
 import { usePrivy, useLogin } from "@privy-io/react-auth";
 import { LogOut, LogIn } from "lucide-react";
+import { WalletMenu } from "./wallet-menu";
 
 /** Unified auth button — opens Privy modal with wallet + Google + GitHub options */
 export function AuthButton() {
@@ -13,10 +14,13 @@ export function AuthButton() {
   }
 
   if (authenticated && user) {
-    const displayName =
-      user.google?.name ??
-      (user.wallet?.address ? user.wallet.address.slice(0, 8) + "\u2026" : "User");
+    // Wallet auth → full dropdown menu
+    if (user.wallet) {
+      return <WalletMenu />;
+    }
 
+    // Social auth only (Google / GitHub) → simple display + sign-out
+    const displayName = user.google?.name ?? "User";
     return (
       <div className="flex items-center gap-2">
         <span className="hidden text-sm text-muted-foreground sm:block">

@@ -3,7 +3,10 @@ import PublicProfileClient, {
   MOCK_PUBLIC_PROFILES,
 } from "@/components/profile/public-profile-client";
 
+export const dynamic = "force-dynamic";
+
 export async function generateStaticParams() {
+  // Pre-render demo profiles; real user profiles are rendered on-demand
   return Object.keys(MOCK_PUBLIC_PROFILES).map((username) => ({ username }));
 }
 
@@ -13,19 +16,22 @@ export async function generateMetadata({
   params: Promise<{ username: string }>;
 }): Promise<Metadata> {
   const { username } = await params;
-  const profile = MOCK_PUBLIC_PROFILES[username];
+  const mock = MOCK_PUBLIC_PROFILES[username];
 
-  if (!profile) {
-    return { title: "Profile Not Found" };
+  if (mock) {
+    return {
+      title: `${mock.displayName}'s Profile`,
+      description: mock.bio || `View ${mock.displayName}'s learning profile on Superteam Academy.`,
+      openGraph: {
+        title: `${mock.displayName} | Superteam Academy`,
+        description: `${mock.displayName} has earned ${mock.xp} XP and completed ${mock.coursesCompleted.length} courses.`,
+      },
+    };
   }
 
   return {
-    title: `${profile.displayName}'s Profile`,
-    description: profile.bio || `View ${profile.displayName}'s learning profile on Superteam Academy.`,
-    openGraph: {
-      title: `${profile.displayName} | Superteam Academy`,
-      description: `${profile.displayName} has earned ${profile.xp} XP and completed ${profile.coursesCompleted.length} courses.`,
-    },
+    title: `${username}'s Profile | Superteam Academy`,
+    description: `View ${username}'s learning profile on Superteam Academy.`,
   };
 }
 

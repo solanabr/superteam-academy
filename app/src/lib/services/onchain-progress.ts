@@ -377,7 +377,7 @@ export class OnChainProgressService implements LearningProgressService {
 
   // ---- Achievements ------------------------------------------------------
 
-  async getAchievements(_userId: string): Promise<Achievement[]> {
+  async getAchievements(_userId: string | null): Promise<Achievement[]> {
     return [];
   }
 

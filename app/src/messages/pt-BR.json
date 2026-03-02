@@ -59,7 +59,18 @@
     "docs": "Documentação",
     "community": "Comunidade",
     "mobileMenu": "Menu",
-    "challenges": "Desafios"
+    "challenges": "Desafios",
+    "discussions": "Discussões",
+    "notifications": "Notificações"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "unreadCount": "{count, plural, one {1 não lida} other {# não lidas}}",
+    "markAllRead": "Marcar todas como lidas",
+    "empty": {
+      "title": "Sem notificações ainda",
+      "body": "Aqui você verá marcos de XP, conquistas e atualizações de cursos."
+    }
   },
   "landing": {
     "hero": {
@@ -437,6 +448,7 @@
     "challengeCompleted": "Desafio Concluído\\!"
   },
   "profile": {
+    "tabOverview": "Visão Geral",
     "editProfile": "Editar Perfil",
     "viewPublicProfile": "Ver Perfil Público",
     "myProfile": "Meu Perfil",
@@ -1226,5 +1238,45 @@
     "pastChallenges": "Desafios Recentes",
     "completed": "Concluído",
     "locked": "Perdido"
+  },
+  "discussions": {
+    "forumTitle": "Fórum da Comunidade",
+    "forumDescription": "Faça perguntas, compartilhe projetos e conecte-se com outros desenvolvedores Solana.",
+    "lessonTitle": "Discussão da Comunidade",
+    "newThread": "Novo Tópico",
+    "postThread": "Publicar Tópico",
+    "searchPlaceholder": "Buscar discussões...",
+    "allCategories": "Todas as Categorias",
+    "sortNewest": "Mais Recentes",
+    "sortTop": "Mais Votados",
+    "sortMostCommented": "Mais Comentados",
+    "noThreads": "Nenhum tópico encontrado.",
+    "loadMore": "Carregar mais",
+    "backToDiscussions": "Voltar para discussões",
+    "commentsCount": "{count, plural, =0 {Sem comentários} one {1 comentário} other {# comentários}}",
+    "commentPlaceholder": "Compartilhe seus pensamentos...",
+    "lessonPlaceholder": "Faça uma pergunta ou compartilhe suas ideias...",
+    "replyPlaceholder": "Escreva uma resposta...",
+    "replyToPlaceholder": "Responder a {name}...",
+    "post": "Publicar",
+    "reply": "Responder",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "showReplies": "{count, plural, one {Mostrar 1 resposta} other {Mostrar # respostas}}",
+    "hideReplies": "{count, plural, one {Ocultar 1 resposta} other {Ocultar # respostas}}",
+    "continueThread": "Continuar este tópico",
+    "noComments": "Ainda sem comentários",
+    "beFirst": "Seja o primeiro a iniciar uma conversa!",
+    "threadLocked": "Este tópico está bloqueado. Não é possível adicionar novos comentários.",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Qual é sua pergunta ou tema?",
+    "categoryLabel": "Categoria",
+    "tagsLabel": "Tags",
+    "tagsHint": "separadas por vírgula",
+    "bodyLabel": "Corpo",
+    "bodyPlaceholder": "Descreva sua pergunta ou compartilhe o que você construiu...",
+    "signInToComment": "Entre para participar da discussão"
   }
 }

@@ -6,6 +6,7 @@ import { LessonSidebar } from "./lesson-sidebar";
 import { LessonNavigation } from "./lesson-navigation";
 import { LessonProgress } from "./lesson-progress";
 import { MarkdownContent, generateContentPlaceholder } from "./markdown-content";
+import { LessonDiscussion } from "@/components/discussions/lesson-discussion";
 import type { Course, Lesson, LessonNavItem } from "@/types";
 
 export interface LessonContentProps {
@@ -71,6 +72,10 @@ export function LessonContent({
 
             <div className="mt-10">
               <MarkdownContent content={lesson.content || generateContentPlaceholder(lesson)} />
+            </div>
+
+            <div className="mt-12 border-t border-border pt-10">
+              <LessonDiscussion lessonId={lesson.id} courseId={course.id} />
             </div>
           </div>
         </div>

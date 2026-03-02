@@ -41,21 +41,6 @@ function formatTrackLevel(difficulty: string, trackLevel: number): string {
   return `${label} (Level ${trackLevel})`;
 }
 
-/** Generate a deterministic devnet-style placeholder address from a slug */
-function generatePlaceholderAddress(slug: string): string {
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) {
-    hash = (hash * 31 + slug.charCodeAt(i)) & 0xffffffff;
-  }
-  const chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  let addr = "";
-  let seed = hash;
-  for (let i = 0; i < 44; i++) {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    addr += chars[seed % chars.length];
-  }
-  return addr;
-}
 
 export default function CertificateClient({ certId }: CertificateClientProps) {
   const t = useTranslations("certificate");
@@ -83,7 +68,6 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
   const certData = useMemo(() => {
     if (!course) return null;
 
-    const placeholderMint = generatePlaceholderAddress(certId);
     const completionDate = progress?.completedAt
       ? new Date(progress.completedAt).toLocaleDateString("en-US", {
           year: "numeric",
@@ -93,6 +77,12 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
       : "";
     const walletAddress = publicKey?.toBase58() ?? "";
 
+    // Look up a real on-chain mint address for this course's track
+    const onChainCred = onChainCredentials.find(
+      (c) => c.trackId === course.trackId && c.mintAddress
+    );
+    const realMintAddress = onChainCred?.mintAddress ?? null;
+
     return {
       id: certId,
       courseName: course.title,
@@ -101,11 +91,14 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
       xpEarned: course.xpTotal,
       track: course.trackName,
       trackLevel: formatTrackLevel(course.difficulty, course.trackLevel),
-      mintAddress: placeholderMint,
-      explorerUrl: `https://explorer.solana.com/address/${placeholderMint}?cluster=devnet`,
+      mintAddress: realMintAddress,
+      explorerUrl: realMintAddress
+        ? `https://explorer.solana.com/address/${realMintAddress}?cluster=devnet`
+        : null,
       ownerAddress: walletAddress,
+      isVerifiedOnChain: !!realMintAddress,
     };
-  }, [course, progress, publicKey, certId]);
+  }, [course, progress, publicKey, certId, onChainCredentials]);
 
   // Loading state
   if (coursesLoading || !progressLoaded) {
@@ -200,7 +193,7 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
   }
 
   function handleCopyMintAddress() {
-    if (certData) {
+    if (certData?.mintAddress) {
       navigator.clipboard.writeText(certData.mintAddress);
     }
   }
@@ -310,10 +303,12 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
 
           <div className="mx-auto mt-10 h-[2px] w-32 rounded-full bg-gradient-to-r from-st-green via-brazil-teal to-brazil-gold-light" />
 
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-brazil-green">
-            <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">{t("verified")}</span>
-          </div>
+          {certData.isVerifiedOnChain && (
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-brazil-green">
+              <CheckCircle className="h-4 w-4" />
+              <span className="font-medium">{t("verified")}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -324,64 +319,84 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
           <h3 className="font-heading text-lg font-bold">
             {t("onChainDetails")}
           </h3>
-          <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-xs font-medium text-yellow-600 dark:text-yellow-400">
-            {t("devnetDemo")}
-          </span>
+          {certData.isVerifiedOnChain ? (
+            <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+              On-chain
+            </span>
+          ) : (
+            <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-xs font-medium text-yellow-600 dark:text-yellow-400">
+              {t("devnetDemo")}
+            </span>
+          )}
         </div>
 
         <div className="mt-4 rounded-xl border border-border bg-card p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  {t("credentialId")}
-                </p>
-                <p className="mt-1 font-mono text-sm text-foreground">
-                  {truncateAddress(certData.mintAddress, 6)}
-                </p>
+          {certData.isVerifiedOnChain && certData.mintAddress ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    {t("credentialId")}
+                  </p>
+                  <p className="mt-1 font-mono text-sm text-foreground">
+                    {truncateAddress(certData.mintAddress, 6)}
+                  </p>
+                </div>
+                <button
+                  onClick={handleCopyMintAddress}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-st-green/30 hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {tc("copy")}
+                </button>
               </div>
-              <button
-                onClick={handleCopyMintAddress}
-                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-st-green/30 hover:text-foreground"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {tc("copy")}
-              </button>
-            </div>
 
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                {t("solanaExplorer")}
-              </p>
-              <a
-                href={certData.explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-st-green transition-colors hover:text-st-green-light"
-              >
-                {tc("viewOnExplorer")}
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
+              {certData.explorerUrl && (
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    {t("solanaExplorer")}
+                  </p>
+                  <a
+                    href={certData.explorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-st-green transition-colors hover:text-st-green-light"
+                  >
+                    {tc("viewOnExplorer")}
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )}
 
-            <div className="flex items-center gap-2 rounded-lg bg-yellow-500/5 px-4 py-3">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+              {certData.ownerAddress && (
+                <div className="flex items-center gap-2 rounded-lg bg-brazil-green/5 px-4 py-3">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0 text-brazil-green" />
+                  <p className="text-sm text-foreground">
+                    {t("ownershipVerified", {
+                      wallet: truncateAddress(certData.ownerAddress, 6),
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 rounded-lg bg-yellow-500/5 px-4 py-3">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Pending on-chain issuance
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t("devnetExplorerNote")}
+                  </p>
+                </div>
+              </div>
               <p className="text-sm text-muted-foreground">
-                {t("devnetExplorerNote")}
+                Connect a Solana wallet and complete this course to receive a verifiable on-chain credential.
               </p>
             </div>
-
-            {certData.ownerAddress && (
-              <div className="flex items-center gap-2 rounded-lg bg-brazil-green/5 px-4 py-3">
-                <CheckCircle className="h-4 w-4 flex-shrink-0 text-brazil-green" />
-                <p className="text-sm text-foreground">
-                  {t("ownershipVerified", {
-                    wallet: truncateAddress(certData.ownerAddress, 6),
-                  })}
-                </p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </section>
 
@@ -410,7 +425,7 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
           </a>
 
           <a
-            href="https://www.linkedin.com/sharing/share-offsite/?url=https://academy.superteam.fun"
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://academy.superteam.fun/certificates/${certData.id}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() =>

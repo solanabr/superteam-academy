@@ -7,13 +7,14 @@ import {
   Panel,
   Separator as PanelResizeHandle,
 } from "react-resizable-panels";
-import { ChevronRight, Loader2, CheckCircle2, Sparkles, Play, List } from "lucide-react";
+import { ChevronRight, Loader2, CheckCircle2, MessageCircle, Sparkles, Play, List } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { LessonSidebar } from "./lesson-sidebar";
 import { LessonNavigation } from "./lesson-navigation";
 import { MobileChallengeView } from "./mobile-challenge-view";
+import { LessonDiscussion } from "@/components/discussions/lesson-discussion";
 import { EditorPanel, TestRunner, OutputDisplay, ChallengePrompt } from "@/components/editor";
 import type { Course, Lesson, TestCase, LessonNavItem } from "@/types";
 
@@ -44,7 +45,7 @@ export function CodeChallenge({
   const [completed, setCompleted] = useState(initialCompleted);
   const [xpAnimating, setXpAnimating] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [activeTab, setActiveTab] = useState<"tests" | "output">("tests");
+  const [activeTab, setActiveTab] = useState<"tests" | "output" | "discussion">("tests");
   const [runOutput, setRunOutput] = useState("");
 
   const allTestsPassed = testResults.every((t) => t.passed === true);
@@ -161,7 +162,7 @@ export function CodeChallenge({
           <PanelResizeHandle className="w-1.5 bg-border transition-colors hover:bg-primary/50 data-[resize-handle-active]:bg-primary" />
           <Panel defaultSize={55} minSize={35}>
             <DesktopEditorPanel
-              lesson={lesson} courseSlug={course.slug} challenge={challenge}
+              lesson={lesson} courseSlug={course.slug} courseId={course.id} challenge={challenge}
               code={code} setCode={setCode} editorLanguage={editorLanguage}
               testResults={testResults} isRunning={isRunning} activeTab={activeTab}
               setActiveTab={setActiveTab} runOutput={runOutput} completed={completed}
@@ -224,15 +225,15 @@ function DesktopPromptPanel({
 }
 
 function DesktopEditorPanel({
-  lesson, courseSlug, challenge, code, setCode, editorLanguage,
+  lesson, courseSlug, courseId, challenge, code, setCode, editorLanguage,
   testResults, isRunning, activeTab, setActiveTab, runOutput,
   completed, allTestsPassed, xpAnimating,
   onRunCode, onMarkComplete, onResetCode, nextLesson,
 }: {
-  lesson: Lesson; courseSlug: string; challenge: NonNullable<Lesson["challenge"]>;
+  lesson: Lesson; courseSlug: string; courseId: string; challenge: NonNullable<Lesson["challenge"]>;
   code: string; setCode: (v: string) => void; editorLanguage: string;
-  testResults: TestCase[]; isRunning: boolean; activeTab: "tests" | "output";
-  setActiveTab: (v: "tests" | "output") => void; runOutput: string;
+  testResults: TestCase[]; isRunning: boolean; activeTab: "tests" | "output" | "discussion";
+  setActiveTab: (v: "tests" | "output" | "discussion") => void; runOutput: string;
   completed: boolean; allTestsPassed: boolean; xpAnimating: boolean;
   onRunCode: () => void; onMarkComplete: () => void; onResetCode: () => void;
   nextLesson: LessonNavItem | null;
@@ -258,12 +259,18 @@ function DesktopEditorPanel({
           <button onClick={() => setActiveTab("output")} className={cn("px-4 py-2 text-xs font-medium transition-colors", activeTab === "output" ? "bg-[#1e1e1e] text-[#ccc]" : "text-[#888] hover:text-[#ccc]")}>
             {t("editor.output")}
           </button>
+          <button onClick={() => setActiveTab("discussion")} className={cn("flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors", activeTab === "discussion" ? "bg-[#1e1e1e] text-[#ccc]" : "text-[#888] hover:text-[#ccc]")}>
+            <MessageCircle className="h-3 w-3" />
+            Discussion
+          </button>
         </div>
-        <div className="h-36 overflow-y-auto bg-[#1e1e1e] p-3">
+        <div className={cn("overflow-y-auto bg-[#1e1e1e]", activeTab === "discussion" ? "h-64 p-4" : "h-36 p-3")}>
           {activeTab === "tests" ? (
             <TestRunner testResults={testResults} variant="panel" />
-          ) : (
+          ) : activeTab === "output" ? (
             <OutputDisplay output={runOutput} placeholder={t("challenge.outputPlaceholder")} />
+          ) : (
+            <LessonDiscussion lessonId={lesson.id} courseId={courseId} />
           )}
         </div>
 

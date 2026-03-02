@@ -7,6 +7,17 @@ export interface MarkdownContentProps {
 }
 
 export function MarkdownContent({ content }: MarkdownContentProps) {
+  const isHtml = content.trimStart().startsWith("<");
+
+  if (isHtml) {
+    return (
+      <div
+        className="prose prose-invert max-w-none [&_h1]:font-heading [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-bold [&_h2]:font-heading [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-bold [&_h3]:font-heading [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_p]:my-3 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_ul]:my-3 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ol]:my-3 [&_ol]:ml-4 [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_li]:pl-1 [&_li]:text-sm [&_li]:leading-relaxed [&_li]:text-muted-foreground [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-[#333] [&_pre]:bg-[#1e1e1e] [&_pre]:p-4 [&_code]:font-mono [&_code]:text-sm [&_a]:text-primary [&_a]:underline [&_strong]:font-semibold [&_strong]:text-foreground"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
   return (
     <div className="prose prose-invert max-w-none">
       <Markdown
@@ -89,6 +100,7 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
     </div>
   );
 }
+
 
 export function generateContentPlaceholder(lesson: Lesson): string {
   return `# ${lesson.title}

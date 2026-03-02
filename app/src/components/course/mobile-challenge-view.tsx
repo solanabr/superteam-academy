@@ -31,8 +31,8 @@ export interface MobileChallengeViewProps {
   completed: boolean;
   allTestsPassed: boolean;
   xpAnimating: boolean;
-  activeTab: "tests" | "output";
-  setActiveTab: (v: "tests" | "output") => void;
+  activeTab: "tests" | "output" | "discussion";
+  setActiveTab: (v: "tests" | "output" | "discussion") => void;
   runOutput: string;
   editorLanguage: string;
   onRunCode: () => void;

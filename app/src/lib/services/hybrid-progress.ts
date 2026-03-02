@@ -188,7 +188,7 @@ export class HybridProgressService implements LearningProgressService {
 
   // ---- Achievements (always localStorage) --------------------------------
 
-  async getAchievements(userId: string): Promise<Achievement[]> {
+  async getAchievements(userId: string | null): Promise<Achievement[]> {
     return this.local.getAchievements(userId);
   }
 

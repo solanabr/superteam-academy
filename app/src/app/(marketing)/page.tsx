@@ -15,20 +15,13 @@ import {
   Layers,
   Quote,
 } from "lucide-react";
-import { getAllCourses } from "@/lib/data-service";
+import { getAllCourses, getPlatformStats } from "@/lib/data-service";
 import { LEARNING_PATHS, DIFFICULTY_BG, TRACKS } from "@/lib/constants";
 import { PARTNER_LOGO_MAP } from "@/components/icons/partner-logos";
 import { CourseIllustration } from "@/components/icons/course-illustration";
 
 /** Revalidate the landing page every hour via ISR */
 export const revalidate = 3600;
-
-const STATS = [
-  { labelKey: "socialProof.learnersLabel" as const, value: "2,500+" },
-  { labelKey: "socialProof.coursesLabel" as const, value: "20+" },
-  { labelKey: "socialProof.credentialsLabel" as const, value: "1,200+" },
-  { labelKey: "socialProof.xpLabel" as const, value: "500K+" },
-];
 
 const FEATURES = [
   {
@@ -79,10 +72,18 @@ const PATH_ICONS: Record<string, typeof Layers> = {
 const PARTNER_NAMES = ["Solana", "Superteam", "Metaplex", "Helius", "Anchor", "Jito"];
 
 export default async function HomePage() {
-  const [courses, t] = await Promise.all([
+  const [courses, t, stats] = await Promise.all([
     getAllCourses(),
     getTranslations("landing"),
+    getPlatformStats(),
   ]);
+
+  const STATS = [
+    { labelKey: "socialProof.learnersLabel" as const, value: stats.learnerCount },
+    { labelKey: "socialProof.coursesLabel" as const, value: stats.courseCount },
+    { labelKey: "socialProof.credentialsLabel" as const, value: stats.credentialCount },
+    { labelKey: "socialProof.xpLabel" as const, value: stats.totalXpFormatted },
+  ];
   const featuredCourses = courses.slice(0, 3);
 
   return (

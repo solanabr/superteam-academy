@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/db";
 import type { Course, Achievement, LearningPath } from "@/types";
+import { MOCK_COURSES } from "@/lib/mock-courses";
+import { getPayload } from "@/lib/payload";
+import { payloadCourseToCourse } from "@/lib/payload-to-course";
 
 // ── Courses ─────────────────────────────────────────────────────────────────
 
@@ -98,6 +101,22 @@ async function fetchCourseRaw(slug: string) {
 }
 
 export async function getAllCourses(): Promise<Course[]> {
+  // Try Payload CMS first
+  try {
+    const payload = await getPayload();
+    const result = await payload.find({
+      collection: "courses",
+      where: { isActive: { equals: true } },
+      sort: "trackId",
+      limit: 1000,
+    });
+    if (result.docs.length > 0) {
+      return result.docs.map(payloadCourseToCourse);
+    }
+  } catch {
+    // Payload not configured or DB not available — fall through to Prisma
+  }
+
   const [courses, completionGroups] = await Promise.all([
     prisma.course.findMany({
       where: { isActive: true },
@@ -110,14 +129,31 @@ export async function getAllCourses(): Promise<Course[]> {
       _count: { courseId: true },
     }),
   ]);
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
 
+  if (courses.length === 0) return MOCK_COURSES;
+
+  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
 }
 
 export async function getCourseBySlug(slug: string): Promise<Course | undefined> {
+  // Try Payload CMS first
+  try {
+    const payload = await getPayload();
+    const result = await payload.find({
+      collection: "courses",
+      where: { slug: { equals: slug } },
+      limit: 1,
+    });
+    if (result.docs.length > 0) {
+      return payloadCourseToCourse(result.docs[0]);
+    }
+  } catch {
+    // Payload not configured or DB not available — fall through to Prisma
+  }
+
   const course = await fetchCourseRaw(slug);
-  if (!course) return undefined;
+  if (!course) return MOCK_COURSES.find((c) => c.slug === slug);
   const completions = await prisma.enrollment.count({
     where: { courseId: course.id, completedAt: { not: null } },
   });
@@ -137,8 +173,10 @@ export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
       _count: { courseId: true },
     }),
   ]);
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
 
+  if (courses.length === 0) return MOCK_COURSES.filter((c) => c.trackId === trackId);
+
+  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
 }
 
@@ -160,6 +198,37 @@ export async function getCoursesByDifficulty(
   const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
 
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
+}
+
+// ── Platform Stats ──────────────────────────────────────────────────────────
+
+export async function getPlatformStats(): Promise<{
+  learnerCount: string;
+  courseCount: string;
+  credentialCount: string;
+  totalXpFormatted: string;
+}> {
+  const [learnerCount, courseCount, credentialCount, xpAgg] = await Promise.all([
+    prisma.user.count(),
+    prisma.course.count({ where: { isActive: true } }),
+    prisma.userCredential.count(),
+    prisma.xPEvent.aggregate({ _sum: { amount: true } }),
+  ]);
+
+  const totalXp = xpAgg._sum.amount ?? 0;
+
+  function fmt(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M+`;
+    if (n >= 1_000) return `${Math.floor(n / 1_000)}K+`;
+    return n > 0 ? `${n}+` : "0";
+  }
+
+  return {
+    learnerCount: fmt(learnerCount),
+    courseCount: fmt(courseCount),
+    credentialCount: fmt(credentialCount),
+    totalXpFormatted: fmt(totalXp),
+  };
 }
 
 // ── Learning Paths ──────────────────────────────────────────────────────────

@@ -6,18 +6,21 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   BookOpen,
+  CheckCircle2,
   Clock,
   Users,
   Trophy,
   Code,
   Lock,
+  User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
 import { formatXP } from "@/lib/utils";
 import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
-import { ModuleList, EnrollButton, ReviewsSection, DiscussionSection } from "@/components/course";
+import { ModuleList, EnrollButton, ReviewsSection } from "@/components/course";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export interface CourseDetailClientProps {
   slug: string;
@@ -121,32 +124,60 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
                 <Trophy className="h-4 w-4 text-xp" />
                 <span className="font-medium text-xp">{formatXP(course.xpTotal)} XP</span>
               </div>
+              {course.creator && (
+                <div className="flex items-center gap-1.5">
+                  <User className="h-4 w-4" />
+                  <span>{course.creator}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Module/Lesson List */}
+          {/* What You'll Learn */}
+          {hasModules && (
+            <div className="mt-8 rounded-2xl border border-border bg-card p-6">
+              <h2 className="font-heading text-lg font-bold">What you&apos;ll learn</h2>
+              <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {course.modules.slice(0, 8).map((m) => (
+                  <li key={m.id} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    {m.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Tabs: Curriculum / Reviews */}
           <div className="mt-10">
-            <h2 className="font-heading text-xl font-bold">{t("detail.courseContent")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {course.lessonCount} lessons across{" "}
-              {hasModules ? course.modules.length : 1} module
-              {(hasModules ? course.modules.length : 1) !== 1 ? "s" : ""}
-            </p>
+            <Tabs defaultValue="curriculum">
+              <TabsList>
+                <TabsTrigger value="curriculum">{t("detail.courseContent")}</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              </TabsList>
 
-            <div className="mt-6">
-              <ModuleList
-                modules={course.modules}
-                courseSlug={course.slug}
-                completedLessons={completedLessons}
-              />
-            </div>
+              <TabsContent value="curriculum">
+                <div className="mt-2">
+                  <p className="text-sm text-muted-foreground">
+                    {course.lessonCount} lessons across{" "}
+                    {hasModules ? course.modules.length : 1} module
+                    {(hasModules ? course.modules.length : 1) !== 1 ? "s" : ""}
+                  </p>
+                  <div className="mt-4">
+                    <ModuleList
+                      modules={course.modules}
+                      courseSlug={course.slug}
+                      completedLessons={completedLessons}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reviews">
+                <ReviewsSection courseSlug={course.slug} />
+              </TabsContent>
+            </Tabs>
           </div>
-
-          {/* Reviews Section */}
-          <ReviewsSection courseSlug={course.slug} />
-
-          {/* Community Discussion */}
-          <DiscussionSection courseSlug={course.slug} />
         </div>
 
         {/* Sidebar */}

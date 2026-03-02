@@ -59,7 +59,18 @@
     "docs": "Docs",
     "community": "Community",
     "mobileMenu": "Menu",
-    "challenges": "Challenges"
+    "challenges": "Challenges",
+    "discussions": "Discussions",
+    "notifications": "Notifications"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{count, plural, one {1 unread} other {# unread}}",
+    "markAllRead": "Mark all as read",
+    "empty": {
+      "title": "No notifications yet",
+      "body": "You'll see XP milestones, achievements, and course updates here."
+    }
   },
   "landing": {
     "hero": {
@@ -437,6 +448,7 @@
     "challengeCompleted": "Challenge Complete\\!"
   },
   "profile": {
+    "tabOverview": "Overview",
     "editProfile": "Edit Profile",
     "viewPublicProfile": "View Public Profile",
     "myProfile": "My Profile",
@@ -1226,5 +1238,45 @@
     "pastChallenges": "Recent Challenges",
     "completed": "Completed",
     "locked": "Missed"
+  },
+  "discussions": {
+    "forumTitle": "Community Forum",
+    "forumDescription": "Ask questions, share projects, and connect with fellow Solana builders.",
+    "lessonTitle": "Community Discussion",
+    "newThread": "New Thread",
+    "postThread": "Post Thread",
+    "searchPlaceholder": "Search discussions...",
+    "allCategories": "All Categories",
+    "sortNewest": "Newest",
+    "sortTop": "Top Voted",
+    "sortMostCommented": "Most Commented",
+    "noThreads": "No threads found.",
+    "loadMore": "Load more",
+    "backToDiscussions": "Back to discussions",
+    "commentsCount": "{count, plural, =0 {No comments yet} one {1 comment} other {# comments}}",
+    "commentPlaceholder": "Share your thoughts...",
+    "lessonPlaceholder": "Ask a question or share your thoughts...",
+    "replyPlaceholder": "Write a reply...",
+    "replyToPlaceholder": "Reply to {name}...",
+    "post": "Post",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "showReplies": "{count, plural, one {Show 1 reply} other {Show # replies}}",
+    "hideReplies": "{count, plural, one {Hide 1 reply} other {Hide # replies}}",
+    "continueThread": "Continue this thread",
+    "noComments": "No comments yet",
+    "beFirst": "Be the first to start a conversation!",
+    "threadLocked": "This thread is locked. No new comments can be added.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "What's your question or topic?",
+    "categoryLabel": "Category",
+    "tagsLabel": "Tags",
+    "tagsHint": "comma separated",
+    "bodyLabel": "Body",
+    "bodyPlaceholder": "Describe your question or share what you built...",
+    "signInToComment": "Sign in to join the discussion"
   }
 }

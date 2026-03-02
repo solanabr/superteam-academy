@@ -1,35 +1,54 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Upload, ExternalLink } from "lucide-react";
-
-const PROFILE_STORAGE_KEY = "sta-profile";
-
-function loadProfile() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
+import { Upload, ExternalLink, Loader2 } from "lucide-react";
 
 export function ProfileTab() {
   const t = useTranslations("settings");
-  const profileInit = loadProfile();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [displayName, setDisplayName] = useState(profileInit?.displayName || "SolDev.eth");
-  const [bio, setBio] = useState(
-    profileInit?.bio || "Solana developer and DeFi enthusiast. Building the future of decentralized education on-chain."
-  );
-  const [twitter, setTwitter] = useState(profileInit?.twitter || "@soldev_eth");
-  const [github, setGithub] = useState(profileInit?.github || "soldev-eth");
-  const [discord, setDiscord] = useState(profileInit?.discord || "soldev.eth#1234");
-  const [avatar, setAvatar] = useState<string | null>(profileInit?.avatar || null);
+  const [displayName, setDisplayName] = useState("Learner");
+  const [bio, setBio] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [github, setGithub] = useState("");
+  const [discord, setDiscord] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load profile from the DB-backed API endpoint
+  useEffect(() => {
+    fetch("/api/user")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) {
+          // Fall back to localStorage if not authenticated
+          try {
+            const raw = localStorage.getItem("sta-profile");
+            if (raw) {
+              const p = JSON.parse(raw);
+              setDisplayName(p.displayName || "Learner");
+              setBio(p.bio || "");
+              setTwitter(p.twitter || "");
+              setGithub(p.github || "");
+              setDiscord(p.discord || "");
+              setAvatar(p.avatar || null);
+            }
+          } catch { /* ignore */ }
+        } else {
+          setDisplayName(data.displayName || "Learner");
+          setBio(data.bio || "");
+          setTwitter(data.socialLinks?.twitter || "");
+          setGithub(data.socialLinks?.github || "");
+          setDiscord(data.socialLinks?.discord || "");
+          setAvatar(data.avatar || null);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -37,19 +56,44 @@ export function ProfileTab() {
     if (file.size > 500_000) return; // 500KB limit
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = reader.result as string;
-      setAvatar(base64);
+      setAvatar(reader.result as string);
     };
     reader.readAsDataURL(file);
   }
 
-  function handleSave() {
-    localStorage.setItem(
-      PROFILE_STORAGE_KEY,
-      JSON.stringify({ displayName, bio, twitter, github, discord, avatar })
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName,
+          bio,
+          socialLinks: { twitter, github, discord },
+        }),
+      });
+
+      if (res.ok) {
+        // Also persist to localStorage as offline cache
+        localStorage.setItem(
+          "sta-profile",
+          JSON.stringify({ displayName, bio, twitter, github, discord, avatar })
+        );
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch { /* ignore */ } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
     );
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
   }
 
   return (
@@ -203,8 +247,10 @@ export function ProfileTab() {
         <button
           type="button"
           onClick={handleSave}
-          className="rounded-lg bg-st-green px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-st-green-dark"
+          disabled={saving}
+          className="flex items-center gap-2 rounded-lg bg-st-green px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-st-green-dark disabled:opacity-60"
         >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {saved ? t("profileSection.savedFeedback") : t("saveChanges")}
         </button>
       </div>

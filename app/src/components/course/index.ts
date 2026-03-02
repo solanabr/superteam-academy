@@ -6,7 +6,6 @@ export { CourseGrid } from "./course-grid";
 export { ModuleList } from "./module-list";
 export { EnrollButton } from "./enroll-button";
 export { ReviewsSection } from "./reviews-section";
-export { DiscussionSection } from "./discussion-section";
 export { default as CourseDetailClient } from "./course-detail-client";
 
 // Lesson components
@@ -33,5 +32,4 @@ export type { CourseGridSkeletonProps } from "./skeletons";
 export type { ModuleListProps } from "./module-list";
 export type { EnrollButtonProps } from "./enroll-button";
 export type { ReviewsSectionProps } from "./reviews-section";
-export type { DiscussionSectionProps } from "./discussion-utils";
 export type { CourseDetailClientProps } from "./course-detail-client";

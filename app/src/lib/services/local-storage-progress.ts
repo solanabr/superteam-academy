@@ -330,9 +330,9 @@ export class LocalStorageProgressService implements LearningProgressService {
 
   // ---- Achievements -------------------------------------------------------
 
-  async getAchievements(userId: string): Promise<Achievement[]> {
+  async getAchievements(userId: string | null): Promise<Achievement[]> {
     const claimed = getItem<Record<number, string>>(
-      this.key("achievements_claimed", userId),
+      this.key("achievements_claimed", userId ?? "guest"),
       {}
     );
 

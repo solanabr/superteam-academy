@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Star,
   TrendingUp,
@@ -10,6 +10,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 import { useWalletCompat as useWallet } from "@/lib/hooks/use-wallet-compat";
 import { formatXP, xpProgress, getLevel } from "@/lib/utils";
 import { useCourses } from "@/lib/hooks/use-courses";
@@ -18,22 +19,42 @@ import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
 import {
   ProfileHeader,
   SkillChart,
+  StreakSection,
   AchievementGrid,
   CredentialDisplay,
   CourseHistory,
 } from "@/components/profile";
 import type { SkillDataPoint, CredentialItem, CompletedCourseItem } from "@/components/profile";
 
-const PROFILE_STORAGE_KEY = "sta-profile";
 const PRIVACY_STORAGE_KEY = "sta-privacy";
 
-function loadProfile(): Record<string, string> | null {
-  if (typeof window === "undefined") return null;
+type Tab = "overview" | "achievements" | "credentials" | "courses";
+
+const TABS: { id: Tab; labelKey: string }[] = [
+  { id: "overview", labelKey: "tabOverview" },
+  { id: "achievements", labelKey: "tabAchievements" },
+  { id: "credentials", labelKey: "tabCredentials" },
+  { id: "courses", labelKey: "tabCourses" },
+];
+
+interface UserProfile {
+  displayName: string;
+  bio: string;
+  twitter: string;
+  github: string;
+  discord: string;
+  avatar: string | null;
+  joinedAt: string | null;
+  isPublic: boolean;
+}
+
+function loadLocalProfile(): Partial<UserProfile> {
+  if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem("sta-profile");
+    return raw ? JSON.parse(raw) : {};
   } catch {
-    return null;
+    return {};
   }
 }
 
@@ -43,6 +64,22 @@ export default function ProfilePage() {
   const { publicKey, connected } = useWallet();
   const { xp, streak, achievements, enrolledCourseIds, progressMap } = useLearningProgress();
   const { courses } = useCourses();
+
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+
+  const [profileData, setProfileData] = useState<UserProfile>(() => {
+    const local = loadLocalProfile();
+    return {
+      displayName: local.displayName || "Learner",
+      bio: local.bio || "",
+      twitter: local.twitter || "",
+      github: local.github || "",
+      discord: local.discord || "",
+      avatar: local.avatar ?? null,
+      joinedAt: null,
+      isPublic: true,
+    };
+  });
 
   const [isPublic, setIsPublic] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -56,22 +93,38 @@ export default function ProfilePage() {
     return true;
   });
 
-  const [profileData] = useState(() => {
-    const p = loadProfile();
-    return {
-      displayName: p?.displayName || "Learner",
-      bio: p?.bio || "",
-      twitter: p?.twitter || "",
-      github: p?.github || "",
-      discord: p?.discord || "",
-      avatar: p?.avatar || null,
-    };
-  });
+  // Load profile from API
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/user")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setProfileData({
+          displayName: data.displayName || "Learner",
+          bio: data.bio || "",
+          twitter: data.socialLinks?.twitter || "",
+          github: data.socialLinks?.github || "",
+          discord: data.socialLinks?.discord || "",
+          avatar: data.avatar || null,
+          joinedAt: data.joinedAt || null,
+          isPublic: data.isPublic ?? true,
+        });
+        setIsPublic(data.isPublic ?? true);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const handleToggleVisibility = () => {
     const next = !isPublic;
     setIsPublic(next);
     localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({ profilePublic: next }));
+    fetch("/api/user", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPublic: next }),
+    }).catch(() => {});
   };
 
   const level = getLevel(xp);
@@ -155,7 +208,17 @@ export default function ProfilePage() {
     .slice(0, 2) || "??";
 
   const walletAddress = connected && publicKey ? publicKey.toBase58() : null;
-  const joinDate = new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+  const joinDate = profileData.joinedAt
+    ? new Date(profileData.joinedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : "";
+
+  const tabLabels: Record<Tab, string> = {
+    overview: t("tabOverview"),
+    achievements: tg("achievement"),
+    credentials: t("credentials"),
+    courses: t("completedCourses"),
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -175,7 +238,7 @@ export default function ProfilePage() {
         labels={{
           viewPublicProfile: t("viewPublicProfile"),
           editProfile: t("editProfile"),
-          memberSince: t("memberSince", { date: joinDate }),
+          memberSince: joinDate ? t("memberSince", { date: joinDate }) : "",
         }}
       />
 
@@ -196,57 +259,102 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* Main Two-Column Layout */}
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="space-y-8 lg:col-span-2">
-          <SkillChart skillData={skillData} title={t("skills")} emptyMessage={t("noSkills")} />
-          <AchievementGrid achievements={achievements} claimedCount={claimedCount} title={tg("achievement")} emptyMessage={t("noBadges")} />
-          <CourseHistory completedCourses={completedCourses} title={t("completedCourses")} emptyMessage={t("noCompletedCourses")} />
-        </div>
+      {/* Tab Bar */}
+      <div className="mt-8 border-b border-white/10">
+        <nav className="-mb-px flex gap-6 overflow-x-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors",
+                activeTab === tab.id
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tabLabels[tab.id]}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        <div className="space-y-8">
-          {/* XP Progress Card */}
-          <div className="glass rounded-2xl p-6">
-            <h2 className="mb-3 text-lg font-bold">{tg("level")}</h2>
-            <div className="text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-st-green to-brazil-teal">
-                <span className="text-2xl font-bold text-white">{level}</span>
+      {/* Tab Content */}
+      <div className="mt-8">
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="space-y-8 lg:col-span-2">
+              <SkillChart skillData={skillData} title={t("skills")} emptyMessage={t("noSkills")} />
+              <StreakSection streak={streak} />
+            </div>
+            <div className="space-y-8">
+              {/* XP Progress Card */}
+              <div className="glass rounded-2xl p-6">
+                <h2 className="mb-3 text-lg font-bold">{tg("level")}</h2>
+                <div className="text-center">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-st-green to-brazil-teal">
+                    <span className="text-2xl font-bold text-white">{level}</span>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {formatXP(xp - progress.currentLevelXp)} / {formatXP(progress.nextLevelXp - progress.currentLevelXp)} XP to Level {progress.level + 1}
+                  </p>
+                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-st-green to-brazil-teal transition-all duration-500"
+                      style={{ width: `${Math.min(progress.progress, 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{Math.round(progress.progress)}% complete</p>
+                </div>
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {formatXP(xp - progress.currentLevelXp)} / {formatXP(progress.nextLevelXp - progress.currentLevelXp)} XP to Level {progress.level + 1}
-              </p>
-              <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-st-green to-brazil-teal transition-all duration-500"
-                  style={{ width: `${Math.min(progress.progress, 100)}%` }}
-                />
+
+              {/* Wallet Card */}
+              <div className="glass rounded-2xl p-6">
+                <h2 className="mb-3 text-lg font-bold">{t("walletAddress")}</h2>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {walletAddress ? (
+                      <>
+                        <p className="truncate font-mono text-xs text-muted-foreground">{walletAddress}</p>
+                        <p className="mt-0.5 text-xs text-brazil-green">Connected</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No wallet connected</p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{Math.round(progress.progress)}% complete</p>
             </div>
           </div>
+        )}
 
-          <CredentialDisplay credentials={credentials} title={t("credentials")} emptyMessage={t("noCredentials")} />
+        {activeTab === "achievements" && (
+          <AchievementGrid
+            achievements={achievements}
+            claimedCount={claimedCount}
+            title={tg("achievement")}
+            emptyMessage={t("noBadges")}
+          />
+        )}
 
-          {/* Wallet Card */}
-          <div className="glass rounded-2xl p-6">
-            <h2 className="mb-3 text-lg font-bold">{t("walletAddress")}</h2>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="min-w-0 flex-1">
-                {walletAddress ? (
-                  <>
-                    <p className="truncate font-mono text-xs text-muted-foreground">{walletAddress}</p>
-                    <p className="mt-0.5 text-xs text-brazil-green">Connected</p>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No wallet connected</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        {activeTab === "credentials" && (
+          <CredentialDisplay
+            credentials={credentials}
+            title={t("credentials")}
+            emptyMessage={t("noCredentials")}
+          />
+        )}
+
+        {activeTab === "courses" && (
+          <CourseHistory
+            completedCourses={completedCourses}
+            title={t("completedCourses")}
+            emptyMessage={t("noCompletedCourses")}
+          />
+        )}
       </div>
     </div>
   );

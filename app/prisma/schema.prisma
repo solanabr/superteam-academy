@@ -27,13 +27,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  enrollments Enrollment[]
-  achievements UserAchievement[]
-  credentials UserCredential[]
-  streakData  StreakData?
-  xpEvents    XPEvent[]
-  activities  Activity[]
-  socialLinks SocialLinks?
+  enrollments    Enrollment[]
+  achievements   UserAchievement[]
+  credentials    UserCredential[]
+  streakData     StreakData?
+  xpEvents       XPEvent[]
+  activities     Activity[]
+  socialLinks    SocialLinks?
+  notifications  Notification[]
+  threads        Thread[]
+  comments       Comment[]
+  threadVotes    ThreadVote[]
+  commentVotes   CommentVote[]
 }
 
 model SocialLinks {
@@ -269,6 +274,103 @@ model Newsletter {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // xp_milestone | level_up | achievement | course_announcement | reply | mention
+  title     String
+  body      String
+  data      Json     @default("{}")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+// ─── Discussions ───────────────────────────────────────────────────────────
+
+model Thread {
+  id           String   @id @default(cuid())
+  title        String
+  body         String
+  preview      String
+  scope        String   // community | lesson
+  category     String?  // Help | Show & Tell | Ideas | General
+  tags         String[]
+  lessonId     String?
+  courseId      String?
+  authorId     String
+  isPinned     Boolean  @default(false)
+  isLocked     Boolean  @default(false)
+  voteScore    Int      @default(0)
+  commentCount Int      @default(0)
+  viewCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  votes    ThreadVote[]
+
+  @@index([scope, category, createdAt])
+  @@index([scope, lessonId])
+  @@index([authorId])
+  @@index([voteScore])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  threadId  String
+  parentId  String?
+  path      String
+  depth     Int      @default(0)
+  body      String
+  authorId  String
+  voteScore Int      @default(0)
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  thread   Thread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  parent   Comment?     @relation("CommentReplies", fields: [parentId], references: [id])
+  children Comment[]    @relation("CommentReplies")
+  author   User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes    CommentVote[]
+
+  @@index([threadId, path])
+  @@index([parentId])
+  @@index([authorId])
+}
+
+model ThreadVote {
+  id       String @id @default(cuid())
+  threadId String
+  userId   String
+  value    Int    // +1 or -1
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+}
+
+model CommentVote {
+  id        String @id @default(cuid())
+  commentId String
+  userId    String
+  value     Int    // +1 or -1
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
 }
 
 // ─── Daily Challenge Completions ────────────────────────────────────────────

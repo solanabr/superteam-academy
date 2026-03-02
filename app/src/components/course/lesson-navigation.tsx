@@ -36,7 +36,7 @@ export function LessonNavigation({
                 t("previous")
               ) : (
                 <>
-                  <span className="hidden sm:inline">{prevLesson.lesson.title}</span>
+                  <span className="hidden max-w-[180px] truncate sm:inline">{prevLesson.lesson.title}</span>
                   <span className="sm:hidden">{t("previous")}</span>
                 </>
               )}
@@ -63,7 +63,7 @@ export function LessonNavigation({
                 t("next")
               ) : (
                 <>
-                  <span className="hidden sm:inline">{nextLesson.lesson.title}</span>
+                  <span className="hidden max-w-[180px] truncate sm:inline">{nextLesson.lesson.title}</span>
                   <span className="sm:hidden">{t("next")}</span>
                 </>
               )}

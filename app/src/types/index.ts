@@ -40,7 +40,8 @@ export interface Lesson {
   type: "content" | "challenge";
   order: number;
   xpReward: number;
-  content?: string; // markdown
+  content?: string; // markdown or HTML from Lexical
+  videoUrl?: string; // YouTube/Vimeo embed URL
   challenge?: Challenge;
   duration: string;
   completed?: boolean;
@@ -114,6 +115,7 @@ export interface Credential {
   totalXpEarned: number;
   firstEarned?: string;
   lastUpdated: string;
+  mintAddress?: string;
   metadataUri?: string;
   badgeImage?: string;
 }
@@ -154,6 +156,40 @@ export interface FlattenedLesson {
   moduleTitle: string;
   moduleIndex: number;
 }
+
+// Notification types
+export type NotificationType =
+  | "xp_milestone"
+  | "level_up"
+  | "achievement"
+  | "course_announcement"
+  | "reply"
+  | "mention";
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+// Discussion types
+export type {
+  ThreadScope,
+  ThreadCategory,
+  VoteValue,
+  ThreadAuthor,
+  ThreadListItem,
+  ThreadDetail,
+  CommentNode,
+  CreateThreadPayload,
+  CreateCommentPayload,
+  ThreadListParams,
+  ThreadListResponse,
+} from "./discussions";
 
 // Learning path
 export interface LearningPath {

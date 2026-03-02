@@ -4,13 +4,10 @@ import { resolveUserId } from "@/lib/auth-utils";
 
 const service = new PrismaProgressService();
 
-export async function GET(request: NextRequest) {
+// GET — public: returns all achievements; claimed status populated for authenticated users
+export async function GET(_request: NextRequest) {
   const userId = await resolveUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const achievements = await service.getAchievements(userId);
+  const achievements = await service.getAchievements(userId ?? null);
   return NextResponse.json(achievements);
 }
 

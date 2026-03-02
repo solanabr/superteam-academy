@@ -130,7 +130,7 @@ export default function LeaderboardPage() {
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { getLeaderboard, xp, streak, isOnChain } = useLearningProgress();
+  const { getLeaderboard, xp, streak, isOnChain, walletAddress } = useLearningProgress();
   const { courses: allCourses } = useCourses();
 
   const courseOptions = useMemo(() =>
@@ -156,7 +156,11 @@ export default function LeaderboardPage() {
   }, [timeFilter, courseFilter, getLeaderboard]);
 
   const top3 = data.slice(0, 3);
-  const userEntry = data.find((e) => e.displayName?.includes("local-learner") || e.wallet === "local-learner");
+  // Detect the current user by wallet address; fall back to userId string match
+  const userEntry = data.find((e) =>
+    (walletAddress && e.wallet === walletAddress) ||
+    (!walletAddress && e.wallet === "local-learner")
+  );
   const userRank = userEntry?.rank;
 
   return (
@@ -291,7 +295,9 @@ export default function LeaderboardPage() {
 
             <div className="divide-y divide-white/5">
               {data.map((entry) => {
-                const isCurrentUser = entry.wallet === "local-learner";
+                const isCurrentUser =
+                  (walletAddress && entry.wallet === walletAddress) ||
+                  (!walletAddress && entry.wallet === "local-learner");
                 return (
                   <div
                     key={entry.rank}

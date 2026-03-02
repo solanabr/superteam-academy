@@ -1,5 +1,6 @@
 export { ProfileHeader } from "./profile-header";
 export { SkillChart } from "./skill-chart";
+export { StreakSection } from "./streak-section";
 export type { SkillDataPoint } from "./skill-chart";
 export { AchievementGrid } from "./achievement-grid";
 export { CredentialDisplay } from "./credential-display";

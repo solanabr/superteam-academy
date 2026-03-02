@@ -120,7 +120,7 @@ export interface LearningProgressService {
    * @param userId - Wallet public key or local user identifier
    * @returns All achievements with `claimed` flag and optional `claimedAt` timestamp
    */
-  getAchievements(userId: string): Promise<Achievement[]>;
+  getAchievements(userId: string | null): Promise<Achievement[]>;
 
   /**
    * Claim an unlocked achievement, awarding its XP reward to the learner.

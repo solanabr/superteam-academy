@@ -1,0 +1,488 @@
+/* ── Superteam Academy CMS Theme ──
+   Branded overrides for both dark and light modes,
+   matching the app's Solana deep-green + cream/gold palette.
+   ────────────────────────────────────────────────────────── */
+
+/* ══════════════════════════════════════
+   SHARED (both modes)
+   ══════════════════════════════════════ */
+
+:root {
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --style-radius-s: 4px;
+  --style-radius-m: 8px;
+  --style-radius-l: 12px;
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code,
+pre,
+.code-field textarea {
+  font-family: var(--font-mono) !important;
+}
+
+/* ── Constrain edit form on wide screens ── */
+.collection-edit,
+.global-edit {
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+.doc-controls__wrapper {
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+/* ══════════════════════════════════════
+   DARK MODE
+   ══════════════════════════════════════ */
+
+html[data-theme="dark"] {
+  /* ── Elevation ramp (background → text) ── */
+  --theme-elevation-0: #1e3a28;
+  --theme-elevation-50: #223d2c;
+  --theme-elevation-100: #2a4d38;
+  --theme-elevation-150: rgba(237, 230, 210, 0.1);
+  --theme-elevation-200: #2f4f3a;
+  --theme-elevation-250: #35573f;
+  --theme-elevation-300: #3a6044;
+  --theme-elevation-350: #406a4a;
+  --theme-elevation-400: #4a7a52;
+  --theme-elevation-450: #56885c;
+  --theme-elevation-500: #648f6a;
+  --theme-elevation-550: #7aa07e;
+  --theme-elevation-600: #8aac8c;
+  --theme-elevation-650: #9ab89c;
+  --theme-elevation-700: #aabfac;
+  --theme-elevation-750: #bccab4;
+  --theme-elevation-800: #ccd6c4;
+  --theme-elevation-850: #d8d2b8;
+  --theme-elevation-900: #e2dcc4;
+  --theme-elevation-950: #ede6d2;
+  --theme-elevation-1000: #f2ebd4;
+
+  /* ── Success / primary accent → brand green ── */
+  --theme-success-50: #1e3a28;
+  --theme-success-100: #264432;
+  --theme-success-200: #2d6b42;
+  --theme-success-300: #357a3c;
+  --theme-success-400: #3d7a4a;
+  --theme-success-500: #448038;
+  --theme-success-600: #4e9040;
+  --theme-success-700: #5ca04c;
+  --theme-success-800: #72b060;
+  --theme-success-900: #92c880;
+  --theme-success-950: #b8e0a8;
+
+  /* ── Warning → gold accent ── */
+  --theme-warning-50: #2a2818;
+  --theme-warning-100: #3a3820;
+  --theme-warning-200: #5a5428;
+  --theme-warning-300: #7a7030;
+  --theme-warning-400: #9a8c30;
+  --theme-warning-500: #c8b830;
+  --theme-warning-600: #d4c23d;
+  --theme-warning-700: #dece58;
+  --theme-warning-800: #e8da78;
+  --theme-warning-900: #ede08a;
+  --theme-warning-950: #f4eab0;
+
+  /* ── Error ── */
+  --theme-error-500: #ef4444;
+  --theme-error-600: #dc2626;
+}
+
+/* Dark — component overrides */
+html[data-theme="dark"] .nav {
+  background: #1e3a28;
+}
+
+html[data-theme="dark"] .nav__wrapper {
+  border-right-color: rgba(237, 230, 210, 0.08);
+}
+
+html[data-theme="dark"] .nav-group__toggle:hover,
+html[data-theme="dark"] .nav__link:hover,
+html[data-theme="dark"] .nav__link--active {
+  background: rgba(68, 128, 56, 0.15);
+}
+
+html[data-theme="dark"] .nav__link--active {
+  border-left-color: #448038;
+}
+
+html[data-theme="dark"] .app-header {
+  background: #1e3a28;
+  border-bottom-color: rgba(237, 230, 210, 0.08);
+}
+
+html[data-theme="dark"] .btn--style-primary {
+  background: #448038;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .btn--style-primary:hover,
+html[data-theme="dark"] .btn--style-primary:focus {
+  background: #3a7232;
+}
+
+html[data-theme="dark"] .btn--style-secondary {
+  border-color: rgba(237, 230, 210, 0.12);
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .btn--style-secondary:hover,
+html[data-theme="dark"] .btn--style-secondary:focus {
+  background: rgba(68, 128, 56, 0.1);
+  border-color: rgba(68, 128, 56, 0.3);
+}
+
+html[data-theme="dark"] .pill {
+  background: rgba(68, 128, 56, 0.15);
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .row-1:hover,
+html[data-theme="dark"] .table .row:hover {
+  background: rgba(68, 128, 56, 0.06);
+}
+
+html[data-theme="dark"] .field-type input,
+html[data-theme="dark"] .field-type textarea,
+html[data-theme="dark"] .field-type select,
+html[data-theme="dark"] .react-select__control {
+  background: rgba(237, 230, 210, 0.04);
+  border-color: rgba(237, 230, 210, 0.1);
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .field-type input:focus,
+html[data-theme="dark"] .field-type textarea:focus,
+html[data-theme="dark"] .react-select__control--is-focused {
+  border-color: rgba(68, 128, 56, 0.5);
+  box-shadow: 0 0 0 2px rgba(68, 128, 56, 0.15);
+}
+
+html[data-theme="dark"] .drawer__content,
+html[data-theme="dark"] .document-drawer__content {
+  background: #223d2c;
+}
+
+html[data-theme="dark"] .doc-header {
+  border-bottom-color: rgba(237, 230, 210, 0.08);
+}
+
+html[data-theme="dark"] .tabs-field__tab-button--active {
+  border-bottom-color: #448038;
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .tabs-field__tab-button:hover {
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(237, 230, 210, 0.15);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(237, 230, 210, 0.25);
+}
+
+html[data-theme="dark"] .status-indicator--draft {
+  background: #c8b830;
+}
+
+html[data-theme="dark"] .status-indicator--published {
+  background: #448038;
+}
+
+html[data-theme="dark"] .toolbar-popup,
+html[data-theme="dark"] .inline-toolbar-popup {
+  background: #2a4d38;
+  border-color: rgba(237, 230, 210, 0.1);
+}
+
+html[data-theme="dark"] .rich-text-lexical .ContentEditable__root {
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .payload-toast-container .toast--success {
+  background: #2d6b42;
+  border-left-color: #448038;
+}
+
+html[data-theme="dark"] .relationship--single-value {
+  background: rgba(42, 77, 56, 0.4);
+  border-color: rgba(237, 230, 210, 0.08);
+}
+
+html[data-theme="dark"] .step-nav a {
+  color: #aabfac;
+}
+
+html[data-theme="dark"] .step-nav a:hover {
+  color: #ede6d2;
+}
+
+html[data-theme="dark"] .dashboard__card-list .card {
+  background: #2a4d38;
+  border-color: rgba(237, 230, 210, 0.08);
+}
+
+html[data-theme="dark"] .dashboard__card-list .card:hover {
+  border-color: rgba(68, 128, 56, 0.3);
+}
+
+html[data-theme="dark"] .collapsible__header {
+  background: rgba(42, 77, 56, 0.3);
+}
+
+html[data-theme="dark"] .collapsible__header:hover {
+  background: rgba(42, 77, 56, 0.5);
+}
+
+html[data-theme="dark"] .versions-count {
+  background: rgba(68, 128, 56, 0.2);
+  color: #ede6d2;
+}
+
+/* ══════════════════════════════════════
+   LIGHT MODE
+   ══════════════════════════════════════ */
+
+html[data-theme="light"] {
+  /* ── Elevation ramp (background → text) ── */
+  --theme-elevation-0: #f2ebd4;
+  --theme-elevation-50: #ede5cc;
+  --theme-elevation-100: #e8e0c6;
+  --theme-elevation-150: rgba(26, 48, 32, 0.1);
+  --theme-elevation-200: #ddd5b2;
+  --theme-elevation-250: #d2caa4;
+  --theme-elevation-300: #c8be8c;
+  --theme-elevation-350: #b0a878;
+  --theme-elevation-400: #98926a;
+  --theme-elevation-450: #807c5c;
+  --theme-elevation-500: #6a6850;
+  --theme-elevation-550: #5a6b5c;
+  --theme-elevation-600: #4d5e4e;
+  --theme-elevation-650: #405240;
+  --theme-elevation-700: #344634;
+  --theme-elevation-750: #2a3c2c;
+  --theme-elevation-800: #223224;
+  --theme-elevation-850: #1e2e20;
+  --theme-elevation-900: #1a3020;
+  --theme-elevation-950: #162818;
+  --theme-elevation-1000: #122010;
+
+  /* ── Success / primary accent → dark brand green ── */
+  --theme-success-50: #eaf5ec;
+  --theme-success-100: #d0e8d4;
+  --theme-success-200: #a0d0a8;
+  --theme-success-300: #6ab870;
+  --theme-success-400: #4a9a50;
+  --theme-success-500: #2d6b42;
+  --theme-success-600: #266038;
+  --theme-success-700: #204e30;
+  --theme-success-800: #1a3e26;
+  --theme-success-900: #142e1c;
+  --theme-success-950: #0e2014;
+
+  /* ── Warning → darker gold ── */
+  --theme-warning-50: #faf6e0;
+  --theme-warning-100: #f0eac0;
+  --theme-warning-200: #e0d898;
+  --theme-warning-300: #d0c470;
+  --theme-warning-400: #c0b050;
+  --theme-warning-500: #b8a028;
+  --theme-warning-600: #a09020;
+  --theme-warning-700: #887818;
+  --theme-warning-800: #706010;
+  --theme-warning-900: #584a08;
+  --theme-warning-950: #403404;
+
+  /* ── Error ── */
+  --theme-error-500: #dc2626;
+  --theme-error-600: #b91c1c;
+}
+
+/* Light — component overrides */
+html[data-theme="light"] .nav {
+  background: #f2ebd4;
+}
+
+html[data-theme="light"] .nav__wrapper {
+  border-right-color: rgba(26, 48, 32, 0.1);
+}
+
+html[data-theme="light"] .nav-group__toggle:hover,
+html[data-theme="light"] .nav__link:hover,
+html[data-theme="light"] .nav__link--active {
+  background: rgba(45, 107, 66, 0.1);
+}
+
+html[data-theme="light"] .nav__link--active {
+  border-left-color: #2d6b42;
+}
+
+html[data-theme="light"] .app-header {
+  background: #f2ebd4;
+  border-bottom-color: rgba(26, 48, 32, 0.1);
+}
+
+html[data-theme="light"] .btn--style-primary {
+  background: #2d6b42;
+  color: #ffffff;
+}
+
+html[data-theme="light"] .btn--style-primary:hover,
+html[data-theme="light"] .btn--style-primary:focus {
+  background: #266038;
+}
+
+html[data-theme="light"] .btn--style-secondary {
+  border-color: rgba(26, 48, 32, 0.15);
+  color: #1a3020;
+}
+
+html[data-theme="light"] .btn--style-secondary:hover,
+html[data-theme="light"] .btn--style-secondary:focus {
+  background: rgba(45, 107, 66, 0.08);
+  border-color: rgba(45, 107, 66, 0.25);
+}
+
+html[data-theme="light"] .pill {
+  background: rgba(45, 107, 66, 0.1);
+  color: #1a3020;
+}
+
+html[data-theme="light"] .row-1:hover,
+html[data-theme="light"] .table .row:hover {
+  background: rgba(45, 107, 66, 0.05);
+}
+
+html[data-theme="light"] .field-type input,
+html[data-theme="light"] .field-type textarea,
+html[data-theme="light"] .field-type select,
+html[data-theme="light"] .react-select__control {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(26, 48, 32, 0.12);
+  color: #1a3020;
+}
+
+html[data-theme="light"] .field-type input:focus,
+html[data-theme="light"] .field-type textarea:focus,
+html[data-theme="light"] .react-select__control--is-focused {
+  border-color: rgba(45, 107, 66, 0.5);
+  box-shadow: 0 0 0 2px rgba(45, 107, 66, 0.12);
+}
+
+html[data-theme="light"] .drawer__content,
+html[data-theme="light"] .document-drawer__content {
+  background: #ede5cc;
+}
+
+html[data-theme="light"] .doc-header {
+  border-bottom-color: rgba(26, 48, 32, 0.1);
+}
+
+html[data-theme="light"] .tabs-field__tab-button--active {
+  border-bottom-color: #2d6b42;
+  color: #1a3020;
+}
+
+html[data-theme="light"] .tabs-field__tab-button:hover {
+  color: #1a3020;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(26, 48, 32, 0.15);
+  border-radius: 4px;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 48, 32, 0.25);
+}
+
+html[data-theme="light"] .status-indicator--draft {
+  background: #b8a028;
+}
+
+html[data-theme="light"] .status-indicator--published {
+  background: #2d6b42;
+}
+
+html[data-theme="light"] .toolbar-popup,
+html[data-theme="light"] .inline-toolbar-popup {
+  background: #e8e0c6;
+  border-color: rgba(26, 48, 32, 0.12);
+}
+
+html[data-theme="light"] .rich-text-lexical .ContentEditable__root {
+  color: #1a3020;
+}
+
+html[data-theme="light"] .payload-toast-container .toast--success {
+  background: #d0e8d4;
+  border-left-color: #2d6b42;
+}
+
+html[data-theme="light"] .relationship--single-value {
+  background: rgba(232, 224, 198, 0.6);
+  border-color: rgba(26, 48, 32, 0.08);
+}
+
+html[data-theme="light"] .step-nav a {
+  color: #5a6b5c;
+}
+
+html[data-theme="light"] .step-nav a:hover {
+  color: #1a3020;
+}
+
+html[data-theme="light"] .dashboard__card-list .card {
+  background: #e8e0c6;
+  border-color: rgba(26, 48, 32, 0.08);
+}
+
+html[data-theme="light"] .dashboard__card-list .card:hover {
+  border-color: rgba(45, 107, 66, 0.25);
+}
+
+html[data-theme="light"] .collapsible__header {
+  background: rgba(232, 224, 198, 0.5);
+}
+
+html[data-theme="light"] .collapsible__header:hover {
+  background: rgba(232, 224, 198, 0.8);
+}
+
+html[data-theme="light"] .versions-count {
+  background: rgba(45, 107, 66, 0.1);
+  color: #1a3020;
+}

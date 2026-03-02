@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -13,12 +13,13 @@ import {
   Share2,
   Link2,
   Check,
+  Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatXP, xpProgress, getLevel } from "@/lib/utils";
 import { TRACKS } from "@/lib/constants";
 import { useCourses } from "@/lib/hooks/use-courses";
-import type { Course } from "@/types";
+import type { Course, Achievement } from "@/types";
 import {
   ProfileHeader,
   SkillChart,
@@ -27,87 +28,33 @@ import {
   CourseHistory,
 } from "@/components/profile";
 import type { SkillDataPoint, CredentialItem, CompletedCourseItem } from "@/components/profile";
-import type { Achievement } from "@/types";
+import { MOCK_PUBLIC_PROFILES } from "../../../prisma/seed-data/profiles";
+export type { MockProfile } from "../../../prisma/seed-data/profiles";
+export { MOCK_PUBLIC_PROFILES };
 
 // ──────────────────────────────────────────────
-// Mock public profiles — rich demo data
+// API profile type
 // ──────────────────────────────────────────────
-interface MockProfile {
+interface ApiProfile {
   displayName: string;
   bio: string;
   joinedAt: string;
   socialLinks: { twitter?: string; github?: string; discord?: string };
   xp: number;
-  coursesCompleted: string[];
+  level: number;
+  streak: { currentStreak: number };
   achievements: Achievement[];
-  skillData: SkillDataPoint[];
+  credentials: Array<{ trackId: number; trackName: string; currentLevel: number; coursesCompleted: number; totalXpEarned: number }>;
+  coursesCompleted: string[];
+  enrolledCourses: string[];
+  skillData?: SkillDataPoint[];
 }
-
-const MOCK_PUBLIC_PROFILES: Record<string, MockProfile> = {
-  "soldev-eth": {
-    displayName: "SolDev.eth",
-    bio: "Full-stack Solana builder. Learning Anchor, building DeFi, and shipping dApps. Superteam Brazil contributor.",
-    joinedAt: "2025-11-15T00:00:00Z",
-    socialLinks: { twitter: "SolDevEth", github: "soldev-eth" },
-    xp: 1750,
-    coursesCompleted: ["intro-to-solana", "anchor-fundamentals", "nextjs-solana-dapps"],
-    achievements: [
-      { id: 1, name: "First Steps", description: "Complete your first lesson", icon: "footprints", category: "progress", xpReward: 50, claimed: true, claimedAt: "2025-12-01T00:00:00Z" },
-      { id: 2, name: "Fast Learner", description: "Complete 5 lessons in one day", icon: "zap", category: "progress", xpReward: 100, claimed: true, claimedAt: "2025-12-10T00:00:00Z" },
-      { id: 5, name: "Course Master", description: "Complete an entire course", icon: "graduation-cap", category: "progress", xpReward: 200, claimed: true, claimedAt: "2026-01-10T00:00:00Z" },
-      { id: 6, name: "Streak Starter", description: "Maintain a 7-day streak", icon: "flame", category: "streaks", xpReward: 75, claimed: true, claimedAt: "2025-12-20T00:00:00Z" },
-      { id: 11, name: "Code Warrior", description: "Complete 10 coding challenges", icon: "code", category: "skills", xpReward: 100, claimed: true, claimedAt: "2026-01-15T00:00:00Z" },
-      { id: 16, name: "Early Adopter", description: "Join the platform in its first month", icon: "rocket", category: "special", xpReward: 150, claimed: true, claimedAt: "2025-11-15T00:00:00Z" },
-      { id: 3, name: "Speed Runner", description: "Complete a course in under 3 days", icon: "timer", category: "progress", xpReward: 150, claimed: false },
-      { id: 8, name: "Monthly Master", description: "Maintain a 30-day streak", icon: "calendar-check", category: "streaks", xpReward: 200, claimed: false },
-    ],
-    skillData: [
-      { skill: "Anchor Framework", value: 70 },
-      { skill: "Standalone", value: 85 },
-      { skill: "Frontend & dApps", value: 60 },
-      { skill: "DeFi Development", value: 20 },
-      { skill: "Program Security", value: 10 },
-    ],
-  },
-  "anchor-pro": {
-    displayName: "AnchorPro",
-    bio: "Anchor framework specialist. Building on-chain programs for Superteam ecosystem. Security enthusiast.",
-    joinedAt: "2025-12-01T00:00:00Z",
-    socialLinks: { twitter: "AnchorPro", github: "anchor-pro", discord: "anchorpro" },
-    xp: 3200,
-    coursesCompleted: ["intro-to-solana", "anchor-fundamentals", "token-engineering", "solana-security", "defi-fundamentals"],
-    achievements: [
-      { id: 1, name: "First Steps", description: "Complete your first lesson", icon: "footprints", category: "progress", xpReward: 50, claimed: true, claimedAt: "2025-12-05T00:00:00Z" },
-      { id: 2, name: "Fast Learner", description: "Complete 5 lessons in one day", icon: "zap", category: "progress", xpReward: 100, claimed: true, claimedAt: "2025-12-12T00:00:00Z" },
-      { id: 5, name: "Course Master", description: "Complete an entire course", icon: "graduation-cap", category: "progress", xpReward: 200, claimed: true, claimedAt: "2025-12-15T00:00:00Z" },
-      { id: 6, name: "Streak Starter", description: "Maintain a 7-day streak", icon: "flame", category: "streaks", xpReward: 75, claimed: true, claimedAt: "2025-12-18T00:00:00Z" },
-      { id: 8, name: "Monthly Master", description: "Maintain a 30-day streak", icon: "calendar-check", category: "streaks", xpReward: 200, claimed: true, claimedAt: "2026-01-15T00:00:00Z" },
-      { id: 11, name: "Code Warrior", description: "Complete 10 coding challenges", icon: "code", category: "skills", xpReward: 100, claimed: true, claimedAt: "2026-01-20T00:00:00Z" },
-      { id: 12, name: "Security Expert", description: "Complete the Security track", icon: "shield", category: "skills", xpReward: 200, claimed: true, claimedAt: "2026-02-01T00:00:00Z" },
-      { id: 13, name: "Token Engineer", description: "Complete the Token Engineering track", icon: "coins", category: "skills", xpReward: 150, claimed: true, claimedAt: "2026-01-20T00:00:00Z" },
-      { id: 16, name: "Early Adopter", description: "Join the platform in its first month", icon: "rocket", category: "special", xpReward: 150, claimed: true, claimedAt: "2025-12-01T00:00:00Z" },
-      { id: 3, name: "Speed Runner", description: "Complete a course in under 3 days", icon: "timer", category: "progress", xpReward: 150, claimed: false },
-    ],
-    skillData: [
-      { skill: "Anchor Framework", value: 95 },
-      { skill: "Standalone", value: 80 },
-      { skill: "Token Engineering", value: 75 },
-      { skill: "Program Security", value: 90 },
-      { skill: "DeFi Development", value: 70 },
-      { skill: "Frontend & dApps", value: 30 },
-    ],
-  },
-};
-
-/** Exported for server-side metadata generation */
-export { MOCK_PUBLIC_PROFILES };
-export type { MockProfile };
 
 /** Derive credentials from completed courses */
 function deriveCredentials(completedSlugs: string[], courseList: Course[]): CredentialItem[] {
   const trackMap: Record<number, { count: number; xp: number }> = {};
   for (const slug of completedSlugs) {
-    const course = courseList.find((c) => c.slug === slug);
+    const course = courseList.find((c) => c.slug === slug || c.id === slug);
     if (!course) continue;
     const tid = course.trackId;
     if (!trackMap[tid]) trackMap[tid] = { count: 0, xp: 0 };
@@ -132,10 +79,28 @@ function deriveCredentials(completedSlugs: string[], courseList: Course[]): Cred
 function deriveCompletedCourses(slugs: string[], courseList: Course[]): CompletedCourseItem[] {
   return slugs
     .map((slug) => {
-      const course = courseList.find((c) => c.slug === slug);
+      const course = courseList.find((c) => c.slug === slug || c.id === slug);
       return course ? { slug, title: course.title, xpTotal: course.xpTotal } : null;
     })
     .filter((c): c is CompletedCourseItem => c !== null);
+}
+
+/** Derive skill data from completed courses */
+function deriveSkillData(completedSlugs: string[], courseList: Course[]): SkillDataPoint[] {
+  const trackXP: Record<string, number> = {};
+  for (const slug of completedSlugs) {
+    const course = courseList.find((c) => c.slug === slug || c.id === slug);
+    if (!course) continue;
+    const trackName = TRACKS[course.trackId]?.display || "Other";
+    trackXP[trackName] = (trackXP[trackName] || 0) + course.xpTotal;
+  }
+  const entries = Object.entries(trackXP);
+  if (entries.length === 0) return [];
+  const maxXP = Math.max(...entries.map(([, v]) => v), 1);
+  return entries.map(([skill, value]) => ({
+    skill,
+    value: Math.round((value / maxXP) * 100),
+  }));
 }
 
 // ──────────────────────────────────────────────
@@ -234,16 +199,71 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
   const tg = useTranslations("gamification");
   const { courses: allCourses } = useCourses();
 
-  const profile = MOCK_PUBLIC_PROFILES[username];
-  if (!profile) {
+  const [apiProfile, setApiProfile] = useState<ApiProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFoundFromApi, setNotFoundFromApi] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/profile/${encodeURIComponent(username)}`)
+      .then(async (res) => {
+        if (res.status === 404) {
+          setNotFoundFromApi(true);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
+      .then((data) => {
+        if (data) setApiProfile(data as ApiProfile);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [username]);
+
+  // Show loading spinner while fetching
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // If not in DB and not a mock profile, 404
+  const mockProfile = MOCK_PUBLIC_PROFILES[username];
+  if (notFoundFromApi && !mockProfile) {
     notFound();
   }
+
+  // Build a unified profile from API data (preferred) or mock data (fallback)
+  const profile = apiProfile
+    ? {
+        displayName: apiProfile.displayName,
+        bio: apiProfile.bio,
+        joinedAt: apiProfile.joinedAt,
+        socialLinks: apiProfile.socialLinks,
+        xp: apiProfile.xp,
+        streak: apiProfile.streak.currentStreak,
+        achievements: apiProfile.achievements,
+        completedSlugs: apiProfile.coursesCompleted,
+        skillData: apiProfile.skillData ?? deriveSkillData(apiProfile.coursesCompleted, allCourses),
+      }
+    : {
+        displayName: mockProfile!.displayName,
+        bio: mockProfile!.bio,
+        joinedAt: mockProfile!.joinedAt,
+        socialLinks: mockProfile!.socialLinks,
+        xp: mockProfile!.xp,
+        streak: 12,
+        achievements: mockProfile!.achievements,
+        completedSlugs: mockProfile!.coursesCompleted,
+        skillData: mockProfile!.skillData,
+      };
 
   const level = getLevel(profile.xp);
   const progress = xpProgress(profile.xp);
   const claimedCount = profile.achievements.filter((a) => a.claimed).length;
-  const completedCourses = deriveCompletedCourses(profile.coursesCompleted, allCourses);
-  const credentials = deriveCredentials(profile.coursesCompleted, allCourses);
+  const completedCourses = deriveCompletedCourses(profile.completedSlugs, allCourses);
+  const credentials = deriveCredentials(profile.completedSlugs, allCourses);
 
   const initials = profile.displayName
     .split(/[\s.]/)
@@ -316,7 +336,7 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground">{tg("streak")}</p>
-            <p className="text-lg font-bold text-streak">12d</p>
+            <p className="text-lg font-bold text-streak">{profile.streak}d</p>
           </div>
         </div>
       </section>
