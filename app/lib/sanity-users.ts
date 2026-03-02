@@ -91,7 +91,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	const existing = await writeClient.fetch<AcademyUser | null>(userByAuthIdQuery, {
 		authId: params.authId,
 	});
-	const normalizedWalletAddress = params.walletAddress?.trim() ?? existing?.walletAddress?.trim();
+	const normalizedWalletAddress = params.walletAddress?.trim() || existing?.walletAddress?.trim();
 	const roleFromIdentity = determineRole(params.email, normalizedWalletAddress);
 	const existingByWallet = normalizedWalletAddress
 		? await writeClient.fetch<AcademyUser | null>(userByWalletQuery, {
@@ -111,11 +111,11 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 		const patch: Record<string, unknown> = {
 			name: params.name,
 			email: params.email,
+			walletAddress: normalizedWalletAddress || target.walletAddress || "",
 			lastActiveAt: now,
 			authId: params.authId,
 			role: roleFromIdentity,
 		};
-		if (normalizedWalletAddress) patch.walletAddress = normalizedWalletAddress;
 		if (params.image) patch.image = params.image;
 		if (!target.username) patch.username = await generateUsername(params.name);
 		return patch;
@@ -285,6 +285,40 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 }
 
 const USERS_BY_WALLETS_QUERY = `*[_type == "academyUser" && walletAddress in $wallets]{ _id, name, image, walletAddress, location }`;
+const ALL_USER_WALLETS_QUERY = `*[_type == "academyUser" && defined(walletAddress) && walletAddress != ""].walletAddress`;
+
+export async function getAllUserWallets(): Promise<string[]> {
+	if (!readClient) return [];
+	return readClient.fetch<string[]>(ALL_USER_WALLETS_QUERY);
+}
+
+export async function ensureSanityUsersExist(wallets: string[]): Promise<void> {
+	if (!writeClient || wallets.length === 0) return;
+	const existing = await getUsersByWallets(wallets);
+	const missing = wallets.filter((w) => !existing.has(w));
+	if (missing.length === 0) return;
+
+	const now = new Date().toISOString();
+	const transaction = writeClient.transaction();
+	for (const wallet of missing) {
+		transaction.create({
+			_type: "academyUser" as const,
+			authId: "",
+			name: `${wallet.slice(0, 4)}...${wallet.slice(-4)}`,
+			email: "",
+			walletAddress: wallet,
+			role: "learner" as const,
+			xpBalance: 0,
+			enrolledCourses: [] as string[],
+			completedCourses: [] as string[],
+			savedCourses: [] as string[],
+			lastActiveAt: now,
+		});
+	}
+	await transaction.commit().catch(() => {
+		/* ignore write failures */
+	});
+}
 
 export async function getUsersByWallets(
 	wallets: string[]

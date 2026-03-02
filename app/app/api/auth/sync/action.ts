@@ -31,6 +31,7 @@ export async function syncAuthSession(
 			role: effectiveRole,
 			email: existing.email,
 			onboardingCompleted: synced?.onboardingCompleted ?? false,
+			walletAddress: walletAddress ?? existing.walletAddress,
 		};
 	}
 
@@ -51,5 +52,6 @@ export async function syncAuthSession(
 		email: sanityUser.email,
 		role: sanityUser.role,
 		onboardingCompleted: sanityUser.onboardingCompleted ?? false,
+		walletAddress: walletAddress ?? sanityUser.walletAddress,
 	};
 }

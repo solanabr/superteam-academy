@@ -26,6 +26,12 @@
 			"intermediate": "Intermediate",
 			"advanced": "Advanced"
 		},
+		"durations": {
+			"all": "Any duration",
+			"short": "Short (< 4h)",
+			"medium": "Medium (4-8h)",
+			"long": "Long (> 8h)"
+		},
 		"sortOptions": {
 			"popular": "Most popular",
 			"newest": "Newest",
@@ -54,7 +60,9 @@
 			"newest": "Newest",
 			"rating": "Rating",
 			"duration": "Duration",
-			"active": "Active filters"
+			"active": "Active filters",
+			"searchPlaceholder": "Search courses",
+			"following": "Following"
 		},
 		"results": {
 			"showing": "Showing {count} courses"
@@ -666,6 +674,16 @@
 				"fontSize": "Font Size",
 				"theme": "Theme"
 			},
+			"themeOptions": {
+				"light": "Light",
+				"dark": "Dark",
+				"system": "System"
+			},
+			"fontSizeOptions": {
+				"small": "Small",
+				"medium": "Medium",
+				"large": "Large"
+			},
 			"title": "Appearance Settings",
 			"toast": {
 				"errorDescription": "Failed to update appearance settings. Please try again.",
@@ -684,6 +702,30 @@
 				"numberFormat": "Number Format",
 				"timeFormat": "Time Format",
 				"timezone": "Timezone"
+			},
+			"languages": {
+				"en": {
+					"label": "English",
+					"region": "United States"
+				},
+				"pt-BR": {
+					"label": "Português",
+					"region": "Brasil"
+				},
+				"es": {
+					"label": "Español",
+					"region": "España"
+				}
+			},
+			"timezones": {
+				"saoPaulo": "São Paulo (BRT)",
+				"newYork": "New York (EST)",
+				"chicago": "Chicago (CST)",
+				"losAngeles": "Los Angeles (PST)",
+				"london": "London (GMT)",
+				"paris": "Paris (CET)",
+				"tokyo": "Tokyo (JST)",
+				"sydney": "Sydney (AEST)"
 			},
 			"preview": {
 				"date": "Sample Date",
@@ -724,6 +766,32 @@
 				"general": "General",
 				"notificationTypes": "Notification Types"
 			},
+			"toggles": {
+				"emailNotifications": {
+					"label": "Email Notifications",
+					"description": "Receive updates and alerts via email"
+				},
+				"pushNotifications": {
+					"label": "Push Notifications",
+					"description": "Get real-time notifications in your browser"
+				},
+				"courseUpdates": {
+					"label": "Course Updates",
+					"description": "Notifications about new lessons and course changes"
+				},
+				"achievementAlerts": {
+					"label": "Achievement Alerts",
+					"description": "Get notified when you unlock achievements"
+				},
+				"weeklyDigest": {
+					"label": "Weekly Digest",
+					"description": "A summary of your weekly learning activity"
+				},
+				"marketingEmails": {
+					"label": "Marketing Emails",
+					"description": "Promotional content and platform news"
+				}
+			},
 			"title": "Notification Settings",
 			"toast": {
 				"errorDescription": "Failed to update notification settings. Please try again.",
@@ -746,6 +814,46 @@
 			},
 			"labels": {
 				"profileVisibility": "Profile Visibility"
+			},
+			"toggles": {
+				"showProgress": {
+					"label": "Show Progress",
+					"description": "Allow others to see your course progress"
+				},
+				"showAchievements": {
+					"label": "Show Achievements",
+					"description": "Display your earned badges and credentials"
+				},
+				"showActivity": {
+					"label": "Show Activity",
+					"description": "Show your recent learning activity"
+				},
+				"allowMessaging": {
+					"label": "Allow Messaging",
+					"description": "Let other users send you messages"
+				},
+				"dataSharing": {
+					"label": "Data Sharing",
+					"description": "Share anonymized usage data to improve the platform"
+				},
+				"analyticsTracking": {
+					"label": "Analytics Tracking",
+					"description": "Allow analytics to personalize your experience"
+				}
+			},
+			"visibility": {
+				"public": {
+					"label": "Public",
+					"description": "Anyone can view your profile"
+				},
+				"friends": {
+					"label": "Friends Only",
+					"description": "Only connections can view your profile"
+				},
+				"private": {
+					"label": "Private",
+					"description": "Your profile is hidden from others"
+				}
 			},
 			"title": "Privacy Settings",
 			"toast": {
@@ -820,6 +928,12 @@
 			"linkedAtLabel": "Linked on",
 			"loading": {
 				"linkedAccounts": "Linked Accounts"
+			},
+			"providers": {
+				"wallet": "Wallet",
+				"google": "Google",
+				"github": "GitHub",
+				"email": "Email"
 			},
 			"sections": {
 				"connectedWallet": "Connected Wallet",

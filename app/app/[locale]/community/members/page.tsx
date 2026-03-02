@@ -7,6 +7,9 @@ import { getTranslations } from "next-intl/server";
 import { getAllUsers, type AcademyUser } from "@/lib/sanity-users";
 import type { MemberWithMeta } from "@superteam-academy/cms";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
+import { getAcademyClient } from "@/lib/academy";
+import { LeaderboardService } from "@/services/leaderboard-service";
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export async function generateMetadata({
 	params,
@@ -23,6 +26,7 @@ type NormalizedMember = {
 	name: string;
 	initials: string;
 	title: string;
+	wallet: string;
 	xp: number;
 	level: number;
 	courses: number;
@@ -61,6 +65,7 @@ function normalizeMember(
 					: user.role === "admin"
 						? "Admin"
 						: "Solana Developer",
+			wallet: user.walletAddress ?? "",
 			xp: user.xpBalance,
 			level: Math.floor(user.xpBalance / 1000),
 			courses: user.completedCourses?.length || 0,
@@ -82,6 +87,7 @@ function normalizeMember(
 		name: sanityMember.user?.name || "Unknown",
 		initials: getInitials(sanityMember.user?.name || "Unknown"),
 		title: sanityMember.title || "Solana Developer",
+		wallet: "",
 		xp: sanityMember.user?.xpBalance || 0,
 		level: Math.floor((sanityMember.user?.xpBalance || 0) / 1000),
 		courses: sanityMember.user?.courseCount || 0,
@@ -124,7 +130,28 @@ export default async function MembersPage() {
 	try {
 		const sanityUsers = await getAllUsers();
 		allMembers = sanityUsers.map(normalizeMember);
-		topMembers = allMembers.sort((a, b) => b.xp - a.xp).slice(0, 5);
+
+		// Fetch actual on-chain XP balances
+		const academyClient = getAcademyClient();
+		const config = await academyClient.fetchConfig();
+		if (config) {
+			const service = new LeaderboardService(
+				academyClient.connection,
+				academyClient.programId
+			);
+			const leaderboard = await service.getLeaderboard(config.xpMint, 200);
+			const xpByWallet = new Map(leaderboard.map((e) => [e.publicKey, Number(e.xpBalance)]));
+
+			for (const member of allMembers) {
+				const onChainXp = member.wallet ? xpByWallet.get(member.wallet) : undefined;
+				if (onChainXp !== undefined) {
+					member.xp = onChainXp;
+					member.level = calculateLevelFromXP(onChainXp);
+				}
+			}
+		}
+
+		topMembers = [...allMembers].sort((a, b) => b.xp - a.xp).slice(0, 5);
 		mentorMembers = allMembers.filter((m) => m.badges.includes("mentor"));
 		risingStarMembers = allMembers.filter((m) => m.badges.includes("rising-star"));
 	} catch (error) {

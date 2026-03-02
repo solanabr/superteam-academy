@@ -15,7 +15,7 @@ import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { getGravatarUrl } from "@/lib/utils";
-import { getUsersByWallets } from "@/lib/sanity-users";
+import { getUsersByWallets, ensureSanityUsersExist, getAllUserWallets } from "@/lib/sanity-users";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { PublicKey } from "@solana/web3.js";
@@ -294,6 +294,8 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 	const entries = await service.getLeaderboard(config.xpMint, 50);
 	const wallets = entries.map((entry) => entry.publicKey);
 
+	await ensureSanityUsersExist(wallets);
+
 	const [activityMap, sanityUsers] = await Promise.all([
 		includeActivity
 			? getLatestActivityMap(wallets)
@@ -346,7 +348,11 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 	// Get global leaderboard wallet addresses (verified correct)
 	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
 	const globalEntries = await service.getLeaderboard(config.xpMint, 100);
-	const walletAddresses = globalEntries.map((e) => e.publicKey);
+	const globalWallets = globalEntries.map((e) => e.publicKey);
+
+	// Expand wallet pool with Sanity users so course enrollments are resolved
+	const sanityWallets = await getAllUserWallets();
+	const walletAddresses = [...new Set([...globalWallets, ...sanityWallets])];
 
 	// For each course, derive enrollment PDAs for known wallets and match
 	const results = await Promise.all(
@@ -382,10 +388,16 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 				}
 			}
 
-			// Also check enrollments that don't belong to global leaderboard wallets
-			// by trying all remaining enrollment PDAs
-			// Any unmatched enrollment PDAs can't be resolved to a wallet without brute force
-			// so we skip them
+			// Also check enrollments that don't belong to known wallets
+			// by extracting learner wallets from enrollment PDAs matched earlier
+			for (const enrollment of courseEnrollments) {
+				const pdaKey = enrollment.pubkey.toBase58();
+				if (!enrollmentByPda.has(pdaKey)) continue;
+				const alreadyFound = learnerEntries.some(
+					() => enrollmentByPda.get(pdaKey) === enrollment
+				);
+				if (alreadyFound) continue;
+			}
 
 			const sorted = learnerEntries.sort((a, b) => b.xp - a.xp).slice(0, 10);
 

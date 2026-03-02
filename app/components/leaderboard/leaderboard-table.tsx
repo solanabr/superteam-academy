@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import Link from "next/link";
 
 interface LeaderboardEntry {
 	rank: number;
@@ -91,7 +92,8 @@ export function LeaderboardTable({
 						{currentEntries.map((entry) => {
 							const rankStyle = RANK_STYLES[entry.rank] ?? "";
 							return (
-								<div
+								<Link
+									href={`/profile/${entry.user.id}`}
 									key={entry.user.id}
 									className={`grid grid-cols-12 gap-3 px-5 py-3 items-center border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors ${rankStyle}`}
 								>
@@ -189,7 +191,7 @@ export function LeaderboardTable({
 											</>
 										)}
 									</div>
-								</div>
+								</Link>
 							);
 						})}
 					</div>

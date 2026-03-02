@@ -138,7 +138,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									variant="secondary"
 									className="gap-1 text-xs font-normal pr-1"
 								>
-									Following
+									{t("filters.following")}
 									<a
 										href={buildFilterUrl({
 											q,
@@ -207,11 +207,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									variant="secondary"
 									className="gap-1 text-xs font-normal pr-1"
 								>
-									{duration === "short"
-										? "Short"
-										: duration === "medium"
-											? "Medium"
-											: "Long"}
+									{t(`durations.${duration}`)}
 									<a
 										href={buildFilterUrl({ q, category, level, sort, view })}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"

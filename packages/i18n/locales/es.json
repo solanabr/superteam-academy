@@ -26,6 +26,12 @@
 			"intermediate": "Intermedio",
 			"advanced": "Avanzado"
 		},
+		"durations": {
+			"all": "Cualquier duración",
+			"short": "Corto (< 4h)",
+			"medium": "Medio (4-8h)",
+			"long": "Largo (> 8h)"
+		},
 		"sortOptions": {
 			"popular": "Más popular",
 			"newest": "Más reciente",
@@ -54,7 +60,9 @@
 			"newest": "Más reciente",
 			"rating": "Calificación",
 			"duration": "Duración",
-			"active": "Filtros activos"
+			"active": "Filtros activos",
+			"searchPlaceholder": "Buscar cursos",
+			"following": "Siguiendo"
 		},
 		"results": {
 			"showing": "Mostrando {count} cursos"
@@ -880,29 +888,39 @@
 		"appearanceSection": {
 			"actions": {
 				"saveChanges": "Guardar cambios",
-				"saving": "Ahorro"
+				"saving": "Guardando"
 			},
 			"reducedMotion": {
-				"description": "Description",
-				"title": "Title"
+				"description": "Reducir el movimiento limitando animaciones no esenciales.",
+				"title": "Reducir movimiento"
 			},
 			"sections": {
 				"accessibility": "Accesibilidad",
 				"fontSize": "Tamaño de fuente",
 				"theme": "Tema"
 			},
-			"title": "Title",
+			"themeOptions": {
+				"light": "Claro",
+				"dark": "Oscuro",
+				"system": "Sistema"
+			},
+			"fontSizeOptions": {
+				"small": "Pequeño",
+				"medium": "Mediano",
+				"large": "Grande"
+			},
+			"title": "Configuración de apariencia",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title"
+				"errorDescription": "Error al actualizar la configuración de apariencia. Inténtalo de nuevo.",
+				"errorTitle": "Actualización fallida",
+				"updatedDescription": "Tus preferencias de apariencia han sido actualizadas.",
+				"updatedTitle": "Apariencia actualizada"
 			}
 		},
 		"languageSection": {
 			"actions": {
 				"saveChanges": "Guardar cambios",
-				"saving": "Ahorro"
+				"saving": "Guardando"
 			},
 			"labels": {
 				"dateFormat": "Formato de fecha",
@@ -910,14 +928,38 @@
 				"timeFormat": "Formato de hora",
 				"timezone": "Zona horaria"
 			},
+			"languages": {
+				"en": {
+					"label": "English",
+					"region": "Estados Unidos"
+				},
+				"pt-BR": {
+					"label": "Português",
+					"region": "Brasil"
+				},
+				"es": {
+					"label": "Español",
+					"region": "España"
+				}
+			},
+			"timezones": {
+				"saoPaulo": "São Paulo (BRT)",
+				"newYork": "Nueva York (EST)",
+				"chicago": "Chicago (CST)",
+				"losAngeles": "Los Ángeles (PST)",
+				"london": "Londres (GMT)",
+				"paris": "París (CET)",
+				"tokyo": "Tokio (JST)",
+				"sydney": "Sídney (AEST)"
+			},
 			"preview": {
-				"date": "Date",
-				"number": "Number",
-				"time": "Time"
+				"date": "Fecha de ejemplo",
+				"number": "Número de ejemplo",
+				"time": "Hora de ejemplo"
 			},
 			"sections": {
 				"language": "Idioma",
-				"preview": "Avance",
+				"preview": "Vista previa",
 				"regionalFormats": "Formatos regionales"
 			},
 			"timeFormats": {
@@ -925,54 +967,120 @@
 				"24h": "24h"
 			},
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"savedTitle": "Saved Title"
+				"errorDescription": "Error al guardar la configuración de idioma. Inténtalo de nuevo.",
+				"errorTitle": "Error al guardar",
+				"savedTitle": "Configuración de idioma guardada"
 			}
 		},
 		"notificationsSection": {
 			"actions": {
 				"saveChanges": "Guardar cambios",
-				"saving": "Ahorro"
+				"saving": "Guardando"
 			},
 			"frequency": {
-				"daily": "A diario",
+				"daily": "Diario",
 				"immediate": "Inmediato",
-				"weekly": "Semanalmente"
+				"weekly": "Semanal"
 			},
 			"labels": {
 				"emailFrequency": "Frecuencia de correo electrónico",
-				"pushFrequency": "Frecuencia de empuje"
+				"pushFrequency": "Frecuencia de notificaciones push"
 			},
 			"sections": {
 				"frequency": "Frecuencia",
 				"general": "General",
 				"notificationTypes": "Tipos de notificación"
 			},
-			"title": "Title",
+			"toggles": {
+				"emailNotifications": {
+					"label": "Notificaciones por correo",
+					"description": "Recibir actualizaciones y alertas por correo electrónico"
+				},
+				"pushNotifications": {
+					"label": "Notificaciones push",
+					"description": "Recibir notificaciones en tiempo real en tu navegador"
+				},
+				"courseUpdates": {
+					"label": "Actualizaciones de cursos",
+					"description": "Notificaciones sobre nuevas lecciones y cambios en cursos"
+				},
+				"achievementAlerts": {
+					"label": "Alertas de logros",
+					"description": "Recibir notificación al desbloquear logros"
+				},
+				"weeklyDigest": {
+					"label": "Resumen semanal",
+					"description": "Un resumen de tu actividad de aprendizaje semanal"
+				},
+				"marketingEmails": {
+					"label": "Correos de marketing",
+					"description": "Contenido promocional y noticias de la plataforma"
+				}
+			},
+			"title": "Configuración de notificaciones",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title"
+				"errorDescription": "Error al actualizar la configuración de notificaciones. Inténtalo de nuevo.",
+				"errorTitle": "Actualización fallida",
+				"updatedDescription": "Tus preferencias de notificación han sido actualizadas.",
+				"updatedTitle": "Notificaciones actualizadas"
 			}
 		},
 		"privacySection": {
 			"actions": {
 				"exportData": "Exportar datos",
-				"exporting": "Exportador",
+				"exporting": "Exportando",
 				"saveChanges": "Guardar cambios",
-				"saving": "Ahorro"
+				"saving": "Guardando"
 			},
 			"export": {
-				"description": "Description",
+				"description": "Descarga una copia de tus datos personales y actividad.",
 				"note": "Nota",
-				"title": "Title"
+				"title": "Exportar datos"
 			},
 			"labels": {
 				"profileVisibility": "Visibilidad del perfil"
 			},
-			"title": "Title",
+			"toggles": {
+				"showProgress": {
+					"label": "Mostrar progreso",
+					"description": "Permitir que otros vean tu progreso en cursos"
+				},
+				"showAchievements": {
+					"label": "Mostrar logros",
+					"description": "Mostrar tus insignias y credenciales obtenidas"
+				},
+				"showActivity": {
+					"label": "Mostrar actividad",
+					"description": "Mostrar tu actividad de aprendizaje reciente"
+				},
+				"allowMessaging": {
+					"label": "Permitir mensajes",
+					"description": "Permitir que otros usuarios te envíen mensajes"
+				},
+				"dataSharing": {
+					"label": "Compartir datos",
+					"description": "Compartir datos de uso anónimos para mejorar la plataforma"
+				},
+				"analyticsTracking": {
+					"label": "Seguimiento analítico",
+					"description": "Permitir análisis para personalizar tu experiencia"
+				}
+			},
+			"visibility": {
+				"public": {
+					"label": "Público",
+					"description": "Cualquiera puede ver tu perfil"
+				},
+				"friends": {
+					"label": "Solo amigos",
+					"description": "Solo tus conexiones pueden ver tu perfil"
+				},
+				"private": {
+					"label": "Privado",
+					"description": "Tu perfil está oculto para otros"
+				}
+			},
+			"title": "Configuración de privacidad",
 			"toast": {
 				"errorDescription": "Error Description",
 				"errorTitle": "Error Title",
@@ -1042,9 +1150,15 @@
 				"noLinkedAccounts": "Sin cuentas vinculadas",
 				"noWalletConnected": "No hay billetera conectada"
 			},
-			"linkedAtLabel": "Linked At Label",
+			"linkedAtLabel": "Vinculado el",
 			"loading": {
 				"linkedAccounts": "Cuentas vinculadas"
+			},
+			"providers": {
+				"wallet": "Billetera",
+				"google": "Google",
+				"github": "GitHub",
+				"email": "Correo electrónico"
 			},
 			"sections": {
 				"connectedWallet": "Cartera conectada",

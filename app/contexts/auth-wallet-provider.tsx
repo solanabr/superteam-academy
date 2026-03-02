@@ -43,6 +43,7 @@ function AuthProviderInner({
 					image: initialSession.user.image as string,
 					role: initialSession.user.role as never,
 					onboardingCompleted: initialSession.user.onboardingCompleted as boolean,
+					walletAddress: initialSession.user.walletAddress as string | undefined,
 				}
 			: null
 	);
@@ -84,6 +85,7 @@ function AuthProviderInner({
 					role: serverRole,
 					onboardingCompleted:
 						syncedData?.onboardingCompleted ?? user?.onboardingCompleted,
+					walletAddress: syncedData?.walletAddress,
 				};
 
 				setUser(userData);

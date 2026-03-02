@@ -14,6 +14,7 @@ export interface AuthUser {
 	image?: string;
 	role?: "learner" | "admin" | "superadmin";
 	onboardingCompleted?: boolean;
+	walletAddress?: string;
 }
 
 interface WalletState {

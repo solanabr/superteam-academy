@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
 import { requireSession } from "@/lib/route-utils";
 import { upsertLinkedAccount } from "@/lib/auth-linking-store";
-import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
+import { syncUserToSanity } from "@/lib/sanity-users";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -25,16 +25,13 @@ export async function POST(request: NextRequest) {
 		if (!auth.ok) return auth.response;
 		const { session } = auth;
 
-		const existingUser = await getUserByAuthId(session.user.id);
-		if (!existingUser) {
-			await syncUserToSanity({
-				authId: session.user.id,
-				name: session.user.name,
-				email: session.user.email,
-				walletAddress: parsed.data.publicKey,
-				...(session.user.image ? { image: session.user.image } : {}),
-			});
-		}
+		await syncUserToSanity({
+			authId: session.user.id,
+			name: session.user.name,
+			email: session.user.email,
+			walletAddress: parsed.data.publicKey,
+			...(session.user.image ? { image: session.user.image } : {}),
+		});
 
 		const result = await upsertLinkedAccount({
 			userId: session.user.id,

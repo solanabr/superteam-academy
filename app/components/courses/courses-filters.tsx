@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +28,7 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 	const [query, setQuery] = useState(q);
+	const t = useTranslations("courses");
 
 	const baseParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
 
@@ -56,7 +58,7 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 			<div className="relative flex-1 max-w-sm w-full">
 				<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 				<Input
-					placeholder="Search courses"
+					placeholder={t("filters.searchPlaceholder")}
 					className="pl-9 h-9 bg-muted/50 border-border/60 rounded-lg"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
@@ -73,14 +75,14 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="all">All</SelectItem>
-					<SelectItem value="solana">Solana</SelectItem>
-					<SelectItem value="anchor">Anchor</SelectItem>
-					<SelectItem value="defi">DeFi</SelectItem>
-					<SelectItem value="nft">NFT</SelectItem>
-					<SelectItem value="security">Security</SelectItem>
-					<SelectItem value="frontend">Frontend</SelectItem>
-					<SelectItem value="token">Token</SelectItem>
+					<SelectItem value="all">{t("categories.all")}</SelectItem>
+					<SelectItem value="solana">{t("categories.solana")}</SelectItem>
+					<SelectItem value="anchor">{t("categories.anchor")}</SelectItem>
+					<SelectItem value="defi">{t("categories.defi")}</SelectItem>
+					<SelectItem value="nft">{t("categories.nft")}</SelectItem>
+					<SelectItem value="security">{t("categories.security")}</SelectItem>
+					<SelectItem value="frontend">{t("categories.frontend")}</SelectItem>
+					<SelectItem value="token">{t("categories.token")}</SelectItem>
 				</SelectContent>
 			</Select>
 
@@ -89,10 +91,10 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="all">All levels</SelectItem>
-					<SelectItem value="beginner">Beginner</SelectItem>
-					<SelectItem value="intermediate">Intermediate</SelectItem>
-					<SelectItem value="advanced">Advanced</SelectItem>
+					<SelectItem value="all">{t("levels.all")}</SelectItem>
+					<SelectItem value="beginner">{t("levels.beginner")}</SelectItem>
+					<SelectItem value="intermediate">{t("levels.intermediate")}</SelectItem>
+					<SelectItem value="advanced">{t("levels.advanced")}</SelectItem>
 				</SelectContent>
 			</Select>
 
@@ -101,10 +103,10 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="all">Any duration</SelectItem>
-					<SelectItem value="short">Short (&lt; 4h)</SelectItem>
-					<SelectItem value="medium">Medium (4-8h)</SelectItem>
-					<SelectItem value="long">Long (&gt; 8h)</SelectItem>
+					<SelectItem value="all">{t("durations.all")}</SelectItem>
+					<SelectItem value="short">{t("durations.short")}</SelectItem>
+					<SelectItem value="medium">{t("durations.medium")}</SelectItem>
+					<SelectItem value="long">{t("durations.long")}</SelectItem>
 				</SelectContent>
 			</Select>
 
@@ -113,10 +115,10 @@ export function CoursesFilters({ q, category, level, duration, sort }: CoursesFi
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="popular">Popular</SelectItem>
-					<SelectItem value="newest">Newest</SelectItem>
-					<SelectItem value="xp">XP</SelectItem>
-					<SelectItem value="duration">Duration</SelectItem>
+					<SelectItem value="popular">{t("sortOptions.popular")}</SelectItem>
+					<SelectItem value="newest">{t("sortOptions.newest")}</SelectItem>
+					<SelectItem value="xp">{t("sortOptions.xp")}</SelectItem>
+					<SelectItem value="duration">{t("sortOptions.duration")}</SelectItem>
 				</SelectContent>
 			</Select>
 		</div>
