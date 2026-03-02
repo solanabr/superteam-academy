@@ -20,6 +20,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@next/third-parties": "^16.1.6",
     "@portabletext/react": "^6.0.2",
+    "@posthog/cli": "^0.6.1",
     "@project-serum/anchor": "^0.26.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",

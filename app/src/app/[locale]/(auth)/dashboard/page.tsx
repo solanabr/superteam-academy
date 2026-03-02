@@ -7,6 +7,7 @@ import { useXpBalance } from "@/hooks/useXpBalance";
 import { useStreak } from "@/hooks/useStreak";
 import { useCredentials } from "@/hooks/useCredentials";
 import { useActivity } from "@/hooks/useActivity";
+import { useSyncXp } from "@/hooks/useSyncXp";
 import { XPBar } from "@/components/gamification/XPBar";
 import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { CredentialCard } from "@/components/solana/CredentialCard";
@@ -177,6 +178,7 @@ export default function DashboardPage() {
   const { streak } = useStreak();
   const { credentials, loading: credsLoading } = useCredentials();
   const { items: activityItems, thisWeek, loading: activityLoading } = useActivity();
+  useSyncXp(); // one-time sync of localStorage completions → Supabase
 
   if (!connected) {
     return (

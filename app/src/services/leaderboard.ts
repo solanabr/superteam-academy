@@ -12,8 +12,7 @@ export async function getLeaderboard(
     .from("profiles")
     .select("wallet_address, username, display_name, avatar_url, total_xp")
     .eq("is_public", true)
-    .gt("total_xp", 0)
-    .order("total_xp", { ascending: false })
+    .order("total_xp", { ascending: false, nullsFirst: false })
     .limit(50);
 
   if (error || !data || data.length === 0) return [];

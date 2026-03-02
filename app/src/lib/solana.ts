@@ -1,5 +1,4 @@
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { AnchorProvider, Program, BN } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 export const PROGRAM_ID = new PublicKey(
