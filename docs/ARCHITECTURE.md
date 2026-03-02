@@ -1,3 +1,5 @@
+> Last synced: 2026-03-02
+
 # Superteam Academy -- Architecture Reference
 
 System architecture, component structure, data flow, and service interfaces for Superteam Academy -- a Solana-native educational LMS.
@@ -37,15 +39,15 @@ System architecture, component structure, data flow, and service interfaces for 
 
 ### Monorepo Layout
 
-| Directory            | Purpose                                                                         |
-| -------------------- | ------------------------------------------------------------------------------- |
-| `apps/web/`          | Next.js 14 application (pages, API routes, components, services)                |
-| `apps/build-server/` | Rust/Axum Solana program compiler on GCP Cloud Run                              |
-| `onchain-academy/`   | Anchor workspace (program source, IDL, tests)                                   |
-| `packages/types/`    | Shared TypeScript interfaces (`Course`, `UserProfile`, `Progress`)              |
-| `packages/config/`   | Shared ESLint, TypeScript, Tailwind configs                                     |
-| `sanity/`            | Sanity Studio schemas (`course`, `module`, `lesson`, `achievement`) + seed data |
-| `supabase/`          | Complete Postgres schema (tables, indexes, RLS, functions)                      |
+| Directory            | Purpose                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `apps/web/`          | Next.js 14 application (pages, API routes, components, services)                         |
+| `apps/build-server/` | Rust/Axum Solana program compiler on GCP Cloud Run                                       |
+| `onchain-academy/`   | Anchor workspace (program source, IDL, tests)                                            |
+| `packages/types/`    | Shared TypeScript interfaces (`Course`, `UserProfile`, `Progress`)                       |
+| `packages/config/`   | Shared ESLint, TypeScript, Tailwind configs                                              |
+| `sanity/`            | Sanity Studio schemas (`course`, `module`, `lesson`, `achievement`, `quest`) + seed data |
+| `supabase/`          | Complete Postgres schema (17 tables, indexes, RLS, functions, views)                     |
 
 ### Deployment Model
 
@@ -70,10 +72,13 @@ RootLayout (app/layout.tsx)
        │    └── page.tsx          ← Landing with terminal typewriter
        │
        ├── (platform)/            ← Platform routes (layout: Header + Sidebar + Footer)
-       │    ├── dashboard/        ← Auth-gated: enrolled courses, XP, streaks
+       │    ├── dashboard/        ← Auth-gated: enrolled courses, XP, streaks, daily quests
        │    ├── courses/          ← Public: course catalog
        │    │    └── [slug]/      ← Public: course detail
        │    │         └── lessons/[id]/  ← Public: lesson view + code editor
+       │    ├── community/        ← Public: forum home (categories)
+       │    │    └── [category-slug]/   ← Category threads
+       │    │         └── [thread-slug]/ ← Thread detail + answers
        │    ├── profile/          ← Auth-gated (own profile)
        │    │    └── [username]/  ← Public: other users' profiles
        │    ├── leaderboard/      ← Public: XP rankings
@@ -86,20 +91,21 @@ RootLayout (app/layout.tsx)
 
 ### Component Groups
 
-| Directory       | Components                                                                                                                                                 | Purpose                                                 |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `ui/`           | Button, Card, Dialog, Avatar, Progress, Tabs, DropdownMenu                                                                                                 | shadcn/ui base primitives (Radix UI)                    |
-| `course/`       | CourseCard, ProgressBar, CurriculumAccordion, DifficultyBadge                                                                                              | Course display and progress tracking                    |
-| `editor/`       | ChallengeInterface, CodeEditor, ChallengeRunner, OutputPanel                                                                                               | Monaco editor with in-browser test runner               |
-| `gamification/` | XpPopup, LevelUpOverlay, LevelBadge, StreakDisplay, SkillRadar, AchievementCard, AchievementGrid, AchievementPopup, CertificatePopup, GamificationOverlays | XP animations, achievement celebrations, streak display |
-| `certificates/` | CertificateCard, CertificateGrid, CourseCompletionMint                                                                                                     | NFT credential display and minting UI                   |
-| `deploy/`       | DeployPanel, WalletFundingCard, GenericProgramExplorer                                                                                                     | Student program deployment panel                        |
-| `admin/`        | CourseSyncTable, AchievementSyncTable, StatusBadge, SyncDiffView, ImmutableMismatchWarning                                                                 | Admin CMS-to-chain sync UI                              |
-| `auth/`         | AuthModal, WalletAuthHandler, UserMenu                                                                                                                     | Wallet + OAuth authentication                           |
-| `layout/`       | Header, Footer, Sidebar, LanguageSwitcher, ThemeProvider, ThemeToggle                                                                                      | Page chrome, navigation, theming                        |
-| `landing/`      | TerminalTypewriter                                                                                                                                         | Landing page animation                                  |
-| `profile/`      | WalletNameGenerator                                                                                                                                        | Fun name generation for wallet users                    |
-| `analytics/`    | AnalyticsProvider                                                                                                                                          | GA4 + PostHog + Sentry wrapper                          |
+| Directory       | Components                                                                                                                                                                                                       | Purpose                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `ui/`           | Button, Card, Dialog, Avatar, Progress, Tabs, DropdownMenu                                                                                                                                                       | shadcn/ui base primitives (Radix UI)                       |
+| `course/`       | CourseCard, ProgressBar, CurriculumAccordion, DifficultyBadge                                                                                                                                                    | Course display and progress tracking                       |
+| `community/`    | ThreadList, ThreadCard, AnswerCard, AnswerEditor, VoteButton, FlagButton, AcceptAnswerButton, CommunitySearch, CommunityStats, CreateThreadModal, CategoryCard, ThreadFilters, ThreadStatusBadge, MarkdownEditor | Forum threads, answers, voting, moderation (14 components) |
+| `editor/`       | ChallengeInterface, CodeEditor, ChallengeRunner, OutputPanel                                                                                                                                                     | Monaco editor with in-browser test runner                  |
+| `gamification/` | XpPopup, LevelUpOverlay, LevelBadge, StreakDisplay, SkillRadar, AchievementCard, AchievementGrid, AchievementPopup, CertificatePopup, GamificationOverlays                                                       | XP animations, achievement celebrations, streak display    |
+| `certificates/` | CertificateCard, CertificateGrid, CourseCompletionMint                                                                                                                                                           | NFT credential display and minting UI                      |
+| `deploy/`       | DeployPanel, WalletFundingCard, GenericProgramExplorer                                                                                                                                                           | Student program deployment panel                           |
+| `admin/`        | CourseSyncTable, AchievementSyncTable, StatusBadge, SyncDiffView, ImmutableMismatchWarning                                                                                                                       | Admin CMS-to-chain sync UI                                 |
+| `auth/`         | AuthModal, WalletAuthHandler, UserMenu                                                                                                                                                                           | Wallet + OAuth authentication                              |
+| `layout/`       | Header, Footer, Sidebar, LanguageSwitcher, ThemeProvider, ThemeToggle                                                                                                                                            | Page chrome, navigation, theming                           |
+| `landing/`      | TerminalTypewriter                                                                                                                                                                                               | Landing page animation                                     |
+| `profile/`      | WalletNameGenerator                                                                                                                                                                                              | Fun name generation for wallet users                       |
+| `analytics/`    | AnalyticsProvider                                                                                                                                                                                                | GA4 + PostHog + Sentry wrapper                             |
 
 ### Client vs Server Components
 
@@ -372,24 +378,24 @@ Used for wallet link/unlink flow, not for lesson completion (which uses on-chain
 
 The Solana program (`onchain-academy`) is built with Anchor 0.31+. Instruction names in Rust are snake_case; Anchor's `Program` constructor converts them to camelCase for TypeScript.
 
-| Instruction (Rust)            | TypeScript Builder (`academy-program.ts`)         | Signer            |
-| ----------------------------- | ------------------------------------------------- | ----------------- |
-| `initialize`                  | -- (one-time setup via `scripts/init-program.ts`) | Authority         |
-| `update_config`               | -- (admin CLI)                                    | Authority         |
-| `create_course`               | `deployCoursePda()` in `admin-signer.ts`          | Authority         |
-| `update_course`               | `updateCoursePda()` in `admin-signer.ts`          | Authority         |
-| `enroll`                      | Client-side via `instructions.ts`                 | Learner wallet    |
-| `complete_lesson`             | `completeLesson()` in `academy-program.ts`        | Backend signer    |
-| `finalize_course`             | `finalizeCourse()` in `academy-program.ts`        | Backend signer    |
-| `close_enrollment`            | Client-side via `instructions.ts`                 | Learner wallet    |
-| `issue_credential`            | `issueCredential()` in `academy-program.ts`       | Backend signer    |
-| `upgrade_credential`          | -- (not yet used in API routes)                   | Backend signer    |
-| `register_minter`             | -- (admin CLI)                                    | Authority         |
-| `revoke_minter`               | -- (admin CLI)                                    | Authority         |
-| `reward_xp`                   | -- (minter CLI)                                   | Registered minter |
-| `create_achievement_type`     | `deployAchievementType()` in `admin-signer.ts`    | Authority         |
-| `award_achievement`           | `awardAchievement()` in `academy-program.ts`      | Registered minter |
-| `deactivate_achievement_type` | -- (admin CLI)                                    | Authority         |
+| Instruction (Rust)            | TypeScript Builder (`academy-program.ts`)           | Signer            |
+| ----------------------------- | --------------------------------------------------- | ----------------- |
+| `initialize`                  | -- (one-time setup via `scripts/init-program.ts`)   | Authority         |
+| `update_config`               | -- (admin CLI)                                      | Authority         |
+| `create_course`               | `deployCoursePda()` in `admin-signer.ts`            | Authority         |
+| `update_course`               | `updateCoursePda()` in `admin-signer.ts`            | Authority         |
+| `enroll`                      | Client-side via `instructions.ts`                   | Learner wallet    |
+| `complete_lesson`             | `completeLesson()` in `academy-program.ts`          | Backend signer    |
+| `finalize_course`             | `finalizeCourse()` in `academy-program.ts`          | Backend signer    |
+| `close_enrollment`            | Client-side via `instructions.ts`                   | Learner wallet    |
+| `issue_credential`            | `issueCredential()` in `academy-program.ts`         | Backend signer    |
+| `upgrade_credential`          | -- (not yet used in API routes)                     | Backend signer    |
+| `register_minter`             | -- (admin CLI)                                      | Authority         |
+| `revoke_minter`               | -- (admin CLI)                                      | Authority         |
+| `reward_xp`                   | `rewardXp()` in `academy-program.ts` (daily quests) | Registered minter |
+| `create_achievement_type`     | `deployAchievementType()` in `admin-signer.ts`      | Authority         |
+| `award_achievement`           | `awardAchievement()` in `academy-program.ts`        | Registered minter |
+| `deactivate_achievement_type` | -- (admin CLI)                                      | Authority         |
 
 ### PDA Table
 
@@ -482,7 +488,9 @@ Mirror writes are non-fatal: if a Supabase write fails after an on-chain TX succ
 - **Generic errors**: No stack traces or internal details in API responses
 - **Env var guards**: API routes fail-fast with 500 if required vars are missing
 
-### RLS Model (10 tables, all with RLS enabled)
+### RLS Model (17 tables, all with RLS enabled)
+
+#### Core Tables
 
 | Table               | SELECT                            | INSERT | UPDATE | DELETE |
 | ------------------- | --------------------------------- | ------ | ------ | ------ |
@@ -497,9 +505,28 @@ Mirror writes are non-fatal: if a Supabase write fails after an on-chain TX succ
 | `siws_nonces`       | None                              | None   | --     | --     |
 | `deployed_programs` | Own                               | Own    | Own    | --     |
 
+#### Community Tables
+
+| Table              | SELECT       | INSERT        | UPDATE | DELETE |
+| ------------------ | ------------ | ------------- | ------ | ------ |
+| `forum_categories` | All (public) | --            | --     | --     |
+| `threads`          | All (public) | Authenticated | Own    | --     |
+| `answers`          | All (public) | Authenticated | Own    | --     |
+| `votes`            | All (public) | Authenticated | --     | --     |
+| `flags`            | --           | Authenticated | --     | --     |
+
+#### Queue / Quest Tables
+
+| Table                     | SELECT | INSERT | UPDATE | DELETE |
+| ------------------------- | ------ | ------ | ------ | ------ |
+| `pending_onchain_actions` | Own    | Own    | Own    | --     |
+| `user_daily_quests`       | Own    | --     | --     | --     |
+
 `user_xp`, `xp_transactions`, and `user_achievements` have no INSERT/UPDATE policies for authenticated users. All writes go through SECURITY DEFINER functions (`award_xp`, `unlock_achievement`) that are `REVOKE`d from `authenticated`, `anon`, and `public` and `GRANT`ed only to `service_role`.
 
 `certificates` and `nft_metadata` have no INSERT policies for authenticated users. All writes go through service_role API routes to prevent users from fabricating completion records.
+
+Community data (categories, threads, answers, votes) has public SELECT policies. Thread/answer writes are authenticated. Vote writes are via SECURITY DEFINER functions (`cast_vote`, `create_thread_rpc`, `create_answer_rpc`).
 
 ### Admin Auth
 
@@ -606,35 +633,45 @@ GamificationOverlays
 
 All routes are in `apps/web/src/app/api/`.
 
-| Route                              | Method | Auth         | Purpose                                                                            |
-| ---------------------------------- | ------ | ------------ | ---------------------------------------------------------------------------------- |
-| `/api/auth/nonce`                  | GET    | None         | Generate SIWS nonce (stored in `siws_nonces` table)                                |
-| `/api/auth/wallet`                 | POST   | None         | SIWS authentication (nonce + Ed25519 verification)                                 |
-| `/api/auth/callback`               | GET    | None         | Google/GitHub OAuth callback (code exchange)                                       |
-| `/api/auth/link-wallet`            | POST   | Required     | Link wallet to existing account                                                    |
-| `/api/auth/unlink`                 | POST   | Required     | Unlink auth method (wallet/Google/GitHub)                                          |
-| `/api/lessons/complete`            | POST   | Required     | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements |
-| `/api/courses/[courseId]/finalize` | POST   | Required     | Standalone course finalization on-chain                                            |
-| `/api/credentials/issue`           | POST   | Required     | Standalone Metaplex Core credential issuance                                       |
-| `/api/enrollment/sync`             | POST   | Required     | Sync on-chain enrollment to Supabase                                               |
-| `/api/leaderboard`                 | GET    | None         | XP rankings (alltime/weekly/monthly)                                               |
-| `/api/certificates/metadata`       | GET    | None         | Serve NFT metadata JSON by UUID                                                    |
-| `/api/build-program`               | POST   | Required     | Proxy Anchor build to build server                                                 |
-| `/api/deploy/save`                 | POST   | Required     | Save deployed program record                                                       |
-| `/api/deploy/[uuid]`               | GET    | Required     | Download compiled .so binary                                                       |
-| `/api/rust/execute`                | POST   | Required     | Proxy basic Rust execution to Rust Playground                                      |
-| `/api/admin/auth`                  | POST   | ADMIN_SECRET | Admin authentication                                                               |
-| `/api/admin/status`                | GET    | ADMIN_SECRET | Platform status (program liveness, authority match)                                |
-| `/api/admin/courses/sync`          | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain                                            |
-| `/api/admin/courses/deactivate`    | POST   | ADMIN_SECRET | Set course `is_active = false`                                                     |
-| `/api/admin/courses/reactivate`    | POST   | ADMIN_SECRET | Set course `is_active = true`                                                      |
-| `/api/admin/achievements/sync`     | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain                                      |
+| Route                                | Method   | Auth                  | Purpose                                                                            |
+| ------------------------------------ | -------- | --------------------- | ---------------------------------------------------------------------------------- |
+| `/api/auth/nonce`                    | GET      | None                  | Generate SIWS nonce (stored in `siws_nonces` table)                                |
+| `/api/auth/wallet`                   | POST     | None                  | SIWS authentication (nonce + Ed25519 verification)                                 |
+| `/api/auth/callback`                 | GET      | None                  | Google/GitHub OAuth callback (code exchange)                                       |
+| `/api/auth/link-wallet`              | POST     | Required              | Link wallet to existing account                                                    |
+| `/api/auth/unlink`                   | POST     | Required              | Unlink auth method (wallet/Google/GitHub)                                          |
+| `/api/lessons/complete`              | POST     | Required              | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements |
+| `/api/leaderboard`                   | GET      | None                  | XP rankings (alltime/weekly/monthly)                                               |
+| `/api/certificates/metadata`         | GET      | None                  | Serve NFT metadata JSON by UUID                                                    |
+| `/api/certificates/mint`             | POST     | Required              | Manual credential mint with retry queue                                            |
+| `/api/build-program`                 | POST     | Required              | Proxy Anchor build to build server                                                 |
+| `/api/deploy/save`                   | POST     | Required              | Save deployed program record                                                       |
+| `/api/deploy/[uuid]`                 | GET      | Required              | Download compiled .so binary                                                       |
+| `/api/rust/execute`                  | POST     | Required              | Proxy basic Rust execution to Rust Playground                                      |
+| `/api/quests/daily`                  | GET/POST | Required              | Get daily quest state / award quest XP (on-chain minting via `reward_xp`)          |
+| `/api/community/threads`             | GET/POST | Varies                | List threads (cursor pagination) / create thread                                   |
+| `/api/community/threads/[id]`        | GET      | None                  | Thread detail with answers                                                         |
+| `/api/community/answers`             | POST     | Required              | Post answer to a thread                                                            |
+| `/api/community/answers/[id]/accept` | POST     | Required              | Accept an answer (thread author only)                                              |
+| `/api/community/votes`               | POST     | Required              | Upvote/downvote thread or answer                                                   |
+| `/api/community/flags`               | POST     | Required              | Flag content for moderation                                                        |
+| `/api/community/search`              | GET      | None                  | Full-text search across threads                                                    |
+| `/api/webhooks/helius`               | POST     | HELIUS_WEBHOOK_SECRET | Process on-chain events (XP, achievements)                                         |
+| `/api/admin/auth`                    | POST     | ADMIN_SECRET          | Admin authentication                                                               |
+| `/api/admin/status`                  | GET      | ADMIN_SECRET          | Platform status (program liveness, authority match)                                |
+| `/api/admin/courses/sync`            | POST     | ADMIN_SECRET          | Deploy course PDA + collection on-chain                                            |
+| `/api/admin/courses/deactivate`      | POST     | ADMIN_SECRET          | Set course `is_active = false`                                                     |
+| `/api/admin/courses/reactivate`      | POST     | ADMIN_SECRET          | Set course `is_active = true`                                                      |
+| `/api/admin/achievements/sync`       | POST     | ADMIN_SECRET          | Deploy achievement type + collection on-chain                                      |
+| `/api/admin/resync`                  | POST     | ADMIN_SECRET          | Resync on-chain state to Supabase                                                  |
 
 ---
 
 ## 9. Database Schema
 
-### Tables (10)
+### Tables (17)
+
+#### Core Tables (10)
 
 | Table               | Purpose                     | Key Columns                                                        |
 | ------------------- | --------------------------- | ------------------------------------------------------------------ |
@@ -649,6 +686,29 @@ All routes are in `apps/web/src/app/api/`.
 | `siws_nonces`       | Nonce replay protection     | `nonce`, `status`, `ip_address`, TTL-based cleanup                 |
 | `deployed_programs` | Student program deployments | `user_id`, `program_id`, `network`                                 |
 
+#### Community Tables (5)
+
+| Table              | Purpose                  | Key Columns                                                                   |
+| ------------------ | ------------------------ | ----------------------------------------------------------------------------- |
+| `forum_categories` | Global forum sections    | `name`, `slug`, `description`, `sort_order`                                   |
+| `threads`          | Discussion threads       | `author_id`, `category_id`, `title`, `body`, `course_id`, `lesson_id`, `tags` |
+| `answers`          | Thread replies           | `thread_id`, `author_id`, `body`, `is_accepted`                               |
+| `votes`            | Upvotes/downvotes        | `user_id`, `thread_id` or `answer_id`, `value` (+1/-1)                        |
+| `flags`            | Content moderation flags | `user_id`, `thread_id` or `answer_id`, `reason`                               |
+
+#### Queue / Quest Tables (2)
+
+| Table                     | Purpose                             | Key Columns                                                         |
+| ------------------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| `pending_onchain_actions` | On-chain retry queue for failed TXs | `user_id`, `action_type`, `payload`, `attempts`, `status`           |
+| `user_daily_quests`       | Daily quest completion tracking     | `user_id`, `quest_id`, `current_value`, `completed`, `period_start` |
+
+#### Views
+
+| View              | Purpose                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| `community_stats` | Aggregated thread/answer/accepted counts per user (for profile display) |
+
 ### Auto-Provisioning
 
 The `on_auth_user_created` trigger fires `handle_new_user()` on every new auth.users insert:
@@ -658,11 +718,12 @@ The `on_auth_user_created` trigger fires `handle_new_user()` on every new auth.u
 
 ### SECURITY DEFINER Functions
 
-| Function                                      | Access                   | Purpose                                                                                  |
-| --------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
-| `award_xp(user_id, amount, reason)`           | `service_role` only      | Insert XP transaction, update totals, manage streaks                                     |
-| `unlock_achievement(user_id, achievement_id)` | `service_role` only      | Record achievement (ON CONFLICT DO NOTHING for idempotency)                              |
-| `get_leaderboard(timeframe, limit)`           | `authenticated` + `anon` | Leaderboard query (alltime uses `user_xp`, weekly/monthly uses `xp_transactions` window) |
+| Function                                         | Access                   | Purpose                                                                                  |
+| ------------------------------------------------ | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `award_xp(user_id, amount, reason)`              | `service_role` only      | Insert XP transaction, update totals, manage streaks                                     |
+| `unlock_achievement(user_id, achievement_id)`    | `service_role` only      | Record achievement (ON CONFLICT DO NOTHING for idempotency)                              |
+| `get_leaderboard(timeframe, limit)`              | `authenticated` + `anon` | Leaderboard query (alltime uses `user_xp`, weekly/monthly uses `xp_transactions` window) |
+| `get_daily_quest_state(p_user_id, p_quest_defs)` | `service_role` only      | Evaluate daily quest progress in a single pass, return quest states                      |
 
 ### Storage
 
@@ -728,4 +789,4 @@ Solana brand colors (#9945FF, #14F195) contrast best against dark backgrounds. D
 
 ---
 
-_Last updated: 2026-02-19_
+_Last updated: 2026-03-02_

@@ -1,3 +1,5 @@
+> Last synced: 2026-03-02
+
 # CMS Guide
 
 Guide for managing course content in Sanity CMS for Superteam Academy (`solarium.courses`), a Solana developer education platform.
@@ -8,7 +10,7 @@ All educational content is authored and managed in Sanity v3. The platform fetch
 
 ## Content Schema
 
-Six document types are registered in `sanity/schemas/index.ts`:
+Seven document types are registered in `sanity/schemas/index.ts`:
 
 ```
 Learning Path
@@ -18,6 +20,7 @@ Learning Path
               └── Lesson (1 or more, ordered)
 
 Achievement (standalone)
+Quest (standalone — daily quest definitions)
 ```
 
 ### Course
@@ -152,6 +155,23 @@ Badges and milestones that learners can unlock. Each achievement can be minted a
 | achievementPda    | string   | Base58-encoded AchievementType PDA address           |
 | collectionAddress | string   | Metaplex Core collection pubkey for achievement NFTs |
 | lastSynced        | datetime | Timestamp of last successful sync                    |
+
+### Quest
+
+Daily quest definitions used by the gamification system. Quests rotate daily and award XP on completion.
+
+| Field       | Type           | Required | Notes                                                                      |
+| ----------- | -------------- | -------- | -------------------------------------------------------------------------- |
+| name        | string         | Yes      | Quest display name (e.g., "Complete a Lesson")                             |
+| description | text           | No       | Short description (2-row editor)                                           |
+| type        | string (list)  | Yes      | `lesson`, `lesson_batch`, `challenge`, `login_streak`, `module`            |
+| icon        | string         | No       | Phosphor icon name (e.g., `BookOpen`, `Code`, `Lightning`)                 |
+| xpReward    | number         | Yes      | XP awarded on completion (min: 1)                                          |
+| targetValue | number         | Yes      | Progress target (e.g., 1 for single completion, 3 for streaks). Min: 1.    |
+| resetType   | string (radio) | Yes      | `daily` (resets at midnight UTC) or `multi_day` (persists until completed) |
+| active      | boolean        | No       | Whether this quest appears in the daily rotation pool (default: true)      |
+
+Studio preview shows quests as `{name}` with subtitle showing the quest type.
 
 ## Publishing Workflow
 
@@ -373,6 +393,7 @@ The project includes seed data in `sanity/seed/` for bootstrapping a development
 | `modules.json`      | Sample modules referencing lessons                                                                              |
 | `course.json`       | Sample courses referencing modules and instructors (includes trackId, trackLevel, xpPerLesson, creatorRewardXp) |
 | `learningPath.json` | Sample learning paths referencing courses                                                                       |
+| `quests.json`       | Daily quest definitions (5 quest types with targets, XP rewards, reset types)                                   |
 
 ### Running the Seed Script
 

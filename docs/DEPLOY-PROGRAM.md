@@ -1,8 +1,10 @@
+> Last synced: 2026-03-02
+
 # Deploying Onchain Academy to Devnet
 
 Each bounty applicant deploys their own program instance on devnet. This gives you full authority over the program — no shared keys, no waiting on others, and a clean environment to test your frontend against.
 
-Full instruction reference: [INTEGRATION.md](./INTEGRATION.md) | Program specification: [SPEC.md](./SPEC.md)
+Architecture reference: [ARCHITECTURE.md](./ARCHITECTURE.md) | Program specification: [audit/SPEC.md](../audit/SPEC.md)
 
 ---
 
@@ -260,13 +262,20 @@ Add these to your `.env.local`:
 NEXT_PUBLIC_PROGRAM_ID=<YOUR_PROGRAM_ID>
 NEXT_PUBLIC_XP_MINT_ADDRESS=<YOUR_XP_MINT_ADDRESS>
 NEXT_PUBLIC_BACKEND_SIGNER=<YOUR_AUTHORITY_PUBKEY>
-NEXT_PUBLIC_CLUSTER=devnet
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
 # Server-side only (never expose to client)
-BACKEND_SIGNER_KEYPAIR=../wallets/signer.json
+BACKEND_SIGNER_SECRET=<BASE58_PRIVATE_KEY>
+PROGRAM_AUTHORITY_SECRET=<BASE58_PRIVATE_KEY>
 ```
 
-For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public key. In production these are separate keys.
+For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public key. `BACKEND_SIGNER_SECRET` and `PROGRAM_AUTHORITY_SECRET` can be the same keypair (as base58). In production these are separate keys.
+
+To extract the base58 private key from a Solana keypair JSON file:
+
+```bash
+node -e "const k=require('./wallets/signer.json'); const bs58=require('bs58'); console.log(bs58.encode(Buffer.from(k)))"
+```
 
 ---
 
