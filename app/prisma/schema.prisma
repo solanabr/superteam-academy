@@ -217,15 +217,17 @@ model UserChallenge {
 
 model Discussion {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId    String   // Привязка к курсу
-  lessonIndex Int      // Привязка к конкретному уроку
+  courseId    String
+  lessonIndex Int
   
   user        User     @relation(fields: [userId], references: [id])
   userId      String   @db.ObjectId
   
-  content     String   // Текст вопроса/комментария
+  content     String
   createdAt   DateTime @default(now())
-  
-  // Ответы на этот комментарий (опционально для глубоких тредов, но мы сделаем плоские для начала)
-  // upvotes    Int      @default(0)
+
+  // НОВОЕ: Самоссылающаяся связь для ответов
+  parentId    String?      @db.ObjectId // Если это ответ, тут будет ID родительского вопроса
+  parent      Discussion?  @relation("DiscussionReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     Discussion[] @relation("DiscussionReplies")
 }

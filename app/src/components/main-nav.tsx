@@ -3,7 +3,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, GraduationCap, Trophy, Settings } from "lucide-react";
+import { LayoutDashboard, GraduationCap, Trophy, Settings, MessageSquare } from "lucide-react";
 
 const items = [
   {
@@ -16,6 +16,10 @@ const items = [
     href: "/courses",
     icon: GraduationCap,
   },
+  { 
+    title: "Forum", 
+    href: "/forum", 
+    icon: MessageSquare },
   {
     title: "Leaderboard",
     href: "/leaderboard",

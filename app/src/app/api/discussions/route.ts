@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     }
 
     const discussions = await prisma.discussion.findMany({
-        where: { courseId, lessonIndex },
+        where: { courseId, lessonIndex, parentId: null },
         orderBy: { createdAt: 'desc' }, // Новые сверху
         include: {
             // Подтягиваем инфу о юзере, чтобы нарисовать аватарку
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
-    const { courseId, lessonIndex, content, walletAddress } = body;
+    const { courseId, lessonIndex, content, walletAddress, parentId } = body; 
 
     // Авторизация
     let userId = null;
@@ -64,9 +64,10 @@ export async function POST(request: Request) {
     const newComment = await prisma.discussion.create({
         data: {
             userId: userId,
-            courseId,
-            lessonIndex,
-            content
+            courseId: courseId,
+            lessonIndex: lessonIndex,
+            content: content,
+            parentId: parentId || null // Если есть parentId, значит это ответ
         },
         include: {
             user: { select: { username: true, walletAddress: true, githubHandle: true, image: true, role: true } }
