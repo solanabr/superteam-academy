@@ -5,6 +5,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 import { NotificationService } from "./notification-service";
@@ -104,7 +107,7 @@ export class PrismaProgressService implements LearningProgressService {
     userId: string,
     courseId: string,
     lessonIndex: number,
-  ): Promise<void> {
+  ): Promise<LessonCompletionResult> {
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },
       include: {
@@ -124,12 +127,12 @@ export class PrismaProgressService implements LearningProgressService {
       },
     });
 
-    if (!enrollment) return;
+    if (!enrollment) return { xpEarned: 0, courseCompleted: false };
 
     // Flatten lessons to find the one at the given index
     const allLessons = enrollment.course.modules.flatMap((m) => m.lessons);
     const lesson = allLessons[lessonIndex];
-    if (!lesson) return;
+    if (!lesson) return { xpEarned: 0, courseCompleted: false };
 
     // Upsert completion (idempotent)
     await prisma.lessonCompletion.upsert({
@@ -150,7 +153,7 @@ export class PrismaProgressService implements LearningProgressService {
     // Award XP — snapshot level before/after for level-up notification
     const xpBefore = await this.getXP(userId);
     const prevLevel = levelFromXP(xpBefore);
-    const newTotal = await this.addXP(userId, lesson.xpReward);
+    const { balance: newTotal } = await this.addXP(userId, lesson.xpReward);
     const newLevel = levelFromXP(newTotal);
     if (newLevel > prevLevel) {
       notifService
@@ -176,20 +179,27 @@ export class PrismaProgressService implements LearningProgressService {
     });
 
     const totalLessons = allLessons.length;
-    const isComplete = completionCount >= totalLessons;
+    const courseCompleted =
+      completionCount >= totalLessons && !enrollment.completedAt;
 
     await prisma.enrollment.update({
       where: { id: enrollment.id },
       data: {
         lastAccessedAt: new Date(),
-        ...(isComplete && !enrollment.completedAt
-          ? { completedAt: new Date() }
-          : {}),
+        ...(courseCompleted ? { completedAt: new Date() } : {}),
       },
     });
+
+    return {
+      xpEarned: lesson.xpReward,
+      courseCompleted,
+    };
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<void> {
+  async enrollInCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
     await prisma.enrollment.upsert({
       where: { userId_courseId: { userId, courseId } },
       create: { userId, courseId },
@@ -203,6 +213,98 @@ export class PrismaProgressService implements LearningProgressService {
         data: { courseId },
       },
     });
+
+    return {};
+  }
+
+  async finalizeCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult> {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+      include: {
+        completions: true,
+        course: {
+          include: {
+            modules: {
+              include: { lessons: { select: { id: true, xpReward: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!enrollment || !enrollment.completedAt) {
+      return { totalXp: 0, bonusXp: 0, creatorXp: 0 };
+    }
+
+    const totalLessons = enrollment.course.modules.reduce(
+      (sum, m) => sum + m.lessons.length,
+      0,
+    );
+    const baseXp = enrollment.completions.reduce((s, c) => s + c.xpEarned, 0);
+    const bonusXp = Math.round(baseXp * 0.5);
+    const creatorXp = Math.round(baseXp * 0.1);
+
+    // Award bonus XP
+    await this.addXP(userId, bonusXp);
+
+    // Upsert credential
+    await prisma.userCredential.upsert({
+      where: {
+        userId_trackId: {
+          userId,
+          trackId: enrollment.course.trackId,
+        },
+      },
+      create: {
+        userId,
+        trackId: enrollment.course.trackId,
+        trackName: enrollment.course.trackName,
+        currentLevel: 1,
+        coursesCompleted: 1,
+        totalXpEarned: baseXp + bonusXp,
+      },
+      update: {
+        currentLevel: { increment: 1 },
+        coursesCompleted: { increment: 1 },
+        totalXpEarned: { increment: baseXp + bonusXp },
+      },
+    });
+
+    await prisma.activity.create({
+      data: {
+        userId,
+        type: "course_completed",
+        data: {
+          courseId,
+          totalLessons,
+          totalXp: baseXp + bonusXp,
+          bonusXp,
+        },
+      },
+    });
+
+    return { totalXp: baseXp + bonusXp, bonusXp, creatorXp };
+  }
+
+  async closeEnrollment(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+
+    if (!enrollment) return {};
+
+    // Delete completions first (cascade), then enrollment
+    await prisma.enrollment.delete({
+      where: { id: enrollment.id },
+    });
+
+    return {};
   }
 
   // ── XP ──────────────────────────────────────────────────────────────────────
@@ -215,7 +317,10 @@ export class PrismaProgressService implements LearningProgressService {
     return result._sum.amount ?? 0;
   }
 
-  async addXP(userId: string, amount: number): Promise<number> {
+  async addXP(
+    userId: string,
+    amount: number,
+  ): Promise<{ balance: number } & TransactionResult> {
     await prisma.xPEvent.create({
       data: {
         userId,
@@ -223,12 +328,10 @@ export class PrismaProgressService implements LearningProgressService {
         source: "lesson",
       },
     });
-    const newTotal = await this.getXP(userId);
+    const balance = await this.getXP(userId);
     // Fire-and-forget milestone notification
-    notifService
-      .maybeCreateXpMilestone(userId, newTotal)
-      .catch(() => undefined);
-    return newTotal;
+    notifService.maybeCreateXpMilestone(userId, balance).catch(() => undefined);
+    return { balance };
   }
 
   // ── Streaks ─────────────────────────────────────────────────────────────────
@@ -467,28 +570,31 @@ export class PrismaProgressService implements LearningProgressService {
     );
 
     return seedAchievements.map((a) => ({
-      id: a.id,
+      id: String(a.id),
       name: a.name,
       description: a.description,
       icon: a.icon,
       category: a.category as Achievement["category"],
       xpReward: a.xpReward,
-      claimed: claimMap.has(a.id),
-      claimedAt: claimMap.get(a.id),
+      claimed: claimMap.has(String(a.id)),
+      claimedAt: claimMap.get(String(a.id)),
     }));
   }
 
-  async claimAchievement(userId: string, achievementId: number): Promise<void> {
+  async claimAchievement(
+    userId: string,
+    achievementId: string,
+  ): Promise<TransactionResult> {
     const achievement = await prisma.achievement.findUnique({
       where: { id: achievementId },
     });
-    if (!achievement) return;
+    if (!achievement) return {};
 
     // Check if already claimed
     const existing = await prisma.userAchievement.findUnique({
       where: { userId_achievementId: { userId, achievementId } },
     });
-    if (existing) return;
+    if (existing) return {};
 
     await prisma.$transaction([
       prisma.userAchievement.create({
@@ -499,7 +605,7 @@ export class PrismaProgressService implements LearningProgressService {
           userId,
           amount: achievement.xpReward,
           source: "achievement",
-          sourceId: String(achievementId),
+          sourceId: achievementId,
         },
       }),
       prisma.activity.create({
@@ -519,5 +625,7 @@ export class PrismaProgressService implements LearningProgressService {
         icon: achievement.icon,
       })
       .catch(() => undefined);
+
+    return {};
   }
 }

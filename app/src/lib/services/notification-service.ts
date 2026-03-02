@@ -121,7 +121,7 @@ export class NotificationService {
   async createAchievementNotification(
     userId: string,
     payload: {
-      achievementId: number;
+      achievementId: string;
       achievementName: string;
       xpReward: number;
       icon: string;

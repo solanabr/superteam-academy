@@ -4,6 +4,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 
 /**
@@ -45,12 +48,13 @@ export interface LearningProgressService {
    * @param userId - Wallet public key or local user identifier
    * @param courseId - Unique course slug
    * @param lessonIndex - Zero-based index of the lesson within the course
+   * @returns Lesson completion result with XP earned and course completion status
    */
   completeLesson(
     userId: string,
     courseId: string,
     lessonIndex: number,
-  ): Promise<void>;
+  ): Promise<LessonCompletionResult>;
 
   /**
    * Enroll a learner in a course, creating a new progress record.
@@ -59,7 +63,26 @@ export interface LearningProgressService {
    * @param userId - Wallet public key or local user identifier
    * @param courseId - Unique course slug
    */
-  enrollInCourse(userId: string, courseId: string): Promise<void>;
+  enrollInCourse(userId: string, courseId: string): Promise<TransactionResult>;
+
+  /**
+   * Finalize a completed course: awards completion bonus XP and issues/upgrades credential.
+   * On-chain: calls finalize_course then issue_credential/upgrade_credential.
+   * @param userId - Wallet public key or local user identifier
+   * @param courseId - Unique course slug
+   */
+  finalizeCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult>;
+
+  /**
+   * Close an enrollment, reclaiming rent.
+   * On-chain: calls close_enrollment (learner-signed).
+   * @param userId - Wallet public key or local user identifier
+   * @param courseId - Unique course slug
+   */
+  closeEnrollment(userId: string, courseId: string): Promise<TransactionResult>;
 
   // -- XP --------------------------------------------------------------------
 
@@ -73,13 +96,16 @@ export interface LearningProgressService {
   getXP(userId: string): Promise<number>;
 
   /**
-   * Award XP to a learner (lesson completion, streak bonus, achievement reward).
+   * Award XP to a learner (manual grant via reward_xp instruction, streak bonus, etc.).
    * In production, this mints soulbound XP tokens via a backend-signed transaction.
    * @param userId - Wallet public key or local user identifier
-   * @param amount - XP to add (e.g. 10–50 for lessons, 25–100 for challenges)
-   * @returns Updated total XP balance after addition
+   * @param amount - XP to add
+   * @returns Updated total XP balance and optional tx signature
    */
-  addXP(userId: string, amount: number): Promise<number>;
+  addXP(
+    userId: string,
+    amount: number,
+  ): Promise<{ balance: number } & TransactionResult>;
 
   // -- Streaks ---------------------------------------------------------------
 
@@ -140,9 +166,12 @@ export interface LearningProgressService {
    * In production, this sets the corresponding bit in the on-chain achievement bitmap.
    * No-ops if the achievement is already claimed or does not exist.
    * @param userId - Wallet public key or local user identifier
-   * @param achievementId - Numeric achievement ID (1–256)
+   * @param achievementId - String achievement identifier
    */
-  claimAchievement(userId: string, achievementId: number): Promise<void>;
+  claimAchievement(
+    userId: string,
+    achievementId: string,
+  ): Promise<TransactionResult>;
 }
 
 // Re-export implementations from their dedicated modules

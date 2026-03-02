@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { achievementId } = body;
 
-  if (achievementId === undefined) {
+  if (!achievementId) {
     return NextResponse.json(
       { error: "Missing achievementId" },
       { status: 400 },
     );
   }
 
-  await service.claimAchievement(userId, achievementId);
+  const result = await service.claimAchievement(userId, String(achievementId));
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, ...result });
 }

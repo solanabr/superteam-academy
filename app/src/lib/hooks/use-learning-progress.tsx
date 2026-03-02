@@ -55,7 +55,7 @@ interface LearningProgressActions {
     timeframe: "weekly" | "monthly" | "alltime",
     courseId?: string,
   ): Promise<LeaderboardEntry[]>;
-  claimAchievement(achievementId: number): Promise<void>;
+  claimAchievement(achievementId: string): Promise<void>;
   refreshAll(): Promise<void>;
   walletAddress: string | null;
 }
@@ -204,9 +204,14 @@ export function LearningProgressProvider({
       xpReward: number,
       meta?: ActivityMeta,
     ) => {
-      await progressService.completeLesson(state.userId, courseId, lessonIndex);
-      await progressService.addXP(state.userId, xpReward);
+      const result = await progressService.completeLesson(
+        state.userId,
+        courseId,
+        lessonIndex,
+      );
+
       await progressService.recordActivity(state.userId);
+
       trackEvent({
         name: "lesson_completed",
         params: {
@@ -221,83 +226,27 @@ export function LearningProgressProvider({
         courseSlug: courseId,
       });
 
-      // Fire on-chain complete_lesson (non-blocking — failure does not affect UI)
-      if (walletUserId) {
-        fetch("/api/onchain/complete-lesson", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            courseId,
-            lessonIndex,
-            learnerWallet: walletUserId,
-          }),
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error(`${res.status}`);
-            return res.json();
-          })
-          .then((data: { success?: boolean; signature?: string }) => {
-            if (data.signature) {
-              setState((prev) => ({
-                ...prev,
-                onChainLessonSig: data.signature ?? null,
-              }));
-            }
-          })
-          .catch((err) => console.warn("[onchain/complete-lesson]", err));
+      if (result.signature) {
+        setState((prev) => ({
+          ...prev,
+          onChainLessonSig: result.signature ?? null,
+        }));
       }
 
-      // Check if course was just completed
-      const updatedProgress = await progressService.getProgress(
-        state.userId,
-        courseId,
-      );
-      if (
-        updatedProgress?.percentage === 100 &&
-        !state.progressMap[courseId]?.completedAt
-      ) {
+      // If the service reports course completed, finalize through the service
+      if (result.courseCompleted) {
         recordActivity(state.userId, "course_completed", {
           course: meta?.courseTitle ?? courseId,
           courseSlug: courseId,
         });
-
-        // Fire on-chain finalize_course + issue_credential cascade (non-blocking)
-        if (walletUserId) {
-          fetch("/api/onchain/finalize-course", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ courseId, learnerWallet: walletUserId }),
-          })
-            .then((res) => {
-              if (!res.ok) throw new Error(`finalize-course ${res.status}`);
-              return res.json();
-            })
-            .then((data: { success?: boolean }) => {
-              if (!data.success)
-                throw new Error("finalize-course returned failure");
-              return fetch("/api/onchain/issue-credential", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  courseId,
-                  learnerWallet: walletUserId,
-                  name: meta?.courseTitle ?? courseId,
-                }),
-              });
-            })
-            .then((res) => {
-              if (res && !res.ok)
-                throw new Error(`issue-credential ${res.status}`);
-            })
-            .catch((err) =>
-              console.warn("[onchain/finalize+issue-credential]", err),
-            );
-        }
+        progressService
+          .finalizeCourse(state.userId, courseId)
+          .catch((err) => console.warn("[finalizeCourse]", err));
       }
 
       await loadAll();
     },
-    [state.userId, state.progressMap, walletUserId, loadAll],
+    [state.userId, loadAll],
   );
 
   const getLeaderboard = useCallback(
@@ -308,7 +257,7 @@ export function LearningProgressProvider({
   );
 
   const claimAchievement = useCallback(
-    async (achievementId: number) => {
+    async (achievementId: string) => {
       await progressService.claimAchievement(state.userId, achievementId);
       trackEvent({
         name: "achievement_claimed",

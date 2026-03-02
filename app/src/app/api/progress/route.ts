@@ -38,8 +38,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await service.completeLesson(userId, courseId, lessonIndex);
-  const progress = await service.getProgress(userId, courseId);
+  const result = await service.completeLesson(userId, courseId, lessonIndex);
 
-  return NextResponse.json(progress);
+  return NextResponse.json(result);
 }

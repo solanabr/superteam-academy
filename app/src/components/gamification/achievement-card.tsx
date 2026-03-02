@@ -8,7 +8,7 @@ import type { Achievement } from "@/types";
 
 interface AchievementCardProps {
   achievement: Achievement;
-  onClaim?: (id: number) => void;
+  onClaim?: (id: string) => void;
   className?: string;
 }
 

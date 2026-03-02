@@ -4,6 +4,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 
@@ -41,16 +44,39 @@ export class ApiProgressService implements LearningProgressService {
     _userId: string,
     courseId: string,
     lessonIndex: number,
-  ): Promise<void> {
-    await apiFetch("/api/progress", {
+  ): Promise<LessonCompletionResult> {
+    return apiFetch<LessonCompletionResult>("/api/progress", {
       method: "POST",
       body: JSON.stringify({ courseId, lessonIndex }),
     });
   }
 
-  async enrollInCourse(_userId: string, courseId: string): Promise<void> {
-    await apiFetch("/api/enrollment", {
+  async enrollInCourse(
+    _userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    return apiFetch<TransactionResult>("/api/enrollment", {
       method: "POST",
+      body: JSON.stringify({ courseId }),
+    });
+  }
+
+  async finalizeCourse(
+    _userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult> {
+    return apiFetch<CourseFinalizationResult>("/api/progress/finalize", {
+      method: "POST",
+      body: JSON.stringify({ courseId }),
+    });
+  }
+
+  async closeEnrollment(
+    _userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    return apiFetch<TransactionResult>("/api/enrollment", {
+      method: "DELETE",
       body: JSON.stringify({ courseId }),
     });
   }
@@ -60,9 +86,12 @@ export class ApiProgressService implements LearningProgressService {
     return user.xp;
   }
 
-  async addXP(_userId: string, _amount: number): Promise<number> {
+  async addXP(
+    _userId: string,
+    _amount: number,
+  ): Promise<{ balance: number } & TransactionResult> {
     const user = await apiFetch<{ xp: number }>("/api/user");
-    return user.xp;
+    return { balance: user.xp };
   }
 
   async getStreak(_userId: string): Promise<StreakData> {
@@ -94,9 +123,9 @@ export class ApiProgressService implements LearningProgressService {
 
   async claimAchievement(
     _userId: string,
-    achievementId: number,
-  ): Promise<void> {
-    await apiFetch("/api/achievements", {
+    achievementId: string,
+  ): Promise<TransactionResult> {
+    return apiFetch<TransactionResult>("/api/achievements", {
       method: "POST",
       body: JSON.stringify({ achievementId }),
     });

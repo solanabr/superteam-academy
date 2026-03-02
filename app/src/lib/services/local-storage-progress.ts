@@ -4,6 +4,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 
@@ -41,7 +44,7 @@ function levelFromXP(xp: number): number {
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   // progress (4)
   {
-    id: 1,
+    id: "first-steps",
     name: "First Steps",
     description: "Complete your first lesson",
     icon: "footprints",
@@ -50,7 +53,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 2,
+    id: "course-conqueror",
     name: "Course Conqueror",
     description: "Complete an entire course",
     icon: "trophy",
@@ -59,7 +62,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 3,
+    id: "halfway-there",
     name: "Halfway There",
     description: "Complete 50% of any course",
     icon: "flag",
@@ -68,7 +71,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 4,
+    id: "knowledge-collector",
     name: "Knowledge Collector",
     description: "Complete 5 courses",
     icon: "library",
@@ -79,7 +82,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
 
   // streaks (4)
   {
-    id: 5,
+    id: "on-fire",
     name: "On Fire",
     description: "Reach a 3-day streak",
     icon: "flame",
@@ -88,7 +91,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 6,
+    id: "week-warrior",
     name: "Week Warrior",
     description: "Reach a 7-day streak",
     icon: "calendar-check",
@@ -97,7 +100,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 7,
+    id: "consistency-king",
     name: "Consistency King",
     description: "Reach a 30-day streak",
     icon: "crown",
@@ -106,7 +109,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 8,
+    id: "unstoppable",
     name: "Unstoppable",
     description: "Reach a 100-day streak",
     icon: "zap",
@@ -117,7 +120,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
 
   // skills (4)
   {
-    id: 9,
+    id: "anchor-apprentice",
     name: "Anchor Apprentice",
     description: "Complete an Anchor Framework course",
     icon: "anchor",
@@ -126,7 +129,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 10,
+    id: "rust-wrangler",
     name: "Rust Wrangler",
     description: "Complete a Rust for Solana course",
     icon: "code",
@@ -135,7 +138,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 11,
+    id: "defi-degen",
     name: "DeFi Degen",
     description: "Complete a DeFi Development course",
     icon: "coins",
@@ -144,7 +147,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 12,
+    id: "security-sentinel",
     name: "Security Sentinel",
     description: "Complete a Program Security course",
     icon: "shield",
@@ -155,7 +158,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
 
   // community (4)
   {
-    id: 13,
+    id: "welcome-aboard",
     name: "Welcome Aboard",
     description: "Create your learner profile",
     icon: "user-plus",
@@ -164,7 +167,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 14,
+    id: "referral-rookie",
     name: "Referral Rookie",
     description: "Refer your first friend",
     icon: "users",
@@ -173,7 +176,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 15,
+    id: "social-butterfly",
     name: "Social Butterfly",
     description: "Connect all social accounts",
     icon: "share-2",
@@ -182,7 +185,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 16,
+    id: "top-10",
     name: "Top 10",
     description: "Reach the top 10 on the leaderboard",
     icon: "bar-chart",
@@ -193,7 +196,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
 
   // special (4)
   {
-    id: 17,
+    id: "early-adopter",
     name: "Early Adopter",
     description: "Join during Season 1",
     icon: "sparkles",
@@ -202,7 +205,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 18,
+    id: "challenge-accepted",
     name: "Challenge Accepted",
     description: "Pass 10 coding challenges",
     icon: "swords",
@@ -211,7 +214,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 19,
+    id: "streak-saver",
     name: "Streak Saver",
     description: "Use a streak freeze",
     icon: "snowflake",
@@ -220,7 +223,7 @@ const DEFAULT_ACHIEVEMENTS: Achievement[] = [
     claimed: false,
   },
   {
-    id: 20,
+    id: "credential-holder",
     name: "Credential Holder",
     description: "Earn your first on-chain credential",
     icon: "badge-check",
@@ -339,12 +342,13 @@ export class LocalStorageProgressService implements LearningProgressService {
     userId: string,
     courseId: string,
     lessonIndex: number,
-  ): Promise<void> {
+  ): Promise<LessonCompletionResult> {
     const k = this.key("progress", `${userId}:${courseId}`);
     const progress = getItem<Progress | null>(k, null);
-    if (!progress) return;
+    if (!progress) return { xpEarned: 0, courseCompleted: false };
 
-    if (!progress.completedLessons.includes(lessonIndex)) {
+    const alreadyCompleted = progress.completedLessons.includes(lessonIndex);
+    if (!alreadyCompleted) {
       progress.completedLessons.push(lessonIndex);
       progress.completedLessons.sort((a, b) => a - b);
     }
@@ -353,17 +357,30 @@ export class LocalStorageProgressService implements LearningProgressService {
     );
     progress.lastAccessedAt = new Date().toISOString();
 
-    if (progress.percentage === 100 && !progress.completedAt) {
+    const courseCompleted =
+      progress.percentage === 100 && !progress.completedAt;
+    if (courseCompleted) {
       progress.completedAt = new Date().toISOString();
     }
 
     setItem(k, progress);
+
+    // Award XP for this lesson (default 10 XP for localStorage)
+    const xpEarned = alreadyCompleted ? 0 : 10;
+    if (xpEarned > 0) {
+      await this.addXP(userId, xpEarned);
+    }
+
+    return { xpEarned, courseCompleted };
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<void> {
+  async enrollInCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
     const k = this.key("progress", `${userId}:${courseId}`);
     const existing = getItem<Progress | null>(k, null);
-    if (existing) return;
+    if (existing) return {};
 
     const progress: Progress = {
       courseId,
@@ -380,6 +397,56 @@ export class LocalStorageProgressService implements LearningProgressService {
       enrolled.push(courseId);
       setItem(this.key("enrolled", userId), enrolled);
     }
+
+    return {};
+  }
+
+  async finalizeCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult> {
+    const progress = await this.getProgress(userId, courseId);
+    if (!progress || progress.percentage < 100) {
+      return { totalXp: 0, bonusXp: 0, creatorXp: 0 };
+    }
+
+    // 50% completion bonus (based on total lessons * 10 XP per lesson)
+    const baseXp = progress.totalLessons * 10;
+    const bonusXp = Math.round(baseXp * 0.5);
+    const creatorXp = Math.round(baseXp * 0.1);
+
+    await this.addXP(userId, bonusXp);
+
+    // Mark as finalized
+    const k = this.key("progress", `${userId}:${courseId}`);
+    const stored = getItem<Progress | null>(k, null);
+    if (stored) {
+      stored.isFinalized = true;
+      setItem(k, stored);
+    }
+
+    return {
+      totalXp: baseXp + bonusXp,
+      bonusXp,
+      creatorXp,
+    };
+  }
+
+  async closeEnrollment(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    if (!isClient()) return {};
+
+    // Remove progress
+    localStorage.removeItem(this.key("progress", `${userId}:${courseId}`));
+
+    // Remove from enrolled list
+    const enrolled = getItem<string[]>(this.key("enrolled", userId), []);
+    const filtered = enrolled.filter((id) => id !== courseId);
+    setItem(this.key("enrolled", userId), filtered);
+
+    return {};
   }
 
   // ---- XP -----------------------------------------------------------------
@@ -388,11 +455,14 @@ export class LocalStorageProgressService implements LearningProgressService {
     return getItem<number>(this.key("xp", userId), 0);
   }
 
-  async addXP(userId: string, amount: number): Promise<number> {
+  async addXP(
+    userId: string,
+    amount: number,
+  ): Promise<{ balance: number } & TransactionResult> {
     const current = getItem<number>(this.key("xp", userId), 0);
     const next = current + amount;
     setItem(this.key("xp", userId), next);
-    return next;
+    return { balance: next };
   }
 
   // ---- Streaks ------------------------------------------------------------
@@ -528,7 +598,7 @@ export class LocalStorageProgressService implements LearningProgressService {
   // ---- Achievements -------------------------------------------------------
 
   async getAchievements(userId: string | null): Promise<Achievement[]> {
-    const claimed = getItem<Record<number, string>>(
+    const claimed = getItem<Record<string, string>>(
       this.key("achievements_claimed", userId ?? "guest"),
       {},
     );
@@ -540,19 +610,23 @@ export class LocalStorageProgressService implements LearningProgressService {
     }));
   }
 
-  async claimAchievement(userId: string, achievementId: number): Promise<void> {
+  async claimAchievement(
+    userId: string,
+    achievementId: string,
+  ): Promise<TransactionResult> {
     const achievement = DEFAULT_ACHIEVEMENTS.find(
       (a) => a.id === achievementId,
     );
-    if (!achievement) return;
+    if (!achievement) return {};
 
     const k = this.key("achievements_claimed", userId);
-    const claimed = getItem<Record<number, string>>(k, {});
-    if (achievementId in claimed) return;
+    const claimed = getItem<Record<string, string>>(k, {});
+    if (achievementId in claimed) return {};
 
     claimed[achievementId] = new Date().toISOString();
     setItem(k, claimed);
 
     await this.addXP(userId, achievement.xpReward);
+    return {};
   }
 }

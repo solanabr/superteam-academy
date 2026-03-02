@@ -18,7 +18,7 @@ type AnalyticsEvent =
     }
   | {
       name: "achievement_claimed";
-      params: { achievement_id: number; achievement_name: string };
+      params: { achievement_id: string; achievement_name: string };
     }
   | { name: "language_changed"; params: { locale: string } }
   | { name: "wallet_connected"; params: { wallet_type: string } }

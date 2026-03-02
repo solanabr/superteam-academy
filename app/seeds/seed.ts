@@ -513,7 +513,7 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding achievements & credentials...");
 
-  const achievementClaims: { userId: string; achievementId: number }[] = [];
+  const achievementClaims: { userId: string; achievementId: string }[] = [];
   const achievementMap = new Map(achievements.map((a) => [a.id, a]));
 
   for (const user of seedUsers) {

@@ -13,6 +13,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 import {
@@ -109,9 +112,13 @@ export class OnChainProgressService implements LearningProgressService {
     }
   }
 
-  async addXP(_userId: string, _amount: number): Promise<number> {
+  async addXP(
+    _userId: string,
+    _amount: number,
+  ): Promise<{ balance: number } & TransactionResult> {
     console.warn("OnChainProgressService.addXP: Backend-signed operation");
-    return this.getXP(_userId);
+    const balance = await this.getXP(_userId);
+    return { balance };
   }
 
   // ---- Progress ----------------------------------------------------------
@@ -160,6 +167,8 @@ export class OnChainProgressService implements LearningProgressService {
           ? new Date(enrollment.completedAt * 1000).toISOString()
           : undefined,
         lastAccessedAt: new Date().toISOString(),
+        enrollmentPda: enrollmentPda.toBase58(),
+        isFinalized: !!enrollment.completedAt,
       };
     } catch {
       return null;
@@ -189,8 +198,6 @@ export class OnChainProgressService implements LearningProgressService {
 
         try {
           const enrollment = deserializeEnrollment(data);
-          // We need to figure out the courseId to verify this enrollment belongs to this learner
-          // Find the matching course
           for (const { account: acc2, pubkey } of accounts) {
             const d2 = acc2.data as Buffer;
             if (d2.length < 50) continue;
@@ -198,25 +205,10 @@ export class OnChainProgressService implements LearningProgressService {
               const course = deserializeCourse(d2);
               if (!course.courseId) continue;
 
-              const [expectedEnrollment] = getEnrollmentPda(
-                course.courseId,
-                learner,
-              );
-              const [coursePda] = getCoursePda(course.courseId);
-              if (
-                enrollment.course.equals(coursePda) &&
-                expectedEnrollment.equals(pubkey)
-              ) {
-                // This enrollment belongs to this learner
-                // Actually we need the enrollment pubkey, not the course pubkey
-                // Let me just check by re-deriving
-              }
-
-              // Simpler approach: derive expected enrollment PDA and check
               const [enrollPda] = getEnrollmentPda(course.courseId, learner);
-              // Check if this account's enrollment.course matches the course PDA
+              const [coursePda] = getCoursePda(course.courseId);
+
               if (enrollment.course.equals(coursePda)) {
-                // Verify the enrollment PDA matches
                 const enrollInfo =
                   await this.connection.getAccountInfo(enrollPda);
                 if (enrollInfo) {
@@ -243,6 +235,8 @@ export class OnChainProgressService implements LearningProgressService {
                       ? new Date(enrollment.completedAt * 1000).toISOString()
                       : undefined,
                     lastAccessedAt: new Date().toISOString(),
+                    enrollmentPda: enrollPda.toBase58(),
+                    isFinalized: !!enrollment.completedAt,
                   });
                   break;
                 }
@@ -263,23 +257,45 @@ export class OnChainProgressService implements LearningProgressService {
   }
 
   async completeLesson(
-    _userId: string,
-    _courseId: string,
-    _lessonIndex: number,
-  ): Promise<void> {
-    console.warn(
-      "OnChainProgressService.completeLesson: Backend-signed operation",
-    );
+    userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<LessonCompletionResult> {
+    try {
+      const res = await fetch("/api/onchain/complete-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          lessonIndex,
+          learnerWallet: userId,
+        }),
+      });
+      if (!res.ok) {
+        console.warn("OnChainProgressService.completeLesson:", res.status);
+        return { xpEarned: 0, courseCompleted: false };
+      }
+      const data = await res.json();
+      return {
+        xpEarned: data.xpEarned ?? 0,
+        courseCompleted: data.courseCompleted ?? false,
+        signature: data.signature,
+      };
+    } catch (err) {
+      console.warn("OnChainProgressService.completeLesson:", err);
+      return { xpEarned: 0, courseCompleted: false };
+    }
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<void> {
+  async enrollInCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
     if (!this.wallet) {
       throw new Error("Wallet not connected");
     }
 
     // Build the enroll instruction using the Anchor instruction discriminator
-    // sha256("global:enroll")[..8] = discriminator for enroll instruction
-    // Pre-computed discriminator to avoid runtime dependency
     const crypto = globalThis.crypto || (await import("crypto")).webcrypto;
     const hashBuf = await crypto.subtle.digest(
       "SHA-256",
@@ -323,7 +339,89 @@ export class OnChainProgressService implements LearningProgressService {
 
     const tx = new VersionedTransaction(message);
     const signedTx = await this.wallet.signTransaction(tx);
-    await this.connection.sendRawTransaction(signedTx.serialize());
+    const signature = await this.connection.sendRawTransaction(
+      signedTx.serialize(),
+    );
+
+    return { signature };
+  }
+
+  async finalizeCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult> {
+    try {
+      const res = await fetch("/api/progress/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, learnerWallet: userId }),
+      });
+      if (!res.ok) {
+        console.warn("OnChainProgressService.finalizeCourse:", res.status);
+        return { totalXp: 0, bonusXp: 0, creatorXp: 0 };
+      }
+      return await res.json();
+    } catch (err) {
+      console.warn("OnChainProgressService.finalizeCourse:", err);
+      return { totalXp: 0, bonusXp: 0, creatorXp: 0 };
+    }
+  }
+
+  async closeEnrollment(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    if (!this.wallet) {
+      throw new Error("Wallet not connected");
+    }
+
+    // Build the close_enrollment instruction
+    const crypto = globalThis.crypto || (await import("crypto")).webcrypto;
+    const hashBuf = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode("global:close_enrollment"),
+    );
+    const discriminator = Buffer.from(new Uint8Array(hashBuf).slice(0, 8));
+
+    const courseIdBytes = Buffer.from(courseId, "utf8");
+    const courseIdLen = Buffer.alloc(4);
+    courseIdLen.writeUInt32LE(courseIdBytes.length, 0);
+
+    const instructionData = Buffer.concat([
+      discriminator,
+      courseIdLen,
+      courseIdBytes,
+    ]);
+
+    const [coursePda] = getCoursePda(courseId);
+    const [enrollmentPda] = getEnrollmentPda(courseId, this.wallet.publicKey);
+
+    const { TransactionInstruction } = await import("@solana/web3.js");
+
+    const ix = new TransactionInstruction({
+      programId: PROGRAM_ID,
+      keys: [
+        { pubkey: coursePda, isSigner: false, isWritable: true },
+        { pubkey: enrollmentPda, isSigner: false, isWritable: true },
+        { pubkey: this.wallet.publicKey, isSigner: true, isWritable: true },
+      ],
+      data: instructionData,
+    });
+
+    const { blockhash } = await this.connection.getLatestBlockhash();
+    const message = new TransactionMessage({
+      payerKey: this.wallet.publicKey,
+      recentBlockhash: blockhash,
+      instructions: [ix],
+    }).compileToV0Message();
+
+    const tx = new VersionedTransaction(message);
+    const signedTx = await this.wallet.signTransaction(tx);
+    const signature = await this.connection.sendRawTransaction(
+      signedTx.serialize(),
+    );
+
+    return { signature };
   }
 
   // ---- Streaks -----------------------------------------------------------
@@ -381,10 +479,11 @@ export class OnChainProgressService implements LearningProgressService {
 
   async claimAchievement(
     _userId: string,
-    _achievementId: number,
-  ): Promise<void> {
+    _achievementId: string,
+  ): Promise<TransactionResult> {
     console.warn(
       "OnChainProgressService.claimAchievement: Backend-signed operation",
     );
+    return {};
   }
 }

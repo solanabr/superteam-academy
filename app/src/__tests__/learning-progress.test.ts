@@ -264,7 +264,7 @@ describe("LocalStorageProgressService — XP", () => {
 
   it("adds XP and returns the new total", async () => {
     const result = await svc.addXP(userId, 100);
-    expect(result).toBe(100);
+    expect(result.balance).toBe(100);
     expect(await svc.getXP(userId)).toBe(100);
   });
 
@@ -504,7 +504,7 @@ describe("LocalStorageProgressService — Achievements", () => {
   it("each achievement has required fields", async () => {
     const achievements = await svc.getAchievements(userId);
     for (const a of achievements) {
-      expect(a.id).toBeGreaterThan(0);
+      expect(a.id).toBeTruthy();
       expect(a.name).toBeTruthy();
       expect(a.description).toBeTruthy();
       expect(a.icon).toBeTruthy();
@@ -526,40 +526,40 @@ describe("LocalStorageProgressService — claimAchievement", () => {
   });
 
   it("marks an achievement as claimed", async () => {
-    await svc.claimAchievement(userId, 1);
+    await svc.claimAchievement(userId, "first-steps");
     const achievements = await svc.getAchievements(userId);
-    const first = achievements.find((a) => a.id === 1)!;
+    const first = achievements.find((a) => a.id === "first-steps")!;
     expect(first.claimed).toBe(true);
     expect(first.claimedAt).toBeTruthy();
   });
 
   it("awards XP when claiming an achievement", async () => {
-    // Achievement #1 "First Steps" has xpReward of 50
+    // Achievement "first-steps" has xpReward of 50
     const xpBefore = await svc.getXP(userId);
-    await svc.claimAchievement(userId, 1);
+    await svc.claimAchievement(userId, "first-steps");
     const xpAfter = await svc.getXP(userId);
     expect(xpAfter - xpBefore).toBe(50);
   });
 
   it("does not double-award XP on repeat claim", async () => {
-    await svc.claimAchievement(userId, 1);
+    await svc.claimAchievement(userId, "first-steps");
     const xpAfterFirst = await svc.getXP(userId);
 
-    await svc.claimAchievement(userId, 1);
+    await svc.claimAchievement(userId, "first-steps");
     const xpAfterSecond = await svc.getXP(userId);
     expect(xpAfterSecond).toBe(xpAfterFirst);
   });
 
   it("does nothing for a non-existent achievement id", async () => {
-    await svc.claimAchievement(userId, 9999);
+    await svc.claimAchievement(userId, "nonexistent-9999");
     const xp = await svc.getXP(userId);
     expect(xp).toBe(0);
   });
 
   it("can claim multiple different achievements", async () => {
-    await svc.claimAchievement(userId, 1); // 50 XP
-    await svc.claimAchievement(userId, 5); // 75 XP
-    await svc.claimAchievement(userId, 13); // 25 XP
+    await svc.claimAchievement(userId, "first-steps"); // 50 XP
+    await svc.claimAchievement(userId, "on-fire"); // 75 XP
+    await svc.claimAchievement(userId, "welcome-aboard"); // 25 XP
 
     const achievements = await svc.getAchievements(userId);
     const claimed = achievements.filter((a) => a.claimed);
@@ -570,7 +570,7 @@ describe("LocalStorageProgressService — claimAchievement", () => {
   });
 
   it("leaves other achievements unclaimed", async () => {
-    await svc.claimAchievement(userId, 1);
+    await svc.claimAchievement(userId, "first-steps");
     const achievements = await svc.getAchievements(userId);
     const unclaimed = achievements.filter((a) => !a.claimed);
     expect(unclaimed).toHaveLength(19);

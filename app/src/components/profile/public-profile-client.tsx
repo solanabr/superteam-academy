@@ -32,8 +32,8 @@ import type {
   CredentialItem,
   CompletedCourseItem,
 } from "@/components/profile";
-import { MOCK_PUBLIC_PROFILES } from "../../../seeds/data/profiles";
-export type { MockProfile } from "../../../seeds/data/profiles";
+import { MOCK_PUBLIC_PROFILES } from "@/lib/data/mock-profiles";
+export type { MockProfile } from "@/lib/data/mock-profiles";
 export { MOCK_PUBLIC_PROFILES };
 
 // ──────────────────────────────────────────────

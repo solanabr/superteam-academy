@@ -1,3 +1,21 @@
+// ── Result types (service layer) ─────────────────────────────────────────────
+
+export interface TransactionResult {
+  signature?: string;
+}
+
+export interface LessonCompletionResult extends TransactionResult {
+  xpEarned: number;
+  courseCompleted: boolean;
+}
+
+export interface CourseFinalizationResult extends TransactionResult {
+  totalXp: number;
+  bonusXp: number;
+  creatorXp: number;
+  credentialAsset?: string;
+}
+
 // Course types
 export interface Course {
   id: string;
@@ -74,6 +92,8 @@ export interface Progress {
   enrolledAt: string;
   completedAt?: string;
   lastAccessedAt: string;
+  enrollmentPda?: string;
+  isFinalized?: boolean;
 }
 
 export interface StreakData {
@@ -96,7 +116,7 @@ export interface LeaderboardEntry {
 
 // Achievement types
 export interface Achievement {
-  id: number;
+  id: string;
   name: string;
   description: string;
   icon: string;
@@ -118,6 +138,7 @@ export interface Credential {
   mintAddress?: string;
   metadataUri?: string;
   badgeImage?: string;
+  collectionAddress?: string;
 }
 
 // User types

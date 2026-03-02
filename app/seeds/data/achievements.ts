@@ -1,12 +1,12 @@
 /**
  * Achievement seed data — 15 achievements across 5 categories.
- * Matches the Achievement model: { id: Int @id, name, description, icon, category, xpReward }
+ * Matches the Achievement model: { id: String @id, name, description, icon, category, xpReward }
  */
 export function getAchievements() {
   return [
     // Progress
     {
-      id: 0,
+      id: "first-steps",
       name: "First Steps",
       description: "Complete your first lesson",
       icon: "Footprints",
@@ -14,7 +14,7 @@ export function getAchievements() {
       xpReward: 25,
     },
     {
-      id: 1,
+      id: "course-completer",
       name: "Course Completer",
       description: "Complete an entire course",
       icon: "GraduationCap",
@@ -22,7 +22,7 @@ export function getAchievements() {
       xpReward: 100,
     },
     {
-      id: 2,
+      id: "speed-runner",
       name: "Speed Runner",
       description: "Complete a course in under 24 hours",
       icon: "Zap",
@@ -31,7 +31,7 @@ export function getAchievements() {
     },
     // Streaks
     {
-      id: 4,
+      id: "week-warrior",
       name: "Week Warrior",
       description: "Maintain a 7-day streak",
       icon: "Flame",
@@ -39,7 +39,7 @@ export function getAchievements() {
       xpReward: 75,
     },
     {
-      id: 5,
+      id: "monthly-master",
       name: "Monthly Master",
       description: "Maintain a 30-day streak",
       icon: "Calendar",
@@ -47,7 +47,7 @@ export function getAchievements() {
       xpReward: 200,
     },
     {
-      id: 6,
+      id: "consistency-king",
       name: "Consistency King",
       description: "Maintain a 100-day streak",
       icon: "Crown",
@@ -56,7 +56,7 @@ export function getAchievements() {
     },
     // Skills
     {
-      id: 8,
+      id: "rust-rookie",
       name: "Rust Rookie",
       description: "Complete a Rust-based course",
       icon: "Code",
@@ -64,7 +64,7 @@ export function getAchievements() {
       xpReward: 100,
     },
     {
-      id: 9,
+      id: "anchor-expert",
       name: "Anchor Expert",
       description: "Complete all Anchor track courses",
       icon: "Anchor",
@@ -72,7 +72,7 @@ export function getAchievements() {
       xpReward: 300,
     },
     {
-      id: 10,
+      id: "full-stack-solana",
       name: "Full Stack Solana",
       description: "Complete courses from 3 different tracks",
       icon: "Layers",
@@ -81,7 +81,7 @@ export function getAchievements() {
     },
     // Community
     {
-      id: 12,
+      id: "helper",
       name: "Helper",
       description: "Help another learner in discussions",
       icon: "HandHelping",
@@ -89,7 +89,7 @@ export function getAchievements() {
       xpReward: 50,
     },
     {
-      id: 13,
+      id: "first-comment",
       name: "First Comment",
       description: "Leave your first discussion comment",
       icon: "MessageSquare",
@@ -97,7 +97,7 @@ export function getAchievements() {
       xpReward: 25,
     },
     {
-      id: 14,
+      id: "top-contributor",
       name: "Top Contributor",
       description: "Get 10 upvotes on your comments",
       icon: "Star",
@@ -106,7 +106,7 @@ export function getAchievements() {
     },
     // Special
     {
-      id: 16,
+      id: "early-adopter",
       name: "Early Adopter",
       description: "Join during the first month",
       icon: "Sparkles",
@@ -114,7 +114,7 @@ export function getAchievements() {
       xpReward: 100,
     },
     {
-      id: 17,
+      id: "bug-hunter",
       name: "Bug Hunter",
       description: "Report a bug that gets fixed",
       icon: "Bug",
@@ -122,7 +122,7 @@ export function getAchievements() {
       xpReward: 200,
     },
     {
-      id: 18,
+      id: "perfect-score",
       name: "Perfect Score",
       description: "Complete all challenges in a course without hints",
       icon: "Trophy",

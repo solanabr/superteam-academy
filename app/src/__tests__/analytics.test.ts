@@ -39,7 +39,7 @@ describe("trackEvent", () => {
       },
       {
         name: "achievement_claimed" as const,
-        params: { achievement_id: 1, achievement_name: "a" },
+        params: { achievement_id: "first-steps", achievement_name: "a" },
       },
       { name: "language_changed" as const, params: { locale: "pt-BR" } },
       { name: "wallet_connected" as const, params: { wallet_type: "phantom" } },

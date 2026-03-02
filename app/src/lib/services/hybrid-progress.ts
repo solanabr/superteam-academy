@@ -5,6 +5,9 @@ import type {
   LeaderboardEntry,
   Credential,
   Achievement,
+  TransactionResult,
+  LessonCompletionResult,
+  CourseFinalizationResult,
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 import { LocalStorageProgressService } from "./learning-progress";
@@ -65,7 +68,10 @@ export class HybridProgressService implements LearningProgressService {
     }
   }
 
-  async addXP(userId: string, amount: number): Promise<number> {
+  async addXP(
+    userId: string,
+    amount: number,
+  ): Promise<{ balance: number } & TransactionResult> {
     // Always write to localStorage (instant feedback)
     return this.local.addXP(userId, amount);
   }
@@ -115,19 +121,42 @@ export class HybridProgressService implements LearningProgressService {
     userId: string,
     courseId: string,
     lessonIndex: number,
-  ): Promise<void> {
+  ): Promise<LessonCompletionResult> {
     // Always write to localStorage for instant UI feedback
-    await this.local.completeLesson(userId, courseId, lessonIndex);
-    // On-chain completion requires backend signature — handled separately
+    const localResult = await this.local.completeLesson(
+      userId,
+      courseId,
+      lessonIndex,
+    );
+
+    if (this.walletConnected) {
+      // Fire on-chain completion (non-blocking — failure does not affect UI)
+      this.onchain
+        .completeLesson(userId, courseId, lessonIndex)
+        .then((onchainResult) => {
+          // Merge signature if available
+          if (onchainResult.signature) {
+            localResult.signature = onchainResult.signature;
+          }
+        })
+        .catch((err) =>
+          console.warn("[hybrid] on-chain completeLesson failed:", err),
+        );
+    }
+
+    return localResult;
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<void> {
+  async enrollInCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
     if (this.walletConnected) {
       try {
-        await this.onchain.enrollInCourse(userId, courseId);
+        const result = await this.onchain.enrollInCourse(userId, courseId);
         // Also track locally for immediate UI state
         await this.local.enrollInCourse(userId, courseId);
-        return;
+        return result;
       } catch (err) {
         console.warn(
           "On-chain enrollment failed, falling back to localStorage:",
@@ -135,7 +164,46 @@ export class HybridProgressService implements LearningProgressService {
         );
       }
     }
-    await this.local.enrollInCourse(userId, courseId);
+    return this.local.enrollInCourse(userId, courseId);
+  }
+
+  async finalizeCourse(
+    userId: string,
+    courseId: string,
+  ): Promise<CourseFinalizationResult> {
+    if (this.walletConnected) {
+      try {
+        const result = await this.onchain.finalizeCourse(userId, courseId);
+        // Also finalize locally
+        await this.local.finalizeCourse(userId, courseId);
+        return result;
+      } catch (err) {
+        console.warn(
+          "On-chain finalizeCourse failed, falling back to localStorage:",
+          err,
+        );
+      }
+    }
+    return this.local.finalizeCourse(userId, courseId);
+  }
+
+  async closeEnrollment(
+    userId: string,
+    courseId: string,
+  ): Promise<TransactionResult> {
+    if (this.walletConnected) {
+      try {
+        const result = await this.onchain.closeEnrollment(userId, courseId);
+        await this.local.closeEnrollment(userId, courseId);
+        return result;
+      } catch (err) {
+        console.warn(
+          "On-chain closeEnrollment failed, falling back to localStorage:",
+          err,
+        );
+      }
+    }
+    return this.local.closeEnrollment(userId, courseId);
   }
 
   // ---- Streaks (always localStorage) ------------------------------------
@@ -188,7 +256,10 @@ export class HybridProgressService implements LearningProgressService {
     return this.local.getAchievements(userId);
   }
 
-  async claimAchievement(userId: string, achievementId: number): Promise<void> {
+  async claimAchievement(
+    userId: string,
+    achievementId: string,
+  ): Promise<TransactionResult> {
     return this.local.claimAchievement(userId, achievementId);
   }
 }

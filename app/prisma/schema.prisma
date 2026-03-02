@@ -220,7 +220,7 @@ model XPEvent {
 }
 
 model Achievement {
-  id          Int    @id
+  id          String @id
   name        String
   description String
   icon        String
@@ -233,7 +233,7 @@ model Achievement {
 model UserAchievement {
   id            String   @id @default(cuid())
   userId        String
-  achievementId Int
+  achievementId String
   claimedAt     DateTime @default(now())
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
