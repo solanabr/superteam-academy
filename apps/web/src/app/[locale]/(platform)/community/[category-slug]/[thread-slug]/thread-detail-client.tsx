@@ -8,12 +8,16 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { ArrowLeft } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { useVote } from "@/hooks/use-vote";
 import { VoteButton } from "@/components/community/vote-button";
 import { ThreadStatusBadge } from "@/components/community/thread-status-badge";
 import { AnswerCard } from "@/components/community/answer-card";
 import { AnswerEditor } from "@/components/community/answer-editor";
 import { FlagButton } from "@/components/community/flag-button";
+import { DeleteButton } from "@/components/community/delete-button";
+import { LevelBadge } from "@/components/gamification/level-badge";
 
 interface Author {
   username: string | null;
@@ -71,8 +75,43 @@ function timeAgo(
   return t("monthsAgo", { count: months });
 }
 
+function VotableAnswerCard({
+  answer,
+  isThreadAuthor,
+  currentUserId,
+  onAccept,
+  onDelete,
+}: {
+  answer: Answer;
+  isThreadAuthor: boolean;
+  currentUserId?: string;
+  onAccept: () => void;
+  onDelete: () => void;
+}) {
+  const { user } = useAuth();
+  const { score, userVote, isVoting, handleVote } = useVote({
+    targetType: "answer",
+    targetId: answer.id,
+    initialScore: answer.vote_score,
+    initialUserVote: answer.userVote,
+  });
+
+  return (
+    <AnswerCard
+      answer={{ ...answer, vote_score: score, userVote }}
+      isThreadAuthor={isThreadAuthor}
+      currentUserId={currentUserId}
+      onVote={handleVote}
+      onAccept={onAccept}
+      onDelete={onDelete}
+      disabled={!user || isVoting}
+    />
+  );
+}
+
 export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const t = useTranslations("community");
   const [thread, setThread] = useState<ThreadData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,29 +135,24 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
     fetchThread();
   }, [fetchThread]);
 
-  const handleVote = async (value: 0 | 1 | -1) => {
-    if (!thread) return;
-    await fetch("/api/community/votes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ threadId: thread.id, value }),
-    });
-    fetchThread();
-  };
-
-  const handleAnswerVote = async (answerId: string, value: 0 | 1 | -1) => {
-    await fetch("/api/community/votes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answerId, value }),
-    });
-    fetchThread();
-  };
+  const threadVote = useVote({
+    targetType: "thread",
+    targetId: thread?.id ?? "",
+    initialScore: thread?.vote_score ?? 0,
+    initialUserVote: thread?.userVote ?? null,
+  });
 
   const handleAccept = async (answerId: string) => {
-    await fetch(`/api/community/answers/${answerId}/accept`, {
+    const res = await fetch(`/api/community/answers/${answerId}/accept`, {
       method: "POST",
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      console.error(
+        "[community] accept failed:",
+        data?.error || res.statusText
+      );
+    }
     fetchThread();
   };
 
@@ -164,10 +198,10 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
       {/* Thread */}
       <div className="flex gap-4">
         <VoteButton
-          score={thread.vote_score}
-          userVote={thread.userVote}
-          onVote={handleVote}
-          disabled={!user}
+          score={threadVote.score}
+          userVote={threadVote.userVote}
+          onVote={threadVote.handleVote}
+          disabled={!user || threadVote.isVoting}
         />
 
         <div className="min-w-0 flex-1">
@@ -196,14 +230,24 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
                 {thread.author.username || t("anonymous")}
               </span>
               {thread.author.level > 0 && (
-                <span className="text-xs font-semibold text-[var(--level)]">
-                  {t("level", { level: thread.author.level })}
-                </span>
+                <LevelBadge level={thread.author.level} size="xs" />
               )}
             </span>
             <span>{timeAgo(thread.created_at, t)}</span>
             <span>{t("views", { count: thread.view_count })}</span>
             {user && <FlagButton threadId={thread.id} />}
+            {user?.id === thread.author_id && (
+              <DeleteButton
+                threadId={thread.id}
+                onDeleted={() =>
+                  router.push(
+                    thread.category
+                      ? `/community/${thread.category.slug}`
+                      : "/community"
+                  )
+                }
+              />
+            )}
           </div>
 
           {/* Body */}
@@ -226,13 +270,13 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
 
         <div className="space-y-4">
           {thread.answers.map((answer) => (
-            <AnswerCard
+            <VotableAnswerCard
               key={answer.id}
               answer={answer}
               isThreadAuthor={user?.id === thread.author_id}
-              onVote={(value) => handleAnswerVote(answer.id, value)}
+              currentUserId={user?.id}
               onAccept={() => handleAccept(answer.id)}
-              disabled={!user}
+              onDelete={() => fetchThread()}
             />
           ))}
         </div>

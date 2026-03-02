@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkCommunityAchievements } from "@/lib/gamification/achievements";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,19 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 30 answers per hour per user
+    if (
+      isRateLimited("community:answers", user.id, {
+        maxTokens: 30,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
     }
 
     const { threadId, body } = await request.json();

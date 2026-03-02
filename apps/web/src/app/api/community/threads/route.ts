@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkCommunityAchievements } from "@/lib/gamification/achievements";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
         category:forum_categories!category_id(id, name, slug)
       `
       )
+      .is("deleted_at", null)
       .limit(limit);
 
     // Scope filters
@@ -80,20 +82,24 @@ export async function GET(request: NextRequest) {
         sort === "top"
           ? /^-?\d+$/.test(ts ?? "")
           : /^\d{4}-\d{2}-\d{2}T/.test(ts ?? "");
-      if (ts && id && uuidRe.test(id) && tsValid) {
-        if (sort === "latest") {
-          query = query.or(
-            `last_activity_at.lt.${ts},and(last_activity_at.eq.${ts},id.lt.${id})`
-          );
-        } else if (sort === "top") {
-          query = query.or(
-            `vote_score.lt.${ts},and(vote_score.eq.${ts},id.lt.${id})`
-          );
-        } else {
-          query = query.or(
-            `created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${id})`
-          );
-        }
+      if (!ts || !id || !uuidRe.test(id) || !tsValid) {
+        return NextResponse.json(
+          { error: "Invalid cursor format" },
+          { status: 400 }
+        );
+      }
+      if (sort === "latest") {
+        query = query.or(
+          `last_activity_at.lt.${ts},and(last_activity_at.eq.${ts},id.lt.${id})`
+        );
+      } else if (sort === "top") {
+        query = query.or(
+          `vote_score.lt.${ts},and(vote_score.eq.${ts},id.lt.${id})`
+        );
+      } else {
+        query = query.or(
+          `created_at.lt.${ts},and(created_at.eq.${ts},id.lt.${id})`
+        );
       }
     }
 
@@ -185,6 +191,19 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 10 threads per hour per user
+    if (
+      isRateLimited("community:threads", user.id, {
+        maxTokens: 10,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
     }
 
     const body = await request.json();

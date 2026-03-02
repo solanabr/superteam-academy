@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { PushPin, ChatCircle } from "@phosphor-icons/react";
 import { VoteButton } from "./vote-button";
 import { ThreadStatusBadge } from "./thread-status-badge";
+import { LevelBadge } from "@/components/gamification/level-badge";
 
 interface ThreadCardAuthor {
   username: string | null;
@@ -106,11 +107,7 @@ export function ThreadCard({
               <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
             )}
             <span>{author.username || t("anonymous")}</span>
-            {author.level > 0 && (
-              <span className="font-semibold text-[var(--level)]">
-                {t("level", { level: author.level })}
-              </span>
-            )}
+            {author.level > 0 && <LevelBadge level={author.level} size="xs" />}
           </span>
           <span>{timeAgo(createdAt, t)}</span>
           <span className="flex items-center gap-1">

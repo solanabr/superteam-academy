@@ -61,7 +61,10 @@ export function AnswerEditor({ threadId, onAnswerPosted }: AnswerEditorProps) {
           disabled={isSubmitting || !body.trim()}
         >
           {isSubmitting && (
-            <div className="sol-spinner !h-4 !w-4" aria-hidden="true" />
+            <div
+              className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+              aria-hidden="true"
+            />
           )}
           {t("postAnswer")}
         </Button>

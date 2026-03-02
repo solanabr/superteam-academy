@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit: 60 votes per hour per user
+    if (
+      isRateLimited("community:votes", user.id, {
+        maxTokens: 60,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+    }
+
     const { threadId, answerId, value } = await request.json();
 
     // Exactly one target
@@ -41,6 +55,9 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createAdminClient();
+
+    // NOTE: Read-then-write pattern could cause 1-2 XP drift under rapid vote toggling.
+    // Mitigated by unique constraints and idempotency keys. Atomic RPC considered but deferred.
 
     // Find existing vote
     let existingVoteQuery = admin

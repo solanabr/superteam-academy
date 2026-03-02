@@ -534,6 +534,8 @@ CREATE POLICY "Users can update their own deployments"
 -- 8. PENDING ON-CHAIN ACTIONS (retry queue)
 -- ─────────────────────────────────────────────
 
+-- NOTE: All writes to this table go through service_role (API routes) or SECURITY DEFINER functions.
+-- No INSERT/UPDATE RLS policies are needed because authenticated/anon roles never write directly.
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -561,6 +563,8 @@ CREATE POLICY "users_read_own_pending_actions"
 -- DAILY QUESTS
 -- ═══════════════════════════════════════════════════════════════
 
+-- NOTE: All writes to this table go through service_role (API routes) or SECURITY DEFINER functions.
+-- No INSERT/UPDATE RLS policies are needed because authenticated/anon roles never write directly.
 CREATE TABLE user_daily_quests (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -817,6 +821,8 @@ CREATE TABLE threads (
   is_pinned BOOLEAN NOT NULL DEFAULT false,
   is_locked BOOLEAN NOT NULL DEFAULT false,
 
+  deleted_at TIMESTAMPTZ,
+
   last_activity_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -833,6 +839,7 @@ CREATE TABLE answers (
   body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 10000),
   is_accepted BOOLEAN NOT NULL DEFAULT false,
   vote_score INT NOT NULL DEFAULT 0,
+  deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -896,12 +903,20 @@ CREATE INDEX idx_threads_short_id ON threads(short_id);
 
 CREATE INDEX idx_answers_thread ON answers(thread_id);
 CREATE INDEX idx_answers_author ON answers(author_id);
+CREATE INDEX idx_threads_deleted ON threads(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX idx_answers_deleted ON answers(deleted_at) WHERE deleted_at IS NOT NULL;
 
 CREATE INDEX idx_votes_thread ON votes(thread_id) WHERE thread_id IS NOT NULL;
 CREATE INDEX idx_votes_answer ON votes(answer_id) WHERE answer_id IS NOT NULL;
 CREATE INDEX idx_votes_user ON votes(user_id);
 
 CREATE INDEX idx_flags_status ON flags(status) WHERE status = 'pending';
+
+-- Prevent duplicate flags: one flag per user per target
+CREATE UNIQUE INDEX IF NOT EXISTS idx_flags_unique_thread
+  ON flags (reporter_id, thread_id) WHERE thread_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_flags_unique_answer
+  ON flags (reporter_id, answer_id) WHERE answer_id IS NOT NULL;
 
 -- Full-text search on threads (weighted: title A, body B)
 ALTER TABLE threads ADD COLUMN search_vector tsvector
@@ -945,6 +960,28 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_prevent_self_vote
   BEFORE INSERT ON votes
   FOR EACH ROW EXECUTE FUNCTION prevent_self_vote();
+
+-- Prevent self-flagging (users cannot flag their own content)
+CREATE OR REPLACE FUNCTION prevent_self_flag()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.thread_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM threads WHERE id = NEW.thread_id AND author_id = NEW.reporter_id) THEN
+      RAISE EXCEPTION 'Cannot flag your own content';
+    END IF;
+  END IF;
+  IF NEW.answer_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM answers WHERE id = NEW.answer_id AND author_id = NEW.reporter_id) THEN
+      RAISE EXCEPTION 'Cannot flag your own content';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_self_flag
+  BEFORE INSERT ON flags
+  FOR EACH ROW EXECUTE FUNCTION prevent_self_flag();
 
 -- Update denormalized vote_score on threads/answers
 CREATE OR REPLACE FUNCTION update_vote_score()
@@ -996,7 +1033,7 @@ CREATE TRIGGER trg_update_answer_count
   AFTER INSERT OR DELETE ON answers
   FOR EACH ROW EXECUTE FUNCTION update_answer_count();
 
--- Update last_activity_at on new answers or answer edits
+-- Update last_activity_at on new answers only (not edits, to prevent gaming thread sort order)
 CREATE OR REPLACE FUNCTION update_last_activity()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -1006,20 +1043,46 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_update_last_activity
-  AFTER INSERT OR UPDATE OF body ON answers
+  AFTER INSERT ON answers
   FOR EACH ROW EXECUTE FUNCTION update_last_activity();
 
 -- ============================================================
 -- Community Forum: SECURITY DEFINER Functions
 -- ============================================================
 
--- Increment view count (called from API route)
-CREATE OR REPLACE FUNCTION increment_view_count(p_thread_id UUID)
+-- Per-user view dedup: only count one view per user per thread per 15-minute window.
+-- Anonymous views (p_user_id IS NULL) always increment.
+CREATE TABLE IF NOT EXISTS thread_views (
+  user_id    UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  thread_id  UUID REFERENCES threads(id) ON DELETE CASCADE,
+  viewed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, thread_id)
+);
+
+ALTER TABLE thread_views ENABLE ROW LEVEL SECURITY;
+-- No RLS policies needed — all access via service_role through increment_view_count().
+
+CREATE OR REPLACE FUNCTION increment_view_count(p_thread_id UUID, p_user_id UUID DEFAULT NULL)
 RETURNS void
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
-  UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+BEGIN
+  IF p_user_id IS NULL THEN
+    UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+    RETURN;
+  END IF;
+
+  INSERT INTO thread_views (user_id, thread_id, viewed_at)
+  VALUES (p_user_id, p_thread_id, NOW())
+  ON CONFLICT (user_id, thread_id) DO UPDATE
+    SET viewed_at = NOW()
+    WHERE thread_views.viewed_at < NOW() - INTERVAL '15 minutes';
+
+  IF FOUND THEN
+    UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+  END IF;
+END;
 $$;
 
 -- Award community XP with daily cap (50/day total, 10/day vote sub-cap)
@@ -1155,8 +1218,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION increment_view_count(UUID) FROM public, anon, authenticated;
-GRANT EXECUTE ON FUNCTION increment_view_count(UUID) TO service_role;
+REVOKE ALL ON FUNCTION increment_view_count(UUID, UUID) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION increment_view_count(UUID, UUID) TO service_role;
 
 REVOKE ALL ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) TO service_role;
@@ -1166,6 +1229,51 @@ GRANT EXECUTE ON FUNCTION revoke_community_xp(UUID, TEXT) TO service_role;
 
 REVOKE ALL ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) TO service_role;
+
+-- Soft-delete a thread and cascade to its answers
+CREATE OR REPLACE FUNCTION soft_delete_thread(p_thread_id UUID, p_user_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM threads WHERE id = p_thread_id AND author_id = p_user_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Thread not found or not owned by user';
+  END IF;
+  UPDATE threads SET deleted_at = NOW() WHERE id = p_thread_id;
+  UPDATE answers SET deleted_at = NOW() WHERE thread_id = p_thread_id AND deleted_at IS NULL;
+END;
+$$;
+
+-- Soft-delete a single answer (decrements count, unmarks solved if was accepted)
+CREATE OR REPLACE FUNCTION soft_delete_answer(p_answer_id UUID, p_user_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_thread_id UUID;
+  v_was_accepted BOOLEAN;
+BEGIN
+  SELECT thread_id, is_accepted INTO v_thread_id, v_was_accepted
+  FROM answers
+  WHERE id = p_answer_id AND author_id = p_user_id AND deleted_at IS NULL;
+
+  IF v_thread_id IS NULL THEN
+    RAISE EXCEPTION 'Answer not found or not owned by user';
+  END IF;
+
+  UPDATE answers SET deleted_at = NOW() WHERE id = p_answer_id;
+  UPDATE threads SET answer_count = GREATEST(answer_count - 1, 0) WHERE id = v_thread_id;
+
+  IF v_was_accepted THEN
+    UPDATE threads SET is_solved = FALSE, accepted_answer_id = NULL WHERE id = v_thread_id;
+  END IF;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION soft_delete_thread(UUID, UUID) FROM authenticated, anon, public;
+GRANT EXECUTE ON FUNCTION soft_delete_thread(UUID, UUID) TO service_role;
+REVOKE EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) FROM authenticated, anon, public;
+GRANT EXECUTE ON FUNCTION soft_delete_answer(UUID, UUID) TO service_role;
 
 -- ============================================================
 -- Community Forum: RLS Policies
@@ -1194,6 +1302,8 @@ CREATE POLICY "Authors can update own threads"
   USING (author_id = auth.uid())
   WITH CHECK (author_id = auth.uid());
 
+-- No DELETE policy needed. Soft delete is handled via soft_delete_thread() SECURITY DEFINER function.
+
 CREATE POLICY "Anyone can view answers"
   ON answers FOR SELECT USING (true);
 
@@ -1207,6 +1317,8 @@ CREATE POLICY "Authors can update own answers"
   TO authenticated
   USING (author_id = auth.uid())
   WITH CHECK (author_id = auth.uid());
+
+-- No DELETE policy needed. Soft delete is handled via soft_delete_answer() SECURITY DEFINER function.
 
 CREATE POLICY "Anyone can view votes"
   ON votes FOR SELECT USING (true);

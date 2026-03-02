@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       `
       )
       .textSearch("search_vector", q, { type: "plain" })
+      .is("deleted_at", null)
       .order("last_activity_at", { ascending: false })
       .limit(limit);
 
