@@ -249,26 +249,63 @@ export default function HomePage() {
         ))}
       </section>
 
-      {/* Partner logos */}
-      <section className="border-b border-[#1a1a1a] px-4 md:px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest text-center mb-6">
-            // TRUSTED BY THE SOLANA ECOSYSTEM
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-            {partners.map((partner) => (
-              <div key={partner.name} className="flex items-center gap-2 px-4 py-2 border border-[#1a1a1a] hover:border-[#9945ff]/40 transition-colors group">
-                <div className="w-6 h-6 bg-[#9945ff]/20 flex items-center justify-center text-[8px] font-mono text-[#9945ff] font-bold">
-                  {partner.abbr}
-                </div>
-                <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest group-hover:text-[#9945ff] transition-colors">
-                  {partner.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+     {/* Partner logos */}
+<section className="border-b border-[#1a1a1a] px-4 md:px-6 py-8">
+  <div className="max-w-7xl mx-auto">
+    <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest text-center mb-8">
+      // TRUSTED BY THE SOLANA ECOSYSTEM
+    </div>
+    <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12">
+      
+      {/* Solana */}
+      <a href="https://solana.com" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
+        <img src="https://solana.com/src/img/branding/solanaWordMark.svg" alt="Solana" className="h-6 invert" />
+      </a>
+
+      {/* Superteam Brazil */}
+      <a href="https://superteam.fun/br" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+        <img src="https://res.cloudinary.com/dgvnuwspr/image/upload/earn-sponsors/photo_2023-12-18_14-04-44_i87q35.jpg"
+          alt="Superteam Brazil" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
+        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Superteam Brazil</span>
+      </a>
+
+      {/* Metaplex */}
+      <a href="https://metaplex.com" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+        <img src="https://smithii.io/wp-content/uploads/2023/04/3DKCXD-K_400x400.jpeg"
+          alt="Metaplex" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
+        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Metaplex</span>
+      </a>
+
+      {/* Helius */}
+      <a href="https://helius.dev" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+        <img src="https://avatars.githubusercontent.com/u/107892413?s=280&v=4"
+          alt="Helius" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
+        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Helius</span>
+      </a>
+
+      {/* Anchor */}
+      <a href="https://anchor-lang.com" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+        <img src="https://www.anchor-lang.com/icons/anchor.png"
+          alt="Anchor" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
+        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Anchor</span>
+      </a>
+
+      {/* Phantom */}
+      <a href="https://phantom.app" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+        <img src="https://play-lh.googleusercontent.com/obRvW02OTYLzJuvic1ZbVDVXLXzI0Vt_JGOjlxZ92XMdBF_i3kqU92u9SgHvJ5pySdM=w480-h960-rw"
+          alt="Phantom" className="h-7 w-7 rounded-sm grayscale hover:grayscale-0 object-cover" />
+        <span className="text-[10px] font-mono text-[#444] uppercase tracking-widest hidden sm:block">Phantom</span>
+      </a>
+
+    </div>
+  </div>
+</section>
 
       {/* Learning Paths */}
       <section className="px-4 md:px-6 py-16 md:py-24 max-w-7xl mx-auto">
@@ -509,6 +546,46 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+{/* Superteam Brazil Banner */}
+<section className="border-t border-[#1a1a1a] overflow-hidden relative">
+  <div className="relative h-48 md:h-64">
+    <img
+      src="https://pbs.twimg.com/profile_banners/1716076980121030656/1767439974/1080x360"
+      alt="Superteam Brazil"
+      className="w-full h-full object-cover opacity-30"
+    />
+    <div className="absolute inset-0 bg-gradient-to-r from-[#020202] via-[#020202]/60 to-transparent" />
+    <div className="absolute inset-0 flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+      <div className="flex items-center gap-4 md:gap-6">
+        <img
+          src="https://res.cloudinary.com/dgvnuwspr/image/upload/earn-sponsors/photo_2023-12-18_14-04-44_i87q35.jpg"
+          alt="Superteam Brazil"
+          className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-sm border border-[#9945ff]/40"
+        />
+        <div>
+          <div className="text-[9px] font-mono text-[#9945ff] uppercase tracking-widest mb-1">
+            // BUILT BY
+          </div>
+          <div className="font-display font-black text-2xl md:text-4xl uppercase tracking-tighter text-[#f5f5f0]">
+            SUPERTEAM BRAZIL
+          </div>
+          <div className="text-[10px] font-mono text-[#555] mt-1">
+            Empowering the Latin American Solana ecosystem
+          </div>
+        </div>
+      </div>
+      
+      <a  href="https://superteam.fun/br"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-auto flex items-center gap-2 px-4 md:px-6 py-2.5 border border-[#9945ff]/40 text-[#9945ff] font-mono text-[10px] uppercase tracking-widest hover:bg-[#9945ff]/10 transition-colors shrink-0"
+      >
+        VISIT <ExternalLink className="w-3 h-3" />
+      </a>
+    </div>
+  </div>
+</section>
 
       {/* Newsletter */}
       <section className="border-t border-[#1a1a1a] px-4 md:px-6 py-16 md:py-24">
