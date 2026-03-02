@@ -12,10 +12,9 @@ import {
   X,
   Globe,
   BookOpen,
-  LayoutDashboard,
   Trophy,
-  User,
   Zap,
+  MessageSquare,
 } from "lucide-react";
 import { useEffect, useCallback, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -33,9 +32,8 @@ interface HeaderProps {
 const NAV_ITEMS = [
   { href: "/courses", labelKey: "courses" as const, icon: BookOpen },
   { href: "/challenges", labelKey: "challenges" as const, icon: Zap },
-  { href: "/dashboard", labelKey: "dashboard" as const, icon: LayoutDashboard },
   { href: "/leaderboard", labelKey: "leaderboard" as const, icon: Trophy },
-  { href: "/profile", labelKey: "profile" as const, icon: User },
+  { href: "/discussions", labelKey: "discussions" as const, icon: MessageSquare },
 ];
 
 export function Header({ appSlot }: HeaderProps) {
@@ -47,6 +45,9 @@ export function Header({ appSlot }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   function handleLocaleChange(locale: Locale) {
     setLangMenuOpen(false);
@@ -150,7 +151,7 @@ export function Header({ appSlot }: HeaderProps) {
             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Toggle theme"
           >
-            {theme === "dark" ? (
+            {mounted && theme === "dark" ? (
               <Sun className="h-4 w-4" />
             ) : (
               <Moon className="h-4 w-4" />
