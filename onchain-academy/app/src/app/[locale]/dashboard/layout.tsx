@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-const BASE_URL = "https://app-seven-mu-27.vercel.app";
+const BASE_URL = "https://superteam-academy-gules.vercel.app";
 
 export async function generateMetadata({
   params,

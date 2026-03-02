@@ -31,9 +31,21 @@ const instrumentSerif = Instrument_Serif({
 // so preloading 182 KiB of Diatype wastes critical-path bandwidth)
 const diatype = localFont({
   src: [
-    { path: "../fonts/diatype/ABCDiatype-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../fonts/diatype/ABCDiatype-Medium.woff2", weight: "500", style: "normal" },
-    { path: "../fonts/diatype/ABCDiatype-Bold.woff2", weight: "700", style: "normal" },
+    {
+      path: "../fonts/diatype/ABCDiatype-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/diatype/ABCDiatype-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/diatype/ABCDiatype-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
   ],
   variable: "--font-diatype",
   display: "swap",
@@ -43,8 +55,16 @@ const diatype = localFont({
 // DSemi — Solana Foundation semi-mono (stats, numbers) — not preloaded (not LCP-critical)
 const dsemi = localFont({
   src: [
-    { path: "../fonts/semimono/ABCDiatypeSemi-Mono-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../fonts/semimono/ABCDiatypeSemi-Mono-Medium.woff2", weight: "500", style: "normal" },
+    {
+      path: "../fonts/semimono/ABCDiatypeSemi-Mono-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/semimono/ABCDiatypeSemi-Mono-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
   ],
   variable: "--font-dsemi",
   display: "swap",
@@ -75,7 +95,7 @@ const caveat = Caveat({
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://app-seven-mu-27.vercel.app"),
+  metadataBase: new URL("https://superteam-academy-gules.vercel.app"),
   title: {
     default: "Superteam Academy | Master Solana Development",
     template: "%s | Superteam Academy",
@@ -98,7 +118,7 @@ export const metadata: Metadata = {
     title: "Superteam Academy | Master Solana Development",
     description:
       "The gamified learning platform for Solana developers. Earn XP, collect on-chain credentials, and level up your skills.",
-    url: "https://app-seven-mu-27.vercel.app",
+    url: "https://superteam-academy-gules.vercel.app",
     siteName: "Superteam Academy",
     images: [
       {
@@ -120,12 +140,12 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   alternates: {
-    canonical: "https://app-seven-mu-27.vercel.app",
+    canonical: "https://superteam-academy-gules.vercel.app",
     languages: {
-      en: "https://app-seven-mu-27.vercel.app/en",
-      "pt-BR": "https://app-seven-mu-27.vercel.app/pt-br",
-      es: "https://app-seven-mu-27.vercel.app/es",
-      "x-default": "https://app-seven-mu-27.vercel.app/en",
+      en: "https://superteam-academy-gules.vercel.app/en",
+      "pt-BR": "https://superteam-academy-gules.vercel.app/pt-br",
+      es: "https://superteam-academy-gules.vercel.app/es",
+      "x-default": "https://superteam-academy-gules.vercel.app/en",
     },
   },
 };
@@ -141,8 +161,16 @@ export default async function RootLayout({
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)" />
+        <meta
+          name="theme-color"
+          content="#000000"
+          media="(prefers-color-scheme: dark)"
+        />
+        <meta
+          name="theme-color"
+          content="#FAFAFA"
+          media="(prefers-color-scheme: light)"
+        />
         <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
         <link
           rel="preconnect"
@@ -157,10 +185,9 @@ export default async function RootLayout({
       >
         {children}
         <PWARegister />
-        <script
+        <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          async
-          defer
+          strategy="lazyOnload"
         />
         <script
           type="application/ld+json"
@@ -169,8 +196,8 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "Superteam Academy",
-              url: "https://app-seven-mu-27.vercel.app",
-              logo: "https://app-seven-mu-27.vercel.app/icon.svg",
+              url: "https://superteam-academy-gules.vercel.app",
+              logo: "https://superteam-academy-gules.vercel.app/icon.svg",
               description:
                 "The gamified learning platform for Solana developers.",
               sameAs: ["https://twitter.com/SuperteamBR"],

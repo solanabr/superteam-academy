@@ -119,7 +119,9 @@ export function Footer({ locale }: { locale: string }) {
           </button>
         </form>
         {status === "success" && (
-          <span style={{ color: "var(--solana-green, #00FFA3)", fontSize: "10px" }}>
+          <span
+            style={{ color: "var(--solana-green, #00FFA3)", fontSize: "10px" }}
+          >
             {tn("success")}
           </span>
         )}
@@ -142,7 +144,9 @@ export function Footer({ locale }: { locale: string }) {
         }}
       >
         <div>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+          >
             <SuperteamLogo size={14} className="currentColor" />
             <em
               style={{
@@ -163,6 +167,7 @@ export function Footer({ locale }: { locale: string }) {
         >
           <Link
             href={`/${locale}/courses`}
+            aria-label={`${t("courses")} — ${t("footerNavigation")}`}
             style={{
               textTransform: "uppercase",
               color: "var(--c-text-muted)",
@@ -174,6 +179,7 @@ export function Footer({ locale }: { locale: string }) {
           </Link>
           <Link
             href={`/${locale}/dashboard`}
+            aria-label={`${t("dashboard")} — ${t("footerNavigation")}`}
             style={{
               textTransform: "uppercase",
               color: "var(--c-text-muted)",
@@ -185,6 +191,7 @@ export function Footer({ locale }: { locale: string }) {
           </Link>
           <Link
             href={`/${locale}/leaderboard`}
+            aria-label={`${t("leaderboard")} — ${t("footerNavigation")}`}
             style={{
               textTransform: "uppercase",
               color: "var(--c-text-muted)",

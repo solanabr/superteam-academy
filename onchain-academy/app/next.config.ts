@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
   async headers() {
     return [
       {
@@ -55,14 +56,15 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*.(js|css|woff2|png|jpg|jpeg|gif|svg|ico|webp|avif)",
         headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
         ],
       },
       {
         source: "/:path(robots.txt|sitemap.xml|manifest.webmanifest)",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=86400" },
-        ],
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
       },
     ];
   },
@@ -91,6 +93,7 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
   widenClientFileUpload: true,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
   disableLogger: true,
   tunnelRoute: "/monitoring",
 });

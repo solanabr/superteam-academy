@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { fetchCourses } from "@/lib/services/courses";
 import { LandingContent } from "./landing-content";
 
-const BASE_URL = "https://app-seven-mu-27.vercel.app";
+const BASE_URL = "https://superteam-academy-gules.vercel.app";
 
 export async function generateMetadata({
   params,

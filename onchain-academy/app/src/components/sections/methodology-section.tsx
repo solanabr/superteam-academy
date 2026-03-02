@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Fingerprint } from "lucide-react";
 
-const FONT_SERIF =
-  "var(--font-instrument-serif), 'Instrument Serif', serif";
+const FONT_SERIF = "var(--font-instrument-serif), 'Instrument Serif', serif";
 
 const methodologyCards = [
   {
@@ -48,7 +47,9 @@ function RingsVisualizer({ active }: { active: boolean }) {
         className={`w-16 h-16 border-t-2 border-b-2 rounded-full flex items-center justify-center transition-colors duration-500 ${
           active ? "border-[#00FFA3]" : "border-[#00FFA3]/30"
         }`}
-        style={{ animation: active ? "spin 4s linear infinite reverse" : "none" }}
+        style={{
+          animation: active ? "spin 4s linear infinite reverse" : "none",
+        }}
       >
         <Fingerprint
           className={`w-6 h-6 transition-colors duration-500 ${
@@ -92,7 +93,7 @@ function TerminalVisualizer({ active }: { active: boolean }) {
   ];
   return (
     <div
-      className="text-[10px] text-white/60 space-y-2 mt-4"
+      className="text-[10px] text-white/70 space-y-2 mt-4"
       style={{ fontFamily: "var(--font-mono)" }}
     >
       <p className="text-[#0ea5e9]">{"> init workspace"}</p>
@@ -118,7 +119,9 @@ function TerminalVisualizer({ active }: { active: boolean }) {
 export function MethodologySection() {
   const [animatingCards, setAnimatingCards] = useState<Set<number>>(new Set());
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const delayTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const delayTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -178,7 +181,7 @@ export function MethodologySection() {
           <h2 className="text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-[0.9] font-black text-[var(--foreground)]">
             Learn it.
             <br />
-            <span className="text-white/60">Prove it.</span>
+            <span className="text-white/70">Prove it.</span>
             <br />
             <span
               className="italic text-[#00FFA3]"
@@ -201,19 +204,21 @@ export function MethodologySection() {
             return (
               <div
                 key={i}
-                ref={(el) => { cardRefs.current[i] = el; }}
+                ref={(el) => {
+                  cardRefs.current[i] = el;
+                }}
                 data-idx={i}
                 className={`group relative rounded-[2rem] p-6 md:p-10 overflow-hidden border transition-all duration-500 hover:-translate-y-2.5 ${
-                  active
-                    ? "border-white/15"
-                    : "border-white/5"
+                  active ? "border-white/15" : "border-white/5"
                 }`}
-                style={{
-                  background: "rgba(10,10,10,0.6)",
-                  backdropFilter: "blur(30px)",
-                  marginBottom: "20vh",
-                  "--card-color": card.color,
-                } as React.CSSProperties}
+                style={
+                  {
+                    background: "rgba(10,10,10,0.6)",
+                    backdropFilter: "blur(30px)",
+                    marginBottom: "20vh",
+                    "--card-color": card.color,
+                  } as React.CSSProperties
+                }
               >
                 {/* Radial glow — active on scroll or hover */}
                 <div
@@ -247,7 +252,7 @@ export function MethodologySection() {
                     } relative overflow-hidden transition-colors duration-500`}
                   >
                     <div
-                      className="absolute top-3 left-3 text-[9px] uppercase tracking-widest text-white/60"
+                      className="absolute top-3 left-3 text-[9px] uppercase tracking-widest text-white/70"
                       style={{ fontFamily: "var(--font-mono)" }}
                     >
                       {card.vizLabel}
@@ -277,14 +282,14 @@ export function MethodologySection() {
                     <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">
                       {card.title}
                     </h3>
-                    <p className="text-base md:text-lg text-white/60 font-light leading-relaxed mb-8">
+                    <p className="text-base md:text-lg text-white/70 font-light leading-relaxed mb-8">
                       {card.desc}
                     </p>
                     <div className="flex gap-3 flex-wrap">
                       {card.tags.map((t) => (
                         <span
                           key={t}
-                          className="px-3 py-1.5 border border-white/10 rounded-full text-[9px] uppercase tracking-widest text-white/60 bg-white/5"
+                          className="px-3 py-1.5 border border-white/10 rounded-full text-[9px] uppercase tracking-widest text-white/70 bg-white/5"
                           style={{ fontFamily: "var(--font-mono)" }}
                         >
                           {t}

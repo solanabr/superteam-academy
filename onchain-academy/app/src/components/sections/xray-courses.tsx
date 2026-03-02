@@ -97,23 +97,20 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
     [],
   );
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = cachedRect.current;
-      const el = cachedEl.current;
-      if (!rect || !el) return;
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Batch into a single rAF — skip if one is already queued
-      if (raf.current) return;
-      raf.current = requestAnimationFrame(() => {
-        el.style.setProperty("--mouse-x", `${x}px`);
-        el.style.setProperty("--mouse-y", `${y}px`);
-        raf.current = 0;
-      });
-    },
-    [],
-  );
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = cachedRect.current;
+    const el = cachedEl.current;
+    if (!rect || !el) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // Batch into a single rAF — skip if one is already queued
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      el.style.setProperty("--mouse-x", `${x}px`);
+      el.style.setProperty("--mouse-y", `${y}px`);
+      raf.current = 0;
+    });
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     cachedRect.current = null;
@@ -143,7 +140,7 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
           </span>
         </h2>
         <p
-          className="text-xs text-white/60 hidden md:block"
+          className="text-xs text-white/70 hidden md:block"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           // HOVER TO REVEAL SOURCE DATA
@@ -170,7 +167,7 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
           <div className="relative z-10 w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-8">
             <div className="flex gap-4 md:gap-8 items-center w-full md:w-1/2">
               <span
-                className="text-2xl md:text-4xl text-white/60"
+                className="text-2xl md:text-4xl text-white/70"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 {c.id}_
@@ -178,19 +175,17 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
               <h3 className="text-[clamp(2rem,6vw,8rem)] font-black tracking-tighter leading-none uppercase">
                 {c.name}
                 <br />
-                <span className="text-white/60">{c.sub}</span>
+                <span className="text-white/70">{c.sub}</span>
               </h3>
             </div>
             <div
               className="text-right flex flex-col items-end"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              <span className="text-[10px] text-white/60 uppercase tracking-widest mb-2">
+              <span className="text-[10px] text-white/70 uppercase tracking-widest mb-2">
                 [STATUS: LOCKED]
               </span>
-              <span className="text-xl md:text-2xl text-white">
-                +{c.xp} XP
-              </span>
+              <span className="text-xl md:text-2xl text-white">+{c.xp} XP</span>
             </div>
           </div>
 
@@ -242,8 +237,7 @@ export function XRayCourses({ locale }: XRayCoursesProps) {
                   className="pointer-events-auto bg-black px-6 md:px-8 py-3 md:py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-3"
                   style={{ color: c.color }}
                 >
-                  Enter Node{" "}
-                  <ArrowRight className="w-4 h-4" />
+                  Enter Node <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
             </div>

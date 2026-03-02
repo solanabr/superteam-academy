@@ -1,7 +1,6 @@
 "use client";
 
-const FONT_SERIF =
-  "var(--font-instrument-serif), 'Instrument Serif', serif";
+const FONT_SERIF = "var(--font-instrument-serif), 'Instrument Serif', serif";
 
 const tracks = [
   {
@@ -85,8 +84,7 @@ export function PathMatrix({ locale }: PathMatrixProps) {
           className="text-5xl md:text-7xl lg:text-8xl tracking-tighter leading-none font-black"
           style={{ mixBlendMode: "difference" }}
         >
-          Pick Your{" "}
-          <br />
+          Pick Your <br />
           <span
             className="italic"
             style={{
@@ -100,7 +98,7 @@ export function PathMatrix({ locale }: PathMatrixProps) {
         </h2>
         <div className="text-right hidden md:block">
           <p
-            className="text-xs text-white/60 mb-2"
+            className="text-xs text-white/70 mb-2"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             // SELECT PROTOCOL PATH
@@ -123,15 +121,16 @@ export function PathMatrix({ locale }: PathMatrixProps) {
           <div
             key={track.id}
             className="path-row group border-b border-white/10 w-full px-6 md:px-12 cursor-pointer"
-            style={
-              { "--path-color": track.color } as React.CSSProperties
-            }
+            style={{ "--path-color": track.color } as React.CSSProperties}
           >
             {/* Tech grid background */}
             <div className="path-tech-bg" />
 
             {/* Main row content — vertically centered in collapsed state */}
-            <div className="relative z-10 w-full max-w-screen-2xl mx-auto flex items-center justify-between shrink-0" style={{ height: 160 }}>
+            <div
+              className="relative z-10 w-full max-w-screen-2xl mx-auto flex items-center justify-between shrink-0"
+              style={{ height: 160 }}
+            >
               <h3
                 className="path-title"
                 style={
@@ -165,7 +164,7 @@ export function PathMatrix({ locale }: PathMatrixProps) {
             <div className="path-hud-wrap relative z-10 px-6 md:px-12">
               <div className="w-full max-w-screen-2xl mx-auto py-8 md:py-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 border-t border-white/10">
                 <div>
-                  <p className="text-white/60 font-light leading-relaxed max-w-sm text-sm md:text-base">
+                  <p className="text-white/70 font-light leading-relaxed max-w-sm text-sm md:text-base">
                     {track.desc}
                   </p>
                 </div>
@@ -173,7 +172,7 @@ export function PathMatrix({ locale }: PathMatrixProps) {
                   className="flex gap-8 md:gap-12 text-xs"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
-                  <div className="flex flex-col gap-2 text-white/60">
+                  <div className="flex flex-col gap-2 text-white/70">
                     <span>[MODULES]</span>
                     <span>[DIFFICULTY]</span>
                   </div>

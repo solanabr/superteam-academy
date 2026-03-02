@@ -56,9 +56,9 @@ html { scroll-behavior: smooth; }
   --c-text-body: #D4D4D8;
   --c-text-2: #ABABBA;
   --c-text-2a: #A1A1AA;
-  --c-text-muted: #8B8B96;
-  --c-text-dim: #848490;
-  --c-text-faint: #71717A;
+  --c-text-muted: #9494A0;
+  --c-text-dim: #8E8E9A;
+  --c-text-faint: #8B8B96;
   --c-border: #27272A;
   --c-border-subtle: #ECE4FD1F;
   --c-border-prominent: #ECE4FD33;

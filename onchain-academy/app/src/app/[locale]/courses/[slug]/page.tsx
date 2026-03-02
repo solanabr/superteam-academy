@@ -22,7 +22,7 @@ export async function generateStaticParams() {
   );
 }
 
-const BASE_URL = "https://app-seven-mu-27.vercel.app";
+const BASE_URL = "https://superteam-academy-gules.vercel.app";
 
 export async function generateMetadata({
   params,
@@ -173,10 +173,7 @@ export default async function CourseDetail({
           <div className="sa-stat-label">Estimated time</div>
         </div>
         <div className="sa-stat-cell">
-          <div
-            className="sa-stat-value"
-            style={{ color: "var(--xp)" }}
-          >
+          <div className="sa-stat-value" style={{ color: "var(--xp)" }}>
             {totalXP}
             <span className="sa-stat-unit">XP</span>
           </div>
@@ -229,7 +226,10 @@ export default async function CourseDetail({
             {t("prerequisite")}{" "}
             <Link
               href={`/${locale}/courses/${getCourseById(course.prerequisiteId!)?.slug}`}
-              style={{ color: "var(--nd-highlight-orange)", textDecoration: "underline" }}
+              style={{
+                color: "var(--nd-highlight-orange)",
+                textDecoration: "underline",
+              }}
             >
               {getCourseById(course.prerequisiteId!)?.title}
             </Link>
@@ -255,7 +255,12 @@ export default async function CourseDetail({
           {totalLessons} Lessons &middot; {course.duration}
         </div>
 
-        <ModuleAccordion modules={course.modules} locale={locale} slug={slug} courseId={course.id} />
+        <ModuleAccordion
+          modules={course.modules}
+          locale={locale}
+          slug={slug}
+          courseId={course.id}
+        />
       </section>
 
       {/* ═══ REVIEWS ═══ */}
@@ -330,7 +335,8 @@ export default async function CourseDetail({
                 <span
                   key={i}
                   style={{
-                    color: i < review.rating ? "#FFC526" : "rgba(255,255,255,0.1)",
+                    color:
+                      i < review.rating ? "#FFC526" : "rgba(255,255,255,0.1)",
                     fontSize: "14px",
                   }}
                 >
