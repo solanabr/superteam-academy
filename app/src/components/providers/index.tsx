@@ -2,7 +2,6 @@
 
 import { ReactNode, Suspense } from "react";
 import { WalletProvider } from "./WalletProvider";
-import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PostHogProvider } from "./PostHogProvider";
 import { PostHogPageview } from "./PostHogPageview";
@@ -14,16 +13,14 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <PostHogProvider>
-      <SessionProvider>
-        <WalletProvider>
-          <TooltipProvider delayDuration={200}>
-            <Suspense>
-              <PostHogPageview />
-            </Suspense>
-            {children}
-          </TooltipProvider>
-        </WalletProvider>
-      </SessionProvider>
+      <WalletProvider>
+        <TooltipProvider delayDuration={200}>
+          <Suspense>
+            <PostHogPageview />
+          </Suspense>
+          {children}
+        </TooltipProvider>
+      </WalletProvider>
     </PostHogProvider>
   );
 }
