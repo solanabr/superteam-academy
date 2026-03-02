@@ -1,3 +1,5 @@
+> Last synced: 2026-03-02
+
 # Customization Guide
 
 How to customize and extend Superteam Academy for your own needs.
@@ -300,12 +302,13 @@ Create a new JSON file in `apps/web/src/messages/`. Copy the structure from `en.
 apps/web/src/messages/fr.json
 ```
 
-The top-level namespace structure to replicate (19 namespaces):
+The top-level namespace structure to replicate (21 namespaces):
 
 ```
 common, nav, auth, landing, courses, lesson, dashboard,
 gamification, certificates, profile, settings, a11y, footer,
-notFound, error, errors, timeAgo, nameGenerator, deploy
+notFound, error, errors, timeAgo, nameGenerator, deploy,
+community, programErrors
 ```
 
 ### Step 2: Register the Locale

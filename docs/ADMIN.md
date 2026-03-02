@@ -1,3 +1,5 @@
+> Last synced: 2026-03-02
+
 # Admin Panel Guide
 
 The Superteam Academy admin panel provides tools for syncing Sanity CMS content to the on-chain program.
@@ -41,6 +43,26 @@ A course must be in `onChainStatus.status == "synced"` before it appears to lear
 1. Open the admin panel at `/en/admin`.
 2. Select "Deploy Achievement".
 3. The admin panel calls `create_achievement_type` on-chain and creates the Metaplex Core collection.
+
+### Course Deactivation / Reactivation
+
+Courses can be toggled on/off without deleting the on-chain PDA:
+
+- **Deactivate**: `POST /api/admin/courses/deactivate` — sets the on-chain Course PDA `is_active = false`
+- **Reactivate**: `POST /api/admin/courses/reactivate` — sets `is_active = true`
+
+Both routes require `ADMIN_SECRET` in the Authorization header.
+
+### Platform Status Check
+
+`GET /api/admin/status` returns:
+
+- Whether the on-chain program is live (Config PDA exists)
+- Whether the local `PROGRAM_AUTHORITY_SECRET` matches the on-chain `Config.authority`
+
+### Resync On-Chain State
+
+`POST /api/admin/resync` re-reads on-chain state and backfills Supabase mirror tables. Use this to recover from Supabase write failures or sync drift.
 
 ### Troubleshooting
 

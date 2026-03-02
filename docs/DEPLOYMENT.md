@@ -1,3 +1,5 @@
+> Last synced: 2026-03-02
+
 # Deployment Guide
 
 Production deployment guide for Superteam Academy on Vercel + Supabase + Sanity + GCP.
@@ -66,6 +68,8 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 | `BACKEND_SIGNER_SECRET`         | **Server-only** | Base58 private key of the backend signer registered in `Config.backend_signer` — signs lesson completion transactions |
 | `ADMIN_SECRET`                  | **Server-only** | Admin panel password (min 32 chars). Required to access `/{locale}/admin`                                             |
 | `SANITY_ADMIN_TOKEN`            | **Server-only** | Sanity write token — required to update `onChainStatus` in Sanity after on-chain deployment                           |
+| `HELIUS_WEBHOOK_SECRET`         | **Server-only** | Shared secret for Helius webhook signature verification (`/api/webhooks/helius`)                                      |
+| `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | Base58 private key of the XP mint authority — required for wallet link/unlink XP transfers                            |
 
 #### Optional Variables
 
@@ -98,21 +102,29 @@ Subsequent pushes to `main` trigger automatic deployments. Pull requests get pre
 1. Create a new project at [supabase.com/dashboard](https://supabase.com/dashboard)
 2. Open **SQL Editor**
 3. Paste the entire contents of `supabase/schema.sql`
-4. Run — this creates all 7 tables, RLS policies, indexes, and SECURITY DEFINER functions
+4. Run — this creates all 17 tables, RLS policies, indexes, SECURITY DEFINER functions, and views
 
 The schema includes:
 
-| Table               | Purpose                       |
-| ------------------- | ----------------------------- |
-| `profiles`          | User profiles (wallet, email) |
-| `enrollments`       | Course enrollments            |
-| `user_progress`     | Lesson completion tracking    |
-| `user_xp`           | Total XP per user             |
-| `xp_transactions`   | XP change log                 |
-| `user_achievements` | Unlocked achievements         |
-| `certificates`      | NFT certificate records       |
-| `siws_nonces`       | SIWS replay protection        |
-| `nft_metadata`      | NFT metadata storage          |
+| Table                     | Purpose                       |
+| ------------------------- | ----------------------------- |
+| `profiles`                | User profiles (wallet, email) |
+| `enrollments`             | Course enrollments            |
+| `user_progress`           | Lesson completion tracking    |
+| `user_xp`                 | Total XP per user             |
+| `xp_transactions`         | XP change log                 |
+| `user_achievements`       | Unlocked achievements         |
+| `certificates`            | NFT certificate records       |
+| `siws_nonces`             | SIWS replay protection        |
+| `nft_metadata`            | NFT metadata storage          |
+| `deployed_programs`       | Student program deployments   |
+| `pending_onchain_actions` | On-chain retry queue          |
+| `user_daily_quests`       | Daily quest progress tracking |
+| `forum_categories`        | Community forum sections      |
+| `threads`                 | Community discussion threads  |
+| `answers`                 | Thread replies                |
+| `votes`                   | Upvotes/downvotes             |
+| `flags`                   | Content moderation flags      |
 
 ### 2. Auth Redirect URLs
 
