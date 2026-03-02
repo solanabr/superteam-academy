@@ -3,5 +3,9 @@ export default function PlatformLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="container py-6 md:py-8">{children}</div>;
+  return (
+    <div className="container px-4 pb-20 pt-6 sm:px-6 md:pt-8 lg:px-8 lg:pb-8">
+      {children}
+    </div>
+  );
 }

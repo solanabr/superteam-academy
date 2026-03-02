@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors hover:bg-subtle hover:text-text"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors hover:bg-subtle hover:text-text md:h-9 md:w-9"
           aria-label={`Language: ${localeNames[locale as Locale]}`}
         >
           <GlobeSimple size={18} weight="bold" />
@@ -37,7 +37,7 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={loc}
             onClick={() => handleChange(loc)}
-            className="flex cursor-pointer items-center justify-between gap-4 font-display text-[13px] font-semibold"
+            className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 font-display text-[13px] font-semibold md:min-h-0"
           >
             <span>{localeNames[loc]}</span>
             {locale === loc && (

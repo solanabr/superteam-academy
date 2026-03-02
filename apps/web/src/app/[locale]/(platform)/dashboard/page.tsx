@@ -764,7 +764,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+      <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
         {t("title")}
       </h1>
 
@@ -1031,22 +1031,26 @@ export default function DashboardPage() {
           {t("recommendedCourses")}
         </h2>
         {data.recommendedCourses.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="recommended-carousel lg:grid lg:grid-cols-3 lg:gap-6">
             {data.recommendedCourses.map((course) => (
-              <CourseCard
-                key={course._id}
-                slug={course.slug}
-                title={course.title}
-                description={course.description}
-                difficulty={
-                  course.difficulty as "beginner" | "intermediate" | "advanced"
-                }
-                duration={course.duration}
-                lessonCount={course.totalLessons}
-                xpReward={course.xpReward}
-                trackLevel={course.trackLevel}
-                pathLabel={course.learningPath ?? undefined}
-              />
+              <div key={course._id} className="recommended-carousel-item">
+                <CourseCard
+                  slug={course.slug}
+                  title={course.title}
+                  description={course.description}
+                  difficulty={
+                    course.difficulty as
+                      | "beginner"
+                      | "intermediate"
+                      | "advanced"
+                  }
+                  duration={course.duration}
+                  lessonCount={course.totalLessons}
+                  xpReward={course.xpReward}
+                  trackLevel={course.trackLevel}
+                  pathLabel={course.learningPath ?? undefined}
+                />
+              </div>
             ))}
           </div>
         ) : (

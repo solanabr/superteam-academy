@@ -370,9 +370,10 @@ export function ChallengeInterface({
                 size="sm"
                 onClick={handleRevealHint}
                 className="gap-1 text-xs"
+                aria-label={t("showHint")}
               >
                 <Lightbulb size={16} weight="duotone" aria-hidden="true" />
-                {t("showHint")}
+                <span className="hidden sm:inline">{t("showHint")}</span>
                 <span className="text-text-3">
                   ({challengeState.hintsRevealed}/{hints.length})
                 </span>
@@ -385,9 +386,10 @@ export function ChallengeInterface({
                 size="sm"
                 onClick={handleShowSolution}
                 className="gap-1 text-xs"
+                aria-label={t("showSolution")}
               >
                 <Eye size={16} weight="duotone" aria-hidden="true" />
-                {t("showSolution")}
+                <span className="hidden sm:inline">{t("showSolution")}</span>
               </Button>
             )}
 
@@ -396,13 +398,14 @@ export function ChallengeInterface({
               size="sm"
               onClick={handleReset}
               className="gap-1 text-xs"
+              aria-label={t("resetCode")}
             >
               <ArrowCounterClockwise
                 size={16}
                 weight="duotone"
                 aria-hidden="true"
               />
-              {t("resetCode")}
+              <span className="hidden sm:inline">{t("resetCode")}</span>
             </Button>
           </div>
         </div>

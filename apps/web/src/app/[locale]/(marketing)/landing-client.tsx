@@ -73,11 +73,11 @@ function CountUpStat({
     <div className="flex flex-col items-center gap-1 text-center">
       <span
         ref={ref}
-        className={`font-mono text-3xl font-black tabular-nums md:text-4xl ${color}`}
+        className={`font-mono text-2xl font-black tabular-nums sm:text-3xl md:text-4xl ${color}`}
       >
         {value.toLocaleString()}
       </span>
-      <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-3">
+      <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-text-3">
         {label}
       </span>
     </div>
@@ -168,7 +168,7 @@ export function LandingPageClient({
             <div className="absolute -bottom-20 -left-20 h-[500px] w-[500px] rounded-full blur-[120px] [background:var(--accent-bg)]" />
           </div>
 
-          <div className="container px-4 pb-20 pt-16 md:pb-28 md:pt-28">
+          <div className="container px-4 pb-16 pt-12 sm:pb-20 sm:pt-16 md:pb-28 md:pt-28">
             <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-md border-[2.5px] border-border bg-card px-3 py-2 shadow-card">
@@ -191,7 +191,7 @@ export function LandingPageClient({
                   />
                 </div>
 
-                <h1 className="mb-5 font-display text-5xl font-black leading-[0.95] tracking-tight text-text md:text-6xl lg:text-7xl">
+                <h1 className="mb-5 font-display text-3xl font-black leading-[0.95] tracking-tight text-text sm:text-5xl md:text-6xl lg:text-7xl">
                   {t("heroTitle")}
                 </h1>
 
@@ -307,10 +307,10 @@ export function LandingPageClient({
 
         {/* ── Learning Paths — Bento Grid ── */}
         {learningPaths.length > 0 && (
-          <section className="py-20 md:py-28">
+          <section className="py-12 sm:py-20 md:py-28">
             <div className="container px-4">
-              <div className="mb-14 flex items-end justify-between">
-                <h2 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
+              <div className="mb-8 flex items-end justify-between sm:mb-14">
+                <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
                   {t("pathsTitle")}
                 </h2>
                 <div className="hidden text-sm font-medium text-text-3 md:block">
@@ -329,7 +329,7 @@ export function LandingPageClient({
                       <Link
                         key={path._id}
                         href={`/${locale}/courses`}
-                        className={`card-chunky group relative flex min-h-[180px] flex-col overflow-hidden p-7 ${
+                        className={`card-chunky group relative flex min-h-[160px] flex-col overflow-hidden p-5 sm:min-h-[180px] sm:p-7 ${
                           isWide ? "md:col-span-2" : ""
                         }`}
                         style={
@@ -385,9 +385,9 @@ export function LandingPageClient({
 
         {/* ── Features ── */}
         <section className="border-y-[2.5px] border-border bg-subtle">
-          <div className="container px-4 py-20 md:py-28">
-            <div className="mb-14 flex items-end justify-between">
-              <h2 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
+          <div className="container px-4 py-12 sm:py-20 md:py-28">
+            <div className="mb-8 flex items-end justify-between sm:mb-14">
+              <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
                 {t("featuresTitle")}
               </h2>
               <div className="hidden text-sm font-medium text-text-3 md:block">
@@ -404,7 +404,7 @@ export function LandingPageClient({
                 return (
                   <div
                     key={feature.idx}
-                    className={`card-chunky group relative overflow-hidden p-7 ${
+                    className={`card-chunky group relative overflow-hidden p-5 sm:p-7 ${
                       isTall ? "flex flex-col md:row-span-2" : ""
                     } ${isFullWidth ? "md:col-span-3" : ""}`}
                     style={
@@ -443,10 +443,10 @@ export function LandingPageClient({
 
         {/* ── Gamification Showcase ── */}
         {achievements.length > 0 && (
-          <section className="py-20 md:py-28">
+          <section className="py-12 sm:py-20 md:py-28">
             <div className="container px-4">
-              <div className="mb-14 flex items-end justify-between">
-                <h2 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
+              <div className="mb-8 flex items-end justify-between sm:mb-14">
+                <h2 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl md:text-4xl">
                   {t("gamificationTitle")}
                 </h2>
                 <div className="hidden text-sm font-medium text-text-3 md:block">
@@ -458,16 +458,16 @@ export function LandingPageClient({
             {/* Achievement Marquee — full-width auto-scroll */}
             <div className="relative overflow-hidden">
               <div
-                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-[var(--bg)] to-transparent"
+                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[var(--bg)] to-transparent sm:w-20"
                 aria-hidden="true"
               />
               <div
-                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-[var(--bg)] to-transparent"
+                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[var(--bg)] to-transparent sm:w-20"
                 aria-hidden="true"
               />
 
               <div
-                className="flex w-max gap-4 py-2"
+                className="flex w-max gap-3 py-2 sm:gap-4"
                 style={{ animation: "marquee 40s linear infinite" }}
               >
                 {[
@@ -514,11 +514,11 @@ export function LandingPageClient({
             aria-hidden="true"
           />
 
-          <div className="container relative px-4 py-24 text-center md:py-36">
-            <h2 className="mb-4 font-display text-4xl font-black tracking-[-1px] text-white md:text-6xl">
+          <div className="container relative px-4 py-16 text-center sm:py-24 md:py-36">
+            <h2 className="mb-4 font-display text-3xl font-black tracking-[-1px] text-white sm:text-4xl md:text-6xl">
               {t("ctaTitle")}
             </h2>
-            <p className="mx-auto mb-10 max-w-md text-lg text-white/50">
+            <p className="mx-auto mb-10 max-w-md text-base text-white/50 sm:text-lg">
               {t("ctaSubtitle")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">

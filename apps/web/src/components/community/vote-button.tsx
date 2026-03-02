@@ -29,7 +29,7 @@ export function VoteButton({
         disabled={disabled}
         onClick={() => onVote(userVote === 1 ? 0 : 1)}
         className={cn(
-          "rounded-md p-0.5 transition-colors hover:bg-[var(--primary-dim)]",
+          "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--primary-dim)]",
           "disabled:cursor-not-allowed disabled:opacity-50",
           userVote === 1
             ? "text-[var(--primary)]"
@@ -57,7 +57,7 @@ export function VoteButton({
         disabled={disabled}
         onClick={() => onVote(userVote === -1 ? 0 : -1)}
         className={cn(
-          "rounded-md p-0.5 transition-colors hover:bg-[var(--danger-light)]",
+          "flex items-center justify-center rounded-md p-2 transition-colors hover:bg-[var(--danger-light)]",
           "disabled:cursor-not-allowed disabled:opacity-50",
           userVote === -1
             ? "text-[var(--danger)]"

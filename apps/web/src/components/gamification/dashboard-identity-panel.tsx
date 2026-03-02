@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useCallback } from "react";
+import { useMemo, useRef, useCallback, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   Lock,
@@ -168,18 +168,33 @@ function AchievementToken({
   name,
   hint,
   state,
+  isOpen,
+  onTap,
+  onOpenChange,
+  wasDrag,
 }: {
   glyph: string;
   name: string;
   hint: string;
   state: "earned" | "sol" | "locked";
+  isOpen?: boolean;
+  onTap?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  wasDrag?: () => boolean;
 }) {
   const isLocked = state === "locked";
 
   return (
-    <Tooltip.Root>
+    <Tooltip.Root open={isOpen} onOpenChange={onOpenChange}>
       <Tooltip.Trigger asChild>
-        <div className="dm">
+        <div
+          className="dm"
+          onClick={(e) => {
+            if (wasDrag?.()) return;
+            e.stopPropagation();
+            onTap?.();
+          }}
+        >
           <div
             className={cn("dm-oct", state)}
             aria-label={`${name} achievement — ${state}`}
@@ -290,7 +305,12 @@ export function DashboardIdentityPanel({
 
   // Achievement slider — horizontal drag-to-scroll
   const achRef = useRef<HTMLDivElement>(null);
-  const achDrag = useRef({ isDown: false, startX: 0, scrollLeft: 0 });
+  const achDrag = useRef({
+    isDown: false,
+    startX: 0,
+    scrollLeft: 0,
+    wasDrag: false,
+  });
 
   const onAchDown = useCallback((e: React.PointerEvent) => {
     const el = achRef.current;
@@ -299,6 +319,7 @@ export function DashboardIdentityPanel({
       isDown: true,
       startX: e.clientX,
       scrollLeft: el.scrollLeft,
+      wasDrag: false,
     };
     el.setPointerCapture(e.pointerId);
     el.style.cursor = "grabbing";
@@ -307,6 +328,9 @@ export function DashboardIdentityPanel({
     if (!achDrag.current.isDown) return;
     const el = achRef.current;
     if (!el) return;
+    if (Math.abs(e.clientX - achDrag.current.startX) > 5) {
+      achDrag.current.wasDrag = true;
+    }
     el.scrollLeft =
       achDrag.current.scrollLeft - (e.clientX - achDrag.current.startX);
   }, []);
@@ -352,6 +376,14 @@ export function DashboardIdentityPanel({
     () => buildHeatmapData(streak.streakHistory),
     [streak.streakHistory]
   );
+
+  // Tap-to-show tooltip state (mobile touch support)
+  const [openTip, setOpenTip] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openTip) return;
+    const timer = setTimeout(() => setOpenTip(null), 3000);
+    return () => clearTimeout(timer);
+  }, [openTip]);
 
   return (
     <div className={cn("dash-panel", className)}>
@@ -412,6 +444,7 @@ export function DashboardIdentityPanel({
               {sortedAchievements.map((ach) => {
                 const earned = unlockedSet.has(ach.id);
                 const isSol = earned && ach.solTier;
+                const tipId = `ach-${ach.id}`;
                 return (
                   <AchievementToken
                     key={ach.id}
@@ -419,6 +452,12 @@ export function DashboardIdentityPanel({
                     name={ach.name}
                     hint={ach.description}
                     state={earned ? (isSol ? "sol" : "earned") : "locked"}
+                    isOpen={openTip === tipId}
+                    onTap={() =>
+                      setOpenTip((prev) => (prev === tipId ? null : tipId))
+                    }
+                    onOpenChange={(open) => setOpenTip(open ? tipId : null)}
+                    wasDrag={() => achDrag.current.wasDrag}
                   />
                 );
               })}
@@ -493,9 +532,16 @@ export function DashboardIdentityPanel({
                   >
                     {/* Grid cells — iterate column-major */}
                     {heatmap.columns.flatMap((col, colIdx) =>
-                      col.map((cell, rowIdx) =>
-                        cell.date ? (
-                          <Tooltip.Root key={`${colIdx}-${rowIdx}`}>
+                      col.map((cell, rowIdx) => {
+                        const cellTipId = `hm-${colIdx}-${rowIdx}`;
+                        return cell.date ? (
+                          <Tooltip.Root
+                            key={`${colIdx}-${rowIdx}`}
+                            open={openTip === cellTipId}
+                            onOpenChange={(open) =>
+                              setOpenTip(open ? cellTipId : null)
+                            }
+                          >
                             <Tooltip.Trigger asChild>
                               <div
                                 className={cn(
@@ -506,6 +552,12 @@ export function DashboardIdentityPanel({
                                   cell.level === 4 && "l4",
                                   cell.isToday && "today"
                                 )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenTip((prev) =>
+                                    prev === cellTipId ? null : cellTipId
+                                  );
+                                }}
                               />
                             </Tooltip.Trigger>
                             <Tooltip.Portal>
@@ -524,8 +576,8 @@ export function DashboardIdentityPanel({
                             key={`${colIdx}-${rowIdx}`}
                             className="cday empty"
                           />
-                        )
-                      )
+                        );
+                      })
                     )}
                   </div>
                 </div>

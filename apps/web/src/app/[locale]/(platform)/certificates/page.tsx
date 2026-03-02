@@ -97,7 +97,7 @@ export default function CertificatesPage() {
     <div className="space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="font-display text-[30px] font-extrabold leading-[1.2] tracking-[-0.5px] text-text">
+        <h1 className="font-display text-2xl font-extrabold leading-[1.2] tracking-[-0.5px] text-text sm:text-[30px]">
           {t("pageTitle")}
         </h1>
         <p className="mt-2 font-body text-[15px] text-text-3">

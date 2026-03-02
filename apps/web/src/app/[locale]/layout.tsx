@@ -7,6 +7,7 @@ import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { Header } from "@/components/layout/header";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { GamificationOverlays } from "@/components/gamification/gamification-overlays";
 
 interface LocaleLayoutProps {
@@ -27,7 +28,7 @@ export default async function LocaleLayout({
   return (
     <ThemeProvider
       attribute="data-theme"
-      defaultTheme="light"
+      defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
     >
@@ -40,6 +41,7 @@ export default async function LocaleLayout({
                 <main id="main-content" className="flex-1 pt-[60px]">
                   {children}
                 </main>
+                <MobileBottomNav />
                 <GamificationOverlays />
               </div>
             </AnalyticsProvider>

@@ -320,129 +320,133 @@ export function LessonPageClient({
     const visibleTests = lesson.tests?.filter((tc) => !tc.hidden) ?? [];
 
     return (
-      <div className="grid-bg -mx-4 -my-6 flex h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8">
-        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
-          {/* Left pane: description + test cases + navigation */}
-          <div className="w-full overflow-auto lg:w-1/2 lg:border-r-[2.5px] lg:border-border">
-            <div className="space-y-6 p-6 pb-12">
-              {/* Lesson top bar */}
-              <div className="flex items-center gap-3 border-b border-border pb-4">
-                <Link
-                  href={`/${locale}/courses/${courseSlug}`}
-                  className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
-                >
-                  <ArrowLeft size={16} weight="bold" />
-                  {tCommon("back")}
-                </Link>
-                <div className="ml-auto flex items-center gap-4">
-                  <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
-                    <Lightning size={14} weight="fill" />+
-                    {earnedXp ?? courseXpPerLesson} XP
-                  </span>
-                  <span
-                    className="text-[16px] leading-none text-text-3"
-                    aria-hidden="true"
+      <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
+        <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+          {/* Left pane: description + test cases + navigation + discussion */}
+          <div className="contents lg:flex lg:w-1/2 lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border">
+            <div className="w-full">
+              <div className="space-y-6 p-4 sm:p-6">
+                {/* Lesson top bar */}
+                <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
+                  <Link
+                    href={`/${locale}/courses/${courseSlug}`}
+                    className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
                   >
-                    &middot;
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs tabular-nums text-text-3">
-                      {currentIndex + 1}/{allLessons.length}
+                    <ArrowLeft size={16} weight="bold" />
+                    {tCommon("back")}
+                  </Link>
+                  <div className="ml-auto flex items-center gap-2 sm:gap-4">
+                    <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+                      <Lightning size={14} weight="fill" />+
+                      {earnedXp ?? courseXpPerLesson} XP
                     </span>
-                    <ProgressBar
-                      value={currentIndex + 1}
-                      max={allLessons.length}
-                      className="w-20"
-                    />
+                    <span
+                      className="hidden text-[16px] leading-none text-text-3 sm:inline"
+                      aria-hidden="true"
+                    >
+                      &middot;
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs tabular-nums text-text-3">
+                        {currentIndex + 1}/{allLessons.length}
+                      </span>
+                      <ProgressBar
+                        value={currentIndex + 1}
+                        max={allLessons.length}
+                        className="w-16 sm:w-20"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Video embed (if lesson has a video) */}
-              {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
+                {/* Video embed (if lesson has a video) */}
+                {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
 
-              {/* Markdown content */}
-              <div className="prose max-w-none dark:prose-invert">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                  components={markdownComponents}
-                >
-                  {lesson.content}
-                </ReactMarkdown>
-              </div>
+                {/* Markdown content */}
+                <div className="prose max-w-none dark:prose-invert">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                    components={markdownComponents}
+                  >
+                    {lesson.content}
+                  </ReactMarkdown>
+                </div>
 
-              {/* Test cases */}
-              {visibleTests.length > 0 && (
-                <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
-                    {t("testCases")}
-                  </h4>
-                  <div className="space-y-1.5">
-                    {visibleTests.map((tc) => (
-                      <div
-                        key={tc.id}
-                        className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                      >
-                        <span className="font-medium">{tc.description}</span>
-                        <div className="mt-1 flex gap-4 font-mono text-text-3">
-                          <span>
-                            {t("input")}: <code>{tc.input}</code>
-                          </span>
-                          <span>
-                            {t("expected")}: <code>{tc.expectedOutput}</code>
-                          </span>
+                {/* Test cases */}
+                {visibleTests.length > 0 && (
+                  <div>
+                    <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
+                      {t("testCases")}
+                    </h4>
+                    <div className="space-y-1.5">
+                      {visibleTests.map((tc) => (
+                        <div
+                          key={tc.id}
+                          className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
+                        >
+                          <span className="font-medium">{tc.description}</span>
+                          <div className="mt-1 flex gap-4 font-mono text-text-3">
+                            <span>
+                              {t("input")}: <code>{tc.input}</code>
+                            </span>
+                            <span>
+                              {t("expected")}: <code>{tc.expectedOutput}</code>
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
+                )}
+
+                {/* Navigation */}
+                <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+                  {prevLesson && (
+                    <Button
+                      variant="pushOutline"
+                      size="default"
+                      asChild
+                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                    >
+                      <Link
+                        href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                      >
+                        &larr; {tCommon("previous")}
+                      </Link>
+                    </Button>
+                  )}
+                  {nextLesson ? (
+                    <Button
+                      variant="push"
+                      size="default"
+                      asChild
+                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                    >
+                      <Link
+                        href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                      >
+                        {tCommon("next")} &rarr;
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="push"
+                      size="default"
+                      asChild
+                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+                    >
+                      <Link href={`/${locale}/courses/${courseSlug}`}>
+                        {t("lessonComplete")}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
-              )}
-
-              {/* Navigation */}
-              <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
-                {prevLesson && (
-                  <Button
-                    variant="pushOutline"
-                    size="default"
-                    asChild
-                    className="min-w-[120px] justify-center"
-                  >
-                    <Link
-                      href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
-                    >
-                      &larr; {tCommon("previous")}
-                    </Link>
-                  </Button>
-                )}
-                {nextLesson ? (
-                  <Button
-                    variant="push"
-                    size="default"
-                    asChild
-                    className="min-w-[120px] justify-center"
-                  >
-                    <Link
-                      href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
-                    >
-                      {tCommon("next")} &rarr;
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="push"
-                    size="default"
-                    asChild
-                    className="min-w-[120px] justify-center"
-                  >
-                    <Link href={`/${locale}/courses/${courseSlug}`}>
-                      {t("lessonComplete")}
-                    </Link>
-                  </Button>
-                )}
               </div>
+            </div>
 
-              {/* Discussion */}
+            {/* Discussion — order-last so it appears after code editor on mobile */}
+            <div className="order-last w-full px-4 pb-12 sm:px-6 lg:order-none">
               <div className="border-t border-border pt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
@@ -482,7 +486,7 @@ export function LessonPageClient({
           </div>
 
           {/* Right pane: code editor + output only */}
-          <div className="flex w-full flex-col overflow-hidden lg:w-1/2">
+          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-1/2">
             {lesson.code && lesson.tests && lesson.solution ? (
               <ChallengeInterface
                 lessonId={lesson._id}
@@ -541,7 +545,7 @@ export function LessonPageClient({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Lesson top bar */}
-      <div className="flex items-center gap-3 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
         <Link
           href={`/${locale}/courses/${courseSlug}`}
           className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
@@ -549,13 +553,13 @@ export function LessonPageClient({
           <ArrowLeft size={16} weight="bold" />
           {tCommon("back")}
         </Link>
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
             <Lightning size={14} weight="fill" />+
             {earnedXp ?? courseXpPerLesson} XP
           </span>
           <span
-            className="text-[16px] leading-none text-text-3"
+            className="hidden text-[16px] leading-none text-text-3 sm:inline"
             aria-hidden="true"
           >
             &middot;
@@ -567,7 +571,7 @@ export function LessonPageClient({
             <ProgressBar
               value={currentIndex + 1}
               max={allLessons.length}
-              className="w-20"
+              className="w-16 sm:w-20"
             />
           </div>
         </div>
@@ -605,13 +609,13 @@ export function LessonPageClient({
 
       {/* Navigation + completion */}
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
+        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
           {prevLesson && (
             <Button
               variant="pushOutline"
               size="default"
               asChild
-              className="min-w-[120px] justify-center"
+              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
             >
               <Link
                 href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
@@ -630,7 +634,7 @@ export function LessonPageClient({
                   isCompleted || isCompleting || hasLinkedWallet === false
                 }
                 onClick={() => handleComplete()}
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
               >
                 {isCompleting ? (
                   <>
@@ -685,7 +689,7 @@ export function LessonPageClient({
               variant={isCompleted ? "push" : "pushOutline"}
               size="default"
               asChild
-              className="min-w-[120px] justify-center"
+              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
             >
               <Link
                 href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
@@ -698,7 +702,7 @@ export function LessonPageClient({
               variant={isCompleted ? "push" : "pushOutline"}
               size="default"
               asChild
-              className="min-w-[120px] justify-center"
+              className="w-full justify-center sm:w-auto sm:min-w-[120px]"
             >
               <Link href={`/${locale}/courses/${courseSlug}`}>
                 {t("lessonComplete")}

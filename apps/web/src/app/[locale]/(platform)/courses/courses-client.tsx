@@ -175,7 +175,7 @@ export function CourseCatalogClient({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+        <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
           {t("catalog")}
         </h1>
         <p className="mt-1 text-text-3">{t("catalogSubtitle")}</p>
@@ -202,7 +202,7 @@ export function CourseCatalogClient({
         <div className="space-y-3">
           {/* Row 1: Search + Difficulty pills */}
           <div className="filter-row">
-            <div className="relative min-w-[200px] max-w-[400px] flex-1">
+            <div className="relative w-full max-w-[400px] flex-1 sm:min-w-[200px]">
               <MagnifyingGlass
                 size={15}
                 weight="bold"

@@ -158,7 +158,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+        <h1 className="font-display text-2xl font-black tracking-[-0.5px] sm:text-3xl">
           {t("title")}
         </h1>
       </div>
@@ -168,7 +168,7 @@ export default function SettingsPage() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList>
+        <TabsList className="w-full overflow-x-auto sm:w-auto">
           <TabsTrigger value="profile">{t("profileSettings")}</TabsTrigger>
           <TabsTrigger value="account">{t("accountSettings")}</TabsTrigger>
           <TabsTrigger value="privacy">{t("privacy")}</TabsTrigger>
