@@ -19,6 +19,7 @@ export type Database = {
           author_id: string;
           body: string;
           created_at: string;
+          deleted_at: string | null;
           id: string;
           is_accepted: boolean;
           thread_id: string;
@@ -29,6 +30,7 @@ export type Database = {
           author_id: string;
           body: string;
           created_at?: string;
+          deleted_at?: string | null;
           id?: string;
           is_accepted?: boolean;
           thread_id: string;
@@ -39,6 +41,7 @@ export type Database = {
           author_id?: string;
           body?: string;
           created_at?: string;
+          deleted_at?: string | null;
           id?: string;
           is_accepted?: boolean;
           thread_id?: string;
@@ -454,6 +457,7 @@ export type Database = {
           category_id: string | null;
           course_id: string | null;
           created_at: string;
+          deleted_at: string | null;
           id: string;
           is_locked: boolean;
           is_pinned: boolean;
@@ -477,6 +481,7 @@ export type Database = {
           category_id?: string | null;
           course_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           id?: string;
           is_locked?: boolean;
           is_pinned?: boolean;
@@ -500,6 +505,7 @@ export type Database = {
           category_id?: string | null;
           course_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           id?: string;
           is_locked?: boolean;
           is_pinned?: boolean;
@@ -901,7 +907,15 @@ export type Database = {
         }[];
       };
       increment_view_count: {
-        Args: { p_thread_id: string };
+        Args: { p_thread_id: string; p_user_id?: string };
+        Returns: undefined;
+      };
+      soft_delete_thread: {
+        Args: { p_thread_id: string; p_user_id: string };
+        Returns: undefined;
+      };
+      soft_delete_answer: {
+        Args: { p_answer_id: string; p_user_id: string };
         Returns: undefined;
       };
       revoke_community_xp: {

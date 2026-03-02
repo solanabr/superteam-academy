@@ -8,7 +8,9 @@ import rehypeHighlight from "rehype-highlight";
 import { VoteButton } from "./vote-button";
 import { AcceptAnswerButton } from "./accept-answer-button";
 import { FlagButton } from "./flag-button";
+import { DeleteButton } from "./delete-button";
 import { cn } from "@/lib/utils";
+import { LevelBadge } from "@/components/gamification/level-badge";
 
 interface Author {
   username: string | null;
@@ -30,8 +32,10 @@ interface AnswerData {
 interface AnswerCardProps {
   answer: AnswerData;
   isThreadAuthor: boolean;
+  currentUserId?: string;
   onVote: (value: 0 | 1 | -1) => void;
   onAccept: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 }
 
@@ -54,10 +58,13 @@ function timeAgo(
 export function AnswerCard({
   answer,
   isThreadAuthor,
+  currentUserId,
   onVote,
   onAccept,
+  onDelete,
   disabled = false,
 }: AnswerCardProps) {
+  const isAuthor = currentUserId === answer.author_id;
   const t = useTranslations("community");
 
   return (
@@ -77,7 +84,7 @@ export function AnswerCard({
           disabled={disabled}
           size="sm"
         />
-        {isThreadAuthor && (
+        {isThreadAuthor && answer.author_id !== currentUserId && (
           <AcceptAnswerButton
             isAccepted={answer.is_accepted}
             onAccept={onAccept}
@@ -116,13 +123,14 @@ export function AnswerCard({
             )}
             <span>{answer.author.username || t("anonymous")}</span>
             {answer.author.level > 0 && (
-              <span className="font-semibold text-[var(--level)]">
-                {t("level", { level: answer.author.level })}
-              </span>
+              <LevelBadge level={answer.author.level} size="xs" />
             )}
           </span>
           <span>{timeAgo(answer.created_at, t)}</span>
           <FlagButton answerId={answer.id} />
+          {isAuthor && onDelete && (
+            <DeleteButton answerId={answer.id} onDeleted={onDelete} />
+          )}
         </div>
       </div>
     </div>

@@ -74,6 +74,30 @@ export async function POST(
 
     const admin = createAdminClient();
 
+    // Before accepting new answer, revoke XP from previous accepted answer.
+    // NOTE: Revoke + unaccept are not atomic. Concurrent accepts could race on is_accepted
+    // flag state. XP is safe (idempotency keys prevent double-award/revoke).
+    const { data: prevAccepted } = await admin
+      .from("answers")
+      .select("id, author_id")
+      .eq("thread_id", thread.id)
+      .eq("is_accepted", true)
+      .maybeSingle();
+
+    if (prevAccepted && prevAccepted.id !== answerId) {
+      // Revoke the previously awarded XP (uses revoke_community_xp which
+      // deletes the xp_transaction row and decrements user_xp.total_xp)
+      await admin
+        .rpc("revoke_community_xp", {
+          p_user_id: prevAccepted.author_id,
+          p_idempotency_key: `accept:${thread.id}:${prevAccepted.id}`,
+        })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error("[community] revoke_community_xp failed:", msg);
+        });
+    }
+
     // Unaccept previous answer if any
     await admin
       .from("answers")

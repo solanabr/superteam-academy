@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logError } from "@/lib/logging";
 
 export async function GET(
   request: NextRequest,
@@ -28,6 +29,7 @@ export async function GET(
       `
       )
       .eq("short_id", shortId)
+      .is("deleted_at", null)
       .single();
 
     if (error || !thread) {
@@ -44,6 +46,7 @@ export async function GET(
       `
       )
       .eq("thread_id", thread.id)
+      .is("deleted_at", null)
       .order("is_accepted", { ascending: false })
       .order("vote_score", { ascending: false })
       .order("created_at", { ascending: true });
@@ -95,7 +98,14 @@ export async function GET(
       process.env.SUPABASE_SERVICE_ROLE_KEY
     ) {
       const admin = createAdminClient();
-      admin.rpc("increment_view_count", { p_thread_id: thread.id }).then();
+      admin
+        .rpc("increment_view_count", {
+          p_thread_id: thread.id,
+          p_user_id: user?.id,
+        })
+        .then(null, (err: Error) =>
+          console.error("[threads] view count increment failed:", err.message)
+        );
     }
 
     // Build response
@@ -117,7 +127,11 @@ export async function GET(
     };
 
     return NextResponse.json(result);
-  } catch {
+  } catch (err) {
+    logError({
+      errorId: "thread-detail",
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
