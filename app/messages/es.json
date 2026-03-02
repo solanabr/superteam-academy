@@ -1,0 +1,536 @@
+{
+  "common": {
+    "nav": {
+      "home": "Inicio",
+      "courses": "Cursos",
+      "dashboard": "Panel",
+      "leaderboard": "Clasificación",
+      "profile": "Perfil",
+      "settings": "Configuración"
+    },
+    "buttons": {
+      "continue": "Continuar",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "confirm": "Confirmar",
+      "back": "Volver",
+      "next": "Siguiente",
+      "submit": "Enviar",
+      "close": "Cerrar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "retry": "Reintentar",
+      "viewAll": "Ver todo",
+      "learnMore": "Saber más",
+      "getStarted": "Comenzar",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "copy": "Copiar",
+      "share": "Compartir"
+    },
+    "loading": {
+      "default": "Cargando...",
+      "courses": "Cargando cursos...",
+      "lessons": "Cargando lección...",
+      "profile": "Cargando perfil...",
+      "transactions": "Procesando transacción...",
+      "wallet": "Conectando billetera...",
+      "submitting": "Enviando...",
+      "saving": "Guardando..."
+    },
+    "status": {
+      "success": "Éxito",
+      "error": "Error",
+      "warning": "Advertencia",
+      "info": "Información"
+    },
+    "misc": {
+      "or": "o",
+      "and": "y",
+      "of": "de",
+      "by": "por",
+      "on": "en",
+      "in": "en",
+      "new": "Nuevo",
+      "beta": "Beta",
+      "comingSoon": "Próximamente",
+      "required": "Requerido",
+      "optional": "Opcional",
+      "noResults": "No se encontraron resultados",
+      "empty": "Nada aquí todavía"
+    }
+  },
+  "landing": {
+    "hero": {
+      "badge": "Construido en Solana",
+      "headline": "Aprende. Gana. Crece On-Chain.",
+      "subheadline": "La plataforma de aprendizaje descentralizada donde cada lección completada queda registrada on-chain. Gana tokens XP soulbound, colecciona NFTs de credenciales y construye un historial de aprendizaje verificable.",
+      "ctaPrimary": "Comenzar a Aprender",
+      "ctaSecondary": "Explorar Cursos",
+      "trustLine": "Desarrollado por Superteam"
+    },
+    "stats": {
+      "activeLearners": "Estudiantes Activos",
+      "coursesPublished": "Cursos Publicados",
+      "lessonsCompleted": "Lecciones Completadas",
+      "xpAwarded": "XP Otorgado",
+      "credentialsIssued": "Credenciales Emitidas"
+    },
+    "features": {
+      "sectionTitle": "¿Por qué Superteam Academy?",
+      "sectionSubtitle": "Un nuevo paradigma para la educación verificable y gratificante en Solana.",
+      "onChainXp": {
+        "title": "XP On-Chain",
+        "description": "Cada lección completada acuña tokens XP soulbound directamente en tu billetera mediante Token-2022. Tu progreso es transparente e inmutable."
+      },
+      "credentialNfts": {
+        "title": "NFTs de Credencial",
+        "description": "Completa un curso y recibe un NFT de credencial Metaplex Core — un certificado de finalización a prueba de manipulaciones y visible en tu billetera."
+      },
+      "achievements": {
+        "title": "Logros",
+        "description": "Desbloquea insignias de logros on-chain al alcanzar hitos. Muestra tus logros al ecosistema de Solana."
+      },
+      "openContent": {
+        "title": "Contenido Abierto",
+        "description": "El contenido de los cursos se almacena en Arweave para un acceso permanente y resistente a la censura. El conocimiento pertenece a todos."
+      },
+      "leaderboards": {
+        "title": "Clasificaciones",
+        "description": "Compite con estudiantes de todo el mundo. Las clasificaciones de XP están impulsadas por la API Helius DAS para mayor precisión en tiempo real."
+      },
+      "solanaNative": {
+        "title": "Nativo de Solana",
+        "description": "Construido nativamente en Solana para una finalidad inferior a un segundo y tarifas de transacción casi nulas. Aprender nunca fue tan accesible."
+      }
+    },
+    "howItWorks": {
+      "sectionTitle": "Cómo Funciona",
+      "sectionSubtitle": "Tu camino de estudiante a desarrollador Solana certificado.",
+      "step1": {
+        "title": "Conecta Tu Billetera",
+        "description": "Inicia sesión con tu billetera de Solana. No se requiere correo electrónico ni contraseña."
+      },
+      "step2": {
+        "title": "Inscríbete en un Curso",
+        "description": "Explora el catálogo e inscríbete en los cursos que se alineen con tus objetivos."
+      },
+      "step3": {
+        "title": "Completa las Lecciones",
+        "description": "Avanza por las lecciones a tu propio ritmo. Cada finalización queda registrada on-chain y te otorga XP."
+      },
+      "step4": {
+        "title": "Obtén Tu Credencial",
+        "description": "Termina todas las lecciones para finalizar el curso y reclamar tu NFT de credencial soulbound."
+      }
+    },
+    "cta": {
+      "headline": "¿Listo para Construir en Solana?",
+      "subheadline": "Únete a miles de estudiantes que ganan credenciales verificables on-chain.",
+      "button": "Abrir App"
+    }
+  },
+  "courses": {
+    "catalog": {
+      "title": "Catálogo de Cursos",
+      "subtitle": "Amplía tu conocimiento de Solana con cursos curados por expertos.",
+      "searchPlaceholder": "Buscar cursos...",
+      "filterBy": "Filtrar por",
+      "sortBy": "Ordenar por",
+      "difficulty": {
+        "label": "Dificultad",
+        "all": "Todos los Niveles",
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado"
+      },
+      "sort": {
+        "newest": "Más recientes",
+        "popular": "Más populares",
+        "xpReward": "Mayor XP",
+        "alphabetical": "A–Z"
+      },
+      "resultsCount": "{count, plural, one {# curso encontrado} other {# cursos encontrados}}",
+      "noResults": "Ningún curso coincide con tus filtros.",
+      "clearFilters": "Limpiar Filtros"
+    },
+    "card": {
+      "lessons": "{count, plural, one {# lección} other {# lecciones}}",
+      "xpReward": "{xp} XP",
+      "enrolled": "Inscrito",
+      "completed": "Completado",
+      "enroll": "Inscribirse",
+      "continue": "Continuar",
+      "review": "Revisar",
+      "prerequisite": "Se requiere prerequisito"
+    },
+    "detail": {
+      "overview": "Descripción",
+      "curriculum": "Temario",
+      "instructor": "Instructor",
+      "requirements": "Requisitos",
+      "whatYouLearn": "Lo que aprenderás",
+      "lessonCount": "{count, plural, one {# lección} other {# lecciones}}",
+      "estimatedTime": "Tiempo Estimado",
+      "difficulty": "Dificultad",
+      "xpOnCompletion": "XP al Completar",
+      "credentialOnCompletion": "NFT de Credencial al Completar",
+      "prerequisite": "Prerequisito",
+      "noPrerequisite": "Ninguno",
+      "tags": "Etiquetas"
+    },
+    "enrollment": {
+      "enrollTitle": "Inscribirse en el Curso",
+      "enrollDescription": "Estás a punto de inscribirte en {courseName}. Tu inscripción quedará registrada on-chain.",
+      "enrollCta": "Confirmar Inscripción",
+      "enrolling": "Inscribiendo...",
+      "enrollSuccess": "¡Te inscribiste exitosamente en {courseName}!",
+      "enrollError": "Error al inscribirse. Por favor, inténtalo de nuevo.",
+      "alreadyEnrolled": "Ya estás inscrito en este curso.",
+      "unenrollTitle": "Cancelar Inscripción",
+      "unenrollDescription": "¿Estás seguro de que deseas cancelar tu inscripción en {courseName}? Tu progreso se perderá.",
+      "unenrollCta": "Confirmar Cancelación",
+      "unenrollCooldownNotice": "Debes esperar {hours} horas antes de volver a inscribirte.",
+      "prerequisiteNotice": "Completa {prerequisite} antes de inscribirte."
+    },
+    "progress": {
+      "yourProgress": "Tu Progreso",
+      "lessonsCompleted": "{completed}/{total} lecciones completadas",
+      "percentComplete": "{percent}% completado",
+      "xpEarned": "{xp} XP ganados",
+      "timeSpent": "Tiempo invertido",
+      "lastActivity": "Última actividad",
+      "completeCourse": "Completar Curso",
+      "claimCredential": "Reclamar Credencial",
+      "finalizingCourse": "Finalizando curso...",
+      "claimingCredential": "Reclamando credencial...",
+      "courseCompleted": "¡Curso Completado!",
+      "credentialClaimed": "¡NFT de credencial reclamado!"
+    }
+  },
+  "lessons": {
+    "viewer": {
+      "lesson": "Lección",
+      "of": "de",
+      "markComplete": "Marcar como Completada",
+      "markingComplete": "Registrando finalización...",
+      "completedBadge": "Completada",
+      "nextLesson": "Siguiente Lección",
+      "previousLesson": "Lección Anterior",
+      "backToCourse": "Volver al Curso",
+      "tableOfContents": "Tabla de Contenidos",
+      "estimatedTime": "Tiempo estimado de lectura",
+      "resources": "Recursos Adicionales"
+    },
+    "codeEditor": {
+      "title": "Editor de Código",
+      "run": "Ejecutar",
+      "running": "Ejecutando...",
+      "reset": "Reiniciar",
+      "solution": "Ver Solución",
+      "output": "Salida",
+      "error": "Error",
+      "success": "¡Todas las pruebas pasaron!",
+      "testsFailed": "{failed}/{total} pruebas fallaron",
+      "copyCode": "Copiar Código",
+      "language": "Lenguaje"
+    },
+    "completion": {
+      "title": "¡Lección Completada!",
+      "xpEarned": "Ganaste {xp} XP",
+      "streakBonus": "Bono de racha: +{xp} XP",
+      "continueButton": "Continuar a la Siguiente Lección",
+      "courseCompleteTitle": "¡Curso Completado!",
+      "courseCompleteSubtitle": "Completaste todas las lecciones. Finaliza el curso para reclamar tu credencial.",
+      "alreadyCompleted": "Ya completaste esta lección."
+    }
+  },
+  "dashboard": {
+    "overview": {
+      "title": "Panel",
+      "greeting": "Bienvenido de nuevo, {name}",
+      "subtitle": "Sigue tu trayectoria de aprendizaje y progreso on-chain.",
+      "quickActions": "Acciones Rápidas",
+      "continueLearning": "Continuar Aprendiendo",
+      "exploreCourses": "Explorar Cursos"
+    },
+    "stats": {
+      "totalXp": "XP Total",
+      "coursesEnrolled": "Cursos Inscritos",
+      "coursesCompleted": "Cursos Completados",
+      "lessonsCompleted": "Lecciones Completadas",
+      "credentialsEarned": "Credenciales Obtenidas",
+      "achievementsUnlocked": "Logros Desbloqueados",
+      "globalRank": "Clasificación Global",
+      "weeklyXp": "XP Esta Semana"
+    },
+    "streaks": {
+      "title": "Racha de Aprendizaje",
+      "currentStreak": "Racha de {days} días",
+      "longestStreak": "Récord: {days} días",
+      "streakAt risk": "¡Inicia sesión mañana para mantener tu racha!",
+      "streakBroken": "Tu racha ha sido reiniciada.",
+      "newStreak": "¡Comienza tu racha hoy!",
+      "streakBonus": "Bono de Racha Activo",
+      "streakBonusDescription": "Completa una lección hoy para un bono de {multiplier}x XP."
+    },
+    "activeCourses": {
+      "title": "Cursos Activos",
+      "empty": "No tienes cursos activos.",
+      "emptySubtitle": "Explora el catálogo para comenzar a aprender.",
+      "progress": "{percent}% completado",
+      "resume": "Reanudar",
+      "lastLesson": "Última: {lesson}"
+    },
+    "recentActivity": {
+      "title": "Actividad Reciente",
+      "empty": "Sin actividad reciente.",
+      "lessonCompleted": "Lección completada en {course}",
+      "courseEnrolled": "Inscrito en {course}",
+      "courseCompleted": "{course} completado",
+      "credentialClaimed": "Credencial reclamada para {course}",
+      "achievementUnlocked": "Logro desbloqueado: {name}",
+      "xpEarned": "{xp} XP ganados"
+    }
+  },
+  "profile": {
+    "header": {
+      "wallet": "Billetera",
+      "joinedDate": "Miembro desde {date}",
+      "editProfile": "Editar Perfil",
+      "shareProfile": "Compartir Perfil",
+      "level": "Nivel {level}",
+      "xpToNextLevel": "{xp} XP para el Nivel {next}"
+    },
+    "achievements": {
+      "title": "Logros",
+      "empty": "Aún no hay logros.",
+      "emptySubtitle": "Completa cursos e hitos para ganar logros.",
+      "unlocked": "{count} desbloqueados",
+      "lockedCount": "{count} bloqueados",
+      "rare": "Raro",
+      "epic": "Épico",
+      "legendary": "Legendario",
+      "unlockedOn": "Desbloqueado el {date}"
+    },
+    "credentials": {
+      "title": "Credenciales",
+      "empty": "Aún no hay credenciales.",
+      "emptySubtitle": "Completa un curso para obtener tu primer NFT de credencial.",
+      "issuedOn": "Emitido el {date}",
+      "viewOnChain": "Ver en Chain",
+      "verifyCredential": "Verificar"
+    },
+    "activity": {
+      "title": "Actividad",
+      "empty": "Sin actividad todavía.",
+      "heatmapLabel": "contribuciones en el último año",
+      "lessonsThisMonth": "{count} lecciones este mes",
+      "xpThisMonth": "{xp} XP este mes"
+    },
+    "stats": {
+      "title": "Estadísticas",
+      "totalXp": "XP Total",
+      "rank": "Clasificación",
+      "coursesCompleted": "Cursos Completados",
+      "currentStreak": "Racha Actual",
+      "longestStreak": "Racha Más Larga",
+      "days": "{count, plural, one {# día} other {# días}}"
+    }
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Los mejores estudiantes clasificados por XP on-chain.",
+    "columns": {
+      "rank": "Posición",
+      "learner": "Estudiante",
+      "xp": "XP",
+      "coursesCompleted": "Cursos",
+      "streak": "Racha",
+      "badges": "Insignias"
+    },
+    "timeFilters": {
+      "allTime": "Todo el Tiempo",
+      "thisWeek": "Esta Semana",
+      "thisMonth": "Este Mes",
+      "today": "Hoy"
+    },
+    "youLabel": "Tú",
+    "yourRank": "Tu posición: #{rank}",
+    "notRanked": "Aún sin clasificar",
+    "empty": "Aún no hay estudiantes en la clasificación.",
+    "topThree": {
+      "first": "1er Lugar",
+      "second": "2do Lugar",
+      "third": "3er Lugar"
+    },
+    "loadMore": "Cargar Más"
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Administra las preferencias de tu cuenta.",
+    "profile": {
+      "title": "Perfil",
+      "displayName": "Nombre para Mostrar",
+      "displayNamePlaceholder": "Ingresa tu nombre para mostrar",
+      "displayNameHint": "Este nombre se muestra públicamente en la clasificación y en tu perfil.",
+      "bio": "Biografía",
+      "bioPlaceholder": "Cuéntale un poco sobre ti a la comunidad...",
+      "bioHint": "Máximo 280 caracteres.",
+      "avatar": "Avatar",
+      "changeAvatar": "Cambiar Avatar",
+      "saveProfile": "Guardar Perfil",
+      "profileSaved": "Perfil guardado exitosamente."
+    },
+    "wallet": {
+      "title": "Billetera",
+      "connected": "Billetera Conectada",
+      "notConnected": "Sin billetera conectada",
+      "connect": "Conectar Billetera",
+      "disconnect": "Desconectar",
+      "linkWallet": "Vincular Billetera Adicional",
+      "linkedWallets": "Billeteras Vinculadas",
+      "primaryWallet": "Principal",
+      "removeWallet": "Eliminar",
+      "network": "Red",
+      "balance": "Saldo SOL"
+    },
+    "language": {
+      "title": "Idioma",
+      "label": "Idioma de la Interfaz",
+      "en": "English",
+      "ptBR": "Português (Brasil)",
+      "es": "Español",
+      "saved": "Idioma actualizado."
+    },
+    "theme": {
+      "title": "Tema",
+      "label": "Tema de Color",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Predeterminado del Sistema",
+      "saved": "Tema actualizado."
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "email": "Notificaciones por Correo",
+      "emailDescription": "Recibe correos sobre actualizaciones de cursos y logros.",
+      "browser": "Notificaciones del Navegador",
+      "browserDescription": "Recibe notificaciones push del navegador.",
+      "streakReminder": "Recordatorios de Racha",
+      "streakReminderDescription": "Recibe recordatorios para mantener tu racha diaria de aprendizaje.",
+      "newCourse": "Alertas de Nuevos Cursos",
+      "newCourseDescription": "Recibe notificaciones cuando se publiquen nuevos cursos.",
+      "saved": "Preferencias de notificaciones guardadas."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "subtitle": "Conecta tu billetera de Solana para acceder a Superteam Academy.",
+      "selectWallet": "Selecciona una billetera para continuar",
+      "noWallet": "¿No tienes billetera?",
+      "getWallet": "Obtener una billetera de Solana",
+      "terms": "Al iniciar sesión, aceptas nuestros {terms} y {privacy}.",
+      "termsLink": "Términos de Servicio",
+      "privacyLink": "Política de Privacidad"
+    },
+    "connectWallet": {
+      "title": "Conectar Billetera",
+      "description": "Selecciona tu billetera de Solana preferida para conectarte a Superteam Academy.",
+      "connecting": "Conectando a {wallet}...",
+      "approveRequest": "Aprueba la solicitud de conexión en tu billetera.",
+      "connected": "¡Billetera conectada!",
+      "failed": "Error al conectar. Por favor, inténtalo de nuevo.",
+      "rejected": "Conexión rechazada."
+    },
+    "linkWallet": {
+      "title": "Vincular Billetera",
+      "description": "Vincula una billetera adicional a tu cuenta para unificar tu historial de XP.",
+      "signMessage": "Firma el mensaje de verificación en tu billetera.",
+      "linking": "Vinculando billetera...",
+      "linked": "Billetera vinculada exitosamente.",
+      "failed": "Error al vincular la billetera. Por favor, inténtalo de nuevo.",
+      "alreadyLinked": "Esta billetera ya está vinculada a una cuenta."
+    }
+  },
+  "gamification": {
+    "xp": {
+      "label": "XP",
+      "earned": "XP Ganados",
+      "total": "XP Total",
+      "thisLesson": "+{xp} XP",
+      "breakdown": "Desglose de XP",
+      "base": "XP Base",
+      "streakBonus": "Bono de Racha",
+      "difficultyBonus": "Bono de Dificultad"
+    },
+    "level": {
+      "label": "Nivel",
+      "current": "Nivel {level}",
+      "next": "Siguiente: Nivel {next}",
+      "progress": "{current}/{required} XP",
+      "levelUp": "¡Subiste de Nivel!",
+      "levelUpDescription": "¡Alcanzaste el Nivel {level}!",
+      "maxLevel": "Nivel Máximo"
+    },
+    "streak": {
+      "label": "Racha",
+      "days": "{count, plural, one {# día} other {# días}}",
+      "current": "Racha Actual",
+      "longest": "Racha Más Larga",
+      "keepGoing": "¡Sigue así!",
+      "activeBonus": "{multiplier}x XP activo",
+      "daysLabel": "días"
+    },
+    "achievements": {
+      "label": "Logros",
+      "unlocked": "¡Logro Desbloqueado!",
+      "new": "Nuevo Logro",
+      "total": "{unlocked}/{total} Logros",
+      "rarity": {
+        "common": "Común",
+        "rare": "Raro",
+        "epic": "Épico",
+        "legendary": "Legendario"
+      },
+      "supply": "{remaining} restantes",
+      "supplyExhausted": "Suministro agotado"
+    }
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "network": "Error de red. Verifica tu conexión.",
+    "wallet": "Error en la billetera. Por favor, vuelve a conectar tu billetera.",
+    "transaction": "La transacción falló. Por favor, inténtalo de nuevo.",
+    "onChain": {
+      "Unauthorized": "No estás autorizado para realizar esta acción.",
+      "CourseNotActive": "Este curso no está activo actualmente.",
+      "LessonOutOfBounds": "La lección solicitada no existe en este curso.",
+      "LessonAlreadyCompleted": "Ya completaste esta lección.",
+      "CourseNotCompleted": "Debes completar todas las lecciones antes de finalizar el curso.",
+      "CourseAlreadyFinalized": "Este curso ya fue finalizado para tu inscripción.",
+      "CourseNotFinalized": "Este curso aún no ha sido finalizado.",
+      "PrerequisiteNotMet": "Debes completar el curso prerequisito antes de inscribirte.",
+      "UnenrollCooldown": "Por favor espera antes de volver a inscribirte en este curso.",
+      "EnrollmentCourseMismatch": "El registro de inscripción no coincide con este curso.",
+      "Overflow": "Ocurrió un desbordamiento numérico. Por favor, contacta a soporte.",
+      "CourseIdEmpty": "El ID del curso no puede estar vacío.",
+      "CourseIdTooLong": "El ID del curso excede la longitud máxima permitida.",
+      "InvalidLessonCount": "El conteo de lecciones proporcionado es inválido.",
+      "InvalidDifficulty": "El valor de dificultad proporcionado es inválido.",
+      "CredentialAssetMismatch": "El activo de credencial no coincide con la credencial esperada del curso.",
+      "CredentialAlreadyIssued": "Ya se emitió una credencial para la finalización de este curso.",
+      "MinterNotActive": "El emisor de XP no está activo actualmente.",
+      "MinterAmountExceeded": "La cantidad de XP solicitada excede el límite permitido del emisor.",
+      "LabelTooLong": "La etiqueta proporcionada excede la longitud máxima permitida.",
+      "AchievementNotActive": "Este logro no está activo actualmente.",
+      "AchievementSupplyExhausted": "Este logro alcanzó su suministro máximo y ya no está disponible.",
+      "AchievementIdTooLong": "El ID del logro excede la longitud máxima permitida.",
+      "AchievementNameTooLong": "El nombre del logro excede la longitud máxima permitida.",
+      "AchievementUriTooLong": "El URI del logro excede la longitud máxima permitida.",
+      "InvalidAmount": "El monto proporcionado es inválido.",
+      "InvalidXpReward": "El valor de recompensa en XP es inválido."
+    }
+  }
+}
