@@ -30,6 +30,7 @@
     "@solana/web3.js": "^1.98.4",
     "@supabase/supabase-js": "^2.95.3",
     "bcryptjs": "^3.0.3",
+    "bn.js": "^5.2.3",
     "bs58": "^4.0.1",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",

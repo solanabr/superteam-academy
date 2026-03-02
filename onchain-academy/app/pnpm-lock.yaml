@@ -56,6 +56,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      bn.js:
+        specifier: ^5.2.3
+        version: 5.2.3
       bs58:
         specifier: ^4.0.1
         version: 4.0.1
