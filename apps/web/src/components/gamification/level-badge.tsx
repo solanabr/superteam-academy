@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface LevelBadgeProps {
   level: number;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -17,6 +17,7 @@ export function getLevelTier(level: number): LevelTier {
 }
 
 const sizeClasses = {
+  xs: "w-[20px] h-[20px] text-[10px] border-[1.5px]",
   sm: "w-[32px] h-[32px] text-[13px] border-[2px]",
   md: "w-[44px] h-[44px] text-[16px] border-[2.5px]",
   lg: "w-[64px] h-[64px] text-[28px] border-[2.5px]",

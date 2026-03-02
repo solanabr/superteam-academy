@@ -39,13 +39,14 @@ export class HybridProgressService implements LearningProgressService {
   }
 
   // -------------------------------------------------------------------------
-  // getXP -- on-chain Token-2022 balance with Supabase fallback
+  // getXP -- max(on-chain Token-2022, Supabase) to include DB-only XP
   // -------------------------------------------------------------------------
 
   async getXP(userId: string): Promise<number> {
     const walletAddress = await this.getWalletForUser(userId);
 
-    // Attempt on-chain read if wallet and XP mint are available
+    // Read on-chain balance if wallet and XP mint are available
+    let onChainXp = 0;
     if (walletAddress && this.xpMint) {
       try {
         const owner = new PublicKey(walletAddress);
@@ -61,20 +62,24 @@ export class HybridProgressService implements LearningProgressService {
           "confirmed",
           TOKEN_2022_PROGRAM_ID
         );
-        return Number(account.amount);
+        onChainXp = Number(account.amount);
       } catch {
-        // ATA not found, RPC error, or any other issue -- fall through
+        // ATA not found, RPC error, or any other issue
       }
     }
 
-    // Supabase fallback
+    // Always read Supabase total (includes community XP that is DB-only)
     const { data } = await this.supabase
       .from("user_xp")
       .select("total_xp")
       .eq("user_id", userId)
       .single();
 
-    return data?.total_xp ?? 0;
+    const supabaseXp = data?.total_xp ?? 0;
+
+    // Take the higher value: on-chain may lead if webhook is delayed,
+    // Supabase may lead due to DB-only XP (community, etc.)
+    return Math.max(onChainXp, supabaseXp);
   }
 
   // -------------------------------------------------------------------------
