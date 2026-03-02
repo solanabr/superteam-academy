@@ -220,10 +220,10 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ### Build Server (Optional -- for code compilation features)
 
-| Variable                       | Scope  | Description                                                             |
-| ------------------------------ | ------ | ----------------------------------------------------------------------- |
-| `NEXT_PUBLIC_BUILD_SERVER_URL` | Client | Cloud Run service URL                                                   |
-| `BUILD_SERVER_API_KEY`         | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run) |
+| Variable               | Scope  | Description                                                             |
+| ---------------------- | ------ | ----------------------------------------------------------------------- |
+| `BUILD_SERVER_URL`     | Server | Cloud Run service URL                                                   |
+| `BUILD_SERVER_API_KEY` | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run) |
 
 ### Analytics (Optional -- platform works without these)
 

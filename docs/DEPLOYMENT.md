@@ -62,7 +62,7 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 | `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                        |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                                                            |
 | `NEXT_PUBLIC_BACKEND_SIGNER`    | Public          | Authority pubkey (same as deployer on devnet)                                                                         |
-| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                           |
+| `BUILD_SERVER_URL`              | **Server-only** | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                           |
 | `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                                                          |
 | `PROGRAM_AUTHORITY_SECRET`      | **Server-only** | Base58 private key of the Config PDA authority — required for admin panel on-chain deployments                        |
 | `BACKEND_SIGNER_SECRET`         | **Server-only** | Base58 private key of the backend signer registered in `Config.backend_signer` — signs lesson completion transactions |

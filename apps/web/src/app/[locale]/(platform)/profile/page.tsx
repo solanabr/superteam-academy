@@ -283,6 +283,7 @@ function useProfileData(): ProfileData {
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
   const tCerts = useTranslations("certificates");
   const locale = useLocale();
   const data = useProfileData();
@@ -296,7 +297,7 @@ export default function ProfilePage() {
           className="animate-spin text-primary"
           aria-hidden="true"
         />
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">{tCommon("loading")}</span>
       </div>
     );
   }

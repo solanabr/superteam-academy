@@ -41,8 +41,8 @@ export async function buildProgram(
 
 /**
  * Get the download URL for a compiled program binary.
- * The binary is fetched directly from the build server via our API proxy.
+ * Routes through the API proxy to keep the build server URL server-only.
  */
 export function getBinaryDownloadUrl(uuid: string): string {
-  return `${process.env.NEXT_PUBLIC_BUILD_SERVER_URL}/deploy/${uuid}`;
+  return `/api/deploy/${uuid}`;
 }

@@ -553,11 +553,100 @@ The middleware (`src/middleware.ts`) chains two concerns in order:
 
 **Admin routes**: Checked against `admin_session` cookie, separate from Supabase auth.
 
-The middleware matcher excludes API routes, `_next`, `_vercel`, and static assets.
+The middleware matcher excludes API routes, `_next`, `_vercel`, `/studio`, and static assets.
 
 ---
 
-## 7. Gamification System
+## 7. Community Forum
+
+Full-stack Q&A forum with XP integration, moderation, and course-scoped discussions.
+
+### Pages
+
+| Route                                      | Component                  | Purpose                                             |
+| ------------------------------------------ | -------------------------- | --------------------------------------------------- |
+| `/community`                               | `community/page.tsx`       | Forum home — category grid + recent threads         |
+| `/community/[category-slug]`               | `[category-slug]/page.tsx` | Category page — filtered thread list + create modal |
+| `/community/[category-slug]/[thread-slug]` | `[thread-slug]/page.tsx`   | Thread detail — body, answers, voting, accept       |
+
+Course and lesson pages embed a `<ThreadList>` tab filtered by `courseId` / `lessonId` for contextual discussions.
+
+### Data Flow
+
+```
+User action → API route → Supabase (RLS/service_role)
+                       ↘ award_xp() SECURITY DEFINER → xp_transactions + user_xp
+                       ↘ on-chain reward_xp (for thread/answer/accept XP)
+```
+
+### API Routes (7)
+
+| Route                                | Method | Auth     | Rate Limit | Purpose                                                                                            |
+| ------------------------------------ | ------ | -------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| `/api/community/threads`             | GET    | None     | —          | List threads with cursor pagination, category/course/lesson filters                                |
+| `/api/community/threads`             | POST   | Required | 10/hr      | Create thread (5 XP, awards via `award_xp()`)                                                      |
+| `/api/community/threads/[id]`        | GET    | None     | —          | Thread detail with answers, increments view count                                                  |
+| `/api/community/answers`             | POST   | Required | 30/hr      | Post answer to thread (10 XP)                                                                      |
+| `/api/community/answers/[id]/accept` | POST   | Required | —          | Accept answer (thread author only, 25 XP to answerer). Re-accept revokes previous XP.              |
+| `/api/community/votes`               | POST   | Required | 60/hr      | Three-state vote (+1/0/-1). Self-vote prevented by DB trigger.                                     |
+| `/api/community/flags`               | POST   | Required | 20/hr      | Flag content for moderation. Dedup index prevents duplicate flags. Self-flag prevented by trigger. |
+| `/api/community/search`              | GET    | None     | —          | Full-text search (tsvector on title + body)                                                        |
+
+Rate limiting uses a per-user in-memory token bucket (`lib/rate-limit.ts`). Process-local; not globally enforced across serverless instances.
+
+### Database Tables (5 + 1 view)
+
+| Table              | Key Columns                                                                                                                                                                            | Notes                                                                                                                                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `forum_categories` | `name`, `slug`, `description`, `sort_order`                                                                                                                                            | Seeded manually. Public SELECT, no user writes.                                                                                                                                               |
+| `threads`          | `title`, `body`, `type` (question/discussion), `category_id`, `course_id`, `lesson_id`, `author_id`, `vote_score`, `view_count`, `answer_count`, `is_solved`, `is_pinned`, `is_locked` | `search_vector` tsvector for full-text search. `last_activity_at` updated on new answers only.                                                                                                |
+| `answers`          | `body`, `thread_id`, `author_id`, `vote_score`, `is_accepted`                                                                                                                          | One accepted answer per thread (enforced by accept route logic).                                                                                                                              |
+| `votes`            | `user_id`, `thread_id`/`answer_id`, `value` (+1/-1)                                                                                                                                    | Unique constraint `(user_id, thread_id)` / `(user_id, answer_id)`. Self-vote prevented by `trg_prevent_self_vote` trigger. `update_vote_score()` trigger maintains denormalized `vote_score`. |
+| `flags`            | `reporter_id`, `thread_id`/`answer_id`, `reason` (enum), `status`                                                                                                                      | Unique partial indexes prevent duplicate flags per user per target. `trg_prevent_self_flag` trigger prevents self-flagging.                                                                   |
+| `community_stats`  | (view)                                                                                                                                                                                 | Aggregated thread/answer/accepted counts per user for profile display.                                                                                                                        |
+
+### Components (14)
+
+| Component            | Purpose                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `ThreadList`         | Paginated thread list with filters (category, course, lesson). Uses `useThreads` hook. |
+| `ThreadCard`         | Thread preview card with vote score, answer count, status badge.                       |
+| `VoteButton`         | Three-state vote UI (up/neutral/down).                                                 |
+| `AnswerCard`         | Answer display with vote, accept button (for thread author).                           |
+| `AnswerEditor`       | Markdown editor for posting answers.                                                   |
+| `CreateThreadModal`  | Modal for creating new threads (title, body, type, category).                          |
+| `CommunitySearch`    | Full-text search bar with debounced API calls.                                         |
+| `CommunityStats`     | User forum stats (threads, answers, accepted).                                         |
+| `FlagButton`         | Content flagging with reason selector.                                                 |
+| `ThreadStatusBadge`  | Question/discussion + solved/unsolved badge.                                           |
+| `ThreadFilters`      | Category, sort, and type filter controls.                                              |
+| `CategoryCard`       | Forum category card with thread count.                                                 |
+| `MarkdownEditor`     | Markdown textarea with preview toggle.                                                 |
+| `AcceptAnswerButton` | Accept/unaccept answer (thread author only).                                           |
+
+### Hooks
+
+| Hook                | Purpose                                                          |
+| ------------------- | ---------------------------------------------------------------- |
+| `useThreads`        | Cursor-based thread pagination with SWR-like caching.            |
+| `useCommunityStats` | Fetch community stats for a user.                                |
+| `useVote`           | Optimistic three-state vote management with rollback on failure. |
+
+### XP Rewards
+
+| Action          | XP  | Idempotency Key                |
+| --------------- | --- | ------------------------------ |
+| Create thread   | 5   | `thread:{threadId}`            |
+| Post answer     | 10  | `answer:{answerId}`            |
+| Answer accepted | 25  | `accept:{threadId}:{answerId}` |
+
+Daily community XP cap: 50 XP (enforced by `award_xp()` SECURITY DEFINER function).
+
+Re-accepting a different answer revokes the previous answerer's 25 XP via `revoke_community_xp()` before awarding the new one.
+
+---
+
+## 8. Gamification System
 
 ### XP
 
@@ -629,7 +718,7 @@ GamificationOverlays
 
 ---
 
-## 8. API Routes
+## 9. API Routes
 
 All routes are in `apps/web/src/app/api/`.
 
@@ -667,7 +756,7 @@ All routes are in `apps/web/src/app/api/`.
 
 ---
 
-## 9. Database Schema
+## 10. Database Schema
 
 ### Tables (17)
 
@@ -731,7 +820,7 @@ The `on_auth_user_created` trigger fires `handle_new_user()` on every new auth.u
 
 ---
 
-## 10. Build Server Architecture
+## 11. Build Server Architecture
 
 The build server is a standalone Rust/Axum service deployed on GCP Cloud Run for compiling student-authored Solana programs.
 
@@ -765,7 +854,7 @@ The build server is a standalone Rust/Axum service deployed on GCP Cloud Run for
 
 ---
 
-## 11. Key Design Decisions
+## 12. Key Design Decisions
 
 ### Hybrid On-Chain / Off-Chain Progress
 

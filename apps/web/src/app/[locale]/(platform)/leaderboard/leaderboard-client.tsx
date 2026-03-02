@@ -153,6 +153,7 @@ export function LeaderboardClient({
   currentUserId,
 }: LeaderboardClientProps) {
   const t = useTranslations("gamification");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
   const [entries, setEntries] = useState<LeaderboardEntry[]>(initialEntries);
@@ -226,7 +227,7 @@ export function LeaderboardClient({
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="sol-spinner" />
-          <span className="sr-only">Loading...</span>
+          <span className="sr-only">{tCommon("loading")}</span>
         </div>
       ) : entries.length === 0 ? (
         <div className="lb-empty">

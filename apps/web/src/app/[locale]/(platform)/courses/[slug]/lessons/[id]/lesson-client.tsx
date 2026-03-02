@@ -638,7 +638,7 @@ export function LessonPageClient({
                       className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Loading...</span>
+                    <span className="sr-only">{tCommon("loading")}</span>
                   </>
                 ) : isCompleted ? (
                   <CheckCircle
@@ -664,7 +664,7 @@ export function LessonPageClient({
                       className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Loading...</span>
+                    <span className="sr-only">{tCommon("loading")}</span>
                   </>
                 )}
                 {tCourses("enrollNow")}

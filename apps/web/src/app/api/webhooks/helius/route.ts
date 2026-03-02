@@ -20,7 +20,6 @@ import type {
   LessonCompletedEvent,
   CourseFinalizedEvent,
   CredentialIssuedEvent,
-  CredentialUpgradedEvent,
   AchievementAwardedEvent,
   XpRewardedEvent,
 } from "@/lib/helius/types";
@@ -100,9 +99,7 @@ export async function POST(req: NextRequest) {
             );
             break;
           case "CredentialUpgraded":
-            console.log(
-              `[webhook] CredentialUpgraded: learner=${(data as CredentialUpgradedEvent).learner} level=${(data as CredentialUpgradedEvent).currentLevel} sig=${signature}`
-            );
+            // No DB handler needed — on-chain state is source of truth
             break;
           case "AchievementAwarded":
             await handleAchievementAwarded(
@@ -114,8 +111,8 @@ export async function POST(req: NextRequest) {
             await handleXpRewarded(data as XpRewardedEvent, signature);
             break;
           default:
-            // Admin events (CourseCreated, ConfigUpdated, etc.) -- log only
-            console.log(`[webhook] ${event.name}: sig=${signature}`);
+            // Admin events (CourseCreated, ConfigUpdated, etc.) -- no-op
+            break;
         }
       } catch (err) {
         console.error(`[webhook] Error handling ${event.name}:`, err);
