@@ -530,7 +530,17 @@ summary::-webkit-details-marker { display: none; }
 .landing-features { padding: 120px clamp(20px, 5vw, 60px); }
 .landing-features-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .landing-cta-section { padding: 160px clamp(20px, 5vw, 60px); }
-.landing-cursor { cursor: none; }
+.landing-cursor {
+  cursor: none;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --c-text-muted: #ABABBA;
+  --c-text-dim: #71717A;
+  --nd-highlight-green: #14F195;
+  --overlay-border: rgba(255,255,255,0.1);
+  --overlay-divider: rgba(255,255,255,0.06);
+  color-scheme: dark;
+}
 
 @media (max-width: 767px) {
   .landing-hero { padding-bottom: 120px; }

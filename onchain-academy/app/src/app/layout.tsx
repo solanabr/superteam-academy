@@ -172,11 +172,6 @@ export default async function RootLayout({
           media="(prefers-color-scheme: light)"
         />
         <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
-        <link
-          rel="preconnect"
-          href="https://api.devnet.solana.com"
-          crossOrigin="anonymous"
-        />
         <link rel="dns-prefetch" href="https://us.i.posthog.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>

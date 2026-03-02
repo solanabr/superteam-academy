@@ -2,54 +2,147 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_SOLANA_NETWORK: devnet
+  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+  NEXT_PUBLIC_SANITY_PROJECT_ID: placeholder
+  NEXT_PUBLIC_SANITY_DATASET: production
+
+defaults:
+  run:
+    working-directory: onchain-academy/app
 
 jobs:
-  lint-build-test:
+  lint-typecheck:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: onchain-academy/app
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
           cache-dependency-path: onchain-academy/app/pnpm-lock.yaml
-
       - run: pnpm install
-
       - name: Typecheck
-        run: npx tsc --noEmit
-
+        run: pnpm exec tsc --noEmit
       - name: Lint
         run: pnpm lint
 
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: onchain-academy/app/pnpm-lock.yaml
+      - run: pnpm install
+      - name: Unit tests
+        run: pnpm test:unit
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint-typecheck, unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: onchain-academy/app/pnpm-lock.yaml
+      - run: pnpm install
       - run: pnpm build
-        env:
-          NEXT_PUBLIC_SOLANA_NETWORK: devnet
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
-          NEXT_PUBLIC_SANITY_PROJECT_ID: placeholder
-          NEXT_PUBLIC_SANITY_DATASET: production
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: |
+            onchain-academy/app/.next
+            onchain-academy/app/node_modules
+          retention-days: 1
 
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: onchain-academy/app/pnpm-lock.yaml
+      - run: pnpm install
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: onchain-academy/app
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('onchain-academy/app/pnpm-lock.yaml') }}
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
-
+      - name: Install Playwright deps (cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       - name: E2E tests
         run: pnpm test:e2e
         env:
           CI: true
-          NEXT_PUBLIC_SOLANA_NETWORK: devnet
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
-          NEXT_PUBLIC_SANITY_PROJECT_ID: placeholder
-          NEXT_PUBLIC_SANITY_DATASET: production
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: onchain-academy/app/playwright-report
+          retention-days: 7
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: onchain-academy/app/pnpm-lock.yaml
+      - run: pnpm install
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: onchain-academy/app
+      - name: Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun --config=lighthouserc.json
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
