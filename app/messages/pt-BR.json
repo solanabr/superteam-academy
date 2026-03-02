@@ -9,7 +9,10 @@
     "title": "Construa o Futuro da Web3 na Solana",
     "subtitle": "A plataforma de aprendizado interativo definitiva. Aprenda Rust, Anchor e DeFi construindo dApps reais.",
     "start": "Começar a Aprender",
-    "features": "Explorar Recursos"
+    "features_explorer": "Explorar Recursos",
+    "courses": "Cursos",
+    "features": "Recursos",
+    "signIn": "Entrar"
   },
   "Header": {
     "signIn": "Entrar"
