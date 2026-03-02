@@ -1,0 +1,56 @@
+# .github/workflows/playwright.yml
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    # Установка pnpm
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    # Переход в папку app и установка зависимостей
+    - name: Install dependencies
+      working-directory: ./app
+      run: pnpm install
+
+    # Установка браузеров для Playwright
+    - name: Install Playwright Browsers
+      working-directory: ./app
+      run: pnpm exec playwright install --with-deps
+
+    # Генерация Prisma Client
+    - name: Generate Prisma Client
+      working-directory: ./app
+      run: npx prisma generate
+
+    # Запуск тестов (Playwright сам поднимет сервер, если мы настроим webServer)
+    - name: Run Playwright tests
+      working-directory: ./app
+      # Нам нужно передать фиктивный DATABASE_URL для Prisma во время тестов, 
+      # чтобы Next.js мог сбилдиться. Для реальных тестов базы лучше использовать моки,
+      # но для проверки UI хватит и пустого.
+      env:
+        DATABASE_URL: "mongodb+srv://dummy:dummy@cluster0.mongodb.net/test?retryWrites=true&w=majority"
+        NEXT_PUBLIC_PROGRAM_ID: "dummy"
+        NEXT_PUBLIC_XP_MINT: "dummy"
+      run: pnpm exec playwright test
+      
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: app/playwright-report/
+        retention-days: 30
