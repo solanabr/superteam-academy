@@ -29,6 +29,22 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 ---
 
 
+## On-Chain Integration (Devnet)
+
+The Anchor program is **deployed and initialized on Solana devnet**. All frontend code points to this live deployment.
+
+| Item | Value |
+|------|-------|
+| **Program ID** | [`3Yr5EZrq8t4fMunuHUZoN9Q6cn4Sf6p3AFAdvWEMaxKU`](https://explorer.solana.com/address/3Yr5EZrq8t4fMunuHUZoN9Q6cn4Sf6p3AFAdvWEMaxKU?cluster=devnet) |
+| **Config PDA** | [`9SjoGw5BFsVGk4phWeckDzBnr96iLk2JyuUqMKmSrkvF`](https://explorer.solana.com/address/9SjoGw5BFsVGk4phWeckDzBnr96iLk2JyuUqMKmSrkvF?cluster=devnet) |
+| **Initialize TX** | [`3a7C5n7auUnH8Z2ygwiUdWVPHJzv6Tw7uRvyqydUPhfRGNhAAXvq5pfMYc35B3jDViKZ6iu9BJHCB6imRZPzLBdq`](https://explorer.solana.com/tx/3a7C5n7auUnH8Z2ygwiUdWVPHJzv6Tw7uRvyqydUPhfRGNhAAXvq5pfMYc35B3jDViKZ6iu9BJHCB6imRZPzLBdq?cluster=devnet) |
+| **Course PDA** (intro-to-solana) | [`HvZ8vQBd7Pw5qewBxYTKa3pjJrine9wqEi64BocQaKYj`](https://explorer.solana.com/address/HvZ8vQBd7Pw5qewBxYTKa3pjJrine9wqEi64BocQaKYj?cluster=devnet) |
+| **Create Course TX** | [`3ZVRxAQb5bwQ2ydL12BkAXL2PRUL26vcyEPMb9q4w7Jz23rM6V8mGtrV4DSduphLnpLZuPswAHRDcyd87YvNLVJF`](https://explorer.solana.com/tx/3ZVRxAQb5bwQ2ydL12BkAXL2PRUL26vcyEPMb9q4w7Jz23rM6V8mGtrV4DSduphLnpLZuPswAHRDcyd87YvNLVJF?cluster=devnet) |
+
+The frontend connects to this program via `lib/solana-program.ts` (PDA derivation helpers) and `lib/use-program.ts` (Anchor client + `enrollInCourse` + `completeLessonOnChain` instructions). The XP token is a soulbound Token-2022 mint; credentials are Metaplex Core assets.
+
+---
+
 ## Lighthouse Scores
 
 | Category | Score |
