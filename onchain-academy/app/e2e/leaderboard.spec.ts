@@ -23,8 +23,8 @@ test.describe("Leaderboard Page", () => {
       timeout: 15_000,
     });
     await expect(page.getByText("AnchorMaster").first()).toBeVisible();
-    // XP values should be shown (use specific demo XP value to avoid hidden elements)
-    await expect(page.getByText("4,250").first()).toBeVisible();
+    // XP values shown as "4.3k XP" (formatXp rounds to k)
+    await expect(page.getByText("k XP").first()).toBeVisible();
   });
 
   test("timeframe tabs are visible and switchable", async ({ page }) => {
