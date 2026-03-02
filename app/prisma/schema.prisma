@@ -36,6 +36,7 @@ model User {
 
   role          Role      @default(USER)
   hasCompletedOnboarding Boolean @default(false)
+  preferences            Json?
   
   // Геймификация
   xp            Int       @default(0)

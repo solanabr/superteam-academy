@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <BookOpen className="h-4 w-4" /> Manage Courses
                     </Link>
                     <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors">
-                        <Users className="h-4 w-4" /> Users (Coming soon)
+                        <Users className="h-4 w-4" /> User Management
                     </Link>
                 </nav>
                 <div className="p-4 border-t">

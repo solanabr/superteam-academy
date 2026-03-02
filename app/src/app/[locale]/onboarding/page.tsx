@@ -77,21 +77,37 @@ export default function OnboardingPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 walletAddress: userDb.walletAddress,
-                answers: answers
+                answers: answers // Сохраняем ответы в БД (опционально, API уже это поддерживает)
             }),
         });
 
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         
-        // Обновляем данные на клиенте
         await refetchUser();
 
-        // Небольшая задержка перед редиректом, чтобы насладиться конфетти
+        // --- УМНАЯ ЛОГИКА РЕКОМЕНДАЦИИ ---
+        // questions[0].id === "experience"
+        // questions[1].id === "solana_knowledge"
+        
+        let recommendedCourseSlug = "solana-mock-test"; // По умолчанию (базовый курс)
+        
+        // Анализируем ответы
+        const experience = answers["experience"];
+        const solanaKnowledge = answers["solana_knowledge"];
+
+        if (experience === "pro" && solanaKnowledge === "dev") {
+            // Опытный разраб, знающий концепции Solana -> сразу на Advanced
+            recommendedCourseSlug = "advanced-rust-solana";
+        } else if (experience === "pro" && solanaKnowledge !== "dev") {
+            // Опытный разраб, но не в Solana -> на базовый, но можно показать тост
+            recommendedCourseSlug = "solana-mock-test";
+        } 
+        // ... можно добавлять другие курсы по мере их появления в CMS
+
         setTimeout(() => {
-            // Анализируем ответы и решаем, куда кинуть.
-            // Для демо - всегда на базовый курс
-            router.push("/courses/solana-mock-test");
-        }, 1500);
+            // Перенаправляем на РЕКОМЕНДОВАННЫЙ курс
+            router.push(`/courses/${recommendedCourseSlug}`);
+        }, 2000); // Чуть увеличил задержку, чтобы анимация успела отыграть
 
     } catch (e) {
         console.error("Onboarding failed", e);

@@ -9,12 +9,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Сохраняем факт прохождения онбординга
-    // В реальном проекте ответы (answers) тоже можно сохранить в БД (например, в поле preferences: Json)
     const user = await prisma.user.update({
       where: { walletAddress },
       data: {
         hasCompletedOnboarding: true,
+        preferences: answers // Сохраняем JSON ответов
       },
     });
 
