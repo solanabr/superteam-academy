@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAcademyClient } from "@/lib/academy";
 import { countCompletedLessons } from "@superteam-academy/anchor";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 
 export async function GET() {
 	const academyClient = getAcademyClient();
@@ -40,7 +40,7 @@ export async function GET() {
 					country: "--",
 				},
 				score,
-				level: calculateLevelFromXP(score),
+				level: levelFromXP(score),
 				achievements: 0,
 				streak: 0,
 				change: 0,

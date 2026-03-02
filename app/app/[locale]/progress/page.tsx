@@ -5,7 +5,7 @@ import { getProgramId, getSolanaConnection } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { ProgressTracking } from "@/components/progress/progress-tracking";
 import { LearningProgressService } from "@/services/learning-progress-service";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
 
 export async function generateMetadata({
@@ -46,7 +46,7 @@ async function ProgressContent() {
 	const snapshot = await service.getLearnerProgressSnapshot(learner);
 	const totalXp = snapshot.totalXp;
 
-	const level = calculateLevelFromXP(totalXp);
+	const level = levelFromXP(totalXp);
 	const nextLevelXP = (level + 1) ** 2 * 100;
 
 	return (

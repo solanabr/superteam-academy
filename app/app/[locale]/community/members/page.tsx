@@ -9,7 +9,7 @@ import type { MemberWithMeta } from "@superteam-academy/cms";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 
 export async function generateMetadata({
 	params,
@@ -146,7 +146,7 @@ export default async function MembersPage() {
 				const onChainXp = member.wallet ? xpByWallet.get(member.wallet) : undefined;
 				if (onChainXp !== undefined) {
 					member.xp = onChainXp;
-					member.level = calculateLevelFromXP(onChainXp);
+					member.level = levelFromXP(onChainXp);
 				}
 			}
 		}

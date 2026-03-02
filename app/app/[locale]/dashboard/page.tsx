@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import type { PublicKey } from "@solana/web3.js";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 		const service = new LearningProgressService(connection, programId);
 		const overview = await service.getLearnerOverview(wallet.publicKey as PublicKey);
 		const totalXp = Number(overview.stats.totalXp);
-		const level = calculateLevelFromXP(totalXp);
+		const level = levelFromXP(totalXp);
 
 		const courses: RecentCourse[] = overview.courses.map((course) => {
 			const progress =

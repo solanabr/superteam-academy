@@ -13,7 +13,7 @@ import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 import { getGravatarUrl } from "@/lib/utils";
 import { getUsersByWallets, ensureSanityUsersExist, getAllUserWallets } from "@/lib/sanity-users";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
@@ -317,7 +317,7 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 				country: sanityUser?.location ?? "--",
 			},
 			score: xp,
-			level: calculateLevelFromXP(xp),
+			level: levelFromXP(xp),
 			achievements: 0,
 			streak: 0,
 			change: 0,
@@ -425,7 +425,7 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 							country: sanityUser?.location ?? "--",
 						},
 						score: entry.xp,
-						level: calculateLevelFromXP(entry.xp),
+						level: levelFromXP(entry.xp),
 						achievements: 0,
 						streak: 0,
 						change: 0,

@@ -21,7 +21,7 @@ import {
 } from "@/lib/academy";
 import type { UserPrivacySettings } from "@superteam-academy/cms";
 import { getLinkedWallet } from "@/lib/auth";
-import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { levelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
 import { AchievementService } from "@/services/achievement-service";
 import { ProfileCompleteness } from "@/components/profile/profile-completeness";
@@ -319,7 +319,7 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	);
 
 	const currentXP = Number(xpBalance);
-	const level = calculateLevelFromXP(currentXP);
+	const level = levelFromXP(currentXP);
 	const currentLevelXP = level * level * 100;
 	const nextLevelXP = (level + 1) * (level + 1) * 100;
 	const xpIntoLevel = currentXP - currentLevelXP;
