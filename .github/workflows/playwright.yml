@@ -43,9 +43,11 @@ jobs:
       # чтобы Next.js мог сбилдиться. Для реальных тестов базы лучше использовать моки,
       # но для проверки UI хватит и пустого.
       env:
+        # Для Prisma можно оставить фиктивный URL, так как мы не делаем запросов к БД в UI-тестах
         DATABASE_URL: "mongodb+srv://dummy:dummy@cluster0.mongodb.net/test?retryWrites=true&w=majority"
-        NEXT_PUBLIC_PROGRAM_ID: "dummy"
-        NEXT_PUBLIC_XP_MINT: "dummy"
+        # ВАЖНО: Используем валидный (но случайный) адрес кошелька Solana, чтобы не падал new PublicKey()
+        NEXT_PUBLIC_PROGRAM_ID: "11111111111111111111111111111111"
+        NEXT_PUBLIC_XP_MINT: "11111111111111111111111111111111"
       run: pnpm exec playwright test
       
     - uses: actions/upload-artifact@v4
