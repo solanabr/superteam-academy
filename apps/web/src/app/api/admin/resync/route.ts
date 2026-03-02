@@ -176,9 +176,13 @@ export async function POST(req: NextRequest) {
                 course_id: course._id,
                 lesson_id: lesson._id,
                 completed: true,
-                completed_at: new Date().toISOString(),
+                completed_at: enrollment.enrolled_at
+                  ? new Date(
+                      Number(enrollment.enrolled_at) * 1000
+                    ).toISOString()
+                  : new Date().toISOString(),
               },
-              { onConflict: "user_id,lesson_id" }
+              { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
             );
             results.lessonsCompleted++;
           }
@@ -274,14 +278,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 4. Final correction: overwrite total_xp + level from on-chain balance
-  // This ensures Supabase matches the authoritative on-chain state even if
-  // individual award_xp calls drifted the total (e.g. Sanity xpReward differs
-  // from on-chain AchievementType.xp_reward).
+  // 4. Final correction: set total_xp = on-chain + DB-only community XP
+  // Community XP (threads, answers, votes) is never minted on-chain, so we
+  // must preserve it by summing from xp_transactions.
   if (onChainXp > 0) {
+    const { data: communityTxRows } = await supabase
+      .from("xp_transactions")
+      .select("amount")
+      .eq("user_id", profile.id)
+      .like("reason", "community:%");
+    const communityXp = (communityTxRows ?? []).reduce(
+      (sum, r) => sum + (r.amount ?? 0),
+      0
+    );
+
+    const totalXp = onChainXp + communityXp;
     await supabase
       .from("user_xp")
-      .update({ total_xp: onChainXp, level: calculateLevel(onChainXp) })
+      .update({ total_xp: totalXp, level: calculateLevel(totalXp) })
       .eq("user_id", profile.id);
   }
 
