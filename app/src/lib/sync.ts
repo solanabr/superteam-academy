@@ -33,121 +33,90 @@ function isLessonComplete(lessonFlags: BN[] | number[], lessonIndex: number): bo
 export async function syncBlockchainData(userId: string, walletAddress: string) {
   if (!walletAddress) return;
 
-  console.log(`[Sync] Starting full sync for ${walletAddress}...`);
+  console.log(`[Sync] 🔄 Starting full sync for ${walletAddress}...`);
   const program = getReadOnlyProgram();
   const walletPubkey = new PublicKey(walletAddress);
   let hasRestoredLessonsThisSession = false;
 
-  // 1. XP Sync (уже было)
+  // 1. XP Sync
   try {
     const learnerXpAta = getAssociatedTokenAddressSync(XP_MINT, walletPubkey, false, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"));
     const balance = await connection.getTokenAccountBalance(learnerXpAta);
     const realXp = Number(balance.value.amount);
     
-    // Получаем текущего юзера, чтобы узнать разницу
     const dbUser = await prisma.user.findUnique({ where: { id: userId }});
     
     if (dbUser && dbUser.xp !== realXp) {
         const diff = realXp - dbUser.xp;
-        
         await prisma.user.update({ where: { id: userId }, data: { xp: realXp } });
-        
-        // Если XP увеличился (например, через скрипт), пишем в историю!
         if (diff > 0) {
             await prisma.xPHistory.create({
-                data: {
-                    userId: userId,
-                    amount: diff,
-                    source: "sync",
-                    description: "Blockchain state synchronization"
-                }
+                data: { userId, amount: diff, source: "sync", description: "Blockchain state synchronization" }
             });
         }
-        console.log(`[Sync] XP restored: ${realXp} (Diff: +${diff})`);
+        console.log(`[Sync] 💰 XP restored: ${realXp} (Diff: +${diff})`);
     }
   } catch (e) {}
 
-  // 2. Courses & Lessons Sync (НОВАЯ ЛОГИКА)
-  // Список всех известных курсов (в проде fetch from DB)
-  const knownCourseIds = ["anchor-101", "solana-mock-test"]; 
+  // 2. Courses & Lessons Sync (ДИНАМИЧЕСКИЙ СПИСОК)
+  // Получаем ВСЕ курсы из базы данных
+  const allCourses = await prisma.course.findMany({ select: { slug: true } });
+  const courseIds = allCourses.map(c => c.slug);
+  
+  console.log(`[Sync] 📚 Checking progress for ${courseIds.length} courses:`, courseIds);
 
-  for (const courseId of knownCourseIds) {
+  for (const courseId of courseIds) {
       try {
           const [enrollmentPda] = PublicKey.findProgramAddressSync(
               [Buffer.from("enrollment"), Buffer.from(courseId), walletPubkey.toBuffer()],
               PROGRAM_ID
           );
 
-          // Читаем аккаунт Enrollment через Anchor (чтобы он распарсил данные)
-          // fetchNullable не работает в node.js без провайдера с кошельком иногда, поэтому try/catch
-          const enrollmentAccount = await program.account.enrollment.fetch(enrollmentPda);
+          const enrollmentAccount = await program.account.enrollment.fetchNullable(enrollmentPda);
           
           if (enrollmentAccount) {
-              console.log(`[Sync] Found enrollment for ${courseId}`);
+              console.log(`[Sync] ✅ Found on-chain enrollment for ${courseId}`);
 
-              // А. Восстанавливаем запись на курс
+              // Восстанавливаем запись на курс в БД
               await prisma.userEnrollment.upsert({
                   where: { userId_courseId: { userId, courseId } },
                   create: { userId, courseId },
                   update: {} 
               });
 
-              // Б. Восстанавливаем прогресс уроков
-              // Проверяем первые 256 уроков (максимум битмапа)
-              // В реальности можно брать lessonCount из курса, но пока так
               const lessonFlags = enrollmentAccount.lessonFlags as BN[];
               
-              // Проходимся по предполагаемым урокам (например, до 50)
-                for (let i = 0; i < 50; i++) {
+              for (let i = 0; i < 50; i++) {
                   if (isLessonComplete(lessonFlags, i)) {
-                      // СНАЧАЛА проверяем, есть ли урок в БД и завершен ли он
                       const existingProgress = await prisma.lessonProgress.findUnique({
-                          where: {
-                              userId_courseId_lessonIndex: {
-                                  userId,
-                                  courseId,
-                                  lessonIndex: i
-                              }
-                          }
+                          where: { userId_courseId_lessonIndex: { userId, courseId, lessonIndex: i } }
                       });
 
-                      // Если урока НЕТ или он НЕ завершен -> тогда мы его "восстанавливаем"
                       if (!existingProgress || existingProgress.status !== "completed") {
                           await prisma.lessonProgress.upsert({
-                              where: {
-                                  userId_courseId_lessonIndex: {
-                                      userId,
-                                      courseId,
-                                      lessonIndex: i
-                                  }
-                              },
-                              update: { status: "completed", completedAt: new Date() }, 
+                              where: { userId_courseId_lessonIndex: { userId, courseId, lessonIndex: i } },
+                              update: { status: "completed", completedAt: new Date() },
                               create: {
-                                  userId,
-                                  courseId,
-                                  lessonIndex: i,
-                                  status: "completed",
-                                  completedAt: new Date(), // Ставим дату восстановления
+                                  userId, courseId, lessonIndex: i,
+                                  status: "completed", completedAt: new Date(),
                                   codeSnippet: "// Restored from blockchain"
                               }
                           });
-                          console.log(`[Sync] Restored lesson ${i} for ${courseId}`);
-                          hasRestoredLessonsThisSession = true; // ТОЛЬКО ЗДЕСЬ
+                          console.log(`[Sync] 📝 Restored lesson ${i} for ${courseId}`);
+                          hasRestoredLessonsThisSession = true;
                       }
-                      // Если урок уже completed, мы ничего не делаем и флаг не ставим.
                   }
               }
           }
       } catch (e: any) {
-          // Ошибка "Account does not exist" нормальна, если не записан
-          if (!e.message?.includes("Account does not exist")) {
-             console.error(`[Sync] Error checking course ${courseId}`, e);
-          }
+         console.error(`[Sync] ❌ Error checking course ${courseId}:`, e.message);
       }
   }
 
   if (hasRestoredLessonsThisSession) {
-    console.log(`[Sync] Lessons restored. Updating streak...`);
+    console.log(`[Sync] 🔥 Lessons restored. Updating streak...`);
     await updateStreak(walletAddress);
   }
+  
+  console.log(`[Sync] ✨ Sync completed for ${walletAddress}`);
 }

@@ -6,6 +6,7 @@ import { useProgram } from "@/hooks/useProgram";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Star, Zap } from "lucide-react";
 import { motion } from "framer-motion"; // Анимация чисел
+import { useUser } from "@/hooks/useUser";
 
 // Хук для анимации числа (Count Up)
 function useCountUp(end: number, duration: number = 2000) {
@@ -54,6 +55,8 @@ export function XpStatCard() {
   const xpInLevel = xp - currentLevelBaseXp;
   const xpNeeded = nextLevelXp - currentLevelBaseXp;
   const progress = Math.min((xpInLevel / xpNeeded) * 100, 100);
+  const { userDb } = useUser();
+  const achievementsCount = userDb?.achievements?.length || 0;
 
   const animatedXp = useCountUp(xp);
 
@@ -95,7 +98,7 @@ export function XpStatCard() {
           <Star className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">0</div>
+          <div className="text-2xl font-bold">{achievementsCount}</div>
           <p className="text-xs text-muted-foreground">NFT Badges earned</p>
         </CardContent>
       </Card>

@@ -32,6 +32,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
         xpPerLesson: course.xpPerLesson,
         imageUrl: course.imageUrl,
         modules: course.modules,
+        isPublished: course.isPublished,
         lessons: flatLessons // Плоский список для легкой навигации по индексам
     };
 

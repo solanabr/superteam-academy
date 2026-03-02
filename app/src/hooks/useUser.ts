@@ -3,10 +3,19 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSession } from "next-auth/react";
 
+export interface Enrollment {
+    courseId: string;
+    enrolledAt: string;
+    progressPercent?: number; // <-- НОВОЕ ПОЛЕ
+    completedLessons: number;
+    totalLessons: number;
+}
+
 export function useUser() {
   const { publicKey } = useWallet();
   const { status } = useSession(); // Следим за статусом сессии NextAuth
   const [userDb, setUserDb] = useState<any>(null);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
@@ -24,13 +33,22 @@ export function useUser() {
         const data = await res.json();
         console.log("[useUser Hook] Data received:", data);
         setUserDb(data);
+        if (data.walletAddress) {
+          const enrollRes = await fetch(`/api/user/enrollments?wallet=${data.walletAddress}`);
+          if (enrollRes.ok) {
+            const enrollData = await enrollRes.json();
+            setEnrollments(enrollData);
+          }
+        }
       } else {
         console.log("[useUser Hook] User not found in DB or not logged in.");
         setUserDb(null);
+        setEnrollments([]);
       }
     } catch (err) {
       console.error("[useUser Hook] Fetch failed:", err);
       setUserDb(null);
+      setEnrollments([]);
     } finally {
       setLoading(false);
     }
@@ -58,7 +76,7 @@ export function useUser() {
 
   return {
     userDb,
-    enrollments: userDb?.enrollments || [],
+    enrollments,
     // ИСПРАВЛЕНИЕ: Добавляем achievements
     achievements: userDb?.achievements || [],
     loading,

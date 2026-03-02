@@ -180,6 +180,15 @@ export async function POST(request: Request) {
                         where: { moduleId: dbModule.id, title: lesson.title }
                     });
 
+                    let parsedRules = null;
+                    if (lesson.isChallenge && lesson.validationRules) {
+                        try {
+                            parsedRules = JSON.parse(lesson.validationRules);
+                        } catch (e) {
+                            console.error("Failed to parse validation rules for", lesson.title);
+                        }
+                    }
+
                     if (dbLesson) {
                         await prisma.lesson.update({
                             where: { id: dbLesson.id },
@@ -187,7 +196,8 @@ export async function POST(request: Request) {
                                 content: lesson.content,
                                 initialCode: lesson.initialCode,
                                 isChallenge: lesson.isChallenge,
-                                order: globalLessonIndex
+                                order: globalLessonIndex,
+                                validationRules: parsedRules
                             }
                         });
                     } else {
@@ -198,7 +208,8 @@ export async function POST(request: Request) {
                                 content: lesson.content,
                                 initialCode: lesson.initialCode,
                                 isChallenge: lesson.isChallenge,
-                                order: globalLessonIndex
+                                order: globalLessonIndex,
+                                validationRules: parsedRules
                             }
                         });
                     }

@@ -32,10 +32,15 @@ export default function DashboardPage() {
             <h3 className="text-xl font-semibold">My Learning</h3>
             
             {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
-            ) : userEnrollments && userEnrollments.length > 0 ? (
-                userEnrollments.map((enrollment) => (
-                    <CourseProgress key={enrollment.courseId} courseId={enrollment.courseId} />
+                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
+            ) : enrollments.length > 0 ? (
+                enrollments.map((enrollment: any) => (
+                    // Передаем enrollment целиком как enrollmentData
+                    <CourseProgress 
+                        key={enrollment.courseId} 
+                        courseId={enrollment.courseId} 
+                        enrollmentData={enrollment} 
+                    />
                 ))
             ) : (
                 <div className="p-8 border rounded-lg text-center bg-muted/20">

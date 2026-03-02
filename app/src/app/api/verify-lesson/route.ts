@@ -355,7 +355,7 @@ export async function POST(request: Request) {
         console.error("[Verify] Auto-finalize failed:", e);
         // Не фейлим запрос, если не удалось выдать сертификат (юзер всё равно прошел урок)
     }
-
+        const achievementsToCheck = [];
         // Условие 1: Первый урок ("first-steps")
         // Проверяем, сколько уроков пройдено всего
         const totalCompletedInDb = await prisma.lessonProgress.count({
@@ -364,13 +364,21 @@ export async function POST(request: Request) {
         
         // Если это был первый урок (totalCompletedInDb сейчас будет >= 1, т.к. мы только что сохранили)
         if (totalCompletedInDb === 1) {
-            // Запускаем асинхронно, не ждем ответа, чтобы не тормозить юзера
-            checkAndAwardAchievement(user.id, walletAddress, "first-steps");
+            achievementsToCheck.push("first-steps");
         }
 
         // Условие 2: Завершение курса ("course-champion")
         if (typeof completedCount !== 'undefined' && completedCount >= totalLessons) {
-             checkAndAwardAchievement(user.id, walletAddress, "course-champion");
+            achievementsToCheck.push("course-completer"); // Убедись, что слаг совпадает со скриптом!
+        }
+
+        //TODO: сделать для всех ачивок.
+
+        if (achievementsToCheck.length > 0) {
+            console.log(`[Verify] Checking achievements: ${achievementsToCheck.join(', ')}`);
+            await Promise.allSettled(
+                achievementsToCheck.map(slug => checkAndAwardAchievement(user.id, walletAddress, slug))
+            );
         }
 
     return NextResponse.json({ success: true, txSignature, certificateMint: certificateMint});

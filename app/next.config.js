@@ -16,6 +16,14 @@ const withPWA = withPWAInit({
 const nextConfig = {
   reactStrictMode: true,
 
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'api.dicebear.com' },
+      { protocol: 'https', hostname: 'arweave.net' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' } // на всякий случай для GitHub
+    ],
+  },
+
   webpack: (config) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
 

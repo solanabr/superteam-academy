@@ -20,6 +20,7 @@ export default function CoursesPage() {
   const router = useRouter();
   
   const [courses, setCourses] = useState<any[]>([]);
+  const [dbCourses, setDbCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Состояние фильтров
@@ -27,10 +28,22 @@ export default function CoursesPage() {
   const [difficultyFilter, setDifficultyFilter] = useState("all");
 
   useEffect(() => {
-    fetchCourses().then((data) => {
-      setCourses(data);
-      setLoading(false);
-    });
+    const loadAll = async () => {
+        try {
+            const chainCourses = await fetchCourses();
+            setCourses(chainCourses);
+
+            // Получаем доп. инфу из нашей БД (описание и т.д.)
+            const res = await fetch('/api/admin/courses'); // Публичный API или переиспользуем админский
+            const data = await res.json();
+            if (!data.error) setDbCourses(data);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+    loadAll();
   }, [fetchCourses]);
 
   // Фильтрация
@@ -96,55 +109,68 @@ export default function CoursesPage() {
             </div>
           ))
         ) : filteredCourses.length > 0 ? (
-          filteredCourses.map((course) => {
-            // Проверяем запись через хук useUser
+          filteredCourses.map((chainCourse) => {
+            const courseId = chainCourse.account.courseId;
+            // Ищем обогащенные данные из БД
+            const dbCourse = dbCourses.find(c => c.slug === courseId);
+            
+            // Проверяем запись
             // @ts-ignore
-            const isEnrolled = enrollments.some(e => e.courseId === course.account.courseId);
+            const myEnrollment = enrollments.find(e => e.courseId === courseId);
+            const isEnrolled = !!myEnrollment;
+            const progress = myEnrollment?.progressPercent || 0;
+            const isCompleted = progress === 100;
             
             return (
-                <Card key={course.publicKey.toString()} className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-all hover:border-purple-500/50 group cursor-pointer" onClick={() => handleCourseClick(course.account.courseId)}>
+                <Card key={courseId} className="flex flex-col justify-between overflow-hidden hover:shadow-lg transition-all hover:border-primary/50 group cursor-pointer" onClick={() => handleCourseClick(courseId)}>
                   
-                  {/* Имитация обложки курса */}
-                  <div className="h-32 bg-gradient-to-r from-gray-900 to-gray-800 relative p-6 flex flex-col justify-end group-hover:from-purple-900/40 group-hover:to-blue-900/40 transition-colors">
+                  <div className="h-32 relative bg-muted flex items-center justify-center">
+                      {/* Если в БД есть картинка - показываем, иначе градиент */}
+                      {dbCourse?.imageUrl ? (
+                          <img src={dbCourse.imageUrl} alt={courseId} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                      ) : (
+                          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800" />
+                      )}
+                      
                       <div className="absolute top-4 right-4">
-                          <Badge variant="secondary" className="bg-black/50 text-white backdrop-blur">
-                              {course.account.lessonCount} Lessons
+                          <Badge variant="secondary" className="bg-black/50 text-white backdrop-blur border-white/10">
+                              {chainCourse.account.lessonCount} Lessons
                           </Badge>
                       </div>
-                      <h3 className="text-xl font-bold text-white tracking-wide">{course.account.courseId}</h3>
+                      <h3 className="absolute bottom-4 left-4 text-xl font-bold text-white drop-shadow-md z-10">{dbCourse?.title || courseId}</h3>
                   </div>
 
                   <CardContent className="pt-6">
-                    <CardDescription className="line-clamp-2 mb-4">
-                      Learn the fundamentals of {course.account.courseId}. Master accounts, instructions, and CPIS.
+                    <CardDescription className="line-clamp-2 mb-4 h-10">
+                      {dbCourse?.description || "Master the fundamentals of Solana development with this interactive course."}
                     </CardDescription>
                     
-                    {/* Метаданные */}
                     <div className="flex gap-2 mb-4">
-                        <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
-                            {course.account.xpPerLesson.toString()} XP
+                        <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 bg-yellow-500/10">
+                            {chainCourse.account.xpPerLesson.toString()} XP/lesson
                         </Badge>
-                        <Badge variant="outline">Rust</Badge>
+                        <Badge variant="outline">{dbCourse?.difficulty || "Beginner"}</Badge>
                     </div>
 
-                    {/* Прогресс бар, если записан (пока фейковый 0%, можно допилить) */}
                     {isEnrolled && (
                         <div className="space-y-1.5">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Progress</span>
-                                <span>In Progress</span>
+                            <div className="flex justify-between text-xs font-medium">
+                                <span className={isCompleted ? "text-green-500" : "text-muted-foreground"}>
+                                    {isCompleted ? "Completed" : "Progress"}
+                                </span>
+                                <span>{progress}%</span>
                             </div>
-                            <Progress value={10} className="h-1.5" aria-label="Course-page-progress" />
+                            <Progress value={progress} className="h-1.5" aria-label="Course progress" />
                         </div>
                     )}
                   </CardContent>
 
                   <CardFooter className="pt-0">
                     <Button 
-                        className="w-full group-hover:bg-purple-600 transition-colors" 
-                        variant={isEnrolled ? "secondary" : "default"}
+                        className="w-full group-hover:bg-primary transition-colors" 
+                        variant={isEnrolled ? (isCompleted ? "outline" : "secondary") : "default"}
                     >
-                        {isEnrolled ? "Continue Learning" : "Start Learning"}
+                        {isCompleted ? "Review Course" : (isEnrolled ? "Continue Learning" : "Start Learning")}
                     </Button>
                   </CardFooter>
                 </Card>

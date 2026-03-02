@@ -68,9 +68,11 @@ export default function AdminCoursesPage() {
                             </TableCell>
                             <TableCell>{course.modules?.length || 0}</TableCell>
                             <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" disabled title="Edit logic coming soon">
-                                    <Edit className="h-4 w-4" />
-                                </Button>
+                                <Link href={`/admin/courses/${course.slug}`}>
+                                    <Button variant="ghost" size="sm">
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                </Link>
                             </TableCell>
                         </TableRow>
                     ))}

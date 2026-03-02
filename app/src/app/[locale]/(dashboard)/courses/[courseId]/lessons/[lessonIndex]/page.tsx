@@ -37,7 +37,7 @@ export default function LessonPage() {
 
   const courseId = params.courseId as string;
   const lessonIndex = parseInt(params.lessonIndex as string);
-  const totalLessons = COURSE_CONTENT[courseId]?.lessons.length || 0;
+  const [totalLessons, setTotalLessons] = useState(0);
 
   const [content, setContent] = useState<LessonContent | null>(null);
   const [code, setCode] = useState("");
@@ -47,6 +47,7 @@ export default function LessonPage() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [certificateId, setCertificateId] = useState<string | null>(null);
 
+
     useEffect(() => {
         const loadLesson = async () => {
             try {
@@ -54,6 +55,7 @@ export default function LessonPage() {
                 const res = await fetch(`/api/courses/${courseId}`);
                 if (!res.ok) throw new Error("Course not found");
                 const courseData = await res.json();
+                setTotalLessons(courseData.lessons.length);
                 
                 const lessonData = courseData.lessons[lessonIndex];
                 
@@ -176,11 +178,18 @@ export default function LessonPage() {
                 </Button>
             )}
             {/* Если урок пройден, показываем кнопку Next */}
-            {(isCompleted && lessonIndex < totalLessons - 1) && (
+            {(isCompleted) && lessonIndex < totalLessons - 1 && (
                 <Button size="sm" onClick={() => router.push(`/courses/${courseId}/lessons/${lessonIndex + 1}`)}>
                     Next Lesson <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             )}
+
+            {(isCompleted) && lessonIndex === totalLessons - 1 && (
+                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => router.push(`/courses/${courseId}`)}>
+                    Finish Course <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
+            )}
+
         </div>
       </div>
 
