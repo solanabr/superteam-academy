@@ -1,6 +1,6 @@
 "use client";
 
-import { GlobeIcon } from "@phosphor-icons/react";
+import { TranslateIcon } from "@phosphor-icons/react";
 import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -34,8 +34,13 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t("label")}>
-          <GlobeIcon />
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={t("label")}
+          className="cursor-pointer"
+        >
+          <TranslateIcon />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

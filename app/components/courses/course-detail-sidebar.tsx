@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Facehash } from "facehash";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/connector/react";
 import { Link } from "@/i18n/navigation";
@@ -18,12 +18,13 @@ import {
 } from "@phosphor-icons/react";
 import { DifficultyBadge } from "./difficulty-badge";
 import { mockReviews } from "@/lib/data/reviews-mock";
+import { getAvatarColors } from "@/lib/avatar-colors";
 import type { Course } from "@/lib/data/types";
 import type { EnrollmentStatus } from "@/lib/hooks/use-enrollment-status";
 
-function getContributorAvatars(course: Course): string[] {
-  const fromReviews = mockReviews.slice(0, 2).map((r) => r.avatar);
-  return [course.creator.avatar, ...fromReviews];
+function getContributorNames(course: Course): string[] {
+  const fromReviews = mockReviews.slice(0, 2).map((r) => r.author);
+  return [course.creator.name, ...fromReviews];
 }
 
 type Props = {
@@ -60,12 +61,12 @@ export function CourseDetailSidebar({ course, enrollment }: Props) {
               {course.xpReward.toLocaleString()} XP
             </p>
           </div>
-          <Image
-            src={course.creator.avatar}
-            alt=""
-            width={40}
-            height={40}
-            className="size-10 rounded-full object-cover ring-2 ring-background"
+          <Facehash
+            name={course.creator.name}
+            size={40}
+            showInitial={false}
+            colors={getAvatarColors(course.creator.name)}
+            className="ring-2 ring-border dark:ring-white/25 rounded-full overflow-hidden"
           />
         </div>
 
@@ -145,14 +146,14 @@ export function CourseDetailSidebar({ course, enrollment }: Props) {
           </Link>
         </div>
         <div className="flex -space-x-2">
-          {getContributorAvatars(course).map((avatar) => (
-            <Image
-              key={avatar}
-              src={avatar}
-              alt=""
-              width={32}
-              height={32}
-              className="size-8 rounded-full border-2 border-background object-cover"
+          {getContributorNames(course).map((name) => (
+            <Facehash
+              key={name}
+              name={name}
+              size={32}
+              showInitial={false}
+              colors={getAvatarColors(name)}
+              className="rounded-full ring-2 ring-border dark:ring-white/25 overflow-hidden shrink-0"
             />
           ))}
           <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium text-muted-foreground">

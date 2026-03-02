@@ -133,10 +133,10 @@ export function FilterBar({
             value={currentTrack}
             onValueChange={(value) => updateParams("track", value)}
           >
-            <SelectTrigger className="h-8 w-[170px] cursor-pointer border-border/80 bg-white text-xs shadow-sm hover:bg-white">
+            <SelectTrigger className="h-8 w-[170px] cursor-pointer border-border/80 text-xs shadow-sm">
               <SelectValue placeholder="All Tracks" />
             </SelectTrigger>
-            <SelectContent className="border border-border/80 bg-white shadow-lg">
+            <SelectContent className="border border-border/80 shadow-lg">
               <SelectItem value="all" className="cursor-pointer text-xs">
                 All Tracks
               </SelectItem>
@@ -157,11 +157,11 @@ export function FilterBar({
           value={currentSort}
           onValueChange={(value) => updateParams("sort", value)}
         >
-          <SelectTrigger className="h-8 w-[150px] cursor-pointer border-border/80 bg-white text-xs shadow-sm hover:bg-white">
+          <SelectTrigger className="h-8 w-[150px] cursor-pointer border-border/80 text-xs shadow-sm">
             <SortAscending className="size-3.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="border border-border/80 bg-white shadow-lg">
+          <SelectContent className="border border-border/80 shadow-lg">
             {SORT_OPTIONS.map((opt) => (
               <SelectItem
                 key={opt.value}

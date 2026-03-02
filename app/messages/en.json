@@ -18,7 +18,9 @@
     "connectPrompt": "Connect your wallet",
     "connecting": "Connecting…",
     "disconnect": "Disconnect",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "recent": "Recent",
+    "otherWallets": "Other Wallets"
   },
   "language": {
     "label": "Language",

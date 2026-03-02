@@ -18,7 +18,9 @@
     "connectPrompt": "Conecte sua carteira",
     "connecting": "Conectando…",
     "disconnect": "Desconectar",
-    "copied": "Copiado!"
+    "copied": "Copiado!",
+    "recent": "Recent",
+    "otherWallets": "Outras Carteiras"
   },
   "language": {
     "label": "Idioma",

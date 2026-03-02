@@ -10,6 +10,7 @@ import {
   useAccount,
   type WalletConnectorId,
 } from "@solana/connector/react";
+import { WalletIcon, CopyIcon, SignOutIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +19,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { cn } from "@/lib/utils";
 
 type ConnectButtonProps = {
@@ -42,33 +51,50 @@ function ConnectButton({ className }: ConnectButtonProps) {
 
   if (isConnected) {
     return (
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={copy}
-          className={cn(
-            "rounded-lg border border-transparent px-2.5 py-1.5 text-sm font-medium",
-            "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none",
-          )}
-        >
-          {copied ? t("copied") : formatted}
-        </button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => disconnect()}
-          disabled={isDisconnecting}
-        >
-          {t("disconnect")}
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="secondary"
+            size="default"
+            className={cn("cursor-pointer min-w-0 font-medium", className)}
+          >
+            <WalletIcon className="size-4 shrink-0" weight="fill" />
+            <span className="truncate">{copied ? t("copied") : formatted}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[200px]">
+          <DropdownMenuItem
+            onClick={() => copy()}
+            className="cursor-pointer gap-2"
+          >
+            <CopyIcon className="size-4" />
+            {copied ? t("copied") : formatted}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => disconnect()}
+            disabled={isDisconnecting}
+            className="cursor-pointer gap-2"
+          >
+            <SignOutIcon className="size-4" />
+            {t("disconnect")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={isConnecting} className={className}>
+        <Button
+          variant="secondary"
+          size="default"
+          disabled={isConnecting}
+          className={cn("cursor-pointer gap-2 font-medium", className)}
+        >
+          <WalletIcon className="size-4 shrink-0" weight="fill" />
           {isConnecting ? t("connecting") : t("connect")}
         </Button>
       </DialogTrigger>

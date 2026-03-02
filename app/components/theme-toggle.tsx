@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MonitorIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
+import { MoonIcon, SunDimIcon, SunIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
 const themeOptions = [
   { value: "light", labelKey: "light", icon: SunIcon },
   { value: "dark", labelKey: "dark", icon: MoonIcon },
-  { value: "system", labelKey: "system", icon: MonitorIcon },
+  { value: "system", labelKey: "system", icon: SunDimIcon },
 ] as const;
 
 export function ThemeToggle() {
@@ -27,7 +27,7 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  const activeTheme = mounted ? theme ?? resolvedTheme : "system";
+  const activeTheme = mounted ? (theme ?? resolvedTheme) : "system";
   const activeOption =
     themeOptions.find((option) => option.value === activeTheme) ??
     themeOptions[2];
@@ -36,7 +36,12 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t("label")}>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={t("label")}
+          className="cursor-pointer"
+        >
           <ActiveIcon />
         </Button>
       </DropdownMenuTrigger>

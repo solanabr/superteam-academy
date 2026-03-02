@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { Star } from "@phosphor-icons/react";
+import { Facehash } from "facehash";
 import { mockReviews } from "@/lib/data/reviews-mock";
+import { getAvatarColors } from "@/lib/avatar-colors";
 
 export function CourseReviews() {
   const t = useTranslations("courseDetail");
@@ -12,12 +14,14 @@ export function CourseReviews() {
       <ul className="divide-y divide-border">
         {mockReviews.map((review) => (
           <li key={review.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
-            <div
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground"
+            <Facehash
+              name={review.author}
+              size={36}
+              showInitial={false}
+              colors={getAvatarColors(review.author)}
+              className="shrink-0 rounded-full ring-2 ring-border dark:ring-white/25 overflow-hidden"
               aria-hidden
-            >
-              {review.author.charAt(0)}
-            </div>
+            />
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{review.author}</span>
