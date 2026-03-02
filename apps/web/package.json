@@ -42,6 +42,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@superteam-lms/deploy": "workspace:*",
+    "@superteam-lms/sanity": "workspace:*",
     "@superteam-lms/types": "workspace:*",
     "bs58": "^6.0.0",
     "canvas-confetti": "^1.9.4",

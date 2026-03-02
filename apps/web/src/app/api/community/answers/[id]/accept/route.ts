@@ -87,15 +87,15 @@ export async function POST(
     if (prevAccepted && prevAccepted.id !== answerId) {
       // Revoke the previously awarded XP (uses revoke_community_xp which
       // deletes the xp_transaction row and decrements user_xp.total_xp)
-      await admin
-        .rpc("revoke_community_xp", {
+      try {
+        await admin.rpc("revoke_community_xp", {
           p_user_id: prevAccepted.author_id,
           p_idempotency_key: `accept:${thread.id}:${prevAccepted.id}`,
-        })
-        .catch((err: unknown) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.error("[community] revoke_community_xp failed:", msg);
         });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[community] revoke_community_xp failed:", msg);
+      }
     }
 
     // Unaccept previous answer if any
