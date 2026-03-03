@@ -33,7 +33,7 @@ export async function GET(req: Request) {
                 select: { createdAt: true }
             });
 
-            return Array.from(new Set(activities.map(act => {
+            return Array.from(new Set(activities.map((act: { createdAt: Date }) => {
                 return act.createdAt.toISOString();
             })));
         }, { ttl: 60 });
