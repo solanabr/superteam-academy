@@ -11,6 +11,8 @@ import {
   checkSkillAchievements,
   checkPerfectScore,
 } from "../services/achievements";
+import { xpMinter } from '../services/onchain/xp-minter.service';
+
 
 // ─── Admin: Create Course ─────────────────────────────────────────────────────
 
@@ -699,23 +701,27 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
 
 // ─── Claim XP ─────────────────────────────────────────────────────────────────
 
+const USE_ONCHAIN_XP = process.env.USE_ONCHAIN_XP === 'true';
+
 /**
  * POST /courses/:slug/milestones/:milestoneId/claim-xp
  * User manually claims XP for a completed milestone.
  * XP must be unlocked (course fully complete) and not already claimed.
- * Credits xpReward to user.totalXP and recalculates their level.
+ * Credits xpReward to user.totalXP and mints on-chain if wallet connected.
  */
 export const claimMilestoneXP = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user.id;
     const { slug, milestoneId } = req.params;
 
+    // Find course
     const course = await Course.findOne({ slug });
     if (!course) {
       res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
+    // Find milestone progress
     const progress = await MilestoneProgress.findOne({
       userId,
       courseId: course._id,
@@ -727,6 +733,7 @@ export const claimMilestoneXP = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Validate XP is unlocked
     if (!progress.isXPUnlocked) {
       res.status(403).json({
         success: false,
@@ -735,45 +742,113 @@ export const claimMilestoneXP = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Check if already claimed
     if (progress.isXPClaimed) {
       res.status(400).json({
         success: false,
         message: "XP already claimed for this milestone",
+        data: {
+          alreadyClaimed: true,
+          claimedAt: progress.xpClaimedAt,
+          txSignature: progress.onchainTxSignature,
+        },
       });
       return;
     }
 
-    // Mark as claimed
-    progress.isXPClaimed = true;
-    progress.xpClaimedAt = new Date();
-    await progress.save();
-
-    // Credit XP to user and recalculate level
-    // Level formula: level = floor(sqrt(totalXP / 100))
-    const user = await User.findById(userId);
+    // Get user
+    const user = await User.findById(userId).populate('wallets');
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
+    // Mark as claimed in progress (do this FIRST to prevent double-claims)
+    progress.isXPClaimed = true;
+    progress.xpClaimedAt = new Date();
+
+    let onchainResult = null;
+    let mintSuccess = false;
+
+    // Attempt on-chain minting if enabled and user has wallet
+    if (USE_ONCHAIN_XP && user.wallets && user.wallets.length > 0) {
+      try {
+        // Find primary wallet or use first one
+        const primaryWallet = user.wallets.find((w: any) => w.isPrimary) || user.wallets[0];
+        
+        progress.mintStatus = 'pending';
+        await progress.save(); // Save pending status
+        
+        console.log(`Minting ${progress.xpReward} XP on-chain to ${primaryWallet.publicKey}...`);
+        
+        // Mint XP tokens on-chain
+        onchainResult = await xpMinter.mintXP(primaryWallet.publicKey, progress.xpReward);
+        
+        // Update progress with transaction details
+        progress.onchainTxSignature = onchainResult.signature;
+        progress.onchainMintedAt = new Date();
+        progress.mintStatus = 'success';
+        mintSuccess = true;
+        
+        console.log(`✅ On-chain mint successful: ${onchainResult.signature}`);
+      } catch (error: any) {
+        console.error('On-chain minting failed:', error);
+        
+        // Record the error but don't fail the whole request
+        progress.mintStatus = 'failed';
+        progress.mintError = error.message || 'Unknown minting error';
+        
+        // Fallback: We'll still credit XP in database
+        console.log('⚠️ Falling back to database XP tracking');
+      }
+    } else {
+      progress.mintStatus = 'not_attempted';
+      console.log('⚠️ On-chain minting disabled or no wallet connected');
+    }
+
+    await progress.save();
+
+    // Credit XP to user in database (always do this as backup)
     user.totalXP += progress.xpReward;
     user.level = Math.floor(Math.sqrt(user.totalXP / 100));
     await user.save();
 
-    res.status(200).json({
+    // Prepare response
+    const response: any = {
       success: true,
       message: `${progress.xpReward} XP claimed! 🎉`,
       data: {
         xpClaimed: progress.xpReward,
         totalXP: user.totalXP,
         level: user.level,
+        onchain: {
+          attempted: USE_ONCHAIN_XP && user.wallets?.length > 0,
+          success: mintSuccess,
+          signature: onchainResult?.signature,
+          explorerUrl: onchainResult?.signature 
+            ? `https://explorer.solana.com/tx/${onchainResult.signature}?cluster=devnet`
+            : null,
+        },
       },
-    });
+    };
+
+    // Add warning if on-chain failed but DB succeeded
+    if (USE_ONCHAIN_XP && user.wallets?.length > 0 && !mintSuccess) {
+      response.warning = 'On-chain minting failed. XP recorded in database. Contact support if issue persists.';
+    }
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Claim XP error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+    });
   }
 };
+
+
 
 // ─── Get Test ─────────────────────────────────────────────────────────────────
 

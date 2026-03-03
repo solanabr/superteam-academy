@@ -31,6 +31,13 @@ export interface IMilestoneProgress extends Document {
   completedLessons: mongoose.Types.ObjectId[]; // Track completed lessons in this milestone
 
   completedAt?: Date;       // When allTestsPassed first became true
+
+  // on-chain tracking
+  onchainTxSignature?: string;
+  onchainMintedAt?: Date;
+  mintStatus?: 'pending' | 'success' | 'failed' | 'not_attempted';
+  mintError?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +84,16 @@ const MilestoneProgressSchema = new Schema<IMilestoneProgress>(
     xpClaimedAt: { type: Date },
 
     completedLessons: [{ type: Schema.Types.ObjectId }],
+
+    // NEW: On-chain transaction tracking 
+    onchainTxSignature: { type: String }, // Solana transaction signature 
+    onchainMintedAt: { type: Date },      // When XP was minted on-chain 
+    mintStatus: {
+      type: String,
+      enum: ['pending', 'success', 'failed', 'not_attempted'],
+      default: 'not_attempted'
+    },
+    mintError: { type: String },          // Error message if minting failed 
 
     completedAt: { type: Date },
   },

@@ -29,6 +29,12 @@ export interface IUser extends Document {
   activityDates: string[]; // "YYYY-MM-DD" strings for heatmap (last 365 days)
   claimedStreakMilestones: number[]; // [7, 30, 100] — prevents duplicate streak milestone XP
 
+  wallets: {
+    publicKey: string;
+    isPrimary: boolean;
+    linkedAt: Date;
+  }[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,6 +68,12 @@ const UserSchema = new Schema<IUser>(
     lastActive: { type: Date },
     activityDates: { type: [String], default: [] }, // "YYYY-MM-DD" for heatmap
     claimedStreakMilestones: { type: [Number], default: [] },
+
+    wallets: [{
+      publicKey: { type: String, required: true },
+      isPrimary: { type: Boolean, default: false },
+      linkedAt: { type: Date, default: Date.now },
+    }],
   },
   {
     timestamps: true,
