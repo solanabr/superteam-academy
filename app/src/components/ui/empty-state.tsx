@@ -35,11 +35,16 @@ export function EmptyState({
       className={cn(
         "flex flex-col items-center justify-center text-center",
         compact ? "py-6" : "py-12",
-        className
+        className,
       )}
     >
       {illustration && (
-        <div className={cn("text-muted-foreground", compact ? "h-20 w-20" : "h-28 w-28")}>
+        <div
+          className={cn(
+            "text-muted-foreground",
+            compact ? "h-20 w-20" : "h-28 w-28",
+          )}
+        >
           {illustration}
         </div>
       )}
@@ -47,13 +52,18 @@ export function EmptyState({
         className={cn(
           "font-medium text-muted-foreground",
           illustration ? "mt-4" : "",
-          compact ? "text-sm" : "text-base"
+          compact ? "text-sm" : "text-base",
         )}
       >
         {title}
       </h3>
       {description && (
-        <p className={cn("mt-1 text-muted-foreground/70", compact ? "text-xs" : "text-sm")}>
+        <p
+          className={cn(
+            "mt-1 text-muted-foreground/70",
+            compact ? "text-xs" : "text-sm",
+          )}
+        >
           {description}
         </p>
       )}

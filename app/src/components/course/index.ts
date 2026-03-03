@@ -21,7 +21,12 @@ export { default as LessonPageClient } from "./lesson-page-client";
 export type { LessonPageClientProps } from "./lesson-page-client";
 
 // Skeletons
-export { CourseCardSkeleton, CourseGridSkeleton, EnrolledCourseSkeleton, ModuleListSkeleton } from "./skeletons";
+export {
+  CourseCardSkeleton,
+  CourseGridSkeleton,
+  EnrolledCourseSkeleton,
+  ModuleListSkeleton,
+} from "./skeletons";
 
 // Types
 export type { CourseCardProps } from "./course-card";

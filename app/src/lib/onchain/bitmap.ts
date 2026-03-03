@@ -14,7 +14,7 @@ import { BN } from "@coral-xyz/anchor";
  */
 export function isLessonComplete(
   lessonFlags: BN[],
-  lessonIndex: number
+  lessonIndex: number,
 ): boolean {
   if (lessonIndex < 0 || lessonIndex >= 256) return false;
   const wordIndex = Math.floor(lessonIndex / 64);
@@ -47,7 +47,7 @@ export function countCompletedLessons(lessonFlags: BN[]): number {
  */
 export function getCompletedLessonIndices(
   lessonFlags: BN[],
-  lessonCount: number
+  lessonCount: number,
 ): number[] {
   const completed: number[] = [];
   for (let i = 0; i < lessonCount; i++) {

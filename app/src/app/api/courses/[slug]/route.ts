@@ -39,7 +39,10 @@ export async function GET(
     where: { courseId: course.id, completedAt: { not: null } },
   });
 
-  const lessonCount = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const lessonCount = course.modules.reduce(
+    (sum, m) => sum + m.lessons.length,
+    0,
+  );
   const challengeCount = course.modules.reduce(
     (sum, m) => sum + m.lessons.filter((l) => l.type === "challenge").length,
     0,

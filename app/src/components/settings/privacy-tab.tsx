@@ -63,7 +63,10 @@ function DeleteAccountSection() {
             </button>
             <button
               type="button"
-              onClick={() => { setShowConfirm(false); setConfirmText(""); }}
+              onClick={() => {
+                setShowConfirm(false);
+                setConfirmText("");
+              }}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
             >
               {t("accountSection.cancel")}
@@ -85,7 +88,9 @@ export function PrivacyTab() {
         const p = JSON.parse(raw);
         if (typeof p.profilePublic === "boolean") return p.profilePublic;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return true;
   });
 
@@ -95,7 +100,9 @@ export function PrivacyTab() {
       <div>
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">{t("privacySection.profileVisibility")}</h3>
+          <h3 className="text-lg font-semibold">
+            {t("privacySection.profileVisibility")}
+          </h3>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("privacySection.visibilityDescription")}
@@ -103,7 +110,9 @@ export function PrivacyTab() {
         <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-card px-4 py-4">
           <div>
             <p className="text-sm font-medium text-foreground">
-              {profilePublic ? t("privacySection.profilePublic") : t("privacySection.profilePrivate")}
+              {profilePublic
+                ? t("privacySection.profilePublic")
+                : t("privacySection.profilePrivate")}
             </p>
             <p className="text-xs text-muted-foreground">
               {profilePublic
@@ -116,7 +125,10 @@ export function PrivacyTab() {
             onToggle={() => {
               const next = !profilePublic;
               setProfilePublic(next);
-              localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({ profilePublic: next }));
+              localStorage.setItem(
+                PRIVACY_STORAGE_KEY,
+                JSON.stringify({ profilePublic: next }),
+              );
             }}
           />
         </div>
@@ -126,7 +138,9 @@ export function PrivacyTab() {
       <div>
         <div className="flex items-center gap-2">
           <Download className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">{t("accountSection.exportData")}</h3>
+          <h3 className="text-lg font-semibold">
+            {t("accountSection.exportData")}
+          </h3>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("accountSection.exportDescription")}
@@ -138,10 +152,16 @@ export function PrivacyTab() {
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
               if (key?.startsWith("sta")) {
-                try { data[key] = JSON.parse(localStorage.getItem(key)!); } catch { data[key] = localStorage.getItem(key); }
+                try {
+                  data[key] = JSON.parse(localStorage.getItem(key)!);
+                } catch {
+                  data[key] = localStorage.getItem(key);
+                }
               }
             }
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+              type: "application/json",
+            });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;

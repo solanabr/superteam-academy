@@ -23,7 +23,7 @@ import { getConfigPda, getCoursePda, getEnrollmentPda } from "../pda";
 import { deserializeConfig } from "../deserializers";
 
 const DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:complete_lesson").digest()
+  createHash("sha256").update("global:complete_lesson").digest(),
 ).subarray(0, 8);
 
 /**
@@ -60,7 +60,10 @@ export async function buildCompleteLessonTransaction(
   );
 
   // Instruction data: discriminator (8 bytes) + lessonIndex u8 (1 byte)
-  const data = Buffer.concat([DISCRIMINATOR, Buffer.from([lessonIndex & 0xff])]);
+  const data = Buffer.concat([
+    DISCRIMINATOR,
+    Buffer.from([lessonIndex & 0xff]),
+  ]);
 
   const ix = new TransactionInstruction({
     programId: PROGRAM_ID,
@@ -82,7 +85,11 @@ export async function buildCompleteLessonTransaction(
     connection.getLatestBlockhash(),
   ]);
 
-  const tx = new Transaction({ feePayer: backendSigner, blockhash, lastValidBlockHeight });
+  const tx = new Transaction({
+    feePayer: backendSigner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }));
 
   if (!ataInfo) {

@@ -84,8 +84,5 @@ export function parseAnchorError(err: unknown): ParsedAnchorError {
  * safe to return success to the caller.
  */
 export function isAlreadyDoneError(name: string | null): boolean {
-  return (
-    name === "LessonAlreadyCompleted" ||
-    name === "CourseAlreadyFinalized"
-  );
+  return name === "LessonAlreadyCompleted" || name === "CourseAlreadyFinalized";
 }

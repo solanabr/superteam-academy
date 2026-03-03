@@ -13,13 +13,28 @@
  * Add new events here to ensure type-safe tracking across the app.
  */
 type AnalyticsEvent =
-  | { name: "course_enrolled"; params: { course_slug: string; course_title: string } }
-  | { name: "lesson_completed"; params: { course_slug: string; lesson_id: string; xp_earned: number } }
-  | { name: "achievement_claimed"; params: { achievement_id: number; achievement_name: string } }
+  | {
+      name: "course_enrolled";
+      params: { course_slug: string; course_title: string };
+    }
+  | {
+      name: "lesson_completed";
+      params: { course_slug: string; lesson_id: string; xp_earned: number };
+    }
+  | {
+      name: "achievement_claimed";
+      params: { achievement_id: number; achievement_name: string };
+    }
   | { name: "language_changed"; params: { locale: string } }
   | { name: "wallet_connected"; params: { wallet_type: string } }
-  | { name: "certificate_shared"; params: { platform: "twitter" | "linkedin"; cert_id: string } }
-  | { name: "code_challenge_run"; params: { course_slug: string; lesson_id: string; passed: boolean } };
+  | {
+      name: "certificate_shared";
+      params: { platform: "twitter" | "linkedin"; cert_id: string };
+    }
+  | {
+      name: "code_challenge_run";
+      params: { course_slug: string; lesson_id: string; passed: boolean };
+    };
 
 declare global {
   interface Window {

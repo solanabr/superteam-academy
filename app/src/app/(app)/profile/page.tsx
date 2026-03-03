@@ -24,7 +24,11 @@ import {
   CredentialDisplay,
   CourseHistory,
 } from "@/components/profile";
-import type { SkillDataPoint, CredentialItem, CompletedCourseItem } from "@/components/profile";
+import type {
+  SkillDataPoint,
+  CredentialItem,
+  CompletedCourseItem,
+} from "@/components/profile";
 
 const PRIVACY_STORAGE_KEY = "sta-privacy";
 
@@ -62,7 +66,8 @@ export default function ProfilePage() {
   const t = useTranslations("profile");
   const tg = useTranslations("gamification");
   const { publicKey, connected } = useWallet();
-  const { xp, streak, achievements, enrolledCourseIds, progressMap } = useLearningProgress();
+  const { xp, streak, achievements, enrolledCourseIds, progressMap } =
+    useLearningProgress();
   const { courses } = useCourses();
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -89,7 +94,9 @@ export default function ProfilePage() {
         const priv = JSON.parse(raw);
         if (typeof priv.profilePublic === "boolean") return priv.profilePublic;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return true;
   });
 
@@ -113,13 +120,18 @@ export default function ProfilePage() {
         setIsPublic(data.isPublic ?? true);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleToggleVisibility = () => {
     const next = !isPublic;
     setIsPublic(next);
-    localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({ profilePublic: next }));
+    localStorage.setItem(
+      PRIVACY_STORAGE_KEY,
+      JSON.stringify({ profilePublic: next }),
+    );
     fetch("/api/user", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -134,7 +146,9 @@ export default function ProfilePage() {
     return Object.entries(progressMap)
       .filter(([, p]) => p.percentage === 100)
       .map(([courseId]) => {
-        const course = courses.find((c) => c.slug === courseId || c.id === courseId);
+        const course = courses.find(
+          (c) => c.slug === courseId || c.id === courseId,
+        );
         return {
           slug: courseId,
           title: course?.title || courseId,
@@ -146,12 +160,15 @@ export default function ProfilePage() {
   const skillData: SkillDataPoint[] = useMemo(() => {
     const trackXP: Record<string, number> = {};
     for (const courseId of enrolledCourseIds) {
-      const course = courses.find((c) => c.slug === courseId || c.id === courseId);
+      const course = courses.find(
+        (c) => c.slug === courseId || c.id === courseId,
+      );
       if (!course) continue;
       const trackName = TRACKS[course.trackId]?.display || "Other";
       const courseProgress = progressMap[courseId];
       const pct = courseProgress?.percentage ?? 0;
-      trackXP[trackName] = (trackXP[trackName] || 0) + Math.round((pct / 100) * course.xpTotal);
+      trackXP[trackName] =
+        (trackXP[trackName] || 0) + Math.round((pct / 100) * course.xpTotal);
     }
     const entries = Object.entries(trackXP);
     if (entries.length === 0) {
@@ -174,7 +191,9 @@ export default function ProfilePage() {
   const credentials: CredentialItem[] = useMemo(() => {
     const trackMap: Record<number, { count: number; xp: number }> = {};
     for (const c of completedCourses) {
-      const course = courses.find((mc) => mc.slug === c.slug || mc.id === c.slug);
+      const course = courses.find(
+        (mc) => mc.slug === c.slug || mc.id === c.slug,
+      );
       const trackId = course?.trackId ?? 0;
       if (!trackMap[trackId]) trackMap[trackId] = { count: 0, xp: 0 };
       trackMap[trackId].count++;
@@ -187,7 +206,12 @@ export default function ProfilePage() {
         trackId,
         trackName: track?.display || "Unknown",
         currentLevel: Math.min(data.count, 3),
-        label: data.count >= 3 ? "Advanced" : data.count >= 2 ? "Intermediate" : "Beginner",
+        label:
+          data.count >= 3
+            ? "Advanced"
+            : data.count >= 2
+              ? "Intermediate"
+              : "Beginner",
         coursesCompleted: data.count,
         totalXp: data.xp,
       };
@@ -196,21 +220,25 @@ export default function ProfilePage() {
 
   const claimedCount = useMemo(
     () => achievements.filter((a) => a.claimed).length,
-    [achievements]
+    [achievements],
   );
 
-  const initials = profileData.displayName
-    .split(/[\s.]/)
-    .filter(Boolean)
-    .map((w: string) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "??";
+  const initials =
+    profileData.displayName
+      .split(/[\s.]/)
+      .filter(Boolean)
+      .map((w: string) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "??";
 
   const walletAddress = connected && publicKey ? publicKey.toBase58() : null;
 
   const joinDate = profileData.joinedAt
-    ? new Date(profileData.joinedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    ? new Date(profileData.joinedAt).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
     : "";
 
   const tabLabels: Record<Tab, string> = {
@@ -244,17 +272,45 @@ export default function ProfilePage() {
 
       {/* Stats Row */}
       <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard icon={<Star className="h-5 w-5 text-xp" />} bgClass="bg-xp/10" label={tg("xp")} value={formatXP(xp)} valueClass="text-xp" />
-        <StatCard icon={<TrendingUp className="h-5 w-5 text-level" />} bgClass="bg-level/10" label={tg("level")} value={level} valueClass="text-level" />
-        <StatCard icon={<Trophy className="h-5 w-5 text-st-green" />} bgClass="bg-st-green/10" label={tg("achievement")} value={claimedCount} valueClass="text-st-green-light" />
-        <StatCard icon={<BookOpen className="h-5 w-5 text-brazil-green" />} bgClass="bg-brazil-green/10" label={t("completedCourses")} value={completedCourses.length} valueClass="text-brazil-green" />
+        <StatCard
+          icon={<Star className="h-5 w-5 text-xp" />}
+          bgClass="bg-xp/10"
+          label={tg("xp")}
+          value={formatXP(xp)}
+          valueClass="text-xp"
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5 text-level" />}
+          bgClass="bg-level/10"
+          label={tg("level")}
+          value={level}
+          valueClass="text-level"
+        />
+        <StatCard
+          icon={<Trophy className="h-5 w-5 text-st-green" />}
+          bgClass="bg-st-green/10"
+          label={tg("achievement")}
+          value={claimedCount}
+          valueClass="text-st-green-light"
+        />
+        <StatCard
+          icon={<BookOpen className="h-5 w-5 text-brazil-green" />}
+          bgClass="bg-brazil-green/10"
+          label={t("completedCourses")}
+          value={completedCourses.length}
+          valueClass="text-brazil-green"
+        />
         <div className="glass col-span-2 flex items-center gap-3 rounded-xl p-4 sm:col-span-1 lg:col-span-1">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-streak/10">
             <Flame className="h-5 w-5 animate-flame text-streak" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">{tg("streak")}</p>
-            <p className="text-lg font-bold text-streak">{streak.currentStreak}d</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {tg("streak")}
+            </p>
+            <p className="text-lg font-bold text-streak">
+              {streak.currentStreak}d
+            </p>
           </div>
         </div>
       </section>
@@ -270,7 +326,7 @@ export default function ProfilePage() {
                 "whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors",
                 activeTab === tab.id
                   ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {tabLabels[tab.id]}
@@ -284,7 +340,11 @@ export default function ProfilePage() {
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="space-y-8 lg:col-span-2">
-              <SkillChart skillData={skillData} title={t("skills")} emptyMessage={t("noSkills")} />
+              <SkillChart
+                skillData={skillData}
+                title={t("skills")}
+                emptyMessage={t("noSkills")}
+              />
               <StreakSection streak={streak} />
             </div>
             <div className="space-y-8">
@@ -293,10 +353,14 @@ export default function ProfilePage() {
                 <h2 className="mb-3 text-lg font-bold">{tg("level")}</h2>
                 <div className="text-center">
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-st-green to-brazil-teal">
-                    <span className="text-2xl font-bold text-white">{level}</span>
+                    <span className="text-2xl font-bold text-white">
+                      {level}
+                    </span>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">
-                    {formatXP(xp - progress.currentLevelXp)} / {formatXP(progress.nextLevelXp - progress.currentLevelXp)} XP to Level {progress.level + 1}
+                    {formatXP(xp - progress.currentLevelXp)} /{" "}
+                    {formatXP(progress.nextLevelXp - progress.currentLevelXp)}{" "}
+                    XP to Level {progress.level + 1}
                   </p>
                   <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
@@ -304,7 +368,9 @@ export default function ProfilePage() {
                       style={{ width: `${Math.min(progress.progress, 100)}%` }}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{Math.round(progress.progress)}% complete</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {Math.round(progress.progress)}% complete
+                  </p>
                 </div>
               </div>
 
@@ -318,11 +384,17 @@ export default function ProfilePage() {
                   <div className="min-w-0 flex-1">
                     {walletAddress ? (
                       <>
-                        <p className="truncate font-mono text-xs text-muted-foreground">{walletAddress}</p>
-                        <p className="mt-0.5 text-xs text-brazil-green">Connected</p>
+                        <p className="truncate font-mono text-xs text-muted-foreground">
+                          {walletAddress}
+                        </p>
+                        <p className="mt-0.5 text-xs text-brazil-green">
+                          Connected
+                        </p>
                       </>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No wallet connected</p>
+                      <p className="text-xs text-muted-foreground">
+                        No wallet connected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -375,7 +447,9 @@ function StatCard({
 }) {
   return (
     <div className="glass flex items-center gap-3 rounded-xl p-4">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${bgClass}`}>
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-full ${bgClass}`}
+      >
         {icon}
       </div>
       <div>

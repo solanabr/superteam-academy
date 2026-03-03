@@ -29,25 +29,31 @@ export function PreferencesTab() {
   const [isPending, startTransition] = useTransition();
   const notifInit = loadNotifications();
   const [emailNotifications, setEmailNotifications] = useState(
-    typeof notifInit?.email === "boolean" ? notifInit.email : true
+    typeof notifInit?.email === "boolean" ? notifInit.email : true,
   );
   const [courseUpdates, setCourseUpdates] = useState(
-    typeof notifInit?.courseUpdates === "boolean" ? notifInit.courseUpdates : true
+    typeof notifInit?.courseUpdates === "boolean"
+      ? notifInit.courseUpdates
+      : true,
   );
   const [achievementAlerts, setAchievementAlerts] = useState(
-    typeof notifInit?.achievements === "boolean" ? notifInit.achievements : true
+    typeof notifInit?.achievements === "boolean"
+      ? notifInit.achievements
+      : true,
   );
   const [streakReminders, setStreakReminders] = useState(
-    typeof notifInit?.streakReminders === "boolean" ? notifInit.streakReminders : false
+    typeof notifInit?.streakReminders === "boolean"
+      ? notifInit.streakReminders
+      : false,
   );
 
-  const persistNotifications = useCallback(
-    (key: string, value: boolean) => {
-      const current = loadNotifications() || {};
-      localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
-    },
-    []
-  );
+  const persistNotifications = useCallback((key: string, value: boolean) => {
+    const current = loadNotifications() || {};
+    localStorage.setItem(
+      NOTIF_STORAGE_KEY,
+      JSON.stringify({ ...current, [key]: value }),
+    );
+  }, []);
 
   function handleLocaleChange(locale: Locale) {
     startTransition(async () => {
@@ -63,9 +69,21 @@ export function PreferencesTab() {
   ];
 
   const themes = [
-    { key: "dark" as const, label: t("preferencesSection.themeDark"), icon: <Moon className="h-4 w-4" /> },
-    { key: "light" as const, label: t("preferencesSection.themeLight"), icon: <Sun className="h-4 w-4" /> },
-    { key: "system" as const, label: t("preferencesSection.themeSystem"), icon: <Monitor className="h-4 w-4" /> },
+    {
+      key: "dark" as const,
+      label: t("preferencesSection.themeDark"),
+      icon: <Moon className="h-4 w-4" />,
+    },
+    {
+      key: "light" as const,
+      label: t("preferencesSection.themeLight"),
+      icon: <Sun className="h-4 w-4" />,
+    },
+    {
+      key: "system" as const,
+      label: t("preferencesSection.themeSystem"),
+      icon: <Monitor className="h-4 w-4" />,
+    },
   ];
 
   return (
@@ -74,12 +92,16 @@ export function PreferencesTab() {
       <div>
         <div className="flex items-center gap-2">
           <Globe className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">{t("preferencesSection.language")}</h3>
+          <h3 className="text-lg font-semibold">
+            {t("preferencesSection.language")}
+          </h3>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("preferencesSection.languageDescription")}
         </p>
-        <div className={`mt-4 space-y-3 ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
+        <div
+          className={`mt-4 space-y-3 ${isPending ? "opacity-50 pointer-events-none" : ""}`}
+        >
           {languages.map((lang) => (
             <label
               key={lang.key}
@@ -97,7 +119,9 @@ export function PreferencesTab() {
                 <div className="h-5 w-5 rounded-full border-2 border-border transition-colors peer-checked:border-st-green" />
                 <div
                   className={`absolute h-2.5 w-2.5 rounded-full transition-colors ${
-                    currentLocale === lang.key ? "bg-st-green" : "bg-transparent"
+                    currentLocale === lang.key
+                      ? "bg-st-green"
+                      : "bg-transparent"
                   }`}
                 />
               </div>
@@ -111,7 +135,9 @@ export function PreferencesTab() {
       <div>
         <div className="flex items-center gap-2">
           <Moon className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">{t("preferencesSection.theme")}</h3>
+          <h3 className="text-lg font-semibold">
+            {t("preferencesSection.theme")}
+          </h3>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("preferencesSection.themeDescription")}
@@ -156,7 +182,10 @@ export function PreferencesTab() {
             </div>
             <Toggle
               enabled={emailNotifications}
-              onToggle={() => { setEmailNotifications(!emailNotifications); persistNotifications("email", !emailNotifications); }}
+              onToggle={() => {
+                setEmailNotifications(!emailNotifications);
+                persistNotifications("email", !emailNotifications);
+              }}
             />
           </div>
 
@@ -171,7 +200,10 @@ export function PreferencesTab() {
             </div>
             <Toggle
               enabled={courseUpdates}
-              onToggle={() => { setCourseUpdates(!courseUpdates); persistNotifications("courseUpdates", !courseUpdates); }}
+              onToggle={() => {
+                setCourseUpdates(!courseUpdates);
+                persistNotifications("courseUpdates", !courseUpdates);
+              }}
             />
           </div>
 
@@ -186,7 +218,10 @@ export function PreferencesTab() {
             </div>
             <Toggle
               enabled={achievementAlerts}
-              onToggle={() => { setAchievementAlerts(!achievementAlerts); persistNotifications("achievements", !achievementAlerts); }}
+              onToggle={() => {
+                setAchievementAlerts(!achievementAlerts);
+                persistNotifications("achievements", !achievementAlerts);
+              }}
             />
           </div>
 
@@ -201,7 +236,10 @@ export function PreferencesTab() {
             </div>
             <Toggle
               enabled={streakReminders}
-              onToggle={() => { setStreakReminders(!streakReminders); persistNotifications("streakReminders", !streakReminders); }}
+              onToggle={() => {
+                setStreakReminders(!streakReminders);
+                persistNotifications("streakReminders", !streakReminders);
+              }}
             />
           </div>
         </div>

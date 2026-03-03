@@ -5,6 +5,7 @@ import { withPayload } from "@payloadcms/next/withPayload";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@privy-io/react-auth"],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

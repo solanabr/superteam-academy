@@ -6,3 +6,6 @@ export { ChallengeOverviewCard } from "./challenge-overview-card";
 export { SpeedLeaderboard } from "./speed-leaderboard";
 export { ChallengeTimer } from "./challenge-timer";
 export { ChallengeSolveClient } from "./challenge-solve-client";
+export { DailyChallengePrompt } from "./daily-challenge-prompt";
+export { DailyTestResults } from "./daily-test-results";
+export { ChallengeBrowseClient } from "./challenge-browse-client";

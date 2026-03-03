@@ -22,7 +22,9 @@ export function AccountTab() {
     <div className="space-y-8">
       {/* Connected Wallets */}
       <div>
-        <h3 className="text-lg font-semibold">{t("accountSection.walletAddress")}</h3>
+        <h3 className="text-lg font-semibold">
+          {t("accountSection.walletAddress")}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("accountSection.walletsDescription")}
         </p>
@@ -37,7 +39,9 @@ export function AccountTab() {
                   <p className="font-mono text-sm font-medium text-foreground">
                     {truncateAddress(publicKey.toBase58(), 6)}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t("accountSection.primaryWallet")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("accountSection.primaryWallet")}
+                  </p>
                 </div>
               </div>
               <button
@@ -77,7 +81,9 @@ export function AccountTab() {
 
       {/* Sign-in Methods */}
       <div>
-        <h3 className="text-lg font-semibold">{t("accountSection.signInMethods")}</h3>
+        <h3 className="text-lg font-semibold">
+          {t("accountSection.signInMethods")}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("accountSection.signInMethodsDescription")}
         </p>

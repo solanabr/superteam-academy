@@ -34,17 +34,24 @@ async function main() {
       trackName: "Solana Development",
       creator: "Superteam Academy",
       isActive: true,
-      tags: [{ tag: "solana" }, { tag: "anchor" }, { tag: "typescript" }, { tag: "rust" }],
+      tags: [
+        { tag: "solana" },
+        { tag: "anchor" },
+        { tag: "typescript" },
+        { tag: "rust" },
+      ],
       prerequisites: [{ slug: "solana-fundamentals" }],
       modules: [
         {
           title: "Solana Fundamentals",
-          description: "Understand the core Solana programming model before writing any code.",
+          description:
+            "Understand the core Solana programming model before writing any code.",
           order: 0,
           lessons: [
             {
               title: "Accounts and the Account Model",
-              description: "How Solana stores state and why it differs from EVM chains.",
+              description:
+                "How Solana stores state and why it differs from EVM chains.",
               type: "content",
               order: 0,
               xpReward: 50,
@@ -56,7 +63,9 @@ async function main() {
                     {
                       type: "heading",
                       tag: "h1",
-                      children: [{ type: "text", text: "The Solana Account Model" }],
+                      children: [
+                        { type: "text", text: "The Solana Account Model" },
+                      ],
                     },
                     {
                       type: "paragraph",
@@ -74,9 +83,7 @@ async function main() {
                     },
                     {
                       type: "paragraph",
-                      children: [
-                        { type: "text", text: "Every account has:" },
-                      ],
+                      children: [{ type: "text", text: "Every account has:" }],
                     },
                     {
                       type: "list",
@@ -86,28 +93,44 @@ async function main() {
                           type: "listitem",
                           children: [
                             { type: "text", text: "lamports", format: "bold" },
-                            { type: "text", text: " — the SOL balance (1 SOL = 10^9 lamports)" },
+                            {
+                              type: "text",
+                              text: " — the SOL balance (1 SOL = 10^9 lamports)",
+                            },
                           ],
                         },
                         {
                           type: "listitem",
                           children: [
                             { type: "text", text: "data", format: "bold" },
-                            { type: "text", text: " — arbitrary bytes (program state, token info, NFT metadata…)" },
+                            {
+                              type: "text",
+                              text: " — arbitrary bytes (program state, token info, NFT metadata…)",
+                            },
                           ],
                         },
                         {
                           type: "listitem",
                           children: [
                             { type: "text", text: "owner", format: "bold" },
-                            { type: "text", text: " — the program ID that controls this account" },
+                            {
+                              type: "text",
+                              text: " — the program ID that controls this account",
+                            },
                           ],
                         },
                         {
                           type: "listitem",
                           children: [
-                            { type: "text", text: "executable", format: "bold" },
-                            { type: "text", text: " — whether this account IS a program" },
+                            {
+                              type: "text",
+                              text: "executable",
+                              format: "bold",
+                            },
+                            {
+                              type: "text",
+                              text: " — whether this account IS a program",
+                            },
                           ],
                         },
                       ],
@@ -132,7 +155,8 @@ async function main() {
             },
             {
               title: "Programs and Instructions",
-              description: "What Solana programs are and how transactions invoke them.",
+              description:
+                "What Solana programs are and how transactions invoke them.",
               type: "content",
               order: 1,
               xpReward: 50,
@@ -144,7 +168,9 @@ async function main() {
                     {
                       type: "heading",
                       tag: "h1",
-                      children: [{ type: "text", text: "Programs and Instructions" }],
+                      children: [
+                        { type: "text", text: "Programs and Instructions" },
+                      ],
                     },
                     {
                       type: "paragraph",
@@ -177,12 +203,14 @@ async function main() {
         },
         {
           title: "Writing Programs with Anchor",
-          description: "Use the Anchor framework to write, test, and deploy your first Solana program.",
+          description:
+            "Use the Anchor framework to write, test, and deploy your first Solana program.",
           order: 1,
           lessons: [
             {
               title: "Your First Anchor Program",
-              description: "Scaffold and build a simple counter program using Anchor.",
+              description:
+                "Scaffold and build a simple counter program using Anchor.",
               type: "content",
               order: 0,
               xpReward: 100,
@@ -194,7 +222,12 @@ async function main() {
                     {
                       type: "heading",
                       tag: "h1",
-                      children: [{ type: "text", text: "Building a Counter with Anchor" }],
+                      children: [
+                        {
+                          type: "text",
+                          text: "Building a Counter with Anchor",
+                        },
+                      ],
                     },
                     {
                       type: "paragraph",
@@ -211,7 +244,7 @@ async function main() {
                       children: [
                         {
                           type: "text",
-                          text: 'use anchor_lang::prelude::*;\n\ndeclare_id!("COUNT111111111111111111111111111111111111111");\n\n#[program]\npub mod counter {\n    use super::*;\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        ctx.accounts.counter.count = 0;\n        Ok(())\n    }\n    pub fn increment(ctx: Context<Increment>) -> Result<()> {\n        ctx.accounts.counter.count = ctx.accounts.counter.count\n            .checked_add(1)\n            .ok_or(ErrorCode::Overflow)?;\n        Ok(())\n    }\n}\n\n#[account]\npub struct Counter {\n    pub count: u64,\n}\n\n#[derive(Accounts)]\npub struct Initialize<\'info> {\n    #[account(init, payer = payer, space = 8 + 8)]\n    pub counter: Account<\'info, Counter>,\n    #[account(mut)]\n    pub payer: Signer<\'info>,\n    pub system_program: Program<\'info, System>,\n}\n\n#[derive(Accounts)]\npub struct Increment<\'info> {\n    #[account(mut)]\n    pub counter: Account<\'info, Counter>,\n}\n\n#[error_code]\npub enum ErrorCode {\n    Overflow,\n}',
+                          text: "use anchor_lang::prelude::*;\n\ndeclare_id!(\"COUNT111111111111111111111111111111111111111\");\n\n#[program]\npub mod counter {\n    use super::*;\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        ctx.accounts.counter.count = 0;\n        Ok(())\n    }\n    pub fn increment(ctx: Context<Increment>) -> Result<()> {\n        ctx.accounts.counter.count = ctx.accounts.counter.count\n            .checked_add(1)\n            .ok_or(ErrorCode::Overflow)?;\n        Ok(())\n    }\n}\n\n#[account]\npub struct Counter {\n    pub count: u64,\n}\n\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(init, payer = payer, space = 8 + 8)]\n    pub counter: Account<'info, Counter>,\n    #[account(mut)]\n    pub payer: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n\n#[derive(Accounts)]\npub struct Increment<'info> {\n    #[account(mut)]\n    pub counter: Account<'info, Counter>,\n}\n\n#[error_code]\npub enum ErrorCode {\n    Overflow,\n}",
                         },
                       ],
                     },
@@ -239,7 +272,12 @@ async function main() {
                       {
                         type: "heading",
                         tag: "h2",
-                        children: [{ type: "text", text: "Challenge: Increment Counter" }],
+                        children: [
+                          {
+                            type: "text",
+                            text: "Challenge: Increment Counter",
+                          },
+                        ],
                       },
                       {
                         type: "paragraph",

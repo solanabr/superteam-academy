@@ -48,7 +48,7 @@ export function QuizStep({
                 "hover:shadow-md hover:-translate-y-0.5",
                 isSelected
                   ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border bg-card hover:border-primary/40"
+                  : "border-border bg-card hover:border-primary/40",
               )}
             >
               {/* Check indicator for multi-select */}
@@ -58,7 +58,7 @@ export function QuizStep({
                     "absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all",
                     isSelected
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground/30"
+                      : "border-muted-foreground/30",
                   )}
                 >
                   {isSelected && <Check className="h-3 w-3" />}
@@ -72,7 +72,7 @@ export function QuizStep({
                     "absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all",
                     isSelected
                       ? "border-primary"
-                      : "border-muted-foreground/30"
+                      : "border-muted-foreground/30",
                   )}
                 >
                   {isSelected && (
@@ -86,7 +86,7 @@ export function QuizStep({
                   "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                   isSelected
                     ? "bg-primary/15 text-primary"
-                    : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                    : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
                 )}
               >
                 <option.icon className="h-5 w-5" />

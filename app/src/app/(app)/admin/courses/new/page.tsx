@@ -7,6 +7,9 @@ export const metadata = {
 
 export default async function NewCoursePage() {
   const courses = await getAllCourses();
-  const availableCourses = courses.map((c) => ({ slug: c.slug, title: c.title }));
+  const availableCourses = courses.map((c) => ({
+    slug: c.slug,
+    title: c.title,
+  }));
   return <CourseCreator availableCourses={availableCourses} />;
 }

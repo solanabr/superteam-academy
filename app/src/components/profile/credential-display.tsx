@@ -31,16 +31,29 @@ interface CredentialDisplayProps {
   emptyMessage: string;
 }
 
-function TrackIcon({ trackId, className }: { trackId: number; className?: string }) {
+function TrackIcon({
+  trackId,
+  className,
+}: {
+  trackId: number;
+  className?: string;
+}) {
   const base = cn("h-5 w-5", className);
   switch (trackId) {
-    case 1: return <Shield className={base} />;
-    case 2: return <Code className={base} />;
-    case 3: return <TrendingUp className={base} />;
-    case 4: return <Shield className={base} />;
-    case 5: return <Layout className={base} />;
-    case 6: return <Coins className={base} />;
-    default: return <BookOpen className={base} />;
+    case 1:
+      return <Shield className={base} />;
+    case 2:
+      return <Code className={base} />;
+    case 3:
+      return <TrendingUp className={base} />;
+    case 4:
+      return <Shield className={base} />;
+    case 5:
+      return <Layout className={base} />;
+    case 6:
+      return <Coins className={base} />;
+    default:
+      return <BookOpen className={base} />;
   }
 }
 
@@ -76,15 +89,20 @@ export function CredentialDisplay({
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold">{cred.trackName}</h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {cred.label} ({t("credentialLevel", { level: cred.currentLevel })})
+                      {cred.label} (
+                      {t("credentialLevel", { level: cred.currentLevel })})
                     </p>
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">
-                    {t("credentialCoursesCompleted", { count: cred.coursesCompleted })}
+                    {t("credentialCoursesCompleted", {
+                      count: cred.coursesCompleted,
+                    })}
                   </span>
-                  <span className="font-semibold text-xp">{formatXP(cred.totalXp)} XP</span>
+                  <span className="font-semibold text-xp">
+                    {formatXP(cred.totalXp)} XP
+                  </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex w-fit items-center gap-1.5 rounded-full bg-st-green/10 px-2.5 py-1 text-xs font-medium text-st-green-light">
@@ -108,7 +126,9 @@ export function CredentialDisplay({
         </div>
       ) : (
         <EmptyState
-          illustration={<EmptyCredentialsIllustration className="h-full w-full" />}
+          illustration={
+            <EmptyCredentialsIllustration className="h-full w-full" />
+          }
           title={emptyMessage}
           compact
         />

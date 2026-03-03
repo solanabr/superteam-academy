@@ -25,7 +25,10 @@ export function AssessmentStep({ answers, onAnswer }: AssessmentStepProps) {
 
       <div className="space-y-6">
         {QUESTION_IDS.map((qId, qi) => (
-          <div key={qId} className="rounded-xl border border-border bg-card p-5">
+          <div
+            key={qId}
+            className="rounded-xl border border-border bg-card p-5"
+          >
             <p className="mb-3 font-semibold">
               {qi + 1}. {t(`${qId}.question`)}
             </p>
@@ -42,7 +45,7 @@ export function AssessmentStep({ answers, onAnswer }: AssessmentStepProps) {
                       "hover:shadow-sm hover:-translate-y-0.5",
                       isSelected
                         ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40"
+                        : "border-border hover:border-primary/40",
                     )}
                   >
                     <span
@@ -50,7 +53,7 @@ export function AssessmentStep({ answers, onAnswer }: AssessmentStepProps) {
                         "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground/30 text-muted-foreground"
+                          : "border-muted-foreground/30 text-muted-foreground",
                       )}
                     >
                       {optId.toUpperCase()}

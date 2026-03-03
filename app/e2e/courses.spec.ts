@@ -34,7 +34,10 @@ test.describe("Courses", () => {
   test("difficulty filter pills work", async ({ page }) => {
     await page.goto("/courses");
     // Click beginner filter
-    const beginnerButton = page.locator("button").filter({ hasText: /beginner/i }).first();
+    const beginnerButton = page
+      .locator("button")
+      .filter({ hasText: /beginner/i })
+      .first();
     await beginnerButton.click();
     await page.waitForTimeout(300);
     // Should still have some courses
@@ -53,7 +56,10 @@ test.describe("Courses", () => {
   test("course detail has enroll button", async ({ page }) => {
     await page.goto("/courses/intro-to-solana");
     // Look for enroll or continue learning button
-    const actionButton = page.locator("button, a").filter({ hasText: /enroll|continue|start/i }).first();
+    const actionButton = page
+      .locator("button, a")
+      .filter({ hasText: /enroll|continue|start/i })
+      .first();
     await expect(actionButton).toBeVisible();
   });
 });

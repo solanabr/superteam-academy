@@ -5,7 +5,11 @@ import { useThreadDetail } from "@/lib/hooks/use-thread-detail";
 import { ThreadDetailView } from "@/components/discussions/thread-detail";
 import { Loader2 } from "lucide-react";
 
-export default function ThreadPage({ params }: { params: Promise<{ threadId: string }> }) {
+export default function ThreadPage({
+  params,
+}: {
+  params: Promise<{ threadId: string }>;
+}) {
   const { threadId } = use(params);
   const {
     thread,

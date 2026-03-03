@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePrivy } from "@privy-io/react-auth";
-import {
-  Flame,
-  BookOpen,
-  Zap,
-  ChevronRight,
-  Award,
-} from "lucide-react";
+import { Flame, BookOpen, Zap, ChevronRight, Award } from "lucide-react";
 import { formatXP, xpProgress, getUserDisplayName } from "@/lib/utils";
 import { useCourses } from "@/lib/hooks/use-courses";
 import { DIFFICULTY_BG } from "@/lib/constants";
@@ -21,8 +15,16 @@ import { DailyQuestsCard } from "@/components/gamification/daily-quests";
 import { StreakDangerBanner } from "@/components/gamification/streak-danger-banner";
 import { StreakFreezeCard } from "@/components/gamification/streak-freeze-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { EmptyCoursesIllustration, EmptyAchievementsIllustration } from "@/components/icons";
-import { DashboardPageSkeleton, ActivityFeed, SeasonalEventBanner, DailyChallengePreview } from "@/components/dashboard";
+import {
+  EmptyCoursesIllustration,
+  EmptyAchievementsIllustration,
+} from "@/components/icons";
+import {
+  DashboardPageSkeleton,
+  ActivityFeed,
+  SeasonalEventBanner,
+  DailyChallengePreview,
+} from "@/components/dashboard";
 import { getPersonalizedRecommendations } from "@/lib/recommendations";
 
 const SKILL_BADGE_COLORS = {
@@ -33,7 +35,12 @@ const SKILL_BADGE_COLORS = {
 
 interface UserOnboardingData {
   skillLevel?: string | null;
-  onboardingData?: { experience?: string; interests?: string[]; goal?: string; pace?: string } | null;
+  onboardingData?: {
+    experience?: string;
+    interests?: string[];
+    goal?: string;
+    pace?: string;
+  } | null;
 }
 
 export default function DashboardPage() {
@@ -74,17 +81,15 @@ export default function DashboardPage() {
     .filter(([, p]) => p.percentage === 100)
     .map(([id]) => id);
 
-  const enrolledCourseData = allCourses.filter((c) =>
-    enrolledCourseIds.includes(c.slug) || enrolledCourseIds.includes(c.id)
+  const enrolledCourseData = allCourses.filter(
+    (c) =>
+      enrolledCourseIds.includes(c.slug) || enrolledCourseIds.includes(c.id),
   );
 
   const claimedAchievements = achievements.filter((a) => a.claimed);
   const recentAchievements = claimedAchievements.slice(0, 6);
 
-  const allEnrolledAndCompleted = [
-    ...enrolledCourseIds,
-    ...completedCourseIds,
-  ];
+  const allEnrolledAndCompleted = [...enrolledCourseIds, ...completedCourseIds];
 
   const recommendedCourses = getPersonalizedRecommendations(allCourses, {
     skillLevel: onboarding.skillLevel,
@@ -97,7 +102,9 @@ export default function DashboardPage() {
   }
 
   const displayName = getUserDisplayName();
-  const skillLevel = onboarding.skillLevel as keyof typeof SKILL_BADGE_COLORS | undefined;
+  const skillLevel = onboarding.skillLevel as
+    | keyof typeof SKILL_BADGE_COLORS
+    | undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -113,9 +120,7 @@ export default function DashboardPage() {
           {t("welcome", { name: displayName })}
         </h1>
         <p className="mt-1 text-muted-foreground">
-          {streak.currentStreak > 0
-            ? t("subtitle")
-            : t("noStreak")}
+          {streak.currentStreak > 0 ? t("subtitle") : t("noStreak")}
         </p>
       </div>
 
@@ -125,11 +130,16 @@ export default function DashboardPage() {
         <div className="glass rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">{t("totalXP")}</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("totalXP")}
+              </p>
               <p className="mt-1 text-3xl font-bold text-xp">
                 {formatXP(xp)} XP
                 {isOnChain && (
-                  <span className="ml-2 inline-block rounded-full bg-green-500/15 px-2 py-0.5 align-middle text-xs font-medium text-green-600 dark:text-green-400" title="Verified on Solana devnet">
+                  <span
+                    className="ml-2 inline-block rounded-full bg-green-500/15 px-2 py-0.5 align-middle text-xs font-medium text-green-600 dark:text-green-400"
+                    title="Verified on Solana devnet"
+                  >
                     on-chain
                   </span>
                 )}
@@ -141,7 +151,9 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-level font-medium">{t("level", { number: progress.level })}</span>
+              <span className="text-level font-medium">
+                {t("level", { number: progress.level })}
+              </span>
               <span className="text-muted-foreground">
                 {formatXP(xp - progress.currentLevelXp)} /{" "}
                 {formatXP(progress.nextLevelXp - progress.currentLevelXp)} XP
@@ -164,9 +176,18 @@ export default function DashboardPage() {
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">{t("skillLevelLabel")}</p>
-                <p className={`mt-1 inline-flex rounded-full border px-3 py-1 text-lg font-bold ${SKILL_BADGE_COLORS[skillLevel]}`}>
-                  {t(`skill${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as "skillBeginner" | "skillIntermediate" | "skillAdvanced")}
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("skillLevelLabel")}
+                </p>
+                <p
+                  className={`mt-1 inline-flex rounded-full border px-3 py-1 text-lg font-bold ${SKILL_BADGE_COLORS[skillLevel]}`}
+                >
+                  {t(
+                    `skill${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as
+                      | "skillBeginner"
+                      | "skillIntermediate"
+                      | "skillAdvanced",
+                  )}
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -180,7 +201,9 @@ export default function DashboardPage() {
         <div className="glass rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">{t("streak")}</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("streak")}
+              </p>
               <p className="mt-1 text-3xl font-bold text-streak">
                 {t("streakDays", { count: streak.currentStreak })}
               </p>
@@ -190,7 +213,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            {t("longestStreak")}: {t("streakDays", { count: streak.longestStreak })}
+            {t("longestStreak")}:{" "}
+            {t("streakDays", { count: streak.longestStreak })}
           </p>
 
           {/* Calendar Heat Map */}
@@ -225,7 +249,9 @@ export default function DashboardPage() {
             {enrolledCourseData.length === 0 ? (
               <div className="glass rounded-xl">
                 <EmptyState
-                  illustration={<EmptyCoursesIllustration className="h-full w-full" />}
+                  illustration={
+                    <EmptyCoursesIllustration className="h-full w-full" />
+                  }
                   title={t("noCourses")}
                   action={{ label: t("startLearning"), href: "/courses" }}
                   compact
@@ -234,7 +260,8 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {enrolledCourseData.map((course) => {
-                  const courseProgress = progressMap[course.slug] || progressMap[course.id];
+                  const courseProgress =
+                    progressMap[course.slug] || progressMap[course.id];
                   const pct = courseProgress?.percentage ?? 0;
                   const isCompleted = pct === 100;
                   return (
@@ -262,7 +289,9 @@ export default function DashboardPage() {
                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                           <span>{course.duration}</span>
                           <span>{course.lessonCount} lessons</span>
-                          <span className="text-xp">{formatXP(course.xpTotal)} XP</span>
+                          <span className="text-xp">
+                            {formatXP(course.xpTotal)} XP
+                          </span>
                         </div>
                         <div className="mt-2 flex items-center gap-3">
                           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -277,7 +306,9 @@ export default function DashboardPage() {
                           </div>
                           <span
                             className={`text-xs font-medium ${
-                              isCompleted ? "text-brazil-green" : "text-muted-foreground"
+                              isCompleted
+                                ? "text-brazil-green"
+                                : "text-muted-foreground"
                             }`}
                           >
                             {pct}%
@@ -327,7 +358,9 @@ export default function DashboardPage() {
                     >
                       {course.difficulty}
                     </span>
-                    <span className="text-xs text-xp">{formatXP(course.xpTotal)} XP</span>
+                    <span className="text-xs text-xp">
+                      {formatXP(course.xpTotal)} XP
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -362,7 +395,9 @@ export default function DashboardPage() {
             {recentAchievements.length === 0 ? (
               <div className="glass rounded-xl">
                 <EmptyState
-                  illustration={<EmptyAchievementsIllustration className="h-full w-full" />}
+                  illustration={
+                    <EmptyAchievementsIllustration className="h-full w-full" />
+                  }
                   title={t("achievementsEmpty")}
                   description={t("achievementsEmptyHint")}
                   compact
@@ -382,7 +417,9 @@ export default function DashboardPage() {
                     <p className="mt-2 text-xs font-medium leading-tight">
                       {achievement.name}
                     </p>
-                    <p className="mt-0.5 text-xs text-xp">+{achievement.xpReward} XP</p>
+                    <p className="mt-0.5 text-xs text-xp">
+                      +{achievement.xpReward} XP
+                    </p>
                   </div>
                 ))}
               </div>
@@ -395,7 +432,9 @@ export default function DashboardPage() {
           {/* Getting Started */}
           {enrolledCourseIds.length === 0 && (
             <section>
-              <h2 className="mb-4 text-xl font-bold">{t("gettingStarted.title")}</h2>
+              <h2 className="mb-4 text-xl font-bold">
+                {t("gettingStarted.title")}
+              </h2>
               <div className="glass rounded-xl p-4">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
@@ -403,7 +442,9 @@ export default function DashboardPage() {
                       <BookOpen className="h-4 w-4 text-st-green" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{t("gettingStarted.enrollTitle")}</p>
+                      <p className="text-sm font-medium">
+                        {t("gettingStarted.enrollTitle")}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {t("gettingStarted.enrollDesc")}
                       </p>
@@ -414,7 +455,9 @@ export default function DashboardPage() {
                       <Zap className="h-4 w-4 text-xp" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{t("gettingStarted.xpTitle")}</p>
+                      <p className="text-sm font-medium">
+                        {t("gettingStarted.xpTitle")}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {t("gettingStarted.xpDesc")}
                       </p>
@@ -425,7 +468,9 @@ export default function DashboardPage() {
                       <Flame className="h-4 w-4 text-streak" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{t("gettingStarted.streakTitle")}</p>
+                      <p className="text-sm font-medium">
+                        {t("gettingStarted.streakTitle")}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {t("gettingStarted.streakDesc")}
                       </p>

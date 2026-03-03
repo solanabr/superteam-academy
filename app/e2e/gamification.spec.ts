@@ -47,7 +47,7 @@ async function enrollAndCompleteLesson(page: Page) {
   if (canComplete) {
     await markCompleteBtn.click();
     await expect(
-      page.getByText("Completed", { exact: false }).first()
+      page.getByText("Completed", { exact: false }).first(),
     ).toBeVisible({ timeout: 5000 });
   }
 }
@@ -58,9 +58,7 @@ test.describe("Gamification — XP System", () => {
     await clearAppStorage(page);
   });
 
-  test("completing a lesson awards XP shown on dashboard", async ({
-    page,
-  }) => {
+  test("completing a lesson awards XP shown on dashboard", async ({ page }) => {
     await enrollAndCompleteLesson(page);
 
     // Navigate to dashboard
@@ -139,7 +137,7 @@ test.describe("Gamification — Achievements", () => {
     // After completing a lesson, the "First Steps" achievement should be claimable or claimed
     // Look for achievement-related elements
     const achievementElements = page.locator(
-      '[class*="achievement"], [data-testid*="achievement"]'
+      '[class*="achievement"], [data-testid*="achievement"]',
     );
     const count = await achievementElements.count();
     // We may find achievement elements; at minimum the section heading exists

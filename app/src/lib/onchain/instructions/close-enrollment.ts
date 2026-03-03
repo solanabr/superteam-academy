@@ -14,7 +14,7 @@ import { PROGRAM_ID } from "../constants";
 import { getCoursePda, getEnrollmentPda } from "../pda";
 
 const DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:close_enrollment").digest()
+  createHash("sha256").update("global:close_enrollment").digest(),
 ).subarray(0, 8);
 
 /**
@@ -43,8 +43,13 @@ export async function buildCloseEnrollmentTransaction(
     data: DISCRIMINATOR,
   });
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  const tx = new Transaction({ feePayer: learner, blockhash, lastValidBlockHeight });
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+  const tx = new Transaction({
+    feePayer: learner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   tx.add(ix);
   return tx;
 }

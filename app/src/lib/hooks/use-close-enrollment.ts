@@ -50,7 +50,11 @@ export function useCloseEnrollment(): UseCloseEnrollmentReturn {
       setError(null);
 
       try {
-        const tx = await buildCloseEnrollmentTransaction(courseId, publicKey, connection);
+        const tx = await buildCloseEnrollmentTransaction(
+          courseId,
+          publicKey,
+          connection,
+        );
 
         setState("signing");
         const serialized = tx.serialize({ requireAllSignatures: false });
@@ -61,8 +65,12 @@ export function useCloseEnrollment(): UseCloseEnrollmentReturn {
 
         setState("confirming");
         const sig = bs58.encode(receipt.signature);
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+        const { blockhash, lastValidBlockHeight } =
+          await connection.getLatestBlockhash();
+        await connection.confirmTransaction(
+          { signature: sig, blockhash, lastValidBlockHeight },
+          "confirmed",
+        );
 
         setTxSignature(sig);
         setState("success");

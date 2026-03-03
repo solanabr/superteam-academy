@@ -63,9 +63,11 @@ describe("deserializers", () => {
 
       // 8-byte discriminator (skipped)
       let offset = DISCRIMINATOR_SIZE;
-      writePubkey(buf, offset, KEY_A); offset += 32;   // authority
-      writePubkey(buf, offset, KEY_B); offset += 32;   // backendSigner
-      writePubkey(buf, offset, KEY_C);                  // xpMint
+      writePubkey(buf, offset, KEY_A);
+      offset += 32; // authority
+      writePubkey(buf, offset, KEY_B);
+      offset += 32; // backendSigner
+      writePubkey(buf, offset, KEY_C); // xpMint
 
       const config = deserializeConfig(buf);
       expect(config.authority.equals(KEY_A)).toBe(true);
@@ -89,42 +91,61 @@ describe("deserializers", () => {
       const prereqSize = opts.hasPrereq ? 32 : 0;
       const size =
         DISCRIMINATOR_SIZE +
-        4 + courseIdLen +   // courseId string
-        32 + 32 + 32 +     // creator, authority, contentTxId
-        2 +                // version
-        1 +                // lessonCount
-        1 +                // difficulty
-        4 +                // xpPerLesson
-        2 +                // trackId
-        1 +                // trackLevel
-        1 + prereqSize +   // hasPrereq + optional pubkey
-        4 +                // creatorRewardXp
-        2 +                // minCompletionsForReward
-        4 +                // totalCompletions
-        4 +                // totalEnrollments
-        1;                 // isActive
+        4 +
+        courseIdLen + // courseId string
+        32 +
+        32 +
+        32 + // creator, authority, contentTxId
+        2 + // version
+        1 + // lessonCount
+        1 + // difficulty
+        4 + // xpPerLesson
+        2 + // trackId
+        1 + // trackLevel
+        1 +
+        prereqSize + // hasPrereq + optional pubkey
+        4 + // creatorRewardXp
+        2 + // minCompletionsForReward
+        4 + // totalCompletions
+        4 + // totalEnrollments
+        1; // isActive
 
       const buf = Buffer.alloc(size);
       let offset = DISCRIMINATOR_SIZE;
 
       offset += writeString(buf, offset, opts.courseId);
-      writePubkey(buf, offset, KEY_A); offset += 32;  // creator
-      writePubkey(buf, offset, KEY_B); offset += 32;  // authority
-      writePubkey(buf, offset, KEY_C); offset += 32;  // contentTxId
-      writeU16LE(buf, offset, 1); offset += 2;        // version
-      writeU8(buf, offset, opts.lessonCount); offset += 1;
-      writeU8(buf, offset, 1); offset += 1;           // difficulty
-      writeU32LE(buf, offset, opts.xpPerLesson); offset += 4;
-      writeU16LE(buf, offset, opts.trackId); offset += 2;
-      writeU8(buf, offset, opts.trackLevel); offset += 1;
-      writeU8(buf, offset, opts.hasPrereq ? 1 : 0); offset += 1;
+      writePubkey(buf, offset, KEY_A);
+      offset += 32; // creator
+      writePubkey(buf, offset, KEY_B);
+      offset += 32; // authority
+      writePubkey(buf, offset, KEY_C);
+      offset += 32; // contentTxId
+      writeU16LE(buf, offset, 1);
+      offset += 2; // version
+      writeU8(buf, offset, opts.lessonCount);
+      offset += 1;
+      writeU8(buf, offset, 1);
+      offset += 1; // difficulty
+      writeU32LE(buf, offset, opts.xpPerLesson);
+      offset += 4;
+      writeU16LE(buf, offset, opts.trackId);
+      offset += 2;
+      writeU8(buf, offset, opts.trackLevel);
+      offset += 1;
+      writeU8(buf, offset, opts.hasPrereq ? 1 : 0);
+      offset += 1;
       if (opts.hasPrereq) {
-        writePubkey(buf, offset, KEY_A); offset += 32;
+        writePubkey(buf, offset, KEY_A);
+        offset += 32;
       }
-      writeU32LE(buf, offset, 0); offset += 4;        // creatorRewardXp
-      writeU16LE(buf, offset, 0); offset += 2;        // minCompletionsForReward
-      writeU32LE(buf, offset, 100); offset += 4;      // totalCompletions
-      writeU32LE(buf, offset, 500); offset += 4;      // totalEnrollments
+      writeU32LE(buf, offset, 0);
+      offset += 4; // creatorRewardXp
+      writeU16LE(buf, offset, 0);
+      offset += 2; // minCompletionsForReward
+      writeU32LE(buf, offset, 100);
+      offset += 4; // totalCompletions
+      writeU32LE(buf, offset, 500);
+      offset += 4; // totalEnrollments
       writeU8(buf, offset, opts.isActive ? 1 : 0);
 
       return buf;
@@ -195,27 +216,33 @@ describe("deserializers", () => {
       const credentialSize = credentialAsset !== null ? 32 : 0;
       const size =
         DISCRIMINATOR_SIZE +
-        32 +        // course pubkey
-        2 +         // enrolledVersion
-        8 +         // enrolledAt (i64)
-        1 +         // hasCompleted flag
+        32 + // course pubkey
+        2 + // enrolledVersion
+        8 + // enrolledAt (i64)
+        1 + // hasCompleted flag
         completedSize + // completedAt (optional i64)
-        32 +        // lessonFlags [u64; 4]
-        1 +         // hasCredential flag
+        32 + // lessonFlags [u64; 4]
+        1 + // hasCredential flag
         credentialSize; // credentialAsset (optional pubkey)
 
       const buf = Buffer.alloc(size);
       let offset = DISCRIMINATOR_SIZE;
 
-      writePubkey(buf, offset, opts.course); offset += 32;
-      writeU16LE(buf, offset, 1); offset += 2;         // enrolledVersion
-      writeI64LE(buf, offset, opts.enrolledAt); offset += 8;
+      writePubkey(buf, offset, opts.course);
+      offset += 32;
+      writeU16LE(buf, offset, 1);
+      offset += 2; // enrolledVersion
+      writeI64LE(buf, offset, opts.enrolledAt);
+      offset += 8;
 
       if (opts.completedAt !== null) {
-        writeU8(buf, offset, 1); offset += 1;
-        writeI64LE(buf, offset, opts.completedAt); offset += 8;
+        writeU8(buf, offset, 1);
+        offset += 1;
+        writeI64LE(buf, offset, opts.completedAt);
+        offset += 8;
       } else {
-        writeU8(buf, offset, 0); offset += 1;
+        writeU8(buf, offset, 0);
+        offset += 1;
       }
 
       for (let i = 0; i < 4; i++) {
@@ -225,7 +252,8 @@ describe("deserializers", () => {
       }
 
       if (credentialAsset !== null) {
-        writeU8(buf, offset, 1); offset += 1;
+        writeU8(buf, offset, 1);
+        offset += 1;
         writePubkey(buf, offset, credentialAsset);
       } else {
         writeU8(buf, offset, 0);
@@ -266,7 +294,7 @@ describe("deserializers", () => {
 
     it("deserializes lesson completion flags", () => {
       const flags = [
-        new BN(7),    // lessons 0, 1, 2 complete (0b111)
+        new BN(7), // lessons 0, 1, 2 complete (0b111)
         new BN(0),
         new BN(0),
         new BN(0),

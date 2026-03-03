@@ -28,7 +28,8 @@ export function getCourse2() {
               // Lesson 1.1 — Workspace Initialization (content)
               {
                 title: "Workspace Initialization",
-                description: "Create and explore a new Anchor project from scratch",
+                description:
+                  "Create and explore a new Anchor project from scratch",
                 type: "content",
                 order: 0,
                 xpReward: 20,
@@ -125,7 +126,8 @@ In the next lesson, we will explore the \`Anchor.toml\` configuration file in de
               // Lesson 1.2 — Anchor.toml Configuration (content)
               {
                 title: "Anchor.toml Configuration",
-                description: "Understand and configure your Anchor workspace settings",
+                description:
+                  "Understand and configure your Anchor workspace settings",
                 type: "content",
                 order: 1,
                 xpReward: 20,
@@ -396,7 +398,8 @@ In the next lesson, we cover IDL generation — the bridge between your on-chain
               // Lesson 1.4 — IDL Generation (content)
               {
                 title: "IDL Generation",
-                description: "Understand how Anchor generates IDLs and how clients consume them",
+                description:
+                  "Understand how Anchor generates IDLs and how clients consume them",
                 type: "content",
                 order: 3,
                 xpReward: 20,
@@ -649,13 +652,15 @@ pub struct Counter {
                         {
                           name: "Authority is stored correctly",
                           input: "initialize()",
-                          expectedOutput: "counter.authority == authority.key()",
+                          expectedOutput:
+                            "counter.authority == authority.key()",
                           order: 1,
                         },
                         {
                           name: "Account space is allocated correctly",
                           input: "initialize()",
-                          expectedOutput: "account data length == 8 + 8 + 32 = 48 bytes",
+                          expectedOutput:
+                            "account data length == 8 + 8 + 32 = 48 bytes",
                           order: 2,
                         },
                       ],
@@ -680,7 +685,8 @@ pub struct Counter {
               // Lesson 2.1 — The #[account] Attribute (content)
               {
                 title: "The #[account] Attribute",
-                description: "Define and configure on-chain data accounts with Anchor",
+                description:
+                  "Define and configure on-chain data accounts with Anchor",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -774,7 +780,8 @@ The \`close = authority\` constraint transfers all remaining lamports to the \`a
               // Lesson 2.2 — Init and Init If Needed (content)
               {
                 title: "Init and Init If Needed",
-                description: "Account creation patterns with init and init_if_needed",
+                description:
+                  "Account creation patterns with init and init_if_needed",
                 type: "content",
                 order: 1,
                 xpReward: 25,
@@ -920,7 +927,8 @@ If the account grows, the payer funds the additional rent. If it shrinks, lampor
               // Lesson 2.3 — Account Constraints (content)
               {
                 title: "Account Constraints",
-                description: "Use Anchor constraints for powerful account validation",
+                description:
+                  "Use Anchor constraints for powerful account validation",
                 type: "content",
                 order: 2,
                 xpReward: 25,
@@ -1044,7 +1052,8 @@ When using \`UncheckedAccount\` or \`AccountInfo\`, you MUST add a \`/// CHECK:\
               // Lesson 2.4 — Challenge: Account Validation (challenge)
               {
                 title: "Account Validation Challenge",
-                description: "Build a vault program with proper account constraints",
+                description:
+                  "Build a vault program with proper account constraints",
                 type: "challenge",
                 order: 3,
                 xpReward: 60,
@@ -1063,7 +1072,7 @@ The withdraw instruction should use the \`constraint\` attribute to ensure the v
                 challenge: {
                   create: {
                     prompt:
-                      "Complete the vault program with proper PDA initialization and withdrawal. The vault uses seeds [b\"vault\", authority.key()] and only the authority can withdraw. Use has_one and constraint attributes for validation.",
+                      'Complete the vault program with proper PDA initialization and withdrawal. The vault uses seeds [b"vault", authority.key()] and only the authority can withdraw. Use has_one and constraint attributes for validation.',
                     starterCode: `use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
@@ -1112,7 +1121,7 @@ pub struct Vault {
 }`,
                     language: "rust",
                     hints: [
-                      "For InitializeVault, use seeds = [b\"vault\", authority.key().as_ref()] and bump.",
+                      'For InitializeVault, use seeds = [b"vault", authority.key().as_ref()] and bump.',
                       "For Withdraw, reuse the stored bump: bump = vault.bump, and add constraint = vault.balance >= amount @ ErrorCode::InsufficientFunds.",
                       "Transfer lamports with vault.sub_lamports(amount)? and ctx.accounts.authority.add_lamports(amount)?.",
                     ],
@@ -1193,13 +1202,15 @@ pub enum ErrorCode {
                         {
                           name: "Vault PDA is created with correct authority and zero balance",
                           input: "initialize_vault()",
-                          expectedOutput: "vault.authority == authority.key() && vault.balance == 0",
+                          expectedOutput:
+                            "vault.authority == authority.key() && vault.balance == 0",
                           order: 0,
                         },
                         {
                           name: "Withdraw decreases vault balance and transfers lamports",
                           input: "withdraw(amount=1000)",
-                          expectedOutput: "vault.balance decreased by 1000, authority lamports increased",
+                          expectedOutput:
+                            "vault.balance decreased by 1000, authority lamports increased",
                           order: 1,
                         },
                         {
@@ -1217,7 +1228,8 @@ pub enum ErrorCode {
               // Lesson 2.5 — Challenge: Multi-Account Relationships (challenge)
               {
                 title: "Multi-Account Relationships",
-                description: "Build a program with related accounts and cross-references",
+                description:
+                  "Build a program with related accounts and cross-references",
                 type: "challenge",
                 order: 4,
                 xpReward: 60,
@@ -1397,19 +1409,22 @@ pub struct Task {
                         {
                           name: "Project is created with correct authority and zero task count",
                           input: "create_project(name='My Project')",
-                          expectedOutput: "project.authority == authority.key() && project.task_count == 0",
+                          expectedOutput:
+                            "project.authority == authority.key() && project.task_count == 0",
                           order: 0,
                         },
                         {
                           name: "Task is created and project task_count increments",
                           input: "add_task(title='First Task')",
-                          expectedOutput: "task.title == 'First Task' && project.task_count == 1",
+                          expectedOutput:
+                            "task.title == 'First Task' && project.task_count == 1",
                           order: 1,
                         },
                         {
                           name: "Second task uses incremented counter for unique PDA",
                           input: "add_task(title='Second Task')",
-                          expectedOutput: "task PDA derived from task_count=1, project.task_count == 2",
+                          expectedOutput:
+                            "task PDA derived from task_count=1, project.task_count == 2",
                           order: 2,
                         },
                       ],
@@ -1434,7 +1449,8 @@ pub struct Task {
               // Lesson 3.1 — #[derive(Accounts)] Deep Dive (content)
               {
                 title: "#[derive(Accounts)] Deep Dive",
-                description: "Master the accounts struct and how Anchor validates instruction contexts",
+                description:
+                  "Master the accounts struct and how Anchor validates instruction contexts",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -1545,7 +1561,8 @@ Consistent ordering makes your program more readable and easier to integrate.`,
               // Lesson 3.2 — Instruction Data (content)
               {
                 title: "Instruction Data",
-                description: "Pass and validate arguments to Anchor instructions",
+                description:
+                  "Pass and validate arguments to Anchor instructions",
                 type: "content",
                 order: 1,
                 xpReward: 25,
@@ -1685,7 +1702,8 @@ Solana transactions have a 1232-byte limit. Instruction data counts toward this.
               // Lesson 3.3 — Signers and Access Control (content)
               {
                 title: "Signers and Access Control",
-                description: "Implement authorization patterns in Anchor programs",
+                description:
+                  "Implement authorization patterns in Anchor programs",
                 type: "content",
                 order: 2,
                 xpReward: 25,
@@ -1824,7 +1842,8 @@ The PDA does not have a private key. Instead, the runtime verifies the seeds + b
               // Lesson 3.4 — Cross-Program Invocations (content)
               {
                 title: "Cross-Program Invocations",
-                description: "Call other Solana programs from within your Anchor program",
+                description:
+                  "Call other Solana programs from within your Anchor program",
                 type: "content",
                 order: 3,
                 xpReward: 25,
@@ -1950,7 +1969,8 @@ This is critical when you read an account's state after a CPI that modified it.
               // Lesson 3.5 — Challenge: Build a Payment Splitter (challenge)
               {
                 title: "Build a Payment Splitter",
-                description: "Create an instruction that splits a SOL payment between two recipients",
+                description:
+                  "Create an instruction that splits a SOL payment between two recipients",
                 type: "challenge",
                 order: 4,
                 xpReward: 60,
@@ -2156,19 +2176,23 @@ pub enum ErrorCode {
                       create: [
                         {
                           name: "SplitConfig is initialized with correct shares",
-                          input: "initialize_split(recipient_a, recipient_b, 7000)",
-                          expectedOutput: "config.share_a_bps == 7000 && config.authority == authority.key()",
+                          input:
+                            "initialize_split(recipient_a, recipient_b, 7000)",
+                          expectedOutput:
+                            "config.share_a_bps == 7000 && config.authority == authority.key()",
                           order: 0,
                         },
                         {
                           name: "Payment is split correctly (70/30)",
                           input: "split_payment(amount=1_000_000_000)",
-                          expectedOutput: "recipient_a receives 700_000_000, recipient_b receives 300_000_000",
+                          expectedOutput:
+                            "recipient_a receives 700_000_000, recipient_b receives 300_000_000",
                           order: 1,
                         },
                         {
                           name: "Initialization fails with invalid share > 10000",
-                          input: "initialize_split(recipient_a, recipient_b, 15000)",
+                          input:
+                            "initialize_split(recipient_a, recipient_b, 15000)",
                           expectedOutput: "Error: InvalidShare",
                           order: 2,
                         },
@@ -2181,7 +2205,8 @@ pub enum ErrorCode {
               // Lesson 3.6 — Challenge: CPI Token Transfer (challenge)
               {
                 title: "CPI Token Transfer",
-                description: "Implement a program that performs CPI to transfer SPL tokens",
+                description:
+                  "Implement a program that performs CPI to transfer SPL tokens",
                 type: "challenge",
                 order: 5,
                 xpReward: 60,
@@ -2368,13 +2393,15 @@ pub enum ErrorCode {
                         {
                           name: "Config is initialized with correct vault and mint",
                           input: "initialize_deposit()",
-                          expectedOutput: "config.vault == vault_ata.key() && config.mint == mint.key()",
+                          expectedOutput:
+                            "config.vault == vault_ata.key() && config.mint == mint.key()",
                           order: 0,
                         },
                         {
                           name: "Deposit transfers tokens and updates total",
                           input: "deposit(amount=1000)",
-                          expectedOutput: "vault_ata.amount increases by 1000, config.total_deposited == 1000",
+                          expectedOutput:
+                            "vault_ata.amount increases by 1000, config.total_deposited == 1000",
                           order: 1,
                         },
                         {
@@ -2405,7 +2432,8 @@ pub enum ErrorCode {
               // Lesson 4.1 — Account Serialization (content)
               {
                 title: "Account Serialization",
-                description: "Understand Borsh serialization and how Anchor stores data on-chain",
+                description:
+                  "Understand Borsh serialization and how Anchor stores data on-chain",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -2519,7 +2547,8 @@ const discriminator = data.slice(0, 8);
               // Lesson 4.2 — Anchor Events (content)
               {
                 title: "Anchor Events",
-                description: "Emit and consume events for off-chain indexing and monitoring",
+                description:
+                  "Emit and consume events for off-chain indexing and monitoring",
                 type: "content",
                 order: 1,
                 xpReward: 25,
@@ -2618,7 +2647,8 @@ For data that clients need to react to in real-time (trades, notifications), use
               // Lesson 4.3 — PDAs with Seeds and Bumps (content)
               {
                 title: "PDAs with Seeds and Bumps",
-                description: "Master Program Derived Addresses for deterministic account addressing",
+                description:
+                  "Master Program Derived Addresses for deterministic account addressing",
                 type: "content",
                 order: 2,
                 xpReward: 25,
@@ -2753,7 +2783,8 @@ Because PDAs are deterministic, two programs using the same seeds produce differ
               // Lesson 4.4 — Challenge: Event-Driven State Machine (challenge)
               {
                 title: "Event-Driven State Machine",
-                description: "Build a program with state transitions and event emissions",
+                description:
+                  "Build a program with state transitions and event emissions",
                 type: "challenge",
                 order: 3,
                 xpReward: 60,
@@ -2957,7 +2988,8 @@ pub enum ErrorCode {
                         {
                           name: "Escrow is created in Created state with correct fields",
                           input: "create_escrow(buyer, amount=1_000_000)",
-                          expectedOutput: "escrow.state == Created && escrow.amount == 1_000_000",
+                          expectedOutput:
+                            "escrow.state == Created && escrow.amount == 1_000_000",
                           order: 0,
                         },
                         {
@@ -2994,7 +3026,8 @@ pub enum ErrorCode {
               // Lesson 5.1 — Bankrun Tests (content)
               {
                 title: "Bankrun Tests",
-                description: "Write fast, lightweight tests using solana-bankrun",
+                description:
+                  "Write fast, lightweight tests using solana-bankrun",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -3123,7 +3156,8 @@ Use Bankrun for unit tests and fast iteration. Use the local validator for integ
               // Lesson 5.2 — Integration Tests (content)
               {
                 title: "Integration Tests",
-                description: "Write end-to-end tests with the Anchor test framework",
+                description:
+                  "Write end-to-end tests with the Anchor test framework",
                 type: "content",
                 order: 1,
                 xpReward: 25,
@@ -3420,7 +3454,8 @@ Always deploy to devnet first and run a full test suite before touching mainnet.
               // Lesson 5.4 — IDL Publishing (content)
               {
                 title: "IDL Publishing",
-                description: "Publish your IDL on-chain for discoverability and client generation",
+                description:
+                  "Publish your IDL on-chain for discoverability and client generation",
                 type: "content",
                 order: 3,
                 xpReward: 20,
@@ -3519,7 +3554,8 @@ The generated TypeScript types provide full autocomplete and type checking for:
               // Lesson 5.5 — Challenge: Write Bankrun Tests (challenge)
               {
                 title: "Write Bankrun Tests",
-                description: "Write comprehensive tests for a counter program using Bankrun",
+                description:
+                  "Write comprehensive tests for a counter program using Bankrun",
                 type: "challenge",
                 order: 4,
                 xpReward: 60,
@@ -3715,19 +3751,22 @@ describe("counter", () => {
                         {
                           name: "All 5 test cases are defined and structured",
                           input: "test suite structure",
-                          expectedOutput: "5 it() blocks covering init, increment, multi-increment, auth check, reset",
+                          expectedOutput:
+                            "5 it() blocks covering init, increment, multi-increment, auth check, reset",
                           order: 0,
                         },
                         {
                           name: "PDA is correctly derived in beforeAll",
                           input: "beforeAll setup",
-                          expectedOutput: "counterPda derived with seeds [b'counter', authority.key()]",
+                          expectedOutput:
+                            "counterPda derived with seeds [b'counter', authority.key()]",
                           order: 1,
                         },
                         {
                           name: "Error case properly catches and validates rejection",
                           input: "non-authority increment test",
-                          expectedOutput: "try/catch block that asserts error is thrown for unauthorized signer",
+                          expectedOutput:
+                            "try/catch block that asserts error is thrown for unauthorized signer",
                           order: 2,
                         },
                       ],
@@ -3739,7 +3778,8 @@ describe("counter", () => {
               // Lesson 5.6 — Challenge: Deployment Script (challenge)
               {
                 title: "Deployment Script",
-                description: "Write an automated deployment and verification script",
+                description:
+                  "Write an automated deployment and verification script",
                 type: "challenge",
                 order: 5,
                 xpReward: 60,
@@ -3920,7 +3960,8 @@ deploy({
                         {
                           name: "Script accepts --cluster argument and validates it",
                           input: "--cluster devnet",
-                          expectedOutput: "cluster = 'devnet', proceeds with deployment",
+                          expectedOutput:
+                            "cluster = 'devnet', proceeds with deployment",
                           order: 0,
                         },
                         {
@@ -3932,7 +3973,8 @@ deploy({
                         {
                           name: "Verification confirms program is executable",
                           input: "after successful deploy",
-                          expectedOutput: "programInfo.executable === true logged",
+                          expectedOutput:
+                            "programInfo.executable === true logged",
                           order: 2,
                         },
                       ],

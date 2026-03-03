@@ -1223,16 +1223,14 @@ pub enum StakingError {
                           name: "seeds include mint in CreatePosition",
                           input:
                             "Check that CreatePosition seeds include mint.key().as_ref()",
-                          expectedOutput:
-                            "seeds contain user key and mint key",
+                          expectedOutput: "seeds contain user key and mint key",
                           order: 0,
                         },
                         {
                           name: "seeds include mint in ModifyPosition",
                           input:
                             "Check that ModifyPosition seeds include mint.key().as_ref()",
-                          expectedOutput:
-                            "seeds contain user key and mint key",
+                          expectedOutput: "seeds contain user key and mint key",
                           order: 1,
                         },
                         {
@@ -2459,8 +2457,7 @@ pub enum LendingError {
                           name: "reentrancy guard released",
                           input:
                             "Check that locked is set back to false after the operation completes",
-                          expectedOutput:
-                            "locked is set to false after CPI",
+                          expectedOutput: "locked is set to false after CPI",
                           order: 2,
                         },
                       ],

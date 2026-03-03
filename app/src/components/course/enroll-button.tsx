@@ -4,7 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useWalletCompat as useWallet } from "@/lib/hooks/use-wallet-compat";
-import { Loader2, Wallet, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  Wallet,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { formatXP } from "@/lib/utils";
 import { TRACKS } from "@/lib/constants";
 import { CourseIllustration } from "@/components/icons/course-illustration";
@@ -39,7 +45,9 @@ export function EnrollButton({
   const { connected } = useWallet();
   const { enroll, state, txSignature, error, reset } = useEnrollOnChain();
 
-  const isPending = ["checking", "building", "signing", "confirming"].includes(state);
+  const isPending = ["checking", "building", "signing", "confirming"].includes(
+    state,
+  );
 
   async function handleEnroll() {
     const ok = await enroll(course.slug);
@@ -75,7 +83,9 @@ export function EnrollButton({
           {/* Progress bar */}
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("detail.progressLabel")}</span>
+              <span className="text-muted-foreground">
+                {t("detail.progressLabel")}
+              </span>
               <span className="font-medium">{progressPct}%</span>
             </div>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
@@ -112,7 +122,9 @@ export function EnrollButton({
             }
             className="block w-full rounded-xl bg-primary px-6 py-3 text-center text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0 active:scale-[0.98]"
           >
-            {progressPct === 100 ? t("detail.completedMessage") : t("catalog.continueLesson")}
+            {progressPct === 100
+              ? t("detail.completedMessage")
+              : t("catalog.continueLesson")}
           </Link>
 
           {progressPct === 100 && (
@@ -128,7 +140,8 @@ export function EnrollButton({
           <div>
             <p className="text-sm font-medium">Connect Wallet to Enroll</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Enrollment is recorded on-chain. Connect a Solana wallet to sign the transaction.
+              Enrollment is recorded on-chain. Connect a Solana wallet to sign
+              the transaction.
             </p>
           </div>
         </div>
@@ -164,27 +177,41 @@ export function EnrollButton({
 
       <div className="mt-6 space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("detail.difficulty")}</span>
+          <span className="text-muted-foreground">
+            {t("detail.difficulty")}
+          </span>
           <span className="font-medium capitalize">{course.difficulty}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("detail.estimatedTime")}</span>
+          <span className="text-muted-foreground">
+            {t("detail.estimatedTime")}
+          </span>
           <span className="font-medium">{course.duration}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("detail.lessonsList")}</span>
+          <span className="text-muted-foreground">
+            {t("detail.lessonsList")}
+          </span>
           <span className="font-medium">{course.lessonCount}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("detail.challengeLabel")}</span>
+          <span className="text-muted-foreground">
+            {t("detail.challengeLabel")}
+          </span>
           <span className="font-medium">{course.challengeCount}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("catalog.xpReward", { amount: "" })}</span>
-          <span className="font-medium text-xp">{formatXP(course.xpTotal)} XP</span>
+          <span className="text-muted-foreground">
+            {t("catalog.xpReward", { amount: "" })}
+          </span>
+          <span className="font-medium text-xp">
+            {formatXP(course.xpTotal)} XP
+          </span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{t("catalog.completionsCount", { count: "" })}</span>
+          <span className="text-muted-foreground">
+            {t("catalog.completionsCount", { count: "" })}
+          </span>
           <span className="font-medium">{course.totalCompletions}</span>
         </div>
       </div>

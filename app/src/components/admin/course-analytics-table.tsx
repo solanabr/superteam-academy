@@ -24,7 +24,15 @@ interface CourseAnalyticsTableProps {
 }
 
 /** Sort direction indicator icon — declared outside render to avoid re-creation. */
-function SortIcon({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: SortDir }) {
+function SortIcon({
+  field,
+  sortField,
+  sortDir,
+}: {
+  field: SortField;
+  sortField: SortField;
+  sortDir: SortDir;
+}) {
   if (sortField !== field) return null;
   return sortDir === "asc" ? (
     <ChevronUp className="ml-1 inline h-3.5 w-3.5" />
@@ -81,7 +89,11 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
             <tr className="border-b border-border/50">
               <th className={thClass} onClick={() => handleSort("title")}>
                 {t("course")}
-                <SortIcon sortField={sortField} sortDir={sortDir} field="title" />
+                <SortIcon
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  field="title"
+                />
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {t("track")}
@@ -89,16 +101,28 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
               <th className={thClass} onClick={() => handleSort("enrollments")}>
                 <Users className="mr-1 inline h-3.5 w-3.5" />
                 {t("enrollments")}
-                <SortIcon sortField={sortField} sortDir={sortDir} field="enrollments" />
+                <SortIcon
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  field="enrollments"
+                />
               </th>
               <th className={thClass} onClick={() => handleSort("completions")}>
                 <CheckCircle className="mr-1 inline h-3.5 w-3.5" />
                 {t("completions")}
-                <SortIcon sortField={sortField} sortDir={sortDir} field="completions" />
+                <SortIcon
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  field="completions"
+                />
               </th>
               <th className={thClass} onClick={() => handleSort("rate")}>
                 {t("completionRate")}
-                <SortIcon sortField={sortField} sortDir={sortDir} field="rate" />
+                <SortIcon
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  field="rate"
+                />
               </th>
               <th className={thClass} onClick={() => handleSort("xp")}>
                 {t("xpAvailable")}
@@ -136,7 +160,8 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
                             {course.difficulty}
                           </span>
                           <span>
-                            {course.lessonCount} {t("lessons")} · {course.challengeCount} {t("challenges")}
+                            {course.lessonCount} {t("lessons")} ·{" "}
+                            {course.challengeCount} {t("challenges")}
                           </span>
                         </div>
                       </div>

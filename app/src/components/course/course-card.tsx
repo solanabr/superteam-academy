@@ -25,9 +25,11 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
   const track = TRACKS[course.trackId];
 
   const ctaLabel =
-    progressPct === 100 ? "Completed" :
-    progressPct > 0     ? "Continue"  :
-                          "Start Course";
+    progressPct === 100
+      ? "Completed"
+      : progressPct > 0
+        ? "Continue"
+        : "Start Course";
 
   return (
     <Link
@@ -77,7 +79,7 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
           <span
             className={cn(
               "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm",
-              DIFFICULTY_BG[course.difficulty]
+              DIFFICULTY_BG[course.difficulty],
             )}
           >
             {DIFFICULTY_LABEL[course.difficulty] ?? course.difficulty}
@@ -92,7 +94,7 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
                 "h-full transition-all duration-500",
                 progressPct === 100
                   ? "bg-brazil-green"
-                  : "bg-gradient-to-r from-st-green to-brazil-teal"
+                  : "bg-gradient-to-r from-st-green to-brazil-teal",
               )}
               style={{ width: `${progressPct}%` }}
             />
@@ -134,12 +136,10 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
                 ? "border-brazil-green/40 bg-brazil-green/10 text-brazil-green"
                 : progressPct > 0
                   ? "border-primary/40 bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
-                  : "border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                  : "border-border text-foreground group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground",
             )}
           >
-            {progressPct === 100 && (
-              <CheckCircle2 className="mr-1.5 h-4 w-4" />
-            )}
+            {progressPct === 100 && <CheckCircle2 className="mr-1.5 h-4 w-4" />}
             {ctaLabel}
           </span>
         </div>

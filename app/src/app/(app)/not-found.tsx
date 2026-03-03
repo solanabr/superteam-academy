@@ -15,7 +15,9 @@ export default function NotFound() {
         <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
           <span className="text-4xl font-bold text-primary">404</span>
         </div>
-        <h1 className="mt-6 font-heading text-3xl font-bold">{t("notFound.title")}</h1>
+        <h1 className="mt-6 font-heading text-3xl font-bold">
+          {t("notFound.title")}
+        </h1>
         <p className="mt-3 max-w-md text-muted-foreground">
           {t("notFound.description")}
         </p>

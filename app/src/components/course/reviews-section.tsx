@@ -75,7 +75,6 @@ function saveReviews(courseSlug: string, reviews: Review[]): void {
   localStorage.setItem(getStorageKey(courseSlug), JSON.stringify(reviews));
 }
 
-
 /** Interactive star rating picker. */
 function StarRating({
   value,
@@ -103,7 +102,7 @@ function StarRating({
             disabled={readonly}
             className={cn(
               "transition-colors",
-              readonly ? "cursor-default" : "cursor-pointer"
+              readonly ? "cursor-default" : "cursor-pointer",
             )}
             onMouseEnter={() => !readonly && setHover(starNum)}
             onMouseLeave={() => !readonly && setHover(0)}
@@ -115,7 +114,7 @@ function StarRating({
                 px,
                 filled
                   ? "fill-brazil-gold text-brazil-gold"
-                  : "text-muted-foreground/30"
+                  : "text-muted-foreground/30",
               )}
             />
           </button>
@@ -166,11 +165,16 @@ function ReviewForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-5">
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-xl border border-border bg-card p-5"
+    >
       <h3 className="text-sm font-semibold">{t("writeReview")}</h3>
 
       <div className="mt-3">
-        <p className="mb-1.5 text-xs text-muted-foreground">{t("yourRating")}</p>
+        <p className="mb-1.5 text-xs text-muted-foreground">
+          {t("yourRating")}
+        </p>
         <StarRating value={rating} onChange={setRating} />
       </div>
 
@@ -201,12 +205,11 @@ function ReviewForm({
 
 export function ReviewsSection({ courseSlug }: ReviewsSectionProps) {
   const t = useTranslations("courses.detail");
-  const [reviews, setReviews] = useState<Review[]>(() => loadReviews(courseSlug));
-
-  const hasUserReview = useMemo(
-    () => reviews.some((r) => r.isUser),
-    [reviews]
+  const [reviews, setReviews] = useState<Review[]>(() =>
+    loadReviews(courseSlug),
   );
+
+  const hasUserReview = useMemo(() => reviews.some((r) => r.isUser), [reviews]);
 
   const { avg, distribution } = useMemo(() => {
     if (reviews.length === 0) return { avg: 0, distribution: [0, 0, 0, 0, 0] };
@@ -231,7 +234,7 @@ export function ReviewsSection({ courseSlug }: ReviewsSectionProps) {
       setReviews(updated);
       saveReviews(courseSlug, updated);
     },
-    [reviews, courseSlug]
+    [reviews, courseSlug],
   );
 
   return (
@@ -247,7 +250,9 @@ export function ReviewsSection({ courseSlug }: ReviewsSectionProps) {
       {/* Aggregate Rating */}
       <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
         <div className="flex flex-col items-center rounded-xl border border-border bg-card px-6 py-5">
-          <span className="font-heading text-4xl font-bold">{avg.toFixed(1)}</span>
+          <span className="font-heading text-4xl font-bold">
+            {avg.toFixed(1)}
+          </span>
           <StarRating value={Math.round(avg)} readonly size="sm" />
           <p className="mt-1 text-xs text-muted-foreground">
             {t("reviewsCount", { count: reviews.length })}
@@ -257,9 +262,14 @@ export function ReviewsSection({ courseSlug }: ReviewsSectionProps) {
         <div className="flex flex-1 flex-col gap-1.5">
           {[5, 4, 3, 2, 1].map((star) => (
             <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-3 text-right text-muted-foreground">{star}</span>
+              <span className="w-3 text-right text-muted-foreground">
+                {star}
+              </span>
               <Star className="h-3 w-3 fill-brazil-gold text-brazil-gold" />
-              <RatingBar count={distribution[star - 1]} total={reviews.length} />
+              <RatingBar
+                count={distribution[star - 1]}
+                total={reviews.length}
+              />
               <span className="w-5 text-right text-muted-foreground">
                 {distribution[star - 1]}
               </span>

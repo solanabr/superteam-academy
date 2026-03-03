@@ -52,7 +52,7 @@ function generateId(): string {
 export function recordActivity(
   userId: string,
   type: ActivityType,
-  meta: Record<string, string>
+  meta: Record<string, string>,
 ): void {
   const activities = getActivities(userId);
   const entry: ActivityEntry = {
@@ -74,7 +74,7 @@ export function recordActivity(
  */
 export function getRecentActivities(
   userId: string,
-  limit = 10
+  limit = 10,
 ): ActivityEntry[] {
   return getActivities(userId).slice(0, limit);
 }

@@ -69,7 +69,14 @@ const PATH_ICONS: Record<string, typeof Layers> = {
   Layers: Layers,
 };
 
-const PARTNER_NAMES = ["Solana", "Superteam", "Metaplex", "Helius", "Anchor", "Jito"];
+const PARTNER_NAMES = [
+  "Solana",
+  "Superteam",
+  "Metaplex",
+  "Helius",
+  "Anchor",
+  "Jito",
+];
 
 export default async function HomePage() {
   const [courses, t, stats] = await Promise.all([
@@ -79,9 +86,15 @@ export default async function HomePage() {
   ]);
 
   const STATS = [
-    { labelKey: "socialProof.learnersLabel" as const, value: stats.learnerCount },
+    {
+      labelKey: "socialProof.learnersLabel" as const,
+      value: stats.learnerCount,
+    },
     { labelKey: "socialProof.coursesLabel" as const, value: stats.courseCount },
-    { labelKey: "socialProof.credentialsLabel" as const, value: stats.credentialCount },
+    {
+      labelKey: "socialProof.credentialsLabel" as const,
+      value: stats.credentialCount,
+    },
     { labelKey: "socialProof.xpLabel" as const, value: stats.totalXpFormatted },
   ];
   const featuredCourses = courses.slice(0, 3);
@@ -136,7 +149,9 @@ export default async function HomePage() {
               <div className="text-2xl font-bold text-gradient-gold sm:text-3xl">
                 {stat.value}
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">{t(stat.labelKey)}</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {t(stat.labelKey)}
+              </div>
             </div>
           ))}
         </div>
@@ -168,9 +183,16 @@ export default async function HomePage() {
                 >
                   <Icon className="h-6 w-6" style={{ color: path.color }} />
                 </div>
-                <h3 className="font-heading text-lg font-semibold">{path.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{path.description}</p>
-                <div className="mt-4 flex items-center gap-1 text-sm font-medium" style={{ color: path.color }}>
+                <h3 className="font-heading text-lg font-semibold">
+                  {path.name}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {path.description}
+                </p>
+                <div
+                  className="mt-4 flex items-center gap-1 text-sm font-medium"
+                  style={{ color: path.color }}
+                >
                   {t("paths.coursesCount", { count: path.courses.length })}
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
@@ -215,7 +237,9 @@ export default async function HomePage() {
                     variant={Number(course.id) - 1}
                   />
                   <div className="absolute left-3 top-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_BG[course.difficulty]}`}>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_BG[course.difficulty]}`}
+                    >
                       {course.difficulty}
                     </span>
                   </div>
@@ -231,15 +255,23 @@ export default async function HomePage() {
 
                   <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-3">
-                      <span>{t("popularCourses.lessonsCount", { count: course.lessonCount })}</span>
+                      <span>
+                        {t("popularCourses.lessonsCount", {
+                          count: course.lessonCount,
+                        })}
+                      </span>
                       <span>{course.duration}</span>
                     </div>
-                    <span className="font-medium text-xp">{course.xpTotal} XP</span>
+                    <span className="font-medium text-xp">
+                      {course.xpTotal} XP
+                    </span>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      {t("popularCourses.enrolled", { count: course.totalEnrollments.toLocaleString() })}
+                      {t("popularCourses.enrolled", {
+                        count: course.totalEnrollments.toLocaleString(),
+                      })}
                     </span>
                     <div className="flex items-center gap-1 text-sm font-medium text-primary opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
                       {t("popularCourses.start")}
@@ -283,11 +315,18 @@ export default async function HomePage() {
               </p>
               <div className="mt-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-st-green to-brazil-teal text-sm font-bold text-white">
-                  {(t(`testimonials.items.${i}.name`) as string).split(" ").map((w: string) => w[0]).join("")}
+                  {(t(`testimonials.items.${i}.name`) as string)
+                    .split(" ")
+                    .map((w: string) => w[0])
+                    .join("")}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">{t(`testimonials.items.${i}.name`)}</p>
-                  <p className="text-xs text-muted-foreground">{t(`testimonials.items.${i}.role`)}</p>
+                  <p className="text-sm font-semibold">
+                    {t(`testimonials.items.${i}.name`)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(`testimonials.items.${i}.role`)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -335,7 +374,9 @@ export default async function HomePage() {
               key={feature.titleKey}
               className="group rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/10 hover:border-primary/20"
             >
-              <feature.icon className={`h-8 w-8 ${feature.color} transition-transform duration-300 group-hover:scale-110`} />
+              <feature.icon
+                className={`h-8 w-8 ${feature.color} transition-transform duration-300 group-hover:scale-110`}
+              />
               <h3 className="mt-4 font-heading text-lg font-semibold">
                 {t(feature.titleKey)}
               </h3>

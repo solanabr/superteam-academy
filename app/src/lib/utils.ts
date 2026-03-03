@@ -22,7 +22,8 @@ export function xpProgress(xp: number): {
   const level = getLevel(xp);
   const currentLevelXp = xpForLevel(level);
   const nextLevelXp = xpForLevel(level + 1);
-  const progress = ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
+  const progress =
+    ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
   return { level, currentLevelXp, nextLevelXp, progress };
 }
 

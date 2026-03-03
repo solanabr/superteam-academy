@@ -1,7 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CheckCircle2, BookOpen, Code, Zap, Clock, GraduationCap, Rocket } from "lucide-react";
+import {
+  CheckCircle2,
+  BookOpen,
+  Code,
+  Zap,
+  Clock,
+  GraduationCap,
+  Rocket,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
@@ -14,7 +22,10 @@ interface CourseCreatorPreviewProps {
   onPublish: () => void;
 }
 
-export function CourseCreatorPreview({ draft, onPublish }: CourseCreatorPreviewProps) {
+export function CourseCreatorPreview({
+  draft,
+  onPublish,
+}: CourseCreatorPreviewProps) {
   const t = useTranslations("admin.creator.preview");
   const trackMeta = TRACKS[draft.trackId];
   const { lessonCount } = calcCourseCounts(draft.modules);
@@ -84,7 +95,14 @@ export function CourseCreatorPreview({ draft, onPublish }: CourseCreatorPreviewP
                     {draft.difficulty}
                   </Badge>
                   {trackMeta && (
-                    <Badge variant="outline" className="text-xs" style={{ borderColor: trackMeta.color, color: trackMeta.color }}>
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={{
+                        borderColor: trackMeta.color,
+                        color: trackMeta.color,
+                      }}
+                    >
                       {trackMeta.display}
                     </Badge>
                   )}
@@ -133,10 +151,16 @@ export function CourseCreatorPreview({ draft, onPublish }: CourseCreatorPreviewP
                       {mod.title || t("unnamedModule")}
                     </p>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{mod.lessons.length} {t("lessons")}</span>
+                      <span>
+                        {mod.lessons.length} {t("lessons")}
+                      </span>
                       <span className="flex items-center gap-0.5">
                         <Code className="h-3 w-3 text-brazil-gold" />
-                        {mod.lessons.filter((l) => l.type === "challenge").length} {t("challenges")}
+                        {
+                          mod.lessons.filter((l) => l.type === "challenge")
+                            .length
+                        }{" "}
+                        {t("challenges")}
                       </span>
                     </div>
                   </div>

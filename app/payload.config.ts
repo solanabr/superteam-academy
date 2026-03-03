@@ -2,6 +2,8 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
+import { resendAdapter } from "@payloadcms/email-resend";
+import * as Sentry from "@sentry/nextjs";
 import sharp from "sharp";
 import { Courses } from "./src/collections/Courses";
 import { Media } from "./src/collections/Media";
@@ -47,6 +49,25 @@ export default buildConfig({
     schemaName: "payload",
   }),
   editor: lexicalEditor(),
+  email: process.env.RESEND_API_KEY
+    ? resendAdapter({
+        defaultFromAddress: "noreply@superteamacademy.com",
+        defaultFromName: "Superteam Academy",
+        apiKey: process.env.RESEND_API_KEY,
+      })
+    : undefined,
+  folders: { browseByFolder: true },
+  hooks: {
+    afterError: [
+      ({ error }) => {
+        if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+          Sentry.captureException(error, {
+            tags: { source: "payload-cms" },
+          });
+        }
+      },
+    ],
+  },
   plugins: [
     s3Storage({
       enabled: s3Enabled,
@@ -57,7 +78,10 @@ export default buildConfig({
           accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
           secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",
         },
-        ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }),
+        ...(process.env.S3_ENDPOINT && {
+          endpoint: process.env.S3_ENDPOINT,
+          forcePathStyle: true,
+        }),
       },
       collections: {
         media: true,

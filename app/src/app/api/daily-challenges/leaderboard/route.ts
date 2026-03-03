@@ -32,7 +32,13 @@ export async function GET() {
   const userIds = withTime.map((c) => c.userId);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, displayName: true, name: true, wallet: true, image: true },
+    select: {
+      id: true,
+      displayName: true,
+      name: true,
+      wallet: true,
+      image: true,
+    },
   });
   const userMap = new Map(users.map((u) => [u.id, u]));
 

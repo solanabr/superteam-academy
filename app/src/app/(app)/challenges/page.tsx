@@ -21,7 +21,9 @@ export default async function ChallengesPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t("subtitle")}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {t("subtitle")}
+          </p>
         </div>
       </div>
 
@@ -51,12 +53,15 @@ export default async function ChallengesPage() {
       </div>
 
       {/* Past challenges */}
-      <div className="mb-10">
+      <div className="mb-6">
         <PastChallenges
           headingLabel={t("pastChallenges")}
           completedLabel={t("completed")}
           xpLabel={t("xpReward")}
           lockedLabel={t("locked")}
+          showMoreLabel={t("showMore")}
+          remainingLabel={t("remaining")}
+          browseAllLabel={t("browseAll")}
         />
       </div>
 

@@ -27,7 +27,11 @@ import {
   CredentialDisplay,
   CourseHistory,
 } from "@/components/profile";
-import type { SkillDataPoint, CredentialItem, CompletedCourseItem } from "@/components/profile";
+import type {
+  SkillDataPoint,
+  CredentialItem,
+  CompletedCourseItem,
+} from "@/components/profile";
 import { MOCK_PUBLIC_PROFILES } from "../../../prisma/seed-data/profiles";
 export type { MockProfile } from "../../../prisma/seed-data/profiles";
 export { MOCK_PUBLIC_PROFILES };
@@ -44,14 +48,23 @@ interface ApiProfile {
   level: number;
   streak: { currentStreak: number };
   achievements: Achievement[];
-  credentials: Array<{ trackId: number; trackName: string; currentLevel: number; coursesCompleted: number; totalXpEarned: number }>;
+  credentials: Array<{
+    trackId: number;
+    trackName: string;
+    currentLevel: number;
+    coursesCompleted: number;
+    totalXpEarned: number;
+  }>;
   coursesCompleted: string[];
   enrolledCourses: string[];
   skillData?: SkillDataPoint[];
 }
 
 /** Derive credentials from completed courses */
-function deriveCredentials(completedSlugs: string[], courseList: Course[]): CredentialItem[] {
+function deriveCredentials(
+  completedSlugs: string[],
+  courseList: Course[],
+): CredentialItem[] {
   const trackMap: Record<number, { count: number; xp: number }> = {};
   for (const slug of completedSlugs) {
     const course = courseList.find((c) => c.slug === slug || c.id === slug);
@@ -68,7 +81,12 @@ function deriveCredentials(completedSlugs: string[], courseList: Course[]): Cred
       trackId,
       trackName: track?.display || "Unknown",
       currentLevel: Math.min(data.count, 3),
-      label: data.count >= 3 ? "Advanced" : data.count >= 2 ? "Intermediate" : "Beginner",
+      label:
+        data.count >= 3
+          ? "Advanced"
+          : data.count >= 2
+            ? "Intermediate"
+            : "Beginner",
       coursesCompleted: data.count,
       totalXp: data.xp,
     };
@@ -76,17 +94,25 @@ function deriveCredentials(completedSlugs: string[], courseList: Course[]): Cred
 }
 
 /** Derive completed course items from slugs */
-function deriveCompletedCourses(slugs: string[], courseList: Course[]): CompletedCourseItem[] {
+function deriveCompletedCourses(
+  slugs: string[],
+  courseList: Course[],
+): CompletedCourseItem[] {
   return slugs
     .map((slug) => {
       const course = courseList.find((c) => c.slug === slug || c.id === slug);
-      return course ? { slug, title: course.title, xpTotal: course.xpTotal } : null;
+      return course
+        ? { slug, title: course.title, xpTotal: course.xpTotal }
+        : null;
     })
     .filter((c): c is CompletedCourseItem => c !== null);
 }
 
 /** Derive skill data from completed courses */
-function deriveSkillData(completedSlugs: string[], courseList: Course[]): SkillDataPoint[] {
+function deriveSkillData(
+  completedSlugs: string[],
+  courseList: Course[],
+): SkillDataPoint[] {
   const trackXP: Record<string, number> = {};
   for (const slug of completedSlugs) {
     const course = courseList.find((c) => c.slug === slug || c.id === slug);
@@ -106,13 +132,20 @@ function deriveSkillData(completedSlugs: string[], courseList: Course[]): SkillD
 // ──────────────────────────────────────────────
 // Share buttons component
 // ──────────────────────────────────────────────
-function ShareActions({ username, displayName }: { username: string; displayName: string }) {
+function ShareActions({
+  username,
+  displayName,
+}: {
+  username: string;
+  displayName: string;
+}) {
   const t = useTranslations("profile");
   const [copied, setCopied] = useState(false);
 
-  const profileUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/profile/${username}`
-    : `/profile/${username}`;
+  const profileUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/profile/${username}`
+      : `/profile/${username}`;
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(profileUrl);
@@ -121,7 +154,7 @@ function ShareActions({ username, displayName }: { username: string; displayName
   }, [profileUrl]);
 
   const twitterText = encodeURIComponent(
-    `Check out ${displayName}'s learning profile on Superteam Academy! 🚀\n\n${profileUrl}\n\n@SuperteamBR`
+    `Check out ${displayName}'s learning profile on Superteam Academy! 🚀\n\n${profileUrl}\n\n@SuperteamBR`,
   );
   const twitterUrl = `https://twitter.com/intent/tweet?text=${twitterText}`;
 
@@ -176,7 +209,9 @@ function StatCard({
 }) {
   return (
     <div className="glass flex items-center gap-3 rounded-xl p-4">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${bgClass}`}>
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-full ${bgClass}`}
+      >
         {icon}
       </div>
       <div>
@@ -194,7 +229,9 @@ export interface PublicProfileClientProps {
   username: string;
 }
 
-export default function PublicProfileClient({ username }: PublicProfileClientProps) {
+export default function PublicProfileClient({
+  username,
+}: PublicProfileClientProps) {
   const t = useTranslations("profile");
   const tg = useTranslations("gamification");
   const { courses: allCourses } = useCourses();
@@ -245,7 +282,9 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
         streak: apiProfile.streak.currentStreak,
         achievements: apiProfile.achievements,
         completedSlugs: apiProfile.coursesCompleted,
-        skillData: apiProfile.skillData ?? deriveSkillData(apiProfile.coursesCompleted, allCourses),
+        skillData:
+          apiProfile.skillData ??
+          deriveSkillData(apiProfile.coursesCompleted, allCourses),
       }
     : {
         displayName: mockProfile!.displayName,
@@ -262,7 +301,10 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
   const level = getLevel(profile.xp);
   const progress = xpProgress(profile.xp);
   const claimedCount = profile.achievements.filter((a) => a.claimed).length;
-  const completedCourses = deriveCompletedCourses(profile.completedSlugs, allCourses);
+  const completedCourses = deriveCompletedCourses(
+    profile.completedSlugs,
+    allCourses,
+  );
   const credentials = deriveCredentials(profile.completedSlugs, allCourses);
 
   const initials = profile.displayName
@@ -297,7 +339,9 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
         socialLinks={profile.socialLinks}
         joinDate={joinDate}
         labels={{ memberSince: t("memberSince", { date: joinDate }) }}
-        actionSlot={<ShareActions username={username} displayName={profile.displayName} />}
+        actionSlot={
+          <ShareActions username={username} displayName={profile.displayName} />
+        }
       />
 
       {/* Stats Row */}
@@ -335,7 +379,9 @@ export default function PublicProfileClient({ username }: PublicProfileClientPro
             <Flame className="h-5 w-5 animate-flame text-streak" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">{tg("streak")}</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {tg("streak")}
+            </p>
             <p className="text-lg font-bold text-streak">{profile.streak}d</p>
           </div>
         </div>

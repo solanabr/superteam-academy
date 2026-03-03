@@ -3,12 +3,27 @@ import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { resolveUserId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/db";
-import { loadBackendSigner, getServerConnection, getTrackCollectionPubkey } from "@/lib/onchain/backend-signer";
+import {
+  loadBackendSigner,
+  getServerConnection,
+  getTrackCollectionPubkey,
+} from "@/lib/onchain/backend-signer";
 import { buildIssueCredentialTransaction } from "@/lib/onchain/instructions/issue-credential";
 import { buildUpgradeCredentialTransaction } from "@/lib/onchain/instructions/upgrade-credential";
-import { deserializeConfig, deserializeCourse, deserializeEnrollment } from "@/lib/onchain/deserializers";
-import { getConfigPda, getCoursePda, getEnrollmentPda } from "@/lib/onchain/pda";
-import { TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@/lib/onchain/constants";
+import {
+  deserializeConfig,
+  deserializeCourse,
+  deserializeEnrollment,
+} from "@/lib/onchain/deserializers";
+import {
+  getConfigPda,
+  getCoursePda,
+  getEnrollmentPda,
+} from "@/lib/onchain/pda";
+import {
+  TOKEN_2022_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@/lib/onchain/constants";
 import { parseAnchorError } from "@/lib/onchain/program-errors";
 import { parseEventsFromLogs } from "@/lib/onchain/events";
 
@@ -27,10 +42,16 @@ export async function POST(request: NextRequest) {
   };
 
   if (!courseId || !learnerWallet) {
-    return NextResponse.json({ error: "Missing courseId or learnerWallet" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing courseId or learnerWallet" },
+      { status: 400 },
+    );
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { wallet: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { wallet: true },
+  });
   if (!user?.wallet || user.wallet !== learnerWallet) {
     return NextResponse.json({ error: "Wallet mismatch" }, { status: 403 });
   }
@@ -39,7 +60,10 @@ export async function POST(request: NextRequest) {
   try {
     learner = new PublicKey(learnerWallet);
   } catch {
-    return NextResponse.json({ error: "Invalid learnerWallet" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid learnerWallet" },
+      { status: 400 },
+    );
   }
 
   const connection = getServerConnection();
@@ -48,7 +72,10 @@ export async function POST(request: NextRequest) {
   const [enrollmentPda] = getEnrollmentPda(courseId, learner);
   const enrollmentInfo = await connection.getAccountInfo(enrollmentPda);
   if (!enrollmentInfo) {
-    return NextResponse.json({ error: "Not enrolled in this course" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Not enrolled in this course" },
+      { status: 400 },
+    );
   }
   const enrollment = deserializeEnrollment(Buffer.from(enrollmentInfo.data));
   if (!enrollment.completedAt) {
@@ -67,7 +94,10 @@ export async function POST(request: NextRequest) {
   const [coursePda] = getCoursePda(courseId);
   const courseInfo = await connection.getAccountInfo(coursePda);
   if (!courseInfo) {
-    return NextResponse.json({ error: "Course not found on-chain" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Course not found on-chain" },
+      { status: 404 },
+    );
   }
   const course = deserializeCourse(Buffer.from(courseInfo.data));
 
@@ -109,7 +139,8 @@ export async function POST(request: NextRequest) {
 
   const backendSigner = loadBackendSigner();
   const credentialName = name ?? `${courseId} Credential`;
-  const credentialUri = metadataUri ?? `https://academy.superteam.fun/api/credentials/${courseId}`;
+  const credentialUri =
+    metadataUri ?? `https://academy.superteam.fun/api/credentials/${courseId}`;
 
   try {
     let signature: string;
@@ -134,9 +165,15 @@ export async function POST(request: NextRequest) {
 
       tx.sign(backendSigner);
 
-      signature = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+      signature = await connection.sendRawTransaction(tx.serialize(), {
+        skipPreflight: false,
+      });
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
+      await connection.confirmTransaction(
+        { signature, blockhash, lastValidBlockHeight },
+        "confirmed",
+      );
 
       let assetFromEvent: string | undefined;
       try {
@@ -152,23 +189,30 @@ export async function POST(request: NextRequest) {
       assetAddress = assetFromEvent ?? existingAsset.toBase58();
     } else {
       // Issue a new credential NFT
-      const { transaction: tx, credentialAssetKeypair } = await buildIssueCredentialTransaction({
-        courseId,
-        learner,
-        trackCollection,
-        name: credentialName,
-        uri: credentialUri,
-        coursesCompleted: 1,
-        totalXp,
-        backendSigner: backendSigner.publicKey,
-        connection,
-      });
+      const { transaction: tx, credentialAssetKeypair } =
+        await buildIssueCredentialTransaction({
+          courseId,
+          learner,
+          trackCollection,
+          name: credentialName,
+          uri: credentialUri,
+          coursesCompleted: 1,
+          totalXp,
+          backendSigner: backendSigner.publicKey,
+          connection,
+        });
 
       tx.sign(backendSigner, credentialAssetKeypair);
 
-      signature = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+      signature = await connection.sendRawTransaction(tx.serialize(), {
+        skipPreflight: false,
+      });
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
+      await connection.confirmTransaction(
+        { signature, blockhash, lastValidBlockHeight },
+        "confirmed",
+      );
 
       let assetFromEvent: string | undefined;
       try {
@@ -181,7 +225,8 @@ export async function POST(request: NextRequest) {
       } catch {
         // Non-fatal
       }
-      assetAddress = assetFromEvent ?? credentialAssetKeypair.publicKey.toBase58();
+      assetAddress =
+        assetFromEvent ?? credentialAssetKeypair.publicKey.toBase58();
     }
 
     // Upsert UserCredential in DB with the on-chain asset address
@@ -207,19 +252,33 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (dbErr) {
-      console.error("[onchain/issue-credential] DB upsert failed after on-chain success", dbErr);
+      console.error(
+        "[onchain/issue-credential] DB upsert failed after on-chain success",
+        dbErr,
+      );
     }
 
-    return NextResponse.json({ success: true, signature, credentialAsset: assetAddress });
+    return NextResponse.json({
+      success: true,
+      signature,
+      credentialAsset: assetAddress,
+    });
   } catch (err) {
     const { name: errorName } = parseAnchorError(err);
 
     if (errorName === "CourseNotFinalized") {
-      return NextResponse.json({ error: "CourseNotFinalized" }, { status: 400 });
+      return NextResponse.json(
+        { error: "CourseNotFinalized" },
+        { status: 400 },
+      );
     }
 
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[onchain/issue-credential]", { userId, courseId, error: msg });
+    console.error("[onchain/issue-credential]", {
+      userId,
+      courseId,
+      error: msg,
+    });
     return NextResponse.json({ error: errorName ?? msg }, { status: 500 });
   }
 }

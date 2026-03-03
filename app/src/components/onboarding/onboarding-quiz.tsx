@@ -37,44 +37,145 @@ interface OnboardingQuizProps {
   courses: Course[];
 }
 
-const STEP_KEYS = ["experience", "interests", "goal", "pace", "assessment"] as const;
+const STEP_KEYS = [
+  "experience",
+  "interests",
+  "goal",
+  "pace",
+  "assessment",
+] as const;
 
 function buildExperienceOptions(t: (key: string) => string): QuizOption[] {
   return [
-    { id: "beginner", label: t("experience.beginner.label"), description: t("experience.beginner.description"), icon: Baby },
-    { id: "web-dev", label: t("experience.webDev.label"), description: t("experience.webDev.description"), icon: Globe },
-    { id: "dev-new-solana", label: t("experience.devNewSolana.label"), description: t("experience.devNewSolana.description"), icon: Code },
-    { id: "solana-dev", label: t("experience.solanaDev.label"), description: t("experience.solanaDev.description"), icon: Rocket },
+    {
+      id: "beginner",
+      label: t("experience.beginner.label"),
+      description: t("experience.beginner.description"),
+      icon: Baby,
+    },
+    {
+      id: "web-dev",
+      label: t("experience.webDev.label"),
+      description: t("experience.webDev.description"),
+      icon: Globe,
+    },
+    {
+      id: "dev-new-solana",
+      label: t("experience.devNewSolana.label"),
+      description: t("experience.devNewSolana.description"),
+      icon: Code,
+    },
+    {
+      id: "solana-dev",
+      label: t("experience.solanaDev.label"),
+      description: t("experience.solanaDev.description"),
+      icon: Rocket,
+    },
   ];
 }
 
 function buildInterestOptions(t: (key: string) => string): QuizOption[] {
   return [
-    { id: "rust", label: t("interests.rust.label"), description: t("interests.rust.description"), icon: Code },
-    { id: "anchor", label: t("interests.anchor.label"), description: t("interests.anchor.description"), icon: Anchor },
-    { id: "defi", label: t("interests.defi.label"), description: t("interests.defi.description"), icon: TrendingUp },
-    { id: "frontend", label: t("interests.frontend.label"), description: t("interests.frontend.description"), icon: Layout },
-    { id: "security", label: t("interests.security.label"), description: t("interests.security.description"), icon: Shield },
-    { id: "token", label: t("interests.token.label"), description: t("interests.token.description"), icon: Coins },
+    {
+      id: "rust",
+      label: t("interests.rust.label"),
+      description: t("interests.rust.description"),
+      icon: Code,
+    },
+    {
+      id: "anchor",
+      label: t("interests.anchor.label"),
+      description: t("interests.anchor.description"),
+      icon: Anchor,
+    },
+    {
+      id: "defi",
+      label: t("interests.defi.label"),
+      description: t("interests.defi.description"),
+      icon: TrendingUp,
+    },
+    {
+      id: "frontend",
+      label: t("interests.frontend.label"),
+      description: t("interests.frontend.description"),
+      icon: Layout,
+    },
+    {
+      id: "security",
+      label: t("interests.security.label"),
+      description: t("interests.security.description"),
+      icon: Shield,
+    },
+    {
+      id: "token",
+      label: t("interests.token.label"),
+      description: t("interests.token.description"),
+      icon: Coins,
+    },
   ];
 }
 
 function buildGoalOptions(t: (key: string) => string): QuizOption[] {
   return [
-    { id: "first-program", label: t("goal.firstProgram.label"), description: t("goal.firstProgram.description"), icon: Rocket },
-    { id: "job", label: t("goal.job.label"), description: t("goal.job.description"), icon: Briefcase },
-    { id: "project", label: t("goal.project.label"), description: t("goal.project.description"), icon: GraduationCap },
-    { id: "fun", label: t("goal.fun.label"), description: t("goal.fun.description"), icon: Heart },
-    { id: "contribute", label: t("goal.contribute.label"), description: t("goal.contribute.description"), icon: Users },
+    {
+      id: "first-program",
+      label: t("goal.firstProgram.label"),
+      description: t("goal.firstProgram.description"),
+      icon: Rocket,
+    },
+    {
+      id: "job",
+      label: t("goal.job.label"),
+      description: t("goal.job.description"),
+      icon: Briefcase,
+    },
+    {
+      id: "project",
+      label: t("goal.project.label"),
+      description: t("goal.project.description"),
+      icon: GraduationCap,
+    },
+    {
+      id: "fun",
+      label: t("goal.fun.label"),
+      description: t("goal.fun.description"),
+      icon: Heart,
+    },
+    {
+      id: "contribute",
+      label: t("goal.contribute.label"),
+      description: t("goal.contribute.description"),
+      icon: Users,
+    },
   ];
 }
 
 function buildPaceOptions(t: (key: string) => string): QuizOption[] {
   return [
-    { id: "casual", label: t("pace.casual.label"), description: t("pace.casual.description"), icon: Coffee },
-    { id: "consistent", label: t("pace.consistent.label"), description: t("pace.consistent.description"), icon: Timer },
-    { id: "intensive", label: t("pace.intensive.label"), description: t("pace.intensive.description"), icon: Zap },
-    { id: "weekend", label: t("pace.weekend.label"), description: t("pace.weekend.description"), icon: CalendarDays },
+    {
+      id: "casual",
+      label: t("pace.casual.label"),
+      description: t("pace.casual.description"),
+      icon: Coffee,
+    },
+    {
+      id: "consistent",
+      label: t("pace.consistent.label"),
+      description: t("pace.consistent.description"),
+      icon: Timer,
+    },
+    {
+      id: "intensive",
+      label: t("pace.intensive.label"),
+      description: t("pace.intensive.description"),
+      icon: Zap,
+    },
+    {
+      id: "weekend",
+      label: t("pace.weekend.label"),
+      description: t("pace.weekend.description"),
+      icon: CalendarDays,
+    },
   ];
 }
 
@@ -91,7 +192,9 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     goal: "",
     pace: "",
   });
-  const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
+  const [assessmentAnswers, setAssessmentAnswers] = useState<
+    Record<string, string>
+  >({});
   const [skillLevel, setSkillLevel] = useState<string | null>(null);
   const [skillScore, setSkillScore] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -104,7 +207,7 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     (key: "experience" | "goal" | "pace", id: string) => {
       setAnswers((prev) => ({ ...prev, [key]: id }));
     },
-    []
+    [],
   );
 
   const handleMultiSelect = useCallback((id: string) => {
@@ -116,9 +219,12 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     }));
   }, []);
 
-  const handleAssessmentAnswer = useCallback((questionId: string, optionId: string) => {
-    setAssessmentAnswers((prev) => ({ ...prev, [questionId]: optionId }));
-  }, []);
+  const handleAssessmentAnswer = useCallback(
+    (questionId: string, optionId: string) => {
+      setAssessmentAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+    },
+    [],
+  );
 
   const assessmentComplete = Object.keys(assessmentAnswers).length === 6;
 
@@ -174,7 +280,10 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
           const res = await fetch("/api/onboarding", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ preferences, assessment: assessmentAnswers }),
+            body: JSON.stringify({
+              preferences,
+              assessment: assessmentAnswers,
+            }),
           });
           const data = await res.json();
           setSkillLevel(data.skillLevel ?? null);
@@ -188,7 +297,10 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
       } else {
         // Unauthenticated — save to localStorage
         try {
-          localStorage.setItem("sta-onboarding", JSON.stringify({ ...preferences, assessment: assessmentAnswers }));
+          localStorage.setItem(
+            "sta-onboarding",
+            JSON.stringify({ ...preferences, assessment: assessmentAnswers }),
+          );
         } catch {
           // Silently ignore storage errors
         }
@@ -204,7 +316,9 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
     if (step > 0) setStep(step - 1);
   };
 
-  const experienceOptions = buildExperienceOptions((key) => t(`questions.${key}`));
+  const experienceOptions = buildExperienceOptions((key) =>
+    t(`questions.${key}`),
+  );
   const interestOptions = buildInterestOptions((key) => t(`questions.${key}`));
   const goalOptions = buildGoalOptions((key) => t(`questions.${key}`));
   const paceOptions = buildPaceOptions((key) => t(`questions.${key}`));

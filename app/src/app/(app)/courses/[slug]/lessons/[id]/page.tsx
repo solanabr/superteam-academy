@@ -19,7 +19,9 @@ export async function generateMetadata({
     if (lesson) {
       return {
         title: `${lesson.title} — ${course.title}`,
-        description: lesson.description || `Lesson in ${course.title} on Superteam Academy.`,
+        description:
+          lesson.description ||
+          `Lesson in ${course.title} on Superteam Academy.`,
       };
     }
   }

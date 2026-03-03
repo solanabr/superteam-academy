@@ -103,7 +103,7 @@ test.describe("Lesson Completion", () => {
       .filter({ hasText: /mark complete/i });
     await markCompleteBtn.click();
     await expect(
-      page.getByText("Completed", { exact: false }).first()
+      page.getByText("Completed", { exact: false }).first(),
     ).toBeVisible({ timeout: 5000 });
 
     // Navigate to another lesson
@@ -177,7 +177,7 @@ test.describe("Lesson Completion", () => {
       .filter({ hasText: /mark complete/i });
     await markCompleteBtn.click();
     await expect(
-      page.getByText("Completed", { exact: false }).first()
+      page.getByText("Completed", { exact: false }).first(),
     ).toBeVisible({ timeout: 5000 });
 
     // Navigate to course detail page

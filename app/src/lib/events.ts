@@ -72,7 +72,7 @@ export function getActiveEvent(): SeasonalEvent | null {
 export function getUpcomingEvent(): SeasonalEvent | null {
   const now = new Date();
   const upcoming = SEASONAL_EVENTS.filter((e) => e.startDate > now).sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+    (a, b) => a.startDate.getTime() - b.startDate.getTime(),
   );
   return upcoming[0] ?? null;
 }
@@ -104,7 +104,7 @@ export function isEventDismissed(eventId: string): boolean {
   if (typeof window === "undefined") return false;
   try {
     const dismissed = JSON.parse(
-      localStorage.getItem("sta_dismissed_events") ?? "[]"
+      localStorage.getItem("sta_dismissed_events") ?? "[]",
     ) as string[];
     return dismissed.includes(eventId);
   } catch {
@@ -119,7 +119,7 @@ export function dismissEvent(eventId: string): void {
   if (typeof window === "undefined") return;
   try {
     const dismissed = JSON.parse(
-      localStorage.getItem("sta_dismissed_events") ?? "[]"
+      localStorage.getItem("sta_dismissed_events") ?? "[]",
     ) as string[];
     if (!dismissed.includes(eventId)) {
       dismissed.push(eventId);

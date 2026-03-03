@@ -29,7 +29,10 @@ export async function GET(
   });
 
   if (!user) {
-    return NextResponse.json({ error: "Profile not found or private" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Profile not found or private" },
+      { status: 404 },
+    );
   }
 
   const [xp, streak, achievements, credentials] = await Promise.all([

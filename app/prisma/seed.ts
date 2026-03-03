@@ -47,15 +47,23 @@ async function main() {
   console.log(`  ✓ ${achievements.length} achievements\n`);
 
   // ── Seed Courses ──────────────────────────────────────────────────────────
-  const allCourses = [getCourse1(), getCourse2(), getCourse3(), getCourse4(), getCourse5(), getCourse6()];
+  const allCourses = [
+    getCourse1(),
+    getCourse2(),
+    getCourse3(),
+    getCourse4(),
+    getCourse5(),
+    getCourse6(),
+  ];
 
   for (const courseData of allCourses) {
     console.log(`  Seeding course: ${courseData.title}...`);
     await prisma.course.create({ data: courseData });
     const moduleCount = courseData.modules.create.length;
     const lessonCount = courseData.modules.create.reduce(
-      (sum: number, m: { lessons: { create: unknown[] } }) => sum + m.lessons.create.length,
-      0
+      (sum: number, m: { lessons: { create: unknown[] } }) =>
+        sum + m.lessons.create.length,
+      0,
     );
     console.log(`  ✓ ${moduleCount} modules, ${lessonCount} lessons\n`);
   }

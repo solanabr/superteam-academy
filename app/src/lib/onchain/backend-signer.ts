@@ -31,5 +31,8 @@ export function getTrackCollectionPubkey(trackId: number): PublicKey | null {
 
 /** Create a server-side Solana RPC connection. */
 export function getServerConnection(): Connection {
-  return new Connection(process.env.NEXT_PUBLIC_RPC_URL ?? DEFAULT_RPC_URL, "confirmed");
+  return new Connection(
+    process.env.NEXT_PUBLIC_RPC_URL ?? DEFAULT_RPC_URL,
+    "confirmed",
+  );
 }

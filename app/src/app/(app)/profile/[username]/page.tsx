@@ -21,7 +21,9 @@ export async function generateMetadata({
   if (mock) {
     return {
       title: `${mock.displayName}'s Profile`,
-      description: mock.bio || `View ${mock.displayName}'s learning profile on Superteam Academy.`,
+      description:
+        mock.bio ||
+        `View ${mock.displayName}'s learning profile on Superteam Academy.`,
       openGraph: {
         title: `${mock.displayName} | Superteam Academy`,
         description: `${mock.displayName} has earned ${mock.xp} XP and completed ${mock.coursesCompleted.length} courses.`,

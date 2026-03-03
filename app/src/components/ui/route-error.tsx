@@ -38,9 +38,7 @@ export function RouteError({
         <Icon className="h-10 w-10 text-destructive" />
       </div>
       <h1 className="mt-6 text-3xl font-bold">{t(titleKey)}</h1>
-      <p className="mt-3 max-w-md text-muted-foreground">
-        {t(descriptionKey)}
-      </p>
+      <p className="mt-3 max-w-md text-muted-foreground">{t(descriptionKey)}</p>
       {error.digest && (
         <p className="mt-2 text-xs text-muted-foreground/60">
           Error ID: {error.digest}

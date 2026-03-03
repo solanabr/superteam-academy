@@ -1,7 +1,14 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Zap, TrendingUp, Trophy, Megaphone, MessageSquare } from "lucide-react";
+import {
+  Bell,
+  Zap,
+  TrendingUp,
+  Trophy,
+  Megaphone,
+  MessageSquare,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +21,10 @@ const TYPE_CONFIG: Record<NotificationType, IconConfig> = {
   xp_milestone: { icon: Zap, className: "text-yellow-500 bg-yellow-500/10" },
   level_up: { icon: TrendingUp, className: "text-blue-500 bg-blue-500/10" },
   achievement: { icon: Trophy, className: "text-amber-500 bg-amber-500/10" },
-  course_announcement: { icon: Megaphone, className: "text-primary bg-primary/10" },
+  course_announcement: {
+    icon: Megaphone,
+    className: "text-primary bg-primary/10",
+  },
   reply: { icon: MessageSquare, className: "text-muted-foreground bg-muted" },
   mention: { icon: MessageSquare, className: "text-muted-foreground bg-muted" },
 };
@@ -48,16 +58,25 @@ function NotificationRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className={cn("text-sm font-medium", !notification.read && "text-foreground")}>
+          <p
+            className={cn(
+              "text-sm font-medium",
+              !notification.read && "text-foreground",
+            )}
+          >
             {notification.title}
           </p>
           {!notification.read && (
             <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
           )}
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">{notification.body}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {notification.body}
+        </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(notification.createdAt), {
+            addSuffix: true,
+          })}
         </p>
       </div>
     </button>
@@ -65,7 +84,8 @@ function NotificationRow({
 }
 
 export function NotificationsClient() {
-  const { notifications, isLoading, markRead, markAllRead, unreadCount } = useNotifications();
+  const { notifications, isLoading, markRead, markAllRead, unreadCount } =
+    useNotifications();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -95,7 +115,9 @@ export function NotificationsClient() {
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">
           <Bell className="h-10 w-10 opacity-30" />
           <p className="font-medium">No notifications yet</p>
-          <p className="text-sm">You'll see XP milestones, achievements, and course updates here.</p>
+          <p className="text-sm">
+            You'll see XP milestones, achievements, and course updates here.
+          </p>
         </div>
       ) : (
         <div className="space-y-2">

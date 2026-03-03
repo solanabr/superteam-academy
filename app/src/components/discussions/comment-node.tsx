@@ -109,7 +109,10 @@ export function CommentNodeComponent({
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setEditing(false); setEditBody(comment.body); }}
+                    onClick={() => {
+                      setEditing(false);
+                      setEditBody(comment.body);
+                    }}
                     className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                   >
                     {t("cancel")}
@@ -117,10 +120,14 @@ export function CommentNodeComponent({
                 </div>
               </form>
             ) : (
-              <p className={cn(
-                "mt-1 text-sm leading-relaxed whitespace-pre-line",
-                comment.isDeleted ? "italic text-muted-foreground" : "text-muted-foreground",
-              )}>
+              <p
+                className={cn(
+                  "mt-1 text-sm leading-relaxed whitespace-pre-line",
+                  comment.isDeleted
+                    ? "italic text-muted-foreground"
+                    : "text-muted-foreground",
+                )}
+              >
                 {comment.body}
               </p>
             )}
@@ -161,7 +168,11 @@ export function CommentNodeComponent({
                     onClick={() => setCollapsed(!collapsed)}
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {collapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+                    {collapsed ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronUp className="h-3 w-3" />
+                    )}
                     {collapsed
                       ? t("showReplies", { count: childCount })
                       : t("hideReplies", { count: childCount })}
@@ -174,7 +185,9 @@ export function CommentNodeComponent({
               <CommentComposer
                 onSubmit={handleReply}
                 onCancel={() => setShowReply(false)}
-                placeholder={t("replyToPlaceholder", { name: comment.author.displayName })}
+                placeholder={t("replyToPlaceholder", {
+                  name: comment.author.displayName,
+                })}
                 autoFocus
                 compact
               />

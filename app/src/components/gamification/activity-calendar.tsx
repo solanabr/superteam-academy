@@ -8,7 +8,11 @@ interface ActivityCalendarProps {
   className?: string;
 }
 
-export function ActivityCalendar({ activityCalendar, days = 30, className }: ActivityCalendarProps) {
+export function ActivityCalendar({
+  activityCalendar,
+  days = 30,
+  className,
+}: ActivityCalendarProps) {
   const calendarDays: [string, boolean][] = [];
   const today = new Date();
   for (let i = days - 1; i >= 0; i--) {

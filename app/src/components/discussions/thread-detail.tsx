@@ -72,7 +72,9 @@ export function ThreadDetailView({
             </span>
           )}
           {thread.tags.map((tag) => (
-            <span key={tag} className="text-xs text-muted-foreground">#{tag}</span>
+            <span key={tag} className="text-xs text-muted-foreground">
+              #{tag}
+            </span>
           ))}
           {thread.isPinned && (
             <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -86,7 +88,9 @@ export function ThreadDetailView({
           )}
         </div>
 
-        <h1 className="mb-4 font-heading text-2xl font-bold leading-snug">{thread.title}</h1>
+        <h1 className="mb-4 font-heading text-2xl font-bold leading-snug">
+          {thread.title}
+        </h1>
 
         {thread.body && (
           <div className="mb-5">

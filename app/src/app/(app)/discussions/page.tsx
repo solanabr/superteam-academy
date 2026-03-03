@@ -7,7 +7,12 @@ import { useDiscussionThreads } from "@/lib/hooks/use-discussion-threads";
 import { discussionApi } from "@/lib/services/discussion-api";
 import { ThreadList } from "@/components/discussions/thread-list";
 import { NewThreadDialog } from "@/components/discussions/new-thread-dialog";
-import type { ThreadCategory, ThreadListParams, CreateThreadPayload, VoteValue } from "@/types";
+import type {
+  ThreadCategory,
+  ThreadListParams,
+  CreateThreadPayload,
+  VoteValue,
+} from "@/types";
 
 type SortKey = "newest" | "top" | "mostCommented";
 
@@ -19,29 +24,45 @@ export default function DiscussionsPage() {
   const [search, setSearch] = useState("");
   const [showNewThread, setShowNewThread] = useState(false);
 
-  const params = useMemo<ThreadListParams>(() => ({
-    scope: "community",
-    category,
-    sort,
-    search: search || undefined,
-  }), [category, sort, search]);
+  const params = useMemo<ThreadListParams>(
+    () => ({
+      scope: "community",
+      category,
+      sort,
+      search: search || undefined,
+    }),
+    [category, sort, search],
+  );
 
-  const { threads, isLoading, nextCursor, isLoadingMore, loadMore, voteThread, refresh } =
-    useDiscussionThreads(params);
+  const {
+    threads,
+    isLoading,
+    nextCursor,
+    isLoadingMore,
+    loadMore,
+    voteThread,
+    refresh,
+  } = useDiscussionThreads(params);
 
-  const handleVote = useCallback((threadId: string, value: VoteValue) => {
-    voteThread(threadId, value);
-  }, [voteThread]);
+  const handleVote = useCallback(
+    (threadId: string, value: VoteValue) => {
+      voteThread(threadId, value);
+    },
+    [voteThread],
+  );
 
-  const handleNewThread = useCallback(async (data: CreateThreadPayload) => {
-    try {
-      const result = await discussionApi.createThread(data);
-      refresh();
-      router.push(`/discussions/${result.id}`);
-    } catch {
-      // swallow
-    }
-  }, [refresh, router]);
+  const handleNewThread = useCallback(
+    async (data: CreateThreadPayload) => {
+      try {
+        const result = await discussionApi.createThread(data);
+        refresh();
+        router.push(`/discussions/${result.id}`);
+      } catch {
+        // swallow
+      }
+    },
+    [refresh, router],
+  );
 
   return (
     <>
@@ -49,7 +70,9 @@ export default function DiscussionsPage() {
         {/* Heading */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold sm:text-4xl">{t("forumTitle")}</h1>
+            <h1 className="font-heading text-3xl font-bold sm:text-4xl">
+              {t("forumTitle")}
+            </h1>
             <p className="mt-2 text-lg text-muted-foreground">
               {t("forumDescription")}
             </p>

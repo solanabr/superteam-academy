@@ -23,6 +23,12 @@ import {
   BlocksFeature,
   CodeBlock,
 } from "@payloadcms/richtext-lexical";
+import {
+  allowPublicRead,
+  isAdminOrEditor,
+  isAdmin,
+  adminFieldUpdate,
+} from "./access";
 
 const richTextFeatures = [
   FixedToolbarFeature(),
@@ -62,8 +68,22 @@ export const Courses: CollectionConfig = {
   slug: "courses",
   admin: {
     useAsTitle: "title",
-    defaultColumns: ["title", "difficulty", "trackName", "isActive", "updatedAt"],
+    defaultColumns: [
+      "title",
+      "difficulty",
+      "trackName",
+      "isActive",
+      "updatedAt",
+    ],
   },
+  access: {
+    read: allowPublicRead,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdmin,
+    readVersions: isAdminOrEditor,
+  },
+  folders: true,
   versions: {
     maxPerDoc: 50,
     drafts: {
@@ -71,6 +91,23 @@ export const Courses: CollectionConfig = {
     },
   },
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data?.modules || !Array.isArray(data.modules)) return data;
+        const titles = new Set<string>();
+        for (const mod of data.modules) {
+          const title = (mod.title as string)?.trim().toLowerCase();
+          if (!title) continue;
+          if (titles.has(title)) {
+            throw new Error(
+              `Duplicate module title "${mod.title}". Each module must have a unique title within a course.`,
+            );
+          }
+          titles.add(title);
+        }
+        return data;
+      },
+    ],
     beforeChange: [
       ({ data }) => {
         if (!data) return data;
@@ -89,13 +126,46 @@ export const Courses: CollectionConfig = {
       },
     ],
     afterChange: [
-      ({ doc }) => {
+      ({ doc, req, previousDoc, operation }) => {
+        // Revalidate pages
         try {
           revalidatePath("/courses", "page");
           revalidatePath(`/courses/${doc.slug}`, "page");
           revalidatePath("/", "page");
         } catch {
           // revalidatePath can throw outside of a request context (e.g. seed scripts)
+        }
+
+        // Audit log
+        const actor =
+          (req.user as Record<string, unknown>)?.displayName ||
+          (req.user as Record<string, unknown>)?.email ||
+          "system";
+        req.payload.logger.info(
+          `[courses] ${operation} "${doc.title}" by ${actor} (id: ${doc.id})`,
+        );
+
+        // Publish notification: draft → published
+        const wasPublished =
+          previousDoc?._status !== "published" && doc._status === "published";
+        if (wasPublished) {
+          const notifyEmail = process.env.CMS_NOTIFICATION_EMAIL;
+          if (notifyEmail) {
+            req.payload
+              .sendEmail({
+                to: notifyEmail,
+                subject: `Course published: ${doc.title}`,
+                text: [
+                  `"${doc.title}" is now live.`,
+                  `Difficulty: ${doc.difficulty || "N/A"}`,
+                  `Total XP: ${doc.xpTotal ?? 0}`,
+                  `Link: ${process.env.NEXT_PUBLIC_SITE_URL || ""}/courses/${doc.slug}`,
+                ].join("\n"),
+              })
+              .catch(() => {
+                // fire-and-forget — never block saves
+              });
+          }
         }
       },
     ],
@@ -175,6 +245,7 @@ export const Courses: CollectionConfig = {
           name: "isActive",
           type: "checkbox",
           defaultValue: true,
+          access: { update: adminFieldUpdate },
           admin: { width: "50%" },
         },
       ],
@@ -186,12 +257,14 @@ export const Courses: CollectionConfig = {
           name: "trackId",
           type: "number",
           defaultValue: 1,
+          access: { update: adminFieldUpdate },
           admin: { width: "25%" },
         },
         {
           name: "trackLevel",
           type: "number",
           defaultValue: 1,
+          access: { update: adminFieldUpdate },
           admin: { width: "25%" },
         },
         {
@@ -313,7 +386,8 @@ export const Courses: CollectionConfig = {
               name: "challenge",
               type: "group",
               admin: {
-                condition: (_, siblingData) => siblingData?.type === "challenge",
+                condition: (_, siblingData) =>
+                  siblingData?.type === "challenge",
               },
               fields: [
                 {

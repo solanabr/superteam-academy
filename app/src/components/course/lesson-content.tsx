@@ -5,7 +5,10 @@ import { Clock, List } from "lucide-react";
 import { LessonSidebar } from "./lesson-sidebar";
 import { LessonNavigation } from "./lesson-navigation";
 import { LessonProgress } from "./lesson-progress";
-import { MarkdownContent, generateContentPlaceholder } from "./markdown-content";
+import {
+  MarkdownContent,
+  generateContentPlaceholder,
+} from "./markdown-content";
 import { LessonDiscussion } from "@/components/discussions/lesson-discussion";
 import type { Course, Lesson, LessonNavItem } from "@/types";
 
@@ -68,10 +71,14 @@ export function LessonContent({
             </div>
 
             <h1 className="font-heading text-3xl font-bold">{lesson.title}</h1>
-            <p className="mt-3 text-lg text-muted-foreground">{lesson.description}</p>
+            <p className="mt-3 text-lg text-muted-foreground">
+              {lesson.description}
+            </p>
 
             <div className="mt-10">
-              <MarkdownContent content={lesson.content || generateContentPlaceholder(lesson)} />
+              <MarkdownContent
+                content={lesson.content || generateContentPlaceholder(lesson)}
+              />
             </div>
 
             <div className="mt-12 border-t border-border pt-10">

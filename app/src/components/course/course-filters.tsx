@@ -28,7 +28,7 @@ function Pill({
         "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
         active
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
       )}
     >
       {children}
@@ -36,7 +36,10 @@ function Pill({
   );
 }
 
-export function CourseFilters({ selectedTrack, onTrackChange }: CourseFiltersProps) {
+export function CourseFilters({
+  selectedTrack,
+  onTrackChange,
+}: CourseFiltersProps) {
   const t = useTranslations("courses");
   const tracks = Object.entries(TRACKS).filter(([id]) => Number(id) !== 0);
 
@@ -47,14 +50,19 @@ export function CourseFilters({ selectedTrack, onTrackChange }: CourseFiltersPro
         <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
           Track
         </span>
-        <Pill active={selectedTrack === null} onClick={() => onTrackChange(null)}>
+        <Pill
+          active={selectedTrack === null}
+          onClick={() => onTrackChange(null)}
+        >
           {t("filters.allTracks")}
         </Pill>
         {tracks.map(([id, track]) => (
           <Pill
             key={id}
             active={selectedTrack === Number(id)}
-            onClick={() => onTrackChange(selectedTrack === Number(id) ? null : Number(id))}
+            onClick={() =>
+              onTrackChange(selectedTrack === Number(id) ? null : Number(id))
+            }
           >
             {track.short}
           </Pill>
@@ -67,14 +75,19 @@ export function CourseFilters({ selectedTrack, onTrackChange }: CourseFiltersPro
           Track
         </p>
         <div className="flex flex-col gap-1.5">
-          <Pill active={selectedTrack === null} onClick={() => onTrackChange(null)}>
+          <Pill
+            active={selectedTrack === null}
+            onClick={() => onTrackChange(null)}
+          >
             {t("filters.allTracks")}
           </Pill>
           {tracks.map(([id, track]) => (
             <Pill
               key={id}
               active={selectedTrack === Number(id)}
-              onClick={() => onTrackChange(selectedTrack === Number(id) ? null : Number(id))}
+              onClick={() =>
+                onTrackChange(selectedTrack === Number(id) ? null : Number(id))
+              }
             >
               {track.display}
             </Pill>

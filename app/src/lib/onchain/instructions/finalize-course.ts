@@ -23,7 +23,7 @@ import { getConfigPda, getCoursePda, getEnrollmentPda } from "../pda";
 import { deserializeConfig, readCreatorFromCourse } from "../deserializers";
 
 const DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:finalize_course").digest()
+  createHash("sha256").update("global:finalize_course").digest(),
 ).subarray(0, 8);
 
 /**
@@ -88,13 +88,18 @@ export async function buildFinalizeCourseTransaction(
     data: DISCRIMINATOR,
   });
 
-  const [learnerAtaInfo, creatorAtaInfo, { blockhash, lastValidBlockHeight }] = await Promise.all([
-    connection.getAccountInfo(learnerXpAta),
-    connection.getAccountInfo(creatorXpAta),
-    connection.getLatestBlockhash(),
-  ]);
+  const [learnerAtaInfo, creatorAtaInfo, { blockhash, lastValidBlockHeight }] =
+    await Promise.all([
+      connection.getAccountInfo(learnerXpAta),
+      connection.getAccountInfo(creatorXpAta),
+      connection.getLatestBlockhash(),
+    ]);
 
-  const tx = new Transaction({ feePayer: backendSigner, blockhash, lastValidBlockHeight });
+  const tx = new Transaction({
+    feePayer: backendSigner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }));
 
   if (!learnerAtaInfo) {

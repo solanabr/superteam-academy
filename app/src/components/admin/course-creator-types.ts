@@ -67,7 +67,7 @@ export function slugify(title: string): string {
 export function calcTotalXP(modules: DraftModule[]): number {
   return modules.reduce(
     (sum, mod) => sum + mod.lessons.reduce((s, l) => s + l.xpReward, 0),
-    0
+    0,
   );
 }
 

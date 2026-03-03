@@ -12,7 +12,13 @@ interface CommentComposerProps {
   compact?: boolean;
 }
 
-export function CommentComposer({ onSubmit, onCancel, placeholder, autoFocus, compact }: CommentComposerProps) {
+export function CommentComposer({
+  onSubmit,
+  onCancel,
+  placeholder,
+  autoFocus,
+  compact,
+}: CommentComposerProps) {
   const t = useTranslations("discussions");
   const [body, setBody] = useState("");
 

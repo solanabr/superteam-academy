@@ -15,7 +15,7 @@ import { PROGRAM_ID } from "./constants";
 import { getCoursePda, getEnrollmentPda } from "./pda";
 
 const ENROLL_DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:enroll").digest()
+  createHash("sha256").update("global:enroll").digest(),
 ).subarray(0, 8);
 
 /** Borsh-encode a string: 4-byte LE u32 length prefix + UTF-8 bytes. */
@@ -48,7 +48,11 @@ export async function buildEnrollTransaction(
   const [coursePda] = getCoursePda(courseId);
   const [enrollmentPda] = getEnrollmentPda(courseId, learner);
 
-  const keys: Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }> = [
+  const keys: Array<{
+    pubkey: PublicKey;
+    isSigner: boolean;
+    isWritable: boolean;
+  }> = [
     { pubkey: coursePda, isSigner: false, isWritable: true },
     { pubkey: enrollmentPda, isSigner: false, isWritable: true },
     { pubkey: learner, isSigner: true, isWritable: true },
@@ -56,14 +60,27 @@ export async function buildEnrollTransaction(
   ];
 
   if (prerequisite) {
-    keys.push({ pubkey: prerequisite.coursePda, isSigner: false, isWritable: false });
-    keys.push({ pubkey: prerequisite.enrollmentPda, isSigner: false, isWritable: false });
+    keys.push({
+      pubkey: prerequisite.coursePda,
+      isSigner: false,
+      isWritable: false,
+    });
+    keys.push({
+      pubkey: prerequisite.enrollmentPda,
+      isSigner: false,
+      isWritable: false,
+    });
   }
 
   const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  const tx = new Transaction({ feePayer: learner, blockhash, lastValidBlockHeight });
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+  const tx = new Transaction({
+    feePayer: learner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   tx.add(ix);
   return tx;
 }

@@ -31,7 +31,8 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const tc = useTranslations("common");
   const { getCourseBySlug, courses: allCourses } = useCourses();
   const maybeCourse = getCourseBySlug(slug);
-  const { enrolledCourseIds, progressMap, enrollInCourse } = useLearningProgress();
+  const { enrolledCourseIds, progressMap, enrollInCourse } =
+    useLearningProgress();
 
   if (!maybeCourse) {
     notFound();
@@ -42,7 +43,9 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const track = TRACKS[course.trackId];
   const hasModules = course.modules.length > 0;
 
-  const isEnrolled = enrolledCourseIds.includes(course.slug) || enrolledCourseIds.includes(course.id);
+  const isEnrolled =
+    enrolledCourseIds.includes(course.slug) ||
+    enrolledCourseIds.includes(course.id);
   const courseProgress = progressMap[course.slug] || progressMap[course.id];
   const progressPct = courseProgress?.percentage ?? 0;
   const completedLessons = courseProgress?.completedLessons ?? [];
@@ -122,7 +125,9 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Trophy className="h-4 w-4 text-xp" />
-                <span className="font-medium text-xp">{formatXP(course.xpTotal)} XP</span>
+                <span className="font-medium text-xp">
+                  {formatXP(course.xpTotal)} XP
+                </span>
               </div>
               {course.creator && (
                 <div className="flex items-center gap-1.5">
@@ -136,7 +141,9 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
           {/* What You'll Learn */}
           {hasModules && (
             <div className="mt-8 rounded-2xl border border-border bg-card p-6">
-              <h2 className="font-heading text-lg font-bold">What you&apos;ll learn</h2>
+              <h2 className="font-heading text-lg font-bold">
+                What you&apos;ll learn
+              </h2>
               <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {course.modules.slice(0, 8).map((m) => (
                   <li key={m.id} className="flex items-start gap-2 text-sm">
@@ -152,7 +159,9 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
           <div className="mt-10">
             <Tabs defaultValue="curriculum">
               <TabsList>
-                <TabsTrigger value="curriculum">{t("detail.courseContent")}</TabsTrigger>
+                <TabsTrigger value="curriculum">
+                  {t("detail.courseContent")}
+                </TabsTrigger>
                 <TabsTrigger value="reviews">Reviews</TabsTrigger>
               </TabsList>
 
@@ -195,11 +204,13 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
             {/* Prerequisites */}
             {course.prerequisites && course.prerequisites.length > 0 && (
               <div className="rounded-2xl border border-border bg-card p-6">
-                <h3 className="font-heading text-sm font-semibold">{t("detail.prerequisites")}</h3>
+                <h3 className="font-heading text-sm font-semibold">
+                  {t("detail.prerequisites")}
+                </h3>
                 <ul className="mt-3 space-y-2">
                   {course.prerequisites.map((prereq) => {
                     const prereqCourse = allCourses.find(
-                      (c) => c.slug === prereq
+                      (c) => c.slug === prereq,
                     );
                     return (
                       <li key={prereq}>
@@ -219,7 +230,9 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
             {/* Tags */}
             <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="font-heading text-sm font-semibold">{t("detail.tags")}</h3>
+              <h3 className="font-heading text-sm font-semibold">
+                {t("detail.tags")}
+              </h3>
               <div className="mt-3 flex flex-wrap gap-2">
                 {course.tags.map((tag) => (
                   <span

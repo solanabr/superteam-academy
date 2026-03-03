@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
   const { courseId, lessonIndex } = body;
 
   if (!courseId || lessonIndex === undefined) {
-    return NextResponse.json({ error: "Missing courseId or lessonIndex" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing courseId or lessonIndex" },
+      { status: 400 },
+    );
   }
 
   await service.completeLesson(userId, courseId, lessonIndex);

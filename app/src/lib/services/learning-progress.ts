@@ -1,4 +1,10 @@
-import type { Progress, StreakData, LeaderboardEntry, Credential, Achievement } from "@/types";
+import type {
+  Progress,
+  StreakData,
+  LeaderboardEntry,
+  Credential,
+  Achievement,
+} from "@/types";
 
 /**
  * Unified interface for tracking learner progress, XP, streaks, and achievements.
@@ -40,7 +46,11 @@ export interface LearningProgressService {
    * @param courseId - Unique course slug
    * @param lessonIndex - Zero-based index of the lesson within the course
    */
-  completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<void>;
+  completeLesson(
+    userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<void>;
 
   /**
    * Enroll a learner in a course, creating a new progress record.
@@ -99,7 +109,10 @@ export interface LearningProgressService {
    * @param courseId - Optional course slug to filter rankings by course-specific XP
    * @returns Sorted array of leaderboard entries with rank, XP, level, and streak
    */
-  getLeaderboard(timeframe: "weekly" | "monthly" | "alltime", courseId?: string): Promise<LeaderboardEntry[]>;
+  getLeaderboard(
+    timeframe: "weekly" | "monthly" | "alltime",
+    courseId?: string,
+  ): Promise<LeaderboardEntry[]>;
 
   // -- Credentials -----------------------------------------------------------
 

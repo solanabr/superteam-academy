@@ -10,12 +10,16 @@ export async function POST(
 ) {
   const { threadId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   const value = body.value;
   if (value !== 1 && value !== -1) {
-    return NextResponse.json({ error: "Value must be 1 or -1" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Value must be 1 or -1" },
+      { status: 400 },
+    );
   }
 
   const result = await service.voteThread(threadId, userId, value);

@@ -12,9 +12,9 @@ import dynamic from "next/dynamic";
 const CelebrationModal = dynamic(
   () =>
     import("@/components/gamification/celebration-modal").then(
-      (mod) => mod.CelebrationModal
+      (mod) => mod.CelebrationModal,
     ),
-  { ssr: false }
+  { ssr: false },
 );
 import { LessonHeader } from "@/components/course/lesson-header";
 import { LessonContent } from "@/components/course/lesson-content";
@@ -36,7 +36,10 @@ export interface LessonPageClientProps {
   lessonId: string;
 }
 
-export default function LessonPageClient({ slug, lessonId }: LessonPageClientProps) {
+export default function LessonPageClient({
+  slug,
+  lessonId,
+}: LessonPageClientProps) {
   const { getCourseBySlug } = useCourses();
   const course = getCourseBySlug(slug);
 
@@ -44,8 +47,13 @@ export default function LessonPageClient({ slug, lessonId }: LessonPageClientPro
     notFound();
   }
 
-  const allLessons = useMemo(() => flattenLessons(course.modules), [course.modules]);
-  const currentIndex = allLessons.findIndex((item) => item.lesson.id === lessonId);
+  const allLessons = useMemo(
+    () => flattenLessons(course.modules),
+    [course.modules],
+  );
+  const currentIndex = allLessons.findIndex(
+    (item) => item.lesson.id === lessonId,
+  );
 
   if (currentIndex === -1) {
     notFound();
@@ -53,16 +61,24 @@ export default function LessonPageClient({ slug, lessonId }: LessonPageClientPro
 
   const { lesson, moduleTitle, moduleIndex } = allLessons[currentIndex];
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-  const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+  const nextLesson =
+    currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
   const isChallenge = lesson.type === "challenge" && lesson.challenge != null;
 
-  const { completeLesson, progressMap, xp, onChainLessonSig } = useLearningProgress();
+  const { completeLesson, progressMap, xp, onChainLessonSig } =
+    useLearningProgress();
   const { showXPGain, showLevelUp } = useXPNotification();
   const {
-    recordCombo, addDailyXP, completeQuestProgress, triggerCelebration, dailyGoal, combo,
+    recordCombo,
+    addDailyXP,
+    completeQuestProgress,
+    triggerCelebration,
+    dailyGoal,
+    combo,
   } = useGamification();
   const courseProgress = progressMap[course.slug] || progressMap[course.id];
-  const isLessonCompleted = courseProgress?.completedLessons?.includes(currentIndex) ?? false;
+  const isLessonCompleted =
+    courseProgress?.completedLessons?.includes(currentIndex) ?? false;
 
   const handleComplete = useCallback(async () => {
     const prevLevel = getLevel(xp);
@@ -99,7 +115,24 @@ export default function LessonPageClient({ slug, lessonId }: LessonPageClientPro
       dailyGoalProgress: dailyGoal.xpToday + totalXP,
       dailyGoalTarget: dailyGoal.target,
     });
-  }, [completeLesson, course.slug, course.title, currentIndex, lesson.xpReward, lesson.title, xp, showXPGain, showLevelUp, recordCombo, addDailyXP, completeQuestProgress, triggerCelebration, dailyGoal, combo, isChallenge]);
+  }, [
+    completeLesson,
+    course.slug,
+    course.title,
+    currentIndex,
+    lesson.xpReward,
+    lesson.title,
+    xp,
+    showXPGain,
+    showLevelUp,
+    recordCombo,
+    addDailyXP,
+    completeQuestProgress,
+    triggerCelebration,
+    dailyGoal,
+    combo,
+    isChallenge,
+  ]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col">

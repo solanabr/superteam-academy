@@ -90,7 +90,12 @@ describe("gamification-quests", () => {
     });
 
     it("uses known quest template IDs", () => {
-      const knownIds = ["lesson-learner", "xp-hunter", "code-warrior", "streak-keeper"];
+      const knownIds = [
+        "lesson-learner",
+        "xp-hunter",
+        "code-warrior",
+        "streak-keeper",
+      ];
       // Check a range of dates
       for (let d = 1; d <= 28; d++) {
         const date = `2026-02-${String(d).padStart(2, "0")}`;

@@ -30,7 +30,11 @@ export function CourseGrid({ courses, progressMap }: CourseGridProps) {
         <CourseCard
           key={course.slug}
           course={course}
-          progressPct={progressMap[course.slug]?.percentage ?? progressMap[course.id]?.percentage ?? 0}
+          progressPct={
+            progressMap[course.slug]?.percentage ??
+            progressMap[course.id]?.percentage ??
+            0
+          }
         />
       ))}
     </div>

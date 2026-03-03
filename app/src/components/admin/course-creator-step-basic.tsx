@@ -20,7 +20,10 @@ const DIFFICULTY_STYLES: Record<string, string> = {
   advanced: "border-brazil-coral text-brazil-coral bg-brazil-coral/10",
 };
 
-export function CourseCreatorBasic({ draft, onChange }: CourseCreatorBasicProps) {
+export function CourseCreatorBasic({
+  draft,
+  onChange,
+}: CourseCreatorBasicProps) {
   const t = useTranslations("admin.creator.basic");
 
   function handleTagInput(value: string) {
@@ -56,7 +59,9 @@ export function CourseCreatorBasic({ draft, onChange }: CourseCreatorBasicProps)
         <div className="space-y-1.5">
           <Label htmlFor="course-slug">{t("slug")}</Label>
           <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap text-xs text-muted-foreground">/courses/</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              /courses/
+            </span>
             <Input
               id="course-slug"
               value={draft.slug}

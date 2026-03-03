@@ -21,7 +21,10 @@ function readPubkey(buf: Buffer, offset: number): PublicKey {
   return new PublicKey(buf.subarray(offset, offset + 32));
 }
 
-function readString(buf: Buffer, offset: number): { value: string; length: number } {
+function readString(
+  buf: Buffer,
+  offset: number,
+): { value: string; length: number } {
   const len = readU32(buf, offset);
   const value = buf.subarray(offset + 4, offset + 4 + len).toString("utf8");
   return { value, length: 4 + len };
@@ -87,8 +90,10 @@ export interface EnrollmentData {
 /** Deserialize a Config account from its raw Borsh-encoded buffer (skips 8-byte discriminator). */
 export function deserializeConfig(data: Buffer): ConfigData {
   let offset = 8;
-  const authority = readPubkey(data, offset); offset += 32;
-  const backendSigner = readPubkey(data, offset); offset += 32;
+  const authority = readPubkey(data, offset);
+  offset += 32;
+  const backendSigner = readPubkey(data, offset);
+  offset += 32;
   const xpMint = readPubkey(data, offset);
   return { authority, backendSigner, xpMint };
 }
@@ -111,13 +116,18 @@ export function deserializeCourse(data: Buffer): CourseData {
   offset += 32; // authority
   offset += 32; // contentTxId
   offset += 2; // version
-  const lessonCount = readU8(data, offset); offset += 1;
+  const lessonCount = readU8(data, offset);
+  offset += 1;
   offset += 1; // difficulty
-  const xpPerLesson = readU32(data, offset); offset += 4;
-  const trackId = data.readUInt16LE(offset); offset += 2;
-  const trackLevel = readU8(data, offset); offset += 1;
+  const xpPerLesson = readU32(data, offset);
+  offset += 4;
+  const trackId = data.readUInt16LE(offset);
+  offset += 2;
+  const trackLevel = readU8(data, offset);
+  offset += 1;
   // prerequisite: Option<Pubkey> — 1 byte tag + optional 32 bytes
-  const hasPrereq = readU8(data, offset); offset += 1;
+  const hasPrereq = readU8(data, offset);
+  offset += 1;
   let prerequisite: PublicKey | null = null;
   if (hasPrereq) {
     prerequisite = readPubkey(data, offset);
@@ -128,13 +138,22 @@ export function deserializeCourse(data: Buffer): CourseData {
   offset += 4; // totalCompletions
   offset += 4; // totalEnrollments
   const isActive = readU8(data, offset) === 1;
-  return { courseId, lessonCount, xpPerLesson, trackId, trackLevel, isActive, prerequisite };
+  return {
+    courseId,
+    lessonCount,
+    xpPerLesson,
+    trackId,
+    trackLevel,
+    isActive,
+    prerequisite,
+  };
 }
 
 /** Deserialize an Enrollment account from its raw Borsh-encoded buffer (skips 8-byte discriminator). */
 export function deserializeEnrollment(data: Buffer): EnrollmentData {
   let offset = 8;
-  const course = readPubkey(data, offset); offset += 32;
+  const course = readPubkey(data, offset);
+  offset += 32;
   offset += 2; // enrolledVersion
   // enrolledAt: i64
   const enrolledAtLo = data.readUInt32LE(offset);
@@ -142,7 +161,8 @@ export function deserializeEnrollment(data: Buffer): EnrollmentData {
   const enrolledAt = enrolledAtHi * 0x100000000 + enrolledAtLo;
   offset += 8;
   // completedAt: Option<i64>
-  const hasCompleted = readU8(data, offset); offset += 1;
+  const hasCompleted = readU8(data, offset);
+  offset += 1;
   let completedAt: number | null = null;
   if (hasCompleted) {
     const compLo = data.readUInt32LE(offset);
@@ -152,7 +172,8 @@ export function deserializeEnrollment(data: Buffer): EnrollmentData {
   }
   const lessonFlags = readLessonFlags(data, offset);
   offset += 32; // [u64; 4]
-  const hasCredential = readU8(data, offset); offset += 1;
+  const hasCredential = readU8(data, offset);
+  offset += 1;
   const credentialAsset = hasCredential ? readPubkey(data, offset) : null;
   return { course, enrolledAt, completedAt, lessonFlags, credentialAsset };
 }

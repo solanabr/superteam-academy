@@ -41,7 +41,6 @@ function formatTrackLevel(difficulty: string, trackLevel: number): string {
   return `${label} (Level ${trackLevel})`;
 }
 
-
 export default function CertificateClient({ certId }: CertificateClientProps) {
   const t = useTranslations("certificate");
   const tc = useTranslations("common");
@@ -50,7 +49,9 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
   const { progressMap, isLoaded: progressLoaded } = useLearningProgress();
   const certificateRef = useRef<HTMLDivElement>(null);
 
-  const [onChainCredentials, setOnChainCredentials] = useState<Credential[]>([]);
+  const [onChainCredentials, setOnChainCredentials] = useState<Credential[]>(
+    [],
+  );
   useEffect(() => {
     if (!publicKey) return;
     progressService
@@ -79,7 +80,7 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
 
     // Look up a real on-chain mint address for this course's track
     const onChainCred = onChainCredentials.find(
-      (c) => c.trackId === course.trackId && c.mintAddress
+      (c) => c.trackId === course.trackId && c.mintAddress,
     );
     const realMintAddress = onChainCred?.mintAddress ?? null;
 
@@ -217,7 +218,7 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
   }
 
   const tweetText = encodeURIComponent(
-    `I just completed "${certData.courseName}" on @SuperteamAcademy and earned ${certData.xpEarned} XP! \n\nVerifiable on-chain credential on Solana.\n\n#Solana #SuperteamAcademy #Web3`
+    `I just completed "${certData.courseName}" on @SuperteamAcademy and earned ${certData.xpEarned} XP! \n\nVerifiable on-chain credential on Solana.\n\n#Solana #SuperteamAcademy #Web3`,
   );
   const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
 
@@ -393,7 +394,8 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Connect a Solana wallet and complete this course to receive a verifiable on-chain credential.
+                Connect a Solana wallet and complete this course to receive a
+                verifiable on-chain credential.
               </p>
             </div>
           )}

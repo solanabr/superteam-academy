@@ -51,7 +51,9 @@ export function CourseCreatorSettings({
               id="xp-total"
               type="number"
               value={draft.xpTotal || autoXP}
-              onChange={(e) => onChange({ xpTotal: Math.max(0, Number(e.target.value)) })}
+              onChange={(e) =>
+                onChange({ xpTotal: Math.max(0, Number(e.target.value)) })
+              }
               className="w-32"
               min={0}
             />
@@ -107,7 +109,9 @@ export function CourseCreatorSettings({
             <BookOpen className="h-4 w-4 text-muted-foreground" />
             {t("prerequisites")}
           </Label>
-          <p className="text-xs text-muted-foreground">{t("prerequisitesHint")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("prerequisitesHint")}
+          </p>
           {availableCourses.length > 0 ? (
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border p-2">
               {availableCourses.map((course) => (
@@ -139,21 +143,28 @@ export function CourseCreatorSettings({
           </p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("summaryModules")}</span>
+              <span className="text-muted-foreground">
+                {t("summaryModules")}
+              </span>
               <span className="font-medium">{draft.modules.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("summaryLessons")}</span>
+              <span className="text-muted-foreground">
+                {t("summaryLessons")}
+              </span>
               <span className="font-medium">
                 {draft.modules.reduce((s, m) => s + m.lessons.length, 0)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("summaryChallenges")}</span>
+              <span className="text-muted-foreground">
+                {t("summaryChallenges")}
+              </span>
               <span className="font-medium">
                 {draft.modules.reduce(
-                  (s, m) => s + m.lessons.filter((l) => l.type === "challenge").length,
-                  0
+                  (s, m) =>
+                    s + m.lessons.filter((l) => l.type === "challenge").length,
+                  0,
                 )}
               </span>
             </div>

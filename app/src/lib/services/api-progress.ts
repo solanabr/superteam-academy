@@ -1,10 +1,19 @@
-import type { Progress, StreakData, LeaderboardEntry, Credential, Achievement } from "@/types";
+import type {
+  Progress,
+  StreakData,
+  LeaderboardEntry,
+  Credential,
+  Achievement,
+} from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
+    },
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status}`);
@@ -17,7 +26,10 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
  * Auth is handled via Privy's `privy-id-token` cookie (sent automatically by the browser).
  */
 export class ApiProgressService implements LearningProgressService {
-  async getProgress(_userId: string, courseId: string): Promise<Progress | null> {
+  async getProgress(
+    _userId: string,
+    courseId: string,
+  ): Promise<Progress | null> {
     return apiFetch<Progress | null>(`/api/progress?courseId=${courseId}`);
   }
 
@@ -25,7 +37,11 @@ export class ApiProgressService implements LearningProgressService {
     return apiFetch<Progress[]>("/api/progress");
   }
 
-  async completeLesson(_userId: string, courseId: string, lessonIndex: number): Promise<void> {
+  async completeLesson(
+    _userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<void> {
     await apiFetch("/api/progress", {
       method: "POST",
       body: JSON.stringify({ courseId, lessonIndex }),
@@ -76,7 +92,10 @@ export class ApiProgressService implements LearningProgressService {
     return apiFetch<Achievement[]>("/api/achievements");
   }
 
-  async claimAchievement(_userId: string, achievementId: number): Promise<void> {
+  async claimAchievement(
+    _userId: string,
+    achievementId: number,
+  ): Promise<void> {
     await apiFetch("/api/achievements", {
       method: "POST",
       body: JSON.stringify({ achievementId }),

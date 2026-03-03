@@ -19,14 +19,23 @@ export function AdminGuard({ children }: AdminGuardProps) {
   const { publicKey, connected } = useWalletCompat();
   const { authenticated } = usePrivy();
   const t = useTranslations("admin");
-  const [apiAdminResult, setApiAdminResult] = useState<{ checked: boolean; isAdmin: boolean }>({ checked: false, isAdmin: false });
+  const [apiAdminResult, setApiAdminResult] = useState<{
+    checked: boolean;
+    isAdmin: boolean;
+  }>({ checked: false, isAdmin: false });
 
   const isAuthenticated = connected || authenticated;
 
-  const syncAdminResult = useMemo<{ resolved: boolean; isAdmin: boolean }>(() => {
+  const syncAdminResult = useMemo<{
+    resolved: boolean;
+    isAdmin: boolean;
+  }>(() => {
     if (!isAuthenticated) return { resolved: true, isAdmin: false };
     if (connected && publicKey && ADMIN_WALLETS) {
-      return { resolved: true, isAdmin: ADMIN_WALLETS.includes(publicKey.toBase58()) };
+      return {
+        resolved: true,
+        isAdmin: ADMIN_WALLETS.includes(publicKey.toBase58()),
+      };
     }
     if (!authenticated) {
       return { resolved: true, isAdmin: false };
@@ -40,16 +49,21 @@ export function AdminGuard({ children }: AdminGuardProps) {
     fetch("/api/user")
       .then((res) => res.json())
       .then((data) => {
-        if (!cancelled) setApiAdminResult({ checked: true, isAdmin: data.isAdmin === true });
+        if (!cancelled)
+          setApiAdminResult({ checked: true, isAdmin: data.isAdmin === true });
       })
       .catch(() => {
         if (!cancelled) setApiAdminResult({ checked: true, isAdmin: false });
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [syncAdminResult.resolved]);
 
   const checking = !syncAdminResult.resolved && !apiAdminResult.checked;
-  const isAdmin = syncAdminResult.resolved ? syncAdminResult.isAdmin : apiAdminResult.isAdmin;
+  const isAdmin = syncAdminResult.resolved
+    ? syncAdminResult.isAdmin
+    : apiAdminResult.isAdmin;
 
   if (checking) {
     return (
@@ -67,7 +81,9 @@ export function AdminGuard({ children }: AdminGuardProps) {
             <LogIn className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="text-2xl font-bold">{t("authRequired")}</h1>
-          <p className="mt-2 text-muted-foreground">{t("authRequiredDescription")}</p>
+          <p className="mt-2 text-muted-foreground">
+            {t("authRequiredDescription")}
+          </p>
           <Link
             href="/dashboard"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-st-green px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-st-green/90"
@@ -88,7 +104,9 @@ export function AdminGuard({ children }: AdminGuardProps) {
             <Shield className="h-8 w-8 text-destructive" />
           </div>
           <h1 className="text-2xl font-bold">{t("accessDenied")}</h1>
-          <p className="mt-2 text-muted-foreground">{t("accessDeniedDescription")}</p>
+          <p className="mt-2 text-muted-foreground">
+            {t("accessDeniedDescription")}
+          </p>
           <Link
             href="/dashboard"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm font-medium transition-colors hover:bg-muted/80"

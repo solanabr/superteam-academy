@@ -8,7 +8,20 @@ interface ContributionCalendarProps {
   className?: string;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 // Day label config: which rows get a label (Mon=1, Wed=3, Fri=5)
 const DAY_LABELS: Record<number, string> = { 1: "Mon", 3: "Wed", 5: "Fri" };
@@ -22,7 +35,10 @@ interface Cell {
   active: boolean;
 }
 
-export function ContributionCalendar({ activityCalendar, className }: ContributionCalendarProps) {
+export function ContributionCalendar({
+  activityCalendar,
+  className,
+}: ContributionCalendarProps) {
   const { weeks, monthLabels } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -49,7 +65,10 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
 
           // Record month label at the first cell (Sunday) of a new month
           if (d === 0 && cursor.getMonth() !== lastMonth) {
-            monthLabels.push({ col: weeks.length, label: MONTHS[cursor.getMonth()] });
+            monthLabels.push({
+              col: weeks.length,
+              label: MONTHS[cursor.getMonth()],
+            });
             lastMonth = cursor.getMonth();
           }
         }
@@ -65,7 +84,6 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
       <div className="inline-flex min-w-max flex-col" style={{ gap: "3px" }}>
-
         {/* Month labels row */}
         <div className="flex" style={{ paddingLeft: "28px", gap: "2px" }}>
           {weeks.map((_, wi) => {
@@ -74,7 +92,13 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
               <div
                 key={wi}
                 className="text-muted-foreground"
-                style={{ width: "10px", fontSize: "9px", lineHeight: "12px", overflow: "visible", whiteSpace: "nowrap" }}
+                style={{
+                  width: "10px",
+                  fontSize: "9px",
+                  lineHeight: "12px",
+                  overflow: "visible",
+                  whiteSpace: "nowrap",
+                }}
               >
                 {label?.label ?? ""}
               </div>
@@ -84,9 +108,11 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
 
         {/* Grid: day-label column + week columns */}
         <div className="flex" style={{ gap: "2px" }}>
-
           {/* Day labels */}
-          <div className="flex flex-col" style={{ gap: "2px", width: "26px", paddingRight: "4px" }}>
+          <div
+            className="flex flex-col"
+            style={{ gap: "2px", width: "26px", paddingRight: "4px" }}
+          >
             {Array.from({ length: 7 }, (_, i) => (
               <div
                 key={i}
@@ -112,11 +138,11 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
                       "rounded-sm transition-colors",
                       cell.active
                         ? "bg-brazil-green hover:brightness-125"
-                        : "bg-muted hover:bg-muted-foreground/20"
+                        : "bg-muted hover:bg-muted-foreground/20",
                     )}
                     style={{ width: "10px", height: "10px" }}
                   />
-                )
+                ),
               )}
             </div>
           ))}
@@ -128,11 +154,19 @@ export function ContributionCalendar({ activityCalendar, className }: Contributi
           style={{ gap: "3px", fontSize: "9px", paddingTop: "2px" }}
         >
           <span>Less</span>
-          {["bg-muted", "bg-brazil-green/25", "bg-brazil-green/50", "bg-brazil-green/75", "bg-brazil-green"].map(
-            (cls, i) => (
-              <div key={i} className={cn("rounded-sm", cls)} style={{ width: "10px", height: "10px" }} />
-            )
-          )}
+          {[
+            "bg-muted",
+            "bg-brazil-green/25",
+            "bg-brazil-green/50",
+            "bg-brazil-green/75",
+            "bg-brazil-green",
+          ].map((cls, i) => (
+            <div
+              key={i}
+              className={cn("rounded-sm", cls)}
+              style={{ width: "10px", height: "10px" }}
+            />
+          ))}
           <span>More</span>
         </div>
       </div>

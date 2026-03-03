@@ -112,8 +112,12 @@ function PodiumCard({
       </div>
 
       <p className="mt-2 font-semibold">{entry.displayName}</p>
-      <p className="text-sm text-xp font-medium">{formatXP(entry.xp)} {t("xp")}</p>
-      <p className="text-xs text-muted-foreground">{t("level")} {entry.level}</p>
+      <p className="text-sm text-xp font-medium">
+        {formatXP(entry.xp)} {t("xp")}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {t("level")} {entry.level}
+      </p>
 
       <div
         className={`mt-3 w-24 ${heights[position]} rounded-t-lg bg-gradient-to-b ${bgColors[position]} border border-white/5`}
@@ -126,40 +130,52 @@ export default function LeaderboardPage() {
   const t = useTranslations("leaderboard");
   const tGamification = useTranslations("gamification");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("allTime");
-  const [courseFilter, setCourseFilter] = useState<string | undefined>(undefined);
+  const [courseFilter, setCourseFilter] = useState<string | undefined>(
+    undefined,
+  );
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { getLeaderboard, xp, streak, isOnChain, walletAddress } = useLearningProgress();
+  const { getLeaderboard, xp, streak, isOnChain, walletAddress } =
+    useLearningProgress();
   const { courses: allCourses } = useCourses();
 
-  const courseOptions = useMemo(() =>
-    allCourses.map((c) => ({ slug: c.slug, title: c.title })),
-    [allCourses]
+  const courseOptions = useMemo(
+    () => allCourses.map((c) => ({ slug: c.slug, title: c.title })),
+    [allCourses],
   );
 
-  const selectedCourseTitle = useMemo(() =>
-    courseFilter ? courseOptions.find((c) => c.slug === courseFilter)?.title : undefined,
-    [courseFilter, courseOptions]
+  const selectedCourseTitle = useMemo(
+    () =>
+      courseFilter
+        ? courseOptions.find((c) => c.slug === courseFilter)?.title
+        : undefined,
+    [courseFilter, courseOptions],
   );
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const entries = await getLeaderboard(toServiceTimeframe(timeFilter), courseFilter);
+      const entries = await getLeaderboard(
+        toServiceTimeframe(timeFilter),
+        courseFilter,
+      );
       if (cancelled) return;
       setData(entries);
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [timeFilter, courseFilter, getLeaderboard]);
 
   const top3 = data.slice(0, 3);
   // Detect the current user by wallet address; fall back to userId string match
-  const userEntry = data.find((e) =>
-    (walletAddress && e.wallet === walletAddress) ||
-    (!walletAddress && e.wallet === "local-learner")
+  const userEntry = data.find(
+    (e) =>
+      (walletAddress && e.wallet === walletAddress) ||
+      (!walletAddress && e.wallet === "local-learner"),
   );
   const userRank = userEntry?.rank;
 
@@ -175,9 +191,7 @@ export default function LeaderboardPage() {
             </span>
           )}
         </h1>
-        <p className="mt-1 text-muted-foreground">
-          {t("subtitle")}
-        </p>
+        <p className="mt-1 text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Filters Row */}
@@ -221,7 +235,9 @@ export default function LeaderboardPage() {
             <span className="max-w-[180px] truncate">
               {selectedCourseTitle ?? t("filter.allCourses")}
             </span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${courseDropdownOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${courseDropdownOpen ? "rotate-180" : ""}`}
+            />
           </button>
           {courseDropdownOpen && (
             <>
@@ -236,9 +252,14 @@ export default function LeaderboardPage() {
                 <button
                   role="option"
                   aria-selected={!courseFilter}
-                  onClick={() => { setCourseFilter(undefined); setCourseDropdownOpen(false); }}
+                  onClick={() => {
+                    setCourseFilter(undefined);
+                    setCourseDropdownOpen(false);
+                  }}
                   className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                    !courseFilter ? "bg-st-green/15 text-st-green-light" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    !courseFilter
+                      ? "bg-st-green/15 text-st-green-light"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {t("filter.allCourses")}
@@ -248,9 +269,14 @@ export default function LeaderboardPage() {
                     key={c.slug}
                     role="option"
                     aria-selected={courseFilter === c.slug}
-                    onClick={() => { setCourseFilter(c.slug); setCourseDropdownOpen(false); }}
+                    onClick={() => {
+                      setCourseFilter(c.slug);
+                      setCourseDropdownOpen(false);
+                    }}
                     className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors truncate ${
-                      courseFilter === c.slug ? "bg-st-green/15 text-st-green-light" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      courseFilter === c.slug
+                        ? "bg-st-green/15 text-st-green-light"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     {c.title}
@@ -267,7 +293,9 @@ export default function LeaderboardPage() {
       ) : !loading && data.length === 0 ? (
         <div className="glass rounded-xl">
           <EmptyState
-            illustration={<EmptyLeaderboardIllustration className="h-full w-full" />}
+            illustration={
+              <EmptyLeaderboardIllustration className="h-full w-full" />
+            }
             title={t("empty")}
             description={t("emptyHint")}
             action={{ label: t("startLearning"), href: "/courses" }}
@@ -287,10 +315,16 @@ export default function LeaderboardPage() {
             <div className="grid grid-cols-12 gap-2 border-b border-white/5 px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-6">
               <div className="col-span-1">{t("rank")}</div>
               <div className="col-span-4 sm:col-span-3">{t("wallet")}</div>
-              <div className="col-span-2 hidden sm:block">{t("walletColumn")}</div>
+              <div className="col-span-2 hidden sm:block">
+                {t("walletColumn")}
+              </div>
               <div className="col-span-2 text-right">{t("xp")}</div>
-              <div className="col-span-2 text-right hidden sm:block">{t("level")}</div>
-              <div className="col-span-2 sm:col-span-2 text-right">{tGamification("streak")}</div>
+              <div className="col-span-2 text-right hidden sm:block">
+                {t("level")}
+              </div>
+              <div className="col-span-2 sm:col-span-2 text-right">
+                {tGamification("streak")}
+              </div>
             </div>
 
             <div className="divide-y divide-white/5">
@@ -326,7 +360,9 @@ export default function LeaderboardPage() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className={`truncate font-medium ${isCurrentUser ? "text-st-green-light" : ""}`}>
+                        <p
+                          className={`truncate font-medium ${isCurrentUser ? "text-st-green-light" : ""}`}
+                        >
                           {isCurrentUser ? t("you") : entry.displayName}
                         </p>
                       </div>
@@ -344,12 +380,16 @@ export default function LeaderboardPage() {
                     <div className="col-span-2 hidden items-center justify-end sm:flex">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="h-3 w-3 text-level" />
-                        <span className="text-level font-medium">{entry.level}</span>
+                        <span className="text-level font-medium">
+                          {entry.level}
+                        </span>
                       </div>
                     </div>
                     <div className="col-span-2 flex items-center justify-end gap-1">
                       <Flame className="h-3 w-3 text-streak" />
-                      <span className="text-streak font-medium">{entry.streak}d</span>
+                      <span className="text-streak font-medium">
+                        {entry.streak}d
+                      </span>
                     </div>
                   </div>
                 );
@@ -366,28 +406,26 @@ export default function LeaderboardPage() {
               <div>
                 <p className="font-semibold">{t("yourRank")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {userRank ? t("yourRankOut", { rank: userRank, total: data.length }) : t("learnersOnBoard", { total: data.length })}
+                  {userRank
+                    ? t("yourRankOut", { rank: userRank, total: data.length })
+                    : t("learnersOnBoard", { total: data.length })}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <div className="text-center">
-                <p className="font-bold text-xp">
-                  {formatXP(xp)}
-                </p>
+                <p className="font-bold text-xp">{formatXP(xp)}</p>
                 <p className="text-xs text-muted-foreground">{t("xp")}</p>
               </div>
               <div className="text-center">
-                <p className="font-bold text-level">
-                  {xpProgress(xp).level}
-                </p>
+                <p className="font-bold text-level">{xpProgress(xp).level}</p>
                 <p className="text-xs text-muted-foreground">{t("level")}</p>
               </div>
               <div className="text-center">
-                <p className="font-bold text-streak">
-                  {streak.currentStreak}d
+                <p className="font-bold text-streak">{streak.currentStreak}d</p>
+                <p className="text-xs text-muted-foreground">
+                  {tGamification("streak")}
                 </p>
-                <p className="text-xs text-muted-foreground">{tGamification("streak")}</p>
               </div>
             </div>
           </div>

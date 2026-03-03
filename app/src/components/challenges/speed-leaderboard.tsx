@@ -28,7 +28,10 @@ interface SpeedLeaderboardProps {
   currentUserId?: string;
 }
 
-export function SpeedLeaderboard({ labels, currentUserId }: SpeedLeaderboardProps) {
+export function SpeedLeaderboard({
+  labels,
+  currentUserId,
+}: SpeedLeaderboardProps) {
   const [entries, setEntries] = useState<SpeedLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +54,10 @@ export function SpeedLeaderboard({ labels, currentUserId }: SpeedLeaderboardProp
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 border-b border-border/50 px-4 py-3 last:border-b-0">
+              <div
+                key={i}
+                className="flex items-center gap-3 border-b border-border/50 px-4 py-3 last:border-b-0"
+              >
                 <Skeleton className="h-5 w-6" />
                 <Skeleton className="h-5 w-32" />
                 <Skeleton className="ml-auto h-5 w-14" />
@@ -81,14 +87,20 @@ export function SpeedLeaderboard({ labels, currentUserId }: SpeedLeaderboardProp
                   key={entry.userId}
                   className={cn(
                     "flex items-center gap-3 border-b border-border/50 px-4 py-2.5 text-sm last:border-b-0",
-                    isCurrentUser && "bg-st-green/10 border-l-2 border-l-st-green",
+                    isCurrentUser &&
+                      "bg-st-green/10 border-l-2 border-l-st-green",
                   )}
                 >
                   <span className="w-8 font-mono text-xs text-muted-foreground">
-                    {entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : `#${entry.rank}`}
+                    {entry.rank <= 3
+                      ? ["🥇", "🥈", "🥉"][entry.rank - 1]
+                      : `#${entry.rank}`}
                   </span>
                   <span className="flex-1 truncate font-medium">
-                    {entry.displayName || (entry.wallet ? truncateWallet(entry.wallet) : "Anonymous")}
+                    {entry.displayName ||
+                      (entry.wallet
+                        ? truncateWallet(entry.wallet)
+                        : "Anonymous")}
                   </span>
                   <span className="w-16 text-right font-mono text-xs tabular-nums">
                     {formatTime(entry.timeSeconds)}

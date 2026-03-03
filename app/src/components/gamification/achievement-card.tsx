@@ -12,7 +12,11 @@ interface AchievementCardProps {
   className?: string;
 }
 
-export function AchievementCard({ achievement, onClaim, className }: AchievementCardProps) {
+export function AchievementCard({
+  achievement,
+  onClaim,
+  className,
+}: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isClaimed = achievement.claimed;
 
@@ -55,7 +59,12 @@ export function AchievementCard({ achievement, onClaim, className }: Achievement
       </p>
 
       {/* XP Reward */}
-      <p className={cn("mt-0.5 text-xs", isClaimed ? "text-xp" : "text-muted-foreground")}>
+      <p
+        className={cn(
+          "mt-0.5 text-xs",
+          isClaimed ? "text-xp" : "text-muted-foreground",
+        )}
+      >
         +{achievement.xpReward} XP
       </p>
 

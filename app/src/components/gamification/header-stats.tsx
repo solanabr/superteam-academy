@@ -36,7 +36,10 @@ export function HeaderStats() {
       <div className="h-4 w-px bg-border" />
       <XPBadge xp={xp} size="sm" />
       {isOnChain && (
-        <span className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400" title={t("onChain.verified")}>
+        <span
+          className="rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400"
+          title={t("onChain.verified")}
+        >
           {t("onChain.badge")}
         </span>
       )}

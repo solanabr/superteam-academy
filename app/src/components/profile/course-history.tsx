@@ -37,7 +37,9 @@ export function CourseHistory({
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="truncate font-semibold">{course.title}</h3>
-                <span className="mt-0.5 text-xs text-xp">{formatXP(course.xpTotal)} XP</span>
+                <span className="mt-0.5 text-xs text-xp">
+                  {formatXP(course.xpTotal)} XP
+                </span>
               </div>
               <div className="flex h-8 items-center rounded-full bg-brazil-green/10 px-3 text-xs font-semibold text-brazil-green">
                 100%

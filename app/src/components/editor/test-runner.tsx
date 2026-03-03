@@ -18,16 +18,13 @@ function TestStatusIcon({
   size: "sm" | "md";
 }) {
   const iconClass = size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5";
-  const wrapperClass =
-    size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5";
+  const wrapperClass = size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5";
 
   if (passed === true) {
     return size === "sm" ? (
       <Check className={cn(iconClass, "shrink-0 text-brazil-green")} />
     ) : (
-      <CheckCircle2
-        className={cn(iconClass, "shrink-0 text-brazil-green")}
-      />
+      <CheckCircle2 className={cn(iconClass, "shrink-0 text-brazil-green")} />
     );
   }
   if (passed === false) {
@@ -42,7 +39,7 @@ function TestStatusIcon({
       className={cn(
         wrapperClass,
         "shrink-0 rounded-full border",
-        size === "sm" ? "border-[#555]" : "border-2 border-muted-foreground/30"
+        size === "sm" ? "border-[#555]" : "border-2 border-muted-foreground/30",
       )}
     />
   );
@@ -118,7 +115,7 @@ export function TestRunner({
                 ? "text-brazil-green"
                 : tc.passed === false
                   ? "text-destructive"
-                  : "text-[#888]"
+                  : "text-[#888]",
             )}
           >
             {tc.name}

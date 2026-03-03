@@ -75,7 +75,9 @@ export function CourseCreator({ availableCourses = [] }: CourseCreatorProps) {
       id: `draft-${draft.slug || Date.now()}`,
     };
     try {
-      const existing = JSON.parse(localStorage.getItem(PUBLISHED_KEY) ?? "[]") as unknown[];
+      const existing = JSON.parse(
+        localStorage.getItem(PUBLISHED_KEY) ?? "[]",
+      ) as unknown[];
       existing.push(finalCourse);
       localStorage.setItem(PUBLISHED_KEY, JSON.stringify(existing));
       localStorage.removeItem(DRAFT_KEY);

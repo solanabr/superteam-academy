@@ -5,7 +5,12 @@ import { X, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ThreadCategory, CreateThreadPayload } from "@/types";
 
-const CATEGORIES: ThreadCategory[] = ["Help", "Show & Tell", "Ideas", "General"];
+const CATEGORIES: ThreadCategory[] = [
+  "Help",
+  "Show & Tell",
+  "Ideas",
+  "General",
+];
 
 interface NewThreadDialogProps {
   onClose: () => void;
@@ -48,7 +53,9 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
     >
       <div className="glass w-full max-w-xl rounded-2xl p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
@@ -64,7 +71,9 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t("titleLabel")}</label>
+            <label className="mb-1.5 block text-sm font-medium">
+              {t("titleLabel")}
+            </label>
             <input
               type="text"
               value={title}
@@ -76,14 +85,18 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t("categoryLabel")}</label>
+            <label className="mb-1.5 block text-sm font-medium">
+              {t("categoryLabel")}
+            </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ThreadCategory)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
@@ -92,7 +105,9 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
             <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
               <Tag className="h-3.5 w-3.5" />
               {t("tagsLabel")}
-              <span className="font-normal text-muted-foreground">({t("tagsHint")})</span>
+              <span className="font-normal text-muted-foreground">
+                ({t("tagsHint")})
+              </span>
             </label>
             <input
               type="text"
@@ -104,7 +119,9 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium">{t("bodyLabel")}</label>
+            <label className="mb-1.5 block text-sm font-medium">
+              {t("bodyLabel")}
+            </label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}

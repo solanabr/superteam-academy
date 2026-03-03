@@ -74,17 +74,14 @@ export class HybridProgressService implements LearningProgressService {
 
   async getProgress(
     userId: string,
-    courseId: string
+    courseId: string,
   ): Promise<Progress | null> {
     if (!this.walletConnected) {
       return this.local.getProgress(userId, courseId);
     }
 
     try {
-      const onchainProgress = await this.onchain.getProgress(
-        userId,
-        courseId
-      );
+      const onchainProgress = await this.onchain.getProgress(userId, courseId);
       if (onchainProgress) return onchainProgress;
     } catch {
       // Fall through to localStorage
@@ -102,11 +99,9 @@ export class HybridProgressService implements LearningProgressService {
       if (onchainProgress.length > 0) {
         // Merge: on-chain enrollments take priority, add local-only ones
         const localProgress = await this.local.getAllProgress(userId);
-        const onchainIds = new Set(
-          onchainProgress.map((p) => p.courseId)
-        );
+        const onchainIds = new Set(onchainProgress.map((p) => p.courseId));
         const localOnly = localProgress.filter(
-          (p) => !onchainIds.has(p.courseId)
+          (p) => !onchainIds.has(p.courseId),
         );
         return [...onchainProgress, ...localOnly];
       }
@@ -119,7 +114,7 @@ export class HybridProgressService implements LearningProgressService {
   async completeLesson(
     userId: string,
     courseId: string,
-    lessonIndex: number
+    lessonIndex: number,
   ): Promise<void> {
     // Always write to localStorage for instant UI feedback
     await this.local.completeLesson(userId, courseId, lessonIndex);
@@ -136,7 +131,7 @@ export class HybridProgressService implements LearningProgressService {
       } catch (err) {
         console.warn(
           "On-chain enrollment failed, falling back to localStorage:",
-          err
+          err,
         );
       }
     }
@@ -157,12 +152,14 @@ export class HybridProgressService implements LearningProgressService {
 
   async getLeaderboard(
     timeframe: "weekly" | "monthly" | "alltime",
-    courseId?: string
+    courseId?: string,
   ): Promise<LeaderboardEntry[]> {
     if (this.walletConnected) {
       try {
-        const onchainBoard =
-          await this.onchain.getLeaderboard(timeframe, courseId);
+        const onchainBoard = await this.onchain.getLeaderboard(
+          timeframe,
+          courseId,
+        );
         if (onchainBoard.length > 0) return onchainBoard;
       } catch {
         // Fall through to localStorage mock
@@ -176,8 +173,7 @@ export class HybridProgressService implements LearningProgressService {
   async getCredentials(wallet: string): Promise<Credential[]> {
     if (this.walletConnected) {
       try {
-        const onchainCreds =
-          await this.onchain.getCredentials(wallet);
+        const onchainCreds = await this.onchain.getCredentials(wallet);
         if (onchainCreds.length > 0) return onchainCreds;
       } catch {
         // Fall through
@@ -192,10 +188,7 @@ export class HybridProgressService implements LearningProgressService {
     return this.local.getAchievements(userId);
   }
 
-  async claimAchievement(
-    userId: string,
-    achievementId: number
-  ): Promise<void> {
+  async claimAchievement(userId: string, achievementId: number): Promise<void> {
     return this.local.claimAchievement(userId, achievementId);
   }
 }

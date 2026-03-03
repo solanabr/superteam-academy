@@ -11,7 +11,8 @@ export async function PATCH(
 ) {
   const { commentId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   if (!body.body?.trim()) {
@@ -34,9 +35,13 @@ export async function DELETE(
 ) {
   const { commentId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
 
   try {
     await service.softDeleteComment(commentId, userId, user?.isAdmin ?? false);

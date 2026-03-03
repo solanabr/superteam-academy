@@ -12,7 +12,11 @@ export interface ModuleListProps {
   completedLessons: number[];
 }
 
-export function ModuleList({ modules, courseSlug, completedLessons }: ModuleListProps) {
+export function ModuleList({
+  modules,
+  courseSlug,
+  completedLessons,
+}: ModuleListProps) {
   const tc = useTranslations("common");
 
   if (modules.length === 0) {
@@ -57,7 +61,10 @@ function ModuleAccordion({
   lessonOffset,
 }: ModuleAccordionProps) {
   return (
-    <details className="group rounded-xl border border-border bg-card" open={moduleIndex === 0}>
+    <details
+      className="group rounded-xl border border-border bg-card"
+      open={moduleIndex === 0}
+    >
       <summary className="flex cursor-pointer items-center justify-between px-5 py-4 [&::-webkit-details-marker]:hidden">
         <div className="flex items-center gap-3">
           <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
@@ -82,7 +89,7 @@ function ModuleAccordion({
               href={`/courses/${courseSlug}/lessons/${lesson.id}`}
               className={cn(
                 "flex items-center gap-3 px-5 py-3 text-sm transition-colors hover:bg-muted/50",
-                li !== module.lessons.length - 1 && "border-b border-border"
+                li !== module.lessons.length - 1 && "border-b border-border",
               )}
             >
               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted-foreground">
@@ -95,7 +102,11 @@ function ModuleAccordion({
                 )}
               </div>
               <div className="flex-1">
-                <span className={cn(isCompleted && "text-muted-foreground line-through")}>
+                <span
+                  className={cn(
+                    isCompleted && "text-muted-foreground line-through",
+                  )}
+                >
                   {lesson.title}
                 </span>
               </div>

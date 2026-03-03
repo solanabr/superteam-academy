@@ -21,7 +21,13 @@ export function useDiscussionThreads(params: ThreadListParams) {
     } finally {
       setIsLoading(false);
     }
-  }, [params.scope, params.category, params.lessonId, params.sort, params.search]);
+  }, [
+    params.scope,
+    params.category,
+    params.lessonId,
+    params.sort,
+    params.search,
+  ]);
 
   useEffect(() => {
     fetchThreads();
@@ -31,7 +37,10 @@ export function useDiscussionThreads(params: ThreadListParams) {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      const data = await discussionApi.listThreads({ ...params, cursor: nextCursor });
+      const data = await discussionApi.listThreads({
+        ...params,
+        cursor: nextCursor,
+      });
       setThreads((prev) => [...prev, ...data.threads]);
       setNextCursor(data.nextCursor);
     } catch {
@@ -41,24 +50,39 @@ export function useDiscussionThreads(params: ThreadListParams) {
     }
   }, [nextCursor, isLoadingMore, params]);
 
-  const voteThread = useCallback(async (threadId: string, value: VoteValue) => {
-    if (value === 0) return;
-    // Optimistic update
-    setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== threadId) return t;
-        const oldVote = t.userVote;
-        const newVote: VoteValue = oldVote === value ? 0 : value;
-        const scoreDelta = newVote - oldVote;
-        return { ...t, userVote: newVote, voteScore: t.voteScore + scoreDelta };
-      }),
-    );
-    try {
-      await discussionApi.voteThread(threadId, value);
-    } catch {
-      fetchThreads(); // revert on failure
-    }
-  }, [fetchThreads]);
+  const voteThread = useCallback(
+    async (threadId: string, value: VoteValue) => {
+      if (value === 0) return;
+      // Optimistic update
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t.id !== threadId) return t;
+          const oldVote = t.userVote;
+          const newVote: VoteValue = oldVote === value ? 0 : value;
+          const scoreDelta = newVote - oldVote;
+          return {
+            ...t,
+            userVote: newVote,
+            voteScore: t.voteScore + scoreDelta,
+          };
+        }),
+      );
+      try {
+        await discussionApi.voteThread(threadId, value);
+      } catch {
+        fetchThreads(); // revert on failure
+      }
+    },
+    [fetchThreads],
+  );
 
-  return { threads, isLoading, nextCursor, isLoadingMore, loadMore, voteThread, refresh: fetchThreads };
+  return {
+    threads,
+    isLoading,
+    nextCursor,
+    isLoadingMore,
+    loadMore,
+    voteThread,
+    refresh: fetchThreads,
+  };
 }

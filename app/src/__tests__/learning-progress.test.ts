@@ -196,7 +196,7 @@ describe("LocalStorageProgressService — completeLesson", () => {
     const p2 = await svc.getProgress(userId, courseId);
 
     expect(new Date(p2!.lastAccessedAt).getTime()).toBeGreaterThan(
-      new Date(p1!.lastAccessedAt).getTime()
+      new Date(p1!.lastAccessedAt).getTime(),
     );
     restoreDate();
   });
@@ -497,7 +497,7 @@ describe("LocalStorageProgressService — Achievements", () => {
     const achievements = await svc.getAchievements(userId);
     const categories = new Set(achievements.map((a) => a.category));
     expect(categories).toEqual(
-      new Set(["progress", "streaks", "skills", "community", "special"])
+      new Set(["progress", "streaks", "skills", "community", "special"]),
     );
   });
 
@@ -557,8 +557,8 @@ describe("LocalStorageProgressService — claimAchievement", () => {
   });
 
   it("can claim multiple different achievements", async () => {
-    await svc.claimAchievement(userId, 1);  // 50 XP
-    await svc.claimAchievement(userId, 5);  // 75 XP
+    await svc.claimAchievement(userId, 1); // 50 XP
+    await svc.claimAchievement(userId, 5); // 75 XP
     await svc.claimAchievement(userId, 13); // 25 XP
 
     const achievements = await svc.getAchievements(userId);
@@ -603,10 +603,7 @@ describe("LocalStorageProgressService — Credentials", () => {
       firstEarned: "2026-01-01",
       lastUpdated: "2026-02-01",
     };
-    storageMock.setItem(
-      "sta_credentials:mywallet",
-      JSON.stringify([cred])
-    );
+    storageMock.setItem("sta_credentials:mywallet", JSON.stringify([cred]));
 
     const creds = await svc.getCredentials("mywallet");
     expect(creds).toHaveLength(1);

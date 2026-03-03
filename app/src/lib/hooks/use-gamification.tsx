@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 import { useLearningProgress } from "./use-learning-progress";
-import { generateDailyQuests, type Quest, type DailyQuests } from "./gamification-quests";
+import {
+  generateDailyQuests,
+  type Quest,
+  type DailyQuests,
+} from "./gamification-quests";
 
 // ── Types ──
 
@@ -52,7 +56,9 @@ export interface CelebrationData {
   dailyGoalTarget: number;
 }
 
-const GamificationContext = createContext<GamificationContextValue | null>(null);
+const GamificationContext = createContext<GamificationContextValue | null>(
+  null,
+);
 
 // ── Helpers ──
 
@@ -84,7 +90,10 @@ function loadDailyGoal(uid: string, today: string): DailyGoal {
     const parsed = JSON.parse(stored) as DailyGoal;
     if (parsed.date === today) return parsed;
     const fresh = { target: parsed.target, xpToday: 0, date: today };
-    localStorage.setItem(getStorageKey("daily_goal", uid), JSON.stringify(fresh));
+    localStorage.setItem(
+      getStorageKey("daily_goal", uid),
+      JSON.stringify(fresh),
+    );
     return fresh;
   } catch {
     return fallback;
@@ -92,17 +101,26 @@ function loadDailyGoal(uid: string, today: string): DailyGoal {
 }
 
 function loadDailyQuests(uid: string, today: string): DailyQuests {
-  const fallback: DailyQuests = { date: today, quests: generateDailyQuests(today) };
+  const fallback: DailyQuests = {
+    date: today,
+    quests: generateDailyQuests(today),
+  };
   if (typeof window === "undefined") return fallback;
   try {
     const stored = localStorage.getItem(getStorageKey("daily_quests", uid));
     if (!stored) {
-      localStorage.setItem(getStorageKey("daily_quests", uid), JSON.stringify(fallback));
+      localStorage.setItem(
+        getStorageKey("daily_quests", uid),
+        JSON.stringify(fallback),
+      );
       return fallback;
     }
     const parsed = JSON.parse(stored) as DailyQuests;
     if (parsed.date === today) return parsed;
-    localStorage.setItem(getStorageKey("daily_quests", uid), JSON.stringify(fallback));
+    localStorage.setItem(
+      getStorageKey("daily_quests", uid),
+      JSON.stringify(fallback),
+    );
     return fallback;
   } catch {
     return fallback;
@@ -110,13 +128,18 @@ function loadDailyQuests(uid: string, today: string): DailyQuests {
 }
 
 function loadCombo(uid: string): ComboState {
-  const fallback: ComboState = { count: 0, multiplier: 1, lastCompletionTime: 0 };
+  const fallback: ComboState = {
+    count: 0,
+    multiplier: 1,
+    lastCompletionTime: 0,
+  };
   if (typeof window === "undefined") return fallback;
   try {
     const stored = localStorage.getItem(getStorageKey("combo", uid));
     if (!stored) return fallback;
     const parsed = JSON.parse(stored) as ComboState;
-    if (Date.now() - parsed.lastCompletionTime > COMBO_TIMEOUT_MS) return fallback;
+    if (Date.now() - parsed.lastCompletionTime > COMBO_TIMEOUT_MS)
+      return fallback;
     return parsed;
   } catch {
     return fallback;
@@ -125,18 +148,27 @@ function loadCombo(uid: string): ComboState {
 
 // ── Provider ──
 
-export function GamificationProvider({ children }: { children: React.ReactNode }) {
+export function GamificationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { userId, streak } = useLearningProgress();
   const today = getTodayString();
 
   // Lazy initial state from localStorage
-  const [dailyGoal, setDailyGoal] = useState<DailyGoal>(() => loadDailyGoal(userId, today));
-  const [dailyQuests, setDailyQuests] = useState<DailyQuests>(() => loadDailyQuests(userId, today));
+  const [dailyGoal, setDailyGoal] = useState<DailyGoal>(() =>
+    loadDailyGoal(userId, today),
+  );
+  const [dailyQuests, setDailyQuests] = useState<DailyQuests>(() =>
+    loadDailyQuests(userId, today),
+  );
   const [combo, setCombo] = useState<ComboState>(() => loadCombo(userId));
 
   // Celebration
   const [showCelebration, setShowCelebration] = useState(false);
-  const [celebrationData, setCelebrationData] = useState<CelebrationData | null>(null);
+  const [celebrationData, setCelebrationData] =
+    useState<CelebrationData | null>(null);
 
   // Re-initialize when userId changes (React docs: "storing information from previous renders")
   const [prevUserId, setPrevUserId] = useState(userId);
@@ -151,7 +183,10 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   const persistDailyGoal = useCallback(
     (goal: DailyGoal) => {
       setDailyGoal(goal);
-      localStorage.setItem(getStorageKey("daily_goal", userId), JSON.stringify(goal));
+      localStorage.setItem(
+        getStorageKey("daily_goal", userId),
+        JSON.stringify(goal),
+      );
     },
     [userId],
   );
@@ -159,7 +194,10 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   const persistDailyQuests = useCallback(
     (quests: DailyQuests) => {
       setDailyQuests(quests);
-      localStorage.setItem(getStorageKey("daily_quests", userId), JSON.stringify(quests));
+      localStorage.setItem(
+        getStorageKey("daily_quests", userId),
+        JSON.stringify(quests),
+      );
     },
     [userId],
   );
@@ -215,7 +253,10 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     const now = Date.now();
     let newCount: number;
 
-    if (combo.lastCompletionTime === 0 || now - combo.lastCompletionTime > COMBO_TIMEOUT_MS) {
+    if (
+      combo.lastCompletionTime === 0 ||
+      now - combo.lastCompletionTime > COMBO_TIMEOUT_MS
+    ) {
       newCount = 1;
     } else {
       newCount = combo.count + 1;

@@ -15,7 +15,9 @@ interface ParsedTokenInfo {
 }
 
 /** Fetch the XP mint address from the on-chain Config PDA. Returns null if program not initialized. */
-export async function getXpMintFromChain(connection: Connection): Promise<PublicKey | null> {
+export async function getXpMintFromChain(
+  connection: Connection,
+): Promise<PublicKey | null> {
   const [configPda] = getConfigPda();
   const info = await connection.getAccountInfo(configPda);
   if (!info) return null;
@@ -36,15 +38,15 @@ export async function getXpLeaderboard(
     const accounts = await connection.getParsedProgramAccounts(
       TOKEN_2022_PROGRAM_ID,
       {
-        filters: [
-          { memcmp: { offset: 0, bytes: xpMint.toBase58() } },
-        ],
+        filters: [{ memcmp: { offset: 0, bytes: xpMint.toBase58() } }],
       },
     );
 
     return accounts
       .map((a) => {
-        const parsed = (a.account.data as { parsed?: { info?: ParsedTokenInfo } }).parsed;
+        const parsed = (
+          a.account.data as { parsed?: { info?: ParsedTokenInfo } }
+        ).parsed;
         return {
           owner: parsed?.info?.owner ?? "",
           balance: Number(parsed?.info?.tokenAmount?.amount ?? 0),

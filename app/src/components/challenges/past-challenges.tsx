@@ -49,7 +49,9 @@ export function PastChallenges({
   browseAllLabel,
 }: PastChallengesProps) {
   const [allChallenges] = useState(() => getAllPastChallenges());
-  const [completions] = useState<DailyChallengeCompletion[]>(() => loadCompletions());
+  const [completions] = useState<DailyChallengeCompletion[]>(() =>
+    loadCompletions(),
+  );
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   if (allChallenges.length === 0) return null;
@@ -91,12 +93,17 @@ export function PastChallenges({
                 )}
               </div>
 
-              <h3 className="mb-2 font-medium leading-tight">{challenge.title}</h3>
+              <h3 className="mb-2 font-medium leading-tight">
+                {challenge.title}
+              </h3>
 
               <div className="flex flex-wrap items-center gap-1.5">
                 <Badge
                   variant="outline"
-                  className={cn("text-[10px]", CATEGORY_COLORS[challenge.category])}
+                  className={cn(
+                    "text-[10px]",
+                    CATEGORY_COLORS[challenge.category],
+                  )}
                 >
                   {challenge.category}
                 </Badge>

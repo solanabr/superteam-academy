@@ -11,7 +11,7 @@ import { PublicKey } from "@solana/web3.js";
 
 function disc(eventName: string): Buffer {
   return Buffer.from(
-    createHash("sha256").update(`event:${eventName}`).digest()
+    createHash("sha256").update(`event:${eventName}`).digest(),
   ).subarray(0, 8);
 }
 
@@ -78,17 +78,28 @@ export function parseEventsFromLogs(logs: string[]): ParsedProgramEvents {
         lessonIndex: data.readUInt8(8 + 32 + 32),
         xpEarned: data.readUInt32LE(8 + 32 + 32 + 1),
       };
-    } else if (d.equals(DISC_COURSE_FINALIZED) && data.length >= 8 + 32 + 32 + 4 + 4 + 32 + 4) {
+    } else if (
+      d.equals(DISC_COURSE_FINALIZED) &&
+      data.length >= 8 + 32 + 32 + 4 + 4 + 32 + 4
+    ) {
       result.courseFinalized = {
         totalXp: data.readUInt32LE(8 + 32 + 32),
         bonusXp: data.readUInt32LE(8 + 32 + 32 + 4),
         creatorXp: data.readUInt32LE(8 + 32 + 32 + 4 + 4 + 32),
       };
-    } else if (d.equals(DISC_CREDENTIAL_ISSUED) && data.length >= 8 + 32 + 32 + 32) {
+    } else if (
+      d.equals(DISC_CREDENTIAL_ISSUED) &&
+      data.length >= 8 + 32 + 32 + 32
+    ) {
       result.credentialIssued = {
-        asset: new PublicKey(data.subarray(8 + 32 + 32, 8 + 32 + 32 + 32)).toBase58(),
+        asset: new PublicKey(
+          data.subarray(8 + 32 + 32, 8 + 32 + 32 + 32),
+        ).toBase58(),
       };
-    } else if (d.equals(DISC_CREDENTIAL_UPGRADED) && data.length >= 8 + 32 + 32) {
+    } else if (
+      d.equals(DISC_CREDENTIAL_UPGRADED) &&
+      data.length >= 8 + 32 + 32
+    ) {
       // learner (32) + asset (32)
       result.credentialUpgraded = {
         asset: new PublicKey(data.subarray(8 + 32, 8 + 32 + 32)).toBase58(),

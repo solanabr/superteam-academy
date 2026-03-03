@@ -3,23 +3,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const cardVariants = cva(
-  "rounded-lg border text-card-foreground shadow",
-  {
-    variants: {
-      variant: {
-        default: "bg-card",
-        glass: "glass",
-      },
+const cardVariants = cva("rounded-lg border text-card-foreground shadow", {
+  variants: {
+    variant: {
+      default: "bg-card",
+      glass: "glass",
     },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-);
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
 
 export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -29,7 +27,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className={cn(cardVariants({ variant, className }))}
       {...props}
     />
-  )
+  ),
 );
 Card.displayName = "Card";
 
@@ -51,7 +49,10 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("font-heading text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn(
+      "font-heading text-lg font-semibold leading-none tracking-tight",
+      className,
+    )}
     {...props}
   />
 ));

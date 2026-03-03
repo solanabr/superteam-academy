@@ -13,15 +13,9 @@ test.describe("Leaderboard — Layout & Structure", () => {
 
   test("leaderboard displays time filter tabs", async ({ page }) => {
     // Should have weekly, monthly, and all-time filter tabs
-    const weeklyTab = page
-      .locator("button")
-      .filter({ hasText: /weekly/i });
-    const monthlyTab = page
-      .locator("button")
-      .filter({ hasText: /monthly/i });
-    const allTimeTab = page
-      .locator("button")
-      .filter({ hasText: /all.?time/i });
+    const weeklyTab = page.locator("button").filter({ hasText: /weekly/i });
+    const monthlyTab = page.locator("button").filter({ hasText: /monthly/i });
+    const allTimeTab = page.locator("button").filter({ hasText: /all.?time/i });
 
     await expect(weeklyTab).toBeVisible();
     await expect(monthlyTab).toBeVisible();
@@ -39,9 +33,7 @@ test.describe("Leaderboard — Layout & Structure", () => {
     await expect(thirdPlace).toBeVisible({ timeout: 5000 });
   });
 
-  test("leaderboard table displays XP and level columns", async ({
-    page,
-  }) => {
+  test("leaderboard table displays XP and level columns", async ({ page }) => {
     // Table headers should include rank, XP, level
     const rankHeader = page.getByText(/^rank$/i);
     const xpHeader = page.getByText(/^xp$/i);
@@ -56,9 +48,7 @@ test.describe("Leaderboard — Layout & Structure", () => {
     await expect(streakValues.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test("leaderboard shows current user summary at bottom", async ({
-    page,
-  }) => {
+  test("leaderboard shows current user summary at bottom", async ({ page }) => {
     // Should show "Your Rank" or similar user summary section
     const yourRank = page.getByText(/your rank|your position/i);
     await expect(yourRank.first()).toBeVisible({ timeout: 5000 });
@@ -71,9 +61,7 @@ test.describe("Leaderboard — Time Filter Switching", () => {
     await page.waitForLoadState("networkidle");
 
     // Click weekly tab
-    const weeklyTab = page
-      .locator("button")
-      .filter({ hasText: /weekly/i });
+    const weeklyTab = page.locator("button").filter({ hasText: /weekly/i });
     await weeklyTab.click();
 
     // Podium should still be visible after filter change
@@ -86,9 +74,7 @@ test.describe("Leaderboard — Time Filter Switching", () => {
     await page.waitForLoadState("networkidle");
 
     // Click monthly tab
-    const monthlyTab = page
-      .locator("button")
-      .filter({ hasText: /monthly/i });
+    const monthlyTab = page.locator("button").filter({ hasText: /monthly/i });
     await monthlyTab.click();
 
     // Podium should still be visible after filter change
@@ -101,9 +87,7 @@ test.describe("Leaderboard — Time Filter Switching", () => {
     await page.waitForLoadState("networkidle");
 
     // The all-time tab should have the active styling (bg-card class)
-    const allTimeTab = page
-      .locator("button")
-      .filter({ hasText: /all.?time/i });
+    const allTimeTab = page.locator("button").filter({ hasText: /all.?time/i });
     await expect(allTimeTab).toBeVisible();
 
     // Verify it has the active styling (shadow-sm is added to active tab)
@@ -117,18 +101,14 @@ test.describe("Leaderboard — Time Filter Switching", () => {
     await page.waitForLoadState("networkidle");
 
     // Click weekly
-    const weeklyTab = page
-      .locator("button")
-      .filter({ hasText: /weekly/i });
+    const weeklyTab = page.locator("button").filter({ hasText: /weekly/i });
     await weeklyTab.click();
 
     // Weekly should now have the active style
     await expect(weeklyTab).toHaveClass(/shadow/);
 
     // All-time should lose the active style
-    const allTimeTab = page
-      .locator("button")
-      .filter({ hasText: /all.?time/i });
+    const allTimeTab = page.locator("button").filter({ hasText: /all.?time/i });
     await expect(allTimeTab).not.toHaveClass(/shadow/);
   });
 });

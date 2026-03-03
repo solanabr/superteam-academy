@@ -12,7 +12,8 @@ export async function GET(
   const { threadId } = await params;
   const userId = await resolveUserId();
   const thread = await service.getThread(threadId, userId);
-  if (!thread) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!thread)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(thread);
 }
 
@@ -22,9 +23,13 @@ export async function PATCH(
 ) {
   const { threadId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
   const body = await request.json();
 
   try {
@@ -43,9 +48,13 @@ export async function DELETE(
 ) {
   const { threadId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
 
   try {
     await service.deleteThread(threadId, userId, user?.isAdmin ?? false);

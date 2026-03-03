@@ -31,15 +31,11 @@ test.describe("Enrollment Flow", () => {
     page,
   }) => {
     // Should display the enroll button
-    const enrollButton = page
-      .locator("button")
-      .filter({ hasText: /enroll/i });
+    const enrollButton = page.locator("button").filter({ hasText: /enroll/i });
     await expect(enrollButton).toBeVisible();
 
     // Should NOT show a progress bar or continue button
-    const continueButton = page
-      .locator("a")
-      .filter({ hasText: /continue/i });
+    const continueButton = page.locator("a").filter({ hasText: /continue/i });
     await expect(continueButton).not.toBeVisible();
   });
 
@@ -47,9 +43,7 @@ test.describe("Enrollment Flow", () => {
     page,
   }) => {
     // Click the enroll button
-    const enrollButton = page
-      .locator("button")
-      .filter({ hasText: /enroll/i });
+    const enrollButton = page.locator("button").filter({ hasText: /enroll/i });
     await expect(enrollButton).toBeVisible();
     await enrollButton.click();
 
@@ -66,9 +60,7 @@ test.describe("Enrollment Flow", () => {
 
   test("enrolled course appears on dashboard", async ({ page }) => {
     // Enroll in the course
-    const enrollButton = page
-      .locator("button")
-      .filter({ hasText: /enroll/i });
+    const enrollButton = page.locator("button").filter({ hasText: /enroll/i });
     await enrollButton.click();
 
     // Wait for enrollment to take effect
@@ -90,9 +82,7 @@ test.describe("Enrollment Flow", () => {
     page,
   }) => {
     // Enroll in the course
-    const enrollButton = page
-      .locator("button")
-      .filter({ hasText: /enroll/i });
+    const enrollButton = page.locator("button").filter({ hasText: /enroll/i });
     await enrollButton.click();
 
     // Click continue learning
@@ -109,9 +99,7 @@ test.describe("Enrollment Flow", () => {
 
   test("enrollment persists after page reload", async ({ page }) => {
     // Enroll in the course
-    const enrollButton = page
-      .locator("button")
-      .filter({ hasText: /enroll/i });
+    const enrollButton = page.locator("button").filter({ hasText: /enroll/i });
     await enrollButton.click();
 
     // Wait for enrollment to take effect

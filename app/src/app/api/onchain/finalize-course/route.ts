@@ -2,9 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { resolveUserId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/db";
-import { loadBackendSigner, getServerConnection } from "@/lib/onchain/backend-signer";
+import {
+  loadBackendSigner,
+  getServerConnection,
+} from "@/lib/onchain/backend-signer";
 import { buildFinalizeCourseTransaction } from "@/lib/onchain/instructions/finalize-course";
-import { parseAnchorError, isAlreadyDoneError } from "@/lib/onchain/program-errors";
+import {
+  parseAnchorError,
+  isAlreadyDoneError,
+} from "@/lib/onchain/program-errors";
 import { parseEventsFromLogs } from "@/lib/onchain/events";
 
 export async function POST(request: NextRequest) {
@@ -20,10 +26,16 @@ export async function POST(request: NextRequest) {
   };
 
   if (!courseId || !learnerWallet) {
-    return NextResponse.json({ error: "Missing courseId or learnerWallet" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing courseId or learnerWallet" },
+      { status: 400 },
+    );
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { wallet: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { wallet: true },
+  });
   if (!user?.wallet || user.wallet !== learnerWallet) {
     return NextResponse.json({ error: "Wallet mismatch" }, { status: 403 });
   }
@@ -32,7 +44,10 @@ export async function POST(request: NextRequest) {
   try {
     learner = new PublicKey(learnerWallet);
   } catch {
-    return NextResponse.json({ error: "Invalid learnerWallet" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid learnerWallet" },
+      { status: 400 },
+    );
   }
 
   const backendSigner = loadBackendSigner();
@@ -52,8 +67,12 @@ export async function POST(request: NextRequest) {
       skipPreflight: false,
     });
 
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-    await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash();
+    await connection.confirmTransaction(
+      { signature, blockhash, lastValidBlockHeight },
+      "confirmed",
+    );
 
     // Parse CourseFinalized event to get actual XP amounts
     let bonusXp: number | undefined;
@@ -75,7 +94,10 @@ export async function POST(request: NextRequest) {
         data: { completedAt: new Date() },
       });
     } catch (dbErr) {
-      console.error("[onchain/finalize-course] DB update failed after on-chain success", dbErr);
+      console.error(
+        "[onchain/finalize-course] DB update failed after on-chain success",
+        dbErr,
+      );
     }
 
     return NextResponse.json({ success: true, signature, bonusXp });
@@ -87,7 +109,11 @@ export async function POST(request: NextRequest) {
     }
 
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[onchain/finalize-course]", { userId, courseId, error: msg });
+    console.error("[onchain/finalize-course]", {
+      userId,
+      courseId,
+      error: msg,
+    });
     return NextResponse.json({ error: name ?? msg }, { status: 500 });
   }
 }

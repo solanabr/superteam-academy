@@ -22,9 +22,20 @@ const iconSizes = {
   lg: "h-4 w-4",
 };
 
-export function XPBadge({ xp, size = "md", showIcon = true, className }: XPBadgeProps) {
+export function XPBadge({
+  xp,
+  size = "md",
+  showIcon = true,
+  className,
+}: XPBadgeProps) {
   return (
-    <span className={cn("inline-flex items-center font-semibold text-xp", sizeStyles[size], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center font-semibold text-xp",
+        sizeStyles[size],
+        className,
+      )}
+    >
       {showIcon && <Zap className={iconSizes[size]} />}
       {formatXP(xp)} XP
     </span>

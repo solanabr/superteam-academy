@@ -13,10 +13,7 @@ export async function GET(
   });
 
   if (!challenge) {
-    return NextResponse.json(
-      { error: "Challenge not found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
   }
 
   return NextResponse.json({ solution: challenge.solution });

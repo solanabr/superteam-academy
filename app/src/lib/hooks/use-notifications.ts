@@ -81,5 +81,12 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  return { notifications, isLoading, markRead, markAllRead, refresh: fetchAll, unreadCount };
+  return {
+    notifications,
+    isLoading,
+    markRead,
+    markAllRead,
+    refresh: fetchAll,
+    unreadCount,
+  };
 }

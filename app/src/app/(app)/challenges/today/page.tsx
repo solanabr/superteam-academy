@@ -26,6 +26,16 @@ export default async function ChallengeTodayPage() {
     yourTime: t("yourTime"),
     backToChallenges: t("backToChallenges"),
     prerequisites: t("prerequisites"),
+    description: t("description"),
+    expectedBehavior: t("expectedBehavior"),
+    examples: t("examples"),
+    input: t("input"),
+    output: t("output"),
+    expected: t("expected"),
+    actual: t("actual"),
+    runningTests: t("runningTests"),
+    compileError: t("compileError"),
+    submitSolution: t("submitSolution"),
   };
 
   return <ChallengeSolveClient challenge={challenge} labels={labels} />;

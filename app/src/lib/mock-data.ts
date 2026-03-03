@@ -13,6 +13,8 @@ export function getCoursesByTrack(trackId: number): Course[] {
   return MOCK_COURSES.filter((c) => c.trackId === trackId);
 }
 
-export function getCoursesByDifficulty(difficulty: Course["difficulty"]): Course[] {
+export function getCoursesByDifficulty(
+  difficulty: Course["difficulty"],
+): Course[] {
   return MOCK_COURSES.filter((c) => c.difficulty === difficulty);
 }

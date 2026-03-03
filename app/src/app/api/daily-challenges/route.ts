@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { resolveUserId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/db";
-import { getTodayChallenge, getTodayKey, getRecentChallenges } from "@/lib/daily-challenges";
+import {
+  getTodayChallenge,
+  getTodayKey,
+  getRecentChallenges,
+  getAllPastChallenges,
+} from "@/lib/daily-challenges";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +30,33 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ challenges, completions });
+  }
+
+  if (mode === "history") {
+    const limit = parseInt(searchParams.get("limit") ?? "100", 10);
+    const allPast = getAllPastChallenges();
+    const visible = allPast.slice(0, limit);
+    const userId = await resolveUserId();
+    let completions: { date: string; xpEarned: number; challengeId: string }[] =
+      [];
+
+    if (userId) {
+      const dbCompletions = await prisma.dailyChallengeCompletion.findMany({
+        where: { userId },
+        orderBy: { completedAt: "desc" },
+      });
+      completions = dbCompletions.map((c) => ({
+        date: c.date,
+        xpEarned: c.xpEarned,
+        challengeId: c.challengeId,
+      }));
+    }
+
+    return NextResponse.json({
+      challenges: visible,
+      completions,
+      total: allPast.length,
+    });
   }
 
   // Default: today's challenge
@@ -60,7 +92,10 @@ export async function POST(request: Request) {
   });
 
   if (existing && existing.xpEarned > 0) {
-    return NextResponse.json({ error: "Already completed today" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Already completed today" },
+      { status: 409 },
+    );
   }
 
   const earnedXp = xpEarned ?? 50;

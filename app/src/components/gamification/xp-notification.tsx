@@ -20,29 +20,40 @@ interface XPNotificationContextValue {
   showLevelUp: (newLevel: number) => void;
 }
 
-const XPNotificationContext = createContext<XPNotificationContextValue | null>(null);
+const XPNotificationContext = createContext<XPNotificationContextValue | null>(
+  null,
+);
 
 export function useXPNotification() {
   const ctx = useContext(XPNotificationContext);
   if (!ctx) {
-    throw new Error("useXPNotification must be used within XPNotificationProvider");
+    throw new Error(
+      "useXPNotification must be used within XPNotificationProvider",
+    );
   }
   return ctx;
 }
 
-export function XPNotificationProvider({ children }: { children: React.ReactNode }) {
+export function XPNotificationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const t = useTranslations("gamification");
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const addNotification = useCallback((notification: Omit<Notification, "id">) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setNotifications((prev) => [...prev, { ...notification, id }]);
+  const addNotification = useCallback(
+    (notification: Omit<Notification, "id">) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      setNotifications((prev) => [...prev, { ...notification, id }]);
 
-    // Auto-dismiss after 3 seconds
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 3000);
-  }, []);
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 3000);
+    },
+    [],
+  );
 
   const showXPGain = useCallback(
     (amount: number) => {
@@ -77,12 +88,17 @@ export function XPNotificationProvider({ children }: { children: React.ReactNode
   );
 
   return (
-    <XPNotificationContext.Provider value={{ showXPGain, showAchievement, showLevelUp }}>
+    <XPNotificationContext.Provider
+      value={{ showXPGain, showAchievement, showLevelUp }}
+    >
       {children}
       {/* Notification container */}
       <div className="pointer-events-none fixed right-4 top-20 z-[100] flex flex-col items-end gap-2">
         {notifications.map((notification) => (
-          <NotificationToast key={notification.id} notification={notification} />
+          <NotificationToast
+            key={notification.id}
+            notification={notification}
+          />
         ))}
       </div>
     </XPNotificationContext.Provider>
@@ -118,7 +134,12 @@ function NotificationToast({ notification }: { notification: Notification }) {
         c.bg,
       )}
     >
-      <div className={cn("flex h-8 w-8 items-center justify-center rounded-full", c.bg)}>
+      <div
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full",
+          c.bg,
+        )}
+      >
         <Icon className={cn("h-4 w-4", c.textColor)} />
       </div>
       <div>

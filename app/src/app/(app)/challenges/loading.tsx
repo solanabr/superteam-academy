@@ -55,7 +55,10 @@ export default function ChallengesLoading() {
       </div>
       <div className="glass rounded-xl overflow-hidden">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 border-b border-border/50 px-4 py-3 last:border-b-0">
+          <div
+            key={i}
+            className="flex items-center gap-3 border-b border-border/50 px-4 py-3 last:border-b-0"
+          >
             <Skeleton className="h-5 w-6" />
             <Skeleton className="h-5 w-32" />
             <Skeleton className="ml-auto h-5 w-14" />

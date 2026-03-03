@@ -19,7 +19,11 @@ interface ChallengeTimerProps {
   label: string;
 }
 
-export function ChallengeTimer({ startedAt, stopped, label }: ChallengeTimerProps) {
+export function ChallengeTimer({
+  startedAt,
+  stopped,
+  label,
+}: ChallengeTimerProps) {
   const [elapsed, setElapsed] = useState(() => {
     return Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
   });
@@ -27,16 +31,17 @@ export function ChallengeTimer({ startedAt, stopped, label }: ChallengeTimerProp
   useEffect(() => {
     if (stopped) return;
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
+      setElapsed(
+        Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000),
+      );
     }, 1000);
     return () => clearInterval(interval);
   }, [startedAt, stopped]);
 
   return (
-    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-      <Timer className="h-3.5 w-3.5" />
-      <span>{label}:</span>
-      <span className="font-mono font-medium tabular-nums text-foreground">
+    <div className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-base font-semibold">
+      <Timer className="h-4 w-4 text-muted-foreground" />
+      <span className="font-mono tabular-nums text-foreground">
         {formatElapsed(elapsed)}
       </span>
     </div>

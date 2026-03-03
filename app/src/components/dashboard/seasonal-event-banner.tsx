@@ -14,7 +14,7 @@ import {
 /** Updates the time-remaining string every minute. */
 function useCountdown(endDate: Date | null): string {
   const [remaining, setRemaining] = useState<string>(
-    endDate ? formatTimeRemaining(endDate) : ""
+    endDate ? formatTimeRemaining(endDate) : "",
   );
 
   useEffect(() => {
@@ -38,7 +38,9 @@ interface SeasonalEventBannerProps {
  * is currently active. Persists the dismissed state to localStorage so the banner
  * does not re-appear after the user closes it.
  */
-export function SeasonalEventBanner({ event: eventProp }: SeasonalEventBannerProps) {
+export function SeasonalEventBanner({
+  event: eventProp,
+}: SeasonalEventBannerProps) {
   const t = useTranslations("dashboard.events");
 
   // Resolve the active event (from prop or live detection)
@@ -64,8 +66,7 @@ export function SeasonalEventBanner({ event: eventProp }: SeasonalEventBannerPro
 
   if (!event || dismissed) return null;
 
-  const isEndingSoon =
-    event.endDate.getTime() - now < 24 * 60 * 60 * 1000; // < 24h
+  const isEndingSoon = event.endDate.getTime() - now < 24 * 60 * 60 * 1000; // < 24h
 
   return (
     <div

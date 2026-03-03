@@ -10,13 +10,18 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   const params: ThreadListParams = {
-    scope: (searchParams.get("scope") as ThreadListParams["scope"]) ?? undefined,
-    category: (searchParams.get("category") as ThreadListParams["category"]) ?? undefined,
+    scope:
+      (searchParams.get("scope") as ThreadListParams["scope"]) ?? undefined,
+    category:
+      (searchParams.get("category") as ThreadListParams["category"]) ??
+      undefined,
     lessonId: searchParams.get("lessonId") ?? undefined,
     sort: (searchParams.get("sort") as ThreadListParams["sort"]) ?? undefined,
     search: searchParams.get("search") ?? undefined,
     cursor: searchParams.get("cursor") ?? undefined,
-    limit: searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined,
+    limit: searchParams.has("limit")
+      ? Number(searchParams.get("limit"))
+      : undefined,
   };
 
   const data = await service.listThreads(params, userId);
@@ -25,11 +30,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   if (!body.title?.trim() || !body.scope) {
-    return NextResponse.json({ error: "Title and scope are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Title and scope are required" },
+      { status: 400 },
+    );
   }
 
   const thread = await service.createThread(userId, {

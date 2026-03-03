@@ -33,7 +33,11 @@ const NAV_ITEMS = [
   { href: "/courses", labelKey: "courses" as const, icon: BookOpen },
   { href: "/challenges", labelKey: "challenges" as const, icon: Zap },
   { href: "/leaderboard", labelKey: "leaderboard" as const, icon: Trophy },
-  { href: "/discussions", labelKey: "discussions" as const, icon: MessageSquare },
+  {
+    href: "/discussions",
+    labelKey: "discussions" as const,
+    icon: MessageSquare,
+  },
 ];
 
 export function Header({ appSlot }: HeaderProps) {
@@ -47,7 +51,9 @@ export function Header({ appSlot }: HeaderProps) {
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function handleLocaleChange(locale: Locale) {
     setLangMenuOpen(false);
@@ -84,7 +90,8 @@ export function Header({ appSlot }: HeaderProps) {
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -93,7 +100,7 @@ export function Header({ appSlot }: HeaderProps) {
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -114,7 +121,7 @@ export function Header({ appSlot }: HeaderProps) {
               onClick={() => setLangMenuOpen(!langMenuOpen)}
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                isPending && "opacity-50"
+                isPending && "opacity-50",
               )}
               aria-label="Change language"
               aria-expanded={langMenuOpen}
@@ -124,14 +131,21 @@ export function Header({ appSlot }: HeaderProps) {
             </button>
             {langMenuOpen && (
               <>
-                <div className="fixed inset-0" onClick={() => setLangMenuOpen(false)} />
-                <div role="menu" className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                <div
+                  className="fixed inset-0"
+                  onClick={() => setLangMenuOpen(false)}
+                />
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-border bg-popover p-1 shadow-lg"
+                >
                   {locales.map((locale) => (
                     <button
                       key={locale}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted",
-                        currentLocale === locale && "bg-primary/10 text-primary font-medium"
+                        currentLocale === locale &&
+                          "bg-primary/10 text-primary font-medium",
                       )}
                       role="menuitem"
                       onClick={() => handleLocaleChange(locale)}
@@ -168,7 +182,11 @@ export function Header({ appSlot }: HeaderProps) {
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
@@ -187,7 +205,7 @@ export function Header({ appSlot }: HeaderProps) {
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
                   isActive
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:bg-muted",
                 )}
               >
                 <item.icon className="h-4 w-4" />

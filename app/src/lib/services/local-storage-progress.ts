@@ -1,4 +1,10 @@
-import type { Progress, StreakData, LeaderboardEntry, Credential, Achievement } from "@/types";
+import type {
+  Progress,
+  StreakData,
+  LeaderboardEntry,
+  Credential,
+  Achievement,
+} from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -34,45 +40,225 @@ function levelFromXP(xp: number): number {
 
 const DEFAULT_ACHIEVEMENTS: Achievement[] = [
   // progress (4)
-  { id: 1, name: "First Steps", description: "Complete your first lesson", icon: "footprints", category: "progress", xpReward: 50, claimed: false },
-  { id: 2, name: "Course Conqueror", description: "Complete an entire course", icon: "trophy", category: "progress", xpReward: 200, claimed: false },
-  { id: 3, name: "Halfway There", description: "Complete 50% of any course", icon: "flag", category: "progress", xpReward: 100, claimed: false },
-  { id: 4, name: "Knowledge Collector", description: "Complete 5 courses", icon: "library", category: "progress", xpReward: 500, claimed: false },
+  {
+    id: 1,
+    name: "First Steps",
+    description: "Complete your first lesson",
+    icon: "footprints",
+    category: "progress",
+    xpReward: 50,
+    claimed: false,
+  },
+  {
+    id: 2,
+    name: "Course Conqueror",
+    description: "Complete an entire course",
+    icon: "trophy",
+    category: "progress",
+    xpReward: 200,
+    claimed: false,
+  },
+  {
+    id: 3,
+    name: "Halfway There",
+    description: "Complete 50% of any course",
+    icon: "flag",
+    category: "progress",
+    xpReward: 100,
+    claimed: false,
+  },
+  {
+    id: 4,
+    name: "Knowledge Collector",
+    description: "Complete 5 courses",
+    icon: "library",
+    category: "progress",
+    xpReward: 500,
+    claimed: false,
+  },
 
   // streaks (4)
-  { id: 5, name: "On Fire", description: "Reach a 3-day streak", icon: "flame", category: "streaks", xpReward: 75, claimed: false },
-  { id: 6, name: "Week Warrior", description: "Reach a 7-day streak", icon: "calendar-check", category: "streaks", xpReward: 150, claimed: false },
-  { id: 7, name: "Consistency King", description: "Reach a 30-day streak", icon: "crown", category: "streaks", xpReward: 500, claimed: false },
-  { id: 8, name: "Unstoppable", description: "Reach a 100-day streak", icon: "zap", category: "streaks", xpReward: 1000, claimed: false },
+  {
+    id: 5,
+    name: "On Fire",
+    description: "Reach a 3-day streak",
+    icon: "flame",
+    category: "streaks",
+    xpReward: 75,
+    claimed: false,
+  },
+  {
+    id: 6,
+    name: "Week Warrior",
+    description: "Reach a 7-day streak",
+    icon: "calendar-check",
+    category: "streaks",
+    xpReward: 150,
+    claimed: false,
+  },
+  {
+    id: 7,
+    name: "Consistency King",
+    description: "Reach a 30-day streak",
+    icon: "crown",
+    category: "streaks",
+    xpReward: 500,
+    claimed: false,
+  },
+  {
+    id: 8,
+    name: "Unstoppable",
+    description: "Reach a 100-day streak",
+    icon: "zap",
+    category: "streaks",
+    xpReward: 1000,
+    claimed: false,
+  },
 
   // skills (4)
-  { id: 9, name: "Anchor Apprentice", description: "Complete an Anchor Framework course", icon: "anchor", category: "skills", xpReward: 150, claimed: false },
-  { id: 10, name: "Rust Wrangler", description: "Complete a Rust for Solana course", icon: "code", category: "skills", xpReward: 150, claimed: false },
-  { id: 11, name: "DeFi Degen", description: "Complete a DeFi Development course", icon: "coins", category: "skills", xpReward: 150, claimed: false },
-  { id: 12, name: "Security Sentinel", description: "Complete a Program Security course", icon: "shield", category: "skills", xpReward: 200, claimed: false },
+  {
+    id: 9,
+    name: "Anchor Apprentice",
+    description: "Complete an Anchor Framework course",
+    icon: "anchor",
+    category: "skills",
+    xpReward: 150,
+    claimed: false,
+  },
+  {
+    id: 10,
+    name: "Rust Wrangler",
+    description: "Complete a Rust for Solana course",
+    icon: "code",
+    category: "skills",
+    xpReward: 150,
+    claimed: false,
+  },
+  {
+    id: 11,
+    name: "DeFi Degen",
+    description: "Complete a DeFi Development course",
+    icon: "coins",
+    category: "skills",
+    xpReward: 150,
+    claimed: false,
+  },
+  {
+    id: 12,
+    name: "Security Sentinel",
+    description: "Complete a Program Security course",
+    icon: "shield",
+    category: "skills",
+    xpReward: 200,
+    claimed: false,
+  },
 
   // community (4)
-  { id: 13, name: "Welcome Aboard", description: "Create your learner profile", icon: "user-plus", category: "community", xpReward: 25, claimed: false },
-  { id: 14, name: "Referral Rookie", description: "Refer your first friend", icon: "users", category: "community", xpReward: 100, claimed: false },
-  { id: 15, name: "Social Butterfly", description: "Connect all social accounts", icon: "share-2", category: "community", xpReward: 50, claimed: false },
-  { id: 16, name: "Top 10", description: "Reach the top 10 on the leaderboard", icon: "bar-chart", category: "community", xpReward: 300, claimed: false },
+  {
+    id: 13,
+    name: "Welcome Aboard",
+    description: "Create your learner profile",
+    icon: "user-plus",
+    category: "community",
+    xpReward: 25,
+    claimed: false,
+  },
+  {
+    id: 14,
+    name: "Referral Rookie",
+    description: "Refer your first friend",
+    icon: "users",
+    category: "community",
+    xpReward: 100,
+    claimed: false,
+  },
+  {
+    id: 15,
+    name: "Social Butterfly",
+    description: "Connect all social accounts",
+    icon: "share-2",
+    category: "community",
+    xpReward: 50,
+    claimed: false,
+  },
+  {
+    id: 16,
+    name: "Top 10",
+    description: "Reach the top 10 on the leaderboard",
+    icon: "bar-chart",
+    category: "community",
+    xpReward: 300,
+    claimed: false,
+  },
 
   // special (4)
-  { id: 17, name: "Early Adopter", description: "Join during Season 1", icon: "sparkles", category: "special", xpReward: 250, claimed: false },
-  { id: 18, name: "Challenge Accepted", description: "Pass 10 coding challenges", icon: "swords", category: "special", xpReward: 200, claimed: false },
-  { id: 19, name: "Streak Saver", description: "Use a streak freeze", icon: "snowflake", category: "special", xpReward: 50, claimed: false },
-  { id: 20, name: "Credential Holder", description: "Earn your first on-chain credential", icon: "badge-check", category: "special", xpReward: 300, claimed: false },
+  {
+    id: 17,
+    name: "Early Adopter",
+    description: "Join during Season 1",
+    icon: "sparkles",
+    category: "special",
+    xpReward: 250,
+    claimed: false,
+  },
+  {
+    id: 18,
+    name: "Challenge Accepted",
+    description: "Pass 10 coding challenges",
+    icon: "swords",
+    category: "special",
+    xpReward: 200,
+    claimed: false,
+  },
+  {
+    id: 19,
+    name: "Streak Saver",
+    description: "Use a streak freeze",
+    icon: "snowflake",
+    category: "special",
+    xpReward: 50,
+    claimed: false,
+  },
+  {
+    id: 20,
+    name: "Credential Holder",
+    description: "Earn your first on-chain credential",
+    icon: "badge-check",
+    category: "special",
+    xpReward: 300,
+    claimed: false,
+  },
 ];
 
 // ── Mock leaderboard ────────────────────────────────────────────────────────
 
 function generateMockLeaderboard(): LeaderboardEntry[] {
   const names = [
-    "SolDev42", "AnchorMaxi", "RustaceanRick", "DeFiDana", "ValidatorVince",
-    "CryptoCarla", "PDAPete", "TokenTina", "ByteBill", "HashHank",
-    "MintMary", "StakeSteve", "BlobBob", "LamportLisa", "TurbineTom",
-    "SerumSara", "JitoJen", "HeliumHarry", "WormholeWendy", "JupiterJack",
-    "MarinadeMax", "RaydiumRita", "OrcaOscar", "MagicEdenMia", "TensorTed",
+    "SolDev42",
+    "AnchorMaxi",
+    "RustaceanRick",
+    "DeFiDana",
+    "ValidatorVince",
+    "CryptoCarla",
+    "PDAPete",
+    "TokenTina",
+    "ByteBill",
+    "HashHank",
+    "MintMary",
+    "StakeSteve",
+    "BlobBob",
+    "LamportLisa",
+    "TurbineTom",
+    "SerumSara",
+    "JitoJen",
+    "HeliumHarry",
+    "WormholeWendy",
+    "JupiterJack",
+    "MarinadeMax",
+    "RaydiumRita",
+    "OrcaOscar",
+    "MagicEdenMia",
+    "TensorTed",
   ];
 
   const wallets = names.map((_, i) => {
@@ -119,8 +305,14 @@ export class LocalStorageProgressService implements LearningProgressService {
 
   // ---- Progress -----------------------------------------------------------
 
-  async getProgress(userId: string, courseId: string): Promise<Progress | null> {
-    return getItem<Progress | null>(this.key("progress", `${userId}:${courseId}`), null);
+  async getProgress(
+    userId: string,
+    courseId: string,
+  ): Promise<Progress | null> {
+    return getItem<Progress | null>(
+      this.key("progress", `${userId}:${courseId}`),
+      null,
+    );
   }
 
   async getAllProgress(userId: string): Promise<Progress[]> {
@@ -143,7 +335,11 @@ export class LocalStorageProgressService implements LearningProgressService {
     return progressList;
   }
 
-  async completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<void> {
+  async completeLesson(
+    userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<void> {
     const k = this.key("progress", `${userId}:${courseId}`);
     const progress = getItem<Progress | null>(k, null);
     if (!progress) return;
@@ -153,7 +349,7 @@ export class LocalStorageProgressService implements LearningProgressService {
       progress.completedLessons.sort((a, b) => a - b);
     }
     progress.percentage = Math.round(
-      (progress.completedLessons.length / progress.totalLessons) * 100
+      (progress.completedLessons.length / progress.totalLessons) * 100,
     );
     progress.lastAccessedAt = new Date().toISOString();
 
@@ -225,7 +421,7 @@ export class LocalStorageProgressService implements LearningProgressService {
       streak.currentStreak += 1;
     } else if (streak.lastActivityDate && streak.lastActivityDate !== today) {
       const daysSinceLast = Math.floor(
-        (Date.now() - new Date(streak.lastActivityDate).getTime()) / 86_400_000
+        (Date.now() - new Date(streak.lastActivityDate).getTime()) / 86_400_000,
       );
       if (daysSinceLast === 2 && streak.streakFreezes > 0) {
         streak.streakFreezes -= 1;
@@ -251,7 +447,7 @@ export class LocalStorageProgressService implements LearningProgressService {
 
   async getLeaderboard(
     timeframe: "weekly" | "monthly" | "alltime",
-    courseId?: string
+    courseId?: string,
   ): Promise<LeaderboardEntry[]> {
     const board = generateMockLeaderboard();
 
@@ -285,7 +481,8 @@ export class LocalStorageProgressService implements LearningProgressService {
       }
     }
 
-    const multiplier = timeframe === "weekly" ? 0.15 : timeframe === "monthly" ? 0.45 : 1;
+    const multiplier =
+      timeframe === "weekly" ? 0.15 : timeframe === "monthly" ? 0.45 : 1;
     let adjusted = board.map((e) => ({
       ...e,
       xp: Math.round(e.xp * multiplier),
@@ -299,7 +496,7 @@ export class LocalStorageProgressService implements LearningProgressService {
         if (isClient()) {
           const progress = getItem<Progress | null>(
             `${KEY_PREFIX}progress:${e.wallet}:${courseId}`,
-            null
+            null,
           );
           if (progress) return true;
         }
@@ -333,7 +530,7 @@ export class LocalStorageProgressService implements LearningProgressService {
   async getAchievements(userId: string | null): Promise<Achievement[]> {
     const claimed = getItem<Record<number, string>>(
       this.key("achievements_claimed", userId ?? "guest"),
-      {}
+      {},
     );
 
     return DEFAULT_ACHIEVEMENTS.map((a) => ({
@@ -344,7 +541,9 @@ export class LocalStorageProgressService implements LearningProgressService {
   }
 
   async claimAchievement(userId: string, achievementId: number): Promise<void> {
-    const achievement = DEFAULT_ACHIEVEMENTS.find((a) => a.id === achievementId);
+    const achievement = DEFAULT_ACHIEVEMENTS.find(
+      (a) => a.id === achievementId,
+    );
     if (!achievement) return;
 
     const k = this.key("achievements_claimed", userId);

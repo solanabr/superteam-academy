@@ -19,7 +19,7 @@ const MonacoEditor = dynamic(
         </div>
       </div>
     ),
-  }
+  },
 );
 
 export interface EditorPanelProps {
@@ -63,7 +63,7 @@ export function EditorPanel({
       <div
         className={cn(
           "flex items-center justify-between border-b border-[#333]",
-          compact ? "px-3 py-1.5" : "px-4 py-2"
+          compact ? "px-3 py-1.5" : "px-4 py-2",
         )}
       >
         {compact ? (
@@ -103,7 +103,7 @@ export function EditorPanel({
               compact ? "px-2 py-1" : "gap-1.5 rounded-md px-3 py-1.5",
               isRunning
                 ? "bg-[#333] text-[#888]"
-                : "bg-brazil-green text-white hover:bg-brazil-green/90"
+                : "bg-brazil-green text-white hover:bg-brazil-green/90",
             )}
           >
             {isRunning ? (
@@ -111,7 +111,7 @@ export function EditorPanel({
                 <Loader2
                   className={cn(
                     "animate-spin",
-                    compact ? "h-3 w-3" : "h-3 w-3"
+                    compact ? "h-3 w-3" : "h-3 w-3",
                   )}
                 />
                 {compact ? t("editor.run") : t("editor.running")}

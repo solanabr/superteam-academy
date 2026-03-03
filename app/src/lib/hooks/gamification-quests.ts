@@ -27,7 +27,7 @@ function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return Math.abs(hash);
@@ -100,7 +100,8 @@ export function generateDailyQuests(dateString: string): Quest[] {
 
   for (const templateIdx of picked) {
     const template = QUEST_TEMPLATES[templateIdx];
-    const variantIdx = hashString(dateString + template.id) % template.variants.length;
+    const variantIdx =
+      hashString(dateString + template.id) % template.variants.length;
     const variant = template.variants[variantIdx];
     quests.push({
       id: template.id,

@@ -170,10 +170,7 @@ export type OnchainAcademy = {
         { name: "minter"; isMut: false; isSigner: true },
         { name: "tokenProgram"; isMut: false; isSigner: false },
       ];
-      args: [
-        { name: "amount"; type: "u64" },
-        { name: "memo"; type: "string" },
-      ];
+      args: [{ name: "amount"; type: "u64" }, { name: "memo"; type: "string" }];
     },
     {
       name: "createAchievementType";
@@ -329,9 +326,7 @@ export type OnchainAcademy = {
       name: "UpdateConfigParams";
       type: {
         kind: "struct";
-        fields: [
-          { name: "newBackendSigner"; type: { option: "publicKey" } },
-        ];
+        fields: [{ name: "newBackendSigner"; type: { option: "publicKey" } }];
       };
     },
     {
@@ -931,9 +926,7 @@ export const IDL: OnchainAcademy = {
       name: "UpdateConfigParams",
       type: {
         kind: "struct",
-        fields: [
-          { name: "newBackendSigner", type: { option: "publicKey" } },
-        ],
+        fields: [{ name: "newBackendSigner", type: { option: "publicKey" } }],
       },
     },
     {

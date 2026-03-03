@@ -40,7 +40,9 @@ export function ThreadCard({ thread, onVote }: ThreadCardProps) {
             </span>
           )}
           {thread.tags.map((tag) => (
-            <span key={tag} className="text-xs text-muted-foreground">#{tag}</span>
+            <span key={tag} className="text-xs text-muted-foreground">
+              #{tag}
+            </span>
           ))}
           {thread.isPinned && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -73,7 +75,9 @@ export function ThreadCard({ thread, onVote }: ThreadCardProps) {
             <Eye className="h-3.5 w-3.5" />
             {thread.viewCount}
           </span>
-          <span className="ml-auto">{formatRelativeDate(thread.createdAt)}</span>
+          <span className="ml-auto">
+            {formatRelativeDate(thread.createdAt)}
+          </span>
         </div>
       </div>
     </div>

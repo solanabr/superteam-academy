@@ -11,7 +11,12 @@ interface VoteButtonsProps {
   compact?: boolean;
 }
 
-export function VoteButtons({ score, userVote, onVote, compact }: VoteButtonsProps) {
+export function VoteButtons({
+  score,
+  userVote,
+  onVote,
+  compact,
+}: VoteButtonsProps) {
   const iconSize = compact ? "h-3.5 w-3.5" : "h-4 w-4";
   return (
     <div className="flex flex-col items-center gap-0.5 shrink-0">
@@ -26,10 +31,12 @@ export function VoteButtons({ score, userVote, onVote, compact }: VoteButtonsPro
       >
         <ThumbsUp className={iconSize} />
       </button>
-      <span className={cn(
-        "font-semibold tabular-nums text-foreground",
-        compact ? "text-xs" : "text-sm",
-      )}>
+      <span
+        className={cn(
+          "font-semibold tabular-nums text-foreground",
+          compact ? "text-xs" : "text-sm",
+        )}
+      >
         {score}
       </span>
       <button

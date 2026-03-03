@@ -43,8 +43,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      {children}
-    </ConnectionProvider>
+    <ConnectionProvider endpoint={endpoint}>{children}</ConnectionProvider>
   );
 }

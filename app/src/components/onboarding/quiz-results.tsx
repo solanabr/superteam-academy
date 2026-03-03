@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import {
-  ArrowRight,
-  Trophy,
-  Zap,
-  Clock,
-  Sparkles,
-  Award,
-} from "lucide-react";
+import { ArrowRight, Trophy, Zap, Clock, Sparkles, Award } from "lucide-react";
 import type { Course } from "@/types";
 import { TRACKS } from "@/lib/constants";
 import { CourseIllustration } from "@/components/icons/course-illustration";
@@ -84,7 +77,13 @@ function getRecommendedCourses(
   skillLevel?: string | null,
 ): Course[] {
   const { experience, interests } = answers;
-  const level = skillLevel ?? (experience === "beginner" ? "beginner" : experience === "solana-dev" ? "advanced" : "intermediate");
+  const level =
+    skillLevel ??
+    (experience === "beginner"
+      ? "beginner"
+      : experience === "solana-dev"
+        ? "advanced"
+        : "intermediate");
 
   const scored = courses.map((course) => {
     let score = 0;
@@ -94,15 +93,19 @@ function getRecommendedCourses(
       score += 5;
     } else if (
       (level === "beginner" && course.difficulty === "intermediate") ||
-      (level === "intermediate" && (course.difficulty === "beginner" || course.difficulty === "advanced")) ||
+      (level === "intermediate" &&
+        (course.difficulty === "beginner" ||
+          course.difficulty === "advanced")) ||
       (level === "advanced" && course.difficulty === "intermediate")
     ) {
       score += 2;
     }
 
     // Experience match (legacy scoring, lower priority)
-    if (experience === "beginner" && course.difficulty === "beginner") score += 1;
-    if (experience === "solana-dev" && course.difficulty === "advanced") score += 1;
+    if (experience === "beginner" && course.difficulty === "beginner")
+      score += 1;
+    if (experience === "solana-dev" && course.difficulty === "advanced")
+      score += 1;
 
     // Interest ↔ track match
     const track = TRACKS[course.trackId];
@@ -133,20 +136,40 @@ const LEVEL_COLORS = {
   advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
 } as const;
 
-export function QuizResults({ answers, courses, skillLevel, skillScore, authenticated }: QuizResultsProps) {
+export function QuizResults({
+  answers,
+  courses,
+  skillLevel,
+  skillScore,
+  authenticated,
+}: QuizResultsProps) {
   const t = useTranslations("onboarding.results");
   const tc = useTranslations("courses.catalog");
   const td = useTranslations("courses.detail");
   const recommendedPath = getRecommendedPath(answers);
-  const recommendedCourses = getRecommendedCourses(answers, courses, skillLevel);
+  const recommendedCourses = getRecommendedCourses(
+    answers,
+    courses,
+    skillLevel,
+  );
   const estimatedWeeks = getEstimatedWeeks(answers);
 
   const levelKey = skillLevel as keyof typeof LEVEL_COLORS | undefined;
   const levelLabel = levelKey
-    ? t(`level${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as "levelBeginner" | "levelIntermediate" | "levelAdvanced")
+    ? t(
+        `level${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as
+          | "levelBeginner"
+          | "levelIntermediate"
+          | "levelAdvanced",
+      )
     : null;
   const levelDescription = levelKey
-    ? t(`levelDescription${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as "levelDescriptionBeginner" | "levelDescriptionIntermediate" | "levelDescriptionAdvanced")
+    ? t(
+        `levelDescription${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as
+          | "levelDescriptionBeginner"
+          | "levelDescriptionIntermediate"
+          | "levelDescriptionAdvanced",
+      )
     : null;
 
   return (
@@ -177,7 +200,7 @@ export function QuizResults({ answers, courses, skillLevel, skillScore, authenti
                 <span
                   className={cn(
                     "inline-flex rounded-full border px-3 py-0.5 text-sm font-bold",
-                    LEVEL_COLORS[levelKey!] ?? "bg-muted text-foreground"
+                    LEVEL_COLORS[levelKey!] ?? "bg-muted text-foreground",
                   )}
                 >
                   {levelLabel}
@@ -206,7 +229,10 @@ export function QuizResults({ answers, courses, skillLevel, skillScore, authenti
         <div className="mt-4 flex flex-wrap gap-4">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>{t("estimatedWeeks", { count: estimatedWeeks })} {t("toFirstCredential")}</span>
+            <span>
+              {t("estimatedWeeks", { count: estimatedWeeks })}{" "}
+              {t("toFirstCredential")}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Trophy className="h-4 w-4 text-brazil-gold" />
@@ -243,7 +269,9 @@ export function QuizResults({ answers, courses, skillLevel, skillScore, authenti
                   </div>
                   <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="capitalize">{td(course.difficulty)}</span>
-                    <span>{tc("lessonsCount", { count: course.lessonCount })}</span>
+                    <span>
+                      {tc("lessonsCount", { count: course.lessonCount })}
+                    </span>
                     <span className="flex items-center gap-0.5">
                       <Zap className="h-3 w-3 text-brazil-gold" />
                       {course.xpTotal} XP
@@ -270,7 +298,11 @@ export function QuizResults({ answers, courses, skillLevel, skillScore, authenti
           </Link>
         ) : (
           <Link
-            href={recommendedCourses[0] ? `/courses/${recommendedCourses[0].slug}` : "/courses"}
+            href={
+              recommendedCourses[0]
+                ? `/courses/${recommendedCourses[0].slug}`
+                : "/courses"
+            }
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97]"
           >
             {t("startFirstCourse")}

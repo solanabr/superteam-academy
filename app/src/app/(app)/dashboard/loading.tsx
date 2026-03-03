@@ -12,7 +12,10 @@ export default function DashboardLoading() {
       {/* Stats cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-2">
+          <div
+            key={i}
+            className="rounded-xl border border-border bg-card p-4 space-y-2"
+          >
             <div className="flex items-center justify-between">
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-5 w-5 rounded" />
@@ -31,7 +34,10 @@ export default function DashboardLoading() {
           <div className="space-y-3">
             <Skeleton className="h-7 w-48" />
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4">
+              <div
+                key={i}
+                className="rounded-xl border border-border bg-card p-4"
+              >
                 <div className="flex gap-4">
                   <Skeleton className="h-20 w-20 shrink-0 rounded-lg" />
                   <div className="flex-1 space-y-2">
@@ -49,7 +55,10 @@ export default function DashboardLoading() {
             <Skeleton className="h-7 w-56" />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+                <div
+                  key={i}
+                  className="rounded-xl border border-border bg-card overflow-hidden"
+                >
                   <Skeleton className="h-28 w-full rounded-none" />
                   <div className="p-3 space-y-2">
                     <Skeleton className="h-5 w-3/4" />

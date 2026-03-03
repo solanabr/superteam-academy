@@ -28,7 +28,8 @@ export function getCourse1() {
               // Lesson 1.1 — What is Solana? (content)
               {
                 title: "What is Solana?",
-                description: "Understanding Solana's architecture and what makes it unique",
+                description:
+                  "Understanding Solana's architecture and what makes it unique",
                 type: "content",
                 order: 0,
                 xpReward: 20,
@@ -77,7 +78,8 @@ In the next lesson, you'll install the Solana CLI and set up your local developm
               // Lesson 1.2 — Install the Solana CLI (content)
               {
                 title: "Install the Solana CLI",
-                description: "Set up the Solana tool suite and configure your local environment",
+                description:
+                  "Set up the Solana tool suite and configure your local environment",
                 type: "content",
                 order: 1,
                 xpReward: 30,
@@ -325,19 +327,24 @@ export async function sendSol(
                       create: [
                         {
                           name: "Returns a valid transaction signature",
-                          input: "connection, senderKeypair, receiverPubkey, 0.5",
-                          expectedOutput: "string (base-58 transaction signature)",
+                          input:
+                            "connection, senderKeypair, receiverPubkey, 0.5",
+                          expectedOutput:
+                            "string (base-58 transaction signature)",
                           order: 0,
                         },
                         {
                           name: "Receiver balance increases by the correct amount",
-                          input: "connection, senderKeypair, receiverPubkey, 1.0",
-                          expectedOutput: "receiver balance increases by 1_000_000_000 lamports",
+                          input:
+                            "connection, senderKeypair, receiverPubkey, 1.0",
+                          expectedOutput:
+                            "receiver balance increases by 1_000_000_000 lamports",
                           order: 1,
                         },
                         {
                           name: "Sender balance decreases by amount plus fees",
-                          input: "connection, senderKeypair, receiverPubkey, 0.1",
+                          input:
+                            "connection, senderKeypair, receiverPubkey, 0.1",
                           expectedOutput:
                             "sender balance decreases by at least 100_000_000 lamports",
                           order: 2,
@@ -364,7 +371,8 @@ export async function sendSol(
               // Lesson 2.1 — The Account Model (content)
               {
                 title: "The Account Model",
-                description: "Deep dive into how Solana stores all on-chain state as accounts",
+                description:
+                  "Deep dive into how Solana stores all on-chain state as accounts",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -665,12 +673,14 @@ export function deriveEnrollmentPDA(
                         {
                           name: "deriveProfilePDA is deterministic for the same inputs",
                           input: "same userPubkey and programId called twice",
-                          expectedOutput: "both calls return identical PDA and bump",
+                          expectedOutput:
+                            "both calls return identical PDA and bump",
                           order: 1,
                         },
                         {
                           name: "deriveEnrollmentPDA returns different PDAs for different courseIds",
-                          input: 'courseId "course-a" vs "course-b", same user and program',
+                          input:
+                            'courseId "course-a" vs "course-b", same user and program',
                           expectedOutput: "two distinct PDA addresses",
                           order: 2,
                         },
@@ -1302,7 +1312,8 @@ export async function batchTransfer(
                           name: "Returns a valid transaction signature",
                           input:
                             "connection, sender, [{address: pubkey1, amountInSol: 0.1}, {address: pubkey2, amountInSol: 0.2}]",
-                          expectedOutput: "string (base-58 transaction signature)",
+                          expectedOutput:
+                            "string (base-58 transaction signature)",
                           order: 0,
                         },
                         {
@@ -1524,22 +1535,26 @@ export async function sendWithRetry(
                       create: [
                         {
                           name: "Returns signature on first successful attempt",
-                          input: "connection, buildTx (succeeds), [signer], maxRetries=3",
-                          expectedOutput: "string (base-58 transaction signature)",
+                          input:
+                            "connection, buildTx (succeeds), [signer], maxRetries=3",
+                          expectedOutput:
+                            "string (base-58 transaction signature)",
                           order: 0,
                         },
                         {
                           name: "Retries on blockhash expiration and succeeds on second attempt",
                           input:
                             "connection, buildTx (fails once with BlockhashNotFound, then succeeds), [signer], maxRetries=3",
-                          expectedOutput: "string (signature from second attempt)",
+                          expectedOutput:
+                            "string (signature from second attempt)",
                           order: 1,
                         },
                         {
                           name: "Throws immediately on non-retryable errors",
                           input:
                             "connection, buildTx (fails with InsufficientFunds), [signer], maxRetries=3",
-                          expectedOutput: "throws InsufficientFunds error without retrying",
+                          expectedOutput:
+                            "throws InsufficientFunds error without retrying",
                           order: 2,
                         },
                         {

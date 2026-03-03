@@ -109,10 +109,11 @@ export function DailyChallengeView({
 
     const codeWords = code.toLowerCase().split(/\s+/);
     const matchScore =
-      solutionKeywords.filter((kw) => codeWords.some((cw) => cw.includes(kw))).length /
-      Math.max(solutionKeywords.length, 1);
+      solutionKeywords.filter((kw) => codeWords.some((cw) => cw.includes(kw)))
+        .length / Math.max(solutionKeywords.length, 1);
 
-    const allPass = matchScore > 0.45 || code.trim() === challenge.solutionCode.trim();
+    const allPass =
+      matchScore > 0.45 || code.trim() === challenge.solutionCode.trim();
 
     setTestResults((prev) =>
       prev.map((t, i) => ({
@@ -144,7 +145,10 @@ export function DailyChallengeView({
       {/* Header */}
       <div className="glass rounded-xl p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/5">
+          <Badge
+            variant="outline"
+            className="text-xs text-primary border-primary/30 bg-primary/5"
+          >
             {labels.dailyChallenge}
           </Badge>
           <Badge
@@ -162,7 +166,9 @@ export function DailyChallengeView({
         </div>
 
         <h1 className="mb-2 text-2xl font-bold">{challenge.title}</h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">{challenge.description}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {challenge.description}
+        </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -252,11 +258,17 @@ export function DailyChallengeView({
                   )}
                 >
                   <span className="mt-0.5 font-bold">
-                    {test.passed === true ? "✓" : test.passed === false ? "✗" : "○"}
+                    {test.passed === true
+                      ? "✓"
+                      : test.passed === false
+                        ? "✗"
+                        : "○"}
                   </span>
                   <div>
                     <div className="font-medium">{test.description}</div>
-                    <div className="text-[10px] opacity-70">→ {test.expectedOutput}</div>
+                    <div className="text-[10px] opacity-70">
+                      → {test.expectedOutput}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -314,7 +326,10 @@ export function DailyChallengeView({
                   {labels.hintLabel} ({hintIndex + 1}/{challenge.hints.length})
                 </span>
                 <ChevronDown
-                  className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")}
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    showHints && "rotate-180",
+                  )}
                 />
               </button>
               {showHints && (
@@ -327,7 +342,11 @@ export function DailyChallengeView({
                       variant="ghost"
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() => setHintIndex((i) => Math.min(i + 1, challenge.hints.length - 1))}
+                      onClick={() =>
+                        setHintIndex((i) =>
+                          Math.min(i + 1, challenge.hints.length - 1),
+                        )
+                      }
                     >
                       {labels.nextHint}
                     </Button>

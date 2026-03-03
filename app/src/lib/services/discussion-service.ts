@@ -11,7 +11,12 @@ import type {
 
 const PAGE_SIZE = 20;
 
-function toAuthor(user: { id: string; displayName: string | null; name: string | null; image: string | null }): ThreadAuthor {
+function toAuthor(user: {
+  id: string;
+  displayName: string | null;
+  name: string | null;
+  image: string | null;
+}): ThreadAuthor {
   return {
     id: user.id,
     displayName: user.displayName ?? user.name ?? "Anonymous",
@@ -22,8 +27,19 @@ function toAuthor(user: { id: string; displayName: string | null; name: string |
 export class DiscussionService {
   // ── Threads ─────────────────────────────────────────────────────────────────
 
-  async listThreads(params: ThreadListParams, userId?: string | null): Promise<ThreadListResponse> {
-    const { scope, category, lessonId, sort = "newest", search, cursor, limit = PAGE_SIZE } = params;
+  async listThreads(
+    params: ThreadListParams,
+    userId?: string | null,
+  ): Promise<ThreadListResponse> {
+    const {
+      scope,
+      category,
+      lessonId,
+      sort = "newest",
+      search,
+      cursor,
+      limit = PAGE_SIZE,
+    } = params;
 
     const where: Record<string, unknown> = {};
     if (scope) where.scope = scope;
@@ -37,9 +53,11 @@ export class DiscussionService {
     }
 
     const orderBy =
-      sort === "top" ? { voteScore: "desc" as const } :
-      sort === "mostCommented" ? { commentCount: "desc" as const } :
-      { createdAt: "desc" as const };
+      sort === "top"
+        ? { voteScore: "desc" as const }
+        : sort === "mostCommented"
+          ? { commentCount: "desc" as const }
+          : { createdAt: "desc" as const };
 
     const rows = await prisma.thread.findMany({
       where,
@@ -47,7 +65,9 @@ export class DiscussionService {
       take: limit + 1,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       include: {
-        author: { select: { id: true, displayName: true, name: true, image: true } },
+        author: {
+          select: { id: true, displayName: true, name: true, image: true },
+        },
         votes: userId ? { where: { userId }, select: { value: true } } : false,
       },
     });
@@ -66,7 +86,9 @@ export class DiscussionService {
       voteScore: t.voteScore,
       commentCount: t.commentCount,
       viewCount: t.viewCount,
-      userVote: (t.votes && t.votes.length > 0 ? t.votes[0].value : 0) as VoteValue,
+      userVote: (t.votes && t.votes.length > 0
+        ? t.votes[0].value
+        : 0) as VoteValue,
       isPinned: t.isPinned,
       createdAt: t.createdAt.toISOString(),
     }));
@@ -77,17 +99,26 @@ export class DiscussionService {
     };
   }
 
-  async getThread(threadId: string, userId?: string | null): Promise<ThreadDetail | null> {
+  async getThread(
+    threadId: string,
+    userId?: string | null,
+  ): Promise<ThreadDetail | null> {
     const thread = await prisma.thread.findUnique({
       where: { id: threadId },
       include: {
-        author: { select: { id: true, displayName: true, name: true, image: true } },
+        author: {
+          select: { id: true, displayName: true, name: true, image: true },
+        },
         votes: userId ? { where: { userId }, select: { value: true } } : false,
         comments: {
           orderBy: { path: "asc" },
           include: {
-            author: { select: { id: true, displayName: true, name: true, image: true } },
-            votes: userId ? { where: { userId }, select: { value: true } } : false,
+            author: {
+              select: { id: true, displayName: true, name: true, image: true },
+            },
+            votes: userId
+              ? { where: { userId }, select: { value: true } }
+              : false,
           },
         },
       },
@@ -104,7 +135,9 @@ export class DiscussionService {
         ? { id: "", displayName: "[deleted]", image: null }
         : toAuthor(c.author),
       voteScore: c.voteScore,
-      userVote: (c.votes && c.votes.length > 0 ? c.votes[0].value : 0) as VoteValue,
+      userVote: (c.votes && c.votes.length > 0
+        ? c.votes[0].value
+        : 0) as VoteValue,
       isDeleted: c.isDeleted,
       createdAt: c.createdAt.toISOString(),
       updatedAt: c.updatedAt.toISOString(),
@@ -122,7 +155,9 @@ export class DiscussionService {
       voteScore: thread.voteScore,
       commentCount: thread.commentCount,
       viewCount: thread.viewCount,
-      userVote: (thread.votes && thread.votes.length > 0 ? thread.votes[0].value : 0) as VoteValue,
+      userVote: (thread.votes && thread.votes.length > 0
+        ? thread.votes[0].value
+        : 0) as VoteValue,
       isPinned: thread.isPinned,
       isLocked: thread.isLocked,
       createdAt: thread.createdAt.toISOString(),
@@ -131,15 +166,18 @@ export class DiscussionService {
     };
   }
 
-  async createThread(authorId: string, data: {
-    title: string;
-    body: string;
-    scope: string;
-    category?: string;
-    tags?: string[];
-    lessonId?: string;
-    courseId?: string;
-  }): Promise<{ id: string }> {
+  async createThread(
+    authorId: string,
+    data: {
+      title: string;
+      body: string;
+      scope: string;
+      category?: string;
+      tags?: string[];
+      lessonId?: string;
+      courseId?: string;
+    },
+  ): Promise<{ id: string }> {
     const preview = data.body.slice(0, 160);
     const thread = await prisma.thread.create({
       data: {
@@ -158,12 +196,17 @@ export class DiscussionService {
     return thread;
   }
 
-  async updateThread(threadId: string, userId: string, data: {
-    title?: string;
-    body?: string;
-    isPinned?: boolean;
-    isLocked?: boolean;
-  }, isAdmin: boolean): Promise<void> {
+  async updateThread(
+    threadId: string,
+    userId: string,
+    data: {
+      title?: string;
+      body?: string;
+      isPinned?: boolean;
+      isLocked?: boolean;
+    },
+    isAdmin: boolean,
+  ): Promise<void> {
     const thread = await prisma.thread.findUnique({
       where: { id: threadId },
       select: { authorId: true },
@@ -187,7 +230,11 @@ export class DiscussionService {
     await prisma.thread.update({ where: { id: threadId }, data: update });
   }
 
-  async deleteThread(threadId: string, userId: string, isAdmin: boolean): Promise<void> {
+  async deleteThread(
+    threadId: string,
+    userId: string,
+    isAdmin: boolean,
+  ): Promise<void> {
     const thread = await prisma.thread.findUnique({
       where: { id: threadId },
       select: { authorId: true },
@@ -200,10 +247,14 @@ export class DiscussionService {
 
   // ── Comments ────────────────────────────────────────────────────────────────
 
-  async createComment(threadId: string, authorId: string, data: {
-    body: string;
-    parentId?: string;
-  }): Promise<CommentNode> {
+  async createComment(
+    threadId: string,
+    authorId: string,
+    data: {
+      body: string;
+      parentId?: string;
+    },
+  ): Promise<CommentNode> {
     const thread = await prisma.thread.findUnique({
       where: { id: threadId },
       select: { isLocked: true },
@@ -236,7 +287,9 @@ export class DiscussionService {
         authorId,
       },
       include: {
-        author: { select: { id: true, displayName: true, name: true, image: true } },
+        author: {
+          select: { id: true, displayName: true, name: true, image: true },
+        },
       },
     });
 
@@ -280,7 +333,11 @@ export class DiscussionService {
     };
   }
 
-  async updateComment(commentId: string, userId: string, body: string): Promise<void> {
+  async updateComment(
+    commentId: string,
+    userId: string,
+    body: string,
+  ): Promise<void> {
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       select: { authorId: true, isDeleted: true },
@@ -295,7 +352,11 @@ export class DiscussionService {
     });
   }
 
-  async softDeleteComment(commentId: string, userId: string, isAdmin: boolean): Promise<void> {
+  async softDeleteComment(
+    commentId: string,
+    userId: string,
+    isAdmin: boolean,
+  ): Promise<void> {
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
       select: { authorId: true, threadId: true },
@@ -311,7 +372,11 @@ export class DiscussionService {
 
   // ── Voting ──────────────────────────────────────────────────────────────────
 
-  async voteThread(threadId: string, userId: string, value: number): Promise<{ voteScore: number }> {
+  async voteThread(
+    threadId: string,
+    userId: string,
+    value: number,
+  ): Promise<{ voteScore: number }> {
     const existing = await prisma.threadVote.findUnique({
       where: { threadId_userId: { threadId, userId } },
     });
@@ -328,7 +393,10 @@ export class DiscussionService {
         return { voteScore: thread.voteScore };
       }
       // Flip vote
-      await prisma.threadVote.update({ where: { id: existing.id }, data: { value } });
+      await prisma.threadVote.update({
+        where: { id: existing.id },
+        data: { value },
+      });
       const thread = await prisma.thread.update({
         where: { id: threadId },
         data: { voteScore: { increment: value - existing.value } },
@@ -347,7 +415,11 @@ export class DiscussionService {
     return { voteScore: thread.voteScore };
   }
 
-  async voteComment(commentId: string, userId: string, value: number): Promise<{ voteScore: number }> {
+  async voteComment(
+    commentId: string,
+    userId: string,
+    value: number,
+  ): Promise<{ voteScore: number }> {
     const existing = await prisma.commentVote.findUnique({
       where: { commentId_userId: { commentId, userId } },
     });
@@ -362,7 +434,10 @@ export class DiscussionService {
         });
         return { voteScore: comment.voteScore };
       }
-      await prisma.commentVote.update({ where: { id: existing.id }, data: { value } });
+      await prisma.commentVote.update({
+        where: { id: existing.id },
+        data: { value },
+      });
       const comment = await prisma.comment.update({
         where: { id: commentId },
         data: { voteScore: { increment: value - existing.value } },
@@ -391,7 +466,11 @@ export class DiscussionService {
 
   // ── Lesson discussion helper ────────────────────────────────────────────────
 
-  async getOrCreateLessonThread(lessonId: string, courseId: string, authorId: string): Promise<string> {
+  async getOrCreateLessonThread(
+    lessonId: string,
+    courseId: string,
+    authorId: string,
+  ): Promise<string> {
     const existing = await prisma.thread.findFirst({
       where: { scope: "lesson", lessonId },
       select: { id: true },

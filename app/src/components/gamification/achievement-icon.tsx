@@ -42,7 +42,10 @@ interface AchievementIconProps {
   className?: string;
 }
 
-export function AchievementIcon({ name, className = "h-5 w-5" }: AchievementIconProps) {
+export function AchievementIcon({
+  name,
+  className = "h-5 w-5",
+}: AchievementIconProps) {
   const IconComponent = ICON_MAP[name] || Award;
   return <IconComponent className={className} />;
 }

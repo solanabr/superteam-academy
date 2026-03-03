@@ -55,13 +55,20 @@ export class NotificationService {
   // ── Triggers ─────────────────────────────────────────────────────────────
 
   /** Idempotent — creates at most one notification per milestone level. */
-  async maybeCreateXpMilestone(userId: string, newTotalXp: number): Promise<void> {
+  async maybeCreateXpMilestone(
+    userId: string,
+    newTotalXp: number,
+  ): Promise<void> {
     for (const milestone of XP_MILESTONES) {
       if (newTotalXp < milestone) break;
 
       const key = `xp_milestone_${milestone}`;
       const exists = await prisma.notification.findFirst({
-        where: { userId, type: "xp_milestone", data: { path: ["key"], equals: key } },
+        where: {
+          userId,
+          type: "xp_milestone",
+          data: { path: ["key"], equals: key },
+        },
         select: { id: true },
       });
       if (exists) continue;
@@ -79,13 +86,21 @@ export class NotificationService {
   }
 
   /** Idempotent per level — one notification per unique level-up event. */
-  async createLevelUp(userId: string, prevLevel: number, newLevel: number): Promise<void> {
+  async createLevelUp(
+    userId: string,
+    prevLevel: number,
+    newLevel: number,
+  ): Promise<void> {
     if (newLevel <= prevLevel) return;
 
     for (let lvl = prevLevel + 1; lvl <= newLevel; lvl++) {
       const key = `level_up_${lvl}`;
       const exists = await prisma.notification.findFirst({
-        where: { userId, type: "level_up", data: { path: ["key"], equals: key } },
+        where: {
+          userId,
+          type: "level_up",
+          data: { path: ["key"], equals: key },
+        },
         select: { id: true },
       });
       if (exists) continue;
@@ -105,11 +120,20 @@ export class NotificationService {
   /** Idempotent per achievementId. */
   async createAchievementNotification(
     userId: string,
-    payload: { achievementId: number; achievementName: string; xpReward: number; icon: string },
+    payload: {
+      achievementId: number;
+      achievementName: string;
+      xpReward: number;
+      icon: string;
+    },
   ): Promise<void> {
     const key = `achievement_${payload.achievementId}`;
     const exists = await prisma.notification.findFirst({
-      where: { userId, type: "achievement", data: { path: ["key"], equals: key } },
+      where: {
+        userId,
+        type: "achievement",
+        data: { path: ["key"], equals: key },
+      },
       select: { id: true },
     });
     if (exists) return;

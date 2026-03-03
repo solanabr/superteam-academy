@@ -13,7 +13,14 @@ interface CommentTreeProps {
   onVote: (commentId: string, value: 1 | -1) => void;
 }
 
-export function CommentTree({ comments, currentUserId, onReply, onEdit, onDelete, onVote }: CommentTreeProps) {
+export function CommentTree({
+  comments,
+  currentUserId,
+  onReply,
+  onEdit,
+  onDelete,
+  onVote,
+}: CommentTreeProps) {
   const childrenMap = useMemo(() => {
     const map = new Map<string | null, CommentNode[]>();
     for (const comment of comments) {

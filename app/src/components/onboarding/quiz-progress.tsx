@@ -8,7 +8,11 @@ interface QuizProgressProps {
   labels: string[];
 }
 
-export function QuizProgress({ currentStep, totalSteps, labels }: QuizProgressProps) {
+export function QuizProgress({
+  currentStep,
+  totalSteps,
+  labels,
+}: QuizProgressProps) {
   const percentage = ((currentStep + 1) / totalSteps) * 100;
 
   return (
@@ -20,7 +24,7 @@ export function QuizProgress({ currentStep, totalSteps, labels }: QuizProgressPr
             key={label}
             className={cn(
               "flex items-center gap-1.5 text-xs font-medium transition-colors",
-              i <= currentStep ? "text-primary" : "text-muted-foreground/50"
+              i <= currentStep ? "text-primary" : "text-muted-foreground/50",
             )}
           >
             <div
@@ -30,7 +34,7 @@ export function QuizProgress({ currentStep, totalSteps, labels }: QuizProgressPr
                   ? "bg-primary text-primary-foreground"
                   : i === currentStep
                     ? "bg-primary/20 text-primary ring-2 ring-primary/40"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted text-muted-foreground",
               )}
             >
               {i < currentStep ? "✓" : i + 1}

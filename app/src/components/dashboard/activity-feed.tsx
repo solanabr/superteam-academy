@@ -37,7 +37,7 @@ const COLOR_MAP: Record<ActivityType, string> = {
 
 function getActivityMessage(
   entry: ActivityEntry,
-  t: ReturnType<typeof useTranslations>
+  t: ReturnType<typeof useTranslations>,
 ): string {
   switch (entry.type) {
     case "lesson_completed":
@@ -65,9 +65,7 @@ function getActivityLink(entry: ActivityEntry): string | null {
     case "lesson_completed":
     case "course_completed":
     case "course_enrolled":
-      return entry.meta.courseSlug
-        ? `/courses/${entry.meta.courseSlug}`
-        : null;
+      return entry.meta.courseSlug ? `/courses/${entry.meta.courseSlug}` : null;
     case "achievement_earned":
       return "/profile";
     default:

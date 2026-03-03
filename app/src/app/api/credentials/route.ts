@@ -15,7 +15,10 @@ export async function GET(request: Request) {
   const wallet = searchParams.get("wallet");
 
   if (!wallet) {
-    return NextResponse.json({ error: "Missing wallet parameter" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing wallet parameter" },
+      { status: 400 },
+    );
   }
 
   const user = await prisma.user.findUnique({

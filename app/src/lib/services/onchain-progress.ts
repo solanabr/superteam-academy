@@ -99,7 +99,7 @@ export class OnChainProgressService implements LearningProgressService {
         mint,
         walletPubkey,
         false,
-        TOKEN_2022_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID,
       );
 
       const balance = await this.connection.getTokenAccountBalance(ata);
@@ -118,7 +118,7 @@ export class OnChainProgressService implements LearningProgressService {
 
   async getProgress(
     userId: string,
-    courseId: string
+    courseId: string,
   ): Promise<Progress | null> {
     try {
       let learner: PublicKey;
@@ -142,7 +142,7 @@ export class OnChainProgressService implements LearningProgressService {
 
       const completedIndices = getCompletedLessonIndices(
         enrollment.lessonFlags,
-        course.lessonCount
+        course.lessonCount,
       );
       const totalLessons = course.lessonCount;
       const percentage =
@@ -200,7 +200,7 @@ export class OnChainProgressService implements LearningProgressService {
 
               const [expectedEnrollment] = getEnrollmentPda(
                 course.courseId,
-                learner
+                learner,
               );
               const [coursePda] = getCoursePda(course.courseId);
               if (
@@ -213,23 +213,21 @@ export class OnChainProgressService implements LearningProgressService {
               }
 
               // Simpler approach: derive expected enrollment PDA and check
-              const [enrollPda] = getEnrollmentPda(
-                course.courseId,
-                learner
-              );
+              const [enrollPda] = getEnrollmentPda(course.courseId, learner);
               // Check if this account's enrollment.course matches the course PDA
               if (enrollment.course.equals(coursePda)) {
                 // Verify the enrollment PDA matches
-                const enrollInfo = await this.connection.getAccountInfo(enrollPda);
+                const enrollInfo =
+                  await this.connection.getAccountInfo(enrollPda);
                 if (enrollInfo) {
                   const completedIndices = getCompletedLessonIndices(
                     enrollment.lessonFlags,
-                    course.lessonCount
+                    course.lessonCount,
                   );
                   const percentage =
                     course.lessonCount > 0
                       ? Math.round(
-                          (completedIndices.length / course.lessonCount) * 100
+                          (completedIndices.length / course.lessonCount) * 100,
                         )
                       : 0;
 
@@ -239,12 +237,10 @@ export class OnChainProgressService implements LearningProgressService {
                     totalLessons: course.lessonCount,
                     percentage,
                     enrolledAt: new Date(
-                      enrollment.enrolledAt * 1000
+                      enrollment.enrolledAt * 1000,
                     ).toISOString(),
                     completedAt: enrollment.completedAt
-                      ? new Date(
-                          enrollment.completedAt * 1000
-                        ).toISOString()
+                      ? new Date(enrollment.completedAt * 1000).toISOString()
                       : undefined,
                     lastAccessedAt: new Date().toISOString(),
                   });
@@ -269,9 +265,11 @@ export class OnChainProgressService implements LearningProgressService {
   async completeLesson(
     _userId: string,
     _courseId: string,
-    _lessonIndex: number
+    _lessonIndex: number,
   ): Promise<void> {
-    console.warn("OnChainProgressService.completeLesson: Backend-signed operation");
+    console.warn(
+      "OnChainProgressService.completeLesson: Backend-signed operation",
+    );
   }
 
   async enrollInCourse(userId: string, courseId: string): Promise<void> {
@@ -285,7 +283,7 @@ export class OnChainProgressService implements LearningProgressService {
     const crypto = globalThis.crypto || (await import("crypto")).webcrypto;
     const hashBuf = await crypto.subtle.digest(
       "SHA-256",
-      new TextEncoder().encode("global:enroll")
+      new TextEncoder().encode("global:enroll"),
     );
     const discriminator = Buffer.from(new Uint8Array(hashBuf).slice(0, 8));
 
@@ -348,7 +346,7 @@ export class OnChainProgressService implements LearningProgressService {
 
   async getLeaderboard(
     _timeframe: "weekly" | "monthly" | "alltime",
-    _courseId?: string
+    _courseId?: string,
   ): Promise<LeaderboardEntry[]> {
     try {
       const mint = await this.getXpMint();
@@ -383,8 +381,10 @@ export class OnChainProgressService implements LearningProgressService {
 
   async claimAchievement(
     _userId: string,
-    _achievementId: number
+    _achievementId: number,
   ): Promise<void> {
-    console.warn("OnChainProgressService.claimAchievement: Backend-signed operation");
+    console.warn(
+      "OnChainProgressService.claimAchievement: Backend-signed operation",
+    );
   }
 }

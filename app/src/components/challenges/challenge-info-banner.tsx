@@ -11,7 +11,11 @@ interface ChallengeInfoBannerProps {
   title: string;
 }
 
-export function ChallengeInfoBanner({ message, dismissLabel, title }: ChallengeInfoBannerProps) {
+export function ChallengeInfoBanner({
+  message,
+  dismissLabel,
+  title,
+}: ChallengeInfoBannerProps) {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {

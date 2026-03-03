@@ -10,7 +10,10 @@ import type {
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
+    },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -45,7 +48,10 @@ class DiscussionApiService {
     });
   }
 
-  async updateThread(threadId: string, data: Record<string, unknown>): Promise<void> {
+  async updateThread(
+    threadId: string,
+    data: Record<string, unknown>,
+  ): Promise<void> {
     await apiFetch(`/api/discussions/threads/${threadId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -53,41 +59,69 @@ class DiscussionApiService {
   }
 
   async deleteThread(threadId: string): Promise<void> {
-    await apiFetch(`/api/discussions/threads/${threadId}`, { method: "DELETE" });
-  }
-
-  // ── Comments ────────────────────────────────────────────────────────────────
-
-  async createComment(threadId: string, data: CreateCommentPayload): Promise<CommentNode> {
-    return apiFetch<CommentNode>(`/api/discussions/threads/${threadId}/comments`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateComment(threadId: string, commentId: string, body: string): Promise<void> {
-    await apiFetch(`/api/discussions/threads/${threadId}/comments/${commentId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ body }),
-    });
-  }
-
-  async deleteComment(threadId: string, commentId: string): Promise<void> {
-    await apiFetch(`/api/discussions/threads/${threadId}/comments/${commentId}`, {
+    await apiFetch(`/api/discussions/threads/${threadId}`, {
       method: "DELETE",
     });
   }
 
-  // ── Voting ──────────────────────────────────────────────────────────────────
+  // ── Comments ────────────────────────────────────────────────────────────────
 
-  async voteThread(threadId: string, value: number): Promise<{ voteScore: number }> {
-    return apiFetch<{ voteScore: number }>(`/api/discussions/threads/${threadId}/vote`, {
-      method: "POST",
-      body: JSON.stringify({ value }),
-    });
+  async createComment(
+    threadId: string,
+    data: CreateCommentPayload,
+  ): Promise<CommentNode> {
+    return apiFetch<CommentNode>(
+      `/api/discussions/threads/${threadId}/comments`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+    );
   }
 
-  async voteComment(threadId: string, commentId: string, value: number): Promise<{ voteScore: number }> {
+  async updateComment(
+    threadId: string,
+    commentId: string,
+    body: string,
+  ): Promise<void> {
+    await apiFetch(
+      `/api/discussions/threads/${threadId}/comments/${commentId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ body }),
+      },
+    );
+  }
+
+  async deleteComment(threadId: string, commentId: string): Promise<void> {
+    await apiFetch(
+      `/api/discussions/threads/${threadId}/comments/${commentId}`,
+      {
+        method: "DELETE",
+      },
+    );
+  }
+
+  // ── Voting ──────────────────────────────────────────────────────────────────
+
+  async voteThread(
+    threadId: string,
+    value: number,
+  ): Promise<{ voteScore: number }> {
+    return apiFetch<{ voteScore: number }>(
+      `/api/discussions/threads/${threadId}/vote`,
+      {
+        method: "POST",
+        body: JSON.stringify({ value }),
+      },
+    );
+  }
+
+  async voteComment(
+    threadId: string,
+    commentId: string,
+    value: number,
+  ): Promise<{ voteScore: number }> {
     return apiFetch<{ voteScore: number }>(
       `/api/discussions/threads/${threadId}/comments/${commentId}/vote`,
       { method: "POST", body: JSON.stringify({ value }) },
@@ -97,7 +131,9 @@ class DiscussionApiService {
   // ── Views ───────────────────────────────────────────────────────────────────
 
   async recordView(threadId: string): Promise<void> {
-    await apiFetch(`/api/discussions/threads/${threadId}/view`, { method: "POST" });
+    await apiFetch(`/api/discussions/threads/${threadId}/view`, {
+      method: "POST",
+    });
   }
 }
 

@@ -13,10 +13,20 @@ interface LessonDiscussionProps {
   currentUserId?: string | null;
 }
 
-export function LessonDiscussion({ lessonId, courseId, currentUserId }: LessonDiscussionProps) {
+export function LessonDiscussion({
+  lessonId,
+  courseId,
+  currentUserId,
+}: LessonDiscussionProps) {
   const t = useTranslations("discussions");
-  const { thread, isLoading, commentCount, addComment, voteComment, deleteComment } =
-    useLessonDiscussion(lessonId, courseId);
+  const {
+    thread,
+    isLoading,
+    commentCount,
+    addComment,
+    voteComment,
+    deleteComment,
+  } = useLessonDiscussion(lessonId, courseId);
 
   const comments = useMemo(() => thread?.comments ?? [], [thread?.comments]);
 
@@ -59,7 +69,9 @@ export function LessonDiscussion({ lessonId, courseId, currentUserId }: LessonDi
       {comments.length === 0 && !isLoading && (
         <div className="mt-8 text-center">
           <MessageCircle className="mx-auto h-10 w-10 text-muted-foreground/30" />
-          <p className="mt-2 text-sm text-muted-foreground">{t("noComments")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("noComments")}
+          </p>
           <p className="text-xs text-muted-foreground">{t("beFirst")}</p>
         </div>
       )}

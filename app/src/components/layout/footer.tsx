@@ -34,9 +34,7 @@ function NewsletterForm() {
 
   if (submitted) {
     return (
-      <p className="text-sm text-brazil-green font-medium">
-        {t("subscribed")}
-      </p>
+      <p className="text-sm text-brazil-green font-medium">{t("subscribed")}</p>
     );
   }
 
@@ -83,7 +81,10 @@ export function Footer() {
   const communityLinks = [
     { label: t("discord"), href: "https://discord.gg/superteambrasil" },
     { label: t("twitter"), href: "https://twitter.com/SuperteamBR" },
-    { label: t("github"), href: "https://github.com/solanabr/superteam-academy" },
+    {
+      label: t("github"),
+      href: "https://github.com/solanabr/superteam-academy",
+    },
     { label: t("superteamEarn"), href: "https://superteam.fun/earn" },
   ];
 
@@ -95,7 +96,9 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">ST</span>
+                <span className="text-sm font-bold text-primary-foreground">
+                  ST
+                </span>
               </div>
               <span className="font-heading text-lg font-bold">Academy</span>
             </div>

@@ -4,7 +4,11 @@ export * from "./bitmap";
 export { getConnection } from "./program";
 export { IDL } from "./idl";
 export type { OnchainAcademy } from "./idl";
-export { getOnChainXpBalance, getXpMintFromChain, getXpLeaderboard } from "./xp-balance";
+export {
+  getOnChainXpBalance,
+  getXpMintFromChain,
+  getXpLeaderboard,
+} from "./xp-balance";
 export { buildEnrollTransaction, isEnrolledOnChain } from "./enroll-tx";
 export { buildCompleteLessonTransaction } from "./instructions/complete-lesson";
 export { buildFinalizeCourseTransaction } from "./instructions/finalize-course";

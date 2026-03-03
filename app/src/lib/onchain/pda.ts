@@ -11,10 +11,7 @@ import { PROGRAM_ID } from "./constants";
 
 /** Derive the singleton Config PDA. Seeds: `["config"]` */
 export function getConfigPda(): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from("config")],
-    PROGRAM_ID
-  );
+  return PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID);
 }
 
 /**
@@ -25,7 +22,7 @@ export function getConfigPda(): [PublicKey, number] {
 export function getCoursePda(courseId: string): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("course"), Buffer.from(courseId)],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
@@ -37,11 +34,11 @@ export function getCoursePda(courseId: string): [PublicKey, number] {
  */
 export function getEnrollmentPda(
   courseId: string,
-  learner: PublicKey
+  learner: PublicKey,
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
@@ -53,7 +50,7 @@ export function getEnrollmentPda(
 export function getMinterRolePda(minter: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("minter"), minter.toBuffer()],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
@@ -63,11 +60,11 @@ export function getMinterRolePda(minter: PublicKey): [PublicKey, number] {
  * @param achievementId - Unique achievement identifier string
  */
 export function getAchievementTypePda(
-  achievementId: string
+  achievementId: string,
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("achievement"), Buffer.from(achievementId)],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }
 
@@ -79,7 +76,7 @@ export function getAchievementTypePda(
  */
 export function getAchievementReceiptPda(
   achievementId: string,
-  recipient: PublicKey
+  recipient: PublicKey,
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [
@@ -87,6 +84,6 @@ export function getAchievementReceiptPda(
       Buffer.from(achievementId),
       recipient.toBuffer(),
     ],
-    PROGRAM_ID
+    PROGRAM_ID,
   );
 }

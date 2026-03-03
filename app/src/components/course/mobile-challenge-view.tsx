@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { EditorPanel, OutputDisplay, ChallengePrompt } from "@/components/editor";
+import {
+  EditorPanel,
+  OutputDisplay,
+  ChallengePrompt,
+} from "@/components/editor";
 import type { Lesson, TestCase, LessonNavItem, Challenge } from "@/types";
 
 export interface MobileChallengeViewProps {
@@ -88,7 +92,7 @@ export function MobileChallengeView({
             "flex-1 px-4 py-2.5 text-center text-sm font-medium transition-colors",
             mobileTab === "prompt"
               ? "border-b-2 border-primary text-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           {t("challenge.title")}
@@ -99,7 +103,7 @@ export function MobileChallengeView({
             "flex-1 px-4 py-2.5 text-center text-sm font-medium transition-colors",
             mobileTab === "editor"
               ? "border-b-2 border-primary text-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           {t("editor.title")}
@@ -144,10 +148,26 @@ export function MobileChallengeView({
           />
           <div className="border-t border-[#333]">
             <div className="flex bg-[#252526]">
-              <button onClick={() => setActiveTab("tests")} className={cn("px-3 py-1.5 text-xs", activeTab === "tests" ? "bg-[#1e1e1e] text-[#ccc]" : "text-[#888]")}>
+              <button
+                onClick={() => setActiveTab("tests")}
+                className={cn(
+                  "px-3 py-1.5 text-xs",
+                  activeTab === "tests"
+                    ? "bg-[#1e1e1e] text-[#ccc]"
+                    : "text-[#888]",
+                )}
+              >
                 {t("challenge.tests")}
               </button>
-              <button onClick={() => setActiveTab("output")} className={cn("px-3 py-1.5 text-xs", activeTab === "output" ? "bg-[#1e1e1e] text-[#ccc]" : "text-[#888]")}>
+              <button
+                onClick={() => setActiveTab("output")}
+                className={cn(
+                  "px-3 py-1.5 text-xs",
+                  activeTab === "output"
+                    ? "bg-[#1e1e1e] text-[#ccc]"
+                    : "text-[#888]",
+                )}
+              >
                 {t("editor.output")}
               </button>
             </div>
@@ -155,14 +175,36 @@ export function MobileChallengeView({
               {activeTab === "tests" ? (
                 <div className="space-y-1">
                   {testResults.map((tc) => (
-                    <div key={tc.id} className="flex items-center gap-1.5 text-xs">
-                      {tc.passed === true ? <Check className="h-3 w-3 text-brazil-green" /> : tc.passed === false ? <X className="h-3 w-3 text-destructive" /> : <div className="h-3 w-3 rounded-full border border-[#555]" />}
-                      <span className={cn(tc.passed === true ? "text-brazil-green" : tc.passed === false ? "text-destructive" : "text-[#888]")}>{tc.name}</span>
+                    <div
+                      key={tc.id}
+                      className="flex items-center gap-1.5 text-xs"
+                    >
+                      {tc.passed === true ? (
+                        <Check className="h-3 w-3 text-brazil-green" />
+                      ) : tc.passed === false ? (
+                        <X className="h-3 w-3 text-destructive" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-[#555]" />
+                      )}
+                      <span
+                        className={cn(
+                          tc.passed === true
+                            ? "text-brazil-green"
+                            : tc.passed === false
+                              ? "text-destructive"
+                              : "text-[#888]",
+                        )}
+                      >
+                        {tc.name}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <OutputDisplay output={runOutput} placeholder={t("challenge.mobileOutputPlaceholder")} />
+                <OutputDisplay
+                  output={runOutput}
+                  placeholder={t("challenge.mobileOutputPlaceholder")}
+                />
               )}
             </div>
           </div>
@@ -179,7 +221,10 @@ export function MobileChallengeView({
         prevLesson={prevLesson}
         nextLesson={nextLesson}
         onMarkComplete={onMarkComplete}
-        onRunCode={() => { setMobileTab("editor"); onRunCode(); }}
+        onRunCode={() => {
+          setMobileTab("editor");
+          onRunCode();
+        }}
       />
     </div>
   );
@@ -219,7 +264,10 @@ function MobileBottomBar({
       <div className="flex items-center justify-between">
         <div>
           {prevLesson && (
-            <Link href={`/courses/${courseSlug}/lessons/${prevLesson.lesson.id}`} className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Link
+              href={`/courses/${courseSlug}/lessons/${prevLesson.lesson.id}`}
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+            >
               <ChevronLeft className="h-3.5 w-3.5" />
               {t("challenge.prev")}
             </Link>
@@ -227,16 +275,25 @@ function MobileBottomBar({
         </div>
         {completed ? (
           nextLesson ? (
-            <Link href={`/courses/${courseSlug}/lessons/${nextLesson.lesson.id}`} className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
+            <Link
+              href={`/courses/${courseSlug}/lessons/${nextLesson.lesson.id}`}
+              className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+            >
               {t("next")} <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           ) : (
-            <Link href={`/courses/${courseSlug}`} className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
+            <Link
+              href={`/courses/${courseSlug}`}
+              className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+            >
               {t("challenge.done")}
             </Link>
           )
         ) : allTestsPassed ? (
-          <button onClick={onMarkComplete} className="flex items-center gap-1 rounded-md bg-gradient-to-r from-brazil-gold to-brazil-gold-light px-3 py-1.5 text-xs font-semibold text-black">
+          <button
+            onClick={onMarkComplete}
+            className="flex items-center gap-1 rounded-md bg-gradient-to-r from-brazil-gold to-brazil-gold-light px-3 py-1.5 text-xs font-semibold text-black"
+          >
             <Sparkles className="h-3.5 w-3.5" />
             {t("challenge.completeXP", { xp: lesson.xpReward })}
           </button>
@@ -244,15 +301,27 @@ function MobileBottomBar({
           <button
             onClick={onRunCode}
             disabled={isRunning}
-            className={cn("flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium", isRunning ? "bg-muted text-muted-foreground" : "bg-brazil-green text-white")}
+            className={cn(
+              "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium",
+              isRunning
+                ? "bg-muted text-muted-foreground"
+                : "bg-brazil-green text-white",
+            )}
           >
-            {isRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+            {isRunning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Play className="h-3.5 w-3.5" />
+            )}
             {t("runCode")}
           </button>
         )}
         <div>
           {nextLesson && !completed && (
-            <Link href={`/courses/${courseSlug}/lessons/${nextLesson.lesson.id}`} className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Link
+              href={`/courses/${courseSlug}/lessons/${nextLesson.lesson.id}`}
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+            >
               {t("challenge.skip")} <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           )}

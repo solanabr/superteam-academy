@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Settings, User, Wallet, Shield } from "lucide-react";
-import { ProfileTab, AccountTab, PreferencesTab, PrivacyTab } from "@/components/settings";
+import {
+  ProfileTab,
+  AccountTab,
+  PreferencesTab,
+  PrivacyTab,
+} from "@/components/settings";
 
 type Tab = "profile" | "account" | "preferences" | "privacy";
 
@@ -32,9 +37,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-muted-foreground">
-          {t("subtitle")}
-        </p>
+        <p className="mt-1 text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Tab Navigation + Content */}

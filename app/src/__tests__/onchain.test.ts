@@ -100,7 +100,7 @@ describe("bitmap helpers", () => {
 describe("PDA derivation", () => {
   it("PROGRAM_ID matches the deployed program", () => {
     expect(PROGRAM_ID.toBase58()).toBe(
-      "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf"
+      "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf",
     );
   });
 
@@ -119,13 +119,13 @@ describe("PDA derivation", () => {
 
   it("TOKEN_2022_PROGRAM_ID matches the canonical address", () => {
     expect(TOKEN_2022_PROGRAM_ID.toBase58()).toBe(
-      "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+      "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
     );
   });
 
   it("MPL_CORE_PROGRAM_ID matches the canonical address", () => {
     expect(MPL_CORE_PROGRAM_ID.toBase58()).toBe(
-      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
     );
   });
 });

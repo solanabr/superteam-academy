@@ -33,7 +33,9 @@ export function DailyChallengePreview({
   completedLabel,
   xpLabel,
 }: DailyChallengePreviewProps) {
-  const [challenge] = useState<DailyChallenge | null>(() => getTodayChallenge());
+  const [challenge] = useState<DailyChallenge | null>(() =>
+    getTodayChallenge(),
+  );
   const [done] = useState(() => isTodayCompleted());
 
   if (!challenge) return null;
@@ -57,7 +59,12 @@ export function DailyChallengePreview({
         )}
       >
         <div className="mb-3 flex items-center gap-2">
-          <Zap className={cn("h-4 w-4", done ? "text-emerald-400" : "text-primary")} />
+          <Zap
+            className={cn(
+              "h-4 w-4",
+              done ? "text-emerald-400" : "text-primary",
+            )}
+          />
           <Badge
             variant="outline"
             className={cn("text-[10px]", CATEGORY_COLORS[challenge.category])}
@@ -73,7 +80,9 @@ export function DailyChallengePreview({
         </div>
 
         <h3 className="mb-1 font-semibold leading-tight">{challenge.title}</h3>
-        <p className="mb-4 line-clamp-2 text-xs text-muted-foreground">{challenge.description}</p>
+        <p className="mb-4 line-clamp-2 text-xs text-muted-foreground">
+          {challenge.description}
+        </p>
 
         {done ? (
           <div className="flex items-center gap-1.5 text-sm text-emerald-400">

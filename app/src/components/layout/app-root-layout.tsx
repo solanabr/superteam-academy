@@ -33,7 +33,7 @@ export const appViewport = {
 
 export const appMetadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://academy.superteam.fun"
+    process.env.NEXT_PUBLIC_APP_URL || "https://academy.superteam.fun",
   ),
   title: {
     default: "Superteam Academy | Learn Solana Development",
@@ -93,9 +93,7 @@ export default async function AppRootLayout({
         <PrivyAuthProvider>
           <NextIntlClientProvider messages={messages}>
             <ThemeProvider>
-              <PostHogProvider>
-                {children}
-              </PostHogProvider>
+              <PostHogProvider>{children}</PostHogProvider>
             </ThemeProvider>
           </NextIntlClientProvider>
         </PrivyAuthProvider>

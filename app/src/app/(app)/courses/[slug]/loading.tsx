@@ -31,7 +31,10 @@ export default function CourseDetailLoading() {
           <div className="space-y-3">
             <Skeleton className="h-7 w-40" />
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-lg border border-border p-4 space-y-2">
+              <div
+                key={i}
+                className="rounded-lg border border-border p-4 space-y-2"
+              >
                 <div className="flex items-center justify-between">
                   <Skeleton className="h-6 w-48" />
                   <Skeleton className="h-5 w-20" />

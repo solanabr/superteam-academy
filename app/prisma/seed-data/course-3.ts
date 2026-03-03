@@ -518,7 +518,8 @@ For standard user wallets, always default to ATAs. Wallets like Phantom and Solf
         // ── Module 2: Token-2022 Extensions ─────────────────────────────────
         {
           title: "Token-2022 Extensions",
-          description: "Advanced token features with the Token Extensions Program",
+          description:
+            "Advanced token features with the Token Extensions Program",
           order: 1,
           lessons: {
             create: [
@@ -604,7 +605,8 @@ Programs interacting with Token-2022 tokens must pass \`TOKEN_2022_PROGRAM_ID\` 
               },
               {
                 title: "Transfer Fees",
-                description: "Implementing automatic transfer fees with Token-2022",
+                description:
+                  "Implementing automatic transfer fees with Token-2022",
                 type: "content",
                 order: 1,
                 xpReward: 30,
@@ -723,7 +725,8 @@ await setTransferFee(
               },
               {
                 title: "Create a Token with Transfer Fee",
-                description: "Build a Token-2022 mint with the TransferFee extension",
+                description:
+                  "Build a Token-2022 mint with the TransferFee extension",
                 type: "challenge",
                 order: 2,
                 xpReward: 75,
@@ -1082,13 +1085,15 @@ Superteam Academy uses exactly this pattern for its XP token: a Token-2022 mint 
         // ── Module 3: NFTs on Solana ────────────────────────────────────────
         {
           title: "NFTs on Solana",
-          description: "Non-fungible tokens, metadata, and collection standards",
+          description:
+            "Non-fungible tokens, metadata, and collection standards",
           order: 2,
           lessons: {
             create: [
               {
                 title: "NFT Standards Overview",
-                description: "Understanding NFT standards and programs on Solana",
+                description:
+                  "Understanding NFT standards and programs on Solana",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -1183,7 +1188,8 @@ For large-scale collections (10K+ items), **compressed NFTs** using state compre
               },
               {
                 title: "Metadata & Collections",
-                description: "On-chain and off-chain metadata patterns for NFTs",
+                description:
+                  "On-chain and off-chain metadata patterns for NFTs",
                 type: "content",
                 order: 1,
                 xpReward: 30,
@@ -1532,7 +1538,8 @@ main();`,
               },
               {
                 title: "NFT Royalties & Creators",
-                description: "Royalty enforcement and creator verification on Solana NFTs",
+                description:
+                  "Royalty enforcement and creator verification on Solana NFTs",
                 type: "content",
                 order: 3,
                 xpReward: 25,
@@ -1648,13 +1655,15 @@ For a team project, distribute shares fairly:
         // ── Module 4: Token Economics ────────────────────────────────────────
         {
           title: "Token Economics",
-          description: "Designing token supply, authority, and vesting mechanisms",
+          description:
+            "Designing token supply, authority, and vesting mechanisms",
           order: 3,
           lessons: {
             create: [
               {
                 title: "Supply Mechanics",
-                description: "Fixed supply, inflationary, and deflationary token models",
+                description:
+                  "Fixed supply, inflationary, and deflationary token models",
                 type: "content",
                 order: 0,
                 xpReward: 25,
@@ -1772,7 +1781,8 @@ For price discovery, circulating supply is what matters. A token with 10% circul
               },
               {
                 title: "Token Authority Patterns",
-                description: "Managing mint, freeze, and close authorities securely",
+                description:
+                  "Managing mint, freeze, and close authorities securely",
                 type: "content",
                 order: 1,
                 xpReward: 30,
@@ -1908,7 +1918,8 @@ A common pattern for new projects:
               },
               {
                 title: "Build a Vesting Schedule",
-                description: "Implement a token vesting mechanism with time-locked releases",
+                description:
+                  "Implement a token vesting mechanism with time-locked releases",
                 type: "challenge",
                 order: 2,
                 xpReward: 75,
@@ -2230,7 +2241,8 @@ main();`,
               },
               {
                 title: "Real-World Token Design",
-                description: "Design a complete token economy for a Solana project",
+                description:
+                  "Design a complete token economy for a Solana project",
                 type: "challenge",
                 order: 3,
                 xpReward: 75,
@@ -2495,7 +2507,8 @@ main();`,
                         },
                         {
                           name: "No category exceeds its total allocation",
-                          input: "all categories at month 48 equal their allocation",
+                          input:
+                            "all categories at month 48 equal their allocation",
                           expectedOutput: "true",
                           order: 3,
                         },

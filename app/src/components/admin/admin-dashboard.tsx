@@ -35,12 +35,20 @@ interface StatCardProps {
   accent?: string;
 }
 
-function StatCard({ icon, label, value, detail, accent = "text-st-green" }: StatCardProps) {
+function StatCard({
+  icon,
+  label,
+  value,
+  detail,
+  accent = "text-st-green",
+}: StatCardProps) {
   return (
     <div className="glass rounded-xl p-5 transition-all hover:-translate-y-[1px] hover:shadow-md">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-muted ${accent}`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-full bg-muted ${accent}`}
+        >
           {icon}
         </div>
       </div>
@@ -51,7 +59,13 @@ function StatCard({ icon, label, value, detail, accent = "text-st-green" }: Stat
 }
 
 function getAchievementsByCategory(achievements: Achievement[]) {
-  const categories = ["progress", "streaks", "skills", "community", "special"] as const;
+  const categories = [
+    "progress",
+    "streaks",
+    "skills",
+    "community",
+    "special",
+  ] as const;
   return categories.map((cat) => {
     const items = achievements.filter((a) => a.category === cat);
     const totalXP = items.reduce((sum, a) => sum + a.xpReward, 0);
@@ -106,7 +120,7 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
 
   useEffect(() => {
     fetch("/api/achievements")
-      .then((res) => res.ok ? res.json() : [])
+      .then((res) => (res.ok ? res.json() : []))
       .then((data) => setAchievements(Array.isArray(data) ? data : []))
       .catch(() => setAchievements([]));
   }, []);
@@ -114,10 +128,18 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
   const totalLessons = courses.reduce((sum, c) => sum + c.lessonCount, 0);
   const totalChallenges = courses.reduce((sum, c) => sum + c.challengeCount, 0);
   const totalXP = courses.reduce((sum, c) => sum + c.xpTotal, 0);
-  const totalEnrollments = courses.reduce((sum, c) => sum + c.totalEnrollments, 0);
-  const totalCompletions = courses.reduce((sum, c) => sum + c.totalCompletions, 0);
+  const totalEnrollments = courses.reduce(
+    (sum, c) => sum + c.totalEnrollments,
+    0,
+  );
+  const totalCompletions = courses.reduce(
+    (sum, c) => sum + c.totalCompletions,
+    0,
+  );
   const avgCompletionRate =
-    totalEnrollments > 0 ? Math.round((totalCompletions / totalEnrollments) * 100) : 0;
+    totalEnrollments > 0
+      ? Math.round((totalCompletions / totalEnrollments) * 100)
+      : 0;
   const activeCourses = courses.filter((c) => c.isActive).length;
 
   const difficultyBreakdown = {
@@ -136,7 +158,10 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
     .filter((t) => t.count > 0);
 
   const achievementStats = getAchievementsByCategory(achievements);
-  const totalAchievementXP = achievements.reduce((sum, a) => sum + a.xpReward, 0);
+  const totalAchievementXP = achievements.reduce(
+    (sum, a) => sum + a.xpReward,
+    0,
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -172,7 +197,10 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
           icon={<Users className="h-5 w-5" />}
           label={t("totalEnrollments")}
           value={totalEnrollments.toLocaleString()}
-          detail={t("completionsSummary", { completions: totalCompletions.toLocaleString(), rate: avgCompletionRate })}
+          detail={t("completionsSummary", {
+            completions: totalCompletions.toLocaleString(),
+            rate: avgCompletionRate,
+          })}
           accent="text-level"
         />
         <StatCard
@@ -202,23 +230,29 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
               {t("byDifficulty")}
             </h3>
             <div className="space-y-3">
-              {(["beginner", "intermediate", "advanced"] as const).map((diff) => (
-                <div key={diff} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        diff === "beginner"
-                          ? "bg-brazil-green"
-                          : diff === "intermediate"
-                            ? "bg-brazil-gold"
-                            : "bg-brazil-coral"
-                      }`}
-                    />
-                    <span className="text-sm capitalize">{t(`difficulty.${diff}`)}</span>
+              {(["beginner", "intermediate", "advanced"] as const).map(
+                (diff) => (
+                  <div key={diff} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`h-2.5 w-2.5 rounded-full ${
+                          diff === "beginner"
+                            ? "bg-brazil-green"
+                            : diff === "intermediate"
+                              ? "bg-brazil-gold"
+                              : "bg-brazil-coral"
+                        }`}
+                      />
+                      <span className="text-sm capitalize">
+                        {t(`difficulty.${diff}`)}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {difficultyBreakdown[diff]}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold">{difficultyBreakdown[diff]}</span>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </section>
 
@@ -229,7 +263,10 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
             </h3>
             <div className="space-y-3">
               {trackBreakdown.map((track) => (
-                <div key={track.trackId} className="flex items-center justify-between">
+                <div
+                  key={track.trackId}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2.5 w-2.5 rounded-full"
@@ -249,7 +286,9 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
               {t("achievementSystem")}
             </h3>
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t("totalBadges")}</span>
+              <span className="text-sm text-muted-foreground">
+                {t("totalBadges")}
+              </span>
               <span className="text-lg font-bold text-achievement">
                 {achievements.length}
               </span>
@@ -262,7 +301,9 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
                 >
                   <div className="flex items-center gap-2 text-sm">
                     {CATEGORY_ICONS[cat.category]}
-                    <span className="capitalize">{t(`achievementCategory.${cat.category}`)}</span>
+                    <span className="capitalize">
+                      {t(`achievementCategory.${cat.category}`)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 text-xs">
                     <span className="font-medium">{cat.count}</span>
@@ -285,7 +326,9 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
                 const children = (
                   <>
                     <div className="text-muted-foreground">{link.icon}</div>
-                    <span className="flex-1 font-medium">{t(`links.${link.key}`)}</span>
+                    <span className="flex-1 font-medium">
+                      {t(`links.${link.key}`)}
+                    </span>
                     {link.external && (
                       <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
@@ -326,8 +369,8 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
               <div className="flex items-center justify-between">
                 <span className="text-sm">{t("health.i18n")}</span>
                 <span className="flex items-center gap-1.5 text-xs font-medium text-brazil-green">
-                  <span className="h-2 w-2 rounded-full bg-brazil-green" />
-                  3 {t("health.locales")}
+                  <span className="h-2 w-2 rounded-full bg-brazil-green" />3{" "}
+                  {t("health.locales")}
                 </span>
               </div>
               <div className="flex items-center justify-between">

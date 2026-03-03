@@ -3,9 +3,15 @@ import { PublicKey } from "@solana/web3.js";
 import { resolveUserId } from "@/lib/auth-utils";
 import { prisma } from "@/lib/db";
 import { PrismaProgressService } from "@/lib/services/prisma-progress";
-import { loadBackendSigner, getServerConnection } from "@/lib/onchain/backend-signer";
+import {
+  loadBackendSigner,
+  getServerConnection,
+} from "@/lib/onchain/backend-signer";
 import { buildCompleteLessonTransaction } from "@/lib/onchain/instructions/complete-lesson";
-import { parseAnchorError, isAlreadyDoneError } from "@/lib/onchain/program-errors";
+import {
+  parseAnchorError,
+  isAlreadyDoneError,
+} from "@/lib/onchain/program-errors";
 import { parseEventsFromLogs } from "@/lib/onchain/events";
 
 const progressService = new PrismaProgressService();
@@ -30,7 +36,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { wallet: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { wallet: true },
+  });
   if (!user?.wallet || user.wallet !== learnerWallet) {
     return NextResponse.json({ error: "Wallet mismatch" }, { status: 403 });
   }
@@ -39,7 +48,10 @@ export async function POST(request: NextRequest) {
   try {
     learner = new PublicKey(learnerWallet);
   } catch {
-    return NextResponse.json({ error: "Invalid learnerWallet" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid learnerWallet" },
+      { status: 400 },
+    );
   }
 
   const backendSigner = loadBackendSigner();
@@ -60,8 +72,12 @@ export async function POST(request: NextRequest) {
       skipPreflight: false,
     });
 
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-    await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash();
+    await connection.confirmTransaction(
+      { signature, blockhash, lastValidBlockHeight },
+      "confirmed",
+    );
 
     // Parse LessonCompleted event to get actual on-chain xpEarned
     let xpEarned: number | undefined;
@@ -80,7 +96,10 @@ export async function POST(request: NextRequest) {
     try {
       await progressService.completeLesson(userId, courseId, lessonIndex);
     } catch (dbErr) {
-      console.error("[onchain/complete-lesson] DB update failed after on-chain success", dbErr);
+      console.error(
+        "[onchain/complete-lesson] DB update failed after on-chain success",
+        dbErr,
+      );
     }
 
     return NextResponse.json({ success: true, signature, xpEarned });
@@ -92,7 +111,12 @@ export async function POST(request: NextRequest) {
     }
 
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[onchain/complete-lesson]", { userId, courseId, lessonIndex, error: msg });
+    console.error("[onchain/complete-lesson]", {
+      userId,
+      courseId,
+      lessonIndex,
+      error: msg,
+    });
     return NextResponse.json({ error: name ?? msg }, { status: 500 });
   }
 }

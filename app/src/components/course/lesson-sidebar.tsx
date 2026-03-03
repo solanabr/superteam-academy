@@ -12,7 +12,11 @@ export interface LessonSidebarProps {
   onClose: () => void;
 }
 
-export function LessonSidebar({ course, currentLessonId, onClose }: LessonSidebarProps) {
+export function LessonSidebar({
+  course,
+  currentLessonId,
+  onClose,
+}: LessonSidebarProps) {
   const t = useTranslations("lesson");
   return (
     <>
@@ -31,7 +35,10 @@ export function LessonSidebar({ course, currentLessonId, onClose }: LessonSideba
           </button>
         </div>
 
-        <div className="overflow-y-auto p-2" style={{ maxHeight: "calc(100vh - 120px)" }}>
+        <div
+          className="overflow-y-auto p-2"
+          style={{ maxHeight: "calc(100vh - 120px)" }}
+        >
           {course.modules.map((mod, mi) => (
             <div key={mod.id} className="mb-2">
               <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -47,7 +54,7 @@ export function LessonSidebar({ course, currentLessonId, onClose }: LessonSideba
                       "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
                       l.id === currentLessonId
                         ? "bg-primary/10 font-medium text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <div className="shrink-0">

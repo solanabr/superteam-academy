@@ -45,22 +45,28 @@ export function DailyQuestsCard() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">{t("dailyQuests.title")}</h2>
         <span className="text-xs text-muted-foreground">
-          {t("dailyQuests.done", { completed: dailyQuests.filter((q) => q.completed).length, total: dailyQuests.length })}
+          {t("dailyQuests.done", {
+            completed: dailyQuests.filter((q) => q.completed).length,
+            total: dailyQuests.length,
+          })}
         </span>
       </div>
       <div className="glass rounded-xl divide-y divide-border/50">
         {dailyQuests.map((quest) => {
           const Icon = QUEST_ICONS[quest.type] || Zap;
           const color = QUEST_COLORS[quest.type] || "text-muted-foreground";
-          const progressPct = quest.target > 0
-            ? Math.min((quest.progress / quest.target) * 100, 100)
-            : 0;
+          const progressPct =
+            quest.target > 0
+              ? Math.min((quest.progress / quest.target) * 100, 100)
+              : 0;
 
           return (
             <div key={quest.id} className="flex items-center gap-3 px-4 py-3">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                quest.completed ? "bg-brazil-green/10" : "bg-muted/50"
-              }`}>
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                  quest.completed ? "bg-brazil-green/10" : "bg-muted/50"
+                }`}
+              >
                 {quest.completed ? (
                   <Check className="h-4 w-4 text-brazil-green" />
                 ) : (
@@ -70,17 +76,25 @@ export function DailyQuestsCard() {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <p className={`text-sm font-medium ${quest.completed ? "line-through text-muted-foreground" : ""}`}>
+                  <p
+                    className={`text-sm font-medium ${quest.completed ? "line-through text-muted-foreground" : ""}`}
+                  >
                     {quest.title}
                   </p>
-                  <span className="text-xs font-medium text-xp">+{quest.xpReward} XP</span>
+                  <span className="text-xs font-medium text-xp">
+                    +{quest.xpReward} XP
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">{quest.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {quest.description}
+                </p>
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
-                        quest.completed ? "bg-brazil-green" : "bg-gradient-to-r from-st-green to-brazil-teal"
+                        quest.completed
+                          ? "bg-brazil-green"
+                          : "bg-gradient-to-r from-st-green to-brazil-teal"
                       }`}
                       style={{ width: `${progressPct}%` }}
                     />

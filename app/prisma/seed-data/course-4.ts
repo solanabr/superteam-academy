@@ -523,7 +523,7 @@ Write an Anchor program with a \`create_pool_mint\` instruction that:
                 challenge: {
                   create: {
                     prompt:
-                      "Write an Anchor instruction `create_pool_mint` that initializes a new SPL token mint where the mint authority is a PDA. The instruction takes `pool_id: String` and `decimals: u8`. The mint PDA uses seeds [\"pool-mint\", pool_id], and the authority PDA uses seeds [\"mint-authority\", pool_id]. Store both bumps in a PoolConfig account at seeds [\"pool-config\", pool_id].",
+                      'Write an Anchor instruction `create_pool_mint` that initializes a new SPL token mint where the mint authority is a PDA. The instruction takes `pool_id: String` and `decimals: u8`. The mint PDA uses seeds ["pool-mint", pool_id], and the authority PDA uses seeds ["mint-authority", pool_id]. Store both bumps in a PoolConfig account at seeds ["pool-config", pool_id].',
                     starterCode: `use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
 
@@ -573,7 +573,7 @@ pub struct PoolConfig {
 }`,
                     language: "rust",
                     hints: [
-                      "Use #[account(init, payer = payer, mint::decimals = decimals, mint::authority = mint_authority, seeds = [b\"pool-mint\", pool_id.as_bytes()], bump)] for the mint account.",
+                      'Use #[account(init, payer = payer, mint::decimals = decimals, mint::authority = mint_authority, seeds = [b"pool-mint", pool_id.as_bytes()], bump)] for the mint account.',
                       "The mint_authority PDA only needs seeds and bump constraints — it does not need init since it is just a derived address used as an authority.",
                       "In the instruction body, access bumps via ctx.bumps.pool_mint and ctx.bumps.mint_authority, and store them on the config.",
                     ],
@@ -847,7 +847,7 @@ pub struct Pool {
                     hints: [
                       "For the first deposit (total_deposits == 0), simply set lp_to_mint = amount. For subsequent deposits, cast to u128: (amount as u128).checked_mul(lp_mint.supply as u128).unwrap().checked_div(pool.total_deposits as u128).unwrap() as u64.",
                       "Use token::transfer with CpiContext::new for the user->vault transfer (user signs). Use token::mint_to with CpiContext::new_with_signer for minting LP tokens (PDA signs).",
-                      "Build signer seeds as: let pool_key = ctx.accounts.pool.key(); let seeds = &[b\"mint-authority\", pool_key.as_ref(), &[ctx.accounts.pool.authority_bump]]; let signer = &[&seeds[..]];",
+                      'Build signer seeds as: let pool_key = ctx.accounts.pool.key(); let seeds = &[b"mint-authority", pool_key.as_ref(), &[ctx.accounts.pool.authority_bump]]; let signer = &[&seeds[..]];',
                     ],
                     solution: `use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
@@ -958,7 +958,8 @@ pub enum ErrorCode {
                       create: [
                         {
                           name: "First deposit mints 1:1 LP tokens",
-                          input: "amount = 1_000_000, pool.total_deposits = 0, lp_supply = 0",
+                          input:
+                            "amount = 1_000_000, pool.total_deposits = 0, lp_supply = 0",
                           expectedOutput:
                             "1_000_000 LP tokens minted, pool.total_deposits = 1_000_000",
                           order: 0,
@@ -2630,10 +2631,8 @@ pub fn calculate_health_factor(
                         },
                         {
                           name: "No borrows returns u64::MAX",
-                          input:
-                            "deposit: 1000 USDC, borrows: []",
-                          expectedOutput:
-                            "u64::MAX (18446744073709551615)",
+                          input: "deposit: 1000 USDC, borrows: []",
+                          expectedOutput: "u64::MAX (18446744073709551615)",
                           order: 2,
                         },
                       ],
@@ -3603,8 +3602,7 @@ fn calculate_deviation_bps(price_a: u64, price_b: u64) -> Result<u16> {
                           name: "Neither valid returns error",
                           input:
                             "primary=0, primary_valid=false, secondary=0, secondary_valid=false, last=100_000_000, max_deviation=500",
-                          expectedOutput:
-                            "Err(OracleError::NoValidPrice)",
+                          expectedOutput: "Err(OracleError::NoValidPrice)",
                           order: 2,
                         },
                       ],
@@ -4524,24 +4522,21 @@ pub fn check_drawdown(
                           name: "Deposit rejected during emergency",
                           input:
                             "amount=1000, current_total=0, max_single=5000, max_total=100000, is_emergency=true",
-                          expectedOutput:
-                            "Err(RiskError::EmergencyShutdown)",
+                          expectedOutput: "Err(RiskError::EmergencyShutdown)",
                           order: 0,
                         },
                         {
                           name: "Drawdown detected when loss exceeds threshold",
                           input:
                             "current_assets=850_000, high_water_mark=1_000_000, max_drawdown_bps=1000",
-                          expectedOutput:
-                            "true (15% drawdown > 10% max)",
+                          expectedOutput: "true (15% drawdown > 10% max)",
                           order: 1,
                         },
                         {
                           name: "Withdrawal within limits passes validation",
                           input:
                             "shares=100, total_shares=1000, max_withdrawal_bps=2000",
-                          expectedOutput:
-                            "Ok(()) — 10% withdrawal < 20% max",
+                          expectedOutput: "Ok(()) — 10% withdrawal < 20% max",
                           order: 2,
                         },
                       ],

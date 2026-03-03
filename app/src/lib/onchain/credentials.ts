@@ -67,7 +67,7 @@ interface DASResponse {
  *          Returns empty array if Helius DAS API is not configured.
  */
 export async function getOnChainCredentials(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<Credential[]> {
   const rpcUrl = HELIUS_RPC_URL;
   if (!rpcUrl || rpcUrl === "https://api.devnet.solana.com") {
@@ -99,23 +99,21 @@ export async function getOnChainCredentials(
       const attrs = asset.content?.metadata?.attributes;
       if (!attrs) continue;
 
-      const trackIdAttr = attrs.find(
-        (a) => a.trait_type === "track_id"
-      );
+      const trackIdAttr = attrs.find((a) => a.trait_type === "track_id");
       if (!trackIdAttr) continue; // Not an academy credential
 
       const trackId = parseInt(trackIdAttr.value, 10);
       const level = parseInt(
         attrs.find((a) => a.trait_type === "level")?.value || "1",
-        10
+        10,
       );
       const coursesCompleted = parseInt(
         attrs.find((a) => a.trait_type === "courses_completed")?.value || "1",
-        10
+        10,
       );
       const totalXp = parseInt(
         attrs.find((a) => a.trait_type === "total_xp")?.value || "0",
-        10
+        10,
       );
 
       const trackNames: Record<number, string> = {
@@ -134,7 +132,9 @@ export async function getOnChainCredentials(
         currentLevel: level,
         coursesCompleted,
         totalXpEarned: totalXp,
-        firstEarned: asset.created_at ? new Date(asset.created_at * 1000).toISOString() : undefined,
+        firstEarned: asset.created_at
+          ? new Date(asset.created_at * 1000).toISOString()
+          : undefined,
         lastUpdated: new Date().toISOString(),
         metadataUri: asset.content?.json_uri,
         badgeImage: asset.content?.links?.image,
@@ -157,7 +157,7 @@ export async function getOnChainCredentials(
  *          Returns empty array if Helius DAS API is not configured.
  */
 export async function getXpTokenHolders(
-  xpMint: string
+  xpMint: string,
 ): Promise<Array<{ owner: string; balance: number }>> {
   const rpcUrl = HELIUS_RPC_URL;
   if (!rpcUrl || rpcUrl === "https://api.devnet.solana.com") {
@@ -180,16 +180,14 @@ export async function getXpTokenHolders(
     if (!data.result?.token_accounts) return [];
 
     return data.result.token_accounts
-      .map(
-        (account: { owner: string; amount: string | number }) => ({
-          owner: account.owner,
-          balance: Number(account.amount),
-        })
-      )
+      .map((account: { owner: string; amount: string | number }) => ({
+        owner: account.owner,
+        balance: Number(account.amount),
+      }))
       .filter((h: { balance: number }) => h.balance > 0)
       .sort(
         (a: { balance: number }, b: { balance: number }) =>
-          b.balance - a.balance
+          b.balance - a.balance,
       );
   } catch {
     return [];

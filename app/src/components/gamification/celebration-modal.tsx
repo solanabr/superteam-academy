@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Sparkles, Zap, TrendingUp, ArrowRight, Flame } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useGamification, type CelebrationData } from "@/lib/hooks/use-gamification";
+import {
+  useGamification,
+  type CelebrationData,
+} from "@/lib/hooks/use-gamification";
 import { formatXP } from "@/lib/utils";
 
 const CONTENT_MESSAGE_KEYS = [
@@ -34,7 +37,7 @@ function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return Math.abs(hash);
@@ -48,7 +51,7 @@ function getMessageKey(title: string, isChallenge: boolean): string {
 
 function ConfettiPiece({ index }: { index: number }) {
   const seed = hashString(`confetti-${index}`);
-  const left = (seed % 100);
+  const left = seed % 100;
   const delay = (seed % 2000) / 1000;
   const duration = 2 + (seed % 2000) / 1000;
   const colorIdx = seed % CONFETTI_COLORS.length;
@@ -58,20 +61,23 @@ function ConfettiPiece({ index }: { index: number }) {
   return (
     <div
       className={`absolute animate-confetti ${CONFETTI_COLORS[colorIdx]} ${isCircle ? "rounded-full" : "rounded-sm"}`}
-      style={{
-        left: `${left}%`,
-        top: "-10px",
-        width: `${size}px`,
-        height: `${size}px`,
-        "--confetti-delay": `${delay}s`,
-        "--confetti-duration": `${duration}s`,
-      } as React.CSSProperties}
+      style={
+        {
+          left: `${left}%`,
+          top: "-10px",
+          width: `${size}px`,
+          height: `${size}px`,
+          "--confetti-delay": `${delay}s`,
+          "--confetti-duration": `${duration}s`,
+        } as React.CSSProperties
+      }
     />
   );
 }
 
 export function CelebrationModal() {
-  const { showCelebration, celebrationData, dismissCelebration } = useGamification();
+  const { showCelebration, celebrationData, dismissCelebration } =
+    useGamification();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -90,7 +96,10 @@ export function CelebrationModal() {
       className="fixed inset-0 z-[200] m-0 h-full w-full max-h-full max-w-full bg-transparent p-0 backdrop:bg-black/70"
       onClose={dismissCelebration}
     >
-      <CelebrationContent data={celebrationData} onContinue={dismissCelebration} />
+      <CelebrationContent
+        data={celebrationData}
+        onContinue={dismissCelebration}
+      />
     </dialog>
   );
 }
@@ -110,13 +119,15 @@ function CelebrationContent({
   const message = t(messageKey);
   const comboLabel = useMemo(() => {
     if (data.comboCount >= 5) return t("combo.super");
-    if (data.comboCount >= 3) return t("combo.count", { count: data.comboCount });
+    if (data.comboCount >= 3)
+      return t("combo.count", { count: data.comboCount });
     if (data.comboCount >= 2) return t("combo.twoX");
     return null;
   }, [data.comboCount, t]);
 
   const confettiPieces = useMemo(
-    () => Array.from({ length: 40 }, (_, i) => <ConfettiPiece key={i} index={i} />),
+    () =>
+      Array.from({ length: 40 }, (_, i) => <ConfettiPiece key={i} index={i} />),
     [],
   );
 
@@ -146,7 +157,9 @@ function CelebrationContent({
         <div className="mt-6 flex items-center justify-center gap-2">
           <div className="flex items-center gap-1.5 rounded-full bg-xp/10 px-4 py-2">
             <Zap className="h-5 w-5 text-xp" />
-            <span className="text-lg font-bold text-xp">+{formatXP(data.xpEarned)} XP</span>
+            <span className="text-lg font-bold text-xp">
+              +{formatXP(data.xpEarned)} XP
+            </span>
           </div>
         </div>
 
@@ -154,7 +167,9 @@ function CelebrationContent({
         {data.bonusXP > 0 && (
           <div className="mt-2 flex items-center justify-center gap-1 text-sm text-brazil-gold">
             <Flame className="h-4 w-4" />
-            <span>+{data.bonusXP} bonus XP ({data.comboMultiplier}x)</span>
+            <span>
+              +{data.bonusXP} bonus XP ({data.comboMultiplier}x)
+            </span>
           </div>
         )}
 
@@ -171,7 +186,9 @@ function CelebrationContent({
           <div className="mt-4 rounded-lg border border-level/30 bg-level/10 px-4 py-3">
             <div className="flex items-center justify-center gap-2">
               <TrendingUp className="h-5 w-5 text-level" />
-              <span className="font-bold text-level">{t("celebration.levelUp")}</span>
+              <span className="font-bold text-level">
+                {t("celebration.levelUp")}
+              </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("celebration.levelReached", { level: data.newLevel })}
@@ -184,7 +201,10 @@ function CelebrationContent({
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{t("celebration.dailyGoal")}</span>
-              <span>{Math.min(data.dailyGoalProgress, data.dailyGoalTarget)}/{data.dailyGoalTarget} XP</span>
+              <span>
+                {Math.min(data.dailyGoalProgress, data.dailyGoalTarget)}/
+                {data.dailyGoalTarget} XP
+              </span>
             </div>
             <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
@@ -193,7 +213,9 @@ function CelebrationContent({
                     ? "bg-brazil-green animate-goal-complete"
                     : "bg-gradient-to-r from-st-green to-brazil-teal"
                 }`}
-                style={{ width: `${Math.min((data.dailyGoalProgress / data.dailyGoalTarget) * 100, 100)}%` }}
+                style={{
+                  width: `${Math.min((data.dailyGoalProgress / data.dailyGoalTarget) * 100, 100)}%`,
+                }}
               />
             </div>
           </div>

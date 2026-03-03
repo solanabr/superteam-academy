@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(Number(searchParams.get("limit") ?? 50), 100);
   const offset = Number(searchParams.get("offset") ?? 0);
 
-  const notifications = await service.getNotifications(userId, { limit, offset });
+  const notifications = await service.getNotifications(userId, {
+    limit,
+    offset,
+  });
   return NextResponse.json(notifications);
 }
 

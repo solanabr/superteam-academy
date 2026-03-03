@@ -9,7 +9,12 @@ import type { ThreadListItem, ThreadCategory, VoteValue } from "@/types";
 
 type SortKey = "newest" | "top" | "mostCommented";
 
-const CATEGORIES: ThreadCategory[] = ["Help", "Show & Tell", "Ideas", "General"];
+const CATEGORIES: ThreadCategory[] = [
+  "Help",
+  "Show & Tell",
+  "Ideas",
+  "General",
+];
 
 interface ThreadListProps {
   threads: ThreadListItem[];
@@ -55,12 +60,20 @@ export function ThreadList({
         />
         <select
           value={category ?? "all"}
-          onChange={(e) => onCategoryChange(e.target.value === "all" ? undefined : e.target.value as ThreadCategory)}
+          onChange={(e) =>
+            onCategoryChange(
+              e.target.value === "all"
+                ? undefined
+                : (e.target.value as ThreadCategory),
+            )
+          }
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
         >
           <option value="all">{t("allCategories")}</option>
           {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
         <select
@@ -80,15 +93,13 @@ export function ThreadList({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : threads.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">{t("noThreads")}</p>
+        <p className="py-12 text-center text-muted-foreground">
+          {t("noThreads")}
+        </p>
       ) : (
         <div className="space-y-3">
           {threads.map((thread) => (
-            <ThreadCard
-              key={thread.id}
-              thread={thread}
-              onVote={onVote}
-            />
+            <ThreadCard key={thread.id} thread={thread} onVote={onVote} />
           ))}
         </div>
       )}

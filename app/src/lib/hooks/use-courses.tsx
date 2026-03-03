@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Course } from "@/types";
 
 interface CoursesContextValue {
@@ -21,8 +27,16 @@ const CoursesContext = createContext<CoursesContextValue>({
 
 let cachedCourses: Course[] | null = null;
 
-export function CoursesProvider({ children, initialCourses }: { children: ReactNode; initialCourses?: Course[] }) {
-  const [courses, setCourses] = useState<Course[]>(initialCourses ?? cachedCourses ?? []);
+export function CoursesProvider({
+  children,
+  initialCourses,
+}: {
+  children: ReactNode;
+  initialCourses?: Course[];
+}) {
+  const [courses, setCourses] = useState<Course[]>(
+    initialCourses ?? cachedCourses ?? [],
+  );
   const [isLoading, setIsLoading] = useState(!initialCourses && !cachedCourses);
 
   useEffect(() => {
@@ -45,14 +59,21 @@ export function CoursesProvider({ children, initialCourses }: { children: ReactN
   const getCourseBySlug = (slug: string) =>
     courses.find((c) => c.slug === slug);
 
-  const getCourseById = (id: string) =>
-    courses.find((c) => c.id === id);
+  const getCourseById = (id: string) => courses.find((c) => c.id === id);
 
   const getCoursesByTrack = (trackId: number) =>
     courses.filter((c) => c.trackId === trackId);
 
   return (
-    <CoursesContext.Provider value={{ courses, isLoading, getCourseBySlug, getCourseById, getCoursesByTrack }}>
+    <CoursesContext.Provider
+      value={{
+        courses,
+        isLoading,
+        getCourseBySlug,
+        getCourseById,
+        getCoursesByTrack,
+      }}
+    >
       {children}
     </CoursesContext.Provider>
   );

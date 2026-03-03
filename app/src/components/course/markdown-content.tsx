@@ -24,16 +24,24 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="font-heading mt-8 mb-4 text-3xl font-bold first:mt-0">{children}</h1>
+            <h1 className="font-heading mt-8 mb-4 text-3xl font-bold first:mt-0">
+              {children}
+            </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="font-heading mt-8 mb-3 text-2xl font-bold">{children}</h2>
+            <h2 className="font-heading mt-8 mb-3 text-2xl font-bold">
+              {children}
+            </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="font-heading mt-6 mb-2 text-xl font-semibold">{children}</h3>
+            <h3 className="font-heading mt-6 mb-2 text-xl font-semibold">
+              {children}
+            </h3>
           ),
           p: ({ children }) => (
-            <p className="my-3 text-sm leading-relaxed text-muted-foreground">{children}</p>
+            <p className="my-3 text-sm leading-relaxed text-muted-foreground">
+              {children}
+            </p>
           ),
           ul: ({ children }) => (
             <ul className="my-3 ml-4 list-disc space-y-1.5">{children}</ul>
@@ -42,7 +50,9 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
             <ol className="my-3 ml-4 list-decimal space-y-1.5">{children}</ol>
           ),
           li: ({ children }) => (
-            <li className="pl-1 text-sm leading-relaxed text-muted-foreground">{children}</li>
+            <li className="pl-1 text-sm leading-relaxed text-muted-foreground">
+              {children}
+            </li>
           ),
           blockquote: ({ children }) => (
             <blockquote className="my-4 rounded-r-lg border-l-4 border-primary/40 bg-primary/5 px-4 py-3 text-sm italic text-muted-foreground">
@@ -77,21 +87,36 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
           },
           pre: ({ children }) => <>{children}</>,
           a: ({ href, children }) => (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline hover:text-primary/80"
+            >
               {children}
             </a>
           ),
-          strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+          strong: ({ children }) => (
+            <strong className="font-semibold text-foreground">
+              {children}
+            </strong>
+          ),
           table: ({ children }) => (
             <div className="my-4 overflow-x-auto">
-              <table className="min-w-full border-collapse border border-border text-sm">{children}</table>
+              <table className="min-w-full border-collapse border border-border text-sm">
+                {children}
+              </table>
             </div>
           ),
           th: ({ children }) => (
-            <th className="border border-border bg-muted px-3 py-2 text-left font-medium">{children}</th>
+            <th className="border border-border bg-muted px-3 py-2 text-left font-medium">
+              {children}
+            </th>
           ),
           td: ({ children }) => (
-            <td className="border border-border px-3 py-2 text-muted-foreground">{children}</td>
+            <td className="border border-border px-3 py-2 text-muted-foreground">
+              {children}
+            </td>
           ),
         }}
       >
@@ -100,7 +125,6 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
     </div>
   );
 }
-
 
 export function generateContentPlaceholder(lesson: Lesson): string {
   return `# ${lesson.title}

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { cn, formatXP, xpProgress, truncateAddress, getLevel, xpForLevel } from "@/lib/utils";
+import {
+  cn,
+  formatXP,
+  xpProgress,
+  truncateAddress,
+  getLevel,
+  xpForLevel,
+} from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // formatXP
@@ -86,8 +93,8 @@ describe("xpProgress", () => {
   it("returns level 0 progress for 0 XP", () => {
     const result = xpProgress(0);
     expect(result.level).toBe(0);
-    expect(result.currentLevelXp).toBe(0);   // xpForLevel(0) = 0
-    expect(result.nextLevelXp).toBe(100);     // xpForLevel(1) = 100
+    expect(result.currentLevelXp).toBe(0); // xpForLevel(0) = 0
+    expect(result.nextLevelXp).toBe(100); // xpForLevel(1) = 100
     expect(result.progress).toBe(0);
   });
 
@@ -140,13 +147,13 @@ describe("truncateAddress", () => {
     expect(truncateAddress(address)).toBe("7xKX...gAsU");
     // First 4 chars + "..." + last 4 chars
     expect(truncateAddress(address)).toBe(
-      `${address.slice(0, 4)}...${address.slice(-4)}`
+      `${address.slice(0, 4)}...${address.slice(-4)}`,
     );
   });
 
   it("truncates with custom char count", () => {
     expect(truncateAddress(address, 6)).toBe(
-      `${address.slice(0, 6)}...${address.slice(-6)}`
+      `${address.slice(0, 6)}...${address.slice(-6)}`,
     );
   });
 

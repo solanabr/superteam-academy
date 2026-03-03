@@ -21,5 +21,9 @@ declare namespace NodeJS {
 
     // Helius
     NEXT_PUBLIC_HELIUS_API_KEY?: string;
+
+    // Payload CMS Email
+    RESEND_API_KEY?: string;
+    CMS_NOTIFICATION_EMAIL?: string;
   }
 }

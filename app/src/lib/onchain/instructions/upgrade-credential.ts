@@ -21,7 +21,7 @@ import { PROGRAM_ID, MPL_CORE_PROGRAM_ID } from "../constants";
 import { getConfigPda, getCoursePda, getEnrollmentPda } from "../pda";
 
 const DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:upgrade_credential").digest()
+  createHash("sha256").update("global:upgrade_credential").digest(),
 ).subarray(0, 8);
 
 function encodeString(s: string): Buffer {
@@ -52,7 +52,7 @@ export interface UpgradeCredentialParams {
   name: string;
   uri: string;
   coursesCompleted: number; // u8
-  totalXp: bigint;          // u64
+  totalXp: bigint; // u64
   backendSigner: PublicKey;
   connection: Connection;
 }
@@ -65,8 +65,16 @@ export async function buildUpgradeCredentialTransaction(
   params: UpgradeCredentialParams,
 ): Promise<Transaction> {
   const {
-    courseId, learner, credentialAsset, trackCollection, name, uri,
-    coursesCompleted, totalXp, backendSigner, connection,
+    courseId,
+    learner,
+    credentialAsset,
+    trackCollection,
+    name,
+    uri,
+    coursesCompleted,
+    totalXp,
+    backendSigner,
+    connection,
   } = params;
 
   const [configPda] = getConfigPda();
@@ -98,8 +106,13 @@ export async function buildUpgradeCredentialTransaction(
     data,
   });
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  const tx = new Transaction({ feePayer: backendSigner, blockhash, lastValidBlockHeight });
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+  const tx = new Transaction({
+    feePayer: backendSigner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }));
   tx.add(ix);
 

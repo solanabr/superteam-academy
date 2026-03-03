@@ -51,7 +51,9 @@ export function ChallengePrompt({
 
       <div className={compact ? "mt-4" : "mt-6"}>
         {!compact && (
-          <h2 className="font-heading text-lg font-semibold">{t("challenge.title")}</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {t("challenge.title")}
+          </h2>
         )}
         <div
           className={`${compact ? "mt-0" : "mt-3"} rounded-lg border border-border bg-muted/30 ${compact ? "p-3" : "p-4"} ${textSize} leading-relaxed`}

@@ -10,7 +10,8 @@ export async function POST(
 ) {
   const { threadId } = await params;
   const userId = await resolveUserId();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   if (!body.body?.trim()) {
@@ -25,8 +26,10 @@ export async function POST(
     return NextResponse.json(comment, { status: 201 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error";
-    if (msg === "Locked") return NextResponse.json({ error: "Thread is locked" }, { status: 403 });
-    if (msg === "Not found") return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (msg === "Locked")
+      return NextResponse.json({ error: "Thread is locked" }, { status: 403 });
+    if (msg === "Not found")
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

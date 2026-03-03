@@ -20,13 +20,16 @@ export function StreakSection({ streak }: { streak: StreakData }) {
           <Flame className="h-5 w-5 animate-flame text-streak" />
           <h2 className="text-lg font-bold">Streak</h2>
         </div>
-        <span className="text-2xl font-bold text-streak">{streak.currentStreak}d</span>
+        <span className="text-2xl font-bold text-streak">
+          {streak.currentStreak}d
+        </span>
       </div>
 
       {/* Milestone chips */}
       <div className="mb-4 flex gap-2">
         {MILESTONES.map(({ days, label, name }) => {
-          const unlocked = streak.currentStreak >= days || streak.longestStreak >= days;
+          const unlocked =
+            streak.currentStreak >= days || streak.longestStreak >= days;
           return (
             <div
               key={days}
@@ -52,11 +55,15 @@ export function StreakSection({ streak }: { streak: StreakData }) {
       <div className="mb-4 flex gap-6 text-sm text-muted-foreground">
         <span>
           Current:{" "}
-          <span className="font-semibold text-foreground">{streak.currentStreak}d</span>
+          <span className="font-semibold text-foreground">
+            {streak.currentStreak}d
+          </span>
         </span>
         <span>
           Longest:{" "}
-          <span className="font-semibold text-foreground">{streak.longestStreak}d</span>
+          <span className="font-semibold text-foreground">
+            {streak.longestStreak}d
+          </span>
         </span>
       </div>
 

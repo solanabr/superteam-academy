@@ -28,7 +28,9 @@ export async function GET() {
   const xp = await service.getXP(user.id);
   const streak = await service.getStreak(user.id);
   const achievements = await service.getAchievements(user.id);
-  const credentials = user.wallet ? await service.getCredentials(user.wallet) : [];
+  const credentials = user.wallet
+    ? await service.getCredentials(user.wallet)
+    : [];
 
   const levelFromXP = (xp: number) => Math.floor(Math.sqrt(xp / 100));
 

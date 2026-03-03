@@ -36,7 +36,7 @@ function FilterPill({
         "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
         active
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
       )}
     >
       {children}
@@ -68,7 +68,9 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
   const [debouncedSearch, isSearchPending] = useDebounce(search, 300);
 
   const selectedDifficulty = searchParams.get("difficulty") || "all";
-  const selectedTrack = searchParams.get("track") ? Number(searchParams.get("track")) : null;
+  const selectedTrack = searchParams.get("track")
+    ? Number(searchParams.get("track"))
+    : null;
   const selectedDuration = (searchParams.get("duration") as Duration) || "all";
   const sort = (searchParams.get("sort") as Sort) || "newest";
 
@@ -100,20 +102,22 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
       for (const [key, value] of Object.entries(updates)) {
-        if (value === null || value === "" || value === "all") params.delete(key);
+        if (value === null || value === "" || value === "all")
+          params.delete(key);
         else params.set(key, value);
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, router, pathname],
   );
 
   const setSelectedDifficulty = (d: string) => updateParams({ difficulty: d });
   const setSelectedTrack = (id: number | null) =>
     updateParams({ track: id !== null ? String(id) : null });
   const setSelectedDuration = (d: Duration) => updateParams({ duration: d });
-  const setSort = (s: Sort) => updateParams({ sort: s === "newest" ? null : s });
+  const setSort = (s: Sort) =>
+    updateParams({ sort: s === "newest" ? null : s });
 
   const filteredCourses = useMemo(() => {
     let result = courses.filter((course) => {
@@ -127,13 +131,15 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
         course.modules.some(
           (m) =>
             m.title.toLowerCase().includes(q) ||
-            m.lessons.some((l) => l.title.toLowerCase().includes(q))
+            m.lessons.some((l) => l.title.toLowerCase().includes(q)),
         );
 
       const matchesDifficulty =
-        selectedDifficulty === "all" || course.difficulty === selectedDifficulty;
+        selectedDifficulty === "all" ||
+        course.difficulty === selectedDifficulty;
 
-      const matchesTrack = selectedTrack === null || course.trackId === selectedTrack;
+      const matchesTrack =
+        selectedTrack === null || course.trackId === selectedTrack;
 
       const hours = parseDurationHours(course.duration);
       const matchesDuration =
@@ -142,20 +148,32 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
         (selectedDuration === "2to5" && hours >= 2 && hours <= 5) ||
         (selectedDuration === "gt5" && hours > 5);
 
-      return matchesSearch && matchesDifficulty && matchesTrack && matchesDuration;
+      return (
+        matchesSearch && matchesDifficulty && matchesTrack && matchesDuration
+      );
     });
 
     if (sort === "popular") {
-      result = [...result].sort((a, b) => b.totalEnrollments - a.totalEnrollments);
+      result = [...result].sort(
+        (a, b) => b.totalEnrollments - a.totalEnrollments,
+      );
     } else if (sort === "xp") {
       result = [...result].sort((a, b) => b.xpTotal - a.xpTotal);
     } else {
       result = [...result].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     }
     return result;
-  }, [courses, debouncedSearch, selectedDifficulty, selectedTrack, selectedDuration, sort]);
+  }, [
+    courses,
+    debouncedSearch,
+    selectedDifficulty,
+    selectedTrack,
+    selectedDuration,
+    sort,
+  ]);
 
   const activeFilters =
     (selectedDifficulty !== "all" ? 1 : 0) +
@@ -201,7 +219,9 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
             <FilterPill
               key={d}
               active={selectedDifficulty === d}
-              onClick={() => setSelectedDifficulty(selectedDifficulty === d ? "all" : d)}
+              onClick={() =>
+                setSelectedDifficulty(selectedDifficulty === d ? "all" : d)
+              }
             >
               {DIFFICULTY_LABEL[d]}
             </FilterPill>
@@ -217,7 +237,9 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
               key={opt.value}
               active={selectedDuration === opt.value}
               onClick={() =>
-                setSelectedDuration(selectedDuration === opt.value ? "all" : opt.value)
+                setSelectedDuration(
+                  selectedDuration === opt.value ? "all" : opt.value,
+                )
               }
             >
               {opt.label}
@@ -245,7 +267,13 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
             <button
               onClick={() => {
                 setSearch("");
-                updateParams({ difficulty: null, track: null, duration: null, sort: null, q: null });
+                updateParams({
+                  difficulty: null,
+                  track: null,
+                  duration: null,
+                  sort: null,
+                  q: null,
+                });
               }}
               className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive"
             >
@@ -263,7 +291,10 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
 
       {/* Track sidebar + grid */}
       <div className="flex flex-col lg:flex-row items-start gap-4 lg:gap-8">
-        <CourseFilters selectedTrack={selectedTrack} onTrackChange={setSelectedTrack} />
+        <CourseFilters
+          selectedTrack={selectedTrack}
+          onTrackChange={setSelectedTrack}
+        />
         <div className="flex-1 min-w-0">
           <CourseGrid courses={filteredCourses} progressMap={progressMap} />
         </div>

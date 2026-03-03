@@ -8,7 +8,7 @@ import { getEnrollmentPda } from "../pda";
 export async function checkEnrollmentOnChain(
   learner: PublicKey,
   courseId: string,
-  rpcUrl?: string
+  rpcUrl?: string,
 ): Promise<boolean> {
   const connection = getConnection(rpcUrl);
   const [enrollmentPda] = getEnrollmentPda(courseId, learner);

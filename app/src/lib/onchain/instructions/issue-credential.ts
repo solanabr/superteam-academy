@@ -19,7 +19,7 @@ import { PROGRAM_ID, MPL_CORE_PROGRAM_ID } from "../constants";
 import { getConfigPda, getCoursePda, getEnrollmentPda } from "../pda";
 
 const DISCRIMINATOR = Buffer.from(
-  createHash("sha256").update("global:issue_credential").digest()
+  createHash("sha256").update("global:issue_credential").digest(),
 ).subarray(0, 8);
 
 function encodeString(s: string): Buffer {
@@ -48,7 +48,7 @@ export interface IssueCredentialParams {
   name: string;
   uri: string;
   coursesCompleted: number; // u8
-  totalXp: bigint;          // u64
+  totalXp: bigint; // u64
   backendSigner: PublicKey;
   connection: Connection;
 }
@@ -66,8 +66,15 @@ export async function buildIssueCredentialTransaction(
   params: IssueCredentialParams,
 ): Promise<IssueCredentialResult> {
   const {
-    courseId, learner, trackCollection, name, uri,
-    coursesCompleted, totalXp, backendSigner, connection,
+    courseId,
+    learner,
+    trackCollection,
+    name,
+    uri,
+    coursesCompleted,
+    totalXp,
+    backendSigner,
+    connection,
   } = params;
 
   const [configPda] = getConfigPda();
@@ -92,7 +99,11 @@ export async function buildIssueCredentialTransaction(
       { pubkey: coursePda, isSigner: false, isWritable: false },
       { pubkey: enrollmentPda, isSigner: false, isWritable: true },
       { pubkey: learner, isSigner: false, isWritable: false },
-      { pubkey: credentialAssetKeypair.publicKey, isSigner: true, isWritable: true },
+      {
+        pubkey: credentialAssetKeypair.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
       { pubkey: trackCollection, isSigner: false, isWritable: true },
       { pubkey: backendSigner, isSigner: true, isWritable: true },
       { pubkey: backendSigner, isSigner: true, isWritable: false },
@@ -102,8 +113,13 @@ export async function buildIssueCredentialTransaction(
     data,
   });
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-  const tx = new Transaction({ feePayer: backendSigner, blockhash, lastValidBlockHeight });
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+  const tx = new Transaction({
+    feePayer: backendSigner,
+    blockhash,
+    lastValidBlockHeight,
+  });
   // Metaplex Core createV2 + plugin init can reach 200K CU; set explicit budget.
   tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }));
   tx.add(ix);

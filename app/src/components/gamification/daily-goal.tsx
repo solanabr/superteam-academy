@@ -17,7 +17,7 @@ function GoalRingSVG({
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(progress, 1) * circumference);
+  const offset = circumference - Math.min(progress, 1) * circumference;
   const isComplete = progress >= 1;
 
   return (
@@ -53,11 +53,14 @@ function GoalRingSVG({
 
 export function DailyGoalMiniRing() {
   const { dailyGoal } = useGamification();
-  const progress = dailyGoal.target > 0 ? dailyGoal.xpToday / dailyGoal.target : 0;
+  const progress =
+    dailyGoal.target > 0 ? dailyGoal.xpToday / dailyGoal.target : 0;
   const isComplete = progress >= 1;
 
   return (
-    <div className={`relative flex items-center justify-center ${isComplete ? "animate-goal-complete" : ""}`}>
+    <div
+      className={`relative flex items-center justify-center ${isComplete ? "animate-goal-complete" : ""}`}
+    >
       <GoalRingSVG progress={progress} size={24} strokeWidth={2.5} />
       <div className="absolute inset-0 flex items-center justify-center">
         {isComplete ? (
@@ -73,22 +76,32 @@ export function DailyGoalMiniRing() {
 export function DailyGoalCard() {
   const t = useTranslations("gamification");
   const { dailyGoal, setDailyGoalTarget } = useGamification();
-  const progress = dailyGoal.target > 0 ? dailyGoal.xpToday / dailyGoal.target : 0;
+  const progress =
+    dailyGoal.target > 0 ? dailyGoal.xpToday / dailyGoal.target : 0;
   const isComplete = progress >= 1;
 
   return (
     <div className="glass rounded-xl p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{t("dailyGoal.title")}</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            {t("dailyGoal.title")}
+          </p>
           <p className="mt-1 text-3xl font-bold">
-            <span className={isComplete ? "text-brazil-green" : "text-brazil-gold"}>
+            <span
+              className={isComplete ? "text-brazil-green" : "text-brazil-gold"}
+            >
               {dailyGoal.xpToday}
             </span>
-            <span className="text-lg text-muted-foreground"> / {dailyGoal.target} XP</span>
+            <span className="text-lg text-muted-foreground">
+              {" "}
+              / {dailyGoal.target} XP
+            </span>
           </p>
         </div>
-        <div className={`relative flex items-center justify-center ${isComplete ? "animate-goal-complete" : ""}`}>
+        <div
+          className={`relative flex items-center justify-center ${isComplete ? "animate-goal-complete" : ""}`}
+        >
           <GoalRingSVG progress={progress} size={56} strokeWidth={4} />
           <div className="absolute inset-0 flex items-center justify-center">
             {isComplete ? (
@@ -104,7 +117,9 @@ export function DailyGoalCard() {
 
       {/* Target selector */}
       <div className="mt-4 flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">{t("dailyGoal.goalLabel")}</span>
+        <span className="text-xs text-muted-foreground">
+          {t("dailyGoal.goalLabel")}
+        </span>
         {GOAL_OPTIONS.map((option) => (
           <button
             key={option}

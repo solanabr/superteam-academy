@@ -78,7 +78,10 @@ export function ModuleListSkeleton() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-border bg-card p-4 space-y-2">
+        <div
+          key={i}
+          className="rounded-xl border border-border bg-card p-4 space-y-2"
+        >
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-48" />
             <Skeleton className="h-4 w-20" />

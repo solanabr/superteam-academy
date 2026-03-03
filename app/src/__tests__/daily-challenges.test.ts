@@ -36,12 +36,16 @@ describe("getTodayChallenge", () => {
 
   it("returns a challenge with valid difficulty", () => {
     const challenge = getTodayChallenge();
-    expect(["beginner", "intermediate", "advanced"]).toContain(challenge.difficulty);
+    expect(["beginner", "intermediate", "advanced"]).toContain(
+      challenge.difficulty,
+    );
   });
 
   it("returns a challenge with valid category", () => {
     const challenge = getTodayChallenge();
-    expect(["rust", "anchor", "solana", "tokens", "defi"]).toContain(challenge.category);
+    expect(["rust", "anchor", "solana", "tokens", "defi"]).toContain(
+      challenge.category,
+    );
   });
 
   it("returns a challenge with valid language", () => {
@@ -114,7 +118,9 @@ describe("getRecentChallenges", () => {
     const today = getTodayChallenge();
     const recent = getRecentChallenges(6);
     // Today should not appear in recent
-    expect(recent.every((c) => c.id !== today.id || recent.length > 1)).toBe(true);
+    expect(recent.every((c) => c.id !== today.id || recent.length > 1)).toBe(
+      true,
+    );
   });
 
   it("all returned items are valid challenge objects", () => {

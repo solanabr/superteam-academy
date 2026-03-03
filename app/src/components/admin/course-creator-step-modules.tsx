@@ -4,7 +4,11 @@ import { useTranslations } from "next-intl";
 import { Plus, Trash2, BookOpen, Code, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { DraftCourse, DraftModule, DraftLesson } from "./course-creator-types";
+import type {
+  DraftCourse,
+  DraftModule,
+  DraftLesson,
+} from "./course-creator-types";
 
 interface CourseCreatorModulesProps {
   draft: DraftCourse;
@@ -21,7 +25,10 @@ const DEFAULT_XP: Record<DraftCourse["difficulty"], number> = {
   advanced: 50,
 };
 
-export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesProps) {
+export function CourseCreatorModules({
+  draft,
+  onChange,
+}: CourseCreatorModulesProps) {
   const t = useTranslations("admin.creator.modules");
 
   function addModule() {
@@ -41,7 +48,7 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
   function updateModule(moduleId: string, updates: Partial<DraftModule>) {
     onChange({
       modules: draft.modules.map((m) =>
-        m.id === moduleId ? { ...m, ...updates } : m
+        m.id === moduleId ? { ...m, ...updates } : m,
       ),
     });
   }
@@ -56,7 +63,7 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
     };
     onChange({
       modules: draft.modules.map((m) =>
-        m.id === moduleId ? { ...m, lessons: [...m.lessons, newLesson] } : m
+        m.id === moduleId ? { ...m, lessons: [...m.lessons, newLesson] } : m,
       ),
     });
   }
@@ -66,7 +73,7 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
       modules: draft.modules.map((m) =>
         m.id === moduleId
           ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) }
-          : m
+          : m,
       ),
     });
   }
@@ -74,7 +81,7 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
   function updateLesson(
     moduleId: string,
     lessonId: string,
-    updates: Partial<DraftLesson>
+    updates: Partial<DraftLesson>,
   ) {
     onChange({
       modules: draft.modules.map((m) =>
@@ -82,10 +89,10 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
           ? {
               ...m,
               lessons: m.lessons.map((l) =>
-                l.id === lessonId ? { ...l, ...updates } : l
+                l.id === lessonId ? { ...l, ...updates } : l,
               ),
             }
-          : m
+          : m,
       ),
     });
   }
@@ -93,7 +100,7 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
   const totalLessons = draft.modules.reduce((s, m) => s + m.lessons.length, 0);
   const totalXP = draft.modules.reduce(
     (s, m) => s + m.lessons.reduce((ls, l) => ls + l.xpReward, 0),
-    0
+    0,
   );
 
   return (
@@ -116,9 +123,18 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
       {draft.modules.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-12 text-center">
           <BookOpen className="mb-3 h-10 w-10 text-muted-foreground/50" />
-          <p className="font-medium text-muted-foreground">{t("emptyModules")}</p>
-          <p className="mt-1 text-sm text-muted-foreground/70">{t("emptyModulesHint")}</p>
-          <Button className="mt-4" onClick={addModule} variant="outline" size="sm">
+          <p className="font-medium text-muted-foreground">
+            {t("emptyModules")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground/70">
+            {t("emptyModulesHint")}
+          </p>
+          <Button
+            className="mt-4"
+            onClick={addModule}
+            variant="outline"
+            size="sm"
+          >
             <Plus className="mr-2 h-4 w-4" />
             {t("addModule")}
           </Button>
@@ -139,14 +155,18 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
                   </span>
                   <Input
                     value={mod.title}
-                    onChange={(e) => updateModule(mod.id, { title: e.target.value })}
+                    onChange={(e) =>
+                      updateModule(mod.id, { title: e.target.value })
+                    }
                     placeholder={t("moduleTitlePlaceholder")}
                     className="font-medium"
                   />
                 </div>
                 <Input
                   value={mod.description}
-                  onChange={(e) => updateModule(mod.id, { description: e.target.value })}
+                  onChange={(e) =>
+                    updateModule(mod.id, { description: e.target.value })
+                  }
                   placeholder={t("moduleDescriptionPlaceholder")}
                   className="text-sm"
                 />
@@ -164,7 +184,10 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
             {/* Lessons */}
             <div className="divide-y">
               {mod.lessons.map((lesson, lessonIdx) => (
-                <div key={lesson.id} className="flex items-center gap-3 px-4 py-3">
+                <div
+                  key={lesson.id}
+                  className="flex items-center gap-3 px-4 py-3"
+                >
                   <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/30" />
                   <span className="w-5 text-center text-xs text-muted-foreground">
                     {lessonIdx + 1}
@@ -231,7 +254,9 @@ export function CourseCreatorModules({ draft, onChange }: CourseCreatorModulesPr
                   <Input
                     value={lesson.duration}
                     onChange={(e) =>
-                      updateLesson(mod.id, lesson.id, { duration: e.target.value })
+                      updateLesson(mod.id, lesson.id, {
+                        duration: e.target.value,
+                      })
                     }
                     placeholder="10 min"
                     className="w-20 shrink-0 text-xs"

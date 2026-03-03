@@ -40,7 +40,9 @@ export function ChallengeOverviewCard({
   challenge,
   labels,
 }: ChallengeOverviewCardProps) {
-  const [status, setStatus] = useState<"idle" | "started" | "completed">("idle");
+  const [status, setStatus] = useState<"idle" | "started" | "completed">(
+    "idle",
+  );
   const [xpEarned, setXpEarned] = useState(0);
 
   useEffect(() => {
@@ -61,7 +63,10 @@ export function ChallengeOverviewCard({
     <div className="glass rounded-xl p-5">
       {/* Badges row */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/5">
+        <Badge
+          variant="outline"
+          className="text-xs text-primary border-primary/30 bg-primary/5"
+        >
           {labels.dailyChallenge}
         </Badge>
         <Badge
@@ -110,7 +115,9 @@ export function ChallengeOverviewCard({
         ) : (
           <Button asChild className="gap-2">
             <Link href="/challenges/today">
-              {status === "started" ? labels.continueChallenge : labels.startChallenge}
+              {status === "started"
+                ? labels.continueChallenge
+                : labels.startChallenge}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

@@ -16,7 +16,12 @@ const sizeStyles = {
   lg: { text: "text-base", icon: "h-5 w-5", gap: "gap-1.5" },
 };
 
-export function StreakCounter({ currentStreak, size = "md", showLabel = true, className }: StreakCounterProps) {
+export function StreakCounter({
+  currentStreak,
+  size = "md",
+  showLabel = true,
+  className,
+}: StreakCounterProps) {
   const config = sizeStyles[size];
   const isActive = currentStreak > 0;
 
@@ -31,7 +36,10 @@ export function StreakCounter({ currentStreak, size = "md", showLabel = true, cl
       )}
     >
       <Flame className={cn(config.icon, isActive && "animate-flame")} />
-      <span>{currentStreak}{showLabel ? "d" : ""}</span>
+      <span>
+        {currentStreak}
+        {showLabel ? "d" : ""}
+      </span>
     </span>
   );
 }

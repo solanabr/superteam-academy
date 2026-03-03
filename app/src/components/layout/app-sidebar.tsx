@@ -44,7 +44,7 @@ export function AppSidebar() {
     <aside
       className={cn(
         "relative flex shrink-0 flex-col border-r border-border bg-background transition-all duration-300",
-        collapsed ? "w-16" : "w-56"
+        collapsed ? "w-16" : "w-56",
       )}
     >
       {/* Collapse toggle */}
@@ -75,7 +75,7 @@ export function AppSidebar() {
                 collapsed ? "justify-center gap-0" : "gap-3",
                 isActive
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               {item.href === "/notifications" ? (

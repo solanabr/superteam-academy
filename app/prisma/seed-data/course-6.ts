@@ -322,20 +322,26 @@ export function ConnectWalletButton() {
                       create: [
                         {
                           name: "Renders connect button when disconnected",
-                          input: "connected=false, connecting=false, publicKey=null",
-                          expectedOutput: "Button with text 'Connect Wallet' that calls setVisible(true)",
+                          input:
+                            "connected=false, connecting=false, publicKey=null",
+                          expectedOutput:
+                            "Button with text 'Connect Wallet' that calls setVisible(true)",
                           order: 0,
                         },
                         {
                           name: "Shows connecting state",
-                          input: "connected=false, connecting=true, publicKey=null",
-                          expectedOutput: "Disabled button with text 'Connecting...'",
+                          input:
+                            "connected=false, connecting=true, publicKey=null",
+                          expectedOutput:
+                            "Disabled button with text 'Connecting...'",
                           order: 1,
                         },
                         {
                           name: "Shows truncated address when connected",
-                          input: "connected=true, publicKey=PublicKey('7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV')",
-                          expectedOutput: "Button with text '7EcD...LtV' that calls disconnect()",
+                          input:
+                            "connected=true, publicKey=PublicKey('7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV')",
+                          expectedOutput:
+                            "Button with text '7EcD...LtV' that calls disconnect()",
                           order: 2,
                         },
                       ],
@@ -739,13 +745,15 @@ export function BalanceDisplay() {
                         },
                         {
                           name: "Displays formatted balance",
-                          input: "publicKey=valid, getBalance resolves 2500000000",
+                          input:
+                            "publicKey=valid, getBalance resolves 2500000000",
                           expectedOutput: "Text 'Balance: 2.5000 SOL'",
                           order: 2,
                         },
                         {
                           name: "Displays error on RPC failure",
-                          input: "publicKey=valid, getBalance rejects 'RPC timeout'",
+                          input:
+                            "publicKey=valid, getBalance rejects 'RPC timeout'",
                           expectedOutput: "Text containing 'RPC timeout'",
                           order: 3,
                         },
@@ -1233,19 +1241,23 @@ export function SendSol() {
                         {
                           name: "Validates zero amount",
                           input: "recipient=validPubkey, amount='0'",
-                          expectedOutput: "Error: 'Amount must be greater than 0'",
+                          expectedOutput:
+                            "Error: 'Amount must be greater than 0'",
                           order: 1,
                         },
                         {
                           name: "Sends transaction and shows confirmed",
-                          input: "recipient=validPubkey, amount='0.1', sendTransaction resolves, confirmTransaction resolves",
-                          expectedOutput: "Status 'confirmed' with signature displayed",
+                          input:
+                            "recipient=validPubkey, amount='0.1', sendTransaction resolves, confirmTransaction resolves",
+                          expectedOutput:
+                            "Status 'confirmed' with signature displayed",
                           order: 2,
                         },
                         {
                           name: "Button disabled while sending",
                           input: "status='sending'",
-                          expectedOutput: "Button disabled with text 'Sending...'",
+                          expectedOutput:
+                            "Button disabled with text 'Sending...'",
                           order: 3,
                         },
                       ],
@@ -1878,19 +1890,23 @@ export function CounterApp() {
                         },
                         {
                           name: "Shows Initialize button when account does not exist",
-                          input: "wallet=connected, program.account.counter.fetch throws",
-                          expectedOutput: "Button with text 'Initialize Counter'",
+                          input:
+                            "wallet=connected, program.account.counter.fetch throws",
+                          expectedOutput:
+                            "Button with text 'Initialize Counter'",
                           order: 1,
                         },
                         {
                           name: "Shows count and Increment button after initialization",
                           input: "wallet=connected, counter.count=5",
-                          expectedOutput: "Text 'Count: 5' and button 'Increment'",
+                          expectedOutput:
+                            "Text 'Count: 5' and button 'Increment'",
                           order: 2,
                         },
                         {
                           name: "Increments count after clicking Increment",
-                          input: "wallet=connected, counter.count=5, increment succeeds, re-fetch returns 6",
+                          input:
+                            "wallet=connected, counter.count=5, increment succeeds, re-fetch returns 6",
                           expectedOutput: "Text 'Count: 6'",
                           order: 3,
                         },
@@ -2079,19 +2095,22 @@ export async function validateDeployment(
                         {
                           name: "getExplorerUrl builds correct URL",
                           input: "signature='5xK...abc', cluster='devnet'",
-                          expectedOutput: "https://explorer.solana.com/tx/5xK...abc?cluster=devnet",
+                          expectedOutput:
+                            "https://explorer.solana.com/tx/5xK...abc?cluster=devnet",
                           order: 1,
                         },
                         {
                           name: "validateDeployment returns valid for executable account",
-                          input: "getAccountInfo returns { executable: true, data: Buffer, lamports: 1000000 }",
+                          input:
+                            "getAccountInfo returns { executable: true, data: Buffer, lamports: 1000000 }",
                           expectedOutput: "{ valid: true }",
                           order: 2,
                         },
                         {
                           name: "validateDeployment returns error for missing account",
                           input: "getAccountInfo returns null",
-                          expectedOutput: "{ valid: false, error: 'Program account not found' }",
+                          expectedOutput:
+                            "{ valid: false, error: 'Program account not found' }",
                           order: 3,
                         },
                       ],

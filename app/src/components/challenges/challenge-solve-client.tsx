@@ -1,26 +1,29 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Group as PanelGroup,
+  Panel,
+  Separator as PanelResizeHandle,
+} from "react-resizable-panels";
+import {
   CheckCircle2,
   Sparkles,
-  ChevronDown,
-  Eye,
-  EyeOff,
   Play,
-  Lightbulb,
-  Tag,
+  Loader2,
   ArrowLeft,
+  Timer,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { ChallengeTimer } from "./challenge-timer";
-import { saveCompletion, type DailyChallenge, type DailyChallengeTest } from "@/lib/daily-challenges";
+import { DailyChallengePrompt } from "./daily-challenge-prompt";
+import { DailyTestResults, type DailyTestResult } from "./daily-test-results";
+import { OutputDisplay } from "@/components/editor/output-display";
+import { saveCompletion, type DailyChallenge } from "@/lib/daily-challenges";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -31,18 +34,16 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 
-const CATEGORY_COLORS: Record<DailyChallenge["category"], string> = {
-  rust: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  anchor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  solana: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  tokens: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  defi: "bg-green-500/10 text-green-400 border-green-500/20",
+const DIFFICULTY_LABELS: Record<DailyChallenge["difficulty"], string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
 };
 
-const DIFFICULTY_LABELS: Record<DailyChallenge["difficulty"], string> = {
-  beginner: "🟢 Beginner",
-  intermediate: "🟡 Intermediate",
-  advanced: "🔴 Advanced",
+const DIFFICULTY_COLORS: Record<DailyChallenge["difficulty"], string> = {
+  beginner: "text-emerald-400",
+  intermediate: "text-yellow-400",
+  advanced: "text-red-400",
 };
 
 interface ChallengeSolveClientProps {
@@ -67,32 +68,55 @@ interface ChallengeSolveClientProps {
     yourTime: string;
     backToChallenges: string;
     prerequisites: string;
+    description?: string;
+    expectedBehavior?: string;
+    examples?: string;
+    input?: string;
+    output?: string;
+    expected?: string;
+    actual?: string;
+    runningTests?: string;
+    compileError?: string;
+    submitSolution?: string;
   };
 }
 
-export function ChallengeSolveClient({ challenge, labels }: ChallengeSolveClientProps) {
+// ── Mobile tab view ──────────────────────────────────────────────────────────
+
+type MobileTab = "description" | "editor" | "results";
+
+export function ChallengeSolveClient({
+  challenge,
+  labels,
+}: ChallengeSolveClientProps) {
   const router = useRouter();
   const [code, setCode] = useState(challenge.starterCode);
   const [isRunning, setIsRunning] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
-  const [hintIndex, setHintIndex] = useState(0);
-  const [showHints, setShowHints] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [celebrating, setCelebrating] = useState(false);
   const [startedAt, setStartedAt] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<DailyChallengeTest[]>(
-    challenge.testCases,
+  const [activeTab, setActiveTab] = useState<"tests" | "output">("tests");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("description");
+  const [runOutput, setRunOutput] = useState("");
+  const [testResults, setTestResults] = useState<DailyTestResult[]>(
+    challenge.testCases.map((tc) => ({
+      description: tc.description,
+      expectedOutput: tc.expectedOutput,
+    })),
   );
+
+  const editorLanguage = useMemo(() => {
+    return challenge.language === "rust" ? "rust" : "typescript";
+  }, [challenge.language]);
 
   // Record start time on mount
   useEffect(() => {
     fetch("/api/daily-challenges/start", { method: "POST" })
       .then((r) => r.json())
       .then((data) => {
-        if (data.startedAt) {
-          setStartedAt(data.startedAt);
-        }
+        if (data.startedAt) setStartedAt(data.startedAt);
       })
       .catch(() => {});
   }, []);
@@ -100,32 +124,39 @@ export function ChallengeSolveClient({ challenge, labels }: ChallengeSolveClient
   const runTests = useCallback(async () => {
     if (isRunning || completed) return;
     setIsRunning(true);
+    setActiveTab("tests");
+    setRunOutput("");
 
-    await new Promise((r) => setTimeout(r, 900));
+    try {
+      const res = await fetch("/api/daily-challenges/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: challenge.id, code }),
+      });
 
-    const solutionKeywords = challenge.solutionCode
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((w) => w.length > 3);
+      if (!res.ok) {
+        setRunOutput("> Error: Failed to validate code. Please try again.");
+        setIsRunning(false);
+        return;
+      }
 
-    const codeWords = code.toLowerCase().split(/\s+/);
-    const matchScore =
-      solutionKeywords.filter((kw) => codeWords.some((cw) => cw.includes(kw))).length /
-      Math.max(solutionKeywords.length, 1);
+      const data: {
+        results: DailyTestResult[];
+        output: string;
+        allPassed: boolean;
+        compileError: boolean;
+      } = await res.json();
 
-    const allPass = matchScore > 0.45 || code.trim() === challenge.solutionCode.trim();
+      setTestResults(data.results);
+      setRunOutput(data.output);
+    } catch {
+      setRunOutput("> Error: Network error. Please check your connection.");
+    } finally {
+      setIsRunning(false);
+    }
+  }, [code, challenge.id, isRunning, completed]);
 
-    setTestResults((prev) =>
-      prev.map((t, i) => ({
-        ...t,
-        passed: allPass || (matchScore > 0.3 && i === 0),
-      })),
-    );
-
-    setIsRunning(false);
-  }, [code, challenge.solutionCode, isRunning, completed]);
-
-  const handleComplete = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     if (completed) return;
     const earned = challenge.xpReward;
     const passedCount = testResults.filter((t) => t.passed === true).length;
@@ -134,10 +165,12 @@ export function ChallengeSolveClient({ challenge, labels }: ChallengeSolveClient
     setXpEarned(earned);
     setCompleted(true);
     setCelebrating(true);
-    setTestResults((prev) => prev.map((t) => ({ ...t, passed: true })));
     setTimeout(() => setCelebrating(false), 2500);
 
-    // Report completion to API
+    const elapsedSeconds = startedAt
+      ? Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000)
+      : null;
+
     fetch("/api/daily-challenges", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -146,262 +179,349 @@ export function ChallengeSolveClient({ challenge, labels }: ChallengeSolveClient
         xpEarned: earned,
         testsPassed: passedCount,
         totalTests: testResults.length,
+        timeSeconds: elapsedSeconds,
       }),
     }).catch(() => {});
-  }, [completed, challenge.id, challenge.xpReward, testResults]);
+  }, [completed, challenge.id, challenge.xpReward, testResults, startedAt]);
+
+  const handleReset = useCallback(() => {
+    setCode(challenge.starterCode);
+    setTestResults(
+      challenge.testCases.map((tc) => ({
+        description: tc.description,
+        expectedOutput: tc.expectedOutput,
+      })),
+    );
+    setRunOutput("");
+  }, [challenge]);
 
   const allPassed = testResults.every((t) => t.passed === true);
-  const passedCount = testResults.filter((t) => t.passed === true).length;
+  const hasRun = testResults.some((t) => t.passed !== undefined);
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Back link */}
+  const promptLabels = {
+    description: labels.description ?? "Description",
+    expectedBehavior: labels.expectedBehavior ?? "Expected Behavior",
+    examples: labels.examples ?? "Examples",
+    input: labels.input ?? "Input",
+    output: labels.output ?? "Output",
+    hintLabel: labels.hintLabel,
+    nextHint: labels.nextHint,
+    showSolution: labels.showSolution,
+    hideSolution: labels.hideSolution,
+  };
+
+  const testLabels = {
+    testResults: labels.testResults,
+    passed: labels.passed,
+    expected: labels.expected ?? "Expected",
+    actual: labels.actual ?? "Actual",
+  };
+
+  // ── Sticky header bar ──────────────────────────────────────────────────────
+
+  const headerBar = (
+    <div className="flex items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <Link
         href="/challenges"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" />
-        {labels.backToChallenges}
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{labels.backToChallenges}</span>
       </Link>
 
-      {/* Header */}
-      <div className="glass mb-6 rounded-xl p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/5">
-            {labels.dailyChallenge}
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn("text-xs", CATEGORY_COLORS[challenge.category])}
-          >
-            {challenge.category}
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            {DIFFICULTY_LABELS[challenge.difficulty]}
-          </Badge>
-          <span className="ml-auto text-sm font-semibold text-yellow-400">
-            +{challenge.xpReward} {labels.xpReward}
-          </span>
-        </div>
+      <div className="h-4 w-px bg-border" />
 
-        <h1 className="mb-2 text-2xl font-bold">{challenge.title}</h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">{challenge.description}</p>
+      <span className="text-xs font-medium">{labels.dailyChallenge}</span>
 
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Tag className="h-3 w-3" />
-            <span className="font-medium">{labels.tags}:</span>
-            {challenge.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-muted px-2 py-0.5">
-                {tag}
-              </span>
-            ))}
-          </div>
-          {startedAt && (
-            <ChallengeTimer
-              startedAt={startedAt}
-              stopped={completed}
-              label={labels.elapsedTime}
-            />
-          )}
-        </div>
-      </div>
+      <div className="h-4 w-px bg-border" />
 
-      {/* Celebration overlay */}
-      {celebrating && (
-        <div className="mb-6 glass rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
-          <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-emerald-400 animate-bounce" />
-          <h2 className="text-xl font-bold text-emerald-400">{labels.challengeComplete}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            +{xpEarned} {labels.xpReward}
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => router.push("/challenges")}
-          >
-            {labels.backToChallenges}
-          </Button>
-        </div>
+      {/* Timer — prominent */}
+      {startedAt && (
+        <ChallengeTimer
+          startedAt={startedAt}
+          stopped={completed}
+          label={labels.elapsedTime}
+        />
       )}
 
-      {/* Split editor + results */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Editor */}
-        <div className="rounded-xl overflow-hidden border border-border">
-          <div className="flex items-center justify-between bg-[#1e1e1e] px-4 py-2">
-            <span className="text-xs font-mono text-zinc-400">
-              solution.{challenge.language === "rust" ? "rs" : "ts"}
-            </span>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-[10px]">
-                {challenge.language}
-              </Badge>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1.5 px-2 text-xs text-zinc-300 hover:text-white"
-                onClick={() => setCode(challenge.starterCode)}
-                disabled={completed}
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
-          <div className="h-[420px]">
-            <MonacoEditor
-              height="420px"
-              language={challenge.language === "rust" ? "rust" : "typescript"}
-              value={showSolution ? challenge.solutionCode : code}
-              onChange={(v) => !showSolution && setCode(v ?? "")}
-              theme="vs-dark"
-              options={{
-                fontSize: 13,
-                fontFamily: "'JetBrains Mono', monospace",
-                minimap: { enabled: false },
-                lineNumbers: "on",
-                scrollBeyondLastLine: false,
-                wordWrap: "on",
-                readOnly: showSolution || completed,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Results panel */}
-        <div className="space-y-4">
-          {/* Test results */}
-          <div className="glass rounded-xl p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{labels.testResults}</h3>
-              <span className="text-xs text-muted-foreground">
-                {passedCount}/{testResults.length} {labels.passed}
-              </span>
-            </div>
-
-            {passedCount > 0 && (
-              <Progress
-                value={(passedCount / testResults.length) * 100}
-                className="mb-3 h-1.5"
-              />
-            )}
-
-            <div className="space-y-2">
-              {testResults.map((test, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex items-start gap-2 rounded-lg px-3 py-2 text-xs",
-                    test.passed === true
-                      ? "bg-emerald-500/10 text-emerald-400"
-                      : test.passed === false
-                        ? "bg-red-500/10 text-red-400"
-                        : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  <span className="mt-0.5 font-bold">
-                    {test.passed === true ? "✓" : test.passed === false ? "✗" : "○"}
-                  </span>
-                  <div>
-                    <div className="font-medium">{test.description}</div>
-                    <div className="text-[10px] opacity-70">→ {test.expectedOutput}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={runTests}
-              disabled={isRunning || completed}
-              className="flex-1 gap-2"
-            >
-              {isRunning ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-              {labels.runTests}
-            </Button>
-
-            <Button
-              onClick={handleComplete}
-              disabled={completed}
-              variant={allPassed ? "default" : "secondary"}
-              className={cn(
-                "flex-1 gap-2 transition-all",
-                completed && "bg-emerald-600 hover:bg-emerald-600 text-white",
-              )}
-            >
-              {completed ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  {xpEarned > 0 ? `+${xpEarned} XP` : labels.alreadyCompleted}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  {allPassed ? labels.allPassed : labels.markComplete}
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Hints */}
-          {challenge.hints.length > 0 && (
-            <div className="glass rounded-xl overflow-hidden">
-              <button
-                className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/30 transition-colors"
-                onClick={() => setShowHints((h) => !h)}
-              >
-                <span className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-yellow-400" />
-                  {labels.hintLabel} ({hintIndex + 1}/{challenge.hints.length})
-                </span>
-                <ChevronDown
-                  className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")}
-                />
-              </button>
-              {showHints && (
-                <div className="border-t border-border px-4 pb-4 pt-3">
-                  <p className="mb-3 text-sm text-muted-foreground">
-                    {challenge.hints[hintIndex]}
-                  </p>
-                  {hintIndex < challenge.hints.length - 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => setHintIndex((i) => Math.min(i + 1, challenge.hints.length - 1))}
-                    >
-                      {labels.nextHint}
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+      <div className="ml-auto flex items-center gap-2">
+        <span
+          className={cn(
+            "text-xs font-medium",
+            DIFFICULTY_COLORS[challenge.difficulty],
           )}
+        >
+          {DIFFICULTY_LABELS[challenge.difficulty]}
+        </span>
+        <span className="text-xs font-semibold text-yellow-400">
+          +{challenge.xpReward} {labels.xpReward}
+        </span>
+      </div>
+    </div>
+  );
 
-          {/* Show/hide solution */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-2 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => setShowSolution((s) => !s)}
+  // ── Celebration overlay ────────────────────────────────────────────────────
+
+  const celebrationOverlay = celebrating && (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="text-center">
+        <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-emerald-400 animate-bounce" />
+        <h2 className="text-2xl font-bold text-emerald-400">
+          {labels.challengeComplete}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          +{xpEarned} {labels.xpReward}
+        </p>
+        <button
+          className="mt-4 rounded-md border border-border px-4 py-2 text-sm hover:bg-muted transition-colors"
+          onClick={() => router.push("/challenges")}
+        >
+          {labels.backToChallenges}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Editor + bottom panel (shared between desktop right panel & mobile) ───
+
+  const editorSection = (
+    <div className="flex h-full flex-col bg-[#1e1e1e]">
+      {/* Editor toolbar */}
+      <div className="flex items-center justify-between border-b border-[#333] px-4 py-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-[#ccc]">
+            solution.{challenge.language === "rust" ? "rs" : "ts"}
+          </span>
+          <span className="rounded bg-[#333] px-1.5 py-0.5 text-[10px] uppercase text-[#888]">
+            {challenge.language}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleReset}
+            disabled={completed}
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs text-[#888] transition-colors hover:bg-[#333] hover:text-[#ccc] disabled:opacity-50"
           >
-            {showSolution ? (
+            Reset
+          </button>
+          <button
+            onClick={runTests}
+            disabled={isRunning || completed}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+              isRunning
+                ? "bg-[#333] text-[#888]"
+                : "bg-brazil-green text-white hover:bg-brazil-green/90",
+            )}
+          >
+            {isRunning ? (
               <>
-                <EyeOff className="h-3.5 w-3.5" /> {labels.hideSolution}
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {labels.runningTests ?? "Running..."}
               </>
             ) : (
               <>
-                <Eye className="h-3.5 w-3.5" /> {labels.showSolution}
+                <Play className="h-3 w-3" />
+                {labels.runTests}
               </>
             )}
-          </Button>
+          </button>
         </div>
+      </div>
+
+      {/* Monaco editor */}
+      <div className="flex-1 min-h-0">
+        <MonacoEditor
+          height="100%"
+          language={editorLanguage}
+          value={showSolution ? challenge.solutionCode : code}
+          onChange={(v) => !showSolution && !completed && setCode(v ?? "")}
+          theme="vs-dark"
+          options={{
+            fontSize: 13,
+            fontFamily: "'JetBrains Mono', monospace",
+            minimap: { enabled: false },
+            lineNumbers: "on",
+            scrollBeyondLastLine: false,
+            wordWrap: "on",
+            readOnly: showSolution || completed,
+            automaticLayout: true,
+            tabSize: 2,
+          }}
+        />
+      </div>
+
+      {/* Bottom tabs: Tests / Output */}
+      <div className="border-t border-[#333]">
+        <div className="flex items-center gap-px bg-[#252526]">
+          <button
+            onClick={() => setActiveTab("tests")}
+            className={cn(
+              "px-4 py-2 text-xs font-medium transition-colors",
+              activeTab === "tests"
+                ? "bg-[#1e1e1e] text-[#ccc]"
+                : "text-[#888] hover:text-[#ccc]",
+            )}
+          >
+            {labels.testResults}
+            {hasRun && (
+              <span className="ml-1.5">
+                {testResults.filter((r) => r.passed).length}/
+                {testResults.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("output")}
+            className={cn(
+              "px-4 py-2 text-xs font-medium transition-colors",
+              activeTab === "output"
+                ? "bg-[#1e1e1e] text-[#ccc]"
+                : "text-[#888] hover:text-[#ccc]",
+            )}
+          >
+            Output
+          </button>
+        </div>
+        <div className="h-36 overflow-y-auto bg-[#1e1e1e]">
+          {activeTab === "tests" ? (
+            <DailyTestResults results={testResults} labels={testLabels} />
+          ) : (
+            <div className="p-3">
+              <OutputDisplay output={runOutput} />
+            </div>
+          )}
+        </div>
+
+        {/* Bottom action bar */}
+        <div className="relative flex items-center justify-between border-t border-[#333] px-4 py-2.5">
+          <div className="text-xs text-[#888]">
+            {allPassed && !completed && labels.allPassed}
+            {completed && (
+              <span className="flex items-center gap-1 text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" /> +{xpEarned} XP
+              </span>
+            )}
+          </div>
+          {completed ? (
+            <Link
+              href="/challenges"
+              className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {labels.backToChallenges}
+            </Link>
+          ) : allPassed ? (
+            <button
+              onClick={handleSubmit}
+              className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-brazil-gold to-brazil-gold-light px-4 py-2 text-xs font-semibold text-black shadow-lg shadow-brazil-gold/20 transition-all hover:shadow-xl hover:shadow-brazil-gold/30"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {labels.submitSolution ?? labels.allPassed}
+            </button>
+          ) : (
+            <button
+              onClick={runTests}
+              disabled={isRunning}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium transition-all",
+                isRunning
+                  ? "bg-[#333] text-[#888]"
+                  : "bg-brazil-green text-white hover:bg-brazil-green/90",
+              )}
+            >
+              {isRunning ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {labels.runningTests ?? "Running..."}
+                </>
+              ) : (
+                <>
+                  <Play className="h-3.5 w-3.5" />
+                  {labels.runTests}
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Desktop layout (split-pane) ────────────────────────────────────────────
+
+  const desktopLayout = (
+    <div className="hidden h-full lg:flex lg:flex-col">
+      <PanelGroup orientation="horizontal" className="flex-1">
+        <Panel defaultSize={40} minSize={25}>
+          <DailyChallengePrompt
+            challenge={challenge}
+            showSolution={showSolution}
+            onToggleSolution={() => setShowSolution((s) => !s)}
+            labels={promptLabels}
+          />
+        </Panel>
+        <PanelResizeHandle className="w-1.5 bg-border transition-colors hover:bg-primary/50 data-[resize-handle-active]:bg-primary" />
+        <Panel defaultSize={60} minSize={35}>
+          {editorSection}
+        </Panel>
+      </PanelGroup>
+    </div>
+  );
+
+  // ── Mobile layout (tabbed) ─────────────────────────────────────────────────
+
+  const mobileLayout = (
+    <div className="flex h-full flex-col lg:hidden">
+      {/* Tab switcher */}
+      <div className="flex border-b border-border">
+        {(["description", "editor", "results"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setMobileTab(tab)}
+            className={cn(
+              "flex-1 px-4 py-2.5 text-xs font-medium capitalize transition-colors",
+              mobileTab === tab
+                ? "border-b-2 border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {mobileTab === "description" && (
+          <DailyChallengePrompt
+            challenge={challenge}
+            showSolution={showSolution}
+            onToggleSolution={() => setShowSolution((s) => !s)}
+            labels={promptLabels}
+          />
+        )}
+        {mobileTab === "editor" && editorSection}
+        {mobileTab === "results" && (
+          <div className="h-full overflow-y-auto bg-[#1e1e1e] p-3">
+            <DailyTestResults results={testResults} labels={testLabels} />
+            {runOutput && (
+              <div className="mt-3 border-t border-[#333] pt-3">
+                <OutputDisplay output={runOutput} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative flex h-[calc(100vh-4rem)] flex-col">
+      {headerBar}
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        {celebrationOverlay}
+        {desktopLayout}
+        {mobileLayout}
       </div>
     </div>
   );

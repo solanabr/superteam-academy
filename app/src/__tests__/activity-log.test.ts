@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { recordActivity, getRecentActivities } from "@/lib/services/activity-log";
+import {
+  recordActivity,
+  getRecentActivities,
+} from "@/lib/services/activity-log";
 import type { ActivityEntry } from "@/lib/services/activity-log";
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
@@ -168,7 +171,7 @@ describe("activity-log service", () => {
 
       expect(storageMock.setItem).toHaveBeenCalledWith(
         "sta_activity:user1",
-        expect.any(String)
+        expect.any(String),
       );
     });
 

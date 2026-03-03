@@ -15,28 +15,27 @@ function ChartLoadingPlaceholder() {
 
 const ResponsiveContainer = dynamic(
   () => import("recharts").then((mod) => mod.ResponsiveContainer),
-  { ssr: false, loading: ChartLoadingPlaceholder }
+  { ssr: false, loading: ChartLoadingPlaceholder },
 );
 const RadarChart = dynamic(
   () => import("recharts").then((mod) => mod.RadarChart),
-  { ssr: false }
+  { ssr: false },
 );
 const PolarGrid = dynamic(
   () => import("recharts").then((mod) => mod.PolarGrid),
-  { ssr: false }
+  { ssr: false },
 );
 const PolarAngleAxis = dynamic(
   () => import("recharts").then((mod) => mod.PolarAngleAxis),
-  { ssr: false }
+  { ssr: false },
 );
 const PolarRadiusAxis = dynamic(
   () => import("recharts").then((mod) => mod.PolarRadiusAxis),
-  { ssr: false }
+  { ssr: false },
 );
-const Radar = dynamic(
-  () => import("recharts").then((mod) => mod.Radar),
-  { ssr: false }
-);
+const Radar = dynamic(() => import("recharts").then((mod) => mod.Radar), {
+  ssr: false,
+});
 
 export interface SkillDataPoint {
   skill: string;
@@ -49,7 +48,11 @@ interface SkillChartProps {
   emptyMessage: string;
 }
 
-export function SkillChart({ skillData, title, emptyMessage }: SkillChartProps) {
+export function SkillChart({
+  skillData,
+  title,
+  emptyMessage,
+}: SkillChartProps) {
   const hasData = skillData.some((s) => s.value > 0);
 
   return (
@@ -85,7 +88,8 @@ export function SkillChart({ skillData, title, emptyMessage }: SkillChartProps) 
           <div className="mt-2 flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
             {skillData.map((s) => (
               <span key={s.skill}>
-                {s.skill}: <span className="font-semibold text-foreground">{s.value}</span>
+                {s.skill}:{" "}
+                <span className="font-semibold text-foreground">{s.value}</span>
               </span>
             ))}
           </div>

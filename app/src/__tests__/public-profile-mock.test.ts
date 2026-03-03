@@ -7,9 +7,7 @@ import { describe, it, expect } from "vitest";
 
 describe("public profile — mock data verification", () => {
   it("MOCK_PUBLIC_PROFILES is used instead of database queries", async () => {
-    const mod = await import(
-      "@/components/profile/public-profile-client"
-    );
+    const mod = await import("@/components/profile/public-profile-client");
 
     // The component exports MOCK_PUBLIC_PROFILES directly
     expect(mod.MOCK_PUBLIC_PROFILES).toBeDefined();
@@ -30,9 +28,7 @@ describe("public profile — mock data verification", () => {
     //
     // This means only hardcoded mock usernames get static pages.
     // Real users registered via auth won't have public profile pages.
-    const mod = await import(
-      "@/components/profile/public-profile-client"
-    );
+    const mod = await import("@/components/profile/public-profile-client");
     const usernames = Object.keys(mod.MOCK_PUBLIC_PROFILES);
 
     // These are the ONLY usernames that will work as /profile/[username]

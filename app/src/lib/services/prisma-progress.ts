@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/db";
-import type { Progress, StreakData, LeaderboardEntry, Credential, Achievement } from "@/types";
+import type {
+  Progress,
+  StreakData,
+  LeaderboardEntry,
+  Credential,
+  Achievement,
+} from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 import { NotificationService } from "./notification-service";
 import { getAchievements as getSeedAchievements } from "../../../prisma/seed-data/achievements";
@@ -17,7 +23,10 @@ function levelFromXP(xp: number): number {
 export class PrismaProgressService implements LearningProgressService {
   // ── Progress ────────────────────────────────────────────────────────────────
 
-  async getProgress(userId: string, courseId: string): Promise<Progress | null> {
+  async getProgress(
+    userId: string,
+    courseId: string,
+  ): Promise<Progress | null> {
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },
       include: {
@@ -44,7 +53,10 @@ export class PrismaProgressService implements LearningProgressService {
       courseId,
       completedLessons: enrollment.completions.map((_, i) => i),
       totalLessons,
-      percentage: totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
+      percentage:
+        totalLessons > 0
+          ? Math.round((completedCount / totalLessons) * 100)
+          : 0,
       enrolledAt: enrollment.enrolledAt.toISOString(),
       completedAt: enrollment.completedAt?.toISOString(),
       lastAccessedAt: enrollment.lastAccessedAt.toISOString(),
@@ -77,7 +89,10 @@ export class PrismaProgressService implements LearningProgressService {
         courseId: enrollment.courseId,
         completedLessons: enrollment.completions.map((_, i) => i),
         totalLessons,
-        percentage: totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
+        percentage:
+          totalLessons > 0
+            ? Math.round((completedCount / totalLessons) * 100)
+            : 0,
         enrolledAt: enrollment.enrolledAt.toISOString(),
         completedAt: enrollment.completedAt?.toISOString(),
         lastAccessedAt: enrollment.lastAccessedAt.toISOString(),
@@ -85,7 +100,11 @@ export class PrismaProgressService implements LearningProgressService {
     });
   }
 
-  async completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<void> {
+  async completeLesson(
+    userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<void> {
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },
       include: {
@@ -94,7 +113,10 @@ export class PrismaProgressService implements LearningProgressService {
             modules: {
               orderBy: { order: "asc" },
               include: {
-                lessons: { orderBy: { order: "asc" }, select: { id: true, xpReward: true } },
+                lessons: {
+                  orderBy: { order: "asc" },
+                  select: { id: true, xpReward: true },
+                },
               },
             },
           },
@@ -131,7 +153,9 @@ export class PrismaProgressService implements LearningProgressService {
     const newTotal = await this.addXP(userId, lesson.xpReward);
     const newLevel = levelFromXP(newTotal);
     if (newLevel > prevLevel) {
-      notifService.createLevelUp(userId, prevLevel, newLevel).catch(() => undefined);
+      notifService
+        .createLevelUp(userId, prevLevel, newLevel)
+        .catch(() => undefined);
     }
 
     // Record activity for streak
@@ -158,7 +182,9 @@ export class PrismaProgressService implements LearningProgressService {
       where: { id: enrollment.id },
       data: {
         lastAccessedAt: new Date(),
-        ...(isComplete && !enrollment.completedAt ? { completedAt: new Date() } : {}),
+        ...(isComplete && !enrollment.completedAt
+          ? { completedAt: new Date() }
+          : {}),
       },
     });
   }
@@ -199,7 +225,9 @@ export class PrismaProgressService implements LearningProgressService {
     });
     const newTotal = await this.getXP(userId);
     // Fire-and-forget milestone notification
-    notifService.maybeCreateXpMilestone(userId, newTotal).catch(() => undefined);
+    notifService
+      .maybeCreateXpMilestone(userId, newTotal)
+      .catch(() => undefined);
     return newTotal;
   }
 
@@ -229,7 +257,9 @@ export class PrismaProgressService implements LearningProgressService {
     return {
       currentStreak: streak.currentStreak,
       longestStreak: streak.longestStreak,
-      lastActivityDate: streak.lastActivityDate ? toDateKey(streak.lastActivityDate) : "",
+      lastActivityDate: streak.lastActivityDate
+        ? toDateKey(streak.lastActivityDate)
+        : "",
       streakFreezes: streak.streakFreezes,
       activityCalendar: calendar,
     };
@@ -251,7 +281,9 @@ export class PrismaProgressService implements LearningProgressService {
       update: {},
     });
 
-    const lastDate = streak.lastActivityDate ? toDateKey(streak.lastActivityDate) : "";
+    const lastDate = streak.lastActivityDate
+      ? toDateKey(streak.lastActivityDate)
+      : "";
 
     if (lastDate === todayKey) {
       return this.getStreak(userId);
@@ -277,7 +309,9 @@ export class PrismaProgressService implements LearningProgressService {
         });
         // Record yesterday's activity as a freeze day
         await prisma.dailyActivity.upsert({
-          where: { streakDataId_date: { streakDataId: streak.id, date: yesterday } },
+          where: {
+            streakDataId_date: { streakDataId: streak.id, date: yesterday },
+          },
           create: { streakDataId: streak.id, date: yesterday, active: true },
           update: {},
         });
@@ -337,7 +371,13 @@ export class PrismaProgressService implements LearningProgressService {
     const userIds = xpByUser.map((x) => x.userId);
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, displayName: true, name: true, wallet: true, image: true },
+      select: {
+        id: true,
+        displayName: true,
+        name: true,
+        wallet: true,
+        image: true,
+      },
     });
 
     const userMap = new Map(users.map((u) => [u.id, u]));
@@ -417,7 +457,9 @@ export class PrismaProgressService implements LearningProgressService {
     const seedAchievements = getSeedAchievements();
 
     const userClaims = userId
-      ? await prisma.userAchievement.findMany({ where: { userId } }).catch(() => [])
+      ? await prisma.userAchievement
+          .findMany({ where: { userId } })
+          .catch(() => [])
       : [];
 
     const claimMap = new Map(

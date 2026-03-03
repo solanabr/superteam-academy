@@ -6,7 +6,10 @@ import { payloadCourseToCourse } from "@/lib/payload-to-course";
 
 // ── Courses ─────────────────────────────────────────────────────────────────
 
-function formatCourse(c: Awaited<ReturnType<typeof fetchCourseRaw>>, completions = 0): Course {
+function formatCourse(
+  c: Awaited<ReturnType<typeof fetchCourseRaw>>,
+  completions = 0,
+): Course {
   if (!c) throw new Error("Course not found");
 
   const lessonCount = c.modules.reduce((sum, m) => sum + m.lessons.length, 0);
@@ -132,11 +135,15 @@ export async function getAllCourses(): Promise<Course[]> {
 
   if (courses.length === 0) return MOCK_COURSES;
 
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+  const completionMap = new Map(
+    completionGroups.map((g) => [g.courseId, g._count.courseId]),
+  );
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
 }
 
-export async function getCourseBySlug(slug: string): Promise<Course | undefined> {
+export async function getCourseBySlug(
+  slug: string,
+): Promise<Course | undefined> {
   // Try Payload CMS first
   try {
     const payload = await getPayload();
@@ -174,9 +181,12 @@ export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
     }),
   ]);
 
-  if (courses.length === 0) return MOCK_COURSES.filter((c) => c.trackId === trackId);
+  if (courses.length === 0)
+    return MOCK_COURSES.filter((c) => c.trackId === trackId);
 
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+  const completionMap = new Map(
+    completionGroups.map((g) => [g.courseId, g._count.courseId]),
+  );
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
 }
 
@@ -195,7 +205,9 @@ export async function getCoursesByDifficulty(
       _count: { courseId: true },
     }),
   ]);
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+  const completionMap = new Map(
+    completionGroups.map((g) => [g.courseId, g._count.courseId]),
+  );
 
   return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
 }
@@ -208,17 +220,20 @@ export async function getPlatformStats(): Promise<{
   credentialCount: string;
   totalXpFormatted: string;
 }> {
-  const [learnerCount, courseCount, credentialCount, xpAgg] = await Promise.all([
-    prisma.user.count(),
-    prisma.course.count({ where: { isActive: true } }),
-    prisma.userCredential.count(),
-    prisma.xPEvent.aggregate({ _sum: { amount: true } }),
-  ]);
+  const [learnerCount, courseCount, credentialCount, xpAgg] = await Promise.all(
+    [
+      prisma.user.count(),
+      prisma.course.count({ where: { isActive: true } }),
+      prisma.userCredential.count(),
+      prisma.xPEvent.aggregate({ _sum: { amount: true } }),
+    ],
+  );
 
   const totalXp = xpAgg._sum.amount ?? 0;
 
   function fmt(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M+`;
+    if (n >= 1_000_000)
+      return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M+`;
     if (n >= 1_000) return `${Math.floor(n / 1_000)}K+`;
     return n > 0 ? `${n}+` : "0";
   }
@@ -249,8 +264,22 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
     pathMap.get(t.trackId)!.slugs.push(t.slug);
   }
 
-  const icons = ["BookOpen", "Anchor", "Coins", "TrendingUp", "Shield", "Layers"];
-  const colors = ["#9945FF", "#14F195", "#FFD700", "#00D4FF", "#FF6B6B", "#4ECDC4"];
+  const icons = [
+    "BookOpen",
+    "Anchor",
+    "Coins",
+    "TrendingUp",
+    "Shield",
+    "Layers",
+  ];
+  const colors = [
+    "#9945FF",
+    "#14F195",
+    "#FFD700",
+    "#00D4FF",
+    "#FF6B6B",
+    "#4ECDC4",
+  ];
 
   return Array.from(pathMap.entries()).map(([id, { name, slugs }]) => ({
     id: String(id),

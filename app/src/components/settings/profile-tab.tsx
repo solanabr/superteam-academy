@@ -36,7 +36,9 @@ export function ProfileTab() {
               setDiscord(p.discord || "");
               setAvatar(p.avatar || null);
             }
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         } else {
           setDisplayName(data.displayName || "Learner");
           setBio(data.bio || "");
@@ -78,12 +80,21 @@ export function ProfileTab() {
         // Also persist to localStorage as offline cache
         localStorage.setItem(
           "sta-profile",
-          JSON.stringify({ displayName, bio, twitter, github, discord, avatar })
+          JSON.stringify({
+            displayName,
+            bio,
+            twitter,
+            github,
+            discord,
+            avatar,
+          }),
         );
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
-    } catch { /* ignore */ } finally {
+    } catch {
+      /* ignore */
+    } finally {
       setSaving(false);
     }
   }
@@ -116,7 +127,13 @@ export function ProfileTab() {
             />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted text-2xl font-bold text-muted-foreground">
-              {displayName.split(/[\s.]/).filter(Boolean).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) || "??"}
+              {displayName
+                .split(/[\s.]/)
+                .filter(Boolean)
+                .map((w: string) => w[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2) || "??"}
             </div>
           )}
           <input
@@ -178,7 +195,9 @@ export function ProfileTab() {
 
       {/* Social Links */}
       <div>
-        <h3 className="text-lg font-semibold">{t("profileSection.socialLinks")}</h3>
+        <h3 className="text-lg font-semibold">
+          {t("profileSection.socialLinks")}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("profileSection.socialLinksDescription")}
         </p>

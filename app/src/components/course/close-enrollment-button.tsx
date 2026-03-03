@@ -1,6 +1,12 @@
 "use client";
 
-import { CheckCircle2, ExternalLink, AlertCircle, Loader2, LockOpen } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  AlertCircle,
+  Loader2,
+  LockOpen,
+} from "lucide-react";
 import { useCloseEnrollment } from "@/lib/hooks/use-close-enrollment";
 import type { Course } from "@/types";
 
@@ -15,7 +21,8 @@ export interface CloseEnrollmentButtonProps {
 }
 
 export function CloseEnrollmentButton({ course }: CloseEnrollmentButtonProps) {
-  const { closeEnrollment, state, txSignature, error, reset } = useCloseEnrollment();
+  const { closeEnrollment, state, txSignature, error, reset } =
+    useCloseEnrollment();
   const isPending = ["building", "signing", "confirming"].includes(state);
 
   if (state === "success" && txSignature) {

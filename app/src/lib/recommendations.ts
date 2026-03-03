@@ -43,7 +43,9 @@ export function getPersonalizedRecommendations(
         score += 5;
       } else if (
         (skillLevel === "beginner" && course.difficulty === "intermediate") ||
-        (skillLevel === "intermediate" && (course.difficulty === "beginner" || course.difficulty === "advanced")) ||
+        (skillLevel === "intermediate" &&
+          (course.difficulty === "beginner" ||
+            course.difficulty === "advanced")) ||
         (skillLevel === "advanced" && course.difficulty === "intermediate")
       ) {
         score += 2;
@@ -57,7 +59,8 @@ export function getPersonalizedRecommendations(
     }
 
     // Goal-based boost (2 points)
-    if (goal === "first-program" && course.difficulty === "beginner") score += 2;
+    if (goal === "first-program" && course.difficulty === "beginner")
+      score += 2;
     if (goal === "job" && course.difficulty !== "beginner") score += 2;
     if (goal === "contribute" && track?.name === "anchor") score += 2;
     if (goal === "project" && course.difficulty === "intermediate") score += 2;

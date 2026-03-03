@@ -12,7 +12,9 @@ export async function GET(request: Request) {
     where: { completedAt: { not: null } },
     _count: { courseId: true },
   });
-  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+  const completionMap = new Map(
+    completionGroups.map((g) => [g.courseId, g._count.courseId]),
+  );
 
   const courses = await prisma.course.findMany({
     where: {
