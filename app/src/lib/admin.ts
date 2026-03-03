@@ -1,4 +1,14 @@
 import { supabase } from "@/lib/supabase";
+import { MOCK_COURSES } from "@/lib/mock-courses";
+
+export interface CourseAdminStat {
+  slug: string;
+  title: string;
+  difficulty: string;
+  xpReward: number;
+  enrollments: number;
+  completion: number; // 0–100
+}
 
 export interface AdminStats {
   totalUsers: number;
@@ -52,6 +62,54 @@ export async function getRecentSignups(limit = 5): Promise<RecentSignup[]> {
 
   if (error || !data) return [];
   return data as RecentSignup[];
+}
+
+export async function getCourseStats(): Promise<CourseAdminStat[]> {
+  const meta = MOCK_COURSES.map((c) => ({
+    slug: c.slug,
+    title: c.title,
+    difficulty: c.difficulty,
+    xpReward: c.xpReward ?? 0,
+    totalLessons: c.modules?.reduce((s, m) => s + (m.lessons?.length ?? 0), 0) ?? 1,
+  }));
+
+  if (!supabase) {
+    return meta.map((c) => ({ ...c, enrollments: 0, completion: 0 }));
+  }
+
+  // Get completed lesson counts per wallet per course
+  const { data, error } = await supabase
+    .from("lesson_completions")
+    .select("course_slug, wallet_address");
+
+  if (error || !data) {
+    return meta.map((c) => ({ ...c, enrollments: 0, completion: 0 }));
+  }
+
+  return meta.map((course) => {
+    const rows = data.filter((r) => r.course_slug === course.slug);
+    const wallets = new Set(rows.map((r) => r.wallet_address));
+    const enrollments = wallets.size;
+
+    let completion = 0;
+    if (enrollments > 0 && course.totalLessons > 0) {
+      const avgCompleted =
+        Array.from(wallets).reduce((sum, wallet) => {
+          const count = rows.filter((r) => r.wallet_address === wallet).length;
+          return sum + count;
+        }, 0) / enrollments;
+      completion = Math.round((avgCompleted / course.totalLessons) * 100);
+    }
+
+    return {
+      slug: course.slug,
+      title: course.title,
+      difficulty: course.difficulty,
+      xpReward: course.xpReward,
+      enrollments,
+      completion,
+    };
+  });
 }
 
 export async function getRecentThreads(limit = 5): Promise<RecentThread[]> {

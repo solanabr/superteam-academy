@@ -13,7 +13,7 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
-import type { AdminStats, RecentSignup, RecentThread } from "@/lib/admin";
+import type { AdminStats, RecentSignup, RecentThread, CourseAdminStat } from "@/lib/admin";
 
 const ADMIN_WALLETS = (
   process.env.NEXT_PUBLIC_ADMIN_WALLETS ??
@@ -22,21 +22,11 @@ const ADMIN_WALLETS = (
   .split(",")
   .map((w) => w.trim());
 
-const COURSES = [
-  { title: "Solana Fundamentals", difficulty: "beginner", enrollments: 342, completion: 68, xp: 500, slug: "solana-fundamentals" },
-  { title: "Anchor Framework Basics", difficulty: "intermediate", enrollments: 198, completion: 54, xp: 1200, slug: "anchor-framework-basics" },
-  { title: "Token-2022 & Extensions", difficulty: "advanced", enrollments: 87, completion: 41, xp: 2000, slug: "token-2022-extensions" },
-  { title: "DeFi on Solana", difficulty: "advanced", enrollments: 134, completion: 38, xp: 2500, slug: "defi-on-solana" },
-  { title: "Solana Program Security", difficulty: "advanced", enrollments: 156, completion: 45, xp: 2200, slug: "solana-program-security" },
-] as const;
-
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "#14F195",
   intermediate: "#F1C40F",
   advanced: "#E74C3C",
 };
-
-const maxEnrollments = Math.max(...COURSES.map((c) => c.enrollments));
 
 function truncateWallet(wallet: string | null): string {
   if (!wallet) return "—";
@@ -60,9 +50,10 @@ interface Props {
   stats: AdminStats;
   recentSignups: RecentSignup[];
   recentThreads: RecentThread[];
+  courseStats: CourseAdminStat[];
 }
 
-export function AdminClient({ stats, recentSignups, recentThreads }: Props) {
+export function AdminClient({ stats, recentSignups, recentThreads, courseStats }: Props) {
   const { publicKey } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -105,9 +96,11 @@ export function AdminClient({ stats, recentSignups, recentThreads }: Props) {
     );
   }
 
+  const maxEnrollments = Math.max(...courseStats.map((c) => c.enrollments), 1);
+
   const STATS = [
     { label: "Total Users", value: stats.totalUsers.toLocaleString(), icon: Users },
-    { label: "Active Courses", value: "5", icon: BookOpen },
+    { label: "Active Courses", value: courseStats.length.toString(), icon: BookOpen },
     { label: "Forum Threads", value: stats.totalThreads.toLocaleString(), icon: MessageSquare },
     { label: "Forum Replies", value: stats.totalReplies.toLocaleString(), icon: MessagesSquare },
   ];
@@ -142,7 +135,7 @@ export function AdminClient({ stats, recentSignups, recentThreads }: Props) {
           </h2>
         </div>
         <div className="space-y-3">
-          {COURSES.map((course) => (
+          {courseStats.map((course) => (
             <div key={course.slug} className="flex items-center gap-3">
               <span className="font-mono text-xs text-muted-foreground w-44 shrink-0 truncate">
                 {course.title}
@@ -193,7 +186,7 @@ export function AdminClient({ stats, recentSignups, recentThreads }: Props) {
               </tr>
             </thead>
             <tbody>
-              {COURSES.map((course) => (
+              {courseStats.map((course) => (
                 <tr
                   key={course.slug}
                   className="border-b border-border last:border-0 transition-colors hover:bg-elevated"
@@ -226,7 +219,7 @@ export function AdminClient({ stats, recentSignups, recentThreads }: Props) {
                     </div>
                   </td>
                   <td className="px-5 py-3.5 font-mono text-sm text-[#14F195]">
-                    {course.xp.toLocaleString()} XP
+                    {course.xpReward.toLocaleString()} XP
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
