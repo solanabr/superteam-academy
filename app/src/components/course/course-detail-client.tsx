@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import { formatXP, difficultyStyle } from "@/lib/utils";
 import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
 import { ModuleList, EnrollButton, ReviewsSection } from "@/components/course";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { trackEvent } from "@/lib/analytics";
 
 export interface CourseDetailClientProps {
   slug: string;
@@ -40,6 +41,13 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   }
 
   const course = maybeCourse;
+
+  useEffect(() => {
+    trackEvent({
+      name: "course_viewed",
+      params: { course_slug: course.slug, course_title: course.title },
+    });
+  }, [course.slug, course.title]);
 
   const tracks = useTracks();
   const difficulties = useDifficulties();

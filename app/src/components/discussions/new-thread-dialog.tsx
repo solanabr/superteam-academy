@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ThreadCategory, CreateThreadPayload } from "@/types";
+import { trackEvent } from "@/lib/analytics";
 
 const CATEGORIES: ThreadCategory[] = [
   "Help",
@@ -45,6 +46,10 @@ export function NewThreadDialog({ onClose, onSubmit }: NewThreadDialogProps) {
         .split(",")
         .map((t) => t.trim().toLowerCase().replace(/\s+/g, "-"))
         .filter(Boolean),
+    });
+    trackEvent({
+      name: "discussion_thread_created",
+      params: { scope: "community", category },
     });
     onClose();
   }

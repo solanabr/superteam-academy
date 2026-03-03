@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, identifyUser } from "@/lib/analytics";
 
 describe("trackEvent", () => {
   let gtagSpy: ReturnType<typeof vi.fn>;
@@ -51,6 +51,34 @@ describe("trackEvent", () => {
         name: "code_challenge_run" as const,
         params: { course_slug: "s", lesson_id: "l", passed: true },
       },
+      {
+        name: "onboarding_completed" as const,
+        params: { skill_level: "beginner", interests: ["solana", "defi"] },
+      },
+      {
+        name: "course_viewed" as const,
+        params: { course_slug: "s", course_title: "t" },
+      },
+      {
+        name: "search_performed" as const,
+        params: { query: "rust", result_count: 5 },
+      },
+      {
+        name: "daily_challenge_started" as const,
+        params: { challenge_id: "dc-1" },
+      },
+      {
+        name: "daily_challenge_completed" as const,
+        params: { challenge_id: "dc-1", tests_passed: 3, total_tests: 5 },
+      },
+      {
+        name: "discussion_thread_created" as const,
+        params: { scope: "community", category: "Help" },
+      },
+      {
+        name: "discussion_comment_posted" as const,
+        params: { thread_id: "t-1" },
+      },
     ];
 
     for (const event of events) {
@@ -66,6 +94,16 @@ describe("trackEvent", () => {
         name: "language_changed",
         params: { locale: "en" },
       }),
+    ).not.toThrow();
+  });
+});
+
+describe("identifyUser", () => {
+  it("does not throw in browser environment", () => {
+    (globalThis as unknown as { window: Record<string, unknown> }).window =
+      globalThis;
+    expect(() =>
+      identifyUser("user-123", { wallet: "abc", email: null }),
     ).not.toThrow();
   });
 });

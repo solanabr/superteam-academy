@@ -26,6 +26,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import type { Course } from "@/types";
+import { trackEvent } from "@/lib/analytics";
 import { QuizProgress } from "./quiz-progress";
 import { QuizStep } from "./quiz-step";
 import type { QuizOption } from "./quiz-step";
@@ -305,6 +306,13 @@ export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
           // Silently ignore storage errors
         }
       }
+      trackEvent({
+        name: "onboarding_completed",
+        params: {
+          skill_level: answers.experience,
+          interests: answers.interests,
+        },
+      });
       setStep(step + 1);
       return;
     }

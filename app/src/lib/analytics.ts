@@ -1,5 +1,5 @@
 /**
- * Custom analytics event tracking for GA4 + PostHog.
+ * Custom analytics event tracking for GA4 + PostHog + Sentry.
  * Events are sent via gtag when GA_MEASUREMENT_ID is configured,
  * and via PostHog when POSTHOG_KEY is configured.
  *
@@ -7,11 +7,6 @@
  * critical rendering path (~100KB savings on initial bundle).
  */
 
-/**
- * Discriminated union of all tracked analytics events.
- * Each event has a unique `name` and typed `params` payload.
- * Add new events here to ensure type-safe tracking across the app.
- */
 type AnalyticsEvent =
   | {
       name: "course_enrolled";
@@ -34,6 +29,38 @@ type AnalyticsEvent =
   | {
       name: "code_challenge_run";
       params: { course_slug: string; lesson_id: string; passed: boolean };
+    }
+  | {
+      name: "onboarding_completed";
+      params: { skill_level: string; interests: string[] };
+    }
+  | {
+      name: "course_viewed";
+      params: { course_slug: string; course_title: string };
+    }
+  | {
+      name: "search_performed";
+      params: { query: string; result_count: number };
+    }
+  | {
+      name: "daily_challenge_started";
+      params: { challenge_id: string };
+    }
+  | {
+      name: "daily_challenge_completed";
+      params: {
+        challenge_id: string;
+        tests_passed: number;
+        total_tests: number;
+      };
+    }
+  | {
+      name: "discussion_thread_created";
+      params: { scope: string; category: string };
+    }
+  | {
+      name: "discussion_comment_posted";
+      params: { thread_id: string };
     };
 
 declare global {
@@ -43,29 +70,46 @@ declare global {
 }
 
 /**
+ * Link user identity across PostHog and Sentry.
+ * Call once when auth state resolves with a logged-in user.
+ */
+export function identifyUser(
+  userId: string,
+  traits: Record<string, string | boolean | number | null>,
+) {
+  if (typeof window === "undefined") return;
+
+  import("posthog-js")
+    .then(({ default: posthog }) => {
+      if (posthog.__loaded) {
+        posthog.identify(userId, traits);
+      }
+    })
+    .catch(() => {});
+
+  import("@sentry/nextjs")
+    .then((Sentry) => {
+      Sentry.setUser({ id: userId, ...traits });
+    })
+    .catch(() => {});
+}
+
+/**
  * Dispatch an analytics event to all configured providers (GA4 + PostHog).
  * Safe to call during SSR (no-ops when `window` is undefined).
- * Silently ignores providers that are not initialized.
- * PostHog is imported dynamically so its ~100KB bundle is never on the critical path.
- * @param event - Typed analytics event with name and params
  */
 export function trackEvent(event: AnalyticsEvent) {
   if (typeof window === "undefined") return;
 
-  // GA4
   if (window.gtag) {
     window.gtag("event", event.name, event.params);
   }
 
-  // PostHog — dynamic import keeps posthog-js off the critical bundle.
-  // If PostHogProvider already loaded it, this resolves instantly from cache.
   import("posthog-js")
     .then(({ default: posthog }) => {
       if (posthog.__loaded) {
         posthog.capture(event.name, event.params);
       }
     })
-    .catch(() => {
-      // PostHog not available — silently ignore
-    });
+    .catch(() => {});
 }

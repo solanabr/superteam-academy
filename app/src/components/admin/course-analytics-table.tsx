@@ -9,8 +9,11 @@ import {
   ArrowUpRight,
   ChevronUp,
   ChevronDown,
+  Power,
+  Pencil,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useTracks } from "@/lib/hooks/use-tracks";
 import { useDifficulties } from "@/lib/hooks/use-difficulties";
@@ -53,6 +56,27 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
   const difficulties = useDifficulties();
   const [sortField, setSortField] = useState<SortField>("enrollments");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [toggleStates, setToggleStates] = useState<Record<string, boolean>>({});
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+
+  const handleToggle = useCallback(async (courseId: string) => {
+    setTogglingIds((prev) => new Set(prev).add(courseId));
+    try {
+      const res = await fetch(`/api/admin/courses/${courseId}/toggle`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setToggleStates((prev) => ({ ...prev, [courseId]: data.isActive }));
+      }
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(courseId);
+        return next;
+      });
+    }
+  }, []);
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -131,7 +155,9 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
                 {t("xpAvailable")}
                 <SortIcon sortField={sortField} sortDir={sortDir} field="xp" />
               </th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {t("actions")}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/30">
@@ -215,13 +241,38 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
                     {formatXP(course.xpTotal)} XP
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/courses/${course.slug}`}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      title={t("viewCourse")}
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleToggle(course.id)}
+                        disabled={togglingIds.has(course.id)}
+                        className={`rounded-md p-1.5 transition-colors hover:bg-muted ${
+                          (toggleStates[course.id] ?? course.isActive)
+                            ? "text-brazil-green"
+                            : "text-muted-foreground"
+                        }`}
+                        title={t("toggleActive")}
+                      >
+                        {togglingIds.has(course.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Power className="h-4 w-4" />
+                        )}
+                      </button>
+                      <Link
+                        href={`/cms/collections/courses/${course.id}`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title={t("editInCMS")}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                      <Link
+                        href={`/courses/${course.slug}`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title={t("viewCourse")}
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );

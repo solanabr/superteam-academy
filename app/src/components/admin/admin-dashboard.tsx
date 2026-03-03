@@ -17,6 +17,7 @@ import {
   Code,
   Shield,
   PenSquare,
+  TrendingUp,
 } from "lucide-react";
 import { useTracks } from "@/lib/hooks/use-tracks";
 import { useDifficulties } from "@/lib/hooks/use-difficulties";
@@ -87,6 +88,12 @@ const QUICK_LINKS = [
     key: "createCourse",
     href: "/admin/courses/new",
     icon: <PenSquare className="h-5 w-5" />,
+    external: false,
+  },
+  {
+    key: "analyticsPage",
+    href: "/admin/analytics",
+    icon: <TrendingUp className="h-5 w-5" />,
     external: false,
   },
   {

@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import { identifyUser } from "@/lib/analytics";
 
 let initialized = false;
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const { user, authenticated } = usePrivy();
+
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (!key || initialized) return;
 
-    // Defer PostHog loading to idle time so it doesn't block LCP/TBT
     const init = () => {
       import("posthog-js").then(({ default: posthog }) => {
         const host =
@@ -32,7 +35,23 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Register service worker for PWA offline support
+  // Link user identity when Privy auth resolves
+  useEffect(() => {
+    if (!authenticated || !user) return;
+
+    const wallet = user.linkedAccounts?.find(
+      (a) =>
+        a.type === "wallet" && "chainType" in a && a.chainType === "solana",
+    );
+    const google = user.linkedAccounts?.find((a) => a.type === "google_oauth");
+
+    identifyUser(user.id, {
+      wallet: (wallet as { address?: string })?.address ?? null,
+      email: (google as { email?: string })?.email ?? null,
+      auth_method: wallet ? "wallet" : "social",
+    });
+  }, [authenticated, user]);
+
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});

@@ -1,7 +1,7 @@
 "use client";
 
-import { useWalletCompat } from "@/lib/hooks/use-wallet-compat";
 import { usePrivy } from "@privy-io/react-auth";
+import { useWallets } from "@privy-io/react-auth/solana";
 import { useEffect, useMemo, useState } from "react";
 import { Shield, Wallet, LogIn } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,32 +16,38 @@ export interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-  const { publicKey, connected } = useWalletCompat();
-  const { authenticated } = usePrivy();
+  const { authenticated, user } = usePrivy();
+  const { wallets } = useWallets();
   const t = useTranslations("admin");
   const [apiAdminResult, setApiAdminResult] = useState<{
     checked: boolean;
     isAdmin: boolean;
   }>({ checked: false, isAdmin: false });
 
-  const isAuthenticated = connected || authenticated;
+  const isAuthenticated = authenticated || wallets.length > 0;
 
   const syncAdminResult = useMemo<{
     resolved: boolean;
     isAdmin: boolean;
   }>(() => {
     if (!isAuthenticated) return { resolved: true, isAdmin: false };
-    if (connected && publicKey && ADMIN_WALLETS) {
-      return {
-        resolved: true,
-        isAdmin: ADMIN_WALLETS.includes(publicKey.toBase58()),
-      };
+
+    if (ADMIN_WALLETS) {
+      const addresses = new Set<string>();
+      for (const w of wallets) addresses.add(w.address);
+      if (user?.wallet?.address) addresses.add(user.wallet.address);
+
+      if (addresses.size > 0) {
+        const match = [...addresses].some((addr) =>
+          ADMIN_WALLETS.includes(addr),
+        );
+        if (match) return { resolved: true, isAdmin: true };
+      }
     }
-    if (!authenticated) {
-      return { resolved: true, isAdmin: false };
-    }
-    return { resolved: false, isAdmin: false };
-  }, [isAuthenticated, connected, publicKey, authenticated]);
+
+    if (authenticated) return { resolved: false, isAdmin: false };
+    return { resolved: true, isAdmin: false };
+  }, [isAuthenticated, wallets, user?.wallet?.address, authenticated]);
 
   useEffect(() => {
     if (syncAdminResult.resolved) return;

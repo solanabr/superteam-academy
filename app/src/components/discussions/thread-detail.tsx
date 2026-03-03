@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Eye, Loader2, Lock, Pin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn, formatRelativeDate } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 import { MarkdownContent } from "@/components/course/markdown-content";
 import { VoteButtons } from "./vote-buttons";
 import { CommentTree } from "./comment-tree";
@@ -125,7 +126,13 @@ export function ThreadDetailView({
         {!thread.isLocked && (
           <div className="mb-6">
             <CommentComposer
-              onSubmit={(body) => onAddComment(body)}
+              onSubmit={(body) => {
+                onAddComment(body);
+                trackEvent({
+                  name: "discussion_comment_posted",
+                  params: { thread_id: thread.id },
+                });
+              }}
               placeholder={t("commentPlaceholder")}
             />
           </div>

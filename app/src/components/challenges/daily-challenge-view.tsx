@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import {
   CheckCircle2,
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 import { ChallengeCountdown } from "./challenge-countdown";
 import {
   isTodayCompleted,
@@ -95,6 +96,15 @@ export function DailyChallengeView({
       : challenge.testCases;
   });
 
+  useEffect(() => {
+    if (!completed) {
+      trackEvent({
+        name: "daily_challenge_started",
+        params: { challenge_id: String(challenge.id) },
+      });
+    }
+  }, [challenge.id, completed]);
+
   const runTests = useCallback(async () => {
     if (isRunning) return;
     setIsRunning(true);
@@ -125,6 +135,9 @@ export function DailyChallengeView({
     setIsRunning(false);
   }, [code, challenge.solutionCode, isRunning]);
 
+  const allPassed = testResults.every((t) => t.passed === true);
+  const passedCount = testResults.filter((t) => t.passed === true).length;
+
   const handleComplete = useCallback(async () => {
     if (completed) return;
     const earned = challenge.xpReward;
@@ -133,12 +146,24 @@ export function DailyChallengeView({
     setCompleted(true);
     setCelebrating(true);
     setTestResults((prev) => prev.map((t) => ({ ...t, passed: true })));
+    trackEvent({
+      name: "daily_challenge_completed",
+      params: {
+        challenge_id: String(challenge.id),
+        tests_passed: passedCount,
+        total_tests: testResults.length,
+      },
+    });
     setTimeout(() => setCelebrating(false), 2500);
     onComplete?.(earned);
-  }, [completed, challenge.id, challenge.xpReward, onComplete]);
-
-  const allPassed = testResults.every((t) => t.passed === true);
-  const passedCount = testResults.filter((t) => t.passed === true).length;
+  }, [
+    completed,
+    challenge.id,
+    challenge.xpReward,
+    onComplete,
+    passedCount,
+    testResults.length,
+  ]);
 
   return (
     <div className="space-y-6">
