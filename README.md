@@ -8,6 +8,21 @@ Built for [Superteam Brazil](https://superteam.fun/).
 
 ---
 
+## Platform Capabilities
+
+| | |
+|---|---|
+| **On-Chain XP** | Soulbound Token-2022 tokens minted via raw CPI (NonTransferable + PermanentDelegate) |
+| **Verifiable Credentials** | Metaplex Core NFTs with PermanentFreezeDelegate -- soulbound, upgradeable per track |
+| **16-Instruction Program** | Deployed Anchor program: courses, enrollments, streaks, achievements, credentials, seasons |
+| **Admin Dashboard** | bcrypt-gated admin panel -- 14 components, 8 API routes, course CRUD, user management, analytics, moderation, on-chain registration |
+| **Sanity CMS** | 5 content schemas, embedded Studio at `/studio`, full admin integration for course publishing |
+| **PWA** | Service worker with cache versioning, offline fallback page, installable standalone manifest |
+| **Analytics** | PostHog + GA4 + Sentry -- consent-gated tracking, 11+ event types, session recording |
+| **E2E + Unit Tests** | 12 Playwright test suites + Vitest unit tests, CI-integrated via GitHub Actions |
+| **i18n** | next-intl with full locale routing -- EN, PT-BR, ES (~36KB translations per locale) |
+| **Bot Protection** | Cloudflare Turnstile on site load and API endpoints (lesson completion, course finalization) |
+
 ## Features
 
 - **Course Catalog** -- Filterable grid with search, difficulty badges, and learning track filters
@@ -21,9 +36,7 @@ Built for [Superteam Brazil](https://superteam.fun/).
 - **Wallet Authentication** -- Multi-wallet support (Phantom, Backpack, Solflare) via Wallet Standard auto-detect
 - **XP System** -- Soulbound Token-2022 tokens with level formula: `Level = floor(sqrt(totalXP / 100))`
 - **Gamification** -- XP rewards per lesson, challenge, and course; streak tracking with freeze system; 20 achievements
-- **Internationalization** -- English, Portuguese (BR), and Spanish; more languages available upon request
 - **Dark and Light Themes** -- Dark mode by default with Warm Stone palette, theme toggle via `next-themes`
-- **Cloudflare Turnstile** -- Bot protection on site load and API endpoints (lesson completion, course finalization)
 
 ## Deployed Addresses
 
