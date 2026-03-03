@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/components/providers/auth-context";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/src/i18n/routing";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as admin from "../controllers/admin";
+import { syncFromSanity } from "../controllers/sanitySync";
 import { authenticate } from "../middlewares/auth";
 import { requireAdmin } from "../middlewares/requireAdmin";
 
@@ -265,5 +266,31 @@ router.get("/analytics/users", admin.analyticsUsers);
  *         description: Minted count and percentage adoption per badge
  */
 router.get("/analytics/achievements", admin.analyticsAchievements);
+
+// ─── Sanity CMS Sync ─────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /admin/sync-sanity:
+ *   post:
+ *     summary: Sync all courses from Sanity CMS into MongoDB (Admin)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     description: >
+ *       Fetches all courses from Sanity CMS and upserts them into MongoDB.
+ *       Existing courses are matched by sanityId (or slug as fallback).
+ *       New courses are created, existing ones are updated.
+ *     responses:
+ *       200:
+ *         description: Sync completed with summary of created/updated/errored courses
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Sync failed
+ */
+router.post("/sync-sanity", syncFromSanity);
 
 export default router;

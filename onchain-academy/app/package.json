@@ -42,12 +42,12 @@
     "next": "15.5.12",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.8.3",
-    "next-sanity": "^9.8.0",
+    "next-sanity": "^9.8.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^3.7.0",
-    "sanity": "^5.12.0",
+    "sanity": "^5.13.0",
     "styled-components": "^6.3.11",
     "tailwind-merge": "^3.4.1"
   },
@@ -61,5 +61,9 @@
     "eslint-config-next": "15.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   }
 }

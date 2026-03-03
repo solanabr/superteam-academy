@@ -364,7 +364,9 @@
     "noEnrolledCourses": "Você ainda não se inscreveu em nenhum curso.",
     "startFirstQuest": "Inicie Sua Primeira Missão",
     "recommendedQuests": "Missões Recomendadas",
-    "moreAchievements": "mais conquistas"
+    "moreAchievements": "mais conquistas",
+    "milestones": "Marcos",
+    "levelProgress": "Progresso de Nível"
   },
   "Profile": {
     "connecting": "CONECTANDO_AO_NÓ_DO_USUÁRIO...",

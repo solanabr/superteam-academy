@@ -364,7 +364,9 @@
     "noEnrolledCourses": "You haven't enrolled in any courses yet.",
     "startFirstQuest": "Start Your First Quest",
     "recommendedQuests": "Recommended Quests",
-    "moreAchievements": "more achievements"
+    "moreAchievements": "more achievements",
+    "milestones": "Milestones",
+    "levelProgress": "Level Progress"
   },
   "Profile": {
     "connecting": "CONNECTING_TO_USER_NODE...",

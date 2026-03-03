@@ -14,6 +14,8 @@ export interface DashboardCourse {
         completed: number;
         total: number;
         percent: number;
+        milestonesCompleted?: number;
+        milestonesTotal?: number;
     };
 }
 
@@ -33,8 +35,12 @@ export interface DashboardData {
         total: number;
         locked: number;
         level: number;
-        progressPercent: number;
+        totalXP?: number;
+        currentLevelXP?: number;
         nextLevelXP: number;
+        progressXP?: number;
+        rangeXP?: number;
+        progressPercent: number;
     };
     streak: {
         current: number;

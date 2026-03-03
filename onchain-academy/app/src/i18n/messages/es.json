@@ -362,7 +362,9 @@
     "noEnrolledCourses": "No te has inscrito en ningún curso aún.",
     "startFirstQuest": "Inicia Tu Primera Misión",
     "recommendedQuests": "Misiones Recomendadas",
-    "moreAchievements": "más logros"
+    "moreAchievements": "más logros",
+    "milestones": "Hitos",
+    "levelProgress": "Progreso de Nivel"
   },
   "Profile": {
     "connecting": "CONECTANDO_A_NODO_USUARIO...",

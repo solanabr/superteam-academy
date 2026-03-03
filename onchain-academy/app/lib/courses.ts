@@ -19,6 +19,13 @@ export type TestType = "quiz" | "code_challenge" | "test";
 
 // ─── Interfaces ───
 
+export interface Certificate {
+    title: string;
+    description: string;
+    shortDescription: string;
+    completedAt: string;
+}
+
 export interface CourseAuthor {
     name: string;
     avatar?: string;
@@ -191,6 +198,13 @@ export const coursesApi = {
      */
     async claimMilestoneXP(slug: string, milestoneId: string): Promise<any> {
         return fetchWithAuth(`/courses/${slug}/milestones/${milestoneId}/claim-xp`, { method: "POST" });
+    },
+
+    /**
+     * Get certificate details for a completed course
+     */
+    async getCertificateDetails(slug: string): Promise<{ success: boolean; data: Certificate }> {
+        return fetchWithAuth<{ success: boolean; data: Certificate }>(`/courses/${slug}/certificate`, { method: "GET" });
     },
 
     /**

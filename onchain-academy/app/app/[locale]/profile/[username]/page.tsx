@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { profileApi, ProfileData } from "@/lib/profile";
 import { achievementsApi, AchievementReceipt, AchievementType } from "@/lib/achievements";
+import { dashboardApi, DashboardCourse } from "@/lib/dashboard";
 import { AchievementCard } from "@/components/ui/achievement-card";
 import { useAuth } from "@/components/providers/auth-context";
 import { useTranslations } from "next-intl";
@@ -105,6 +106,7 @@ export default function ProfilePage() {
     const [data, setData] = useState<ProfileData | null>(null);
     const [achievements, setAchievements] = useState<AchievementReceipt[]>([]);
     const [allTypes, setAllTypes] = useState<AchievementType[]>([]);
+    const [completedCourses, setCompletedCourses] = useState<DashboardCourse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -116,15 +118,27 @@ export default function ProfilePage() {
             ? profileApi.getMe()
             : profileApi.getPublicProfile(username);
 
-        Promise.all([
+        const promises: [Promise<any>, Promise<any>, Promise<any>, Promise<any>?] = [
             fetchProfile,
             achievementsApi.getMyAchievements(),
             achievementsApi.getAchievementTypes()
-        ])
-            .then(([profRes, achRes, typeRes]) => {
+        ];
+
+        if (isMe) {
+            promises.push(dashboardApi.getDashboardData());
+        }
+
+        Promise.all(promises)
+            .then(([profRes, achRes, typeRes, dashRes]) => {
                 setData(profRes.data);
                 setAchievements(achRes.data);
                 setAllTypes(typeRes.data);
+                if (dashRes) {
+                    const completed = dashRes.data.activeCourses.filter((c: DashboardCourse) =>
+                        c.completedAt || c.progress.percent === 100
+                    );
+                    setCompletedCourses(completed);
+                }
             })
             .catch(err => {
                 console.error("Failed to fetch profile/achievements:", err);
@@ -365,6 +379,41 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="space-y-8">
+                        {/* ── Protocol Certifications ── */}
+                        {isMe && completedCourses.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="border border-white/[0.06] bg-[#0a0f1a]/90 overflow-hidden">
+                                <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-neon-green" />
+                                        <span className="text-sm font-bold text-white uppercase tracking-wider">Protocol Certifications</span>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-500 font-bold">{completedCourses.length} Earned</span>
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    {completedCourses.map((course) => (
+                                        <Link
+                                            key={course.slug}
+                                            href={`/certificates/${course.slug}`}
+                                            className="group flex items-center justify-between p-3 border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-neon-green/30 transition-all"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 border border-white/10 flex items-center justify-center text-lg overflow-hidden shrink-0 bg-white/5">
+                                                    {course.thumbnail ? <img src={course.thumbnail} className="w-full h-full object-cover grayscale opacity-50 group-hover:opacity-100 group-hover:grayscale-0 transition-all" /> : "📜"}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-[10px] font-black text-white truncate group-hover:text-neon-green transition-colors">{course.title}</div>
+                                                    <div className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Earned {new Date(course.completedAt!).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                                </div>
+                                            </div>
+                                            <div className="p-2 text-zinc-600 group-hover:text-neon-green transition-colors">
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* ── Skill Radar ── */}
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="border border-white/[0.06] bg-[#0a0f1a]/90 overflow-hidden">
                             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">

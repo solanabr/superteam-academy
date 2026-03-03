@@ -3,27 +3,51 @@ export default {
     title: 'Lesson',
     type: 'document',
     fields: [
-        { name: 'title', title: 'Title', type: 'string' },
+        { name: 'title', title: 'Title', type: 'string', validation: (Rule) => Rule.required() },
         {
             name: 'type',
             title: 'Type',
             type: 'string',
-            options: { list: ['video', 'reading', 'challenge'] }
+            options: {
+                list: [
+                    { title: 'Video', value: 'video' },
+                    { title: 'Document', value: 'document' },
+                    { title: 'Text', value: 'text' },
+                ],
+            },
+            validation: (Rule) => Rule.required(),
         },
-        { name: 'order', title: 'Order', type: 'number' },
-        { name: 'duration', title: 'Duration (minutes)', type: 'number' },
-        { name: 'videoUrl', title: 'Video URL', type: 'url', hidden: ({ parent }) => parent?.type !== 'video' },
-        { name: 'content', title: 'Content', type: 'blockContent', hidden: ({ parent }) => parent?.type === 'video' },
+        { name: 'order', title: 'Order', type: 'number', validation: (Rule) => Rule.required() },
         {
-            name: 'challenge',
-            title: 'Challenge',
-            type: 'object',
-            hidden: ({ parent }) => parent?.type !== 'challenge',
-            fields: [
-                { name: 'instructions', title: 'Instructions', type: 'blockContent' },
-                { name: 'initialCode', title: 'Initial Code', type: 'code', options: { language: 'rust' } },
-                { name: 'solution', title: 'Solution', type: 'code', options: { language: 'rust' } },
-            ]
-        }
-    ]
+            name: 'duration',
+            title: 'Duration (minutes)',
+            type: 'number',
+            initialValue: 8,
+            description: 'Estimated duration in minutes',
+        },
+        {
+            name: 'url',
+            title: 'URL',
+            type: 'url',
+            description: 'Video URL or document link',
+            hidden: ({ parent }) => parent?.type === 'text',
+        },
+        {
+            name: 'content',
+            title: 'Content',
+            type: 'blockContent',
+            description: 'Rich text content for text-type lessons',
+            hidden: ({ parent }) => parent?.type !== 'text',
+        },
+    ],
+    preview: {
+        select: { title: 'title', type: 'type', order: 'order' },
+        prepare({ title, type, order }) {
+            const icons = { video: '🎬', document: '📄', text: '📝' }
+            return {
+                title: `${order ? `${order}. ` : ''}${title || 'Untitled Lesson'}`,
+                subtitle: `${icons[type] || '📄'} ${type || 'unknown'}`,
+            }
+        },
+    },
 }

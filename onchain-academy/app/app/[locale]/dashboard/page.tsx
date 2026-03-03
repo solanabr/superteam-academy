@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/components/providers/auth-context";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/src/i18n/routing";
 import { useEffect, useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                                 <div className="p-5 space-y-5">
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 border border-white/10 bg-white/5 flex items-center justify-center text-2xl relative">
-                                            {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover grayscale opacity-80" alt="" /> : "🧑‍💻"}
+                                            {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" alt="" /> : "🧑‍💻"}
                                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-neon-purple/20 border border-neon-purple/40 flex items-center justify-center text-[10px] font-mono font-black text-neon-purple">
                                                 {dashboardData?.xp.level || user.level || 1}
                                             </div>
@@ -206,6 +206,24 @@ export default function DashboardPage() {
                                             <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">{t("dayStreak")}</div>
                                         </div>
                                     </div>
+
+                                    {dashboardData?.xp && (
+                                        <div className="space-y-2 font-mono">
+                                            <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
+                                                <span className="text-zinc-500">{t("levelProgress")}</span>
+                                                <span className="text-white">{dashboardData.xp.progressXP || 0} / {dashboardData.xp.rangeXP || 0} XP</span>
+                                            </div>
+                                            <div className="h-1 bg-white/5 overflow-hidden">
+                                                <div
+                                                    className="h-full bg-neon-green transition-all duration-1000"
+                                                    style={{ width: `${dashboardData.xp.progressPercent}%` }}
+                                                />
+                                            </div>
+                                            <div className="text-[9px] text-zinc-600 text-right uppercase tracking-tighter">
+                                                {(dashboardData.xp.nextLevelXP - (dashboardData.xp.currentLevelXP || 0) - (dashboardData.xp.progressXP || 0))} XP to Level {dashboardData.xp.level + 1}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <Link href="/profile" className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-mono font-bold text-neon-cyan uppercase tracking-widest hover:bg-white/[0.02] border border-transparent hover:border-white/5 transition-colors">
                                         {t("viewFullProfile")} <ChevronRight className="w-3 h-3" />
@@ -278,14 +296,21 @@ export default function DashboardPage() {
                                             <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.02] hover:border-white/10 transition-all font-mono group">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <div className="w-12 h-12 flex items-center justify-center text-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors">
-                                                        {course.thumbnail ? <img src={course.thumbnail} className="w-full h-full object-cover grayscale" /> : "📜"}
+                                                        {course.thumbnail ? <img src={course.thumbnail} className="w-full h-full object-cover" /> : "📜"}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="font-bold text-white text-sm truncate">{course.title}</span>
-                                                            <span className="text-[8px] px-1.5 py-0.5 uppercase tracking-widest font-black bg-white/5 text-zinc-400 border border-white/10">
-                                                                {course.difficulty}
-                                                            </span>
+                                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-white text-sm truncate">{course.title}</span>
+                                                                <span className="text-[8px] px-1.5 py-0.5 uppercase tracking-widest font-black bg-white/5 text-zinc-400 border border-white/10">
+                                                                    {course.difficulty}
+                                                                </span>
+                                                            </div>
+                                                            {course.progress.milestonesTotal && (
+                                                                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+                                                                    {course.progress.milestonesCompleted} / {course.progress.milestonesTotal} {t("milestones")}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="h-1.5 bg-white/5 overflow-hidden mt-2">
                                                             <div className="h-full bg-neon-cyan transition-all duration-500" style={{ width: `${course.progress.percent}%` }} />
@@ -338,7 +363,7 @@ export default function DashboardPage() {
                                             <Link key={i} href={`/courses/${course.slug}`} className="group p-3 border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/10 transition-all font-mono block">
                                                 <div className="aspect-video w-full bg-white/5 mb-3 overflow-hidden">
                                                     {course.thumbnail ? (
-                                                        <img src={course.thumbnail} className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
+                                                        <img src={course.thumbnail} className="w-full h-full object-cover transition-all duration-500" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-zinc-700">📜</div>
                                                     )}
