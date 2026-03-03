@@ -17,6 +17,7 @@ const navLinks = [
   { href: "/courses", key: "courses" },
   { href: "/leaderboard", key: "leaderboard" },
   { href: "/dashboard", key: "dashboard" },
+  { href: "/community", key: "community" },
 ] as const;
 
 export function Header() {
