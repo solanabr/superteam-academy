@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Plus, Trash2, Save, Loader2, ArrowLeft, GripVertical, FileJson } from "lucide-react";
+import {Badge} from "@/components/ui/badge"
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface DraftLesson {
     title: string;
@@ -36,13 +38,15 @@ interface DraftCourse {
     xpPerLesson: number;
     imageUrl: string;
     isPublished: boolean;
-    status?: string;
     modules: DraftModule[];
+    status?: string;
+    reviewComment?: string;
 }
 
 export default function CreateCoursePage() {
   const router = useRouter();
   const params = useParams();
+  const { publicKey } = useWallet();
   const slugParam = params.slug as string;
   const isNew = slugParam === "new";
 
@@ -90,8 +94,9 @@ export default function CreateCoursePage() {
                     difficulty: data.difficulty,
                     xpPerLesson: data.xpPerLesson,
                     imageUrl: data.imageUrl || "",
-                    isPublished: data.status === "APPROVED", // ИСПРАВЛЕНИЕ
+                    isPublished: false, // Креатору это поле вообще не нужно
                     status: data.status,
+                    reviewComment: data.reviewComment, // Чтобы показать причину отказа
                     modules: formattedModules
                 });
             } catch (error) {
@@ -105,7 +110,7 @@ export default function CreateCoursePage() {
     }
   }, [slugParam, isNew, router]);
 
-  const isLockedOnChain = !isNew && course.isPublished;
+  const isLockedOnChain = !isNew && (course.status === 'APPROVED' || course.status === 'PENDING');
 
   const addModule = () => {
       setCourse({ ...course, modules: [...course.modules, { title: `Module ${course.modules.length + 1}`, lessons: [] }] });
@@ -168,24 +173,20 @@ export default function CreateCoursePage() {
 
       setLoading(true);
       try {
-          const res = await fetch('/api/admin/courses', {
+          const res = await fetch('/api/creator/courses', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              // ВАЖНО: Если редактируем, slug может быть read-only, но мы отправляем его для upsert
-              body: JSON.stringify(course)
+              // ДОБАВЛЯЕМ WALLET ADDRESS В ТЕЛО ЗАПРОСА ДЛЯ АВТОРИЗАЦИИ
+              body: JSON.stringify({ ...course, walletAddress: publicKey?.toString() })
           });
 
           if (!res.ok) {
               const data = await res.json();
-              throw new Error(data.error || "Failed to save course");
+              throw new Error(data.error || "Failed to save");
           }
 
-          toast.success("Course saved successfully!");
-          if (isNew) {
-            router.push('/admin/courses');
-          } else {
-            // Если редактировали, остаемся здесь
-          }
+          toast.success("Saved successfully!");
+          router.push('/creator');
 
       } catch (error: any) {
           toast.error(error.message);
@@ -196,33 +197,53 @@ export default function CreateCoursePage() {
 
   if (fetching) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
 
+  const handleSubmitForReview = async () => {
+      // Чтобы не дублировать код, просто меняем стейт и вызываем save
+      const courseToSubmit = { ...course, status: "PENDING" };
+      setCourse(courseToSubmit);
+      
+      // Нужно дождаться обновления стейта или передать напрямую в fetch
+      // Для надежности передадим в API статус напрямую
+      setLoading(true);
+      try {
+          const res = await fetch('/api/creator/courses', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...courseToSubmit, walletAddress: publicKey?.toString() })
+          });
+          if (!res.ok) throw new Error("Failed to submit");
+          toast.success("Submitted for review!");
+          router.push('/creator');
+      } catch (e: any) {
+          toast.error(e.message);
+      } finally {
+          setLoading(false);
+      }
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-32">
       {/* Header Sticky Bar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b p-4 -mx-8 px-8 flex items-center justify-between mb-8 shadow-sm">
+      <div className="flex items-center justify-between bg-card p-4 rounded-xl border shadow-sm mb-8">
         <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/admin/courses')}>
-                <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-                <h1 className="text-2xl font-bold">{isNew ? "Course Builder" : "Edit Course"}</h1>
-                <p className="text-xs text-muted-foreground">{course.title || "Untitled Course"}</p>
-            </div>
+            {course.status === 'REJECTED' && (
+                <div className="bg-red-500/10 text-red-500 px-3 py-1 rounded-md text-sm border border-red-500/20">
+                    <strong>Rejected:</strong> {course.reviewComment}
+                </div>
+            )}
+            {course.status === 'PENDING' && (
+                <Badge className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20">Under Review</Badge>
+            )}
+            {course.status === 'APPROVED' && (
+                <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Published</Badge>
+            )}
         </div>
-        <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-lg">
-                <Label htmlFor="publish-mode" className="font-semibold cursor-pointer">Publish On-Chain</Label>
-                <Switch 
-                    id="publish-mode" 
-                    checked={course.isPublished} 
-                    // Если уже опубликован - нельзя отменить (смарт-контракт не поддерживает "удаление")
-                    disabled={isLockedOnChain} 
-                    onCheckedChange={(val) => setCourse({...course, isPublished: val})} 
-                />
-            </div>
-            <Button onClick={handleSave} disabled={loading} size="lg" className="gap-2">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Course
+        <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={handleSave} disabled={loading || isLockedOnChain}>
+                <Save className="mr-2 h-4 w-4" /> Save Draft
+            </Button>
+            <Button onClick={handleSubmitForReview} disabled={loading || isLockedOnChain} className="bg-primary">
+                {course.status === 'PENDING' ? "Under Review" : "Submit for Review"}
             </Button>
         </div>
       </div>

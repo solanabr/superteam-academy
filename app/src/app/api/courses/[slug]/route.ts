@@ -6,6 +6,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
     const course = await prisma.course.findUnique({
       where: { slug: params.slug },
       include: {
+        author: true,
         modules: {
           include: {
             lessons: {
@@ -31,9 +32,14 @@ export async function GET(request: Request, { params }: { params: { slug: string
         difficulty: course.difficulty,
         xpPerLesson: course.xpPerLesson,
         imageUrl: course.imageUrl,
+        // ИСПРАВЛЕНИЕ: Возвращаем статус
+        status: course.status,
+        // Оставляем isPublished как производное поле для совместимости с фронтендом (если лень везде менять)
+        // Но лучше и на фронте использовать status. Давай пока оставим для совместимости:
+        isPublished: course.status === "APPROVED", 
+        author: course.author,
         modules: course.modules,
-        isPublished: course.isPublished,
-        lessons: flatLessons // Плоский список для легкой навигации по индексам
+        lessons: flatLessons
     };
 
     return NextResponse.json(formattedData);

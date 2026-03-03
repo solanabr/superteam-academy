@@ -101,14 +101,20 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
       }
   };
 
-  const certificates = credentials.filter((nft) => 
-    nft.attributes.some(attr => attr.trait_type === "Level" || attr.trait_type === "courses_completed")
-  );
+  const isCertificate = (nft: CredentialNFT) => {
+      const nameLower = nft.name.toLowerCase();
+      if (nameLower.includes('certificate') || nameLower.includes('credential')) return true;
+      
+      // Fallback на проверку атрибутов (на всякий случай)
+      return nft.attributes?.some(attr => 
+          attr.trait_type.toLowerCase() === "level" || 
+          attr.trait_type.toLowerCase() === "courses completed" ||
+          attr.trait_type.toLowerCase() === "courses_completed"
+      );
+  };
 
-  // Ачивки - это всё остальное (или те, у кого нет "Level")
-  const badgeNFTs = credentials.filter((nft) => 
-    !nft.attributes.some(attr => attr.trait_type === "Level" || attr.trait_type === "courses_completed")
-  );
+  const certificates = credentials.filter(isCertificate);
+  const badgeNFTs = credentials.filter(nft => !isCertificate(nft));
 
   return (
     <div className="container max-w-6xl py-8 space-y-8">
@@ -278,7 +284,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                         badgeNFTs.map((nft) => (
                             <div key={nft.id} className="flex flex-col items-center text-center p-4 border rounded-xl bg-card hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.open(`https://core.metaplex.com/explorer/${nft.id}?env=devnet`, '_blank')}>
                                 <div className="h-20 w-20 mb-3 rounded-full overflow-hidden border-2 border-yellow-500 shadow-lg">
-                                    <img src={nft.image} alt={nft.name} className="w-full h-full object-cover" />
+                                    <Image src={nft.image} alt={nft.name} fill className="w-full h-full object-cover" />
                                 </div>
                                 <span className="font-semibold text-sm line-clamp-2">{nft.name}</span>
                             </div>

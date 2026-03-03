@@ -90,7 +90,7 @@ async function main() {
                 description: "Master the basics of Solana development. Build real dApps, earn XP, and get certified on-chain.",
                 difficulty: "Beginner",
                 xpPerLesson: 50,
-                isPublished: true,
+                status: "APPROVED",
                 imageUrl: "https://arweave.net/Yx0n2TqR0GqNeJnoYx4SMCjZt0r9uS-KRwQoK_vG2Wc" 
             }
         });

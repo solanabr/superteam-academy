@@ -48,6 +48,7 @@ export async function POST(request: Request) {
 
     const data = await request.json();
     const { slug, title, description, difficulty, xpPerLesson, imageUrl, isPublished, modules } = data;
+    const courseStatus = isPublished ? "APPROVED" : "DRAFT";
 
     // Подсчет общего количества уроков (нужно для блокчейна)
     let totalLessons = 0;
@@ -143,8 +144,9 @@ export async function POST(request: Request) {
     // 1. Создаем/обновляем курс
     const course = await prisma.course.upsert({
         where: { slug: slug },
-        update: { title, description, difficulty, xpPerLesson, isPublished, imageUrl },
-        create: { slug, title, description, difficulty, xpPerLesson, isPublished, imageUrl }
+        // ИСПРАВЛЕНИЕ: Используем status вместо isPublished
+        update: { title, description, difficulty, xpPerLesson, status: courseStatus, imageUrl },
+        create: { slug, title, description, difficulty, xpPerLesson, status: courseStatus, imageUrl }
     });
 
     // 2. Обрабатываем модули и уроки

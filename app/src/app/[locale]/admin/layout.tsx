@@ -7,6 +7,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher"; // Импортируем свитчер
 import { BarChart3, BookOpen, Users, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils"; // Для склеивания классов
+import { ClipboardCheck } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); // Получаем текущий путь (без локали!)
@@ -46,6 +47,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         )}
                     >
                         <Users className="h-4 w-4" /> Users
+                    </Link>
+                    <Link 
+                        href="/admin/review" 
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                            pathname.startsWith("/admin/review") ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-muted-foreground"
+                        )}
+                    >
+                        <ClipboardCheck className="h-4 w-4" /> Review Submissions
                     </Link>
                 </nav>
                 <div className="p-4 border-t">

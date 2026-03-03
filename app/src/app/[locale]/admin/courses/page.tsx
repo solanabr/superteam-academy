@@ -60,8 +60,11 @@ export default function AdminCoursesPage() {
                             <TableCell className="font-medium">{course.title}</TableCell>
                             <TableCell className="font-mono text-xs">{course.slug}</TableCell>
                             <TableCell>
-                                {course.isPublished ? (
+                                {/* ИСПРАВЛЕНИЕ: Используем course.status */}
+                                {course.status === "APPROVED" ? (
                                     <Badge className="bg-green-500/10 text-green-500">Published</Badge>
+                                ) : course.status === "PENDING" ? (
+                                    <Badge className="bg-yellow-500/10 text-yellow-500">In Review</Badge>
                                 ) : (
                                     <Badge variant="secondary">Draft</Badge>
                                 )}

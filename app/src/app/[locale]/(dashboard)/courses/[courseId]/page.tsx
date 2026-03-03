@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Loader2, Users, Star, BookOpen, Share2, Play } from "lucide-react";
 import { COURSE_CONTENT } from "@/lib/course-content";
 import { ModuleList } from "@/components/module-list";
+import Link from "next/link"
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -169,16 +170,40 @@ export default function CourseDetailsPage() {
             {/* Instructor Card */}
             <div className="border rounded-lg p-6 bg-card/30">
                 <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Instructor</h3>
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 border-2 border-background">
-                        <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback>ST</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <p className="font-bold text-base">Superteam Brazil</p>
-                        <p className="text-xs text-muted-foreground">Core Contributors</p>
-                    </div>
-                </div>
+                {courseContent.author ? (
+                    // РЕАЛЬНЫЙ АВТОР (ЮЗЕР)
+                    <>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12 border-2 border-background">
+                                <AvatarImage src={courseContent.author.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${courseContent.author.walletAddress}`} />
+                                <AvatarFallback>U</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-bold text-base">{courseContent.author.username || courseContent.author.name}</p>
+                                <p className="text-xs text-muted-foreground">Community Creator</p>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                            <Link href={`/profile/${courseContent.author.username || courseContent.author.walletAddress}`} className="w-full">
+                                <Button variant="outline" size="sm" className="w-full h-8 text-xs">View Profile</Button>
+                            </Link>
+                        </div>
+                    </>
+                ) : (
+                    // ДЕФОЛТНЫЙ АВТОР (Superteam) - Для официальных курсов без привязки к id
+                    <>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12 border-2 border-background">
+                                <AvatarImage src="https://github.com/shadcn.png" />
+                                <AvatarFallback>ST</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-bold text-base">Superteam Brazil</p>
+                                <p className="text-xs text-muted-foreground">Core Contributors</p>
+                            </div>
+                        </div>
+                    </>
+                )}
                 <div className="mt-4 flex gap-2">
                     <Button variant="outline" size="sm" className="w-full h-8 text-xs">View Profile</Button>
                     <Button variant="outline" size="sm" className="w-full h-8 text-xs"><Share2 className="h-3 w-3 mr-1"/> Share</Button>

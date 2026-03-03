@@ -14,6 +14,13 @@ enum Role {
   ADMIN
 }
 
+enum CourseStatus {
+  DRAFT       // Черновик (видит только автор)
+  PENDING     // Отправлен на модерацию
+  APPROVED    // Одобрен админом (опубликован в блокчейне)
+  REJECTED    // Отклонен
+}
+
 // Модель User (расширенная для NextAuth)
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -54,6 +61,7 @@ model User {
   xpHistory     XPHistory[]
   challenges    UserChallenge[]
   discussions   Discussion[]
+  createdCourses Course[]
 }
 
 
@@ -151,15 +159,25 @@ model XPHistory {
 
 model Course {
   id          String         @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String         @unique // Идентификатор в блокчейне (solana-mock-test)
+  slug        String         @unique
   title       String
   description String
-  difficulty  String         @default("Beginner") // Beginner, Intermediate, Advanced
+  difficulty  String         @default("Beginner")
   xpPerLesson Int            @default(50)
   imageUrl    String?
-  isPublished Boolean        @default(false)
   
-  modules     CourseModule[] // Связь с модулями
+  // ИЗМЕНЕНИЕ: Заменяем isPublished на status
+  // isPublished Boolean     @default(false)
+  status      CourseStatus   @default(DRAFT)
+  
+  // НОВОЕ: Обратная связь от модератора
+  reviewComment String?
+
+  // НОВОЕ: Связь с автором (кто создал)
+  authorId    String?        @db.ObjectId
+  author      User?          @relation(fields: [authorId], references: [id])
+
+  modules     CourseModule[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 }
