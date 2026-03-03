@@ -12,20 +12,18 @@
  */
 
 import * as anchor from "@coral-xyz/anchor";
-import { Program, BN } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
+import { BN } from "@coral-xyz/anchor";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   getAccount,
 } from "@solana/spl-token";
+import { getProgram, getProvider } from "./load-program";
 
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
+const provider = getProvider();
+const program = getProgram();
 
 const courseId = process.argv[2] || "solana-mock-test";
 const trackCollection = new PublicKey(

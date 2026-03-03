@@ -13,6 +13,14 @@ const apiHost = isEu ? "https://eu.i.posthog.com" : "https://us.i.posthog.com";
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      "@walletconnect/universal-provider": false,
+    };
+    return config;
+  },
   async rewrites() {
     return [
       { source: "/ph/static/:path*", destination: `${assetsHost}/static/:path*` },

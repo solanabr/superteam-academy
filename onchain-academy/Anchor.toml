@@ -1,15 +1,16 @@
 [toolchain]
 package_manager = "yarn"
+anchor_version = "0.31.1"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-onchain_academy = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf"
+onchain_academy = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf"
 
 [programs.devnet]
-onchain_academy = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf"
+onchain_academy = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf"
 
 [registry]
 url = "https://api.apr.dev"

@@ -1,11 +1,8 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { getProgram, getProvider } from "./load-program";
 
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
+const provider = getProvider();
+const program = getProgram();
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],

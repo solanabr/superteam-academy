@@ -1,13 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import * as fs from "fs";
+import { getProgram, getProvider } from "./load-program";
 
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
+const provider = getProvider();
+const program = getProgram();
 
 // Load XP mint keypair
 const xpMintSecret = JSON.parse(

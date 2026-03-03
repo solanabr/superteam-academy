@@ -12,8 +12,9 @@ import {
 import * as fs from "fs";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
+// Use deployed program ID (Anchor.toml programs.devnet)
 const PROGRAM_ID = new PublicKey(
-  "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf",
+  "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf",
 );
 
 const secret = JSON.parse(fs.readFileSync("../wallets/signer.json", "utf-8"));

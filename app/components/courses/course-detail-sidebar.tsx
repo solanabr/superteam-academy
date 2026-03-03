@@ -1,11 +1,13 @@
 "use client";
 
+import { useCallback } from "react";
 import { Facehash } from "facehash";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/connector/react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@/components/connect-wallet";
+import { useEnroll } from "@/lib/hooks/use-enroll";
 import {
   Clock,
   Lightning,
@@ -35,6 +37,7 @@ type Props = {
 export function CourseDetailSidebar({ course, enrollment }: Props) {
   const t = useTranslations("courseDetail");
   const { isConnected } = useWallet();
+  const { enroll, isEnrolling, error: enrollError } = useEnroll();
 
   const completedCount = enrollment.completedLessons.length;
   const progress =
@@ -48,6 +51,15 @@ export function CourseDetailSidebar({ course, enrollment }: Props) {
       ? `~${hours} Hour${hours > 1 ? "s" : ""}`
       : `~${course.totalDuration} min`;
   const techLabel = course.tags[0] ?? "Solana";
+
+  const handleEnroll = useCallback(async () => {
+    try {
+      await enroll(course.id);
+      await enrollment.refetch();
+    } catch {
+      // Error state is already exposed by useEnroll.
+    }
+  }, [course.id, enroll, enrollment]);
 
   return (
     <aside className="space-y-6">
@@ -103,12 +115,16 @@ export function CourseDetailSidebar({ course, enrollment }: Props) {
             </div>
           ) : !enrollment.enrolled ? (
             <Button
+              onClick={() => {
+                void handleEnroll();
+              }}
+              disabled={isEnrolling || enrollment.loading}
               className="h-11 w-full text-base font-semibold"
               size="lg"
             >
               <span className="inline-flex items-center gap-2">
                 <FolderOpen className="size-4" weight="duotone" />
-                {t("initializeSequence")}
+                {isEnrolling ? `${t("enroll")}...` : t("enroll")}
               </span>
             </Button>
           ) : (
@@ -127,6 +143,9 @@ export function CourseDetailSidebar({ course, enrollment }: Props) {
             </Button>
           )}
         </div>
+        {enrollError ? (
+          <p className="mt-2 text-xs text-destructive">{enrollError}</p>
+        ) : null}
 
         <p className="mt-3 text-center text-xs text-muted-foreground">
           {t("completionRate", { percent: completionPercent })}
