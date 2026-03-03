@@ -14,6 +14,7 @@ import {
   BookOpen,
   Trophy,
   Zap,
+  Bell,
   MessageSquare,
 } from "lucide-react";
 import { useEffect, useCallback, useState, useTransition } from "react";
@@ -23,6 +24,7 @@ import { localeNames, localeFlags, type Locale, locales } from "@/i18n/config";
 import { AuthButton } from "@/components/auth/sign-in-button";
 import { SuperteamAcademyLogo } from "@/components/icons/superteam-logo";
 import { trackEvent } from "@/lib/analytics";
+import { useNotificationUnreadCount } from "@/lib/hooks/use-notifications";
 
 interface HeaderProps {
   /** Slot for app-specific controls (gamification stats, wallet button) rendered before the language selector */
@@ -50,6 +52,7 @@ export function Header({ appSlot }: HeaderProps) {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const unreadCount = useNotificationUnreadCount();
 
   useEffect(() => {
     setMounted(true);
@@ -111,9 +114,23 @@ export function Header({ appSlot }: HeaderProps) {
         </nav>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {/* App-specific controls (gamification stats, wallet) — only rendered inside (app) layout */}
           {appSlot}
+
+          {/* Notifications */}
+          <Link
+            href="/notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Link>
 
           {/* Language Selector */}
           <div className="relative">
