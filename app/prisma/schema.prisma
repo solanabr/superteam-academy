@@ -1,0 +1,333 @@
+// Prisma schema — mirrors existing Supabase PostgreSQL tables
+// Prisma connects to the same DB as Supabase for complex queries (leaderboard, admin, community)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// Auth Tables (from 001_create_auth_tables.sql)
+// ============================================================================
+
+model profiles {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet_address String?   @unique
+  email          String?
+  name           String?
+  username       String?   @unique
+  avatar_url     String?
+  bio            String?
+  social_links   Json?     @db.JsonB  // { twitter?, github?, website? }
+  is_public      Boolean   @default(true)
+  role                String    @default("student")    // 'student' | 'instructor'
+  onboarding_complete Boolean   @default(false)
+  session_version     Int       @default(1)
+  last_login_at  DateTime? @db.Timestamptz(6)
+  login_count    Int       @default(0)
+  offchain_xp    Int       @default(0)  // Off-chain XP (daily login). Resets to 0 on streak break.
+  deleted_at     DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  linked_accounts    linked_accounts[]
+  audit_logs         audit_logs[]
+  streaks            streaks[]
+  streak_activity    streak_activity[]
+  streak_milestones  streak_milestones[]
+  achievements       achievements[]
+  admin_whitelist_entries admin_whitelist[] @relation("admin_adder")
+  role_changes_received  role_change_log[] @relation("role_target")
+  role_changes_made      role_change_log[] @relation("role_changer")
+  threads                threads[]
+  replies                replies[]
+  thread_upvotes         thread_upvotes[]
+  reply_upvotes          reply_upvotes[]
+  push_subscriptions     push_subscriptions[]
+  webhook_configs        webhook_configs[]
+  daily_login_streaks    daily_login_streaks?
+}
+
+model linked_accounts {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String    @db.Uuid
+  provider      String
+  provider_id   String
+  provider_data Json?     @db.JsonB
+  last_used_at  DateTime? @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_id])
+  @@index([user_id])
+}
+
+model audit_logs {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  action     String
+  ip_address String?
+  user_agent String?
+  metadata   Json?    @db.JsonB
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([action])
+}
+
+// ============================================================================
+// Streak Tables (from 003_create_streak_tables.sql)
+// ============================================================================
+
+// Daily login streak — XP resets to 0 when streak breaks
+model daily_login_streaks {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String    @unique @db.Uuid
+  current_streak  Int       @default(0)
+  longest_streak  Int       @default(0)
+  last_login_date DateTime? @db.Date
+  total_login_xp  Int       @default(0)  // Current active login XP (resets on break)
+  streak_broken   Boolean   @default(false)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model streaks {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String    @unique @db.Uuid
+  current_streak     Int       @default(0)
+  longest_streak     Int       @default(0)
+  last_activity_date DateTime? @db.Date
+  freeze_count       Int       @default(3)
+  max_freezes        Int       @default(3)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model streak_activity {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String   @db.Uuid
+  activity_date     DateTime @db.Date
+  xp_earned         Int      @default(0)
+  lessons_completed Int      @default(0)
+  courses_completed Int      @default(0)
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, activity_date])
+  @@index([user_id])
+}
+
+model streak_milestones {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @db.Uuid
+  milestone_days Int
+  xp_reward      Int
+  claimed_at     DateTime @default(now()) @db.Timestamptz(6)
+  tx_signature   String?  // On-chain reward_xp tx signature
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, milestone_days])
+  @@index([user_id])
+}
+
+// XP balance snapshots for time-windowed leaderboard queries
+model xp_snapshots {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet     String
+  xp_balance BigInt   @default(0)
+  snapped_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([wallet, snapped_at])
+  @@index([snapped_at])
+}
+
+// ============================================================================
+// Achievement Tables (from 004_create_achievement_tables.sql)
+// ============================================================================
+
+model achievements {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @db.Uuid
+  achievement_id String
+  awarded_at     DateTime @default(now()) @db.Timestamptz(6)
+  asset_address  String?
+  tx_hash        String?
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, achievement_id])
+  @@index([user_id])
+  @@index([achievement_id])
+}
+
+// ============================================================================
+// RBAC Tables (from 006_rbac.sql)
+// ============================================================================
+
+model admin_whitelist {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String?
+  wallet     String?   // Solana base58, case-sensitive
+  added_by   String?   @db.Uuid
+  added_at   DateTime  @default(now()) @db.Timestamptz(6)
+  removed_at DateTime? @db.Timestamptz(6)
+
+  adder profiles? @relation("admin_adder", fields: [added_by], references: [id], onDelete: SetNull)
+}
+
+model role_change_log {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profile_id String   @db.Uuid
+  old_role   String?
+  new_role   String
+  changed_by String?  @db.Uuid
+  reason     String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  profile profiles  @relation("role_target", fields: [profile_id], references: [id], onDelete: Cascade)
+  changer profiles? @relation("role_changer", fields: [changed_by], references: [id], onDelete: SetNull)
+
+  @@index([profile_id])
+}
+
+// ============================================================================
+// Event Logs (from 007_event_logs.sql)
+// ============================================================================
+
+model event_logs {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_type String
+  tx_hash    String
+  slot       Int      @default(0)
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+  data       Json     @default("{}")
+  processed  Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([event_type])
+  @@index([tx_hash])
+  @@index([timestamp(sort: Desc)])
+  @@index([processed])
+}
+
+// ============================================================================
+// Community Forum Tables (from 008_community_forum.sql)
+// ============================================================================
+
+model threads {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String     @db.VarChar(255)
+  content     String
+  author_id   String     @db.Uuid
+  category    String     @default("general") @db.VarChar(50)
+  course_id   String?    @db.VarChar(50)
+  lesson_id   String?    @db.VarChar(50)
+  tags        String[]   @default([])
+  upvotes     Int        @default(0)
+  reply_count Int        @default(0)
+  is_pinned   Boolean    @default(false)
+  is_locked   Boolean    @default(false)
+  created_at  DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
+
+  author         profiles         @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  replies        replies[]
+  thread_upvotes thread_upvotes[]
+
+  @@index([category])
+  @@index([course_id])
+  @@index([author_id])
+  @@index([created_at(sort: Desc)])
+}
+
+model replies {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  thread_id   String   @db.Uuid
+  content     String
+  author_id   String   @db.Uuid
+  upvotes     Int      @default(0)
+  is_accepted Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  thread        threads        @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author        profiles       @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  reply_upvotes reply_upvotes[]
+
+  @@index([thread_id])
+  @@index([author_id])
+}
+
+model thread_upvotes {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  thread_id  String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  thread threads  @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  user   profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([thread_id, user_id])
+}
+
+model reply_upvotes {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reply_id   String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  reply replies  @relation(fields: [reply_id], references: [id], onDelete: Cascade)
+  user  profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([reply_id, user_id])
+}
+
+// ============================================================================
+// Push Subscriptions (from 009_push_subscriptions.sql)
+// ============================================================================
+
+model push_subscriptions {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  user profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+// ============================================================================
+// Webhook Configs (from 010_webhook_configs.sql)
+// ============================================================================
+
+model webhook_configs {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  url        String
+  secret     String
+  events     String[]
+  active     Boolean  @default(true)
+  created_by String?  @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  creator profiles? @relation(fields: [created_by], references: [id], onDelete: SetNull)
+
+  @@index([active])
+}

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0e1629" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d4a373"/>
+      <stop offset="100%" stop-color="#a07c50"/>
+    </linearGradient>
+    <linearGradient id="r" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="url(#g)"/>
+  <!-- Medal -->
+  <circle cx="100" cy="88" r="68" fill="url(#m)" stroke="#d4a373" stroke-width="3"/>
+  <circle cx="100" cy="88" r="58" fill="#1a0e2e" stroke="#a07c50" stroke-width="2"/>
+  <!-- Footsteps -->
+  <g transform="translate(100,80)" fill="#d4a373">
+    <!-- Left foot -->
+    <ellipse cx="-12" cy="-8" rx="8" ry="14" transform="rotate(-10,-12,-8)"/>
+    <circle cx="-20" cy="-24" r="3"/>
+    <circle cx="-15" cy="-26" r="2.5"/>
+    <circle cx="-10" cy="-25" r="2.5"/>
+    <circle cx="-6" cy="-22" r="2"/>
+    <!-- Right foot -->
+    <ellipse cx="12" cy="8" rx="8" ry="14" transform="rotate(10,12,8)"/>
+    <circle cx="6" cy="-8" r="2"/>
+    <circle cx="10" cy="-10" r="2.5"/>
+    <circle cx="15" cy="-9" r="2.5"/>
+    <circle cx="20" cy="-6" r="3"/>
+  </g>
+  <!-- Wings -->
+  <g fill="#d4a373" opacity="0.6">
+    <path d="M20,80 Q10,60 25,45 Q35,55 32,75 Z"/>
+    <path d="M180,80 Q190,60 175,45 Q165,55 168,75 Z"/>
+  </g>
+  <!-- Ribbon -->
+  <path d="M70,148 L85,170 L100,155 L115,170 L130,148" fill="url(#r)"/>
+  <!-- Label -->
+  <rect x="40" y="140" width="120" height="22" rx="4" fill="#d4a373" stroke="#a07c50" stroke-width="1"/>
+  <text x="100" y="155" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="12" fill="#1a0e2e">First Steps</text>
+</svg>

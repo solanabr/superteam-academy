@@ -1,0 +1,70 @@
+/**
+* @license
+*
+* Font Family: Quilon
+* Designed by: Jonny Pinhorn
+* URL: https://www.fontshare.com/fonts/quilon
+* © 2026 Indian Type Foundry
+*
+* Quilon Regular 
+* Quilon Medium 
+* Quilon Semibold 
+* Quilon Bold 
+* Quilon Variable (Variable font)
+
+*
+*/
+@font-face {
+  font-family: 'Quilon-Regular';
+  src: url('../fonts/Quilon-Regular.woff2') format('woff2'),
+       url('../fonts/Quilon-Regular.woff') format('woff'),
+       url('../fonts/Quilon-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Quilon-Medium';
+  src: url('../fonts/Quilon-Medium.woff2') format('woff2'),
+       url('../fonts/Quilon-Medium.woff') format('woff'),
+       url('../fonts/Quilon-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Quilon-Semibold';
+  src: url('../fonts/Quilon-Semibold.woff2') format('woff2'),
+       url('../fonts/Quilon-Semibold.woff') format('woff'),
+       url('../fonts/Quilon-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Quilon-Bold';
+  src: url('../fonts/Quilon-Bold.woff2') format('woff2'),
+       url('../fonts/Quilon-Bold.woff') format('woff'),
+       url('../fonts/Quilon-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+/**
+* This is a variable font
+* You can control variable axes as shown below:
+* font-variation-settings: wght 400.0;
+*
+* available axes:
+'wght' (range from 400.0 to 700.0
+*/
+@font-face {
+  font-family: 'Quilon-Variable';
+  src: url('../fonts/Quilon-Variable.woff2') format('woff2'),
+       url('../fonts/Quilon-Variable.woff') format('woff'),
+       url('../fonts/Quilon-Variable.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+

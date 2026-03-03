@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0e1629" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="r" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="url(#g)"/>
+  <circle cx="100" cy="88" r="68" fill="url(#m)" stroke="#fbbf24" stroke-width="3"/>
+  <circle cx="100" cy="88" r="58" fill="#0e1629" stroke="#d97706" stroke-width="2"/>
+  <!-- Crown -->
+  <g transform="translate(100,75)">
+    <polygon points="-30,10 -25,-15 -12,0 0,-22 12,0 25,-15 30,10" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
+    <rect x="-30" y="10" width="60" height="10" rx="2" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+    <!-- Gems -->
+    <circle cx="-12" cy="-2" r="3" fill="#ef4444"/>
+    <circle cx="0" cy="-10" r="3.5" fill="#a78bfa"/>
+    <circle cx="12" cy="-2" r="3" fill="#34d399"/>
+  </g>
+  <!-- 30 text -->
+  <text x="100" y="115" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="18" fill="#fbbf24">30</text>
+  <path d="M70,148 L85,170 L100,155 L115,170 L130,148" fill="url(#r)"/>
+  <rect x="30" y="140" width="140" height="22" rx="4" fill="#d4a373" stroke="#a07c50" stroke-width="1"/>
+  <text x="100" y="155" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="10" fill="#1a0e2e">Monthly Master</text>
+</svg>
