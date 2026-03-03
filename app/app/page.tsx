@@ -250,36 +250,36 @@ export default function HomePage() {
 
             <a href="https://solana.com" target="_blank" rel="noopener noreferrer"
               className="opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/solana-wordmark.svg" alt="Solana" className="h-7 brightness-0 invert" />
+              <img src="/solana-wordmark.svg" alt="Solana" width={120} height={28} className="h-7 brightness-0 invert" />
             </a>
 
             <a href="https://superteam.fun/br" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/superteam-br.jpg" alt="Superteam Brazil" className="h-8 w-8 rounded-sm object-cover" />
+              <img src="/superteam-br.jpg" alt="Superteam Brazil" width={120} height={28} className="h-7 brightness-0 invert" />
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest hidden sm:block">Superteam Brazil</span>
             </a>
 
             <a href="https://metaplex.com" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/metaplex.jpg" alt="Metaplex" className="h-8 w-8 rounded-sm object-cover" />
+              <img src="/metaplex.jpg" alt="Metaplex" width={120} height={28} className="h-7 brightness-0 invert" />
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest hidden sm:block">Metaplex</span>
             </a>
 
             <a href="https://helius.dev" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/helius.jpg" alt="Helius" className="h-8 w-8 rounded-sm object-cover" />
+              <img src="/helius.jpg" alt="Helius" width={120} height={28} className="h-7 brightness-0 invert" />
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest hidden sm:block">Helius</span>
             </a>
 
             <a href="https://anchor-lang.com" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/anchor.png" alt="Anchor" className="h-8 w-8 rounded-sm object-cover" />
+              <img src="/anchor.png" alt="Anchor" width={120} height={28} className="h-7 brightness-0 invert" />
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest hidden sm:block">Anchor</span>
             </a>
 
             <a href="https://phantom.app" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-              <img src="/phantom.jpg" alt="Phantom" className="h-8 w-8 rounded-sm object-cover" />
+              <img src="/phantom.jpg" alt="Phantom" width={120} height={28} className="h-7 brightness-0 invert" />
               <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest hidden sm:block">Phantom</span>
             </a>
 

@@ -19,11 +19,24 @@ const nextConfig = {
       { protocol: "https", hostname: "play-lh.googleusercontent.com" },
       { protocol: "https", hostname: "pbs.twimg.com" },
     ],
+    formats: ["image/avif", "image/webp"],
   },
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@solana/wallet-adapter-react",
+      "@solana/wallet-adapter-react-ui",
+    ],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  poweredByHeader: false,
+  compress: true,
 };
 
 const config = withPWA(nextConfig);
-
 module.exports = withSentryConfig(config, {
   org: "peace-dapps",
   project: "superteam-academy",
@@ -31,4 +44,7 @@ module.exports = withSentryConfig(config, {
   widenClientFileUpload: true,
   hideSourceMaps: true,
   disableLogger: true,
+  treeshake: {
+    removeDebugLogging: true,
+  },
 });
