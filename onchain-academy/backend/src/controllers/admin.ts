@@ -63,12 +63,16 @@ export const adminUpdateCourse = async (req: Request, res: Response): Promise<vo
 
         const allowed = [
             "title", "description", "shortDescription", "thumbnail", "tags",
-            "difficulty", "topic", "status", "author", "milestones"
+            "difficulty", "topic", "status", "author", "milestones", "sanityId"
         ];
 
         // Apply updates
         allowed.forEach((key) => {
             if (req.body[key] !== undefined) {
+                // Special handling for status change to 'published'
+                if (key === "status" && req.body[key] === "published" && course.status !== "published") {
+                    course.publishedAt = new Date();
+                }
                 (course as any)[key] = req.body[key];
             }
         });
@@ -438,3 +442,8 @@ export const analyticsAchievements = async (req: Request, res: Response): Promis
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+
+/**
+ * 
+ */

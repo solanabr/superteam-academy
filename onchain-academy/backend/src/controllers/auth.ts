@@ -116,6 +116,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         username: user.username,
         totalXP: user.totalXP,
         level: user.level,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -180,6 +181,7 @@ export const githubAuth = async (req: Request, res: Response): Promise<void> => 
           username: user.username,
           totalXP: user.totalXP,
           level: user.level,
+          role: user.role,
         },
       });
       return;
@@ -224,6 +226,7 @@ export const githubAuth = async (req: Request, res: Response): Promise<void> => 
         username: user.username,
         totalXP: user.totalXP,
         level: user.level,
+        role: user.role,
       },
     });
   } catch (error) {

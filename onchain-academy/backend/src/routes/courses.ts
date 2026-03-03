@@ -580,4 +580,54 @@ router.post(
     coursesController.completeLesson
 );
 
+/**
+ * @swagger
+ * /courses/{slug}/certificate:
+ *   get:
+ *     summary: Get certificate details for a completed course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Certificate details returned successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not enrolled or course not completed
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/:slug/certificate", authenticate, coursesController.getCertificateDetails);
+
+/**
+ * @swagger
+ * /courses/sanity/{sanityId}:
+ *   get:
+ *     summary: Get a course by its Sanity ID
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: sanityId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Course data returned successfully
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/sanity/:sanityId", coursesController.getCourseBySanityId);
+
 export default router;

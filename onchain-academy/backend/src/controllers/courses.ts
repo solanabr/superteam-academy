@@ -33,7 +33,6 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
       milestones,
       author,
       sanityId,
-      certificate,
     } = req.body;
 
     // Validate exactly 5 milestones
@@ -431,7 +430,7 @@ export const enrollInCourse = async (req: Request, res: Response): Promise<void>
  *
  * Performs backend grading of a test attempt.
  * Quizzes are graded by comparing selected options to the correct ones.
- * Code challenges are graded by matching user output to expected output.
+ * Code challenges are graded by matching user output to expected output.j
  *
  * A milestone is considered complete if the cumulative weighted score 
  * (Sum of (BestScore % * TestPoints)) across all tests in the milestone is >= 80.
@@ -917,3 +916,59 @@ export const completeLesson = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+export const getCertificateDetails = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const course = await Course.findOne({ slug });
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+    
+    const enrollment = await Enrollment.findOne({ userId: (req as any).user.id, courseId: course._id });
+    if (!enrollment) {
+      res.status(403).json({ success: false, message: "You are not enrolled in this course" });
+      return;
+    }
+
+    if (!enrollment.completedAt) {
+      res.status(403).json({ success: false, message: "You have not completed this course" });
+      return;
+    }
+
+    const certificate = {
+      title: course.title,
+      description: course.description,
+      shortDescription: course.shortDescription,
+      completedAt: enrollment.completedAt,
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: certificate,
+    });
+  } catch (error) {
+    console.error("Get certificate details error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+export const getCourseBySanityId = async (req: Request, res: Response) => {
+  try {
+    const { sanityId } = req.params;
+    const course = await Course.findOne({ sanityId });
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      data: course,
+    });
+  } catch (error) {
+    console.error("Get course by sanity id error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
