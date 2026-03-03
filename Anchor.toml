@@ -1,0 +1,28 @@
+[toolchain]
+
+[features]
+resolution = true
+seeds = true
+skip-lint = false
+
+[[test.genesis_accounts]]
+address = "11111111111111111111111111111111"
+lamports = 1000000
+owner = "11111111111111111111111111111111"
+executable = false
+
+[provider]
+cluster = "devnet"
+wallet = "wallets/signer.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[programs.devnet]
+academy = "2JEFfbRwBqZB3nf5JkTGsievs43CDuGettfzBWzf94Mw"
+
+[programs.mainnet]
+academy = "11111111111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"

@@ -1,0 +1,30 @@
+[package]
+name = "academy"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anchor-lang = "0.30"
+anchor-spl = "0.30"
+solana-program = "1.18"
+spl-token = "4"
+# spl-token-2022 = "0.9"
+spl-associated-token-account = { version = "2", features = ["no-entrypoint"] }
+# light-sdk = { path = "../../light-sdk", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+anchor-client = "0.30"
+
+[features]
+default = []
+# cpi = ["anchor-lang/cpi"]
+# light = ["light-sdk"]
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
+harness = false

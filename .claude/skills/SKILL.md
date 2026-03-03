@@ -1,167 +1,200 @@
----
-name: superteam-academy-dev
-description: Superteam Academy — decentralized learning platform on Solana with soulbound XP tokens (Token-2022), Metaplex Core credentials, course registry, achievements, and creator incentives. Covers Anchor program development, testing with LiteSVM/Mollusk/Trident.
-user-invocable: true
----
+# Solana Academy — Frontend Skill
 
-# Superteam Academy Skill
+This document is the canonical reference for frontend development on the Solana Academy Platform.
 
-## What this Skill is for
+## Core Technology Stack
 
-Use this Skill when the user asks for:
-- On-chain program development for the Academy platform
-- XP token minting (soulbound Token-2022)
-- Course registry and enrollment logic
-- Lesson completion and bitmap tracking
-- Finalize course / award XP flows
-- Metaplex Core credential issuance and upgrades (soulbound via PermanentFreezeDelegate)
-- Achievement system (create, award, deactivate)
-- Minter role management (register, revoke, reward XP)
-- Anchor program development, testing, security
-- Deployment workflows (devnet → mainnet)
+| Component | Technology | Version |
+| --- | --- | --- |
+| Framework | Next.js | 14.2+ |
+| UI Framework | React | 18.3+ |
+| Language | TypeScript | 5.5+ |
+| Styling | Tailwind CSS | 3.4+ |
+| Client State | Zustand | 4.5+ |
+| Server State | TanStack Query | 5.48+ |
+| Wallet Integration | @solana/wallet-adapter | 0.15+ |
+| i18n | next-intl | 3.15+ |
+| Code Editor | @monaco-editor/react | 4.7+ |
 
-## Core Concepts
-
-### Account Structure (6 PDAs + Metaplex Core NFTs)
-
-| Account | Seeds | Purpose |
-|---------|-------|---------|
-| Config | `["config"]` | Singleton: authority, backend signer, XP mint |
-| Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps, credential ref (closeable) |
-| MinterRole | `["minter", minter.key()]` | Registered XP minter with optional per-call cap (closeable via revoke_minter) |
-| AchievementType | `["achievement", achievement_id.as_bytes()]` | Achievement definition: name, collection, supply cap, XP reward |
-| AchievementReceipt | `["achievement_receipt", achievement_id.as_bytes(), recipient.key()]` | Proof of award — PDA collision prevents double-awarding |
-| Credential NFT | Metaplex Core asset (1 per learner per track) | Soulbound, wallet-visible, upgradeable via URI + Attributes plugin |
-
-### Instructions (16 Total)
-
-| Category | Instructions |
-|----------|-------------|
-| **Platform Management (2)** | `initialize`, `update_config` |
-| **Courses (2)** | `create_course`, `update_course` |
-| **Enrollment & Progress (6)** | `enroll`, `complete_lesson`, `finalize_course`, `close_enrollment`, `issue_credential`, `upgrade_credential` |
-| **Minter Roles (3)** | `register_minter`, `revoke_minter`, `reward_xp` |
-| **Achievements (3)** | `create_achievement_type`, `award_achievement`, `deactivate_achievement_type` |
-
-### Core Learning Loop
+## Project Structure
 
 ```
-ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE ENROLLMENT
+.
+├── app/                 ← Next.js App Directory (routes & pages)
+├── components/          ← React components (UI, page sections)
+├── lib/                 ← Utilities, services, hooks
+│   ├── hooks/          ← Custom React hooks
+│   ├── services/       ← Business logic services
+│   ├── types/          ← TypeScript interfaces
+│   ├── utils/          ← Helper functions
+│   └── i18n/           ← Internationalization
+├── public/             ← Static assets
+├── docs/               ← Documentation
+└── .claude/            ← This project configuration
+    ├── skills/         ← Skill guides
+    ├── rules/          ← Code standards
+    ├── commands/       ← Automated workflows
+    └── agents/         ← AI agent prompts
 ```
 
-1. **Enroll**: Learner signs, prerequisite check, create Enrollment PDA
-2. **Complete Lessons**: Backend signs, set bitmap bit, mint lesson XP (Token-2022 CPI)
-3. **Finalize Course**: Backend signs, verify all lessons done, mint completion bonus + creator XP
-4. **Issue Credential**: Backend signs, Metaplex Core createV2 CPI (PermanentFreezeDelegate + Attributes plugins)
-5. **Close Enrollment**: Learner signs, reclaim rent (immediate if completed, 24h cooldown if not)
+## Component Architecture
 
-### Key Design Decisions
+### For Pages (under `app/`)
+- Each page imports relevant components
+- Keep page logic minimal; delegate to components
+- Use server components for data fetching where possible
 
-- **XP = soulbound Token-2022 token** (NonTransferable + PermanentDelegate)
-- **Credentials = Metaplex Core NFTs** — soulbound via PermanentFreezeDelegate, wallet-visible, upgradeable
-- **Config PDA = update authority** of all track collection NFTs
-- **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI
-- **Completion bonus merged into `finalize_course`** — bonus XP = floor(xp_per_lesson * lesson_count / 2)
-- **No LearnerProfile PDA** — XP balance tracked via Token-2022 ATA
-- **Rotatable backend signer** stored in Config
-- **Reserved bytes** on all accounts for future-proofing without migrations
-- **`revoke_minter` closes the MinterRole PDA** (not a soft deactivation)
+### For Reusable Components (under `components/`)
+- Keep components under 300 lines
+- Use TypeScript for all props
+- Export via index files within subdirectories
+- Document complex components with JSDoc
 
-## Technology Stack
+### For Utilities (under `lib/`)
+- **hooks/**: Custom React hooks for reusable logic
+- **services/**: Business logic (API calls, data transformation)
+- **types/**: Shared TypeScript interfaces
+- **utils/**: Pure functions (formatting, validation)
 
-| Layer | Stack |
-|-------|-------|
-| Programs | Anchor 0.31+, Rust 1.82+ |
-| Token Standard | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
-| Credentials | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| Testing | Mollusk, LiteSVM, Trident (fuzz) |
-| Client | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| Frontend | Next.js 14+, React, Tailwind CSS |
-| RPC | Helius (DAS API for XP leaderboard + credential NFT queries) |
-| Content | Arweave (immutable course content) |
-| Multisig | Squads (platform authority) |
+## Key Patterns & Best Practices
 
-## Compute Budgets
+### State Management
 
-| Instruction | CU Budget |
-|-------------|-----------|
-| initialize | ~50K |
-| create_course | ~15K |
-| complete_lesson | ~30K |
-| finalize_course | ~50K |
-| issue_credential | ~50-100K |
-| upgrade_credential | ~50-100K |
-| award_achievement | ~80K |
+**Client State (Zustand):**
+- Learner profile, UI preferences
+- Use selectors to avoid unnecessary re-renders
+- Persist to localStorage for offline support
 
-## Operating Procedure
+**Server State (TanStack Query):**
+- Course listings, enrollment data, submissions
+- Auto-stale-while-revalidate (5 min default)
+- Automatic refetching on window focus
 
-### 1. Classify the task
+**Component State (useState):**
+- Form inputs, UI toggles
+- Local to the component only
 
-- Platform setup (Config, authority)
-- Course management (create, update, track assignment)
-- Enrollment flow (enroll, lessons, finalize, credentials, close)
-- Minter roles (register, revoke, reward XP)
-- Achievements (create type, award, deactivate)
-- Account structure (PDAs, state)
-- Access control (backend signer, authority, minter permissions)
-- Testing (unit, integration, fuzz)
-- Security (audit, attack vectors)
-- Deployment (devnet, mainnet)
+### Service Layer
 
-### 2. Implementation Checklist
+```typescript
+// All API calls go through services
+interface CourseService {
+  getAllCourses(): Promise<Course[]>;
+  getCourse(id: string): Promise<Course>;
+  enrollCourse(courseId: string): Promise<Enrollment>;
+}
 
-Always verify:
-- Account validation (owner, signer, PDA seeds + bump)
-- Backend signer matches `Config.backend_signer`
-- Checked arithmetic throughout (`checked_add`, `checked_sub`, `checked_mul`)
-- Bitmap operations correct for lesson tracking
-- Events emitted for state changes
-- Canonical PDA bumps stored (never recalculated)
-- Reserved bytes preserved on account modifications
-- CPI target program IDs validated
+// Components never call fetch() directly
+// Components use hooks which call services
+const useCourses = () => useQuery(['courses'], courseService.getAllCourses);
+```
 
-### 3. Testing Requirements
+### Error Handling
 
-- **Unit test** (Mollusk): Each instruction in isolation
-- **Integration test** (LiteSVM): Full enroll → complete lessons → finalize → credential flow
-- **Fuzz test** (Trident): Random amounts, edge cases, bitmap bounds
-- **Attack test**: Unauthorized signer, double completion, supply exhaustion
+- Always catch errors in async operations
+- Show user-friendly error messages
+- Log errors to monitoring service (Sentry, etc.)
+- Provide recovery options (retry, go back)
 
-## Progressive Disclosure (read when needed)
+### Performance
 
-### Programs & Development
-- [programs-anchor.md](programs-anchor.md) — Anchor patterns, constraints, testing pyramid, IDL generation
+- Code-split heavy components (CodeEditor, Charts)
+- Lazy-load images with Next.js Image component
+- Use React.memo for expensive components
+- Cache API responses via TanStack Query
+- Optimize bundle size (target: <200KB gzipped)
 
-### Testing & Security
-- [testing.md](testing.md) — LiteSVM, Mollusk, Trident, CI guidance
-- [security.md](security.md) — Vulnerability categories, program checklists
+## Development Workflow
 
-### Deployment
-- [deployment.md](deployment.md) — Devnet/mainnet workflows, verifiable builds, multisig
+### 1. Identify Task Type
+- **New Page** → Create under `app/[route]/`
+- **New Component** → Create under `components/[category]/`
+- **New Hook** → Create under `lib/hooks/`
+- **New Service** → Create under `lib/services/`
+- **New Type** → Add to `lib/types/index.ts`
 
-### Ecosystem & Reference
-- [ecosystem.md](ecosystem.md) — Token standards, DeFi protocols
-- [idl-codegen.md](idl-codegen.md) — Codama/Shank client generation
-- [resources.md](resources.md) — Official documentation links
+### 2. Check Code Standards
+- See `.claude/rules/typescript.md` for type patterns
+- See `.claude/rules/react.md` for component patterns
+- Run `npm run lint` to catch issues
 
-## Task Routing Guide
+### 3. Test Before Commit
+- Type check: `npm run type-check`
+- Build: `npm run build`
+- Lint: `npm run lint`
+- Local test: `npm run dev`
 
-| User asks about... | Primary file(s) |
-|--------------------|-----------------|
-| Anchor program code | programs-anchor.md |
-| Unit/integration testing | testing.md |
-| Fuzz testing (Trident) | testing.md |
-| Security review, audit | security.md |
-| Deploy to devnet/mainnet | deployment.md |
-| Token standards, SPL, Token-2022 | ecosystem.md |
-| Generated clients, IDL | idl-codegen.md |
-| Official docs and resources | resources.md |
+### 4. Commit & Push
+- Use clear commit messages
+- Reference related issues/tasks
+- GitHub Actions will run tests automatically
 
-## Canonical Docs
+## Implementation Checklist
 
-| Document | Purpose |
-|----------|---------|
-| `docs/SPEC.md` | Source of truth for all program behavior |
-| `docs/ARCHITECTURE.md` | Account maps, data flows, CU budgets |
-| `docs/INTEGRATION.md` | Frontend integration guide |
+When creating new features, verify:
+
+- [ ] TypeScript strict mode enabled; no `any` types
+- [ ] Props fully typed (no implicit `any`)
+- [ ] Error handling for all async operations
+- [ ] Internationalization: use `useI18n()` for all user-facing text
+- [ ] Accessibility: semantic HTML, aria labels where needed
+- [ ] Performance: images optimized, components memoized if needed
+- [ ] Tests written for business logic
+- [ ] Documentation updated (JSDoc, ARCHITECTURE.md)
+- [ ] No console warnings/errors
+- [ ] Builds successfully (`npm run build`)
+
+## Common Gotchas
+
+### Hydration Mismatch
+Client and server render different content:
+- **Fix**: Use `useEffect` for client-only values
+- **Fix**: Use `suppressHydrationWarning` only as last resort
+
+### Stale Props
+Component receives old props due to memoization:
+- **Fix**: Include all dependencies in `useCallback` dependencies
+- **Fix**: Use proper key in lists (never index)
+
+### Memory Leaks
+Subscriptions not cleaned up:
+- **Fix**: Always return cleanup function from `useEffect`
+- **Fix**: Check `isMounted` before setState in async operations
+
+### Missing Error Handling
+Unhandled promise rejections:
+- **Fix**: Always `.catch()` or `try/catch` in async functions
+- **Fix**: Validate API responses before using
+
+## Verifying Implementations
+
+Before marking a task complete:
+
+1. **Build Check**: `npm run build` (no errors)
+2. **Type Check**: `npm run type-check` (no errors)
+3. **Lint Check**: `npm run lint` (no errors)
+4. **Dev Test**: `npm run dev` then test in browser
+5. **Code Review**: Self-review code against patterns in `.claude/rules/`
+
+## When Stuck
+
+1. Check similar implementations in `components/` or existing pages
+2. Review patterns in `.claude/rules/typescript.md` and `.claude/rules/react.md`
+3. Check `.claude/skills/frontend-development.md` for detailed examples
+4. Review `docs/SPECIFICATION.md` for feature requirements
+
+## Future On-Chain Integration
+
+When implementing blockchain features:
+
+1. Add `lib/services/on-chain.service.ts` for Solana interactions
+2. Create hook: `lib/hooks/useProgram.ts` for program instructions
+3. Follow patterns in `.claude/skills/` for Anchor programs
+4. Always validate user input before signing transactions
+5. Test extensively on devnet before mainnet
+
+---
+
+**Document Version**: 1.0.0  
+**Last Updated**: February 2026  
+**Maintained By**: Superteam Academy Team

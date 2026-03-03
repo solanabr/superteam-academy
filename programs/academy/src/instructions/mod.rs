@@ -1,0 +1,16 @@
+pub mod initialize;
+pub mod update_config;
+pub mod create_course;
+pub mod update_course;
+pub mod register_minter;
+pub mod revoke_minter;
+pub mod create_achievement_type;
+pub mod deactivate_achievement_type;
+pub mod enroll;
+pub mod close_enrollment;
+pub mod complete_lesson;
+pub mod finalize_course;
+pub mod issue_credential;
+pub mod upgrade_credential;
+pub mod reward_xp;
+pub mod award_achievement;

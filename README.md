@@ -1,96 +1,273 @@
-# Superteam Academy
+# Superteam Academy Platform 🚀
 
-Decentralized learning platform on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. Platform governed by multisig authority.
+**Interactive Solana Development Learning Platform**
 
-## Monorepo Structure
+Production-ready platform for teaching Solana development through interactive, hands-on courses with gamification and on-chain credentials.
 
-```
-superteam-academy/
-├── onchain-academy/          ← Anchor program (deployed on devnet)
-│   ├── programs/             ← Rust program source (16 instructions)
-│   ├── tests/                ← 77 Rust + 62 TypeScript tests
-│   └── scripts/              ← Devnet interaction scripts
-├── app/                      ← Next.js frontend (bounty)
-├── sdk/                      ← TypeScript SDK (future)
-├── docs/                     ← Documentation
-│   ├── SPEC.md               ← Program specification
-│   ├── ARCHITECTURE.md       ← Account maps, data flows, CU budgets
-│   ├── INTEGRATION.md        ← Frontend integration guide
-│   └── DEPLOY-PROGRAM.md     ← Deploy your own devnet instance
-└── wallets/                  ← Keypairs (gitignored)
-```
+[![Tests](https://github.com/solanabr/solana-academy-platform/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/solanabr/solana-academy-platform/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Quick Start
+## 📚 Documentation
 
-```bash
-git clone https://github.com/solanabr/superteam-academy.git
-cd superteam-academy/onchain-academy
+Start here to understand the project:
 
-# Install dependencies
-yarn install
+| Document | Purpose |
+| --- | --- |
+| [**CLAUDE.md**](CLAUDE.md) | Project overview & AI assistant context |
+| [**docs/SPECIFICATION.md**](docs/SPECIFICATION.md) | Feature specifications & requirements |
+| [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md) | System design & data flows |
+| [**docs/QUICKSTART.md**](docs/QUICKSTART.md) | Setup instructions |
+| [**.claude/skills/SKILL.md**](.claude/skills/SKILL.md) | Frontend development guide |
 
-# Build the program
-anchor build
+## 🚀 Quick Start
 
-# Run tests (localnet)
-anchor test
+**Prerequisites**: Node.js 20+, npm 9+
 
-# Rust unit tests
-cargo test --manifest-path tests/rust/Cargo.toml
-```
-
-## Devnet Deployment
-
-The program is live on devnet:
-
-| | Address |
-|---|---|
-| **Program** | [`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet) |
-| **XP Mint** | [`xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`](https://explorer.solana.com/address/xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3?cluster=devnet) |
-| **Authority** | [`ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn`](https://explorer.solana.com/address/ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn?cluster=devnet) |
-
-Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) on devnet.
-
-## Tech Stack
-
-| Layer | Stack |
-|---|---|
-| **Programs** | Anchor 0.31+, Rust 1.82+ |
-| **XP Tokens** | Token-2022 (NonTransferable, PermanentDelegate) |
-| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| **Testing** | ts-mocha/Chai, Cargo test |
-| **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
-| **Multisig** | Squads (platform authority) |
-
-## Documentation
-
-- **[Program Specification](docs/SPEC.md)** — 16 instructions, 6 PDA types, 26 errors, 15 events
-- **[Architecture](docs/ARCHITECTURE.md)** — Account maps, data flows, CU budgets
-- **[Frontend Integration](docs/INTEGRATION.md)** — PDA derivation, instruction usage, events, error handling
-- **[Deployment Guide](docs/DEPLOY-PROGRAM.md)** — Deploy your own program instance on devnet
-- **[Frontend Bounty](docs/bounty.md)** — $4,800 USDC bounty for building the frontend
-
-## Contributing
+### 1. Clone & Install
 
 ```bash
-# Branch naming
-git checkout -b <type>/<scope>-<description>-<DD-MM-YYYY>
-# Examples:
-#   feat/enrollment-lessons-11-02-2026
-#   fix/cooldown-check-12-02-2026
-#   docs/integration-guide-17-02-2026
-
-# Before merging
-anchor build
-cargo fmt
-cargo clippy -- -W clippy::all
-cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
-anchor test
+git clone https://github.com/solanabr/solana-academy-platform.git
+cd solana-academy-platform
+npm install
 ```
 
-## License
+### 2. Configure Environment
 
-[MIT](LICENSE)
+```bash
+cp .env.example .env.local
+# Edit .env.local with your settings (defaults work for local dev)
+```
+
+### 3. Start Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📁 Project Structure
+
+```
+.
+├── app/                         ← Next.js app directory (routes)
+│   ├── courses/                ← Course browsing & lessons
+│   ├── dashboard/              ← User dashboard
+│   ├── profile/                ← User profile
+│   ├── leaderboard/            ← Rankings
+│   ├── settings/               ← User preferences
+│   └── layout.tsx              ← Root layout
+├── components/
+│   ├── courses/                ← Course-related components
+│   ├── dashboard/              ← Dashboard widgets
+│   ├── editor/                 ← Code editor & challenge runner
+│   ├── layout/                 ← Header & Footer
+│   └── ui/                     ← Base UI components
+├── lib/
+│   ├── hooks/                  ← Custom React hooks
+│   ├── services/               ← API & business logic
+│   ├── i18n/                   ← Internationalization
+│   ├── types/                  ← TypeScript interfaces
+│   └── utils/                  ← Helper functions
+├── docs/                       ← Project documentation
+│   ├── SPECIFICATION.md        ← Feature specs
+│   ├── ARCHITECTURE.md         ← System design
+│   └── IMPLEMENTATION_ORDER.md ← Phased plan
+├── .claude/                    ← AI assistant configuration
+│   ├── agents/                 ← AI agent profiles
+│   ├── commands/               ← Automated workflows
+│   ├── rules/                  ← Code quality standards
+│   └── skills/                 ← Development guides
+├── .github/
+│   └── workflows/              ← CI/CD pipelines
+├── CLAUDE.md                   ← Project overview
+├── package.json
+├── tsconfig.json
+├── next.config.js
+└── README.md                   ← This file
+```
+
+## 🛠️ Available Commands
+
+```bash
+npm run dev           # Start development server (port 3000)
+npm run build         # Production build
+npm run start         # Run production build  
+npm run type-check    # TypeScript validation
+npm run lint          # ESLint validation
+npm test              # Run test suite
+```
+
+## 🎨 Design System
+
+### Colors
+- **Neon Accents**: Cyan (#00F0FF), Magenta (#FF00FF), Green (#00FF41)
+- **Terminal**: Dark backgrounds with grid pattern
+- **Solana**: Purple (#9945FF), Green (#14F195)
+
+### Typography
+- **Display**: Space Grotesk (headings)
+- **Body**: Inter (readable text)
+- **Code**: JetBrains Mono (code snippets)
+
+### Animations
+- Glitch effects on hover
+- Glow animations for neon elements
+- Smooth transitions throughout
+
+## 🎯 Features
+
+### Phase 1: MVP ✅
+- [x] Next.js 14 setup with TypeScript
+- [x] Tailwind CSS configuration
+- [x] Component architecture
+- [x] Navigation & routing
+- [ ] Landing page design
+- [ ] Course catalog page
+- [ ] Course detail & lesson pages
+- [ ] Code editor integration
+
+### Phase 2: Core Functionality
+- [ ] User dashboard
+- [ ] Learning progress tracking
+- [ ] Code challenge execution
+- [ ] Achievement system
+- [ ] User profile page
+- [ ] Settings & preferences
+
+### Phase 3: Gamification
+- [ ] XP point system
+- [ ] Leaderboard integration
+- [ ] Achievement badges
+- [ ] Streak tracking
+- [ ] Level progression
+
+### Phase 4: On-Chain Integration (Future)
+- [ ] Wallet connection
+- [ ] XP token reading (Token-2022)
+- [ ] Certificate issuance (ZK Compression)
+- [ ] Credential verification
+- [ ] On-chain leaderboard
+
+## 🛠️ Tech Stack
+
+| Category | Technology | Version |
+| --- | --- | --- |
+| Framework | Next.js | 14.2+ |
+| UI Library | React | 18.3+ |
+| Language | TypeScript | 5.5+ |
+| Styling | Tailwind CSS | 3.4+ |
+| State (Client) | Zustand | 4.5+ |
+| State (Server) | TanStack Query | 5.48+ |
+| Code Editor | Monaco Editor | 4.7+ |
+| i18n | next-intl | 3.15+ |
+| Package Manager | npm | 9+ |
+
+## 📖 Development Guide
+
+### Code Standards
+
+Follow these for all contributions:
+
+- **TypeScript**: Strict mode enabled; no `any` types
+- **React**: Functional components with hooks
+- **Components**: Keep under 300 lines
+- **Styling**: Tailwind CSS + `cn()` utility
+- **i18n**: Use `useI18n()` for all user text
+- **Testing**: Jest + React Testing Library
+- **Commits**: Conventional commit format
+
+See code standards docs:
+- [.claude/rules/typescript.md](.claude/rules/typescript.md) - TypeScript best practices
+- [.claude/rules/react.md](.claude/rules/react.md) - React component patterns
+- [.claude/skills/frontend-development.md](.claude/skills/frontend-development.md) - Detailed guide
+
+### Development Workflow
+
+1. **Create feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make changes** following code standards
+
+3. **Verify & test**
+   ```bash
+   npm run type-check   # Type validation
+   npm run lint         # Code linting
+   npm run build        # Production build
+   npm test             # Run tests
+   ```
+
+4. **Commit & push**
+   ```bash
+   git commit -m "feat: description of change"
+   git push origin feature/your-feature-name
+   ```
+
+5. **Open pull request** on GitHub
+
+### CI/CD Pipeline
+
+All commits to `main` and `develop` branches automatically:
+- Run TypeScript type checking
+- Run ESLint validation
+- Execute test suite
+- Perform security audit
+- Deploy preview to Vercel (for PRs)
+- Deploy to production (main branch only)
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. Connect GitHub repository to Vercel
+2. Set environment variables in project settings
+3. Push to `main` branch for production deployment
+4. Push to `develop` branch for staging
+
+### Manual Deployment
+
+```bash
+# Build production bundle
+npm run build
+
+# Run production server
+npm run start
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please:
+
+1. Read [docs/SPECIFICATION.md](docs/SPECIFICATION.md) for requirements
+2. Check [CLAUDE.md](CLAUDE.md) for project structure
+3. Follow code standards in `.claude/rules/`
+4. Write tests for new features
+5. Update documentation
+6. Open pull request with clear description
+
+## 📝 License
+
+MIT License - See [LICENSE](LICENSE) for details
+
+Copyright © 2026 Superteam Brazil
+
+## 🔗 Links
+
+- **Repository**: https://github.com/solanabr/solana-academy-platform
+- **Documentation**: See `/docs` folder
+- **Solana Docs**: https://docs.solana.com/
+- **Next.js Docs**: https://nextjs.org/docs
+
+## 🙋‍♀️ Support
+
+- **Questions**: Check [docs/](docs/) for documentation
+- **Issues**: Open GitHub issue
+- **Discord**: Superteam Brazil community
+
+---
+
+**Last Updated**: February 2026  
+**Maintained By**: Superteam Academy Team  
+**Status**: In Active Development

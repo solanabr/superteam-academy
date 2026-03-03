@@ -1,61 +1,43 @@
-# Dependencies
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Rust / Anchor build artifacts
-target/
-.anchor/
-**/*.rs.bk
+# testing
+/coverage
 
-# Test artifacts
-test-ledger/
+# next.js
+/.next/
+/out/
 
-# Lock files (regenerated per-workspace)
-# Keep Cargo.lock for reproducible builds but ignore yarn.lock if using pnpm
-yarn.lock
+# production
+/build
 
-# OS files
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# Environment variables
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
 .env
-.env.*
-!.env.example
 
-# IDE / Editor
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.vim/
+# vercel
+.vercel
 
-# Yarn / pnpm
-.yarn/
-.pnp.*
-yarn-error.log
-.pnpm-debug.log
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
-# Keypair files (contain private keys — NEVER commit)
+# security - keypair files
 wallets/
+*.json.keypair
 
-# Claude local settings (user-specific permissions)
-.claude/settings.local.json
-
-# Coverage / profiling
-coverage/
-lcov.info
-*.profraw
-*.profdata
-
-# Fuzz corpus (can be large)
-onchain-academy/trident-tests/fuzz/corpus/
-onchain-academy/trident-tests/fuzz/artifacts/
-
-# Verifiable build artifacts
-onchain-academy/target/verifiable/
-
-# Misc
-*.log
-*.tmp
-.cache/
+# build artifacts
+programs/*/target/
+/target/
+Cargo.lock

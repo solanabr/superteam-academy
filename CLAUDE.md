@@ -1,230 +1,209 @@
-# Superteam Academy
+# Solana Academy Platform
 
-You are **academy-builder** for the Superteam Academy monorepo — on-chain program, SDK, and frontend.
+This is the official AI assistant context file for the Superteam Academy Platform project.
 
-## Project Overview
+## Quick Links
 
-Superteam Academy is a **decentralized learning platform on Solana**. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. The platform is governed by a multisig authority.
-
-**Docs**:
-- `docs/SPEC.md` — Canonical program specification (source of truth)
-- `docs/ARCHITECTURE.md` — Account maps, data flows, CU budgets
-- `docs/INTEGRATION.md` — Frontend integration guide (PDA derivation, instruction usage, events)
-
-## Communication Style
-
-- No filler phrases
-- Direct, efficient responses
-- Code first, explanations when needed
-- Admit uncertainty rather than guess
-
-## Branch Workflow
-
-```bash
-git checkout -b <type>/<scope>-<description>-<DD-MM-YYYY>
-# feat/enrollment-lessons-11-02-2026
-# fix/cooldown-check-12-02-2026
-# docs/integration-guide-17-02-2026
-```
-
-Use `/quick-commit` to automate branch creation and commits.
+- **Specification**: [docs/SPECIFICATION.md](docs/SPECIFICATION.md)
+- **Architecture**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **Implementation Order**: [docs/IMPLEMENTATION_ORDER.md](docs/IMPLEMENTATION_ORDER.md)
+- **Canonical Docs**: See `.claude/skills/SKILL.md`
 
 ## Monorepo Structure
 
 ```
-superteam-academy/
-├── CLAUDE.md                    ← You are here
+.
+├── .claude/
+│   ├── agents/                  ← Specialized agents (engineer, architect, tech-docs-writer)
+│   ├── commands/                ← Slash commands (/quick-commit, /deploy, /test, etc.)
+│   ├── rules/                   ← Always-on constraints (typescript.md, react.md)
+│   ├── skills/                  ← Skill docs (frontend, testing, deployment)
+│   └── settings.json            ← Permissions, hooks, model defaults
+├── .github/
+│   └── workflows/               ← CI/CD pipelines (tests, linting, deployment)
 ├── docs/
-│   ├── SPEC.md                  ← Program specification (v3.0)
-│   ├── ARCHITECTURE.md          ← System diagrams, account maps, CU budgets
-│   └── INTEGRATION.md           ← Frontend integration guide
-├── onchain-academy/             ← Anchor workspace
-│   ├── programs/
-│   │   └── onchain-academy/    ← On-chain program (Anchor 0.31+)
-│   │       └── src/
-│   │           ├── lib.rs       ← 16 instructions
-│   │           ├── state/       ← 6 PDA account structs
-│   │           ├── instructions/← One file per instruction
-│   │           ├── errors.rs    ← 26 error variants
-│   │           ├── events.rs    ← 15 events
-│   │           └── utils.rs     ← Shared helpers (mint_xp)
-│   ├── tests/
-│   │   ├── onchain-academy.ts  ← 62 TypeScript integration tests
-│   │   └── rust/                ← 77 Rust unit tests
-│   ├── Anchor.toml
-│   ├── Cargo.toml               ← Workspace root
-│   └── package.json
-├── app/                         ← Next.js frontend (future)
-├── sdk/                         ← TypeScript SDK (future)
-├── wallets/                     ← Keypairs (gitignored)
-├── scripts/                     ← Helper scripts
-└── .claude/
-    ├── agents/                  ← 6 specialized agents
-    ├── commands/                ← 11 slash commands
-    ├── rules/                   ← Always-on constraints
-    ├── skills/                  ← Skill docs
-    └── settings.json            ← Permissions, hooks
+│   ├── SPECIFICATION.md         ← Frontend & dApp specification
+│   ├── ARCHITECTURE.md          ← System architecture & data flows
+│   ├── IMPLEMENTATION_ORDER.md  ← Phased implementation plan
+│   └── FEATURE_ROADMAP.md       ← Future features & improvements
+├── app/                         ← Next.js app directory (frontend)
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── courses/
+│   ├── dashboard/
+│   ├── certificates/
+│   └── ...
+├── components/                  ← React components
+│   ├── courses/
+│   ├── dashboard/
+│   ├── editor/
+│   ├── layout/
+│   └── ui/
+├── lib/
+│   ├── hooks/
+│   ├── i18n/
+│   ├── services/
+│   ├── types/
+│   └── utils/
+├── Anchor.toml                  ← (Future) On-chain programs
+├── Cargo.toml                   ← (Future) Rust workspace
+├── package.json
+├── tsconfig.json
+├── tailwind.config.ts
+├── next.config.js
+├── README.md
+└── CLAUDE.md                    ← This file
 ```
 
 ## Technology Stack
 
-| Layer | Stack |
-|-------|-------|
-| **Programs** | Anchor 0.31+, Rust 1.82+ |
-| **XP Tokens** | Token-2022 (NonTransferable, PermanentDelegate) |
-| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| **Testing** | Mollusk, LiteSVM, ts-mocha/Chai |
-| **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
-| **Multisig** | Squads (platform authority) |
+| Layer         | Stack                                                    |
+| ------------- | -------------------------------------------------------- |
+| Frontend      | Next.js 14+, React 18, TypeScript, Tailwind CSS          |
+| Wallet        | @solana/wallet-adapter-react                             |
+| State Mgmt    | Zustand (client state), TanStack Query (server state)    |
+| i18n          | next-intl (internationalization)                         |
+| Editor        | Monaco Editor (in-browser code editor)                   |
+| RPC           | Helius (production), localhost (dev)                     |
+| On-Chain      | Anchor programs (future), Token-2022, Light SDK (future) |
+| Testing       | Jest, Vitest, Playwright (future)                        |
+| CI/CD         | GitHub Actions                                           |
 
-## Program Overview
+## Core Features
 
-16 instructions, 6 PDA types, 26 error variants, 15 events.
+### Phase 1: MVP (Current)
+- [x] Course catalog with search & filters
+- [x] Learning dashboard
+- [x] In-browser code editor
+- [x] Multi-language interface
+- [x] User profiles
+- [x] Settings panel
 
-See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend usage.
+### Phase 2: On-Chain Integration (Upcoming)
+- [ ] Wallet connection & authentication
+- [ ] XP token minting
+- [ ] Achievement credentials
+- [ ] Leaderboard (on-chain XP)
+- [ ] Certificate issuance
 
-### Key Design Decisions
+### Phase 3: Advanced Features
+- [ ] Live collaboration
+- [ ] Community forums
+- [ ] Mentorship system
+- [ ] Corporate training tracks
 
-- **XP = soulbound Token-2022** — NonTransferable + PermanentDelegate (no transfer, no self-burn)
-- **Credentials = Metaplex Core NFTs** — soulbound, wallet-visible, upgradeable attributes
-- **No LearnerProfile PDA** — XP balance via Token-2022 ATA
-- **`finalize_course` / `issue_credential` split** — XP awards independent of credential CPI
-- **Rotatable backend signer** — stored in Config, rotatable via `update_config`
-- **Reserved bytes** on all accounts for future-proofing
+## System Overview
 
-## Agents
-
-| Agent | Use When |
-|-------|----------|
-| **solana-architect** | System design, PDA schemes, token economics |
-| **anchor-engineer** | Anchor programs, IDL generation, constraints |
-| **solana-qa-engineer** | Testing, CU profiling, code quality |
-| **tech-docs-writer** | Documentation generation |
-| **solana-guide** | Learning, tutorials, concept explanations |
-| **solana-researcher** | Ecosystem research |
-
-## Mandatory Workflow
-
-Every program change:
-1. **Build**: `anchor build`
-2. **Format**: `cargo fmt`
-3. **Lint**: `cargo clippy -- -W clippy::all`
-4. **Test**: `cargo test --manifest-path tests/rust/Cargo.toml && anchor test`
-5. **Quality**: Remove AI slop (see below)
-6. **Deploy**: Devnet first, mainnet with explicit confirmation
-
-## Security Principles
-
-**NEVER:**
-- Deploy to mainnet without explicit user confirmation
-- Use unchecked arithmetic in programs
-- Skip account validation
-- Use `unwrap()` in program code
-- Recalculate PDA bumps on every call
-
-**ALWAYS:**
-- Validate ALL accounts (owner, signer, PDA)
-- Use checked arithmetic (`checked_add`, `checked_sub`, `checked_mul`)
-- Store canonical PDA bumps
-- Reload accounts after CPIs if modified
-- Validate CPI target program IDs
-- Verify backend_signer matches Config.backend_signer
-
-## Code Quality: AI Slop Removal
-
-Before completing any branch:
-
-```bash
-git diff main...HEAD
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Frontend (Next.js + React)                       │
+│                                                                     │
+│  Wallet Adapter ──── Anchor Client ──── Helius RPC ──── Solana     │
+│                                                                     │
+│  Components: Header, CourseCard, CodeEditor, GamificationUI         │
+│  Pages: Dashboard, Courses, Profile, Leaderboard, Certificates      │
+└────────────────────────────────────────────┬────────────────────────┘
+                                             │
+                           (Future) On-Chain Programs
 ```
 
-**Remove:** Obvious comments, defensive try/catch abnormal for codebase, verbose error messages, redundant validation, style inconsistencies.
-
-**Keep:** Security checks, comments on non-obvious logic (bitmap math, Metaplex Core CPI), error handling matching existing patterns.
-
-## Skill System
-
-Entry point: `.claude/skills/SKILL.md`
-
-| Category | Files |
-|----------|-------|
-| **Programs** | programs-anchor.md |
-| **Testing** | testing.md |
-| **Security** | security.md |
-| **Deployment** | deployment.md |
-| **Ecosystem** | ecosystem.md, resources.md |
-| **IDL** | idl-codegen.md |
-
-Rules (always-on): `.claude/rules/anchor.md`, `.claude/rules/typescript.md`
-
-## Commands
-
-| Command | Purpose |
-|---------|---------|
-| `/quick-commit` | Format, lint, branch creation, conventional commits |
-| `/build-program` | Build Solana program (Anchor) |
-| `/test-rust` | Run Rust unit tests |
-| `/test-ts` | Run TypeScript integration tests |
-| `/deploy` | Deploy to devnet or mainnet |
-| `/audit-solana` | Security audit workflow |
-| `/setup-ci-cd` | Configure GitHub Actions |
-| `/write-docs` | Generate documentation |
-| `/explain-code` | Explain complex code with diagrams |
-| `/plan-feature` | Plan feature implementation |
-
-## Vanity Keypairs
-
-Keypairs live in `wallets/` (gitignored). Replace placeholders with vanity-ground keys.
-
-| File | Purpose |
-|------|---------|
-| `wallets/signer.json` | Authority/payer keypair |
-| `wallets/program-keypair.json` | Program deploy keypair (determines program ID) |
-| `wallets/xp-mint-keypair.json` | XP mint keypair (determines mint address) |
+## Development Commands
 
 ```bash
-# Grind vanity addresses
-solana-keygen grind --starts-with ACAD:1   # program
-solana-keygen grind --starts-with XP:1     # XP mint
+# Install dependencies
+npm install
 
-# Place keypairs
-cp <program-keypair>.json wallets/program-keypair.json
-cp <xp-mint-keypair>.json wallets/xp-mint-keypair.json
+# Start development server
+npm run dev
 
-# Update program ID everywhere
-./scripts/update-program-id.sh
+# Build for production
+npm build
+npm start
 
-# Deploy
-anchor build
-anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypair.json
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
 ```
 
-## Pre-Mainnet Checklist
+## Key Files & Patterns
 
-- [ ] All tests passing (unit + integration + fuzz 10+ min)
-- [ ] Security audit completed
-- [ ] Verifiable build (`anchor build --verifiable`)
-- [ ] CU optimization verified (see ARCHITECTURE.md)
-- [ ] Metaplex Core credential flow tested end-to-end
-- [ ] Devnet testing successful (multiple days)
-- [ ] AI slop removed from branch
-- [ ] User explicit confirmation received
+### Components
+- **CourseCard**: Displays course preview with metadata
+- **CodeEditor**: Monaco-based in-browser editor for lessons
+- **ChallengeRunner**: Executes and validates code challenges
+- **GamificationUI**: XP counter, streaks, achievements display
+- **DashboardUI**: Learner progress & achievements overview
 
-## Quick Reference
+### Services
+- `course.service.ts`: Fetch and manage course data
+- `learning-progress.service.ts`: Track learner progress
+- (Future) `on-chain.service.ts`: Interact with Solana programs
 
-```bash
-# Build + test
-anchor build && cargo fmt && cargo clippy -- -W clippy::all
-cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
-anchor test
+### Hooks
+- `useI18n()`: Multi-language support
+- `useLearningProgress()`: Track & update learner progress
+- (Future) `useWallet()`: Wallet connection & signing
+- (Future) `useProgram()`: Interact with on-chain programs
 
-# Deploy flow
-/deploy  # Always devnet first
-```
+## Important Rules
+
+### Code Quality
+- Use TypeScript strictly (no `any` types)
+- Follow Next.js app directory patterns
+- Keep components under 300 lines
+- Use Tailwind CSS for styling
+- Export components via index files
+
+### Testing
+- Unit tests for business logic
+- Integration tests for user flows
+- E2E tests with Playwright
+- Minimum 70% coverage for critical paths
+
+### Deployment
+- Always run `npm run build` before committing
+- Fix all TypeScript errors & ESLint warnings
+- Test locally with `npm run dev` first
+- Use GitHub Actions for automated deployment
+
+## On-Chain Integration (Future)
+
+When implementing on-chain features:
+
+1. **Program Development**: Anchor framework (Rust)
+2. **Client SDK**: TypeScript wrapper around IDL
+3. **Frontend Integration**: Connect wallet → Call program → Update UI
+4. **Testing**: Mollusk (unit) + LiteSVM (integration) + Trident (fuzz)
+5. **Deployment**: Devnet → Mainnet via multisig (Squads)
+
+See `.claude/skills/` for detailed guides.
+
+## Operating Procedure
+
+1. **Classify the task** (frontend feature, component, service, docs, etc.)
+2. **Check constraints** in `.claude/rules/`
+3. **Follow patterns** in existing code
+4. **Write tests** before/alongside implementation
+5. **Update docs** for new features
+6. **Commit with clear message**: `/quick-commit` or manual process
+
+## Getting Help
+
+- **Architecture questions**: See `docs/ARCHITECTURE.md`
+- **Feature planning**: See `docs/IMPLEMENTATION_ORDER.md`
+- **Code patterns**: See `.claude/rules/typescript.md` and `.claude/rules/react.md`
+- **Component examples**: Browse `components/` directory
+- **Deployment**: See `.claude/commands/deploy.md`
+
+## License
+
+MIT License - Superteam Brazil 2026
 
 ---
 
-**Docs**: `docs/` | **Skills**: `.claude/skills/` | **Rules**: `.claude/rules/` | **Commands**: `.claude/commands/` | **Agents**: `.claude/agents/`
+**Last Updated**: February 2026  
+**Version**: 1.0.0  
+**Status**: MVP Phase
