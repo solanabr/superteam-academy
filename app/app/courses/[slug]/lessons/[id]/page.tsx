@@ -16,6 +16,8 @@ export default async function LessonPage({
   }
 
   const allLessons = await courseService.getLessons(slug);
+  const lessonsWithMeta = allLessons.map((l, idx) => ({ ...l, lessonNumber: idx + 1 }));
+  
   const currentIndex = allLessons.findIndex((l) => l.id === id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : undefined;
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : undefined;
@@ -24,6 +26,7 @@ export default async function LessonPage({
     <LessonClient
       lesson={lesson}
       courseSlug={slug}
+      allLessons={lessonsWithMeta}
       prevLesson={prevLesson}
       nextLesson={nextLesson}
     />
