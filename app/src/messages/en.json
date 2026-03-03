@@ -172,6 +172,110 @@
       "xpLabel": "XP Distributed",
       "testimonialLabel": "What builders are saying"
     },
+    "quiz": {
+      "sectionTitle": "Test Your Knowledge",
+      "sectionSubtitle": "Think you know Solana? Take this quick quiz to find out.",
+      "questions": {
+        "0": {
+          "question": "What is a PDA (Program Derived Address) in Solana?",
+          "options": {
+            "0": "A wallet address generated from a private key",
+            "1": "An address derived from a program ID and seeds, with no private key",
+            "2": "A temporary address used only during transactions",
+            "3": "An address that can only hold SOL tokens"
+          },
+          "correct": "1"
+        },
+        "1": {
+          "question": "What token standard does Solana use for fungible tokens?",
+          "options": {
+            "0": "ERC-20",
+            "1": "BEP-20",
+            "2": "SPL Token / Token-2022",
+            "3": "TRC-20"
+          },
+          "correct": "2"
+        },
+        "2": {
+          "question": "What is the Anchor framework used for?",
+          "options": {
+            "0": "Building frontend applications on Solana",
+            "1": "Managing Solana validator nodes",
+            "2": "Developing and deploying Solana programs with Rust macros",
+            "3": "Creating NFT marketplaces exclusively"
+          },
+          "correct": "2"
+        },
+        "3": {
+          "question": "What makes a soulbound token different from a regular token?",
+          "options": {
+            "0": "It costs more to mint",
+            "1": "It can only be sent once",
+            "2": "It is non-transferable and bound to a wallet",
+            "3": "It automatically expires after 30 days"
+          },
+          "correct": "2"
+        }
+      },
+      "correctFeedback": "Correct! Well done.",
+      "incorrectFeedback": "Not quite. The correct answer is highlighted above.",
+      "nextQuestion": "Next",
+      "seeResults": "See Results",
+      "resultTitle": "Quiz Complete!",
+      "resultScore": "You got {score} out of {total} correct",
+      "tryAgain": "Try Again"
+    },
+    "codePlayground": {
+      "sectionTitle": "Try It Now",
+      "sectionSubtitle": "See what building on Solana looks like. Run this sample Anchor program.",
+      "run": "Run",
+      "running": "Running...",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "terminal": "Terminal",
+      "placeholder": "Click 'Run' to see the output..."
+    },
+    "faq": {
+      "sectionTitle": "Frequently Asked Questions",
+      "sectionSubtitle": "Everything you need to know about Superteam Academy",
+      "items": {
+        "0": {
+          "question": "Is Superteam Academy free?",
+          "answer": "Yes! All courses and learning paths are completely free. You just need a Solana wallet to earn XP and credentials."
+        },
+        "1": {
+          "question": "Do I need prior Solana experience?",
+          "answer": "Not at all. We have beginner tracks that start from the basics of Rust and Solana. Our learning paths are designed to take you from zero to deploying programs."
+        },
+        "2": {
+          "question": "What are soulbound XP tokens?",
+          "answer": "Soulbound XP tokens are non-transferable SPL tokens on Solana. They represent your learning progress and cannot be bought, sold, or transferred — they're permanently tied to your wallet."
+        },
+        "3": {
+          "question": "How do on-chain credentials work?",
+          "answer": "When you complete a course, you receive a Metaplex Core NFT credential. It's soulbound (non-transferable) and contains metadata about what you learned, your score, and completion date."
+        },
+        "4": {
+          "question": "Can I contribute courses as a creator?",
+          "answer": "Yes! Course creators earn XP rewards when students complete their courses. Reach out through our community channels to get started as a creator."
+        },
+        "5": {
+          "question": "What wallet do I need?",
+          "answer": "Any Solana-compatible wallet works — Phantom, Solflare, Backpack, or others. You'll need a small amount of SOL for transaction fees on devnet (free) or mainnet."
+        },
+        "6": {
+          "question": "Is the platform open source?",
+          "answer": "Yes! Superteam Academy is fully open source under the MIT license. You can view the code, contribute, or fork it for your own learning platform."
+        }
+      }
+    },
+    "screenshots": {
+      "sectionTitle": "See It In Action",
+      "sectionSubtitle": "From dashboard to lessons to leaderboards — explore the platform",
+      "dashboard": { "label": "Dashboard" },
+      "lesson": { "label": "Interactive Lesson" },
+      "leaderboard": { "label": "Leaderboard" }
+    },
     "cta": {
       "title": "Ready to Build on Solana?",
       "subtitle": "Join thousands of developers earning verifiable credentials. Connect your wallet and start your first course today.",

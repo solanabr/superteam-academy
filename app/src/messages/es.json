@@ -172,6 +172,110 @@
       "xpLabel": "XP Distribuido",
       "testimonialLabel": "Lo que dicen los builders"
     },
+    "quiz": {
+      "sectionTitle": "Pon a Prueba tu Conocimiento",
+      "sectionSubtitle": "¿Crees que conoces Solana? Haz este quiz rápido para descubrirlo.",
+      "questions": {
+        "0": {
+          "question": "¿Qué es un PDA (Program Derived Address) en Solana?",
+          "options": {
+            "0": "Una dirección de billetera generada a partir de una clave privada",
+            "1": "Una dirección derivada de un program ID y seeds, sin clave privada",
+            "2": "Una dirección temporal usada solo durante transacciones",
+            "3": "Una dirección que solo puede contener tokens SOL"
+          },
+          "correct": "1"
+        },
+        "1": {
+          "question": "¿Qué estándar de token usa Solana para tokens fungibles?",
+          "options": {
+            "0": "ERC-20",
+            "1": "BEP-20",
+            "2": "SPL Token / Token-2022",
+            "3": "TRC-20"
+          },
+          "correct": "2"
+        },
+        "2": {
+          "question": "¿Para qué se usa el framework Anchor?",
+          "options": {
+            "0": "Construir aplicaciones frontend en Solana",
+            "1": "Gestionar nodos validadores de Solana",
+            "2": "Desarrollar y desplegar programas Solana con macros de Rust",
+            "3": "Crear marketplaces de NFT exclusivamente"
+          },
+          "correct": "2"
+        },
+        "3": {
+          "question": "¿Qué diferencia a un token soulbound de un token regular?",
+          "options": {
+            "0": "Cuesta más acuñarlo",
+            "1": "Solo puede enviarse una vez",
+            "2": "Es no transferible y está vinculado a una billetera",
+            "3": "Expira automáticamente después de 30 días"
+          },
+          "correct": "2"
+        }
+      },
+      "correctFeedback": "¡Correcto! Bien hecho.",
+      "incorrectFeedback": "No exactamente. La respuesta correcta está resaltada arriba.",
+      "nextQuestion": "Siguiente",
+      "seeResults": "Ver Resultados",
+      "resultTitle": "¡Quiz Completo!",
+      "resultScore": "Acertaste {score} de {total}",
+      "tryAgain": "Intentar de Nuevo"
+    },
+    "codePlayground": {
+      "sectionTitle": "Pruébalo Ahora",
+      "sectionSubtitle": "Mira cómo es construir en Solana. Ejecuta este programa Anchor de ejemplo.",
+      "run": "Ejecutar",
+      "running": "Ejecutando...",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "terminal": "Terminal",
+      "placeholder": "Haz clic en 'Ejecutar' para ver la salida..."
+    },
+    "faq": {
+      "sectionTitle": "Preguntas Frecuentes",
+      "sectionSubtitle": "Todo lo que necesitas saber sobre Superteam Academy",
+      "items": {
+        "0": {
+          "question": "¿Es gratuita Superteam Academy?",
+          "answer": "¡Sí! Todos los cursos y rutas de aprendizaje son completamente gratuitos. Solo necesitas una billetera Solana para ganar XP y credenciales."
+        },
+        "1": {
+          "question": "¿Necesito experiencia previa con Solana?",
+          "answer": "Para nada. Tenemos rutas para principiantes que empiezan desde lo básico de Rust y Solana. Nuestras rutas están diseñadas para llevarte de cero a desplegar programas."
+        },
+        "2": {
+          "question": "¿Qué son los tokens de XP soulbound?",
+          "answer": "Los tokens de XP soulbound son tokens SPL no transferibles en Solana. Representan tu progreso de aprendizaje y no pueden comprarse, venderse ni transferirse — están permanentemente vinculados a tu billetera."
+        },
+        "3": {
+          "question": "¿Cómo funcionan las credenciales on-chain?",
+          "answer": "Al completar un curso, recibes una credencial NFT Metaplex Core. Es soulbound (no transferible) y contiene metadatos sobre lo que aprendiste, tu puntuación y fecha de finalización."
+        },
+        "4": {
+          "question": "¿Puedo contribuir cursos como creador?",
+          "answer": "¡Sí! Los creadores de cursos ganan recompensas en XP cuando los estudiantes completan sus cursos. Contáctanos a través de nuestros canales de comunidad para empezar como creador."
+        },
+        "5": {
+          "question": "¿Qué billetera necesito?",
+          "answer": "Cualquier billetera compatible con Solana funciona — Phantom, Solflare, Backpack u otras. Necesitarás una pequeña cantidad de SOL para las tarifas de transacción en devnet (gratis) o mainnet."
+        },
+        "6": {
+          "question": "¿Es la plataforma open source?",
+          "answer": "¡Sí! Superteam Academy es completamente open source bajo la licencia MIT. Puedes ver el código, contribuir o hacer fork para tu propia plataforma de aprendizaje."
+        }
+      }
+    },
+    "screenshots": {
+      "sectionTitle": "Míralo en Acción",
+      "sectionSubtitle": "Del panel a las lecciones y clasificaciones — explora la plataforma",
+      "dashboard": { "label": "Panel" },
+      "lesson": { "label": "Lección Interactiva" },
+      "leaderboard": { "label": "Clasificación" }
+    },
     "cta": {
       "title": "¿Listo para Construir en Solana?",
       "subtitle": "Únete a miles de desarrolladores que obtienen credenciales verificables. Conecta tu billetera y empieza tu primer curso hoy.",

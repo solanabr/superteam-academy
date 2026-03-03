@@ -440,3 +440,192 @@ body {
 .animate-page-enter {
   animation: page-enter 0.15s ease-out;
 }
+
+/* ── Landing Page Animations ── */
+
+/* Hero badge shimmer sweep */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer-sweep 3s ease-in-out infinite;
+}
+
+/* Animated gradient text — hero title keyword highlight */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.text-gradient-animated {
+  background: linear-gradient(
+    90deg,
+    var(--brazil-gold) 0%,
+    var(--st-green) 25%,
+    var(--brazil-teal) 50%,
+    var(--brazil-gold) 75%,
+    var(--st-green) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* Pulsing glow for CTA and primary buttons */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px 0 rgba(68, 128, 56, 0.2); }
+  50% { box-shadow: 0 0 40px 8px rgba(68, 128, 56, 0.35); }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Animated border gradient — cards */
+@keyframes border-rotate {
+  0% { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.animate-border-glow {
+  animation: border-rotate 4s linear infinite;
+  border-image: conic-gradient(
+    from var(--border-angle),
+    var(--brazil-gold) 0%,
+    var(--st-green) 33%,
+    var(--brazil-teal) 66%,
+    var(--brazil-gold) 100%
+  ) 1;
+}
+
+/* Icon bounce on hover */
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-6px) scale(1.15); }
+  50% { transform: translateY(-2px) scale(1.05); }
+}
+
+.group:hover .animate-icon-bounce {
+  animation: icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Marquee scroll for partner logos */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Stat bar pulse on viewport entry */
+@keyframes stat-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-stat-pop {
+  animation: stat-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Hover card tilt glow */
+.card-hover-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover-glow::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(200, 184, 48, 0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-hover-glow:hover::before {
+  opacity: 1;
+}
+
+/* Typewriter cursor blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor-blink::after {
+  content: "|";
+  animation: cursor-blink 0.8s step-end infinite;
+  color: var(--brazil-gold);
+  font-weight: 200;
+}
+
+/* Floating gradient orb background */
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 10px) scale(1.02); }
+}
+
+.animate-orb {
+  animation: orb-float 20s ease-in-out infinite;
+}
+
+.animate-orb-delayed {
+  animation: orb-float 25s ease-in-out infinite;
+  animation-delay: -10s;
+}
+
+/* ── Landing Page Utilities ── */
+
+/* Grid background — dots */
+.bg-grid-dots {
+  background-image: radial-gradient(circle, rgba(237, 230, 210, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.light .bg-grid-dots {
+  background-image: radial-gradient(circle, rgba(26, 48, 32, 0.06) 1px, transparent 1px);
+}
+
+/* Grid background — lines */
+.bg-grid-lines {
+  background-image:
+    linear-gradient(rgba(237, 230, 210, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(237, 230, 210, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.light .bg-grid-lines {
+  background-image:
+    linear-gradient(rgba(26, 48, 32, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 48, 32, 0.04) 1px, transparent 1px);
+}
+
+/* 3D perspective container */
+.perspective-container {
+  perspective: 1000px;
+}
