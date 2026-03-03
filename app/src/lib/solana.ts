@@ -2,7 +2,8 @@ import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 export const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_PROGRAM_ID || "64XGGSc32TUX7rxge5u4Qsv55RQN5ybSwS4B1eksWTxy"
+  process.env.NEXT_PUBLIC_PROGRAM_ID ||
+    "64XGGSc32TUX7rxge5u4Qsv55RQN5ybSwS4B1eksWTxy",
 );
 
 export const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT
@@ -10,11 +11,11 @@ export const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT
   : null;
 
 export const TOKEN_2022_PROGRAM_ID = new PublicKey(
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
 );
 
 export const MPL_CORE_PROGRAM_ID = new PublicKey(
-  "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+  "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
 );
 
 export const CLUSTER = (process.env.NEXT_PUBLIC_CLUSTER ?? "devnet") as
@@ -28,12 +29,14 @@ export const HELIUS_RPC_URL =
     ? `https://devnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? ""}`
     : `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? ""}`);
 
+export function getConnectionEndpoint(): string {
+  return (
+    process.env.NEXT_PUBLIC_RPC_URL || HELIUS_RPC_URL || clusterApiUrl(CLUSTER)
+  );
+}
+
 export function getConnection(): Connection {
-  const endpoint =
-    process.env.NEXT_PUBLIC_RPC_URL ||
-    HELIUS_RPC_URL ||
-    clusterApiUrl(CLUSTER);
-  return new Connection(endpoint, "confirmed");
+  return new Connection(getConnectionEndpoint(), "confirmed");
 }
 
 export function getXpAta(walletAddress: string): PublicKey | null {
@@ -43,7 +46,7 @@ export function getXpAta(walletAddress: string): PublicKey | null {
       XP_MINT,
       new PublicKey(walletAddress),
       false,
-      TOKEN_2022_PROGRAM_ID
+      TOKEN_2022_PROGRAM_ID,
     );
   } catch {
     return null;
@@ -69,30 +72,36 @@ export async function fetchAllXpBalances(): Promise<
   try {
     const conn = getConnection();
     const accounts = await conn.getTokenLargestAccounts(XP_MINT);
-    const results: Array<{ wallet: string; xp: number }> = [];
-    for (const acc of accounts.value) {
-      try {
-        const info = await conn.getParsedAccountInfo(acc.address);
-        if (
-          info.value?.data &&
-          typeof info.value.data === "object" &&
-          "parsed" in info.value.data
-        ) {
-          const parsed = info.value.data.parsed as {
-            info?: { owner?: string; tokenAmount?: { amount?: string } };
-          };
-          if (parsed.info?.owner) {
-            results.push({
-              wallet: parsed.info.owner,
-              xp: Number(parsed.info.tokenAmount?.amount ?? 0),
-            });
+
+    const settled = await Promise.all(
+      accounts.value.map(async (acc) => {
+        try {
+          const info = await conn.getParsedAccountInfo(acc.address);
+          if (
+            info.value?.data &&
+            typeof info.value.data === "object" &&
+            "parsed" in info.value.data
+          ) {
+            const parsed = info.value.data.parsed as {
+              info?: { owner?: string; tokenAmount?: { amount?: string } };
+            };
+            if (parsed.info?.owner) {
+              return {
+                wallet: parsed.info.owner,
+                xp: Number(parsed.info.tokenAmount?.amount ?? 0),
+              };
+            }
           }
+        } catch {
+          // skip
         }
-      } catch {
-        // skip
-      }
-    }
-    return results.sort((a, b) => b.xp - a.xp);
+        return null;
+      }),
+    );
+
+    return settled
+      .filter((r): r is { wallet: string; xp: number } => r !== null)
+      .sort((a, b) => b.xp - a.xp);
   } catch {
     return [];
   }
@@ -100,7 +109,7 @@ export async function fetchAllXpBalances(): Promise<
 
 export function solanaExplorerUrl(
   addressOrSig: string,
-  type: "address" | "tx" = "address"
+  type: "address" | "tx" = "address",
 ): string {
   const cluster = CLUSTER !== "mainnet-beta" ? `?cluster=${CLUSTER}` : "";
   return `https://explorer.solana.com/${type}/${addressOrSig}${cluster}`;
