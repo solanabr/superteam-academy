@@ -38,6 +38,8 @@ export function SiteHeader() {
     { href: "/courses", label: t("nav.courses") },
     { href: "/dashboard", label: t("nav.dashboard") },
     { href: "/leaderboard", label: t("nav.leaderboard") },
+    { href: "/challenges", label: "Challenges" },
+    { href: "/community", label: "Community" },
   ];
 
   return (

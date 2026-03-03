@@ -11,8 +11,6 @@ import {
     Github,
     Mail,
     Globe,
-    Moon,
-    Sun,
     Eye,
     Lock,
     Save,
@@ -28,11 +26,8 @@ import { Button } from "@/components/ui/button";
 export default function SettingsPage() {
     const { publicKey } = useWallet();
     const { t, locale, setLocale } = useI18n();
-    const [theme, setTheme] = useState<"dark" | "light">("dark");
     const [name, setName] = useState("Solana Developer");
-    const [bio, setBio] = useState(
-        "Building the future of decentralized learning."
-    );
+    const [bio, setBio] = useState("Building the future of decentralized learning.");
     const [visibility, setVisibility] = useState<"public" | "private">("public");
     const [saved, setSaved] = useState(false);
 
@@ -55,11 +50,6 @@ export default function SettingsPage() {
             </main>
         );
     }
-
-    const handleThemeChange = (newTheme: "dark" | "light") => {
-        setTheme(newTheme);
-        document.documentElement.classList.toggle("light", newTheme === "light");
-    };
 
     const handleSave = () => {
         setSaved(true);
@@ -98,6 +88,7 @@ export default function SettingsPage() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Your display name"
+                                className="bg-black/5 text-foreground dark:bg-black/40 border-border font-space"
                             />
                         </div>
                         <div>
@@ -108,7 +99,7 @@ export default function SettingsPage() {
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={3}
-                                className="flex w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors resize-none"
+                                className="flex w-full rounded-md border border-border bg-black/5 dark:bg-black/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors resize-none font-space"
                             />
                         </div>
                     </CardContent>
@@ -211,7 +202,7 @@ export default function SettingsPage() {
                             <select
                                 value={locale}
                                 onChange={(e) => setLocale(e.target.value as Locale)}
-                                className="flex h-10 w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                                className="flex h-10 w-full rounded-md border border-border bg-black/5 dark:bg-black/40 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors font-space"
                             >
                                 {SUPPORTED_LOCALES.map((l) => (
                                     <option key={l.code} value={l.code}>
@@ -219,35 +210,6 @@ export default function SettingsPage() {
                                     </option>
                                 ))}
                             </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                Theme
-                            </label>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleThemeChange("dark")}
-                                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all ${theme === "dark"
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-border hover:text-foreground"
-                                        }`}
-                                >
-                                    <Moon className="h-4 w-4" />
-                                    Dark
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleThemeChange("light")}
-                                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all ${theme === "light"
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-border hover:text-foreground"
-                                        }`}
-                                >
-                                    <Sun className="h-4 w-4" />
-                                    Light
-                                </button>
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -285,7 +247,7 @@ export default function SettingsPage() {
                                 onChange={(e) =>
                                     setVisibility(e.target.value as "public" | "private")
                                 }
-                                className="rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors focus:border-primary/50 focus:outline-none"
+                                className="rounded-md border border-border bg-black/5 dark:bg-black/40 text-foreground px-3 py-1.5 text-sm transition-colors focus:border-primary/50 focus:outline-none font-space"
                             >
                                 <option value="public">Public</option>
                                 <option value="private">Private</option>

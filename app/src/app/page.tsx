@@ -210,7 +210,13 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="rounded-none border-2 border-border bg-black hover:bg-border hover:text-white font-bold uppercase tracking-widest px-8 py-6 text-sm transition-all">
+              <Button asChild variant="outline" size="lg" className="rounded-none border-2 border-primary/50 bg-black hover:bg-primary/20 text-primary font-bold uppercase tracking-widest px-8 py-6 text-sm transition-all">
+                <Link href="/welcome">
+                  Take Assessment
+                  <Zap className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="rounded-none border-2 border-border bg-black hover:bg-border hover:text-white font-bold uppercase tracking-widest px-8 py-6 text-sm transition-all hidden sm:flex">
                 <Link href="/dashboard">{t("nav.dashboard")}</Link>
               </Button>
             </motion.div>

@@ -1,0 +1,17 @@
+{
+    "name": "Superteam Academy LMS",
+    "short_name": "Academy",
+    "description": "Learn Solana. Earn on-chain.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#050a18",
+    "theme_color": "#050a18",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

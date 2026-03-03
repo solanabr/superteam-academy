@@ -63,6 +63,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -75,6 +76,48 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    name: "Superteam Academy",
+    description: "Master Solana development with interactive courses, code challenges, and on-chain NFT credentials.",
+    url: "https://academy.superteam.fun",
+    sameAs: [
+      "https://twitter.com/superabordo",
+      "https://github.com/solanabr",
+    ],
+    offers: {
+      "@type": "Offer",
+      category: "Course",
+      description: "Free Solana development courses with on-chain credentials",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    hasCourse: [
+      {
+        "@type": "Course",
+        name: "Solana 101: Building Your First dApp",
+        description: "Learn the fundamentals of Solana development with hands-on coding exercises.",
+        provider: { "@type": "Organization", name: "Superteam Academy" },
+        educationalLevel: "Beginner",
+      },
+      {
+        "@type": "Course",
+        name: "DeFi Deep Dive: AMMs & Lending Protocols",
+        description: "Master DeFi concepts and build decentralized finance applications on Solana.",
+        provider: { "@type": "Organization", name: "Superteam Academy" },
+        educationalLevel: "Intermediate",
+      },
+      {
+        "@type": "Course",
+        name: "NFT Mastery with Metaplex Core",
+        description: "Create, manage, and trade NFTs using the Metaplex Core standard on Solana.",
+        provider: { "@type": "Organization", name: "Superteam Academy" },
+        educationalLevel: "Advanced",
+      },
+    ],
+  };
+
   return (
     <html
       lang="en"
@@ -82,6 +125,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${syne.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <AppShell>{children}</AppShell>
         <Analytics />
         <SpeedInsights />
