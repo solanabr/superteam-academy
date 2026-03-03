@@ -2,13 +2,12 @@ import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 export const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_PROGRAM_ID ||
+  (process.env.NEXT_PUBLIC_PROGRAM_ID ?? "").trim() ||
     "64XGGSc32TUX7rxge5u4Qsv55RQN5ybSwS4B1eksWTxy",
 );
 
-export const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT
-  ? new PublicKey(process.env.NEXT_PUBLIC_XP_MINT)
-  : null;
+const _xpMintRaw = (process.env.NEXT_PUBLIC_XP_MINT ?? "").trim();
+export const XP_MINT = _xpMintRaw ? new PublicKey(_xpMintRaw) : null;
 
 export const TOKEN_2022_PROGRAM_ID = new PublicKey(
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
