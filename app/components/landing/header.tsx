@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -23,6 +23,7 @@ export function Header() {
   const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
   const { ready, authenticated, login, logout, address, user } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,23 +39,23 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/');
+    router.push(`/${locale}`);
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={`/${locale}`} className="flex items-center gap-2">
             <span className="text-base font-semibold tracking-tight text-foreground">
               {t("common.brandName")}
             </span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
-              const isActive = pathname.startsWith(link.href);
+              const isActive = pathname.startsWith(`/${locale}${link.href}`);
               return (
-                <Link key={link.href} href={link.href}>
+                <Link key={link.href} href={`/${locale}${link.href}`}>
                   <Button variant={isActive ? "secondary" : "ghost"} size="sm">
                     {t(`nav.${link.key}`)}
                   </Button>
@@ -87,19 +88,19 @@ export function Header() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href="/profile" className="flex items-center gap-2 w-full">
+                  <Link href={`/${locale}/profile`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={UserIcon} size={16} strokeWidth={2} />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href="/settings" className="flex items-center gap-2 w-full">
+                  <Link href={`/${locale}/settings`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={2} />
                     Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href="/certificates" className="flex items-center gap-2 w-full">
+                  <Link href={`/${locale}/certificates`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={Award01Icon} size={16} strokeWidth={2} />
                     Certificates
                   </Link>

@@ -1,21 +1,5 @@
-import { Header } from "@/components/landing/header";
-import { Hero } from "@/components/landing/hero";
-import { Features } from "@/components/landing/features";
-import { LearningPaths } from "@/components/landing/learning-paths";
-import { Stats } from "@/components/landing/stats";
-import { Footer } from "@/components/landing/footer";
+import { redirect } from 'next/navigation';
 
-export default function Page() {
-  return (
-    <>
-      <Header />
-      <main>
-        <Hero />
-        <Stats />
-        <Features />
-        <LearningPaths />
-      </main>
-      <Footer />
-    </>
-  );
+export default function RootPage() {
+  redirect('/en');
 }

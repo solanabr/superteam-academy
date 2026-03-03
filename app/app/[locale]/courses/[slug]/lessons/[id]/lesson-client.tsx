@@ -269,12 +269,8 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
         {/* Code Editor Panel - 70% */}
         <div className="flex-1 flex flex-col overflow-hidden bg-card">
           {/* Toolbar */}
-          <div className="h-12 border-b border-border flex items-center justify-between px-4 flex-shrink-0">
+          <div className="h-12 border-b border-border flex items-center px-4 flex-shrink-0">
             <span className="text-sm font-medium">Code Editor</span>
-            <Button size="sm" onClick={runTests} disabled={isRunning}>
-              <HugeiconsIcon icon={PlayIcon} size={14} />
-              {isRunning ? "Running..." : "Run Code"}
-            </Button>
           </div>
 
           {/* Editor */}
@@ -283,7 +279,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
               value={code}
               onChange={setCode}
               language="typescript"
-              height="100%"
+              height="calc(100vh - 200px)"
             />
           </div>
 

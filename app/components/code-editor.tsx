@@ -1,10 +1,14 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useState } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import { useLocale } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface CodeEditorProps {
+  showAiMentor?: boolean;
   value: string;
   onChange?: (value: string) => void;
   language?: string;
@@ -13,67 +17,75 @@ interface CodeEditorProps {
   minimap?: boolean;
 }
 
-export function CodeEditor({
-  value,
-  onChange,
-  language = "typescript",
-  readOnly = false,
-  height = "400px",
-  minimap = false,
-}: CodeEditorProps) {
+export function CodeEditor({ value, onChange, language = "rust", readOnly = false, height = "400px", minimap = false, showAiMentor = false }: CodeEditorProps) {
   const { resolvedTheme } = useTheme();
-  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const locale = useLocale();
+  const editorRef = useRef<any>(null);
+  const [aiExplanation, setAiExplanation] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleMount: OnMount = (editor) => {
     editorRef.current = editor;
   };
 
-  const handleChange = (value: string | undefined) => {
-    if (onChange && value !== undefined) {
-      onChange(value);
+  const handleChange = (val: string | undefined) => {
+    if (onChange && val !== undefined) onChange(val);
+  };
+
+  const runCode = async () => {
+    const code = editorRef.current?.getValue() || value;
+    setIsLoading(true);
+    setAiExplanation("");
+    setError("");
+    try {
+      const simulatedError = "error[E0425]: cannot find value in this scope";
+      setError(simulatedError);
+      const res = await fetch("/api/ai-mentor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, error: simulatedError, locale }),
+      });
+      const data = await res.json();
+      setAiExplanation(data.explanation);
+    } catch (e) {
+      setAiExplanation("Failed to get AI explanation");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (editorRef.current) {
-      const editor = editorRef.current;
-      const model = editor.getModel();
-      if (model) {
-        editor.updateOptions({
-          theme: resolvedTheme === "dark" ? "vs-dark" : "vs",
-        });
-      }
-    }
-  }, [resolvedTheme]);
-
   return (
-    <div
-      className="overflow-hidden rounded-lg border border-border"
-      style={{ height }}
-    >
-      <Editor
-        height="100%"
-        language={language}
-        value={value}
-        onChange={handleChange}
-        onMount={handleMount}
-        theme={resolvedTheme === "dark" ? "vs-dark" : "vs"}
-        options={{
-          readOnly,
-          minimap: { enabled: minimap },
-          fontSize: 14,
-          lineNumbers: "on",
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          tabSize: 2,
-          wordWrap: "on",
-          padding: { top: 16, bottom: 16 },
-          scrollbar: {
-            verticalScrollbarSize: 8,
-            horizontalScrollbarSize: 8,
-          },
-        }}
-      />
+    <div className="flex flex-col gap-3">
+      <div className="rounded-lg overflow-hidden border border-border">
+        <Editor
+          height={height}
+          language={language}
+          value={value}
+          theme={resolvedTheme === "dark" ? "vs-dark" : "vs-light"}
+          onChange={handleChange}
+          onMount={handleMount}
+          options={{ minimap: { enabled: minimap }, fontSize: 14, readOnly }}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={runCode} disabled={isLoading}>
+          {isLoading ? "Running..." : "Run Code"}
+        </Button>
+      </div>
+      {error && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive font-mono">
+          {error}
+        </div>
+      )}
+      {aiExplanation && (
+        <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline">AI Mentor</Badge>
+          </div>
+          <p className="text-sm text-foreground whitespace-pre-wrap">{aiExplanation}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,42 +1,33 @@
-"use client";
+'use client';
 
-import { useLocale, useTranslations } from "next-intl";
-import { useTransition } from "react";
-import { setLocale } from "@/lib/actions";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { locales } from "@/i18n/config";
+import { useLocale } from 'next-intl';
+import { useRouter, usePathname } from 'next/navigation';
+import { locales } from '@/i18n/config';
+import { Button } from '@/components/ui/button';
 
 export function LocaleSwitcher() {
-  const t = useTranslations("locale");
-  const currentLocale = useLocale();
-  const [isPending, startTransition] = useTransition();
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  function handleChange(value: string | null) {
-    if (!value) return;
-    startTransition(async () => {
-      await setLocale(value);
-      window.location.reload();
-    });
-  }
+  const handleChange = (newLocale: string) => {
+    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
+    router.push(newPath);
+    router.refresh();
+  };
 
   return (
-    <Select value={currentLocale} onValueChange={handleChange} disabled={isPending}>
-      <SelectTrigger className="h-8 w-16" aria-label="Select language">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent align="end">
-        {locales.map((loc) => (
-          <SelectItem key={loc} value={loc}>
-            {t(loc)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-1">
+      {locales.map((l) => (
+        <Button
+          key={l}
+          variant={l === locale ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => handleChange(l)}
+        >
+          {l === 'pt-BR' ? 'PT' : l.toUpperCase()}
+        </Button>
+      ))}
+    </div>
   );
 }
