@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -11,6 +12,7 @@ import { useSyncXp } from "@/hooks/useSyncXp";
 import { XPBar } from "@/components/gamification/XPBar";
 import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { CredentialCard } from "@/components/solana/CredentialCard";
+import { MOCK_COURSES } from "@/lib/mock-courses";
 import { Link } from "@/i18n/navigation";
 import {
   BookOpen,
@@ -27,7 +29,7 @@ import {
 
 type ActivityItemType = "lesson" | "xp" | "milestone" | "enrollment" | "credential";
 
-interface RecommendedCourse {
+interface CourseWithProgress {
   id: string;
   title: string;
   description: string;
@@ -38,50 +40,18 @@ interface RecommendedCourse {
   trackIcon: string;
   trackColor: string;
   slug: string;
-  progressPercent?: number;
+  progressPercent: number;
+  completedLessons: number;
+  totalLessons: number;
 }
 
-const RECOMMENDED_COURSES: RecommendedCourse[] = [
-  {
-    id: "rc1",
-    title: "Solana Program Security",
-    description:
-      "Learn to identify and prevent common vulnerabilities in Solana programs — signer checks, owner validation, and more.",
-    difficulty: "intermediate",
-    durationHours: 4,
-    xpReward: 500,
-    trackName: "Anchor Framework",
-    trackIcon: "⚓",
-    trackColor: "#9945FF",
-    slug: "solana-program-security",
-  },
-  {
-    id: "rc2",
-    title: "Token-2022 Extensions Deep Dive",
-    description:
-      "Explore advanced Token-2022 features: transfer hooks, confidential transfers, and non-transferable mints.",
-    difficulty: "advanced",
-    durationHours: 6,
-    xpReward: 800,
-    trackName: "Solana Basics",
-    trackIcon: "◎",
-    trackColor: "#14F195",
-    slug: "token-2022-extensions",
-  },
-  {
-    id: "rc3",
-    title: "Building a DeFi AMM",
-    description:
-      "Implement a constant-product AMM from scratch using Anchor. Covers liquidity pools, swaps, and fee collection.",
-    difficulty: "advanced",
-    durationHours: 8,
-    xpReward: 1200,
-    trackName: "DeFi",
-    trackIcon: "💹",
-    trackColor: "#00D4FF",
-    slug: "defi-amm",
-  },
-];
+const TRACK_META: Record<number, { name: string; icon: string; color: string }> = {
+  1: { name: "Solana Basics",      icon: "◎", color: "#14F195" },
+  2: { name: "Anchor Framework",   icon: "⚓", color: "#9945FF" },
+  3: { name: "DeFi",               icon: "💹", color: "#00D4FF" },
+  4: { name: "Token-2022",         icon: "🪙", color: "#F5A623" },
+  5: { name: "Security",           icon: "🔒", color: "#FF4444" },
+};
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "#14F195",
@@ -89,10 +59,40 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "#FF4444",
 };
 
+function buildCoursesWithProgress(): CourseWithProgress[] {
+  return MOCK_COURSES.map((course) => {
+    const totalLessons = course.modules?.reduce(
+      (sum, m) => sum + (m.lessons?.length ?? 0), 0
+    ) ?? 0;
+    let completedLessons = 0;
+    try {
+      const ids: string[] = JSON.parse(
+        localStorage.getItem(`completed_${course.slug}`) ?? "[]"
+      );
+      completedLessons = ids.length;
+    } catch {}
+    const track = TRACK_META[course.trackId ?? 0] ?? { name: "General", icon: "📚", color: "#666666" };
+    return {
+      id: course._id,
+      title: course.title,
+      description: course.description,
+      difficulty: course.difficulty as "beginner" | "intermediate" | "advanced",
+      durationHours: course.durationHours ?? 0,
+      xpReward: course.xpReward ?? 0,
+      slug: course.slug,
+      trackName: track.name,
+      trackIcon: track.icon,
+      trackColor: track.color,
+      completedLessons,
+      totalLessons,
+      progressPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+    };
+  });
+}
+
 // ─── Daily challenge widget ───────────────────────────────────────────────────
 
 function DailyChallengeWidget() {
-  // Mock daily challenge — in production, fetched from CMS
   const challenge = {
     title: "Bitmap Lesson Tracker",
     description: "Implement a function that reads a u64 bitmap and returns which lesson indices are completed.",
@@ -178,7 +178,20 @@ export default function DashboardPage() {
   const { streak } = useStreak();
   const { credentials, loading: credsLoading } = useCredentials();
   const { items: activityItems, thisWeek, loading: activityLoading } = useActivity();
-  useSyncXp(); // one-time sync of localStorage completions → Supabase
+  useSyncXp();
+
+  const [courses, setCourses] = useState<CourseWithProgress[]>([]);
+
+  useEffect(() => {
+    const all = buildCoursesWithProgress();
+    // Sort: in-progress first, then not-started (by difficulty asc), then completed
+    const inProgress = all.filter((c) => c.progressPercent > 0 && c.progressPercent < 100);
+    const notStarted = all.filter((c) => c.progressPercent === 0);
+    const completed = all.filter((c) => c.progressPercent === 100);
+    const diffOrder: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
+    notStarted.sort((a, b) => (diffOrder[a.difficulty] ?? 0) - (diffOrder[b.difficulty] ?? 0));
+    setCourses([...inProgress, ...notStarted, ...completed].slice(0, 3));
+  }, []);
 
   if (!connected) {
     return (
@@ -200,6 +213,8 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const inProgressCourses = courses.filter((c) => c.progressPercent > 0 && c.progressPercent < 100);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -296,7 +311,7 @@ export default function DashboardPage() {
         <StreakWidget streak={streak} />
       </div>
 
-      {/* Two-column layout: activity feed + recommended courses */}
+      {/* Two-column layout: activity feed + courses */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         {/* Activity feed — 2 cols */}
         <div className="lg:col-span-2 bg-card border border-border rounded p-5">
@@ -349,7 +364,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Recommended courses — 3 cols */}
+        {/* Up Next courses — 3 cols */}
         <div className="lg:col-span-3 bg-card border border-border rounded p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
@@ -365,9 +380,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {RECOMMENDED_COURSES.map((course) => {
-              const diffColor =
-                DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
+            {courses.map((course) => {
+              const diffColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
               return (
                 <Link
                   key={course.id}
@@ -377,7 +391,6 @@ export default function DashboardPage() {
                   }}
                 >
                   <article className="group flex gap-3 p-3 rounded border border-border hover:border-border-hover hover:bg-background transition-all">
-                    {/* Track icon */}
                     <div
                       className="flex-shrink-0 w-10 h-10 rounded flex items-center justify-center text-xl"
                       style={{
@@ -388,34 +401,59 @@ export default function DashboardPage() {
                       {course.trackIcon}
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-mono text-xs font-semibold text-foreground group-hover:text-white transition-colors leading-snug line-clamp-1">
                         {course.title}
                       </h3>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-1">
                         {course.description}
                       </p>
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span
-                          className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm"
-                          style={{
-                            color: diffColor,
-                            backgroundColor: `${diffColor}18`,
-                            border: `1px solid ${diffColor}35`,
-                          }}
-                        >
-                          {course.difficulty}
-                        </span>
-                        <span className="text-[9px] font-mono text-muted-foreground flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
-                          {course.durationHours}h
-                        </span>
-                        <span className="text-[9px] font-mono text-[#14F195] flex items-center gap-0.5 ml-auto">
-                          <Zap className="h-2.5 w-2.5" />
-                          {course.xpReward.toLocaleString()} XP
-                        </span>
-                      </div>
+
+                      {course.progressPercent > 0 && course.progressPercent < 100 ? (
+                        <div className="mt-1.5">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-[9px] font-mono text-[#14F195]">
+                              {course.completedLessons}/{course.totalLessons} lessons
+                            </span>
+                            <span className="text-[9px] font-mono text-muted-foreground">
+                              {course.progressPercent}%
+                            </span>
+                          </div>
+                          <div className="h-1 bg-elevated rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#14F195] rounded-full transition-all"
+                              style={{ width: `${course.progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <span
+                            className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm"
+                            style={{
+                              color: diffColor,
+                              backgroundColor: `${diffColor}18`,
+                              border: `1px solid ${diffColor}35`,
+                            }}
+                          >
+                            {course.difficulty}
+                          </span>
+                          <span className="text-[9px] font-mono text-muted-foreground flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
+                            {course.durationHours}h
+                          </span>
+                          {course.progressPercent === 100 ? (
+                            <span className="text-[9px] font-mono text-[#14F195] flex items-center gap-0.5 ml-auto">
+                              <CheckCircle2 className="h-2.5 w-2.5" /> Completed
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-[#14F195] flex items-center gap-0.5 ml-auto">
+                              <Zap className="h-2.5 w-2.5" />
+                              {course.xpReward.toLocaleString()} XP
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <ChevronRight className="h-4 w-4 text-subtle flex-shrink-0 self-center group-hover:text-muted-foreground transition-colors" />
@@ -429,32 +467,77 @@ export default function DashboardPage() {
 
       <DailyChallengeWidget />
 
-      {/* Continue Learning (existing) */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-mono text-lg font-semibold text-foreground">
-            {t("continueLearning")}
-          </h2>
-          <Link
-            href="/courses"
-            className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
-          >
-            Browse all →
-          </Link>
+      {/* Continue Learning */}
+      {inProgressCourses.length > 0 ? (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-mono text-lg font-semibold text-foreground">
+              {t("continueLearning")}
+            </h2>
+            <Link
+              href="/courses"
+              className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
+            >
+              Browse all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {inProgressCourses.map((course) => (
+              <Link
+                key={course.id}
+                href={{ pathname: "/courses/[slug]", params: { slug: course.slug } }}
+              >
+                <div className="group bg-card border border-border rounded p-4 hover:border-border-hover transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{course.trackIcon}</span>
+                    <span className="text-xs font-mono font-semibold text-foreground line-clamp-1 group-hover:text-white transition-colors">
+                      {course.title}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      {course.completedLessons}/{course.totalLessons} lessons
+                    </span>
+                    <span className="text-[10px] font-mono text-[#14F195]">{course.progressPercent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#14F195] rounded-full"
+                      style={{ width: `${course.progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="bg-card border border-border rounded p-6 text-center">
-          <BookOpen className="h-8 w-8 text-subtle mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground font-mono mb-4">
-            {t("noActivity")}
-          </p>
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
-          >
-            Browse Courses
-          </Link>
+      ) : (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-mono text-lg font-semibold text-foreground">
+              {t("continueLearning")}
+            </h2>
+            <Link
+              href="/courses"
+              className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
+            >
+              Browse all →
+            </Link>
+          </div>
+          <div className="bg-card border border-border rounded p-6 text-center">
+            <BookOpen className="h-8 w-8 text-subtle mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-mono mb-4">
+              {t("noActivity")}
+            </p>
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
+            >
+              Browse Courses
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Credentials grid */}
       {credentials.length > 0 && (
