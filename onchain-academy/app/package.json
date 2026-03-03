@@ -39,13 +39,14 @@
     "framer-motion": "^12.34.1",
     "lucide-react": "^0.574.0",
     "mini-svg-data-uri": "^1.4.4",
-    "next": "16.1.6",
+    "next": "15.5.12",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.8.3",
     "next-sanity": "^9.8.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-syntax-highlighter": "^15.6.1",
+    "recharts": "^3.7.0",
     "sanity": "^5.12.0",
     "styled-components": "^6.3.11",
     "tailwind-merge": "^3.4.1"
@@ -57,7 +58,7 @@
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "15.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

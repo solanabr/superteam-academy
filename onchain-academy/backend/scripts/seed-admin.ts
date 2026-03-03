@@ -18,9 +18,9 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { User } from "../src/models/users";
 
-const ADMIN_NAME = "Myles";
-const ADMIN_USERNAME = "myles";
-const ADMIN_EMAIL = "admin@sollearn.dev";
+const ADMIN_NAME = "Admin User";
+const ADMIN_USERNAME = "admin";
+const ADMIN_EMAIL = process.argv[2] || "admin@osmos.academy";
 
 async function main() {
     const MONGO_URI = process.env.MONGO_URI;

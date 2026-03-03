@@ -44,14 +44,14 @@ export const getDashboard = async (req: Request, res: Response): Promise<void> =
 
         // Fetch course info for enrolled courses
         const courses = await Course.find({ _id: { $in: courseIds } })
-            .select("title slug thumbnail shortDescription totalXP difficulty topic")
+            .select("title slug thumbnail shortDescription totalXP difficulty topic milestones")
             .lean();
 
         const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
 
         // Fetch milestone progress for all enrolled courses in one query
         const allProgress = await MilestoneProgress.find({ userId, courseId: { $in: courseIds } })
-            .select("courseId allTestsPassed milestoneOrder")
+            .select("courseId allTestsPassed milestoneOrder completedLessons testAttempts")
             .lean();
 
         // Group by courseId
@@ -65,10 +65,28 @@ export const getDashboard = async (req: Request, res: Response): Promise<void> =
         const activeCourses = enrollments.map((enrollment) => {
             const courseId = enrollment.courseId.toString();
             const course = courseMap.get(courseId);
-            const milestones = progressByCourse.get(courseId) ?? [];
-            const completed = milestones.filter((m) => m.allTestsPassed).length;
-            const total = milestones.length;
-            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const progressDocs = progressByCourse.get(courseId) ?? [];
+
+            // Calculate total items (lessons + tests) in the course
+            let totalItems = 0;
+            course?.milestones.forEach((m: any) => {
+                totalItems += (m.lessons?.length || 0) + (m.tests?.length || 0);
+            });
+
+            // Calculate completed items (unique lessons + passed tests)
+            let completedItems = 0;
+            progressDocs.forEach((pd: any) => {
+                completedItems += (pd.completedLessons?.length || 0);
+                // Count tests that have passed in the best attempt
+                completedItems += pd.testAttempts.filter((a: any) => a.passed).length;
+            });
+
+            // Calculate percentage (clamped to 100)
+            const percent = totalItems > 0 ? Math.min(100, Math.round((completedItems / totalItems) * 100)) : 0;
+
+            // Also keep milestone completion for internal tracking if needed
+            const milestonesCompleted = progressDocs.filter((m) => m.allTestsPassed).length;
+            const milestonesTotal = course?.milestones.length || 0;
 
             return {
                 courseId,
@@ -80,7 +98,13 @@ export const getDashboard = async (req: Request, res: Response): Promise<void> =
                 totalXP: course?.totalXP,
                 completedAt: enrollment.completedAt ?? null,
                 lastAccessedAt: enrollment.lastAccessedAt,
-                progress: { completed, total, percent },
+                progress: {
+                    completed: completedItems,
+                    total: totalItems,
+                    percent,
+                    milestonesCompleted,
+                    milestonesTotal
+                },
             };
         });
 
