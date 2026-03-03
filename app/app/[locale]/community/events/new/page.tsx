@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "next-intl";
+import { useTagInput } from "@/hooks/use-tag-input";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 
 const EVENT_TYPES = [
 	{ value: "workshop" },
@@ -28,83 +28,39 @@ const EVENT_TYPES = [
 
 export default function NewEventPage() {
 	const t = useTranslations("community.createEvent");
-	const router = useRouter();
-	const { toast } = useToast();
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isOnline, setIsOnline] = useState(true);
-	const [tags, setTags] = useState<string[]>([]);
-	const [tagInput, setTagInput] = useState("");
-
-	const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && tagInput.trim()) {
-			e.preventDefault();
-			if (!tags.includes(tagInput.trim()) && tags.length < 5) {
-				setTags([...tags, tagInput.trim()]);
-				setTagInput("");
-			}
-		}
-	};
-
-	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter((tag) => tag !== tagToRemove));
-	};
+	const { tags, tagInput, setTagInput, removeTag, handleKeyDown } = useTagInput();
+	const { isSubmitting, submit } = useFormSubmit({
+		endpoint: "/api/community/events",
+		successToast: {
+			title: t("toast.createdTitle"),
+			description: t("toast.createdDescription"),
+		},
+		errorToast: {
+			title: t("toast.errorTitle"),
+			fallbackDescription: t("errors.createFailedRetry"),
+		},
+		redirectTo: "/community/events",
+	});
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setIsSubmitting(true);
+		const formData = new FormData(e.currentTarget);
+		const maxAttendeesRaw = formData.get("maxAttendees") as string;
 
-		try {
-			const formData = new FormData(e.currentTarget);
-			const title = formData.get("title") as string;
-			const description = formData.get("description") as string;
-			const type = formData.get("type") as string;
-			const startDate = formData.get("startDate") as string;
-			const endDate = (formData.get("endDate") as string) || undefined;
-			const timezone = formData.get("timezone") as string;
-			const location = isOnline ? undefined : (formData.get("location") as string);
-			const maxAttendeesRaw = formData.get("maxAttendees") as string;
-			const maxAttendees = maxAttendeesRaw ? Number(maxAttendeesRaw) : undefined;
-			const registrationUrl = (formData.get("registrationUrl") as string) || undefined;
-
-			const res = await fetch("/api/community/events", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					title,
-					description,
-					type,
-					startDate,
-					endDate,
-					timezone,
-					location,
-					isOnline,
-					maxAttendees,
-					registrationUrl,
-					tags,
-				}),
-			});
-
-			const data = await res.json();
-
-			if (!res.ok) {
-				throw new Error(data.error || t("errors.createFailed"));
-			}
-
-			toast({
-				title: t("toast.createdTitle"),
-				description: t("toast.createdDescription"),
-			});
-
-			router.push("/community/events");
-		} catch (err) {
-			toast({
-				title: t("toast.errorTitle"),
-				description: err instanceof Error ? err.message : t("errors.createFailedRetry"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsSubmitting(false);
-		}
+		await submit({
+			title: formData.get("title") as string,
+			description: formData.get("description") as string,
+			type: formData.get("type") as string,
+			startDate: formData.get("startDate") as string,
+			endDate: (formData.get("endDate") as string) || undefined,
+			timezone: formData.get("timezone") as string,
+			location: isOnline ? undefined : (formData.get("location") as string),
+			isOnline,
+			maxAttendees: maxAttendeesRaw ? Number(maxAttendeesRaw) : undefined,
+			registrationUrl: (formData.get("registrationUrl") as string) || undefined,
+			tags,
+		});
 	};
 
 	return (
@@ -278,7 +234,7 @@ export default function NewEventPage() {
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
-							onKeyDown={handleAddTag}
+							onKeyDown={handleKeyDown}
 							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
@@ -289,7 +245,7 @@ export default function NewEventPage() {
 										key={tag}
 										variant="secondary"
 										className="gap-1 cursor-pointer"
-										onClick={() => handleRemoveTag(tag)}
+										onClick={() => removeTag(tag)}
 									>
 										{tag}
 										<span className="text-muted-foreground">×</span>

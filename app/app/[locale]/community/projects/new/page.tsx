@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,8 +13,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "next-intl";
+import { useTagInput } from "@/hooks/use-tag-input";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 
 const CATEGORIES = [
 	{ value: "defi" },
@@ -29,75 +28,34 @@ const CATEGORIES = [
 
 export default function NewProjectPage() {
 	const t = useTranslations("community.createProject");
-	const router = useRouter();
-	const { toast } = useToast();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [tags, setTags] = useState<string[]>([]);
-	const [tagInput, setTagInput] = useState("");
-
-	const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && tagInput.trim()) {
-			e.preventDefault();
-			if (!tags.includes(tagInput.trim()) && tags.length < 5) {
-				setTags([...tags, tagInput.trim()]);
-				setTagInput("");
-			}
-		}
-	};
-
-	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter((tag) => tag !== tagToRemove));
-	};
+	const { tags, tagInput, setTagInput, removeTag, handleKeyDown } = useTagInput();
+	const { isSubmitting, submit } = useFormSubmit({
+		endpoint: "/api/community/projects",
+		successToast: {
+			title: t("toast.submittedTitle"),
+			description: t("toast.submittedDescription"),
+		},
+		errorToast: {
+			title: t("toast.errorTitle"),
+			fallbackDescription: t("errors.submitFailedRetry"),
+		},
+		redirectTo: (data) => `/community/projects/${data.slug}`,
+	});
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setIsSubmitting(true);
+		const formData = new FormData(e.currentTarget);
+		const xpRewardRaw = formData.get("xpReward") as string;
 
-		try {
-			const formData = new FormData(e.currentTarget);
-			const title = formData.get("title") as string;
-			const description = formData.get("description") as string;
-			const category = formData.get("category") as string;
-			const githubUrl = (formData.get("githubUrl") as string) || undefined;
-			const liveUrl = (formData.get("liveUrl") as string) || undefined;
-			const xpRewardRaw = formData.get("xpReward") as string;
-			const xpReward = xpRewardRaw ? Number(xpRewardRaw) : undefined;
-
-			const res = await fetch("/api/community/projects", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					title,
-					description,
-					category,
-					githubUrl,
-					liveUrl,
-					xpReward,
-					tags,
-				}),
-			});
-
-			const data = await res.json();
-
-			if (!res.ok) {
-				throw new Error(data.error || t("errors.submitFailed"));
-			}
-
-			toast({
-				title: t("toast.submittedTitle"),
-				description: t("toast.submittedDescription"),
-			});
-
-			router.push(`/community/projects/${data.slug}`);
-		} catch (err) {
-			toast({
-				title: t("toast.errorTitle"),
-				description: err instanceof Error ? err.message : t("errors.submitFailedRetry"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsSubmitting(false);
-		}
+		await submit({
+			title: formData.get("title") as string,
+			description: formData.get("description") as string,
+			category: formData.get("category") as string,
+			githubUrl: (formData.get("githubUrl") as string) || undefined,
+			liveUrl: (formData.get("liveUrl") as string) || undefined,
+			xpReward: xpRewardRaw ? Number(xpRewardRaw) : undefined,
+			tags,
+		});
 	};
 
 	return (
@@ -212,7 +170,7 @@ export default function NewProjectPage() {
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
-							onKeyDown={handleAddTag}
+							onKeyDown={handleKeyDown}
 							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
@@ -223,7 +181,7 @@ export default function NewProjectPage() {
 										key={tag}
 										variant="secondary"
 										className="gap-1 cursor-pointer"
-										onClick={() => handleRemoveTag(tag)}
+										onClick={() => removeTag(tag)}
 									>
 										{tag}
 										<span className="text-muted-foreground">×</span>

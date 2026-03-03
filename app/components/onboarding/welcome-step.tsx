@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { isValidUsername, isUsernameAvailable, getUsernameSuggestions } from "@/lib/username-utils";
+import { isValidUsername, getUsernameSuggestions } from "@/lib/username-utils";
 import { useAuth } from "@/contexts/auth-context";
+import { useUsernameValidation } from "@/hooks/use-username-validation";
 
 interface OnboardingData {
 	username?: string;
@@ -34,36 +35,13 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 	const t = useTranslations("onboarding.welcome");
 	const { user } = useAuth();
 	const [username, setUsername] = useState(data.username || "");
-	const [checking, setChecking] = useState(false);
-	const [available, setAvailable] = useState<boolean | null>(null);
+	const { checking, available, debouncedCheck } = useUsernameValidation();
 	const [suggestions, setSuggestions] = useState<string[]>([]);
 	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
-	const checkUsername = async (value: string) => {
-		if (!(await isValidUsername(value))) {
-			setAvailable(null);
-			return;
-		}
-
-		setChecking(true);
-		try {
-			const result = await isUsernameAvailable(value);
-			setAvailable(result);
-		} catch {
-			setAvailable(null);
-		} finally {
-			setChecking(false);
-		}
-	};
-
 	const handleUsernameChange = async (value: string) => {
 		setUsername(value);
-		setAvailable(null);
-
-		if (value && (await isValidUsername(value))) {
-			const timeoutId = setTimeout(() => checkUsername(value), 500);
-			setTimeout(() => clearTimeout(timeoutId), 600);
-		}
+		debouncedCheck(value);
 	};
 
 	useEffect(() => {

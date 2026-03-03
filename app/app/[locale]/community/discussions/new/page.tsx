@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,8 +13,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { useTranslations } from "next-intl";
+import { useTagInput } from "@/hooks/use-tag-input";
+import { useFormSubmit } from "@/hooks/use-form-submit";
 
 const CATEGORIES = [
 	{ value: "announcements" },
@@ -29,63 +28,30 @@ const CATEGORIES = [
 
 export default function NewDiscussionPage() {
 	const t = useTranslations("community.createDiscussion");
-	const router = useRouter();
-	const { toast } = useToast();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [tags, setTags] = useState<string[]>([]);
-	const [tagInput, setTagInput] = useState("");
-
-	const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" && tagInput.trim()) {
-			e.preventDefault();
-			if (!tags.includes(tagInput.trim()) && tags.length < 5) {
-				setTags([...tags, tagInput.trim()]);
-				setTagInput("");
-			}
-		}
-	};
-
-	const handleRemoveTag = (tagToRemove: string) => {
-		setTags(tags.filter((tag) => tag !== tagToRemove));
-	};
+	const { tags, tagInput, setTagInput, removeTag, handleKeyDown } = useTagInput();
+	const { isSubmitting, submit } = useFormSubmit({
+		endpoint: "/api/community/discussions",
+		successToast: {
+			title: t("toast.createdTitle"),
+			description: t("toast.createdDescription"),
+		},
+		errorToast: {
+			title: t("toast.errorTitle"),
+			fallbackDescription: t("errors.createFailedRetry"),
+		},
+		redirectTo: (data) => `/community/discussions/${data.slug}`,
+	});
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setIsSubmitting(true);
+		const formData = new FormData(e.currentTarget);
 
-		try {
-			const formData = new FormData(e.currentTarget);
-			const title = formData.get("title") as string;
-			const content = formData.get("content") as string;
-			const category = formData.get("category") as string;
-
-			const res = await fetch("/api/community/discussions", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ title, content, category, tags }),
-			});
-
-			const data = await res.json();
-
-			if (!res.ok) {
-				throw new Error(data.error || t("errors.createFailed"));
-			}
-
-			toast({
-				title: t("toast.createdTitle"),
-				description: t("toast.createdDescription"),
-			});
-
-			router.push(`/community/discussions/${data.slug}`);
-		} catch (err) {
-			toast({
-				title: t("toast.errorTitle"),
-				description: err instanceof Error ? err.message : t("errors.createFailedRetry"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsSubmitting(false);
-		}
+		await submit({
+			title: formData.get("title") as string,
+			content: formData.get("content") as string,
+			category: formData.get("category") as string,
+			tags,
+		});
 	};
 
 	return (
@@ -158,7 +124,7 @@ export default function NewDiscussionPage() {
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
-							onKeyDown={handleAddTag}
+							onKeyDown={handleKeyDown}
 							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
@@ -169,7 +135,7 @@ export default function NewDiscussionPage() {
 										key={tag}
 										variant="secondary"
 										className="gap-1 cursor-pointer"
-										onClick={() => handleRemoveTag(tag)}
+										onClick={() => removeTag(tag)}
 									>
 										{tag}
 										<span className="text-muted-foreground">×</span>

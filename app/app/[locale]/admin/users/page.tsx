@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Users, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/table";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 import { formatDate, truncateAddress } from "@/lib/utils";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface UserRow {
 	_id: string;
@@ -32,28 +34,18 @@ interface UserRow {
 }
 
 export default function AdminUsersPage() {
-	const [users, setUsers] = useState<UserRow[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [search, setSearch] = useState("");
 	const [offset, setOffset] = useState(0);
 	const limit = 50;
 
-	const fetchUsers = useCallback(async () => {
-		setLoading(true);
-		try {
-			const res = await fetch(`/api/admin/users?limit=${limit}&offset=${offset}`);
-			if (res.ok) {
-				const data = (await res.json()) as { users: UserRow[] };
-				setUsers(data.users);
-			}
-		} finally {
-			setLoading(false);
-		}
+	const { data: usersData, loading } = useAsyncData(async () => {
+		const { data } = await fetchJson<{ users: UserRow[] }>(
+			`/api/admin/users?limit=${limit}&offset=${offset}`
+		);
+		return data?.users ?? [];
 	}, [offset]);
 
-	useEffect(() => {
-		fetchUsers();
-	}, [fetchUsers]);
+	const users = usersData ?? [];
 
 	const filtered = search
 		? users.filter(

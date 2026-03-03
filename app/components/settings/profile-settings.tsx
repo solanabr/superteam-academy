@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Camera, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsSave } from "@/hooks/use-settings";
-import { isValidUsername, isUsernameAvailable } from "@/lib/username-utils";
+import { useUsernameValidation } from "@/hooks/use-username-validation";
+import { isValidUsername } from "@/lib/username-utils";
 
 interface ProfileData {
 	name: string;
@@ -36,9 +37,11 @@ export function ProfileSettings() {
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
 	});
-	const [usernameChecking, setUsernameChecking] = useState(false);
-	const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-	const usernameTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+	const {
+		checking: usernameChecking,
+		available: usernameAvailable,
+		debouncedCheck: checkUsername,
+	} = useUsernameValidation();
 	const [profile, setProfile] = useState<ProfileData>({
 		name: "",
 		email: "",
@@ -62,33 +65,9 @@ export function ProfileSettings() {
 		});
 	}, [data]);
 
-	const checkUsernameAvailability = async (username: string) => {
-		if (!(await isValidUsername(username))) {
-			setUsernameAvailable(null);
-			return;
-		}
-
-		setUsernameChecking(true);
-		try {
-			const available = await isUsernameAvailable(username);
-			setUsernameAvailable(available);
-		} catch {
-			setUsernameAvailable(null);
-		} finally {
-			setUsernameChecking(false);
-		}
-	};
-
 	const handleUsernameChange = (value: string) => {
 		setProfile((prev) => ({ ...prev, username: value }));
-		setUsernameAvailable(null);
-
-		if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
-		usernameTimerRef.current = setTimeout(async () => {
-			if (value && (await isValidUsername(value))) {
-				checkUsernameAvailability(value);
-			}
-		}, 500);
+		checkUsername(value);
 	};
 
 	const handleSave = async () => {

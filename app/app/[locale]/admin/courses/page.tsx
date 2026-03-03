@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
 	BookOpen,
@@ -35,6 +35,8 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface CourseRow {
 	_id: string;
@@ -50,34 +52,25 @@ interface CourseRow {
 }
 
 export default function AdminCoursesPage() {
-	const [courses, setCourses] = useState<CourseRow[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [reconciling, setReconciling] = useState(false);
 	const [reconcileMessage, setReconcileMessage] = useState<string | null>(null);
 
-	const fetchCourses = useCallback(async () => {
-		try {
-			const res = await fetch("/api/admin/courses");
-			if (res.ok) {
-				const data = (await res.json()) as { courses: CourseRow[] };
-				setCourses(data.courses);
-			}
-		} finally {
-			setLoading(false);
-		}
+	const {
+		data: coursesData,
+		loading,
+		refetch: fetchCourses,
+	} = useAsyncData(async () => {
+		const { data } = await fetchJson<{ courses: CourseRow[] }>("/api/admin/courses");
+		return data?.courses ?? [];
 	}, []);
 
-	useEffect(() => {
-		fetchCourses();
-	}, [fetchCourses]);
+	const courses = coursesData ?? [];
 
 	const handleDelete = async (courseId: string) => {
 		const res = await fetch(`/api/admin/courses/${courseId}`, {
 			method: "DELETE",
 		});
-		if (res.ok) {
-			setCourses((prev) => prev.filter((c) => c._id !== courseId));
-		}
+		if (res.ok) fetchCourses();
 	};
 
 	const togglePublish = async (courseId: string, published: boolean) => {
@@ -86,11 +79,7 @@ export default function AdminCoursesPage() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ published: !published }),
 		});
-		if (res.ok) {
-			setCourses((prev) =>
-				prev.map((c) => (c._id === courseId ? { ...c, published: !published } : c))
-			);
-		}
+		if (res.ok) fetchCourses();
 	};
 
 	const handleReconcile = async () => {

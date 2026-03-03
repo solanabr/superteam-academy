@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Settings, Loader2, Save, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface PlatformSettings {
 	platformName: string;
@@ -28,26 +30,21 @@ const DEFAULT_SETTINGS: PlatformSettings = {
 
 export default function AdminSettingsPage() {
 	const { isSuperAdmin } = useAuth();
-	const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_SETTINGS);
-	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [saved, setSaved] = useState(false);
 
-	const fetchSettings = useCallback(async () => {
-		try {
-			const res = await fetch("/api/admin/settings");
-			if (res.ok) {
-				const data = (await res.json()) as { settings: PlatformSettings };
-				setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
-			}
-		} finally {
-			setLoading(false);
-		}
+	const { data: fetchedSettings, loading } = useAsyncData(async () => {
+		const { data } = await fetchJson<{ settings: PlatformSettings }>("/api/admin/settings");
+		return data?.settings ? { ...DEFAULT_SETTINGS, ...data.settings } : DEFAULT_SETTINGS;
 	}, []);
 
-	useEffect(() => {
-		fetchSettings();
-	}, [fetchSettings]);
+	const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_SETTINGS);
+	const [initialized, setInitialized] = useState(false);
+
+	if (fetchedSettings && !initialized) {
+		setSettings(fetchedSettings);
+		setInitialized(true);
+	}
 
 	const handleSave = async () => {
 		setSaving(true);

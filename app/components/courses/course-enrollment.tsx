@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Wallet, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { type PublicKey, Transaction } from "@solana/web3.js";
+import type { PublicKey } from "@solana/web3.js";
 import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getProgramId } from "@/lib/academy";
 import { useRouter } from "@superteam-academy/i18n/navigation";
 import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
+import { sendAndConfirmTx, isWalletReady } from "@/lib/solana-transaction";
 
 interface CourseEnrollmentProps {
 	course: {
@@ -47,7 +48,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const prerequisitesMet = course.prerequisites
 		? course.prerequisites.every((p) => p.completed)
 		: true;
-	const canClose = isWalletVerified && wallet.publicKey && wallet.sendTransaction;
+	const canClose = isWalletVerified && isWalletReady(wallet);
 
 	const handleEnrollment = async () => {
 		if (!prerequisitesMet) return;
@@ -76,7 +77,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		}
 
 		// Step 3: Send enrollment transaction
-		if (!wallet.publicKey || !wallet.sendTransaction) return;
+		if (!isWalletReady(wallet)) return;
 
 		setIsEnrolling(true);
 		setAuthError(null);
@@ -90,16 +91,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 					: {}),
 			});
 
-			const tx = new Transaction().add(ix);
-			tx.feePayer = wallet.publicKey as PublicKey;
-			const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-			tx.recentBlockhash = blockhash;
-
-			const signature = await wallet.sendTransaction(tx, connection);
-			await connection.confirmTransaction(
-				{ signature, blockhash, lastValidBlockHeight },
-				"confirmed"
-			);
+			await sendAndConfirmTx(connection, wallet, ix);
 
 			refetch();
 			router.push(`/courses/${course.id}/lessons/1-1`);
@@ -113,7 +105,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	};
 
 	const handleCloseEnrollment = async () => {
-		if (!wallet.publicKey || !wallet.sendTransaction) return;
+		if (!isWalletReady(wallet)) return;
 		if (!isWalletVerified) {
 			setAuthError(t("enroll.verifyWalletPrompt"));
 			return;
@@ -128,16 +120,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				programId: getProgramId(),
 			});
 
-			const tx = new Transaction().add(ix);
-			tx.feePayer = wallet.publicKey as PublicKey;
-			const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-			tx.recentBlockhash = blockhash;
-
-			const signature = await wallet.sendTransaction(tx, connection);
-			await connection.confirmTransaction(
-				{ signature, blockhash, lastValidBlockHeight },
-				"confirmed"
-			);
+			await sendAndConfirmTx(connection, wallet, ix);
 
 			router.push("/courses");
 		} catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Wallet, ExternalLink, Copy, Check, RefreshCw, Link2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,15 +10,15 @@ import { useAuth } from "@/contexts/auth-context";
 import { useSettingsSave } from "@/hooks/use-settings";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { createSignInMessage } from "@superteam-academy/auth";
+import { truncateAddress } from "@/lib/utils";
+import { canSignMessage } from "@/lib/solana-transaction";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface LinkedAccount {
 	provider: "wallet" | "google" | "github" | "email";
 	identifier: string;
 	linkedAt: string;
-}
-
-function truncateAddress(address: string) {
-	return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 export function WalletSettings() {
@@ -36,9 +36,18 @@ export function WalletSettings() {
 	});
 	const { copied, copy } = useCopyToClipboard();
 	const [autoConnect, setAutoConnect] = useState(true);
-	const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
-	const [accountsLoading, setAccountsLoading] = useState(true);
 	const [pendingProvider, setPendingProvider] = useState<string | null>(null);
+
+	const {
+		data: linkedAccounts,
+		loading: accountsLoading,
+		refetch: loadLinkedAccounts,
+	} = useAsyncData(async () => {
+		const { data } = await fetchJson<{ accounts?: LinkedAccount[] }>(
+			"/api/auth/linked-accounts"
+		);
+		return data?.accounts ?? [];
+	}, []);
 
 	useEffect(() => {
 		if (typeof data?.settings?.wallet?.autoConnect === "boolean") {
@@ -48,26 +57,6 @@ export function WalletSettings() {
 
 	const walletAddress = wallet.publicKey?.toBase58() ?? null;
 	const walletName = wallet.wallet?.adapter.name ?? t("unknownWallet");
-
-	const loadLinkedAccounts = useCallback(async () => {
-		setAccountsLoading(true);
-		try {
-			const response = await fetch("/api/auth/linked-accounts", { cache: "no-store" });
-			if (!response.ok) {
-				setLinkedAccounts([]);
-				return;
-			}
-
-			const data = (await response.json()) as { accounts?: LinkedAccount[] };
-			setLinkedAccounts(data.accounts ?? []);
-		} finally {
-			setAccountsLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		void loadLinkedAccounts();
-	}, [loadLinkedAccounts]);
 
 	const copyAddress = () => {
 		if (walletAddress) copy(walletAddress);
@@ -141,7 +130,7 @@ export function WalletSettings() {
 	};
 
 	const linkCurrentWallet = async () => {
-		if (!wallet.publicKey || !wallet.signMessage) {
+		if (!canSignMessage(wallet)) {
 			toast({
 				title: t("toast.signatureUnavailableTitle"),
 				description: t("toast.signatureUnavailableDescription"),
@@ -152,6 +141,8 @@ export function WalletSettings() {
 
 		setPendingProvider("wallet");
 		try {
+			if (!wallet.signMessage || !wallet.publicKey) return;
+
 			const nonceResponse = await fetch("/api/auth/wallet/nonce", { cache: "no-store" });
 			if (!nonceResponse.ok) {
 				throw new Error("Failed to create wallet nonce");
@@ -198,8 +189,10 @@ export function WalletSettings() {
 		}
 	};
 
+	const accounts = linkedAccounts ?? [];
+
 	const isLinked = (provider: LinkedAccount["provider"]) =>
-		linkedAccounts.some((account) => account.provider === provider);
+		accounts.some((account) => account.provider === provider);
 
 	return (
 		<div className="space-y-6">
@@ -327,13 +320,13 @@ export function WalletSettings() {
 						<div className="text-sm text-muted-foreground">
 							{t("loading.linkedAccounts")}
 						</div>
-					) : linkedAccounts.length === 0 ? (
+					) : accounts.length === 0 ? (
 						<div className="text-sm text-muted-foreground">
 							{t("empty.noLinkedAccounts")}
 						</div>
 					) : (
 						<div className="space-y-2">
-							{linkedAccounts.map((account) => {
+							{accounts.map((account) => {
 								const providerLabel = t(`providers.${account.provider}`);
 
 								return (

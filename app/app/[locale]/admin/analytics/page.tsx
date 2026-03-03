@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Users, BookOpen, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface AnalyticsData {
 	totalUsers: number;
@@ -41,38 +42,36 @@ interface CourseRow {
 	lessonCount?: number;
 }
 
-export default function AdminAnalyticsPage() {
-	const [stats, setStats] = useState<AnalyticsData | null>(null);
-	const [courses, setCourses] = useState<CourseRow[]>([]);
-	const [metrics, setMetrics] = useState<ObservabilityMetrics | null>(null);
-	const [loading, setLoading] = useState(true);
+interface AnalyticsFetchResult {
+	stats: AnalyticsData;
+	courses: CourseRow[];
+	metrics: ObservabilityMetrics | null;
+}
 
-	const fetchData = useCallback(async () => {
-		try {
-			const [statsRes, coursesRes, observabilityRes] = await Promise.all([
-				fetch("/api/admin/stats"),
-				fetch("/api/admin/courses"),
-				fetch("/api/platform/observability"),
-			]);
-			if (statsRes.ok) setStats(await statsRes.json());
-			if (coursesRes.ok) {
-				const data = (await coursesRes.json()) as { courses: CourseRow[] };
-				setCourses(data.courses);
-			}
-			if (observabilityRes.ok) {
-				const data = (await observabilityRes.json()) as {
-					metrics: ObservabilityMetrics;
-				};
-				setMetrics(data.metrics);
-			}
-		} finally {
-			setLoading(false);
-		}
+export default function AdminAnalyticsPage() {
+	const { data, loading } = useAsyncData<AnalyticsFetchResult>(async () => {
+		const [statsRes, coursesRes, observabilityRes] = await Promise.all([
+			fetchJson<AnalyticsData>("/api/admin/stats"),
+			fetchJson<{ courses: CourseRow[] }>("/api/admin/courses"),
+			fetchJson<{ metrics: ObservabilityMetrics }>("/api/platform/observability"),
+		]);
+		return {
+			stats: statsRes.data ?? {
+				totalUsers: 0,
+				activeUsers: 0,
+				adminCount: 0,
+				totalEnrollments: 0,
+				totalCourses: 0,
+				publishedCourses: 0,
+			},
+			courses: coursesRes.data?.courses ?? [],
+			metrics: observabilityRes.data?.metrics ?? null,
+		};
 	}, []);
 
-	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+	const stats = data?.stats;
+	const courses = data?.courses ?? [];
+	const metrics = data?.metrics ?? null;
 
 	if (loading) {
 		return (

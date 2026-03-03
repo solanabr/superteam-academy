@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Shield, UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,8 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 import { formatDate, truncateAddress } from "@/lib/utils";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { fetchJson } from "@/lib/fetch-utils";
 
 interface AdminRow {
 	_id: string;
@@ -59,28 +61,21 @@ interface AdminRow {
 
 export default function AdminTeamPage() {
 	const { isSuperAdmin } = useAuth();
-	const [admins, setAdmins] = useState<AdminRow[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [promoteEmail, setPromoteEmail] = useState("");
 	const [promoteRole, setPromoteRole] = useState<string>("admin");
 	const [promoting, setPromoting] = useState(false);
 
-	const fetchAdmins = useCallback(async () => {
-		try {
-			const res = await fetch("/api/admin/admins");
-			if (res.ok) {
-				const data = (await res.json()) as { admins: AdminRow[] };
-				setAdmins(data.admins);
-			}
-		} finally {
-			setLoading(false);
-		}
+	const {
+		data: adminsData,
+		loading,
+		refetch: fetchAdmins,
+	} = useAsyncData(async () => {
+		const { data } = await fetchJson<{ admins: AdminRow[] }>("/api/admin/admins");
+		return data?.admins ?? [];
 	}, []);
 
-	useEffect(() => {
-		fetchAdmins();
-	}, [fetchAdmins]);
+	const admins = adminsData ?? [];
 
 	const handlePromote = async () => {
 		if (!promoteEmail.trim()) return;
@@ -125,7 +120,7 @@ export default function AdminTeamPage() {
 			body: JSON.stringify({ userId, role: "learner" }),
 		});
 		if (res.ok) {
-			setAdmins((prev) => prev.filter((a) => a._id !== userId));
+			fetchAdmins();
 		}
 	};
 
