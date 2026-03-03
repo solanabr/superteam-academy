@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Menu, X, Settings, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { WalletButton } from "@/components/solana/WalletButton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LOCALES = ["en", "pt-BR", "es"] as const;
-const LOCALE_LABELS: Record<string, string> = { en: "EN", "pt-BR": "PT", es: "ES" };
+const LOCALE_LABELS: Record<string, string> = {
+  en: "EN",
+  "pt-BR": "PT",
+  es: "ES",
+};
 
 function ThemeToggle() {
   const [isLight, setIsLight] = useState(false);
@@ -47,9 +51,11 @@ function LocaleSwitcher() {
   const pathname = usePathname();
 
   const cycleLocale = () => {
-    const currentIndex = LOCALES.indexOf(currentLocale as (typeof LOCALES)[number]);
+    const currentIndex = LOCALES.indexOf(
+      currentLocale as (typeof LOCALES)[number],
+    );
     const nextLocale = LOCALES[(currentIndex + 1) % LOCALES.length];
-    router.replace(pathname, { locale: nextLocale });
+    router.replace(pathname as never, { locale: nextLocale });
   };
 
   return (
@@ -79,7 +85,10 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wider">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wider"
+        >
           <span className="text-[#14F195] text-base">◎</span>
           <span className="text-foreground">ACADEMY</span>
         </Link>
@@ -94,7 +103,7 @@ export function Header() {
                 "px-3 py-1.5 rounded text-sm font-mono transition-colors",
                 pathname === href || pathname.startsWith(href + "/")
                   ? "text-foreground bg-elevated"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card",
               )}
             >
               {t(key)}
@@ -108,16 +117,6 @@ export function Header() {
             <ThemeToggle />
             <LocaleSwitcher />
           </div>
-          <Link
-            href="/settings"
-            className={cn(
-              "hidden sm:flex items-center justify-center h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-card transition-colors",
-              pathname.startsWith("/settings") && "text-foreground bg-elevated"
-            )}
-            title="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Link>
           <WalletButton className="hidden sm:flex" />
 
           {/* Mobile toggle */}
@@ -127,7 +126,11 @@ export function Header() {
             className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen((v) => !v)}
           >
-            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {mobileOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -144,7 +147,7 @@ export function Header() {
                 "block px-3 py-2 rounded text-sm font-mono transition-colors",
                 pathname === href
                   ? "text-foreground bg-elevated"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {t(key)}

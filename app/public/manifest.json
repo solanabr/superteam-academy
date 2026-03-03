@@ -8,12 +8,29 @@
   "theme_color": "#14F195",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ],
   "categories": ["education", "productivity"],
   "shortcuts": [
-    { "name": "Courses", "url": "/en/courses", "description": "Browse all courses" },
-    { "name": "Dashboard", "url": "/en/dashboard", "description": "View your progress" },
-    { "name": "Leaderboard", "url": "/en/leaderboard", "description": "Top learners" }
+    {
+      "name": "Courses",
+      "url": "/en/courses",
+      "description": "Browse all courses"
+    },
+    {
+      "name": "Dashboard",
+      "url": "/en/dashboard",
+      "description": "View your progress"
+    },
+    {
+      "name": "Leaderboard",
+      "url": "/en/leaderboard",
+      "description": "Top learners"
+    }
   ]
 }

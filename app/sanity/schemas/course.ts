@@ -99,7 +99,8 @@ export default defineType({
       name: "onChainCourseId",
       title: "On-Chain Course ID",
       type: "string",
-      description: "Matches the courseId used in the Anchor program (e.g. anchor-101)",
+      description:
+        "Matches the courseId used in the Anchor program (e.g. anchor-101)",
     }),
     defineField({
       name: "publishedAt",

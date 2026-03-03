@@ -27,7 +27,8 @@ export async function generateMetadata({
     openGraph: {
       siteName: "Superteam Academy",
       type: "website",
-      locale: locale === "pt-BR" ? "pt_BR" : locale === "es" ? "es_ES" : "en_US",
+      locale:
+        locale === "pt-BR" ? "pt_BR" : locale === "es" ? "es_ES" : "en_US",
     },
     twitter: {
       card: "summary_large_image",
@@ -40,7 +41,10 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
+export default async function LocaleLayout({
+  children,
+  params,
+}: LocaleLayoutProps) {
   const { locale } = await params;
 
   if (!routing.locales.includes(locale as Locale)) {

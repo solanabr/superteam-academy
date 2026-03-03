@@ -13,7 +13,16 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
-import type { AdminStats, RecentSignup, RecentThread, CourseAdminStat } from "@/lib/admin";
+import type {
+  AdminStats,
+  RecentSignup,
+  RecentThread,
+  CourseAdminStat,
+} from "@/lib/admin";
+
+const SANITY_PROJECT_ID =
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "k9esrahg";
+const SANITY_STUDIO_URL = `https://${SANITY_PROJECT_ID}.sanity.studio`;
 
 const ADMIN_WALLETS = (
   process.env.NEXT_PUBLIC_ADMIN_WALLETS ??
@@ -53,7 +62,12 @@ interface Props {
   courseStats: CourseAdminStat[];
 }
 
-export function AdminClient({ stats, recentSignups, recentThreads, courseStats }: Props) {
+export function AdminClient({
+  stats,
+  recentSignups,
+  recentThreads,
+  courseStats,
+}: Props) {
   const { publicKey } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -64,8 +78,12 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
           <Wallet className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="font-mono text-xl font-bold text-foreground mb-2">Admin Access</h1>
-          <p className="text-sm text-muted-foreground">Connect an authorized wallet to access this panel.</p>
+          <h1 className="font-mono text-xl font-bold text-foreground mb-2">
+            Admin Access
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Connect an authorized wallet to access this panel.
+          </p>
         </div>
         <button
           onClick={() => setVisible(true)}
@@ -84,12 +102,15 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
           <ShieldAlert className="h-5 w-5 text-[#FF4444]" />
         </div>
         <div>
-          <h1 className="font-mono text-xl font-bold text-foreground mb-2">Access Denied</h1>
+          <h1 className="font-mono text-xl font-bold text-foreground mb-2">
+            Access Denied
+          </h1>
           <p className="text-sm text-muted-foreground mb-2">
             This wallet is not authorized to access the admin panel.
           </p>
           <p className="text-[10px] font-mono text-subtle">
-            {publicKey.toBase58().slice(0, 8)}...{publicKey.toBase58().slice(-8)}
+            {publicKey.toBase58().slice(0, 8)}...
+            {publicKey.toBase58().slice(-8)}
           </p>
         </div>
       </div>
@@ -99,29 +120,56 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
   const maxEnrollments = Math.max(...courseStats.map((c) => c.enrollments), 1);
 
   const STATS = [
-    { label: "Total Users", value: stats.totalUsers.toLocaleString(), icon: Users },
-    { label: "Active Courses", value: courseStats.length.toString(), icon: BookOpen },
-    { label: "Forum Threads", value: stats.totalThreads.toLocaleString(), icon: MessageSquare },
-    { label: "Forum Replies", value: stats.totalReplies.toLocaleString(), icon: MessagesSquare },
+    {
+      label: "Total Users",
+      value: stats.totalUsers.toLocaleString(),
+      icon: Users,
+    },
+    {
+      label: "Active Courses",
+      value: courseStats.length.toString(),
+      icon: BookOpen,
+    },
+    {
+      label: "Forum Threads",
+      value: stats.totalThreads.toLocaleString(),
+      icon: MessageSquare,
+    },
+    {
+      label: "Forum Replies",
+      value: stats.totalReplies.toLocaleString(),
+      icon: MessagesSquare,
+    },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">Admin Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Platform overview and course management.</p>
+        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
+          Admin Dashboard
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Platform overview and course management.
+        </p>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STATS.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="bg-card border border-border rounded-lg p-5 flex flex-col gap-3">
+          <div
+            key={label}
+            className="bg-card border border-border rounded-lg p-5 flex flex-col gap-3"
+          >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">{label}</p>
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                {label}
+              </p>
               <Icon className="h-4 w-4 text-[#14F195]" />
             </div>
-            <p className="font-mono text-2xl font-bold text-foreground">{value}</p>
+            <p className="font-mono text-2xl font-bold text-foreground">
+              {value}
+            </p>
           </div>
         ))}
       </div>
@@ -143,7 +191,9 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
               <div className="flex-1 bg-background rounded-sm h-5 overflow-hidden">
                 <div
                   className="h-full bg-[#14F195]/70 rounded-sm flex items-center justify-end pr-2 transition-all"
-                  style={{ width: `${(course.enrollments / maxEnrollments) * 100}%` }}
+                  style={{
+                    width: `${(course.enrollments / maxEnrollments) * 100}%`,
+                  }}
                 >
                   <span className="font-mono text-[10px] text-black font-bold">
                     {course.enrollments}
@@ -175,7 +225,14 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                {["Title", "Difficulty", "Enrollments", "Completion %", "XP Reward", "Actions"].map((col) => (
+                {[
+                  "Title",
+                  "Difficulty",
+                  "Enrollments",
+                  "Completion %",
+                  "XP Reward",
+                  "Actions",
+                ].map((col) => (
                   <th
                     key={col}
                     className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
@@ -191,7 +248,9 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
                   key={course.slug}
                   className="border-b border-border last:border-0 transition-colors hover:bg-elevated"
                 >
-                  <td className="px-5 py-3.5 font-mono text-sm text-foreground">{course.title}</td>
+                  <td className="px-5 py-3.5 font-mono text-sm text-foreground">
+                    {course.title}
+                  </td>
                   <td className="px-5 py-3.5">
                     <span
                       className="text-[10px] font-mono px-2 py-0.5 rounded-full border"
@@ -215,7 +274,9 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
                           style={{ width: `${course.completion}%` }}
                         />
                       </div>
-                      <span className="font-mono text-xs text-muted-foreground">{course.completion}%</span>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {course.completion}%
+                      </span>
                     </div>
                   </td>
                   <td className="px-5 py-3.5 font-mono text-sm text-[#14F195]">
@@ -223,9 +284,14 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button className="text-[10px] font-mono px-2.5 py-1 border border-border rounded text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors">
+                      <a
+                        href={`${SANITY_STUDIO_URL}/structure/course`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono px-2.5 py-1 border border-border rounded text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors"
+                      >
                         Edit
-                      </button>
+                      </a>
                       <a
                         href={`/courses/${course.slug}`}
                         className="text-[10px] font-mono px-2.5 py-1 border border-[#14F195]/30 rounded text-[#14F195] hover:bg-[#14F195]/10 transition-colors"
@@ -251,19 +317,23 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
         </div>
         <div className="overflow-x-auto">
           {recentSignups.length === 0 ? (
-            <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">No signups yet.</p>
+            <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">
+              No signups yet.
+            </p>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  {["Wallet / Username", "Display Name", "Joined"].map((col) => (
-                    <th
-                      key={col}
-                      className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
-                    >
-                      {col}
-                    </th>
-                  ))}
+                  {["Wallet / Username", "Display Name", "Joined"].map(
+                    (col) => (
+                      <th
+                        key={col}
+                        className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
+                      >
+                        {col}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -303,7 +373,9 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
         </div>
         <div className="overflow-x-auto">
           {recentThreads.length === 0 ? (
-            <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">No threads yet.</p>
+            <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">
+              No threads yet.
+            </p>
           ) : (
             <table className="w-full">
               <thead>
@@ -333,7 +405,9 @@ export function AdminClient({ stats, recentSignups, recentThreads, courseStats }
                           {thread.category_label}
                         </span>
                       ) : (
-                        <span className="font-mono text-xs text-muted-foreground">—</span>
+                        <span className="font-mono text-xs text-muted-foreground">
+                          —
+                        </span>
                       )}
                     </td>
                     <td className="px-5 py-3.5 font-mono text-xs text-muted-foreground">

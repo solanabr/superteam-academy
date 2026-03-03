@@ -35,7 +35,9 @@ export function useSyncXp() {
         try {
           const ids: string[] = JSON.parse(localStorage.getItem(key) ?? "[]");
           if (ids.length > 0) completedBySlug[slug] = ids;
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       }
 
       if (Object.keys(completedBySlug).length === 0) {
@@ -44,19 +46,30 @@ export function useSyncXp() {
       }
 
       // Fetch course data for XP values
-      let courseMap: Record<string, { title: string; lessons: Record<string, { title: string; xp: number }> }> = {};
+      let courseMap: Record<
+        string,
+        {
+          title: string;
+          lessons: Record<string, { title: string; xp: number }>;
+        }
+      > = {};
       try {
         const courses = await getAllCourses();
         for (const c of courses) {
           const lessons: Record<string, { title: string; xp: number }> = {};
           for (const m of c.modules ?? []) {
             for (const l of m.lessons ?? []) {
-              lessons[l._id] = { title: l.title, xp: l.xpReward ?? DEFAULT_XP_PER_LESSON };
+              lessons[l._id] = {
+                title: l.title,
+                xp: l.xpReward ?? DEFAULT_XP_PER_LESSON,
+              };
             }
           }
           courseMap[c.slug] = { title: c.title, lessons };
         }
-      } catch { /* use default XP */ }
+      } catch {
+        /* use default XP */
+      }
 
       // Check which ones are already in Supabase
       if (!supabase) return;
@@ -67,7 +80,9 @@ export function useSyncXp() {
         .eq("wallet_address", wallet)
         .in("lesson_id", allIds);
 
-      const existingSet = new Set((existing ?? []).map((r: { lesson_id: string }) => r.lesson_id));
+      const existingSet = new Set(
+        (existing ?? []).map((r: { lesson_id: string }) => r.lesson_id),
+      );
 
       let totalNewXp = 0;
       const rows = [];
@@ -91,7 +106,9 @@ export function useSyncXp() {
       }
 
       if (rows.length > 0) {
-        await supabase.from("lesson_completions").upsert(rows, { onConflict: "wallet_address,lesson_id" });
+        await supabase
+          .from("lesson_completions")
+          .upsert(rows, { onConflict: "wallet_address,lesson_id" });
         if (totalNewXp > 0) {
           await supabase.rpc("increment_xp", { wallet, amount: totalNewXp });
         }

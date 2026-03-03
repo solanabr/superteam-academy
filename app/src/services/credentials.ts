@@ -29,11 +29,15 @@ const TRACK_COLLECTIONS = (process.env.NEXT_PUBLIC_TRACK_COLLECTIONS ?? "")
   .split(",")
   .filter(Boolean);
 
-const ACHIEVEMENT_COLLECTIONS = (process.env.NEXT_PUBLIC_ACHIEVEMENT_COLLECTIONS ?? "")
+const ACHIEVEMENT_COLLECTIONS = (
+  process.env.NEXT_PUBLIC_ACHIEVEMENT_COLLECTIONS ?? ""
+)
   .split(",")
   .filter(Boolean);
 
-export async function getCredentials(walletAddress: string): Promise<Credential[]> {
+export async function getCredentials(
+  walletAddress: string,
+): Promise<Credential[]> {
   if (!HELIUS_RPC_URL || !walletAddress) return [];
 
   try {
@@ -53,7 +57,7 @@ export async function getCredentials(walletAddress: string): Promise<Credential[
       }),
     });
 
-    const data = await res.json() as { result?: { items?: DasAsset[] } };
+    const data = (await res.json()) as { result?: { items?: DasAsset[] } };
     const items = data.result?.items ?? [];
 
     return items
@@ -65,7 +69,7 @@ export async function getCredentials(walletAddress: string): Promise<Credential[
         return item.grouping?.some(
           (g) =>
             g.group_key === "collection" &&
-            TRACK_COLLECTIONS.includes(g.group_value)
+            TRACK_COLLECTIONS.includes(g.group_value),
         );
       })
       .map((item): Credential => {
@@ -93,7 +97,54 @@ export async function getCredentials(walletAddress: string): Promise<Credential[
   }
 }
 
-export async function getAchievements(walletAddress: string): Promise<Achievement[]> {
+export async function getCredentialById(
+  assetId: string,
+): Promise<Credential | null> {
+  if (!HELIUS_RPC_URL || !assetId) return null;
+
+  try {
+    const res = await fetch(HELIUS_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "get-asset",
+        method: "getAsset",
+        params: { id: assetId },
+      }),
+    });
+
+    const data = (await res.json()) as { result?: DasAsset };
+    const item = data.result;
+    if (!item) return null;
+
+    const attrs: Record<string, string> = {};
+    for (const attr of item.content?.metadata?.attributes ?? []) {
+      attrs[attr.trait_type] = attr.value;
+    }
+
+    return {
+      id: item.id,
+      name: item.content?.metadata?.name ?? "Academy Credential",
+      imageUrl: item.content?.links?.image ?? item.content?.metadata?.image,
+      metadataUri: item.content?.json_uri,
+      attributes: {
+        trackId: attrs["track_id"],
+        level: attrs["level"],
+        coursesCompleted: attrs["courses_completed"],
+        totalXp: attrs["total_xp"],
+      },
+      assetAddress: item.id,
+      mintedAt: item.created_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getAchievements(
+  walletAddress: string,
+): Promise<Achievement[]> {
   if (!HELIUS_RPC_URL || !walletAddress) return [];
 
   try {
@@ -108,7 +159,7 @@ export async function getAchievements(walletAddress: string): Promise<Achievemen
       }),
     });
 
-    const data = await res.json() as { result?: { items?: DasAsset[] } };
+    const data = (await res.json()) as { result?: { items?: DasAsset[] } };
     const items = data.result?.items ?? [];
 
     return items
@@ -117,7 +168,7 @@ export async function getAchievements(walletAddress: string): Promise<Achievemen
         return item.grouping?.some(
           (g) =>
             g.group_key === "collection" &&
-            ACHIEVEMENT_COLLECTIONS.includes(g.group_value)
+            ACHIEVEMENT_COLLECTIONS.includes(g.group_value),
         );
       })
       .map((item): Achievement => {

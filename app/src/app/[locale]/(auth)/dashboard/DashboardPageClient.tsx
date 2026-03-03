@@ -31,7 +31,12 @@ import { getAchievements } from "@/services/credentials";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ActivityItemType = "lesson" | "xp" | "milestone" | "enrollment" | "credential";
+type ActivityItemType =
+  | "lesson"
+  | "xp"
+  | "milestone"
+  | "enrollment"
+  | "credential";
 
 interface CourseWithProgress {
   id: string;
@@ -49,12 +54,15 @@ interface CourseWithProgress {
   totalLessons: number;
 }
 
-const TRACK_META: Record<number, { name: string; icon: string; color: string }> = {
-  1: { name: "Solana Basics",      icon: "◎", color: "#14F195" },
-  2: { name: "Anchor Framework",   icon: "⚓", color: "#9945FF" },
-  3: { name: "DeFi",               icon: "💹", color: "#00D4FF" },
-  4: { name: "Token-2022",         icon: "🪙", color: "#F5A623" },
-  5: { name: "Security",           icon: "🔒", color: "#FF4444" },
+const TRACK_META: Record<
+  number,
+  { name: string; icon: string; color: string }
+> = {
+  1: { name: "Solana Basics", icon: "◎", color: "#14F195" },
+  2: { name: "Anchor Framework", icon: "⚓", color: "#9945FF" },
+  3: { name: "DeFi", icon: "💹", color: "#00D4FF" },
+  4: { name: "Token-2022", icon: "🪙", color: "#F5A623" },
+  5: { name: "Security", icon: "🔒", color: "#FF4444" },
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -65,17 +73,21 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 function buildCoursesWithProgress(): CourseWithProgress[] {
   return MOCK_COURSES.map((course) => {
-    const totalLessons = course.modules?.reduce(
-      (sum, m) => sum + (m.lessons?.length ?? 0), 0
-    ) ?? 0;
+    const totalLessons =
+      course.modules?.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0) ??
+      0;
     let completedLessons = 0;
     try {
       const ids: string[] = JSON.parse(
-        localStorage.getItem(`completed_${course.slug}`) ?? "[]"
+        localStorage.getItem(`completed_${course.slug}`) ?? "[]",
       );
       completedLessons = ids.length;
     } catch {}
-    const track = TRACK_META[course.trackId ?? 0] ?? { name: "General", icon: "📚", color: "#666666" };
+    const track = TRACK_META[course.trackId ?? 0] ?? {
+      name: "General",
+      icon: "📚",
+      color: "#666666",
+    };
     return {
       id: course._id,
       title: course.title,
@@ -89,11 +101,14 @@ function buildCoursesWithProgress(): CourseWithProgress[] {
       trackColor: track.color,
       completedLessons,
       totalLessons,
-      progressPercent: totalLessons > 0
-        ? completedLessons > 0
-          ? Math.round((completedLessons / totalLessons) * 100)
-          : localStorage.getItem(`last_lesson_${course.slug}`) ? 1 : 0
-        : 0,
+      progressPercent:
+        totalLessons > 0
+          ? completedLessons > 0
+            ? Math.round((completedLessons / totalLessons) * 100)
+            : localStorage.getItem(`last_lesson_${course.slug}`)
+              ? 1
+              : 0
+          : 0,
     };
   });
 }
@@ -121,7 +136,10 @@ function buildDailyChallenges(): DailyChallenge[] {
             title: lesson.title.replace(/^Challenge:\s*/i, ""),
             courseTitle: course.title,
             courseDescription: course.description,
-            difficulty: course.difficulty as "beginner" | "intermediate" | "advanced",
+            difficulty: course.difficulty as
+              | "beginner"
+              | "intermediate"
+              | "advanced",
             xpReward: lesson.xpReward ?? 0,
             estimatedMinutes: lesson.estimatedMinutes ?? 30,
             courseSlug: course.slug,
@@ -161,7 +179,9 @@ function DailyChallengeWidget() {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="font-mono text-lg font-semibold text-foreground">Daily Challenge</h2>
+        <h2 className="font-mono text-lg font-semibold text-foreground">
+          Daily Challenge
+        </h2>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 text-[#14F195] animate-pulse">
           LIVE
         </span>
@@ -170,8 +190,13 @@ function DailyChallengeWidget() {
         </span>
       </div>
       <div className="bg-card border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle at top right, rgba(20,241,149,0.06), transparent 70%)" }} />
+        <div
+          className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at top right, rgba(20,241,149,0.06), transparent 70%)",
+          }}
+        />
         <div className="flex items-start justify-between gap-4 relative">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -182,13 +207,23 @@ function DailyChallengeWidget() {
                 ~{challenge.estimatedMinutes} min
               </span>
             </div>
-            <h3 className="font-mono text-sm font-semibold text-foreground mb-1">{challenge.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{challenge.courseDescription}</p>
-            <p className="text-[10px] font-mono text-subtle mt-1">{challenge.courseTitle}</p>
+            <h3 className="font-mono text-sm font-semibold text-foreground mb-1">
+              {challenge.title}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              {challenge.courseDescription}
+            </p>
+            <p className="text-[10px] font-mono text-subtle mt-1">
+              {challenge.courseTitle}
+            </p>
           </div>
           <div className="flex-shrink-0 text-right">
-            <div className="font-mono text-2xl font-bold text-[#14F195]">+{challenge.xpReward}</div>
-            <div className="text-[10px] text-muted-foreground font-mono">XP</div>
+            <div className="font-mono text-2xl font-bold text-[#14F195]">
+              +{challenge.xpReward}
+            </div>
+            <div className="text-[10px] text-muted-foreground font-mono">
+              XP
+            </div>
           </div>
         </div>
         <div className="mt-4">
@@ -234,11 +269,17 @@ export default function DashboardPage() {
   const { data: xpData, loading: xpLoading } = useXpBalance();
   const { streak } = useStreak();
   const { credentials, loading: credsLoading } = useCredentials();
-  const { items: activityItems, thisWeek, loading: activityLoading } = useActivity();
+  const {
+    items: activityItems,
+    thisWeek,
+    loading: activityLoading,
+  } = useActivity();
   useSyncXp();
 
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
-  const [inProgressCourses, setInProgressCourses] = useState<CourseWithProgress[]>([]);
+  const [inProgressCourses, setInProgressCourses] = useState<
+    CourseWithProgress[]
+  >([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
@@ -256,11 +297,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const all = buildCoursesWithProgress();
     // Sort: in-progress first, then not-started (by difficulty asc), then completed
-    const inProgress = all.filter((c) => c.progressPercent > 0 && c.progressPercent < 100);
+    const inProgress = all.filter(
+      (c) => c.progressPercent > 0 && c.progressPercent < 100,
+    );
     const notStarted = all.filter((c) => c.progressPercent === 0);
     const completed = all.filter((c) => c.progressPercent === 100);
-    const diffOrder: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
-    notStarted.sort((a, b) => (diffOrder[a.difficulty] ?? 0) - (diffOrder[b.difficulty] ?? 0));
+    const diffOrder: Record<string, number> = {
+      beginner: 0,
+      intermediate: 1,
+      advanced: 2,
+    };
+    notStarted.sort(
+      (a, b) => (diffOrder[a.difficulty] ?? 0) - (diffOrder[b.difficulty] ?? 0),
+    );
     setInProgressCourses(inProgress);
     setCourses([...inProgress, ...notStarted, ...completed].slice(0, 3));
   }, []);
@@ -285,7 +334,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -364,7 +412,9 @@ export default function DashboardPage() {
           ) : (
             <div className="font-mono text-3xl font-bold text-foreground">
               {thisWeek}
-              <span className="text-sm text-muted-foreground ml-1">lessons</span>
+              <span className="text-sm text-muted-foreground ml-1">
+                lessons
+              </span>
             </div>
           )}
           <p className="text-[10px] text-muted-foreground font-mono mt-2">
@@ -429,11 +479,14 @@ export default function DashboardPage() {
                     +{achievement.xpReward} XP
                   </p>
                   <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                    {new Date(achievement.awardedAt).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {new Date(achievement.awardedAt).toLocaleDateString(
+                      undefined,
+                      {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      },
+                    )}
                   </p>
                 </div>
               </div>
@@ -457,7 +510,12 @@ export default function DashboardPage() {
 
           {activityLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-12 bg-elevated rounded animate-pulse" />)}
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 bg-elevated rounded animate-pulse"
+                />
+              ))}
             </div>
           ) : activityItems.length === 0 ? (
             <p className="text-xs font-mono text-muted-foreground text-center py-8">
@@ -512,7 +570,8 @@ export default function DashboardPage() {
 
           <div className="flex flex-col gap-3">
             {courses.map((course) => {
-              const diffColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
+              const diffColor =
+                DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
               return (
                 <Link
                   key={course.id}
@@ -540,11 +599,13 @@ export default function DashboardPage() {
                         {course.description}
                       </p>
 
-                      {course.progressPercent > 0 && course.progressPercent < 100 ? (
+                      {course.progressPercent > 0 &&
+                      course.progressPercent < 100 ? (
                         <div className="mt-1.5">
                           <div className="flex items-center justify-between mb-0.5">
                             <span className="text-[9px] font-mono text-[#14F195]">
-                              {course.completedLessons}/{course.totalLessons} lessons
+                              {course.completedLessons}/{course.totalLessons}{" "}
+                              lessons
                             </span>
                             <span className="text-[9px] font-mono text-muted-foreground">
                               {course.progressPercent}%
@@ -616,7 +677,10 @@ export default function DashboardPage() {
             {inProgressCourses.map((course) => (
               <Link
                 key={course.id}
-                href={{ pathname: "/courses/[slug]", params: { slug: course.slug } }}
+                href={{
+                  pathname: "/courses/[slug]",
+                  params: { slug: course.slug },
+                }}
               >
                 <div className="group bg-card border border-border rounded p-4 hover:border-border-hover transition-all">
                   <div className="flex items-center gap-2 mb-2">
@@ -629,7 +693,9 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-mono text-muted-foreground">
                       {course.completedLessons}/{course.totalLessons} lessons
                     </span>
-                    <span className="text-[10px] font-mono text-[#14F195]">{course.progressPercent}%</span>
+                    <span className="text-[10px] font-mono text-[#14F195]">
+                      {course.progressPercent}%
+                    </span>
                   </div>
                   <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
                     <div

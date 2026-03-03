@@ -31,7 +31,8 @@ export default function SettingsPage() {
   const currentLocale = useLocale();
   const { publicKey, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
-  const { openUserProfile } = useClerk();
+  const { openUserProfile, openSignIn } = useClerk();
+  const connectOAuth = () => (user ? openUserProfile() : openSignIn());
   const { user } = useUser();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
@@ -44,8 +45,12 @@ export default function SettingsPage() {
   const [twitterHandle, setTwitterHandle] = useState("");
   const [githubHandle, setGithubHandle] = useState("");
 
-  const googleAccount = user?.externalAccounts.find((a) => a.provider === "oauth_google");
-  const githubAccount = user?.externalAccounts.find((a) => a.provider === "oauth_github");
+  const googleAccount = user?.externalAccounts.find(
+    (a) => a.provider === "google",
+  );
+  const githubAccount = user?.externalAccounts.find(
+    (a) => a.provider === "github",
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -109,7 +114,9 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="font-mono text-3xl font-bold text-foreground mb-8">{t("title")}</h1>
+      <h1 className="font-mono text-3xl font-bold text-foreground mb-8">
+        {t("title")}
+      </h1>
 
       <div className="flex gap-6">
         {/* Sidebar tabs */}
@@ -122,7 +129,7 @@ export default function SettingsPage() {
                 "w-full flex items-center gap-2.5 px-3 py-2 rounded text-sm font-mono text-left transition-colors",
                 activeTab === id
                   ? "bg-elevated text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card",
               )}
             >
               <Icon className="h-3.5 w-3.5 flex-shrink-0" />
@@ -192,8 +199,12 @@ export default function SettingsPage() {
                 {saved ? t("profile.saved") : t("profile.save")}
               </button>
               <div className="pt-4 border-t border-border">
-                <h3 className="font-mono text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Data Export</h3>
-                <p className="text-xs text-muted-foreground mb-3">Download all your progress data, XP history, and credentials.</p>
+                <h3 className="font-mono text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                  Data Export
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Download all your progress data, XP history, and credentials.
+                </p>
                 <button
                   onClick={() => {
                     const data = {
@@ -203,7 +214,9 @@ export default function SettingsPage() {
                       bio,
                       streak: localStorage.getItem("streak_data"),
                     };
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const blob = new Blob([JSON.stringify(data, null, 2)], {
+                      type: "application/json",
+                    });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
@@ -227,7 +240,11 @@ export default function SettingsPage() {
               <AccountRow
                 label={t("accounts.wallet")}
                 icon="◎"
-                value={publicKey ? `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}` : undefined}
+                value={
+                  publicKey
+                    ? `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}`
+                    : undefined
+                }
                 connected={connected}
                 onConnect={() => setVisible(true)}
                 onDisconnect={disconnect}
@@ -237,20 +254,31 @@ export default function SettingsPage() {
                 icon="G"
                 value={googleAccount?.emailAddress ?? undefined}
                 connected={!!googleAccount}
-                onConnect={() => openUserProfile()}
-                onDisconnect={googleAccount ? () => handleDisconnectOAuth(googleAccount.id) : undefined}
+                onConnect={connectOAuth}
+                onDisconnect={
+                  googleAccount
+                    ? () => handleDisconnectOAuth(googleAccount.id)
+                    : undefined
+                }
               />
               <AccountRow
                 label={t("accounts.github")}
                 icon="⌥"
                 value={githubAccount?.username ?? undefined}
                 connected={!!githubAccount}
-                onConnect={() => openUserProfile()}
-                onDisconnect={githubAccount ? () => handleDisconnectOAuth(githubAccount.id) : undefined}
+                onConnect={connectOAuth}
+                onDisconnect={
+                  githubAccount
+                    ? () => handleDisconnectOAuth(githubAccount.id)
+                    : undefined
+                }
               />
               <p className="text-[10px] font-mono text-subtle pt-1">
                 Manage sign-in methods via{" "}
-                <button onClick={() => openUserProfile()} className="text-[#14F195] hover:underline">
+                <button
+                  onClick={connectOAuth}
+                  className="text-[#14F195] hover:underline"
+                >
                   Clerk profile
                 </button>
               </p>
@@ -271,11 +299,15 @@ export default function SettingsPage() {
                       "flex-1 py-3 rounded border font-mono text-sm capitalize transition-colors",
                       activeTheme === theme
                         ? "border-[#14F195] text-[#14F195] bg-[#14F195]/5"
-                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground"
+                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground",
                     )}
                   >
-                    {theme === "dark" ? t("appearance.dark") : t("appearance.light")}
-                    {activeTheme === theme && <span className="ml-1.5 text-[9px]">✓</span>}
+                    {theme === "dark"
+                      ? t("appearance.dark")
+                      : t("appearance.light")}
+                    {activeTheme === theme && (
+                      <span className="ml-1.5 text-[9px]">✓</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -297,11 +329,13 @@ export default function SettingsPage() {
                       "w-full flex items-center justify-between px-3 py-2.5 rounded border font-mono text-sm transition-colors",
                       isActive
                         ? "border-[#14F195]/30 text-foreground bg-[#14F195]/5"
-                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground"
+                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground",
                     )}
                   >
                     <span>{label}</span>
-                    {isActive && <Check className="h-3.5 w-3.5 text-[#14F195]" />}
+                    {isActive && (
+                      <Check className="h-3.5 w-3.5 text-[#14F195]" />
+                    )}
                   </button>
                 );
               })}
@@ -313,7 +347,13 @@ export default function SettingsPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <label className="text-xs font-mono text-muted-foreground">{label}</label>
@@ -345,7 +385,11 @@ function AccountRow({
         </span>
         <div>
           <p className="text-sm font-mono text-foreground">{label}</p>
-          {value && <p className="text-[10px] font-mono text-muted-foreground">{value}</p>}
+          {value && (
+            <p className="text-[10px] font-mono text-muted-foreground">
+              {value}
+            </p>
+          )}
         </div>
       </div>
       {connected ? (

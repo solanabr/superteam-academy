@@ -32,7 +32,10 @@ export function useActivity() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!publicKey || !supabase) { setLoading(false); return; }
+    if (!publicKey || !supabase) {
+      setLoading(false);
+      return;
+    }
     const wallet = publicKey.toBase58();
     const { data } = await supabase
       .from("lesson_completions")
@@ -41,7 +44,10 @@ export function useActivity() {
       .order("completed_at", { ascending: false })
       .limit(10);
 
-    if (!data) { setLoading(false); return; }
+    if (!data) {
+      setLoading(false);
+      return;
+    }
 
     const week = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     setThisWeek(data.filter((r) => new Date(r.completed_at) >= week).length);
@@ -70,7 +76,9 @@ export function useActivity() {
     setLoading(false);
   }, [publicKey]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return { items, thisWeek, loading };
 }

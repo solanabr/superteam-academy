@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { AnchorProvider, Program, BN, web3, type Idl, type Wallet as AnchorWallet } from "@coral-xyz/anchor";
+import {
+  AnchorProvider,
+  Program,
+  BN,
+  web3,
+  type Idl,
+  type Wallet as AnchorWallet,
+} from "@coral-xyz/anchor";
 import { SystemProgram } from "@solana/web3.js";
 import { getConnection, PROGRAM_ID } from "@/lib/solana";
 import { findEnrollmentPDA, findCoursePDA } from "@/lib/pda";
@@ -42,14 +49,18 @@ export function useEnrollment(courseId: string | undefined) {
       try {
         latestBlockhash = await connection.getLatestBlockhash("finalized");
       } catch {
-        return { success: false, error: "Cannot reach Solana devnet. Check your connection." };
+        return {
+          success: false,
+          error: "Cannot reach Solana devnet. Check your connection.",
+        };
       }
 
       const wallet = {
         publicKey,
         signTransaction: signTransaction as AnchorWallet["signTransaction"],
-        signAllTransactions: signAllTransactions as AnchorWallet["signAllTransactions"],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        signAllTransactions:
+          signAllTransactions as AnchorWallet["signAllTransactions"],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any as AnchorWallet;
 
       const provider = new AnchorProvider(connection, wallet, {
@@ -69,13 +80,15 @@ export function useEnrollment(courseId: string | undefined) {
       const [coursePda] = findCoursePDA(courseId);
       const [enrollmentPda] = findEnrollmentPDA(courseId, publicKey);
 
-      const sig = await (program.methods as unknown as {
-        enroll: (id: string) => {
-          accountsPartial: (accounts: Record<string, unknown>) => {
-            rpc: (opts?: Record<string, unknown>) => Promise<string>;
+      const sig = await (
+        program.methods as unknown as {
+          enroll: (id: string) => {
+            accountsPartial: (accounts: Record<string, unknown>) => {
+              rpc: (opts?: Record<string, unknown>) => Promise<string>;
+            };
           };
-        };
-      })
+        }
+      )
         .enroll(courseId)
         .accountsPartial({
           course: coursePda,
@@ -98,7 +111,14 @@ export function useEnrollment(courseId: string | undefined) {
     } finally {
       setEnrolling(false);
     }
-  }, [publicKey, courseId, signTransaction, signAllTransactions, connection, refresh]);
+  }, [
+    publicKey,
+    courseId,
+    signTransaction,
+    signAllTransactions,
+    connection,
+    refresh,
+  ]);
 
   return { progress, loading, enrolling, enroll, refresh };
 }

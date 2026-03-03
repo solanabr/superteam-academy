@@ -3,14 +3,34 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
-import { MOCK_COURSES } from "@/lib/mock-courses";
+import { getAllCourses } from "@/lib/sanity";
 import { supabase } from "@/lib/supabase";
+import { events } from "@/lib/analytics";
 import type { LeaderboardEntry } from "@/types";
 
-export function LeaderboardClient({ entries }: { entries: LeaderboardEntry[] }) {
+interface CourseOption {
+  slug: string;
+  title: string;
+}
+
+export function LeaderboardClient({
+  entries,
+}: {
+  entries: LeaderboardEntry[];
+}) {
   const { publicKey } = useWallet();
   const [selectedCourse, setSelectedCourse] = useState<string>("");
-  const [filteredEntries, setFilteredEntries] = useState<LeaderboardEntry[]>(entries);
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+
+  useEffect(() => {
+    events.leaderboardView("all");
+    getAllCourses().then((all) =>
+      setCourses(all.map((c) => ({ slug: c.slug, title: c.title }))),
+    );
+  }, []);
+
+  const [filteredEntries, setFilteredEntries] =
+    useState<LeaderboardEntry[]>(entries);
   const [isFiltering, setIsFiltering] = useState(false);
 
   useEffect(() => {
@@ -38,7 +58,9 @@ export function LeaderboardClient({ entries }: { entries: LeaderboardEntry[] }) 
           setIsFiltering(false);
           return;
         }
-        const wallets = new Set(data.map((row) => row.wallet_address as string));
+        const wallets = new Set(
+          data.map((row) => row.wallet_address as string),
+        );
         setFilteredEntries(entries.filter((e) => wallets.has(e.walletAddress)));
         setIsFiltering(false);
       });
@@ -64,14 +86,16 @@ export function LeaderboardClient({ entries }: { entries: LeaderboardEntry[] }) 
             className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-[#14F195]/50 disabled:opacity-50 cursor-pointer"
           >
             <option value="">All Courses</option>
-            {MOCK_COURSES.map((course) => (
+            {courses.map((course) => (
               <option key={course.slug} value={course.slug}>
                 {course.title}
               </option>
             ))}
           </select>
           {isFiltering && (
-            <span className="text-[10px] font-mono text-muted-foreground">Loading...</span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              Loading...
+            </span>
           )}
         </div>
       )}

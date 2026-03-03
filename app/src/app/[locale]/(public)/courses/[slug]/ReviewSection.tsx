@@ -8,7 +8,7 @@ import { useProfile } from "@/hooks/useProfile";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 interface Review {
@@ -20,7 +20,15 @@ interface Review {
   created_at: string;
 }
 
-function StarRating({ rating, interactive = false, onChange }: { rating: number; interactive?: boolean; onChange?: (r: number) => void }) {
+function StarRating({
+  rating,
+  interactive = false,
+  onChange,
+}: {
+  rating: number;
+  interactive?: boolean;
+  onChange?: (r: number) => void;
+}) {
   const [hover, setHover] = useState(0);
   return (
     <div className="flex gap-0.5">
@@ -64,17 +72,25 @@ function ReviewModal({
     setSubmitting(true);
     setError(null);
     const wallet = publicKey.toBase58();
-    const displayName = profile?.display_name ?? profile?.username
-      ?? (wallet.slice(0, 6) + "..." + wallet.slice(-4));
-    const { error: err } = await supabase.from("course_reviews").upsert({
-      course_slug: courseSlug,
-      wallet_address: wallet,
-      display_name: displayName,
-      rating,
-      comment: comment.trim() || null,
-    }, { onConflict: "course_slug,wallet_address" });
+    const displayName =
+      profile?.display_name ??
+      profile?.username ??
+      wallet.slice(0, 6) + "..." + wallet.slice(-4);
+    const { error: err } = await supabase.from("course_reviews").upsert(
+      {
+        course_slug: courseSlug,
+        wallet_address: wallet,
+        display_name: displayName,
+        rating,
+        comment: comment.trim() || null,
+      },
+      { onConflict: "course_slug,wallet_address" },
+    );
     setSubmitting(false);
-    if (err) { setError(err.message); return; }
+    if (err) {
+      setError(err.message);
+      return;
+    }
     onSubmitted(rating, comment.trim());
     onClose();
   };
@@ -86,7 +102,9 @@ function ReviewModal({
           <h3 className="font-mono text-base font-semibold text-foreground">
             {isEdit ? "Edit your review" : "Rate this course"}
           </h3>
-          <p className="text-xs font-mono text-muted-foreground mt-1">Your review helps other learners.</p>
+          <p className="text-xs font-mono text-muted-foreground mt-1">
+            Your review helps other learners.
+          </p>
         </div>
 
         <div className="space-y-1">
@@ -95,7 +113,9 @@ function ReviewModal({
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-mono text-muted-foreground">Comment (optional)</label>
+          <label className="text-xs font-mono text-muted-foreground">
+            Comment (optional)
+          </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -108,7 +128,10 @@ function ReviewModal({
         {error && <p className="text-xs font-mono text-red-400">{error}</p>}
 
         <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
+          >
             Cancel
           </button>
           <button
@@ -125,17 +148,28 @@ function ReviewModal({
   );
 }
 
-export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: string; totalLessons: number }) {
+export function RateCourseButton({
+  courseSlug,
+  totalLessons,
+}: {
+  courseSlug: string;
+  totalLessons: number;
+}) {
   const { publicKey } = useWallet();
   const [allDone, setAllDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [existingReview, setExistingReview] = useState<{ rating: number; comment: string } | null>(null);
+  const [existingReview, setExistingReview] = useState<{
+    rating: number;
+    comment: string;
+  } | null>(null);
   const [loadingReview, setLoadingReview] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const ids: string[] = JSON.parse(localStorage.getItem(`completed_${courseSlug}`) ?? "[]");
+      const ids: string[] = JSON.parse(
+        localStorage.getItem(`completed_${courseSlug}`) ?? "[]",
+      );
       setAllDone(ids.length >= totalLessons && totalLessons > 0);
     } catch {}
   }, [courseSlug, totalLessons]);
@@ -150,7 +184,11 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
       .eq("wallet_address", publicKey.toBase58())
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setExistingReview({ rating: data.rating, comment: data.comment ?? "" });
+        if (data)
+          setExistingReview({
+            rating: data.rating,
+            comment: data.comment ?? "",
+          });
         setLoadingReview(false);
       });
   }, [publicKey, courseSlug, allDone]);
@@ -170,9 +208,13 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
         }`}
       >
         {isEdit ? (
-          <><Pencil className="h-3.5 w-3.5" /> Edit your review</>
+          <>
+            <Pencil className="h-3.5 w-3.5" /> Edit your review
+          </>
         ) : (
-          <><Star className="h-3.5 w-3.5" /> Rate this course</>
+          <>
+            <Star className="h-3.5 w-3.5" /> Rate this course
+          </>
         )}
       </button>
       {showModal && (
@@ -182,7 +224,9 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
           initialComment={existingReview?.comment}
           isEdit={isEdit}
           onClose={() => setShowModal(false)}
-          onSubmitted={(rating, comment) => setExistingReview({ rating, comment })}
+          onSubmitted={(rating, comment) =>
+            setExistingReview({ rating, comment })
+          }
         />
       )}
     </>
@@ -204,50 +248,68 @@ export function StudentReviews({ courseSlug }: { courseSlug: string }) {
     setLoading(false);
   }, [courseSlug]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const avg = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const avg =
+    reviews.length > 0
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : null;
 
   return (
     <div>
       <div className="flex items-baseline gap-3 mb-4">
-        <h2 className="font-mono text-lg font-semibold text-foreground">Student Reviews</h2>
+        <h2 className="font-mono text-lg font-semibold text-foreground">
+          Student Reviews
+        </h2>
         {avg && (
           <div className="flex items-center gap-1.5 font-mono text-sm">
             <span className="text-[#14F195] font-bold">{avg}</span>
             <span className="text-muted-foreground">/ 5</span>
-            <span className="text-subtle text-xs">({reviews.length} review{reviews.length !== 1 ? "s" : ""})</span>
+            <span className="text-subtle text-xs">
+              ({reviews.length} review{reviews.length !== 1 ? "s" : ""})
+            </span>
           </div>
         )}
       </div>
 
       {loading && (
         <div className="space-y-3">
-          {[1, 2].map(i => <div key={i} className="h-20 bg-elevated rounded animate-pulse" />)}
+          {[1, 2].map((i) => (
+            <div key={i} className="h-20 bg-elevated rounded animate-pulse" />
+          ))}
         </div>
       )}
 
       {!loading && reviews.length === 0 && (
-        <p className="text-sm font-mono text-muted-foreground">No reviews yet. Complete the course to leave the first one!</p>
+        <p className="text-sm font-mono text-muted-foreground">
+          No reviews yet. Complete the course to leave the first one!
+        </p>
       )}
 
       {!loading && reviews.length > 0 && (
         <div className="space-y-3">
           {reviews.map((review) => (
-            <div key={review.id} className="bg-card border border-border rounded p-4 space-y-2">
+            <div
+              key={review.id}
+              className="bg-card border border-border rounded p-4 space-y-2"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-full bg-elevated border border-border-hover flex items-center justify-center text-[10px] font-mono font-semibold text-foreground shrink-0">
                   {(review.display_name ?? "?").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-mono font-semibold text-foreground">{review.display_name ?? "Anonymous"}</span>
+                  <span className="text-xs font-mono font-semibold text-foreground">
+                    {review.display_name ?? "Anonymous"}
+                  </span>
                   <StarRating rating={review.rating} />
                 </div>
               </div>
               {review.comment && (
-                <p className="text-sm text-muted-foreground leading-relaxed pl-10">{review.comment}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed pl-10">
+                  {review.comment}
+                </p>
               )}
             </div>
           ))}

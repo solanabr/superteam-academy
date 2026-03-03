@@ -25,7 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export async function generateStaticParams() {
   const sanityCourses = await getAllCourses().catch(() => []);
   const mockSlugs = MOCK_COURSES.map((c) => ({ slug: c.slug }));
-  const sanitySlugs = sanityCourses.map((c: SanityCourse) => ({ slug: c.slug }));
+  const sanitySlugs = sanityCourses.map((c: SanityCourse) => ({
+    slug: c.slug,
+  }));
   return [...mockSlugs, ...sanitySlugs];
 }
 
@@ -43,7 +45,10 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const track = TRACKS[course.trackId];
   const diffColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
-  const totalLessons = course.modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
+  const totalLessons = course.modules.reduce(
+    (sum, m) => sum + (m.lessons?.length ?? 0),
+    0,
+  );
 
   // Look up instructor's Supabase profile if they have a wallet address
   const instructorWallet = course.instructor?.walletAddress;
@@ -62,7 +67,10 @@ export default async function CourseDetailPage({ params }: Props) {
         <div className="lg:col-span-2 space-y-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-            <Link href="/courses" className="hover:text-foreground transition-colors">
+            <Link
+              href="/courses"
+              className="hover:text-foreground transition-colors"
+            >
               Courses
             </Link>
             <span>/</span>
@@ -74,7 +82,11 @@ export default async function CourseDetailPage({ params }: Props) {
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span
                 className="text-[10px] font-mono px-2 py-0.5 rounded-sm border"
-                style={{ color: diffColor, backgroundColor: `${diffColor}15`, borderColor: `${diffColor}30` }}
+                style={{
+                  color: diffColor,
+                  backgroundColor: `${diffColor}15`,
+                  borderColor: `${diffColor}30`,
+                }}
               >
                 {course.difficulty}
               </span>
@@ -87,7 +99,9 @@ export default async function CourseDetailPage({ params }: Props) {
             <h1 className="font-mono text-3xl font-bold text-foreground mb-3">
               {course.title}
             </h1>
-            <p className="text-muted-foreground leading-relaxed">{course.description}</p>
+            <p className="text-muted-foreground leading-relaxed">
+              {course.description}
+            </p>
           </div>
 
           {/* Stats */}
@@ -170,6 +184,7 @@ export default async function CourseDetailPage({ params }: Props) {
               courseSlug={slug}
               firstLessonId={course.modules?.[0]?.lessons?.[0]?._id}
               totalLessons={totalLessons}
+              difficulty={course.difficulty}
             />
             <RateCourseButton courseSlug={slug} totalLessons={totalLessons} />
 
@@ -189,7 +204,9 @@ export default async function CourseDetailPage({ params }: Props) {
               {track && (
                 <div className="flex justify-between">
                   <span>Track</span>
-                  <span className="text-foreground">{track.icon} {track.name}</span>
+                  <span className="text-foreground">
+                    {track.icon} {track.name}
+                  </span>
                 </div>
               )}
             </div>
@@ -212,7 +229,9 @@ export default async function CourseDetailPage({ params }: Props) {
 
           {course.instructor && (
             <div className="bg-card border border-border rounded p-5">
-              <p className="text-xs text-muted-foreground font-mono mb-3">Instructor</p>
+              <p className="text-xs text-muted-foreground font-mono mb-3">
+                Instructor
+              </p>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-sm font-bold text-[#14F195] shrink-0">
                   {(instructorDisplayName ?? "?")[0].toUpperCase()}
@@ -223,10 +242,15 @@ export default async function CourseDetailPage({ params }: Props) {
                   </p>
                   {instructorWallet ? (
                     <Link
-                      href={`/profile/${instructorProfile?.username ?? instructorWallet}` as Parameters<typeof Link>[0]["href"]}
+                      href={
+                        `/profile/${instructorProfile?.username ?? instructorWallet}` as Parameters<
+                          typeof Link
+                        >[0]["href"]
+                      }
                       className="text-[10px] font-mono text-muted-foreground hover:text-[#14F195] transition-colors"
                     >
-                      ◎ {instructorWallet.slice(0, 6)}...{instructorWallet.slice(-4)}
+                      ◎ {instructorWallet.slice(0, 6)}...
+                      {instructorWallet.slice(-4)}
                     </Link>
                   ) : course.instructor.twitterHandle ? (
                     <p className="text-[10px] font-mono text-muted-foreground">
@@ -243,9 +267,6 @@ export default async function CourseDetailPage({ params }: Props) {
   );
 }
 
-
-
-
 function LessonRow({
   lesson,
   courseSlug,
@@ -259,15 +280,26 @@ function LessonRow({
 }) {
   return (
     <Link
-      href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: lesson._id } }}
+      href={{
+        pathname: "/courses/[slug]/lessons/[id]",
+        params: { slug: courseSlug, id: lesson._id },
+      }}
       className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-elevated transition-colors group/row"
     >
       <span
         className="text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0"
         style={
           lesson.type === "challenge"
-            ? { color: "#F5A623", borderColor: "#F5A62330", backgroundColor: "#F5A62310" }
-            : { color: "#666666", borderColor: "#33333380", backgroundColor: "transparent" }
+            ? {
+                color: "#F5A623",
+                borderColor: "#F5A62330",
+                backgroundColor: "#F5A62310",
+              }
+            : {
+                color: "#666666",
+                borderColor: "#33333380",
+                backgroundColor: "transparent",
+              }
         }
       >
         {lesson.type === "challenge" ? "challenge" : "lesson"}

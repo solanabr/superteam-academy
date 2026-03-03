@@ -12,7 +12,10 @@ export default function ProfileRedirect() {
 
   useEffect(() => {
     if (publicKey) {
-      router.push({ pathname: "/profile/[username]", params: { username: publicKey.toBase58() } });
+      router.push({
+        pathname: "/profile/[username]",
+        params: { username: publicKey.toBase58() },
+      });
     }
   }, [publicKey, router]);
 
@@ -20,7 +23,9 @@ export default function ProfileRedirect() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
         <span className="text-4xl">◎</span>
-        <h2 className="font-mono text-xl font-bold text-foreground">View your profile</h2>
+        <h2 className="font-mono text-xl font-bold text-foreground">
+          View your profile
+        </h2>
         <p className="text-sm text-muted-foreground text-center max-w-xs">
           Connect your wallet to access your profile page.
         </p>
@@ -36,7 +41,9 @@ export default function ProfileRedirect() {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="text-muted-foreground font-mono text-sm">Redirecting...</div>
+      <div className="text-muted-foreground font-mono text-sm">
+        Redirecting...
+      </div>
     </div>
   );
 }

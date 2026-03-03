@@ -30,8 +30,12 @@ export default function CertificatesPage() {
           <Award className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <h1 className="font-mono text-xl font-bold text-foreground mb-2">My Certificates</h1>
-          <p className="text-sm text-muted-foreground">Connect your wallet to view your on-chain credentials.</p>
+          <h1 className="font-mono text-xl font-bold text-foreground mb-2">
+            My Certificates
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Connect your wallet to view your on-chain credentials.
+          </p>
         </div>
         <button
           onClick={() => setVisible(true)}
@@ -46,7 +50,9 @@ export default function CertificatesPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-8">
-        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">My Certificates</h1>
+        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
+          My Certificates
+        </h1>
         <p className="text-sm text-muted-foreground">
           Soulbound credentials issued on-chain via Metaplex Core.
         </p>
@@ -55,7 +61,10 @@ export default function CertificatesPage() {
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded h-48 animate-pulse" />
+            <div
+              key={i}
+              className="bg-card border border-border rounded h-48 animate-pulse"
+            />
           ))}
         </div>
       ) : credentials.length === 0 ? (
@@ -63,7 +72,9 @@ export default function CertificatesPage() {
           <div className="w-14 h-14 rounded-full bg-elevated flex items-center justify-center">
             <Award className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="font-mono text-sm text-muted-foreground">No credentials yet.</p>
+          <p className="font-mono text-sm text-muted-foreground">
+            No credentials yet.
+          </p>
           <p className="text-xs text-muted-foreground max-w-xs">
             Complete a course to earn your first soulbound credential NFT.
           </p>

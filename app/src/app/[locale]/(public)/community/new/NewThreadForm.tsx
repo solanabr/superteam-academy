@@ -40,7 +40,8 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
   }
 
   const authorWallet = publicKey.toBase58();
-  const authorDisplayName = profile?.display_name ?? profile?.username ?? undefined;
+  const authorDisplayName =
+    profile?.display_name ?? profile?.username ?? undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +83,8 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
         <span className="text-[#14F195]">◎</span>
         <span className="text-muted-foreground">Posting as</span>
         <span className="text-foreground">
-          {authorDisplayName ?? `${authorWallet.slice(0, 6)}...${authorWallet.slice(-4)}`}
+          {authorDisplayName ??
+            `${authorWallet.slice(0, 6)}...${authorWallet.slice(-4)}`}
         </span>
       </div>
 

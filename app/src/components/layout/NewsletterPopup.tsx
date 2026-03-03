@@ -56,11 +56,14 @@ export function NewsletterPopup() {
     setSubmitting(true);
     try {
       if (supabase) {
-        await supabase.from("newsletter_subscribers").upsert({
-          email,
-          wallet_address: publicKey?.toBase58() ?? null,
-          subscribed_at: new Date().toISOString(),
-        }, { onConflict: "email" });
+        await supabase.from("newsletter_subscribers").upsert(
+          {
+            email,
+            wallet_address: publicKey?.toBase58() ?? null,
+            subscribed_at: new Date().toISOString(),
+          },
+          { onConflict: "email" },
+        );
       }
       localStorage.setItem(STORAGE_KEY_SUBSCRIBED, "1");
       setDone(true);
@@ -92,11 +95,14 @@ export function NewsletterPopup() {
           <div className="w-7 h-7 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 flex items-center justify-center shrink-0">
             <Zap className="h-3.5 w-3.5 text-[#14F195]" />
           </div>
-          <p className="font-mono text-sm font-semibold text-foreground">Stay updated</p>
+          <p className="font-mono text-sm font-semibold text-foreground">
+            Stay updated
+          </p>
         </div>
 
         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-          New courses, Solana ecosystem updates, and XP events — straight to your inbox.
+          New courses, Solana ecosystem updates, and XP events — straight to
+          your inbox.
         </p>
 
         {done ? (

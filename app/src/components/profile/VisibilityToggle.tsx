@@ -5,7 +5,11 @@ import { upsertProfile } from "@/lib/supabase";
 
 const STORAGE_KEY = "profile:visibility";
 
-export function VisibilityToggle({ walletAddress }: { walletAddress?: string }) {
+export function VisibilityToggle({
+  walletAddress,
+}: {
+  walletAddress?: string;
+}) {
   const [isPublic, setIsPublic] = useState<boolean>(true);
   const [mounted, setMounted] = useState(false);
 
@@ -42,7 +46,11 @@ export function VisibilityToggle({ walletAddress }: { walletAddress?: string }) 
         color: isPublic ? "#14F195" : "#666666",
         background: isPublic ? "rgba(20,241,149,0.06)" : "#111111",
       }}
-      title={isPublic ? "Profile is public — click to make private" : "Profile is private — click to make public"}
+      title={
+        isPublic
+          ? "Profile is public — click to make private"
+          : "Profile is private — click to make public"
+      }
     >
       {isPublic ? (
         <>

@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { getThread, getReplies, getVoteCount, formatTimeAgo } from "@/lib/forum";
+import {
+  getThread,
+  getReplies,
+  getVoteCount,
+  formatTimeAgo,
+} from "@/lib/forum";
 import { ReplyForm } from "./ReplyForm";
 import { UpvoteButton } from "./UpvoteButton";
 
@@ -36,14 +41,21 @@ export default async function ThreadDetailPage({ params }: Props) {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-        <Link href="/community" className="hover:text-foreground transition-colors">
+        <Link
+          href="/community"
+          className="hover:text-foreground transition-colors"
+        >
           Community
         </Link>
         <span>/</span>
         {thread.category && (
           <>
             <Link
-              href={`/community?category=${thread.category.slug}` as Parameters<typeof Link>[0]["href"]}
+              href={
+                `/community?category=${thread.category.slug}` as Parameters<
+                  typeof Link
+                >[0]["href"]
+              }
               className="hover:text-foreground transition-colors"
             >
               {thread.category.label}
@@ -51,7 +63,9 @@ export default async function ThreadDetailPage({ params }: Props) {
             <span>/</span>
           </>
         )}
-        <span className="text-foreground truncate max-w-[200px]">{thread.title}</span>
+        <span className="text-foreground truncate max-w-[200px]">
+          {thread.title}
+        </span>
       </nav>
 
       {/* Thread */}
@@ -89,14 +103,17 @@ export default async function ThreadDetailPage({ params }: Props) {
 
           <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-muted-foreground">
             <span className="text-foreground">
-              {thread.author_display_name ?? `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
+              {thread.author_display_name ??
+                `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
             </span>
             <span>·</span>
             <span>{formatTimeAgo(thread.created_at)}</span>
             <span>·</span>
             <span>{thread.views} views</span>
             <span>·</span>
-            <span>{replies.length} {replies.length === 1 ? "reply" : "replies"}</span>
+            <span>
+              {replies.length} {replies.length === 1 ? "reply" : "replies"}
+            </span>
           </div>
         </div>
 
@@ -146,11 +163,14 @@ export default async function ThreadDetailPage({ params }: Props) {
 
               <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
                 <span className="text-foreground font-semibold">
-                  {reply.author_display_name ?? `${reply.author_wallet.slice(0, 6)}...${reply.author_wallet.slice(-4)}`}
+                  {reply.author_display_name ??
+                    `${reply.author_wallet.slice(0, 6)}...${reply.author_wallet.slice(-4)}`}
                 </span>
                 <span>·</span>
                 <span>{formatTimeAgo(reply.created_at)}</span>
-                <span className="ml-auto text-muted-foreground/50">#{index + 1}</span>
+                <span className="ml-auto text-muted-foreground/50">
+                  #{index + 1}
+                </span>
               </div>
 
               <p className="font-mono text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">

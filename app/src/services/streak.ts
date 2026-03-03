@@ -9,25 +9,48 @@ function todayStr(): string {
 function daysBetween(a: string, b: string): number {
   const da = new Date(a);
   const db = new Date(b);
-  return Math.abs(Math.round((da.getTime() - db.getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.abs(
+    Math.round((da.getTime() - db.getTime()) / (1000 * 60 * 60 * 24)),
+  );
 }
 
 export function getStreakData(_userId?: string): StreakData {
   if (typeof window === "undefined") {
-    return { currentStreak: 0, longestStreak: 0, lastActivityDate: null, streakHistory: [] };
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActivityDate: null,
+      streakHistory: [],
+    };
   }
   try {
     const raw = localStorage.getItem(STREAK_KEY);
-    if (!raw) return { currentStreak: 0, longestStreak: 0, lastActivityDate: null, streakHistory: [] };
+    if (!raw)
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: null,
+        streakHistory: [],
+      };
     return JSON.parse(raw) as StreakData;
   } catch {
-    return { currentStreak: 0, longestStreak: 0, lastActivityDate: null, streakHistory: [] };
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActivityDate: null,
+      streakHistory: [],
+    };
   }
 }
 
 export function recordActivity(_userId?: string): StreakData {
   if (typeof window === "undefined") {
-    return { currentStreak: 0, longestStreak: 0, lastActivityDate: null, streakHistory: [] };
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActivityDate: null,
+      streakHistory: [],
+    };
   }
 
   const today = todayStr();

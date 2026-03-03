@@ -100,7 +100,7 @@ function computeResult(answers: Answers): TrackResult {
 async function resolveSlug(preferredSlug: string): Promise<string> {
   try {
     const slugs: string[] = await sanity.fetch(
-      `*[_type == "course"]{ "slug": slug.current }.slug`
+      `*[_type == "course"]{ "slug": slug.current }.slug`,
     );
     if (slugs.includes(preferredSlug)) return preferredSlug;
     return slugs[0] ?? "/courses";
@@ -130,7 +130,9 @@ function OptionCard({
       }}
     >
       <span className="font-mono text-sm text-foreground">{label}</span>
-      {selected && <CheckCircle className="h-4 w-4 text-[#14F195] flex-shrink-0" />}
+      {selected && (
+        <CheckCircle className="h-4 w-4 text-[#14F195] flex-shrink-0" />
+      )}
     </button>
   );
 }
@@ -145,7 +147,9 @@ function ProgressBar({ step }: { step: number }) {
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
           Step {step} of 4
         </span>
-        <span className="text-[10px] font-mono text-muted-foreground">{Math.round(pct)}%</span>
+        <span className="text-[10px] font-mono text-muted-foreground">
+          {Math.round(pct)}%
+        </span>
       </div>
       <div className="h-0.5 bg-border rounded-full overflow-hidden">
         <div
@@ -192,7 +196,8 @@ export default function OnboardingPage() {
             Welcome to Superteam Academy
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed mb-10 font-mono">
-            Let&apos;s personalize your learning path. Answer a few quick questions.
+            Let&apos;s personalize your learning path. Answer a few quick
+            questions.
           </p>
           <button
             onClick={() => setStep(1)}
@@ -258,7 +263,9 @@ export default function OnboardingPage() {
               <span className="font-mono text-lg font-bold text-[#14F195] ml-auto">
                 +{result.xpReward.toLocaleString()}
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground">XP</span>
+              <span className="text-[10px] font-mono text-muted-foreground">
+                XP
+              </span>
             </div>
           </div>
 
@@ -295,9 +302,18 @@ export default function OnboardingPage() {
       key: "experience",
       question: "What's your Solana experience level?",
       options: [
-        { label: "Complete beginner — never touched Solana", value: "beginner" },
-        { label: "Some experience — read docs, maybe one tutorial", value: "some" },
-        { label: "Intermediate — built something on Solana", value: "intermediate" },
+        {
+          label: "Complete beginner — never touched Solana",
+          value: "beginner",
+        },
+        {
+          label: "Some experience — read docs, maybe one tutorial",
+          value: "some",
+        },
+        {
+          label: "Intermediate — built something on Solana",
+          value: "intermediate",
+        },
         { label: "Advanced — shipped production programs", value: "advanced" },
       ],
     },

@@ -24,9 +24,18 @@ import { Link } from "@/i18n/navigation";
 import { PortableText } from "@portabletext/react";
 import type { PortableTextBlock } from "@portabletext/react";
 import { MonacoEditor } from "@/components/editor/MonacoEditor";
-import { completeLesson } from "@/services/learning-progress";
+import {
+  completeLesson,
+  finalizeLesson,
+  recordActivity,
+} from "@/services/learning-progress";
+import {
+  ACHIEVEMENT_DEFS,
+  type AchievementDef,
+} from "@/services/achievement-engine";
 import { useEnrollment } from "@/hooks/useEnrollment";
 import { supabase } from "@/lib/supabase";
+import { events } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import type { SanityLesson, SanityModule, SanityTestCase } from "@/types";
 
@@ -49,16 +58,24 @@ const ptComponents = {
   },
   block: {
     h1: ({ children }: { children?: React.ReactNode }) => (
-      <h1 className="font-mono text-xl font-bold text-foreground mt-8 mb-3">{children}</h1>
+      <h1 className="font-mono text-xl font-bold text-foreground mt-8 mb-3">
+        {children}
+      </h1>
     ),
     h2: ({ children }: { children?: React.ReactNode }) => (
-      <h2 className="font-mono text-lg font-bold text-foreground mt-6 mb-2 border-b border-border pb-1">{children}</h2>
+      <h2 className="font-mono text-lg font-bold text-foreground mt-6 mb-2 border-b border-border pb-1">
+        {children}
+      </h2>
     ),
     h3: ({ children }: { children?: React.ReactNode }) => (
-      <h3 className="font-mono text-base font-semibold text-foreground mt-5 mb-2">{children}</h3>
+      <h3 className="font-mono text-base font-semibold text-foreground mt-5 mb-2">
+        {children}
+      </h3>
     ),
     normal: ({ children }: { children?: React.ReactNode }) => (
-      <p className="text-sm text-muted-foreground leading-relaxed mb-3">{children}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+        {children}
+      </p>
     ),
     blockquote: ({ children }: { children?: React.ReactNode }) => (
       <blockquote className="border-l-2 border-[#14F195]/40 pl-4 my-4 text-sm text-muted-foreground italic">
@@ -96,7 +113,13 @@ const ptComponents = {
     em: ({ children }: { children?: React.ReactNode }) => (
       <em className="italic text-muted-foreground">{children}</em>
     ),
-    link: ({ children, value }: { children?: React.ReactNode; value?: { href: string } }) => (
+    link: ({
+      children,
+      value,
+    }: {
+      children?: React.ReactNode;
+      value?: { href: string };
+    }) => (
       <a
         href={value?.href}
         target="_blank"
@@ -124,7 +147,10 @@ interface TestResult {
  * expectedOutput = "true" (pattern must exist) or "false" (must not exist).
  * For non-pattern tests, attempts simple JS eval.
  */
-function runPatternTests(code: string, testCases: SanityTestCase[]): TestResult[] {
+function runPatternTests(
+  code: string,
+  testCases: SanityTestCase[],
+): TestResult[] {
   return testCases.map((tc) => {
     const pattern = tc.input?.toString() ?? "";
     const expected = tc.expectedOutput?.toString().toLowerCase().trim();
@@ -148,7 +174,7 @@ function runPatternTests(code: string, testCases: SanityTestCase[]): TestResult[
     try {
       // Wrap in IIFE and call with input
       const fn = new Function(
-        `"use strict";\n${code}\nif (typeof solution !== "undefined") return solution(${JSON.stringify(pattern)}); return null;`
+        `"use strict";\n${code}\nif (typeof solution !== "undefined") return solution(${JSON.stringify(pattern)}); return null;`,
       );
       const result = fn();
       const passed = String(result).trim() === String(tc.expectedOutput).trim();
@@ -184,7 +210,9 @@ function SuccessCelebration({ xp }: { xp: number }) {
       {/* XP toast */}
       <div
         className="pointer-events-auto flex items-center gap-3 bg-[#14F195] text-black font-mono font-bold text-base px-6 py-3.5 rounded-lg shadow-2xl shadow-[#14F195]/30"
-        style={{ animation: "celebrateSlideUp 0.4s cubic-bezier(0.22,1,0.36,1)" }}
+        style={{
+          animation: "celebrateSlideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
+        }}
       >
         <Trophy className="h-5 w-5" />
         <span>+{xp} XP earned!</span>
@@ -218,6 +246,45 @@ function SuccessCelebration({ xp }: { xp: number }) {
           100% { transform: translateY(40px) scale(0.6); opacity: 0; }
         }
       `}</style>
+    </div>
+  );
+}
+
+// ─── Achievement Toast ────────────────────────────────────────────────────────
+
+function AchievementToast({
+  achievements,
+}: {
+  achievements: AchievementDef[];
+}) {
+  if (achievements.length === 0) return null;
+  return (
+    <div className="fixed bottom-24 right-8 z-50 space-y-2 pointer-events-none">
+      {achievements.map((a, i) => (
+        <div
+          key={a.id}
+          className="flex items-center gap-3 bg-card border border-[#9945FF]/40 rounded-lg px-4 py-3 shadow-xl"
+          style={{
+            animation: `celebrateSlideUp 0.4s ${i * 0.12}s cubic-bezier(0.22,1,0.36,1) both`,
+          }}
+        >
+          <span className="text-xl">{a.icon}</span>
+          <div>
+            <p className="text-[10px] font-mono text-[#9945FF] uppercase tracking-widest">
+              Achievement Unlocked
+            </p>
+            <p className="font-mono text-sm font-semibold text-foreground">
+              {a.name}
+            </p>
+          </div>
+          <style>{`
+            @keyframes celebrateSlideUp {
+              from { transform: translateY(16px); opacity: 0; }
+              to   { transform: translateY(0);    opacity: 1; }
+            }
+          `}</style>
+        </div>
+      ))}
     </div>
   );
 }
@@ -270,7 +337,7 @@ function ModuleSidebar({
         className={cn(
           "fixed top-10 left-0 bottom-0 w-60 bg-card border-r border-border z-30 flex flex-col transition-transform duration-200",
           "lg:relative lg:top-auto lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Close button mobile */}
@@ -284,7 +351,9 @@ function ModuleSidebar({
         <div className="overflow-y-auto flex-1 py-2">
           {modules.map((module, mi) => {
             const isExpanded = expandedModules.has(mi);
-            const completed = module.lessons?.filter((l) => completedIds.has(l._id)).length ?? 0;
+            const completed =
+              module.lessons?.filter((l) => completedIds.has(l._id)).length ??
+              0;
             const total = module.lessons?.length ?? 0;
 
             return (
@@ -326,7 +395,7 @@ function ModuleSidebar({
                             "flex items-center gap-2.5 px-4 py-2 text-[11px] font-mono transition-colors",
                             isCurrent
                               ? "bg-[#14F195]/10 text-[#14F195] border-r-2 border-[#14F195]"
-                              : "text-muted-foreground hover:text-foreground hover:bg-elevated"
+                              : "text-muted-foreground hover:text-foreground hover:bg-elevated",
                           )}
                         >
                           {isDone ? (
@@ -336,7 +405,9 @@ function ModuleSidebar({
                           ) : (
                             <BookOpen className="h-3 w-3 shrink-0 opacity-50" />
                           )}
-                          <span className="line-clamp-2 leading-snug">{lesson.title}</span>
+                          <span className="line-clamp-2 leading-snug">
+                            {lesson.title}
+                          </span>
                           {lesson.xpReward > 0 && (
                             <span className="ml-auto text-[9px] text-[#14F195]/60 shrink-0">
                               +{lesson.xpReward}
@@ -384,7 +455,7 @@ function TestResultsPanel({
               "rounded px-3 py-2 border text-xs font-mono transition-colors",
               pending && "border-border bg-card text-muted-foreground",
               passed && "border-[#14F195]/30 bg-[#14F195]/5 text-foreground",
-              failed && "border-[#FF4444]/30 bg-[#FF4444]/5 text-foreground"
+              failed && "border-[#FF4444]/30 bg-[#FF4444]/5 text-foreground",
             )}
           >
             <div className="flex items-center gap-2">
@@ -397,12 +468,20 @@ function TestResultsPanel({
               ) : (
                 <X className="h-3 w-3 text-[#FF4444] shrink-0" />
               )}
-              <span className={cn(pending && "text-muted-foreground", passed && "text-foreground", failed && "text-foreground")}>
+              <span
+                className={cn(
+                  pending && "text-muted-foreground",
+                  passed && "text-foreground",
+                  failed && "text-foreground",
+                )}
+              >
                 {tc.description}
               </span>
             </div>
             {result?.error && (
-              <p className="mt-1 ml-5 text-[#FF4444] text-[10px]">{result.error}</p>
+              <p className="mt-1 ml-5 text-[#FF4444] text-[10px]">
+                {result.error}
+              </p>
             )}
             {result?.output && !result.passed && !result.error && (
               <p className="mt-1 ml-5 text-muted-foreground text-[10px]">
@@ -429,8 +508,15 @@ function HintsPanel({ hints }: { hints: string[] }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
       >
-        <span>💡 Hints ({revealedCount}/{hints.length} revealed)</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+        <span>
+          💡 Hints ({revealedCount}/{hints.length} revealed)
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 transition-transform",
+            open && "rotate-180",
+          )}
+        />
       </button>
       {open && (
         <div className="px-4 pb-4 space-y-2 border-t border-border">
@@ -453,7 +539,9 @@ function HintsPanel({ hints }: { hints: string[] }) {
               Show next hint
             </button>
           ) : (
-            <p className="text-xs font-mono text-muted-foreground">All hints revealed.</p>
+            <p className="text-xs font-mono text-muted-foreground">
+              All hints revealed.
+            </p>
           )}
         </div>
       )}
@@ -463,7 +551,13 @@ function HintsPanel({ hints }: { hints: string[] }) {
 
 // ─── Solution panel ───────────────────────────────────────────────────────────
 
-function SolutionPanel({ code, language }: { code: string; language: "rust" | "typescript" }) {
+function SolutionPanel({
+  code,
+  language,
+}: {
+  code: string;
+  language: "rust" | "typescript";
+}) {
   const [show, setShow] = useState(false);
   return (
     <div className="mt-4">
@@ -473,7 +567,7 @@ function SolutionPanel({ code, language }: { code: string; language: "rust" | "t
           "text-xs font-mono px-3 py-1.5 rounded border transition-colors",
           show
             ? "border-[#14F195]/50 text-[#14F195]"
-            : "border-border text-muted-foreground hover:border-[#14F195]/40 hover:text-[#14F195]"
+            : "border-border text-muted-foreground hover:border-[#14F195]/40 hover:text-[#14F195]",
         )}
       >
         {show ? "Hide Solution" : "View Solution"}
@@ -555,6 +649,10 @@ function ConnectPrompt() {
 interface LessonViewProps {
   lesson: SanityLesson;
   courseSlug: string;
+  /** On-chain course ID for program instructions — falls back to courseSlug */
+  onChainCourseId?: string;
+  /** 0-based lesson index in the full lesson list, for on-chain bitmap */
+  lessonIndex?: number;
   courseTitle: string;
   modules: SanityModule[];
   prevLessonId: string | null;
@@ -564,6 +662,8 @@ interface LessonViewProps {
 export function LessonView({
   lesson,
   courseSlug,
+  onChainCourseId,
+  lessonIndex: lessonIndexProp,
   courseTitle,
   modules,
   prevLessonId,
@@ -571,29 +671,30 @@ export function LessonView({
 }: LessonViewProps) {
   const t = useTranslations("lesson");
   const { publicKey } = useWallet();
-  const { progress } = useEnrollment(courseSlug);
+  const { progress, refresh } = useEnrollment(courseSlug);
   const isEnrolled = progress?.enrolled ?? false;
+  const totalLessons = modules.flatMap((m) => m.lessons ?? []).length;
+  const allLessonsComplete =
+    isEnrolled &&
+    totalLessons > 0 &&
+    (progress?.completedLessons.length ?? 0) >= totalLessons;
 
   const isChallenge = lesson.type === "challenge";
   const storageKey = `code_${courseSlug}_${lesson._id}`;
   const completedKey = `completed_${courseSlug}`;
-  const language: "rust" | "typescript" = lesson.starterCode?.trim().startsWith("use ") ? "rust" : "typescript";
+  const language: "rust" | "typescript" = lesson.starterCode
+    ?.trim()
+    .startsWith("use ")
+    ? "rust"
+    : "typescript";
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const [code, setCode] = useState(() => {
-    if (typeof window === "undefined") return lesson.starterCode ?? "";
-    return localStorage.getItem(storageKey) ?? lesson.starterCode ?? "";
-  });
-  const [completedIds, setCompletedIds] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      return new Set(JSON.parse(localStorage.getItem(completedKey) ?? "[]"));
-    } catch {
-      return new Set();
-    }
-  });
+  const [code, setCode] = useState(lesson.starterCode ?? "");
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [completing, setCompleting] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
   const [celebration, setCelebration] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
   const [allPassed, setAllPassed] = useState(false);
@@ -601,12 +702,21 @@ export function LessonView({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isCompleted = completedIds.has(lesson._id);
+  const isCompleted = isEnrolled
+    ? (progress?.completedLessons.includes(lessonIndexProp ?? 0) ?? false)
+    : completedIds.has(lesson._id);
 
-  // Mark course as started when visiting any lesson
+  // Hydrate from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
+    const storedCode = localStorage.getItem(storageKey);
+    if (storedCode) setCode(storedCode);
+    try {
+      const stored = localStorage.getItem(completedKey);
+      if (stored) setCompletedIds(new Set(JSON.parse(stored) as string[]));
+    } catch {}
     localStorage.setItem(`last_lesson_${courseSlug}`, lesson._id);
-  }, [courseSlug, lesson._id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -640,10 +750,49 @@ export function LessonView({
   }, [code, lesson.testCases]);
 
   const markComplete = useCallback(async () => {
-    if (!isEnrolled) return;
+    if (!isEnrolled || !publicKey || isCompleted) return;
     setCompleting(true);
+    const awardedIds: Array<{ id: string; asset: string }> = [];
     try {
-      await completeLesson(courseSlug, lesson.order ?? 0);
+      const result = await completeLesson(
+        onChainCourseId ?? courseSlug,
+        lessonIndexProp ?? lesson.order ?? 0,
+        publicKey.toBase58(),
+      );
+      await refresh();
+
+      if (result.success) {
+        // Collect XP milestone awards from backend
+        awardedIds.push(...(result.achievements ?? []));
+
+        // Record streak and check streak milestones
+        const updatedStreak = recordActivity();
+        const streakMilestones = [
+          { threshold: 3, id: "streak-3" },
+          { threshold: 7, id: "streak-7" },
+          { threshold: 14, id: "streak-14" },
+        ];
+        for (const m of streakMilestones) {
+          if (updatedStreak.currentStreak >= m.threshold) {
+            try {
+              const resp = await fetch("/api/achievements/award", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  achievementId: m.id,
+                  recipientWallet: publicKey.toBase58(),
+                }),
+              });
+              const data = (await resp.json()) as {
+                awarded?: boolean;
+                asset?: string;
+              };
+              if (data.awarded && data.asset)
+                awardedIds.push({ id: m.id, asset: data.asset });
+            } catch {}
+          }
+        }
+      }
     } catch {
       // Best-effort — mark locally regardless
     } finally {
@@ -658,32 +807,85 @@ export function LessonView({
       if (publicKey && supabase) {
         const wallet = publicKey.toBase58();
         const xp = lesson.xpReward ?? 0;
-        // Record completion
-        supabase.from("lesson_completions").upsert({
-          wallet_address: wallet,
-          course_slug: courseSlug,
-          course_title: courseTitle,
-          lesson_id: lesson._id,
-          lesson_title: lesson.title,
-          xp_earned: xp,
-          completed_at: new Date().toISOString(),
-        }, { onConflict: "wallet_address,lesson_id" }).then(() => {});
-        // Increment total_xp in profile
+        supabase
+          .from("lesson_completions")
+          .upsert(
+            {
+              wallet_address: wallet,
+              course_slug: courseSlug,
+              course_title: courseTitle,
+              lesson_id: lesson._id,
+              lesson_title: lesson.title,
+              xp_earned: xp,
+              completed_at: new Date().toISOString(),
+            },
+            { onConflict: "wallet_address,lesson_id" },
+          )
+          .then(() => {});
         if (xp > 0) {
-          supabase.rpc("increment_xp", { wallet: wallet, amount: xp }).then(() => {});
+          supabase
+            .rpc("increment_xp", { wallet: wallet, amount: xp })
+            .then(() => {});
         }
       }
 
+      events.lessonComplete(
+        courseSlug,
+        lesson.order ?? 0,
+        lesson.xpReward ?? 0,
+      );
       setCelebration(true);
       setTimeout(() => setCelebration(false), 4500);
       setCompleting(false);
     }
-  }, [completedIds, completedKey, courseSlug, courseTitle, isEnrolled, lesson._id, lesson.order, lesson.title, lesson.xpReward, publicKey]);
+
+    // Show achievement toasts for newly awarded achievements
+    if (awardedIds.length > 0) {
+      const defs = awardedIds
+        .map((a) => ACHIEVEMENT_DEFS.find((d) => d.id === a.id))
+        .filter((d): d is AchievementDef => d !== undefined);
+      if (defs.length > 0) {
+        setNewAchievements(defs);
+        setTimeout(() => setNewAchievements([]), 6000);
+      }
+    }
+  }, [
+    completedIds,
+    completedKey,
+    courseSlug,
+    courseTitle,
+    isEnrolled,
+    isCompleted,
+    lesson._id,
+    lesson.order,
+    lesson.title,
+    lesson.xpReward,
+    lessonIndexProp,
+    onChainCourseId,
+    publicKey,
+    refresh,
+  ]);
+
+  const handleFinalize = useCallback(async () => {
+    if (!publicKey) return;
+    setFinalizing(true);
+    try {
+      await finalizeLesson(onChainCourseId ?? courseSlug, publicKey.toBase58());
+      await refresh();
+      setCelebration(true);
+      setTimeout(() => setCelebration(false), 4500);
+    } catch {
+      // best-effort
+    } finally {
+      setFinalizing(false);
+    }
+  }, [publicKey, onChainCourseId, courseSlug, refresh]);
 
   const handleResetCode = useCallback(() => {
     const starter = lesson.starterCode ?? "";
     setCode(starter);
-    if (typeof window !== "undefined") localStorage.setItem(storageKey, starter);
+    if (typeof window !== "undefined")
+      localStorage.setItem(storageKey, starter);
     setTestResults([]);
     setAllPassed(false);
   }, [lesson.starterCode, storageKey]);
@@ -695,13 +897,13 @@ export function LessonView({
     setPanelWidth((p) => Math.min(72, Math.max(28, p + (dx / w) * 100)));
   }, []);
 
-  // ── Hints: extracted from test case descriptions ───────────────────────────
-  const hints: string[] = [];
+  const hints: string[] = lesson.hints ?? [];
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="h-[calc(100vh-56px)] flex flex-col bg-background overflow-hidden">
       {celebration && <SuccessCelebration xp={lesson.xpReward ?? 0} />}
+      <AchievementToast achievements={newAchievements} />
 
       {/* Top bar */}
       <div className="h-10 border-b border-border flex items-center justify-between px-3 flex-shrink-0 gap-2">
@@ -722,7 +924,9 @@ export function LessonView({
             <span className="hidden sm:block">{courseTitle}</span>
           </Link>
           <span className="text-subtle hidden sm:block">/</span>
-          <span className="text-xs font-mono text-foreground truncate">{lesson.title}</span>
+          <span className="text-xs font-mono text-foreground truncate">
+            {lesson.title}
+          </span>
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -734,7 +938,10 @@ export function LessonView({
           )}
           {prevLessonId && (
             <Link
-              href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: prevLessonId } }}
+              href={{
+                pathname: "/courses/[slug]/lessons/[id]",
+                params: { slug: courseSlug, id: prevLessonId },
+              }}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors"
             >
               <ChevronLeft className="h-3 w-3" />
@@ -743,7 +950,10 @@ export function LessonView({
           )}
           {nextLessonId ? (
             <Link
-              href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: nextLessonId } }}
+              href={{
+                pathname: "/courses/[slug]/lessons/[id]",
+                params: { slug: courseSlug, id: nextLessonId },
+              }}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors"
             >
               <span className="hidden sm:block">{t("next")}</span>
@@ -751,7 +961,10 @@ export function LessonView({
             </Link>
           ) : (
             <Link
-              href={{ pathname: "/courses/[slug]", params: { slug: courseSlug } }}
+              href={{
+                pathname: "/courses/[slug]",
+                params: { slug: courseSlug },
+              }}
               className="flex items-center gap-1 text-[#14F195] hover:text-[#0D9E61] text-xs font-mono transition-colors"
             >
               <span className="hidden sm:block">Finish Course</span>
@@ -788,10 +1001,14 @@ export function LessonView({
                     "inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full border",
                     isChallenge
                       ? "border-[#9945FF]/40 bg-[#9945FF]/10 text-[#9945FF]"
-                      : "border-[#14F195]/30 bg-[#14F195]/10 text-[#14F195]"
+                      : "border-[#14F195]/30 bg-[#14F195]/10 text-[#14F195]",
                   )}
                 >
-                  {isChallenge ? <Code2 className="h-3 w-3" /> : <BookOpen className="h-3 w-3" />}
+                  {isChallenge ? (
+                    <Code2 className="h-3 w-3" />
+                  ) : (
+                    <BookOpen className="h-3 w-3" />
+                  )}
                   {isChallenge ? "Challenge" : "Reading"}
                 </span>
                 {lesson.estimatedMinutes && (
@@ -811,7 +1028,10 @@ export function LessonView({
               {/* Content */}
               {lesson.content ? (
                 <div className="max-w-none">
-                  <PortableText value={lesson.content as PortableTextBlock[]} components={ptComponents} />
+                  <PortableText
+                    value={lesson.content as PortableTextBlock[]}
+                    components={ptComponents}
+                  />
                 </div>
               ) : (
                 <div className="border border-border rounded p-6 text-center">
@@ -831,57 +1051,75 @@ export function LessonView({
 
               {/* ── Content lesson actions ──────────────────────────────── */}
               {!isChallenge && (
-                <div className="mt-8 space-y-4">
+                <div className="mt-8 space-y-3">
+                  {!publicKey && <ConnectPrompt />}
+                  {publicKey && !isEnrolled && (
+                    <p className="text-xs font-mono text-amber-400">
+                      Enroll in this course to track progress on-chain.
+                    </p>
+                  )}
+
+                  {/* Single morphing action button */}
                   {!isCompleted ? (
-                    <>
-                      {!publicKey && <ConnectPrompt />}
-                      {publicKey && !isEnrolled && (
-                        <p className="text-xs font-mono text-amber-400">
-                          Enroll in this course to track progress on-chain.
-                        </p>
+                    <button
+                      onClick={markComplete}
+                      disabled={completing || !isEnrolled || !publicKey}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={
+                        !isEnrolled ? "Enroll in the course first" : undefined
+                      }
+                    >
+                      {completing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : null}
+                      {completing ? "Saving..." : t("complete")}
+                    </button>
+                  ) : nextLessonId ? (
+                    <Link
+                      href={{
+                        pathname: "/courses/[slug]/lessons/[id]",
+                        params: { slug: courseSlug, id: nextLessonId },
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                    >
+                      Continue <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : progress?.isFinalized ? (
+                    <Link
+                      href={{
+                        pathname: "/courses/[slug]",
+                        params: { slug: courseSlug },
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                    >
+                      View Credential <CheckCircle className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : allLessonsComplete ? (
+                    <button
+                      onClick={handleFinalize}
+                      disabled={finalizing}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-60"
+                    >
+                      {finalizing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-3.5 w-3.5" />
                       )}
-                      <button
-                        onClick={markComplete}
-                        disabled={completing || !isEnrolled || !publicKey}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={!isEnrolled ? "Enroll in the course first" : undefined}
-                      >
-                        {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                        {t("complete")}
-                      </button>
-                    </>
+                      {finalizing ? "Minting NFT..." : "Finish Course"}
+                    </button>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 border border-[#14F195]/30 bg-[#14F195]/5 rounded-lg px-5 py-4">
-                        <CheckCircle className="h-5 w-5 text-[#14F195] shrink-0" />
-                        <div className="flex-1">
-                          <p className="font-mono text-sm font-semibold text-foreground">
-                            Lesson complete!
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                            +{lesson.xpReward} XP earned
-                          </p>
-                        </div>
-                        {nextLessonId ? (
-                          <Link
-                            href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: nextLessonId } }}
-                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
-                          >
-                            Next Lesson <ChevronRight className="h-3.5 w-3.5" />
-                          </Link>
-                        ) : (
-                          <Link
-                            href={{ pathname: "/courses/[slug]", params: { slug: courseSlug } }}
-                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
-                          >
-                            Finish <CheckCircle className="h-3.5 w-3.5" />
-                          </Link>
-                        )}
-                      </div>
-                      {lesson.solutionCode && (
-                        <SolutionPanel code={lesson.solutionCode} language={language} />
-                      )}
-                    </div>
+                    <p className="text-xs font-mono text-muted-foreground flex items-center gap-2">
+                      <CheckCircle className="h-3.5 w-3.5 text-[#14F195]/50" />
+                      Lesson done · complete remaining lessons to finish the
+                      course
+                    </p>
+                  )}
+
+                  {isCompleted && lesson.solutionCode && (
+                    <SolutionPanel
+                      code={lesson.solutionCode}
+                      language={language}
+                    />
                   )}
                 </div>
               )}
@@ -898,13 +1136,44 @@ export function LessonView({
                       +{lesson.xpReward} XP earned
                     </p>
                   </div>
-                  {nextLessonId && (
+                  {nextLessonId ? (
                     <Link
-                      href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: nextLessonId } }}
+                      href={{
+                        pathname: "/courses/[slug]/lessons/[id]",
+                        params: { slug: courseSlug, id: nextLessonId },
+                      }}
                       className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
                     >
                       Next <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
+                  ) : progress?.isFinalized ? (
+                    <Link
+                      href={{
+                        pathname: "/courses/[slug]",
+                        params: { slug: courseSlug },
+                      }}
+                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
+                    >
+                      View Credential <CheckCircle className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleFinalize}
+                      disabled={finalizing || !allLessonsComplete}
+                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      title={
+                        !allLessonsComplete
+                          ? "Complete all lessons first"
+                          : undefined
+                      }
+                    >
+                      {finalizing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-3.5 w-3.5" />
+                      )}
+                      Finish Course
+                    </button>
                   )}
                 </div>
               )}
@@ -957,11 +1226,14 @@ export function LessonView({
                       Test Results
                     </span>
                     {testResults.length > 0 && (
-                      <span className={cn(
-                        "text-[10px] font-mono",
-                        allPassed ? "text-[#14F195]" : "text-[#FF4444]"
-                      )}>
-                        {testResults.filter((r) => r.passed).length}/{testResults.length} passed
+                      <span
+                        className={cn(
+                          "text-[10px] font-mono",
+                          allPassed ? "text-[#14F195]" : "text-[#FF4444]",
+                        )}
+                      >
+                        {testResults.filter((r) => r.passed).length}/
+                        {testResults.length} passed
                       </span>
                     )}
                   </div>
@@ -1000,49 +1272,107 @@ export function LessonView({
                         className="flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-mono font-semibold border border-[#14F195]/50 text-[#14F195] rounded hover:bg-[#14F195]/10 transition-colors disabled:opacity-50"
                       >
                         {running ? (
-                          <><Loader2 className="h-3 w-3 animate-spin" /> Running...</>
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                            Running...
+                          </>
                         ) : (
-                          <><Play className="h-3 w-3" /> Run Tests</>
+                          <>
+                            <Play className="h-3 w-3" /> Run Tests
+                          </>
                         )}
                       </button>
 
                       {isCompleted ? (
-                        <button
-                          disabled
-                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30"
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" /> Completed
-                        </button>
+                        nextLessonId ? (
+                          <Link
+                            href={{
+                              pathname: "/courses/[slug]/lessons/[id]",
+                              params: { slug: courseSlug, id: nextLessonId },
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                          >
+                            Continue <ChevronRight className="h-3 w-3" />
+                          </Link>
+                        ) : progress?.isFinalized ? (
+                          <Link
+                            href={{
+                              pathname: "/courses/[slug]",
+                              params: { slug: courseSlug },
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> View
+                            Credential
+                          </Link>
+                        ) : allLessonsComplete ? (
+                          <button
+                            onClick={handleFinalize}
+                            disabled={finalizing}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-60"
+                          >
+                            {finalizing ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                                Minting...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-3.5 w-3.5" /> Finish
+                                Course
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30">
+                            <CheckCircle className="h-3.5 w-3.5" /> Completed
+                          </div>
+                        )
                       ) : (
                         <button
                           onClick={markComplete}
-                          disabled={completing || !isEnrolled || !publicKey || (!allPassed && (lesson.testCases?.length ?? 0) > 0)}
+                          disabled={
+                            completing ||
+                            !isEnrolled ||
+                            !publicKey ||
+                            (!allPassed && (lesson.testCases?.length ?? 0) > 0)
+                          }
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold transition-colors",
-                            isEnrolled && publicKey && (allPassed || (lesson.testCases?.length ?? 0) === 0)
+                            isEnrolled &&
+                              publicKey &&
+                              (allPassed ||
+                                (lesson.testCases?.length ?? 0) === 0)
                               ? "bg-[#14F195] text-black hover:bg-[#0D9E61]"
-                              : "bg-elevated text-muted-foreground border border-border cursor-not-allowed"
+                              : "bg-elevated text-muted-foreground border border-border cursor-not-allowed",
                           )}
                           title={
-                            !publicKey ? "Connect wallet to submit"
-                            : !isEnrolled ? "Enroll in the course first"
-                            : !allPassed && (lesson.testCases?.length ?? 0) > 0 ? "Run tests first"
-                            : undefined
+                            !publicKey
+                              ? "Connect wallet to submit"
+                              : !isEnrolled
+                                ? "Enroll in the course first"
+                                : !allPassed &&
+                                    (lesson.testCases?.length ?? 0) > 0
+                                  ? "Run tests first"
+                                  : undefined
                           }
                         >
                           {completing ? (
-                            <><Loader2 className="h-3 w-3 animate-spin" /> Submitting...</>
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                              Submitting...
+                            </>
                           ) : (
-                            <><Zap className="h-3 w-3" /> Submit</>
+                            <>
+                              <Zap className="h-3 w-3" /> Submit
+                            </>
                           )}
                         </button>
                       )}
                     </div>
 
                     {/* Wallet prompt */}
-                    {!publicKey && !isCompleted && (
-                      <ConnectPrompt />
-                    )}
+                    {!publicKey && !isCompleted && <ConnectPrompt />}
                   </div>
                 </div>
               </div>

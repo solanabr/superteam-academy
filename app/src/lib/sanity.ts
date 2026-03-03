@@ -55,9 +55,12 @@ export async function getAllCourses(): Promise<SanityCourse[]> {
   `);
 }
 
-export async function getCourseBySlug(slug: string): Promise<SanityCourse | null> {
+export async function getCourseBySlug(
+  slug: string,
+): Promise<SanityCourse | null> {
   if (!sanityClient) return null;
-  const courses = await sanityClient.fetch(`
+  const courses = await sanityClient.fetch(
+    `
     *[_type == "course" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
       _id,
       title,
@@ -83,33 +86,45 @@ export async function getCourseBySlug(slug: string): Promise<SanityCourse | null
         "lessons": lessons[]-> | order(order asc) {
           _id, title, "type": lessonType, order, xpReward, estimatedMinutes,
           content, starterCode, solutionCode,
-          testCases[] { input, expectedOutput, description }
+          testCases[] { input, expectedOutput, description },
+          hints
         }
       }
     }
-  `, { slug });
+  `,
+    { slug },
+  );
   return courses ?? null;
 }
 
 export async function getLessonById(id: string): Promise<SanityLesson | null> {
   if (!sanityClient) return null;
-  const lesson = await sanityClient.fetch(`
+  const lesson = await sanityClient.fetch(
+    `
     *[_type == "lesson" && _id == $id][0] {
       _id, title, "type": lessonType, order, xpReward, estimatedMinutes,
       content, starterCode, solutionCode,
-      testCases[] { input, expectedOutput, description }
+      testCases[] { input, expectedOutput, description },
+      hints
     }
-  `, { id });
+  `,
+    { id },
+  );
   return lesson ?? null;
 }
 
-export async function getCoursesByTrack(trackId: number): Promise<SanityCourse[]> {
+export async function getCoursesByTrack(
+  trackId: number,
+): Promise<SanityCourse[]> {
   if (!sanityClient) return [];
-  return sanityClient.fetch(`
+  return sanityClient.fetch(
+    `
     *[_type == "course" && trackId == $trackId && !(_id in path("drafts.**"))] | order(publishedAt asc) {
       _id, title, "slug": slug.current, description, difficulty,
       durationHours, xpReward, trackId,
       "thumbnail": thumbnail.asset->url
     }
-  `, { trackId });
+  `,
+    { trackId },
+  );
 }

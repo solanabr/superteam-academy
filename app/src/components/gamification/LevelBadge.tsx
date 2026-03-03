@@ -18,10 +18,11 @@ export function LevelBadge({ level, size = "md", className }: LevelBadgeProps) {
       className={cn(
         "inline-flex items-center justify-center font-mono font-bold text-black bg-[#14F195] rounded-sm",
         sizeClasses[size],
-        className
+        className,
       )}
       style={{
-        clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+        clipPath:
+          "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
       }}
       title={`Level ${level}`}
     >

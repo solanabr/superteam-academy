@@ -1,14 +1,14 @@
 type GtagFunction = (
   command: string,
   eventName: string,
-  params?: Record<string, string | number | boolean>
+  params?: Record<string, string | number | boolean>,
 ) => void;
 
 type WindowWithGtag = Window & typeof globalThis & { gtag?: GtagFunction };
 
 export function trackEvent(
   eventName: string,
-  params?: Record<string, string | number | boolean>
+  params?: Record<string, string | number | boolean>,
 ) {
   if (typeof window !== "undefined") {
     const win = window as WindowWithGtag;

@@ -70,7 +70,8 @@ export async function getCourseStats(): Promise<CourseAdminStat[]> {
     title: c.title,
     difficulty: c.difficulty,
     xpReward: c.xpReward ?? 0,
-    totalLessons: c.modules?.reduce((s, m) => s + (m.lessons?.length ?? 0), 0) ?? 1,
+    totalLessons:
+      c.modules?.reduce((s, m) => s + (m.lessons?.length ?? 0), 0) ?? 1,
   }));
 
   if (!supabase) {
@@ -118,7 +119,7 @@ export async function getRecentThreads(limit = 5): Promise<RecentThread[]> {
   const { data, error } = await supabase
     .from("forum_threads")
     .select(
-      "id, title, created_at, views, is_answered, forum_categories(label)"
+      "id, title, created_at, views, is_answered, forum_categories(label)",
     )
     .order("created_at", { ascending: false })
     .limit(limit);

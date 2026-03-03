@@ -13,7 +13,10 @@ interface LeaderboardTableProps {
 const RANK_COLORS = ["#F5A623", "#AAAAAA", "#B87333"];
 const RANK_LABELS = ["🥇", "🥈", "🥉"];
 
-export function LeaderboardTable({ entries, currentWallet }: LeaderboardTableProps) {
+export function LeaderboardTable({
+  entries,
+  currentWallet,
+}: LeaderboardTableProps) {
   return (
     <div className="bg-card border border-border rounded overflow-hidden">
       {/* Header */}
@@ -40,7 +43,7 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
                 ? "bg-[#14F195]/5 border-l-2 border-l-[#14F195]"
                 : profileHref
                   ? "hover:bg-elevated cursor-pointer"
-                  : "hover:bg-elevated"
+                  : "hover:bg-elevated",
             )}
           >
             {/* Rank */}
@@ -48,7 +51,9 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
               {isTop3 ? (
                 <span>{RANK_LABELS[entry.rank - 1]}</span>
               ) : (
-                <span className="text-muted-foreground text-xs">{entry.rank}</span>
+                <span className="text-muted-foreground text-xs">
+                  {entry.rank}
+                </span>
               )}
             </div>
 
@@ -67,7 +72,8 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
                     className="text-xs text-muted-foreground truncate block"
                     title={entry.walletAddress}
                   >
-                    {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}
+                    {entry.walletAddress.slice(0, 6)}...
+                    {entry.walletAddress.slice(-4)}
                   </span>
                 )}
                 {isYou && (
@@ -86,7 +92,9 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
               className={cn(
                 "col-span-3 text-right text-sm mono-numbers",
                 isTop3 ? "font-bold" : "",
-                isTop3 ? `text-[${RANK_COLORS[entry.rank - 1]}]` : "text-foreground"
+                isTop3
+                  ? `text-[${RANK_COLORS[entry.rank - 1]}]`
+                  : "text-foreground",
               )}
             >
               {entry.xpBalance.toLocaleString()}

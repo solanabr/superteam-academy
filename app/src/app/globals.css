@@ -184,6 +184,15 @@
   }
 }
 
+/* Terminal cursor blink animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.terminal-cursor {
+  animation: blink 1s step-end infinite;
+}
+
 /* Monaco editor dark theme override */
 .monaco-editor .margin {
   background-color: #0D0D0D !important;

@@ -40,7 +40,9 @@ function FooterNewsletter() {
 
   if (subscribed) {
     return (
-      <p className="text-xs font-mono text-[#14F195]">Thanks for subscribing!</p>
+      <p className="text-xs font-mono text-[#14F195]">
+        Thanks for subscribing!
+      </p>
     );
   }
 
@@ -49,7 +51,10 @@ function FooterNewsletter() {
       <p className="text-xs text-muted-foreground font-mono shrink-0">
         Stay updated with Superteam Academy
       </p>
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full sm:w-auto">
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 w-full sm:w-auto"
+      >
         <input
           type="email"
           value={email}

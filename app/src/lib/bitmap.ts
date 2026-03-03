@@ -4,7 +4,10 @@ import { BN } from "@coral-xyz/anchor";
  * Checks whether a specific lesson (by 0-based index) is complete.
  * Enrollment stores progress as [u64; 4] = 256 bits total.
  */
-export function isLessonComplete(lessonFlags: BN[], lessonIndex: number): boolean {
+export function isLessonComplete(
+  lessonFlags: BN[],
+  lessonIndex: number,
+): boolean {
   const wordIndex = Math.floor(lessonIndex / 64);
   const bitIndex = lessonIndex % 64;
   if (wordIndex >= lessonFlags.length) return false;
@@ -31,7 +34,7 @@ export function countCompletedLessons(lessonFlags: BN[]): number {
  */
 export function getCompletedLessonIndices(
   lessonFlags: BN[],
-  lessonCount: number
+  lessonCount: number,
 ): number[] {
   const completed: number[] = [];
   for (let i = 0; i < lessonCount; i++) {
@@ -47,7 +50,7 @@ export function getCompletedLessonIndices(
  */
 export function getCompletionPercent(
   lessonFlags: BN[],
-  lessonCount: number
+  lessonCount: number,
 ): number {
   if (lessonCount === 0) return 0;
   const completed = countCompletedLessons(lessonFlags);
@@ -59,7 +62,7 @@ export function getCompletionPercent(
  */
 export function isFullyComplete(
   lessonFlags: BN[],
-  lessonCount: number
+  lessonCount: number,
 ): boolean {
   return countCompletedLessons(lessonFlags) >= lessonCount;
 }

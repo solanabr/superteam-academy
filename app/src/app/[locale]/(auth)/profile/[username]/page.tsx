@@ -17,18 +17,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${username} · Academy Profile` };
 }
 
+// Map trackId to SkillRadar axis name
+const TRACK_TO_SKILL: Record<number, string> = {
+  1: "Rust", // Solana Basics → Rust
+  2: "Anchor", // Anchor Framework
+  3: "DeFi", // DeFi
+  4: "NFTs", // NFTs & Digital Assets
+  5: "Frontend", // Full-Stack Solana
+};
+
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
   const t = await getTranslations("profile");
 
-  // Try username lookup first, then wallet address lookup (for direct /profile/[walletAddress] URLs)
+  // Try username lookup first, then wallet address lookup
   const isWalletAddress = username.length >= 32 && username.length <= 44;
   const profile =
     (await getProfileByUsername(username).catch(() => null)) ??
-    (isWalletAddress ? await getProfileByWallet(username).catch(() => null) : null);
+    (isWalletAddress
+      ? await getProfileByWallet(username).catch(() => null)
+      : null);
 
-  // For wallet addresses without a Supabase profile, generate a stub
-  const walletAddress = profile?.walletAddress ?? (isWalletAddress ? username : null);
+  const walletAddress =
+    profile?.walletAddress ?? (isWalletAddress ? username : null);
 
   const [credentials, achievements] = await Promise.all([
     walletAddress ? getCredentials(walletAddress) : Promise.resolve([]),
@@ -37,11 +48,21 @@ export default async function ProfilePage({ params }: Props) {
 
   const totalXp = credentials.reduce(
     (sum, c) => sum + Number(c.attributes.totalXp ?? 0),
-    0
+    0,
   );
   const level = xpToLevel(totalXp);
 
-  // If no profile at all and not a wallet address, show not found
+  // Derive skill scores from credential attributes
+  const derivedSkills: Record<string, number> = {};
+  for (const cred of credentials) {
+    const trackId = Number(cred.attributes.trackId ?? 0);
+    const skillName = TRACK_TO_SKILL[trackId];
+    if (skillName) {
+      const credLevel = Number(cred.attributes.level ?? 0);
+      derivedSkills[skillName] = Math.min(100, credLevel * 25);
+    }
+  }
+
   if (!profile && !walletAddress) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
@@ -55,28 +76,64 @@ export default async function ProfilePage({ params }: Props) {
       {/* Profile header */}
       <div className="flex items-start gap-5 mb-8">
         <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-2xl flex-shrink-0">
-          {(profile?.displayName ?? profile?.username ?? username)?.[0]?.toUpperCase() ?? "?"}
+          {(profile?.displayName ??
+            profile?.username ??
+            username)?.[0]?.toUpperCase() ?? "?"}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-mono text-2xl font-bold text-foreground">
-              {profile?.displayName ?? profile?.username ?? (walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : username)}
+              {profile?.displayName ??
+                profile?.username ??
+                (walletAddress
+                  ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                  : username)}
             </h1>
             <LevelBadge level={level} />
-            {walletAddress && <VisibilityToggle walletAddress={walletAddress} />}
+            {walletAddress && (
+              <VisibilityToggle walletAddress={walletAddress} />
+            )}
           </div>
           {profile?.username && (
-            <p className="text-sm text-muted-foreground font-mono">@{profile.username}</p>
+            <p className="text-sm text-muted-foreground font-mono">
+              @{profile.username}
+            </p>
           )}
           {profile?.bio && (
-            <p className="text-sm text-muted-foreground mt-2 max-w-xl">{profile.bio}</p>
+            <p className="text-sm text-muted-foreground mt-2 max-w-xl">
+              {profile.bio}
+            </p>
           )}
           <div className="flex flex-wrap gap-4 mt-3 text-xs font-mono text-muted-foreground">
             {walletAddress && (
-              <span>◎ {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+              <span>
+                ◎ {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+              </span>
             )}
             {profile?.createdAt && (
-              <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
+              <span>
+                Joined {new Date(profile.createdAt).toLocaleDateString()}
+              </span>
+            )}
+            {profile?.twitterHandle && (
+              <a
+                href={`https://twitter.com/${profile.twitterHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#14F195] hover:underline"
+              >
+                @{profile.twitterHandle}
+              </a>
+            )}
+            {profile?.githubHandle && (
+              <a
+                href={`https://github.com/${profile.githubHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#14F195] hover:underline"
+              >
+                github/{profile.githubHandle}
+              </a>
             )}
           </div>
         </div>
@@ -89,8 +146,13 @@ export default async function ProfilePage({ params }: Props) {
           { label: "Credentials", value: credentials.length.toString() },
           { label: "Achievements", value: achievements.length.toString() },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-card border border-border rounded p-4 text-center">
-            <div className="font-mono text-2xl font-bold text-foreground">{value}</div>
+          <div
+            key={label}
+            className="bg-card border border-border rounded p-4 text-center"
+          >
+            <div className="font-mono text-2xl font-bold text-foreground">
+              {value}
+            </div>
             <div className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-wider">
               {label}
             </div>
@@ -103,7 +165,11 @@ export default async function ProfilePage({ params }: Props) {
         <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
           Skills
         </h2>
-        <SkillRadar />
+        <SkillRadar
+          skills={
+            Object.keys(derivedSkills).length > 0 ? derivedSkills : undefined
+          }
+        />
       </section>
 
       {/* Credentials */}
@@ -112,7 +178,9 @@ export default async function ProfilePage({ params }: Props) {
           {t("credentials")}
         </h2>
         {credentials.length === 0 ? (
-          <p className="text-sm text-muted-foreground font-mono">{t("noCredentials")}</p>
+          <p className="text-sm text-muted-foreground font-mono">
+            {t("noCredentials")}
+          </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {credentials.map((cred) => (
@@ -124,18 +192,32 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* Completed Courses */}
       <section className="mb-8">
-        <h2 className="font-mono text-sm font-semibold text-foreground mb-3">Completed Courses</h2>
+        <h2 className="font-mono text-sm font-semibold text-foreground mb-3">
+          Completed Courses
+        </h2>
         {credentials.length === 0 ? (
-          <p className="text-xs text-muted-foreground font-mono">No completed courses yet.</p>
+          <p className="text-xs text-muted-foreground font-mono">
+            No completed courses yet.
+          </p>
         ) : (
           <div className="space-y-2">
             {credentials.map((cred) => (
-              <div key={cred.assetAddress} className="flex items-center justify-between bg-card border border-border rounded px-4 py-2.5">
+              <div
+                key={cred.assetAddress}
+                className="flex items-center justify-between bg-card border border-border rounded px-4 py-2.5"
+              >
                 <div>
-                  <p className="text-sm font-mono text-foreground">{cred.attributes.trackId ?? "Academy"} Track</p>
-                  <p className="text-xs text-muted-foreground">Level {cred.attributes.level ?? 0} · {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP</p>
+                  <p className="text-sm font-mono text-foreground">
+                    {cred.attributes.trackId ?? "Academy"} Track
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Level {cred.attributes.level ?? 0} ·{" "}
+                    {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP
+                  </p>
                 </div>
-                <span className="text-[10px] font-mono text-[#14F195] bg-[#14F195]/10 border border-[#14F195]/20 rounded px-2 py-0.5">&#x2713; Completed</span>
+                <span className="text-[10px] font-mono text-[#14F195] bg-[#14F195]/10 border border-[#14F195]/20 rounded px-2 py-0.5">
+                  &#x2713; Completed
+                </span>
               </div>
             ))}
           </div>
@@ -155,8 +237,12 @@ export default async function ProfilePage({ params }: Props) {
                 className="bg-card border border-border rounded px-3 py-2 flex items-center gap-2"
               >
                 <span className="text-sm">🏆</span>
-                <span className="text-xs font-mono text-foreground">{ach.name}</span>
-                <span className="text-[10px] font-mono text-[#14F195]">+{ach.xpReward} XP</span>
+                <span className="text-xs font-mono text-foreground">
+                  {ach.name}
+                </span>
+                <span className="text-[10px] font-mono text-[#14F195]">
+                  +{ach.xpReward} XP
+                </span>
               </div>
             ))}
           </div>

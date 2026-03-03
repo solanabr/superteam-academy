@@ -24,8 +24,14 @@ export default async function LeaderboardPage({ searchParams }: Props) {
   const t = await getTranslations("leaderboard");
   const { timeframe = "all-time" } = await searchParams;
 
-  const validTimeframes: LeaderboardTimeframe[] = ["weekly", "monthly", "all-time"];
-  const activeTimeframe = validTimeframes.includes(timeframe as LeaderboardTimeframe)
+  const validTimeframes: LeaderboardTimeframe[] = [
+    "weekly",
+    "monthly",
+    "all-time",
+  ];
+  const activeTimeframe = validTimeframes.includes(
+    timeframe as LeaderboardTimeframe,
+  )
     ? (timeframe as LeaderboardTimeframe)
     : "all-time";
 
@@ -88,12 +94,21 @@ function PodiumCard({
   medal,
   highlighted,
 }: {
-  entry: { walletAddress: string; username?: string; displayName?: string; xpBalance: number; level: number };
+  entry: {
+    walletAddress: string;
+    username?: string;
+    displayName?: string;
+    xpBalance: number;
+    level: number;
+  };
   height: string;
   medal: string;
   highlighted?: boolean;
 }) {
-  const name = entry.displayName ?? entry.username ?? `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`;
+  const name =
+    entry.displayName ??
+    entry.username ??
+    `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`;
 
   return (
     <div

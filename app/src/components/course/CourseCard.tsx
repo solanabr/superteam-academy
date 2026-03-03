@@ -86,13 +86,22 @@ export function CourseCard({ course, progress }: CourseCardProps) {
           <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
             <span className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
-              {course.modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0)} lessons
+              {course.modules.reduce(
+                (sum, m) => sum + (m.lessons?.length ?? 0),
+                0,
+              )}{" "}
+              lessons
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {course.durationHours}h
             </span>
-            <span className={cn("flex items-center gap-1 ml-auto", "text-[#14F195]")}>
+            <span
+              className={cn(
+                "flex items-center gap-1 ml-auto",
+                "text-[#14F195]",
+              )}
+            >
               <Zap className="h-3 w-3" />
               {course.xpReward.toLocaleString()} XP
             </span>
@@ -103,7 +112,11 @@ export function CourseCard({ course, progress }: CourseCardProps) {
             <div className="mt-2 pt-2 border-t border-border">
               <div className="flex items-center justify-between text-[10px] font-mono">
                 <span className="text-muted-foreground">Progress</span>
-                <span className={percent === 100 ? "text-[#14F195]" : "text-foreground"}>
+                <span
+                  className={
+                    percent === 100 ? "text-[#14F195]" : "text-foreground"
+                  }
+                >
                   {percent === 100 ? "Complete ✓" : `${percent}%`}
                 </span>
               </div>

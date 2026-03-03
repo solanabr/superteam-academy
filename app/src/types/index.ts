@@ -58,6 +58,7 @@ export interface SanityLesson {
   starterCode?: string;
   solutionCode?: string;
   testCases?: SanityTestCase[];
+  hints?: string[];
   estimatedMinutes?: number;
 }
 
@@ -215,6 +216,7 @@ export interface TxResult {
   signature?: string;
   error?: string;
   success: boolean;
+  achievements?: Array<{ id: string; asset: string }>;
 }
 
 // ─── Track ───────────────────────────────────────────────────────────────────
@@ -229,11 +231,41 @@ export interface Track {
 }
 
 export const TRACKS: Record<number, Omit<Track, "courses">> = {
-  1: { id: 1, name: "Solana Basics", description: "Core Solana concepts and development", icon: "◎", color: "#14F195" },
-  2: { id: 2, name: "Anchor Framework", description: "Build on-chain programs with Anchor", icon: "⚓", color: "#9945FF" },
-  3: { id: 3, name: "DeFi", description: "Decentralized finance protocols", icon: "💹", color: "#00D4FF" },
-  4: { id: 4, name: "NFTs & Digital Assets", description: "Metaplex and digital collectibles", icon: "🎨", color: "#F5A623" },
-  5: { id: 5, name: "Full-Stack Solana", description: "End-to-end dApp development", icon: "⚡", color: "#FF4444" },
+  1: {
+    id: 1,
+    name: "Solana Basics",
+    description: "Core Solana concepts and development",
+    icon: "◎",
+    color: "#14F195",
+  },
+  2: {
+    id: 2,
+    name: "Anchor Framework",
+    description: "Build on-chain programs with Anchor",
+    icon: "⚓",
+    color: "#9945FF",
+  },
+  3: {
+    id: 3,
+    name: "DeFi",
+    description: "Decentralized finance protocols",
+    icon: "💹",
+    color: "#00D4FF",
+  },
+  4: {
+    id: 4,
+    name: "NFTs & Digital Assets",
+    description: "Metaplex and digital collectibles",
+    icon: "🎨",
+    color: "#F5A623",
+  },
+  5: {
+    id: 5,
+    name: "Full-Stack Solana",
+    description: "End-to-end dApp development",
+    icon: "⚡",
+    color: "#FF4444",
+  },
 };
 
 export const DIFFICULTY_LABELS: Record<CourseDifficulty, string> = {

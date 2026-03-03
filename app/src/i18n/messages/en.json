@@ -25,7 +25,27 @@
     },
     "tracks": {
       "title": "Learning Tracks",
-      "subtitle": "Structured paths from zero to production-ready Solana developer"
+      "subtitle": "Structured paths from zero to production-ready Solana developer",
+      "viewAll": "View all courses",
+      "coursesCount": "courses"
+    },
+    "howItWorks": {
+      "title": "Three steps to on-chain mastery",
+      "subtitle": "How it works",
+      "steps": {
+        "enroll": {
+          "label": "Enroll",
+          "description": "Browse structured learning tracks. Connect your Solana wallet and enroll in any course with one click — no credit card, no setup."
+        },
+        "learn": {
+          "label": "Learn",
+          "description": "Write real code in the browser with Monaco editor. Get instant feedback on challenges. Learn Rust and TypeScript the hands-on way."
+        },
+        "earn": {
+          "label": "Earn",
+          "description": "Complete lessons to mint XP tokens to your wallet. Finish a track to earn a soulbound NFT credential — verifiable on-chain, owned forever."
+        }
+      }
     },
     "features": {
       "title": "Built Different",
@@ -172,6 +192,32 @@
     "completedOn": "Completed on {date}",
     "earnedBy": "Earned by",
     "track": "Track"
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "connectedLabel": "Connected wallet",
+    "copyAddress": "Copy address",
+    "copied": "Copied!",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "certificates": "Certificates",
+    "settings": "Settings",
+    "disconnect": "Disconnect",
+    "levelLabel": "Lv."
+  },
+  "enroll": {
+    "connectToEnroll": "Connect Wallet to Enroll",
+    "enrolling": "Enrolling...",
+    "enroll": "Enroll in Course",
+    "completed": "✓ Completed",
+    "courseComplete": "✓ Course Complete",
+    "continueLearning": "Continue Learning →",
+    "switchToDevnet": "Switch your wallet to <strong>Devnet</strong> to enroll on-chain.",
+    "alreadyEnrolled": "You are already enrolled in this course.",
+    "courseNotActive": "This course is not yet active on-chain.",
+    "switchDevnetRetry": "Switch your wallet to Devnet and try again.",
+    "courseNotRegistered": "Course not yet registered on devnet.",
+    "enrolledTx": "Enrolled! Tx: {tx}…"
   },
   "common": {
     "loading": "Loading...",

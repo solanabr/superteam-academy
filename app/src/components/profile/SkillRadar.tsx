@@ -29,7 +29,7 @@ function polarToCartesian(
   cx: number,
   cy: number,
   radius: number,
-  angleRad: number
+  angleRad: number,
 ): [number, number] {
   return [cx + radius * Math.cos(angleRad), cy + radius * Math.sin(angleRad)];
 }
@@ -50,7 +50,7 @@ function buildSkillPolygon(
   cx: number,
   cy: number,
   values: number[],
-  maxRadius: number
+  maxRadius: number,
 ): string {
   const n = values.length;
   const startAngle = -Math.PI / 2;
@@ -66,7 +66,9 @@ function buildSkillPolygon(
 
 export function SkillRadar({ skills }: SkillRadarProps) {
   const merged: Record<string, number> = { ...DEFAULT_SKILLS, ...skills };
-  const values = SKILL_ORDER.map((s) => Math.min(100, Math.max(0, merged[s] ?? 0)));
+  const values = SKILL_ORDER.map((s) =>
+    Math.min(100, Math.max(0, merged[s] ?? 0)),
+  );
   const n = SKILL_ORDER.length;
   const startAngle = -Math.PI / 2;
 

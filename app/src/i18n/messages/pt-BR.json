@@ -25,7 +25,27 @@
     },
     "tracks": {
       "title": "Trilhas de Aprendizado",
-      "subtitle": "Caminhos estruturados do zero ao desenvolvedor Solana pronto para produção"
+      "subtitle": "Caminhos estruturados do zero ao desenvolvedor Solana pronto para produção",
+      "viewAll": "Ver todos os cursos",
+      "coursesCount": "cursos"
+    },
+    "howItWorks": {
+      "title": "Três passos para dominar on-chain",
+      "subtitle": "Como funciona",
+      "steps": {
+        "enroll": {
+          "label": "Inscrever",
+          "description": "Explore trilhas de aprendizado estruturadas. Conecte sua carteira Solana e inscreva-se em qualquer curso com um clique."
+        },
+        "learn": {
+          "label": "Aprender",
+          "description": "Escreva código real no navegador com o editor Monaco. Receba feedback instantâneo nos desafios."
+        },
+        "earn": {
+          "label": "Ganhar",
+          "description": "Complete lições para mintar tokens XP em sua carteira. Conclua uma trilha para ganhar uma credencial NFT soulbound."
+        }
+      }
     },
     "features": {
       "title": "Construído Diferente",
@@ -172,6 +192,32 @@
     "completedOn": "Concluído em {date}",
     "earnedBy": "Ganho por",
     "track": "Trilha"
+  },
+  "wallet": {
+    "connect": "Conectar Carteira",
+    "connectedLabel": "Carteira conectada",
+    "copyAddress": "Copiar endereço",
+    "copied": "Copiado!",
+    "dashboard": "Painel",
+    "profile": "Perfil",
+    "certificates": "Certificados",
+    "settings": "Configurações",
+    "disconnect": "Desconectar",
+    "levelLabel": "Nv."
+  },
+  "enroll": {
+    "connectToEnroll": "Conectar Carteira para Inscrever-se",
+    "enrolling": "Inscrevendo...",
+    "enroll": "Inscrever-se no Curso",
+    "completed": "✓ Concluído",
+    "courseComplete": "✓ Curso Concluído",
+    "continueLearning": "Continuar Aprendendo →",
+    "switchToDevnet": "Mude sua carteira para <strong>Devnet</strong> para inscrever-se on-chain.",
+    "alreadyEnrolled": "Você já está inscrito neste curso.",
+    "courseNotActive": "Este curso ainda não está ativo on-chain.",
+    "switchDevnetRetry": "Mude sua carteira para Devnet e tente novamente.",
+    "courseNotRegistered": "Curso ainda não registrado na devnet.",
+    "enrolledTx": "Inscrito! Tx: {tx}…"
   },
   "common": {
     "loading": "Carregando...",

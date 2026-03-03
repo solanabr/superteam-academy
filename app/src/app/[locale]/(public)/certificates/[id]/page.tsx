@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { ExternalLink, Shield } from "lucide-react";
 import { solanaExplorerUrl } from "@/lib/explorer";
 import { TRACKS } from "@/types";
+import { getCredentialById } from "@/services/credentials";
 import type { Metadata } from "next";
 import { DownloadButton } from "./DownloadButton";
 import { CopyShareButton } from "./CopyShareButton";
@@ -36,23 +37,34 @@ export default async function CertificatePage({ params }: Props) {
   const { id } = await params;
   const t = await getTranslations("certificate");
 
-  // In production: fetch from Helius DAS by asset address (id)
-  const mockCredential = {
-    name: "Solana Basics",
-    trackId: 1,
-    level: "1",
-    coursesCompleted: "3",
-    totalXp: "2500",
-    earnedBy: `${id.slice(0, 4)}...${id.slice(-4)}`,
-    completedOn: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-    assetAddress: id,
-  };
+  const credential = await getCredentialById(id);
 
-  const track = TRACKS[mockCredential.trackId];
+  const name = credential?.name ?? "Solana Basics";
+  const trackId = Number(credential?.attributes?.trackId ?? 1);
+  const level = credential?.attributes?.level ?? "1";
+  const coursesCompleted = credential?.attributes?.coursesCompleted ?? "3";
+  const totalXp = credential?.attributes?.totalXp ?? "2500";
+  const earnedBy = `${id.slice(0, 4)}...${id.slice(-4)}`;
+  const issueDate = credential?.mintedAt
+    ? new Date(credential.mintedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
+  const track = TRACKS[trackId];
+
+  const programId =
+    process.env.NEXT_PUBLIC_PROGRAM_ID ??
+    "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf";
   const certificateUrl = `https://superteam-academy.vercel.app/certificates/${id}`;
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `I just completed the ${mockCredential.name} on @SuperteamBR Academy and earned my on-chain credential! #Solana #Web3 #SuperteamAcademy`
+    `I just completed the ${name} on @SuperteamBR Academy and earned my on-chain credential! #Solana #Web3 #SuperteamAcademy`,
   )}&url=${encodeURIComponent(certificateUrl)}`;
 
   return (
@@ -63,7 +75,8 @@ export default async function CertificatePage({ params }: Props) {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: "radial-gradient(ellipse at 50% 0%, rgba(20,241,149,0.08) 0%, transparent 60%)",
+            background:
+              "radial-gradient(ellipse at 50% 0%, rgba(20,241,149,0.08) 0%, transparent 60%)",
           }}
         />
 
@@ -96,13 +109,21 @@ export default async function CertificatePage({ params }: Props) {
 
           {/* Main content */}
           <div className="py-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">This certifies that</p>
-            <p className="font-mono text-xl font-bold text-[#14F195]">{mockCredential.earnedBy}</p>
-            <p className="text-xs text-muted-foreground font-mono">has successfully completed</p>
-            <p className="font-mono text-2xl font-black text-foreground">{mockCredential.name}</p>
+            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+              This certifies that
+            </p>
+            <p className="font-mono text-xl font-bold text-[#14F195]">
+              {earnedBy}
+            </p>
+            <p className="text-xs text-muted-foreground font-mono">
+              has successfully completed
+            </p>
+            <p className="font-mono text-2xl font-black text-foreground">
+              {name}
+            </p>
             {track && (
               <p className="text-sm text-muted-foreground font-mono">
-                {track.icon} {track.name} Track · Level {mockCredential.level}
+                {track.icon} {track.name} Track · Level {level}
               </p>
             )}
           </div>
@@ -111,7 +132,7 @@ export default async function CertificatePage({ params }: Props) {
           <div className="flex justify-center gap-8 py-3 border-y border-border">
             <div className="text-center">
               <div className="font-mono text-lg font-bold text-foreground">
-                {mockCredential.coursesCompleted}
+                {coursesCompleted}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 Courses
@@ -119,7 +140,7 @@ export default async function CertificatePage({ params }: Props) {
             </div>
             <div className="text-center">
               <div className="font-mono text-lg font-bold text-[#14F195]">
-                {Number(mockCredential.totalXp).toLocaleString()}
+                {Number(totalXp).toLocaleString()}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 XP Earned
@@ -127,7 +148,7 @@ export default async function CertificatePage({ params }: Props) {
             </div>
             <div className="text-center">
               <div className="font-mono text-lg font-bold text-foreground">
-                {mockCredential.level}
+                {level}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 Level
@@ -136,7 +157,7 @@ export default async function CertificatePage({ params }: Props) {
           </div>
 
           <p className="text-xs text-muted-foreground font-mono">
-            {t("completedOn", { date: mockCredential.completedOn })}
+            {t("completedOn", { date: issueDate })}
           </p>
         </div>
       </div>
@@ -170,11 +191,15 @@ export default async function CertificatePage({ params }: Props) {
       <div className="mt-6 bg-card border border-border rounded p-4 space-y-2 font-mono text-xs">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Asset Address</span>
-          <span className="text-foreground break-all">{id.slice(0, 20)}...</span>
+          <span className="text-foreground break-all">
+            {id.slice(0, 20)}...
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Program</span>
-          <span className="text-foreground">ACADBRCB3...3ucf</span>
+          <span className="text-foreground">
+            {programId.slice(0, 8)}...{programId.slice(-4)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Network</span>
@@ -188,4 +213,3 @@ export default async function CertificatePage({ params }: Props) {
     </div>
   );
 }
-

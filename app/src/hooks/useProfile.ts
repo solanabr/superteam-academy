@@ -15,7 +15,10 @@ export function useProfile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    if (!publicKey || !supabase) { setProfile(null); return; }
+    if (!publicKey || !supabase) {
+      setProfile(null);
+      return;
+    }
     supabase
       .from("profiles")
       .select("username, display_name, avatar_url")

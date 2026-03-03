@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
-import { getCategories, getThreads, getForumStats, formatTimeAgo } from "@/lib/forum";
+import {
+  getCategories,
+  getThreads,
+  getForumStats,
+  formatTimeAgo,
+} from "@/lib/forum";
 import type { ForumThread } from "@/lib/forum";
 
 export const metadata: Metadata = {
@@ -27,17 +32,23 @@ export default async function CommunityPage({
       {/* Stats bar */}
       <div className="flex items-center gap-6 px-4 py-3 border border-border bg-card rounded text-xs font-mono text-muted-foreground">
         <span>
-          <span className="text-[#14F195] font-semibold">{stats.thread_count}</span>{" "}
+          <span className="text-[#14F195] font-semibold">
+            {stats.thread_count}
+          </span>{" "}
           threads
         </span>
         <span>·</span>
         <span>
-          <span className="text-[#14F195] font-semibold">{stats.reply_count}</span>{" "}
+          <span className="text-[#14F195] font-semibold">
+            {stats.reply_count}
+          </span>{" "}
           replies
         </span>
         <span>·</span>
         <span>
-          <span className="text-[#14F195] font-semibold">{stats.member_count}</span>{" "}
+          <span className="text-[#14F195] font-semibold">
+            {stats.member_count}
+          </span>{" "}
           members
         </span>
       </div>
@@ -71,7 +82,11 @@ export default async function CommunityPage({
             href="/community"
             className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors ${!category ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
           >
-            <span className={`font-mono text-sm ${!category ? "text-[#14F195]" : "text-foreground"}`}>All</span>
+            <span
+              className={`font-mono text-sm ${!category ? "text-[#14F195]" : "text-foreground"}`}
+            >
+              All
+            </span>
             <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
               {stats.thread_count}
             </span>
@@ -85,8 +100,13 @@ export default async function CommunityPage({
                 href={`/community?category=${cat.slug}` as any}
                 className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors group ${isActive ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
               >
-                <span className={`font-mono text-sm flex items-center gap-2 ${isActive ? "text-[#14F195]" : "text-foreground group-hover:text-[#14F195] transition-colors"}`}>
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                <span
+                  className={`font-mono text-sm flex items-center gap-2 ${isActive ? "text-[#14F195]" : "text-foreground group-hover:text-[#14F195] transition-colors"}`}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: cat.color }}
+                  />
                   {cat.label}
                 </span>
                 <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
@@ -107,7 +127,10 @@ export default async function CommunityPage({
             <div className="bg-card border border-border rounded-lg px-5 py-16 text-center">
               <p className="font-mono text-sm text-muted-foreground">
                 No threads yet.{" "}
-                <Link href="/community/new" className="text-[#14F195] hover:underline">
+                <Link
+                  href="/community/new"
+                  className="text-[#14F195] hover:underline"
+                >
                   Start the first one.
                 </Link>
               </p>
@@ -165,7 +188,8 @@ export default async function CommunityPage({
 
                       <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-muted-foreground">
                         <span className="truncate max-w-[160px]">
-                          {thread.author_display_name ?? `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
+                          {thread.author_display_name ??
+                            `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
                         </span>
                         <span>·</span>
                         <span>{thread.reply_count ?? 0} replies</span>

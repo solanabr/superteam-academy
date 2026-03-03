@@ -15,7 +15,10 @@ export default async function NewThreadPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs font-mono text-muted-foreground mb-8">
-        <Link href="/community" className="hover:text-foreground transition-colors">
+        <Link
+          href="/community"
+          className="hover:text-foreground transition-colors"
+        >
           Community
         </Link>
         <span>/</span>
@@ -35,7 +38,8 @@ export default async function NewThreadPage() {
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="font-mono text-sm text-muted-foreground">
-              Unable to load categories. Please check your connection and try again.
+              Unable to load categories. Please check your connection and try
+              again.
             </p>
           </div>
         ) : (

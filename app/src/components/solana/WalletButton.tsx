@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { events } from "@/lib/analytics";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Copy, LogOut, ChevronDown, LayoutDashboard, User, Settings, Award } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  Copy,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  Settings,
+  Award,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,13 +32,23 @@ function abbrev(address: string): string {
 }
 
 export function WalletButton({ className }: { className?: string }) {
-  const { publicKey, disconnect, connected } = useWallet();
+  const { publicKey, disconnect, connected, wallet } = useWallet();
   const { setVisible } = useWalletModal();
+  const t = useTranslations("wallet");
   const { data: xpData } = useXpBalance();
   const profile = useProfile();
   const [copied, setCopied] = useState(false);
 
-  const displayName = profile?.username ?? profile?.display_name ?? (publicKey ? abbrev(publicKey.toBase58()) : "");
+  useEffect(() => {
+    if (connected) {
+      events.walletConnect(wallet?.adapter.name ?? "unknown");
+    }
+  }, [connected, wallet]);
+
+  const displayName =
+    profile?.username ??
+    profile?.display_name ??
+    (publicKey ? abbrev(publicKey.toBase58()) : "");
 
   const handleCopy = useCallback(() => {
     if (!publicKey) return;
@@ -43,12 +63,12 @@ export function WalletButton({ className }: { className?: string }) {
         onClick={() => setVisible(true)}
         className={cn(
           "bg-[#14F195] text-black font-mono text-sm font-medium hover:bg-accent-dim transition-colors",
-          className
+          className,
         )}
         size="sm"
       >
         <span className="mr-1.5">◎</span>
-        Connect Wallet
+        {t("connect")}
       </Button>
     );
   }
@@ -61,14 +81,15 @@ export function WalletButton({ className }: { className?: string }) {
           size="sm"
           className={cn(
             "font-mono text-sm border-border hover:border-border-hover bg-card hover:bg-elevated",
-            className
+            className,
           )}
         >
           <span className="text-[#14F195] mr-1.5">◎</span>
           {displayName}
           {xpData && (
             <span className="ml-2 text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">
-              Lv.{xpData.level}
+              {t("levelLabel")}
+              {xpData.level}
             </span>
           )}
           <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground" />
@@ -79,7 +100,9 @@ export function WalletButton({ className }: { className?: string }) {
         className="w-56 bg-card border-border font-mono"
       >
         <div className="px-3 py-2">
-          <p className="text-xs text-muted-foreground mb-1">Connected wallet</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            {t("connectedLabel")}
+          </p>
           <p className="text-sm text-foreground break-all">
             {publicKey.toBase58().slice(0, 20)}...
           </p>
@@ -95,31 +118,43 @@ export function WalletButton({ className }: { className?: string }) {
           className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
         >
           <Copy className="mr-2 h-3.5 w-3.5" />
-          {copied ? "Copied!" : "Copy address"}
+          {copied ? t("copied") : t("copyAddress")}
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-border" />
-        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
+        <DropdownMenuItem
+          asChild
+          className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
+        >
           <Link href="/dashboard">
             <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
-            Dashboard
+            {t("dashboard")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
+        <DropdownMenuItem
+          asChild
+          className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
+        >
           <Link href="/profile">
             <User className="mr-2 h-3.5 w-3.5" />
-            Profile
+            {t("profile")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
+        <DropdownMenuItem
+          asChild
+          className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
+        >
           <Link href="/certificates">
             <Award className="mr-2 h-3.5 w-3.5" />
-            Certificates
+            {t("certificates")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
+        <DropdownMenuItem
+          asChild
+          className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
+        >
           <Link href="/settings">
             <Settings className="mr-2 h-3.5 w-3.5" />
-            Settings
+            {t("settings")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-border" />
@@ -128,7 +163,7 @@ export function WalletButton({ className }: { className?: string }) {
           className="text-[#FF4444] focus:bg-elevated focus:text-[#FF4444] cursor-pointer"
         >
           <LogOut className="mr-2 h-3.5 w-3.5" />
-          Disconnect
+          {t("disconnect")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

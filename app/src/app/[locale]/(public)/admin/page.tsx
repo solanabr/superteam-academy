@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { getAdminStats, getRecentSignups, getRecentThreads, getCourseStats } from "@/lib/admin";
+import {
+  getAdminStats,
+  getRecentSignups,
+  getRecentThreads,
+  getCourseStats,
+} from "@/lib/admin";
 import { AdminClient } from "./AdminClient";
 
 export const metadata: Metadata = {

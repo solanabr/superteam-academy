@@ -17,10 +17,14 @@ export async function generateMetadata({
   return { title: t("title"), description: t("subtitle") };
 }
 
-
 interface CoursesPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ difficulty?: string; track?: string; q?: string; sort?: string }>;
+  searchParams: Promise<{
+    difficulty?: string;
+    track?: string;
+    q?: string;
+    sort?: string;
+  }>;
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
@@ -43,7 +47,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
     filtered = filtered.filter(
       (c) =>
         c.title.toLowerCase().includes(query) ||
-        c.description.toLowerCase().includes(query)
+        c.description.toLowerCase().includes(query),
     );
   }
 
@@ -53,10 +57,15 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   if (activeSort === "xpReward") {
     sorted.sort((a, b) => (b.xpReward ?? 0) - (a.xpReward ?? 0));
   } else if (activeSort === "difficulty") {
-    const order: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
+    const order: Record<string, number> = {
+      beginner: 0,
+      intermediate: 1,
+      advanced: 2,
+    };
     sorted.sort(
       (a, b) =>
-        (order[a.difficulty as string] ?? 0) - (order[b.difficulty as string] ?? 0)
+        (order[a.difficulty as string] ?? 0) -
+        (order[b.difficulty as string] ?? 0),
     );
   }
   // newest = default, no sort needed (Sanity returns newest first)
@@ -80,7 +89,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
       {/* Search */}
       <form method="GET" action="" className="mb-4">
-        {difficulty && <input type="hidden" name="difficulty" value={difficulty} />}
+        {difficulty && (
+          <input type="hidden" name="difficulty" value={difficulty} />
+        )}
         {track && <input type="hidden" name="track" value={track} />}
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
@@ -104,7 +115,12 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           return (
             <Link
               key={value}
-              href={{ pathname: "/courses", query: Object.keys(filterQuery).length ? filterQuery : undefined }}
+              href={{
+                pathname: "/courses",
+                query: Object.keys(filterQuery).length
+                  ? filterQuery
+                  : undefined,
+              }}
               className={[
                 "px-3 py-1.5 rounded text-xs font-mono transition-colors border",
                 (difficulty ?? "all") === value
@@ -130,7 +146,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           )}
           {track && <input type="hidden" name="track" value={track} />}
           <div className="inline-flex items-center gap-2">
-            <label className="text-xs font-mono text-muted-foreground">Sort by</label>
+            <label className="text-xs font-mono text-muted-foreground">
+              Sort by
+            </label>
             <select
               name="sort"
               defaultValue={activeSort}

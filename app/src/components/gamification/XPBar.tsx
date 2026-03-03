@@ -19,7 +19,8 @@ export function XPBar({ xpData, showLabel = true, className }: XPBarProps) {
         <div className="flex items-center justify-between text-xs font-mono">
           <span className="text-[#14F195] font-semibold">Level {level}</span>
           <span className="text-muted-foreground">
-            {balance.toLocaleString()} XP · {xpToNextLevel.toLocaleString()} to next
+            {balance.toLocaleString()} XP · {xpToNextLevel.toLocaleString()} to
+            next
           </span>
         </div>
       )}

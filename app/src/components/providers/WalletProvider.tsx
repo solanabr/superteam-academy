@@ -9,8 +9,13 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
+  CoinbaseWalletAdapter,
+  LedgerWalletAdapter,
+  TorusWalletAdapter,
+  TrustWalletAdapter,
+  NightlyWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { getConnection } from "@/lib/solana";
+import { getConnectionEndpoint } from "@/lib/solana";
 
 // Import wallet adapter styles
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -20,17 +25,19 @@ interface Props {
 }
 
 export const WalletProvider: FC<Props> = ({ children }) => {
-  const endpoint = useMemo(() => {
-    const conn = getConnection();
-    return (conn as unknown as { _rpcEndpoint?: string })._rpcEndpoint ?? "https://api.devnet.solana.com";
-  }, []);
+  const endpoint = useMemo(() => getConnectionEndpoint(), []);
 
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
+      new CoinbaseWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new TorusWalletAdapter(),
+      new TrustWalletAdapter(),
+      new NightlyWalletAdapter(),
     ],
-    []
+    [],
   );
 
   return (

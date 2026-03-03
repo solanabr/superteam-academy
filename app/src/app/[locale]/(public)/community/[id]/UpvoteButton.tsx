@@ -17,7 +17,10 @@ export function UpvoteButton({ threadId, initialCount }: UpvoteButtonProps) {
     if (loading) return;
     setLoading(true);
     try {
-      const newCount = await toggleVote(threadId, `anon_${Math.random().toString(36).slice(2, 8)}`);
+      const newCount = await toggleVote(
+        threadId,
+        `anon_${Math.random().toString(36).slice(2, 8)}`,
+      );
       setCount(newCount);
       setVoted((v) => !v);
     } finally {
@@ -46,10 +49,7 @@ export function UpvoteButton({ threadId, initialCount }: UpvoteButtonProps) {
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0"
       >
-        <path
-          d="M6 1L11 7H7V11H5V7H1L6 1Z"
-          fill="currentColor"
-        />
+        <path d="M6 1L11 7H7V11H5V7H1L6 1Z" fill="currentColor" />
       </svg>
       <span>{count}</span>
     </button>

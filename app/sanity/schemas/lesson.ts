@@ -85,9 +85,17 @@ export default defineType({
         {
           type: "object",
           fields: [
-            defineField({ name: "description", type: "string", title: "Description" }),
+            defineField({
+              name: "description",
+              type: "string",
+              title: "Description",
+            }),
             defineField({ name: "input", type: "text", title: "Input" }),
-            defineField({ name: "expectedOutput", type: "text", title: "Expected Output" }),
+            defineField({
+              name: "expectedOutput",
+              type: "text",
+              title: "Expected Output",
+            }),
           ],
         },
       ],

@@ -78,7 +78,7 @@ export async function getCategories(): Promise<ForumCategory[]> {
     color: (row.color as string) ?? "#666666",
     order_index: row.order_index as number,
     thread_count: Array.isArray(row.forum_threads)
-      ? (row.forum_threads[0] as { count: number })?.count ?? 0
+      ? ((row.forum_threads[0] as { count: number })?.count ?? 0)
       : 0,
   }));
 }
@@ -86,7 +86,7 @@ export async function getCategories(): Promise<ForumCategory[]> {
 export async function getThreads(
   categorySlug?: string,
   limit = 20,
-  offset = 0
+  offset = 0,
 ): Promise<ForumThread[]> {
   if (!supabase) return [];
 
@@ -97,7 +97,7 @@ export async function getThreads(
       *,
       category:forum_categories(*),
       forum_replies(count)
-    `
+    `,
     )
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false })
@@ -130,7 +130,7 @@ export async function getThreads(
       created_at: row.created_at as string,
       updated_at: row.updated_at as string,
       reply_count: Array.isArray(row.forum_replies)
-        ? (row.forum_replies[0] as { count: number })?.count ?? 0
+        ? ((row.forum_replies[0] as { count: number })?.count ?? 0)
         : 0,
       category: row.category as ForumCategory | undefined,
     }));
@@ -149,7 +149,10 @@ export async function getThread(id: string): Promise<ForumThread | null> {
       if (data && supabase) {
         supabase
           .from("forum_threads")
-          .update({ views: ((data as Record<string, unknown>).views as number ?? 0) + 1 })
+          .update({
+            views:
+              (((data as Record<string, unknown>).views as number) ?? 0) + 1,
+          })
           .eq("id", id)
           .then(() => undefined);
       }
@@ -162,7 +165,7 @@ export async function getThread(id: string): Promise<ForumThread | null> {
       *,
       category:forum_categories(*),
       forum_replies(count)
-    `
+    `,
     )
     .eq("id", id)
     .single();
@@ -183,7 +186,7 @@ export async function getThread(id: string): Promise<ForumThread | null> {
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     reply_count: Array.isArray(row.forum_replies)
-      ? (row.forum_replies[0] as { count: number })?.count ?? 0
+      ? ((row.forum_replies[0] as { count: number })?.count ?? 0)
       : 0,
     category: row.category as ForumCategory | undefined,
   };
@@ -250,7 +253,7 @@ export async function createReply(data: {
 
 export async function toggleVote(
   threadId: string,
-  voterWallet: string
+  voterWallet: string,
 ): Promise<number> {
   if (!supabase) return 0;
 
@@ -306,9 +309,7 @@ export async function getForumStats(): Promise<ForumStats> {
       supabase
         .from("forum_replies")
         .select("*", { count: "exact", head: true }),
-      supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
     ]);
 
   return {

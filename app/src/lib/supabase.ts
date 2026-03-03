@@ -21,7 +21,7 @@ export const supabase =
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
 export async function getProfileByWallet(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<UserProfile | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -34,7 +34,7 @@ export async function getProfileByWallet(
 }
 
 export async function getProfileByUsername(
-  username: string
+  username: string,
 ): Promise<UserProfile | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -47,7 +47,7 @@ export async function getProfileByUsername(
 }
 
 export async function upsertProfile(
-  profile: Partial<UserProfile> & { walletAddress?: string }
+  profile: Partial<UserProfile> & { walletAddress?: string },
 ): Promise<UserProfile | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -90,7 +90,7 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
 // ─── Linked Accounts ──────────────────────────────────────────────────────────
 
 export async function getLinkedAccounts(
-  userId: string
+  userId: string,
 ): Promise<LinkedAccount[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -109,7 +109,7 @@ export async function getLinkedAccounts(
 export async function linkAccount(
   userId: string,
   provider: "wallet" | "google" | "github",
-  providerId: string
+  providerId: string,
 ): Promise<boolean> {
   if (!supabase) return false;
   const { error } = await supabase.from("linked_accounts").upsert({
@@ -122,7 +122,9 @@ export async function linkAccount(
 
 // ─── Streaks ─────────────────────────────────────────────────────────────────
 
-export async function getStreakFromDB(userId: string): Promise<StreakData | null> {
+export async function getStreakFromDB(
+  userId: string,
+): Promise<StreakData | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("streaks")
@@ -133,14 +135,17 @@ export async function getStreakFromDB(userId: string): Promise<StreakData | null
   return {
     currentStreak: (data as Record<string, unknown>).current_streak as number,
     longestStreak: (data as Record<string, unknown>).longest_streak as number,
-    lastActivityDate: (data as Record<string, unknown>).last_activity_date as string | null,
-    streakHistory: ((data as Record<string, unknown>).streak_history as string[]) ?? [],
+    lastActivityDate: (data as Record<string, unknown>).last_activity_date as
+      | string
+      | null,
+    streakHistory:
+      ((data as Record<string, unknown>).streak_history as string[]) ?? [],
   };
 }
 
 export async function updateStreak(
   userId: string,
-  streak: StreakData
+  streak: StreakData,
 ): Promise<void> {
   if (!supabase) return;
   await supabase.from("streaks").upsert({

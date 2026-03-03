@@ -27,7 +27,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
       const d = new Date(iso);
       d.setHours(0, 0, 0, 0);
       return d.getTime();
-    })
+    }),
   );
 
   const totalActiveDays = activeDays.size;
@@ -39,36 +39,65 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
         {/* Stats */}
         <div className="flex items-center gap-4 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className={cn("text-base leading-none", streak.currentStreak >= 7 && "drop-shadow-[0_0_8px_rgba(245,166,35,0.7)]")}>
+            <span
+              className={cn(
+                "text-base leading-none",
+                streak.currentStreak >= 7 &&
+                  "drop-shadow-[0_0_8px_rgba(245,166,35,0.7)]",
+              )}
+            >
               🔥
             </span>
-            <span className={cn("font-mono text-xl font-bold leading-none", streak.currentStreak >= 7 ? "text-[#F5A623]" : streak.currentStreak > 0 ? "text-foreground" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "font-mono text-xl font-bold leading-none",
+                streak.currentStreak >= 7
+                  ? "text-[#F5A623]"
+                  : streak.currentStreak > 0
+                    ? "text-foreground"
+                    : "text-muted-foreground",
+              )}
+            >
               {streak.currentStreak}
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono">days</span>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              days
+            </span>
           </div>
 
           <div className="h-5 w-px bg-border" />
 
           <div className="font-mono leading-none">
-            <span className="text-sm font-semibold text-foreground">{streak.longestStreak}</span>
+            <span className="text-sm font-semibold text-foreground">
+              {streak.longestStreak}
+            </span>
             <span className="text-[10px] text-muted-foreground ml-1">best</span>
           </div>
 
           <div className="h-5 w-px bg-border" />
 
           <div className="font-mono leading-none">
-            <span className="text-sm font-semibold text-[#14F195]">{totalActiveDays}</span>
-            <span className="text-[10px] text-muted-foreground ml-1">total</span>
+            <span className="text-sm font-semibold text-[#14F195]">
+              {totalActiveDays}
+            </span>
+            <span className="text-[10px] text-muted-foreground ml-1">
+              total
+            </span>
           </div>
         </div>
 
         {/* 28-day grid */}
         <div className="flex-1">
-          <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(28, 1fr)" }}>
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: "repeat(28, 1fr)" }}
+          >
             {/* Day-of-week labels */}
             {days.map((day, i) => (
-              <div key={i} className="text-[8px] font-mono text-subtle text-center leading-none mb-0.5">
+              <div
+                key={i}
+                className="text-[8px] font-mono text-subtle text-center leading-none mb-0.5"
+              >
                 {i % 7 === 0 ? DAY_LABELS[day.getDay()] : ""}
               </div>
             ))}
@@ -80,17 +109,28 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
 
               let bg: string;
               let shadow: string | undefined;
-              if (isToday && isActive) { bg = "#1dff9f"; shadow = "0 0 4px rgba(20,241,149,0.6)"; }
-              else if (isToday) { bg = "#1A2A22"; shadow = "0 0 3px rgba(20,241,149,0.2)"; }
-              else if (isActive) { bg = "#14F195"; }
-              else { bg = "#1A1A1A"; }
+              if (isToday && isActive) {
+                bg = "#1dff9f";
+                shadow = "0 0 4px rgba(20,241,149,0.6)";
+              } else if (isToday) {
+                bg = "#1A2A22";
+                shadow = "0 0 3px rgba(20,241,149,0.2)";
+              } else if (isActive) {
+                bg = "#14F195";
+              } else {
+                bg = "#1A1A1A";
+              }
 
               return (
                 <div
                   key={i}
                   title={`${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}${isActive ? " ✓" : ""}`}
                   className="rounded-[2px] cursor-default hover:scale-110 transition-transform"
-                  style={{ aspectRatio: "1", backgroundColor: bg, boxShadow: shadow }}
+                  style={{
+                    aspectRatio: "1",
+                    backgroundColor: bg,
+                    boxShadow: shadow,
+                  }}
                 />
               );
             })}
@@ -103,8 +143,24 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
             const reached = streak.longestStreak >= m;
             return (
               <div key={m} className="flex items-center gap-1">
-                <span className={cn("text-[10px]", reached ? "drop-shadow-[0_0_4px_rgba(245,166,35,0.5)]" : "opacity-25 grayscale")}>🔥</span>
-                <span className={cn("text-[10px] font-mono", reached ? "text-[#F5A623]" : "text-subtle")}>{m}d</span>
+                <span
+                  className={cn(
+                    "text-[10px]",
+                    reached
+                      ? "drop-shadow-[0_0_4px_rgba(245,166,35,0.5)]"
+                      : "opacity-25 grayscale",
+                  )}
+                >
+                  🔥
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px] font-mono",
+                    reached ? "text-[#F5A623]" : "text-subtle",
+                  )}
+                >
+                  {m}d
+                </span>
               </div>
             );
           })}

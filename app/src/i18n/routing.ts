@@ -13,6 +13,7 @@ export const routing = defineRouting({
     "/profile": "/profile",
     "/profile/[username]": "/profile/[username]",
     "/settings": "/settings",
+    "/certificates": "/certificates",
     "/certificates/[id]": "/certificates/[id]",
     "/community": "/community",
     "/community/new": "/community/new",
