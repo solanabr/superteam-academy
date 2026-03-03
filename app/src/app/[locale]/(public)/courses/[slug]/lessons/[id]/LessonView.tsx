@@ -602,6 +602,11 @@ export function LessonView({
 
   const isCompleted = completedIds.has(lesson._id);
 
+  // Mark course as started when visiting any lesson
+  useEffect(() => {
+    localStorage.setItem(`last_lesson_${courseSlug}`, lesson._id);
+  }, [courseSlug, lesson._id]);
+
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleCodeChange = (value: string | undefined) => {

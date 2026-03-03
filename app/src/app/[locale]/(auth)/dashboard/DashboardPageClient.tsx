@@ -85,7 +85,11 @@ function buildCoursesWithProgress(): CourseWithProgress[] {
       trackColor: track.color,
       completedLessons,
       totalLessons,
-      progressPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+      progressPercent: totalLessons > 0
+        ? completedLessons > 0
+          ? Math.round((completedLessons / totalLessons) * 100)
+          : localStorage.getItem(`last_lesson_${course.slug}`) ? 1 : 0
+        : 0,
     };
   });
 }
