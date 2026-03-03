@@ -171,7 +171,9 @@
 			"moneyBack": "Garantia de reembolso de 30 dias",
 			"lifetimeAccess": "Acesso vitalício ao conteúdo do curso",
 			"certificateIncluded": "Certificado de conclusão incluído",
-			"closeEnrollment": "Fechar inscrição"
+			"closeEnrollment": "Fechar inscrição",
+			"enrollmentFailed": "Falha na inscrição. Tente novamente.",
+			"closeEnrollmentFailed": "Falha ao fechar inscrição. Tente novamente."
 		},
 		"modules": {
 			"title": "Grade do Curso",

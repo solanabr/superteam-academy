@@ -66,7 +66,9 @@ const NAV_ITEMS = [
 	},
 ];
 
-const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+import { getRpcUrl } from "@/lib/academy";
+
+const RPC_ENDPOINT = getRpcUrl();
 
 function getClusterBadge(endpoint: string): { label: string; className: string } {
 	const normalized = endpoint.toLowerCase();

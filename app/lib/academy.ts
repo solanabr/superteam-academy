@@ -5,8 +5,17 @@ let cachedConnection: Connection | null = null;
 let cachedClient: AcademyClient | null = null;
 
 function getRpcUrl(): string {
-	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+	if (process.env.NEXT_PUBLIC_SOLANA_RPC_URL) {
+		return process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+	}
+	const heliusKey = process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? process.env.HELIUS_API_KEY;
+	if (heliusKey) {
+		return `https://devnet.helius-rpc.com/?api-key=${heliusKey}`;
+	}
+	return "https://api.devnet.solana.com";
 }
+
+export { getRpcUrl };
 
 export function getProgramId(): PublicKey {
 	const value = process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ?? DEFAULT_PROGRAM_ID;

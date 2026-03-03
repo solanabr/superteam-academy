@@ -171,7 +171,9 @@
 			"moneyBack": "30-day money-back guarantee",
 			"lifetimeAccess": "Lifetime access to course materials",
 			"certificateIncluded": "Certificate of completion included",
-			"closeEnrollment": "Close Enrollment"
+			"closeEnrollment": "Close Enrollment",
+			"enrollmentFailed": "Enrollment failed. Please try again.",
+			"closeEnrollmentFailed": "Failed to close enrollment. Please try again."
 		},
 		"modules": {
 			"title": "Course Curriculum",

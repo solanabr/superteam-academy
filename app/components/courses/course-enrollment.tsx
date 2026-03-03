@@ -33,8 +33,9 @@ interface CourseEnrollmentProps {
 
 export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const t = useTranslations("courses");
-	const { wallet, isWalletConnected, isWalletVerified, verifyWallet } = useAuth();
-	const { enrolled } = useOnchainEnrollment(course.id, course.enrolled);
+	const { wallet, isWalletConnected, isWalletVerified, isAuthenticated, verifyWallet } =
+		useAuth();
+	const { enrolled, refetch } = useOnchainEnrollment(course.id, course.enrolled);
 	const { connection } = useConnection();
 	const router = useRouter();
 	const [loginOpen, setLoginOpen] = useState(false);
@@ -52,7 +53,11 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		if (!prerequisitesMet) return;
 
 		if (!isWalletConnected) {
-			setLoginOpen(true);
+			if (!isAuthenticated) {
+				setLoginOpen(true);
+				return;
+			}
+			setAuthError(t("enroll.walletRequired"));
 			return;
 		}
 
@@ -74,6 +79,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		if (!wallet.publicKey || !wallet.sendTransaction) return;
 
 		setIsEnrolling(true);
+		setAuthError(null);
 		try {
 			const ix = buildEnrollInstruction({
 				courseId: course.id,
@@ -86,14 +92,21 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			const tx = new Transaction().add(ix);
 			tx.feePayer = wallet.publicKey as PublicKey;
-			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+			const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+			tx.recentBlockhash = blockhash;
 
 			const signature = await wallet.sendTransaction(tx, connection);
-			await connection.confirmTransaction(signature, "confirmed");
+			await connection.confirmTransaction(
+				{ signature, blockhash, lastValidBlockHeight },
+				"confirmed"
+			);
 
+			refetch();
 			router.push(`/courses/${course.id}/lessons/1-1`);
 		} catch (error) {
 			console.error("Enrollment failed:", error);
+			const message = error instanceof Error ? error.message : t("enroll.enrollmentFailed");
+			setAuthError(message);
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -107,6 +120,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		}
 
 		setIsClosing(true);
+		setAuthError(null);
 		try {
 			const ix = buildCloseEnrollmentInstruction({
 				courseId: course.id,
@@ -116,14 +130,21 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			const tx = new Transaction().add(ix);
 			tx.feePayer = wallet.publicKey as PublicKey;
-			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+			const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+			tx.recentBlockhash = blockhash;
 
 			const signature = await wallet.sendTransaction(tx, connection);
-			await connection.confirmTransaction(signature, "confirmed");
+			await connection.confirmTransaction(
+				{ signature, blockhash, lastValidBlockHeight },
+				"confirmed"
+			);
 
 			router.push("/courses");
 		} catch (error) {
 			console.error("Failed to close enrollment:", error);
+			const message =
+				error instanceof Error ? error.message : t("enroll.closeEnrollmentFailed");
+			setAuthError(message);
 		} finally {
 			setIsClosing(false);
 		}

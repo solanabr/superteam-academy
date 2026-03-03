@@ -171,7 +171,9 @@
 			"moneyBack": "Garantía de devolución de 30 días",
 			"lifetimeAccess": "Acceso de por vida a los materiales del curso",
 			"certificateIncluded": "Certificado de finalización incluido",
-			"closeEnrollment": "Cerrar Inscripción"
+			"closeEnrollment": "Cerrar Inscripción",
+			"enrollmentFailed": "Error en la inscripción. Inténtalo de nuevo.",
+			"closeEnrollmentFailed": "Error al cerrar la inscripción. Inténtalo de nuevo."
 		},
 		"modules": {
 			"title": "Plan de estudios",

@@ -23,8 +23,11 @@ export function useOnchainEnrollment(courseId: string, serverEnrolled?: boolean)
 	const { wallet, isWalletConnected } = useAuth();
 	const [enrollment, setEnrollment] = useState<OnchainEnrollment | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [fetchCount, setFetchCount] = useState(0);
 
 	const walletKey = wallet.publicKey?.toBase58() ?? null;
+
+	const refetch = () => setFetchCount((c) => c + 1);
 
 	useEffect(() => {
 		if (!isWalletConnected || !walletKey) {
@@ -80,9 +83,9 @@ export function useOnchainEnrollment(courseId: string, serverEnrolled?: boolean)
 		return () => {
 			cancelled = true;
 		};
-	}, [courseId, walletKey, isWalletConnected]);
+	}, [courseId, walletKey, isWalletConnected, fetchCount]);
 
 	const enrolled = enrollment?.enrolled ?? serverEnrolled ?? false;
 
-	return { enrolled, enrollment, loading };
+	return { enrolled, enrollment, loading, refetch };
 }

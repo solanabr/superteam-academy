@@ -221,7 +221,13 @@ function AuthProviderInner({
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-const ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+const ENDPOINT = (() => {
+	const explicit = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+	if (explicit) return explicit;
+	const heliusKey = process.env.NEXT_PUBLIC_HELIUS_API_KEY;
+	if (heliusKey) return `https://devnet.helius-rpc.com/?api-key=${heliusKey}`;
+	return "https://api.devnet.solana.com";
+})();
 
 function deriveWalletNetwork(endpoint: string): WalletAdapterNetwork {
 	const normalizedEndpoint = endpoint.toLowerCase();
