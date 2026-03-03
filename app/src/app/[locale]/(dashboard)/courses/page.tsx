@@ -50,12 +50,22 @@ export default function CoursesPage() {
   // Фильтрация
   const filteredCourses = useMemo(() => {
     return courses.filter(course => {
-        const matchesSearch = course.account.courseId.toLowerCase().includes(searchQuery.toLowerCase());
-        // В будущем можно добавить поле difficulty в Course Account, пока эмулируем
-        const matchesDifficulty = difficultyFilter === "all" || true; 
+        // Ищем данные этого курса в массиве из БД
+        const dbCourse = dbCourses.find(c => c.slug === course.account.courseId);
+        
+        // Поиск по названию или slug
+        const matchesSearch = 
+            course.account.courseId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (dbCourse?.title && dbCourse.title.toLowerCase().includes(searchQuery.toLowerCase()));
+        
+        // РЕАЛЬНЫЙ фильтр по сложности
+        const matchesDifficulty = 
+            difficultyFilter === "all" || 
+            (dbCourse?.difficulty && dbCourse.difficulty.toLowerCase() === difficultyFilter.toLowerCase()); 
+            
         return matchesSearch && matchesDifficulty;
     });
-  }, [courses, searchQuery, difficultyFilter]);
+  }, [courses, dbCourses, searchQuery, difficultyFilter]);
 
   const handleCourseClick = (courseId: string) => {
     router.push(`/courses/${courseId}`);

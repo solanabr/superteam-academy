@@ -15,6 +15,7 @@ import { Link } from "@/i18n/navigation";
 import { useCredentials, CredentialNFT } from "@/hooks/useCredentials"; // Импортируем хук и тип
 import dynamic from "next/dynamic";
 import Image from "next/image"
+import { toast } from "sonner";
 
 // Тип для пропсов, чтобы обеспечить строгую типизацию
 // В будущем его можно вынести в @/types/index.ts
@@ -82,12 +83,39 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
       "Community": allAchievements.filter(a => ["helper", "early-adopter"].includes(a.slug)),
   };
 
+  const handleShare = async () => {
+      const shareUrl = `${window.location.origin}/profile/${user.username || user.walletAddress}`;
+      const shareText = `Check out my Web3 developer profile on Superteam Academy! I'm Level ${Math.floor(Math.sqrt(user.xp / 100))} with ${user.xp} XP.`;
+
+      // Пытаемся использовать нативный Web Share API (работает на мобилках и Mac)
+      if (navigator.share) {
+          try {
+              await navigator.share({ title: 'Superteam Academy Profile', text: shareText, url: shareUrl });
+          } catch (e) {
+              console.log("Share canceled");
+          }
+      } else {
+          // Fallback: копируем в буфер обмена
+          navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+          toast.success("Profile link copied to clipboard!");
+      }
+  };
+
+  const certificates = credentials.filter((nft) => 
+    nft.attributes.some(attr => attr.trait_type === "Level" || attr.trait_type === "courses_completed")
+  );
+
+  // Ачивки - это всё остальное (или те, у кого нет "Level")
+  const badgeNFTs = credentials.filter((nft) => 
+    !nft.attributes.some(attr => attr.trait_type === "Level" || attr.trait_type === "courses_completed")
+  );
+
   return (
     <div className="container max-w-6xl py-8 space-y-8">
       {/* 1. Profile Header */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
         <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
-            <AvatarImage src={user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.walletAddress}`} alt={`${user.username || 'User'} avatar`} />
+            <AvatarImage src={user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.walletAddress}`} alt="Profile Avatar" />
             <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
         </Avatar>
         
@@ -96,12 +124,21 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                 <h1 className="text-3xl font-bold">{user.username || "Anonymous Learner"}</h1>
                 <div className="flex flex-wrap gap-4 text-muted-foreground mt-2 text-sm">
                     {user.walletAddress && (
-                        <div className="flex items-center gap-1 font-mono bg-muted px-2 py-1 rounded">
-                            {user.walletAddress.slice(0, 4)}...{user.walletAddress.slice(-4)}
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                        </div>
+                        <>
+                            {/* ДЕЛАЕМ КОШЕЛЕК КЛИКАБЕЛЬНЫМ (ВЕДЕТ НА EXPLORER) */}
+                            <a 
+                                href={`https://explorer.solana.com/address/${user.walletAddress}?cluster=devnet`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 font-mono bg-muted px-2 py-1 rounded hover:text-foreground transition-colors cursor-pointer"
+                            >
+                                {user.walletAddress.slice(0, 4)}...{user.walletAddress.slice(-4)}
+                                <ExternalLink className="h-3 w-3 ml-1" />
+                            </a>
+                         </>
                     )}
                     <div className="flex items-center gap-1"><Calendar className="h-4 w-4" /> Joined {joinDate}</div>
+                   
                 </div>
             </div>
             
@@ -118,7 +155,8 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                         <Github className="h-4 w-4" /> {user.githubHandle}
                     </Button>
                 )}
-                <Button size="sm" className="gap-2 ml-auto md:ml-0">
+                {/* ИСПРАВЛЯЕМ КНОПКУ SHARE */}
+                <Button size="sm" className="gap-2 ml-auto md:ml-0" onClick={handleShare}>
                     <Share2 className="h-4 w-4" /> Share Profile
                 </Button>
             </div>
@@ -198,26 +236,61 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
             </Card>
         </TabsContent>
 
-        <TabsContent value="credentials" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {nftLoading ? (
-                    <Skeleton className="h-[400px] w-full rounded-xl" />
-                ) : credentials.length > 0 ? (
-                    credentials.map((nft: CredentialNFT) => (
-                        <div key={nft.id} className="aspect-[3/4] cursor-pointer" onClick={() => window.open(`/certificates/${nft.id}`, '_blank')}>
-                            <CredentialCard 
-                                name={nft.name}
-                                imageUrl={nft.image}
-                                level={parseInt(nft.attributes.find(a => a.trait_type === "Level")?.value || "1")}
-                            />
+        <TabsContent value="credentials" className="mt-6 space-y-12">
+            
+            {/* СЕКЦИЯ 1: СЕРТИФИКАТЫ ЗА КУРСЫ (Course Credentials) */}
+            <div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-purple-500" />
+                    Course Credentials
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {nftLoading ? (
+                        <Skeleton className="h-[400px] w-full rounded-xl" />
+                    ) : certificates.length > 0 ? (
+                        certificates.map((nft) => (
+                            <div key={nft.id} className="aspect-[3/4] cursor-pointer" onClick={() => window.open(`/certificates/${nft.id}`, '_blank')}>
+                                <CredentialCard 
+                                    name={nft.name}
+                                    imageUrl={nft.image}
+                                    level={parseInt(nft.attributes.find(a => a.trait_type === "Level" || a.trait_type === "level")?.value || "1")}
+                                />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-12 text-center border rounded-lg border-dashed bg-muted/10">
+                            <p className="text-muted-foreground">No course credentials yet. Complete a track to earn one!</p>
                         </div>
-                    ))
-                ) : (
-                    <div className="col-span-full py-12 text-center border rounded-lg border-dashed">
-                        <p className="text-muted-foreground">No credentials yet.</p>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
+
+            {/* СЕКЦИЯ 2: NFT АЧИВКИ (Achievement Badges) */}
+            <div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                    <Award className="h-5 w-5 text-yellow-500" />
+                    Special Badges
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {nftLoading ? (
+                         Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+                    ) : badgeNFTs.length > 0 ? (
+                        badgeNFTs.map((nft) => (
+                            <div key={nft.id} className="flex flex-col items-center text-center p-4 border rounded-xl bg-card hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.open(`https://core.metaplex.com/explorer/${nft.id}?env=devnet`, '_blank')}>
+                                <div className="h-20 w-20 mb-3 rounded-full overflow-hidden border-2 border-yellow-500 shadow-lg">
+                                    <img src={nft.image} alt={nft.name} className="w-full h-full object-cover" />
+                                </div>
+                                <span className="font-semibold text-sm line-clamp-2">{nft.name}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-12 text-center border rounded-lg border-dashed bg-muted/10">
+                            <p className="text-muted-foreground">No special badges earned yet.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
         </TabsContent>
       </Tabs>
     </div>

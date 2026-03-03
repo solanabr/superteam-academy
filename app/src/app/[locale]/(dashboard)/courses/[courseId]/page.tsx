@@ -93,12 +93,16 @@ export default function CourseDetailsPage() {
         <div className="lg:col-span-8 space-y-8">
             <div className="space-y-4">
                 <div className="flex gap-2">
+                    {/* Пока все курсы считаем официальными. В Этапе 38 добавим логику UGC */}
                     <Badge variant="outline" className="text-purple-400 border-purple-400/30">Official Course</Badge>
-                    <Badge variant="secondary">Beginner</Badge>
+                    {/* Динамическая сложность из БД */}
+                    <Badge variant="secondary">{courseContent.difficulty || "Beginner"}</Badge>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{courseContent.title}</h1>
+                
+                {/* Динамическое описание из БД */}
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                    Master the basics of Solana development. Build real dApps, earn XP, and get certified on-chain.
+                    {courseContent.description || "Master the basics of Solana development. Build real dApps, earn XP, and get certified on-chain."}
                 </p>
                 
                 <div className="flex flex-wrap gap-6 text-sm text-muted-foreground pt-2">

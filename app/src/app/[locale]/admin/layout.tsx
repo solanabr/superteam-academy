@@ -1,10 +1,16 @@
 // app/src/app/[locale]/admin/layout.tsx
+"use client"; // Добавили use client для хука usePathname
+
 import { AdminGuard } from "@/components/admin-guard";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation"; // Импортируем usePathname
 import { ModeToggle } from "@/components/mode-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher"; // Импортируем свитчер
 import { BarChart3, BookOpen, Users, LayoutDashboard } from "lucide-react";
+import { cn } from "@/lib/utils"; // Для склеивания классов
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname(); // Получаем текущий путь (без локали!)
+
   return (
     <AdminGuard>
         <div className="flex min-h-screen bg-muted/20">
@@ -14,14 +20,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     Academy Admin
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
-                    <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                    <Link 
+                        href="/admin" 
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                            pathname === "/admin" ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-muted-foreground"
+                        )}
+                    >
                         <LayoutDashboard className="h-4 w-4" /> Overview
                     </Link>
-                    <Link href="/admin/courses" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                    <Link 
+                        href="/admin/courses" 
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                            pathname.startsWith("/admin/courses") ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-muted-foreground"
+                        )}
+                    >
                         <BookOpen className="h-4 w-4" /> Manage Courses
                     </Link>
-                    <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors">
-                        <Users className="h-4 w-4" /> User Management
+                    <Link 
+                        href="/admin/users" 
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                            pathname.startsWith("/admin/users") ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted text-muted-foreground"
+                        )}
+                    >
+                        <Users className="h-4 w-4" /> Users
                     </Link>
                 </nav>
                 <div className="p-4 border-t">
@@ -31,8 +55,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* Admin Content */}
             <main className="flex-1 flex flex-col">
-                <header className="h-16 border-b bg-background flex items-center justify-end px-6">
+                <header className="h-16 border-b bg-background flex items-center justify-end px-6 gap-4">
+                    
                     <ModeToggle />
+                    <LanguageSwitcher /> 
                 </header>
                 <div className="p-8">
                     {children}
