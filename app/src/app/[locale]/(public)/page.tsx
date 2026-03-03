@@ -108,9 +108,9 @@ export default async function LandingPage() {
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           {/* H1 */}
           <h1 className="font-mono font-black text-5xl sm:text-7xl md:text-8xl leading-[0.9] tracking-tight mb-6">
-            <span className="block text-white">Master</span>
-            <span className="block text-white">Solana</span>
-            <span className="block text-[#14F195]">Development</span>
+            <span className="block text-foreground">Master</span>
+            <span className="block text-foreground">Solana</span>
+            <span className="block text-accent">Development</span>
           </h1>
 
           <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10 font-mono">
@@ -154,7 +154,7 @@ export default async function LandingPage() {
       <section id="tracks" className="py-20 px-4 border-t border-border">
         <div className="max-w-5xl mx-auto">
           <div className="mb-12">
-            <p className="font-mono text-xs text-[#14F195] uppercase tracking-widest mb-3">
+            <p className="font-mono text-xs text-accent uppercase tracking-widest mb-3">
               {t("tracks.subtitle")}
             </p>
             <h2 className="font-mono font-black text-3xl sm:text-4xl text-foreground">
@@ -226,7 +226,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/courses"
-              className="font-mono text-xs text-muted-foreground hover:text-[#14F195] transition-colors flex items-center gap-1"
+              className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
             >
               {t("tracks.viewAll")} →
             </Link>
@@ -238,7 +238,7 @@ export default async function LandingPage() {
       <section className="py-20 px-4 border-t border-border">
         <div className="max-w-5xl mx-auto">
           <div className="mb-12 text-center">
-            <p className="font-mono text-xs text-[#14F195] uppercase tracking-widest mb-3">
+            <p className="font-mono text-xs text-accent uppercase tracking-widest mb-3">
               {t("howItWorks.subtitle")}
             </p>
             <h2 className="font-mono font-black text-3xl sm:text-4xl text-foreground">
@@ -310,7 +310,7 @@ export default async function LandingPage() {
                     on-chain-profile.json
                   </span>
                 </div>
-                <span className="text-[10px] text-[#14F195] font-mono">
+                <span className="text-[10px] text-accent font-mono">
                   ✓ verified
                 </span>
               </div>
@@ -320,7 +320,7 @@ export default async function LandingPage() {
                   <div>
                     <span className="text-[#9945FF]">&quot;wallet&quot;</span>
                     <span className="text-muted-foreground">: </span>
-                    <span className="text-[#14F195]">
+                    <span className="text-accent">
                       &quot;8RER7...sB1f&quot;
                     </span>
                     <span className="text-muted-foreground">,</span>
@@ -371,13 +371,13 @@ export default async function LandingPage() {
 
             {/* Right: CTA */}
             <div>
-              <p className="font-mono text-xs text-[#14F195] uppercase tracking-widest mb-4">
+              <p className="font-mono text-xs text-accent uppercase tracking-widest mb-4">
                 {t("socialProof.title")}
               </p>
               <h2 className="font-mono text-3xl sm:text-4xl font-black text-foreground mb-4 leading-tight">
                 Your credentials,
                 <br />
-                <span className="text-[#14F195]">on-chain forever.</span>
+                <span className="text-accent">on-chain forever.</span>
               </h2>
               <p className="text-sm text-muted-foreground mb-8 leading-relaxed max-w-sm">
                 Join hundreds of developers building on Solana. Every lesson

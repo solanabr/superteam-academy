@@ -169,6 +169,12 @@
       linear-gradient(90deg, rgba(31, 31, 31, 0.6) 1px, transparent 1px);
     background-size: 40px 40px;
   }
+  .light .grid-pattern {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
   .scanline {
     background: repeating-linear-gradient(
       0deg,

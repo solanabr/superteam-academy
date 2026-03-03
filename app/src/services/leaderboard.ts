@@ -33,11 +33,37 @@ export async function getLeaderboard(
     }
   }
 
-  // all-time (and fallback): read from Token-2022 on-chain
+  // all-time: prefer Token-2022 on-chain; fall back to Supabase aggregate if empty
   const balances = await fetchAllXpBalances();
-  return enrichWithProfiles(
-    balances.slice(0, 50).map(({ wallet, xp }) => ({ wallet, xp })),
-  );
+  if (balances.length > 0) {
+    return enrichWithProfiles(
+      balances.slice(0, 50).map(({ wallet, xp }) => ({ wallet, xp })),
+    );
+  }
+
+  // On-chain empty (no XP minted yet) → aggregate from Supabase lesson_completions
+  if (supabase) {
+    const { data } = await supabase
+      .from("lesson_completions")
+      .select("wallet_address, xp_earned");
+
+    if (data && data.length > 0) {
+      const totals: Record<string, number> = {};
+      for (const row of data) {
+        if (!row.wallet_address) continue;
+        totals[row.wallet_address] =
+          (totals[row.wallet_address] ?? 0) + (row.xp_earned ?? 0);
+      }
+      return await enrichWithProfiles(
+        Object.entries(totals)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 50)
+          .map(([wallet, xp]) => ({ wallet, xp })),
+      );
+    }
+  }
+
+  return [];
 }
 
 async function enrichWithProfiles(
