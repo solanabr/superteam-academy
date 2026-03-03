@@ -236,7 +236,7 @@ export const TRACKS: Record<number, Omit<Track, "courses">> = {
     name: "Solana Basics",
     description: "Core Solana concepts and development",
     icon: "◎",
-    color: "#14F195",
+    color: "var(--accent)",
   },
   2: {
     id: 2,
@@ -275,7 +275,7 @@ export const DIFFICULTY_LABELS: Record<CourseDifficulty, string> = {
 };
 
 export const DIFFICULTY_COLORS: Record<CourseDifficulty, string> = {
-  beginner: "#14F195",
+  beginner: "var(--accent)",
   intermediate: "#F5A623",
   advanced: "#FF4444",
 };

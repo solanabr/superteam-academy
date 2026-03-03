@@ -10,7 +10,7 @@ export function CopyShareButton({
 }) {
   return (
     <button
-      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
+      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
       onClick={() => {
         navigator.clipboard.writeText(url).catch(() => {});
       }}

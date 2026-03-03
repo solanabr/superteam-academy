@@ -58,7 +58,7 @@ const TRACK_META: Record<
   number,
   { name: string; icon: string; color: string }
 > = {
-  1: { name: "Solana Basics", icon: "◎", color: "#14F195" },
+  1: { name: "Solana Basics", icon: "◎", color: "var(--accent)" },
   2: { name: "Anchor Framework", icon: "⚓", color: "#9945FF" },
   3: { name: "DeFi", icon: "💹", color: "#00D4FF" },
   4: { name: "Token-2022", icon: "🪙", color: "#F5A623" },
@@ -66,7 +66,7 @@ const TRACK_META: Record<
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "#14F195",
+  beginner: "var(--accent)",
   intermediate: "#F5A623",
   advanced: "#FF4444",
 };
@@ -182,14 +182,14 @@ function DailyChallengeWidget() {
         <h2 className="font-mono text-lg font-semibold text-foreground">
           Daily Challenge
         </h2>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 text-[#14F195] animate-pulse">
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent animate-pulse">
           LIVE
         </span>
         <span className="ml-auto text-xs font-mono text-muted-foreground flex items-center gap-1">
           <Clock className="h-3 w-3" /> Resets in {resetsIn}
         </span>
       </div>
-      <div className="bg-card border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
+      <div className="bg-card border border-accent/20 rounded p-5 relative overflow-hidden">
         <div
           className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
           style={{
@@ -218,7 +218,7 @@ function DailyChallengeWidget() {
             </p>
           </div>
           <div className="flex-shrink-0 text-right">
-            <div className="font-mono text-2xl font-bold text-[#14F195]">
+            <div className="font-mono text-2xl font-bold text-accent">
               +{challenge.xpReward}
             </div>
             <div className="text-[10px] text-muted-foreground font-mono">
@@ -232,7 +232,7 @@ function DailyChallengeWidget() {
               pathname: "/courses/[slug]/lessons/[id]",
               params: { slug: challenge.courseSlug, id: challenge.lessonId },
             }}
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
+            className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
           >
             <Zap className="h-3.5 w-3.5" />
             Solve Challenge
@@ -248,7 +248,7 @@ function DailyChallengeWidget() {
 function ActivityIcon({ type }: { type: ActivityItemType }) {
   switch (type) {
     case "lesson":
-      return <CheckCircle2 className="h-3.5 w-3.5 text-[#14F195]" />;
+      return <CheckCircle2 className="h-3.5 w-3.5 text-accent" />;
     case "xp":
       return <Zap className="h-3.5 w-3.5 text-[#F5A623]" />;
     case "milestone":
@@ -327,7 +327,7 @@ export default function DashboardPage() {
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
+          className="mt-2 bg-accent text-black font-mono font-semibold px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
         {/* XP Card */}
         <div className="bg-card border border-border rounded p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Zap className="h-4 w-4 text-[#14F195]" />
+            <Zap className="h-4 w-4 text-accent" />
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
               XP Balance
             </span>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                   <p className="font-mono text-xs font-semibold text-foreground leading-snug line-clamp-1">
                     {achievement.name}
                   </p>
-                  <p className="text-[10px] font-mono text-[#14F195] mt-0.5">
+                  <p className="text-[10px] font-mono text-accent mt-0.5">
                     +{achievement.xpReward} XP
                   </p>
                   <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
@@ -603,7 +603,7 @@ export default function DashboardPage() {
                       course.progressPercent < 100 ? (
                         <div className="mt-1.5">
                           <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-[9px] font-mono text-[#14F195]">
+                            <span className="text-[9px] font-mono text-accent">
                               {course.completedLessons}/{course.totalLessons}{" "}
                               lessons
                             </span>
@@ -613,7 +613,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="h-1 bg-elevated rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[#14F195] rounded-full transition-all"
+                              className="h-full bg-accent rounded-full transition-all"
                               style={{ width: `${course.progressPercent}%` }}
                             />
                           </div>
@@ -635,11 +635,11 @@ export default function DashboardPage() {
                             {course.durationHours}h
                           </span>
                           {course.progressPercent === 100 ? (
-                            <span className="text-[9px] font-mono text-[#14F195] flex items-center gap-0.5 ml-auto">
+                            <span className="text-[9px] font-mono text-accent flex items-center gap-0.5 ml-auto">
                               <CheckCircle2 className="h-2.5 w-2.5" /> Completed
                             </span>
                           ) : (
-                            <span className="text-[9px] font-mono text-[#14F195] flex items-center gap-0.5 ml-auto">
+                            <span className="text-[9px] font-mono text-accent flex items-center gap-0.5 ml-auto">
                               <Zap className="h-2.5 w-2.5" />
                               {course.xpReward.toLocaleString()} XP
                             </span>
@@ -693,13 +693,13 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-mono text-muted-foreground">
                       {course.completedLessons}/{course.totalLessons} lessons
                     </span>
-                    <span className="text-[10px] font-mono text-[#14F195]">
+                    <span className="text-[10px] font-mono text-accent">
                       {course.progressPercent}%
                     </span>
                   </div>
                   <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#14F195] rounded-full"
+                      className="h-full bg-accent rounded-full"
                       style={{ width: `${course.progressPercent}%` }}
                     />
                   </div>
@@ -728,7 +728,7 @@ export default function DashboardPage() {
             </p>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
+              className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
             >
               Browse Courses
             </Link>

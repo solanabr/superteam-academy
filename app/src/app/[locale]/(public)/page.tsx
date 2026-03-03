@@ -20,7 +20,7 @@ const TRACKS = [
     id: 1,
     name: "Solana Basics",
     difficulty: "beginner",
-    color: "#14F195",
+    color: "var(--accent)",
     courses: 3,
     description:
       "Core concepts: accounts, transactions, PDAs, and the programming model from scratch.",
@@ -67,7 +67,7 @@ const HOW_IT_WORKS = [
   {
     key: "enroll",
     cmd: "academy enroll <course-slug>",
-    color: "#14F195",
+    color: "var(--accent)",
     stepNum: 1,
   },
   {
@@ -121,7 +121,7 @@ export default async function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
+              className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
             >
               <span>◎</span>
               {t("hero.cta")}
@@ -305,7 +305,7 @@ export default async function LandingPage() {
             <div className="bg-[#0D1117] border border-border rounded-lg overflow-hidden font-mono text-xs">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-elevated">
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#14F195]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                   <span className="text-[10px] text-muted-foreground">
                     on-chain-profile.json
                   </span>
@@ -385,7 +385,7 @@ export default async function LandingPage() {
               </p>
               <Link
                 href="/courses"
-                className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
+                className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
               >
                 <span>◎</span>
                 {t("hero.cta")}

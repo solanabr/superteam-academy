@@ -120,7 +120,7 @@ export default async function ProfilePage({ params }: Props) {
                 href={`https://twitter.com/${profile.twitterHandle}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#14F195] hover:underline"
+                className="text-accent hover:underline"
               >
                 @{profile.twitterHandle}
               </a>
@@ -130,7 +130,7 @@ export default async function ProfilePage({ params }: Props) {
                 href={`https://github.com/${profile.githubHandle}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#14F195] hover:underline"
+                className="text-accent hover:underline"
               >
                 github/{profile.githubHandle}
               </a>
@@ -215,7 +215,7 @@ export default async function ProfilePage({ params }: Props) {
                     {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP
                   </p>
                 </div>
-                <span className="text-[10px] font-mono text-[#14F195] bg-[#14F195]/10 border border-[#14F195]/20 rounded px-2 py-0.5">
+                <span className="text-[10px] font-mono text-accent bg-accent/10 border border-accent/20 rounded px-2 py-0.5">
                   &#x2713; Completed
                 </span>
               </div>
@@ -240,7 +240,7 @@ export default async function ProfilePage({ params }: Props) {
                 <span className="text-xs font-mono text-foreground">
                   {ach.name}
                 </span>
-                <span className="text-[10px] font-mono text-[#14F195]">
+                <span className="text-[10px] font-mono text-accent">
                   +{ach.xpReward} XP
                 </span>
               </div>

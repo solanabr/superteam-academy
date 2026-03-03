@@ -114,7 +114,7 @@ export default async function CourseDetailPage({ params }: Props) {
               <Clock className="h-4 w-4" />
               <span>{course.durationHours}h estimated</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[#14F195]">
+            <div className="flex items-center gap-1.5 text-accent">
               <Zap className="h-4 w-4" />
               <span>{course.xpReward.toLocaleString()} XP reward</span>
             </div>
@@ -173,7 +173,7 @@ export default async function CourseDetailPage({ params }: Props) {
         <aside className="lg:sticky lg:top-20 h-fit space-y-4">
           <div className="bg-card border border-border rounded p-5">
             <div className="flex items-center justify-between mb-4">
-              <div className="font-mono text-2xl font-bold text-[#14F195]">
+              <div className="font-mono text-2xl font-bold text-accent">
                 {course.xpReward.toLocaleString()}
                 <span className="text-sm ml-1">XP</span>
               </div>
@@ -233,7 +233,7 @@ export default async function CourseDetailPage({ params }: Props) {
                 Instructor
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-sm font-bold text-[#14F195] shrink-0">
+                <div className="w-9 h-9 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-sm font-bold text-accent shrink-0">
                   {(instructorDisplayName ?? "?")[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -247,7 +247,7 @@ export default async function CourseDetailPage({ params }: Props) {
                           typeof Link
                         >[0]["href"]
                       }
-                      className="text-[10px] font-mono text-muted-foreground hover:text-[#14F195] transition-colors"
+                      className="text-[10px] font-mono text-muted-foreground hover:text-accent transition-colors"
                     >
                       ◎ {instructorWallet.slice(0, 6)}...
                       {instructorWallet.slice(-4)}
@@ -309,7 +309,7 @@ function LessonRow({
       </span>
       <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
         {lesson.estimatedMinutes && <span>{lesson.estimatedMinutes}m</span>}
-        <span className="text-[#14F195]">+{lesson.xpReward} XP</span>
+        <span className="text-accent">+{lesson.xpReward} XP</span>
       </div>
     </Link>
   );

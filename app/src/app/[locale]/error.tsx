@@ -17,10 +17,7 @@ export default function Error({
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 font-mono">
       <p className="text-[#FF4444] text-sm">Something went wrong</p>
-      <button
-        onClick={reset}
-        className="text-[#14F195] text-xs hover:underline"
-      >
+      <button onClick={reset} className="text-accent text-xs hover:underline">
         Try again
       </button>
     </div>

@@ -83,7 +83,7 @@ export function LeaderboardClient({
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
             disabled={isFiltering}
-            className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-[#14F195]/50 disabled:opacity-50 cursor-pointer"
+            className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-accent/50 disabled:opacity-50 cursor-pointer"
           >
             <option value="">All Courses</option>
             {courses.map((course) => (

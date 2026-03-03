@@ -39,7 +39,7 @@ function computeResult(answers: Answers): TrackResult {
     return {
       heading: "Start with: Solana Fundamentals",
       track: "◎ Solana Basics",
-      color: "#14F195",
+      color: "var(--accent)",
       description:
         "Build a solid foundation — accounts, transactions, PDAs, and Token-2022. No prior Solana knowledge required.",
       xpReward: 300,
@@ -125,13 +125,13 @@ function OptionCard({
       onClick={onClick}
       className="w-full text-left bg-card border rounded p-4 cursor-pointer transition-all flex items-center justify-between gap-3"
       style={{
-        borderColor: selected ? "#14F195" : "#1F1F1F",
+        borderColor: selected ? "var(--accent)" : "#1F1F1F",
         backgroundColor: selected ? "rgba(20,241,149,0.05)" : undefined,
       }}
     >
       <span className="font-mono text-sm text-foreground">{label}</span>
       {selected && (
-        <CheckCircle className="h-4 w-4 text-[#14F195] flex-shrink-0" />
+        <CheckCircle className="h-4 w-4 text-accent flex-shrink-0" />
       )}
     </button>
   );
@@ -154,7 +154,7 @@ function ProgressBar({ step }: { step: number }) {
       <div className="h-0.5 bg-border rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, backgroundColor: "#14F195" }}
+          style={{ width: `${pct}%`, backgroundColor: "var(--accent)" }}
         />
       </div>
     </div>
@@ -191,7 +191,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
-          <div className="text-6xl mb-6 font-mono text-[#14F195]">◎</div>
+          <div className="text-6xl mb-6 font-mono text-accent">◎</div>
           <h1 className="font-mono text-3xl font-black text-foreground mb-4 leading-tight">
             Welcome to Superteam Academy
           </h1>
@@ -201,7 +201,7 @@ export default function OnboardingPage() {
           </p>
           <button
             onClick={() => setStep(1)}
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
+            className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
           >
             Start Assessment
             <ChevronRight className="h-4 w-4" />
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
               {result.track}
             </div>
 
-            <h3 className="font-mono text-sm font-bold text-[#14F195] mb-2">
+            <h3 className="font-mono text-sm font-bold text-accent mb-2">
               {result.heading}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
@@ -260,7 +260,7 @@ export default function OnboardingPage() {
               <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
                 XP you&apos;ll earn
               </span>
-              <span className="font-mono text-lg font-bold text-[#14F195] ml-auto">
+              <span className="font-mono text-lg font-bold text-accent ml-auto">
                 +{result.xpReward.toLocaleString()}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground">
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                 pathname: "/courses/[slug]",
                 params: { slug: result.slug },
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
             >
               Start Learning
               <ChevronRight className="h-4 w-4" />
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
           disabled={!canAdvance}
           className="w-full font-mono font-semibold text-sm px-6 py-2.5 rounded transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
-            backgroundColor: canAdvance ? "#14F195" : "#1F1F1F",
+            backgroundColor: canAdvance ? "var(--accent)" : "#1F1F1F",
             color: canAdvance ? "#000000" : "#666666",
           }}
         >

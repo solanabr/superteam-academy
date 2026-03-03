@@ -78,7 +78,7 @@ const ptComponents = {
       </p>
     ),
     blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <blockquote className="border-l-2 border-[#14F195]/40 pl-4 my-4 text-sm text-muted-foreground italic">
+      <blockquote className="border-l-2 border-accent/40 pl-4 my-4 text-sm text-muted-foreground italic">
         {children}
       </blockquote>
     ),
@@ -96,14 +96,14 @@ const ptComponents = {
   listItem: {
     bullet: ({ children }: { children?: React.ReactNode }) => (
       <li className="flex gap-2 text-sm text-muted-foreground">
-        <span className="text-[#14F195] mt-0.5 shrink-0">·</span>
+        <span className="text-accent mt-0.5 shrink-0">·</span>
         <span>{children}</span>
       </li>
     ),
   },
   marks: {
     code: ({ children }: { children?: React.ReactNode }) => (
-      <code className="font-mono text-[#14F195] bg-[#14F195]/10 px-1.5 py-0.5 rounded text-xs">
+      <code className="font-mono text-accent bg-accent/10 px-1.5 py-0.5 rounded text-xs">
         {children}
       </code>
     ),
@@ -124,7 +124,7 @@ const ptComponents = {
         href={value?.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[#14F195] hover:underline"
+        className="text-accent hover:underline"
       >
         {children}
       </a>
@@ -209,7 +209,7 @@ function SuccessCelebration({ xp }: { xp: number }) {
     <div className="fixed inset-0 pointer-events-none z-50 flex items-end justify-end p-8">
       {/* XP toast */}
       <div
-        className="pointer-events-auto flex items-center gap-3 bg-[#14F195] text-black font-mono font-bold text-base px-6 py-3.5 rounded-lg shadow-2xl shadow-[#14F195]/30"
+        className="pointer-events-auto flex items-center gap-3 bg-accent text-black font-mono font-bold text-base px-6 py-3.5 rounded-lg shadow-2xl shadow-accent/30"
         style={{
           animation: "celebrateSlideUp 0.4s cubic-bezier(0.22,1,0.36,1)",
         }}
@@ -227,7 +227,9 @@ function SuccessCelebration({ xp }: { xp: number }) {
             style={{
               left: `${10 + Math.random() * 80}%`,
               top: `${20 + Math.random() * 60}%`,
-              background: ["#14F195", "#9945FF", "#F5A623", "#FFFFFF"][i % 4],
+              background: ["var(--accent)", "#9945FF", "#F5A623", "#FFFFFF"][
+                i % 4
+              ],
               animation: `particleFall ${0.8 + Math.random() * 1.2}s ${Math.random() * 0.3}s ease-out forwards`,
               opacity: 0,
             }}
@@ -394,12 +396,12 @@ function ModuleSidebar({
                           className={cn(
                             "flex items-center gap-2.5 px-4 py-2 text-[11px] font-mono transition-colors",
                             isCurrent
-                              ? "bg-[#14F195]/10 text-[#14F195] border-r-2 border-[#14F195]"
+                              ? "bg-accent/10 text-accent border-r-2 border-accent"
                               : "text-muted-foreground hover:text-foreground hover:bg-elevated",
                           )}
                         >
                           {isDone ? (
-                            <CheckCircle className="h-3 w-3 text-[#14F195] shrink-0" />
+                            <CheckCircle className="h-3 w-3 text-accent shrink-0" />
                           ) : isChallenge ? (
                             <Code2 className="h-3 w-3 shrink-0 opacity-50" />
                           ) : (
@@ -409,7 +411,7 @@ function ModuleSidebar({
                             {lesson.title}
                           </span>
                           {lesson.xpReward > 0 && (
-                            <span className="ml-auto text-[9px] text-[#14F195]/60 shrink-0">
+                            <span className="ml-auto text-[9px] text-accent/60 shrink-0">
                               +{lesson.xpReward}
                             </span>
                           )}
@@ -454,7 +456,7 @@ function TestResultsPanel({
             className={cn(
               "rounded px-3 py-2 border text-xs font-mono transition-colors",
               pending && "border-border bg-card text-muted-foreground",
-              passed && "border-[#14F195]/30 bg-[#14F195]/5 text-foreground",
+              passed && "border-accent/30 bg-accent/5 text-foreground",
               failed && "border-[#FF4444]/30 bg-[#FF4444]/5 text-foreground",
             )}
           >
@@ -464,7 +466,7 @@ function TestResultsPanel({
               ) : pending ? (
                 <span className="text-subtle shrink-0">○</span>
               ) : passed ? (
-                <CheckCircle className="h-3 w-3 text-[#14F195] shrink-0" />
+                <CheckCircle className="h-3 w-3 text-accent shrink-0" />
               ) : (
                 <X className="h-3 w-3 text-[#FF4444] shrink-0" />
               )}
@@ -524,9 +526,9 @@ function HintsPanel({ hints }: { hints: string[] }) {
             {hints.slice(0, revealedCount).map((hint, i) => (
               <div
                 key={i}
-                className="border border-[#14F195]/20 bg-[#14F195]/5 rounded p-3 text-sm font-mono text-foreground"
+                className="border border-accent/20 bg-accent/5 rounded p-3 text-sm font-mono text-foreground"
               >
-                <span className="text-[#14F195] mr-2">{i + 1}.</span>
+                <span className="text-accent mr-2">{i + 1}.</span>
                 {hint}
               </div>
             ))}
@@ -534,7 +536,7 @@ function HintsPanel({ hints }: { hints: string[] }) {
           {revealedCount < hints.length ? (
             <button
               onClick={() => setRevealedCount((p) => p + 1)}
-              className="text-xs font-mono text-[#14F195]/70 hover:text-[#14F195] border border-[#14F195]/20 hover:border-[#14F195]/50 px-3 py-1.5 rounded transition-colors"
+              className="text-xs font-mono text-accent/70 hover:text-accent border border-accent/20 hover:border-accent/50 px-3 py-1.5 rounded transition-colors"
             >
               Show next hint
             </button>
@@ -566,8 +568,8 @@ function SolutionPanel({
         className={cn(
           "text-xs font-mono px-3 py-1.5 rounded border transition-colors",
           show
-            ? "border-[#14F195]/50 text-[#14F195]"
-            : "border-border text-muted-foreground hover:border-[#14F195]/40 hover:text-[#14F195]",
+            ? "border-accent/50 text-accent"
+            : "border-border text-muted-foreground hover:border-accent/40 hover:text-accent",
         )}
       >
         {show ? "Hide Solution" : "View Solution"}
@@ -620,7 +622,7 @@ function ResizableDivider({ onDrag }: { onDrag: (dx: number) => void }) {
         lastX.current = e.clientX;
         e.preventDefault();
       }}
-      className="flex-shrink-0 w-1.5 bg-border hover:bg-[#14F195]/30 cursor-col-resize transition-colors select-none"
+      className="flex-shrink-0 w-1.5 bg-border hover:bg-accent/30 cursor-col-resize transition-colors select-none"
     />
   );
 }
@@ -636,7 +638,7 @@ function ConnectPrompt() {
       </p>
       <button
         onClick={() => setVisible(true)}
-        className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-xs px-3 py-1.5 rounded-full hover:bg-[#0D9E61] transition-colors"
+        className="shrink-0 flex items-center gap-1.5 bg-accent text-black font-mono font-semibold text-xs px-3 py-1.5 rounded-full hover:bg-accent-dim transition-colors"
       >
         <span>◎</span> Connect
       </button>
@@ -931,7 +933,7 @@ export function LessonView({
 
         <div className="flex items-center gap-3 flex-shrink-0">
           {isCompleted && (
-            <span className="flex items-center gap-1 text-xs font-mono text-[#14F195]">
+            <span className="flex items-center gap-1 text-xs font-mono text-accent">
               <CheckCircle className="h-3.5 w-3.5" />
               <span className="hidden sm:block">{t("completed")}</span>
             </span>
@@ -965,7 +967,7 @@ export function LessonView({
                 pathname: "/courses/[slug]",
                 params: { slug: courseSlug },
               }}
-              className="flex items-center gap-1 text-[#14F195] hover:text-[#0D9E61] text-xs font-mono transition-colors"
+              className="flex items-center gap-1 text-accent hover:text-accent-dim text-xs font-mono transition-colors"
             >
               <span className="hidden sm:block">Finish Course</span>
               <ChevronRight className="h-3 w-3" />
@@ -1001,7 +1003,7 @@ export function LessonView({
                     "inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full border",
                     isChallenge
                       ? "border-[#9945FF]/40 bg-[#9945FF]/10 text-[#9945FF]"
-                      : "border-[#14F195]/30 bg-[#14F195]/10 text-[#14F195]",
+                      : "border-accent/30 bg-accent/10 text-accent",
                   )}
                 >
                   {isChallenge ? (
@@ -1016,7 +1018,7 @@ export function LessonView({
                     {lesson.estimatedMinutes} min
                   </span>
                 )}
-                <span className="text-[10px] font-mono text-[#14F195] ml-auto">
+                <span className="text-[10px] font-mono text-accent ml-auto">
                   +{lesson.xpReward} XP
                 </span>
               </div>
@@ -1064,7 +1066,7 @@ export function LessonView({
                     <button
                       onClick={markComplete}
                       disabled={completing || !isEnrolled || !publicKey}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-accent text-black hover:bg-accent-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={
                         !isEnrolled ? "Enroll in the course first" : undefined
                       }
@@ -1080,7 +1082,7 @@ export function LessonView({
                         pathname: "/courses/[slug]/lessons/[id]",
                         params: { slug: courseSlug, id: nextLessonId },
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-accent text-black hover:bg-accent-dim transition-colors"
                     >
                       Continue <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
@@ -1090,7 +1092,7 @@ export function LessonView({
                         pathname: "/courses/[slug]",
                         params: { slug: courseSlug },
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-accent text-black hover:bg-accent-dim transition-colors"
                     >
                       View Credential <CheckCircle className="h-3.5 w-3.5" />
                     </Link>
@@ -1098,7 +1100,7 @@ export function LessonView({
                     <button
                       onClick={handleFinalize}
                       disabled={finalizing}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-60"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-accent text-black hover:bg-accent-dim transition-colors disabled:opacity-60"
                     >
                       {finalizing ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1109,7 +1111,7 @@ export function LessonView({
                     </button>
                   ) : (
                     <p className="text-xs font-mono text-muted-foreground flex items-center gap-2">
-                      <CheckCircle className="h-3.5 w-3.5 text-[#14F195]/50" />
+                      <CheckCircle className="h-3.5 w-3.5 text-accent/50" />
                       Lesson done · complete remaining lessons to finish the
                       course
                     </p>
@@ -1126,8 +1128,8 @@ export function LessonView({
 
               {/* ── Challenge: completed banner (in content pane) ───────── */}
               {isChallenge && isCompleted && (
-                <div className="mt-6 flex items-center gap-3 border border-[#14F195]/30 bg-[#14F195]/5 rounded-lg px-5 py-4">
-                  <CheckCircle className="h-5 w-5 text-[#14F195] shrink-0" />
+                <div className="mt-6 flex items-center gap-3 border border-accent/30 bg-accent/5 rounded-lg px-5 py-4">
+                  <CheckCircle className="h-5 w-5 text-accent shrink-0" />
                   <div className="flex-1">
                     <p className="font-mono text-sm font-semibold text-foreground">
                       Challenge complete!
@@ -1142,7 +1144,7 @@ export function LessonView({
                         pathname: "/courses/[slug]/lessons/[id]",
                         params: { slug: courseSlug, id: nextLessonId },
                       }}
-                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
+                      className="shrink-0 flex items-center gap-1.5 bg-accent text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-accent-dim transition-colors"
                     >
                       Next <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
@@ -1152,7 +1154,7 @@ export function LessonView({
                         pathname: "/courses/[slug]",
                         params: { slug: courseSlug },
                       }}
-                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
+                      className="shrink-0 flex items-center gap-1.5 bg-accent text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-accent-dim transition-colors"
                     >
                       View Credential <CheckCircle className="h-3.5 w-3.5" />
                     </Link>
@@ -1160,7 +1162,7 @@ export function LessonView({
                     <button
                       onClick={handleFinalize}
                       disabled={finalizing || !allLessonsComplete}
-                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="shrink-0 flex items-center gap-1.5 bg-accent text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-accent-dim transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       title={
                         !allLessonsComplete
                           ? "Complete all lessons first"
@@ -1191,9 +1193,9 @@ export function LessonView({
               >
                 {/* Editor tab bar */}
                 <div className="flex items-center border-b border-border px-3 py-1.5 gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1.5 bg-[#14F195]/10 rounded px-3 py-1 border border-[#14F195]/30">
-                    <Code2 className="h-3 w-3 text-[#14F195]" />
-                    <span className="text-[10px] font-mono text-[#14F195]">
+                  <div className="flex items-center gap-1.5 bg-accent/10 rounded px-3 py-1 border border-accent/30">
+                    <Code2 className="h-3 w-3 text-accent" />
+                    <span className="text-[10px] font-mono text-accent">
                       main.{language === "rust" ? "rs" : "ts"}
                     </span>
                   </div>
@@ -1229,7 +1231,7 @@ export function LessonView({
                       <span
                         className={cn(
                           "text-[10px] font-mono",
-                          allPassed ? "text-[#14F195]" : "text-[#FF4444]",
+                          allPassed ? "text-accent" : "text-[#FF4444]",
                         )}
                       >
                         {testResults.filter((r) => r.passed).length}/
@@ -1269,7 +1271,7 @@ export function LessonView({
                       <button
                         onClick={handleRunTests}
                         disabled={running}
-                        className="flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-mono font-semibold border border-[#14F195]/50 text-[#14F195] rounded hover:bg-[#14F195]/10 transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-mono font-semibold border border-accent/50 text-accent rounded hover:bg-accent/10 transition-colors disabled:opacity-50"
                       >
                         {running ? (
                           <>
@@ -1290,7 +1292,7 @@ export function LessonView({
                               pathname: "/courses/[slug]/lessons/[id]",
                               params: { slug: courseSlug, id: nextLessonId },
                             }}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-accent text-black hover:bg-accent-dim transition-colors"
                           >
                             Continue <ChevronRight className="h-3 w-3" />
                           </Link>
@@ -1300,7 +1302,7 @@ export function LessonView({
                               pathname: "/courses/[slug]",
                               params: { slug: courseSlug },
                             }}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-accent/10 text-accent border border-accent/30"
                           >
                             <CheckCircle className="h-3.5 w-3.5" /> View
                             Credential
@@ -1309,7 +1311,7 @@ export function LessonView({
                           <button
                             onClick={handleFinalize}
                             disabled={finalizing}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-60"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-accent text-black hover:bg-accent-dim transition-colors disabled:opacity-60"
                           >
                             {finalizing ? (
                               <>
@@ -1324,7 +1326,7 @@ export function LessonView({
                             )}
                           </button>
                         ) : (
-                          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30">
+                          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold bg-accent/10 text-accent border border-accent/30">
                             <CheckCircle className="h-3.5 w-3.5" /> Completed
                           </div>
                         )
@@ -1343,7 +1345,7 @@ export function LessonView({
                               publicKey &&
                               (allPassed ||
                                 (lesson.testCases?.length ?? 0) === 0)
-                              ? "bg-[#14F195] text-black hover:bg-[#0D9E61]"
+                              ? "bg-accent text-black hover:bg-accent-dim"
                               : "bg-elevated text-muted-foreground border border-border cursor-not-allowed",
                           )}
                           title={

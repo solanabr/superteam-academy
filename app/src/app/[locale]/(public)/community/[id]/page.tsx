@@ -91,7 +91,7 @@ export default async function ThreadDetailPage({ params }: Props) {
               </span>
             )}
             {thread.is_answered && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#14F195]/40 bg-[#14F195]/10 text-[#14F195]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
                 Answered
               </span>
             )}
@@ -149,13 +149,13 @@ export default async function ThreadDetailPage({ params }: Props) {
               className={[
                 "bg-card border rounded-lg p-5 space-y-3",
                 reply.is_accepted
-                  ? "border-[#14F195]/40 bg-[#14F195]/5"
+                  ? "border-accent/40 bg-accent/5"
                   : "border-border",
               ].join(" ")}
             >
               {reply.is_accepted && (
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#14F195]/40 bg-[#14F195]/10 text-[#14F195]">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
                     Accepted Answer
                   </span>
                 </div>

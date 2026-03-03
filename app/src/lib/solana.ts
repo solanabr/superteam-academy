@@ -22,16 +22,21 @@ export const CLUSTER = (process.env.NEXT_PUBLIC_CLUSTER ?? "devnet") as
   | "devnet"
   | "testnet";
 
-export const HELIUS_RPC_URL =
-  process.env.NEXT_PUBLIC_HELIUS_RPC_URL ??
-  (CLUSTER === "devnet"
-    ? `https://devnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? ""}`
-    : `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? ""}`);
-
 export function getConnectionEndpoint(): string {
-  return (
-    process.env.NEXT_PUBLIC_RPC_URL || HELIUS_RPC_URL || clusterApiUrl(CLUSTER)
-  );
+  const explicit = (process.env.NEXT_PUBLIC_RPC_URL ?? "").trim();
+  if (explicit) return explicit;
+
+  const heliusRpc = (process.env.NEXT_PUBLIC_HELIUS_RPC_URL ?? "").trim();
+  if (heliusRpc) return heliusRpc;
+
+  const heliusKey = (process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? "").trim();
+  if (heliusKey) {
+    return CLUSTER === "devnet"
+      ? `https://devnet.helius-rpc.com/?api-key=${heliusKey}`
+      : `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
+  }
+
+  return clusterApiUrl(CLUSTER);
 }
 
 export function getConnection(): Connection {

@@ -89,7 +89,7 @@ export function Header() {
           href="/"
           className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wider"
         >
-          <span className="text-[#14F195] text-base">◎</span>
+          <span className="text-accent text-base">◎</span>
           <span className="text-foreground">ACADEMY</span>
         </Link>
 

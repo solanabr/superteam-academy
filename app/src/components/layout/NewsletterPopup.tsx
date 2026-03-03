@@ -92,8 +92,8 @@ export function NewsletterPopup() {
         </button>
 
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 flex items-center justify-center shrink-0">
-            <Zap className="h-3.5 w-3.5 text-[#14F195]" />
+          <div className="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+            <Zap className="h-3.5 w-3.5 text-accent" />
           </div>
           <p className="font-mono text-sm font-semibold text-foreground">
             Stay updated
@@ -106,7 +106,7 @@ export function NewsletterPopup() {
         </p>
 
         {done ? (
-          <p className="text-sm font-mono text-[#14F195] text-center py-1">
+          <p className="text-sm font-mono text-accent text-center py-1">
             You&apos;re in!
           </p>
         ) : (
@@ -117,12 +117,12 @@ export function NewsletterPopup() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#14F195]/50 transition-colors"
+              className="flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
             />
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 shrink-0"
+              className="px-4 py-1.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors disabled:opacity-50 shrink-0"
             >
               {submitting ? "..." : "Join"}
             </button>

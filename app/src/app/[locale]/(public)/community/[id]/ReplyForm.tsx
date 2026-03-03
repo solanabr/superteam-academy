@@ -29,7 +29,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="shrink-0 inline-flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-xs px-3 py-1.5 rounded-full hover:bg-[#0D9E61] transition-colors"
+          className="shrink-0 inline-flex items-center gap-1.5 bg-accent text-black font-mono font-semibold text-xs px-3 py-1.5 rounded-full hover:bg-accent-dim transition-colors"
         >
           <span>◎</span> Connect Wallet
         </button>
@@ -79,7 +79,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
     <form onSubmit={handleSubmit} className="space-y-3">
       {/* Author pill */}
       <div className="flex items-center gap-2 text-xs font-mono">
-        <span className="text-[#14F195]">◎</span>
+        <span className="text-accent">◎</span>
         <span className="text-muted-foreground">Replying as</span>
         <span className="text-foreground">
           {authorDisplayName ??
@@ -92,7 +92,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write your reply..."
         rows={5}
-        className="w-full bg-background border border-border focus:border-[#14F195]/50 rounded px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors resize-y"
+        className="w-full bg-background border border-border focus:border-accent/50 rounded px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors resize-y"
         required
       />
 
@@ -103,7 +103,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
       )}
 
       {success && (
-        <div className="px-3 py-2.5 bg-[#14F195]/10 border border-[#14F195]/30 rounded text-xs font-mono text-[#14F195]">
+        <div className="px-3 py-2.5 bg-accent/10 border border-accent/30 rounded text-xs font-mono text-accent">
           Reply posted.
         </div>
       )}
@@ -112,7 +112,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? "Posting..." : "Post Reply"}
         </button>

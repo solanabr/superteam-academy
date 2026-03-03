@@ -40,9 +40,7 @@ function FooterNewsletter() {
 
   if (subscribed) {
     return (
-      <p className="text-xs font-mono text-[#14F195]">
-        Thanks for subscribing!
-      </p>
+      <p className="text-xs font-mono text-accent">Thanks for subscribing!</p>
     );
   }
 
@@ -61,12 +59,12 @@ function FooterNewsletter() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="email@example.com"
           required
-          className="bg-transparent border border-border text-sm font-mono px-3 py-1.5 rounded text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#14F195]/50 flex-1 min-w-0"
+          className="bg-transparent border border-border text-sm font-mono px-3 py-1.5 rounded text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 flex-1 min-w-0"
         />
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-1.5 bg-[#14F195]/10 border border-[#14F195]/30 text-[#14F195] text-xs font-mono rounded hover:bg-[#14F195]/20 transition-colors whitespace-nowrap disabled:opacity-50"
+          className="px-4 py-1.5 bg-accent/10 border border-accent/30 text-accent text-xs font-mono rounded hover:bg-accent/20 transition-colors whitespace-nowrap disabled:opacity-50"
         >
           {loading ? "..." : "Subscribe"}
         </button>
@@ -90,7 +88,7 @@ export function Footer() {
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground font-mono">
             © 2026 Superteam Academy.{" "}
-            <span className="text-[#14F195]">Built on Solana.</span>
+            <span className="text-accent">Built on Solana.</span>
           </p>
           <div className="flex items-center gap-4">
             <a

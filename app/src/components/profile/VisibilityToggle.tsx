@@ -42,8 +42,8 @@ export function VisibilityToggle({
       onClick={toggle}
       className="inline-flex items-center gap-1.5 px-3 py-1 rounded border text-xs font-mono transition-colors cursor-pointer select-none"
       style={{
-        borderColor: isPublic ? "#14F195" : "#1F1F1F",
-        color: isPublic ? "#14F195" : "#666666",
+        borderColor: isPublic ? "var(--accent)" : "#1F1F1F",
+        color: isPublic ? "var(--accent)" : "#666666",
         background: isPublic ? "rgba(20,241,149,0.06)" : "#111111",
       }}
       title={

@@ -32,21 +32,19 @@ export default async function CommunityPage({
       {/* Stats bar */}
       <div className="flex items-center gap-6 px-4 py-3 border border-border bg-card rounded text-xs font-mono text-muted-foreground">
         <span>
-          <span className="text-[#14F195] font-semibold">
+          <span className="text-accent font-semibold">
             {stats.thread_count}
           </span>{" "}
           threads
         </span>
         <span>·</span>
         <span>
-          <span className="text-[#14F195] font-semibold">
-            {stats.reply_count}
-          </span>{" "}
+          <span className="text-accent font-semibold">{stats.reply_count}</span>{" "}
           replies
         </span>
         <span>·</span>
         <span>
-          <span className="text-[#14F195] font-semibold">
+          <span className="text-accent font-semibold">
             {stats.member_count}
           </span>{" "}
           members
@@ -65,7 +63,7 @@ export default async function CommunityPage({
         </div>
         <Link
           href="/community/new"
-          className="shrink-0 px-4 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors"
+          className="shrink-0 px-4 py-2 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
           + New Thread
         </Link>
@@ -80,10 +78,10 @@ export default async function CommunityPage({
           </p>
           <Link
             href="/community"
-            className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors ${!category ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
+            className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors ${!category ? "border-accent/40" : "border-border hover:border-border-hover"}`}
           >
             <span
-              className={`font-mono text-sm ${!category ? "text-[#14F195]" : "text-foreground"}`}
+              className={`font-mono text-sm ${!category ? "text-accent" : "text-foreground"}`}
             >
               All
             </span>
@@ -98,10 +96,10 @@ export default async function CommunityPage({
                 key={cat.slug}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 href={`/community?category=${cat.slug}` as any}
-                className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors group ${isActive ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
+                className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors group ${isActive ? "border-accent/40" : "border-border hover:border-border-hover"}`}
               >
                 <span
-                  className={`font-mono text-sm flex items-center gap-2 ${isActive ? "text-[#14F195]" : "text-foreground group-hover:text-[#14F195] transition-colors"}`}
+                  className={`font-mono text-sm flex items-center gap-2 ${isActive ? "text-accent" : "text-foreground group-hover:text-accent transition-colors"}`}
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -129,7 +127,7 @@ export default async function CommunityPage({
                 No threads yet.{" "}
                 <Link
                   href="/community/new"
-                  className="text-[#14F195] hover:underline"
+                  className="text-accent hover:underline"
                 >
                   Start the first one.
                 </Link>
@@ -171,7 +169,7 @@ export default async function CommunityPage({
 
                         {/* Answered badge */}
                         {thread.is_answered === true && (
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#14F195]/40 bg-[#14F195]/10 text-[#14F195]">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
                             Answered
                           </span>
                         )}

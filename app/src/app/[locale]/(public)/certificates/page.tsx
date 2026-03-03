@@ -39,7 +39,7 @@ export default function CertificatesPage() {
         </div>
         <button
           onClick={() => setVisible(true)}
-          className="px-6 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors"
+          className="px-6 py-2.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>

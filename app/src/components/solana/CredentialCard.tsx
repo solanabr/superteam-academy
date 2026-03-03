@@ -23,7 +23,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
       }}
       className="block"
     >
-      <div className="group bg-card border border-border rounded hover:border-[#14F195]/30 transition-all duration-200 overflow-hidden">
+      <div className="group bg-card border border-border rounded hover:border-accent/30 transition-all duration-200 overflow-hidden">
         {/* Image / placeholder */}
         <div className="relative h-32 bg-background flex items-center justify-center overflow-hidden">
           {credential.imageUrl ? (
@@ -37,14 +37,14 @@ export function CredentialCard({ credential }: CredentialCardProps) {
             <div
               className="absolute inset-0 flex items-center justify-center"
               style={{
-                background: `radial-gradient(circle at 50% 50%, ${track?.color ?? "#14F195"}20 0%, transparent 70%)`,
+                background: `radial-gradient(circle at 50% 50%, ${track?.color ?? "var(--accent)"}20 0%, transparent 70%)`,
               }}
             >
-              <Shield className="h-10 w-10 text-[#14F195] opacity-40" />
+              <Shield className="h-10 w-10 text-accent opacity-40" />
             </div>
           )}
           <div className="absolute top-2 right-2">
-            <span className="text-[10px] font-mono bg-background/90 text-[#14F195] border border-[#14F195]/30 px-2 py-0.5 rounded-sm">
+            <span className="text-[10px] font-mono bg-background/90 text-accent border border-accent/30 px-2 py-0.5 rounded-sm">
               Lv.{level}
             </span>
           </div>
@@ -58,7 +58,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
             {track ? `${track.icon} ${track.name}` : "Academy Credential"}
           </p>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-[10px] font-mono text-[#14F195]">
+            <span className="text-[10px] font-mono text-accent">
               {Number(xp).toLocaleString()} XP
             </span>
             <a

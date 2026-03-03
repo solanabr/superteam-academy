@@ -100,7 +100,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search courses..."
-            className="w-full bg-card border border-border focus:border-[#14F195]/50 rounded pl-9 pr-3 py-1.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors"
+            className="w-full bg-card border border-border focus:border-accent/50 rounded pl-9 pr-3 py-1.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors"
           />
         </div>
       </form>
@@ -124,7 +124,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
               className={[
                 "px-3 py-1.5 rounded text-xs font-mono transition-colors border",
                 (difficulty ?? "all") === value
-                  ? "bg-[#14F195] text-black border-[#14F195]"
+                  ? "bg-accent text-black border-accent"
                   : "bg-transparent text-muted-foreground border-border hover:border-border-hover hover:text-foreground",
               ].join(" ")}
             >
@@ -152,7 +152,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             <select
               name="sort"
               defaultValue={activeSort}
-              className="bg-card border border-border text-foreground font-mono text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#14F195]/50"
+              className="bg-card border border-border text-foreground font-mono text-xs rounded px-2 py-1.5 focus:outline-none focus:border-accent/50"
             >
               <option value="newest">{t("sort.newest")}</option>
               <option value="xpReward">{t("sort.xpReward")}</option>

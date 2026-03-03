@@ -77,7 +77,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
           <div className="h-5 w-px bg-border" />
 
           <div className="font-mono leading-none">
-            <span className="text-sm font-semibold text-[#14F195]">
+            <span className="text-sm font-semibold text-accent">
               {totalActiveDays}
             </span>
             <span className="text-[10px] text-muted-foreground ml-1">
@@ -116,7 +116,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
                 bg = "#1A2A22";
                 shadow = "0 0 3px rgba(20,241,149,0.2)";
               } else if (isActive) {
-                bg = "#14F195";
+                bg = "var(--accent)";
               } else {
                 bg = "#1A1A1A";
               }

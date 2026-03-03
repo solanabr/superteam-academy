@@ -32,7 +32,7 @@ const ADMIN_WALLETS = (
   .map((w) => w.trim());
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "#14F195",
+  beginner: "var(--accent)",
   intermediate: "#F1C40F",
   advanced: "#E74C3C",
 };
@@ -87,7 +87,7 @@ export function AdminClient({
         </div>
         <button
           onClick={() => setVisible(true)}
-          className="px-6 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors"
+          className="px-6 py-2.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>
@@ -165,7 +165,7 @@ export function AdminClient({
               <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
                 {label}
               </p>
-              <Icon className="h-4 w-4 text-[#14F195]" />
+              <Icon className="h-4 w-4 text-accent" />
             </div>
             <p className="font-mono text-2xl font-bold text-foreground">
               {value}
@@ -177,7 +177,7 @@ export function AdminClient({
       {/* Enrollments bar chart */}
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-center gap-2 mb-5">
-          <TrendingUp className="h-4 w-4 text-[#14F195]" />
+          <TrendingUp className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
             Enrollments by Course
           </h2>
@@ -190,7 +190,7 @@ export function AdminClient({
               </span>
               <div className="flex-1 bg-background rounded-sm h-5 overflow-hidden">
                 <div
-                  className="h-full bg-[#14F195]/70 rounded-sm flex items-center justify-end pr-2 transition-all"
+                  className="h-full bg-accent/70 rounded-sm flex items-center justify-end pr-2 transition-all"
                   style={{
                     width: `${(course.enrollments / maxEnrollments) * 100}%`,
                   }}
@@ -209,14 +209,14 @@ export function AdminClient({
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-[#14F195]" />
+            <BookOpen className="h-4 w-4 text-accent" />
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
               Courses
             </h2>
           </div>
           <Link
             href="/courses"
-            className="text-xs font-mono text-muted-foreground hover:text-[#14F195] transition-colors flex items-center gap-1"
+            className="text-xs font-mono text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
           >
             View All <ExternalLink className="h-3 w-3" />
           </Link>
@@ -270,7 +270,7 @@ export function AdminClient({
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-1.5 bg-border rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#14F195] rounded-full"
+                          className="h-full bg-accent rounded-full"
                           style={{ width: `${course.completion}%` }}
                         />
                       </div>
@@ -279,7 +279,7 @@ export function AdminClient({
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-sm text-[#14F195]">
+                  <td className="px-5 py-3.5 font-mono text-sm text-accent">
                     {course.xpReward.toLocaleString()} XP
                   </td>
                   <td className="px-5 py-3.5">
@@ -294,7 +294,7 @@ export function AdminClient({
                       </a>
                       <a
                         href={`/courses/${course.slug}`}
-                        className="text-[10px] font-mono px-2.5 py-1 border border-[#14F195]/30 rounded text-[#14F195] hover:bg-[#14F195]/10 transition-colors"
+                        className="text-[10px] font-mono px-2.5 py-1 border border-accent/30 rounded text-accent hover:bg-accent/10 transition-colors"
                       >
                         View
                       </a>
@@ -310,7 +310,7 @@ export function AdminClient({
       {/* Recent signups table */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-          <Users className="h-4 w-4 text-[#14F195]" />
+          <Users className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
             Recent Signups
           </h2>
@@ -344,7 +344,7 @@ export function AdminClient({
                   >
                     <td className="px-5 py-3.5 font-mono text-sm text-foreground">
                       {user.username ? (
-                        <span className="text-[#14F195]">@{user.username}</span>
+                        <span className="text-accent">@{user.username}</span>
                       ) : (
                         truncateWallet(user.wallet_address)
                       )}
@@ -366,7 +366,7 @@ export function AdminClient({
       {/* Forum activity table */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-          <MessageSquare className="h-4 w-4 text-[#14F195]" />
+          <MessageSquare className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
             Recent Forum Activity
           </h2>
@@ -401,7 +401,7 @@ export function AdminClient({
                     </td>
                     <td className="px-5 py-3.5">
                       {thread.category_label ? (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#14F195]/30 text-[#14F195] bg-[#14F195]/10">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/30 text-accent bg-accent/10">
                           {thread.category_label}
                         </span>
                       ) : (

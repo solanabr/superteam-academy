@@ -40,7 +40,7 @@ export function LeaderboardTable({
             className={cn(
               "grid grid-cols-12 gap-2 px-4 py-3 border-b border-border last:border-0 font-mono items-center transition-colors",
               isYou
-                ? "bg-[#14F195]/5 border-l-2 border-l-[#14F195]"
+                ? "bg-accent/5 border-l-2 border-l-accent"
                 : profileHref
                   ? "hover:bg-elevated cursor-pointer"
                   : "hover:bg-elevated",
@@ -76,9 +76,7 @@ export function LeaderboardTable({
                     {entry.walletAddress.slice(-4)}
                   </span>
                 )}
-                {isYou && (
-                  <span className="text-[9px] text-[#14F195]">You</span>
-                )}
+                {isYou && <span className="text-[9px] text-accent">You</span>}
               </div>
             </div>
 

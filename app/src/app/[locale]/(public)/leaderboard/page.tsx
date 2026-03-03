@@ -124,7 +124,7 @@ function PodiumCard({
       <span className="text-[10px] font-mono text-foreground truncate w-full text-center">
         {name.length > 12 ? `${name.slice(0, 12)}...` : name}
       </span>
-      <span className="text-[10px] font-mono text-[#14F195]">
+      <span className="text-[10px] font-mono text-accent">
         {entry.xpBalance.toLocaleString()} XP
       </span>
       <div
@@ -132,7 +132,7 @@ function PodiumCard({
           height,
           "w-full rounded-t",
           highlighted
-            ? "bg-[#14F195]/20 border border-[#14F195]/30"
+            ? "bg-accent/20 border border-accent/30"
             : "bg-elevated border border-border",
         ].join(" ")}
       />

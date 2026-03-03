@@ -35,7 +35,7 @@ export function UpvoteButton({ threadId, initialCount }: UpvoteButtonProps) {
       className={[
         "flex items-center gap-1.5 px-3 py-1.5 rounded border font-mono text-xs transition-colors",
         voted
-          ? "bg-[#14F195]/10 border-[#14F195]/40 text-[#14F195]"
+          ? "bg-accent/10 border-accent/40 text-accent"
           : "bg-card border-border text-muted-foreground hover:border-border-hover hover:text-foreground",
         loading ? "opacity-50 cursor-not-allowed" : "",
       ].join(" ")}

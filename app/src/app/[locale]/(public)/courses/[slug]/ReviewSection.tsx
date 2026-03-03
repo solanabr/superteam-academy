@@ -121,7 +121,7 @@ function ReviewModal({
             onChange={(e) => setComment(e.target.value)}
             placeholder="What did you think about this course?"
             rows={4}
-            className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-[#14F195]/50 transition-colors"
+            className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-accent/50 transition-colors"
           />
         </div>
 
@@ -137,7 +137,7 @@ function ReviewModal({
           <button
             onClick={handleSubmit}
             disabled={rating === 0 || submitting}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#14F195] text-black text-xs font-mono font-semibold rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black text-xs font-mono font-semibold rounded-full hover:bg-accent-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
             {isEdit ? "Update Review" : "Submit Review"}
@@ -265,7 +265,7 @@ export function StudentReviews({ courseSlug }: { courseSlug: string }) {
         </h2>
         {avg && (
           <div className="flex items-center gap-1.5 font-mono text-sm">
-            <span className="text-[#14F195] font-bold">{avg}</span>
+            <span className="text-accent font-bold">{avg}</span>
             <span className="text-muted-foreground">/ 5</span>
             <span className="text-subtle text-xs">
               ({reviews.length} review{reviews.length !== 1 ? "s" : ""})

@@ -150,7 +150,7 @@ export default function SettingsPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="satoshi"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors"
                 />
               </Field>
               <Field label={t("profile.displayName")}>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Satoshi Nakamoto"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors"
                 />
               </Field>
               <Field label={t("profile.bio")}>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Building on Solana..."
                   rows={3}
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors resize-none"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors resize-none"
                 />
               </Field>
               <Field label="Twitter / X">
@@ -175,7 +175,7 @@ export default function SettingsPage() {
                   value={twitterHandle}
                   onChange={(e) => setTwitterHandle(e.target.value)}
                   placeholder="@handle"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors"
                 />
               </Field>
               <Field label="GitHub">
@@ -183,13 +183,13 @@ export default function SettingsPage() {
                   value={githubHandle}
                   onChange={(e) => setGithubHandle(e.target.value)}
                   placeholder="username"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors"
                 />
               </Field>
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors disabled:opacity-70"
+                className="flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors disabled:opacity-70"
               >
                 {saving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -277,7 +277,7 @@ export default function SettingsPage() {
                 Manage sign-in methods via{" "}
                 <button
                   onClick={connectOAuth}
-                  className="text-[#14F195] hover:underline"
+                  className="text-accent hover:underline"
                 >
                   Clerk profile
                 </button>
@@ -298,7 +298,7 @@ export default function SettingsPage() {
                     className={cn(
                       "flex-1 py-3 rounded border font-mono text-sm capitalize transition-colors",
                       activeTheme === theme
-                        ? "border-[#14F195] text-[#14F195] bg-[#14F195]/5"
+                        ? "border-accent text-accent bg-accent/5"
                         : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground",
                     )}
                   >
@@ -328,14 +328,12 @@ export default function SettingsPage() {
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded border font-mono text-sm transition-colors",
                       isActive
-                        ? "border-[#14F195]/30 text-foreground bg-[#14F195]/5"
+                        ? "border-accent/30 text-foreground bg-accent/5"
                         : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground",
                     )}
                   >
                     <span>{label}</span>
-                    {isActive && (
-                      <Check className="h-3.5 w-3.5 text-[#14F195]" />
-                    )}
+                    {isActive && <Check className="h-3.5 w-3.5 text-accent" />}
                   </button>
                 );
               })}
@@ -402,7 +400,7 @@ function AccountRow({
       ) : (
         <button
           onClick={onConnect}
-          className="text-xs font-mono text-[#14F195] hover:text-[#0D9E61] transition-colors"
+          className="text-xs font-mono text-accent hover:text-accent-dim transition-colors"
         >
           Connect
         </button>

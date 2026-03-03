@@ -106,7 +106,7 @@ function Card({
         &ldquo;{quote}&rdquo;
       </p>
       <div className="flex items-center gap-3 pt-1 border-t border-border">
-        <div className="w-8 h-8 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 flex items-center justify-center font-mono text-xs font-bold text-[#14F195] shrink-0">
+        <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-mono text-xs font-bold text-accent shrink-0">
           {initials}
         </div>
         <div>

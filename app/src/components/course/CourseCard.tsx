@@ -66,7 +66,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
           {isEnrolled && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border">
               <div
-                className="h-full bg-[#14F195] transition-all"
+                className="h-full bg-accent transition-all"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -97,10 +97,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
               {course.durationHours}h
             </span>
             <span
-              className={cn(
-                "flex items-center gap-1 ml-auto",
-                "text-[#14F195]",
-              )}
+              className={cn("flex items-center gap-1 ml-auto", "text-accent")}
             >
               <Zap className="h-3 w-3" />
               {course.xpReward.toLocaleString()} XP
@@ -114,7 +111,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
                 <span className="text-muted-foreground">Progress</span>
                 <span
                   className={
-                    percent === 100 ? "text-[#14F195]" : "text-foreground"
+                    percent === 100 ? "text-accent" : "text-foreground"
                   }
                 >
                   {percent === 100 ? "Complete ✓" : `${percent}%`}

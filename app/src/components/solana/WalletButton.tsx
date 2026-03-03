@@ -62,7 +62,7 @@ export function WalletButton({ className }: { className?: string }) {
       <Button
         onClick={() => setVisible(true)}
         className={cn(
-          "bg-[#14F195] text-black font-mono text-sm font-medium hover:bg-accent-dim transition-colors",
+          "bg-accent text-black font-mono text-sm font-medium hover:bg-accent-dim transition-colors",
           className,
         )}
         size="sm"
@@ -84,7 +84,7 @@ export function WalletButton({ className }: { className?: string }) {
             className,
           )}
         >
-          <span className="text-[#14F195] mr-1.5">◎</span>
+          <span className="text-accent mr-1.5">◎</span>
           {displayName}
           {xpData && (
             <span className="ml-2 text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">
@@ -107,7 +107,7 @@ export function WalletButton({ className }: { className?: string }) {
             {publicKey.toBase58().slice(0, 20)}...
           </p>
           {xpData && (
-            <p className="text-xs text-[#14F195] mt-1">
+            <p className="text-xs text-accent mt-1">
               {xpData.balance.toLocaleString()} XP · Level {xpData.level}
             </p>
           )}

@@ -70,7 +70,7 @@ export default async function CertificatePage({ params }: Props) {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
       {/* Certificate card */}
-      <div className="relative bg-background border border-[#14F195]/30 rounded-lg overflow-hidden p-8">
+      <div className="relative bg-background border border-accent/30 rounded-lg overflow-hidden p-8">
         {/* Ambient glow */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -81,17 +81,17 @@ export default async function CertificatePage({ params }: Props) {
         />
 
         {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#14F195]/50 rounded-tl-lg" />
-        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#14F195]/50 rounded-tr-lg" />
-        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#14F195]/50 rounded-bl-lg" />
-        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#14F195]/50 rounded-br-lg" />
+        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-accent/50 rounded-tl-lg" />
+        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-accent/50 rounded-tr-lg" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-accent/50 rounded-bl-lg" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-accent/50 rounded-br-lg" />
 
         <div className="relative z-10 text-center space-y-4">
           {/* Header */}
           <div>
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Shield className="h-5 w-5 text-[#14F195]" />
-              <span className="text-[10px] font-mono text-[#14F195] uppercase tracking-[0.2em]">
+              <Shield className="h-5 w-5 text-accent" />
+              <span className="text-[10px] font-mono text-accent uppercase tracking-[0.2em]">
                 {t("verified")}
               </span>
             </div>
@@ -103,7 +103,7 @@ export default async function CertificatePage({ params }: Props) {
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-[#14F195] text-lg">◎</span>
+            <span className="text-accent text-lg">◎</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -112,7 +112,7 @@ export default async function CertificatePage({ params }: Props) {
             <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
               This certifies that
             </p>
-            <p className="font-mono text-xl font-bold text-[#14F195]">
+            <p className="font-mono text-xl font-bold text-accent">
               {earnedBy}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
@@ -139,7 +139,7 @@ export default async function CertificatePage({ params }: Props) {
               </div>
             </div>
             <div className="text-center">
-              <div className="font-mono text-lg font-bold text-[#14F195]">
+              <div className="font-mono text-lg font-bold text-accent">
                 {Number(totalXp).toLocaleString()}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
@@ -203,7 +203,7 @@ export default async function CertificatePage({ params }: Props) {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Network</span>
-          <span className="text-[#14F195]">Solana Devnet</span>
+          <span className="text-accent">Solana Devnet</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Standard</span>
