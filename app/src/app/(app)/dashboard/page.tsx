@@ -26,10 +26,12 @@ import {
   DailyChallengePreview,
 } from "@/components/dashboard";
 import { getPersonalizedRecommendations } from "@/lib/recommendations";
+import { useTracks } from "@/lib/hooks/use-tracks";
 
 const SKILL_BADGE_COLORS = {
   beginner: "bg-brazil-green/10 text-brazil-green border-brazil-green/30",
   intermediate: "bg-brazil-gold/10 text-brazil-gold border-brazil-gold/30",
+  professional: "bg-brazil-blue/10 text-brazil-blue border-brazil-blue/30",
   advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
 } as const;
 
@@ -48,6 +50,7 @@ export default function DashboardPage() {
   const tc = useTranslations("common");
   const { authenticated } = usePrivy();
   const { courses: allCourses } = useCourses();
+  const tracks = useTracks();
   const {
     xp,
     streak,
@@ -95,6 +98,7 @@ export default function DashboardPage() {
     skillLevel: onboarding.skillLevel,
     preferences: onboarding.onboardingData,
     enrolledIds: allEnrolledAndCompleted,
+    tracks,
   });
 
   if (!isLoaded) {
@@ -127,7 +131,7 @@ export default function DashboardPage() {
       {/* Top Stats Row */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* XP Card */}
-        <div className="glass rounded-xl p-6">
+        <Link href="/leaderboard" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -169,11 +173,11 @@ export default function DashboardPage() {
               {Math.round(progress.progress)}% to Level {progress.level + 1}
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Skill Level Badge (if assessed) */}
         {skillLevel && SKILL_BADGE_COLORS[skillLevel] && (
-          <div className="glass rounded-xl p-6">
+          <Link href="/profile" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -186,6 +190,7 @@ export default function DashboardPage() {
                     `skill${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as
                       | "skillBeginner"
                       | "skillIntermediate"
+                      | "skillProfessional"
                       | "skillAdvanced",
                   )}
                 </p>
@@ -194,11 +199,11 @@ export default function DashboardPage() {
                 <Award className="h-6 w-6 text-primary" />
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* Streak Card */}
-        <div className="glass rounded-xl p-6">
+        <Link href="/profile" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -225,7 +230,7 @@ export default function DashboardPage() {
             <ActivityCalendar activityCalendar={streak.activityCalendar} />
           </div>
           <StreakFreezeCard freezes={streak.streakFreezes} />
-        </div>
+        </Link>
 
         {/* Daily Goal Card */}
         <DailyGoalCard />
@@ -233,8 +238,62 @@ export default function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Left Column: Courses + Recommendations */}
+        {/* Left Column: Activity Feed, Quests, Achievements (2/3 width) */}
         <div className="space-y-8 lg:col-span-2">
+          <ActivityFeed limit={20} />
+
+          {/* Daily Quests */}
+          <DailyQuestsCard />
+
+          {/* Recent Achievements */}
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold">{t("achievements")}</h2>
+              <Link
+                href="/profile"
+                className="flex items-center gap-1 text-sm text-st-green hover:text-st-green-light transition-colors"
+              >
+                {tc("all")} <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            {recentAchievements.length === 0 ? (
+              <div className="glass rounded-xl">
+                <EmptyState
+                  illustration={
+                    <EmptyAchievementsIllustration className="h-full w-full" />
+                  }
+                  title={t("achievementsEmpty")}
+                  description={t("achievementsEmptyHint")}
+                  compact
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {recentAchievements.map((achievement) => (
+                  <Link
+                    key={achievement.id}
+                    href="/profile"
+                    className="glass flex flex-col items-center rounded-xl p-3 text-center transition-all hover:border-st-green/30"
+                    title={achievement.description}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-achievement/10 text-achievement">
+                      <AchievementIcon name={achievement.icon} />
+                    </div>
+                    <p className="mt-2 text-xs font-medium leading-tight">
+                      {achievement.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-xp">
+                      +{achievement.xpReward} XP
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Right Column: Courses, Challenge, Getting Started */}
+        <div className="space-y-8">
           {/* Active Courses */}
           <section>
             <div className="mb-4 flex items-center justify-between">
@@ -323,53 +382,6 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* Recommended Courses */}
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold">{t("recommended")}</h2>
-              <Link
-                href="/courses"
-                className="flex items-center gap-1 text-sm text-st-green hover:text-st-green-light transition-colors"
-              >
-                {tc("viewAll")} <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {recommendedCourses.map((course) => (
-                <Link
-                  key={course.id}
-                  href={`/courses/${course.slug}`}
-                  className="glass group rounded-xl p-4 transition-all hover:border-st-green/30"
-                >
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <BookOpen className="h-5 w-5 text-brazil-teal" />
-                  </div>
-                  <h3 className="font-semibold group-hover:text-st-green transition-colors">
-                    {course.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                    {course.description}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        DIFFICULTY_BG[course.difficulty]
-                      }`}
-                    >
-                      {course.difficulty}
-                    </span>
-                    <span className="text-xs text-xp">
-                      {formatXP(course.xpTotal)} XP
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column: Quests + Achievements + Activity Feed */}
-        <div className="space-y-8">
           {/* Daily Coding Challenge */}
           <DailyChallengePreview
             headingLabel={t("dailyChallenge")}
@@ -377,57 +389,6 @@ export default function DashboardPage() {
             completedLabel={t("challengeCompleted")}
             xpLabel="XP"
           />
-
-          {/* Daily Quests */}
-          <DailyQuestsCard />
-
-          {/* Recent Achievements */}
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold">{t("achievements")}</h2>
-              <Link
-                href="/profile"
-                className="flex items-center gap-1 text-sm text-st-green hover:text-st-green-light transition-colors"
-              >
-                {tc("all")} <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            {recentAchievements.length === 0 ? (
-              <div className="glass rounded-xl">
-                <EmptyState
-                  illustration={
-                    <EmptyAchievementsIllustration className="h-full w-full" />
-                  }
-                  title={t("achievementsEmpty")}
-                  description={t("achievementsEmptyHint")}
-                  compact
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {recentAchievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className="glass flex flex-col items-center rounded-xl p-3 text-center"
-                    title={achievement.description}
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-achievement/10 text-achievement">
-                      <AchievementIcon name={achievement.icon} />
-                    </div>
-                    <p className="mt-2 text-xs font-medium leading-tight">
-                      {achievement.name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-xp">
-                      +{achievement.xpReward} XP
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Recent Activity Feed */}
-          <ActivityFeed />
 
           {/* Getting Started */}
           {enrolledCourseIds.length === 0 && (
@@ -482,6 +443,50 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Recommended Courses — full-width below grid */}
+      <section className="mt-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold">{t("recommended")}</h2>
+          <Link
+            href="/courses"
+            className="flex items-center gap-1 text-sm text-st-green hover:text-st-green-light transition-colors"
+          >
+            {tc("viewAll")} <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {recommendedCourses.map((course) => (
+            <Link
+              key={course.id}
+              href={`/courses/${course.slug}`}
+              className="glass group rounded-xl p-4 transition-all hover:border-st-green/30"
+            >
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                <BookOpen className="h-5 w-5 text-brazil-teal" />
+              </div>
+              <h3 className="font-semibold group-hover:text-st-green transition-colors">
+                {course.title}
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                {course.description}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    DIFFICULTY_BG[course.difficulty]
+                  }`}
+                >
+                  {course.difficulty}
+                </span>
+                <span className="text-xs text-xp">
+                  {formatXP(course.xpTotal)} XP
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
