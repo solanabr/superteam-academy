@@ -8,6 +8,8 @@ import { registerLeaderboardRoutes } from "../academy/routes/leaderboard-routes.
 import { registerChallengeRoutes } from "../academy/routes/challenge-routes.js";
 import { registerSeasonRoutes } from "../academy/routes/season-routes.js";
 import { registerNotificationRoutes } from "../academy/routes/notification-routes.js";
+import { registerChallengeConfigSyncRoutes } from "../academy/routes/challenge-config-sync.js";
+import { registerChallengeCodeRoutes } from "../academy/routes/challenge-code.js";
 
 const app = new Hono();
 
@@ -18,6 +20,8 @@ registerMinterRoutes(app);
 registerAchievementRoutes(app);
 registerLeaderboardRoutes(app);
 registerChallengeRoutes(app);
+registerChallengeConfigSyncRoutes(app);
+registerChallengeCodeRoutes(app);
 registerSeasonRoutes(app);
 registerNotificationRoutes(app);
 

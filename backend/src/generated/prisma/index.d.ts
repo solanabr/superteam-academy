@@ -9578,6 +9578,7 @@ export namespace Prisma {
     title: string | null
     description: string | null
     type: string | null
+    status: string | null
     xpReward: number | null
     seasonId: number | null
     startsAt: Date | null
@@ -9592,6 +9593,7 @@ export namespace Prisma {
     title: string | null
     description: string | null
     type: string | null
+    status: string | null
     xpReward: number | null
     seasonId: number | null
     startsAt: Date | null
@@ -9606,6 +9608,7 @@ export namespace Prisma {
     title: number
     description: number
     type: number
+    status: number
     config: number
     xpReward: number
     seasonId: number
@@ -9635,6 +9638,7 @@ export namespace Prisma {
     title?: true
     description?: true
     type?: true
+    status?: true
     xpReward?: true
     seasonId?: true
     startsAt?: true
@@ -9649,6 +9653,7 @@ export namespace Prisma {
     title?: true
     description?: true
     type?: true
+    status?: true
     xpReward?: true
     seasonId?: true
     startsAt?: true
@@ -9663,6 +9668,7 @@ export namespace Prisma {
     title?: true
     description?: true
     type?: true
+    status?: true
     config?: true
     xpReward?: true
     seasonId?: true
@@ -9765,6 +9771,7 @@ export namespace Prisma {
     title: string
     description: string | null
     type: string
+    status: string
     config: JsonValue
     xpReward: number
     seasonId: number | null
@@ -9799,6 +9806,7 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     type?: boolean
+    status?: boolean
     config?: boolean
     xpReward?: boolean
     seasonId?: boolean
@@ -9817,6 +9825,7 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     type?: boolean
+    status?: boolean
     config?: boolean
     xpReward?: boolean
     seasonId?: boolean
@@ -9833,6 +9842,7 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     type?: boolean
+    status?: boolean
     config?: boolean
     xpReward?: boolean
     seasonId?: boolean
@@ -9849,6 +9859,7 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     type?: boolean
+    status?: boolean
     config?: boolean
     xpReward?: boolean
     seasonId?: boolean
@@ -9858,7 +9869,7 @@ export namespace Prisma {
     sanityId?: boolean
   }
 
-  export type ChallengeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "description" | "type" | "config" | "xpReward" | "seasonId" | "startsAt" | "endsAt" | "createdAt" | "sanityId", ExtArgs["result"]["challenge"]>
+  export type ChallengeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "description" | "type" | "status" | "config" | "xpReward" | "seasonId" | "startsAt" | "endsAt" | "createdAt" | "sanityId", ExtArgs["result"]["challenge"]>
   export type ChallengeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     season?: boolean | Challenge$seasonArgs<ExtArgs>
     completions?: boolean | Challenge$completionsArgs<ExtArgs>
@@ -9883,6 +9894,7 @@ export namespace Prisma {
       title: string
       description: string | null
       type: string
+      status: string
       config: Prisma.JsonValue
       xpReward: number
       seasonId: number | null
@@ -10320,6 +10332,7 @@ export namespace Prisma {
     readonly title: FieldRef<"Challenge", 'String'>
     readonly description: FieldRef<"Challenge", 'String'>
     readonly type: FieldRef<"Challenge", 'String'>
+    readonly status: FieldRef<"Challenge", 'String'>
     readonly config: FieldRef<"Challenge", 'Json'>
     readonly xpReward: FieldRef<"Challenge", 'Int'>
     readonly seasonId: FieldRef<"Challenge", 'Int'>
@@ -13042,6 +13055,7 @@ export namespace Prisma {
     title: 'title',
     description: 'description',
     type: 'type',
+    status: 'status',
     config: 'config',
     xpReward: 'xpReward',
     seasonId: 'seasonId',
@@ -13660,6 +13674,7 @@ export namespace Prisma {
     title?: StringFilter<"Challenge"> | string
     description?: StringNullableFilter<"Challenge"> | string | null
     type?: StringFilter<"Challenge"> | string
+    status?: StringFilter<"Challenge"> | string
     config?: JsonFilter<"Challenge">
     xpReward?: IntFilter<"Challenge"> | number
     seasonId?: IntNullableFilter<"Challenge"> | number | null
@@ -13677,6 +13692,7 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrderInput | SortOrder
     type?: SortOrder
+    status?: SortOrder
     config?: SortOrder
     xpReward?: SortOrder
     seasonId?: SortOrderInput | SortOrder
@@ -13698,6 +13714,7 @@ export namespace Prisma {
     title?: StringFilter<"Challenge"> | string
     description?: StringNullableFilter<"Challenge"> | string | null
     type?: StringFilter<"Challenge"> | string
+    status?: StringFilter<"Challenge"> | string
     config?: JsonFilter<"Challenge">
     xpReward?: IntFilter<"Challenge"> | number
     seasonId?: IntNullableFilter<"Challenge"> | number | null
@@ -13714,6 +13731,7 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrderInput | SortOrder
     type?: SortOrder
+    status?: SortOrder
     config?: SortOrder
     xpReward?: SortOrder
     seasonId?: SortOrderInput | SortOrder
@@ -13737,6 +13755,7 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Challenge"> | string
     description?: StringNullableWithAggregatesFilter<"Challenge"> | string | null
     type?: StringWithAggregatesFilter<"Challenge"> | string
+    status?: StringWithAggregatesFilter<"Challenge"> | string
     config?: JsonWithAggregatesFilter<"Challenge">
     xpReward?: IntWithAggregatesFilter<"Challenge"> | number
     seasonId?: IntNullableWithAggregatesFilter<"Challenge"> | number | null
@@ -14340,6 +14359,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     startsAt?: Date | string | null
@@ -14356,6 +14376,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     seasonId?: number | null
@@ -14371,6 +14392,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14387,6 +14409,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     seasonId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -14403,6 +14426,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     seasonId?: number | null
@@ -14417,6 +14441,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14431,6 +14456,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     seasonId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -15102,6 +15128,7 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     type?: SortOrder
+    status?: SortOrder
     config?: SortOrder
     xpReward?: SortOrder
     seasonId?: SortOrder
@@ -15123,6 +15150,7 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     type?: SortOrder
+    status?: SortOrder
     xpReward?: SortOrder
     seasonId?: SortOrder
     startsAt?: SortOrder
@@ -15137,6 +15165,7 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     type?: SortOrder
+    status?: SortOrder
     xpReward?: SortOrder
     seasonId?: SortOrder
     startsAt?: SortOrder
@@ -16170,6 +16199,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     startsAt?: Date | string | null
@@ -16185,6 +16215,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     startsAt?: Date | string | null
@@ -16229,6 +16260,7 @@ export namespace Prisma {
     title?: StringFilter<"Challenge"> | string
     description?: StringNullableFilter<"Challenge"> | string | null
     type?: StringFilter<"Challenge"> | string
+    status?: StringFilter<"Challenge"> | string
     config?: JsonFilter<"Challenge">
     xpReward?: IntFilter<"Challenge"> | number
     seasonId?: IntNullableFilter<"Challenge"> | number | null
@@ -16359,6 +16391,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     startsAt?: Date | string | null
@@ -16374,6 +16407,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     seasonId?: number | null
@@ -16404,6 +16438,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16419,6 +16454,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     seasonId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -16526,6 +16562,7 @@ export namespace Prisma {
     title: string
     description?: string | null
     type: string
+    status?: string
     config: JsonNullValueInput | InputJsonValue
     xpReward?: number
     startsAt?: Date | string | null
@@ -16539,6 +16576,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16554,6 +16592,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16569,6 +16608,7 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
     config?: JsonNullValueInput | InputJsonValue
     xpReward?: IntFieldUpdateOperationsInput | number
     startsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

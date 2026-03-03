@@ -25,6 +25,7 @@ const ADMIN_ONLY_ACTIONS = new Set([
   "create-challenge",
   "update-challenge",
   "sync-sanity-challenges",
+  "sync-challenge-config-from-sanity",
 ]);
 
 const ALLOWED_ACTIONS = new Set([
@@ -48,6 +49,7 @@ const ALLOWED_ACTIONS = new Set([
   "create-challenge",
   "update-challenge",
   "sync-sanity-challenges",
+  "sync-challenge-config-from-sanity",
   "index-enrollment",
 ]);
 

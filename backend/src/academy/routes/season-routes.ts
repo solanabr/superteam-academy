@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 import { getPrisma } from "@/lib/prisma.js";
 import { withRouteErrorHandling, badRequest } from "@/lib/errors.js";
+import { sanityClient } from "@/lib/sanity.js";
 import { readJsonObject, readOptionalString, readRequiredString } from "@/lib/validation.js";
 
 function parseIsoDate(value: unknown, field: string): Date {
@@ -85,8 +86,11 @@ export function registerSeasonRoutes(app: Hono): void {
         endAt?: Date;
         sanityId?: string | null;
       } = {};
+      let newSlug: string | undefined;
+
       if (body.slug !== undefined) {
-        updates.slug = readRequiredString(body, "slug").trim().toLowerCase().replace(/\s+/g, "-");
+        newSlug = readRequiredString(body, "slug").trim().toLowerCase().replace(/\s+/g, "-");
+        updates.slug = newSlug;
         const conflict = await prisma.season.findFirst({
           where: { slug: updates.slug, id: { not: id } },
         });
@@ -98,6 +102,21 @@ export function registerSeasonRoutes(app: Hono): void {
       if (body.startAt !== undefined) updates.startAt = parseIsoDate(body.startAt, "startAt");
       if (body.endAt !== undefined) updates.endAt = parseIsoDate(body.endAt, "endAt");
       if (body.sanityId !== undefined) updates.sanityId = readOptionalString(body, "sanityId") ?? null;
+
+      if (newSlug && newSlug !== existing.slug && existing.sanityId) {
+        try {
+          await sanityClient
+            .patch(existing.sanityId)
+            .set({ slug: { _type: "slug", current: newSlug } })
+            .commit();
+        } catch (err) {
+          console.error("failed to sync season slug to Sanity", {
+            sanityId: existing.sanityId,
+            newSlug,
+            error: String(err),
+          });
+        }
+      }
       const season = await prisma.season.update({
         where: { id },
         data: updates,

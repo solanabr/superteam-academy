@@ -47,6 +47,9 @@ importers:
       node-cron:
         specifier: ^4.2.1
         version: 4.2.1
+      vm2:
+        specifier: ^3.10.5
+        version: 3.10.5
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -796,6 +799,10 @@ packages:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
+
+  acorn-walk@8.3.5:
+    resolution: {integrity: sha512-HEHNfbars9v4pgpW6SO1KSPkfoS0xVOM/9UzkJltjlsHZmJasxg8aXkuZa7SMf8vKGIBhpUsPluQSqhJFCqebw==}
+    engines: {node: '>=0.4.0'}
 
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
@@ -1854,6 +1861,11 @@ packages:
       jsdom:
         optional: true
 
+  vm2@3.10.5:
+    resolution: {integrity: sha512-3P/2QDccVFBcujfCOeP8vVNuGfuBJHEuvGR8eMmI10p/iwLL2UwF5PDaNaoOS2pRGQEDmJRyeEcc8kmm2Z59RA==}
+    engines: {node: '>=6.0'}
+    hasBin: true
+
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
 
@@ -2630,6 +2642,10 @@ snapshots:
       tinyrainbow: 3.0.3
 
   acorn-jsx@5.3.2(acorn@8.16.0):
+    dependencies:
+      acorn: 8.16.0
+
+  acorn-walk@8.3.5:
     dependencies:
       acorn: 8.16.0
 
@@ -3639,6 +3655,11 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  vm2@3.10.5:
+    dependencies:
+      acorn: 8.16.0
+      acorn-walk: 8.3.5
 
   webidl-conversions@3.0.1: {}
 

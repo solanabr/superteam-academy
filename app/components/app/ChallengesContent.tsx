@@ -108,8 +108,21 @@ export function ChallengesContent() {
                     </p>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-game text-xs text-muted-foreground">
-                      {ch.type === "daily" ? "Daily challenge" : "Seasonal challenge"}
+                    <div className="font-game text-xs text-muted-foreground flex items-center gap-2">
+                      <span>
+                        {ch.type === "daily"
+                          ? "Daily challenge"
+                          : ch.type === "seasonal"
+                          ? "Seasonal challenge"
+                          : ch.type === "sponsored"
+                          ? "Sponsored challenge"
+                          : ch.type}
+                      </span>
+                      {ch.type === "sponsored" && (
+                        <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-yellow-400 border-yellow-400/60">
+                          Sponsored
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {ch.completed && (
@@ -171,7 +184,7 @@ export function ChallengesContent() {
 
       {wallet && (
         <div className="space-y-4">
-          <div className="relative max-w-md">
+          <div className="relative max-w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search challenges..."

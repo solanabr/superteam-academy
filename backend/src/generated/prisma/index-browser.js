@@ -191,6 +191,7 @@ exports.Prisma.ChallengeScalarFieldEnum = {
   title: 'title',
   description: 'description',
   type: 'type',
+  status: 'status',
   config: 'config',
   xpReward: 'xpReward',
   seasonId: 'seasonId',

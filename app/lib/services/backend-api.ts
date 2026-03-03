@@ -273,7 +273,7 @@ export interface CreateChallengeParams {
   slug: string;
   title: string;
   description?: string;
-  type: "daily" | "seasonal";
+  type: "daily" | "seasonal" | "sponsored";
   config: Record<string, unknown>;
   xpReward?: number;
   seasonId?: number;
@@ -286,7 +286,7 @@ export interface UpdateChallengeParams {
   slug?: string;
   title?: string;
   description?: string;
-  type?: "daily" | "seasonal";
+  type?: "daily" | "seasonal" | "sponsored";
   config?: Record<string, unknown>;
   xpReward?: number;
   seasonId?: number | null;
@@ -340,5 +340,13 @@ export async function syncSanityChallenges(
       challengesCreated?: number;
       challengesUpdated?: number;
     }
+  >;
+}
+
+export async function syncChallengeConfigFromSanity(
+  token?: string | null
+): Promise<BackendApiResponse & { updated?: number }> {
+  return postBff("/sync-challenge-config-from-sanity", {}, token) as Promise<
+    BackendApiResponse & { updated?: number }
   >;
 }

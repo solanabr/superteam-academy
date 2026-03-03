@@ -100,6 +100,7 @@ export function registerChallengeRoutes(app: Hono): void {
           seasonId: ch.seasonId,
           startsAt: ch.startsAt,
           endsAt: ch.endsAt,
+          status: ch.status,
           fromSanity: ch.sanityId != null,
           sanityId: ch.sanityId ?? undefined,
           seasonName: ch.season?.name ?? null,
@@ -110,6 +111,7 @@ export function registerChallengeRoutes(app: Hono): void {
       const activeDay = day as string;
       const [challenges, completions] = await Promise.all([
         prisma.challenge.findMany({
+          where: { status: "active" },
           include: { season: true },
           orderBy: { id: "asc" },
         }),
@@ -132,6 +134,10 @@ export function registerChallengeRoutes(app: Hono): void {
         }
         if (ch.type === "seasonal" && ch.season) {
           return isDayInRange(activeDay, ch.season.startAt, ch.season.endAt);
+        }
+        if (ch.type === "sponsored") {
+          if (!ch.startsAt || !ch.endsAt) return false;
+          return isDayInRange(activeDay, ch.startsAt, ch.endsAt);
         }
         return false;
       });
@@ -188,8 +194,10 @@ export function registerChallengeRoutes(app: Hono): void {
     withRouteErrorHandling(async (c) => {
       const prisma = getPrisma();
 
-      // Write-only sync: use Prisma as source of truth and
-      // create/update corresponding docs in Sanity.
+      // Write-only sync: use Prisma as source of truth for core fields and
+      // create/update corresponding docs in Sanity. Sanity may add extra
+      // fields (like rich content or code tests) which can be pulled back
+      // into Challenge.config via a separate sync route.
       const seasons = await prisma.season.findMany();
       const challenges = await prisma.challenge.findMany();
 
@@ -240,7 +248,6 @@ export function registerChallengeRoutes(app: Hono): void {
           title: challenge.title,
           description: challenge.description ?? undefined,
           type: challenge.type,
-          config: (challenge.config ?? {}) as object,
           xpReward: challenge.xpReward,
           startsAt: challenge.startsAt ? challenge.startsAt.toISOString() : undefined,
           endsAt: challenge.endsAt ? challenge.endsAt.toISOString() : undefined,
@@ -251,10 +258,12 @@ export function registerChallengeRoutes(app: Hono): void {
         }
 
         if (challenge.sanityId) {
-          await sanityClient.createOrReplace({
-            _id: challenge.sanityId,
-            ...baseDoc,
-          } as { _id: string; _type: string });
+          // Only update core fields; keep any additional fields (like config)
+          // that may have been authored directly in Sanity.
+          await sanityClient
+            .patch(challenge.sanityId)
+            .set(baseDoc)
+            .commit();
           challengesUpdated += 1;
         } else {
           const created = await sanityClient.create(baseDoc as { _type: string });
@@ -456,8 +465,8 @@ export function registerChallengeRoutes(app: Hono): void {
       const title = readRequiredString(body, "title");
       const description = readOptionalString(body, "description") ?? null;
       const type = readRequiredString(body, "type");
-      if (type !== "daily" && type !== "seasonal") {
-        throw badRequest("type must be daily or seasonal");
+      if (type !== "daily" && type !== "seasonal" && type !== "sponsored") {
+        throw badRequest("type must be daily, seasonal, or sponsored");
       }
       const config = parseJsonObject(body.config, "config");
       const xpReward = readOptionalNumber(body, "xpReward", { defaultValue: 0, integer: true, min: 0 }) ?? 0;
@@ -467,6 +476,14 @@ export function registerChallengeRoutes(app: Hono): void {
       }
       const startsAt = parseIsoDateOrNull(body.startsAt, "startsAt");
       const endsAt = parseIsoDateOrNull(body.endsAt, "endsAt");
+      if (type === "sponsored") {
+        if (!startsAt || !endsAt) {
+          throw badRequest("startsAt and endsAt are required for sponsored challenges");
+        }
+        if (startsAt > endsAt) {
+          throw badRequest("startsAt must be before endsAt for sponsored challenges");
+        }
+      }
       const challenge = await prisma.challenge.create({
         data: {
           slug,
@@ -543,8 +560,8 @@ export function registerChallengeRoutes(app: Hono): void {
       if (body.description !== undefined) updates.description = readOptionalString(body, "description") ?? null;
       if (body.type !== undefined) {
         updates.type = readRequiredString(body, "type");
-        if (updates.type !== "daily" && updates.type !== "seasonal") {
-          throw badRequest("type must be daily or seasonal");
+        if (updates.type !== "daily" && updates.type !== "seasonal" && updates.type !== "sponsored") {
+          throw badRequest("type must be daily, seasonal, or sponsored");
         }
       }
       if (body.config !== undefined) updates.config = parseJsonObject(body.config, "config") as object;

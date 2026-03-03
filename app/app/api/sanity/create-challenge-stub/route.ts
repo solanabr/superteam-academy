@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
   const slug = (body.slug ?? "").trim();
   const title = (body.title ?? "").trim();
   const type = (body.type ?? "").trim();
-  if (!slug || !title || (type !== "daily" && type !== "seasonal")) {
+  if (!slug || !title || (type !== "daily" && type !== "seasonal" && type !== "sponsored")) {
     return NextResponse.json(
-      { error: "slug, title, type(daily|seasonal) are required" },
+      { error: "slug, title, type(daily|seasonal|sponsored) are required" },
       { status: 400 }
     );
   }

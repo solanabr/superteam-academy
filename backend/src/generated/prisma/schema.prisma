@@ -106,7 +106,8 @@ model Challenge {
   slug        String    @unique
   title       String
   description String?
-  type        String // "daily" | "seasonal"
+  type        String // "daily" | "seasonal" | "sponsored"
+  status      String    @default("pending") @map("status") // "pending" | "active" | "ended"
   config      Json // e.g. { "action": "complete_lesson", "courseId": "...", "lessonCount": 1 }
   xpReward    Int       @default(0) @map("xp_reward")
   seasonId    Int?      @map("season_id")
@@ -119,6 +120,7 @@ model Challenge {
   completions UserChallengeCompletion[]
 
   @@index([type, startsAt, endsAt])
+  @@index([status])
   @@index([seasonId])
   @@map("challenges")
 }

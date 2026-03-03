@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useChallenges, useCompleteChallenge } from "@/hooks";
 import type { ChallengeItem } from "@/hooks/useChallenges";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 
 type ChallengeBySlug = {
   id: number;
@@ -32,6 +33,7 @@ type ChallengeBySlug = {
   startsAt: string | null;
   endsAt: string | null;
   seasonName: string | null;
+  config?: Record<string, unknown> | null;
 };
 
 export default function ChallengeSlugPage({
@@ -86,6 +88,40 @@ export default function ChallengeSlugPage({
     };
   }, [slug]);
 
+  const codeConfig = useMemo(() => {
+    const raw = (challenge?.config ?? null) as unknown;
+    if (!raw || typeof raw !== "object") return null;
+    const cfg = raw as {
+      kind?: string;
+      language?: string;
+      starterCode?: string;
+      tests?: { id: string; label: string; hidden?: boolean }[];
+      requireSubmissionLink?: boolean;
+    };
+    if (cfg.kind !== "code") return null;
+    return cfg;
+  }, [challenge?.config]);
+
+  const [codeValue, setCodeValue] = useState(
+    (codeConfig?.starterCode as string | undefined) ?? ""
+  );
+  const [running, setRunning] = useState(false);
+  const [testResults, setTestResults] = useState<
+    { id: string; label: string; passed: boolean; errorMessage?: string; hidden?: boolean }[]
+  >([]);
+
+  const allTestsPassed = testResults.length > 0 && testResults.every((t) => t.passed);
+
+  // When codeConfig arrives from the backend, initialize the editor with starterCode
+  useEffect(() => {
+    const starter = (codeConfig?.starterCode as string | undefined) ?? "";
+    if (!starter) return;
+    // Only auto-fill if the user hasn't typed anything yet
+    if (codeValue === "") {
+      setCodeValue(starter);
+    }
+  }, [codeConfig?.starterCode]);
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex items-center justify-center gap-2">
@@ -97,23 +133,69 @@ export default function ChallengeSlugPage({
 
   if (!challenge) return notFound();
 
-  const handleComplete = () => {
-    const link = submissionLink.trim();
-    if (!link) {
-      toast.error("Submission link is required to complete this challenge.");
-      return;
+  async function handleRunTests() {
+    if (!challenge) return;
+    if (!codeConfig) return;
+    setRunning(true);
+    try {
+      const res = await fetch(`/api/challenges/${challenge.id}/run-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: codeValue,
+          language: codeConfig.language ?? "typescript",
+        }),
+      });
+      const data = (await res.json()) as {
+        tests?: { id: string; label: string; passed: boolean; errorMessage?: string; hidden?: boolean }[];
+        allPassed?: boolean;
+        error?: string;
+      };
+      if (!res.ok || data.error) {
+        throw new Error(data.error ?? "Failed to run tests");
+      }
+      setTestResults(data.tests ?? []);
+      if (data.allPassed) {
+        toast.success("All tests passed! You can now complete the challenge.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to run tests");
+    } finally {
+      setRunning(false);
     }
-    if (!/^https?:\/\//i.test(link)) {
-      toast.error("Enter a valid URL starting with http:// or https://");
-      return;
+  }
+
+  const handleComplete = () => {
+    const isCodeChallenge = Boolean(codeConfig);
+    const requireLinkForCode = Boolean(codeConfig?.requireSubmissionLink);
+    const shouldValidateLink = !isCodeChallenge || requireLinkForCode;
+
+    const link = submissionLink.trim();
+    if (shouldValidateLink) {
+      if (!link) {
+        toast.error("Submission link is required to complete this challenge.");
+        return;
+      }
+      if (!/^https?:\/\//i.test(link)) {
+        toast.error("Enter a valid URL starting with http:// or https://");
+        return;
+      }
     }
     if (!wallet) {
       toast.error("Connect your wallet to complete this challenge.");
       return;
     }
 
+    if (codeConfig && !allTestsPassed) {
+      toast.error("Run tests and pass all of them before completing this code challenge.");
+      return;
+    }
+
     complete(
-      { challengeId: challenge.id, submissionLink: link },
+      {
+        challengeId: challenge.id,
+        ...(shouldValidateLink ? { submissionLink: link } : {}),
+      },
       {
         onSuccess: () => {
           toast.success("Challenge completed! XP awarded.");
@@ -216,7 +298,11 @@ export default function ChallengeSlugPage({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 font-game text-sm text-yellow-400">
             <Target className="h-4 w-4" />
-            {challenge.type === "seasonal" ? "Seasonal" : "Daily"}
+            {challenge.type === "seasonal"
+              ? "Seasonal"
+              : challenge.type === "sponsored"
+              ? "Sponsored"
+              : "Daily"}
           </span>
           {challenge.xpReward > 0 && (
             <span className="font-game text-sm text-yellow-400 inline-flex items-center gap-1">
@@ -239,6 +325,95 @@ export default function ChallengeSlugPage({
           </p>
         )}
 
+        {codeConfig && (
+          <div className="space-y-3">
+                <div className="space-y-1">
+              <p className="font-game text-sm text-muted-foreground">
+                Solve this challenge by writing code. Implement a function{" "}
+                <code className="px-1 py-0.5 rounded bg-muted font-mono text-xs">
+                  solution(input)
+                </code>{" "}
+                that passes all tests.
+              </p>
+            </div>
+            <CodeEditor
+              value={codeValue}
+              onChange={setCodeValue}
+              language={(codeConfig.language as any) ?? "typescript"}
+              height="360px"
+              className="border border-border rounded-xl overflow-hidden"
+            />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-game text-sm text-muted-foreground">
+                  Test cases
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="font-game"
+                  disabled={running}
+                  onClick={handleRunTests}
+                >
+                  {running ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Running…
+                    </>
+                  ) : (
+                    "Run tests"
+                  )}
+                </Button>
+              </div>
+              <div className="space-y-1">
+                {(testResults.length
+                  ? testResults
+                  : (codeConfig.tests ?? []).map((t) => ({
+                      ...t,
+                      passed: false,
+                    }))
+                ).map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between rounded-lg border border-border/60 bg-card/60 px-3 py-2"
+                  >
+                    <span className="font-game text-xs sm:text-sm text-muted-foreground">
+                      {t.label}
+                    </span>
+                    {testResults.length > 0 && (
+                      <span
+                        className={`font-game text-xs ${
+                          t.passed
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {t.passed ? "Passed" : "Failed"}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {testResults.some((t) => t.errorMessage) && (
+                  <ul className="mt-1 space-y-1">
+                    {testResults.map(
+                      (t) =>
+                        t.errorMessage && (
+                          <li
+                            key={`${t.id}-err`}
+                            className="font-game text-xs text-destructive"
+                          >
+                            {t.label}: {t.errorMessage}
+                          </li>
+                        )
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {wallet && completed && (
           <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-game">
             <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -254,25 +429,29 @@ export default function ChallengeSlugPage({
 
         {wallet && !completed && (
           <div className="space-y-3 pt-2">
-            <Label
-              htmlFor="submission-link"
-              className="font-game flex items-center gap-2"
-            >
-              <Link2 className="h-4 w-4" />
-              Submission link (required)
-            </Label>
-            <Input
-              id="submission-link"
-              type="url"
-              placeholder="https://example.com/your-work"
-              value={submissionLink}
-              onChange={(e) => setSubmissionLink(e.target.value)}
-              className="font-game"
-            />
-            <p className="text-xs text-muted-foreground font-game">
-              Paste a link to your work or proof (GitHub repo, CodeSandbox, screenshot, etc.). Admins
-              will use this to verify your submission.
-            </p>
+            {(!codeConfig || codeConfig.requireSubmissionLink) && (
+              <>
+                <Label
+                  htmlFor="submission-link"
+                  className="font-game flex items-center gap-2"
+                >
+                  <Link2 className="h-4 w-4" />
+                  Submission link (required)
+                </Label>
+                <Input
+                  id="submission-link"
+                  type="url"
+                  placeholder="https://example.com/your-work"
+                  value={submissionLink}
+                  onChange={(e) => setSubmissionLink(e.target.value)}
+                  className="font-game"
+                />
+                <p className="text-xs text-muted-foreground font-game">
+                  Paste a link to your work or proof (GitHub repo, CodeSandbox, screenshot, etc.). Admins
+                  will use this to verify your submission.
+                </p>
+              </>
+            )}
             <Button
               variant="pixel"
               className="font-game"
@@ -284,6 +463,8 @@ export default function ChallengeSlugPage({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Completing…
                 </>
+              ) : codeConfig ? (
+                "Complete challenge"
               ) : (
                 "Submit link & complete"
               )}

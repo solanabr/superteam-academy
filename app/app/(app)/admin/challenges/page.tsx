@@ -11,6 +11,7 @@ import {
   createChallenge,
   createSeason,
   syncSanityChallenges,
+  syncChallengeConfigFromSanity,
   updateChallenge,
   updateSeason,
   type BackendApiResponse,
@@ -19,8 +20,8 @@ import {
 } from "@/lib/services/backend-api";
 import { useAdminAuth } from "@/providers/AdminAuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Pencil, Link2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ExternalLink, Link2, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type CompletionRow = {
@@ -285,10 +286,17 @@ export default function AdminChallengesPage() {
         challengesUpdated?: number;
       };
       if (res.error) throw new Error(res.error);
+
+      const cfgRes = (await syncChallengeConfigFromSanity(
+        token
+      )) as BackendApiResponse & { updated?: number };
+      if (cfgRes.error) throw new Error(cfgRes.error);
+
       const createdS = (res as { seasonsCreated?: number }).seasonsCreated ?? 0;
       const updatedS = (res as { seasonsUpdated?: number }).seasonsUpdated ?? 0;
       const createdC = (res as { challengesCreated?: number }).challengesCreated ?? 0;
       const updatedC = (res as { challengesUpdated?: number }).challengesUpdated ?? 0;
+      const cfgUpdated = (cfgRes as { updated?: number }).updated ?? 0;
       const parts: string[] = [];
       if (createdS || updatedS) {
         const s: string[] = [];
@@ -302,10 +310,14 @@ export default function AdminChallengesPage() {
         if (updatedC) s.push(`${updatedC} updated`);
         parts.push(`Challenges: ${s.join(", ")}`);
       }
+      if (cfgUpdated) {
+        parts.push(`Configs: ${cfgUpdated} updated`);
+      }
+
       if (parts.length) {
-        toast.success(`Synced from Sanity. ${parts.join("; ")}.`);
+        toast.success(`Synced with Sanity. ${parts.join("; ")}.`);
       } else {
-        toast.info("Synced from Sanity. No seasons or challenges in Studio.", {
+        toast.info("Synced with Sanity. No seasons or challenges in Studio.", {
           description: "Backend uses SANITY_PROJECT_ID and SANITY_DATASET — ensure they match your app's Sanity project. Create stubs from this page first, or add docs in Studio.",
         });
       }
@@ -442,21 +454,30 @@ export default function AdminChallengesPage() {
         <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
           <h2 className="font-game text-2xl mb-4">Challenges</h2>
           {challengesLoading ? (
-            <p className="font-game text-muted-foreground text-sm">Loading…</p>
+            <p className="font-game text-muted-foreground text-md">Loading…</p>
           ) : challenges.length === 0 ? (
-            <p className="font-game text-muted-foreground text-sm">No challenges yet. Create one to get a stub in Sanity.</p>
+            <p className="font-game text-muted-foreground text-md">No challenges yet. Create one to get a stub in Sanity.</p>
           ) : (
             <ul className="space-y-4 mb-6">
               {challenges.map((ch) => (
-                <li key={ch.id} className="font-game text-sm rounded-xl border-2 border-border bg-muted/30 p-3 space-y-2">
+                <li key={ch.id} className="font-game text-md rounded-xl border-2 border-border bg-muted/30 p-3 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">{ch.title}</span>
+                    <span className="font-semibold text-md">{ch.title}</span>
                     {ch.fromSanity && (
-                      <span className="text-[10px] uppercase tracking-wide rounded-full border px-2 py-0.5 text-muted-foreground">
+                      <span className="text-md uppercase tracking-wide rounded-full border px-2 py-0.5 text-muted-foreground">
                         From Sanity
                       </span>
                     )}
                     <span className="text-yellow-400">{ch.xpReward} XP</span>
+                    <span className="text-xs text-muted-foreground">
+                      {ch.type === "daily"
+                        ? "Daily"
+                        : ch.type === "seasonal"
+                        ? "Seasonal"
+                        : ch.type === "sponsored"
+                        ? "Sponsored"
+                        : ch.type}
+                    </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-muted-foreground">Slug:</span>
@@ -497,7 +518,7 @@ export default function AdminChallengesPage() {
                       href={`${STUDIO_BASE}/desk/challenge;${ch.sanityId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-yellow-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-md text-yellow-400 hover:underline"
                     >
                       Edit in Sanity <ExternalLink className="h-3 w-3" />
                     </a>
@@ -507,28 +528,32 @@ export default function AdminChallengesPage() {
             </ul>
           )}
           <form onSubmit={handleCreateChallenge} className="space-y-3">
-            <Label className="font-game">New challenge (creates stub in Sanity)</Label>
+            <Label className="font-game text-lg">New challenge (creates stub in Sanity)</Label>
             <Input
               placeholder="Slug (e.g. complete-one-lesson)"
               value={challengeForm.slug}
               onChange={(e) => setChallengeForm((f) => ({ ...f, slug: e.target.value }))}
-              className="font-game"
+              className="font-game text-md"
             />
             <Input
               placeholder="Title"
               value={challengeForm.title}
               onChange={(e) => setChallengeForm((f) => ({ ...f, title: e.target.value }))}
-              className="font-game"
+              className="font-game text-md"
             />
             <select
               value={challengeForm.type}
               onChange={(e) =>
-                setChallengeForm((f) => ({ ...f, type: e.target.value as "daily" | "seasonal" }))
+                setChallengeForm((f) => ({
+                  ...f,
+                  type: e.target.value as "daily" | "seasonal" | "sponsored",
+                }))
               }
-              className="border border-input rounded-md bg-background px-3 py-2 font-game w-full"
+              className="border border-input rounded-md bg-background px-3 py-2 font-game w-full text-md"
             >
               <option value="daily">Daily</option>
               <option value="seasonal">Seasonal</option>
+              <option value="sponsored">Sponsored</option>
             </select>
             <Input
               type="number"
@@ -537,20 +562,7 @@ export default function AdminChallengesPage() {
               onChange={(e) =>
                 setChallengeForm((f) => ({ ...f, xpReward: parseInt(e.target.value, 10) || 0 }))
               }
-              className="font-game"
-            />
-            <Input
-              placeholder="Config JSON (e.g. {})"
-              value={JSON.stringify(challengeForm.config ?? {})}
-              onChange={(e) => {
-                try {
-                  const config = JSON.parse(e.target.value || "{}");
-                  setChallengeForm((f) => ({ ...f, config }));
-                } catch {
-                  // ignore invalid JSON
-                }
-              }}
-              className="font-mono text-sm"
+              className="font-game text-md"
             />
             <Button type="submit" variant="pixel" className="font-game" disabled={submitting}>
               Create challenge
