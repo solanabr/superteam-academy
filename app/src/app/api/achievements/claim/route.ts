@@ -43,9 +43,15 @@ export async function POST(request: NextRequest) {
     const service = learningProgressService;
 
     try {
-        const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
-        const claimed = await service.claimAchievement(identifier, achievementId);
-        return NextResponse.json({ ok: true, claimed });
+        const { inngest } = await import("@/lib/inngest/client");
+
+        // PIVOT: Move logic to Inngest for durability
+        await inngest.send({
+            name: "academy/achievement.claimed",
+            data: { wallet, achievementId }
+        });
+
+        return NextResponse.json({ ok: true, claimed: true, queued: true });
     } catch (e: any) {
         return NextResponse.json(
             { error: e?.message ?? "Failed to claim achievement" },

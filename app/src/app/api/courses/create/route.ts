@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverClient } from "@/sanity/lib/server-client";
 import { prisma } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 /**
  * POST /api/courses/create
@@ -44,7 +45,36 @@ export async function POST(request: NextRequest) {
       difficulty?: "beginner" | "intermediate" | "advanced";
       track?: string;
       wallet: string;
-      modules?: Array<{ title?: string; lessons?: Array<{ title: string }> }>;
+      modules?: Array<{
+        title?: string;
+        description?: string;
+        quiz?: {
+          passingScore: number;
+          questions: Array<{
+            question: string;
+            options: string[];
+            correctIndex: number;
+            explanation: string;
+          }>;
+        };
+        lessons?: Array<{
+          title: string;
+          type: string;
+          content?: string;
+          videoUrl?: string;
+          duration?: string;
+          xp?: number;
+          challenge?: {
+            prompt: string;
+            objectives: string[];
+            starterCode: string;
+            solutionCode: string;
+            language: string;
+            hints: string[];
+          };
+        }>;
+      }>;
+      published?: boolean;
     };
 
     if (!title || typeof title !== "string") {
@@ -102,24 +132,93 @@ export async function POST(request: NextRequest) {
             const lessonTitle = lt?.title?.trim();
             if (!lessonTitle) continue;
 
-            const lessonDoc = await serverClient.create({
+            let challengeRef = null;
+            let lessonType = "content";
+
+            // If it's a challenge, create the Challenge doc first
+            if (lt.type === "challenge" && lt.challenge) {
+              lessonType = "challenge";
+              const challengeDoc = await serverClient.create({
+                _type: "challenge",
+                title: `${lessonTitle} - Challenge`,
+                prompt: lt.challenge.prompt || "",
+                language: lt.challenge.language || "typescript",
+                starterCode: lt.challenge.starterCode || "",
+                // Map the educator's solution string to the primary test case
+                testCases: lt.challenge.solutionCode ? [
+                  {
+                    _key: `tc-${Date.now()}`,
+                    name: "Primary Validation",
+                    expected: lt.challenge.solutionCode,
+                  }
+                ] : []
+              });
+              challengeRef = { _type: "reference", _ref: challengeDoc._id };
+            }
+
+            // Create simple Portable Text block for the lesson content
+            const contentBlocks = lt.content ? [
+              {
+                _type: "block",
+                _key: Date.now().toString(36) + Math.random().toString(36).substring(2),
+                style: "normal",
+                markDefs: [],
+                children: [
+                  {
+                    _type: "span",
+                    _key: Date.now().toString(36) + Math.random().toString(36).substring(2),
+                    text: lt.content,
+                  }
+                ]
+              }
+            ] : [];
+
+            // Create Lesson doc
+            const lessonDocPayload: any = {
               _type: "lesson",
               title: lessonTitle,
               sortOrder: li,
-              content: [],
-              lessonType: "content",
-            });
+              lessonType,
+              content: contentBlocks,
+            };
+
+            if (lt.videoUrl) lessonDocPayload.videoUrl = lt.videoUrl;
+            if (lt.duration) lessonDocPayload.estimatedTime = lt.duration;
+            if (challengeRef) lessonDocPayload.challenge = challengeRef;
+
+            const lessonDoc = await serverClient.create(lessonDocPayload);
 
             lessonRefs.push({ _type: "reference", _ref: lessonDoc._id });
           }
         }
 
-        const moduleDoc = await serverClient.create({
+        let quizRef = null;
+        if (mod.quiz && Array.isArray(mod.quiz.questions) && mod.quiz.questions.length > 0 && mod.quiz.questions[0].question.trim() !== '') {
+          const quizDoc = await serverClient.create({
+            _type: "quiz",
+            title: `${mod.title || `Module ${mi + 1}`} - Quiz`,
+            passingScore: mod.quiz.passingScore || 70,
+            questions: mod.quiz.questions.map(q => ({
+              _key: Date.now().toString(36) + Math.random().toString(36).substring(2),
+              question: q.question,
+              options: q.options,
+              correctIndex: q.correctIndex,
+              explanation: q.explanation || ""
+            }))
+          });
+          quizRef = { _type: "reference", _ref: quizDoc._id };
+        }
+
+        const modulePayload: any = {
           _type: "module",
           title: mod.title || `Module ${mi + 1}`,
+          description: mod.description || "",
           sortOrder: mi,
           lessons: lessonRefs,
-        });
+        };
+        if (quizRef) modulePayload.quiz = quizRef;
+
+        const moduleDoc = await serverClient.create(modulePayload);
 
         moduleRefs.push({ _type: "reference", _ref: moduleDoc._id });
       }
@@ -179,6 +278,14 @@ export async function POST(request: NextRequest) {
       } catch (syncError) {
         console.error("[api/courses/create] Background sync dispatch failed:", syncError);
       }
+    }
+    // Proactively revalidate the courses list and detail paths
+    try {
+      revalidatePath("/[locale]/(platform)/courses", "page");
+      revalidatePath("/[locale]/(platform)/courses/[slug]", "page");
+      console.log(`[api/courses/create] ISR paths revalidated for course: ${slug}`);
+    } catch (revalidateError) {
+      console.error("[api/courses/create] Non-blocking revalidation failed:", revalidateError);
     }
 
     return NextResponse.json({

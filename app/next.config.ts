@@ -24,6 +24,8 @@ const svgAttrReplace = {
   },
 };
 
+import { withSentryConfig } from "@sentry/nextjs";
+
 const nodeModulesPath = path.join(__dirname, "node_modules");
 
 const nextConfig: NextConfig = {
@@ -38,6 +40,31 @@ const nextConfig: NextConfig = {
         hostname: "api.dicebear.com",
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
   },
   // Satisfy Next 16: having webpack config requires a turbopack key (empty = no custom Turbopack).
   turbopack: {},
@@ -58,35 +85,45 @@ const nextConfig: NextConfig = {
       use: svgAttrReplace,
     });
 
-    // Make @codemirror/lsp-client optional - handle gracefully if not installed
-    // The code uses dynamic imports with try-catch, so runtime will handle missing package
-    // This webpack config prevents build errors when the package is not installed
-    const originalExternals = config.externals || [];
-    config.externals = [
-      ...(Array.isArray(originalExternals) ? originalExternals : []),
-      ({ request }: { request?: string }, callback: Function) => {
-        if (request === "@codemirror/lsp-client") {
-          // Check if module exists
-          try {
-            require.resolve(request);
-            // Module exists - let webpack handle it normally
-            return callback();
-          } catch {
-            // Module doesn't exist - provide empty object to prevent build error
-            // Runtime code uses dynamic imports with try-catch to handle gracefully
-            return callback(null, "{}");
-          }
-        }
-        // For other modules, use original externals logic
-        if (typeof originalExternals === "function") {
-          return originalExternals({ request }, callback);
-        }
-        callback();
-      },
-    ];
 
     return config;
   },
 };
 
-export default withNextIntl(nextConfig);
+// Wrap with next-intl FIRST, then with Sentry
+const intlConfig = withNextIntl(nextConfig);
+
+export default withSentryConfig(intlConfig, {
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
+
+  // For all available options, see:
+  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-hidden-source-map
+  widenClientFileUpload: true,
+
+  // Automatically annotate React components to show their full name in breadcrumbs and McR
+  reactComponentAnnotation: {
+    enabled: true,
+  },
+
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+  // This can increase your server load as well as your Sentry quota.
+  // tunnelRoute: "/monitoring",
+
+  // Hides source maps from visitors
+
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
+
+  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router config route handlers.)
+  // See the following for more information:
+  // https://docs.sentry.io/product/crons/
+  // https://vercel.com/docs/cron-jobs
+  automaticVercelMonitors: true,
+});

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+/** 
+ * CRITICAL: This route is forced to dynamic to ensure that user preferences and settings
+ * are always fresh and never served from a stale build-time or edge cache.
+ */
+export const dynamic = "force-dynamic";
+
 /** GET: return user by wallet. POST: create or return user by wallet (call after connect). */
 export async function GET(request: NextRequest) {
   const wallet = request.nextUrl.searchParams.get("wallet");
@@ -16,17 +22,16 @@ export async function GET(request: NextRequest) {
         email: true,
         role: true,
         profile: true,
-        referralCode: true,
-        _count: { select: { referrals: true } },
+        preferences: true,
+        progress: {
+          select: { xp: true, currentStreak: true, longestStreak: true, lastActivityDate: true }
+        }
       },
     });
     if (!user) {
       return NextResponse.json(null, { status: 404 });
     }
-    return NextResponse.json({
-      ...user,
-      referralsCount: user._count.referrals,
-    });
+    return NextResponse.json(user);
   } catch (e: any) {
     console.error("GET /api/user error:", e?.message ?? e);
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
@@ -40,33 +45,17 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const { wallet, email, referrerCode } = body;
+  const { wallet, email } = body;
   if (!wallet || typeof wallet !== "string") {
     return NextResponse.json({ error: "Missing wallet" }, { status: 400 });
   }
 
   try {
-    // Check if user exists first to only apply referrer on creation
-    const existingUser = await prisma.user.findUnique({
-      where: { walletAddress: wallet },
-    });
-
-    let referrerId: string | undefined;
-    if (!existingUser && referrerCode) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: referrerCode },
-      });
-      if (referrer) {
-        referrerId = referrer.id;
-      }
-    }
-
     const user = await prisma.user.upsert({
       where: { walletAddress: wallet },
       create: {
         walletAddress: wallet,
         email: email ?? null,
-        referrerId: referrerId,
         profile: {
           image: `https://api.dicebear.com/9.x/bottts/svg?seed=${wallet}&backgroundColor=0a0a0b&baseColor=14f195&radius=50&sidesProbability=0&topProbability=0`,
           displayName: ""
@@ -79,15 +68,14 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         profile: true,
-        referralCode: true,
-        _count: { select: { referrals: true } },
+        preferences: true,
+        progress: {
+          select: { xp: true, currentStreak: true, longestStreak: true, lastActivityDate: true }
+        }
       },
     });
 
-    return NextResponse.json({
-      ...user,
-      referralsCount: user._count.referrals,
-    });
+    return NextResponse.json(user);
   } catch (e: any) {
     console.error("POST /api/user error:", e?.message ?? e);
     return NextResponse.json({ error: "Database connection failed" }, { status: 503 });

@@ -11,13 +11,14 @@ export async function GET(request: NextRequest) {
             ? timeframeStr as "daily" | "weekly" | "all-time"
             : "all-time";
 
-        const limit = parseInt(searchParams.get("limit") || "50", 10);
+        const limit = parseInt(searchParams.get("limit") || "10", 10);
+        const page = parseInt(searchParams.get("page") || "1", 10);
         const courseId = searchParams.get("courseId") || undefined;
 
         const { getCached } = await import("@/lib/cache");
-        const leaderboard = await getCached(`leaderboard:${timeframe}:${courseId || 'all'}:${limit}`, async () => {
-            return await learningProgressService.getLeaderboard({ limit, timeframe, courseId });
-        }, { ttl: 60 });
+        const leaderboard = await getCached(`leaderboard:${timeframe}:${courseId || 'all'}:${limit}:${page}`, async () => {
+            return await learningProgressService.getLeaderboard({ limit, page, timeframe, courseId });
+        }, { ttl: 20 });
 
         return NextResponse.json(leaderboard);
     } catch (e) {

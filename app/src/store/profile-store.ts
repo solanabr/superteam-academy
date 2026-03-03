@@ -7,6 +7,7 @@ export type PublicProfile = {
         walletAddress: string;
         createdAt: string;
         profile: any;
+        preferences?: any;
     };
     xp: number;
     level: number;
@@ -21,6 +22,7 @@ type ProfileState = {
     error: string | null;
 
     fetchProfile: (wallet: string) => Promise<void>;
+    updateProfileXp: (wallet: string, xpGain: number) => void;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
     reset: () => void;
@@ -71,6 +73,27 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         } finally {
             set({ isInitialLoading: false, isRefreshing: false });
         }
+    },
+
+    updateProfileXp: (wallet: string, xpGain: number) => {
+        set((state) => {
+            const profile = state.profiles[wallet];
+            if (!profile) return state;
+
+            const newXp = profile.xp + xpGain;
+            const newLevel = Math.floor(newXp / 1000); // Matching basic rank logic
+
+            return {
+                profiles: {
+                    ...state.profiles,
+                    [wallet]: {
+                        ...profile,
+                        xp: newXp,
+                        level: newLevel
+                    }
+                }
+            };
+        });
     },
 
     setError: (error) => set({ error }),

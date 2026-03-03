@@ -91,12 +91,10 @@ export function PlatformNavbar() {
         <nav className="fixed top-0 left-0 right-0 h-16 z-40 bg-[#0A0A0B]/70 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-3">
-                <div className="size-8 rounded bg-gradient-to-br from-solana to-emerald-800 flex items-center justify-center shadow-[0_0_10px_rgba(20,241,149,0.3)]">
+                <img src="/logo/st-brazil-horizontal.svg" alt="Superteam Brazil" className="h-8 w-auto hidden sm:block" />
+                <div className="size-8 rounded bg-gradient-to-br from-solana to-emerald-800 flex items-center justify-center shadow-[0_0_10px_rgba(20,241,149,0.3)] sm:hidden">
                     <Terminal size={18} className="text-void" strokeWidth={2.5} />
                 </div>
-                <h1 className="font-display font-bold text-lg md:text-xl tracking-tight text-white hidden sm:block">
-                    Superteam<span className="text-solana">.academy</span>
-                </h1>
             </Link>
 
             {/* Desktop Navigation */}

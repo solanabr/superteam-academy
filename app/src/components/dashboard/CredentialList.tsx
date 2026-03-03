@@ -21,28 +21,85 @@ export function CredentialList({
     const { wallets } = useWallets();
     const {
         credentials: storeCredentials,
-        isCredentialsLoading: loading,
-        fetchCredentials
+        isCredentialsLoading: storeLoading,
+        fetchCredentials,
+        hasMoreCredentials: storeHasMore,
+        credentialPage
     } = useUserStore();
     const t = useTranslations("components");
 
-    // Use initialData if provided, otherwise fallback to store
-    const credentials = initialData ?? storeCredentials;
+    // UI State
+    const [filter, setFilter] = useState<string>("all");
+    const tracks = ["all", "rust", "anchor", "security", "solana"];
+
+    // Local pagination state for initialData mode
+    const PAGE_SIZE = 5;
+    const [localCredentials, setLocalCredentials] = useState<Credential[]>(initialData ?? []);
+    const [localPage, setLocalPage] = useState(1);
+    const [localHasMore, setLocalHasMore] = useState(
+        initialData ? initialData.length >= PAGE_SIZE : false
+    );
+    const [localLoading, setLocalLoading] = useState(false);
 
     const linkedAddress =
         privyUser?.wallet?.address ?? privyUser?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
     const resolvedAddress = propAddress ?? linkedAddress ?? wallets?.[0]?.address;
 
-    const [filter, setFilter] = useState<string>("all");
-    const tracks = ["all", "rust", "anchor", "security", "solana"];
+    const isInitialDataMode = !!initialData;
 
+    // Effects
     useEffect(() => {
-        // Only fetch if initialData is NOT provided
-        if (resolvedAddress && !initialData) {
-            fetchCredentials(resolvedAddress);
+        // Only fetch from store if initialData is NOT provided
+        if (resolvedAddress && !isInitialDataMode) {
+            fetchCredentials(resolvedAddress, 1, false);
         }
-    }, [resolvedAddress, fetchCredentials, initialData]);
+    }, [resolvedAddress, fetchCredentials, isInitialDataMode]);
 
+    // Sync initialData changes (e.g. when profile store refreshes)
+    useEffect(() => {
+        if (initialData) {
+            setLocalCredentials(initialData);
+            setLocalHasMore(initialData.length >= PAGE_SIZE);
+            setLocalPage(1);
+        }
+    }, [initialData]);
+
+    const handleLoadMore = async () => {
+        if (isInitialDataMode) {
+            // Fetch next page directly from the credentials API
+            if (!resolvedAddress || localLoading) return;
+            setLocalLoading(true);
+            const nextPage = localPage + 1;
+            try {
+                const res = await fetch(
+                    `/api/credentials?wallet=${encodeURIComponent(resolvedAddress)}&page=${nextPage}&limit=${PAGE_SIZE}`,
+                    { cache: "no-store" }
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    const newCreds = data.credentials || [];
+                    setLocalCredentials(prev => [...prev, ...newCreds]);
+                    setLocalHasMore(data.pagination?.hasMore ?? newCreds.length === PAGE_SIZE);
+                    setLocalPage(nextPage);
+                }
+            } catch (e) {
+                console.error("Load more credentials error:", e);
+            } finally {
+                setLocalLoading(false);
+            }
+        } else {
+            if (resolvedAddress) {
+                fetchCredentials(resolvedAddress, credentialPage + 1, true);
+            }
+        }
+    };
+
+    // Determine which data source to use
+    const credentials = isInitialDataMode ? localCredentials : storeCredentials;
+    const loading = isInitialDataMode ? localLoading : storeLoading;
+    const hasMore = isInitialDataMode ? localHasMore : storeHasMore;
+
+    // Early Returns (must be AFTER all hooks)
     if (loading && credentials.length === 0) {
         return <Loader2 className="h-6 w-6 animate-spin text-solana" />;
     }
@@ -57,17 +114,9 @@ export function CredentialList({
         );
     }
 
-    const sortedCredentials = [...credentials].sort((a, b) => {
-        const trackCompare = (a.trackName || "").localeCompare(b.trackName || "");
-        if (trackCompare !== 0) return trackCompare;
-        const dateA = new Date(a.earnedAt).getTime();
-        const dateB = new Date(b.earnedAt).getTime();
-        return dateB - dateA;
-    });
-
     const filteredCredentials = filter === "all"
-        ? sortedCredentials
-        : sortedCredentials.filter(c => c.trackName?.toLowerCase() === filter.toLowerCase());
+        ? credentials
+        : credentials.filter(c => c.trackName?.toLowerCase() === filter.toLowerCase());
 
     return (
         <div className="flex flex-col gap-6">
@@ -92,33 +141,53 @@ export function CredentialList({
                         No certificates found for {filter.toUpperCase()}.
                     </div>
                 ) : (
-                    filteredCredentials.map((cred) => (
-                        <Link
-                            key={cred.id}
-                            href={`/certificates/${cred.id}`}
-                            className="glass-panel relative overflow-hidden rounded-lg border p-6 group block transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                        >
+                    <>
+                        {filteredCredentials.map((cred) => (
+                            <Link
+                                key={cred.id}
+                                href={`/certificates/${cred.mintAddress || cred.id}`}
+                                prefetch={true}
+                                className="glass-panel relative overflow-hidden rounded-lg border p-6 group block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                            >
 
-                            {cred.image ? (
-                                <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <img src={cred.image} alt={cred.trackName} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-void to-transparent" />
-                                </div>
-                            ) : null}
+                                {cred.image ? (
+                                    <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
+                                        <img src={cred.image} alt={cred.trackName} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-void to-transparent" />
+                                    </div>
+                                ) : null}
 
-                            <div className="relative z-10 flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-solana mb-4">
-                                    <Medal className="h-6 w-6" />
-                                    <span className="font-display font-bold uppercase tracking-wider text-sm">
-                                        {cred.trackName}
-                                    </span>
+                                <div className="relative z-10 flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-solana mb-1">
+                                        <Medal className="h-4 w-5" />
+                                        <span className="font-display font-bold uppercase tracking-wider text-[10px] opacity-70">
+                                            {cred.trackName}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-white font-display font-bold text-lg leading-tight group-hover:text-solana transition-colors">
+                                        {cred.courseName || cred.trackName}
+                                    </h3>
+                                    <div className="mt-2 text-[10px] font-mono text-text-secondary opacity-50">
+                                        {new Date(cred.earnedAt).toLocaleDateString()}
+                                    </div>
                                 </div>
-                                <div className="mt-2 text-xs text-text-secondary opacity-50">
-                                    {new Date(cred.earnedAt).toLocaleDateString()}
-                                </div>
+                            </Link>
+                        ))}
+
+                        {hasMore && filter === "all" && (
+                            <div className="col-span-full flex justify-center mt-6">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleLoadMore}
+                                    disabled={loading}
+                                    className="border-solana/20 text-solana hover:bg-solana/10"
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                    {t("load_more_certificates") || "Load More Certificates"}
+                                </Button>
                             </div>
-                        </Link>
-                    ))
+                        )}
+                    </>
                 )}
             </div>
         </div>

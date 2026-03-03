@@ -86,6 +86,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                     </h3>
                     <Link
                         href="/courses"
+                        prefetch={true}
                         className="text-[10px] font-mono text-text-muted hover:text-solana transition-colors uppercase tracking-[0.2em] font-bold"
                     >
                         {t("browse_courses")} →
@@ -102,6 +103,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                                 <Link
                                     key={course._id}
                                     href={`/courses/${course.slug}`}
+                                    prefetch={true}
                                     className="group glass-panel rounded-xl p-5 border border-white/5 hover:border-solana/30 transition-all duration-300 flex flex-col gap-3"
                                 >
                                     <div className="flex items-start justify-between gap-2">
@@ -157,6 +159,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                 </h3>
                 <Link
                     href="/courses"
+                    prefetch={true}
                     className="text-xs font-mono text-text-muted hover:text-solana transition-colors uppercase tracking-widest"
                 >
                     {t("browse_courses")} →
@@ -172,6 +175,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                         <Link
                             key={course.courseId}
                             href={`/courses/${course.slug}`}
+                            prefetch={true}
                             className="group glass-panel rounded-xl p-5 border border-white/5 hover:border-solana/30 transition-all duration-300 flex flex-col gap-3 relative overflow-hidden"
                         >
                             {/* Track accent */}

@@ -14,12 +14,17 @@ export type AppUser = {
     email?: string;
     role: "student" | "professor" | "admin";
     profile: UserProfile;
+    preferences?: any;
     createdAt: string;
 };
 
 export type Credential = {
     id: string;
+    courseId?: string | null;
+    courseName?: string | null;
+    trackId?: string;
     trackName: string;
+    mintAddress?: string | null;
     level: number;
     coursesCompleted: number;
     totalXpEarned: number;
@@ -36,16 +41,28 @@ export type UserProgress = {
     lastActivityDate: string | null;
 };
 
+export type Activity = {
+    id: string;
+    title: string;
+    description: string;
+    xp: number;
+    timestamp: string;
+};
+
 export type UserState = {
     // User data
     user: AppUser | null;
     progress: UserProgress | null;
     credentials: Credential[];
+    recentActivities: Activity[]; // CACHED ACTIVITY FEED
 
     // Loading states
     isLoading: boolean;
     isProgressLoading: boolean;
     isCredentialsLoading: boolean;
+    hasMoreCredentials: boolean;
+    credentialPage: number;
+    isActivitiesLoading: boolean;
 
     // Error states
     error: string | null;
@@ -59,10 +76,12 @@ export type UserState = {
     setError: (error: string | null) => void;
     setProgressError: (error: string | null) => void;
 
-    fetchUser: (walletAddress: string) => Promise<void>;
+    fetchUser: (walletAddress: string, background?: boolean) => Promise<void>;
     fetchProgress: (walletAddress: string) => Promise<void>;
-    fetchCredentials: (walletAddress: string) => Promise<void>;
+    fetchCredentials: (walletAddress: string, page?: number, append?: boolean) => Promise<void>;
+    fetchActivities: (walletAddress: string, forceRefresh?: boolean) => Promise<void>;
     updateXpOptimistic: (xpGain: number) => void;
+    setProgressDirect: (data: { xp: number; currentStreak: number; longestStreak: number; lastActivityDate: string | Date | null }) => void;
 
     // Reset store
     reset: () => void;
@@ -72,9 +91,13 @@ const initialState = {
     user: null,
     progress: null,
     credentials: [],
+    recentActivities: [],
     isLoading: false,
     isProgressLoading: false,
     isCredentialsLoading: false,
+    hasMoreCredentials: true,
+    credentialPage: 1,
+    isActivitiesLoading: false,
     error: null,
     progressError: null,
 };
@@ -94,16 +117,21 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     setProgressError: (progressError) => set({ progressError }),
 
-    fetchUser: async (walletAddress) => {
+    fetchUser: async (walletAddress, background = false) => {
         const state = get();
 
         // Prevent duplicate fetches
-        if (state.isLoading) return;
+        if (state.isLoading && !background) return;
 
-        set({ isLoading: true, error: null });
+        if (!background) {
+            set({ isLoading: true, error: null });
+        }
 
         try {
-            const res = await fetch(`/api/user?wallet=${encodeURIComponent(walletAddress)}`);
+            const res = await fetch(`/api/user?wallet=${encodeURIComponent(walletAddress)}`, {
+                cache: "no-store",
+                headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+            });
 
             if (res.status === 404) {
                 // User doesn't exist yet, SyncUserOnLogin will handle creation
@@ -129,7 +157,9 @@ export const useUserStore = create<UserState>((set, get) => ({
                 });
             }
         } finally {
-            set({ isLoading: false });
+            if (!background) {
+                set({ isLoading: false });
+            }
         }
     },
 
@@ -142,7 +172,10 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ isProgressLoading: true, progressError: null });
 
         try {
-            const res = await fetch(`/api/progress?wallet=${encodeURIComponent(walletAddress)}`);
+            const res = await fetch(`/api/progress?wallet=${encodeURIComponent(walletAddress)}`, {
+                cache: "no-store",
+                headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+            });
 
             if (!res.ok) {
                 throw new Error("Failed to fetch progress");
@@ -181,18 +214,36 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
     },
 
-    fetchCredentials: async (walletAddress) => {
+    fetchCredentials: async (walletAddress, page = 1, append = false) => {
         const state = get();
+        const limit = 5;
+
+        // Smart Cache: If we already have enough credentials for this page, and it's not a refresh, skip.
+        // For page 1: if credentials.length >= limit and not appending, we might already have it.
+        // For append: if credentials.length >= page * limit, we already have this page.
+        if (state.credentials.length >= page * limit && !state.isLoading) {
+            return;
+        }
+
         if (state.isCredentialsLoading) return;
 
-        set({ isCredentialsLoading: true });
+        set({ isCredentialsLoading: true, credentialPage: page });
 
         try {
-            const res = await fetch(`/api/credentials?wallet=${encodeURIComponent(walletAddress)}`);
+            const limit = 5;
+            const res = await fetch(`/api/credentials?wallet=${encodeURIComponent(walletAddress)}&page=${page}&limit=${limit}`, {
+                cache: "no-store",
+                headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+            });
             if (!res.ok) throw new Error("Failed to fetch credentials");
 
             const data = await res.json();
-            set({ credentials: data.credentials || [] });
+            const newCredentials = data.credentials || [];
+
+            set({
+                credentials: append ? [...state.credentials, ...newCredentials] : newCredentials,
+                hasMoreCredentials: data.pagination?.hasMore ?? (newCredentials.length === limit)
+            });
         } catch (error) {
             console.error("fetchCredentials error:", error);
         } finally {
@@ -200,12 +251,31 @@ export const useUserStore = create<UserState>((set, get) => ({
         }
     },
 
+    fetchActivities: async (walletAddress: string, forceRefresh = false) => {
+        const state = get();
+        if (state.isActivitiesLoading) return;
+
+        set({ isActivitiesLoading: true });
+
+        try {
+            const res = await fetch(`/api/activities?wallet=${encodeURIComponent(walletAddress)}&limit=10`);
+            if (!res.ok) throw new Error("Failed to fetch activities");
+
+            const data = await res.json();
+            set({ recentActivities: data.activities || [] });
+        } catch (error) {
+            console.error("fetchActivities error:", error);
+        } finally {
+            set({ isActivitiesLoading: false });
+        }
+    },
+
     updateXpOptimistic: (xpGain) => {
         const state = get();
-        if (!state.progress) return;
+        if (!state.progress || !state.user) return;
 
         const newXp = state.progress.xp + xpGain;
-        const newLevel = Math.floor(newXp / 1000);
+        const newLevel = getLevelFromXp(newXp);
 
         let newRank = "Newbie";
         if (newXp >= 10000) newRank = "Expert";
@@ -220,6 +290,34 @@ export const useUserStore = create<UserState>((set, get) => ({
                 level: newLevel,
                 rank: newRank,
             },
+        });
+
+        // Sync with Profile Store if it has the current user loaded
+        import("@/store/profile-store").then(({ useProfileStore }) => {
+            useProfileStore.getState().updateProfileXp(state.user!.walletAddress, xpGain);
+        });
+    },
+
+    setProgressDirect: (data) => {
+        const xp = data.xp ?? 0;
+        const level = getLevelFromXp(xp);
+
+        let rank = "Newbie";
+        if (xp >= 10000) rank = "Expert";
+        else if (xp >= 5000) rank = "Advanced";
+        else if (xp >= 2500) rank = "Intermediate";
+        else if (xp >= 1000) rank = "Squire";
+
+        set({
+            progress: {
+                xp,
+                level,
+                rank,
+                currentStreak: data.currentStreak ?? 0,
+                longestStreak: data.longestStreak ?? 0,
+                lastActivityDate: data.lastActivityDate ? new Date(data.lastActivityDate as any).toISOString() : null,
+            },
+            isProgressLoading: false,
         });
     },
 

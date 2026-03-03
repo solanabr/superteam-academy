@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createLearningProgressService } from "@/lib/learning-progress/prisma-impl";
 import { serverClient } from "@/sanity/lib/server-client";
-import { learningProgressService } from "@/lib/learning-progress/service";
 
 /** GET /api/enrollment?wallet=...&courseId=... — enrollment progress for a user in a course. */
 export async function GET(request: NextRequest) {
@@ -25,42 +23,60 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(null, { status: 404 });
     }
 
-    const service = learningProgressService;
-
     if (courseId) {
-      // For On-Chain, we pass the wallet address directly as the identifier
-      const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
+      const { countSetBits } = await import("@/lib/bitmap");
 
-      const { getCached } = await import("@/lib/cache");
-      const { getCourseById } = await import("@/sanity/lib/queries");
-
-      // Fetch course from Sanity to get the correct trackId
-      const course = await getCourseById(courseId);
-      const trackId = course?.track ?? courseId;
-
-      const [progress, credential] = await Promise.all([
-        getCached(`user:${wallet}:enrollment:${courseId}`, async () => {
-          return await service.getEnrollmentProgress(identifier, courseId);
-        }, { ttl: 60 }),
+      // DB-First: Read enrollment directly from Prisma (fast ~10ms)
+      // On-chain is only used for writes (enroll/complete/graduate)
+      const [enrollment, credential] = await Promise.all([
+        prisma.enrollment.findUnique({
+          where: { userId_courseId: { userId: user.id, courseId } },
+        }),
+        // Prioritize courseId match, then lazy-fetch trackId for fallback
         prisma.credential.findFirst({
-          where: { userId: user.id, trackId: trackId },
-          select: { mintAddress: true }
+          where: { userId: user.id, courseId },
+          select: { id: true, mintAddress: true }
+        }).then(async (res) => {
+          if (res) return res;
+          // Lazy: only fetch course track from Sanity if no direct credential match
+          const { getCourseById } = await import("@/sanity/lib/queries");
+          const course = await getCourseById(courseId);
+          const trackId = course?.track ?? courseId;
+          return prisma.credential.findFirst({
+            where: { userId: user.id, trackId },
+            orderBy: { earnedAt: 'desc' },
+            select: { id: true, mintAddress: true }
+          });
         })
       ]);
 
-      if (!progress) {
+      if (!enrollment) {
         if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
         return NextResponse.json(null, { status: 404 });
       }
+
+      // Get totalLessons from Sanity (CDN-cached, fast)
+      const { getCached } = await import("@/lib/cache");
+      const totalLessons = await getCached(`course:${courseId}:lessonCount`, async () => {
+        const result = await serverClient.fetch(
+          `*[_type == "course" && _id == $id][0]{ "totalLessons": count(modules[]->lessons[]->_id) }`,
+          { id: courseId }
+        );
+        return result?.totalLessons ?? 0;
+      }, { ttl: 300 }); // Cache for 5 minutes — lesson count rarely changes
+
+      const completedCount = countSetBits(enrollment.lessonFlags);
+
       return NextResponse.json({
-        courseId: progress.courseId,
-        completedCount: progress.completedCount,
-        totalLessons: progress.totalLessons,
-        completedAt: progress.completedAt,
-        bonusClaimed: progress.bonusClaimed,
-        lessonFlags: Array.from(progress.lessonFlags),
-        onChainActive: progress.onChainActive,
+        courseId: enrollment.courseId,
+        completedCount,
+        totalLessons,
+        completedAt: enrollment.completedAt,
+        bonusClaimed: enrollment.bonusClaimed,
+        lessonFlags: Array.from(enrollment.lessonFlags),
+        onChainActive: true, // If enrolled via on-chain, account exists
         mintAddress: credential?.mintAddress ?? null,
+        credentialId: credential?.id ?? null,
       });
     } else {
       // List all enrollments with calculated progress - Wrapped in Cache
@@ -101,7 +117,7 @@ export async function GET(request: NextRequest) {
             updatedAt: enrollment.updatedAt,
           };
         });
-      }, { ttl: 60 });
+      }, { ttl: 30 });
 
       return NextResponse.json(enrichedEnrollments);
     }

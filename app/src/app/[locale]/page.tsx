@@ -1,9 +1,14 @@
-import { Footer } from "@/components/layout/Footer";
-import { ScrollJourney } from "@/components/landing/ScrollJourney";
 import { LandingHeaderActions } from "@/components/landing/LandingHeaderActions";
-import { SocialProof } from "@/components/landing/SocialProof";
 import { getTranslations } from "next-intl/server";
 import { Terminal } from "lucide-react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const ScrollJourney = dynamic(() => import("@/components/landing/ScrollJourney").then(mod => mod.ScrollJourney));
+const SocialProof = dynamic(() => import("@/components/landing/SocialProof").then(mod => mod.SocialProof));
+const Footer = dynamic(() => import("@/components/layout/Footer").then(mod => mod.Footer));
+
+export const revalidate = 300; // ISR cache for 5 minutes
 
 export default async function LandingPage() {
     const t = await getTranslations("landing");
@@ -20,10 +25,18 @@ export default async function LandingPage() {
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 h-20 z-40 glass-panel border-b border-white/10 px-8 flex items-center justify-between transition-all duration-300">
                 <div className="flex items-center gap-3">
-                    <div className="size-9 bg-solana/10 border border-solana/20 rounded flex items-center justify-center">
+                    <div className="relative h-8 w-48 hidden sm:block">
+                        <Image
+                            src="/logo/st-brazil-horizontal.svg"
+                            alt="Superteam Brazil"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
+                    <div role="img" aria-label="Terminal Logo" className="size-9 bg-solana/10 border border-solana/20 rounded flex items-center justify-center sm:hidden">
                         <Terminal className="text-solana h-5 w-5" />
                     </div>
-                    <span className="font-display font-bold text-xl tracking-tight text-white">{t("title")}</span>
                 </div>
 
                 <LandingHeaderActions />

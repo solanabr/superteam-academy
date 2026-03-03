@@ -30,6 +30,8 @@ export interface Credential {
   id: string;
   userId: string;
   walletAddress?: string;
+  courseId?: string | null;
+  courseName?: string | null;
   trackId: string;
   trackName: string;
   level: number;

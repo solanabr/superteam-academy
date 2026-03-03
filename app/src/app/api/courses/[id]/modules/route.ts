@@ -15,26 +15,19 @@ type ModuleInput = {
   title: string;
   sortOrder?: number;
   lessons?: LessonInput[];
+  quiz?: {
+    _id?: string;
+    title: string;
+    passingScore: number;
+    questions: Array<{
+      question: string;
+      options: string[];
+      correctIndex: number;
+      explanation?: string;
+    }>;
+  };
 };
 
-function textToPortableText(content?: string) {
-  const trimmed = content?.trim();
-  if (!trimmed) return [];
-
-  const paragraphs = trimmed.split(/\n{2,}/);
-  return paragraphs.map((paragraph) => ({
-    _type: "block",
-    style: "normal",
-    markDefs: [],
-    children: [
-      {
-        _type: "span",
-        text: paragraph,
-        marks: [],
-      },
-    ],
-  }));
-}
 
 /**
  * POST /api/courses/[id]/modules
@@ -128,7 +121,7 @@ export async function POST(
         const lessonTitle = (lesson.title || "").trim();
         if (!lessonTitle) continue;
 
-        const contentBlocks = textToPortableText(lesson.content);
+        const content = (lesson.content || "").trim();
         const testOutput = (lesson.testOutput || "").trim();
 
         let challengeId: string | undefined = undefined;
@@ -166,7 +159,7 @@ export async function POST(
             .set({
               title: lessonTitle,
               sortOrder: li,
-              content: contentBlocks,
+              content: content,
               lessonType: challengeId ? "challenge" : "content",
               challenge: challengeId ? { _type: "reference", _ref: challengeId } : undefined,
             })
@@ -181,7 +174,7 @@ export async function POST(
             _type: "lesson",
             title: lessonTitle,
             sortOrder: li,
-            content: contentBlocks,
+            content: content,
             lessonType: challengeId ? "challenge" : "content",
             challenge: challengeId ? { _type: "reference", _ref: challengeId } : undefined,
           });
@@ -193,6 +186,30 @@ export async function POST(
         }
       }
 
+      let quizRef: { _type: "reference", _ref: string } | undefined = undefined;
+
+      if (mod.quiz) {
+        const quizData = {
+          title: mod.quiz.title,
+          passingScore: mod.quiz.passingScore,
+          questions: mod.quiz.questions.map(q => ({
+            ...q,
+            _key: Math.random().toString(36).substring(7)
+          }))
+        };
+
+        if (mod.quiz._id) {
+          const updatedQuiz = await serverClient.patch(mod.quiz._id).set(quizData).commit();
+          quizRef = { _type: "reference", _ref: updatedQuiz._id };
+        } else {
+          const createdQuiz = await serverClient.create({
+            _type: "quiz",
+            ...quizData
+          });
+          quizRef = { _type: "reference", _ref: createdQuiz._id };
+        }
+      }
+
       if (mod._id) {
         const updatedModule = await serverClient
           .patch(mod._id)
@@ -200,6 +217,7 @@ export async function POST(
             title: moduleTitle,
             sortOrder: mi,
             lessons: lessonRefs,
+            quiz: quizRef,
           })
           .commit();
 
@@ -213,6 +231,7 @@ export async function POST(
           title: moduleTitle,
           sortOrder: mi,
           lessons: lessonRefs,
+          quiz: quizRef,
         });
 
         moduleRefs.push({

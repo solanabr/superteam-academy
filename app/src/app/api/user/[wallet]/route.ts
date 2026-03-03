@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { learningProgressService } from "@/lib/learning-progress/service";
 import { getLevelFromXp } from "@/lib/ranks";
 
 export async function GET(
@@ -14,47 +13,61 @@ export async function GET(
         const { getCached } = await import("@/lib/cache");
 
         const data = await getCached(`user:${wallet}:profile`, async () => {
+            // DB-First: Fetch user + progress + credentials in a single parallel query
             const user = await prisma.user.findUnique({
                 where: { walletAddress: wallet },
                 select: {
                     id: true,
                     walletAddress: true,
                     profile: true,
+                    preferences: true,
                     createdAt: true,
+                    progress: {
+                        select: {
+                            xp: true,
+                            achievementFlags: true,
+                        }
+                    }
                 }
             });
 
             if (!user) return null;
 
-            // Fetch "real" XP and flags + Credentials in parallel
-            const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+            // Fetch credentials in parallel (already fast — Prisma only)
+            const credentials = await prisma.credential.findMany({
+                where: { userId: user.id },
+                select: {
+                    id: true,
+                    courseId: true,
+                    courseName: true,
+                    trackId: true,
+                    trackName: true,
+                    level: true,
+                    coursesCompleted: true,
+                    totalXpEarned: true,
+                    mintAddress: true,
+                    verificationUrl: true,
+                    earnedAt: true
+                },
+                orderBy: { earnedAt: 'desc' }
+            });
 
-            const [progressResult, credentialsResult] = await Promise.allSettled([
-                learningProgressService.getProgress(identifier),
-                prisma.credential.findMany({
-                    where: { userId: user.id },
-                    select: {
-                        id: true,
-                        trackId: true,
-                        trackName: true,
-                        mintAddress: true,
-                        earnedAt: true
-                    },
-                    orderBy: { earnedAt: 'desc' }
-                })
-            ]);
-
-            const progress = progressResult.status === "fulfilled" ? progressResult.value : null;
-            const credentials = credentialsResult.status === "fulfilled" ? credentialsResult.value : [];
+            const xp = user.progress?.xp ?? 0;
 
             return {
-                user,
-                xp: progress?.xp ?? 0,
-                level: getLevelFromXp(progress?.xp ?? 0),
-                achievementFlags: progress?.achievementFlags ? Array.from(progress.achievementFlags) : [],
+                user: {
+                    id: user.id,
+                    walletAddress: user.walletAddress,
+                    profile: user.profile,
+                    preferences: user.preferences,
+                    createdAt: user.createdAt,
+                },
+                xp,
+                level: getLevelFromXp(xp),
+                achievementFlags: user.progress?.achievementFlags ? Array.from(user.progress.achievementFlags) : [],
                 credentials,
             };
-        }, { ttl: 60 });
+        }, { ttl: 30 });
 
         if (!data) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });

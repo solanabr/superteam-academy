@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/routing";
 import { ArrowRight } from "lucide-react";
 
 export function ScrollJourney() {
-    const { ready, authenticated, login } = usePrivy();
-    const router = useRouter();
-
     const orbRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<HTMLDivElement>(null);
@@ -116,7 +111,7 @@ export function ScrollJourney() {
                 </div>
                 <div className="mt-8 text-right md:absolute md:-right-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 01</p>
-                    <h3 className="text-2xl font-display font-bold text-white mb-2">Hands-on learning with in-built IDE</h3>
+                    <h2 className="text-2xl font-display font-bold text-white mb-2">Hands-on learning with in-built IDE</h2>
                 </div>
             </div>
 
@@ -144,7 +139,7 @@ export function ScrollJourney() {
                 </div>
                 <div className="mt-8 text-left md:absolute md:-left-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 02</p>
-                    <h3 className="text-2xl font-display font-bold text-white mb-2">Implement your learning on-chain</h3>
+                    <h2 className="text-2xl font-display font-bold text-white mb-2">Implement your learning on-chain</h2>
                 </div>
             </div>
 
@@ -170,36 +165,26 @@ export function ScrollJourney() {
                             </div>
                         </div>
                         <div className="mt-20 p-4 rounded-lg bg-white/5 border border-white/10 text-left">
-                            <p className="text-[10px] text-white/40 uppercase font-code">Recipient</p>
+                            <p className="text-[10px] text-white/70 uppercase font-code">Recipient</p>
                             <p className="text-xs font-code truncate text-white">sol.superteam_academy.mainnet</p>
                         </div>
                     </div>
                 </div>
                 <div className="mt-8 text-right md:absolute md:-right-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 03</p>
-                    <h3 className="text-2xl font-display font-bold text-white mb-2">See your learning in action</h3>
+                    <h2 className="text-2xl font-display font-bold text-white mb-2">See your learning in action</h2>
                 </div>
             </div>
 
             {/* Final CTA below the mobile app */}
             <div className="mt-32 mb-20 z-10">
-                <Button
-                    onClick={() => {
-                        if (!ready) return;
-                        if (authenticated) {
-                            router.push("/dashboard");
-                        } else {
-                            login();
-                        }
-                    }}
-                    disabled={!ready}
-                    variant="default"
-                    size="lg"
-                    className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)] disabled:opacity-50"
+                <Link
+                    href="/login"
+                    className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)]"
                 >
-                    <span>{authenticated ? "Dashboard" : "Start Compiling"}</span>
+                    <span>Start Compiling</span>
                     <ArrowRight size={20} />
-                </Button>
+                </Link>
             </div>
         </div>
     );

@@ -61,3 +61,24 @@ export function getPrimaryConnection(): Connection {
 export function getFallbackConnection(): Connection {
     return fallbackConnection;
 }
+export async function getTransactionFee(transaction: any): Promise<number | null> {
+    return await withFallbackRPC(async (connection) => {
+        try {
+            const { blockhash } = await connection.getLatestBlockhash();
+            const versionedTx = typeof transaction.version === 'undefined'; // Check if it's Legacy
+
+            if (versionedTx) {
+                // Legacy Transaction
+                const fee = await connection.getFeeForMessage(transaction.compileMessage(), "confirmed");
+                return fee.value ? fee.value / 1_000_000_000 : 0.000005;
+            } else {
+                // Versioned Transaction
+                const fee = await connection.getFeeForMessage(transaction.message, "confirmed");
+                return fee.value ? fee.value / 1_000_000_000 : 0.000005;
+            }
+        } catch (e) {
+            console.error("[solana-connection] Failed to get transaction fee:", e);
+            return 0.000005; // Fallback to standard fee
+        }
+    });
+}

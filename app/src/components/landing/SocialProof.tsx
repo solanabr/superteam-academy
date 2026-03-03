@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, BookOpen, Award, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 export function SocialProof() {
     const [stats, setStats] = useState<{ totalUsers: number, totalXp: number, totalGraduates: number } | null>(null);
@@ -47,7 +48,14 @@ export function SocialProof() {
                 <p className="text-sm font-mono uppercase tracking-[0.4em] text-white/90">Empowered by the best in the ecosystem</p>
                 <div className="flex flex-wrap items-center justify-center gap-24 opacity-70 grayscale hover:grayscale-0 transition-all duration-700">
                     {partners.map(p => (
-                        <img key={p.name} src={p.logo} alt={p.name} className="h-12 md:h-16 w-auto" />
+                        <div key={p.name} className="relative h-12 md:h-16 w-48">
+                            <Image
+                                src={p.logo}
+                                alt={p.name}
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
                     ))}
                 </div>
             </div>

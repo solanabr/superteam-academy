@@ -71,20 +71,23 @@ export async function POST(
       serverClient.patch(draftId).set({ published: false }).commit().catch(() => null),
     ]);
 
+    const { invalidatePattern } = await import("@/lib/cache");
+    await invalidatePattern("*sanity:courses*");
+
     return NextResponse.json({ success: true, published: false });
   } catch (error: any) {
     console.error("Error unpublishing course:", error);
-    
+
     if (error.message?.includes("Insufficient permissions") || error.statusCode === 403) {
       return NextResponse.json(
-        { 
+        {
           error: "API token lacks write permissions. Please create a new token with Editor role in Sanity dashboard (Settings → API → Tokens). See docs/SANITY_TOKEN_SETUP.md for details.",
-          details: error.message 
+          details: error.message
         },
         { status: 403 }
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Failed to unpublish course" },
       { status: 500 }

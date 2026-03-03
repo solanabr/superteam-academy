@@ -30,6 +30,17 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Superteam Academy",
   description: "Master Solana at the metal level",
+  icons: {
+    icon: [
+      { url: '/icon.svg', media: '(prefers-color-scheme: light)' },
+      { url: '/icon.svg', media: '(prefers-color-scheme: dark)' },
+    ],
+    shortcut: ['/icon.svg'],
+    apple: [
+      { url: '/icon.svg' },
+      { url: '/icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default async function RootLayout({
@@ -41,6 +52,12 @@ export default async function RootLayout({
 }) {
   const { locale } = await params;
   const messages = await getMessages();
+
+  // Validate locale to prevent rendering for unsupported locales (like bots hitting robots.txt)
+  const supportedLocales = ["en", "es", "pt-BR"];
+  if (!supportedLocales.includes(locale)) {
+    return null; // Or you could use notFound() from next/navigation
+  }
 
   return (
     <html lang={locale} className="dark">
@@ -55,13 +72,10 @@ export default async function RootLayout({
       >
         <div className="bg-noise opacity-12 pointer-events-none fixed inset-0 z-50 mix-blend-overlay"></div>
         <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <SyncUserOnLogin />
-            <Suspense fallback={null}>
-              <ThirdPartyScripts />
-            </Suspense>
-            {children}
-          </AuthProvider>
+          <Suspense fallback={null}>
+            <ThirdPartyScripts />
+          </Suspense>
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

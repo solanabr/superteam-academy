@@ -108,70 +108,22 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
 
-    // Still loading Privy
+    // If it's a public path, we skip all auth-related blocking UI
+    if (isPublicPath) {
+        return <>{children}</>;
+    }
+
+    // Still loading Privy - show a simple background or nothing to avoid flicker
     if (!ready) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-void">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
-                    <span className="text-sm font-mono text-text-muted">{t("authenticating")}</span>
-                </div>
-            </div>
-        );
+        return <div className="fixed inset-0 z-50 bg-void" />;
     }
 
-    // Not authenticated — redirect is happening via useEffect
+    // Not authenticated - redirect is happening via useEffect
     if (!authenticated) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-void">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
-                    <span className="text-sm font-mono text-text-muted">{t("redirecting")}</span>
-                </div>
-            </div>
-        );
+        return <div className="fixed inset-0 z-50 bg-void" />;
     }
 
-    // Wallet not yet initialized (OAuth race) or user data loading
-    if (!walletAddress || isLoading || (!user && walletAddress)) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-void">
-                <div className="flex flex-col items-center gap-4 text-center px-6">
-                    {error && !isLoading ? (
-                        <>
-                            <div className="size-12 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
-                                <AlertCircle className="text-red-500" size={24} />
-                            </div>
-                            <h2 className="text-xl font-bold text-text-primary">{t("sync_error")}</h2>
-                            <p className="text-text-secondary max-w-xs">{error}</p>
-                            <Button
-                                onClick={() => {
-                                    if (error?.includes("create profile")) {
-                                        window.location.reload();
-                                    } else {
-                                        lastFetchedWallet.current = null; // reset guard
-                                        if (walletAddress) fetchUser(walletAddress);
-                                    }
-                                }}
-                                variant="default"
-                                className="mt-4 px-6 py-2 bg-solana text-void font-bold rounded-lg hover:bg-solana-light transition-colors"
-                            >
-                                {t("retry_connection")}
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
-                            <span className="text-sm font-mono text-text-muted">
-                                {!walletAddress ? t("setting_up") : t("loading_profile")}
-                            </span>
-                        </>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
+    // If we have a user but onboarding isn't done, show the modal
     if (user && !(user.profile as any)?.onboardingComplete && !onboardingDone) {
         return (
             <OnboardingModal
@@ -181,5 +133,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // Render children if authenticated, even if user data is still syncing in background
     return <>{children}</>;
 }

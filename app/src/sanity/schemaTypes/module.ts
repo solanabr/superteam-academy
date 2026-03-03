@@ -29,5 +29,12 @@ export const moduleType = defineType({
       type: "array",
       of: [{ type: "reference", to: [{ type: "lesson" }] }],
     }),
+    defineField({
+      name: "quiz",
+      title: "Module Quiz",
+      type: "reference",
+      to: [{ type: "quiz" }],
+      description: "Optional knowledge check at the end of the module",
+    }),
   ],
 });

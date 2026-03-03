@@ -5,7 +5,9 @@ import {
     confirmEnrollment,
     confirmLessonCompletion,
     confirmCourseCreation,
-    confirmUnenrollment
+    confirmUnenrollment,
+    handleAchievementClaim,
+    handleQuizCompletion
 } from "@/lib/inngest/functions";
 
 export const { GET, POST, PUT } = serve({
@@ -15,6 +17,8 @@ export const { GET, POST, PUT } = serve({
         confirmEnrollment,
         confirmLessonCompletion,
         confirmCourseCreation,
-        confirmUnenrollment
+        confirmUnenrollment,
+        handleAchievementClaim,
+        handleQuizCompletion
     ],
 });

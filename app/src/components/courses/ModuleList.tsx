@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
-import { useEnrollmentStore } from "@/store/enrollment-store";
+import { useCourseStore } from "@/store/course-store";
 import { useAppUser } from "@/hooks/useAppUser";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -28,10 +28,10 @@ interface ModuleListProps {
 
 export function ModuleList({ courseId, courseSlug, modules }: ModuleListProps) {
     const t = useTranslations("courses");
-    const enrollment = useEnrollmentStore((s) => s.enrollments[courseId]);
+    const progress = useCourseStore((s) => s.progress);
 
     // Access strictly depends on enrollment (everyone must enroll)
-    const hasAccess = !!enrollment;
+    const hasAccess = !!progress;
 
     return (
         <div className="flex flex-col gap-4">

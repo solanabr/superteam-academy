@@ -42,7 +42,30 @@ export async function POST(request: NextRequest) {
 
         const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
 
-        // 0. Sync completion status and award 500 XP in Prisma Transactionally
+        // Check if already finalized to prevent duplicate XP
+        const enrollment = await prisma.enrollment.findUnique({
+            where: { userId_courseId: { userId: user.id, courseId } }
+        });
+
+        if (!enrollment) {
+            return NextResponse.json({ error: "Enrollment not found" }, { status: 404 });
+        }
+
+        if (enrollment.completedAt) {
+            console.log(`[api/graduation] Course ${courseId} is already completed for ${wallet}`);
+            // If already complete, just make sure Inngest attempts exactly once per idempotency key
+            if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+                const { inngest } = await import("@/lib/inngest/client");
+                await inngest.send({
+                    name: "solana/graduation.started",
+                    data: { wallet, courseId, lessonCount }
+                });
+                return NextResponse.json({ ok: true, message: "Graduation already triggered. Retrying NFT mint..." });
+            }
+            return NextResponse.json({ ok: true, message: "Already graduated." });
+        }
+
+        // 0. Sync completion status and award 100 XP in Prisma Transactionally
         await prisma.$transaction([
             prisma.enrollment.updateMany({
                 where: { userId: user.id, courseId },
@@ -50,17 +73,17 @@ export async function POST(request: NextRequest) {
             }),
             prisma.progress.update({
                 where: { userId: user.id },
-                data: { xp: { increment: 500 } }
+                data: { xp: { increment: 100 } }
             }),
             prisma.xpEvent.create({
                 data: {
                     userId: user.id,
-                    amount: 500,
+                    amount: 100,
                     source: "graduation"
                 }
             })
         ]);
-        console.log("[api/graduation] Prisma updated (Completion + 500 XP)");
+        console.log("[api/graduation] Prisma updated (Completion + 100 XP)");
 
         // Final Cache Clear - IMPORTANT: Must happen even in on-chain mode 
         // because the local Prisma state has changed (completedAt set).

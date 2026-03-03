@@ -10,6 +10,7 @@ export type EnrollmentProgress = {
   bonusClaimed: boolean;
   onChainActive?: boolean;
   mintAddress?: string | null;
+  credentialId?: string | null;
 };
 
 export type AllEnrollmentItem = {
@@ -48,6 +49,9 @@ type EnrollmentState = {
   setEnrollment: (courseId: string, progress: EnrollmentProgress | null) => void;
   setLoading: (courseId: string, loading: boolean) => void;
   setError: (courseId: string, error: string | null) => void;
+  // Transaction Preparation
+  prepareEnrollment: (walletAddress: string, courseId: string) => Promise<any>;
+  prepareCloseEnrollment: (walletAddress: string, courseId: string) => Promise<any>;
   // Optimistic update helpers
   setEnrollmentOptimistic: (courseId: string, totalLessons: number) => void;
   setBonusClaimedOptimistic: (courseId: string, claimed: boolean) => void;
@@ -195,6 +199,7 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         throw new Error("No wallet connected. Please connect your Solana wallet.");
       }
 
+      let signature: string = "";
       await withFallbackRPC(async (connection) => {
         const { PublicKey, SystemProgram } = await import("@solana/web3.js");
         const { Program } = await import("@coral-xyz/anchor");
@@ -226,7 +231,6 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         const { blockhash } = await connection.getLatestBlockhash();
         tx.recentBlockhash = blockhash;
 
-        let signature: string;
         if (signTx && wallet) {
           // Serialize and sign via Privy
           const serializedTx = tx.serialize({ verifySignatures: false });
@@ -237,7 +241,7 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
             options: { uiOptions }
           });
 
-          // Broadcast via our fallback-aware connection
+          // 4. Broadcast and Await Confirmation
           signature = await connection.sendRawTransaction(signedTransaction);
         } else if (wallet && typeof wallet.sendTransaction === 'function') {
           // Fallback for direct wallet adapter if available
@@ -247,28 +251,41 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         }
 
         console.log("Enrollment TX sent:", signature);
-
-        // Background: confirm + sync (don't block the UI)
-        connection.confirmTransaction(signature, "confirmed")
-          .then(() => console.log("Enrollment confirmed:", signature))
-          .catch((e) => console.error("Enrollment confirmation failed:", e));
+        await connection.confirmTransaction(signature, "confirmed");
+        console.log("Enrollment confirmed:", signature);
       });
 
-      // Immediately flip UI to "Enrolled"
+      // 2. Flip UI to "Enrolled" (Optimistic but backed by confirmation)
       state.setEnrollmentOptimistic(courseId, 0);
       state.setLoading(courseId, false);
 
-      // Background: sync to DB + fetch fresh data
-      fetch("/api/enroll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: walletAddress, courseId }),
-      })
-        .then(() => {
+      // 3. Atomic Sync: Write to DB, Invalidate Cache, and Fetch Fresh State
+      try {
+        const res = await fetch("/api/enroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress, courseId, signature }),
+        });
+
+        if (res.ok) {
+          // Surgical Sync: Refresh courses grid and current detail
+          await fetch("/api/sync/course", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wallet: walletAddress }),
+          }).catch(() => null);
+
           sendGAEvent('enroll', { course_id: courseId, wallet: walletAddress });
-          get().fetchEnrollment(walletAddress, courseId, true);
-        })
-        .catch((e) => console.error("Enrollment DB sync failed:", e));
+
+          // Parallel refresh: Current enrollment + All enrollments (for dashboard)
+          await Promise.all([
+            get().fetchEnrollment(walletAddress, courseId, true),
+            get().fetchAllEnrollments(walletAddress, true)
+          ]);
+        }
+      } catch (e) {
+        console.error("Enrollment DB sync failed:", e);
+      }
     } catch (error) {
       state.setError(
         courseId,
@@ -382,8 +399,30 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
 
       // Clear loading BEFORE fetchEnrollment so its guard doesn't block the refresh
       state.setLoading(courseId, false);
+
+      // Surgical Sync: Course status, Certificates, and XP/Level
+      await Promise.all([
+        fetch("/api/sync/course", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        }),
+        fetch("/api/sync/certificates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        }),
+        fetch("/api/sync/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        })
+      ]).catch(() => null);
+
       sendGAEvent('graduate', { course_id: courseId, wallet: walletAddress, xp_earned: 500 });
       await get().fetchEnrollment(walletAddress, courseId);
+      // Also refresh dashboard lists
+      await get().fetchAllEnrollments(walletAddress, true);
     } catch (error) {
       state.setError(
         courseId,
@@ -413,6 +452,13 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error ?? "Claim failed");
       }
+
+      // Surgical Sync: Refresh XP/Level on dashboard
+      await fetch("/api/sync/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: walletAddress }),
+      }).catch(() => null);
 
       // Clear loading BEFORE fetchEnrollment so its guard doesn't block the refresh
       state.setLoading(courseId, false);
@@ -484,9 +530,23 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         console.log("Rent reclaimed successfully:", signature);
       });
 
-      // Refresh enrollment status. Since the on-chain account is gone, 
-      // our hybrid service should now return the Prisma-only record.
+      // 1. Surgical Sync - Invalidate specific course/certificate caches
+      await Promise.all([
+        fetch("/api/sync/course", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        }),
+        fetch("/api/sync/certificates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress }),
+        })
+      ]).catch(e => console.error("Surgical Sync failed:", e));
+
+      // 2. Refresh enrollment status (Now fetches fresh data bypass-cache)
       await state.fetchEnrollment(walletAddress, courseId, true);
+      await state.fetchAllEnrollments(walletAddress, true);
     } catch (error) {
       state.setError(
         courseId,
@@ -496,6 +556,63 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     } finally {
       state.setLoading(courseId, false);
     }
+  },
+
+  prepareEnrollment: async (walletAddress, courseId) => {
+    return await withFallbackRPC(async (connection) => {
+      const { PublicKey, SystemProgram, Transaction } = await import("@solana/web3.js");
+      const { Program } = await import("@coral-xyz/anchor");
+      // @ts-ignore
+      const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+      const pubkey = new PublicKey(walletAddress);
+      const program = new Program(onchainAcademyIdl as any, { connection } as any);
+      const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+      const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), pubkey.toBuffer()], program.programId);
+
+      const tx = await program.methods
+        .enroll(courseId)
+        .accounts({
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: pubkey,
+          systemProgram: SystemProgram.programId,
+        } as any)
+        .transaction();
+
+      tx.feePayer = pubkey;
+      const { blockhash } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      return tx;
+    });
+  },
+
+  prepareCloseEnrollment: async (walletAddress, courseId) => {
+    return await withFallbackRPC(async (connection) => {
+      const { PublicKey, Transaction } = await import("@solana/web3.js");
+      const { Program } = await import("@coral-xyz/anchor");
+      // @ts-ignore
+      const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+      const program = new Program(onchainAcademyIdl as any, { connection } as any);
+      const pubkey = new PublicKey(walletAddress);
+      const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+      const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), pubkey.toBuffer()], program.programId);
+
+      const tx = await program.methods
+        .closeEnrollment()
+        .accounts({
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: pubkey,
+        } as any)
+        .transaction();
+
+      tx.feePayer = pubkey;
+      const { blockhash } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      return tx;
+    });
   },
 
   reset: () => set({

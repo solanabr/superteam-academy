@@ -15,6 +15,12 @@ const courseFields = `
     _id,
     title,
     sortOrder,
+    "quiz": quiz->{
+      _id,
+      title,
+      passingScore,
+      questions
+    },
     "lessons": lessons[]->{
       _id,
       title,
@@ -87,6 +93,7 @@ export type ModuleRef = {
   title: string;
   sortOrder: number;
   lessons?: LessonRef[];
+  quiz?: import("@/components/lessons/QuizView").QuizType;
 };
 
 export type CourseDetail = CourseListItem & {
@@ -99,7 +106,7 @@ export async function getCourses(locale: string = "en"): Promise<CourseListItem[
     return await getCached(`${locale}:sanity:courses`, async () => {
       const list = await client.fetch<CourseListItem[]>(coursesQuery);
       return list ?? [];
-    }, { ttl: 300 }); // Cache courses for 5 minutes
+    }, { ttl: 60 }); // Cache courses for 1 minute
   } catch {
     // Fallback to direct fetch if cache fails
     const list = await client.fetch<CourseListItem[]>(coursesQuery).catch(() => []);
@@ -113,7 +120,7 @@ export async function getCourseBySlug(slug: string, locale: string = "en"): Prom
     return await getCached(`${locale}:sanity:course:${slug}`, async () => {
       const course = await client.fetch<CourseDetail | null>(courseBySlugQuery, { slug });
       return course ?? null;
-    }, { ttl: 300 });
+    }, { ttl: 60 });
   } catch {
     const course = await client.fetch<CourseDetail | null>(courseBySlugQuery, { slug }).catch(() => null);
     return course ?? null;

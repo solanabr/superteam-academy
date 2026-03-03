@@ -1,56 +1,21 @@
-"use client";
-
 import Script from "next/script";
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 // Google Analytics 4
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 // Hotjar
 const HOTJAR_ID = process.env.NEXT_PUBLIC_HOTJAR_ID;
 const HOTJAR_SV = process.env.NEXT_PUBLIC_HOTJAR_SNIPPET_VERSION || "6";
-// Sentry
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 export function ThirdPartyScripts() {
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-
-    // Track GA4 Pageviews on route change
-    useEffect(() => {
-        if (pathname && GA_MEASUREMENT_ID) {
-            const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
-            (window as any).gtag?.("config", GA_MEASUREMENT_ID, {
-                page_path: url,
-            });
-        }
-    }, [pathname, searchParams]);
-
     return (
         <>
             {/* Google Analytics 4 */}
-            {GA_MEASUREMENT_ID && (
-                <>
-                    <Script
-                        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-                        strategy="afterInteractive"
-                    />
-                    <Script id="google-analytics" strategy="afterInteractive">
-                        {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}', {
-                page_path: window.location.pathname,
-              });
-            `}
-                    </Script>
-                </>
-            )}
+            {GA_MEASUREMENT_ID && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
 
             {/* Hotjar Heatmap */}
             {HOTJAR_ID && (
-                <Script id="hotjar" strategy="afterInteractive">
+                <Script id="hotjar" strategy="lazyOnload">
                     {`
               (function(h,o,t,j,a,r){
                   h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
@@ -62,26 +27,6 @@ export function ThirdPartyScripts() {
               })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
             `}
                 </Script>
-            )}
-
-            {/* Sentry */}
-            {SENTRY_DSN && (
-                <>
-                    <Script
-                        src="https://browser.sentry-cdn.com/8.54.0/bundle.min.js"
-                        crossOrigin="anonymous"
-                        strategy="afterInteractive"
-                    />
-                    <Script id="sentry-init" strategy="afterInteractive">
-                        {`
-              window.Sentry?.init({
-                dsn: '${SENTRY_DSN}',
-                integrations: [],
-                tracesSampleRate: 1.0,
-              });
-            `}
-                    </Script>
-                </>
             )}
         </>
     );

@@ -1,3 +1,4 @@
+import "server-only";
 import { PrismaClient } from "@prisma/client";
 import type { LearningProgressService } from "./interface";
 import type {
@@ -68,9 +69,24 @@ function calculateNewStreak(
 }
 
 export function createLearningProgressService(prisma: PrismaClient): LearningProgressService {
+  /**
+   * Internal helper to resolve a userId (which might be a wallet address) to a UUID.
+   */
+  const resolveId = async (id: string): Promise<string> => {
+    // If it looks like a wallet address (Solana addresses are base58, typically 32-44 chars)
+    if (id.length >= 32 && id.length <= 44 && !id.includes("-")) {
+      const user = await prisma.user.findUnique({
+        where: { walletAddress: id },
+        select: { id: true },
+      });
+      return user?.id ?? id;
+    }
+    return id;
+  };
 
   const getProgress = async (userId: string): Promise<Progress | null> => {
-    const row = await prisma.progress.findUnique({ where: { userId } });
+    const resolvedId = await resolveId(userId);
+    const row = await prisma.progress.findUnique({ where: { userId: resolvedId } });
     if (!row) return null;
     return {
       userId: row.userId,
@@ -83,8 +99,9 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
   };
 
   const getEnrollmentProgress = async (userId: string, courseId: string): Promise<EnrollmentProgress | null> => {
+    const resolvedId = await resolveId(userId);
     const row = await prisma.enrollment.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId: resolvedId, courseId } },
     });
     if (!row) return null;
     const flags = toUint8Array(row.lessonFlags);
@@ -95,18 +112,20 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       completedAt: row.completedAt,
       bonusClaimed: row.bonusClaimed,
       completedCount,
-      totalLessons: LESSON_FLAGS_LEN * 8,
+      totalLessons: 0, // Signal to caller to resolve via Sanity or metadata
     };
   };
 
   const getXP = async (userId: string): Promise<number> => {
-    const row = await prisma.progress.findUnique({ where: { userId }, select: { xp: true } });
+    const resolvedId = await resolveId(userId);
+    const row = await prisma.progress.findUnique({ where: { userId: resolvedId }, select: { xp: true } });
     return row?.xp ?? 0;
   };
 
   const getStreak = async (userId: string): Promise<StreakData> => {
+    const resolvedId = await resolveId(userId);
     const row = await prisma.progress.findUnique({
-      where: { userId },
+      where: { userId: resolvedId },
       select: { currentStreak: true, longestStreak: true, lastActivityDate: true },
     });
     if (!row)
@@ -118,8 +137,10 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     };
   };
 
-  const getLeaderboard = async (options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time"; courseId?: string }): Promise<LeaderboardEntry[]> => {
+  const getLeaderboard = async (options?: { limit?: number; page?: number; timeframe?: "daily" | "weekly" | "all-time"; courseId?: string }): Promise<LeaderboardEntry[]> => {
     const limit = options?.limit ?? 50;
+    const page = options?.page ?? 1;
+    const skip = Math.max(0, (page - 1) * limit);
     const timeframe = options?.timeframe ?? "all-time";
     const courseId = options?.courseId;
 
@@ -135,10 +156,32 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       dateFilter = d;
     }
 
-    // Base where clause
-    const where: any = {};
+    // Include ALL real XP sources: lessons, quizzes, achievements, graduation, and course bonuses
+    const where: any = {
+      OR: [
+        { source: { startsWith: "lesson:" } },
+        { source: { startsWith: "quiz:" } },
+        { source: { startsWith: "bonus:" } },
+        { source: { startsWith: "achievement:" } },
+        { source: { startsWith: "course_bonus" } },
+        { source: "graduation" },
+      ]
+    };
     if (dateFilter) where.createdAt = { gte: dateFilter };
-    if (courseId) where.source = { contains: courseId };
+    if (courseId) {
+      // If filtering by course, match real sources for that specific course
+      where.AND = [
+        { source: { contains: courseId } },
+        {
+          OR: [
+            { source: { startsWith: "lesson:" } },
+            { source: { startsWith: "quiz:" } },
+            { source: { startsWith: "bonus:" } },
+          ]
+        }
+      ];
+      delete where.OR; // Clean up the top-level OR as it's now in AND
+    }
 
     if (dateFilter || courseId) {
       // Group by userId on XpEvent
@@ -148,6 +191,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         _sum: { amount: true },
         orderBy: { _sum: { amount: 'desc' } },
         take: limit,
+        skip: skip,
       });
 
       if (agg.length === 0) return [];
@@ -164,7 +208,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         const r = rows.find(x => x.userId === a.userId);
         const timeframeXp = a._sum.amount ?? 0;
         return {
-          rank: i + 1,
+          rank: skip + i + 1,
           userId: a.userId,
           walletAddress: r?.user?.walletAddress ?? 'Unknown',
           xp: timeframeXp,
@@ -177,10 +221,11 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       const rows = await prisma.progress.findMany({
         orderBy: { xp: "desc" },
         take: limit,
+        skip: skip,
         include: { user: { select: { walletAddress: true } } },
       });
       return rows.map((row: (typeof rows)[number], i: number) => ({
-        rank: i + 1,
+        rank: skip + i + 1,
         userId: row.userId,
         walletAddress: row.user.walletAddress,
         xp: row.xp,
@@ -190,14 +235,18 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     }
   };
 
-  const getCredentials = async (userId: string): Promise<Credential[]> => {
+  const getCredentials = async (userId: string, options?: { limit?: number; skip?: number }): Promise<Credential[]> => {
     const rows = await prisma.credential.findMany({
       where: { userId },
       orderBy: { earnedAt: "desc" },
+      take: options?.limit,
+      skip: options?.skip,
     });
     return rows.map((r: (typeof rows)[number]) => ({
       id: r.id,
       userId: r.userId,
+      courseId: r.courseId,
+      courseName: r.courseName,
       trackId: r.trackId,
       trackName: r.trackName,
       level: r.level,
@@ -209,15 +258,27 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
   };
 
   const getCredential = async (id: string): Promise<Credential | null> => {
-    const cred = await prisma.credential.findUnique({
+    // Try by Prisma DB id first, then fallback to mintAddress (on-chain NFT asset)
+    let cred = await prisma.credential.findUnique({
       where: { id },
       include: { user: { select: { walletAddress: true } } }
     });
+
+    if (!cred) {
+      // Fallback: look up by mintAddress (the on-chain NFT asset address)
+      cred = await prisma.credential.findFirst({
+        where: { mintAddress: id },
+        include: { user: { select: { walletAddress: true } } }
+      });
+    }
+
     if (!cred) return null;
     return {
       id: cred.id,
       userId: cred.userId,
       walletAddress: cred.user.walletAddress,
+      courseId: cred.courseId,
+      courseName: cred.courseName,
       trackId: cred.trackId,
       trackName: cred.trackName,
       level: cred.level,
@@ -236,29 +297,27 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     userId: string;
     wallet?: string;
     courseId: string;
+    courseName?: string;
     trackId: string;
     trackName: string;
     xpEarned: number;
     mintAddress?: string;
     verificationUrl?: string;
   }): Promise<string> => {
-    const { userId, wallet, courseId, trackId, trackName, xpEarned, mintAddress, verificationUrl } = params;
-    const targetUserId = userId; // Prisma usually uses internal userId, but we could use wallet if needed.
+    const { userId, wallet, courseId, courseName, trackId, trackName, xpEarned, mintAddress, verificationUrl } = params;
+    const resolvedId = await resolveId(userId);
 
+    // Check for existing credential for THIS COURSE
     const existing = await prisma.credential.findFirst({
-      where: { userId, trackId },
+      where: { userId: resolvedId, courseId },
     });
 
     if (existing) {
-      const newCoursesCount = existing.coursesCompleted + 1;
-      const newLevel = Math.min(newCoursesCount, 3);
-
+      // Already has a credential for this course, just update stats if needed
       await prisma.credential.update({
         where: { id: existing.id },
         data: {
-          coursesCompleted: { increment: 1 },
           totalXpEarned: { increment: xpEarned },
-          level: newLevel,
           earnedAt: new Date(),
           mintAddress: mintAddress ?? (existing as any).mintAddress,
           verificationUrl: verificationUrl ?? (existing as any).verificationUrl,
@@ -266,12 +325,15 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       });
       return mintAddress ?? existing.id;
     } else {
+      // Create NEW credential for this COURSE
       const created = await prisma.credential.create({
         data: {
-          userId,
+          userId: resolvedId,
+          courseId,
+          courseName,
           trackId,
           trackName,
-          level: 1,
+          level: 1, // Course-specific credentials start at level 1
           coursesCompleted: 1,
           totalXpEarned: xpEarned,
           mintAddress,
@@ -283,23 +345,24 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
   };
 
   const claimAchievement = async (userId: string, achievementId: string): Promise<boolean> => {
+    const resolvedId = await resolveId(userId);
     // 1. Fetch user progress and preferences
     let progress = await prisma.progress.findUnique({
-      where: { userId },
+      where: { userId: resolvedId },
       include: { user: { select: { preferences: true } } }
     });
 
     if (!progress) {
       // Auto-create progress if it doesn't exist (e.g. they unlock easter egg before their first course)
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: resolvedId },
         select: { preferences: true }
       });
       if (!user) throw new Error("User not found");
 
       progress = await prisma.progress.create({
         data: {
-          userId,
+          userId: resolvedId,
           xp: 0,
           currentStreak: 0,
           longestStreak: 0,
@@ -326,14 +389,14 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     switch (achievementId) {
 
       case "first-lesson": {
-        const enrollments = await prisma.enrollment.findMany({ where: { userId } });
+        const enrollments = await prisma.enrollment.findMany({ where: { userId: resolvedId } });
         isValid = enrollments.some(e => countSetBits(e.lessonFlags) > 0);
         if (!isValid) throw new Error("Complete your first lesson to claim this achievement!");
         break;
       }
       case "first-course": {
         const completedCourse = await prisma.enrollment.findFirst({
-          where: { userId, completedAt: { not: null } }
+          where: { userId: resolvedId, completedAt: { not: null } }
         });
         isValid = !!completedCourse;
         if (!isValid) throw new Error("Complete a full course to claim this achievement!");
@@ -366,45 +429,64 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         break;
       }
       default:
+        errorIds: ["Unknown achievement"];
         throw new Error("Unknown achievement");
     }
 
     if (!isValid) return false;
 
-    // 5. Update progress
+    // 5. Update progress with achievement flag + XP (50 per achievement, matching on-chain mint)
+    const achievementXp = 50;
     const newFlags = setLessonFlag(flags, bitIndex);
 
-    await prisma.progress.update({
-      where: { userId },
-      data: {
-        achievementFlags: Buffer.from(newFlags),
-      },
-    });
+    await prisma.$transaction([
+      prisma.progress.update({
+        where: { userId: resolvedId },
+        data: {
+          achievementFlags: Buffer.from(newFlags),
+          xp: { increment: achievementXp },
+        },
+      }),
+      prisma.xpEvent.create({
+        data: {
+          userId: resolvedId,
+          amount: achievementXp,
+          source: `achievement:${achievementId}`,
+        }
+      })
+    ]);
 
     return true;
   };
 
   const enroll = async (userId: string, courseId: string): Promise<void> => {
+    const resolvedId = await resolveId(userId);
     const emptyFlags = Buffer.alloc(LESSON_FLAGS_LEN);
     await prisma.enrollment.upsert({
-      where: { userId_courseId: { userId, courseId } },
+      where: { userId_courseId: { userId: resolvedId, courseId } },
       create: {
-        userId,
+        userId: resolvedId,
         courseId,
         lessonFlags: emptyFlags,
       },
       update: {},
     });
     await prisma.progress.upsert({
-      where: { userId },
+      where: { userId: resolvedId },
       create: {
-        userId,
+        userId: resolvedId,
         xp: 0,
         currentStreak: 0,
         longestStreak: 0,
         achievementFlags: Buffer.alloc(32),
       },
       update: {},
+    });
+  };
+
+  const unenroll = async (userId: string, courseId: string): Promise<void> => {
+    await prisma.enrollment.deleteMany({
+      where: { userId, courseId },
     });
   };
 
@@ -490,6 +572,77 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     // This prevents confetti from firing automatically during lesson completion.
   };
 
+  const completeQuiz = async (params: {
+    userId: string;
+    courseId: string;
+    moduleId: string;
+    quizId: string;
+    xpReward: number;
+  }): Promise<void> => {
+    const { userId, quizId, xpReward } = params;
+
+    // Deduplicate XP event:
+    const existing = await prisma.xpEvent.findFirst({
+      where: { userId, source: `quiz:${quizId}` }
+    });
+
+    if (existing) {
+      return; // Already completed
+    }
+
+    const progressRow = await prisma.progress.findUnique({
+      where: { userId },
+      select: {
+        currentStreak: true,
+        longestStreak: true,
+        lastActivityDate: true,
+        streakFreezes: true
+      },
+    });
+
+    const { currentStreak, longestStreak, lastActivityDate, freezesConsumed } = calculateNewStreak(
+      progressRow?.lastActivityDate ?? null,
+      progressRow?.currentStreak ?? 0,
+      progressRow?.longestStreak ?? 0,
+      progressRow?.streakFreezes ?? 0
+    );
+
+    const updateData: import("@prisma/client").Prisma.ProgressUpdateInput = {
+      xp: { increment: xpReward },
+      currentStreak,
+      longestStreak,
+      lastActivityDate,
+    };
+
+    if (freezesConsumed > 0) {
+      updateData.streakFreezes = { decrement: freezesConsumed };
+      updateData.lastFreezeDate = new Date();
+    }
+
+    await prisma.$transaction([
+      prisma.progress.upsert({
+        where: { userId },
+        create: {
+          userId,
+          xp: xpReward,
+          currentStreak,
+          longestStreak,
+          lastActivityDate,
+          achievementFlags: Buffer.alloc(32),
+          streakFreezes: 1,
+        },
+        update: updateData,
+      }),
+      prisma.xpEvent.create({
+        data: {
+          userId,
+          amount: xpReward,
+          source: `quiz:${quizId}`,
+        }
+      })
+    ]);
+  };
+
   const finalizeCourse = async (userId: string, courseId: string, lessonCount: number): Promise<void> => {
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },
@@ -538,9 +691,10 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     ]);
   };
 
-  const logActivity = async (userId: string): Promise<void> => {
+  const logActivity = async (userId: string): Promise<boolean> => {
+    const resolvedId = await resolveId(userId);
     const progressRow = await prisma.progress.findUnique({
-      where: { userId },
+      where: { userId: resolvedId },
       select: {
         currentStreak: true,
         longestStreak: true,
@@ -553,7 +707,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       // Create their initial progress and grant day 1 streak automatically
       await prisma.progress.create({
         data: {
-          userId,
+          userId: resolvedId,
           xp: 0,
           currentStreak: 1,
           longestStreak: 1,
@@ -561,7 +715,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
           achievementFlags: Buffer.alloc(32)
         }
       });
-      return;
+      return true;
     }
 
     const { currentStreak, longestStreak, lastActivityDate, freezesConsumed } = calculateNewStreak(
@@ -588,10 +742,12 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       }
 
       await prisma.progress.update({
-        where: { userId },
+        where: { userId: resolvedId },
         data: updateData,
       });
+      return true;
     }
+    return false;
   };
 
   return {
@@ -604,10 +760,12 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     getCredential,
     completeLesson,
     enroll,
+    unenroll,
     finalizeCourse,
     claimCompletionBonus,
     issueCredential,
     claimAchievement,
     logActivity,
+    completeQuiz,
   };
 }

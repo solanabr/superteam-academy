@@ -23,11 +23,6 @@ model User {
   credentials  Credential[]
   xpEvents     XpEvent[]
 
-  referralCode String  @unique @default(cuid()) @map("referral_code")
-  referrerId   String? @map("referrer_id")
-  referrer     User?   @relation("Referrals", fields: [referrerId], references: [id])
-  referrals    User[]  @relation("Referrals")
-
   @@map("users")
 }
 
@@ -69,6 +64,8 @@ model Progress {
 model Credential {
   id               String   @id @default(cuid())
   userId           String   @map("user_id")
+  courseId         String?  @map("course_id")
+  courseName       String?  @map("course_name")
   trackId          String   @map("track_id")
   trackName        String   @map("track_name")
   level            Int      @default(1)
@@ -98,4 +95,13 @@ model XpEvent {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@map("xp_events")
+}
+
+model NewsletterSubscriber {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  subscribedAt    DateTime  @default(now()) @map("subscribed_at")
+  unsubscribedAt  DateTime? @map("unsubscribed_at")
+
+  @@map("newsletter_subscribers")
 }

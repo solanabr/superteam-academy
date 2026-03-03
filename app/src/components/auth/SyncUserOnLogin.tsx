@@ -13,6 +13,7 @@ export function SyncUserOnLogin() {
   const setUser = useUserStore((s: UserState) => s.setUser);
   const setError = useUserStore((s: UserState) => s.setError);
   const fetchProgress = useUserStore((s: UserState) => s.fetchProgress);
+  const setProgressDirect = useUserStore((s: UserState) => s.setProgressDirect);
   const synced = useRef(false);
 
   const linkedAddress =
@@ -21,20 +22,11 @@ export function SyncUserOnLogin() {
   const walletAddress = linkedAddress ?? solanaAddress;
 
   useEffect(() => {
-    // Check for referral code in URL
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
-    if (ref) {
-      sessionStorage.setItem("referral_code", ref);
-    }
-
     if (!authenticated || !walletAddress || synced.current) return;
     synced.current = true;
 
     const email =
       user?.email?.address ?? (user?.linkedAccounts?.find((a: any) => a.type === "email") as any)?.address;
-
-    const storedReferral = sessionStorage.getItem("referral_code");
 
     fetch("/api/user", {
       method: "POST",
@@ -42,27 +34,32 @@ export function SyncUserOnLogin() {
       body: JSON.stringify({
         wallet: walletAddress,
         email: email ?? undefined,
-        referrerCode: storedReferral ?? undefined
       }),
     })
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
           setUser(data);
-          // Also trigger progress fetch once user is synced
+
+          // If the user API piggybacked progress data, set it INSTANTLY
+          // This makes XP display without waiting for the separate /api/progress call
+          if (data.progress) {
+            setProgressDirect(data.progress);
+          }
+
+          // Still fetch full progress in background for any additional data
           fetchProgress(walletAddress);
-          // Clear referral after successful sync
-          sessionStorage.removeItem("referral_code");
         } else {
+          // If sync fails, we don't block the UI, but we log it for debugging
+          console.error("SyncUserOnLogin: Failed to sync user profile");
           synced.current = false;
-          setError("Failed to create profile. Please check your connection or try again later.");
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("SyncUserOnLogin: Network error during sync", err);
         synced.current = false;
-        setError("Failed to connect to the server for profile creation.");
       });
-  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, setError, fetchProgress]);
+  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, fetchProgress, setProgressDirect]);
 
   return null;
 }

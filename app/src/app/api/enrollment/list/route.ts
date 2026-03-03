@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
                     updatedAt: enrollment.updatedAt,
                 };
             });
-        }, { ttl: 60 });
+        }, { ttl: 30 });
 
         return NextResponse.json(enriched);
     } catch (error: any) {

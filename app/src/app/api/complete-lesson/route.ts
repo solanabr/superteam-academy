@@ -43,6 +43,15 @@ export async function POST(request: NextRequest) {
       lessonIndex,
       xpReward: xpReward ?? 100,
     });
+
+    // Invalidate user enrollment cache for instant progress update
+    try {
+      const { invalidatePattern } = await import("@/lib/cache");
+      await invalidatePattern(`user:${wallet}*`);
+      console.log(`[api/complete-lesson] Cache invalidated for user ${wallet}`);
+    } catch (cacheError) {
+      console.error("[api/complete-lesson] Non-blocking cache invalidation failed:", cacheError);
+    }
   } catch (e: any) {
     return NextResponse.json(
       { error: e?.message ?? "Failed to complete lesson" },

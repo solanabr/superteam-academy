@@ -26,9 +26,8 @@ export const lessonType = defineType({
     defineField({
       name: "content",
       title: "Content",
-      type: "array",
-      of: [{ type: "block" }],
-      description: "Lesson body (markdown-like blocks)",
+      type: "text",
+      description: "Lesson body in Markdown format",
     }),
     defineField({
       name: "videoUrl",

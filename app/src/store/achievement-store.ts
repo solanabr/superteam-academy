@@ -75,8 +75,10 @@ export const useAchievementStore = create<AchievementState>((set, get) => ({
 
     claimAchievement: async (walletAddress, achievementId) => {
         const state = get();
-
         state.setClaimingId(achievementId);
+
+        // PLATINUM: Update local state BEFORE API call for maximum responsiveness
+        state.setClaimOptimistic(achievementId, true);
 
         try {
             const res = await fetch("/api/achievements/claim", {
@@ -87,16 +89,22 @@ export const useAchievementStore = create<AchievementState>((set, get) => ({
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
+                // PLATINUM: Rollback on failure
+                state.setClaimOptimistic(achievementId, false);
                 throw new Error(data?.error ?? "Failed to claim achievement");
             }
 
             const data = await res.json();
 
-            // Refresh to get server state
-            await state.fetchAchievements(walletAddress);
+            // Optimistically update user XP globally
+            import("@/store/user-store").then(({ useUserStore }) => {
+                const ACH_XP = data.xpAmount || (achievementId === 'easter-egg' ? 1000 : 200);
+                useUserStore.getState().updateXpOptimistic(ACH_XP);
+            });
 
-            // Return whether it was actually claimed
-            return data.claimed === true;
+            // Note: We don't fetchAchievements immediately because Inngest background sync
+            // is still running. The local "optimistic" state will persist.
+            return data.ok === true;
         } catch (error) {
             set({
                 error: error instanceof Error ? error.message : "Failed to claim achievement",

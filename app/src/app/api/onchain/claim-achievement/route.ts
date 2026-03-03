@@ -121,6 +121,14 @@ export async function POST(req: NextRequest) {
             return signature;
         });
 
+        // Invalidate Cache for instant progress update
+        try {
+            const { invalidatePattern } = await import("@/lib/cache");
+            await invalidatePattern(`user:${wallet}*`);
+        } catch (e) {
+            console.error("[claim-achievement] Cache invalidation failed:", e);
+        }
+
         return NextResponse.json({ success: true, claimed: true, signature: sig });
 
     } catch (error: any) {

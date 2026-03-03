@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { Flame, Medal } from "lucide-react";
+
 type Props = {
+    walletAddress?: string;
     currentStreak: number;
     longestStreak: number;
     lastActivityDate: string | null;
@@ -13,9 +17,19 @@ function getMilestoneAtStreak(streak: number): number | null {
     return MILESTONE_DAYS.find((m) => streak >= m && streak < (MILESTONE_DAYS[MILESTONE_DAYS.indexOf(m) + 1] ?? Infinity)) ?? null;
 }
 
-import { Flame, Medal } from "lucide-react";
+export function StreakCalendar({ walletAddress, currentStreak, longestStreak, lastActivityDate, isLoading }: Props) {
+    const [activeDaysList, setActiveDaysList] = useState<string[]>([]);
 
-export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate, isLoading }: Props) {
+    useEffect(() => {
+        if (!walletAddress) return;
+        fetch(`/api/activities/calendar?wallet=${walletAddress}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.activeDays) setActiveDaysList(data.activeDays);
+            })
+            .catch(e => console.error("Failed to fetch calendar", e));
+    }, [walletAddress]);
+
     if (isLoading) {
         return (
             <section className="glass-panel rounded-xl p-6 border border-white/5 space-y-4 animate-pulse">
@@ -28,9 +42,9 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
                 </div>
 
                 <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2">
-                    {Array.from({ length: 12 }).map((_, i) => (
+                    {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="flex flex-col gap-1">
-                            {Array.from({ length: 7 }).map((_, j) => (
+                            {Array.from({ length: 5 }).map((_, j) => (
                                 <div key={j} className="w-3.5 h-3.5 rounded-sm bg-white/5" />
                             ))}
                         </div>
@@ -47,13 +61,15 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
             </section>
         );
     }
-    // Build an 84-day (12 weeks) rolling window ending today
-    const DAYS = 84;
+    // Build a 30-day rolling window ending today
+    const DAYS = 30;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Determine active day indices (from today backwards by currentStreak days)
     const activeDays = new Set<number>();
+
+    // Add current streak via optimistic formula
     if (currentStreak > 0 && lastActivityDate) {
         const lastActive = new Date(lastActivityDate);
         lastActive.setHours(0, 0, 0, 0);
@@ -63,6 +79,15 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
             activeDays.add(i);
         }
     }
+
+    // Add historical async database days
+    activeDaysList.forEach((isoDate) => {
+        const d = new Date(isoDate);
+        const daysAgo = Math.round((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysAgo >= 0 && daysAgo < DAYS) {
+            activeDays.add(daysAgo);
+        }
+    });
 
     const grid: { daysAgo: number; label: string; isToday: boolean; isActive: boolean }[] = [];
     for (let i = DAYS - 1; i >= 0; i--) {
@@ -77,12 +102,13 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
     }
 
     // Month labels for grid columns (rough)
-    const weeks = Array.from({ length: 12 }, (_, wi) => grid.slice(wi * 7, wi * 7 + 7));
+    // Render as a 5-day columns x 6 grid for a cleaner 30-day block
+    const weeks = Array.from({ length: 6 }, (_, wi) => grid.slice(wi * 5, wi * 5 + 5));
     const nextMilestone = MILESTONE_DAYS.find((m) => m > currentStreak);
     const currentMilestone = getMilestoneAtStreak(currentStreak);
 
     return (
-        <section className="glass-panel rounded-xl p-6 border border-white/5 space-y-4">
+        <section className="glass-panel rounded-xl p-6 border border-white/5 space-y-4 h-[340px] flex flex-col justify-between">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Flame size={20} className="text-rust" fill="currentColor" />

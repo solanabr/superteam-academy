@@ -73,9 +73,10 @@ export async function POST(
                 userId: identifier,
                 wallet: wallet,
                 courseId: courseId,
+                courseName: course.title,
                 trackId: course.track,
                 trackName: trackName,
-                xpEarned: 500
+                xpEarned: 100
             });
 
             console.log(`[api/finalize] Credential issued: ${mintAddress}`);

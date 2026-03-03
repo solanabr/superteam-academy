@@ -5,10 +5,31 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { ACHIEVEMENTS, type Achievement } from "@/lib/achievements";
 import { sendGAEvent } from "@/components/analytics/ThirdPartyScripts";
-import { Loader2, CheckCircle, Unlock, X, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, Unlock, X, AlertCircle, BookOpen, GraduationCap, Flame, Rocket, Sunrise, Moon, Puzzle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import confetti from "canvas-confetti";
+
+function AchievementIcon({ id, className }: { id: string; className?: string }) {
+    switch (id) {
+        case "first-lesson":
+            return <BookOpen className={className} />;
+        case "first-course":
+            return <GraduationCap className={className} />;
+        case "streak-3":
+            return <Flame className={className} />;
+        case "streak-7":
+            return <Rocket className={className} />;
+        case "early-bird":
+            return <Sunrise className={className} />;
+        case "night-owl":
+            return <Moon className={className} />;
+        case "easter-egg":
+            return <Puzzle className={className} />;
+        default:
+            return <AlertCircle className={className} />;
+    }
+}
 
 type ToastState = {
     type: "success" | "info";
@@ -36,12 +57,28 @@ export function AchievementList() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.achievementFlags) {
-                    const flagsBytes = data.achievementFlags.data ? data.achievementFlags.data : Object.values(data.achievementFlags);
+                    // Robust parsing for achievement flags (handles Buffer, Array, or Object)
+                    let flagsBytes: number[] = [];
+                    const rawFlags = data.achievementFlags;
+
+                    if (rawFlags && typeof rawFlags === 'object') {
+                        if (rawFlags.type === 'Buffer' && Array.isArray(rawFlags.data)) {
+                            flagsBytes = rawFlags.data;
+                        } else if (Array.isArray(rawFlags)) {
+                            flagsBytes = rawFlags;
+                        } else if (rawFlags.data && Array.isArray(rawFlags.data)) {
+                            flagsBytes = rawFlags.data;
+                        } else {
+                            // Local fallback for object-style bitmask if needed
+                            flagsBytes = Object.values(rawFlags) as number[];
+                        }
+                    }
 
                     const newClaimed = ACHIEVEMENTS.map(a => {
                         const byteIndex = Math.floor(a.bitIndex / 8);
                         const bitIndex = a.bitIndex % 8;
-                        return ((flagsBytes[byteIndex] as number) & (1 << bitIndex)) !== 0;
+                        const byte = flagsBytes[byteIndex] ?? 0;
+                        return (byte & (1 << bitIndex)) !== 0;
                     });
                     setClaimedFlags(newClaimed);
                 }
@@ -101,8 +138,13 @@ export function AchievementList() {
                     type: "success",
                     message: "🎉 Congrats, continue on your journey soldier!",
                 });
+                setClaimedFlags(prev => {
+                    const next = [...prev];
+                    const idx = ACHIEVEMENTS.findIndex(ach => ach.id === achievement.id);
+                    if (idx >= 0) next[idx] = true;
+                    return next;
+                });
                 sendGAEvent('claim_achievement', { achievement_id: achievement.id, wallet: walletAddress });
-                await fetchProgress();
             } else {
                 // Requirements not met — show friendly message
                 setToast({
@@ -160,7 +202,9 @@ export function AchievementList() {
                             )}
                         >
                             <div className="flex items-start justify-between">
-                                <div className="text-4xl">{a.icon}</div>
+                                <div className={clsx("p-3 rounded-xl", isClaimed ? "bg-solana/20 text-solana shadow-[0_0_20px_rgba(20,241,149,0.2)]" : "bg-white/5 text-text-muted")}>
+                                    <AchievementIcon id={a.id} className="w-8 h-8" />
+                                </div>
                                 {isClaimed ? (
                                     <CheckCircle className="h-6 w-6 text-solana" />
                                 ) : (
@@ -183,6 +227,16 @@ export function AchievementList() {
                                     {a.title}
                                 </h3>
                                 <p className="text-text-secondary text-sm mt-1">{a.description}</p>
+                                {a.xp > 0 && (
+                                    <div className={clsx(
+                                        "mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                        isClaimed
+                                            ? "bg-solana/15 text-solana border border-solana/20"
+                                            : "bg-white/5 text-text-muted border border-white/10"
+                                    )}>
+                                        ⚡ {isClaimed ? `${a.xp} XP Earned` : `+${a.xp} XP`}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
-import { useEnrollmentStore } from "@/store/enrollment-store";
+import { useCourseStore } from "@/store/course-store";
+import { useLessonStore } from "@/store/lesson-store";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trophy, CheckCircle, Medal } from "lucide-react";
+import { Loader2, CheckCircle, Medal } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type CourseCompletionProps = {
@@ -23,56 +24,58 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
         user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
     const walletAddress = linkedAddress ?? wallets?.[0]?.address;
 
-    // Find the actual Solana wallet object that matches our target address
-    const activeWallet = wallets.find(w => w.address === walletAddress) ?? wallets[0];
+    // Use the new consolidated courseStore
+    const progress = useCourseStore((s) => s.progress);
+    const isLoading = useCourseStore((s) => s.isLoading || s.isGraduating);
+    const fetchProgress = useCourseStore((s) => s.fetchProgress);
+    const graduate = useCourseStore((s) => s.graduate);
 
-    // Use atomic selectors to prevent re-render issues
-    const completedCount = useEnrollmentStore((state) =>
-        state.enrollments[courseId]?.completedCount ?? 0
-    );
-    const mintedAt = useEnrollmentStore((state) =>
-        state.enrollments[courseId]?.completedAt ?? null
-    );
-    const mintAddress = useEnrollmentStore((state) =>
-        state.enrollments[courseId]?.mintAddress ?? null
-    );
-    const onChainActive = useEnrollmentStore((state) =>
-        state.enrollments[courseId]?.onChainActive ?? false
-    );
-    const bonusClaimed = useEnrollmentStore((state) =>
-        state.enrollments[courseId]?.bonusClaimed ?? false
-    );
-    const loading = useEnrollmentStore((state) => state.loading[courseId] ?? false);
-    const finalize = useEnrollmentStore((state) => state.finalize);
-    const fetchEnrollment = useEnrollmentStore((state) => state.fetchEnrollment);
-    const reclaimRent = useEnrollmentStore((state) => state.reclaimRent);
+    const completedCount = progress?.completedCount ?? 0;
+    const mintedAt = progress?.completedAt ?? null;
+    const mintAddress = progress?.mintAddress ?? null;
+    const credentialId = progress?.credentialId ?? null;
+
+    // The certificate identifier: prefer mintAddress (on-chain NFT), fall back to credentialId (Prisma DB)
+    const certificateId = mintAddress || credentialId;
+
+    // Use optimistic lesson state for immediate redirects where DB sync via Inngest is still processing
+    const optimisticCompletions = useLessonStore((s) => s.completions[courseId]);
+    const optimisticCompletedCount = optimisticCompletions?.lessonFlags
+        ? optimisticCompletions.lessonFlags.reduce((count, byte) => {
+            let n = byte;
+            let c = 0;
+            while (n > 0) { c += n & 1; n >>= 1; }
+            return count + c;
+        }, 0)
+        : completedCount;
+
+    const effectiveCompletedCount = Math.max(completedCount, optimisticCompletedCount);
 
     const [isActionLoading, setIsActionLoading] = useState(false);
-    const [isReclaimLoading, setIsReclaimLoading] = useState(false);
 
-    // Persists after API success — prevents button from reverting to "Get Certificate"
-    const [graduated, setGraduated] = useState(false);
-
-    const isComplete = completedCount >= totalLessons || !!mintedAt;
-
-    // Condition for "Truly Finished": 
-    // If on-chain is active, we wait for mintAddress. Otherwise just mintedAt.
-    const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
-    const isMinted = USE_ONCHAIN ? !!mintAddress : !!mintedAt;
-
-    // Once the graduation API returns success, poll until isMinted is true
+    // Poll for certificate ID after graduation completes (Inngest mints asynchronously)
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
     useEffect(() => {
-        if (!graduated || isMinted || !walletAddress) return;
-        const interval = setInterval(() => {
-            fetchEnrollment(walletAddress, courseId, true);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, [graduated, isMinted, walletAddress, courseId, fetchEnrollment]);
+        // Only poll when: course is minted but we don't have a certificate link yet
+        if (mintedAt && !certificateId && walletAddress) {
+            pollRef.current = setInterval(() => {
+                fetchProgress(walletAddress, courseId, true, true);
+            }, 4000); // Poll every 4 seconds
+        }
 
-    if (!authenticated || !walletAddress || (completedCount === 0 && !mintedAt)) return null;
+        // Stop polling once we have a certificate identifier
+        if (certificateId && pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, [mintedAt, certificateId, walletAddress, courseId, fetchProgress]);
 
     const handleFinalize = async () => {
-        if (isActionLoading || graduated) return;
+        if (isActionLoading) return;
 
         if (!walletAddress) {
             const isEmbeddedWallet =
@@ -90,31 +93,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
         setIsActionLoading(true);
         try {
             console.log(`[CourseCompletion] Requesting graduation for course ${courseId}`);
-            const res = await fetch(`/api/graduation`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    wallet: walletAddress,
-                    courseId: courseId,
-                    lessonCount: totalLessons
-                }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data?.error ?? "Finalize failed");
-            }
-
-            // Mark as graduated — this prevents the button from ever reverting
-            setGraduated(true);
-
-            const data = await res.json();
-            if (data.warning || data.message) {
-                alert(data.warning || data.message);
-            }
-
-            // Refresh state (may or may not have completedAt yet — polling handles the rest)
-            await fetchEnrollment(walletAddress, courseId, true);
+            await graduate(walletAddress, courseId, totalLessons);
         } catch (error: any) {
             console.error("Finalize failed", error);
             const errorMsg = error instanceof Error ? error.message : t("finalize_failed");
@@ -124,52 +103,30 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
         }
     };
 
-    const handleReclaimRent = async () => {
-        if (isReclaimLoading) return;
+    const isComplete = effectiveCompletedCount >= totalLessons || !!mintedAt;
+    const isMinted = !!mintedAt;
 
-        if (!activeWallet || !walletAddress) {
-            const isEmbeddedWallet =
-                user?.linkedAccounts?.some((a) => a.type === "wallet" && (a as any).walletClientType === "privy") ||
-                (user?.wallet as any)?.walletClientType === "privy";
-            if (!isEmbeddedWallet) {
-                alert("Please connect your Solana wallet to reclaim rent.");
-                connectWallet();
-            } else {
-                alert("Wallet is still initializing. Please wait a moment and try again.");
-            }
-            return;
-        }
-
-        const confirm = window.confirm("Reclaiming rent will close your on-chain enrollment account and return approximately 0.003 SOL to your wallet. Your progress will remain archived in our database. Proceed?");
-        if (!confirm) return;
-
-        setIsReclaimLoading(true);
-        try {
-            await reclaimRent(walletAddress, courseId, activeWallet.signTransaction as any, activeWallet);
-            alert("Rent reclaimed successfully!");
-        } catch (error: any) {
-            console.error("Reclaim rent failed", error);
-            alert(error instanceof Error ? error.message : "Reclaim rent failed");
-        } finally {
-            setIsReclaimLoading(false);
-        }
-    };
-
+    if (!authenticated || !walletAddress || (effectiveCompletedCount === 0 && !mintedAt)) return null;
     if (!isComplete) return null;
 
     return (
         <div className="mt-6 border-t border-white/10 pt-6">
-            {!isMinted && !graduated ? (
+            {!isMinted ? (
                 <div className="flex flex-col gap-4 items-start">
                     <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
-                    <p className="text-text-secondary">{t("completion_info")}</p>
+                    <p className="text-text-secondary">
+                        {isLoading
+                            ? "Your certificate is being minted on-chain. This may take a moment..."
+                            : t("completion_info")
+                        }
+                    </p>
                     <Button
                         onClick={handleFinalize}
-                        disabled={isActionLoading || loading}
-                        variant="solana-ghost"
-                        className="flex items-center gap-2"
+                        disabled={isActionLoading || isLoading}
+                        variant={isLoading ? "default" : "solana-ghost"}
+                        className={`flex items-center gap-2 ${isLoading ? "bg-solana/70 text-black cursor-wait" : ""}`}
                     >
-                        {isActionLoading ? (
+                        {(isActionLoading || isLoading) ? (
                             <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 Finalizing & Minting...
@@ -180,19 +137,6 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                                 Get Certificate
                             </>
                         )}
-                    </Button>
-                </div>
-            ) : !isMinted && graduated ? (
-                <div className="flex flex-col gap-4 items-start">
-                    <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
-                    <p className="text-text-secondary">Your certificate is being minted on-chain. This may take a moment...</p>
-                    <Button
-                        disabled
-                        variant="default"
-                        className="flex items-center gap-2 rounded-md bg-solana/70 px-4 py-2 text-sm font-medium text-black disabled:opacity-80"
-                    >
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Finalizing & Minting...
                     </Button>
                 </div>
             ) : (
@@ -208,24 +152,28 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                     </div>
 
                     <div className="flex flex-wrap gap-4">
-                        <Button
-                            asChild
-                            variant="default"
-                            className={`flex items-center gap-3 rounded-lg bg-solana text-[#0A0A0B] hover:brightness-110 shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] px-6 py-3 font-bold transition-all h-auto`}
-                        >
-                            <Link href={`/profile/${walletAddress}`}>
-                                <Medal className="h-5 w-5" />
-                                View Your Certificate
-                            </Link>
-                        </Button>
-
+                        {certificateId ? (
+                            <Button
+                                asChild
+                                variant="default"
+                                className={`flex items-center gap-3 rounded-lg bg-solana text-[#0A0A0B] hover:brightness-110 shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] px-6 py-3 font-bold transition-all h-auto`}
+                            >
+                                <Link href={`/certificates/${certificateId}`}>
+                                    <Medal className="h-5 w-5" />
+                                    View Your Certificate
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button
+                                disabled
+                                variant="default"
+                                className="flex items-center gap-3 rounded-lg bg-solana/60 text-[#0A0A0B] px-6 py-3 font-bold h-auto cursor-wait"
+                            >
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                Preparing Certificate...
+                            </Button>
+                        )}
                     </div>
-
-                    {!onChainActive && (
-                        <p className="text-white/40 text-xs italic">
-                            On-chain enrollment account closed. Progress archived off-chain.
-                        </p>
-                    )}
                 </div>
             )}
         </div>

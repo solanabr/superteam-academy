@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
         const courses = await getCourses(locale);
         return NextResponse.json(
             { courses },
-            { headers: { "Cache-Control": "s-maxage=300, stale-while-revalidate=60" } }
+            { headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=60" } }
         );
     } catch (error: any) {
         console.error("GET /api/courses/list error:", error?.message ?? error);

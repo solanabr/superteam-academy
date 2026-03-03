@@ -41,7 +41,8 @@
         "unlocked": "{count}/{total} Unlocked",
         "continue_learning": "Continue Learning",
         "no_enrollments": "You haven't enrolled in any courses yet.",
-        "recommended_courses": "Recommended for You"
+        "recommended_courses": "Recommended for You",
+        "recentActivity": "Recent Activity"
     },
     "settings": {
         "title": "Settings",
@@ -103,14 +104,6 @@
             "data_export": "Data Export",
             "data_export_desc": "Download all your academy data (profile, enrollments, credentials, XP) in JSON format.",
             "export_button": "Download Data"
-        },
-        "referral": {
-            "title": "Referral Program",
-            "desc": "Share your referral link with friends and earn bonus EXP when they join and complete their first course.",
-            "your_link": "Your Referral Link",
-            "stats": "Referral Stats",
-            "friends_joined": "Friends Joined",
-            "copied": "Link Copied!"
         }
     },
     "courses": {
@@ -184,14 +177,23 @@
         "browse_courses": "Browse courses"
     },
     "footer": {
+        "description": "The ultimate learning platform for native Solana developers. Built by the community, for the community.",
         "made_with": "Made with",
         "from": "from",
         "ubuntu_quote": "ubuntu - I am because we are.",
         "motivation": "In this decentralized future, no one builds alone. Your growth is our growth, and your security is our collective strength.",
         "mission": "lets strive towards development of safer/better blockchain",
-        "exit": "exit"
+        "exit": "exit",
+        "newsletter_title": "Join our Newsletter",
+        "newsletter_desc": "Get the latest updates on new courses, challenges, and platform features.",
+        "newsletter_placeholder": "Enter your email",
+        "newsletter_subscribe": "Subscribe",
+        "newsletter_subscribing": "Subscribing...",
+        "newsletter_success": "Thanks for subscribing!",
+        "newsletter_error": "Failed to subscribe. Please try again."
     },
     "course_detail": {
+        "course_completed": "Course Completed",
         "your_progress": "Your progress: {current}/{total} lessons ({pct}%)",
         "login_to_enroll": "Log in and connect your wallet to enroll in {title}.",
         "enrolled": "Enrolled",
@@ -262,7 +264,8 @@
         "subtitle": "Top learners by XP",
         "col_user": "User",
         "col_level": "Level",
-        "all_courses": "All Courses"
+        "all_courses": "All Courses",
+        "load_more": "Load More"
     },
     "profile": {
         "not_found_title": "Profile Not Found",
@@ -271,25 +274,16 @@
         "get_started_cta": "Ready to start your journey? Enroll in a course to earn XP and climb the leaderboard!"
     },
     "auth": {
-        "authenticating": "Authenticating...",
-        "redirecting": "Redirecting...",
-        "sync_error": "Profile Sync Error",
-        "retry_connection": "Retry Connection",
         "welcome": "Welcome",
         "continue": "Continue",
         "loading": "Loading…",
-        "log_in": "Log in",
-        "setting_up": "Setting up your account...",
-        "loading_profile": "Loading profile..."
+        "log_in": "Log in"
     },
     "components": {
         "active_course_title": "Active Course",
         "view_all_courses": "View All Courses ->",
         "active_course_desc": "Continue your journey in Web3 through our structured curriculum.",
         "no_credentials": "No credentials yet. Complete courses to earn them!",
-        "referrals_title": "Referrals",
-        "referrals_desc": "Invite friends and earn XP together.",
-        "referred_users": "Referred Users",
         "sidebar_dashboard": "Dashboard",
         "sidebar_brand": "Superteam .academy",
         "sidebar_courses": "Courses",
@@ -304,8 +298,7 @@
         "stats_next_rank": "Next Rank: {xp} XP",
         "active_course_last_lesson": "Last lesson: {title}",
         "active_course_continue": "Continue",
-        "referral_your_link": "Your Referral Link",
-        "referral_copied": "Copied to clipboard!"
+        "load_more_certificates": "Load More Certificates"
     },
     "ide": {
         "loading_editor": "Loading Editor...",
@@ -330,5 +323,12 @@
         "expected": "Expected",
         "got": "Got",
         "error": "Error"
+    },
+    "not_found": {
+        "title": "404 - Request Dropped",
+        "subtitle": "Gm. This page hasn't been minted yet, or maybe it was a rug.",
+        "description": "The block you're looking for was not found in the mempool. It might have been reorged or never existed.",
+        "back_home": "Return to Dashboard",
+        "status": "Congestion Level: High"
     }
 }

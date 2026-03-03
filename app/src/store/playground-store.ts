@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import { SupportedLanguage } from "@/components/lessons/CodeEditor";
 
+export type TestResult = {
+    name: string;
+    passed: boolean;
+    input?: string;
+    expected?: string;
+    actual?: string;
+    error?: string;
+};
+
 export type PlaygroundState = {
     // Map of lessonId -> code content
     code: Record<string, string>;
@@ -17,6 +26,9 @@ export type PlaygroundState = {
     // Map of lessonId -> execution stats
     stats: Record<string, { memory?: string; cpuTime?: string }>;
 
+    // Map of lessonId -> detailed test case runs
+    testResults: Record<string, TestResult[]>;
+
     // Daily limit tracking
     dailyLimitReached: boolean;
 
@@ -26,6 +38,7 @@ export type PlaygroundState = {
     setOutput: (lessonId: string, output: string) => void;
     setStatus: (lessonId: string, status: "idle" | "running" | "success" | "error") => void;
     setStats: (lessonId: string, stats: { memory?: string; cpuTime?: string }) => void;
+    setTestResults: (lessonId: string, results: TestResult[]) => void;
     setDailyLimitReached: (reached: boolean) => void;
 
     // Clear playground for a lesson
@@ -41,6 +54,7 @@ const initialState = {
     output: {},
     status: {},
     stats: {},
+    testResults: {},
     dailyLimitReached: false,
 };
 
@@ -77,6 +91,12 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
         }));
     },
 
+    setTestResults: (lessonId, results) => {
+        set((state) => ({
+            testResults: { ...state.testResults, [lessonId]: results },
+        }));
+    },
+
     setDailyLimitReached: (dailyLimitReached) => set({ dailyLimitReached }),
 
     clearLesson: (lessonId) => {
@@ -86,6 +106,7 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
             const { [lessonId]: _out, ...restOut } = state.output;
             const { [lessonId]: _status, ...restStatus } = state.status;
             const { [lessonId]: _stats, ...restStats } = state.stats;
+            const { [lessonId]: _testResult, ...restTestResults } = state.testResults;
 
             return {
                 code: restCode,
@@ -93,6 +114,7 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
                 output: restOut,
                 status: restStatus,
                 stats: restStats,
+                testResults: restTestResults,
             };
         });
     },

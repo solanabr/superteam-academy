@@ -11,6 +11,8 @@ const CodeEditor = dynamic(() => import("./CodeEditor").then((mod) => mod.CodeEd
 import { Button } from "@/components/ui/button";
 import { TerminalOutput } from "./TerminalOutput";
 import { useTranslations } from "next-intl";
+import { useLessonStore } from "@/store/lesson-store";
+import { useEffect } from "react";
 
 type ChallengeRunnerProps = {
   language: SupportedLanguage;
@@ -36,26 +38,23 @@ export function ChallengeRunner({
   testCases = [],
   onComplete,
 }: ChallengeRunnerProps) {
-  const [code, setCode] = useState(starterCode);
-  const [status, setStatus] = useState<RunStatus>("idle");
-  const [message, setMessage] = useState<string | null>(null);
-  const [marking, setMarking] = useState(false);
-  const [output, setOutput] = useState<string>("");
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [dailyLimitReached, setDailyLimitReached] = useState(false);
-  const [executionStats, setExecutionStats] = useState<{
-    memory?: string;
-    cpuTime?: string;
-  }>({});
+  const {
+    code, status, message, marking, output, testResults, dailyLimitReached, executionStats,
+    setCode, setStatus, setMessage, setMarking, setOutput, setTestResults, setDailyLimitReached, setExecutionStats, resetExecution
+  } = useLessonStore();
+
+  // Set initial code only once when component mounts
+  useEffect(() => {
+    if (!code && starterCode) {
+      setCode(starterCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starterCode]);
   const t = useTranslations("ide");
 
   const handleRun = async () => {
+    resetExecution();
     setStatus("running");
-    setMessage(null);
-    setOutput("");
-    setTestResults([]);
-    setDailyLimitReached(false);
-    setExecutionStats({});
 
     if (!code.trim()) {
       setStatus("failed");
@@ -191,13 +190,7 @@ export function ChallengeRunner({
         status={status === "passed" ? "success" : status === "failed" ? "error" : status === "running" ? "running" : "idle"}
         executionStats={executionStats}
         dailyLimitReached={dailyLimitReached}
-        onClear={() => {
-          setOutput("");
-          setStatus("idle");
-          setTestResults([]);
-          setDailyLimitReached(false);
-          setExecutionStats({});
-        }}
+        onClear={resetExecution}
       />
 
       {testCases.length > 0 && (

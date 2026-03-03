@@ -23,7 +23,6 @@ export function StatsRow({ xp, streak, rank, nextRankXP, className }: StatsRowPr
                 <p className="text-text-muted text-[10px] font-mono uppercase tracking-[0.2em] font-bold">{t("stats_total_xp")}</p>
                 <div className="flex items-baseline gap-2 mt-1">
                     <h3 className="text-4xl font-mono font-bold text-white">{xp.toLocaleString()}</h3>
-                    <span className="text-solana text-[10px] font-mono bg-solana/10 px-2 py-0.5 rounded">+450 UP</span>
                 </div>
                 <div className="w-full h-1 bg-white/5 rounded-full mt-4 overflow-hidden">
                     <div

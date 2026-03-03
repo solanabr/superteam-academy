@@ -23,6 +23,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // 0. Guard: Do not allow unenrollment (deletion) if course is completed
+    const existing = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId } }
+    });
+
+    if (existing?.completedAt) {
+        return NextResponse.json({
+            error: "Cannot unenroll from a completed course. Use 'Reclaim Rent' instead to close your on-chain account while preserving your achievement."
+        }, { status: 403 });
+    }
+
     // 1. Delete from Prisma
     await prisma.enrollment.deleteMany({
         where: {

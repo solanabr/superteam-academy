@@ -96,6 +96,9 @@ export async function POST(
       serverClient.patch(`drafts.${publishedId}`).set({ published: true }).commit().catch(() => null),
     ]);
 
+    const { invalidatePattern } = await import("@/lib/cache");
+    await invalidatePattern("*sanity:courses*");
+
     return NextResponse.json({ success: true, published: true });
   } catch (error: any) {
     console.error("Error publishing course:", error);

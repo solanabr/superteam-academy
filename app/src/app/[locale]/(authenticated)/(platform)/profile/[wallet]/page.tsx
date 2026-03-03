@@ -1,0 +1,250 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useAppUser } from "@/hooks/useAppUser";
+import { Loader2, Coins, CalendarDays, ShieldCheck, Trophy, Twitter, Globe, Radar, Lock } from "lucide-react";
+import { Link } from "@/i18n/routing";
+import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
+import { ACHIEVEMENTS } from "@/lib/achievements";
+import { CredentialList } from "@/components/dashboard/CredentialList";
+import { AchievementBadge } from "@/components/achievements/AchievementBadge";
+import { SkillRadar } from "@/components/profile/SkillRadar";
+
+type ProfileData = {
+    user: {
+        id: string;
+        walletAddress: string;
+        createdAt: string;
+        profile: any;
+    };
+    xp: number;
+    level: number;
+    achievementFlags: number[];
+    credentials: { id: string; trackId: string; trackName: string; mintAddress: string | null; earnedAt: string }[];
+};
+
+import { useProfileStore } from "@/store/profile-store";
+
+export default function ProfilePage() {
+    const { user } = useAppUser();
+    const params = useParams();
+    const wallet = params.wallet as string;
+    const t = useTranslations("profile");
+
+    const { profiles, isInitialLoading, error: storeError, fetchProfile } = useProfileStore();
+
+    useEffect(() => {
+        if (wallet) {
+            fetchProfile(wallet);
+        }
+    }, [wallet, fetchProfile]);
+
+    const data = profiles[wallet] || null;
+    const error = storeError;
+
+    if (isInitialLoading && !data) {
+        return (
+            <main className="pt-8 pb-16">
+                <div className="mx-auto max-w-4xl px-4 space-y-8 animate-pulse">
+                    <div className="glass-panel p-8 rounded-lg border border-white/5 h-48 bg-white/5" />
+                    <div className="glass-panel p-6 rounded-xl border border-white/5 h-64 bg-white/5" />
+                    <div className="h-64 bg-white/5 rounded-xl border border-white/5" />
+                </div>
+            </main>
+        );
+    }
+
+    if (error || !data) {
+        return (
+            <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+                <ShieldCheck className="mx-auto h-12 w-12 text-white/10 mb-4" />
+                <h1 className="text-2xl font-display font-semibold text-text-primary mb-2">{t("not_found_title")}</h1>
+                <p className="text-text-secondary">{t("not_found_desc")}</p>
+                <Link href="/leaderboard" className="mt-6 inline-block">
+                    <Button variant="outline" size="sm">
+                        {t("back_to_leaderboard")}
+                    </Button>
+                </Link>
+            </div>
+        );
+    }
+
+    const P = data.user.profile || {};
+    const displayName = P.displayName || `User ${data.user.walletAddress.substring(0, 4)}...${data.user.walletAddress.substring(data.user.walletAddress.length - 4)}`;
+
+    // Privacy checks
+    const isPublicProfile = data.user.preferences?.isPublicProfile !== false; // defaults to true if undefined
+    const isOwner = user?.walletAddress === data.user.walletAddress;
+    const showPrivateData = isPublicProfile || isOwner;
+
+    const claimedAchievements = ACHIEVEMENTS.map((def) => ({
+        ...def,
+        claimed: data.achievementFlags?.includes(def.bitIndex) || false,
+    })).filter(a => a.claimed);
+
+    const credentials = data.credentials;
+
+    // Compute skill scores from credentials (each credential contributes up to 100 pts)
+    const TRACK_SKILL_MAP: Record<string, string> = {
+        rust: "Rust",
+        anchor: "Anchor",
+        defi: "DeFi",
+        frontend: "Frontend",
+        security: "Security",
+        solana: "Solana",
+    };
+    const skillScores: Record<string, number> = {};
+    credentials.forEach((cred) => {
+        const trackId = cred.trackName?.toLowerCase() ?? "";
+        if (!trackId) return;
+        const key = Object.keys(TRACK_SKILL_MAP).find(k => trackId.includes(k));
+        if (key) skillScores[key] = Math.min(100, (skillScores[key] ?? 0) + 30);
+    });
+    const skills = Object.entries(TRACK_SKILL_MAP).map(([key, label]) => ({
+        label,
+        value: skillScores[key] ?? 0,
+    }));
+    const hasSkillData = skills.some(s => s.value > 0);
+
+    return (
+        <main className="pt-8 pb-16">
+            <div className="mx-auto max-w-4xl px-4 space-y-8">
+                {user?.walletAddress === data.user.walletAddress && data.xp === 0 && (
+                    <div className="border border-solana/20 bg-solana/5 rounded-lg p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="flex items-center gap-3">
+                            <ShieldCheck className="h-5 w-5 text-solana" />
+                            <p className="text-sm text-text-secondary">
+                                {t("get_started_cta")}
+                            </p>
+                        </div>
+                        <Link href="/courses" className="text-xs font-bold uppercase tracking-wider text-solana hover:underline whitespace-nowrap">
+                            Explore Courses
+                        </Link>
+                    </div>
+                )}
+
+                {/* ── Header ──────────────────────────────────────── */}
+                <div className="glass-panel p-8 rounded-lg border border-white/5 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-solana/20 via-blue-500/10 to-transparent opacity-50"></div>
+
+                    <div className="relative flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                        <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-xl overflow-hidden bg-black/50 border-2 border-solana/30 shadow-xl flex-shrink-0">
+                            <img
+                                src={`https://api.dicebear.com/9.x/bottts/svg?seed=${data.user.walletAddress}&backgroundColor=0a0a0b&baseColor=14f195&radius=50`}
+                                alt={displayName}
+                                className="h-full w-full object-cover"
+                            />
+                        </div>
+
+                        <div className="flex-1 space-y-3">
+                            <div>
+                                <h1 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight">{displayName}</h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="font-mono text-sm text-text-muted bg-white/5 px-2 py-0.5 rounded cursor-copy hover:text-white transition-colors">
+                                        {data.user.walletAddress.slice(0, 6)}...{data.user.walletAddress.slice(-4)}
+                                    </span>
+                                    <span className="text-xs text-text-muted flex items-center gap-1">
+                                        <CalendarDays className="h-3 w-3" />
+                                        Joined {new Date(data.user.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {P.bio && (
+                                <p className="text-text-secondary text-sm leading-relaxed max-w-2xl">{P.bio}</p>
+                            )}
+
+                            {/* Social Links */}
+                            <div className="flex items-center gap-3 pt-2">
+                                {P.twitter && (
+                                    <a href={P.twitter.startsWith('http') ? P.twitter : `https://${P.twitter}`} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-[#1DA1F2] transition-colors p-1.5 bg-white/5 hover:bg-white/10 rounded-full">
+                                        <Twitter className="h-4 w-4" />
+                                    </a>
+                                )}
+
+                                {P.website && (
+                                    <a href={P.website.startsWith('http') ? P.website : `https://${P.website}`} target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-solana transition-colors p-1.5 bg-white/5 hover:bg-white/10 rounded-full">
+                                        <Globe className="h-4 w-4" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Stats Box */}
+                        <div className="flex bg-black/40 border border-white/10 rounded-lg overflow-hidden sm:ml-auto self-stretch sm:self-auto min-w-[200px]">
+                            <div className="flex-1 p-4 border-r border-white/10 flex flex-col justify-center items-center">
+                                <span className="text-xs text-text-muted font-mono uppercase tracking-widest mb-1">Level</span>
+                                <span className="text-2xl font-bold font-mono text-white">{data.level}</span>
+                            </div>
+                            <div className="flex-1 p-4 flex flex-col justify-center items-center">
+                                <span className="text-xs text-text-muted font-mono uppercase tracking-widest mb-1 flex items-center gap-1">XP <Coins className="h-3 w-3 text-solana" /></span>
+                                <span className="text-2xl font-bold font-mono text-solana">{data.xp.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {!showPrivateData && (
+                    <div className="glass-panel p-8 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center space-y-3">
+                        <Lock className="h-10 w-10 text-white/20" />
+                        <h2 className="text-lg font-medium text-white tracking-wide">Private Profile</h2>
+                        <p className="text-text-secondary text-sm max-w-sm">
+                            This user has chosen to keep their detailed skills and certificates private from other viewers.
+                        </p>
+                    </div>
+                )}
+
+                {/* Skill Radar */}
+                {hasSkillData && showPrivateData && (
+                    <section className="glass-panel p-6 rounded-xl border border-white/5 space-y-4">
+                        <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
+                            <Radar className="h-5 w-5 text-solana" />
+                            Skill Profile
+                        </h2>
+                        <div className="flex justify-center">
+                            <SkillRadar skills={skills} size={240} />
+                        </div>
+                    </section>
+                )}
+
+                {/* Achievement Badges */}
+                {claimedAchievements.length > 0 && showPrivateData && (
+                    <section className="glass-panel p-6 rounded-xl border border-white/5 space-y-4">
+                        <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
+                            <Trophy className="h-5 w-5 text-solana" />
+                            Achievements
+                            <span className="text-xs font-mono text-text-muted ml-auto">
+                                {claimedAchievements.length} earned
+                            </span>
+                        </h2>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 place-items-center">
+                            {claimedAchievements.map((a) => (
+                                <AchievementBadge
+                                    key={a.id}
+                                    icon={a.icon}
+                                    title={a.title}
+                                    description={a.description}
+                                    claimed={a.claimed}
+                                    size="sm"
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {showPrivateData && (
+                    <section className="space-y-4">
+                        <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
+                            <ShieldCheck className="h-5 w-5 text-solana" />
+                            Certificates &amp; Credentials
+                        </h2>
+                        <CredentialList walletAddress={wallet} initialData={data.credentials as any} />
+                    </section>
+                )}
+            </div>
+        </main>
+    );
+}
+

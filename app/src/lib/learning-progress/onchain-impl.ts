@@ -10,7 +10,7 @@ import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { LearningProgressService } from "./interface";
 // @ts-ignore
 import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
-import { prisma } from "@/lib/db";
+// import { prisma } from "@/lib/db"; // Removed for browser safety
 import { withFallbackRPC, HELIUS_RPC } from "@/lib/solana-connection";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync, createAssociatedTokenAccountIdempotentInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
@@ -24,9 +24,11 @@ const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4
 export class OnChainLearningService implements LearningProgressService {
     private connection: Connection;
     private program: Program<any>;
+    private dbService?: LearningProgressService;
 
-    constructor(connection: Connection) {
+    constructor(connection: Connection, dbService?: LearningProgressService) {
         this.connection = connection;
+        this.dbService = dbService;
         const provider = new AnchorProvider(
             connection,
             { publicKey: PublicKey.default, signTransaction: async () => { throw new Error("Read-only") }, signAllTransactions: async () => { throw new Error("Read-only") } },
@@ -84,28 +86,35 @@ export class OnChainLearningService implements LearningProgressService {
     // --- READ Methods ---
 
     async getProgress(userId: string): Promise<any> {
-        // Parallelize XP fetch (RPC) and Database fetch (Prisma)
-        const [xpResult, userResult] = await Promise.allSettled([
+        // Parallelize XP fetch (RPC) and Database fetch (Service)
+        const [xpResult, dbResult] = await Promise.allSettled([
             this.getXP(userId),
-            prisma.user.findFirst({
-                where: { OR: [{ walletAddress: userId }, { id: userId }] },
-                include: { progress: true }
-            })
+            this.dbService ? this.dbService.getProgress(userId) : Promise.resolve(null)
         ]);
 
         const xp = xpResult.status === "fulfilled" ? xpResult.value : 0;
-        const user = userResult.status === "fulfilled" ? userResult.value : null;
+        const progress = dbResult.status === "fulfilled" ? dbResult.value : null;
 
-        if (!user || !user.progress) {
+        /**
+         * HYBRID SYNC: If the database XP is out of sync, we delegate to dbService.
+         * The dbService (prisma-impl) should handle the actual DB update.
+         */
+        if (this.dbService && progress && progress.xp !== xp) {
+            // Note: We don't have a specific "syncXP" on the interface, 
+            // but prisma-impl handles XP synchronization during completeLesson/claimBonus.
+            // For general read-sync, we rely on the next write operation or manual sync.
+        }
+
+        if (!progress) {
             return { xp, currentStreak: 0, longestStreak: 0, lastActivityDate: null, achievementFlags: [] };
         }
 
         return {
             xp,
-            currentStreak: user.progress.currentStreak,
-            longestStreak: user.progress.longestStreak,
-            lastActivityDate: user.progress.lastActivityDate,
-            achievementFlags: user.progress.achievementFlags
+            currentStreak: progress.currentStreak,
+            longestStreak: progress.longestStreak,
+            lastActivityDate: progress.lastActivityDate,
+            achievementFlags: progress.achievementFlags
         };
     }
 
@@ -114,22 +123,16 @@ export class OnChainLearningService implements LearningProgressService {
         let walletAddress = userId;
         const isWallet = userId.length >= 32 && userId.length <= 44 && !userId.includes("-");
 
-        if (!isWallet) {
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { walletAddress: true }
-            });
-            if (user?.walletAddress) {
-                walletAddress = user.walletAddress;
-            } else {
-                // Not a wallet and not in DB - fall back to Prisma implementation
-                const { createLearningProgressService } = await import("./prisma-impl");
-                const prismaService = createLearningProgressService(prisma);
-                return await prismaService.getEnrollmentProgress(userId, courseId);
-            }
+        if (!isWallet && this.dbService) {
+            // If we have a dbService, we might be on the server. 
+            // We need to resolve the internal userId to a walletAddress.
+            // However, the OnChain service primarily works with wallets.
+            // If the caller passed a UUID, we try to fetch the wallet via dbService if it supports a way to resolve it.
+            // For now, if it's not a wallet, we fallback to DB service.
+            return await this.dbService.getEnrollmentProgress(userId, courseId);
         }
 
-        // 2. Fetch from On-Chain (Parallelize Enrollment and Course fetches)
+        // 2. Fetch from On-Chain
         return await this.withProgram(async (program, connection) => {
             try {
                 const userKey = new PublicKey(walletAddress);
@@ -142,14 +145,9 @@ export class OnChainLearningService implements LearningProgressService {
                 ]);
 
                 if (enrollmentResult.status === "rejected" || !enrollmentResult.value) {
-                    // Not on-chain yet or fetch failed? Fall back to Prisma for hybrid sync
-                    const { createLearningProgressService } = await import("./prisma-impl");
-                    const prismaService = createLearningProgressService(prisma);
-                    const progress = await prismaService.getEnrollmentProgress(walletAddress, courseId);
-                    if (progress) {
-                        return { ...progress, onChainActive: false };
-                    }
-                    return null;
+                    if (!this.dbService) return null;
+                    const progress = await this.dbService.getEnrollmentProgress(userId, courseId);
+                    return progress ? { ...progress, onChainActive: false } : null;
                 }
 
                 const enrollment = enrollmentResult.value;
@@ -183,157 +181,103 @@ export class OnChainLearningService implements LearningProgressService {
                     onChainActive: true
                 };
             } catch (e) {
-                // Fallback to Prisma on any error
-                const { createLearningProgressService } = await import("./prisma-impl");
-                const prismaService = createLearningProgressService(prisma);
-                const progress = await prismaService.getEnrollmentProgress(walletAddress, courseId);
+                if (!this.dbService) return null;
+                const progress = await this.dbService.getEnrollmentProgress(userId, courseId);
                 return progress ? { ...progress, onChainActive: false } : null;
             }
         });
     }
 
     async getXP(userId: string): Promise<number> {
-        return await this.withProgram(async (program, connection) => {
-            const [configPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("config")],
-                program.programId
-            );
-            const configAccount = await (program.account as any).config.fetch(configPda);
-            const xpMint = configAccount.xpMint;
+        const { getCached } = await import("@/lib/cache");
+        return await getCached(`user:${userId}:xp`, async () => {
+            return await this.withProgram(async (program, connection) => {
+                const [configPda] = PublicKey.findProgramAddressSync(
+                    [Buffer.from("config")],
+                    program.programId
+                );
+                const configAccount = await (program.account as any).config.fetch(configPda);
+                const xpMint = configAccount.xpMint;
 
-            const userKey = new PublicKey(userId);
-            const accounts = await connection.getTokenAccountsByOwner(userKey, { mint: xpMint });
+                const userKey = new PublicKey(userId);
+                const accounts = await connection.getTokenAccountsByOwner(userKey, { mint: xpMint });
 
-            if (accounts.value.length === 0) return 0;
+                if (accounts.value.length === 0) return 0;
 
-            const balance = await connection.getTokenAccountBalance(accounts.value[0].pubkey);
-            return balance.value.uiAmount || 0;
-        });
+                const balance = await connection.getTokenAccountBalance(accounts.value[0].pubkey);
+                return balance.value.uiAmount || 0;
+            });
+        }, { ttl: 60 });
     }
 
     async getStreak(userId: string): Promise<any> {
-        // Hybrid Implementation: Streaks are always off-chain (DB/Frontend)
-        // We use Prisma directly here to fetch streak data even in On-Chain mode.
-        try {
-            // We need to resolve wallet to User ID if possible, or just query by wallet if schema supports it.
-            // But 'progress' table uses internal User ID.
-            // So we first find the user by wallet.
-            const user = await prisma.user.findUnique({
-                where: { walletAddress: userId },
-                include: { progress: true }
-            });
+        // Hybrid Implementation: Streaks are always off-chain
+        if (!this.dbService) return { currentStreak: 0, longestStreak: 0, lastActivityDate: null };
+        return this.dbService.getStreak(userId);
+    }
 
-            if (!user || !user.progress) {
-                return { currentStreak: 0, longestStreak: 0, lastActivityDate: null };
-            }
+    async getLeaderboard(options?: { limit?: number; page?: number; timeframe?: "daily" | "weekly" | "all-time"; courseId?: string }): Promise<any[]> {
+        if (!this.dbService) return [];
+        return this.dbService.getLeaderboard(options);
+    }
 
-            return {
-                currentStreak: user.progress.currentStreak,
-                longestStreak: user.progress.longestStreak,
-                lastActivityDate: user.progress.lastActivityDate
-            };
-        } catch (e) {
-            console.error("Failed to fetch streak", e);
-            return { currentStreak: 0, longestStreak: 0, lastActivityDate: null };
+    private assetCache = new Map<string, { items: any[]; expires: number }>();
+
+    private async getOnChainAssets(owner: string): Promise<any[]> {
+        const now = Date.now();
+        const cached = this.assetCache.get(owner);
+        if (cached && cached.expires > now) {
+            return cached.items;
         }
-    }
 
-    async getLeaderboard(options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time" }): Promise<any[]> {
-        return await this.withProgram(async (program, connection) => {
-            const [configPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("config")],
-                program.programId
-            );
-            const configAccount = await (program.account as any).config.fetch(configPda);
-            const xpMint = configAccount.xpMint;
-
-            const largestAccounts = await connection.getTokenLargestAccounts(xpMint);
-            const topAccounts = largestAccounts.value.slice(0, options?.limit || 50);
-
-            const accountInfos = await connection.getMultipleAccountsInfo(topAccounts.map(a => a.address));
-
-            const leaderboard = accountInfos.map((info, index) => {
-                if (!info) return null;
-                const owner = new PublicKey(info.data.slice(32, 64));
-                const amount = topAccounts[index].amount;
-
-                const xpNum = Number(topAccounts[index].uiAmount ?? amount);
-                return {
-                    rank: index + 1,
-                    userId: owner.toBase58(),
-                    walletAddress: owner.toBase58(),
-                    xp: xpNum,
-                    level: getLevelFromXp(xpNum),
-                    currentStreak: 0
-                };
-            }).filter(Boolean);
-
-            return leaderboard as any[];
-        });
-    }
-
-    async getCredentials(userId: string): Promise<any[]> {
-        try {
-            // Validate public key to avoid Helius DAS errors
-            try {
-                new PublicKey(userId);
-            } catch (e) {
-                console.warn(`[onchain-impl] getCredentials: Skipping on-chain fetch for invalid pubkey: ${userId}`);
-                return [];
-            }
-
-            // Helius DAS API - getAssetsByOwner
-            const heliusUrl = HELIUS_RPC;
-            const response = await fetch(heliusUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+        const heliusUrl = HELIUS_RPC;
+        const response = await fetch(heliusUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'get-assets',
+                method: 'getAssetsByOwner',
+                params: {
+                    ownerAddress: owner,
+                    page: 1,
+                    limit: 100, // Reasonable limit for academic credentials
+                    displayOptions: { showCollectionMetadata: true },
                 },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: 'my-id',
-                    method: 'getAssetsByOwner',
-                    params: {
-                        ownerAddress: userId,
-                        page: 1,
-                        limit: 100,
-                        displayOptions: {
-                            showCollectionMetadata: true,
-                        },
-                    },
-                }),
-            });
+            }),
+        });
 
-            const data = await response.json();
-            if (data.error) {
-                if (data.error.code === -32401) {
-                    console.warn("[onchain-impl] Helius API key is invalid or missing. Credentials will not be displayed.");
-                } else {
-                    console.error("Helius DAS Error:", data.error);
-                }
-                return [];
+        const data = await response.json();
+        if (data.error) {
+            if (data.error.code === -32401) {
+                console.warn("[onchain-impl] Helius API key is invalid or missing.");
+            } else {
+                console.error("Helius DAS Error:", data.error);
             }
-            const { result } = data;
+            return [];
+        }
 
-            if (!result || !result.items) return [];
+        const items = data.result?.items || [];
+        this.assetCache.set(owner, { items, expires: now + 30000 }); // 30s cache
+        return items;
+    }
 
-            // Filter for Academy Credentials using Collection Address or specific metadata
-            // For now, we fitler by checking if it has Attributes we expect (Level, Track, XP)
-            const filteredAssets = result.items
-                // @ts-ignore
-                .filter((asset: any) => {
-                    // Check if it's a Metaplex Core asset? Or just check attributes
-                    // Ideally we check asset.grouping to match our Collection Address
-                    // But for now, let's look for "Course Credential" in name or attributes
-                    return asset.content?.metadata?.name?.includes("Credential") ||
-                        asset.content?.metadata?.attributes?.some((a: any) => a.trait_type === "Track");
-                });
+    async getCredentials(userId: string, options?: { limit?: number; skip?: number }): Promise<any[]> {
+        try {
+            // Validate public key
+            try { new PublicKey(userId); } catch (e) { return []; }
 
-            // Fetch all user's Prisma credentials to get true earnedAt dates
-            const userDbCreds = await prisma.credential.findMany({
-                where: { OR: [{ userId: userId }, { user: { walletAddress: userId } }] },
-                select: { id: true, earnedAt: true, trackName: true, trackId: true }
+            const items = await this.getOnChainAssets(userId);
+
+            // Filter for Academy Credentials
+            const filteredAssets = items.filter((asset: any) => {
+                const metadataName = asset.content?.metadata?.name || "";
+                return metadataName.includes("Credential") ||
+                    asset.content?.metadata?.attributes?.some((a: any) => a.trait_type === "Track");
             });
+
+            // Fetch true earnedAt dates and course info from DB if possible
+            const dbCreds = this.dbService ? await this.dbService.getCredentials(userId) : [];
 
             const credentials = filteredAssets.map((asset: any) => {
                 const attrs = asset.content?.metadata?.attributes || [];
@@ -343,8 +287,8 @@ export class OnChainLearningService implements LearningProgressService {
                 const courses = attrs.find((a: any) => a.trait_type === "Courses Completed")?.value;
 
                 // Match with DB record
-                const dbMatch = userDbCreds.find(c => c.id === asset.id);
-                const earnedAt = dbMatch ? dbMatch.earnedAt.toISOString() : new Date().toISOString();
+                const dbMatch = dbCreds.find((c: any) => c.id === asset.id || c.mintAddress === asset.id);
+                const earnedAt = dbMatch ? (typeof dbMatch.earnedAt === 'string' ? dbMatch.earnedAt : (dbMatch.earnedAt as Date).toISOString()) : new Date().toISOString();
                 const trackName = dbMatch?.trackName || track;
                 const trackId = dbMatch?.trackId || track.toLowerCase().replace(/\s/g, "-");
 
@@ -352,6 +296,8 @@ export class OnChainLearningService implements LearningProgressService {
                     id: asset.id,
                     userId: asset.ownership.owner,
                     walletAddress: asset.ownership.owner,
+                    courseId: dbMatch?.courseId || null,
+                    courseName: dbMatch?.courseName || null,
                     trackId,
                     trackName,
                     level: level ? parseInt(level) : 1,
@@ -363,7 +309,15 @@ export class OnChainLearningService implements LearningProgressService {
                 };
             });
 
-            return credentials;
+            // Handle pagination for on-chain
+            let paginated = credentials;
+            if (options?.skip !== undefined || options?.limit !== undefined) {
+                const skipAmount = options.skip || 0;
+                const limitAmount = options.limit || credentials.length;
+                paginated = credentials.slice(skipAmount, skipAmount + limitAmount);
+            }
+
+            return paginated;
 
         } catch (e) {
             console.error("Failed to fetch credentials from DAS", e);
@@ -404,18 +358,14 @@ export class OnChainLearningService implements LearningProgressService {
             const xp = attrs.find((a: any) => a.trait_type === "XP")?.value || "0";
             const courses = attrs.find((a: any) => a.trait_type === "Courses Completed")?.value || "1";
 
-            // Try to find the matching record in Prisma to get the true earnedAt date and track name
+            // Try to find the matching record in DB
             let earnedAt = new Date().toISOString();
             let trackName = track;
             let trackId = track.toLowerCase().replace(/\s/g, "-");
 
-            const dbCred = await prisma.credential.findUnique({
-                where: { id: asset.id },
-                select: { earnedAt: true, trackName: true, trackId: true }
-            });
-
+            const dbCred = this.dbService ? await this.dbService.getCredential(id) : null;
             if (dbCred) {
-                earnedAt = dbCred.earnedAt.toISOString();
+                earnedAt = typeof dbCred.earnedAt === 'string' ? dbCred.earnedAt : (dbCred.earnedAt as Date).toISOString();
                 if (dbCred.trackName) trackName = dbCred.trackName;
                 if (dbCred.trackId) trackId = dbCred.trackId;
             }
@@ -443,22 +393,9 @@ export class OnChainLearningService implements LearningProgressService {
     // --- WRITE Methods ---
 
     async enroll(userId: string, courseId: string): Promise<any> {
-        // 1. Sync to Prisma if on the server
-        if (typeof window === "undefined") {
-            try {
-                const user = await prisma.user.findFirst({
-                    where: { OR: [{ walletAddress: userId }, { id: userId }] },
-                    select: { id: true }
-                });
-                if (user) {
-                    const { createLearningProgressService } = await import("./prisma-impl");
-                    const prismaService = createLearningProgressService(prisma);
-                    await prismaService.enroll(user.id, courseId);
-                    console.log(`[onchain-service] Synced enrollment to DB for user ${user.id}`);
-                }
-            } catch (e) {
-                console.error("[onchain-service] Failed to sync enrollment to DB:", e);
-            }
+        // 1. Sync to DB if we have a service (server-side)
+        if (this.dbService) {
+            await this.dbService.enroll(userId, courseId).catch(e => console.error("[onchain-service] DB sync failed", e));
         }
 
         // 2. Generate on-chain transaction
@@ -489,14 +426,10 @@ export class OnChainLearningService implements LearningProgressService {
         let walletAddress = userId;
         const isWallet = userId.length >= 32 && userId.length <= 44 && !userId.includes("-");
 
-        if (!isWallet) {
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { walletAddress: true }
-            });
-            if (user?.walletAddress) {
-                walletAddress = user.walletAddress;
-            }
+        if (!isWallet && this.dbService) {
+            // If we have a dbService, it's on the server.
+            // Delegate to dbService (unenroll is already implemented there)
+            return await this.dbService.unenroll(userId, courseId);
         }
 
         // 2. Generate on-chain transaction
@@ -522,7 +455,7 @@ export class OnChainLearningService implements LearningProgressService {
     }
 
     async completeLesson(params: { userId: string; courseId: string; lessonIndex: number; xpReward: number }): Promise<void> {
-        if (typeof window === "undefined") {
+        if (this.dbService) {
             // Server-side: Execute on-chain lesson completion using backend signer
             await this.withBackendProgram(async (program, connection, backendWallet) => {
                 const learner = new PublicKey(params.userId);
@@ -559,6 +492,8 @@ export class OnChainLearningService implements LearningProgressService {
                 await connection.confirmTransaction(signature);
                 console.log(`[onchain-service] Lesson ${params.lessonIndex} completed on-chain: ${signature}`);
             });
+            // Sync to DB
+            await this.dbService.completeLesson(params);
         } else {
             const res = await fetch("/api/onchain/complete-lesson", {
                 method: "POST",
@@ -681,7 +616,7 @@ export class OnChainLearningService implements LearningProgressService {
     }
 
     async claimCompletionBonus(userId: string, courseId: string, xpAmount: number): Promise<void> {
-        if (typeof window === "undefined") {
+        if (this.dbService) {
             await this.withBackendProgram(async (program, connection, backendWallet) => {
                 const learner = new PublicKey(userId);
                 const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
@@ -711,6 +646,11 @@ export class OnChainLearningService implements LearningProgressService {
                 const signature = await connection.sendRawTransaction(tx.serialize());
                 await connection.confirmTransaction(signature);
                 console.log(`[onchain-service] Bonus claimed on-chain: ${signature}`);
+
+                // SYNC TO DB
+                if (this.dbService) {
+                    await this.dbService.claimCompletionBonus(userId, courseId, xpAmount).catch(e => console.error("[onchain-sync] Bonus DB sync failed:", e));
+                }
             });
         } else {
             const res = await fetch("/api/onchain/claim-bonus", {
@@ -722,10 +662,10 @@ export class OnChainLearningService implements LearningProgressService {
         }
     }
 
-    async issueCredential(params: { userId: string; wallet?: string; courseId: string; trackId: string; trackName: string; xpEarned: number }): Promise<string> {
+    async issueCredential(params: { userId: string; wallet?: string; courseId: string; courseName?: string; trackId: string; trackName: string; xpEarned: number }): Promise<string> {
         if (typeof window === "undefined") {
             // Server-side: Issue NFT Credential using Metaplex Core
-            const { userId, wallet, courseId, trackId, trackName, xpEarned } = params;
+            const { userId, wallet, courseId, courseName, trackId, trackName, xpEarned } = params;
             const targetWallet = wallet || userId;
 
             if (!targetWallet) {
@@ -748,7 +688,7 @@ export class OnChainLearningService implements LearningProgressService {
 
                 // We use the issue_credential instruction from the IDL:
                 // credential_name, metadata_uri, courses_completed, total_xp
-                const credentialName = `${trackName} Certificate`;
+                const credentialName = courseName ? `${courseName} Certificate` : `${trackName} Certificate`;
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
                 const metadataUri = `${appUrl}/api/metadata/credential/${asset.publicKey.toBase58()}`;
 
@@ -801,42 +741,16 @@ export class OnChainLearningService implements LearningProgressService {
                 await connection.confirmTransaction(signature);
                 console.log(`[onchain-service] issueCredential: SUCCESS! signature=${signature}`);
 
-                // Find Prisma user to link the credential
-                const prismaUser = await prisma.user.findFirst({
-                    where: { OR: [{ walletAddress: wallet }, { id: wallet }] },
-                    select: { id: true }
-                });
-
-                if (prismaUser) {
-                    // Calculate real coursesCompleted count and level for this track
-                    const existingCount = await prisma.credential.count({
-                        where: { userId: prismaUser.id, trackId }
-                    });
-                    const coursesCompleted = existingCount + 1;
-
-                    // Use standard level formula: Level 1 = 1 course, Level 2 = 2 courses, etc.
-                    // Or use XP based level from the track. 
-                    // The user liked the "Level 2" for 1540 XP, which aligns with 1 course + bonus.
-                    const level = coursesCompleted;
-
-                    await prisma.credential.create({
-                        data: {
-                            id: asset.publicKey.toBase58(),
-                            userId: prismaUser.id,
-                            trackId,
-                            trackName,
-                            level,
-                            coursesCompleted,
-                            totalXpEarned: xpEarned,
-                            mintAddress: asset.publicKey.toBase58(),
-                            metadataUrl: metadataUri,
-                        }
-                    }).catch(e => console.error("Failed to sync credential to DB:", e));
+                const mintAddress = asset.publicKey.toBase58();
+                if (this.dbService) {
+                    await this.dbService.issueCredential({
+                        ...params,
+                        mintAddress,
+                        verificationUrl: `https://explorer.solana.com/address/${mintAddress}?cluster=devnet`
+                    }).catch((e: any) => console.error("Failed to sync credential to DB:", e));
                 }
-                else {
-                    console.warn("[onchain-service] Could not find Prisma user to sync credential for wallet:", wallet);
-                }
-                return asset.publicKey.toBase58();
+
+                return mintAddress;
             });
         } else {
             const res = await fetch("/api/onchain/issue-credential", {
@@ -845,6 +759,7 @@ export class OnChainLearningService implements LearningProgressService {
                 body: JSON.stringify({
                     wallet: params.userId,
                     courseId: params.courseId,
+                    courseName: params.courseName, // Added
                     trackId: params.trackId,
                     trackName: params.trackName,
                     xpEarned: params.xpEarned
@@ -856,7 +771,79 @@ export class OnChainLearningService implements LearningProgressService {
         }
     }
 
+    async completeQuiz(params: { userId: string; courseId: string; moduleId: string; quizId: string; xpReward: number; }): Promise<void> {
+        // 1. Mint XP tokens on-chain for quiz completion
+        if (this.dbService) {
+            try {
+                await this.withBackendProgram(async (program, connection, backendWallet) => {
+                    const learner = new PublicKey(params.userId);
+                    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+                    const config = await (program.account as any).config.fetch(configPda);
+
+                    const learnerTokenAccounts = await connection.getTokenAccountsByOwner(learner, { mint: config.xpMint });
+                    const learnerTokenAccount = learnerTokenAccounts.value[0]?.pubkey;
+
+                    if (!learnerTokenAccount) {
+                        console.warn(`[onchain-service] Quiz XP: No token account for ${params.userId}, skipping on-chain mint.`);
+                        return;
+                    }
+
+                    const [minterPda] = PublicKey.findProgramAddressSync(
+                        [Buffer.from("minter"), backendWallet.publicKey.toBuffer()],
+                        program.programId
+                    );
+
+                    const tx = await (program.methods as any)
+                        .rewardXp(new BN(params.xpReward))
+                        .accounts({
+                            config: configPda,
+                            minterRole: minterPda,
+                            xpMint: config.xpMint,
+                            recipientTokenAccount: learnerTokenAccount,
+                            minter: backendWallet.publicKey,
+                            tokenProgram: TOKEN_2022_PROGRAM_ID,
+                        } as any)
+                        .transaction();
+
+                    tx.feePayer = backendWallet.publicKey;
+                    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                    tx.sign(backendWallet);
+
+                    const signature = await connection.sendRawTransaction(tx.serialize());
+                    await connection.confirmTransaction(signature);
+                    console.log(`[onchain-service] Quiz ${params.quizId} XP minted on-chain: ${signature}`);
+                });
+            } catch (e) {
+                console.error("[onchain-service] Quiz on-chain XP mint failed, proceeding with DB sync:", e);
+            }
+
+            // 2. Sync to DB (records XP + XpEvent)
+            await this.dbService.completeQuiz(params);
+        } else {
+            // Client-side: use API
+            const res = await fetch("/api/complete-quiz", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    walletAddress: params.userId,
+                    courseId: params.courseId,
+                    moduleId: params.moduleId,
+                    quizId: params.quizId,
+                    xpReward: params.xpReward
+                })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || "Failed to complete quiz");
+            }
+        }
+    }
+
     async claimAchievement(userId: string, achievementId: string): Promise<boolean> {
+        if (this.dbService) {
+            return this.dbService.claimAchievement(userId, achievementId);
+        }
+
         const res = await fetch("/api/onchain/claim-achievement", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -872,20 +859,8 @@ export class OnChainLearningService implements LearningProgressService {
         return data.claimed === true;
     }
 
-    async logActivity(userId: string): Promise<void> {
-        // Hybrid Implementation: Streaks are always off-chain (DB/Frontend)
-        try {
-            const user = await prisma.user.findUnique({
-                where: { walletAddress: userId },
-                select: { id: true }
-            });
-            if (!user) return;
-
-            const { createLearningProgressService } = await import("./prisma-impl");
-            const prismaService = createLearningProgressService(prisma);
-            await prismaService.logActivity(user.id);
-        } catch (e) {
-            console.error("Failed to log activity", e);
-        }
+    async logActivity(userId: string): Promise<boolean> {
+        if (!this.dbService) return false;
+        return this.dbService.logActivity(userId);
     }
 }

@@ -41,7 +41,8 @@
         "unlocked": "{count}/{total} Desbloqueados",
         "continue_learning": "Continuar Aprendendo",
         "no_enrollments": "Você ainda não se inscreveu em nenhum curso.",
-        "recommended_courses": "Recomendado para Você"
+        "recommended_courses": "Recomendado para Você",
+        "recentActivity": "Atividade Recente"
     },
     "settings": {
         "title": "Configurações",
@@ -101,14 +102,6 @@
             "data_export": "Exportar Dados",
             "data_export_desc": "Baixe todos os seus dados da academia (perfil, inscrições, certificados, EXP) em formato JSON.",
             "export_button": "Baixar Dados"
-        },
-        "referral": {
-            "title": "Programa de Indicação",
-            "desc": "Compartilhe seu link de indicação com amigos e ganhe EXP bônus quando eles se juntarem e completarem seu primeiro curso.",
-            "your_link": "Seu Link de Indicação",
-            "stats": "Estatísticas de Indicação",
-            "friends_joined": "Amigos Indicados",
-            "copied": "Link Copiado!"
         }
     },
     "courses": {
@@ -120,7 +113,8 @@
             "rust": "Rust",
             "anchor": "Anchor",
             "security": "Segurança",
-            "solana": "Solana"
+            "solana": "Solana",
+            "other": "Outros"
         },
         "loading": "Carregando cursos...",
         "none_available": "Nenhum curso disponível ainda.",
@@ -181,14 +175,23 @@
         "browse_courses": "Explorar cursos"
     },
     "footer": {
+        "description": "A plataforma definitiva de aprendizado para desenvolvedores Solana nativos. Construída pela comunidade, para a comunidade.",
         "made_with": "Feito com",
         "from": "pela",
         "ubuntu_quote": "ubuntu - Eu sou porque nós somos.",
         "motivation": "Neste futuro descentralizado, ninguém constrói sozinho. Seu crescimento é o nosso crescimento, e sua segurança é a nossa força coletiva.",
         "mission": "vamos nos esforçar para o desenvolvimento de uma blockchain melhor e mais segura",
-        "exit": "sair"
+        "exit": "sair",
+        "newsletter_title": "Assine nossa Newsletter",
+        "newsletter_desc": "Receba as últimas atualizações sobre novos cursos, desafios e recursos da plataforma.",
+        "newsletter_placeholder": "Digite seu e-mail",
+        "newsletter_subscribe": "Assinar",
+        "newsletter_subscribing": "Assinando...",
+        "newsletter_success": "Agradecemos por assinar!",
+        "newsletter_error": "Falha ao assinar. Tente novamente."
     },
     "course_detail": {
+        "course_completed": "Curso Concluído",
         "your_progress": "Seu progresso: {current}/{total} lições ({pct}%)",
         "login_to_enroll": "Faça login e conecte sua carteira para se inscrever em {title}.",
         "enrolled": "Inscrito",
@@ -259,7 +262,8 @@
         "subtitle": "Melhores alunos por XP",
         "col_user": "Usuário",
         "col_level": "Nível",
-        "all_courses": "Todos os Cursos"
+        "all_courses": "Todos os Cursos",
+        "load_more": "Carregar Mais"
     },
     "profile": {
         "not_found_title": "Perfil não encontrado",
@@ -268,25 +272,16 @@
         "get_started_cta": "Pronto para começar sua jornada? Inscreva-se em um curso para ganhar XP e subir no placar!"
     },
     "auth": {
-        "authenticating": "Autenticando...",
-        "redirecting": "Redirecionando...",
-        "sync_error": "Erro de sincronização",
-        "retry_connection": "Tentar Novamente",
         "welcome": "Bem-vindo",
         "continue": "Continuar",
         "loading": "Carregando…",
-        "log_in": "Entrar",
-        "setting_up": "Configurando sua conta...",
-        "loading_profile": "Carregando perfil..."
+        "log_in": "Entrar"
     },
     "components": {
         "active_course_title": "Curso Ativo",
         "view_all_courses": "Ver Todos os Cursos ->",
         "active_course_desc": "Continue sua jornada na Web3 através de nosso currículo estruturado.",
         "no_credentials": "Sem credenciais ainda. Complete cursos para ganhá-las!",
-        "referrals_title": "Indicações",
-        "referrals_desc": "Convide amigos e ganhem XP juntos.",
-        "referred_users": "Usuários Indicados",
         "sidebar_dashboard": "Painel",
         "sidebar_brand": "Superteam .academy",
         "sidebar_courses": "Cursos",
@@ -301,8 +296,7 @@
         "stats_next_rank": "Próximo Ranking: {xp} XP",
         "active_course_last_lesson": "Última lição: {title}",
         "active_course_continue": "Continuar",
-        "referral_your_link": "Seu Link de Indicação",
-        "referral_copied": "Copiado para a área de transferência!"
+        "load_more_certificates": "Carregar mais certificados"
     },
     "ide": {
         "loading_editor": "Carregando editor...",
@@ -327,5 +321,12 @@
         "expected": "Esperado",
         "got": "Obtido",
         "error": "Erro"
+    },
+    "not_found": {
+        "title": "404 - Solicitação Descartada",
+        "subtitle": "Gm. Esta página ainda não foi cunhada, ou talvez tenha sido um rug.",
+        "description": "O bloco que você está procurando não foi encontrado no mempool. Pode ter sido reorganizado ou nunca ter existido.",
+        "back_home": "Voltar ao Painel",
+        "status": "Nível de Congestionamento: Alto"
     }
 }

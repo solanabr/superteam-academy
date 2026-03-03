@@ -10,7 +10,8 @@ const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLI
  */
 async function confirmOnChain(signature: string) {
     const connection = new Connection(RPC_URL, "confirmed");
-    const result = await connection.confirmTransaction(signature);
+    // Standardizing to the more robust confirmation model
+    const result = await connection.confirmTransaction(signature, "confirmed");
     if (result.value.err) {
         throw new Error(`Transaction failed: ${JSON.stringify(result.value.err)}`);
     }
@@ -58,6 +59,7 @@ export const handleGraduation = inngest.createFunction(
                 userId: wallet,
                 wallet: wallet,
                 courseId: courseId,
+                courseName: course.title, // ADDED: Pass actual course title
                 trackId: course.track,
                 trackName: trackName,
                 xpEarned: 500
@@ -72,6 +74,41 @@ export const handleGraduation = inngest.createFunction(
         return { success: true, mintAddress };
     }
 );
+
+/**
+ * Handles background Achievement Claim.
+ */
+export const handleAchievementClaim = inngest.createFunction(
+    {
+        id: "handle-achievement-claim",
+        idempotency: "event.data.wallet + event.data.achievementId"
+    },
+    { event: "academy/achievement.claimed" },
+    async ({ event, step }) => {
+        const { wallet, achievementId } = event.data;
+
+        // 1. Process Claim in DB/On-chain
+        await step.run("process-claim", async () => {
+            const { learningProgressService } = await import("@/lib/learning-progress/service");
+            const user = await prisma.user.findUnique({ where: { walletAddress: wallet } });
+            if (!user) throw new Error("User not found");
+
+            const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+            return await learningProgressService.claimAchievement(identifier, achievementId);
+        });
+
+        // 2. Safety Buffer to ensure DB commit
+        await step.sleep("db-commit-wait", "1s");
+
+        // 3. Invalidate Cache
+        await step.run("invalidate-cache", async () => {
+            await invalidatePattern(`user:${wallet}*`);
+        });
+
+        return { success: true };
+    }
+);
+
 
 /**
  * Handles background confirmation for Course Enrollment.
@@ -187,6 +224,116 @@ export const confirmUnenrollment = inngest.createFunction(
 
         await step.run("confirm-on-chain", async () => {
             return await confirmOnChain(signature);
+        });
+
+        await step.run("invalidate-user-cache", async () => {
+            await invalidatePattern(`user:${wallet}*`);
+        });
+
+        return { success: true };
+    }
+);
+
+/**
+ * Handles background confirmation for Quiz Completion.
+ */
+export const handleQuizCompletion = inngest.createFunction(
+    {
+        id: "handle-quiz-completion",
+        idempotency: "event.data.wallet + event.data.quizId"
+    },
+    { event: "academy/quiz.completed" },
+    async ({ event, step }) => {
+        const { wallet, courseId, moduleId, quizId, xpReward } = event.data;
+
+        // 1. Mint XP tokens on-chain (same as lesson completion pattern)
+        if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+            await step.run("mint-quiz-xp-onchain", async () => {
+                try {
+                    const { Connection, Keypair, PublicKey, Transaction } = await import("@solana/web3.js");
+                    const { getAssociatedTokenAddressSync } = await import("@solana/spl-token");
+                    const { Program, AnchorProvider, BN } = await import("@coral-xyz/anchor");
+                    const bs58 = (await import("bs58")).default;
+                    const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+                    const BACKEND_WALLET_KEY = process.env.BACKEND_WALLET_PRIVATE_KEY;
+                    if (!BACKEND_WALLET_KEY) {
+                        console.warn("[quiz-inngest] No backend wallet key, skipping on-chain mint");
+                        return { skipped: true };
+                    }
+
+                    const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+                    const connection = new Connection(RPC_URL, "confirmed");
+                    const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
+
+                    const provider = new AnchorProvider(
+                        connection,
+                        // @ts-ignore
+                        { publicKey: backendWallet.publicKey, signTransaction: async (tx: any) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs: any[]) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
+                        AnchorProvider.defaultOptions()
+                    );
+
+                    const program = new Program(onchainAcademyIdl as any, provider);
+                    const learner = new PublicKey(wallet);
+
+                    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+                    const config = await (program.account as any).config.fetch(configPda);
+
+                    const learnerTokenAccount = getAssociatedTokenAddressSync(
+                        config.xpMint, learner, true, TOKEN_2022_PROGRAM_ID
+                    );
+
+                    const accountInfo = await connection.getAccountInfo(learnerTokenAccount);
+                    if (!accountInfo) {
+                        console.warn(`[quiz-inngest] No token account for ${wallet}, skipping on-chain mint`);
+                        return { skipped: true, reason: "no_token_account" };
+                    }
+
+                    const [minterPda] = PublicKey.findProgramAddressSync(
+                        [Buffer.from("minter"), backendWallet.publicKey.toBuffer()], program.programId
+                    );
+
+                    const tx = await (program.methods as any)
+                        .rewardXp(new BN(xpReward))
+                        .accounts({
+                            config: configPda,
+                            minterRole: minterPda,
+                            xpMint: config.xpMint,
+                            recipientTokenAccount: learnerTokenAccount,
+                            minter: backendWallet.publicKey,
+                            tokenProgram: TOKEN_2022_PROGRAM_ID,
+                        } as any)
+                        .transaction();
+
+                    tx.feePayer = backendWallet.publicKey;
+                    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                    tx.sign(backendWallet);
+
+                    const signature = await connection.sendRawTransaction(tx.serialize());
+                    await connection.confirmTransaction(signature, "confirmed");
+                    console.log(`[quiz-inngest] Quiz ${quizId} XP minted on-chain: ${signature}`);
+                    return { success: true, signature };
+                } catch (e: any) {
+                    console.error("[quiz-inngest] On-chain XP mint failed:", e.message);
+                    return { skipped: true, error: e.message };
+                }
+            });
+        }
+
+        // 2. Sync DB state (records XP + XpEvent in Prisma)
+        await step.run("sync-db-state", async () => {
+            const user = await prisma.user.findUnique({ where: { walletAddress: wallet } });
+            if (user) {
+                const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
+                const service = createLearningProgressService(prisma);
+                await service.completeQuiz({
+                    userId: user.id,
+                    courseId,
+                    moduleId,
+                    quizId,
+                    xpReward
+                });
+            }
         });
 
         await step.run("invalidate-user-cache", async () => {

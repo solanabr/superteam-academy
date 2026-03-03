@@ -48,6 +48,32 @@ type SolanaGraduationEvent = {
   };
 };
 
+type AcademyQuizCompleteEvent = {
+  data: {
+    wallet: string;
+    courseId: string;
+    moduleId: string;
+    quizId: string;
+    xpReward: number;
+  };
+};
+
+type AcademyAchievementClaimEvent = {
+  data: {
+    wallet: string;
+    achievementId: string;
+  };
+};
+
+type AcademyReferralRewardEvent = {
+  data: {
+    wallet: string;
+    courseId?: string;
+    achievementId?: string;
+    type: "enrollment" | "graduation" | "achievement";
+  };
+};
+
 export type Events = {
   "solana/transaction.sent": SolanaTxEvent;
   "solana/enrollment.sent": SolanaEnrollmentEvent;
@@ -55,6 +81,9 @@ export type Events = {
   "solana/course.published": SolanaCoursePublishedEvent;
   "solana/graduation.started": SolanaGraduationEvent;
   "solana/unenrollment.sent": SolanaEnrollmentEvent;
+  "academy/quiz.completed": AcademyQuizCompleteEvent;
+  "academy/achievement.claimed": AcademyAchievementClaimEvent;
+  "academy/referral.reward": AcademyReferralRewardEvent;
 };
 
 // Create a client to send and receive events

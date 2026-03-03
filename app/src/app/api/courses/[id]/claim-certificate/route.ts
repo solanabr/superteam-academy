@@ -44,13 +44,17 @@ export async function POST(
         // Let's use courseId as trackId for now or lookup a default.
         // Fetch course metadata stub:
 
-        // In a real app we'd fetch the course doc. For now, we stub track info.
-        const trackId = "solana-development"; // Default for these lessons
-        const trackName = "Solana Development";
+        const { getCourseById } = await import("@/sanity/lib/queries");
+        const course = await getCourseById(courseId);
+
+        const trackId = course?.track || "solana-development";
+        const trackName = trackId.charAt(0).toUpperCase() + trackId.slice(1);
+        const courseName = course?.title || "Solana Course";
 
         await service.issueCredential({
             userId: user.id,
             courseId,
+            courseName,
             trackId,
             trackName,
             xpEarned: 0,

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { useEnrollmentStore } from "@/store/enrollment-store";
+import { useCourseStore } from "@/store/course-store";
 import { useUserStore } from "@/store/user-store";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,23 +27,23 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
     const user = useUserStore((s) => s.user);
     const userLoading = useUserStore((s) => s.isLoading);
 
-    const enrollment = useEnrollmentStore((s) => s.enrollments[courseId]);
-    const enrollmentLoading = useEnrollmentStore((s) => s.loading[courseId]);
-    const fetchEnrollment = useEnrollmentStore((s) => s.fetchEnrollment);
+    const progress = useCourseStore((s) => s.progress);
+    const progressLoading = useCourseStore((s) => s.isLoading);
+    const fetchProgress = useCourseStore((s) => s.fetchProgress);
 
     const walletAddress = user?.walletAddress;
 
-    // Fetch enrollment when wallet is available
+    // Fetch progress when wallet is available
     useEffect(() => {
-        if (walletAddress && courseId && enrollment === undefined && !enrollmentLoading) {
-            fetchEnrollment(walletAddress, courseId);
+        if (walletAddress && courseId && progress === null && !progressLoading) {
+            fetchProgress(walletAddress, courseId);
         }
-    }, [walletAddress, courseId, enrollment, enrollmentLoading, fetchEnrollment]);
+    }, [walletAddress, courseId, progress, progressLoading, fetchProgress]);
 
 
 
     // Still loading auth or enrollment
-    const isLoading = userLoading || (walletAddress && enrollment === undefined && enrollmentLoading);
+    const isLoading = userLoading || (walletAddress && progress === null && progressLoading);
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
@@ -78,7 +78,7 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
     }
 
     // Authenticated but not enrolled
-    if (!enrollment) {
+    if (!progress) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
                 <div className="glass-panel flex flex-col items-center gap-6 rounded-xl border border-white/10 p-10 text-center max-w-md">

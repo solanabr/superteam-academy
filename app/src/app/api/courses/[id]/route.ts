@@ -29,6 +29,7 @@ export async function GET(
           _id,
           title,
           sortOrder,
+          "quiz": quiz->,
           "lessons": lessons[]->{
             _id,
             title,

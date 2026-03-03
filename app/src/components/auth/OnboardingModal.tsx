@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Dialog, DialogPortal, DialogOverlay, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -8,6 +8,7 @@ import { Progress } from "../ui/progress";
 import { Input } from "../ui/input";
 import { useAppUser } from "@/hooks/useAppUser";
 import { useUserStore } from "@/store/user-store";
+import { useOnboardingStore } from "@/store/onboarding-store";
 import { CheckCircle2, ChevronRight, GraduationCap, User, School, Loader2 } from "lucide-react";
 import { Link } from "../../../i18n/routing";
 
@@ -63,14 +64,15 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
     const { user } = useAppUser();
     const fetchUser = useUserStore((s) => s.fetchUser);
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [step, setStep] = useState(0); // 0: Welcome, 1: Account Setup, 2: Quiz, 3: Result
-    const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [answers, setAnswers] = useState<Record<string, number>>({});
-
-    const [username, setUsername] = useState("");
-    const [roleSelection, setRoleSelection] = useState<"student" | "professor">("student");
-    const [isSaving, setIsSaving] = useState(false);
+    const {
+        isOpen, setIsOpen,
+        step, setStep,
+        currentQuestion, setCurrentQuestion,
+        answers, setAnswer,
+        username, setUsername,
+        roleSelection, setRoleSelection,
+        isSaving, setIsSaving
+    } = useOnboardingStore();
 
     useEffect(() => {
         // AuthGuard controls whether this component mounts based on user.profile.onboardingComplete.
@@ -92,11 +94,13 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
         if (isSaving) return;
 
         const q = ASSESSMENT_QUESTIONS[currentQuestion];
+        setAnswer(q.field, value);
+
+        // Use the new Answers that includes the current value
         const newAnswers = { ...answers, [q.field]: value };
-        setAnswers(newAnswers);
 
         if (currentQuestion < ASSESSMENT_QUESTIONS.length - 1) {
-            setCurrentQuestion(prev => prev + 1);
+            setCurrentQuestion(currentQuestion + 1);
         } else {
             setIsSaving(true);
             const targetWallet = walletAddress || user?.walletAddress;
@@ -132,8 +136,6 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
             fetchUser(targetWallet);
         }
     };
-
-
 
     return (
         <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open && step === 3) finishOnboarding(); }}>
