@@ -30,7 +30,8 @@
     "leaderboard": "Leaderboard",
     "dashboard": "Dashboard",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "community": "Community"
   },
   "hero": {
     "badge": "Built on Solana",

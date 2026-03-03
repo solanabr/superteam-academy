@@ -30,7 +30,8 @@
     "leaderboard": "Clasificación",
     "dashboard": "Panel",
     "profile": "Perfil",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "community": "Comunidad"
   },
   "hero": {
     "badge": "Hecho en Solana",

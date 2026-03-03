@@ -1,175 +1,52 @@
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+"use client";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Crown02Icon,
-  Medal01Icon,
-  Award01Icon,
-} from "@hugeicons/core-free-icons";
-import { onChainLeaderboardService, leaderboardService } from "@/lib/services";
-import { getTranslations } from "next-intl/server";
 
-function truncateWallet(wallet: string) {
-  return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
-}
+const MOCK_LEADERS = [
+  { rank: 1, address: "9xQe...F3mK", name: "sol_master_br", xp: 12500, level: 11, streak: 45 },
+  { rank: 2, address: "7hJk...P2nL", name: "anchor_wizard", xp: 9800, level: 9, streak: 32 },
+  { rank: 3, address: "3mNp...Q8sW", name: "latam_builder", xp: 8200, level: 9, streak: 28 },
+  { rank: 4, address: "5rTy...H6vB", name: "defi_dev_mx", xp: 7100, level: 8, streak: 15 },
+  { rank: 5, address: "2wXz...K4cD", name: "rust_rookie", xp: 5600, level: 7, streak: 21 },
+  { rank: 6, address: "8pLm...J9qE", name: "nft_builder", xp: 4200, level: 6, streak: 8 },
+  { rank: 7, address: "1vCb...R7tF", name: "crypto_learn", xp: 3100, level: 5, streak: 12 },
+  { rank: 8, address: "6nHs...U3wG", name: "solana_noob", xp: 2400, level: 4, streak: 5 },
+  { rank: 9, address: "4kGf...Y1xH", name: "web3_latam", xp: 1800, level: 4, streak: 3 },
+  { rank: 10, address: "0jDe...M5yI", name: "anchor_dev", xp: 1200, level: 3, streak: 7 },
+];
 
-function rankIcon(rank: number) {
-  switch (rank) {
-    case 1:
-      return Crown02Icon;
-    case 2:
-      return Medal01Icon;
-    case 3:
-      return Award01Icon;
-    default:
-      return null;
-  }
-}
+const RANK_COLORS = ["text-yellow-400", "text-gray-300", "text-amber-600"];
+const RANK_EMOJI = ["🥇", "🥈", "🥉"];
 
-function rankColor(rank: number) {
-  switch (rank) {
-    case 1:
-      return "text-rank-gold";
-    case 2:
-      return "text-rank-silver";
-    case 3:
-      return "text-rank-bronze";
-    default:
-      return "text-muted-foreground";
-  }
-}
-
-export default async function LeaderboardPage() {
-  const entries = await onChainLeaderboardService.getLeaderboard(20);
-  const t = await getTranslations();
-
+export default function LeaderboardPage() {
+  const [filter, setFilter] = useState("all-time");
   return (
-    <div className="py-4">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          {t("leaderboard.heading")}
-        </h1>
-        <p className="mt-2 max-w-lg text-muted-foreground">
-          {t("leaderboard.description")}
-        </p>
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Leaderboard</h1>
+        <p className="text-muted-foreground mt-1">Top Solana builders ranked by XP</p>
       </div>
-
-      {/* Top 3 podium */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {entries.slice(0, 3).map((entry, i) => {
-          const icon = rankIcon(entry.rank);
-          return (
-            <Card
-              key={entry.wallet}
-              className="animate-fade-in"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  {icon && (
-                    <HugeiconsIcon
-                      icon={icon}
-                      size={18}
-                      strokeWidth={2}
-                      className={rankColor(entry.rank)}
-                      color="currentColor"
-                    />
-                  )}
-                  <CardTitle className="text-base">
-                    #{entry.rank}
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  {entry.username ?? truncateWallet(entry.wallet)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold tracking-tight text-foreground">
-                    {entry.xp.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-muted-foreground">XP</span>
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="secondary">{t("common.level", { level: entry.level })}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {t("common.credentials", { count: entry.credentialCount })}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="flex gap-2 mb-6">
+        {["weekly", "monthly", "all-time"].map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            className={"px-4 py-1.5 rounded-full text-sm border transition-all capitalize " + (filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50")}
+          >{f}</button>
+        ))}
       </div>
-
-      {/* Full table */}
-      <div className="overflow-hidden rounded-xl border border-border">
-        {/* Table header */}
-        <div className="grid grid-cols-[3rem_1fr_6rem_5rem_5rem] gap-4 border-b border-border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground sm:grid-cols-[3rem_1fr_8rem_5rem_6rem]">
-          <span>{t("leaderboard.rank")}</span>
-          <span>{t("leaderboard.learner")}</span>
-          <span className="text-right">{t("leaderboard.xp")}</span>
-          <span className="text-right">{t("courses.levelLabel")}</span>
-          <span className="hidden text-right sm:block">{t("common.credentials", { count: 2 })}</span>
-        </div>
-
-        {/* Table rows */}
-        {entries.map((entry, i) => (
-          <div
-            key={entry.wallet}
-            className="animate-fade-in grid grid-cols-[3rem_1fr_6rem_5rem_5rem] items-center gap-4 border-b border-border px-4 py-3 text-sm last:border-b-0 hover:bg-muted/30 sm:grid-cols-[3rem_1fr_8rem_5rem_6rem]"
-            style={{ animationDelay: `${(i + 3) * 40}ms` }}
-          >
-            {/* Rank */}
-            <span className={`font-medium ${rankColor(entry.rank)}`}>
-              {entry.rank <= 3 ? (
-                <span className="flex items-center gap-1">
-                  {rankIcon(entry.rank) && (
-                    <HugeiconsIcon
-                      icon={rankIcon(entry.rank)!}
-                      size={14}
-                      strokeWidth={2}
-                      color="currentColor"
-                    />
-                  )}
-                </span>
-              ) : (
-                entry.rank
-              )}
-            </span>
-
-            {/* Learner */}
-            <div className="min-w-0">
-              <span className="block truncate font-medium text-foreground">
-                {entry.username ?? truncateWallet(entry.wallet)}
-              </span>
-              {entry.username && (
-                <span className="block truncate text-xs text-muted-foreground">
-                  {truncateWallet(entry.wallet)}
-                </span>
-              )}
+      <div className="flex flex-col gap-2">
+        {MOCK_LEADERS.map((user) => (
+          <div key={user.rank} className={"flex items-center gap-4 p-4 rounded-xl border transition-all " + (user.rank <= 3 ? "border-primary/30 bg-primary/5" : "border-border bg-card")}>
+            <div className={"text-xl font-bold w-8 text-center " + (RANK_COLORS[user.rank-1] || "text-muted-foreground")}>
+              {user.rank <= 3 ? RANK_EMOJI[user.rank-1] : user.rank}
             </div>
-
-            {/* XP */}
-            <span className="text-right font-medium text-foreground">
-              {entry.xp.toLocaleString()}
-            </span>
-
-            {/* Level */}
-            <span className="text-right text-muted-foreground">
-              {entry.level}
-            </span>
-
-            {/* Credentials */}
-            <span className="hidden text-right text-muted-foreground sm:block">
-              {entry.credentialCount}
-            </span>
+            <div className="flex-1">
+              <div className="font-semibold">{user.name}</div>
+              <div className="text-xs text-muted-foreground">{user.address}</div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-primary">{user.xp.toLocaleString()} XP</div>
+              <div className="text-xs text-muted-foreground">Level {user.level} · 🔥 {user.streak}d</div>
+            </div>
           </div>
         ))}
       </div>
