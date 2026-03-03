@@ -265,6 +265,18 @@ npm run build    # Production build
 npm run start    # Start production server
 ```
 
+### Testing
+
+The project includes **220 tests** across unit and E2E suites. See [Testing Documentation](documentation/17-testing.md) for full details.
+
+```bash
+npm test              # Run 196 unit tests (Vitest)
+npm run test:watch    # Unit tests in watch mode
+npm run test:coverage # Unit tests with coverage report
+npm run test:e2e      # Run 24 E2E tests (Playwright)
+npm run test:e2e:report  # View Playwright HTML report
+```
+
 ---
 
 ## Documentation
@@ -309,6 +321,7 @@ Complete technical documentation is available in the [`documentation/`](document
 | 10 | [CMS & Content](documentation/10-cms-and-content.md) | Sanity CMS schemas, content pipeline, CMS + on-chain data merge |
 | 11 | [Notifications & Events](documentation/11-notifications-and-events.md) | Event listener, job queue, webhooks, push notifications, cron |
 | 16 | [Code Editor Integration](documentation/16-code-editor-integration.md) | CodeMirror 6, Judge0 CE execution pipeline, test cases, code challenge interface |
+| 18 | [Mock Data Architecture](documentation/18-mock-data-architecture.md) | Local mock data fallback pipelines without touching Solana, Sanity or Judge0 |
 
 ### Analytics & i18n
 
@@ -316,6 +329,12 @@ Complete technical documentation is available in the [`documentation/`](document
 |---|---|---|
 | 13 | [Internationalization](documentation/13-internationalization.md) | Locale routing, translation workflow, frontend integration |
 | 15 | [Analytics & Monitoring](documentation/15-analytics-and-monitoring.md) | GA4, PostHog (heatmaps), Sentry (error monitoring), custom events |
+
+### Testing
+
+| # | Document | Description |
+|---|---|---|
+| 17 | [Testing](documentation/17-testing.md) | Vitest unit tests (196), Playwright E2E tests (24), reports, CI/CD integration |
 
 ---
 
@@ -372,7 +391,8 @@ app/
   prisma/                   # Database schema + migrations
   sanity/                   # CMS schema definitions
   public/                   # Static assets
-  documentation/            # Technical documentation (16 files)
+  documentation/            # Technical documentation (17 files)
+  test/                     # Test suites (33 unit + 5 E2E specs)
 ```
 
 ---

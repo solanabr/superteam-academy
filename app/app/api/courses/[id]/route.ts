@@ -15,13 +15,24 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
     try {
+        const { id: courseId } = await params;
+
+        // ── Mock data mode ──────────────────────────────────────────────
+        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+            const { MOCK_ON_CHAIN_COURSES } = await import('@/mock-data');
+            const course = MOCK_ON_CHAIN_COURSES.find((c) => c.courseId === courseId) ?? null;
+            if (!course) {
+                return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+            }
+            return NextResponse.json({ course });
+        }
+        // ── Real data ───────────────────────────────────────────────────
+
         // Rate limiting
         const headersList = await headers();
         const ip = headersList.get('x-forwarded-for') ?? '127.0.0.1';
         const { success, response } = await checkRateLimit(`course-detail:${ip}`);
         if (!success) return response as NextResponse;
-
-        const { id: courseId } = await params;
 
         if (!courseId || courseId.length > 32) {
             return NextResponse.json(

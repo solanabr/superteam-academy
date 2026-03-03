@@ -13,6 +13,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'courseId parameter required' }, { status: 400 });
     }
 
+    // ── Mock data mode ──────────────────────────────────────────────────
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const { MOCK_SANITY_COURSES } = await import('@/mock-data');
+        const course = MOCK_SANITY_COURSES.find((c) => c.onChainCourseId === courseId) ?? null;
+        return NextResponse.json({ course });
+    }
+    // ── Real data ───────────────────────────────────────────────────────
+
     try {
         const course = await cms.getCourseByOnChainId(courseId);
         return NextResponse.json({ course });

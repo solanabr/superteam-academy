@@ -13,6 +13,19 @@ const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production';
 
 export async function GET(): Promise<NextResponse> {
+    // ── Mock data mode ──────────────────────────────────────────────────
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const { MOCK_SANITY_COURSES } = await import('@/mock-data');
+        const courses = MOCK_SANITY_COURSES.map((c) => ({
+            onChainCourseId: c.onChainCourseId,
+            title: c.title,
+            description: c.description,
+            thumbnail: null,
+        }));
+        return NextResponse.json({ courses });
+    }
+    // ── Real data ───────────────────────────────────────────────────────
+
     if (!PROJECT_ID) {
         // Sanity not configured — return empty list (courses fall back to courseId display)
         return NextResponse.json({ courses: [] });

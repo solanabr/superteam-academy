@@ -30,6 +30,23 @@ function isValidPubkey(value: string): boolean {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
     try {
+        // ── Mock data mode ──────────────────────────────────────────────
+        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+            const { MOCK_ON_CHAIN_COURSES } = await import('@/mock-data');
+            const { searchParams } = new URL(request.url);
+            const trackId = searchParams.get('track');
+            let courses = MOCK_ON_CHAIN_COURSES;
+            if (trackId) {
+                const parsed = parseInt(trackId, 10);
+                courses = courses.filter((c) => c.trackId === parsed);
+            }
+            if (searchParams.get('active') === 'true') {
+                courses = courses.filter((c) => c.isActive);
+            }
+            return NextResponse.json({ courses, count: courses.length });
+        }
+        // ── Real data ───────────────────────────────────────────────────
+
         // Rate limiting
         const headersList = await headers();
         const ip = headersList.get('x-forwarded-for') ?? '127.0.0.1';

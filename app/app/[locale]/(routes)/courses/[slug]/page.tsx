@@ -16,6 +16,8 @@ import { CourseHeader } from '@/components/course/CourseHeader';
 import { CourseSidebar } from '@/components/course/CourseSidebar';
 import { LessonList } from '@/components/lesson/LessonList';
 
+const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 export default function CourseDetailPage() {
     const params = useParams<{ slug: string }>();
     const courseId = params.slug;
@@ -92,7 +94,7 @@ export default function CourseDetailPage() {
         );
     }
 
-    const isEnrolled = progress.data?.isEnrolled ?? false;
+    const isEnrolled = MOCK_MODE ? true : (progress.data?.isEnrolled ?? false);
 
     return (
         <div className="course-detail-page">

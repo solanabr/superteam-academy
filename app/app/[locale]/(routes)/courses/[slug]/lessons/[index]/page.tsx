@@ -22,6 +22,8 @@ import { VideoPlayer } from '@/components/lesson/VideoPlayer';
 import { LessonContent } from '@/components/lesson/LessonContent';
 import { LessonNavigation } from '@/components/lesson/LessonNavigation';
 
+const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
 export default function LessonViewPage() {
     const params = useParams<{ slug: string; index: string }>();
     const courseId = params.slug;
@@ -47,6 +49,17 @@ export default function LessonViewPage() {
 
     // Fetch individual lesson content
     useEffect(() => {
+        // In mock mode, use the content field from the lesson data directly
+        if (MOCK_MODE) {
+            if (lesson && 'content' in lesson && typeof (lesson as Record<string, unknown>).content === 'string') {
+                setLessonContent((lesson as Record<string, unknown>).content as string);
+            } else {
+                setLessonContent(null);
+            }
+            setIsContentLoading(false);
+            return;
+        }
+
         if (!lesson?.contentTxId) {
             setIsContentLoading(false);
             return;
@@ -81,7 +94,7 @@ export default function LessonViewPage() {
         fetchContent();
 
         return () => controller.abort();
-    }, [lesson?.contentTxId]);
+    }, [lesson?.contentTxId, lesson]);
 
     // Loading state
     if (courseLoading || !course) {
@@ -124,6 +137,10 @@ export default function LessonViewPage() {
     }
 
     const handleComplete = () => {
+        if (MOCK_MODE) {
+            // In mock mode, skip on-chain lesson completion — just show UI feedback
+            return;
+        }
         completeLesson(lessonIndex);
     };
 

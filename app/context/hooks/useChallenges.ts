@@ -60,7 +60,7 @@ export function useChallenges() {
                                     instructions: lesson.challenge.instructions,
                                     difficulty: course.difficulty,
                                     xpReward: lesson.xpReward || course.xpPerLesson,
-                                    linkHref: `/courses/${sanityCourse.slug.current}/lessons/${lessonGlobalIndex}`,
+                                    linkHref: `/courses/${course.courseId}/lessons/${lessonGlobalIndex}`,
                                 });
                             }
                             lessonGlobalIndex++;

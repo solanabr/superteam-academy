@@ -4,6 +4,8 @@
  *
  * Uses the code execution API (Piston) when enabled,
  * falls back to client-side string matching when disabled.
+ * When NEXT_PUBLIC_USE_MOCK_DATA is set, uses /api/mock-execute
+ * and shows ClaimXpPopup on success.
  *
  * All challenge data (starter code, test cases, instructions) comes
  * from Sanity CMS via SanityChallenge — nothing hardcoded.
@@ -16,7 +18,10 @@ import { CodeEditor } from './CodeEditor';
 import { HintsPanel } from './HintsPanel';
 import { OutputTerminal } from './OutputTerminal';
 import { useCodeExecution } from '@/context/hooks/useCodeExecution';
+import { ClaimXpPopup } from '@/components/streak/ClaimXpPopup';
 import type { SanityChallenge, SanityTestCase, SanityCodeBlock } from '@/context/types/course';
+
+const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
 /** Result of a single test case (used for both API and fallback) */
 interface TestResult {
@@ -105,8 +110,45 @@ export function ChallengePanel({
 
     const failedCount = displayResults.filter((r) => !r.passed && !r.isHidden).length;
 
+    const [isMockExecuting, setIsMockExecuting] = useState(false);
+    const [showXpPopup, setShowXpPopup] = useState(false);
+
     const handleRun = useCallback(async () => {
         setActiveTab('output');
+
+        // ── Mock execution mode ─────────────────────────────────────
+        if (MOCK_MODE) {
+            setIsMockExecuting(true);
+            try {
+                const res = await fetch('/api/mock-execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: currentCode,
+                        language: challenge.language,
+                        testCases: challenge.testCases,
+                    }),
+                });
+                const data = await res.json();
+                const mockResults: TestResult[] = (data.results || []).map((r: { name: string; passed: boolean; output: string; expected: string; isHidden: boolean }) => ({
+                    name: r.name,
+                    passed: r.passed,
+                    input: '',
+                    expected: r.expected,
+                    actual: r.output,
+                    isHidden: r.isHidden,
+                }));
+                setResults(mockResults);
+                setActiveTab('tests');
+            } catch {
+                const fallbackResults = runTestsFallback(currentCode, challenge.testCases);
+                setResults(fallbackResults);
+            } finally {
+                setIsMockExecuting(false);
+            }
+            return;
+        }
+        // ── Real execution ───────────────────────────────────────────
 
         if (executionEnabled) {
             // Use real Piston API execution
@@ -135,6 +177,9 @@ export function ChallengePanel({
     const allPassed = displayResults.length > 0 && displayResults.every((r) => r.passed);
     if (allPassed && !isCompleted && !showSuccess && displayResults.length > 0) {
         setShowSuccess(true);
+        if (MOCK_MODE && !showXpPopup) {
+            setShowXpPopup(true);
+        }
     }
 
     // Auto-fallback: when Piston API fails, run client-side tests so user gets feedback
@@ -198,10 +243,10 @@ export function ChallengePanel({
                 <button
                     className="toolbar-btn run-btn"
                     onClick={handleRun}
-                    disabled={isExecuting || isCompleted}
+                    disabled={isExecuting || isMockExecuting || isCompleted}
                     type="button"
                 >
-                    {isExecuting ? t('running') : t('runCode')}
+                    {(isExecuting || isMockExecuting) ? t('running') : t('runCode')}
                 </button>
             </div>
 
@@ -317,8 +362,18 @@ export function ChallengePanel({
                 />
             )}
 
-            {/* Success celebration */}
-            {showSuccess && (
+            {/* Success celebration — ClaimXpPopup for mock mode, default overlay otherwise */}
+            {showXpPopup && MOCK_MODE && (
+                <ClaimXpPopup
+                    xpAmount={xpReward}
+                    streakDay={1}
+                    onClose={() => {
+                        setShowXpPopup(false);
+                        handleMarkComplete();
+                    }}
+                />
+            )}
+            {showSuccess && !MOCK_MODE && (
                 <div className="success-overlay" onClick={() => setShowSuccess(false)}>
                     <div className="success-card">
                         <div className="success-icon">{'\u2713'}</div>
