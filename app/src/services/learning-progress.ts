@@ -21,7 +21,9 @@ export interface LearningProgressService {
   completeLesson(courseId: string, lessonIndex: number): Promise<TxResult>;
   getXpBalance(walletAddress: string): Promise<number>;
   getStreakData(userId: string): Promise<StreakData>;
-  getLeaderboard(timeframe: "weekly" | "monthly" | "all-time"): Promise<LeaderboardEntry[]>;
+  getLeaderboard(
+    timeframe: "weekly" | "monthly" | "all-time",
+  ): Promise<LeaderboardEntry[]>;
   getCredentials(walletAddress: string): Promise<Credential[]>;
 }
 
@@ -29,7 +31,7 @@ export interface LearningProgressService {
 
 export async function getProgress(
   walletAddress: string,
-  courseId: string
+  courseId: string,
 ): Promise<CourseProgress> {
   try {
     const learner = new PublicKey(walletAddress);
@@ -69,7 +71,9 @@ export async function getProgress(
     const credentialOffset = completedAtOffset + 9;
     const hasCredential = data[credentialOffset] === 1;
     const credentialAsset = hasCredential
-      ? new PublicKey(data.slice(credentialOffset + 1, credentialOffset + 33)).toBase58()
+      ? new PublicKey(
+          data.slice(credentialOffset + 1, credentialOffset + 33),
+        ).toBase58()
       : undefined;
 
     // Decode lesson count from course
@@ -86,10 +90,14 @@ export async function getProgress(
       // We'll default to checking the bitmap only
     }
 
-    const completedLessons = getCompletedLessonIndices(lessonFlags, Math.max(totalLessons, 64));
-    const percentComplete = totalLessons > 0
-      ? Math.round((completedLessons.length / totalLessons) * 100)
-      : 0;
+    const completedLessons = getCompletedLessonIndices(
+      lessonFlags,
+      Math.max(totalLessons, 64),
+    );
+    const percentComplete =
+      totalLessons > 0
+        ? Math.round((completedLessons.length / totalLessons) * 100)
+        : 0;
 
     return {
       courseId,
@@ -112,22 +120,58 @@ export async function getProgress(
   }
 }
 
-/** Lesson completion is backend-signed — POST to /api/lessons/complete */
+/** Lesson completion is backend-signed — POST to backend service */
 export async function completeLesson(
   courseId: string,
-  lessonIndex: number
+  lessonIndex: number,
+  learnerWallet: string,
 ): Promise<TxResult> {
+  const url = "/api/lessons/complete";
   try {
-    const res = await fetch("/api/lessons/complete", {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId, lessonIndex }),
+      body: JSON.stringify({ courseId, lessonIndex, learnerWallet }),
     });
-    const json = await res.json() as { signature?: string; error?: string };
+    const json = (await res.json()) as {
+      signature?: string;
+      error?: string;
+      achievements?: Array<{ id: string; asset: string }>;
+    };
     if (!res.ok) {
       return { success: false, error: json.error ?? "Unknown error" };
     }
-    return { success: true, signature: json.signature };
+    return {
+      success: true,
+      signature: json.signature,
+      achievements: json.achievements,
+    };
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
+/** Finalize course + issue credential NFT — called explicitly by user */
+export async function finalizeLesson(
+  courseId: string,
+  learnerWallet: string,
+): Promise<TxResult> {
+  const url = "/api/lessons/finalize";
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId, learnerWallet }),
+    });
+    const json = (await res.json()) as {
+      finalizeSignature?: string;
+      credentialAsset?: string;
+      error?: string;
+    };
+    if (!res.ok) {
+      return { success: false, error: json.error ?? "Unknown error" };
+    }
+    return { success: true, signature: json.finalizeSignature };
   } catch (err) {
     return { success: false, error: String(err) };
   }

@@ -1,5 +1,11 @@
-import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  VersionedTransaction,
+} from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
@@ -100,8 +106,36 @@ export function getAnchorProgram(): {
 } {
   const backendKeypair = loadBackendKeypair();
   const connection = new Connection(getConnectionEndpoint(), "confirmed");
-  const wallet = new Wallet(backendKeypair);
-  const provider = new AnchorProvider(connection, wallet, {
+
+  // Inline wallet — avoids importing `Wallet` which is absent in Anchor's ESM build
+  const wallet = {
+    publicKey: backendKeypair.publicKey,
+    signTransaction: async <T extends Transaction | VersionedTransaction>(
+      tx: T,
+    ): Promise<T> => {
+      if ("version" in tx) {
+        (tx as VersionedTransaction).sign([backendKeypair]);
+      } else {
+        (tx as Transaction).sign(backendKeypair);
+      }
+      return tx;
+    },
+    signAllTransactions: async <T extends Transaction | VersionedTransaction>(
+      txs: T[],
+    ): Promise<T[]> => {
+      txs.forEach((tx) => {
+        if ("version" in tx) {
+          (tx as VersionedTransaction).sign([backendKeypair]);
+        } else {
+          (tx as Transaction).sign(backendKeypair);
+        }
+      });
+      return txs;
+    },
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const provider = new AnchorProvider(connection, wallet as any, {
     commitment: "confirmed",
     skipPreflight: false,
   });
