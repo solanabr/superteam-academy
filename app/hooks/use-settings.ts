@@ -104,3 +104,34 @@ export function useSettingsSave(messages: {
 
 	return { data, loading, saving, handleSave };
 }
+
+export function useSettingsSection<T extends object>(
+	sectionKey: keyof UserSettings,
+	defaults: T,
+	messages: {
+		successTitle: string;
+		successDescription?: string;
+		errorTitle: string;
+		errorDescription: string;
+	}
+) {
+	const { data, saving, handleSave: rawSave } = useSettingsSave(messages);
+	const [settings, setSettings] = useState<T>(defaults);
+
+	useEffect(() => {
+		const section = data?.settings?.[sectionKey];
+		if (!section) return;
+		setSettings((prev) => ({ ...prev, ...(section as unknown as Partial<T>) }));
+	}, [data, sectionKey]);
+
+	const update = useCallback(<K extends keyof T>(key: K, value: T[K]) => {
+		setSettings((prev) => ({ ...prev, [key]: value }));
+	}, []);
+
+	const save = useCallback(
+		() => rawSave({ settings: { [sectionKey]: settings } } as Record<string, unknown>),
+		[rawSave, sectionKey, settings]
+	);
+
+	return { data, settings, saving, update, save };
+}

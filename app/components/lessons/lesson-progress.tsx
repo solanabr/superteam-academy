@@ -34,8 +34,6 @@ export function LessonProgress({ progress, currentLesson }: LessonProgressProps)
 	const completionPercentage = (progress.completedLessons / progress.totalLessons) * 100;
 	const xpPercentage = (progress.xpEarned / progress.xpRequired) * 100;
 
-	const formatTime = formatDuration;
-
 	return (
 		<div className="space-y-4">
 			<Card>
@@ -95,7 +93,9 @@ export function LessonProgress({ progress, currentLesson }: LessonProgressProps)
 						</div>
 						<div className="flex items-center gap-2 text-xs text-muted-foreground">
 							<Clock className="h-3 w-3" />
-							<span>{t("timeSpent", { time: formatTime(progress.timeSpent) })}</span>
+							<span>
+								{t("timeSpent", { time: formatDuration(progress.timeSpent) })}
+							</span>
 						</div>
 					</div>
 				</CardContent>
@@ -152,7 +152,9 @@ export function LessonProgress({ progress, currentLesson }: LessonProgressProps)
 				</Card>
 				<Card>
 					<CardContent className="pt-6">
-						<div className="text-2xl font-bold">{formatTime(progress.timeSpent)}</div>
+						<div className="text-2xl font-bold">
+							{formatDuration(progress.timeSpent)}
+						</div>
 						<p className="text-xs text-muted-foreground">{t("timeSpentLabel")}</p>
 					</CardContent>
 				</Card>

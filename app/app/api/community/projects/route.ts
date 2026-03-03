@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createProject } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
-import { requireSession, MAX_TAGS, parseTags, parseJsonBody } from "@/lib/route-utils";
+import { requireSession, MAX_TAGS, parseTags, safeParseBody } from "@/lib/route-utils";
 import type { ProjectCategory } from "@superteam-academy/cms";
 
 const VALID_CATEGORIES: ProjectCategory[] = ["defi", "nft", "tooling", "gaming", "social", "infra"];
@@ -15,17 +15,9 @@ export async function POST(request: Request) {
 	if (!auth.ok) return auth.response;
 	const session = auth.session;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const title = typeof data.title === "string" ? data.title.trim() : "";
 	const description = typeof data.description === "string" ? data.description.trim() : "";

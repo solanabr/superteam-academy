@@ -126,8 +126,6 @@ export function LessonNotes({
 		}
 	}, [notes, lessonId, useApi]);
 
-	const formatTime = formatTimestamp;
-
 	const addNote = async () => {
 		if (!newNoteTitle.trim() || !newNoteContent.trim()) return;
 
@@ -248,7 +246,7 @@ export function LessonNotes({
 				disabled={isAddingNote}
 			>
 				<Plus className="h-4 w-4 mr-2" />
-				Add Note at {formatTime(currentTime)}
+				Add Note at {formatTimestamp(currentTime)}
 			</Button>
 
 			{isAddingNote && (
@@ -316,7 +314,7 @@ export function LessonNotes({
 									) : (
 										<CardTitle className="text-sm flex items-center gap-2">
 											<Badge variant="secondary" className="text-xs">
-												{formatTime(note.timestamp)}
+												{formatTimestamp(note.timestamp)}
 											</Badge>
 											{note.title}
 										</CardTitle>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Eye, Users, Lock, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
-import { useSettingsSave } from "@/hooks/use-settings";
+import { useSettingsSection } from "@/hooks/use-settings";
 
 interface PrivacyState {
 	profileVisibility: "public" | "friends" | "private";
@@ -94,28 +94,17 @@ export function PrivacySettings() {
 	const t = useTranslations("settings.privacySection");
 	const { toast } = useToast();
 	const {
-		data,
+		settings,
 		saving: isLoading,
-		handleSave: saveSettings,
-	} = useSettingsSave({
+		update,
+		save: handleSave,
+	} = useSettingsSection("privacy", DEFAULTS, {
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
 	});
 	const [isExporting, setIsExporting] = useState(false);
-	const [settings, setSettings] = useState<PrivacyState>(DEFAULTS);
-
-	useEffect(() => {
-		if (!data?.settings?.privacy) return;
-		setSettings((prev) => ({ ...prev, ...data.settings.privacy }));
-	}, [data]);
-
-	const handleSave = () => saveSettings({ settings: { privacy: settings } });
-
-	const update = <K extends keyof PrivacyState>(key: K, value: PrivacyState[K]) => {
-		setSettings((prev) => ({ ...prev, [key]: value }));
-	};
 
 	const handleExport = useCallback(async () => {
 		setIsExporting(true);

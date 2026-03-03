@@ -4,6 +4,7 @@ import { BookOpen, Clock, CheckCircle, Play, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Link } from "@superteam-academy/i18n/navigation";
+import { formatDuration } from "@/lib/utils";
 
 interface Course {
 	id: string;
@@ -32,13 +33,6 @@ const GRADIENTS = [
 ];
 
 export function CourseProgress({ courses }: CourseProgressProps) {
-	const formatTime = (minutes: number) => {
-		if (minutes < 60) return `${minutes}m`;
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-	};
-
 	const inProgress = courses.filter((c) => c.status === "in_progress");
 	const completed = courses.filter((c) => c.status === "completed");
 	const notStarted = courses.filter((c) => c.status === "not_started");
@@ -90,7 +84,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 									</span>
 									<span className="inline-flex items-center gap-0.5">
 										<Clock className="h-3 w-3" />
-										{formatTime(course.progress.timeSpent)}
+										{formatDuration(course.progress.timeSpent)}
 									</span>
 									<span>by {course.instructor.name}</span>
 								</div>
@@ -116,7 +110,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 							<div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
 								<span className="inline-flex items-center gap-0.5">
 									<Clock className="h-3 w-3" />
-									{formatTime(course.progress.timeSpent)}
+									{formatDuration(course.progress.timeSpent)}
 								</span>
 								{course.completionDate && (
 									<span>

@@ -6,7 +6,7 @@ import {
 	MAX_TITLE_LENGTH,
 	MAX_TAGS,
 	parseTags,
-	parseJsonBody,
+	safeParseBody,
 } from "@/lib/route-utils";
 import type { EventType } from "@superteam-academy/cms";
 
@@ -24,17 +24,9 @@ export async function POST(request: Request) {
 	const auth = await requireSession();
 	if (!auth.ok) return auth.response;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const title = typeof data.title === "string" ? data.title.trim() : "";
 	const description = typeof data.description === "string" ? data.description.trim() : "";

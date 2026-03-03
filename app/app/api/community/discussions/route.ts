@@ -7,7 +7,7 @@ import {
 	MAX_TITLE_LENGTH,
 	MAX_TAGS,
 	parseTags,
-	parseJsonBody,
+	safeParseBody,
 } from "@/lib/route-utils";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 
@@ -27,17 +27,9 @@ export async function POST(request: Request) {
 	if (!auth.ok) return auth.response;
 	const session = auth.session;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const title = typeof data.title === "string" ? data.title.trim() : "";
 	const content = typeof data.content === "string" ? data.content.trim() : "";

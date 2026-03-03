@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
 	requireSession,
-	parseJsonBody,
+	safeParseBody,
 	sanityWriteClient,
 	sanityReadClient,
 } from "@/lib/route-utils";
@@ -45,17 +45,9 @@ export async function POST(request: Request) {
 	const auth = await requireSession();
 	if (!auth.ok) return auth.response;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const lessonId = typeof data.lessonId === "string" ? data.lessonId.trim() : "";
 	const title = typeof data.title === "string" ? data.title.trim() : "";
@@ -112,17 +104,9 @@ export async function PATCH(request: Request) {
 	const auth = await requireSession();
 	if (!auth.ok) return auth.response;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const noteId = typeof data.noteId === "string" ? data.noteId.trim() : "";
 	const title = typeof data.title === "string" ? data.title.trim() : undefined;

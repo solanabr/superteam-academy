@@ -1,23 +1,5 @@
+import type { Course } from "@/types/course";
 import { CourseCard } from "./course-card";
-
-interface Course {
-	id: string;
-	title: string;
-	description: string;
-	category: string;
-	level: string;
-	duration: string;
-	students: number;
-	instructor: string;
-	image: string;
-	tags: string[];
-	xpReward: number;
-	price: number;
-	featured?: boolean;
-	enrolled?: boolean;
-	progress?: number;
-	gradient?: string;
-}
 
 interface CourseGridProps {
 	courses: Course[];

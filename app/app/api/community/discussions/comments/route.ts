@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createComment } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
-import { requireSession, parseJsonBody } from "@/lib/route-utils";
+import { requireSession, safeParseBody } from "@/lib/route-utils";
 
 const MAX_COMMENT_LENGTH = 5000;
 
@@ -11,17 +11,9 @@ export async function POST(request: Request) {
 	if (!auth.ok) return auth.response;
 	const session = auth.session;
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-	}
-
-	const data = parseJsonBody(body);
-	if (!data) {
-		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-	}
+	const parsed = await safeParseBody(request);
+	if (!parsed.ok) return parsed.response;
+	const data = parsed.data;
 
 	const discussionId = typeof data.discussionId === "string" ? data.discussionId.trim() : "";
 	const content = typeof data.content === "string" ? data.content.trim() : "";

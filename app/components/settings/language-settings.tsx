@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
-import { useSettingsSave } from "@/hooks/use-settings";
+import { useSettingsSection } from "@/hooks/use-settings";
 
 type Language = "en" | "pt-BR" | "es";
 type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
@@ -46,34 +45,26 @@ function getLocale(lang: Language) {
 	return "en-US";
 }
 
+const LANG_DEFAULTS: LangState = {
+	language: "en",
+	dateFormat: "MM/DD/YYYY",
+	timeFormat: "12h",
+	numberFormat: "en-US",
+	timezone: "America/New_York",
+};
+
 export function LanguageSettings() {
 	const t = useTranslations("settings.languageSection");
 	const {
-		data,
+		settings,
 		saving,
-		handleSave: saveSettings,
-	} = useSettingsSave({
+		update,
+		save: handleSave,
+	} = useSettingsSection("language", LANG_DEFAULTS, {
 		successTitle: t("toast.savedTitle"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
 	});
-	const [settings, setSettings] = useState<LangState>({
-		language: "en",
-		dateFormat: "MM/DD/YYYY",
-		timeFormat: "12h",
-		numberFormat: "en-US",
-		timezone: "America/New_York",
-	});
-
-	useEffect(() => {
-		if (!data?.settings?.language) return;
-		setSettings((prev) => ({ ...prev, ...data.settings.language }));
-	}, [data]);
-
-	const update = <K extends keyof LangState>(key: K, value: LangState[K]) =>
-		setSettings((prev) => ({ ...prev, [key]: value }));
-
-	const handleSave = () => saveSettings({ settings: { language: settings } });
 
 	const locale = getLocale(settings.language);
 

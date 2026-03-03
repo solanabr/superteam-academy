@@ -87,8 +87,6 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 	const currentQuestion = validQuestions[currentQuestionIndex];
 	const progress = hasQuestions ? ((currentQuestionIndex + 1) / validQuestions.length) * 100 : 0;
 
-	const formatTime = formatTimestamp;
-
 	const handleAnswerSelect = (questionId: string, answerIndex: number) => {
 		setAnswers((prev) => ({
 			...prev,
@@ -281,7 +279,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 						<CardTitle>{quiz.title}</CardTitle>
 						{timeRemaining !== null && (
 							<Badge variant={timeRemaining < 300 ? "destructive" : "secondary"}>
-								{formatTime(timeRemaining)}
+								{formatTimestamp(timeRemaining)}
 							</Badge>
 						)}
 					</div>

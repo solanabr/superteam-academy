@@ -69,8 +69,6 @@ export function ProgressTracking({
 	const completedLessons = courses.reduce((acc, course) => acc + course.completedLessons, 0);
 	const totalTimeSpent = courses.reduce((acc, course) => acc + course.timeSpent, 0);
 
-	const formatTime = formatDuration;
-
 	const getRarityColor = (rarity: string) => {
 		switch (rarity) {
 			case "common":
@@ -218,7 +216,7 @@ export function ProgressTracking({
 										<div className="flex items-center justify-between text-sm text-muted-foreground">
 											<div className="flex items-center gap-1">
 												<Clock className="h-4 w-4" />
-												{formatTime(course.timeSpent)}
+												{formatDuration(course.timeSpent)}
 											</div>
 											<div className="flex items-center gap-1">
 												<TrendingUp className="h-4 w-4" />
@@ -285,7 +283,7 @@ export function ProgressTracking({
 									</div>
 									<div className="text-center p-4 bg-muted rounded-lg">
 										<div className="text-2xl font-bold text-green-600">
-											{formatTime(totalTimeSpent)}
+											{formatDuration(totalTimeSpent)}
 										</div>
 										<div className="text-sm text-muted-foreground">
 											{t("totalTime")}

@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
-import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import { buildCompleteLessonInstruction, isLessonCompleted } from "@superteam-academy/anchor";
-import {
-	findToken2022ATA,
-	TOKEN_2022_PROGRAM_ID,
-	ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@superteam-academy/solana";
-import { getLinkedWallet } from "@/lib/auth";
-import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
-import { loadBackendSigner } from "@/lib/route-utils";
+import { initOnchainRoute, signAndSendTransaction, ensureToken2022ATA } from "@/lib/route-utils";
 
 export async function POST(request: Request) {
 	try {
-		const wallet = await getLinkedWallet();
-		if (!wallet) {
-			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-		}
+		const init = await initOnchainRoute();
+		if (!init.ok) return init.response;
+		const { learner, client, programId, backendKeypair } = init;
 
 		const body = await request.json();
 		const { courseId, lessonIndex } = body as { courseId?: string; lessonIndex?: number };
@@ -25,12 +17,6 @@ export async function POST(request: Request) {
 				{ status: 400 }
 			);
 		}
-
-		const connection = getSolanaConnection();
-		const client = getAcademyClient();
-		const programId = getProgramId();
-		const backendKeypair = loadBackendSigner();
-		const learner = new PublicKey(wallet);
 
 		const [config, course, enrollment] = await Promise.all([
 			client.fetchConfig(),
@@ -53,46 +39,26 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Lesson already completed" }, { status: 409 });
 		}
 
-		const xpMint = config.xpMint;
-		const learnerTokenAccount = findToken2022ATA(learner, xpMint);
-
 		const tx = new Transaction();
-
-		const ataInfo = await connection.getAccountInfo(learnerTokenAccount);
-		if (!ataInfo) {
-			const createAtaIx = new TransactionInstruction({
-				programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-				keys: [
-					{ pubkey: backendKeypair.publicKey, isSigner: true, isWritable: true },
-					{ pubkey: learnerTokenAccount, isSigner: false, isWritable: true },
-					{ pubkey: learner, isSigner: false, isWritable: false },
-					{ pubkey: xpMint, isSigner: false, isWritable: false },
-					{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-					{ pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
-				],
-				data: Buffer.from([1]), // CreateIdempotent
-			});
-			tx.add(createAtaIx);
-		}
+		const learnerTokenAccount = await ensureToken2022ATA(
+			tx,
+			learner,
+			config.xpMint,
+			backendKeypair
+		);
 
 		const ix = buildCompleteLessonInstruction({
 			courseId,
 			lessonIndex,
 			learner,
 			learnerTokenAccount,
-			xpMint,
+			xpMint: config.xpMint,
 			backendSigner: backendKeypair.publicKey,
 			programId,
 		});
 
 		tx.add(ix);
-		tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-		tx.feePayer = backendKeypair.publicKey;
-		tx.sign(backendKeypair);
-
-		const signature = await connection.sendRawTransaction(tx.serialize());
-		await connection.confirmTransaction(signature, "confirmed");
-
+		const signature = await signAndSendTransaction(tx, backendKeypair);
 		return NextResponse.json({ signature });
 	} catch (error) {
 		console.error("complete_lesson error:", error);

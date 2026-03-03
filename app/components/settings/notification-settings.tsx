@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Mail, MessageSquare, Trophy, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,7 +12,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
-import { useSettingsSave } from "@/hooks/use-settings";
+import { useSettingsSection } from "@/hooks/use-settings";
 
 interface NotificationState {
 	emailNotifications: boolean;
@@ -83,27 +82,16 @@ const TOGGLE_ITEMS = [
 export function NotificationSettings() {
 	const t = useTranslations("settings.notificationsSection");
 	const {
-		data,
+		settings,
 		saving: isLoading,
-		handleSave: saveSettings,
-	} = useSettingsSave({
+		update,
+		save: handleSave,
+	} = useSettingsSection("notifications", DEFAULTS, {
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
 	});
-	const [settings, setSettings] = useState<NotificationState>(DEFAULTS);
-
-	useEffect(() => {
-		if (!data?.settings?.notifications) return;
-		setSettings((prev) => ({ ...prev, ...data.settings.notifications }));
-	}, [data]);
-
-	const handleSave = () => saveSettings({ settings: { notifications: settings } });
-
-	const update = <K extends keyof NotificationState>(key: K, value: NotificationState[K]) => {
-		setSettings((prev) => ({ ...prev, [key]: value }));
-	};
 
 	const renderSection = (title: string, section: string) => (
 		<div className="space-y-3">

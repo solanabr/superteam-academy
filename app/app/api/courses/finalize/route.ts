@@ -1,29 +1,20 @@
 import { NextResponse } from "next/server";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
 import { buildFinalizeCourseInstruction, countCompletedLessons } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
-import { getLinkedWallet } from "@/lib/auth";
-import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
-import { loadBackendSigner } from "@/lib/route-utils";
+import { initOnchainRoute, signAndSendTransaction } from "@/lib/route-utils";
 
 export async function POST(request: Request) {
 	try {
-		const wallet = await getLinkedWallet();
-		if (!wallet) {
-			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-		}
+		const init = await initOnchainRoute();
+		if (!init.ok) return init.response;
+		const { learner, client, programId, backendKeypair } = init;
 
 		const body = await request.json();
 		const { courseId } = body as { courseId?: string };
 		if (!courseId) {
 			return NextResponse.json({ error: "courseId is required" }, { status: 400 });
 		}
-
-		const connection = getSolanaConnection();
-		const client = getAcademyClient();
-		const programId = getProgramId();
-		const backendKeypair = loadBackendSigner();
-		const learner = new PublicKey(wallet);
 
 		const [config, course] = await Promise.all([
 			client.fetchConfig(),
@@ -68,13 +59,7 @@ export async function POST(request: Request) {
 		});
 
 		const tx = new Transaction().add(ix);
-		tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-		tx.feePayer = backendKeypair.publicKey;
-		tx.sign(backendKeypair);
-
-		const signature = await connection.sendRawTransaction(tx.serialize());
-		await connection.confirmTransaction(signature, "confirmed");
-
+		const signature = await signAndSendTransaction(tx, backendKeypair);
 		return NextResponse.json({ signature });
 	} catch (error) {
 		console.error("finalize_course error:", error);

@@ -129,8 +129,6 @@ export function LessonVideoPlayer({
 		}
 	};
 
-	const formatTime = formatTimestamp;
-
 	return (
 		<div
 			className="relative group bg-black"
@@ -170,7 +168,7 @@ export function LessonVideoPlayer({
 				<div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
 					<div className="flex items-center gap-2">
 						<span className="text-white text-sm font-mono">
-							{formatTime(currentTime)}
+							{formatTimestamp(currentTime)}
 						</span>
 						<Slider
 							value={[duration > 0 ? (currentTime / duration) * 100 : 0]}
@@ -179,7 +177,9 @@ export function LessonVideoPlayer({
 							step={0.1}
 							className="flex-1"
 						/>
-						<span className="text-white text-sm font-mono">{formatTime(duration)}</span>
+						<span className="text-white text-sm font-mono">
+							{formatTimestamp(duration)}
+						</span>
 					</div>
 
 					<div className="flex items-center justify-between">

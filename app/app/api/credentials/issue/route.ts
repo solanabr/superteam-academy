@@ -4,9 +4,7 @@ import {
 	buildIssueCredentialInstruction,
 	buildUpgradeCredentialInstruction,
 } from "@superteam-academy/anchor";
-import { getLinkedWallet } from "@/lib/auth";
-import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
-import { loadBackendSigner } from "@/lib/route-utils";
+import { initOnchainRoute, signAndSendTransaction } from "@/lib/route-utils";
 
 interface IssueBody {
 	courseId?: string;
@@ -20,10 +18,9 @@ interface IssueBody {
 
 export async function POST(request: Request) {
 	try {
-		const wallet = await getLinkedWallet();
-		if (!wallet) {
-			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-		}
+		const init = await initOnchainRoute();
+		if (!init.ok) return init.response;
+		const { learner, programId, backendKeypair } = init;
 
 		const body = (await request.json()) as IssueBody;
 		const {
@@ -51,16 +48,11 @@ export async function POST(request: Request) {
 			);
 		}
 
-		const connection = getSolanaConnection();
-		const client = getAcademyClient();
-		const programId = getProgramId();
-		const backendKeypair = loadBackendSigner();
-		const learner = new PublicKey(wallet);
 		const trackCollectionPk = new PublicKey(trackCollection);
 		const totalXpBigInt = BigInt(totalXp);
 		const isUpgrade = !!body.existingCredentialAsset;
 
-		const enrollment = await client.fetchEnrollment(courseId, learner);
+		const enrollment = await init.client.fetchEnrollment(courseId, learner);
 		if (!enrollment) {
 			return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
 		}
@@ -110,17 +102,10 @@ export async function POST(request: Request) {
 				});
 
 		const tx = new Transaction().add(ix);
-		tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-		tx.feePayer = backendKeypair.publicKey;
-
-		const signers = [backendKeypair];
-		if (credentialAssetKeypair) {
-			signers.push(credentialAssetKeypair);
-		}
-		tx.sign(...signers);
-
-		const signature = await connection.sendRawTransaction(tx.serialize());
-		await connection.confirmTransaction(signature, "confirmed");
+		const extraSigners = credentialAssetKeypair ? [credentialAssetKeypair] : [];
+		const signature = await signAndSendTransaction(tx, backendKeypair, {
+			signers: extraSigners,
+		});
 
 		return NextResponse.json({
 			signature,
