@@ -8,20 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  getAllCourses, 
-  createCourse, 
-  updateCourse, 
-  deleteCourse,
-  getAllLessons,
-  createLesson,
-  updateLesson,
-  deleteLesson,
-  getAnalytics,
-  testConnection,
-  AdminCourse,
-  AdminLesson
-} from "@/lib/sanity/admin";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { 
   BookOpenIcon, 
@@ -32,7 +18,63 @@ import {
   Delete02Icon
 } from "@hugeicons/core-free-icons";
 
+interface AdminCourse {
+  _id?: string;
+  title: string;
+  slug: { current: string };
+  description: string;
+  level: "Beginner" | "Intermediate" | "Advanced";
+  totalXp: number;
+  creator: string;
+  image?: { asset: { _ref: string } };
+  order: number;
+  lessons?: { _ref: string }[];
+}
+
+interface AdminLesson {
+  _id?: string;
+  title: string;
+  slug: { current: string };
+  type: "reading" | "coding" | "quiz";
+  xpReward: number;
+  order: number;
+  starterCode?: string;
+  solution?: string;
+  testCases?: { input: string; expected: string; description: string }[];
+}
+
 type Tab = "courses" | "lessons" | "analytics";
+
+async function apiGet<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+async function apiPost<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+async function apiPatch<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+async function apiDelete(url: string): Promise<void> {
+  const res = await fetch(url, { method: "DELETE" });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+}
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("courses");
@@ -44,7 +86,7 @@ export default function AdminPage() {
   const [connectionStatus, setConnectionStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleTestConnection = async () => {
-    const result = await testConnection();
+    const result = await apiGet<{ success: boolean; message: string }>("/api/admin/analytics?action=test-connection");
     setConnectionStatus(result);
   };
   
@@ -79,13 +121,13 @@ export default function AdminPage() {
     setError(null);
     try {
       if (activeTab === "courses") {
-        const data = await getAllCourses();
+        const data = await apiGet<AdminCourse[]>("/api/admin/courses");
         setCourses(data);
       } else if (activeTab === "lessons") {
-        const lessonsData = await getAllLessons();
-        setLessons(lessonsData);
+        const data = await apiGet<AdminLesson[]>("/api/admin/lessons");
+        setLessons(data);
       } else if (activeTab === "analytics") {
-        const data = await getAnalytics();
+        const data = await apiGet<typeof analytics>("/api/admin/analytics");
         setAnalytics(data);
       }
     } catch (err) {
@@ -95,7 +137,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleTabChange = async (tab: Tab) => {
+  const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     setShowCourseForm(false);
     setShowLessonForm(false);
@@ -109,11 +151,11 @@ export default function AdminPage() {
 
   const handleCreateCourse = async () => {
     try {
-      await createCourse({
+      await apiPost("/api/admin/courses", {
         title: courseForm.title,
         slug: { current: courseForm.slug },
         description: courseForm.description,
-        level: courseForm.level as "Beginner" | "Intermediate" | "Advanced",
+        level: courseForm.level,
         totalXp: courseForm.totalXp,
         creator: courseForm.creator,
         order: courseForm.order,
@@ -129,11 +171,11 @@ export default function AdminPage() {
   const handleUpdateCourse = async () => {
     if (!editingCourse?._id) return;
     try {
-      await updateCourse(editingCourse._id, {
+      await apiPatch(`/api/admin/courses?id=${editingCourse._id}`, {
         title: courseForm.title,
         slug: { current: courseForm.slug },
         description: courseForm.description,
-        level: courseForm.level as "Beginner" | "Intermediate" | "Advanced",
+        level: courseForm.level,
         totalXp: courseForm.totalXp,
         creator: courseForm.creator,
         order: courseForm.order,
@@ -150,7 +192,7 @@ export default function AdminPage() {
   const handleDeleteCourse = async (id: string) => {
     if (!confirm("Are you sure you want to delete this course?")) return;
     try {
-      await deleteCourse(id);
+      await apiDelete(`/api/admin/courses?id=${id}`);
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete course");
@@ -159,7 +201,7 @@ export default function AdminPage() {
 
   const handleCreateLesson = async () => {
     try {
-      await createLesson({
+      await apiPost("/api/admin/lessons", {
         title: lessonForm.title,
         slug: { current: lessonForm.slug },
         type: lessonForm.type,
@@ -180,7 +222,7 @@ export default function AdminPage() {
   const handleUpdateLesson = async () => {
     if (!editingLesson?._id) return;
     try {
-      await updateLesson(editingLesson._id, {
+      await apiPatch(`/api/admin/lessons?id=${editingLesson._id}`, {
         title: lessonForm.title,
         slug: { current: lessonForm.slug },
         type: lessonForm.type,
@@ -202,7 +244,7 @@ export default function AdminPage() {
   const handleDeleteLesson = async (id: string) => {
     if (!confirm("Are you sure you want to delete this lesson?")) return;
     try {
-      await deleteLesson(id);
+      await apiDelete(`/api/admin/lessons?id=${id}`);
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete lesson");

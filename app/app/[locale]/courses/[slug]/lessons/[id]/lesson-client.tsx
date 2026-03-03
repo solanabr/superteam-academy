@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -31,6 +32,7 @@ interface LessonClientProps {
 }
 
 export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextLesson, locale = 'en' }: LessonClientProps) {
+  const t = useTranslations("lesson");
   const [code, setCode] = useState(lesson.starterCode || "");
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState<{ passed: boolean; message: string }[]>([]);
@@ -75,20 +77,20 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
         } catch {
           results.push({
             passed: false,
-            message: testCase.description || "Test failed",
+            message: testCase.description || t("testFailed"),
           });
         }
       }
     } else {
       results.push({
         passed: true,
-        message: "No tests defined for this lesson",
+        message: t("noTests"),
       });
     }
 
     setTestResults(results);
     setIsRunning(false);
-  }, [code, lesson.testCases]);
+  }, [code, lesson.testCases, t]);
 
   const getLessonIcon = (type: string) => {
     switch (type) {
@@ -105,18 +107,18 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
         <div className="w-64 border-r border-border bg-card flex-shrink-0 flex flex-col">
           <div className="p-4 border-b border-border">
             <Link 
-              href={`/courses/${courseSlug}`}
+              href={`/${locale}/courses/${courseSlug}`}
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-              Back to Course
+              {t("backToCourse")}
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {allLessons.map((l, idx) => (
               <Link
                 key={l.id}
-                href={`/courses/${courseSlug}/lessons/${l.id}`}
+                href={`/${locale}/courses/${courseSlug}/lessons/${l.id}`}
                 className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                   l.id === lesson.id 
                     ? "bg-primary/10 text-primary" 
@@ -134,8 +136,8 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto p-8">
             <div className="flex items-center gap-3 mb-6">
-              <Badge variant="outline">Reading</Badge>
-              <span className="text-sm text-muted-foreground">Lesson {currentIndex + 1} of {allLessons.length}</span>
+              <Badge variant="outline">{t("reading")}</Badge>
+              <span className="text-sm text-muted-foreground">{t("lessonOf", { current: currentIndex + 1, total: allLessons.length })}</span>
             </div>
             
             <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">
@@ -143,7 +145,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
             </h1>
             
             <div className="prose prose-muted max-w-none">
-              <p>This is a reading lesson. Content would be loaded from CMS/Arweave.</p>
+              <p>{t("readingPlaceholder")}</p>
               <p className="mt-4">
                 In a full implementation, this would contain:
               </p>
@@ -158,20 +160,20 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
             <div className="mt-8 flex justify-between pt-6 border-t border-border">
               {prevLesson ? (
                 <Link 
-                  href={`/courses/${courseSlug}/lessons/${prevLesson.id}`}
+                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.id}`}
                   className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-                  Previous
+                  {t("previous")}
                 </Link>
               ) : <div />}
               
               {nextLesson && (
                 <Link 
-                  href={`/courses/${courseSlug}/lessons/${nextLesson.id}`}
+                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.id}`}
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                 >
-                  Next
+                  {t("next")}
                   <HugeiconsIcon icon={ArrowLeft02Icon} size={16} className="rotate-180" />
                 </Link>
               )}
@@ -188,18 +190,18 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
       <div className="w-64 border-r border-border bg-card flex-shrink-0 flex flex-col">
         <div className="p-4 border-b border-border">
           <Link 
-            href={`/courses/${courseSlug}`}
+            href={`/${locale}/courses/${courseSlug}`}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-            Back to Course
+            {t("backToCourse")}
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {allLessons.map((l, idx) => (
             <Link
               key={l.id}
-              href={`/courses/${courseSlug}/lessons/${l.id}`}
+              href={`/${locale}/courses/${courseSlug}/lessons/${l.id}`}
               className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                 l.id === lesson.id 
                   ? "bg-primary/10 text-primary" 
@@ -220,8 +222,8 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
           <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
               <Badge variant="secondary">{lesson.xpReward} XP</Badge>
-              <Badge variant="outline">Coding</Badge>
-              <span className="text-sm text-muted-foreground">Lesson {currentIndex + 1}</span>
+              <Badge variant="outline">{t("coding")}</Badge>
+              <span className="text-sm text-muted-foreground">{t("lessonN", { n: currentIndex + 1 })}</span>
             </div>
             
             <h1 className="text-xl font-bold text-foreground mb-4">
@@ -229,11 +231,11 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
             </h1>
 
             <div className="prose prose-muted max-w-none text-sm">
-              <p>Complete the coding challenge below. Write your solution in the editor and click &quot;Run Code&quot; to test.</p>
+              <p>{t("completeChallenge")}</p>
               
               {lesson.testCases && lesson.testCases.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="font-medium text-foreground mb-2">Test Cases:</h4>
+                  <h4 className="font-medium text-foreground mb-2">{t("testCases")}</h4>
                   <ul className="list-disc pl-4 space-y-1">
                     {lesson.testCases.map((tc, i) => (
                       <li key={i} className="text-muted-foreground">{tc.description}</li>
@@ -246,19 +248,19 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
             <div className="mt-6 flex flex-col gap-2">
               {prevLesson && (
                 <Link 
-                  href={`/courses/${courseSlug}/lessons/${prevLesson.id}`}
+                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.id}`}
                   className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <HugeiconsIcon icon={ArrowLeft02Icon} size={14} />
-                  Previous: {prevLesson.title}
+                  {t("previousLesson", { title: prevLesson.title })}
                 </Link>
               )}
               {nextLesson && (
                 <Link 
-                  href={`/courses/${courseSlug}/lessons/${nextLesson.id}`}
+                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.id}`}
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                 >
-                  Next: {nextLesson.title}
+                  {t("nextLesson", { title: nextLesson.title })}
                   <HugeiconsIcon icon={ArrowLeft02Icon} size={14} className="rotate-180" />
                 </Link>
               )}
@@ -270,7 +272,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
         <div className="flex-1 flex flex-col overflow-hidden bg-card">
           {/* Toolbar */}
           <div className="h-12 border-b border-border flex items-center px-4 flex-shrink-0">
-            <span className="text-sm font-medium">Code Editor</span>
+            <span className="text-sm font-medium">{t("codeEditor")}</span>
           </div>
 
           {/* Editor */}
@@ -287,7 +289,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
           {testResults.length > 0 && (
             <div className="h-40 border-t border-border overflow-y-auto flex-shrink-0">
               <div className="p-4">
-                <h4 className="text-sm font-medium mb-2">Test Results</h4>
+                <h4 className="text-sm font-medium mb-2">{t("testResults")}</h4>
                 <div className="space-y-2">
                   {testResults.map((result, i) => (
                     <div

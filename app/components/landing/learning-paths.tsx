@@ -12,7 +12,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { levelBadgeClasses } from "@/lib/utils";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 const paths = [
   {
@@ -46,6 +46,7 @@ const paths = [
 
 export function LearningPaths() {
   const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <section>
@@ -59,7 +60,7 @@ export function LearningPaths() {
               {t("learningPaths.description")}
             </p>
           </div>
-          <Link href="/courses" className="hidden md:block">
+          <Link href={`/${locale}/courses`} className="hidden md:block">
             <Button variant="ghost" size="sm">
               {t("common.viewAll")}
               <HugeiconsIcon
@@ -94,7 +95,7 @@ export function LearningPaths() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Link href={`/courses/${path.slug}`} className="w-full">
+                <Link href={`/${locale}/courses/${path.slug}`} className="w-full">
                   <Button variant="outline" size="lg" className="w-full">
                     {t("common.startLearning")}
                     <HugeiconsIcon
@@ -110,7 +111,7 @@ export function LearningPaths() {
         </div>
 
         <div className="mt-6 text-center md:hidden">
-          <Link href="/courses">
+          <Link href={`/${locale}/courses`}>
             <Button variant="ghost" size="sm">
               {t("common.viewAllCourses")}
               <HugeiconsIcon

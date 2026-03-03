@@ -32,7 +32,6 @@ export const sanityCourseService: CourseService = {
       const courses = await sanityClient.fetch(query);
       
       if (!courses || courses.length === 0) {
-        console.log('No courses in Sanity, using stubs');
         return courseService.getCourses();
       }
       

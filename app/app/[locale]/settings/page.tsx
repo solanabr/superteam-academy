@@ -150,7 +150,7 @@ export default function SettingsPage() {
               </div>
               {authenticated && address ? (
                 <Button size="sm" variant="outline" className="w-fit" onClick={logout}>
-                  Disconnect Wallet
+                  {t("common.disconnectWallet")}
                 </Button>
               ) : (
                 <Button size="sm" className="w-fit" onClick={login}>

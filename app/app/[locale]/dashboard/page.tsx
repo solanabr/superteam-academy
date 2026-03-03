@@ -22,7 +22,7 @@ import {
   learningProgressService,
   courseService,
 } from "@/lib/services";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 export default async function DashboardPage() {
   const [xp, streak, credentials, enrollments, courses] = await Promise.all([
@@ -34,6 +34,7 @@ export default async function DashboardPage() {
   ]);
 
   const t = await getTranslations();
+  const locale = await getLocale();
   const courseMap = new Map(courses.map((c) => [c.slug, c]));
 
   return (
@@ -127,7 +128,7 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("dashboard.noEnrollments")}
                 </p>
-                <Link href="/courses" className="mt-3 inline-block">
+                <Link href={`/${locale}/courses`} className="mt-3 inline-block">
                   <Button size="sm">
                     {t("common.browseCourses")}
                     <HugeiconsIcon icon={ArrowRight02Icon} size={14} data-icon="inline-end" />
@@ -147,7 +148,7 @@ export default async function DashboardPage() {
                 return (
                   <Link
                     key={enrollment.courseSlug}
-                    href={`/courses/${enrollment.courseSlug}`}
+                    href={`/${locale}/courses/${enrollment.courseSlug}`}
                     className="group"
                   >
                     <Card
@@ -272,7 +273,7 @@ export default async function DashboardPage() {
 
           <Separator />
 
-          <Link href="/courses">
+          <Link href={`/${locale}/courses`}>
             <Button variant="outline" size="lg" className="w-full">
               {t("common.browseMoreCourses")}
               <HugeiconsIcon icon={ArrowRight02Icon} size={14} data-icon="inline-end" />

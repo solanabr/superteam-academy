@@ -19,7 +19,11 @@
     "credentials": "{count, plural, one {# credential} other {# credentials}}",
     "of": "of",
     "days": "days",
-    "noResults": "No results found."
+    "noResults": "No results found.",
+    "loading": "Loading...",
+    "logout": "Logout",
+    "disconnectWallet": "Disconnect Wallet",
+    "startLearningFree": "Start Learning Free"
   },
   "nav": {
     "courses": "Courses",
@@ -169,11 +173,65 @@
     "soulbound": "Soulbound — non-transferable",
     "noCertificates": "No certificates yet",
     "noCertificatesDesc": "Complete courses to earn credentials.",
-    "browseCourses": "Browse Courses"
+    "browseCourses": "Browse Courses",
+    "levelBeginner": "Beginner",
+    "levelIntermediate": "Intermediate",
+    "levelAdvanced": "Advanced"
   },
   "locale": {
     "en": "English",
     "pt-BR": "Português (BR)",
     "es": "Español"
+  },
+  "codeEditor": {
+    "running": "Running...",
+    "runCode": "Run Code",
+    "aiMentor": "AI Mentor",
+    "aiFailed": "Failed to get AI explanation"
+  },
+  "lesson": {
+    "backToCourse": "Back to Course",
+    "reading": "Reading",
+    "coding": "Coding",
+    "lessonOf": "Lesson {current} of {total}",
+    "lessonN": "Lesson {n}",
+    "previous": "Previous",
+    "next": "Next",
+    "previousLesson": "Previous: {title}",
+    "nextLesson": "Next: {title}",
+    "codeEditor": "Code Editor",
+    "testResults": "Test Results",
+    "testFailed": "Test failed",
+    "noTests": "No tests defined for this lesson",
+    "completeChallenge": "Complete the coding challenge below. Write your solution in the editor and click \"Run Code\" to test.",
+    "testCases": "Test Cases:",
+    "readingPlaceholder": "This is a reading lesson. Content would be loaded from CMS/Arweave."
+  },
+  "onboarding": {
+    "questionOf": "Question {current} of {total}",
+    "next": "Next →",
+    "findPath": "Find my path 🚀",
+    "matchFound": "Perfect match found!",
+    "takingYou": "Taking you to your personalized learning path...",
+    "q1": "How would you find the best Solana tutorial online?",
+    "q1o1": "Search docs.solana.com directly",
+    "q1o2": "Ask in Discord/community",
+    "q1o3": "Watch YouTube videos",
+    "q1o4": "Try building something and figure it out",
+    "q2": "You have 100 XP to spend. What do you pick?",
+    "q2o1": "Guaranteed Bronze badge",
+    "q2o2": "10% chance at Gold badge",
+    "q2o3": "Split between both",
+    "q2o4": "Save XP for later",
+    "q3": "Where are you right now?",
+    "q3o1": "Never written Rust before",
+    "q3o2": "Know some Rust basics",
+    "q3o3": "Built smart contracts before",
+    "q3o4": "Solana developer already",
+    "q4": "What do you want to build?",
+    "q4o1": "DeFi protocol",
+    "q4o2": "NFT project",
+    "q4o3": "dApp frontend",
+    "q4o4": "Not sure yet"
   }
 }

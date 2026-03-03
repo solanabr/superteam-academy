@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,16 @@ function truncateAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function getLevelName(level: number): string {
+function getLevelName(level: number, t: (key: string) => string): string {
+  switch (level) {
+    case 1: return t("certificates.levelBeginner");
+    case 2: return t("certificates.levelIntermediate");
+    case 3: return t("certificates.levelAdvanced");
+    default: return t("certificates.levelBeginner");
+  }
+}
+
+function getLevelKey(level: number): string {
   switch (level) {
     case 1: return "Beginner";
     case 2: return "Intermediate";
@@ -23,6 +32,7 @@ function getLevelName(level: number): string {
 
 export default async function CertificatesPage() {
   const t = await getTranslations();
+  const locale = await getLocale();
   const credentials = await credentialService.getCredentials();
   const profile = await userService.getProfile();
 
@@ -46,7 +56,7 @@ export default async function CertificatesPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {t("certificates.noCertificatesDesc")}
           </p>
-          <Link href="/courses">
+          <Link href={`/${locale}/courses`}>
             <Button className="mt-4">
               {t("certificates.browseCourses")}
               <HugeiconsIcon icon={ArrowRight02Icon} size={16} />
@@ -56,7 +66,7 @@ export default async function CertificatesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {credentials.map((credential) => (
-            <Link key={credential.id} href={`/certificates/${credential.id}`}>
+            <Link key={credential.id} href={`/${locale}/certificates/${credential.id}`}>
               <Card className="transition-colors hover:border-primary/50 hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center gap-4 pb-2">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -71,8 +81,8 @@ export default async function CertificatesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <Badge className={levelBadgeClasses(getLevelName(credential.level))}>
-                      {getLevelName(credential.level)}
+                    <Badge className={levelBadgeClasses(getLevelKey(credential.level))}>
+                      {getLevelName(credential.level, t)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {new Date(credential.issuedAt).toLocaleDateString()}

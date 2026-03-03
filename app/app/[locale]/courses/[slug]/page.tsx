@@ -19,7 +19,7 @@ import {
 import { courseService, sanityCourseService } from "@/lib/services";
 import type { Lesson } from "@/lib/services";
 import { levelBadgeClasses } from "@/lib/utils";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 function lessonTypeIcon(type: Lesson["type"]) {
   switch (type) {
@@ -46,6 +46,7 @@ export default async function CourseDetailPage({
   if (!course) notFound();
 
   const t = await getTranslations();
+  const locale = await getLocale();
 
   function lessonTypeLabel(type: Lesson["type"]) {
     switch (type) {
@@ -62,7 +63,7 @@ export default async function CourseDetailPage({
     <div className="py-4 mx-auto max-w-6xl">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/courses" className="transition-colors hover:text-foreground">
+        <Link href={`/${locale}/courses`} className="transition-colors hover:text-foreground">
           {t("nav.courses")}
         </Link>
         <span>/</span>
@@ -143,7 +144,7 @@ export default async function CourseDetailPage({
             {lessons.map((lesson, i) => (
               <Link
                 key={lesson.id}
-                href={`/courses/${slug}/lessons/${lesson.id}`}
+                href={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
                 className="group"
               >
                 <div

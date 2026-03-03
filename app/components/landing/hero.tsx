@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from "next-intl";
 
 export function Hero() {
   const t = useTranslations("hero");
+  const tc = useTranslations("common");
   const locale = useLocale();
   return (
     <section className="relative overflow-hidden">
@@ -22,7 +23,7 @@ export function Hero() {
           <div className="flex animate-fade-in flex-wrap items-center gap-3 [animation-delay:300ms]">
             <Link href={"/" + locale + "/onboarding"}>
               <Button size="lg" className="gap-2">
-                Start Learning Free
+                {tc("startLearningFree")}
                 <HugeiconsIcon icon={ArrowRight02Icon} size={16} data-icon="inline-end" />
               </Button>
             </Link>

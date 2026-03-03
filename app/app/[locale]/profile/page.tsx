@@ -20,7 +20,7 @@ import {
   UserCircle02Icon,
 } from "@hugeicons/core-free-icons";
 import { userService, courseService } from "@/lib/services";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 function truncateWallet(wallet: string) {
   return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
@@ -34,6 +34,7 @@ export default async function ProfilePage() {
   ]);
 
   const t = await getTranslations();
+  const locale = await getLocale();
   const courseMap = new Map(courses.map((c) => [c.slug, c]));
 
   const completedCount = profile.enrollments.filter((e) => e.isCompleted).length;
@@ -69,7 +70,7 @@ export default async function ProfilePage() {
           </div>
         </div>
         {profile.username && (
-          <Link href={`/profile/${profile.username}`}>
+          <Link href={`/${locale}/profile/${profile.username}`}>
             <Button variant="outline" size="sm">
               {t("profile.viewPublicProfile")}
               <HugeiconsIcon icon={ArrowRight02Icon} size={14} data-icon="inline-end" />
@@ -163,7 +164,7 @@ export default async function ProfilePage() {
           ) : (
             <div className="flex flex-col gap-3">
               {profile.credentials.map((cred, i) => (
-                <Link key={cred.id} href={`/certificates/${cred.id}`} className="group">
+                <Link key={cred.id} href={`/${locale}/certificates/${cred.id}`} className="group">
                   <Card
                     className="animate-fade-in transition-colors hover:bg-muted/30"
                     style={{ animationDelay: `${i * 60}ms` }}

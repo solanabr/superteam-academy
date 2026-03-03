@@ -1,4 +1,3 @@
-import * as solana from '@solana/web3.js';
 import { connection, getTokenBalance, getNFTsByOwner, getLeaderboardData } from '@/lib/solana/client';
 import type { XpSummary, StreakData, Credential, UserProfile, LeaderboardEntry } from './types';
 

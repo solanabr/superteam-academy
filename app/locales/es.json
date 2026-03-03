@@ -19,7 +19,11 @@
     "credentials": "{count, plural, one {# credencial} other {# credenciales}}",
     "of": "de",
     "days": "días",
-    "noResults": "No se encontraron resultados."
+    "noResults": "No se encontraron resultados.",
+    "loading": "Cargando...",
+    "logout": "Cerrar sesión",
+    "disconnectWallet": "Desconectar Billetera",
+    "startLearningFree": "Empieza Gratis"
   },
   "nav": {
     "courses": "Cursos",
@@ -169,11 +173,65 @@
     "soulbound": "Soulbound — no transferible",
     "noCertificates": "Sin certificados aún",
     "noCertificatesDesc": "Completa cursos para obtener credenciales.",
-    "browseCourses": "Ver Cursos"
+    "browseCourses": "Ver Cursos",
+    "levelBeginner": "Principiante",
+    "levelIntermediate": "Intermedio",
+    "levelAdvanced": "Avanzado"
   },
   "locale": {
     "en": "English",
     "pt-BR": "Português (BR)",
     "es": "Español"
+  },
+  "codeEditor": {
+    "running": "Ejecutando...",
+    "runCode": "Ejecutar Código",
+    "aiMentor": "Mentor IA",
+    "aiFailed": "Error al obtener explicación de IA"
+  },
+  "lesson": {
+    "backToCourse": "Volver al Curso",
+    "reading": "Lectura",
+    "coding": "Código",
+    "lessonOf": "Lección {current} de {total}",
+    "lessonN": "Lección {n}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "previousLesson": "Anterior: {title}",
+    "nextLesson": "Siguiente: {title}",
+    "codeEditor": "Editor de Código",
+    "testResults": "Resultados de Pruebas",
+    "testFailed": "Prueba fallida",
+    "noTests": "No hay pruebas definidas para esta lección",
+    "completeChallenge": "Completa el desafío de código a continuación. Escribe tu solución en el editor y haz clic en \"Ejecutar Código\" para probar.",
+    "testCases": "Casos de Prueba:",
+    "readingPlaceholder": "Esta es una lección de lectura. El contenido se cargaría desde CMS/Arweave."
+  },
+  "onboarding": {
+    "questionOf": "Pregunta {current} de {total}",
+    "next": "Siguiente →",
+    "findPath": "Encontrar mi camino 🚀",
+    "matchFound": "¡Combinación perfecta encontrada!",
+    "takingYou": "Llevándote a tu ruta personalizada...",
+    "q1": "¿Cómo encontrarías el mejor tutorial de Solana en línea?",
+    "q1o1": "Buscar en docs.solana.com directamente",
+    "q1o2": "Preguntar en Discord/comunidad",
+    "q1o3": "Ver videos en YouTube",
+    "q1o4": "Intentar construir algo y descubrirlo",
+    "q2": "Tienes 100 XP para gastar. ¿Qué eliges?",
+    "q2o1": "Badge Bronce garantizado",
+    "q2o2": "10% de probabilidad de Badge Oro",
+    "q2o3": "Dividir entre ambos",
+    "q2o4": "Guardar XP para después",
+    "q3": "¿Dónde estás ahora?",
+    "q3o1": "Nunca he escrito Rust",
+    "q3o2": "Conozco lo básico de Rust",
+    "q3o3": "Ya he construido smart contracts",
+    "q3o4": "Ya soy desarrollador Solana",
+    "q4": "¿Qué quieres construir?",
+    "q4o1": "Protocolo DeFi",
+    "q4o2": "Proyecto NFT",
+    "q4o3": "Frontend de dApp",
+    "q4o4": "Aún no sé"
   }
 }

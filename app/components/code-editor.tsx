@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,7 +20,8 @@ interface CodeEditorProps {
 export function CodeEditor({ value, onChange, language = "rust", readOnly = false, height = "400px", minimap = false, showAiMentor = false }: CodeEditorProps) {
   const { resolvedTheme } = useTheme();
   const locale = useLocale();
-  const editorRef = useRef<any>(null);
+  const t = useTranslations("codeEditor");
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const [aiExplanation, setAiExplanation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +50,7 @@ export function CodeEditor({ value, onChange, language = "rust", readOnly = fals
       const data = await res.json();
       setAiExplanation(data.explanation);
     } catch (e) {
-      setAiExplanation("Failed to get AI explanation");
+      setAiExplanation(t("aiFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +71,7 @@ export function CodeEditor({ value, onChange, language = "rust", readOnly = fals
       </div>
       <div className="flex gap-2">
         <Button onClick={runCode} disabled={isLoading}>
-          {isLoading ? "Running..." : "Run Code"}
+          {isLoading ? t("running") : t("runCode")}
         </Button>
       </div>
       {error && (
@@ -81,7 +82,7 @@ export function CodeEditor({ value, onChange, language = "rust", readOnly = fals
       {aiExplanation && (
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="outline">AI Mentor</Badge>
+            <Badge variant="outline">{t("aiMentor")}</Badge>
           </div>
           <p className="text-sm text-foreground whitespace-pre-wrap">{aiExplanation}</p>
         </div>

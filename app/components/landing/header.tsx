@@ -69,7 +69,7 @@ export function Header() {
           <ThemeToggle />
           {!ready ? (
             <Button size="lg" disabled>
-              Loading...
+              {t("common.loading")}
             </Button>
           ) : authenticated ? (
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -90,26 +90,26 @@ export function Header() {
                 <DropdownMenuItem>
                   <Link href={`/${locale}/profile`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={UserIcon} size={16} strokeWidth={2} />
-                    Profile
+                    {t("nav.profile")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link href={`/${locale}/settings`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={2} />
-                    Settings
+                    {t("nav.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link href={`/${locale}/certificates`} className="flex items-center gap-2 w-full">
                     <HugeiconsIcon icon={Award01Icon} size={16} strokeWidth={2} />
-                    Certificates
+                    {t("certificates.heading")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <button onClick={handleLogout} className="flex w-full items-center gap-2 text-destructive">
                     <HugeiconsIcon icon={Logout01Icon} size={16} strokeWidth={2} />
-                    Logout
+                    {t("common.logout")}
                   </button>
                 </DropdownMenuItem>
               </DropdownMenuContent>

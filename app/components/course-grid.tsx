@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { Course } from "@/lib/services";
 import { levelBadgeClasses } from "@/lib/utils";
 
@@ -31,7 +31,7 @@ const filterKeys: Record<Filter, string> = {
 export function CourseGrid({ courses }: { courses: Course[] }) {
   const [active, setActive] = useState<Filter>("All");
   const t = useTranslations();
-
+  const locale = useLocale();
   const filtered =
     active === "All"
       ? courses
@@ -90,7 +90,7 @@ export function CourseGrid({ courses }: { courses: Course[] }) {
               </div>
             </CardContent>
             <CardFooter>
-              <Link href={`/courses/${course.slug}`} className="w-full">
+              <Link href={`/${locale}/courses/${course.slug}`} className="w-full">
                 <Button variant="outline" size="lg" className="w-full">
                   {t("common.viewCourse")}
                   <HugeiconsIcon

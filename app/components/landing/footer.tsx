@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 export function Footer() {
   const t = useTranslations();
+  const locale = useLocale();
 
   const footerLinks = {
     platform: {
       label: t("footer.platform"),
       links: [
-        { label: t("nav.courses"), href: "/courses" },
-        { label: t("nav.leaderboard"), href: "/leaderboard" },
-        { label: t("nav.dashboard"), href: "/dashboard" },
+        { label: t("nav.courses"), href: `/${locale}/courses` },
+        { label: t("nav.leaderboard"), href: `/${locale}/leaderboard` },
+        { label: t("nav.dashboard"), href: `/${locale}/dashboard` },
       ],
     },
     resources: {
