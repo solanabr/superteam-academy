@@ -61,7 +61,7 @@ Open [http://localhost:3001](http://localhost:3001).
 | `/dashboard` | Real XP balance, level, streak, recent activity feed |
 | `/profile/[username]` | Public profile — credentials, achievements, completed courses |
 | `/settings` | Account settings — display name, bio, visibility toggle |
-| `/admin` | Admin panel (dev only) |
+| `/admin` | Admin panel — wallet-gated access |
 
 ---
 
@@ -374,6 +374,24 @@ Minimum required env vars for a working deployment:
 - `NEXT_PUBLIC_SANITY_PROJECT_ID`
 - `NEXT_PUBLIC_PROGRAM_ID` + `NEXT_PUBLIC_CLUSTER` + `NEXT_PUBLIC_XP_MINT`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY`
+
+---
+
+## Admin Panel
+
+The admin panel at `/admin` is wallet-gated. Only wallets listed in `NEXT_PUBLIC_ADMIN_WALLETS` can access it.
+
+### Authorized Wallets
+
+Configure in `.env.local` (comma-separated for multiple wallets):
+
+```
+NEXT_PUBLIC_ADMIN_WALLETS=8RER7VKxDjHgruqJPgQhKo54cUTTsdX5iLoiKRTjsB1f
+```
+
+If the variable is not set, the default authorized wallet is `8RER7VKxDjHgruqJPgQhKo54cUTTsdX5iLoiKRTjsB1f`.
+
+Visitors without an authorized wallet will see an "Access Denied" page. The panel shows real Supabase data: user count, forum threads, replies, recent signups, and recent forum activity.
 
 ---
 

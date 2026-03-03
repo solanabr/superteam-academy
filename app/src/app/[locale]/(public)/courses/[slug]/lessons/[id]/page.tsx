@@ -12,6 +12,11 @@ export default async function LessonPage({ params }: Props) {
   const { slug, id } = await params;
 
   let course = await getCourseBySlug(slug).catch(() => null);
+  // If Sanity returned a course but doesn't have the requested lesson, fall back to mock
+  if (course) {
+    const hasLesson = course.modules.flatMap((m) => m.lessons ?? []).some((l) => l._id === id);
+    if (!hasLesson) course = null;
+  }
   if (!course) course = getMockCourseBySlug(slug);
   if (!course) notFound();
 
