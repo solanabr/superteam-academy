@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ExternalLink, Shield } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import { solanaExplorerUrl } from "@/lib/explorer";
 import { TRACKS } from "@/types";
 import type { Credential } from "@/types";
@@ -15,6 +16,10 @@ export function CredentialCard({ credential }: CredentialCardProps) {
   const xp = credential.attributes.totalXp ?? "0";
 
   return (
+    <Link
+      href={{ pathname: "/certificates/[id]", params: { id: credential.assetAddress } }}
+      className="block"
+    >
     <div className="group bg-card border border-border rounded hover:border-[#14F195]/30 transition-all duration-200 overflow-hidden">
       {/* Image / placeholder */}
       <div className="relative h-32 bg-background flex items-center justify-center overflow-hidden">
@@ -65,5 +70,6 @@ export function CredentialCard({ credential }: CredentialCardProps) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }

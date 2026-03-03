@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { PortableText } from "@portabletext/react";
+import type { PortableTextBlock } from "@portabletext/react";
 import { MonacoEditor } from "@/components/editor/MonacoEditor";
 import { completeLesson } from "@/services/learning-progress";
 import { useEnrollment } from "@/hooks/useEnrollment";
@@ -810,8 +811,7 @@ export function LessonView({
               {/* Content */}
               {lesson.content ? (
                 <div className="max-w-none">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  <PortableText value={lesson.content as any} components={ptComponents} />
+                  <PortableText value={lesson.content as PortableTextBlock[]} components={ptComponents} />
                 </div>
               ) : (
                 <div className="border border-border rounded p-6 text-center">

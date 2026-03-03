@@ -23,7 +23,11 @@ import {
   TrendingUp,
   Clock,
   ChevronRight,
+  Trophy,
+  Shield,
 } from "lucide-react";
+import type { Achievement } from "@/types";
+import { getAchievements } from "@/services/credentials";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -235,6 +239,19 @@ export default function DashboardPage() {
 
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
   const [inProgressCourses, setInProgressCourses] = useState<CourseWithProgress[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+
+  useEffect(() => {
+    if (!publicKey) return;
+    (async () => {
+      try {
+        const data = await getAchievements(publicKey.toBase58());
+        setAchievements(data);
+      } catch {
+        setAchievements([]);
+      }
+    })();
+  }, [publicKey]);
 
   useEffect(() => {
     const all = buildCoursesWithProgress();
@@ -363,6 +380,64 @@ export default function DashboardPage() {
           </span>
         </div>
         <StreakWidget streak={streak} />
+      </div>
+
+      {/* Recent Achievements */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-[#F5A623]" />
+            <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
+              Achievements
+            </h2>
+          </div>
+          {achievements.length > 0 && (
+            <Link
+              href="/profile"
+              className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
+            >
+              View all
+              <ChevronRight className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+
+        {achievements.length === 0 ? (
+          <div className="bg-card border border-border rounded p-6 text-center">
+            <Shield className="h-8 w-8 text-subtle mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-mono">
+              No achievements yet. Complete courses to earn badges.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {achievements.slice(0, 3).map((achievement) => (
+              <div
+                key={achievement.id}
+                className="bg-card border border-border rounded p-4 flex gap-3 items-start"
+              >
+                <div className="flex-shrink-0 w-9 h-9 rounded flex items-center justify-center bg-[#F5A623]/10 border border-[#F5A623]/20">
+                  <Shield className="h-4 w-4 text-[#F5A623]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-xs font-semibold text-foreground leading-snug line-clamp-1">
+                    {achievement.name}
+                  </p>
+                  <p className="text-[10px] font-mono text-[#14F195] mt-0.5">
+                    +{achievement.xpReward} XP
+                  </p>
+                  <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                    {new Date(achievement.awardedAt).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Two-column layout: activity feed + courses */}

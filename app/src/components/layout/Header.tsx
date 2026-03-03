@@ -1,12 +1,67 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Menu, X, Settings } from "lucide-react";
-import { Link, usePathname } from "@/i18n/navigation";
+import { useState, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import { Menu, X, Settings, Sun, Moon } from "lucide-react";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { WalletButton } from "@/components/solana/WalletButton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const LOCALES = ["en", "pt-BR", "es"] as const;
+const LOCALE_LABELS: Record<string, string> = { en: "EN", "pt-BR": "PT", es: "ES" };
+
+function ThemeToggle() {
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    setIsLight(document.documentElement.classList.contains("light"));
+  }, []);
+
+  const toggle = () => {
+    const next = !isLight;
+    setIsLight(next);
+    if (next) {
+      document.documentElement.classList.add("light");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("theme", "dark");
+    }
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 rounded text-muted-foreground hover:text-foreground transition-colors"
+      title={isLight ? "Switch to dark" : "Switch to light"}
+    >
+      {isLight ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
+  );
+}
+
+function LocaleSwitcher() {
+  const currentLocale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const cycleLocale = () => {
+    const currentIndex = LOCALES.indexOf(currentLocale as (typeof LOCALES)[number]);
+    const nextLocale = LOCALES[(currentIndex + 1) % LOCALES.length];
+    router.replace(pathname, { locale: nextLocale });
+  };
+
+  return (
+    <button
+      onClick={cycleLocale}
+      className="text-xs font-mono px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors"
+      title="Switch language"
+    >
+      {LOCALE_LABELS[currentLocale] ?? currentLocale.toUpperCase()}
+    </button>
+  );
+}
 
 const NAV_LINKS = [
   { key: "courses" as const, href: "/courses" },
@@ -49,6 +104,10 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1">
+            <ThemeToggle />
+            <LocaleSwitcher />
+          </div>
           <Link
             href="/settings"
             className={cn(

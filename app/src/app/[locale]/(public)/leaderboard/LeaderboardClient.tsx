@@ -1,10 +1,84 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
+import { MOCK_COURSES } from "@/lib/mock-courses";
+import { supabase } from "@/lib/supabase";
 import type { LeaderboardEntry } from "@/types";
 
 export function LeaderboardClient({ entries }: { entries: LeaderboardEntry[] }) {
   const { publicKey } = useWallet();
-  return <LeaderboardTable entries={entries} currentWallet={publicKey?.toBase58()} />;
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [filteredEntries, setFilteredEntries] = useState<LeaderboardEntry[]>(entries);
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCourse) {
+      setFilteredEntries(entries);
+      return;
+    }
+
+    if (!supabase) {
+      setFilteredEntries(entries);
+      return;
+    }
+
+    let cancelled = false;
+    setIsFiltering(true);
+
+    supabase
+      .from("lesson_completions")
+      .select("wallet_address")
+      .eq("course_slug", selectedCourse)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) {
+          setFilteredEntries(entries);
+          setIsFiltering(false);
+          return;
+        }
+        const wallets = new Set(data.map((row) => row.wallet_address as string));
+        setFilteredEntries(entries.filter((e) => wallets.has(e.walletAddress)));
+        setIsFiltering(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCourse, entries]);
+
+  const showFilter = !!supabase;
+
+  return (
+    <div>
+      {showFilter && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+            Filter by course
+          </span>
+          <select
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            disabled={isFiltering}
+            className="bg-card border border-border rounded px-2 py-1 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-[#14F195]/50 disabled:opacity-50 cursor-pointer"
+          >
+            <option value="">All Courses</option>
+            {MOCK_COURSES.map((course) => (
+              <option key={course.slug} value={course.slug}>
+                {course.title}
+              </option>
+            ))}
+          </select>
+          {isFiltering && (
+            <span className="text-[10px] font-mono text-muted-foreground">Loading...</span>
+          )}
+        </div>
+      )}
+      <LeaderboardTable
+        entries={filteredEntries}
+        currentWallet={publicKey?.toBase58()}
+      />
+    </div>
+  );
 }
