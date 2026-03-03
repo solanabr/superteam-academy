@@ -281,7 +281,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
               value={code}
               onChange={setCode}
               language="typescript"
-              height="calc(100vh - 200px)"
+              height="400px"
             />
           </div>
 
