@@ -14,6 +14,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         api_host: host,
         person_profiles: "identified_only",
         capture_pageview: false,
+        enable_heatmaps: true,
         session_recording: {
           maskAllInputs: true,
         },
