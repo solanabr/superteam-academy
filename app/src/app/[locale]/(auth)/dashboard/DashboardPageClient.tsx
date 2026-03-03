@@ -230,6 +230,7 @@ export default function DashboardPage() {
   useSyncXp();
 
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
+  const [inProgressCourses, setInProgressCourses] = useState<CourseWithProgress[]>([]);
 
   useEffect(() => {
     const all = buildCoursesWithProgress();
@@ -239,6 +240,7 @@ export default function DashboardPage() {
     const completed = all.filter((c) => c.progressPercent === 100);
     const diffOrder: Record<string, number> = { beginner: 0, intermediate: 1, advanced: 2 };
     notStarted.sort((a, b) => (diffOrder[a.difficulty] ?? 0) - (diffOrder[b.difficulty] ?? 0));
+    setInProgressCourses(inProgress);
     setCourses([...inProgress, ...notStarted, ...completed].slice(0, 3));
   }, []);
 
@@ -263,7 +265,6 @@ export default function DashboardPage() {
     );
   }
 
-  const inProgressCourses = courses.filter((c) => c.progressPercent > 0 && c.progressPercent < 100);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
