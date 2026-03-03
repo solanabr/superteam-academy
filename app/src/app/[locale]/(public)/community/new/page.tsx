@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { getCategories } from "@/lib/forum";
+import { getTranslations } from "next-intl/server";
 import { NewThreadForm } from "./NewThreadForm";
 
 export const metadata: Metadata = {
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function NewThreadPage() {
-  const categories = await getCategories();
+  const [categories, t] = await Promise.all([
+    getCategories(),
+    getTranslations("newThread"),
+  ]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
@@ -19,27 +23,24 @@ export default async function NewThreadPage() {
           href="/community"
           className="hover:text-foreground transition-colors"
         >
-          Community
+          {t("breadcrumbCommunity")}
         </Link>
         <span>/</span>
-        <span className="text-foreground">New Thread</span>
+        <span className="text-foreground">{t("breadcrumbNew")}</span>
       </nav>
 
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="mb-6">
           <h1 className="font-mono text-xl font-bold text-foreground mb-1">
-            Start a Discussion
+            {t("pageTitle")}
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Ask a question, share knowledge, or showcase your work.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("pageSubtitle")}</p>
         </div>
 
         {categories.length === 0 ? (
           <div className="text-center py-8">
             <p className="font-mono text-sm text-muted-foreground">
-              Unable to load categories. Please check your connection and try
-              again.
+              {t("loadError")}
             </p>
           </div>
         ) : (

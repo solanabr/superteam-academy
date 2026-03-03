@@ -8,7 +8,10 @@
     "settings": "Ajustes",
     "connectWallet": "Conectar Billetera",
     "disconnectWallet": "Desconectar",
-    "signIn": "Iniciar Sesión"
+    "signIn": "Iniciar Sesión",
+    "switchToDark": "Cambiar a oscuro",
+    "switchToLight": "Cambiar a claro",
+    "switchLanguage": "Cambiar idioma"
   },
   "home": {
     "hero": {
@@ -21,7 +24,8 @@
         "developers": "Desarrolladores",
         "courses": "Cursos",
         "xpMinted": "XP Acuñado"
-      }
+      },
+      "findStartingPoint": "Encuentra tu punto de partida →"
     },
     "tracks": {
       "title": "Rutas de Aprendizaje",
@@ -68,7 +72,10 @@
     },
     "socialProof": {
       "title": "Únete a la Comunidad",
-      "testimonials": "Testimonios de Estudiantes"
+      "testimonials": "Testimonios de Estudiantes",
+      "credentialsHeading": "Tus credenciales,",
+      "credentialsHighlight": "en la cadena para siempre.",
+      "body": "Únete a cientos de desarrolladores construyendo en Solana. Cada lección acuña XP. Cada curso otorga un NFT soulbound."
     }
   },
   "courses": {
@@ -126,7 +133,30 @@
     "credentials": "Credenciales",
     "recentActivity": "Actividad Reciente",
     "noActivity": "Sin actividad aún. ¡Empieza un curso!",
-    "continueLearning": "Seguir Aprendiendo"
+    "continueLearning": "Seguir Aprendiendo",
+    "connectWallet": "Conecta tu billetera",
+    "connectWalletDesc": "Conecta tu billetera Solana para ver tu panel, saldo de XP y progreso de aprendizaje.",
+    "connectWalletBtn": "Conectar Billetera",
+    "xpBalance": "Saldo XP",
+    "viewCertificates": "Ver certificados",
+    "thisWeek": "Esta Semana",
+    "lessons": "lecciones",
+    "keepMomentum": "Mantén el impulso",
+    "achievements": "Logros",
+    "noAchievements": "Sin logros aún. Completa cursos para ganar insignias.",
+    "viewAll": "Ver todo",
+    "lastSevenDays": "Últimos 7 días",
+    "firstLessonPrompt": "Completa tu primera lección para ver la actividad aquí.",
+    "upNext": "A Continuación",
+    "browseAll": "Ver todos",
+    "dailyChallenge": "Desafío Diario",
+    "live": "EN VIVO",
+    "resetsIn": "Reinicia en {time}",
+    "solveChallenge": "Resolver Desafío",
+    "browseCourses": "Ver Cursos",
+    "inProgress": "En Progreso",
+    "completed": "Completado",
+    "streakLabel": "Racha"
   },
   "leaderboard": {
     "title": "Clasificación",
@@ -140,7 +170,8 @@
     "learner": "Aprendiz",
     "level": "Nivel",
     "xp": "XP",
-    "you": "Tú"
+    "you": "Tú",
+    "noData": "Sin datos aún. ¡Completa lecciones para aparecer aquí!"
   },
   "profile": {
     "title": "Perfil",
@@ -152,7 +183,16 @@
     "noAchievements": "Sin logros aún",
     "joinedDate": "Se unió el {date}",
     "xpTotal": "{xp} XP total",
-    "level": "Nivel {level}"
+    "level": "Nivel {level}",
+    "notFound": "Perfil no encontrado.",
+    "joined": "Se unió",
+    "totalXp": "XP Total",
+    "skills": "Habilidades",
+    "completedCourses": "Cursos Completados",
+    "noCompletedCourses": "Sin cursos completados aún.",
+    "inProgress": "En Progreso",
+    "lessonSingular": "lección",
+    "lessonPlural": "lecciones"
   },
   "settings": {
     "title": "Ajustes",
@@ -162,7 +202,10 @@
       "displayName": "Nombre para mostrar",
       "bio": "Bio",
       "save": "Guardar Cambios",
-      "saved": "¡Guardado!"
+      "saved": "¡Guardado!",
+      "dataExport": "Exportar Datos",
+      "dataExportDesc": "Descarga todos tus datos de progreso, historial de XP y credenciales.",
+      "exportBtn": "Exportar Datos (JSON)"
     },
     "accounts": {
       "title": "Cuentas Vinculadas",
@@ -170,7 +213,9 @@
       "google": "Google",
       "github": "GitHub",
       "connect": "Conectar",
-      "disconnect": "Desconectar"
+      "disconnect": "Desconectar",
+      "manageSignIn": "Administra los métodos de inicio de sesión en",
+      "clerkProfile": "perfil de Clerk"
     },
     "appearance": {
       "title": "Apariencia",
@@ -181,6 +226,12 @@
     "language": {
       "title": "Idioma",
       "select": "Seleccionar Idioma"
+    },
+    "tabs": {
+      "profile": "Perfil",
+      "accounts": "Cuentas Vinculadas",
+      "appearance": "Apariencia",
+      "language": "Idioma"
     }
   },
   "certificate": {
@@ -191,7 +242,30 @@
     "viewOnExplorer": "Ver en Explorer",
     "completedOn": "Completado el {date}",
     "earnedBy": "Obtenido por",
-    "track": "Ruta"
+    "track": "Ruta",
+    "academyCertificate": "Certificado Academy",
+    "thisCertifies": "Esto certifica que",
+    "hasCompleted": "ha completado exitosamente",
+    "trackLevel": "Ruta {trackName} · Nivel {level}",
+    "courses": "Cursos",
+    "xpEarned": "XP Ganado",
+    "level": "Nivel",
+    "shareOnX": "Compartir en X",
+    "assetAddress": "Dirección del Asset",
+    "program": "Programa",
+    "network": "Red",
+    "standard": "Estándar",
+    "solanaDevnet": "Solana Devnet",
+    "metaplexCore": "Metaplex Core (Soulbound)"
+  },
+  "certificates": {
+    "title": "Mis Certificados",
+    "subtitle": "Credenciales soulbound emitidas on-chain via Metaplex Core.",
+    "connectPromptTitle": "Mis Certificados",
+    "connectPromptDesc": "Conecta tu billetera para ver tus credenciales on-chain.",
+    "connectBtn": "Conectar Billetera",
+    "noCredentials": "Sin credenciales aún.",
+    "noCredentialsDesc": "Completa un curso para ganar tu primera credencial NFT soulbound."
   },
   "wallet": {
     "connect": "Conectar Billetera",
@@ -203,7 +277,8 @@
     "certificates": "Certificados",
     "settings": "Ajustes",
     "disconnect": "Desconectar",
-    "levelLabel": "Nv."
+    "levelLabel": "Nv.",
+    "xpLevel": "{xp} XP · Nivel {level}"
   },
   "enroll": {
     "connectToEnroll": "Conectar Billetera para Inscribirse",
@@ -230,5 +305,115 @@
     "walletRequired": "Conecta tu billetera para continuar",
     "notFound": "No encontrado",
     "comingSoon": "Próximamente"
+  },
+  "community": {
+    "title": "Comunidad",
+    "subtitle": "Haz preguntas, comparte conocimiento, ayuda a otros a aprender Solana.",
+    "newThread": "+ Nuevo Hilo",
+    "categories": "Categorías",
+    "all": "Todos",
+    "latestThreads": "Últimos Hilos",
+    "noThreads": "Sin hilos aún.",
+    "startFirst": "Sé el primero en publicar.",
+    "threads": "hilos",
+    "replies": "respuestas",
+    "members": "miembros",
+    "views": "vistas",
+    "pinned": "Fijado",
+    "answered": "Respondido",
+    "unanswered": "Sin Respuesta",
+    "reply": "respuesta",
+    "upvote": "voto",
+    "upvotes": "votos",
+    "acceptedAnswer": "Respuesta Aceptada",
+    "leaveReply": "Deja una Respuesta",
+    "breadcrumb": "Comunidad",
+    "threadNotFound": "Hilo No Encontrado"
+  },
+  "newThread": {
+    "connectPrompt": "Conecta tu billetera para publicar un hilo.",
+    "connectBtn": "Conectar Billetera",
+    "postingAs": "Publicando como",
+    "category": "Categoría",
+    "title": "Título",
+    "titlePlaceholder": "¿Cuál es tu pregunta o tema?",
+    "body": "Contenido",
+    "markdownSupported": "(markdown compatible)",
+    "bodyPlaceholder": "Describe tu pregunta en detalle. Incluye fragmentos de código, mensajes de error o contexto relevante.",
+    "allFieldsRequired": "Todos los campos son obligatorios.",
+    "failedToCreate": "No se pudo crear el hilo. Por favor intenta de nuevo.",
+    "unexpectedError": "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+    "cancel": "Cancelar",
+    "posting": "Publicando...",
+    "postThread": "Publicar Hilo",
+    "pageTitle": "Iniciar una Discusión",
+    "pageSubtitle": "Haz una pregunta, comparte conocimiento o muestra tu trabajo.",
+    "breadcrumbCommunity": "Comunidad",
+    "breadcrumbNew": "Nuevo Hilo",
+    "loadError": "No se pudieron cargar las categorías. Por favor revisa tu conexión e intenta de nuevo."
+  },
+  "admin": {
+    "title": "Panel de Administración",
+    "subtitle": "Resumen de la plataforma y gestión de cursos.",
+    "accessTitle": "Acceso de Administrador",
+    "accessDesc": "Conecta una billetera autorizada para acceder a este panel.",
+    "connectBtn": "Conectar Billetera",
+    "deniedTitle": "Acceso Denegado",
+    "deniedDesc": "Esta billetera no está autorizada para acceder al panel de administración.",
+    "totalUsers": "Total de Usuarios",
+    "activeCourses": "Cursos Activos",
+    "forumThreads": "Hilos del Foro",
+    "forumReplies": "Respuestas del Foro",
+    "enrollmentsByCourse": "Inscripciones por Curso",
+    "courses": "Cursos",
+    "colTitle": "Título",
+    "colDifficulty": "Dificultad",
+    "colEnrollments": "Inscripciones",
+    "colCompletion": "Completado %",
+    "colXpReward": "Recompensa XP",
+    "colActions": "Acciones",
+    "edit": "Editar",
+    "view": "Ver",
+    "viewAll": "Ver Todo",
+    "recentSignups": "Registros Recientes",
+    "noSignups": "Sin registros aún.",
+    "colWalletUsername": "Billetera / Usuario",
+    "colDisplayName": "Nombre para Mostrar",
+    "colJoined": "Se Unió",
+    "recentForumActivity": "Actividad Reciente del Foro",
+    "noForumThreads": "Sin hilos aún.",
+    "colCategory": "Categoría",
+    "colCreated": "Creado"
+  },
+  "streakWidget": {
+    "days": "días",
+    "best": "mejor",
+    "total": "total"
+  },
+  "xpBar": {
+    "level": "Nivel {level}",
+    "toNext": "para el siguiente"
+  },
+  "levelBadge": {
+    "title": "Nivel {level}"
+  },
+  "credentialCard": {
+    "academyCredential": "Credencial Academy",
+    "levelAbbrev": "Nv."
+  },
+  "courseCard": {
+    "lessons": "lecciones",
+    "progress": "Progreso",
+    "complete": "Completado ✓"
+  },
+  "footer": {
+    "stayUpdated": "Mantente al día con Superteam Academy",
+    "subscribe": "Suscribirse",
+    "alreadySubscribed": "¡Ya estás suscrito!",
+    "errorTryAgain": "Algo salió mal. Intenta de nuevo.",
+    "thanksSubscribing": "¡Gracias por suscribirte!",
+    "copyright": "© 2026 Superteam Academy.",
+    "builtOnSolana": "Construido en Solana.",
+    "admin": "Admin"
   }
 }

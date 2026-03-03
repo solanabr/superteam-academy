@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { BookOpen, Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,6 +14,7 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, progress }: CourseCardProps) {
+  const t = useTranslations("courseCard");
   const track = TRACKS[course.trackId];
   const difficultyColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
   const isEnrolled = progress?.enrolled;
@@ -75,7 +79,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
         {/* Content */}
         <div className="p-4 flex flex-col flex-1">
-          <h3 className="font-mono text-sm font-semibold text-foreground line-clamp-2 leading-snug mb-1.5 group-hover:text-white transition-colors">
+          <h3 className="font-mono text-sm font-semibold text-foreground line-clamp-2 leading-snug mb-1.5 group-hover:text-accent transition-colors">
             {course.title}
           </h3>
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1 mb-3">
@@ -90,7 +94,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
                 (sum, m) => sum + (m.lessons?.length ?? 0),
                 0,
               )}{" "}
-              lessons
+              {t("lessons")}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -108,13 +112,13 @@ export function CourseCard({ course, progress }: CourseCardProps) {
           {isEnrolled && (
             <div className="mt-2 pt-2 border-t border-border">
               <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{t("progress")}</span>
                 <span
                   className={
                     percent === 100 ? "text-accent" : "text-foreground"
                   }
                 >
-                  {percent === 100 ? "Complete ✓" : `${percent}%`}
+                  {percent === 100 ? t("complete") : `${percent}%`}
                 </span>
               </div>
             </div>

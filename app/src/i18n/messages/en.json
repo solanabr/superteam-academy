@@ -8,7 +8,10 @@
     "settings": "Settings",
     "connectWallet": "Connect Wallet",
     "disconnectWallet": "Disconnect",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "switchToDark": "Switch to dark",
+    "switchToLight": "Switch to light",
+    "switchLanguage": "Switch language"
   },
   "home": {
     "hero": {
@@ -21,7 +24,8 @@
         "developers": "Developers",
         "courses": "Courses",
         "xpMinted": "XP Minted"
-      }
+      },
+      "findStartingPoint": "Find your starting point →"
     },
     "tracks": {
       "title": "Learning Tracks",
@@ -68,7 +72,10 @@
     },
     "socialProof": {
       "title": "Join the Community",
-      "testimonials": "Student Testimonials"
+      "testimonials": "Student Testimonials",
+      "credentialsHeading": "Your credentials,",
+      "credentialsHighlight": "on-chain forever.",
+      "body": "Join hundreds of developers building on Solana. Every lesson mints XP. Every course earns a soulbound NFT."
     }
   },
   "courses": {
@@ -126,7 +133,30 @@
     "credentials": "Credentials",
     "recentActivity": "Recent Activity",
     "noActivity": "No activity yet. Start a course!",
-    "continueLearning": "Continue Learning"
+    "continueLearning": "Continue Learning",
+    "connectWallet": "Connect your wallet",
+    "connectWalletDesc": "Connect your Solana wallet to view your dashboard, XP balance, and learning progress.",
+    "connectWalletBtn": "Connect Wallet",
+    "xpBalance": "XP Balance",
+    "viewCertificates": "View certificates",
+    "thisWeek": "This Week",
+    "lessons": "lessons",
+    "keepMomentum": "Keep the momentum going",
+    "achievements": "Achievements",
+    "noAchievements": "No achievements yet. Complete courses to earn badges.",
+    "viewAll": "View all",
+    "lastSevenDays": "Last 7 days",
+    "firstLessonPrompt": "Complete your first lesson to see activity here.",
+    "upNext": "Up Next",
+    "browseAll": "Browse all",
+    "dailyChallenge": "Daily Challenge",
+    "live": "LIVE",
+    "resetsIn": "Resets in {time}",
+    "solveChallenge": "Solve Challenge",
+    "browseCourses": "Browse Courses",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "streakLabel": "Streak"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -140,7 +170,8 @@
     "learner": "Learner",
     "level": "Level",
     "xp": "XP",
-    "you": "You"
+    "you": "You",
+    "noData": "No data yet. Complete lessons to appear here!"
   },
   "profile": {
     "title": "Profile",
@@ -152,7 +183,16 @@
     "noAchievements": "No achievements yet",
     "joinedDate": "Joined {date}",
     "xpTotal": "{xp} XP total",
-    "level": "Level {level}"
+    "level": "Level {level}",
+    "notFound": "Profile not found.",
+    "joined": "Joined",
+    "totalXp": "Total XP",
+    "skills": "Skills",
+    "completedCourses": "Completed Courses",
+    "noCompletedCourses": "No completed courses yet.",
+    "inProgress": "In Progress",
+    "lessonSingular": "lesson",
+    "lessonPlural": "lessons"
   },
   "settings": {
     "title": "Settings",
@@ -162,7 +202,10 @@
       "displayName": "Display Name",
       "bio": "Bio",
       "save": "Save Changes",
-      "saved": "Saved!"
+      "saved": "Saved!",
+      "dataExport": "Data Export",
+      "dataExportDesc": "Download all your progress data, XP history, and credentials.",
+      "exportBtn": "Export Data (JSON)"
     },
     "accounts": {
       "title": "Linked Accounts",
@@ -170,7 +213,9 @@
       "google": "Google",
       "github": "GitHub",
       "connect": "Connect",
-      "disconnect": "Disconnect"
+      "disconnect": "Disconnect",
+      "manageSignIn": "Manage sign-in methods via",
+      "clerkProfile": "Clerk profile"
     },
     "appearance": {
       "title": "Appearance",
@@ -181,6 +226,12 @@
     "language": {
       "title": "Language",
       "select": "Select Language"
+    },
+    "tabs": {
+      "profile": "Profile",
+      "accounts": "Linked Accounts",
+      "appearance": "Appearance",
+      "language": "Language"
     }
   },
   "certificate": {
@@ -191,7 +242,30 @@
     "viewOnExplorer": "View on Explorer",
     "completedOn": "Completed on {date}",
     "earnedBy": "Earned by",
-    "track": "Track"
+    "track": "Track",
+    "academyCertificate": "Academy Certificate",
+    "thisCertifies": "This certifies that",
+    "hasCompleted": "has successfully completed",
+    "trackLevel": "{trackName} Track · Level {level}",
+    "courses": "Courses",
+    "xpEarned": "XP Earned",
+    "level": "Level",
+    "shareOnX": "Share on X",
+    "assetAddress": "Asset Address",
+    "program": "Program",
+    "network": "Network",
+    "standard": "Standard",
+    "solanaDevnet": "Solana Devnet",
+    "metaplexCore": "Metaplex Core (Soulbound)"
+  },
+  "certificates": {
+    "title": "My Certificates",
+    "subtitle": "Soulbound credentials issued on-chain via Metaplex Core.",
+    "connectPromptTitle": "My Certificates",
+    "connectPromptDesc": "Connect your wallet to view your on-chain credentials.",
+    "connectBtn": "Connect Wallet",
+    "noCredentials": "No credentials yet.",
+    "noCredentialsDesc": "Complete a course to earn your first soulbound credential NFT."
   },
   "wallet": {
     "connect": "Connect Wallet",
@@ -203,7 +277,8 @@
     "certificates": "Certificates",
     "settings": "Settings",
     "disconnect": "Disconnect",
-    "levelLabel": "Lv."
+    "levelLabel": "Lv.",
+    "xpLevel": "{xp} XP · Level {level}"
   },
   "enroll": {
     "connectToEnroll": "Connect Wallet to Enroll",
@@ -230,5 +305,115 @@
     "walletRequired": "Connect your wallet to continue",
     "notFound": "Not Found",
     "comingSoon": "Coming Soon"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Ask questions, share knowledge, help others learn Solana.",
+    "newThread": "+ New Thread",
+    "categories": "Categories",
+    "all": "All",
+    "latestThreads": "Latest Threads",
+    "noThreads": "No threads yet.",
+    "startFirst": "Start the first one.",
+    "threads": "threads",
+    "replies": "replies",
+    "members": "members",
+    "views": "views",
+    "pinned": "Pinned",
+    "answered": "Answered",
+    "unanswered": "Unanswered",
+    "reply": "reply",
+    "upvote": "upvote",
+    "upvotes": "upvotes",
+    "acceptedAnswer": "Accepted Answer",
+    "leaveReply": "Leave a Reply",
+    "breadcrumb": "Community",
+    "threadNotFound": "Thread Not Found"
+  },
+  "newThread": {
+    "connectPrompt": "Connect your wallet to post a thread.",
+    "connectBtn": "Connect Wallet",
+    "postingAs": "Posting as",
+    "category": "Category",
+    "title": "Title",
+    "titlePlaceholder": "What's your question or topic?",
+    "body": "Body",
+    "markdownSupported": "(markdown supported)",
+    "bodyPlaceholder": "Describe your question in detail. Include relevant code snippets, error messages, or context.",
+    "allFieldsRequired": "All fields are required.",
+    "failedToCreate": "Failed to create thread. Please try again.",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "cancel": "Cancel",
+    "posting": "Posting...",
+    "postThread": "Post Thread",
+    "pageTitle": "Start a Discussion",
+    "pageSubtitle": "Ask a question, share knowledge, or showcase your work.",
+    "breadcrumbCommunity": "Community",
+    "breadcrumbNew": "New Thread",
+    "loadError": "Unable to load categories. Please check your connection and try again."
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "Platform overview and course management.",
+    "accessTitle": "Admin Access",
+    "accessDesc": "Connect an authorized wallet to access this panel.",
+    "connectBtn": "Connect Wallet",
+    "deniedTitle": "Access Denied",
+    "deniedDesc": "This wallet is not authorized to access the admin panel.",
+    "totalUsers": "Total Users",
+    "activeCourses": "Active Courses",
+    "forumThreads": "Forum Threads",
+    "forumReplies": "Forum Replies",
+    "enrollmentsByCourse": "Enrollments by Course",
+    "courses": "Courses",
+    "colTitle": "Title",
+    "colDifficulty": "Difficulty",
+    "colEnrollments": "Enrollments",
+    "colCompletion": "Completion %",
+    "colXpReward": "XP Reward",
+    "colActions": "Actions",
+    "edit": "Edit",
+    "view": "View",
+    "viewAll": "View All",
+    "recentSignups": "Recent Signups",
+    "noSignups": "No signups yet.",
+    "colWalletUsername": "Wallet / Username",
+    "colDisplayName": "Display Name",
+    "colJoined": "Joined",
+    "recentForumActivity": "Recent Forum Activity",
+    "noForumThreads": "No threads yet.",
+    "colCategory": "Category",
+    "colCreated": "Created"
+  },
+  "streakWidget": {
+    "days": "days",
+    "best": "best",
+    "total": "total"
+  },
+  "xpBar": {
+    "level": "Level {level}",
+    "toNext": "to next"
+  },
+  "levelBadge": {
+    "title": "Level {level}"
+  },
+  "credentialCard": {
+    "academyCredential": "Academy Credential",
+    "levelAbbrev": "Lv."
+  },
+  "courseCard": {
+    "lessons": "lessons",
+    "progress": "Progress",
+    "complete": "Complete ✓"
+  },
+  "footer": {
+    "stayUpdated": "Stay updated with Superteam Academy",
+    "subscribe": "Subscribe",
+    "alreadySubscribed": "Already subscribed!",
+    "errorTryAgain": "Something went wrong. Try again.",
+    "thanksSubscribing": "Thanks for subscribing!",
+    "copyright": "© 2026 Superteam Academy.",
+    "builtOnSolana": "Built on Solana.",
+    "admin": "Admin"
   }
 }

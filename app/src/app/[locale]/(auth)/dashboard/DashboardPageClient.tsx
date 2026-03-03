@@ -165,6 +165,7 @@ function getTimeUntilMidnight(): string {
 }
 
 function DailyChallengeWidget() {
+  const t = useTranslations("dashboard");
   const dayIndex = Math.floor(Date.now() / 86400000);
   const challenge = ALL_CHALLENGES[dayIndex % ALL_CHALLENGES.length];
   const [resetsIn, setResetsIn] = useState(getTimeUntilMidnight());
@@ -180,13 +181,13 @@ function DailyChallengeWidget() {
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
         <h2 className="font-mono text-lg font-semibold text-foreground">
-          Daily Challenge
+          {t("dailyChallenge")}
         </h2>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent animate-pulse">
-          LIVE
+          {t("live")}
         </span>
         <span className="ml-auto text-xs font-mono text-muted-foreground flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Resets in {resetsIn}
+          <Clock className="h-3 w-3" /> {t("resetsIn", { time: resetsIn })}
         </span>
       </div>
       <div className="bg-card border border-accent/20 rounded p-5 relative overflow-hidden">
@@ -235,7 +236,7 @@ function DailyChallengeWidget() {
             className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
           >
             <Zap className="h-3.5 w-3.5" />
-            Solve Challenge
+            {t("solveChallenge")}
           </Link>
         </div>
       </div>
@@ -319,17 +320,16 @@ export default function DashboardPage() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
         <span className="text-5xl">◎</span>
         <h2 className="font-mono text-xl font-bold text-foreground">
-          Connect your wallet
+          {t("connectWallet")}
         </h2>
         <p className="text-sm text-muted-foreground text-center max-w-sm">
-          Connect your Solana wallet to view your dashboard, XP balance, and
-          learning progress.
+          {t("connectWalletDesc")}
         </p>
         <button
           onClick={() => setVisible(true)}
           className="mt-2 bg-accent text-black font-mono font-semibold px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
         >
-          Connect Wallet
+          {t("connectWalletBtn")}
         </button>
       </div>
     );
@@ -356,7 +356,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-3">
             <Zap className="h-4 w-4 text-accent" />
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              XP Balance
+              {t("xpBalance")}
             </span>
           </div>
           {xpLoading ? (
@@ -382,7 +382,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 mb-3">
               <Award className="h-4 w-4 text-[#9945FF]" />
               <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                Credentials
+                {t("credentials")}
               </span>
             </div>
             {credsLoading ? (
@@ -394,7 +394,7 @@ export default function DashboardPage() {
               </div>
             )}
             <p className="text-[10px] text-[#9945FF]/70 font-mono mt-2">
-              View certificates →
+              {t("viewCertificates")} →
             </p>
           </div>
         </Link>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="h-4 w-4 text-[#00D4FF]" />
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              This Week
+              {t("thisWeek")}
             </span>
           </div>
           {activityLoading ? (
@@ -413,12 +413,12 @@ export default function DashboardPage() {
             <div className="font-mono text-3xl font-bold text-foreground">
               {thisWeek}
               <span className="text-sm text-muted-foreground ml-1">
-                lessons
+                {t("lessons")}
               </span>
             </div>
           )}
           <p className="text-[10px] text-muted-foreground font-mono mt-2">
-            Keep the momentum going
+            {t("keepMomentum")}
           </p>
         </div>
       </div>
@@ -428,7 +428,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 mb-4">
           <span className="text-sm">🔥</span>
           <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-            Streak
+            {t("streakLabel")}
           </span>
         </div>
         <StreakWidget streak={streak} />
@@ -440,7 +440,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-[#F5A623]" />
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
-              Achievements
+              {t("achievements")}
             </h2>
           </div>
           {achievements.length > 0 && (
@@ -448,7 +448,7 @@ export default function DashboardPage() {
               href="/profile"
               className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
             >
-              View all
+              {t("viewAll")}
               <ChevronRight className="h-3 w-3" />
             </Link>
           )}
@@ -458,7 +458,7 @@ export default function DashboardPage() {
           <div className="bg-card border border-border rounded p-6 text-center">
             <Shield className="h-8 w-8 text-subtle mx-auto mb-3" />
             <p className="text-sm text-muted-foreground font-mono">
-              No achievements yet. Complete courses to earn badges.
+              {t("noAchievements")}
             </p>
           </div>
         ) : (
@@ -501,10 +501,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-card border border-border rounded p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
-              Recent Activity
+              {t("recentActivity")}
             </h2>
             <span className="text-[10px] font-mono text-muted-foreground">
-              Last 7 days
+              {t("lastSevenDays")}
             </span>
           </div>
 
@@ -519,7 +519,7 @@ export default function DashboardPage() {
             </div>
           ) : activityItems.length === 0 ? (
             <p className="text-xs font-mono text-muted-foreground text-center py-8">
-              Complete your first lesson to see activity here.
+              {t("firstLessonPrompt")}
             </p>
           ) : (
             <ol className="relative">
@@ -557,13 +557,13 @@ export default function DashboardPage() {
         <div className="lg:col-span-3 bg-card border border-border rounded p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
-              Up Next
+              {t("upNext")}
             </h2>
             <Link
               href="/courses"
               className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
             >
-              Browse all
+              {t("browseAll")}
               <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
@@ -592,7 +592,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-mono text-xs font-semibold text-foreground group-hover:text-white transition-colors leading-snug line-clamp-1">
+                      <h3 className="font-mono text-xs font-semibold text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-1">
                         {course.title}
                       </h3>
                       <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-1">
@@ -605,7 +605,7 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between mb-0.5">
                             <span className="text-[9px] font-mono text-accent">
                               {course.completedLessons}/{course.totalLessons}{" "}
-                              lessons
+                              {t("lessons")}
                             </span>
                             <span className="text-[9px] font-mono text-muted-foreground">
                               {course.progressPercent}%
@@ -636,7 +636,8 @@ export default function DashboardPage() {
                           </span>
                           {course.progressPercent === 100 ? (
                             <span className="text-[9px] font-mono text-accent flex items-center gap-0.5 ml-auto">
-                              <CheckCircle2 className="h-2.5 w-2.5" /> Completed
+                              <CheckCircle2 className="h-2.5 w-2.5" />{" "}
+                              {t("completed")}
                             </span>
                           ) : (
                             <span className="text-[9px] font-mono text-accent flex items-center gap-0.5 ml-auto">
@@ -670,7 +671,7 @@ export default function DashboardPage() {
               href="/courses"
               className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
             >
-              Browse all →
+              {t("browseAll")} →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -685,13 +686,14 @@ export default function DashboardPage() {
                 <div className="group bg-card border border-border rounded p-4 hover:border-border-hover transition-all">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-lg">{course.trackIcon}</span>
-                    <span className="text-xs font-mono font-semibold text-foreground line-clamp-1 group-hover:text-white transition-colors">
+                    <span className="text-xs font-mono font-semibold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
                       {course.title}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-mono text-muted-foreground">
-                      {course.completedLessons}/{course.totalLessons} lessons
+                      {course.completedLessons}/{course.totalLessons}{" "}
+                      {t("lessons")}
                     </span>
                     <span className="text-[10px] font-mono text-accent">
                       {course.progressPercent}%
@@ -718,7 +720,7 @@ export default function DashboardPage() {
               href="/courses"
               className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
             >
-              Browse all →
+              {t("browseAll")} →
             </Link>
           </div>
           <div className="bg-card border border-border rounded p-6 text-center">
@@ -730,7 +732,7 @@ export default function DashboardPage() {
               href="/courses"
               className="inline-flex items-center gap-2 bg-accent text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
             >
-              Browse Courses
+              {t("browseCourses")}
             </Link>
           </div>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { StreakData } from "@/types";
 
@@ -11,6 +12,7 @@ interface StreakWidgetProps {
 const MILESTONES = [7, 30, 100] as const;
 
 export function StreakWidget({ streak, className }: StreakWidgetProps) {
+  const t = useTranslations("streakWidget");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -61,7 +63,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
               {streak.currentStreak}
             </span>
             <span className="text-[10px] text-muted-foreground font-mono">
-              days
+              {t("days")}
             </span>
           </div>
 
@@ -71,7 +73,9 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
             <span className="text-sm font-semibold text-foreground">
               {streak.longestStreak}
             </span>
-            <span className="text-[10px] text-muted-foreground ml-1">best</span>
+            <span className="text-[10px] text-muted-foreground ml-1">
+              {t("best")}
+            </span>
           </div>
 
           <div className="h-5 w-px bg-border" />
@@ -81,7 +85,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
               {totalActiveDays}
             </span>
             <span className="text-[10px] text-muted-foreground ml-1">
-              total
+              {t("total")}
             </span>
           </div>
         </div>

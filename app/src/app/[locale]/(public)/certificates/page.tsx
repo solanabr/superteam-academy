@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Award } from "lucide-react";
@@ -9,6 +10,7 @@ import { getCredentials } from "@/services/credentials";
 import type { Credential } from "@/types";
 
 export default function CertificatesPage() {
+  const t = useTranslations("certificates");
   const { publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -31,17 +33,17 @@ export default function CertificatesPage() {
         </div>
         <div>
           <h1 className="font-mono text-xl font-bold text-foreground mb-2">
-            My Certificates
+            {t("connectPromptTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Connect your wallet to view your on-chain credentials.
+            {t("connectPromptDesc")}
           </p>
         </div>
         <button
           onClick={() => setVisible(true)}
           className="px-6 py-2.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
-          Connect Wallet
+          {t("connectBtn")}
         </button>
       </div>
     );
@@ -51,11 +53,9 @@ export default function CertificatesPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-8">
         <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
-          My Certificates
+          {t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Soulbound credentials issued on-chain via Metaplex Core.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {loading ? (
@@ -73,10 +73,10 @@ export default function CertificatesPage() {
             <Award className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="font-mono text-sm text-muted-foreground">
-            No credentials yet.
+            {t("noCredentials")}
           </p>
           <p className="text-xs text-muted-foreground max-w-xs">
-            Complete a course to earn your first soulbound credential NFT.
+            {t("noCredentialsDesc")}
           </p>
         </div>
       ) : (

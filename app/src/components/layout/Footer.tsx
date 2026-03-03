@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { Github, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 function FooterNewsletter() {
+  const t = useTranslations("footer");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -23,16 +25,16 @@ function FooterNewsletter() {
           .insert({ email });
         if (error) {
           if (error.code === "23505") {
-            setMessage("Already subscribed!");
+            setMessage(t("alreadySubscribed"));
           } else {
-            setMessage("Something went wrong. Try again.");
+            setMessage(t("errorTryAgain"));
           }
           return;
         }
       }
       setSubscribed(true);
     } catch {
-      setMessage("Something went wrong. Try again.");
+      setMessage(t("errorTryAgain"));
     } finally {
       setLoading(false);
     }
@@ -40,14 +42,14 @@ function FooterNewsletter() {
 
   if (subscribed) {
     return (
-      <p className="text-xs font-mono text-accent">Thanks for subscribing!</p>
+      <p className="text-xs font-mono text-accent">{t("thanksSubscribing")}</p>
     );
   }
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
       <p className="text-xs text-muted-foreground font-mono shrink-0">
-        Stay updated with Superteam Academy
+        {t("stayUpdated")}
       </p>
       <form
         onSubmit={handleSubmit}
@@ -66,7 +68,7 @@ function FooterNewsletter() {
           disabled={loading}
           className="px-4 py-1.5 bg-accent/10 border border-accent/30 text-accent text-xs font-mono rounded hover:bg-accent/20 transition-colors whitespace-nowrap disabled:opacity-50"
         >
-          {loading ? "..." : "Subscribe"}
+          {loading ? "..." : t("subscribe")}
         </button>
       </form>
       {message && (
@@ -77,6 +79,7 @@ function FooterNewsletter() {
 }
 
 export function Footer() {
+  const t = useTranslations("footer");
   const pathname = usePathname();
 
   if (pathname.includes("/lessons/")) return null;
@@ -87,15 +90,15 @@ export function Footer() {
         <FooterNewsletter />
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground font-mono">
-            © 2026 Superteam Academy.{" "}
-            <span className="text-accent">Built on Solana.</span>
+            {t("copyright")}{" "}
+            <span className="text-accent">{t("builtOnSolana")}</span>
           </p>
           <div className="flex items-center gap-4">
             <a
               href="/admin"
               className="text-xs text-subtle hover:text-muted-foreground transition-colors font-mono"
             >
-              Admin
+              {t("admin")}
             </a>
             <a
               href="https://github.com/solanabr/superteam-academy"

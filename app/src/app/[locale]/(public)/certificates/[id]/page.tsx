@@ -96,7 +96,7 @@ export default async function CertificatePage({ params }: Props) {
               </span>
             </div>
             <h1 className="font-mono text-2xl font-black text-foreground tracking-widest uppercase">
-              Academy Certificate
+              {t("academyCertificate")}
             </h1>
           </div>
 
@@ -110,20 +110,20 @@ export default async function CertificatePage({ params }: Props) {
           {/* Main content */}
           <div className="py-4 space-y-2">
             <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
-              This certifies that
+              {t("thisCertifies")}
             </p>
             <p className="font-mono text-xl font-bold text-accent">
               {earnedBy}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
-              has successfully completed
+              {t("hasCompleted")}
             </p>
             <p className="font-mono text-2xl font-black text-foreground">
               {name}
             </p>
             {track && (
               <p className="text-sm text-muted-foreground font-mono">
-                {track.icon} {track.name} Track · Level {level}
+                {track.icon} {track.name} {t("track")} · {t("level")} {level}
               </p>
             )}
           </div>
@@ -135,7 +135,7 @@ export default async function CertificatePage({ params }: Props) {
                 {coursesCompleted}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
-                Courses
+                {t("courses")}
               </div>
             </div>
             <div className="text-center">
@@ -143,7 +143,7 @@ export default async function CertificatePage({ params }: Props) {
                 {Number(totalXp).toLocaleString()}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
-                XP Earned
+                {t("xpEarned")}
               </div>
             </div>
             <div className="text-center">
@@ -151,7 +151,7 @@ export default async function CertificatePage({ params }: Props) {
                 {level}
               </div>
               <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
-                Level
+                {t("level")}
               </div>
             </div>
           </div>
@@ -180,34 +180,34 @@ export default async function CertificatePage({ params }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 px-4 py-2.5 border border-border text-muted-foreground hover:text-foreground hover:border-border-hover font-mono text-sm rounded transition-colors"
-          title="Share on X (Twitter)"
+          title={t("shareOnX")}
         >
           <XIcon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Share on X</span>
+          <span className="hidden sm:inline">{t("shareOnX")}</span>
         </a>
       </div>
 
       {/* On-chain details */}
       <div className="mt-6 bg-card border border-border rounded p-4 space-y-2 font-mono text-xs">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Asset Address</span>
+          <span className="text-muted-foreground">{t("assetAddress")}</span>
           <span className="text-foreground break-all">
             {id.slice(0, 20)}...
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Program</span>
+          <span className="text-muted-foreground">{t("program")}</span>
           <span className="text-foreground">
             {programId.slice(0, 8)}...{programId.slice(-4)}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Network</span>
-          <span className="text-accent">Solana Devnet</span>
+          <span className="text-muted-foreground">{t("network")}</span>
+          <span className="text-accent">{t("solanaDevnet")}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Standard</span>
-          <span className="text-foreground">Metaplex Core (Soulbound)</span>
+          <span className="text-muted-foreground">{t("standard")}</span>
+          <span className="text-foreground">{t("metaplexCore")}</span>
         </div>
       </div>
     </div>

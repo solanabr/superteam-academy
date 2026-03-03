@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import {
   getThread,
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ThreadDetailPage({ params }: Props) {
   const { id } = await params;
+  const t = await getTranslations("community");
 
   const [thread, replies, voteCount] = await Promise.all([
     getThread(id),
@@ -45,7 +47,7 @@ export default async function ThreadDetailPage({ params }: Props) {
           href="/community"
           className="hover:text-foreground transition-colors"
         >
-          Community
+          {t("breadcrumb")}
         </Link>
         <span>/</span>
         {thread.category && (
@@ -87,12 +89,12 @@ export default async function ThreadDetailPage({ params }: Props) {
             )}
             {thread.is_pinned && (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#F5A623]/40 bg-[#F5A623]/10 text-[#F5A623]">
-                Pinned
+                {t("pinned")}
               </span>
             )}
             {thread.is_answered && (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
-                Answered
+                {t("answered")}
               </span>
             )}
           </div>
@@ -109,10 +111,13 @@ export default async function ThreadDetailPage({ params }: Props) {
             <span>·</span>
             <span>{formatTimeAgo(thread.created_at)}</span>
             <span>·</span>
-            <span>{thread.views} views</span>
+            <span>
+              {thread.views} {t("views")}
+            </span>
             <span>·</span>
             <span>
-              {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              {replies.length}{" "}
+              {replies.length === 1 ? t("reply") : t("replies")}
             </span>
           </div>
         </div>
@@ -131,7 +136,7 @@ export default async function ThreadDetailPage({ params }: Props) {
         <div className="flex items-center gap-3 pt-2">
           <UpvoteButton threadId={thread.id} initialCount={voteCount} />
           <span className="text-[10px] font-mono text-muted-foreground">
-            {voteCount} {voteCount === 1 ? "upvote" : "upvotes"}
+            {voteCount} {voteCount === 1 ? t("upvote") : t("upvotes")}
           </span>
         </div>
       </article>
@@ -140,7 +145,7 @@ export default async function ThreadDetailPage({ params }: Props) {
       {replies.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-1">
-            {replies.length} {replies.length === 1 ? "Reply" : "Replies"}
+            {replies.length} {replies.length === 1 ? t("reply") : t("replies")}
           </h2>
 
           {replies.map((reply, index) => (
@@ -156,7 +161,7 @@ export default async function ThreadDetailPage({ params }: Props) {
               {reply.is_accepted && (
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
-                    Accepted Answer
+                    {t("acceptedAnswer")}
                   </span>
                 </div>
               )}
@@ -184,7 +189,7 @@ export default async function ThreadDetailPage({ params }: Props) {
       {/* Reply form */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-4">
         <h2 className="font-mono text-sm font-semibold text-foreground">
-          Leave a Reply
+          {t("leaveReply")}
         </h2>
         <ReplyForm threadId={thread.id} />
       </section>

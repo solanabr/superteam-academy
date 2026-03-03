@@ -1056,7 +1056,7 @@ export function LessonView({
                 <div className="mt-8 space-y-3">
                   {!publicKey && <ConnectPrompt />}
                   {publicKey && !isEnrolled && (
-                    <p className="text-xs font-mono text-amber-400">
+                    <p className="text-xs font-mono text-warning">
                       Enroll in this course to track progress on-chain.
                     </p>
                   )}

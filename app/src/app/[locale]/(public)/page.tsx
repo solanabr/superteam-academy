@@ -130,7 +130,7 @@ export default async function LandingPage() {
               href="/onboarding"
               className="inline-flex items-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded-full hover:bg-card hover:border-border-hover transition-colors"
             >
-              Find your starting point →
+              {t("hero.findStartingPoint")}
             </Link>
           </div>
 
@@ -302,7 +302,7 @@ export default async function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left: mock JSON profile */}
-            <div className="bg-[#0D1117] border border-border rounded-lg overflow-hidden font-mono text-xs">
+            <div className="bg-card border border-border rounded-lg overflow-hidden font-mono text-xs shadow-sm">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-elevated">
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -375,13 +375,14 @@ export default async function LandingPage() {
                 {t("socialProof.title")}
               </p>
               <h2 className="font-mono text-3xl sm:text-4xl font-black text-foreground mb-4 leading-tight">
-                Your credentials,
+                {t("socialProof.credentialsHeading")}
                 <br />
-                <span className="text-accent">on-chain forever.</span>
+                <span className="text-accent">
+                  {t("socialProof.credentialsHighlight")}
+                </span>
               </h2>
               <p className="text-sm text-muted-foreground mb-8 leading-relaxed max-w-sm">
-                Join hundreds of developers building on Solana. Every lesson
-                mints XP. Every course earns a soulbound NFT.
+                {t("socialProof.body")}
               </p>
               <Link
                 href="/courses"

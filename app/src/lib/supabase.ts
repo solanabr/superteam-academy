@@ -120,6 +120,89 @@ export async function linkAccount(
   return !error;
 }
 
+// ─── Lesson Completions ───────────────────────────────────────────────────────
+
+export async function getCompletedCourseSlugs(
+  walletAddress: string,
+): Promise<string[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("lesson_completions")
+    .select("course_slug")
+    .eq("wallet_address", walletAddress)
+    .not("course_slug", "is", null);
+  if (error || !data) return [];
+  const slugs = [
+    ...new Set(
+      data
+        .map((r: Record<string, unknown>) => r.course_slug as string)
+        .filter(Boolean),
+    ),
+  ];
+  return slugs;
+}
+
+export interface CompletedCourseEntry {
+  courseSlug: string;
+  courseTitle: string;
+  lessonsCompleted: number;
+  totalXp: number;
+  lastCompletedAt: string;
+}
+
+export async function getProfileStats(walletAddress: string): Promise<{
+  totalXp: number;
+  completedCourses: CompletedCourseEntry[];
+}> {
+  if (!supabase) return { totalXp: 0, completedCourses: [] };
+
+  const { data, error } = await supabase
+    .from("lesson_completions")
+    .select("course_slug, course_title, xp_earned, completed_at")
+    .eq("wallet_address", walletAddress);
+
+  if (error || !data || data.length === 0)
+    return { totalXp: 0, completedCourses: [] };
+
+  type Row = {
+    course_slug: string;
+    course_title: string;
+    xp_earned: number;
+    completed_at: string;
+  };
+  const rows = data as Row[];
+
+  const totalXp = rows.reduce((sum, r) => sum + (r.xp_earned ?? 0), 0);
+
+  const courseMap: Record<string, CompletedCourseEntry> = {};
+  for (const row of rows) {
+    const slug = row.course_slug;
+    if (!slug) continue;
+    if (!courseMap[slug]) {
+      courseMap[slug] = {
+        courseSlug: slug,
+        courseTitle: row.course_title ?? slug,
+        lessonsCompleted: 0,
+        totalXp: 0,
+        lastCompletedAt: row.completed_at ?? "",
+      };
+    }
+    courseMap[slug].lessonsCompleted += 1;
+    courseMap[slug].totalXp += row.xp_earned ?? 0;
+    if (row.completed_at > courseMap[slug].lastCompletedAt) {
+      courseMap[slug].lastCompletedAt = row.completed_at;
+    }
+  }
+
+  const completedCourses = Object.values(courseMap).sort(
+    (a, b) =>
+      new Date(b.lastCompletedAt).getTime() -
+      new Date(a.lastCompletedAt).getTime(),
+  );
+
+  return { totalXp, completedCourses };
+}
+
 // ─── Streaks ─────────────────────────────────────────────────────────────────
 
 export async function getStreakFromDB(

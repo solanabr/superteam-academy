@@ -5,12 +5,12 @@ interface SkillRadarProps {
 }
 
 const DEFAULT_SKILLS: Record<string, number> = {
-  Rust: 70,
-  Anchor: 55,
-  Frontend: 80,
-  Security: 40,
-  DeFi: 30,
-  NFTs: 60,
+  Rust: 0,
+  Anchor: 0,
+  Frontend: 0,
+  Security: 0,
+  DeFi: 0,
+  NFTs: 0,
 };
 
 const SKILL_ORDER = ["Rust", "Anchor", "Frontend", "Security", "DeFi", "NFTs"];

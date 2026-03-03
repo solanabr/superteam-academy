@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { XpData } from "@/types";
@@ -11,16 +12,19 @@ interface XPBarProps {
 }
 
 export function XPBar({ xpData, showLabel = true, className }: XPBarProps) {
+  const t = useTranslations("xpBar");
   const { level, balance, xpToNextLevel, xpProgress } = xpData;
 
   return (
     <div className={cn("space-y-1.5", className)}>
       {showLabel && (
         <div className="flex items-center justify-between text-xs font-mono">
-          <span className="text-accent font-semibold">Level {level}</span>
+          <span className="text-accent font-semibold">
+            {t("level", { level })}
+          </span>
           <span className="text-muted-foreground">
-            {balance.toLocaleString()} XP · {xpToNextLevel.toLocaleString()} to
-            next
+            {balance.toLocaleString()} XP · {xpToNextLevel.toLocaleString()}{" "}
+            {t("toNext")}
           </span>
         </div>
       )}

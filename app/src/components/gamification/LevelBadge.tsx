@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface LevelBadgeProps {
@@ -13,6 +16,7 @@ const sizeClasses = {
 };
 
 export function LevelBadge({ level, size = "md", className }: LevelBadgeProps) {
+  const t = useTranslations("levelBadge");
   return (
     <div
       className={cn(
@@ -24,7 +28,7 @@ export function LevelBadge({ level, size = "md", className }: LevelBadgeProps) {
         clipPath:
           "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
       }}
-      title={`Level ${level}`}
+      title={t("title", { level })}
     >
       {level}
     </div>

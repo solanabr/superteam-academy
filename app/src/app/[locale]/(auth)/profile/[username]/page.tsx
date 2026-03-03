@@ -1,5 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import { getProfileByUsername, getProfileByWallet } from "@/lib/supabase";
+import {
+  getProfileByUsername,
+  getProfileByWallet,
+  getCompletedCourseSlugs,
+  getProfileStats,
+} from "@/lib/supabase";
+import { getCourseSkillData } from "@/lib/sanity";
 import { getCredentials, getAchievements } from "@/services/credentials";
 import { CredentialCard } from "@/components/solana/CredentialCard";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
@@ -17,14 +23,50 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${username} · Academy Profile` };
 }
 
-// Map trackId to SkillRadar axis name
-const TRACK_TO_SKILL: Record<number, string> = {
-  1: "Rust", // Solana Basics → Rust
-  2: "Anchor", // Anchor Framework
-  3: "DeFi", // DeFi
-  4: "NFTs", // NFTs & Digital Assets
-  5: "Frontend", // Full-Stack Solana
-};
+// Max courses per skill used to normalise scores — prevents a single track
+// dominating; adjust as the course catalogue grows.
+const MAX_COURSES_PER_SKILL = 5;
+
+// Returns the skill axes a course belongs to based on its tags and trackId.
+function courseToSkills(tags: string[], trackId: number): string[] {
+  const skills = new Set<string>();
+
+  const tagSet = tags.map((t) => t.toLowerCase());
+
+  if (tagSet.some((t) => t.includes("rust")) || trackId === 1 || trackId === 2)
+    skills.add("Rust");
+  if (tagSet.some((t) => t.includes("anchor")) || trackId === 2)
+    skills.add("Anchor");
+  if (tagSet.some((t) => t.includes("defi")) || trackId === 3)
+    skills.add("DeFi");
+  if (tagSet.some((t) => t.includes("nft")) || trackId === 4)
+    skills.add("NFTs");
+  if (tagSet.some((t) => t.includes("frontend")) || trackId === 5)
+    skills.add("Frontend");
+  if (tagSet.some((t) => t.includes("security"))) skills.add("Security");
+
+  return [...skills];
+}
+
+function computeSkillScores(
+  courseData: Array<{ slug: string; tags: string[]; trackId: number }>,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const course of courseData) {
+    const axes = courseToSkills(course.tags ?? [], course.trackId ?? 0);
+    for (const axis of axes) {
+      counts[axis] = (counts[axis] ?? 0) + 1;
+    }
+  }
+  const scores: Record<string, number> = {};
+  for (const [skill, count] of Object.entries(counts)) {
+    scores[skill] = Math.min(
+      100,
+      Math.round((count / MAX_COURSES_PER_SKILL) * 100),
+    );
+  }
+  return scores;
+}
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
@@ -41,32 +83,32 @@ export default async function ProfilePage({ params }: Props) {
   const walletAddress =
     profile?.walletAddress ?? (isWalletAddress ? username : null);
 
-  const [credentials, achievements] = await Promise.all([
-    walletAddress ? getCredentials(walletAddress) : Promise.resolve([]),
-    walletAddress ? getAchievements(walletAddress) : Promise.resolve([]),
-  ]);
+  const [credentials, achievements, completedSlugs, profileStats] =
+    await Promise.all([
+      walletAddress ? getCredentials(walletAddress) : Promise.resolve([]),
+      walletAddress ? getAchievements(walletAddress) : Promise.resolve([]),
+      walletAddress
+        ? getCompletedCourseSlugs(walletAddress)
+        : Promise.resolve([]),
+      walletAddress
+        ? getProfileStats(walletAddress)
+        : Promise.resolve({ totalXp: 0, completedCourses: [] }),
+    ]);
 
-  const totalXp = credentials.reduce(
-    (sum, c) => sum + Number(c.attributes.totalXp ?? 0),
-    0,
-  );
+  const totalXp = profileStats.totalXp;
   const level = xpToLevel(totalXp);
 
-  // Derive skill scores from credential attributes
-  const derivedSkills: Record<string, number> = {};
-  for (const cred of credentials) {
-    const trackId = Number(cred.attributes.trackId ?? 0);
-    const skillName = TRACK_TO_SKILL[trackId];
-    if (skillName) {
-      const credLevel = Number(cred.attributes.level ?? 0);
-      derivedSkills[skillName] = Math.min(100, credLevel * 25);
-    }
-  }
+  // Derive skill scores from completed courses (tags + trackId)
+  const courseSkillData =
+    completedSlugs.length > 0
+      ? await getCourseSkillData(completedSlugs).catch(() => [])
+      : [];
+  const derivedSkills = computeSkillScores(courseSkillData);
 
   if (!profile && !walletAddress) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <p className="font-mono text-muted-foreground">Profile not found.</p>
+        <p className="font-mono text-muted-foreground">{t("notFound")}</p>
       </div>
     );
   }
@@ -112,7 +154,7 @@ export default async function ProfilePage({ params }: Props) {
             )}
             {profile?.createdAt && (
               <span>
-                Joined {new Date(profile.createdAt).toLocaleDateString()}
+                {t("joined")} {new Date(profile.createdAt).toLocaleDateString()}
               </span>
             )}
             {profile?.twitterHandle && (
@@ -142,9 +184,12 @@ export default async function ProfilePage({ params }: Props) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { label: "Total XP", value: totalXp.toLocaleString() },
-          { label: "Credentials", value: credentials.length.toString() },
-          { label: "Achievements", value: achievements.length.toString() },
+          { label: t("totalXp"), value: totalXp.toLocaleString() },
+          {
+            label: t("courses"),
+            value: profileStats.completedCourses.length.toString(),
+          },
+          { label: t("achievements"), value: achievements.length.toString() },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -163,7 +208,7 @@ export default async function ProfilePage({ params }: Props) {
       {/* Skills */}
       <section className="mb-8">
         <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
-          Skills
+          {t("skills")}
         </h2>
         <SkillRadar
           skills={
@@ -193,30 +238,33 @@ export default async function ProfilePage({ params }: Props) {
       {/* Completed Courses */}
       <section className="mb-8">
         <h2 className="font-mono text-sm font-semibold text-foreground mb-3">
-          Completed Courses
+          {t("completedCourses")}
         </h2>
-        {credentials.length === 0 ? (
+        {profileStats.completedCourses.length === 0 ? (
           <p className="text-xs text-muted-foreground font-mono">
-            No completed courses yet.
+            {t("noCompletedCourses")}
           </p>
         ) : (
           <div className="space-y-2">
-            {credentials.map((cred) => (
+            {profileStats.completedCourses.map((course) => (
               <div
-                key={cred.assetAddress}
+                key={course.courseSlug}
                 className="flex items-center justify-between bg-card border border-border rounded px-4 py-2.5"
               >
                 <div>
                   <p className="text-sm font-mono text-foreground">
-                    {cred.attributes.trackId ?? "Academy"} Track
+                    {course.courseTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Level {cred.attributes.level ?? 0} ·{" "}
-                    {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP
+                    {course.lessonsCompleted}{" "}
+                    {course.lessonsCompleted === 1
+                      ? t("lessonSingular")
+                      : t("lessonPlural")}{" "}
+                    · {course.totalXp.toLocaleString()} XP
                   </p>
                 </div>
                 <span className="text-[10px] font-mono text-accent bg-accent/10 border border-accent/20 rounded px-2 py-0.5">
-                  &#x2713; Completed
+                  &#x2713; {t("inProgress")}
                 </span>
               </div>
             ))}

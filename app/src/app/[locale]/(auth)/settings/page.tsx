@@ -12,13 +12,6 @@ import { upsertProfile, getProfileByWallet } from "@/lib/supabase";
 
 type SettingsTab = "profile" | "accounts" | "appearance" | "language";
 
-const TABS: Array<{ id: SettingsTab; icon: typeof User; label: string }> = [
-  { id: "profile", icon: User, label: "Profile" },
-  { id: "accounts", icon: Link2, label: "Linked Accounts" },
-  { id: "appearance", icon: Palette, label: "Appearance" },
-  { id: "language", icon: Globe, label: "Language" },
-];
-
 const LANGUAGES = [
   { value: "en", label: "English" },
   { value: "pt-BR", label: "Português (Brasil)" },
@@ -35,10 +28,16 @@ export default function SettingsPage() {
   const connectOAuth = () => (user ? openUserProfile() : openSignIn());
   const { user } = useUser();
 
+  const TABS: Array<{ id: SettingsTab; icon: typeof User; label: string }> = [
+    { id: "profile", icon: User, label: t("tabs.profile") },
+    { id: "accounts", icon: Link2, label: t("tabs.accounts") },
+    { id: "appearance", icon: Palette, label: t("tabs.appearance") },
+    { id: "language", icon: Globe, label: t("tabs.language") },
+  ];
+
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [activeTheme, setActiveTheme] = useState<"dark" | "light">("dark");
@@ -61,7 +60,6 @@ export default function SettingsPage() {
     if (!publicKey) return;
     getProfileByWallet(publicKey.toBase58()).then((profile) => {
       if (!profile) return;
-      setUsername(profile.username ?? "");
       setDisplayName(profile.displayName ?? "");
       setBio(profile.bio ?? "");
       setTwitterHandle(profile.twitterHandle ?? "");
@@ -82,7 +80,6 @@ export default function SettingsPage() {
       if (publicKey) {
         await upsertProfile({
           walletAddress: publicKey.toBase58(),
-          username: username || undefined,
           displayName: displayName || undefined,
           bio: bio || undefined,
           twitterHandle: twitterHandle || undefined,
@@ -145,14 +142,6 @@ export default function SettingsPage() {
               <h2 className="font-mono text-sm font-semibold text-foreground">
                 {t("profile.title")}
               </h2>
-              <Field label={t("profile.username")}>
-                <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="satoshi"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-accent/50 transition-colors"
-                />
-              </Field>
               <Field label={t("profile.displayName")}>
                 <input
                   value={displayName}
@@ -200,17 +189,16 @@ export default function SettingsPage() {
               </button>
               <div className="pt-4 border-t border-border">
                 <h3 className="font-mono text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                  Data Export
+                  {t("profile.dataExport")}
                 </h3>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Download all your progress data, XP history, and credentials.
+                  {t("profile.dataExportDesc")}
                 </p>
                 <button
                   onClick={() => {
                     const data = {
                       exportedAt: new Date().toISOString(),
                       wallet: publicKey?.toBase58(),
-                      username,
                       bio,
                       streak: localStorage.getItem("streak_data"),
                     };
@@ -226,7 +214,7 @@ export default function SettingsPage() {
                   }}
                   className="flex items-center gap-2 border border-border text-muted-foreground font-mono text-xs px-4 py-2 rounded hover:border-border-hover hover:text-foreground transition-colors"
                 >
-                  Export Data (JSON)
+                  {t("profile.exportBtn")}
                 </button>
               </div>
             </div>
@@ -247,7 +235,9 @@ export default function SettingsPage() {
                 }
                 connected={connected}
                 onConnect={() => setVisible(true)}
-                onDisconnect={disconnect}
+                onDisconnect={() => disconnect()}
+                connectLabel={t("accounts.connect")}
+                disconnectLabel={t("accounts.disconnect")}
               />
               <AccountRow
                 label={t("accounts.google")}
@@ -260,6 +250,8 @@ export default function SettingsPage() {
                     ? () => handleDisconnectOAuth(googleAccount.id)
                     : undefined
                 }
+                connectLabel={t("accounts.connect")}
+                disconnectLabel={t("accounts.disconnect")}
               />
               <AccountRow
                 label={t("accounts.github")}
@@ -272,14 +264,16 @@ export default function SettingsPage() {
                     ? () => handleDisconnectOAuth(githubAccount.id)
                     : undefined
                 }
+                connectLabel={t("accounts.connect")}
+                disconnectLabel={t("accounts.disconnect")}
               />
               <p className="text-[10px] font-mono text-subtle pt-1">
-                Manage sign-in methods via{" "}
+                {t("accounts.manageSignIn")}{" "}
                 <button
                   onClick={connectOAuth}
                   className="text-accent hover:underline"
                 >
-                  Clerk profile
+                  {t("accounts.clerkProfile")}
                 </button>
               </p>
             </div>
@@ -367,6 +361,8 @@ function AccountRow({
   connected,
   onConnect,
   onDisconnect,
+  connectLabel,
+  disconnectLabel,
 }: {
   label: string;
   icon: string;
@@ -374,6 +370,8 @@ function AccountRow({
   connected: boolean;
   onConnect: () => void;
   onDisconnect?: () => void;
+  connectLabel: string;
+  disconnectLabel: string;
 }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
@@ -395,14 +393,14 @@ function AccountRow({
           onClick={onDisconnect}
           className="text-xs font-mono text-[#FF4444] hover:text-[#FF6666] transition-colors"
         >
-          Disconnect
+          {disconnectLabel}
         </button>
       ) : (
         <button
           onClick={onConnect}
           className="text-xs font-mono text-accent hover:text-accent-dim transition-colors"
         >
-          Connect
+          {connectLabel}
         </button>
       )}
     </div>

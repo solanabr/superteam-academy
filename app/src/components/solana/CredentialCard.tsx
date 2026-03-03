@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { ExternalLink, Shield } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { solanaExplorerUrl } from "@/lib/explorer";
@@ -10,6 +13,7 @@ interface CredentialCardProps {
 }
 
 export function CredentialCard({ credential }: CredentialCardProps) {
+  const t = useTranslations("credentialCard");
   const trackId = Number(credential.attributes.trackId ?? 0);
   const track = TRACKS[trackId];
   const level = credential.attributes.level ?? "1";
@@ -45,7 +49,8 @@ export function CredentialCard({ credential }: CredentialCardProps) {
           )}
           <div className="absolute top-2 right-2">
             <span className="text-[10px] font-mono bg-background/90 text-accent border border-accent/30 px-2 py-0.5 rounded-sm">
-              Lv.{level}
+              {t("levelAbbrev")}
+              {level}
             </span>
           </div>
         </div>
@@ -55,7 +60,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
             {credential.name}
           </h4>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-            {track ? `${track.icon} ${track.name}` : "Academy Credential"}
+            {track ? `${track.icon} ${track.name}` : t("academyCredential")}
           </p>
           <div className="flex items-center justify-between mt-2">
             <span className="text-[10px] font-mono text-accent">

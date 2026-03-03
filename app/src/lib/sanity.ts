@@ -128,3 +128,19 @@ export async function getCoursesByTrack(
     { trackId },
   );
 }
+
+export async function getCourseSkillData(
+  slugs: string[],
+): Promise<Array<{ slug: string; tags: string[]; trackId: number }>> {
+  if (!sanityClient || slugs.length === 0) return [];
+  return sanityClient.fetch(
+    `
+    *[_type == "course" && slug.current in $slugs && !(_id in path("drafts.**"))] {
+      "slug": slug.current,
+      tags,
+      trackId
+    }
+  `,
+    { slugs },
+  );
+}

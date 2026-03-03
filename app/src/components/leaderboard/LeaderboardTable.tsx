@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
@@ -17,14 +18,16 @@ export function LeaderboardTable({
   entries,
   currentWallet,
 }: LeaderboardTableProps) {
+  const t = useTranslations("leaderboard");
+
   return (
     <div className="bg-card border border-border rounded overflow-hidden">
       {/* Header */}
       <div className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-border text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
         <div className="col-span-1">#</div>
-        <div className="col-span-6">Learner</div>
-        <div className="col-span-2 text-center">Level</div>
-        <div className="col-span-3 text-right">XP</div>
+        <div className="col-span-6">{t("learner")}</div>
+        <div className="col-span-2 text-center">{t("level")}</div>
+        <div className="col-span-3 text-right">{t("xp")}</div>
       </div>
 
       {entries.map((entry) => {
@@ -76,7 +79,9 @@ export function LeaderboardTable({
                     {entry.walletAddress.slice(-4)}
                   </span>
                 )}
-                {isYou && <span className="text-[9px] text-accent">You</span>}
+                {isYou && (
+                  <span className="text-[9px] text-accent">{t("you")}</span>
+                )}
               </div>
             </div>
 
@@ -111,7 +116,7 @@ export function LeaderboardTable({
 
       {entries.length === 0 && (
         <div className="text-center py-12 text-muted-foreground font-mono text-sm">
-          No data yet. Complete lessons to appear here!
+          {t("noData")}
         </div>
       )}
     </div>

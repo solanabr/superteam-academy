@@ -108,7 +108,10 @@ export function WalletButton({ className }: { className?: string }) {
           </p>
           {xpData && (
             <p className="text-xs text-accent mt-1">
-              {xpData.balance.toLocaleString()} XP · Level {xpData.level}
+              {t("xpLevel", {
+                xp: xpData.balance.toLocaleString(),
+                level: xpData.level,
+              })}
             </p>
           )}
         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import {
   getCategories,
@@ -21,6 +22,7 @@ export default async function CommunityPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
+  const t = await getTranslations("community");
   const [categories, threads, stats] = await Promise.all([
     getCategories(),
     getThreads(category, 20, 0),
@@ -35,19 +37,19 @@ export default async function CommunityPage({
           <span className="text-accent font-semibold">
             {stats.thread_count}
           </span>{" "}
-          threads
+          {t("threads")}
         </span>
         <span>·</span>
         <span>
           <span className="text-accent font-semibold">{stats.reply_count}</span>{" "}
-          replies
+          {t("replies")}
         </span>
         <span>·</span>
         <span>
           <span className="text-accent font-semibold">
             {stats.member_count}
           </span>{" "}
-          members
+          {t("members")}
         </span>
       </div>
 
@@ -55,17 +57,15 @@ export default async function CommunityPage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
-            Community
+            {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Ask questions, share knowledge, help others learn Solana.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link
           href="/community/new"
           className="shrink-0 px-4 py-2 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
-          + New Thread
+          {t("newThread")}
         </Link>
       </div>
 
@@ -74,7 +74,7 @@ export default async function CommunityPage({
         {/* Categories sidebar */}
         <aside className="lg:w-1/4 shrink-0 space-y-2">
           <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-1 mb-3">
-            Categories
+            {t("categories")}
           </p>
           <Link
             href="/community"
@@ -83,7 +83,7 @@ export default async function CommunityPage({
             <span
               className={`font-mono text-sm ${!category ? "text-accent" : "text-foreground"}`}
             >
-              All
+              {t("all")}
             </span>
             <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
               {stats.thread_count}
@@ -118,18 +118,18 @@ export default async function CommunityPage({
         {/* Thread list */}
         <div className="flex-1 space-y-2">
           <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground px-1 mb-3">
-            Latest Threads
+            {t("latestThreads")}
           </p>
 
           {threads.length === 0 ? (
             <div className="bg-card border border-border rounded-lg px-5 py-16 text-center">
               <p className="font-mono text-sm text-muted-foreground">
-                No threads yet.{" "}
+                {t("noThreads")}{" "}
                 <Link
                   href="/community/new"
                   className="text-accent hover:underline"
                 >
-                  Start the first one.
+                  {t("startFirst")}
                 </Link>
               </p>
             </div>
@@ -163,19 +163,19 @@ export default async function CommunityPage({
                         {/* Pinned badge */}
                         {thread.is_pinned && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#F5A623]/40 bg-[#F5A623]/10 text-[#F5A623]">
-                            Pinned
+                            {t("pinned")}
                           </span>
                         )}
 
                         {/* Answered badge */}
                         {thread.is_answered === true && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
-                            Answered
+                            {t("answered")}
                           </span>
                         )}
                         {thread.is_answered === false && (
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[#666666]/40 bg-[#666666]/10 text-muted-foreground">
-                            Unanswered
+                            {t("unanswered")}
                           </span>
                         )}
                       </div>
@@ -190,9 +190,13 @@ export default async function CommunityPage({
                             `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
                         </span>
                         <span>·</span>
-                        <span>{thread.reply_count ?? 0} replies</span>
+                        <span>
+                          {thread.reply_count ?? 0} {t("replies")}
+                        </span>
                         <span>·</span>
-                        <span>{thread.views} views</span>
+                        <span>
+                          {thread.views} {t("views")}
+                        </span>
                         <span>·</span>
                         <span>{formatTimeAgo(thread.created_at)}</span>
                       </div>

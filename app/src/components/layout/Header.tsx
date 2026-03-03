@@ -16,6 +16,7 @@ const LOCALE_LABELS: Record<string, string> = {
 };
 
 function ThemeToggle() {
+  const t = useTranslations("nav");
   const [isLight, setIsLight] = useState(false);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       className="p-2 rounded text-muted-foreground hover:text-foreground transition-colors"
-      title={isLight ? "Switch to dark" : "Switch to light"}
+      title={isLight ? t("switchToDark") : t("switchToLight")}
     >
       {isLight ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
@@ -46,6 +47,7 @@ function ThemeToggle() {
 }
 
 function LocaleSwitcher() {
+  const t = useTranslations("nav");
   const currentLocale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -62,7 +64,7 @@ function LocaleSwitcher() {
     <button
       onClick={cycleLocale}
       className="text-xs font-mono px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors"
-      title="Switch language"
+      title={t("switchLanguage")}
     >
       {LOCALE_LABELS[currentLocale] ?? currentLocale.toUpperCase()}
     </button>

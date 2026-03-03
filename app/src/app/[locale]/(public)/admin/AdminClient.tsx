@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Link } from "@/i18n/navigation";
@@ -68,6 +69,7 @@ export function AdminClient({
   recentThreads,
   courseStats,
 }: Props) {
+  const t = useTranslations("admin");
   const { publicKey } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -79,17 +81,15 @@ export function AdminClient({
         </div>
         <div>
           <h1 className="font-mono text-xl font-bold text-foreground mb-2">
-            Admin Access
+            {t("accessTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Connect an authorized wallet to access this panel.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("accessDesc")}</p>
         </div>
         <button
           onClick={() => setVisible(true)}
           className="px-6 py-2.5 bg-accent text-black font-mono font-semibold text-sm rounded-full hover:bg-accent-dim transition-colors"
         >
-          Connect Wallet
+          {t("connectBtn")}
         </button>
       </div>
     );
@@ -103,10 +103,10 @@ export function AdminClient({
         </div>
         <div>
           <h1 className="font-mono text-xl font-bold text-foreground mb-2">
-            Access Denied
+            {t("deniedTitle")}
           </h1>
           <p className="text-sm text-muted-foreground mb-2">
-            This wallet is not authorized to access the admin panel.
+            {t("deniedDesc")}
           </p>
           <p className="text-[10px] font-mono text-subtle">
             {publicKey.toBase58().slice(0, 8)}...
@@ -121,22 +121,22 @@ export function AdminClient({
 
   const STATS = [
     {
-      label: "Total Users",
+      label: t("totalUsers"),
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
     },
     {
-      label: "Active Courses",
+      label: t("activeCourses"),
       value: courseStats.length.toString(),
       icon: BookOpen,
     },
     {
-      label: "Forum Threads",
+      label: t("forumThreads"),
       value: stats.totalThreads.toLocaleString(),
       icon: MessageSquare,
     },
     {
-      label: "Forum Replies",
+      label: t("forumReplies"),
       value: stats.totalReplies.toLocaleString(),
       icon: MessagesSquare,
     },
@@ -147,11 +147,9 @@ export function AdminClient({
       {/* Page header */}
       <div>
         <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
-          Admin Dashboard
+          {t("title")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Platform overview and course management.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Stats row */}
@@ -179,7 +177,7 @@ export function AdminClient({
         <div className="flex items-center gap-2 mb-5">
           <TrendingUp className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
-            Enrollments by Course
+            {t("enrollmentsByCourse")}
           </h2>
         </div>
         <div className="space-y-3">
@@ -211,14 +209,14 @@ export function AdminClient({
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-accent" />
             <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
-              Courses
+              {t("courses")}
             </h2>
           </div>
           <Link
             href="/courses"
             className="text-xs font-mono text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
           >
-            View All <ExternalLink className="h-3 w-3" />
+            {t("viewAll")} <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
         <div className="overflow-x-auto">
@@ -226,12 +224,12 @@ export function AdminClient({
             <thead>
               <tr className="border-b border-border">
                 {[
-                  "Title",
-                  "Difficulty",
-                  "Enrollments",
-                  "Completion %",
-                  "XP Reward",
-                  "Actions",
+                  t("colTitle"),
+                  t("colDifficulty"),
+                  t("colEnrollments"),
+                  t("colCompletion"),
+                  t("colXpReward"),
+                  t("colActions"),
                 ].map((col) => (
                   <th
                     key={col}
@@ -290,13 +288,13 @@ export function AdminClient({
                         rel="noopener noreferrer"
                         className="text-[10px] font-mono px-2.5 py-1 border border-border rounded text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors"
                       >
-                        Edit
+                        {t("edit")}
                       </a>
                       <a
                         href={`/courses/${course.slug}`}
                         className="text-[10px] font-mono px-2.5 py-1 border border-accent/30 rounded text-accent hover:bg-accent/10 transition-colors"
                       >
-                        View
+                        {t("view")}
                       </a>
                     </div>
                   </td>
@@ -312,28 +310,30 @@ export function AdminClient({
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
           <Users className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
-            Recent Signups
+            {t("recentSignups")}
           </h2>
         </div>
         <div className="overflow-x-auto">
           {recentSignups.length === 0 ? (
             <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">
-              No signups yet.
+              {t("noSignups")}
             </p>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  {["Wallet / Username", "Display Name", "Joined"].map(
-                    (col) => (
-                      <th
-                        key={col}
-                        className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
-                      >
-                        {col}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    t("colWalletUsername"),
+                    t("colDisplayName"),
+                    t("colJoined"),
+                  ].map((col) => (
+                    <th
+                      key={col}
+                      className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
+                    >
+                      {col}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -368,26 +368,28 @@ export function AdminClient({
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
           <MessageSquare className="h-4 w-4 text-accent" />
           <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
-            Recent Forum Activity
+            {t("recentForumActivity")}
           </h2>
         </div>
         <div className="overflow-x-auto">
           {recentThreads.length === 0 ? (
             <p className="px-5 py-8 text-center font-mono text-sm text-muted-foreground">
-              No threads yet.
+              {t("noForumThreads")}
             </p>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  {["Title", "Category", "Created"].map((col) => (
-                    <th
-                      key={col}
-                      className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
-                    >
-                      {col}
-                    </th>
-                  ))}
+                  {[t("colTitle"), t("colCategory"), t("colCreated")].map(
+                    (col) => (
+                      <th
+                        key={col}
+                        className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
+                      >
+                        {col}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
