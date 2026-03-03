@@ -11,7 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { formatXP } from "@/lib/utils";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EmptyCredentialsIllustration } from "@/components/icons";
 
@@ -63,6 +63,7 @@ export function CredentialDisplay({
   emptyMessage,
 }: CredentialDisplayProps) {
   const t = useTranslations("profile");
+  const TRACKS = useTracks();
   return (
     <section className="glass rounded-2xl p-6">
       <h2 className="mb-4 text-lg font-bold">{title}</h2>

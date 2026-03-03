@@ -98,7 +98,7 @@ export function ActivityFeed({ limit = 8 }: ActivityFeedProps) {
           <p className="text-sm text-muted-foreground">{t("noActivity")}</p>
         </div>
       ) : (
-        <div className="glass rounded-xl divide-y divide-border">
+        <div className="glass rounded-xl divide-y divide-border max-h-[600px] overflow-y-auto">
           {activities.map((entry) => {
             const Icon = ICON_MAP[entry.type];
             const colorClass = COLOR_MAP[entry.type];

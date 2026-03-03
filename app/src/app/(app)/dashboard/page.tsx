@@ -127,7 +127,10 @@ export default function DashboardPage() {
       {/* Top Stats Row */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* XP Card */}
-        <Link href="/leaderboard" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
+        <Link
+          href="/leaderboard"
+          className="glass rounded-xl p-6 transition-all hover:border-st-green/30"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -173,7 +176,10 @@ export default function DashboardPage() {
 
         {/* Skill Level Badge (if assessed) */}
         {skillDiff && (
-          <Link href="/profile" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
+          <Link
+            href="/profile"
+            className="glass rounded-xl p-6 transition-all hover:border-st-green/30"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -198,7 +204,10 @@ export default function DashboardPage() {
         )}
 
         {/* Streak Card */}
-        <Link href="/profile" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
+        <Link
+          href="/profile"
+          className="glass rounded-xl p-6 transition-all hover:border-st-green/30"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -335,10 +344,14 @@ export default function DashboardPage() {
                           <span
                             className="rounded-full px-2 py-0.5 text-xs font-medium"
                             style={difficultyStyle(
-                              difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                              difficulties.find(
+                                (d) => d.value === course.difficulty,
+                              )?.color ?? "#888",
                             )}
                           >
-                            {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
+                            {difficulties.find(
+                              (d) => d.value === course.difficulty,
+                            )?.label ?? course.difficulty}
                           </span>
                         </div>
                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -471,10 +484,12 @@ export default function DashboardPage() {
                 <span
                   className="rounded-full px-2 py-0.5 text-xs font-medium"
                   style={difficultyStyle(
-                    difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                    difficulties.find((d) => d.value === course.difficulty)
+                      ?.color ?? "#888",
                   )}
                 >
-                  {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
+                  {difficulties.find((d) => d.value === course.difficulty)
+                    ?.label ?? course.difficulty}
                 </span>
                 <span className="text-xs text-xp">
                   {formatXP(course.xpTotal)} XP

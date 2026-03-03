@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { useWalletCompat as useWallet } from "@/lib/hooks/use-wallet-compat";
 import { formatXP, xpProgress, getLevel } from "@/lib/utils";
 import { useCourses } from "@/lib/hooks/use-courses";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
 import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
 import {
   ProfileHeader,
@@ -69,6 +69,7 @@ export default function ProfilePage() {
   const { xp, streak, achievements, enrolledCourseIds, progressMap } =
     useLearningProgress();
   const { courses } = useCourses();
+  const TRACKS = useTracks();
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 

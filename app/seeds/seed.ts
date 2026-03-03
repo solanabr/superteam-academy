@@ -1,4 +1,4 @@
-import { PrismaClient } from "../superteam-academy/app/src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { getRustForSolanaCourse } from "./courses/rust-for-solana";

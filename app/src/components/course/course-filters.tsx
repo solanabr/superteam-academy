@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
 import { cn } from "@/lib/utils";
 
-export type Duration = "all" | "lt2" | "2to5" | "gt5";
+export type Duration = "all" | "lt1" | "1to3" | "3to6" | "6to12" | "gt12";
 export type Sort = "newest" | "popular" | "xp";
 
 export interface CourseFiltersProps {
@@ -41,7 +41,8 @@ export function CourseFilters({
   onTrackChange,
 }: CourseFiltersProps) {
   const t = useTranslations("courses");
-  const tracks = Object.entries(TRACKS).filter(([id]) => Number(id) !== 0);
+  const allTracks = useTracks();
+  const tracks = Object.entries(allTracks).filter(([id]) => Number(id) !== 0);
 
   return (
     <>

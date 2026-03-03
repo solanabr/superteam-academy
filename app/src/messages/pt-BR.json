@@ -237,6 +237,7 @@
       "difficulty": "Dificuldade",
       "beginner": "Iniciante",
       "intermediate": "Intermediário",
+      "professional": "Profissional",
       "advanced": "Avançado",
       "track": "Trilha",
       "estimatedTime": "Tempo Estimado",
@@ -288,6 +289,7 @@
       "trackStandalone": "Avulso",
       "difficultyBeginner": "Iniciante",
       "difficultyIntermediate": "Intermediário",
+      "difficultyProfessional": "Profissional",
       "difficultyAdvanced": "Avançado",
       "statusAll": "Todos os Cursos",
       "statusEnrolled": "Meus Matriculados",
@@ -395,6 +397,7 @@
     "skillLevelLabel": "Nível de Habilidade",
     "skillBeginner": "Iniciante",
     "skillIntermediate": "Intermediário",
+    "skillProfessional": "Profissional",
     "skillAdvanced": "Avançado",
     "achievements": "Conquistas",
     "achievementsUnlocked": "{unlocked} de {total} desbloqueadas",
@@ -937,6 +940,7 @@
     "difficulty": {
       "beginner": "Iniciante",
       "intermediate": "Intermediário",
+      "professional": "Profissional",
       "advanced": "Avançado"
     },
     "byTrack": "Por Trilha",
@@ -1000,6 +1004,7 @@
         "difficultyOption": {
           "beginner": "Iniciante",
           "intermediate": "Intermediário",
+          "professional": "Profissional",
           "advanced": "Avançado"
         },
         "track": "Trilha de Aprendizado",
@@ -1250,9 +1255,11 @@
       "skillScore": "Você acertou {score} de 6",
       "levelBeginner": "Iniciante",
       "levelIntermediate": "Intermediário",
+      "levelProfessional": "Profissional",
       "levelAdvanced": "Avançado",
       "levelDescriptionBeginner": "Ótimo ponto de partida — vamos recomendar cursos fundamentais para construir suas habilidades do zero.",
       "levelDescriptionIntermediate": "Base sólida — você está pronto para cursos específicos de frameworks e projetos práticos.",
+      "levelDescriptionProfessional": "Forte expertise — você está preparado para desenvolvimento em produção e design de sistemas complexos.",
       "levelDescriptionAdvanced": "Conhecimento impressionante — mergulhe em tópicos avançados como auditoria de segurança e design de protocolos DeFi.",
       "paths": {
         "fundamentals": {

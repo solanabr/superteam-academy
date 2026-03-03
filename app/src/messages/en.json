@@ -237,6 +237,7 @@
       "difficulty": "Difficulty",
       "beginner": "Beginner",
       "intermediate": "Intermediate",
+      "professional": "Professional",
       "advanced": "Advanced",
       "track": "Track",
       "estimatedTime": "Estimated Time",
@@ -288,6 +289,7 @@
       "trackStandalone": "Standalone",
       "difficultyBeginner": "Beginner",
       "difficultyIntermediate": "Intermediate",
+      "difficultyProfessional": "Professional",
       "difficultyAdvanced": "Advanced",
       "statusAll": "All Courses",
       "statusEnrolled": "My Enrolled",
@@ -395,6 +397,7 @@
     "skillLevelLabel": "Skill Level",
     "skillBeginner": "Beginner",
     "skillIntermediate": "Intermediate",
+    "skillProfessional": "Professional",
     "skillAdvanced": "Advanced",
     "achievements": "Achievements",
     "achievementsUnlocked": "{unlocked} of {total} unlocked",
@@ -937,6 +940,7 @@
     "difficulty": {
       "beginner": "Beginner",
       "intermediate": "Intermediate",
+      "professional": "Professional",
       "advanced": "Advanced"
     },
     "byTrack": "By Track",
@@ -1000,6 +1004,7 @@
         "difficultyOption": {
           "beginner": "Beginner",
           "intermediate": "Intermediate",
+          "professional": "Professional",
           "advanced": "Advanced"
         },
         "track": "Learning Track",
@@ -1250,9 +1255,11 @@
       "skillScore": "You answered {score} of 6 correctly",
       "levelBeginner": "Beginner",
       "levelIntermediate": "Intermediate",
+      "levelProfessional": "Professional",
       "levelAdvanced": "Advanced",
       "levelDescriptionBeginner": "Great starting point — we'll recommend foundational courses to build your skills from the ground up.",
       "levelDescriptionIntermediate": "Solid foundation — you're ready for framework-specific courses and hands-on projects.",
+      "levelDescriptionProfessional": "Strong expertise — you're prepared for production-grade development and complex system design.",
       "levelDescriptionAdvanced": "Impressive knowledge — dive into advanced topics like security auditing and DeFi protocol design.",
       "paths": {
         "fundamentals": {

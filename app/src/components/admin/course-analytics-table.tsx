@@ -160,10 +160,14 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
                           <span
                             className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                             style={difficultyStyle(
-                              difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                              difficulties.find(
+                                (d) => d.value === course.difficulty,
+                              )?.color ?? "#888",
                             )}
                           >
-                            {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
+                            {difficulties.find(
+                              (d) => d.value === course.difficulty,
+                            )?.label ?? course.difficulty}
                           </span>
                           <span>
                             {course.lessonCount} {t("lessons")} ·{" "}

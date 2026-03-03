@@ -96,7 +96,11 @@ function getRecommendedCourses(
     const courseIdx = difficultyOrder.indexOf(course.difficulty);
     if (course.difficulty === level) {
       score += 5;
-    } else if (levelIdx >= 0 && courseIdx >= 0 && Math.abs(levelIdx - courseIdx) === 1) {
+    } else if (
+      levelIdx >= 0 &&
+      courseIdx >= 0 &&
+      Math.abs(levelIdx - courseIdx) === 1
+    ) {
       score += 2;
     }
 

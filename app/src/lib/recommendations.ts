@@ -53,7 +53,11 @@ export function getPersonalizedRecommendations(
       const courseIdx = difficultyOrder.indexOf(course.difficulty);
       if (course.difficulty === skillLevel) {
         score += 5;
-      } else if (skillIdx >= 0 && courseIdx >= 0 && Math.abs(skillIdx - courseIdx) === 1) {
+      } else if (
+        skillIdx >= 0 &&
+        courseIdx >= 0 &&
+        Math.abs(skillIdx - courseIdx) === 1
+      ) {
         score += 2;
       }
     }

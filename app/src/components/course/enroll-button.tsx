@@ -12,7 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatXP } from "@/lib/utils";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
 import { CourseIllustration } from "@/components/icons/course-illustration";
 import { useEnrollOnChain } from "@/lib/hooks/use-enroll-onchain";
 import { CloseEnrollmentButton } from "@/components/course/close-enrollment-button";
@@ -43,6 +43,7 @@ export function EnrollButton({
 }: EnrollButtonProps) {
   const t = useTranslations("courses");
   const { connected } = useWallet();
+  const tracks = useTracks();
   const { enroll, state, txSignature, error, reset } = useEnrollOnChain();
 
   const isPending = ["checking", "building", "signing", "confirming"].includes(
@@ -72,7 +73,7 @@ export function EnrollButton({
         ) : (
           <CourseIllustration
             className="absolute inset-0 h-full w-full"
-            trackColor={TRACKS[course.trackId]?.color ?? "#4a8c5c"}
+            trackColor={tracks[course.trackId]?.color ?? "#4a8c5c"}
             variant={Number(course.id) - 1}
           />
         )}

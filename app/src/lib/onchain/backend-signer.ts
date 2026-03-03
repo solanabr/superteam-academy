@@ -18,9 +18,15 @@ export function loadBackendSigner(): Keypair {
   return Keypair.fromSecretKey(bs58.decode(key));
 }
 
-/** Get the Metaplex Core track collection pubkey for a track, or null if not configured. */
-export function getTrackCollectionPubkey(trackId: number): PublicKey | null {
-  const key = process.env[`TRACK_COLLECTION_${trackId}`];
+/**
+ * Get the Metaplex Core track collection pubkey for a track, or null if not configured.
+ * Prefers the CMS-stored collectionAddress if provided, falls back to TRACK_COLLECTION_N env var.
+ */
+export function getTrackCollectionPubkey(
+  trackId: number,
+  collectionAddress?: string,
+): PublicKey | null {
+  const key = collectionAddress || process.env[`TRACK_COLLECTION_${trackId}`];
   if (!key) return null;
   try {
     return new PublicKey(key);

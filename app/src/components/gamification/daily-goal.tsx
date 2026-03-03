@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Target, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGamification } from "@/lib/hooks/use-gamification";
@@ -81,7 +82,10 @@ export function DailyGoalCard() {
   const isComplete = progress >= 1;
 
   return (
-    <div className="glass rounded-xl p-6">
+    <Link
+      href="/challenges"
+      className="block glass rounded-xl p-6 transition-all hover:border-st-green/30"
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
@@ -123,7 +127,11 @@ export function DailyGoalCard() {
         {GOAL_OPTIONS.map((option) => (
           <button
             key={option}
-            onClick={() => setDailyGoalTarget(option)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDailyGoalTarget(option);
+            }}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               dailyGoal.target === option
                 ? "bg-brazil-gold/20 text-brazil-gold"
@@ -134,6 +142,6 @@ export function DailyGoalCard() {
           </button>
         ))}
       </div>
-    </div>
+    </Link>
   );
 }

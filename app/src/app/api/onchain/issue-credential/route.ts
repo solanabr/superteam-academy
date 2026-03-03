@@ -8,6 +8,7 @@ import {
   getServerConnection,
   getTrackCollectionPubkey,
 } from "@/lib/onchain/backend-signer";
+import { getAllTracks, getTrackCollectionAddress } from "@/lib/tracks-service";
 import { buildIssueCredentialTransaction } from "@/lib/onchain/instructions/issue-credential";
 import { buildUpgradeCredentialTransaction } from "@/lib/onchain/instructions/upgrade-credential";
 import {
@@ -101,7 +102,10 @@ export async function POST(request: NextRequest) {
   }
   const course = deserializeCourse(Buffer.from(courseInfo.data));
 
-  const trackCollection = getTrackCollectionPubkey(course.trackId);
+  // Look up CMS-stored collection address, then fall back to env var
+  const tracks = await getAllTracks();
+  const cmsAddress = getTrackCollectionAddress(tracks, course.trackId);
+  const trackCollection = getTrackCollectionPubkey(course.trackId, cmsAddress);
   if (!trackCollection) {
     return NextResponse.json(
       { error: `TRACK_COLLECTION_${course.trackId} env var not configured` },

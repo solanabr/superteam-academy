@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatXP, xpProgress, getLevel } from "@/lib/utils";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
 import { useCourses } from "@/lib/hooks/use-courses";
 import type { Course, Achievement } from "@/types";
 import {
@@ -64,6 +64,7 @@ interface ApiProfile {
 function deriveCredentials(
   completedSlugs: string[],
   courseList: Course[],
+  tracks: Record<number, { display?: string }>,
 ): CredentialItem[] {
   const trackMap: Record<number, { count: number; xp: number }> = {};
   for (const slug of completedSlugs) {
@@ -76,7 +77,7 @@ function deriveCredentials(
   }
   return Object.entries(trackMap).map(([idStr, data]) => {
     const trackId = Number(idStr);
-    const track = TRACKS[trackId];
+    const track = tracks[trackId];
     return {
       trackId,
       trackName: track?.display || "Unknown",
@@ -112,12 +113,13 @@ function deriveCompletedCourses(
 function deriveSkillData(
   completedSlugs: string[],
   courseList: Course[],
+  tracks: Record<number, { display?: string }>,
 ): SkillDataPoint[] {
   const trackXP: Record<string, number> = {};
   for (const slug of completedSlugs) {
     const course = courseList.find((c) => c.slug === slug || c.id === slug);
     if (!course) continue;
-    const trackName = TRACKS[course.trackId]?.display || "Other";
+    const trackName = tracks[course.trackId]?.display || "Other";
     trackXP[trackName] = (trackXP[trackName] || 0) + course.xpTotal;
   }
   const entries = Object.entries(trackXP);
@@ -235,6 +237,7 @@ export default function PublicProfileClient({
   const t = useTranslations("profile");
   const tg = useTranslations("gamification");
   const { courses: allCourses } = useCourses();
+  const TRACKS = useTracks();
 
   const [apiProfile, setApiProfile] = useState<ApiProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -284,7 +287,7 @@ export default function PublicProfileClient({
         completedSlugs: apiProfile.coursesCompleted,
         skillData:
           apiProfile.skillData ??
-          deriveSkillData(apiProfile.coursesCompleted, allCourses),
+          deriveSkillData(apiProfile.coursesCompleted, allCourses, TRACKS),
       }
     : {
         displayName: mockProfile!.displayName,
@@ -305,7 +308,11 @@ export default function PublicProfileClient({
     profile.completedSlugs,
     allCourses,
   );
-  const credentials = deriveCredentials(profile.completedSlugs, allCourses);
+  const credentials = deriveCredentials(
+    profile.completedSlugs,
+    allCourses,
+    TRACKS,
+  );
 
   const initials = profile.displayName
     .split(/[\s.]/)

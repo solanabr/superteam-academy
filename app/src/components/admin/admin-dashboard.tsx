@@ -240,7 +240,10 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
             <div className="space-y-3">
               {[...difficultyBreakdown.entries()].map(
                 ([value, { label, color, count }]) => (
-                  <div key={value} className="flex items-center justify-between">
+                  <div
+                    key={value}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
                       <div
                         className="h-2.5 w-2.5 rounded-full"

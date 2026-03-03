@@ -248,10 +248,12 @@ export default async function HomePage() {
                     <span
                       className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
                       style={difficultyStyle(
-                        difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                        difficulties.find((d) => d.value === course.difficulty)
+                          ?.color ?? "#888",
                       )}
                     >
-                      {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
+                      {difficulties.find((d) => d.value === course.difficulty)
+                        ?.label ?? course.difficulty}
                     </span>
                   </div>
                 </div>

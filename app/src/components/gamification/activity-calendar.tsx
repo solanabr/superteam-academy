@@ -10,7 +10,7 @@ interface ActivityCalendarProps {
 
 export function ActivityCalendar({
   activityCalendar,
-  days = 30,
+  days = 28,
   className,
 }: ActivityCalendarProps) {
   const calendarDays: [string, boolean][] = [];
@@ -23,7 +23,7 @@ export function ActivityCalendar({
   }
 
   return (
-    <div className={cn("grid grid-cols-10 gap-1", className)}>
+    <div className={cn("grid grid-cols-7 gap-1", className)}>
       {calendarDays.map(([date, active]) => (
         <div
           key={date}

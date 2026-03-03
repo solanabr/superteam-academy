@@ -27,10 +27,34 @@ export interface DifficultyMeta {
 }
 
 export const DIFFICULTIES: DifficultyMeta[] = [
-  { value: "beginner", label: "Beginner", color: "#2d9b6e", order: 0, defaultXp: 15 },
-  { value: "intermediate", label: "Intermediate", color: "#c8b830", order: 1, defaultXp: 30 },
-  { value: "professional", label: "Professional", color: "#1a5c7a", order: 2, defaultXp: 40 },
-  { value: "advanced", label: "Advanced", color: "#d4755e", order: 3, defaultXp: 50 },
+  {
+    value: "beginner",
+    label: "Beginner",
+    color: "#2d9b6e",
+    order: 0,
+    defaultXp: 15,
+  },
+  {
+    value: "intermediate",
+    label: "Intermediate",
+    color: "#c8b830",
+    order: 1,
+    defaultXp: 30,
+  },
+  {
+    value: "professional",
+    label: "Professional",
+    color: "#1a5c7a",
+    order: 2,
+    defaultXp: 40,
+  },
+  {
+    value: "advanced",
+    label: "Advanced",
+    color: "#d4755e",
+    order: 3,
+    defaultXp: 50,
+  },
 ];
 
 // Track registry (matches on-chain spec)

@@ -1,6 +1,7 @@
 "use client";
 
-import { BookOpen, Zap, Code, Flame, Check } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Zap, Code, Flame, Check, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGamification } from "@/lib/hooks/use-gamification";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -44,12 +45,20 @@ export function DailyQuestsCard() {
     <section>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">{t("dailyQuests.title")}</h2>
-        <span className="text-xs text-muted-foreground">
-          {t("dailyQuests.done", {
-            completed: dailyQuests.filter((q) => q.completed).length,
-            total: dailyQuests.length,
-          })}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {t("dailyQuests.done", {
+              completed: dailyQuests.filter((q) => q.completed).length,
+              total: dailyQuests.length,
+            })}
+          </span>
+          <Link
+            href="/challenges"
+            className="flex items-center gap-1 text-sm text-st-green hover:text-st-green-light transition-colors"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
       <div className="glass rounded-xl divide-y divide-border/50">
         {dailyQuests.map((quest) => {

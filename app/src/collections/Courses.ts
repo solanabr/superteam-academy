@@ -146,8 +146,10 @@ export const Courses: CollectionConfig = {
                     collection: "tracks",
                     id: data.track as string,
                   });
-            data.trackId = (trackDoc as Record<string, unknown>).trackId as number;
-            data.trackName = (trackDoc as Record<string, unknown>).display as string;
+            data.trackId = (trackDoc as Record<string, unknown>)
+              .trackId as number;
+            data.trackName = (trackDoc as Record<string, unknown>)
+              .display as string;
           } catch {
             // Track doc may not exist yet
           }
@@ -170,13 +172,15 @@ export const Courses: CollectionConfig = {
         if (data.difficultyRef) {
           try {
             const diffDoc =
-              typeof data.difficultyRef === "object" && data.difficultyRef !== null
+              typeof data.difficultyRef === "object" &&
+              data.difficultyRef !== null
                 ? data.difficultyRef
                 : await req.payload.findByID({
                     collection: "difficulties",
                     id: data.difficultyRef as string,
                   });
-            data.difficulty = (diffDoc as Record<string, unknown>).value as string;
+            data.difficulty = (diffDoc as Record<string, unknown>)
+              .value as string;
           } catch {
             // Difficulties collection may not be seeded yet
           }

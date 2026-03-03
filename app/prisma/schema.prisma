@@ -68,7 +68,7 @@ model Course {
   description String
 
   thumbnail     String?
-  difficulty    String  // beginner | intermediate | advanced
+  difficulty    String  // beginner | intermediate | professional | advanced
   duration      String  // e.g. "8 hours"
   xpTotal       Int
   trackId       Int
