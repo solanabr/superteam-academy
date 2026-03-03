@@ -7,7 +7,7 @@ export default async function CoursesPage() {
   const t = await getTranslations("courses");
 
   return (
-    <div className="py-4">
+    <div className="py-4 mx-auto max-w-6xl">
       <div className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {t("heading")}

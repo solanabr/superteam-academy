@@ -36,6 +36,7 @@ export interface Course {
   level: "Beginner" | "Intermediate" | "Advanced";
   imageUri?: string;
   creator: string;
+  lessons?: Lesson[];
 }
 
 export interface Lesson {

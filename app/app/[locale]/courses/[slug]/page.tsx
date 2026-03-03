@@ -16,7 +16,7 @@ import {
   SourceCodeSquareIcon,
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
-import { courseService } from "@/lib/services";
+import { courseService, sanityCourseService } from "@/lib/services";
 import type { Lesson } from "@/lib/services";
 import { levelBadgeClasses } from "@/lib/utils";
 import { getTranslations } from "next-intl/server";
@@ -39,8 +39,8 @@ export default async function CourseDetailPage({
 }) {
   const { slug } = await params;
   const [course, lessons] = await Promise.all([
-    courseService.getCourse(slug),
-    courseService.getLessons(slug),
+    sanityCourseService.getCourse(slug),
+    sanityCourseService.getLessons(slug),
   ]);
 
   if (!course) notFound();
@@ -59,7 +59,7 @@ export default async function CourseDetailPage({
   }
 
   return (
-    <div className="py-4">
+    <div className="py-4 mx-auto max-w-6xl">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Link href="/courses" className="transition-colors hover:text-foreground">

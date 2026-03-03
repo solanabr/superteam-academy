@@ -8,7 +8,7 @@ export default function CoursesLayout({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto w-full px-4 py-8">{children}</main>
     </>
   );
 }

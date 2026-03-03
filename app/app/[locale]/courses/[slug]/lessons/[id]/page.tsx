@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { courseService } from "@/lib/services";
+import { getLocale } from "next-intl/server";
+import { sanityCourseService, credentialService, userService } from "@/lib/services";
 import { LessonClient } from "./lesson-client";
 
 export default async function LessonPage({
@@ -8,14 +9,15 @@ export default async function LessonPage({
   params: Promise<{ slug: string; id: string }>;
 }) {
   const { slug, id } = await params;
+  const locale = await getLocale();
 
-  const lesson = await courseService.getLesson(slug, id);
+  const lesson = await sanityCourseService.getLesson(slug, id);
 
   if (!lesson) {
     notFound();
   }
 
-  const allLessons = await courseService.getLessons(slug);
+  const allLessons = await sanityCourseService.getLessons(slug);
   const lessonsWithMeta = allLessons.map((l, idx) => ({ ...l, lessonNumber: idx + 1 }));
   
   const currentIndex = allLessons.findIndex((l) => l.id === id);
@@ -29,6 +31,7 @@ export default async function LessonPage({
       allLessons={lessonsWithMeta}
       prevLesson={prevLesson}
       nextLesson={nextLesson}
+      locale={locale as 'en' | 'pt-BR' | 'es'}
     />
   );
 }

@@ -27,9 +27,10 @@ interface LessonClientProps {
   allLessons: LessonWithMeta[];
   prevLesson?: { id: string; title: string };
   nextLesson?: { id: string; title: string };
+  locale?: 'en' | 'pt-BR' | 'es';
 }
 
-export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextLesson }: LessonClientProps) {
+export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextLesson, locale = 'en' }: LessonClientProps) {
   const [code, setCode] = useState(lesson.starterCode || "");
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState<{ passed: boolean; message: string }[]>([]);

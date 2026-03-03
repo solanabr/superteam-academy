@@ -28,3 +28,9 @@ export {
   enrollmentAction,
   lessonAction,
 } from "./stubs";
+
+// Sanity-powered course service (falls back to stubs if not configured)
+export { sanityCourseService } from "./sanity-course";
+
+// On-chain services (use real Solana data when available)
+export { onChainUserService, onChainLeaderboardService } from "./onchain";

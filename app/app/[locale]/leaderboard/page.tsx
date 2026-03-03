@@ -12,7 +12,7 @@ import {
   Medal01Icon,
   Award01Icon,
 } from "@hugeicons/core-free-icons";
-import { leaderboardService } from "@/lib/services";
+import { onChainLeaderboardService, leaderboardService } from "@/lib/services";
 import { getTranslations } from "next-intl/server";
 
 function truncateWallet(wallet: string) {
@@ -46,7 +46,7 @@ function rankColor(rank: number) {
 }
 
 export default async function LeaderboardPage() {
-  const entries = await leaderboardService.getLeaderboard(20);
+  const entries = await onChainLeaderboardService.getLeaderboard(20);
   const t = await getTranslations();
 
   return (
