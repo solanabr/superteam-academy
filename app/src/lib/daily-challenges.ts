@@ -31,6 +31,17 @@ export interface DailyChallengeCompletion {
   completedAt: string; // ISO
 }
 
+export interface SpeedLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  wallet: string | null;
+  avatar: string | null;
+  timeSeconds: number; // completedAt - startedAt in seconds
+  testsPassed: number;
+  totalTests: number;
+}
+
 // ── 28-challenge bank (4-week rotation) ─────────────────────────────────────
 
 const CHALLENGE_BANK: DailyChallenge[] = [
@@ -1181,6 +1192,13 @@ export function getSecondsUntilReset(): number {
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   tomorrow.setUTCHours(0, 0, 0, 0);
   return Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+}
+
+/**
+ * Get a challenge by its ID from the bank.
+ */
+export function getChallengeById(id: number): DailyChallenge | undefined {
+  return CHALLENGE_BANK.find((c) => c.id === id);
 }
 
 // ── localStorage helpers ─────────────────────────────────────────────────────

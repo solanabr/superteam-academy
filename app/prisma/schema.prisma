@@ -384,13 +384,17 @@ model CommentVote {
 // ─── Daily Challenge Completions ────────────────────────────────────────────
 
 model DailyChallengeCompletion {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   challengeId String
-  date        String   // YYYY-MM-DD
+  date        String    // YYYY-MM-DD
   xpEarned    Int
-  completedAt DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime  @default(now())
+  testsPassed Int       @default(0)
+  totalTests  Int       @default(0)
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([date, completedAt])
 }

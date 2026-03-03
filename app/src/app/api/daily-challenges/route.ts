@@ -32,15 +32,17 @@ export async function GET(request: Request) {
   const dateKey = getTodayKey();
 
   let completed = false;
+  let startedAt: string | null = null;
   const userId = await resolveUserId();
   if (userId) {
     const existing = await prisma.dailyChallengeCompletion.findUnique({
       where: { userId_date: { userId, date: dateKey } },
     });
-    completed = !!existing;
+    completed = !!existing && existing.xpEarned > 0;
+    startedAt = existing?.startedAt?.toISOString() ?? null;
   }
 
-  return NextResponse.json({ challenge, dateKey, completed });
+  return NextResponse.json({ challenge, dateKey, completed, startedAt });
 }
 
 export async function POST(request: Request) {
@@ -50,35 +52,64 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { challengeId, xpEarned } = body;
+  const { challengeId, xpEarned, testsPassed, totalTests } = body;
   const dateKey = getTodayKey();
 
   const existing = await prisma.dailyChallengeCompletion.findUnique({
     where: { userId_date: { userId, date: dateKey } },
   });
 
-  if (existing) {
+  if (existing && existing.xpEarned > 0) {
     return NextResponse.json({ error: "Already completed today" }, { status: 409 });
   }
 
-  await prisma.$transaction([
-    prisma.dailyChallengeCompletion.create({
-      data: {
-        userId,
-        challengeId,
-        date: dateKey,
-        xpEarned: xpEarned ?? 50,
-      },
-    }),
-    prisma.xPEvent.create({
-      data: {
-        userId,
-        amount: xpEarned ?? 50,
-        source: "daily_challenge",
-        sourceId: challengeId,
-      },
-    }),
-  ]);
+  const earnedXp = xpEarned ?? 50;
+
+  if (existing) {
+    // Update existing start record with completion data
+    await prisma.$transaction([
+      prisma.dailyChallengeCompletion.update({
+        where: { userId_date: { userId, date: dateKey } },
+        data: {
+          xpEarned: earnedXp,
+          completedAt: new Date(),
+          testsPassed: testsPassed ?? 0,
+          totalTests: totalTests ?? 0,
+        },
+      }),
+      prisma.xPEvent.create({
+        data: {
+          userId,
+          amount: earnedXp,
+          source: "daily_challenge",
+          sourceId: challengeId,
+        },
+      }),
+    ]);
+  } else {
+    // No start record exists — create fresh
+    await prisma.$transaction([
+      prisma.dailyChallengeCompletion.create({
+        data: {
+          userId,
+          challengeId,
+          date: dateKey,
+          xpEarned: earnedXp,
+          completedAt: new Date(),
+          testsPassed: testsPassed ?? 0,
+          totalTests: totalTests ?? 0,
+        },
+      }),
+      prisma.xPEvent.create({
+        data: {
+          userId,
+          amount: earnedXp,
+          source: "daily_challenge",
+          sourceId: challengeId,
+        },
+      }),
+    ]);
+  }
 
   return NextResponse.json({ success: true });
 }

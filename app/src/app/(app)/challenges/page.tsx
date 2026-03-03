@@ -1,33 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { Zap } from "lucide-react";
-import { getTodayChallenge, getTodayKey } from "@/lib/daily-challenges";
-import { DailyChallengeView } from "@/components/challenges/daily-challenge-view";
+import { getTodayChallenge } from "@/lib/daily-challenges";
+import { ChallengeInfoBanner } from "@/components/challenges/challenge-info-banner";
+import { ChallengeOverviewCard } from "@/components/challenges/challenge-overview-card";
 import { PastChallenges } from "@/components/challenges/past-challenges";
+import { SpeedLeaderboard } from "@/components/challenges/speed-leaderboard";
 
-export const revalidate = 60; // Revalidate every minute so the day resets correctly
+export const revalidate = 60;
 
 export default async function ChallengesPage() {
   const t = await getTranslations("challenges");
   const challenge = getTodayChallenge();
-  const dateKey = getTodayKey();
-
-  const labels = {
-    dailyChallenge: t("dailyChallenge"),
-    xpReward: t("xpReward"),
-    runTests: t("runTests"),
-    allPassed: t("allPassed"),
-    markComplete: t("markComplete"),
-    alreadyCompleted: t("alreadyCompleted"),
-    showSolution: t("showSolution"),
-    hideSolution: t("hideSolution"),
-    hintLabel: t("hintLabel"),
-    nextHint: t("nextHint"),
-    nextReset: t("nextReset"),
-    tags: t("tags"),
-    testResults: t("testResults"),
-    passed: t("passed"),
-    failed: t("failed"),
-  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -42,21 +25,51 @@ export default async function ChallengesPage() {
         </div>
       </div>
 
-      {/* Today's challenge */}
+      {/* Info banner */}
+      <div className="mb-6">
+        <ChallengeInfoBanner
+          title={t("howItWorks")}
+          message={t("infoBanner")}
+          dismissLabel={t("dismissInfo")}
+        />
+      </div>
+
+      {/* Today's challenge overview */}
       <div className="mb-10">
-        <DailyChallengeView
+        <ChallengeOverviewCard
           challenge={challenge}
-          dateKey={dateKey}
-          labels={labels}
+          labels={{
+            dailyChallenge: t("dailyChallenge"),
+            xpReward: t("xpReward"),
+            nextReset: t("nextReset"),
+            tags: t("tags"),
+            startChallenge: t("startChallenge"),
+            continueChallenge: t("continueChallenge"),
+            completedToday: t("completedToday"),
+          }}
         />
       </div>
 
       {/* Past challenges */}
-      <PastChallenges
-        headingLabel={t("pastChallenges")}
-        completedLabel={t("completed")}
-        xpLabel={t("xpReward")}
-        lockedLabel={t("locked")}
+      <div className="mb-10">
+        <PastChallenges
+          headingLabel={t("pastChallenges")}
+          completedLabel={t("completed")}
+          xpLabel={t("xpReward")}
+          lockedLabel={t("locked")}
+        />
+      </div>
+
+      {/* Speed leaderboard */}
+      <SpeedLeaderboard
+        labels={{
+          speedLeaderboard: t("speedLeaderboard"),
+          noCompletionsYet: t("noCompletionsYet"),
+          rank: t("rank"),
+          user: t("user"),
+          timeToComplete: t("timeToComplete"),
+          tests: t("tests"),
+        }}
       />
     </div>
   );
