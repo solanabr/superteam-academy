@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Star, Loader2, CheckCircle } from "lucide-react";
+import { Star, Loader2, CheckCircle, Pencil } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -37,11 +37,25 @@ function StarRating({ rating, interactive = false, onChange }: { rating: number;
   );
 }
 
-function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string; onClose: () => void; onSubmitted: () => void }) {
+function ReviewModal({
+  courseSlug,
+  initialRating,
+  initialComment,
+  isEdit,
+  onClose,
+  onSubmitted,
+}: {
+  courseSlug: string;
+  initialRating?: number;
+  initialComment?: string;
+  isEdit?: boolean;
+  onClose: () => void;
+  onSubmitted: (rating: number, comment: string) => void;
+}) {
   const { publicKey } = useWallet();
   const profile = useProfile();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [rating, setRating] = useState(initialRating ?? 0);
+  const [comment, setComment] = useState(initialComment ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,7 +75,7 @@ function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string;
     }, { onConflict: "course_slug,wallet_address" });
     setSubmitting(false);
     if (err) { setError(err.message); return; }
-    onSubmitted();
+    onSubmitted(rating, comment.trim());
     onClose();
   };
 
@@ -69,7 +83,9 @@ function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string;
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-card border border-border rounded-lg w-full max-w-md p-6 space-y-5">
         <div>
-          <h3 className="font-mono text-base font-semibold text-foreground">Rate this course</h3>
+          <h3 className="font-mono text-base font-semibold text-foreground">
+            {isEdit ? "Edit your review" : "Rate this course"}
+          </h3>
           <p className="text-xs font-mono text-muted-foreground mt-1">Your review helps other learners.</p>
         </div>
 
@@ -101,7 +117,7 @@ function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string;
             className="flex items-center gap-1.5 px-4 py-2 bg-[#14F195] text-black text-xs font-mono font-semibold rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
-            Submit Review
+            {isEdit ? "Update Review" : "Submit Review"}
           </button>
         </div>
       </div>
@@ -113,7 +129,8 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
   const { publicKey } = useWallet();
   const [allDone, setAllDone] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [existingReview, setExistingReview] = useState<{ rating: number; comment: string } | null>(null);
+  const [loadingReview, setLoadingReview] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -123,21 +140,49 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
     } catch {}
   }, [courseSlug, totalLessons]);
 
-  if (!allDone || !publicKey) return null;
+  useEffect(() => {
+    if (!publicKey || !allDone) return;
+    setLoadingReview(true);
+    supabase
+      .from("course_reviews")
+      .select("rating, comment")
+      .eq("course_slug", courseSlug)
+      .eq("wallet_address", publicKey.toBase58())
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setExistingReview({ rating: data.rating, comment: data.comment ?? "" });
+        setLoadingReview(false);
+      });
+  }, [publicKey, courseSlug, allDone]);
+
+  if (!allDone || !publicKey || loadingReview) return null;
+
+  const isEdit = existingReview !== null;
 
   return (
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="w-full flex items-center justify-center gap-1.5 mt-2 py-2.5 border border-[#F5A623]/40 bg-[#F5A623]/5 text-[#F5A623] text-sm font-mono font-semibold rounded-full hover:bg-[#F5A623]/10 transition-colors"
+        className={`w-full flex items-center justify-center gap-1.5 mt-2 py-2.5 text-sm font-mono font-semibold rounded-full transition-colors ${
+          isEdit
+            ? "border border-border bg-elevated text-muted-foreground hover:text-foreground hover:border-border-hover"
+            : "border border-[#F5A623]/40 bg-[#F5A623]/5 text-[#F5A623] hover:bg-[#F5A623]/10"
+        }`}
       >
-        {submitted ? <><CheckCircle className="h-3.5 w-3.5" /> Review submitted</> : <><Star className="h-3.5 w-3.5" /> Rate this course</>}
+        {isEdit ? (
+          <><Pencil className="h-3.5 w-3.5" /> Edit your review</>
+        ) : (
+          <><Star className="h-3.5 w-3.5" /> Rate this course</>
+        )}
       </button>
       {showModal && (
         <ReviewModal
           courseSlug={courseSlug}
+          initialRating={existingReview?.rating}
+          initialComment={existingReview?.comment}
+          isEdit={isEdit}
           onClose={() => setShowModal(false)}
-          onSubmitted={() => setSubmitted(true)}
+          onSubmitted={(rating, comment) => setExistingReview({ rating, comment })}
         />
       )}
     </>
