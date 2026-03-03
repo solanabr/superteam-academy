@@ -92,15 +92,63 @@ function buildCoursesWithProgress(): CourseWithProgress[] {
 
 // ─── Daily challenge widget ───────────────────────────────────────────────────
 
+interface DailyChallenge {
+  title: string;
+  courseTitle: string;
+  courseDescription: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  xpReward: number;
+  estimatedMinutes: number;
+  courseSlug: string;
+  lessonId: string;
+}
+
+function buildDailyChallenges(): DailyChallenge[] {
+  const result: DailyChallenge[] = [];
+  for (const course of MOCK_COURSES) {
+    for (const mod of course.modules ?? []) {
+      for (const lesson of mod.lessons ?? []) {
+        if (lesson.type === "challenge") {
+          result.push({
+            title: lesson.title.replace(/^Challenge:\s*/i, ""),
+            courseTitle: course.title,
+            courseDescription: course.description,
+            difficulty: course.difficulty as "beginner" | "intermediate" | "advanced",
+            xpReward: lesson.xpReward ?? 0,
+            estimatedMinutes: lesson.estimatedMinutes ?? 30,
+            courseSlug: course.slug,
+            lessonId: lesson._id,
+          });
+        }
+      }
+    }
+  }
+  return result;
+}
+
+const ALL_CHALLENGES = buildDailyChallenges();
+
+function getTimeUntilMidnight(): string {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  const diff = midnight.getTime() - now.getTime();
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
+
 function DailyChallengeWidget() {
-  const challenge = {
-    title: "Bitmap Lesson Tracker",
-    description: "Implement a function that reads a u64 bitmap and returns which lesson indices are completed.",
-    xpReward: 50,
-    difficulty: "intermediate" as const,
-    expiresIn: "14h 22m",
-    completedBy: 47,
-  };
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  const challenge = ALL_CHALLENGES[dayIndex % ALL_CHALLENGES.length];
+  const [resetsIn, setResetsIn] = useState(getTimeUntilMidnight());
+
+  useEffect(() => {
+    const id = setInterval(() => setResetsIn(getTimeUntilMidnight()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!challenge) return null;
 
   return (
     <div className="mb-8">
@@ -110,7 +158,7 @@ function DailyChallengeWidget() {
           LIVE
         </span>
         <span className="ml-auto text-xs font-mono text-muted-foreground flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Resets in {challenge.expiresIn}
+          <Clock className="h-3 w-3" /> Resets in {resetsIn}
         </span>
       </div>
       <div className="bg-card border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
@@ -123,11 +171,12 @@ function DailyChallengeWidget() {
                 {challenge.difficulty}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground">
-                {challenge.completedBy} devs completed today
+                ~{challenge.estimatedMinutes} min
               </span>
             </div>
             <h3 className="font-mono text-sm font-semibold text-foreground mb-1">{challenge.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{challenge.description}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{challenge.courseDescription}</p>
+            <p className="text-[10px] font-mono text-subtle mt-1">{challenge.courseTitle}</p>
           </div>
           <div className="flex-shrink-0 text-right">
             <div className="font-mono text-2xl font-bold text-[#14F195]">+{challenge.xpReward}</div>
@@ -138,7 +187,7 @@ function DailyChallengeWidget() {
           <Link
             href={{
               pathname: "/courses/[slug]/lessons/[id]",
-              params: { slug: "solana-fundamentals", id: "l6" },
+              params: { slug: challenge.courseSlug, id: challenge.lessonId },
             }}
             className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded-full hover:bg-accent-dim transition-colors"
           >
