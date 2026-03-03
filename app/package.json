@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.37",
+    "@ai-sdk/react": "^3.0.107",
     "@coral-xyz/anchor": "^0.32.1",
     "@metaplex-foundation/mpl-core": "^1.7.0",
     "@monaco-editor/react": "^4.7.0",
@@ -41,6 +42,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/bn.js": "^5.2.0",
     "@types/node": "^20",

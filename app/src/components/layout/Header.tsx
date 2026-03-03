@@ -6,13 +6,14 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useXP } from "@/hooks/useXP";
 import { formatXP } from "@/lib/xp";
-import { Zap, BookOpen, Trophy, User, LayoutDashboard, Menu, X } from "lucide-react";
+import { Zap, BookOpen, Trophy, User, LayoutDashboard, Menu, X, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const NAV_LINKS = [
     { href: "/courses", label: "Courses", icon: BookOpen },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    { href: "/admin", label: "Admin", icon: Shield },
 ];
 
 export function Header() {
@@ -29,9 +30,11 @@ export function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 shrink-0 group">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                        <Zap className="w-4 h-4 text-white" />
-                    </div>
+                    <img
+                        src="/icon-192x192.png"
+                        alt="Superteam Academy Logo"
+                        className="w-9 h-9 rounded-xl shadow-lg group-hover:scale-105 transition-transform"
+                    />
                     <span className="font-heading font-bold text-lg hidden sm:block">
                         Superteam <span className="gradient-text">Academy</span>
                     </span>

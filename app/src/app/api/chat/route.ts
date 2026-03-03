@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText, Message } from "ai";
+import { streamText } from "ai";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -22,7 +22,7 @@ Guidelines:
             messages,
         });
 
-        return result.toDataStreamResponse();
+        return result.toTextStreamResponse();
     } catch (error) {
         console.error("Chat API Error:", error);
         return new Response(JSON.stringify({ error: "Failed to connect to AI assistant" }), { status: 500 });

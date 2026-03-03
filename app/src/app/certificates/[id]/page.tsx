@@ -1,8 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { ExternalLink, Share2, Award, Zap, BookOpen, Shield } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,8 +34,6 @@ export default function CertificatePage() {
 
     return (
         <div className="min-h-screen">
-            <Header />
-
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
                 <div className="text-center mb-8">
                     <h1 className="font-heading text-3xl font-bold mb-2">Verifiable Certificate</h1>
@@ -136,8 +132,6 @@ export default function CertificatePage() {
                     </div>
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 }

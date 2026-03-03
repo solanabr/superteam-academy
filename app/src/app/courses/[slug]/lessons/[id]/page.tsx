@@ -1,14 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Header } from "@/components/layout/Header";
 import { getCourseBySlug } from "@/lib/courses";
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Zap, Check, Play, Bot, Send, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
+import { useTranslations } from "next-intl";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -18,6 +18,7 @@ export default function LessonPage() {
     const lessonId = parseInt(params?.id as string ?? "0");
     const course = getCourseBySlug(slug);
     const lesson = course?.lessons[lessonId];
+    const t = useTranslations("lesson");
 
     const [code, setCode] = useState(lesson?.challenge?.starterCode ?? "");
     const [completing, setCompleting] = useState(false);
@@ -25,9 +26,22 @@ export default function LessonPage() {
     const [showXP, setShowXP] = useState(false);
 
     // AI Chat state
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+    const { messages, sendMessage, status } = useChat();
+    const isLoading = status === "submitted" || status === "streaming";
+    const [input, setInput] = useState("");
     const [isChatOpen, setIsChatOpen] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isLoading) return;
+        sendMessage({ role: "user", parts: [{ type: "text", text: input }] });
+        setInput("");
+    };
 
     // Auto-scroll chat to bottom
     useEffect(() => {
@@ -45,9 +59,8 @@ export default function LessonPage() {
     if (!course || !lesson) {
         return (
             <div className="min-h-screen">
-                <Header />
                 <div className="flex items-center justify-center mt-32 text-[hsl(var(--muted-foreground))]">
-                    Lesson not found
+                    {t("lesson_not_found")}
                 </div>
             </div>
         );
@@ -74,8 +87,6 @@ export default function LessonPage() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <Header />
-
             {/* Lesson header bar */}
             <div className="border-b border-[hsl(var(--border))] px-4 py-3 flex items-center gap-4 bg-[hsl(var(--card))]">
                 <Link href={`/courses/${slug}`} className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] flex items-center gap-1">
@@ -120,7 +131,7 @@ export default function LessonPage() {
                     <div className="flex items-center justify-between mt-10 pt-6 border-t border-[hsl(var(--border))]">
                         {prevLesson !== null ? (
                             <Link href={`/courses/${slug}/lessons/${prevLesson}`} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
-                                <ChevronLeft className="w-4 h-4" /> Previous Lesson
+                                <ChevronLeft className="w-4 h-4" /> {t("prev_lesson")}
                             </Link>
                         ) : <div />}
 
@@ -133,17 +144,17 @@ export default function LessonPage() {
                                 }`}
                         >
                             {completed ? (
-                                <><Check className="w-4 h-4" /> Completed (+{course.xpPerLesson} XP)</>
+                                <><Check className="w-4 h-4" /> {t("completed")} (+{course.xpPerLesson} XP)</>
                             ) : completing ? (
-                                "Marking..."
+                                t("marking")
                             ) : (
-                                <><Play className="w-4 h-4" /> Mark Complete</>
+                                <><Play className="w-4 h-4" /> {t("mark_complete")}</>
                             )}
                         </button>
 
                         {nextLesson !== null ? (
                             <Link href={`/courses/${slug}/lessons/${nextLesson}`} className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
-                                Next Lesson <ChevronRight className="w-4 h-4" />
+                                {t("next_lesson")} <ChevronRight className="w-4 h-4" />
                             </Link>
                         ) : <div />}
                     </div>
@@ -158,7 +169,7 @@ export default function LessonPage() {
                             </span>
                             {lesson.hasCodeChallenge && (
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-400/10 text-green-400 font-semibold">
-                                    Code Challenge
+                                    {t("code_challenge")}
                                 </span>
                             )}
                         </div>
@@ -169,7 +180,7 @@ export default function LessonPage() {
                                 }`}
                         >
                             <Bot className="w-3.5 h-3.5" />
-                            {isChatOpen ? "Close AI" : "Ask AI"}
+                            {isChatOpen ? t("close_ai") : t("ask_ai")}
                         </button>
                     </div>
 
@@ -195,7 +206,7 @@ export default function LessonPage() {
                     {/* Test cases (conditionally hidden when chat is open to save space) */}
                     {lesson.hasCodeChallenge && lesson.challenge && !isChatOpen && (
                         <div className="border-t border-[hsl(var(--border))] p-4 space-y-2 max-h-48 overflow-y-auto">
-                            <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-3">Test Cases</p>
+                            <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-3">{t("test_cases")}</p>
                             {lesson.challenge.testCases.map((tc, i) => (
                                 <div key={i} className="glass rounded-lg p-3 text-xs">
                                     <p className="text-[hsl(var(--muted-foreground))] mb-1">{tc.description}</p>
@@ -212,7 +223,7 @@ export default function LessonPage() {
                                 {messages.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-[hsl(var(--muted-foreground))]">
                                         <Bot className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-sm">I'm your Solana AI Assistant.<br />Ask me for hints or Rust/Anchor explanations!</p>
+                                        <p className="text-sm">{t("ai_welcome")} <br />{t("ai_prompt")}</p>
                                     </div>
                                 ) : (
                                     messages.map((m) => (
@@ -221,7 +232,7 @@ export default function LessonPage() {
                                                 {m.role === "user" ? <UserIcon className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                                             </div>
                                             <div className={`max-w-[85%] rounded-xl p-3 ${m.role === "user" ? "bg-[hsl(var(--primary))] text-white rounded-tr-sm" : "bg-[hsl(var(--muted))] rounded-tl-sm"}`}>
-                                                {m.content}
+                                                {m.parts.map((p, i) => p.type === 'text' ? <span key={i}>{p.text}</span> : null)}
                                             </div>
                                         </div>
                                     ))
@@ -245,7 +256,7 @@ export default function LessonPage() {
                                 <input
                                     value={input}
                                     onChange={handleInputChange}
-                                    placeholder="Ask for a hint..."
+                                    placeholder={t("ask_hint")}
                                     className="flex-1 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors"
                                 />
                                 <button

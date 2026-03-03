@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, Tooltip } from "recharts";
 import { Award, BookOpen, Zap, Star, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useXP } from "@/hooks/useXP";
+import { formatXP } from "@/lib/xp";
 
 const SKILL_DATA = [
     { skill: "Anchor", value: 85 },
@@ -17,22 +18,22 @@ const SKILL_DATA = [
     { skill: "Testing", value: 55 },
 ];
 
-const BADGES = [
-    { name: "First Lesson", emoji: "🎓", desc: "Completed your first lesson" },
-    { name: "Anchor Dev", emoji: "⚓", desc: "Completed Anchor Basics" },
-    { name: "Streak x7", emoji: "🔥", desc: "7-day learning streak" },
-];
-
 export default function ProfilePage() {
     const params = useParams();
     const username = params?.username as string;
     const { publicKey } = useWallet();
+    const xp = useXP();
     const isOwn = publicKey?.toBase58().startsWith(username);
+    const t = useTranslations("profile");
+
+    const BADGES = [
+        { name: t("badge_first_lesson"), emoji: "🎓", desc: t("badge_first_lesson_desc") },
+        { name: t("badge_anchor"), emoji: "⚓", desc: t("badge_anchor_desc") },
+        { name: t("badge_streak"), emoji: "🔥", desc: t("badge_streak_desc") },
+    ];
 
     return (
         <div className="min-h-screen">
-            <Header />
-
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
                 {/* Profile header */}
                 <div className="glass rounded-2xl p-8 mb-8 relative overflow-hidden">
@@ -46,15 +47,15 @@ export default function ProfilePage() {
                         <div className="flex-1">
                             <div className="flex items-center gap-3 flex-wrap">
                                 <h1 className="font-heading text-2xl font-bold">{username}</h1>
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300">Level 4 Builder</span>
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300">Level {isOwn ? xp.level : 4}</span>
                             </div>
                             <p className="text-[hsl(var(--muted-foreground))] mt-1">
-                                Learning Solana development with Superteam Brazil 🇧🇷
+                                {t("bio")}
                             </p>
                             <div className="flex items-center gap-4 mt-3 text-sm text-[hsl(var(--muted-foreground))]">
-                                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-green-400" /> 2,450 XP</span>
-                                <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5 text-purple-400" /> 2 courses</span>
-                                <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-yellow-400" /> 3 badges</span>
+                                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-green-400" /> {isOwn ? formatXP(xp.balance) : "2,450"} XP</span>
+                                <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5 text-purple-400" /> 2 {t("courses")}</span>
+                                <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-yellow-400" /> 3 {t("badges_count")}</span>
                             </div>
                         </div>
 
@@ -63,7 +64,7 @@ export default function ProfilePage() {
                                 href="/settings"
                                 className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:border-[hsl(var(--primary)/0.5)] transition-colors"
                             >
-                                Edit Profile
+                                {t("edit_profile")}
                             </Link>
                         )}
                     </div>
@@ -73,7 +74,7 @@ export default function ProfilePage() {
                     {/* Skills radar */}
                     <div className="glass rounded-2xl p-6">
                         <h2 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
-                            <Star className="w-5 h-5 text-purple-400" /> Skills Radar
+                            <Star className="w-5 h-5 text-purple-400" /> {t("skills_radar")}
                         </h2>
                         <ResponsiveContainer width="100%" height={220}>
                             <RadarChart data={SKILL_DATA}>
@@ -96,7 +97,7 @@ export default function ProfilePage() {
                     {/* Credentials / NFTs */}
                     <div className="glass rounded-2xl p-6">
                         <h2 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
-                            <Award className="w-5 h-5 text-yellow-400" /> Credentials
+                            <Award className="w-5 h-5 text-yellow-400" /> {t("credentials")}
                         </h2>
                         <div className="space-y-3">
                             <div className="glass rounded-xl p-4 flex items-center gap-3 group hover:border-purple-500/40 transition-colors">
@@ -110,7 +111,7 @@ export default function ProfilePage() {
                                 <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                             </div>
                             <p className="text-xs text-center text-[hsl(var(--muted-foreground))] py-4">
-                                Complete more courses to earn credentials
+                                {t("complete_more")}
                             </p>
                         </div>
                     </div>
@@ -118,7 +119,7 @@ export default function ProfilePage() {
                     {/* Badges */}
                     <div className="glass rounded-2xl p-6">
                         <h2 className="font-heading font-semibold text-lg mb-4 flex items-center gap-2">
-                            <Award className="w-5 h-5 text-green-400" /> Badges
+                            <Award className="w-5 h-5 text-green-400" /> {t("badges")}
                         </h2>
                         <div className="grid grid-cols-3 gap-3">
                             {BADGES.map((badge) => (
@@ -134,8 +135,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 }

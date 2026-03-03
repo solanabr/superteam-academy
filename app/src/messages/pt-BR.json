@@ -25,7 +25,17 @@
         "track_defi": "DeFi & Protocolos",
         "track_defi_desc": "Entenda AMMs, empréstimos e protocolos DeFi",
         "track_nft": "NFTs & Metaplex",
-        "track_nft_desc": "Mint, colecione e construa no ecossistema Metaplex"
+        "track_nft_desc": "Mint, colecione e construa no ecossistema Metaplex",
+        "how_it_works": "Como Funciona",
+        "step_1_title": "1. Conectar Carteira",
+        "step_1_desc": "Conecte sua carteira Solana para criar sua conta e acompanhar seu progresso onchain.",
+        "step_2_title": "2. Concluir Lições",
+        "step_2_desc": "Passe por cursos interativos, escreva contratos inteligentes e construa dApps reais.",
+        "step_3_title": "3. Ganhar XP & Credenciais",
+        "step_3_desc": "Obtenha XP verificável onchain por cada lição e reivindique emblemas NFT ao concluir os cursos.",
+        "courses": "Cursos",
+        "featured_title": "Cursos em Destaque",
+        "view_all": "Ver Todos os Cursos"
     },
     "courses": {
         "title": "Catálogo de Cursos",
@@ -40,7 +50,11 @@
         "continue": "Continuar",
         "enrolled": "Matriculado",
         "completed": "Concluído",
-        "starting_soon": "Em Breve"
+        "starting_soon": "Em Breve",
+        "subtitle": "Domine o desenvolvimento na Solana com lições interativas",
+        "search_placeholder": "Buscar cursos...",
+        "all_tracks": "Todas as Trilhas",
+        "all_levels": "Todos os Níveis"
     },
     "lesson": {
         "mark_complete": "Marcar como Concluído",
@@ -48,7 +62,17 @@
         "prev_lesson": "Aula Anterior",
         "run_code": "Executar Código",
         "xp_earned": "XP Ganho!",
-        "lesson_complete": "Aula Concluída!"
+        "lesson_complete": "Aula Concluída!",
+        "ask_ai": "Perguntar à IA",
+        "lesson_not_found": "Aula não encontrada.",
+        "completed": "Concluído",
+        "marking": "Marcando...",
+        "code_challenge": "Desafio de Código",
+        "close_ai": "Fechar IA",
+        "test_cases": "Casos de Teste",
+        "ai_welcome": "Como posso ajudar você hoje?",
+        "ai_prompt": "Pergunte-me qualquer coisa sobre desenvolvimento na Solana.",
+        "ask_hint": "Faça uma pergunta..."
     },
     "dashboard": {
         "title": "Painel",
@@ -58,7 +82,20 @@
         "days": "dias",
         "courses_in_progress": "Cursos em Andamento",
         "recent_activity": "Atividade Recente",
-        "achievements": "Conquistas"
+        "achievements": "Conquistas",
+        "connect_wallet": "Conectar Carteira",
+        "connect_wallet_desc": "Conecte sua carteira para acompanhar seu progresso e ganhar XP.",
+        "streak_desc": "A consistência é fundamental! Conclua as lições diariamente para aumentar sua sequência.",
+        "wallet": "Carteira",
+        "view_explorer": "Ver no Explorador",
+        "continue_learning": "Continuar Aprendendo",
+        "lessons": "lições",
+        "browse_all": "Navegar em Todos os Cursos",
+        "your_stats": "Suas Estatísticas",
+        "stat_lessons": "Lições Concluídas",
+        "stat_achievements": "Conquistas Desbloqueadas",
+        "stat_rank": "Classificação Global",
+        "view_profile": "Ver Perfil Público"
     },
     "leaderboard": {
         "title": "Ranking Global",
@@ -68,7 +105,12 @@
         "wallet": "Carteira",
         "xp": "XP Total",
         "level": "Nível",
-        "streak": "Sequência"
+        "streak": "Sequência",
+        "subtitle": "Os melhores construtores do ecossistema",
+        "all_time": "Todos os Tempos",
+        "builder": "Construtor",
+        "your_rank": "Seu Rank",
+        "you": "Você"
     },
     "settings": {
         "title": "Configurações",
@@ -81,16 +123,62 @@
         "github": "Conta GitHub",
         "link": "Conectar",
         "unlink": "Desconectar",
-        "save": "Salvar Alterações"
+        "save": "Salvar Alterações",
+        "subtitle": "Gerencie as preferências da sua conta",
+        "tab_profile": "Perfil",
+        "tab_account": "Conta",
+        "tab_notifications": "Notificações",
+        "public_profile": "Informações do Perfil Público",
+        "save_changes": "Salvar Alterações",
+        "connected_accounts": "Contas Conectadas",
+        "github_desc": "Conecte sua conta GitHub para conquistas",
+        "connect": "Conectar",
+        "email_desc": "Receba relatórios de progresso semanais",
+        "verify": "Verificar Email"
     },
-    "certificate": {
-        "title": "Certificado Verificável",
+    "certificates": {
+        "title": "Certificados Verificáveis",
         "issued_to": "Emitido Para",
         "course": "Curso",
         "track": "Trilha",
         "xp": "XP Total",
         "verify_onchain": "Verificar Onchain",
         "share": "Compartilhar",
-        "download": "Baixar"
+        "download": "Baixar",
+        "subtitle": "Visualize e gerencie suas credenciais onchain",
+        "no_certificates": "Nenhum Certificado Ainda",
+        "complete_courses": "Complete cursos para ganhar certificados NFT verificáveis.",
+        "browse_courses": "Explorar Cursos",
+        "view_details": "Ver Detalhes"
+    },
+    "profile": {
+        "badge_first_lesson": "Primeiros Passos",
+        "badge_first_lesson_desc": "Completou a primeira lição",
+        "badge_anchor": "Iniciante em Anchor",
+        "badge_anchor_desc": "Escreveu um programa Solana em Anchor",
+        "badge_streak": "Guerreiro da Semana",
+        "badge_streak_desc": "Sequência de 7 dias de aprendizado",
+        "level_4": "Nível 4",
+        "bio": "Iniciante em Web3 atualmente aprendendo desenvolvimento na Solana.",
+        "courses": "Cursos",
+        "badges_count": "Emblemas",
+        "edit_profile": "Editar Perfil",
+        "skills_radar": "Radar de Habilidades",
+        "credentials": "Credenciais Verificáveis",
+        "complete_more": "Complete mais cursos para ganhar credenciais NFT.",
+        "badges": "Emblemas Desbloqueados"
+    },
+    "admin": {
+        "access_denied": "Acesso Negado",
+        "access_denied_desc": "Você precisa de privilégios de administrador para ver esta página.",
+        "title": "Painel de Administração",
+        "subtitle": "Visão geral e gerenciamento da plataforma",
+        "system_status": "Sistema Operacional",
+        "total_users": "Total de Usuários",
+        "active_courses": "Cursos Ativos",
+        "credentials_issued": "Credenciais Emitidas",
+        "daily_active": "Usuários Diários",
+        "recent_activity": "Atividade Recente",
+        "system_alerts": "Alertas do Sistema"
     }
 }

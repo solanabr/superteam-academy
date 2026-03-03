@@ -1,11 +1,10 @@
-"use client";
+﻿"use client";
 
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { CourseCard } from "@/components/course/CourseCard";
 import { STATIC_COURSES } from "@/lib/courses";
 import { Search, Filter } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 const TRACKS = ["All", "anchor", "defi", "nft", "core"] as const;
 const LEVELS = ["All", "beginner", "intermediate", "advanced"] as const;
@@ -14,6 +13,7 @@ export default function CoursesPage() {
     const [search, setSearch] = useState("");
     const [track, setTrack] = useState<string>("All");
     const [level, setLevel] = useState<string>("All");
+    const t = useTranslations("courses");
 
     const filtered = useMemo(() => {
         return STATIC_COURSES.filter((c) => {
@@ -29,8 +29,6 @@ export default function CoursesPage() {
 
     return (
         <div className="min-h-screen">
-            <Header />
-
             {/* Structured Data for SEO */}
             <script
                 type="application/ld+json"
@@ -52,9 +50,9 @@ export default function CoursesPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
                 {/* Page header */}
                 <div className="mb-10">
-                    <h1 className="font-heading text-4xl font-bold mb-2">Course Catalog</h1>
+                    <h1 className="font-heading text-4xl font-bold mb-2">{t("title")}</h1>
                     <p className="text-[hsl(var(--muted-foreground))]">
-                        {STATIC_COURSES.filter((c) => c.isActive).length} courses available — earn verifiable XP on Solana
+                        {STATIC_COURSES.filter((c) => c.isActive).length} {t("subtitle")}
                     </p>
                 </div>
 
@@ -65,7 +63,7 @@ export default function CoursesPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                         <input
                             type="text"
-                            placeholder="Search courses..."
+                            placeholder={t("search_placeholder")}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full pl-10 pr-4 py-2.5 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors"
@@ -76,16 +74,16 @@ export default function CoursesPage() {
                     <div className="flex items-center gap-2">
                         <Filter className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                         <div className="flex gap-1 flex-wrap">
-                            {TRACKS.map((t) => (
+                            {TRACKS.map((t_filter) => (
                                 <button
-                                    key={t}
-                                    onClick={() => setTrack(t)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${track === t
+                                    key={t_filter}
+                                    onClick={() => setTrack(t_filter)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${track === t_filter
                                         ? "bg-[hsl(var(--primary))] text-white"
                                         : "bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                                         }`}
                                 >
-                                    {t === "All" ? "All Tracks" : t.toUpperCase()}
+                                    {t_filter === "All" ? t("all_tracks") : t_filter.toUpperCase()}
                                 </button>
                             ))}
                         </div>
@@ -102,7 +100,7 @@ export default function CoursesPage() {
                                     : "bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                                     }`}
                             >
-                                {l === "All" ? "All Levels" : l.charAt(0).toUpperCase() + l.slice(1)}
+                                {l === "All" ? t("all_levels") : l.charAt(0).toUpperCase() + l.slice(1)}
                             </button>
                         ))}
                     </div>
@@ -111,8 +109,8 @@ export default function CoursesPage() {
                 {/* Results */}
                 {filtered.length === 0 ? (
                     <div className="text-center py-20 text-[hsl(var(--muted-foreground))]">
-                        <p className="text-lg font-semibold mb-2">No courses found</p>
-                        <p className="text-sm">Try adjusting your search or filters</p>
+                        <p className="text-lg font-semibold mb-2">{t("no_results")}</p>
+                        <p className="text-sm">{t("try_adjusting")}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,8 +120,6 @@ export default function CoursesPage() {
                     </div>
                 )}
             </div>
-
-            <Footer />
         </div>
     );
 }

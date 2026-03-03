@@ -1,148 +1,158 @@
 "use client";
 
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useState } from "react";
+import { User, Mail, Github, LogOut, Shield, Bell, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Wallet, User, Github, Chrome, Shield, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function SettingsPage() {
-    const { publicKey, connected } = useWallet();
-    const [username, setUsername] = useState("");
-    const [bio, setBio] = useState("");
-    const [saving, setSaving] = useState(false);
+    const { publicKey, disconnect } = useWallet();
+    const t = useTranslations("settings");
 
-    async function handleSave() {
-        setSaving(true);
-        await new Promise((r) => setTimeout(r, 800));
-        setSaving(false);
-        toast.success("Profile updated!");
-    }
-
-    if (!connected) {
-        return (
-            <div className="min-h-screen">
-                <Header />
-                <div className="flex flex-col items-center justify-center mt-32 gap-4 text-center px-4">
-                    <Shield className="w-12 h-12 text-[hsl(var(--primary))]" />
-                    <h2 className="font-heading text-2xl font-bold">Connect Wallet</h2>
-                    <p className="text-[hsl(var(--muted-foreground))]">Connect your wallet to access settings.</p>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
+    const handleSave = () => {
+        toast.success(t("save_success"));
+    };
 
     return (
         <div className="min-h-screen">
-            <Header />
-
-            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-                <h1 className="font-heading text-3xl font-bold mb-8">Settings</h1>
-
-                {/* Profile section */}
-                <section className="glass rounded-2xl p-6 mb-6">
-                    <h2 className="font-heading font-semibold text-lg mb-5 flex items-center gap-2">
-                        <User className="w-5 h-5 text-purple-400" /> Profile
-                    </h2>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-[hsl(var(--muted-foreground))]">Username</label>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                placeholder="your-username"
-                                className="w-full px-4 py-2.5 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-xl text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1.5 text-[hsl(var(--muted-foreground))]">Bio</label>
-                            <textarea
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                                placeholder="Tell the community about yourself..."
-                                rows={3}
-                                className="w-full px-4 py-2.5 bg-[hsl(var(--input))] border border-[hsl(var(--border))] rounded-xl text-sm placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors resize-none"
-                            />
-                        </div>
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 rounded-xl bg-[hsl(var(--primary)/0.2)] flex items-center justify-center">
+                        <SettingsIcon className="w-5 h-5 text-[hsl(var(--primary))]" />
                     </div>
-                </section>
-
-                {/* Wallet */}
-                <section className="glass rounded-2xl p-6 mb-6">
-                    <h2 className="font-heading font-semibold text-lg mb-5 flex items-center gap-2">
-                        <Wallet className="w-5 h-5 text-green-400" /> Wallet
-                    </h2>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-mono text-sm">{publicKey?.toBase58().slice(0, 16)}...{publicKey?.toBase58().slice(-8)}</p>
-                            <p className="text-xs text-green-400 mt-1 font-semibold">● Connected (Devnet)</p>
-                        </div>
-                        <span className="px-3 py-1.5 rounded-lg bg-green-500/15 text-green-400 text-xs font-semibold">Primary</span>
+                    <div>
+                        <h1 className="font-heading text-3xl font-bold">{t("title")}</h1>
+                        <p className="text-[hsl(var(--muted-foreground))]">{t("subtitle")}</p>
                     </div>
-                </section>
+                </div>
 
-                {/* OAuth */}
-                <section className="glass rounded-2xl p-6 mb-6">
-                    <h2 className="font-heading font-semibold text-lg mb-5 flex items-center gap-2">
-                        <Shield className="w-5 h-5 text-blue-400" /> Linked Accounts
-                    </h2>
-                    <div className="space-y-3">
-                        {/* Google */}
-                        <div className="flex items-center justify-between py-3 border-b border-[hsl(var(--border))]">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-[hsl(var(--muted))] flex items-center justify-center">
-                                    <Chrome className="w-4 h-4 text-blue-400" />
-                                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Settings Navigation */}
+                    <div className="space-y-2">
+                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[hsl(var(--primary))] text-white font-medium transition-colors">
+                            <User className="w-4 h-4" /> {t("tab_profile")}
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] font-medium transition-colors">
+                            <Shield className="w-4 h-4" /> {t("tab_account")}
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] font-medium transition-colors">
+                            <Bell className="w-4 h-4" /> {t("tab_notifications")}
+                        </button>
+                    </div>
+
+                    {/* Settings Content */}
+                    <div className="md:col-span-2 space-y-6">
+                        {/* Public Profile Section */}
+                        <div className="glass rounded-2xl p-6">
+                            <h2 className="font-heading text-lg font-semibold mb-4">{t("public_profile")}</h2>
+                            
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="font-medium text-sm">Google</p>
-                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Not linked</p>
+                                    <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">
+                                        {t("username")}
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        defaultValue="solana_builder"
+                                        className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-[hsl(var(--muted-foreground))] mb-1">
+                                        {t("bio")}
+                                    </label>
+                                    <textarea 
+                                        defaultValue="Learning Solana development with Superteam Brazil 🇧🇷"
+                                        rows={3}
+                                        className="w-full bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[hsl(var(--primary)/0.5)] transition-colors resize-none"
+                                    />
                                 </div>
                             </div>
-                            <button
-                                onClick={() => toast.info("Google OAuth — set GOOGLE_CLIENT_ID in .env to enable")}
-                                className="px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:border-[hsl(var(--primary)/0.5)] transition-colors"
-                            >
-                                Link
-                            </button>
+                            
+                            <div className="mt-6 flex justify-end">
+                                <button 
+                                    onClick={handleSave}
+                                    className="px-6 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                                >
+                                    {t("save_changes")}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* GitHub */}
-                        <div className="flex items-center justify-between py-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-[hsl(var(--muted))] flex items-center justify-center">
-                                    <Github className="w-4 h-4" />
+                        {/* Connected Accounts Section */}
+                        <div className="glass rounded-2xl p-6">
+                            <h2 className="font-heading text-lg font-semibold mb-4">{t("connected_accounts")}</h2>
+                            
+                            <div className="space-y-3">
+                                {/* Wallet */}
+                                <div className="flex items-center justify-between p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                            <div className="w-5 h-5 bg-gradient-to-tr from-purple-500 to-green-400 rounded-full" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">{t("wallet")}</p>
+                                            <p className="text-xs text-[hsl(var(--muted-foreground))] font-mono mt-0.5">
+                                                {publicKey ? `${publicKey.toBase58().slice(0, 8)}...${publicKey.toBase58().slice(-8)}` : "Not connected"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {publicKey ? (
+                                        <button 
+                                            onClick={disconnect}
+                                            className="p-2 text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                            title="Disconnect"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                        </button>
+                                    ) : (
+                                        <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-white">
+                                            {t("connect")}
+                                        </button>
+                                    )}
                                 </div>
-                                <div>
-                                    <p className="font-medium text-sm">GitHub</p>
-                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Not linked</p>
+
+                                {/* GitHub */}
+                                <div className="flex items-center justify-between p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center">
+                                            <Github className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">GitHub</p>
+                                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                                                {t("github_desc")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--muted-foreground)/0.2)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted-foreground)/0.3)] transition-colors">
+                                        {t("connect")}
+                                    </button>
+                                </div>
+
+                                {/* Email */}
+                                <div className="flex items-center justify-between p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.3)]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center">
+                                            <Mail className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">Email</p>
+                                            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                                                {t("email_desc")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--muted-foreground)/0.2)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted-foreground)/0.3)] transition-colors">
+                                        {t("verify")}
+                                    </button>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => toast.info("GitHub OAuth — set GITHUB_CLIENT_ID in .env to enable")}
-                                className="px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:border-[hsl(var(--primary)/0.5)] transition-colors"
-                            >
-                                Link
-                            </button>
                         </div>
                     </div>
-                </section>
-
-                {/* Save */}
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full flex items-center justify-center gap-2 bg-[hsl(var(--primary))] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all disabled:opacity-50 hover:shadow-[var(--glow-purple)]"
-                >
-                    <Save className="w-4 h-4" />
-                    {saving ? "Saving..." : "Save Changes"}
-                </button>
+                </div>
             </div>
-
-            <Footer />
         </div>
     );
 }

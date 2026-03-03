@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Providers } from "@/providers";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Analytics } from "@/components/Analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Superteam Academy | Learn Solana, Earn Onchain",
   description: "The decentralized learning platform by Superteam Brazil. Complete courses, earn soulbound XP tokens, and receive verifiable NFT credentials.",
   manifest: "/manifest.json",
-  themeColor: "#0a0a0a",
   keywords: ["Solana", "blockchain", "learning", "NFT", "DeFi", "Web3", "crypto education"],
   openGraph: {
     type: "website",
@@ -21,6 +22,13 @@ export const metadata: Metadata = {
     title: "Superteam Academy",
     description: "Learn Solana, Earn Onchain",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
+  ],
 };
 
 export default function RootLayout({
@@ -39,7 +47,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Sidebar />
+          <main className="lg:ml-60 pt-14 lg:pt-0 min-h-screen">
+            {children}
+          </main>
+        </Providers>
+        <Analytics />
       </body>
     </html>
   );

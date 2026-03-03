@@ -71,7 +71,6 @@ Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) o
 - **[Architecture](docs/ARCHITECTURE.md)** — Account maps, data flows, CU budgets
 - **[Frontend Integration](docs/INTEGRATION.md)** — PDA derivation, instruction usage, events, error handling
 - **[Deployment Guide](docs/DEPLOY-PROGRAM.md)** — Deploy your own program instance on devnet
-- **[Frontend Bounty](docs/bounty.md)** — $4,800 USDC bounty for building the frontend
 
 ## Contributing
 

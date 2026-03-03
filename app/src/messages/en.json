@@ -25,7 +25,17 @@
         "track_defi": "DeFi & Protocols",
         "track_defi_desc": "Understand AMMs, lending, and DeFi protocols",
         "track_nft": "NFTs & Metaplex",
-        "track_nft_desc": "Mint, collect, and build on the Metaplex ecosystem"
+        "track_nft_desc": "Mint, collect, and build on the Metaplex ecosystem",
+        "how_it_works": "How it Works",
+        "step_1_title": "1. Connect Wallet",
+        "step_1_desc": "Connect your Solana wallet to create your account and track your progress onchain.",
+        "step_2_title": "2. Complete Lessons",
+        "step_2_desc": "Go through interactive courses, write smart contracts, and build real dApps.",
+        "step_3_title": "3. Earn XP & Credentials",
+        "step_3_desc": "Get verifiable onchain XP for every lesson and claim NFT badges for course completion.",
+        "courses": "Courses",
+        "featured_title": "Featured Courses",
+        "view_all": "View All Courses"
     },
     "courses": {
         "title": "Course Catalog",
@@ -40,7 +50,11 @@
         "continue": "Continue",
         "enrolled": "Enrolled",
         "completed": "Completed",
-        "starting_soon": "Starting Soon"
+        "starting_soon": "Starting Soon",
+        "subtitle": "Master Solana development with interactive lessons",
+        "search_placeholder": "Search courses...",
+        "all_tracks": "All Tracks",
+        "all_levels": "All Levels"
     },
     "lesson": {
         "mark_complete": "Mark Complete",
@@ -48,7 +62,17 @@
         "prev_lesson": "Previous Lesson",
         "run_code": "Run Code",
         "xp_earned": "XP Earned!",
-        "lesson_complete": "Lesson Complete!"
+        "lesson_complete": "Lesson Complete!",
+        "ask_ai": "Ask AI",
+        "lesson_not_found": "Lesson not found.",
+        "completed": "Completed",
+        "marking": "Marking...",
+        "code_challenge": "Code Challenge",
+        "close_ai": "Close AI",
+        "test_cases": "Test Cases",
+        "ai_welcome": "How can I help you today?",
+        "ai_prompt": "Ask me anything about Solana development.",
+        "ask_hint": "Ask a question..."
     },
     "dashboard": {
         "title": "Dashboard",
@@ -58,7 +82,20 @@
         "days": "days",
         "courses_in_progress": "Courses In Progress",
         "recent_activity": "Recent Activity",
-        "achievements": "Achievements"
+        "achievements": "Achievements",
+        "connect_wallet": "Connect Wallet",
+        "connect_wallet_desc": "Connect your wallet to track your progress and earn XP.",
+        "streak_desc": "Consistency is key! Complete lessons daily to increase your streak.",
+        "wallet": "Wallet",
+        "view_explorer": "View on Explorer",
+        "continue_learning": "Continue Learning",
+        "lessons": "lessons",
+        "browse_all": "Browse All Courses",
+        "your_stats": "Your Stats",
+        "stat_lessons": "Lessons Completed",
+        "stat_achievements": "Achievements Unlocked",
+        "stat_rank": "Global Rank",
+        "view_profile": "View Public Profile"
     },
     "leaderboard": {
         "title": "Global Leaderboard",
@@ -68,7 +105,12 @@
         "wallet": "Wallet",
         "xp": "Total XP",
         "level": "Level",
-        "streak": "Streak"
+        "streak": "Streak",
+        "subtitle": "Top builders in the ecosystem",
+        "all_time": "All Time",
+        "builder": "Builder",
+        "your_rank": "Your Rank",
+        "you": "You"
     },
     "settings": {
         "title": "Settings",
@@ -81,16 +123,62 @@
         "github": "GitHub Account",
         "link": "Link",
         "unlink": "Unlink",
-        "save": "Save Changes"
+        "save": "Save Changes",
+        "subtitle": "Manage your account preferences",
+        "tab_profile": "Profile",
+        "tab_account": "Account",
+        "tab_notifications": "Notifications",
+        "public_profile": "Public Profile Information",
+        "save_changes": "Save Changes",
+        "connected_accounts": "Connected Accounts",
+        "github_desc": "Connect your GitHub account for achievements",
+        "connect": "Connect",
+        "email_desc": "Receive weekly progress reports",
+        "verify": "Verify Email"
     },
-    "certificate": {
-        "title": "Verifiable Certificate",
+    "certificates": {
+        "title": "Verifiable Certificates",
         "issued_to": "Issued To",
         "course": "Course",
         "track": "Track",
         "xp": "Total XP",
         "verify_onchain": "Verify Onchain",
         "share": "Share",
-        "download": "Download"
+        "download": "Download",
+        "subtitle": "View and manage your onchain credentials",
+        "no_certificates": "No Certificates Yet",
+        "complete_courses": "Complete courses to earn verifiable NFT certificates.",
+        "browse_courses": "Browse Courses",
+        "view_details": "View Details"
+    },
+    "profile": {
+        "badge_first_lesson": "First Steps",
+        "badge_first_lesson_desc": "Completed the first lesson",
+        "badge_anchor": "Anchor Initiate",
+        "badge_anchor_desc": "Wrote a Solana program in Anchor",
+        "badge_streak": "Week Warrior",
+        "badge_streak_desc": "7 day learning streak",
+        "level_4": "Level 4",
+        "bio": "Web3 beginner currently learning Solana development.",
+        "courses": "Courses",
+        "badges_count": "Badges",
+        "edit_profile": "Edit Profile",
+        "skills_radar": "Skills Radar",
+        "credentials": "Verifiable Credentials",
+        "complete_more": "Complete more courses to earn NFT credentials.",
+        "badges": "Badges Unlocked"
+    },
+    "admin": {
+        "access_denied": "Access Denied",
+        "access_denied_desc": "You need administrator privileges to view this page.",
+        "title": "Admin Dashboard",
+        "subtitle": "Platform overview and management",
+        "system_status": "System Operational",
+        "total_users": "Total Users",
+        "active_courses": "Active Courses",
+        "credentials_issued": "Credentials Issued",
+        "daily_active": "Daily Active",
+        "recent_activity": "Recent Activity",
+        "system_alerts": "System Alerts"
     }
 }

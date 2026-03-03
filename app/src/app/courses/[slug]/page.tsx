@@ -1,8 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { getCourseBySlug } from "@/lib/courses";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getEnrollmentPda } from "@/lib/pda";
@@ -24,11 +22,9 @@ export default function CourseDetailPage() {
     if (!course) {
         return (
             <div className="min-h-screen">
-                <Header />
                 <div className="flex items-center justify-center mt-32 text-[hsl(var(--muted-foreground))]">
                     Course not found
                 </div>
-                <Footer />
             </div>
         );
     }
@@ -57,8 +53,6 @@ export default function CourseDetailPage() {
 
     return (
         <div className="min-h-screen">
-            <Header />
-
             {/* Structured Data for SEO */}
             <script
                 type="application/ld+json"
@@ -221,8 +215,6 @@ export default function CourseDetailPage() {
                     </div>
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 }

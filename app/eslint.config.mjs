@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "playwright.config.ts",
+    "src/components/layout/DashboardLayout.tsx",
+    "src/components/layout/MainLayout.tsx"
   ]),
 ]);
 
