@@ -23,7 +23,7 @@ export function CredentialsWidget() {
                     Credentials
                 </h3>
                 <Link
-                    href="/certificates"
+                    href="/achievements"
                     className="text-xs font-semibold hover:underline"
                     style={{ color: '#0f6a37' }}
                 >
