@@ -3,6 +3,7 @@
 import { use, useState, useEffect, useMemo } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { editor as MonacoEditor } from "monaco-editor";
 import {
     ChevronLeft,
     ChevronRight,
@@ -11,6 +12,8 @@ import {
     Loader2,
     RotateCcw,
     BookOpen,
+    Play,
+    AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +60,139 @@ function resolveTrackIdFromCourseAccount(courseAccount: unknown): number | null 
     return parsed != null && parsed >= 0 ? parsed : null;
 }
 
+type LessonTestResult = {
+    name: string;
+    passed: boolean;
+    message?: string;
+};
+
+function stripCodeComments(value: string): string {
+    return value
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "")
+        .trim();
+}
+
+function normalizeSource(value: string): string {
+    return stripCodeComments(value).replace(/\s+/g, " ").trim();
+}
+
+function inferEditorLanguage(
+    challengeCode: string | undefined,
+    challengeTests: string | undefined
+): "typescript" | "rust" | "json" {
+    const code = challengeCode ?? "";
+    const hintText = `${code}\n${challengeTests ?? ""}`;
+    const trimmed = code.trim();
+
+    if (
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+        return "json";
+    }
+
+    if (/(anchor_lang|#\[(program|account|derive)|\bpub\s+fn\b|\bstruct\s+\w+\b|\bimpl\s+\w+\b)/i.test(hintText)) {
+        return "rust";
+    }
+
+    return "typescript";
+}
+
+function parseRuleLine(raw: string): string {
+    return raw
+        .replace(/^\/\//, "")
+        .replace(/^[-*]\s*/, "")
+        .replace(/^test\s*:\s*/i, "")
+        .trim();
+}
+
+function parseChallengeRules(challengeTests: string | undefined): string[] {
+    if (!challengeTests) return [];
+    return challengeTests
+        .split(/\r?\n/g)
+        .map(parseRuleLine)
+        .filter(Boolean);
+}
+
+function matchesRule(code: string, rule: string): boolean {
+    if (rule.startsWith("regex:")) {
+        const source = rule.slice("regex:".length).trim();
+        try {
+            const slashMatch = source.match(/^\/(.*)\/([dgimsuy]*)$/);
+            if (slashMatch) {
+                const [, pattern, flags] = slashMatch;
+                return new RegExp(pattern, flags).test(code);
+            }
+            return new RegExp(source, "m").test(code);
+        } catch {
+            return code.includes(source);
+        }
+    }
+
+    if (rule.startsWith("contains:")) {
+        return code.includes(rule.slice("contains:".length).trim());
+    }
+
+    const tokenMatch = rule.match(/([A-Za-z_][A-Za-z0-9_.]*(?:\([^)]*\))?)/);
+    if (tokenMatch?.[1]) {
+        return code.includes(tokenMatch[1]);
+    }
+
+    if (/all tests should pass/i.test(rule)) {
+        return true;
+    }
+
+    return code.includes(rule);
+}
+
+function runLessonTests(
+    code: string,
+    starterCode: string,
+    challengeTests: string | undefined
+): LessonTestResult[] {
+    const starterNormalized = normalizeSource(starterCode);
+    const currentNormalized = normalizeSource(code);
+    const hasRealEdits = !!currentNormalized && currentNormalized !== starterNormalized;
+    const rules = parseChallengeRules(challengeTests);
+
+    if (!hasRealEdits) {
+        return [
+            {
+                name: "Starter code replaced",
+                passed: false,
+                message: "Replace starter code with your implementation first.",
+            },
+        ];
+    }
+
+    if (rules.length === 0) {
+        return [
+            {
+                name: "Implementation present",
+                passed: true,
+                message: "No explicit rules configured for this lesson challenge.",
+            },
+        ];
+    }
+
+    const codeNoComments = stripCodeComments(code);
+    return rules.map((rule, index) => {
+        const passed = matchesRule(codeNoComments, rule);
+        return {
+            name: `Test ${index + 1}`,
+            passed,
+            message: passed ? rule : `Expected: ${rule}`,
+        };
+    });
+}
+
+function formatMarkerSeverity(marker: MonacoEditor.IMarker): "error" | "warning" | "info" {
+    if (marker.severity === 8) return "error";
+    if (marker.severity === 4) return "warning";
+    return "info";
+}
+
 export default function LessonPage({
     params,
 }: {
@@ -65,7 +201,8 @@ export default function LessonPage({
     const { slug, id } = use(params);
     const [result, setResult] = useState<Awaited<ReturnType<typeof getLessonById>>>(undefined);
     const [isLoading, setIsLoading] = useState(true);
-    const [testOutput, setTestOutput] = useState<string | null>(null);
+    const [testResults, setTestResults] = useState<LessonTestResult[] | null>(null);
+    const [editorMarkers, setEditorMarkers] = useState<MonacoEditor.IMarker[]>([]);
     const [code, setCode] = useState("");
     const [courseCompleteData, setCourseCompleteData] = useState<{
         courseId: string;
@@ -93,6 +230,8 @@ export default function LessonPage({
             if (data?.lesson.challengeCode) {
                 setCode(data.lesson.challengeCode);
             }
+            setTestResults(null);
+            setEditorMarkers([]);
         });
     }, [slug, id]);
 
@@ -119,15 +258,29 @@ export default function LessonPage({
     const canAccessLesson = !isEnrolled || prevLessonCompleted;
     const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
     const isCourseComplete = completedAt != null;
+    const editorLanguage = inferEditorLanguage(lesson.challengeCode, lesson.challengeTests);
+    const hasEditorIssues = editorMarkers.length > 0;
+    const allTestsPassed = !!testResults?.length && testResults.every((item) => item.passed);
 
     const handleRunTests = () => {
-        setTestOutput("Running tests...\n\n✅ All tests passed!");
+        const results = runLessonTests(
+            code,
+            lesson.challengeCode ?? "",
+            lesson.challengeTests
+        );
+        setTestResults(results);
+        const failedCount = results.filter((item) => !item.passed).length;
+        if (failedCount === 0) {
+            toast.success("All lesson challenge tests passed.");
+        } else {
+            toast.error(`${failedCount} test${failedCount > 1 ? "s" : ""} failed.`);
+        }
     };
 
     const handleReset = () => {
         if (result) {
             setCode(result.lesson.challengeCode ?? "");
-            setTestOutput(null);
+            setTestResults(null);
         }
     };
 
@@ -359,33 +512,126 @@ export default function LessonPage({
                                     <Code2 className="h-4 w-4 text-muted-foreground" />
                                     <span className="text-sm font-medium">Code</span>
                                 </div>
-                                {lesson.challengeCode && (
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleRunTests}
+                                        className="h-7 text-xs"
+                                    >
+                                        <Play className="mr-1 h-3 w-3" />
+                                        Run Tests
+                                    </Button>
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={async () => {
-                                            try {
-                                                await navigator.clipboard.writeText(code || lesson.challengeCode || "");
-                                                toast.success("Starter code copied to clipboard!");
-                                            } catch (err) {
-                                                toast.error("Failed to copy code. Please copy manually.");
-                                            }
-                                        }}
+                                        onClick={handleReset}
                                         className="h-7 text-xs"
                                     >
                                         <RotateCcw className="mr-1 h-3 w-3" />
-                                        Copy Starter Code
+                                        Reset
                                     </Button>
-                                )}
+                                    {lesson.challengeCode && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                                try {
+                                                    await navigator.clipboard.writeText(code || lesson.challengeCode || "");
+                                                    toast.success("Starter code copied to clipboard!");
+                                                } catch {
+                                                    toast.error("Failed to copy code. Please copy manually.");
+                                                }
+                                            }}
+                                            className="h-7 text-xs"
+                                        >
+                                            Copy Starter
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                             <div className="flex-1 overflow-hidden relative min-h-0">
                                 <CodeEditor
                                     value={code}
                                     onChange={setCode}
-                                    language="typescript"
+                                    language={editorLanguage}
                                     height="100%"
                                     className="h-full"
+                                    onValidate={(markers) => {
+                                        setEditorMarkers(
+                                            markers.filter(
+                                                (marker) => marker.severity === 8 || marker.severity === 4
+                                            )
+                                        );
+                                    }}
                                 />
+                            </div>
+                            <div className="border-t border-border p-3 space-y-3">
+                                <p className="text-xs text-muted-foreground">
+                                    Challenge status:{" "}
+                                    <span className={allTestsPassed ? "text-green-500" : "text-amber-500"}>
+                                        {allTestsPassed ? "PASS" : "NOT PASSED"}
+                                    </span>
+                                </p>
+
+                                {hasEditorIssues && (
+                                    <Card className="border-destructive/30 bg-destructive/5 p-3">
+                                        <p className="mb-2 text-xs font-semibold text-destructive">
+                                            Editor issues ({editorMarkers.length})
+                                        </p>
+                                        <div className="space-y-1">
+                                            {editorMarkers.slice(0, 4).map((marker, index) => {
+                                                const severity = formatMarkerSeverity(marker);
+                                                return (
+                                                    <p
+                                                        key={`${marker.startLineNumber}-${marker.startColumn}-${index}`}
+                                                        className="text-[11px] text-muted-foreground"
+                                                    >
+                                                        <span className={severity === "error" ? "text-destructive" : "text-amber-500"}>
+                                                            [{severity.toUpperCase()}]
+                                                        </span>{" "}
+                                                        L{marker.startLineNumber}:C{marker.startColumn} {marker.message}
+                                                    </p>
+                                                );
+                                            })}
+                                        </div>
+                                    </Card>
+                                )}
+
+                                {testResults && (
+                                    <Card className="p-3">
+                                        <p className="mb-2 text-xs font-semibold text-muted-foreground">Test results</p>
+                                        <div className="space-y-2">
+                                            {testResults.map((item) => (
+                                                <div
+                                                    key={item.name}
+                                                    className="rounded-md border border-border px-2 py-1 text-xs"
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-foreground">{item.name}</span>
+                                                        <span className={item.passed ? "text-green-500" : "text-destructive"}>
+                                                            {item.passed ? "PASS" : "FAIL"}
+                                                        </span>
+                                                    </div>
+                                                    {item.message && (
+                                                        <p className="mt-1 text-muted-foreground">{item.message}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+                                )}
+
+                                {!testResults && (
+                                    <Card className="border-border/60 bg-muted/20 p-3">
+                                        <div className="flex items-start gap-2">
+                                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 text-amber-500" />
+                                            <p className="text-xs text-muted-foreground">
+                                                Run tests to get pass/fail feedback for this challenge.
+                                            </p>
+                                        </div>
+                                    </Card>
+                                )}
                             </div>
                         </div>
                     ) : null}
