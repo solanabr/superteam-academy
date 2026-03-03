@@ -1,0 +1,21 @@
+{
+    "name": "Superteam Academy Brazil",
+    "short_name": "Superteam Academy",
+    "description": "The decentralized learning platform by Superteam Brazil. Complete courses, earn soulbound XP tokens, and receive verifiable NFT credentials — all on Solana.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#14f195",
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

@@ -1,0 +1,96 @@
+{
+    "nav": {
+        "courses": "Cursos",
+        "dashboard": "Panel",
+        "leaderboard": "Clasificación",
+        "profile": "Perfil",
+        "settings": "Configuración",
+        "connect": "Conectar Billetera",
+        "disconnect": "Desconectar"
+    },
+    "landing": {
+        "hero_title": "Aprende Solana,",
+        "hero_title_accent": "Gana Onchain",
+        "hero_subtitle": "La plataforma de aprendizaje descentralizada de Superteam Brazil. Completa cursos, gana XP onchain y recibe credenciales NFT verificables.",
+        "cta_explore": "Explorar Cursos",
+        "cta_dashboard": "Mi Panel",
+        "stat_learners": "Estudiantes Activos",
+        "stat_courses": "Cursos Disponibles",
+        "stat_xp": "XP Distribuido",
+        "stat_credentials": "Credenciales Emitidas",
+        "paths_title": "Rutas de Aprendizaje",
+        "paths_subtitle": "Domina el ecosistema Solana con rutas prácticas y verificables onchain",
+        "track_anchor": "Desarrollo Anchor",
+        "track_anchor_desc": "Crea programas Solana con el framework Anchor",
+        "track_defi": "DeFi y Protocolos",
+        "track_defi_desc": "Entiende AMMs, préstamos y protocolos DeFi",
+        "track_nft": "NFTs y Metaplex",
+        "track_nft_desc": "Mint, colecciona y construye en el ecosistema Metaplex"
+    },
+    "courses": {
+        "title": "Catálogo de Cursos",
+        "search": "Buscar cursos...",
+        "filter_all": "Todos",
+        "filter_beginner": "Principiante",
+        "filter_intermediate": "Intermedio",
+        "filter_advanced": "Avanzado",
+        "xp_reward": "Recompensa XP",
+        "lessons": "lecciones",
+        "enroll": "Inscribirse",
+        "continue": "Continuar",
+        "enrolled": "Inscrito",
+        "completed": "Completado",
+        "starting_soon": "Próximamente"
+    },
+    "lesson": {
+        "mark_complete": "Marcar como Completado",
+        "next_lesson": "Siguiente Lección",
+        "prev_lesson": "Lección Anterior",
+        "run_code": "Ejecutar Código",
+        "xp_earned": "¡XP Ganado!",
+        "lesson_complete": "¡Lección Completada!"
+    },
+    "dashboard": {
+        "title": "Panel",
+        "xp_balance": "Saldo XP",
+        "level": "Nivel",
+        "streak": "Racha",
+        "days": "días",
+        "courses_in_progress": "Cursos en Progreso",
+        "recent_activity": "Actividad Reciente",
+        "achievements": "Logros"
+    },
+    "leaderboard": {
+        "title": "Clasificación Global",
+        "global": "Global",
+        "weekly": "Semanal",
+        "rank": "Posición",
+        "wallet": "Billetera",
+        "xp": "XP Total",
+        "level": "Nivel",
+        "streak": "Racha"
+    },
+    "settings": {
+        "title": "Configuración",
+        "profile": "Perfil",
+        "username": "Nombre de Usuario",
+        "bio": "Bio",
+        "wallet": "Billetera",
+        "connected": "Conectada",
+        "google": "Cuenta Google",
+        "github": "Cuenta GitHub",
+        "link": "Vincular",
+        "unlink": "Desvincular",
+        "save": "Guardar Cambios"
+    },
+    "certificate": {
+        "title": "Certificado Verificable",
+        "issued_to": "Emitido A",
+        "course": "Curso",
+        "track": "Ruta",
+        "xp": "XP Total",
+        "verify_onchain": "Verificar Onchain",
+        "share": "Compartir",
+        "download": "Descargar"
+    }
+}

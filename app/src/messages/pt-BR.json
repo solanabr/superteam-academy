@@ -1,0 +1,96 @@
+{
+    "nav": {
+        "courses": "Cursos",
+        "dashboard": "Painel",
+        "leaderboard": "Ranking",
+        "profile": "Perfil",
+        "settings": "Configurações",
+        "connect": "Conectar Carteira",
+        "disconnect": "Desconectar"
+    },
+    "landing": {
+        "hero_title": "Aprenda Solana,",
+        "hero_title_accent": "Ganhe na Cadeia",
+        "hero_subtitle": "A plataforma de aprendizado descentralizada do Superteam Brazil. Complete cursos, ganhe XP onchain e receba credenciais NFT verificáveis.",
+        "cta_explore": "Explorar Cursos",
+        "cta_dashboard": "Meu Painel",
+        "stat_learners": "Aprendizes Ativos",
+        "stat_courses": "Cursos Disponíveis",
+        "stat_xp": "XP Distribuído",
+        "stat_credentials": "Credenciais Emitidas",
+        "paths_title": "Trilhas de Aprendizado",
+        "paths_subtitle": "Domine o ecossistema Solana com trilhas práticas e verificáveis onchain",
+        "track_anchor": "Desenvolvimento Anchor",
+        "track_anchor_desc": "Crie programas Solana com o framework Anchor",
+        "track_defi": "DeFi & Protocolos",
+        "track_defi_desc": "Entenda AMMs, empréstimos e protocolos DeFi",
+        "track_nft": "NFTs & Metaplex",
+        "track_nft_desc": "Mint, colecione e construa no ecossistema Metaplex"
+    },
+    "courses": {
+        "title": "Catálogo de Cursos",
+        "search": "Buscar cursos...",
+        "filter_all": "Todos",
+        "filter_beginner": "Iniciante",
+        "filter_intermediate": "Intermediário",
+        "filter_advanced": "Avançado",
+        "xp_reward": "XP de Recompensa",
+        "lessons": "aulas",
+        "enroll": "Matricular-se",
+        "continue": "Continuar",
+        "enrolled": "Matriculado",
+        "completed": "Concluído",
+        "starting_soon": "Em Breve"
+    },
+    "lesson": {
+        "mark_complete": "Marcar como Concluído",
+        "next_lesson": "Próxima Aula",
+        "prev_lesson": "Aula Anterior",
+        "run_code": "Executar Código",
+        "xp_earned": "XP Ganho!",
+        "lesson_complete": "Aula Concluída!"
+    },
+    "dashboard": {
+        "title": "Painel",
+        "xp_balance": "Saldo XP",
+        "level": "Nível",
+        "streak": "Sequência",
+        "days": "dias",
+        "courses_in_progress": "Cursos em Andamento",
+        "recent_activity": "Atividade Recente",
+        "achievements": "Conquistas"
+    },
+    "leaderboard": {
+        "title": "Ranking Global",
+        "global": "Global",
+        "weekly": "Semanal",
+        "rank": "Posição",
+        "wallet": "Carteira",
+        "xp": "XP Total",
+        "level": "Nível",
+        "streak": "Sequência"
+    },
+    "settings": {
+        "title": "Configurações",
+        "profile": "Perfil",
+        "username": "Nome de Usuário",
+        "bio": "Bio",
+        "wallet": "Carteira",
+        "connected": "Conectada",
+        "google": "Conta Google",
+        "github": "Conta GitHub",
+        "link": "Conectar",
+        "unlink": "Desconectar",
+        "save": "Salvar Alterações"
+    },
+    "certificate": {
+        "title": "Certificado Verificável",
+        "issued_to": "Emitido Para",
+        "course": "Curso",
+        "track": "Trilha",
+        "xp": "XP Total",
+        "verify_onchain": "Verificar Onchain",
+        "share": "Compartilhar",
+        "download": "Baixar"
+    }
+}
