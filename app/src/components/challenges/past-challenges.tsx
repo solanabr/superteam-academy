@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Lock } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Lock, ChevronDown, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  getRecentChallenges,
+  getAllPastChallenges,
   loadCompletions,
   type DailyChallenge,
   type DailyChallengeCompletion,
@@ -25,47 +27,48 @@ const DIFFICULTY_COLORS: Record<DailyChallenge["difficulty"], string> = {
   advanced: "text-red-400",
 };
 
+const PAGE_SIZE = 6;
+
 interface PastChallengesProps {
   headingLabel: string;
   completedLabel: string;
   xpLabel: string;
   lockedLabel: string;
+  showMoreLabel?: string;
+  remainingLabel?: string;
+  browseAllLabel?: string;
 }
 
-/** Displays the last 6 daily challenges with completion status. */
 export function PastChallenges({
   headingLabel,
   completedLabel,
   xpLabel,
   lockedLabel,
+  showMoreLabel = "Show More",
+  remainingLabel = "remaining",
+  browseAllLabel,
 }: PastChallengesProps) {
-  const [now] = useState(() => Date.now());
-  const [challenges] = useState<DailyChallenge[]>(() => getRecentChallenges(6));
+  const [allChallenges] = useState(() => getAllPastChallenges());
   const [completions] = useState<DailyChallengeCompletion[]>(() => loadCompletions());
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  if (challenges.length === 0) return null;
+  if (allChallenges.length === 0) return null;
 
-  // Build date keys for the last 6 days
-  const today = Math.floor(now / 86_400_000);
-  const dateKeys = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date((today - i - 1) * 86_400_000);
-    return d.toISOString().slice(0, 10);
-  });
-
+  const visible = allChallenges.slice(0, visibleCount);
+  const remaining = allChallenges.length - visibleCount;
   const completionMap = new Map(completions.map((c) => [c.date, c]));
 
   return (
     <div>
       <h2 className="mb-4 text-xl font-semibold">{headingLabel}</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {challenges.map((challenge, i) => {
-          const dateKey = dateKeys[i];
-          const completion = completionMap.get(dateKey);
+        {visible.map(({ challenge, date }) => {
+          const completion = completionMap.get(date);
           const isDone = !!completion;
 
           return (
             <div
-              key={`${challenge.id}-${dateKey}`}
+              key={`${challenge.id}-${date}`}
               className={cn(
                 "glass rounded-xl p-4 transition-all",
                 isDone
@@ -74,7 +77,7 @@ export function PastChallenges({
               )}
             >
               <div className="mb-2 flex items-start justify-between gap-2">
-                <span className="text-xs text-muted-foreground">{dateKey}</span>
+                <span className="text-xs text-muted-foreground">{date}</span>
                 {isDone ? (
                   <div className="flex items-center gap-1 text-xs text-emerald-400">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -119,6 +122,28 @@ export function PastChallenges({
             </div>
           );
         })}
+      </div>
+
+      {/* Single action button — swaps after first expand */}
+      <div className="mt-4 flex justify-center">
+        {visibleCount <= PAGE_SIZE && remaining > 0 ? (
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          >
+            <ChevronDown className="h-4 w-4" />
+            {showMoreLabel} ({remaining} {remainingLabel})
+          </Button>
+        ) : browseAllLabel && visibleCount > PAGE_SIZE ? (
+          <Link
+            href="/challenges/browse"
+            className="group flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+          >
+            {browseAllLabel}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        ) : null}
       </div>
     </div>
   );

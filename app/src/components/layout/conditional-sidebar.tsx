@@ -9,6 +9,8 @@ const SIDEBAR_ROUTES = new Set([
   "/courses",
   "/dashboard",
   "/challenges",
+  "/challenges/browse",
+  "/challenges/today",
   "/leaderboard",
   "/discussions",
   "/notifications",
