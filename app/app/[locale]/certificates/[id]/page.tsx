@@ -31,9 +31,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ id
           </div>
         </div>
         <div className="flex gap-3 justify-center">
-          <Button asChild variant="outline">
-            <a href={"https://explorer.solana.com/address/" + id + "?cluster=devnet"} target="_blank">View on Explorer</a>
-          </Button>
+          <a href={"https://explorer.solana.com/address/" + id + "?cluster=devnet"} target="_blank" className="inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">View on Explorer</a>
           <Button>Share Certificate</Button>
         </div>
       </div>
