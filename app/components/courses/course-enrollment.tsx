@@ -6,7 +6,6 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { type PublicKey, Transaction } from "@solana/web3.js";
 import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import { LoginModal } from "@/components/auth/login-modal";
 import { useAuth } from "@/contexts/auth-context";
 import { getProgramId } from "@/lib/academy";
 import { useRouter } from "@superteam-academy/i18n/navigation";
+import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
 
 interface CourseEnrollmentProps {
 	course: {
@@ -34,6 +34,7 @@ interface CourseEnrollmentProps {
 export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const t = useTranslations("courses");
 	const { wallet, isWalletConnected, isWalletVerified, verifyWallet } = useAuth();
+	const { enrolled } = useOnchainEnrollment(course.id, course.enrolled);
 	const { connection } = useConnection();
 	const router = useRouter();
 	const [loginOpen, setLoginOpen] = useState(false);
@@ -45,34 +46,32 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const prerequisitesMet = course.prerequisites
 		? course.prerequisites.every((p) => p.completed)
 		: true;
-	const canTransact = isWalletVerified && wallet.publicKey && wallet.sendTransaction;
-	const canEnroll = prerequisitesMet && Boolean(canTransact);
-	const canClose = Boolean(canTransact);
-
-	const handleOpenLoginModal = () => {
-		setLoginOpen(true);
-	};
-
-	const handleVerifyWallet = async () => {
-		setIsVerifying(true);
-		setAuthError(null);
-		try {
-			await verifyWallet();
-		} catch (error) {
-			console.error("Wallet verification failed", error);
-			setAuthError(t("enroll.verificationFailed"));
-		} finally {
-			setIsVerifying(false);
-		}
-	};
+	const canClose = isWalletVerified && wallet.publicKey && wallet.sendTransaction;
 
 	const handleEnrollment = async () => {
 		if (!prerequisitesMet) return;
-		if (!wallet.publicKey || !wallet.sendTransaction) return;
-		if (!isWalletVerified) {
-			setAuthError(t("enroll.verifyWalletPrompt"));
+
+		if (!isWalletConnected) {
+			setLoginOpen(true);
 			return;
 		}
+
+		if (!isWalletVerified) {
+			setIsVerifying(true);
+			setAuthError(null);
+			try {
+				await verifyWallet();
+			} catch (error) {
+				console.error("Wallet verification failed", error);
+				setAuthError(t("enroll.verificationFailed"));
+				setIsVerifying(false);
+				return;
+			}
+			setIsVerifying(false);
+		}
+
+		// Step 3: Send enrollment transaction
+		if (!wallet.publicKey || !wallet.sendTransaction) return;
 
 		setIsEnrolling(true);
 		try {
@@ -130,7 +129,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		}
 	};
 
-	if (course.enrolled) {
+	if (enrolled) {
 		return (
 			<div className="space-y-4">
 				{authError && (
@@ -179,20 +178,6 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				</Alert>
 			)}
 
-			{!isWalletConnected && (
-				<Alert>
-					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>{t("enroll.walletRequired")}</AlertDescription>
-				</Alert>
-			)}
-
-			{isWalletConnected && !isWalletVerified && (
-				<Alert>
-					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>{t("enroll.verifyWalletPrompt")}</AlertDescription>
-				</Alert>
-			)}
-
 			{!prerequisitesMet && (
 				<Alert>
 					<AlertCircle className="h-4 w-4" />
@@ -200,24 +185,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				</Alert>
 			)}
 
-			{!isWalletConnected && (
-				<Button className="w-full" size="lg" onClick={handleOpenLoginModal}>
-					{t("enroll.loginSignup")}
-				</Button>
-			)}
-
-			{isWalletConnected && !isWalletVerified && (
-				<Button
-					className="w-full"
-					size="lg"
-					onClick={handleVerifyWallet}
-					disabled={isVerifying}
-				>
-					{isVerifying ? t("enroll.processing") : t("enroll.verifyWallet")}
-				</Button>
-			)}
-
-			{isWalletVerified && course.price === 0 ? (
+			{course.price === 0 ? (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
 						<div className="text-3xl font-bold text-green-600 mb-2">
@@ -230,12 +198,16 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						className="w-full"
 						size="lg"
 						onClick={handleEnrollment}
-						disabled={!canEnroll || isEnrolling}
+						disabled={!prerequisitesMet || isEnrolling || isVerifying}
 					>
-						{isEnrolling ? t("enroll.enrolling") : t("enroll.enrollFree")}
+						{isEnrolling
+							? t("enroll.enrolling")
+							: isVerifying
+								? t("enroll.processing")
+								: t("enroll.enrollFree")}
 					</Button>
 				</div>
-			) : isWalletVerified ? (
+			) : (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
 						<div className="text-3xl font-bold mb-2">${course.price}</div>
@@ -261,14 +233,16 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						className="w-full"
 						size="lg"
 						onClick={handleEnrollment}
-						disabled={!canEnroll || isEnrolling}
+						disabled={!prerequisitesMet || isEnrolling || isVerifying}
 					>
 						{isEnrolling
 							? t("enroll.processing")
-							: t("enroll.enrollFor", { price: course.price })}
+							: isVerifying
+								? t("enroll.processing")
+								: t("enroll.enrollFor", { price: course.price })}
 					</Button>
 				</div>
-			) : null}
+			)}
 
 			<div className="text-xs text-muted-foreground text-center space-y-1">
 				<p>{t("enroll.moneyBack")}</p>

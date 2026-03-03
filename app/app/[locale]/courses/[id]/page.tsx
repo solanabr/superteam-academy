@@ -2,12 +2,10 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft, Star, BookOpen, Zap } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { CourseHero } from "@/components/courses/course-hero";
 import { CourseDetailTabs } from "@/components/courses/course-detail-tabs";
 import { CoursePrerequisites } from "@/components/courses/course-prerequisites";
@@ -90,7 +88,7 @@ async function CourseDetailContent({
 
 			<CourseHero course={course} />
 
-			<div className="container mx-auto px-4">
+			<div className="container mx-auto px-4 pb-4">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					<div className="lg:col-span-2 space-y-8">
 						<CourseDetailTabs

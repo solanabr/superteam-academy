@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { LoginModal } from "@/components/auth/login-modal";
 import { ShareMenu } from "@/components/courses/share-menu";
+import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
 
 interface CourseHeroProps {
 	course: {
@@ -39,7 +40,8 @@ interface CourseHeroProps {
 
 export function CourseHero({ course }: CourseHeroProps) {
 	const t = useTranslations("courses");
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, isWalletConnected } = useAuth();
+	const { enrolled } = useOnchainEnrollment(course.id, course.enrolled);
 	const [isSaved, setIsSaved] = useState(false);
 	const [loginOpen, setLoginOpen] = useState(false);
 
@@ -156,7 +158,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 						</div>
 
 						<div className="flex items-center gap-3 pt-4">
-							{course.enrolled ? (
+							{enrolled ? (
 								<Button size="lg" asChild={true}>
 									<Link href={`/courses/${course.id}/lessons/1-1`}>
 										{t("hero.continueLearning")}
@@ -166,7 +168,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 								<Button
 									size="lg"
 									onClick={() => {
-										if (isAuthenticated) {
+										if (isAuthenticated || isWalletConnected) {
 											const enrollSection = document.getElementById("enroll");
 											if (enrollSection) {
 												enrollSection.scrollIntoView({

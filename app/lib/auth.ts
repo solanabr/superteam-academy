@@ -71,5 +71,19 @@ export async function getLinkedWallet() {
 
 	if (!session) return undefined;
 
-	return walletFromEmail(session.user.email);
+	// Wallet-only sessions have the pubkey encoded in the email
+	const fromEmail = walletFromEmail(session.user.email);
+	if (fromEmail) return fromEmail;
+
+	// OAuth users who linked a wallet have it stored on the user record
+	const stored = (session.user as Record<string, unknown>).walletAddress as string | undefined;
+	if (stored) {
+		try {
+			return new PublicKey(stored).toBase58();
+		} catch {
+			return undefined;
+		}
+	}
+
+	return undefined;
 }
