@@ -311,7 +311,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-display font-black text-xl uppercase mb-2 group-hover:text-[#9945ff] transition-colors">
                 {path.title}
-              </h3>
+              </h2>
               <p className="text-[11px] font-mono text-[#444] mb-5">{path.desc}</p>
               <div className="space-y-2">
                 {path.steps.map((step, si) => (
@@ -360,7 +360,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
                   {feature.title}
-                </h3>
+                </h2>
                 <p className="text-xs font-mono text-[#444] leading-relaxed">
                   {feature.desc}
                 </p>
@@ -414,7 +414,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
                       {course.title}
-                    </h3>
+                    </h2>
                     <p className="text-xs font-mono text-[#444] line-clamp-2 mb-4 flex-1 leading-relaxed">
                       {course.description}
                     </p>
@@ -696,3 +696,4 @@ export default function HomePage() {
     </div>
   );
 }
+
