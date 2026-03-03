@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { Syne, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { AppShell } from "./shell";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -130,6 +131,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <AppShell>{children}</AppShell>
+        <MobileBottomNav />
         <Analytics />
         <SpeedInsights />
       </body>
