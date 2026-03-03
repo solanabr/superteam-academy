@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
             if (enrollments.length === 0) return [];
 
-            const courseIds = enrollments.map((e) => e.courseId);
+            const courseIds = enrollments.map((e: { courseId: string }) => e.courseId);
 
             // Fetch course metadata from Sanity (title, slug, track, difficulty, duration)
             const courses = await serverClient.fetch<

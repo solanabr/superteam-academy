@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
         if (enrollments.length === 0) return [];
 
-        const courseIds = enrollments.map(e => e.courseId);
+        const courseIds = enrollments.map((e: { courseId: string }) => e.courseId);
         const courses = await serverClient.fetch(
           `*[_type == "course" && _id in $ids] {
             _id,
