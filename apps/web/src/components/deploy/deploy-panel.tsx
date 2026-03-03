@@ -661,10 +661,7 @@ export function DeployPanel({
                 </span>
                 <span className="font-mono font-semibold">{chunkPercent}%</span>
               </div>
-              <Progress
-                value={chunkPercent}
-                className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-solana-purple [&>div]:to-solana-green"
-              />
+              <Progress value={chunkPercent} size="thin" variant="primary" />
               {estimatedTimeRemaining !== null &&
                 estimatedTimeRemaining > 0 && (
                   <p className="text-right text-[10px] text-muted-foreground">
