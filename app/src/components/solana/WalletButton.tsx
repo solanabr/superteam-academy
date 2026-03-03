@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Copy, LogOut, ChevronDown, LayoutDashboard, User, Settings } from "lucide-react";
+import { Copy, LogOut, ChevronDown, LayoutDashboard, User, Settings, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -108,6 +108,12 @@ export function WalletButton({ className }: { className?: string }) {
           <Link href="/profile">
             <User className="mr-2 h-3.5 w-3.5" />
             Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
+          <Link href="/certificates">
+            <Award className="mr-2 h-3.5 w-3.5" />
+            Certificates
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">

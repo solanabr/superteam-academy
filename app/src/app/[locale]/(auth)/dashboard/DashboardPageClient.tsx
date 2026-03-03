@@ -329,25 +329,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Credentials Card */}
-        <div className="bg-card border border-border rounded p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Award className="h-4 w-4 text-[#9945FF]" />
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              Credentials
-            </span>
-          </div>
-          {credsLoading ? (
-            <div className="h-8 bg-elevated rounded animate-pulse" />
-          ) : (
-            <div className="font-mono text-3xl font-bold text-foreground">
-              {credentials.length}
-              <span className="text-sm text-muted-foreground ml-1">NFTs</span>
+        <Link href="/certificates" className="block">
+          <div className="bg-card border border-border rounded p-5 hover:border-[#9945FF]/40 transition-colors h-full">
+            <div className="flex items-center gap-2 mb-3">
+              <Award className="h-4 w-4 text-[#9945FF]" />
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                Credentials
+              </span>
             </div>
-          )}
-          <p className="text-[10px] text-muted-foreground font-mono mt-2">
-            Soulbound on Solana
-          </p>
-        </div>
+            {credsLoading ? (
+              <div className="h-8 bg-elevated rounded animate-pulse" />
+            ) : (
+              <div className="font-mono text-3xl font-bold text-foreground">
+                {credentials.length}
+                <span className="text-sm text-muted-foreground ml-1">NFTs</span>
+              </div>
+            )}
+            <p className="text-[10px] text-[#9945FF]/70 font-mono mt-2">
+              View certificates →
+            </p>
+          </div>
+        </Link>
 
         {/* Activity summary */}
         <div className="bg-card border border-border rounded p-5">
