@@ -11,6 +11,7 @@ import { Footer } from "@/components/layout/Footer";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import "@solana/wallet-adapter-react-ui/styles.css";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Superteam Academy – Learn Solana Development",
@@ -27,6 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body>
         <GoogleAnalytics gaId="G-FHKG5DZED4" />
+        <Script id="clarity" strategy="afterInteractive">
+  {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","vq2qbe985x");`}
+</Script>
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
