@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "courses": "Cursos",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "paths": "Rutas de Aprendizaje",
+    "challenges": "Desafíos",
+    "login": "Iniciar Sesión"
+  },
+  "hero": {
+    "badge": "La Plataforma #1 de Educación Solana",
+    "h1a": "Tu Camino para",
+    "h1b": "Construir",
+    "h1c": "en Solana",
+    "sub": "Desde fundamentos de blockchain hasta desplegar programas en producción — rutas estructuradas, desafíos en vivo y una comunidad global de más de 34,000 constructores.",
+    "cta1": "Comenzar a Aprender →",
+    "cta2": "Explorar Cursos",
+    "liveCount": "aprendiendo ahora",
+    "trending": "Ruta Tendencia",
+    "cardTitle": "Construye un DEX en Solana",
+    "cardDesc": "Implementa un AMM con pools de liquidez concentrada desde cero usando Anchor.",
+    "progress": "Progreso",
+    "xpEarned": "Recién ganado",
+    "streak": "Racha de 14 días",
+    "streakSub": "¡Sigue así!",
+    "modules": ["Matemáticas del AMM", "Cuentas del Pool", "Instrucción de Swap", "Cálculo de Comisiones"],
+    "activeLabel": "Activo"
+  },
+  "stats": ["Constructores Inscritos", "Cursos y Módulos", "Tasa de Finalización", "Países Representados"],
+  "partners": "Con la confianza de equipos en",
+  "paths": {
+    "sectionLabel": "Rutas de Aprendizaje",
+    "sectionTitle": "Rutas estructuradas hacia\nel dominio real de Solana",
+    "sectionSub": "No solo videos — cada ruta combina teoría, proyectos prácticos y desafíos de código en vivo.",
+    "exploreAll": "Explorar Todos los Cursos →",
+    "curriculum": "Currículo",
+    "pathProgress": "Progreso de la ruta",
+    "duration": "Duración",
+    "lessons": "Lecciones",
+    "xpReward": "Recompensa XP",
+    "level": "Nivel",
+    "begin": "Comenzar Ruta",
+    "cont": "Continuar Ruta",
+    "cards": [
+      {
+        "tag": "Principiante",
+        "title": "Fundamentos de Solana",
+        "desc": "Domina la arquitectura principal — cuentas, programas, PDAs y el runtime Sealevel. La base sobre la que todo lo demás se construye.",
+        "modules": ["Fundamentos de Blockchain", "Arquitectura de Solana", "Wallets y Claves", "Modelo de Cuentas", "Tu Primera Transacción"]
+      },
+      {
+        "tag": "Intermedio",
+        "title": "Construye Programas On-chain",
+        "desc": "Escribe, despliega y prueba programas Solana en Rust usando el framework Anchor. De validador local a mainnet.",
+        "modules": ["Rust para Solana", "Framework Anchor", "Gestión de Estado", "CPIs y Composabilidad", "Pruebas y Despliegue"]
+      },
+      {
+        "tag": "Avanzado",
+        "title": "DeFi y Programas de Tokens",
+        "desc": "Crea tokens SPL, pools de liquidez e integra con los principales protocolos DeFi de Solana. Construye la infraestructura que otros usan.",
+        "modules": ["Estándar SPL Token", "Metadatos de Tokens", "Mecánicas AMM", "Integración de Protocolos", "Auditoría de Seguridad"]
+      }
+    ]
+  },
+  "features": {
+    "sectionLabel": "Características de la Plataforma",
+    "sectionTitle": "Construido para builders,\npor builders",
+    "sectionSub": "Cada función está diseñada en torno a una pregunta: qué hace que la gente realmente lance proyectos en Solana?",
+    "items": [
+      { "title": "Rutas de Aprendizaje Estructuradas", "desc": "Secuencias curadas que te llevan de cero a desplegar en mainnet. Sin adivinanzas — un camino claro de concepto a código lanzado.", "meta": "120+ módulos" },
+      { "title": "Credenciales On-chain", "desc": "Obtén certificados verificables acuñados como NFTs de Solana. Tus logros viven permanentemente on-chain — no en un PDF falsificable.", "meta": "Verificado en Solana" },
+      { "title": "Desafíos de Código en Vivo", "desc": "Desafíos semanales ligados a problemas reales del ecosistema. Entrega código funcional, recibe revisiones de contribuidores top.", "meta": "Nuevo desafío semanal" },
+      { "title": "Comunidad Superteam", "desc": "Acceso directo a más de 8,000 builders, fundadores y contribuidores de Solana en más de 35 países. Encuentra colaboradores y oportunidades.", "meta": "35+ países" },
+      { "title": "Talleres con Expertos", "desc": "Sesiones en vivo con contribuidores del core de Solana, ingenieros de protocolos y fundadores que han lanzado. Historias reales.", "meta": "En vivo cada semana" },
+      { "title": "Analíticas de Progreso", "desc": "Un panel personal rastrea tu XP, racha, gráfico de habilidades y velocidad de cursos — para que siempre sepas dónde estás.", "meta": "Gráfico completo" }
+    ]
+  },
+  "testimonials": {
+    "sectionLabel": "Voces de la Comunidad",
+    "sectionTitle": "Builders que lanzaron\ntras Superteam Academy",
+    "ratingBase": "Basado en 2,841 reseñas",
+    "items": [
+      { "quote": "Hace seis meses no tenía experiencia en blockchain. Tras completar la ruta de Fundamentos conseguí un puesto a tiempo completo en una startup nativa de Solana. La calidad aquí no tiene rival." },
+      { "quote": "El curso de Anchor es el recurso más completo que he encontrado — mejor que la documentación oficial. Los desafíos en vivo me empujaron a lanzar de verdad, no solo a ver videos." },
+      { "quote": "Superteam Academy me conectó con las personas exactas que se convirtieron en mis cofundadores. La comunidad sola vale 10 veces el costo del curso." }
+    ]
+  },
+  "cta": {
+    "overline": "Únete a más de 34,000 Builders",
+    "title": "La forma más rápida de pasar\nde curioso a lanzar proyectos.",
+    "sub": "Sin paywalls. Sin pruebas. Sin tarjeta de crédito — nunca. Solo construye.",
+    "btn1": "Únete Gratis →",
+    "btn2": "Ver Todos los Cursos"
+  },
+  "footer": {
+    "tagline": "El camino más rápido de curioso a constructor en Solana. Aprendizaje estructurado, desafíos reales, comunidad global.",
+    "newsletterLabel": "Resumen semanal para builders",
+    "newsletterPlaceholder": "tu@email.com",
+    "newsletterBtn": "Suscribirse",
+    "subscribedMsg": "¡Ya estás dentro! Bienvenido al resumen.",
+    "status": "Todos los sistemas operativos",
+    "copyright": "© 2025 Superteam Academy. Construido para el ecosistema Solana.",
+    "linkHeadings": {
+      "Learn": "Aprender",
+      "Community": "Comunidad",
+      "Company": "Empresa",
+      "Support": "Soporte"
+    },
+    "links": {
+      "Learn": ["Todos los Cursos", "Rutas de Aprendizaje", "Desafíos", "Talleres", "Certificaciones"],
+      "Community": ["Discord", "Foro", "Tabla de Líderes", "Superteam DAO", "Eventos"],
+      "Company": ["Acerca de", "Blog", "Empleos", "Kit de Prensa", "Recursos de Marca"],
+      "Support": ["Centro de Ayuda", "Preguntas Frecuentes", "Contacto", "Privacidad", "Términos"]
+    }
+  }
+}

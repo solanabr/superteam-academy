@@ -1,0 +1,339 @@
+/* Design tokens and keyframes for Landing A – use with Tailwind utilities */
+/* Fonts: Playfair Display & DM Sans loaded via next/font in layout.tsx */
+
+/* :root {
+  --landing-hero-bg: #0d1f12;
+  --cream: rgb(247, 234, 203);
+  --cream-dark: rgb(235, 220, 195);
+  --primary-hover: #00a558;
+  --mint: #52dda0;
+  --hero-bg: #0d1f12;
+  --charcoal: #1b231d;
+} */
+
+:root {
+  --hero-bg: #0d1f12;
+}
+
+.font-display {
+  font-family: var(--font-playfair), 'Playfair Display', serif;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-animate-float-slow,
+  .landing-animate-float-fast,
+  .landing-animate-pulse-dot,
+  .landing-animate-marquee,
+  .landing-aurora-1,
+  .landing-aurora-2,
+  .landing-aurora-3,
+  .landing-beam-1,
+  .landing-beam-2,
+  .landing-scan,
+  .landing-card-border,
+  .landing-particle {
+    animation: none !important;
+  }
+  .landing-animate-fade-up,
+  .landing-animate-fade-up-d1,
+  .landing-animate-fade-up-d2,
+  .landing-animate-fade-up-d3,
+  .landing-animate-fade-up-d4 {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(3deg);
+  }
+}
+@keyframes float-mid {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+@keyframes float-fast {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.04);
+  }
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.5);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+@keyframes aurora-1 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.55;
+  }
+  33% {
+    transform: translate(4%, -6%) scale(1.08);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.95);
+    opacity: 0.5;
+  }
+}
+@keyframes aurora-2 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1) rotate(0deg);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translate(-6%, 5%) scale(1.12) rotate(5deg);
+    opacity: 0.6;
+  }
+  70% {
+    transform: translate(5%, -3%) scale(0.92) rotate(-3deg);
+    opacity: 0.35;
+  }
+}
+@keyframes aurora-3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(3%, 6%) scale(1.15);
+    opacity: 0.5;
+  }
+}
+@keyframes beam-drift {
+  0%,
+  100% {
+    opacity: 0.12;
+    transform: skewX(-12deg) translateX(0);
+  }
+  50% {
+    opacity: 0.22;
+    transform: skewX(-12deg) translateX(12px);
+  }
+}
+@keyframes beam-drift-2 {
+  0%,
+  100% {
+    opacity: 0.08;
+    transform: skewX(-18deg) translateX(0);
+  }
+  50% {
+    opacity: 0.16;
+    transform: skewX(-18deg) translateX(-8px);
+  }
+}
+@keyframes particle-rise {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-120px) translateX(var(--dx, 10px));
+    opacity: 0;
+  }
+}
+@keyframes scan-line {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 0.6;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+@keyframes border-glow {
+  0%,
+  100% {
+    border-color: rgba(0, 140, 76, 0.25);
+  }
+  50% {
+    border-color: rgba(82, 221, 160, 0.5);
+  }
+}
+
+.landing-animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+.landing-animate-float-fast {
+  animation: float-fast 3.5s ease-in-out infinite;
+}
+.landing-animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.landing-animate-fade-up {
+  animation: fade-up 0.7s ease both;
+}
+.landing-animate-fade-up-d1 {
+  animation: fade-up 0.7s 0.1s ease both;
+}
+.landing-animate-fade-up-d2 {
+  animation: fade-up 0.7s 0.2s ease both;
+}
+.landing-animate-fade-up-d3 {
+  animation: fade-up 0.7s 0.35s ease both;
+}
+.landing-animate-fade-up-d4 {
+  animation: fade-up 0.7s 0.5s ease both;
+}
+.landing-animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+.landing-aurora-1 {
+  animation: aurora-1 12s ease-in-out infinite;
+}
+.landing-aurora-2 {
+  animation: aurora-2 16s ease-in-out infinite;
+}
+.landing-aurora-3 {
+  animation: aurora-3 10s ease-in-out infinite;
+}
+.landing-beam-1 {
+  animation: beam-drift 8s ease-in-out infinite;
+}
+.landing-beam-2 {
+  animation: beam-drift-2 11s ease-in-out infinite;
+}
+.landing-scan {
+  animation: scan-line 6s linear infinite;
+}
+.landing-card-border {
+  animation: border-glow 4s ease-in-out infinite;
+}
+
+.landing-hero-bg {
+  background: var(--hero-bg);
+}
+
+.landing-grid-lines {
+  background-image:
+    linear-gradient(rgba(247, 234, 203, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(247, 234, 203, 0.028) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.landing-glass-card {
+  background: rgba(247, 234, 203, 0.07);
+  border: 1px solid rgba(247, 234, 203, 0.13);
+  backdrop-filter: blur(14px);
+}
+
+.landing-card-hover {
+  transition: all 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+.landing-card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 56px rgba(27, 35, 29, 0.14);
+  border-color: hsl(var(--primary));
+}
+
+.landing-noise-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+.landing-section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(27, 35, 29, 0.12) 30%,
+    rgba(27, 35, 29, 0.12) 70%,
+    transparent
+  );
+}
+
+.landing-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.landing-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--cream));
+}
+.landing-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--secondary));
+  border-radius: 3px;
+}
+
+.landing-particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  animation: particle-rise 5s ease-in-out infinite;
+}
+
+section[id] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
