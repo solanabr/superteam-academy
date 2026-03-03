@@ -40,6 +40,7 @@
         "notLinked": "Not linked"
     },
     "nav": {
+        "home": "Inicio",
         "courses": "Cursos",
         "dashboard": "Panel",
         "leaderboard": "Clasificación",
@@ -92,6 +93,7 @@
         "connectAndLink": "Conectar y Vincular",
         "linkingWallet": "Vinculando...",
         "skipForNow": "Omitir por ahora",
+        "profileCreated": "¡Perfil creado exitosamente!",
         "walletNote": "Para acuñar credenciales on-chain como certificaciones o XP, necesitarás vincular una billetera. Puedes hacerlo más tarde desde la configuración del perfil."
     },
     "landing": {

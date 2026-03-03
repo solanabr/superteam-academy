@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { goeyToast } from 'goey-toast';
 
@@ -22,18 +21,28 @@ type Step = 'profile' | 'wallet-link';
  * All users are assigned the 'student' role automatically.
  */
 export default function OnboardingPage() {
-    const { data: session } = useSession();
     const t = useTranslations('onboarding');
     const [step, setStep] = useState<Step>('profile');
     const [submitting, setSubmitting] = useState(false);
 
-    // Determine if user signed up via wallet (no wallet-link step needed)
-    // Primary: check the auth provider stored in JWT (most reliable)
-    // Fallback: check walletAddress or linked_accounts for robustness
-    const isWalletUser =
-        session?.provider === 'wallet' ||
-        !!(session?.walletAddress) ||
-        (session?.linkedAccounts ?? []).some((a) => a.provider === 'wallet');
+    // Authoritative wallet-user check from the DB via /api/auth/linked-accounts.
+    // Session-based checks (useSession → provider/walletAddress/linkedAccounts)
+    // are unreliable with NextAuth v4's CredentialsProvider, so we query the
+    // database-backed endpoint instead. `null` means still loading.
+    const [isWalletUser, setIsWalletUser] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch('/api/auth/linked-accounts')
+            .then((r) => r.json())
+            .then((data) => {
+                if (!cancelled) setIsWalletUser(!!data.hasWallet);
+            })
+            .catch(() => {
+                if (!cancelled) setIsWalletUser(false);
+            });
+        return () => { cancelled = true; };
+    }, []);
 
     // Calculate total steps and current index
     const steps: Step[] = isWalletUser ? ['profile'] : ['profile', 'wallet-link'];
@@ -74,7 +83,19 @@ export default function OnboardingPage() {
 
             goeyToast.success(t('profileCreated') || 'Profile created successfully!');
 
-            if (isWalletUser) {
+            // Definitive wallet check: query the DB-backed endpoint.
+            // This is the authoritative source — createUserWithWallet()
+            // always creates a linked_accounts row with provider='wallet'.
+            let walletUser = isWalletUser;
+            if (!walletUser) {
+                try {
+                    const res = await fetch('/api/auth/linked-accounts');
+                    const linked = await res.json();
+                    walletUser = !!linked.hasWallet;
+                } catch { /* fall through with false */ }
+            }
+
+            if (walletUser) {
                 sessionStorage.setItem('auth_success', '1');
                 window.location.href = '/api/auth/session/refresh?redirect=/dashboard';
             } else {

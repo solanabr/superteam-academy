@@ -40,6 +40,7 @@
         "notLinked": "Not linked"
     },
     "nav": {
+        "home": "Home",
         "courses": "Courses",
         "dashboard": "Dashboard",
         "leaderboard": "Leaderboard",
@@ -92,6 +93,7 @@
         "connectAndLink": "Connect & Link Wallet",
         "linkingWallet": "Linking...",
         "skipForNow": "Skip for now",
+        "profileCreated": "Profile created successfully!",
         "walletNote": "To mint on-chain credentials like certifications or XP, you'll need to link a wallet. You can do this later from profile settings."
     },
     "landing": {

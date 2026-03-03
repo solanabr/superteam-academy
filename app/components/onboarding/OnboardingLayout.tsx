@@ -49,7 +49,7 @@ export function OnboardingLayout({ currentStep, totalSteps, children }: Onboardi
 
                 {/* Right panel — cycling Lotties with fade transition */}
                 <div className="hidden lg:flex w-1/2 h-full items-center justify-center bg-brand-green/5 dark:bg-[#0f2618] border-l border-border">
-                    <div className="w-full max-w-[44rem] aspect-square relative">
+                    <div className="w-full max-w-[28rem] aspect-square relative">
                         {/* Hello Lottie (JSON) */}
                         <div
                             className="absolute inset-0"

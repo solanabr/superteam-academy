@@ -111,6 +111,16 @@ export function LandingNavbar({ minimal = false }: LandingNavbarProps) {
 
                 {/* ── Right section ── */}
                 <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Home link — shown only in minimal mode (login/onboarding) */}
+                    {minimal && (
+                        <Link
+                            href="/"
+                            className="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-foreground transition-all hover:bg-transparent hover:underline hover:underline-offset-4 sm:block"
+                        >
+                            {t('home')}
+                        </Link>
+                    )}
+
                     {/* Course link — hidden on mobile and in minimal mode */}
                     {!minimal && (
                         <a
@@ -211,6 +221,17 @@ export function LandingNavbar({ minimal = false }: LandingNavbarProps) {
                 <div className="overflow-hidden">
                     <div className="mt-2 rounded-2xl border border-border/50 bg-background shadow-lg dark:border-border">
                         <div className="flex flex-col p-3">
+                            {/* Home link — shown only in minimal mode (login/onboarding) */}
+                            {minimal && (
+                                <Link
+                                    href="/"
+                                    className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-transparent hover:underline hover:underline-offset-4"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    {t('home')}
+                                </Link>
+                            )}
+
                             {!minimal && (
                                 <a
                                     href="#courses"

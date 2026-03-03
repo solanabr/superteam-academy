@@ -40,6 +40,7 @@
         "notLinked": "Not linked"
     },
     "nav": {
+        "home": "Início",
         "courses": "Cursos",
         "dashboard": "Painel",
         "leaderboard": "Ranking",
@@ -92,6 +93,7 @@
         "connectAndLink": "Conectar e Vincular",
         "linkingWallet": "Vinculando...",
         "skipForNow": "Pular por agora",
+        "profileCreated": "Perfil criado com sucesso!",
         "walletNote": "Para cunhar credenciais on-chain como certificações ou XP, será necessário vincular uma carteira. Você pode fazer isso depois nas configurações do perfil."
     },
     "landing": {
