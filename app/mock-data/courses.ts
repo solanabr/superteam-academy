@@ -4,6 +4,9 @@
  * Two complete SanityCourse objects matching the CMS schema exactly,
  * with modules, lessons (content, challenge, quiz, video), and challenges.
  *
+ * Designed to feel like a real production course catalog with
+ * comprehensive content, varied lesson types, and realistic challenges.
+ *
  * Only loaded when NEXT_PUBLIC_USE_MOCK_DATA=true.
  */
 
@@ -12,7 +15,6 @@ import type {
     SanityModule,
     SanityLesson,
     SanityChallenge,
-    SanityTestCase,
     SanityQuiz,
     SanityTrack,
     SanityInstructor,
@@ -25,7 +27,7 @@ const MOCK_INSTRUCTOR_1: SanityInstructor = {
     _id: 'mock-instructor-1',
     _type: 'instructor',
     name: 'Alex Solana',
-    bio: 'Core Solana developer and educator with 5+ years of blockchain experience. Built multiple production dApps.',
+    bio: 'Core Solana developer and educator with 5+ years of blockchain experience. Built multiple production dApps and contributed to the Anchor framework.',
     avatar: null,
     walletAddress: '11111111111111111111111111111111',
     socialLinks: {
@@ -38,7 +40,7 @@ const MOCK_INSTRUCTOR_2: SanityInstructor = {
     _id: 'mock-instructor-2',
     _type: 'instructor',
     name: 'Maria DeFi',
-    bio: 'DeFi researcher and protocol engineer. Previously at Raydium and Orca. Passionate about financial inclusion.',
+    bio: 'DeFi researcher and protocol engineer. Previously at Raydium and Orca. Passionate about financial inclusion through decentralized protocols.',
     avatar: null,
     walletAddress: '22222222222222222222222222222222',
     socialLinks: {
@@ -141,6 +143,88 @@ fn main() {
     ],
 };
 
+// ─── Challenge: PDA Derivation (Rust) ──────────────────────────────────────
+
+const PDA_DERIVATION_CHALLENGE: SanityChallenge = {
+    language: 'rust',
+    instructions: `# Derive a PDA Seed 🔑
+
+Write a function called \`derive_enrollment_seed\` that constructs the seed bytes used to derive a Program Derived Address (PDA) for a student enrollment.
+
+## Requirements
+- Takes a \`course_id: &str\` and \`student_id: &str\`
+- Returns a \`Vec<Vec<u8>>\` containing three seed byte arrays:
+  1. The literal string \`"enrollment"\` as bytes
+  2. The \`course_id\` as bytes
+  3. The \`student_id\` as bytes
+
+## Example
+\`\`\`rust
+let seeds = derive_enrollment_seed("solana-101", "student-abc");
+// seeds[0] == b"enrollment"
+// seeds[1] == b"solana-101"
+// seeds[2] == b"student-abc"
+\`\`\`
+
+> **Hint:** Use \`.as_bytes()\` to convert a \`&str\` to \`&[u8]\`, then \`.to_vec()\` to own it.`,
+    starterCode: {
+        _type: 'code',
+        language: 'rust',
+        code: `// Derive the PDA seeds for an enrollment account
+// Seeds: ["enrollment", course_id, student_id]
+
+fn derive_enrollment_seed(course_id: &str, student_id: &str) -> Vec<Vec<u8>> {
+    // TODO: return a vec of three byte vectors
+    todo!()
+}
+
+fn main() {
+    let seeds = derive_enrollment_seed("solana-101", "student-abc");
+    for (i, seed) in seeds.iter().enumerate() {
+        println!("Seed {}: {:?}", i, String::from_utf8_lossy(seed));
+    }
+}`,
+    },
+    solutionCode: {
+        _type: 'code',
+        language: 'rust',
+        code: `fn derive_enrollment_seed(course_id: &str, student_id: &str) -> Vec<Vec<u8>> {
+    vec![
+        b"enrollment".to_vec(),
+        course_id.as_bytes().to_vec(),
+        student_id.as_bytes().to_vec(),
+    ]
+}
+
+fn main() {
+    let seeds = derive_enrollment_seed("solana-101", "student-abc");
+    for (i, seed) in seeds.iter().enumerate() {
+        println!("Seed {}: {:?}", i, String::from_utf8_lossy(seed));
+    }
+}`,
+    },
+    testCases: [
+        {
+            name: 'Returns 3 seed arrays',
+            input: 'solana-101,student-abc',
+            expectedOutput: '3',
+            isHidden: false,
+        },
+        {
+            name: 'First seed is "enrollment"',
+            input: 'solana-101,student-abc',
+            expectedOutput: 'enrollment',
+            isHidden: false,
+        },
+        {
+            name: 'Seeds contain course and student IDs',
+            input: 'defi-201,student-xyz',
+            expectedOutput: 'defi-201',
+            isHidden: true,
+        },
+    ],
+};
+
 // ─── Challenge: Token Swap Calculator (TypeScript) ─────────────────────────
 
 const TOKEN_SWAP_CHALLENGE: SanityChallenge = {
@@ -228,6 +312,116 @@ console.log(calculateSwap(100, 1000, 2000));`,
     ],
 };
 
+// ─── Challenge: Liquidity Pool Share (TypeScript) ──────────────────────────
+
+const LIQUIDITY_POOL_CHALLENGE: SanityChallenge = {
+    language: 'typescript',
+    instructions: `# Liquidity Pool Share Calculator 🏊
+
+Calculate a liquidity provider's share of a pool and the value of their position.
+
+## Requirements
+Implement \`calculatePoolShare\` that takes:
+- \`lpTokens\`: number of LP tokens the user holds
+- \`totalLpSupply\`: total LP tokens in circulation
+- \`reserveA\`: total Token A in the pool
+- \`reserveB\`: total Token B in the pool
+- \`priceA\`: price of Token A in USD
+- \`priceB\`: price of Token B in USD
+
+Returns an object with:
+- \`sharePercent\`: their share of the pool (as a percentage, 2 decimal places)
+- \`tokenA\`: their share of Token A (rounded down)
+- \`tokenB\`: their share of Token B (rounded down)
+- \`totalValueUsd\`: total USD value of their position (rounded to 2 decimal places)
+
+## Example
+\`\`\`typescript
+calculatePoolShare(50, 1000, 10000, 20000, 150, 1);
+// sharePercent: 5.00
+// tokenA: 500, tokenB: 1000
+// totalValueUsd: 76000.00
+\`\`\``,
+    starterCode: {
+        _type: 'code',
+        language: 'typescript',
+        code: `interface PoolPosition {
+  sharePercent: number;
+  tokenA: number;
+  tokenB: number;
+  totalValueUsd: number;
+}
+
+function calculatePoolShare(
+  lpTokens: number,
+  totalLpSupply: number,
+  reserveA: number,
+  reserveB: number,
+  priceA: number,
+  priceB: number
+): PoolPosition {
+  // TODO: implement
+  return { sharePercent: 0, tokenA: 0, tokenB: 0, totalValueUsd: 0 };
+}
+
+const result = calculatePoolShare(50, 1000, 10000, 20000, 150, 1);
+console.log(JSON.stringify(result));`,
+    },
+    solutionCode: {
+        _type: 'code',
+        language: 'typescript',
+        code: `interface PoolPosition {
+  sharePercent: number;
+  tokenA: number;
+  tokenB: number;
+  totalValueUsd: number;
+}
+
+function calculatePoolShare(
+  lpTokens: number,
+  totalLpSupply: number,
+  reserveA: number,
+  reserveB: number,
+  priceA: number,
+  priceB: number
+): PoolPosition {
+  const share = lpTokens / totalLpSupply;
+  const tokenA = Math.floor(share * reserveA);
+  const tokenB = Math.floor(share * reserveB);
+  const totalValueUsd = Math.round((tokenA * priceA + tokenB * priceB) * 100) / 100;
+  return {
+    sharePercent: Math.round(share * 100 * 100) / 100,
+    tokenA,
+    tokenB,
+    totalValueUsd,
+  };
+}
+
+const result = calculatePoolShare(50, 1000, 10000, 20000, 150, 1);
+console.log(JSON.stringify(result));`,
+    },
+    testCases: [
+        {
+            name: '5% pool share calculation',
+            input: '50,1000,10000,20000,150,1',
+            expectedOutput: '76000',
+            isHidden: false,
+        },
+        {
+            name: '10% share of equal pool',
+            input: '100,1000,5000,5000,2,2',
+            expectedOutput: '2000',
+            isHidden: false,
+        },
+        {
+            name: '1% micro share',
+            input: '1,100,50000,100000,100,50',
+            expectedOutput: '100000',
+            isHidden: true,
+        },
+    ],
+};
+
 // ─── Quiz Data ──────────────────────────────────────────────────────────────
 
 const ACCOUNTS_QUIZ: SanityQuiz = {
@@ -287,9 +481,30 @@ const DEFI_QUIZ: SanityQuiz = {
     ],
 };
 
+const SOLANA_BASICS_QUIZ: SanityQuiz = {
+    passThreshold: 70,
+    questions: [
+        {
+            question: 'What consensus mechanism does Solana use alongside Tower BFT?',
+            options: ['Proof of Work', 'Proof of Stake', 'Proof of History', 'Delegated Proof of Stake'],
+            correctIndex: 2,
+        },
+        {
+            question: 'What is the typical transaction cost on Solana?',
+            options: ['$5-10', '$0.50-1.00', '$0.01-0.05', 'Less than $0.001'],
+            correctIndex: 3,
+        },
+        {
+            question: 'What language are Solana programs primarily written in?',
+            options: ['JavaScript', 'Python', 'Rust', 'Go'],
+            correctIndex: 2,
+        },
+    ],
+};
+
 // ─── Lessons ────────────────────────────────────────────────────────────────
 
-// Course 1 Lessons
+// Course 1 Lessons — Intro to Solana Development
 const COURSE_1_LESSONS: SanityLesson[] = [
     {
         _id: 'mock-lesson-1-1',
@@ -298,7 +513,7 @@ const COURSE_1_LESSONS: SanityLesson[] = [
         slug: { current: 'what-is-solana' },
         type: 'content',
         order: 0,
-        duration: 15,
+        duration: 900,
         xpReward: 100,
         content: `# What is Solana? ◎
 
@@ -351,17 +566,28 @@ pub mod hello_world {
 3. **Composability** — Programs can call other programs
 4. **Growing ecosystem** — DeFi, NFTs, Gaming, DePIN, and more
 
-> 💡 **Next up:** You'll write your first Solana program function!`,
+> 💡 **Next up:** Test your understanding with a quick quiz!`,
     },
     {
         _id: 'mock-lesson-1-2',
         _type: 'lesson',
-        title: 'Hello Solana',
+        title: 'Solana Basics Quiz',
+        slug: { current: 'solana-basics-quiz' },
+        type: 'content',
+        order: 1,
+        duration: 300,
+        xpReward: 100,
+        quiz: SOLANA_BASICS_QUIZ,
+    },
+    {
+        _id: 'mock-lesson-1-3',
+        _type: 'lesson',
+        title: 'Hello Solana — Your First Function',
         slug: { current: 'hello-solana' },
         type: 'challenge',
-        order: 1,
-        duration: 20,
-        xpReward: 100,
+        order: 2,
+        duration: 1200,
+        xpReward: 150,
         challenge: HELLO_SOLANA_CHALLENGE,
         hints: [
             'A Rust String can be created with String::from("text")',
@@ -370,13 +596,13 @@ pub mod hello_world {
         ],
     },
     {
-        _id: 'mock-lesson-1-3',
+        _id: 'mock-lesson-1-4',
         _type: 'lesson',
         title: 'Understanding Accounts',
         slug: { current: 'understanding-accounts' },
         type: 'content',
-        order: 2,
-        duration: 15,
+        order: 3,
+        duration: 900,
         xpReward: 100,
         content: `# Understanding Solana Accounts 🏦
 
@@ -433,22 +659,38 @@ PDAs are powerful because:
 | Course | \`["course", course_id]\` | Course metadata |
 | Enrollment | \`["enrollment", course, learner]\` | Tracks progress |
 
-> 📝 **Quiz time!** Test your understanding of accounts and PDAs.`,
+> 📝 **Next up:** Put your PDA knowledge to practice with a coding challenge!`,
     },
     {
-        _id: 'mock-lesson-1-4',
+        _id: 'mock-lesson-1-5',
         _type: 'lesson',
-        title: 'Accounts Quiz',
+        title: 'PDA Derivation Challenge',
+        slug: { current: 'pda-derivation' },
+        type: 'challenge',
+        order: 4,
+        duration: 1500,
+        xpReward: 150,
+        challenge: PDA_DERIVATION_CHALLENGE,
+        hints: [
+            'Use .as_bytes() to convert a &str to &[u8]',
+            'Use .to_vec() to own the byte slice into a Vec<u8>',
+            'Return vec![...] with three elements: the literal, course_id bytes, student_id bytes',
+        ],
+    },
+    {
+        _id: 'mock-lesson-1-6',
+        _type: 'lesson',
+        title: 'Accounts & PDAs Quiz',
         slug: { current: 'accounts-quiz' },
         type: 'content',
-        order: 3,
-        duration: 10,
+        order: 5,
+        duration: 300,
         xpReward: 100,
         quiz: ACCOUNTS_QUIZ,
     },
 ];
 
-// Course 2 Lessons
+// Course 2 Lessons — DeFi Fundamentals
 const COURSE_2_LESSONS: SanityLesson[] = [
     {
         _id: 'mock-lesson-2-1',
@@ -457,7 +699,7 @@ const COURSE_2_LESSONS: SanityLesson[] = [
         slug: { current: 'spl-tokens-overview' },
         type: 'content',
         order: 0,
-        duration: 20,
+        duration: 1200,
         xpReward: 150,
         content: `# SPL Tokens on Solana 🪙
 
@@ -515,8 +757,8 @@ const xpMint = new PublicKey("HA5ZraV52nBSGdnDfEFvi8683qXHPvaR14NTBhBzxe8a");
         slug: { current: 'token-swap-calculator' },
         type: 'challenge',
         order: 1,
-        duration: 25,
-        xpReward: 150,
+        duration: 1500,
+        xpReward: 200,
         challenge: TOKEN_SWAP_CHALLENGE,
         hints: [
             'The fee is 0.3%, so inputAfterFee = inputAmount * 0.997',
@@ -531,7 +773,7 @@ const xpMint = new PublicKey("HA5ZraV52nBSGdnDfEFvi8683qXHPvaR14NTBhBzxe8a");
         slug: { current: 'amm-mechanics' },
         type: 'content',
         order: 2,
-        duration: 20,
+        duration: 1200,
         xpReward: 150,
         content: `# Automated Market Makers (AMMs) 🤖
 
@@ -579,16 +821,32 @@ When you provide liquidity, the pool rebalances as prices change:
 - **Orca** — Concentrated liquidity (Whirlpools)
 - **Jupiter** — Aggregator (routes across all DEXes)
 
-> 📝 **Quiz time!** Test your DeFi knowledge.`,
+> 📝 **Next:** Calculate your pool position value!`,
     },
     {
         _id: 'mock-lesson-2-4',
         _type: 'lesson',
-        title: 'DeFi Quiz',
+        title: 'Liquidity Pool Share Calculator',
+        slug: { current: 'liquidity-pool-share' },
+        type: 'challenge',
+        order: 3,
+        duration: 1800,
+        xpReward: 200,
+        challenge: LIQUIDITY_POOL_CHALLENGE,
+        hints: [
+            'Share = lpTokens / totalLpSupply',
+            'Token amounts = share * reserve (round down with Math.floor)',
+            'Total value = (tokenA * priceA) + (tokenB * priceB), rounded to 2 decimal places',
+        ],
+    },
+    {
+        _id: 'mock-lesson-2-5',
+        _type: 'lesson',
+        title: 'DeFi Knowledge Check',
         slug: { current: 'defi-quiz' },
         type: 'content',
-        order: 3,
-        duration: 10,
+        order: 4,
+        duration: 300,
         xpReward: 150,
         quiz: DEFI_QUIZ,
     },
@@ -600,18 +858,18 @@ const COURSE_1_MODULES: SanityModule[] = [
     {
         _id: 'mock-module-1-1',
         _type: 'module',
-        title: 'Getting Started',
-        description: 'Learn the basics of Solana blockchain and write your first program function.',
+        title: 'Getting Started with Solana',
+        description: 'Learn the basics of Solana blockchain — architecture, consensus, and why developers choose it.',
         order: 0,
-        lessons: [COURSE_1_LESSONS[0], COURSE_1_LESSONS[1]],
+        lessons: [COURSE_1_LESSONS[0], COURSE_1_LESSONS[1], COURSE_1_LESSONS[2]],
     },
     {
         _id: 'mock-module-1-2',
         _type: 'module',
-        title: 'Accounts & PDAs',
-        description: 'Understand how Solana stores data on-chain using accounts and program-derived addresses.',
+        title: 'Accounts & Program Derived Addresses',
+        description: 'Master how Solana stores data on-chain using accounts and deterministic PDA derivation.',
         order: 1,
-        lessons: [COURSE_1_LESSONS[2], COURSE_1_LESSONS[3]],
+        lessons: [COURSE_1_LESSONS[3], COURSE_1_LESSONS[4], COURSE_1_LESSONS[5]],
     },
 ];
 
@@ -619,18 +877,18 @@ const COURSE_2_MODULES: SanityModule[] = [
     {
         _id: 'mock-module-2-1',
         _type: 'module',
-        title: 'Token Basics',
-        description: 'Understand SPL tokens, Token-2022, and build a swap calculator.',
+        title: 'Token Fundamentals',
+        description: 'Understand SPL tokens, Token-2022 extensions, and build a swap calculator from scratch.',
         order: 0,
         lessons: [COURSE_2_LESSONS[0], COURSE_2_LESSONS[1]],
     },
     {
         _id: 'mock-module-2-2',
         _type: 'module',
-        title: 'Liquidity Pools',
-        description: 'Learn how AMMs work, impermanent loss, and test your DeFi knowledge.',
+        title: 'Liquidity & DeFi Mechanics',
+        description: 'Learn how AMMs work, calculate pool positions, understand impermanent loss, and test your DeFi knowledge.',
         order: 1,
-        lessons: [COURSE_2_LESSONS[2], COURSE_2_LESSONS[3]],
+        lessons: [COURSE_2_LESSONS[2], COURSE_2_LESSONS[3], COURSE_2_LESSONS[4]],
     },
 ];
 
@@ -643,14 +901,14 @@ export const MOCK_SANITY_COURSES: SanityCourse[] = [
         title: 'Intro to Solana Development',
         slug: { current: 'intro-to-solana' },
         onChainCourseId: 'mock-course-1',
-        description: 'Start your Solana journey! Learn the fundamentals of blockchain development, write your first Rust program, and understand the account model that makes Solana unique.',
+        description: 'Start your Solana journey! Learn the fundamentals of blockchain development, write your first Rust program, understand the account model, and derive Program Derived Addresses.',
         thumbnail: null,
         difficulty: 'easy',
         xpPerLesson: 100,
-        estimatedDuration: 60,
+        estimatedDuration: 90,
         isPublished: true,
         publishedAt: '2026-01-15T00:00:00Z',
-        tags: ['solana', 'rust', 'beginner', 'blockchain', 'anchor'],
+        tags: ['solana', 'rust', 'beginner', 'blockchain', 'anchor', 'accounts', 'pda'],
         instructor: MOCK_INSTRUCTOR_1,
         track: MOCK_TRACK_1,
         modules: COURSE_1_MODULES,
@@ -661,14 +919,14 @@ export const MOCK_SANITY_COURSES: SanityCourse[] = [
         title: 'DeFi Fundamentals on Solana',
         slug: { current: 'defi-fundamentals' },
         onChainCourseId: 'mock-course-2',
-        description: 'Master decentralized finance on Solana. Learn about SPL tokens, AMMs, liquidity pools, and build a token swap calculator from scratch.',
+        description: 'Master decentralized finance on Solana. Learn about SPL tokens, Token-2022 extensions, AMM mechanics, build a token swap calculator, and compute liquidity pool positions.',
         thumbnail: null,
         difficulty: 'medium',
         xpPerLesson: 150,
-        estimatedDuration: 90,
+        estimatedDuration: 120,
         isPublished: true,
         publishedAt: '2026-02-01T00:00:00Z',
-        tags: ['defi', 'typescript', 'intermediate', 'tokens', 'amm'],
+        tags: ['defi', 'typescript', 'intermediate', 'tokens', 'amm', 'liquidity', 'spl'],
         instructor: MOCK_INSTRUCTOR_2,
         track: MOCK_TRACK_2,
         modules: COURSE_2_MODULES,

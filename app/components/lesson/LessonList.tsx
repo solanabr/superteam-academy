@@ -1,10 +1,12 @@
 /**
  * Lesson list component — shows lessons with completion status.
+ * Themed with Tailwind CSS variables for light/dark mode support.
  */
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/context/i18n/navigation';
 import { useTranslations } from 'next-intl';
+import { Check, Lock, ArrowRight, Video, Code2, HelpCircle } from 'lucide-react';
 import type { Lesson } from '@/context/types/course';
 import type { CourseProgressData } from '@/context/hooks/useLessonCompletion';
 import { isLessonDone } from '@/context/hooks/useLessonCompletion';
@@ -19,9 +21,9 @@ interface LessonListProps {
 export function LessonList({ courseId, lessons, progress, isEnrolled }: LessonListProps) {
     const t = useTranslations('lesson');
     return (
-        <div className="lesson-list">
-            <h2 className="list-title">{t('courseContent')}</h2>
-            <div className="lessons">
+        <div className="mt-8">
+            <h2 className="text-lg font-bold text-foreground mb-4 font-display">{t('courseContent')}</h2>
+            <div className="flex flex-col gap-1">
                 {lessons.map((lesson, i) => {
                     const completed = isLessonDone(progress, lesson.index);
                     const isLocked = !isEnrolled;
@@ -31,119 +33,60 @@ export function LessonList({ courseId, lessons, progress, isEnrolled }: LessonLi
                     return (
                         <div key={lesson.index} id={`lesson-${lesson.index}`}>
                             {isLocked ? (
-                                <div className="lesson-item lesson-locked">
-                                    <div className="lesson-index">{i + 1}</div>
-                                    <div className="lesson-info">
-                                        <span className="lesson-title">{lesson.title}</span>
-                                        <span className="lesson-meta">{mins}m • {t('enrollToAccess')}</span>
+                                <div className="flex items-center gap-4 px-4 sm:px-5 py-4 rounded-xl bg-card/30 border border-border/50 opacity-50 cursor-not-allowed">
+                                    <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-muted text-muted-foreground text-sm font-bold shrink-0">
+                                        <Lock className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 flex flex-col gap-1">
+                                        <span className="text-sm font-semibold text-foreground/80 font-supreme">{lesson.title}</span>
+                                        <span className="text-xs text-muted-foreground font-supreme">{mins}m • {t('enrollToAccess')}</span>
                                     </div>
                                 </div>
                             ) : (
                                 <Link
                                     href={`/courses/${courseId}/lessons/${lesson.index}`}
-                                    className={`lesson-item ${completed ? 'lesson-completed' : 'lesson-available'}`}
+                                    className={`group flex items-center gap-4 px-4 sm:px-5 py-4 rounded-xl border transition-all duration-200 hover:shadow-sm ${completed
+                                            ? 'bg-brand-green-emerald/5 border-brand-green-emerald/15 hover:border-brand-green-emerald/30'
+                                            : 'bg-card/30 border-border/50 hover:border-border hover:bg-card/60'
+                                        }`}
                                 >
-                                    <div className={`lesson-index ${completed ? 'index-done' : ''}`}>
-                                        {completed ? '✓' : i + 1}
+                                    <div className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold shrink-0 ${completed
+                                            ? 'bg-brand-green-emerald/15 text-brand-green-emerald'
+                                            : 'bg-muted/60 text-muted-foreground'
+                                        }`}>
+                                        {completed ? <Check className="w-4 h-4" /> : i + 1}
                                     </div>
-                                    <div className="lesson-info">
-                                        <span className="lesson-title">{lesson.title}</span>
-                                        <span className="lesson-meta">
+                                    <div className="flex-1 flex flex-col gap-1">
+                                        <span className="text-sm font-semibold text-foreground font-supreme">{lesson.title}</span>
+                                        <span className="text-xs text-muted-foreground font-supreme flex items-center gap-1.5">
                                             {mins}m
-                                            {lesson.type === 'video' && ` \u2022 \ud83c\udfa5 Video`}
-                                            {lesson.type === 'challenge' && ` \u2022 Challenge`}
-                                            {lesson.quiz && ` \u2022 ${t('quiz')}`}
-                                            {completed && ` \u2022 ${t('completed')}`}
+                                            {lesson.type === 'video' && (
+                                                <span className="inline-flex items-center gap-0.5">
+                                                    <Video className="w-3 h-3" /> Video
+                                                </span>
+                                            )}
+                                            {lesson.type === 'challenge' && (
+                                                <span className="inline-flex items-center gap-0.5">
+                                                    <Code2 className="w-3 h-3" /> Challenge
+                                                </span>
+                                            )}
+                                            {lesson.quiz && (
+                                                <span className="inline-flex items-center gap-0.5">
+                                                    <HelpCircle className="w-3 h-3" /> {t('quiz')}
+                                                </span>
+                                            )}
+                                            {completed && (
+                                                <span className="text-brand-green-emerald">• {t('completed')}</span>
+                                            )}
                                         </span>
                                     </div>
-                                    <span className="lesson-arrow">→</span>
+                                    <ArrowRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors shrink-0" />
                                 </Link>
                             )}
                         </div>
                     );
                 })}
             </div>
-
-            <style jsx>{`
-                .lesson-list {
-                    margin-top: 32px;
-                }
-                .list-title {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: rgba(255, 255, 255, 0.9);
-                    margin: 0 0 16px;
-                }
-                .lessons {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-                .lesson-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 16px 20px;
-                    border-radius: 12px;
-                    background: rgba(255, 255, 255, 0.02);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    transition: all 0.2s;
-                    text-decoration: none;
-                    color: inherit;
-                }
-                .lesson-available:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-color: rgba(255, 255, 255, 0.12);
-                    transform: translateX(4px);
-                }
-                .lesson-locked {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-                .lesson-completed {
-                    border-color: rgba(20, 241, 149, 0.15);
-                }
-                .lesson-index {
-                    width: 36px;
-                    height: 36px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 10px;
-                    background: rgba(255, 255, 255, 0.06);
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    color: rgba(255, 255, 255, 0.5);
-                    flex-shrink: 0;
-                }
-                .index-done {
-                    background: rgba(20, 241, 149, 0.15);
-                    color: #14F195;
-                }
-                .lesson-info {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-                .lesson-title {
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    color: rgba(255, 255, 255, 0.85);
-                }
-                .lesson-meta {
-                    font-size: 0.75rem;
-                    color: rgba(255, 255, 255, 0.35);
-                }
-                .lesson-arrow {
-                    font-size: 1rem;
-                    color: rgba(255, 255, 255, 0.2);
-                    transition: color 0.2s;
-                }
-                .lesson-available:hover .lesson-arrow {
-                    color: rgba(255, 255, 255, 0.6);
-                }
-            `}</style>
         </div>
     );
 }

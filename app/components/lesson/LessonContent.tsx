@@ -1,5 +1,6 @@
 /**
  * Lesson content component — renders lesson text + quiz + completion.
+ * Themed with Tailwind CSS variables for light/dark mode support.
  */
 'use client';
 
@@ -48,31 +49,45 @@ export function LessonContent({
             : null;
 
     return (
-        <div className="lesson-content">
-            <div className="content-header">
-                <div className="lesson-badge">{t('lessonNumber', { n: lesson.index + 1 })}</div>
-                <h1 className="lesson-title">{lesson.title}</h1>
+        <div className="min-h-full p-8 overflow-y-auto">
+            {/* Header */}
+            <div className="mb-8">
+                <div className="inline-block text-[0.7rem] font-semibold uppercase tracking-wider text-accent bg-accent/10 border border-accent/20 px-2.5 py-1 rounded-full mb-3">
+                    {t('lessonNumber', { n: lesson.index + 1 })}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight font-display">
+                    {lesson.title}
+                </h1>
             </div>
 
             {/* Lesson body */}
-            <div className="content-body">
+            <div className="mb-8">
                 {isContentLoading ? (
-                    <div className="content-skeleton">
-                        <div className="skeleton-line w-full" />
-                        <div className="skeleton-line w-3-4" />
-                        <div className="skeleton-line w-full" />
-                        <div className="skeleton-line w-1-2" />
-                        <div className="skeleton-line w-full" />
+                    <div className="flex flex-col gap-3">
+                        <div className="h-4 w-full bg-muted/40 rounded animate-pulse" />
+                        <div className="h-4 w-3/4 bg-muted/40 rounded animate-pulse" />
+                        <div className="h-4 w-full bg-muted/40 rounded animate-pulse" />
+                        <div className="h-4 w-1/2 bg-muted/40 rounded animate-pulse" />
+                        <div className="h-4 w-full bg-muted/40 rounded animate-pulse" />
                     </div>
                 ) : lessonContent ? (
                     <div
-                        className="lesson-markdown"
+                        className="prose prose-sm dark:prose-invert max-w-none font-supreme text-foreground/80 leading-relaxed
+                            prose-headings:text-foreground prose-headings:font-display
+                            prose-h2:text-lg prose-h2:mt-8 prose-h2:mb-3
+                            prose-h3:text-base prose-h3:mt-6 prose-h3:mb-2
+                            prose-code:text-brand-green-emerald prose-code:bg-muted/40 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                            prose-pre:bg-muted/60 prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-pre:p-4
+                            prose-a:text-accent prose-a:no-underline hover:prose-a:underline
+                            prose-table:text-sm
+                            prose-th:text-foreground/80 prose-th:font-semibold
+                            prose-td:text-foreground/60"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lessonContent) }}
                     />
                 ) : (
-                    <div className="content-placeholder">
-                        <p>{t('contentLoading')}</p>
-                        <p className="placeholder-hint">
+                    <div className="py-10 text-center bg-muted/10 border border-dashed border-border rounded-xl text-muted-foreground">
+                        <p className="mb-2">{t('contentLoading')}</p>
+                        <p className="text-xs font-mono text-muted-foreground/50">
                             {t('contentTx', { txId: lesson.contentTxId })}
                         </p>
                     </div>
@@ -98,14 +113,14 @@ export function LessonContent({
             )}
 
             {/* Completion */}
-            <div className="completion-section">
+            <div className="mt-8 pt-6 border-t border-border">
                 {isCompleted ? (
-                    <div className="completed-badge">
+                    <div className="py-4 bg-brand-green-emerald/10 border border-brand-green-emerald/20 rounded-xl text-center text-sm font-semibold text-brand-green-emerald">
                         {t('completedWithXp', { xp: xpReward })}
                     </div>
                 ) : (
                     <button
-                        className="complete-button"
+                        className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-accent to-brand-green-emerald hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                         onClick={onComplete}
                         disabled={!canComplete || isCompleting}
                         type="button"
@@ -119,144 +134,6 @@ export function LessonContent({
                     </button>
                 )}
             </div>
-
-            <style jsx>{`
-                .lesson-content {
-                    min-height: 100%;
-                    padding: 32px;
-                    overflow-y: auto;
-                }
-                .content-header {
-                    margin-bottom: 32px;
-                }
-                .lesson-badge {
-                    display: inline-block;
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.08em;
-                    color: #9945FF;
-                    background: rgba(153, 69, 255, 0.1);
-                    border: 1px solid rgba(153, 69, 255, 0.2);
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    margin-bottom: 12px;
-                }
-                .lesson-title {
-                    font-size: 1.6rem;
-                    font-weight: 800;
-                    color: rgba(255, 255, 255, 0.95);
-                    margin: 0;
-                    line-height: 1.3;
-                }
-                .content-body {
-                    margin-bottom: 32px;
-                }
-                .lesson-markdown {
-                    font-size: 0.95rem;
-                    color: rgba(255, 255, 255, 0.7);
-                    line-height: 1.8;
-                }
-                .lesson-markdown :global(h2) {
-                    font-size: 1.2rem;
-                    color: rgba(255, 255, 255, 0.9);
-                    margin: 32px 0 12px;
-                }
-                .lesson-markdown :global(h3) {
-                    font-size: 1.05rem;
-                    color: rgba(255, 255, 255, 0.85);
-                    margin: 24px 0 10px;
-                }
-                .lesson-markdown :global(code) {
-                    background: rgba(255, 255, 255, 0.06);
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    font-size: 0.85em;
-                    color: #14F195;
-                }
-                .lesson-markdown :global(pre) {
-                    background: rgba(0, 0, 0, 0.4);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    border-radius: 10px;
-                    padding: 16px;
-                    overflow-x: auto;
-                    margin: 16px 0;
-                }
-                .lesson-markdown :global(pre code) {
-                    background: none;
-                    padding: 0;
-                    color: rgba(255, 255, 255, 0.8);
-                }
-                .lesson-markdown :global(a) {
-                    color: #9945FF;
-                }
-                .content-skeleton {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                .skeleton-line {
-                    height: 16px;
-                    background: rgba(255, 255, 255, 0.06);
-                    border-radius: 4px;
-                    animation: pulse 1.5s ease infinite;
-                }
-                .w-full { width: 100%; }
-                .w-3-4 { width: 75%; }
-                .w-1-2 { width: 50%; }
-                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-                .content-placeholder {
-                    padding: 40px;
-                    text-align: center;
-                    background: rgba(255, 255, 255, 0.02);
-                    border: 1px dashed rgba(255, 255, 255, 0.1);
-                    border-radius: 12px;
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                .content-placeholder p {
-                    margin: 0 0 8px;
-                }
-                .placeholder-hint {
-                    font-size: 0.75rem;
-                    font-family: monospace;
-                    color: rgba(255, 255, 255, 0.25);
-                }
-                .completion-section {
-                    margin-top: 32px;
-                    padding-top: 24px;
-                    border-top: 1px solid rgba(255, 255, 255, 0.06);
-                }
-                .completed-badge {
-                    padding: 16px;
-                    background: rgba(20, 241, 149, 0.08);
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                    border-radius: 12px;
-                    text-align: center;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    color: #14F195;
-                }
-                .complete-button {
-                    width: 100%;
-                    padding: 14px;
-                    border: none;
-                    border-radius: 12px;
-                    background: linear-gradient(135deg, #9945FF, #14F195);
-                    color: white;
-                    font-size: 0.9rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .complete-button:hover:not(:disabled) {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 20px rgba(153, 69, 255, 0.3);
-                }
-                .complete-button:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-            `}</style>
         </div>
     );
 }

@@ -3,12 +3,14 @@
  *
  * Split-pane layout: lesson content (left) + code editor (right).
  * Fetches lesson content from Arweave and manages completion state.
+ *
+ * In mock mode, auto-enrolls user so challenges are accessible.
  */
 'use client';
 
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from '@/context/i18n/navigation';
 import { useCourseDetails } from '@/context/hooks/useCourseDetails';
 import {
     useLessonCompletion,
@@ -21,6 +23,7 @@ import { ChallengePanel } from '@/components/editor/ChallengePanel';
 import { VideoPlayer } from '@/components/lesson/VideoPlayer';
 import { LessonContent } from '@/components/lesson/LessonContent';
 import { LessonNavigation } from '@/components/lesson/LessonNavigation';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
@@ -99,17 +102,11 @@ export default function LessonViewPage() {
     // Loading state
     if (courseLoading || !course) {
         return (
-            <div className="lesson-page">
-                <div className="lesson-loading">
-                    <div className="spinner" />
-                    <p>Loading lesson...</p>
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-brand-green-emerald" />
+                    <p className="text-sm font-supreme">Loading lesson...</p>
                 </div>
-                <style jsx>{`
-                    .lesson-page { min-height: 100vh; background: #0a0a0f; color: white; display: flex; align-items: center; justify-content: center; }
-                    .lesson-loading { text-align: center; color: rgba(255,255,255,0.4); }
-                    .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #9945FF; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
-                    @keyframes spin { to { transform: rotate(360deg); } }
-                `}</style>
             </div>
         );
     }
@@ -117,30 +114,19 @@ export default function LessonViewPage() {
     // Invalid lesson index
     if (!lesson || isNaN(lessonIndex) || lessonIndex < 0 || lessonIndex >= course.lessonCount) {
         return (
-            <div className="lesson-page">
-                <div className="lesson-error">
-                    <h2>Lesson Not Found</h2>
-                    <p>This lesson does not exist in this course.</p>
-                    <Link href={`/courses/${courseId}`} className="error-link">
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground/80 mb-2">Lesson Not Found</h2>
+                    <p className="text-muted-foreground mb-6">This lesson does not exist in this course.</p>
+                    <Link href={`/courses/${courseId}`} className="text-brand-green-emerald font-semibold hover:underline">
                         Back to Course
                     </Link>
                 </div>
-                <style jsx>{`
-                    .lesson-page { min-height: 100vh; background: #0a0a0f; color: white; display: flex; align-items: center; justify-content: center; }
-                    .lesson-error { text-align: center; }
-                    .lesson-error h2 { font-size: 1.3rem; color: rgba(255,255,255,0.8); margin: 0 0 8px; }
-                    .lesson-error p { color: rgba(255,255,255,0.4); margin: 0 0 20px; }
-                    .error-link { color: #9945FF; text-decoration: none; font-weight: 600; }
-                `}</style>
             </div>
         );
     }
 
     const handleComplete = () => {
-        if (MOCK_MODE) {
-            // In mock mode, skip on-chain lesson completion — just show UI feedback
-            return;
-        }
         completeLesson(lessonIndex);
     };
 
@@ -169,20 +155,29 @@ export default function LessonViewPage() {
     );
 
     return (
-        <div className="lesson-page">
+        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
             {/* Top Bar */}
-            <header className="lesson-header">
-                <Link href={`/courses/${courseId}`} className="back-link">
-                    {'\u2190'} {course.title}
+            <header className="flex items-center gap-4 px-4 sm:px-5 py-2.5 bg-card/80 backdrop-blur-md border-b border-border shrink-0">
+                <Link
+                    href={`/courses/${courseId}`}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 truncate max-w-[300px]"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                    {course.title}
                 </Link>
-                <span className="lesson-indicator">
+                <span className="text-xs text-muted-foreground/50 ml-auto">
                     Lesson {lessonIndex + 1} of {course.lessonCount}
                 </span>
-                {isCompleted && <span className="done-badge">{'\u2713'} Done</span>}
+                {isCompleted && (
+                    <span className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-brand-green-emerald bg-brand-green-emerald/10 border border-brand-green-emerald/20 px-2.5 py-0.5 rounded-full">
+                        <Check className="w-3 h-3" />
+                        Done
+                    </span>
+                )}
             </header>
 
             {/* Split: Content + Editor */}
-            <div className="lesson-body">
+            <div className="flex-1 overflow-hidden">
                 <SplitLayout
                     left={
                         <LessonContent
@@ -209,58 +204,6 @@ export default function LessonViewPage() {
                 currentIndex={lessonIndex}
                 totalLessons={course.lessonCount}
             />
-
-            <style jsx>{`
-                .lesson-page {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100vh;
-                    background: #0a0a0f;
-                    color: white;
-                    overflow: hidden;
-                }
-                .lesson-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 10px 20px;
-                    background: rgba(10, 10, 15, 0.95);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                    backdrop-filter: blur(12px);
-                    flex-shrink: 0;
-                }
-                .back-link {
-                    font-size: 0.8rem;
-                    color: rgba(255, 255, 255, 0.5);
-                    text-decoration: none;
-                    transition: color 0.2s;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 300px;
-                }
-                .back-link:hover {
-                    color: rgba(255, 255, 255, 0.85);
-                }
-                .lesson-indicator {
-                    font-size: 0.75rem;
-                    color: rgba(255, 255, 255, 0.3);
-                    margin-left: auto;
-                }
-                .done-badge {
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    color: #14F195;
-                    background: rgba(20, 241, 149, 0.1);
-                    padding: 3px 10px;
-                    border-radius: 20px;
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                }
-                .lesson-body {
-                    flex: 1;
-                    overflow: hidden;
-                }
-            `}</style>
         </div>
     );
 }

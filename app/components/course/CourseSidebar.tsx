@@ -1,5 +1,8 @@
 /**
  * Course sidebar — progress, CTA, stats, finalize.
+ * Themed with Tailwind CSS variables for light/dark mode support.
+ *
+ * Accepts isMockMode to skip wallet-dependent enrollment UIs.
  */
 'use client';
 
@@ -21,6 +24,7 @@ interface CourseSidebarProps {
     onEnroll: () => void;
     onFinalize: () => void;
     walletConnected: boolean;
+    isMockMode?: boolean;
 }
 
 export function CourseSidebar({
@@ -35,16 +39,17 @@ export function CourseSidebar({
     onEnroll,
     onFinalize,
     walletConnected,
+    isMockMode = false,
 }: CourseSidebarProps) {
     const t = useTranslations('courses');
     const tc = useTranslations('common');
     const tl = useTranslations('lesson');
     const trackColor = getTrackColor(course.trackId);
     const totalXp = calculateCourseTotalXp(course.xpPerLesson, course.lessonCount);
-    const isEnrolled = progress?.isEnrolled ?? false;
+    const isEnrolled = isMockMode ? true : (progress?.isEnrolled ?? false);
     const isFullyCompleted = progress?.isFullyCompleted ?? false;
-    const progressPercent = progress?.progressPercent ?? 0;
-    const completedCount = progress?.completedCount ?? 0;
+    const progressPercent = isMockMode ? 0 : (progress?.progressPercent ?? 0);
+    const completedCount = isMockMode ? 0 : (progress?.completedCount ?? 0);
     const isFinalized = !!progress?.enrollment?.completedAt;
 
     // Estimated duration: ~15min per lesson
@@ -54,16 +59,16 @@ export function CourseSidebar({
     const durationStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
     return (
-        <aside className="course-sidebar">
+        <aside className="sticky top-20 bg-card/50 border border-border rounded-2xl p-6 flex flex-col gap-5">
             {/* Progress Ring */}
-            {isEnrolled && (
-                <div className="progress-section">
-                    <div className="progress-ring-container">
-                        <svg viewBox="0 0 100 100" className="progress-ring">
+            {isEnrolled && !isMockMode && (
+                <div className="flex flex-col items-center gap-2">
+                    <div className="relative w-[120px] h-[120px]">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
                             <circle
                                 cx="50" cy="50" r="42"
                                 fill="none"
-                                stroke="rgba(255,255,255,0.06)"
+                                className="stroke-border"
                                 strokeWidth="8"
                             />
                             <circle
@@ -78,257 +83,101 @@ export function CourseSidebar({
                                 style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                             />
                         </svg>
-                        <div className="progress-text">
-                            <span className="progress-percent">{progressPercent}%</span>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-2xl font-extrabold text-foreground">{progressPercent}%</span>
                         </div>
                     </div>
-                    <div className="progress-label">
+                    <div className="text-xs text-muted-foreground font-supreme">
                         {tl('progress', { current: completedCount, total: course.lessonCount })}
                     </div>
                 </div>
             )}
 
+            {/* Mock mode enrolled badge */}
+            {isMockMode && (
+                <div className="text-center py-3 rounded-xl bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald text-sm font-semibold font-supreme">
+                    ✅ Auto-enrolled (Mock Mode)
+                </div>
+            )}
+
             {/* CTA Button */}
-            <div className="cta-section">
-                {!walletConnected ? (
-                    <button className="cta-button cta-disabled" disabled>
-                        {t('connectWalletToEnroll')}
-                    </button>
-                ) : !isEnrolled ? (
-                    <>
-                        <button
-                            className={`cta-button ${enrollError ? 'cta-error' : 'cta-enroll'}`}
-                            onClick={onEnroll}
-                            disabled={isEnrolling}
-                            style={!enrollError ? { background: `linear-gradient(135deg, ${trackColor}, ${trackColor}cc)` } : undefined}
-                        >
-                            {isEnrolling ? t('enrolling') : enrollError ? `❌ ${tc('retry')}` : t('enrollNow')}
+            {!isMockMode && (
+                <div>
+                    {!walletConnected ? (
+                        <button className="w-full py-3.5 rounded-xl text-sm font-bold bg-muted text-muted-foreground cursor-not-allowed" disabled>
+                            {t('connectWalletToEnroll')}
                         </button>
-                        {enrollError && <p className="cta-error-msg">{enrollError.message}</p>}
-                    </>
-                ) : isFullyCompleted && !isFinalized ? (
-                    <>
-                        <button
-                            className={`cta-button ${finalizeError ? 'cta-error' : 'cta-finalize'}`}
-                            onClick={onFinalize}
-                            disabled={isFinalizing}
-                        >
-                            {isFinalizing ? t('finalizing') : finalizeError ? `❌ ${tc('retry')}` : t('finalizeClaim')}
-                        </button>
-                        {finalizeError && <p className="cta-error-msg">{finalizeError.message}</p>}
-                    </>
-                ) : isFinalized ? (
-                    <div className="cta-completed">
-                        <div>✅ {t('completed')}</div>
-                        {isIssuingCredential && (
-                            <div className="credential-minting">
-                                🔄 Minting credential NFT...
-                            </div>
-                        )}
-                        {credentialResult && (
-                            <a
-                                href={`https://explorer.solana.com/address/${credentialResult.credentialAsset}?cluster=devnet`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="credential-link"
+                    ) : !isEnrolled ? (
+                        <>
+                            <button
+                                className={`w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all ${enrollError ? 'bg-destructive/15 border border-destructive/30 text-destructive' : 'hover:-translate-y-0.5 shadow-md hover:shadow-lg'}`}
+                                onClick={onEnroll}
+                                disabled={isEnrolling}
+                                style={!enrollError ? { background: `linear-gradient(135deg, ${trackColor}, ${trackColor}cc)` } : undefined}
                             >
-                                🎓 View Credential NFT ↗
-                            </a>
-                        )}
-                    </div>
-                ) : (
-                    <a href={`#lesson-${completedCount}`} className="cta-button cta-continue">
-                        {t('continueLearning')}
-                    </a>
-                )}
-            </div>
+                                {isEnrolling ? t('enrolling') : enrollError ? `❌ ${tc('retry')}` : t('enrollNow')}
+                            </button>
+                            {enrollError && <p className="mt-2 text-xs text-destructive/70 text-center font-supreme">{enrollError.message}</p>}
+                        </>
+                    ) : isFullyCompleted && !isFinalized ? (
+                        <>
+                            <button
+                                className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all ${finalizeError ? 'bg-destructive/15 border border-destructive/30 text-destructive' : 'bg-gradient-to-r from-brand-yellow to-orange-500 text-brand-black hover:-translate-y-0.5'}`}
+                                onClick={onFinalize}
+                                disabled={isFinalizing}
+                            >
+                                {isFinalizing ? t('finalizing') : finalizeError ? `❌ ${tc('retry')}` : t('finalizeClaim')}
+                            </button>
+                            {finalizeError && <p className="mt-2 text-xs text-destructive/70 text-center font-supreme">{finalizeError.message}</p>}
+                        </>
+                    ) : isFinalized ? (
+                        <div className="text-center py-3.5 rounded-xl bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald text-sm font-semibold flex flex-col gap-2">
+                            <div>✅ {t('completed')}</div>
+                            {isIssuingCredential && (
+                                <div className="text-xs text-brand-yellow/80 animate-pulse">
+                                    🔄 Minting credential NFT...
+                                </div>
+                            )}
+                            {credentialResult && (
+                                <a
+                                    href={`https://explorer.solana.com/address/${credentialResult.credentialAsset}?cluster=devnet`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-brand-green-emerald font-semibold hover:underline"
+                                >
+                                    🎓 View Credential NFT ↗
+                                </a>
+                            )}
+                        </div>
+                    ) : (
+                        <a href={`#lesson-${completedCount}`} className="block w-full py-3.5 rounded-xl text-sm font-bold text-center text-white bg-gradient-to-r from-brand-green-emerald to-brand-green-dark hover:-translate-y-0.5 transition-all">
+                            {t('continueLearning')}
+                        </a>
+                    )}
+                </div>
+            )}
 
             {/* Stats */}
-            <div className="sidebar-stats">
-                <div className="stat-row">
-                    <span className="stat-label">{tc('lessons')}</span>
-                    <span className="stat-value">{course.lessonCount}</span>
-                </div>
-                <div className="stat-row">
-                    <span className="stat-label">{tc('totalXp')}</span>
-                    <span className="stat-value xp-value">{totalXp.toLocaleString()}</span>
-                </div>
-                <div className="stat-row">
-                    <span className="stat-label">{t('xpPerLesson')}</span>
-                    <span className="stat-value">{course.xpPerLesson}</span>
-                </div>
-                <div className="stat-row">
-                    <span className="stat-label">{tc('duration')}</span>
-                    <span className="stat-value">{durationStr}</span>
-                </div>
-                <div className="stat-row">
-                    <span className="stat-label">{t('enrolled', { count: course.totalEnrollments })}</span>
-                    <span className="stat-value">{course.totalEnrollments}</span>
-                </div>
-                <div className="stat-row">
-                    <span className="stat-label">{t('completions')}</span>
-                    <span className="stat-value">{course.totalCompletions}</span>
-                </div>
+            <div className="flex flex-col">
+                {[
+                    { label: tc('lessons'), value: course.lessonCount },
+                    { label: tc('totalXp'), value: totalXp.toLocaleString(), isXp: true },
+                    { label: t('xpPerLesson'), value: course.xpPerLesson },
+                    { label: tc('duration'), value: durationStr },
+                    { label: t('enrolled', { count: course.totalEnrollments }), value: course.totalEnrollments },
+                    { label: t('completions'), value: course.totalCompletions },
+                ].map((stat, i, arr) => (
+                    <div
+                        key={stat.label}
+                        className={`flex justify-between items-center py-2.5 ${i < arr.length - 1 ? 'border-b border-border/50' : ''}`}
+                    >
+                        <span className="text-xs text-muted-foreground font-supreme">{stat.label}</span>
+                        <span className={`text-sm font-semibold font-supreme ${stat.isXp ? 'text-brand-yellow' : 'text-foreground'}`}>
+                            {stat.value}
+                        </span>
+                    </div>
+                ))}
             </div>
-
-            <style jsx>{`
-                .course-sidebar {
-                    position: sticky;
-                    top: 80px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 16px;
-                    padding: 24px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                }
-                .progress-section {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                }
-                .progress-ring-container {
-                    position: relative;
-                    width: 120px;
-                    height: 120px;
-                }
-                .progress-ring {
-                    width: 100%;
-                    height: 100%;
-                }
-                .progress-text {
-                    position: absolute;
-                    inset: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .progress-percent {
-                    font-size: 1.5rem;
-                    font-weight: 800;
-                    color: rgba(255, 255, 255, 0.9);
-                }
-                .progress-label {
-                    font-size: 0.8rem;
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                .cta-section {
-                    padding: 0;
-                }
-                .cta-button {
-                    display: block;
-                    width: 100%;
-                    padding: 14px;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 0.9rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    text-align: center;
-                    text-decoration: none;
-                    transition: all 0.2s;
-                    color: white;
-                }
-                .cta-enroll {
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                }
-                .cta-enroll:hover:not(:disabled) {
-                    transform: translateY(-1px);
-                    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-                }
-                .cta-enroll:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                }
-                .cta-continue {
-                    background: linear-gradient(135deg, #9945FF, #14F195);
-                }
-                .cta-continue:hover {
-                    transform: translateY(-1px);
-                }
-                .cta-finalize {
-                    background: linear-gradient(135deg, #FFD700, #FF8C00);
-                    color: #000;
-                }
-                .cta-finalize:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                }
-                .cta-error {
-                    background: rgba(255, 107, 107, 0.15);
-                    border: 1px solid rgba(255, 107, 107, 0.3);
-                    color: #ff6b6b;
-                }
-                .cta-error-msg {
-                    margin: 8px 0 0;
-                    font-size: 0.72rem;
-                    color: rgba(255, 107, 107, 0.7);
-                    text-align: center;
-                }
-                .cta-disabled {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: rgba(255, 255, 255, 0.35);
-                    cursor: not-allowed;
-                }
-                .cta-completed {
-                    text-align: center;
-                    padding: 14px;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    color: #14F195;
-                    background: rgba(20, 241, 149, 0.08);
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                    border-radius: 12px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                .credential-minting {
-                    font-size: 0.78rem;
-                    color: rgba(255, 215, 0, 0.8);
-                    animation: pulse 1.5s ease infinite;
-                }
-                .credential-link {
-                    font-size: 0.78rem;
-                    color: #9945FF;
-                    text-decoration: none;
-                    font-weight: 600;
-                    transition: color 0.2s;
-                }
-                .credential-link:hover {
-                    color: #14F195;
-                }
-                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-                .sidebar-stats {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0;
-                }
-                .stat-row {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px 0;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-                }
-                .stat-row:last-child {
-                    border-bottom: none;
-                }
-                .stat-label {
-                    font-size: 0.8rem;
-                    color: rgba(255, 255, 255, 0.4);
-                }
-                .stat-value {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    color: rgba(255, 255, 255, 0.85);
-                }
-                .xp-value {
-                    color: rgba(255, 215, 0, 0.85);
-                }
-            `}</style>
         </aside>
     );
 }

@@ -1,9 +1,11 @@
 /**
  * Course header component — title, track badge, difficulty, stats.
+ * Themed with Tailwind CSS variables for light/dark mode support.
  */
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { BookOpen, Sparkles, Gift, Users } from 'lucide-react';
 import type { CourseWithDetails, Difficulty } from '@/context/types/course';
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/context/types/course';
 import { getTrackName, getTrackColor } from '@/context/course/tracks';
@@ -24,137 +26,62 @@ export function CourseHeader({ course }: CourseHeaderProps) {
     const bonusXp = calculateCompletionBonus(course.xpPerLesson, course.lessonCount);
 
     return (
-        <div className="course-header">
+        <div className="relative rounded-2xl overflow-hidden bg-card/50 border border-border">
+            {/* Accent gradient overlay */}
             <div
-                className="header-accent"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                    background: `linear-gradient(135deg, ${trackColor}44 0%, transparent 60%)`,
+                    background: `linear-gradient(135deg, ${trackColor}22 0%, transparent 60%)`,
                 }}
             />
 
-            <div className="header-content">
-                <div className="header-badges">
-                    <span className="track-badge" style={{ color: trackColor, borderColor: `${trackColor}44` }}>
+            <div className="relative p-6 sm:p-8">
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <span
+                        className="text-[0.72rem] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border bg-card/50"
+                        style={{ color: trackColor, borderColor: `${trackColor}44` }}
+                    >
                         {trackName}
                     </span>
-                    <span className={`difficulty-badge ${diffColorClass}`}>
+                    <span className={`text-[0.72rem] font-semibold px-3 py-1 rounded-full border ${diffColorClass}`}>
                         {diffLabel}
                     </span>
-                    <span className="level-badge">{t('level', { level: course.trackLevel })}</span>
+                    <span className="text-[0.68rem] text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full font-medium">
+                        {t('level', { level: course.trackLevel })}
+                    </span>
                 </div>
 
-                <h1 className="course-title">{course.title}</h1>
-                <p className="course-description">{course.description}</p>
+                {/* Title */}
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight mb-3 font-display">
+                    {course.title}
+                </h1>
 
-                <div className="course-meta">
-                    <div className="meta-item">
-                        <span className="meta-icon">📚</span>
+                {/* Description */}
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 max-w-[640px] font-supreme">
+                    {course.description}
+                </p>
+
+                {/* Meta stats */}
+                <div className="flex flex-wrap gap-4 sm:gap-5">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-supreme">
+                        <BookOpen className="w-4 h-4" aria-hidden="true" />
                         <span>{t('lessons', { count: course.lessonCount })}</span>
                     </div>
-                    <div className="meta-item">
-                        <span className="meta-icon">✨</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-supreme">
+                        <Sparkles className="w-4 h-4" aria-hidden="true" />
                         <span>{t('xpTotal', { total: totalXp.toLocaleString() })}</span>
                     </div>
-                    <div className="meta-item">
-                        <span className="meta-icon">🎁</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-supreme">
+                        <Gift className="w-4 h-4" aria-hidden="true" />
                         <span>{t('xpBonus', { bonus: bonusXp.toLocaleString() })}</span>
                     </div>
-                    <div className="meta-item">
-                        <span className="meta-icon">👥</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-supreme">
+                        <Users className="w-4 h-4" aria-hidden="true" />
                         <span>{t('enrolled', { count: course.totalEnrollments })}</span>
                     </div>
                 </div>
             </div>
-
-            <style jsx>{`
-                .course-header {
-                    position: relative;
-                    border-radius: 20px;
-                    overflow: hidden;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                }
-                .header-accent {
-                    position: absolute;
-                    inset: 0;
-                    pointer-events: none;
-                }
-                .header-content {
-                    position: relative;
-                    padding: 32px;
-                }
-                .header-badges {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    margin-bottom: 16px;
-                }
-                .track-badge {
-                    font-size: 0.72rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    border: 1px solid;
-                    background: rgba(255, 255, 255, 0.03);
-                }
-                .difficulty-badge {
-                    font-size: 0.72rem;
-                    font-weight: 600;
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    border: 1px solid;
-                }
-                .level-badge {
-                    font-size: 0.68rem;
-                    color: rgba(255, 255, 255, 0.4);
-                    background: rgba(255, 255, 255, 0.06);
-                    padding: 4px 10px;
-                    border-radius: 20px;
-                    font-weight: 500;
-                }
-                .course-title {
-                    font-size: 2rem;
-                    font-weight: 800;
-                    color: rgba(255, 255, 255, 0.95);
-                    line-height: 1.2;
-                    margin: 0 0 12px;
-                }
-                .course-description {
-                    font-size: 1rem;
-                    color: rgba(255, 255, 255, 0.5);
-                    line-height: 1.6;
-                    margin: 0 0 24px;
-                    max-width: 640px;
-                }
-                .course-meta {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 20px;
-                }
-                .meta-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 0.85rem;
-                    color: rgba(255, 255, 255, 0.5);
-                }
-                .meta-icon {
-                    font-size: 1rem;
-                }
-                @media (max-width: 768px) {
-                    .header-content {
-                        padding: 20px;
-                    }
-                    .course-title {
-                        font-size: 1.5rem;
-                    }
-                    .course-meta {
-                        gap: 12px;
-                    }
-                }
-            `}</style>
         </div>
     );
 }

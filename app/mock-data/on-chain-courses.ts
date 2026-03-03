@@ -4,6 +4,8 @@
  * These simulate the on-chain Course PDA data fetched from /api/courses.
  * courseId maps to the SanityCourse's onChainCourseId.
  *
+ * Lesson counts must match the total lessons in MOCK_SANITY_COURSES.
+ *
  * Only loaded when NEXT_PUBLIC_USE_MOCK_DATA=true.
  */
 
@@ -16,7 +18,7 @@ export const MOCK_ON_CHAIN_COURSES: Course[] = [
         creator: '11111111111111111111111111111111',
         contentTxId: [],
         version: 1,
-        lessonCount: 4,
+        lessonCount: 6, // 2 content + 2 challenges + 2 quizzes
         difficulty: 1, // Beginner
         xpPerLesson: 100,
         trackId: 1, // Solana Developer
@@ -32,7 +34,7 @@ export const MOCK_ON_CHAIN_COURSES: Course[] = [
         bump: 255,
         // Enriched by CMS merge in useActiveCourses:
         title: 'Intro to Solana Development',
-        description: 'Start your Solana journey! Learn the fundamentals of blockchain development, write your first Rust program, and understand the account model.',
+        description: 'Start your Solana journey! Learn the fundamentals, write your first Rust program, and understand accounts & PDAs.',
         thumbnail: undefined,
     },
     {
@@ -41,7 +43,7 @@ export const MOCK_ON_CHAIN_COURSES: Course[] = [
         creator: '22222222222222222222222222222222',
         contentTxId: [],
         version: 1,
-        lessonCount: 4,
+        lessonCount: 5, // 2 content + 2 challenges + 1 quiz
         difficulty: 2, // Intermediate
         xpPerLesson: 150,
         trackId: 2, // DeFi Specialist
@@ -56,7 +58,7 @@ export const MOCK_ON_CHAIN_COURSES: Course[] = [
         updatedAt: Math.floor(new Date('2026-03-01').getTime() / 1000),
         bump: 254,
         title: 'DeFi Fundamentals on Solana',
-        description: 'Master decentralized finance on Solana. Learn about SPL tokens, AMMs, liquidity pools, and build a token swap calculator.',
+        description: 'Master decentralized finance on Solana. Learn about SPL tokens, AMMs, liquidity pools, and build calculators.',
         thumbnail: undefined,
     },
 ];

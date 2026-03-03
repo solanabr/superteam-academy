@@ -9,6 +9,8 @@
  * 3. Frontend updates UI with new progress
  *
  * Progress is tracked via the on-chain enrollment bitmap.
+ *
+ * In mock mode, progress is tracked locally in memory (no wallet/on-chain).
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -25,6 +27,18 @@ import {
     isCourseFullyCompleted,
     getCompletedLessonIndices,
 } from '@/context/solana/bitmap';
+
+const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+
+// ─── Mock Mode: in-memory completion tracking ─────────────────────────
+const mockCompletedLessons = new Map<string, Set<number>>();
+
+function getMockCompleted(courseId: string): Set<number> {
+    if (!mockCompletedLessons.has(courseId)) {
+        mockCompletedLessons.set(courseId, new Set<number>());
+    }
+    return mockCompletedLessons.get(courseId)!;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -50,17 +64,46 @@ export interface CourseProgressData {
 // ─── Hooks ───────────────────────────────────────────────────────────
 
 /**
- * Hook for completing a lesson via the backend API.
+ * Hook for completing a lesson.
  *
- * Sends a POST request to /api/lessons/complete which is signed
- * by the backend signer (anti-cheat pattern).
+ * In real mode: sends POST /api/lessons/complete (backend-signed).
+ * In mock mode: tracks completion locally and shows celebratory toast.
  */
 export function useLessonCompletion(courseId: string) {
     const { publicKey } = useWallet();
     const queryClient = useQueryClient();
     const [completionStep, setCompletionStep] = useState<CompletionStep>('idle');
 
-    const mutation = useMutation<LessonCompletionResult, Error, number>({
+    // ── Mock mode completion ─────────────────────────────────────
+    const mockMutation = useMutation<LessonCompletionResult, Error, number>({
+        mutationFn: async (lessonIndex: number) => {
+            setCompletionStep('submitting');
+            // Simulate a short delay for UX
+            await new Promise((r) => setTimeout(r, 600));
+
+            // Track locally
+            getMockCompleted(courseId).add(lessonIndex);
+
+            setCompletionStep('confirming');
+            await new Promise((r) => setTimeout(r, 300));
+
+            return { success: true, signature: 'mock-sig', slot: 0 };
+        },
+        onSuccess: () => {
+            setCompletionStep('idle');
+            goeyToast.success('Lesson Completed! ✨', {
+                description: 'XP earned — keep going!',
+            });
+            queryClient.invalidateQueries({ queryKey: ['course-progress', courseId] });
+            queryClient.invalidateQueries({ queryKey: ['xpBalance'] });
+        },
+        onError: () => {
+            setCompletionStep('idle');
+        },
+    });
+
+    // ── Real mode completion ─────────────────────────────────────
+    const realMutation = useMutation<LessonCompletionResult, Error, number>({
         mutationFn: async (lessonIndex: number) => {
             if (!publicKey) throw new Error('Wallet not connected');
 
@@ -88,16 +131,9 @@ export function useLessonCompletion(courseId: string) {
             goeyToast.success('Lesson Completed! ✨', {
                 description: 'XP earned — keep going!',
             });
-            // Invalidate enrollment, progress, and XP queries
-            queryClient.invalidateQueries({
-                queryKey: ['enrollment', courseId],
-            });
-            queryClient.invalidateQueries({
-                queryKey: ['course-progress', courseId],
-            });
-            queryClient.invalidateQueries({
-                queryKey: ['xpBalance'],
-            });
+            queryClient.invalidateQueries({ queryKey: ['enrollment', courseId] });
+            queryClient.invalidateQueries({ queryKey: ['course-progress', courseId] });
+            queryClient.invalidateQueries({ queryKey: ['xpBalance'] });
         },
         onError: (error) => {
             setCompletionStep('idle');
@@ -106,6 +142,8 @@ export function useLessonCompletion(courseId: string) {
             });
         },
     });
+
+    const mutation = MOCK_MODE ? mockMutation : realMutation;
 
     return {
         completeLesson: mutation.mutate,
@@ -125,6 +163,7 @@ export function useLessonCompletion(courseId: string) {
  * Hook for finalizing a course via the backend API.
  *
  * Awards bonus XP and auto-issues a credential NFT after finalization.
+ * In mock mode, simulates a successful finalization.
  */
 export function useCourseFinalization(courseId: string) {
     const { publicKey } = useWallet();
@@ -138,6 +177,11 @@ export function useCourseFinalization(courseId: string) {
 
     const mutation = useMutation<LessonCompletionResult, Error>({
         mutationFn: async () => {
+            if (MOCK_MODE) {
+                await new Promise((r) => setTimeout(r, 800));
+                return { success: true, signature: 'mock-finalize-sig', slot: 0 };
+            }
+
             if (!publicKey) throw new Error('Wallet not connected');
 
             const response = await fetch('/api/courses/finalize', {
@@ -160,15 +204,25 @@ export function useCourseFinalization(courseId: string) {
             goeyToast.success('Course Finalized! 🎉', {
                 description: 'Bonus XP awarded — minting your credential...',
             });
-            queryClient.invalidateQueries({
-                queryKey: ['enrollment', courseId],
-            });
-            queryClient.invalidateQueries({
-                queryKey: ['course-progress', courseId],
-            });
-            queryClient.invalidateQueries({
-                queryKey: ['xpBalance'],
-            });
+            queryClient.invalidateQueries({ queryKey: ['enrollment', courseId] });
+            queryClient.invalidateQueries({ queryKey: ['course-progress', courseId] });
+            queryClient.invalidateQueries({ queryKey: ['xpBalance'] });
+
+            if (MOCK_MODE) {
+                // Simulate credential issuance
+                setIsIssuingCredential(true);
+                await new Promise((r) => setTimeout(r, 1200));
+                setCredentialResult({
+                    action: 'issued',
+                    credentialAsset: 'MockCredential111111111111111111',
+                    signature: 'mock-cred-sig',
+                });
+                setIsIssuingCredential(false);
+                goeyToast.success('Credential Minted! 🎓', {
+                    description: 'Your mock credential has been issued.',
+                });
+                return;
+            }
 
             // Auto-issue credential NFT after finalization
             try {
@@ -220,19 +274,36 @@ export function useCourseFinalization(courseId: string) {
 /**
  * Hook for course progress tracking.
  *
- * Fetches the enrollment bitmap and computes:
- * - Number of completed lessons
- * - Progress percentage
- * - Whether the course is fully completed
- * - Per-lesson completion status
+ * Real mode: fetches enrollment bitmap from on-chain.
+ * Mock mode: uses in-memory completion tracking (no wallet needed).
  */
 export function useCourseProgress(courseId: string, totalLessons: number) {
     const { connection } = useConnection();
     const { publicKey } = useWallet();
 
     return useQuery<CourseProgressData>({
-        queryKey: ['course-progress', courseId, publicKey?.toBase58()],
+        queryKey: ['course-progress', courseId, MOCK_MODE ? 'mock' : publicKey?.toBase58()],
         queryFn: async () => {
+            // ── Mock mode ─────────────────────────────────────────
+            if (MOCK_MODE) {
+                const completed = getMockCompleted(courseId);
+                const completedCount = completed.size;
+                const completedIndices = Array.from(completed).sort((a, b) => a - b);
+                const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+                const isFullyCompleted = completedCount >= totalLessons;
+
+                return {
+                    enrollment: null,
+                    completedCount,
+                    totalLessons,
+                    progressPercent,
+                    completedIndices,
+                    isFullyCompleted,
+                    isEnrolled: true, // auto-enrolled in mock mode
+                };
+            }
+
+            // ── Real mode ─────────────────────────────────────────
             if (!publicKey) {
                 return {
                     enrollment: null,
@@ -271,19 +342,22 @@ export function useCourseProgress(courseId: string, totalLessons: number) {
                 isEnrolled: true,
             };
         },
-        enabled: !!courseId && !!publicKey,
-        staleTime: 15_000, // 15 seconds — progress may change frequently during learning
+        enabled: MOCK_MODE || (!!courseId && !!publicKey),
+        staleTime: MOCK_MODE ? 2_000 : 15_000,
     });
 }
 
 /**
  * Check if a specific lesson is completed.
  * Uses data from the useCourseProgress hook.
+ *
+ * In mock mode, checks the completedIndices array.
  */
 export function isLessonDone(
     progressData: CourseProgressData | undefined,
     lessonIndex: number
 ): boolean {
+    if (progressData?.completedIndices?.includes(lessonIndex)) return true;
     if (!progressData?.enrollment) return false;
     return isLessonComplete(progressData.enrollment.lessonFlags, lessonIndex);
 }

@@ -9,6 +9,8 @@
  *
  * All challenge data (starter code, test cases, instructions) comes
  * from Sanity CMS via SanityChallenge — nothing hardcoded.
+ *
+ * Themed with Tailwind CSS variables for light/dark mode support.
  */
 'use client';
 
@@ -19,6 +21,7 @@ import { HintsPanel } from './HintsPanel';
 import { OutputTerminal } from './OutputTerminal';
 import { useCodeExecution } from '@/context/hooks/useCodeExecution';
 import { ClaimXpPopup } from '@/components/streak/ClaimXpPopup';
+import { Check, X, Circle, RotateCcw, Play, Loader2 } from 'lucide-react';
 import type { SanityChallenge, SanityTestCase, SanityCodeBlock } from '@/context/types/course';
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
@@ -211,17 +214,19 @@ export function ChallengePanel({
     }, [onComplete]);
 
     return (
-        <div className="challenge-panel" ref={editorContainerRef}>
+        <div className="flex flex-col h-full bg-card overflow-y-auto" ref={editorContainerRef}>
             {/* Challenge prompt */}
-            <div className="challenge-header">
-                <div className="challenge-badge">{t('challenge')}</div>
-                <div className="challenge-instructions">
+            <div className="px-5 py-4 border-b border-border">
+                <div className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-brand-green-emerald bg-brand-green-emerald/10 border border-brand-green-emerald/20 px-2 py-0.5 rounded mb-2.5">
+                    {t('challenge')}
+                </div>
+                <div className="text-sm text-foreground/70 leading-relaxed font-supreme whitespace-pre-wrap">
                     {challenge.instructions}
                 </div>
             </div>
 
             {/* Editor */}
-            <div className="challenge-editor">
+            <div className="flex-1 min-h-[200px] max-h-[400px]">
                 <CodeEditor
                     language={challenge.language as 'rust' | 'typescript' | 'json'}
                     starterCode={challenge.starterCode.code}
@@ -231,43 +236,57 @@ export function ChallengePanel({
             </div>
 
             {/* Toolbar */}
-            <div className="challenge-toolbar">
+            <div className="flex gap-2 px-5 py-2 bg-muted/30 border-t border-b border-border">
                 <button
-                    className="toolbar-btn reset-btn"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     onClick={handleReset}
                     disabled={isCompleted}
                     type="button"
                 >
+                    <RotateCcw className="w-3 h-3" />
                     {t('resetCode')}
                 </button>
                 <button
-                    className="toolbar-btn run-btn"
+                    className="inline-flex items-center gap-1.5 ml-auto px-4 py-1.5 rounded-md text-xs font-bold bg-brand-green-emerald/10 text-brand-green-emerald border border-brand-green-emerald/20 hover:bg-brand-green-emerald/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     onClick={handleRun}
                     disabled={isExecuting || isMockExecuting || isCompleted}
                     type="button"
                 >
-                    {(isExecuting || isMockExecuting) ? t('running') : t('runCode')}
+                    {(isExecuting || isMockExecuting) ? (
+                        <><Loader2 className="w-3 h-3 animate-spin" />{t('running')}</>
+                    ) : (
+                        <><Play className="w-3 h-3" />{t('runCode')}</>
+                    )}
                 </button>
             </div>
 
             {/* Tab bar */}
-            <div className="panel-tabs">
+            <div className="flex bg-muted/20 border-b border-border">
                 <button
-                    className={`panel-tab ${activeTab === 'output' ? 'panel-tab-active' : ''}`}
+                    className={`flex-1 py-2 px-4 border-b-2 text-[0.7rem] font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${activeTab === 'output'
+                            ? 'text-foreground border-brand-green-emerald'
+                            : 'text-muted-foreground border-transparent hover:text-foreground/60'
+                        }`}
                     onClick={() => setActiveTab('output')}
                     type="button"
                 >
                     {t('output')}
-                    {isExecuting && <span className="tab-spinner" />}
+                    {isExecuting && <Loader2 className="w-2.5 h-2.5 animate-spin" />}
                 </button>
                 <button
-                    className={`panel-tab ${activeTab === 'tests' ? 'panel-tab-active' : ''}`}
+                    className={`flex-1 py-2 px-4 border-b-2 text-[0.7rem] font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${activeTab === 'tests'
+                            ? 'text-foreground border-brand-green-emerald'
+                            : 'text-muted-foreground border-transparent hover:text-foreground/60'
+                        }`}
                     onClick={() => setActiveTab('tests')}
                     type="button"
                 >
                     {t('testCases')}
                     {displayResults.length > 0 && (
-                        <span className={`tab-badge ${allVisiblePassed ? 'badge-pass' : 'badge-fail'}`}>
+                        <span className={`text-[0.6rem] px-1.5 py-px rounded-full font-bold ${allVisiblePassed
+                                ? 'bg-brand-green-emerald/15 text-brand-green-emerald'
+                                : 'bg-destructive/15 text-destructive'
+                            }`}>
                             {displayResults.filter((r) => r.passed).length}/{displayResults.length}
                         </span>
                     )}
@@ -285,38 +304,51 @@ export function ChallengePanel({
 
             {/* Test cases */}
             {activeTab === 'tests' && (
-                <div className="test-cases">
-                    <div className="test-cases-header">{t('testCases')}</div>
+                <div className="px-5 py-3">
+                    <div className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                        {t('testCases')}
+                    </div>
                     {challenge.testCases.map((tc, i) => {
                         const result = displayResults[i];
-                        const statusClass = result
-                            ? result.passed ? 'test-pass' : 'test-fail'
-                            : 'test-pending';
+                        const isPassed = result?.passed;
+                        const isFailed = result && !result.passed;
 
                         return (
-                            <div key={tc.name} className={`test-case ${statusClass}`}>
-                                <div className="test-name">
-                                    <span className="test-icon">
-                                        {result
-                                            ? result.passed ? '\u2713' : '\u2717'
-                                            : '\u25CB'}
+                            <div
+                                key={tc.name}
+                                className={`px-3 py-2.5 rounded-lg mb-1 border ${isPassed
+                                        ? 'border-brand-green-emerald/15 bg-brand-green-emerald/5'
+                                        : isFailed
+                                            ? 'border-destructive/15 bg-destructive/5'
+                                            : 'border-border/50 bg-card/50'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2 text-sm font-semibold text-foreground/75">
+                                    <span className="w-4 text-center">
+                                        {isPassed ? (
+                                            <Check className="w-3.5 h-3.5 text-brand-green-emerald" />
+                                        ) : isFailed ? (
+                                            <X className="w-3.5 h-3.5 text-destructive" />
+                                        ) : (
+                                            <Circle className="w-3.5 h-3.5 text-muted-foreground/40" />
+                                        )}
                                     </span>
                                     {tc.isHidden ? t('hidden') : tc.name}
                                 </div>
                                 {!tc.isHidden && (
-                                    <div className="test-details">
-                                        <div className="test-row">
-                                            <span className="test-label">{t('input')}:</span>
-                                            <code className="test-value">{tc.input}</code>
+                                    <div className="mt-2 pl-6 space-y-0.5">
+                                        <div className="flex gap-2 items-baseline text-xs">
+                                            <span className="text-muted-foreground min-w-[60px] shrink-0">{t('input')}:</span>
+                                            <code className="font-mono text-foreground/60 bg-muted/40 px-1.5 py-px rounded text-[0.72rem]">{tc.input}</code>
                                         </div>
-                                        <div className="test-row">
-                                            <span className="test-label">{t('expected')}:</span>
-                                            <code className="test-value">{tc.expectedOutput}</code>
+                                        <div className="flex gap-2 items-baseline text-xs">
+                                            <span className="text-muted-foreground min-w-[60px] shrink-0">{t('expected')}:</span>
+                                            <code className="font-mono text-foreground/60 bg-muted/40 px-1.5 py-px rounded text-[0.72rem]">{tc.expectedOutput}</code>
                                         </div>
-                                        {result && !result.passed && (
-                                            <div className="test-row test-actual">
-                                                <span className="test-label">{t('actual')}:</span>
-                                                <code className="test-value">{result.actual}</code>
+                                        {isFailed && result && (
+                                            <div className="flex gap-2 items-baseline text-xs">
+                                                <span className="text-muted-foreground min-w-[60px] shrink-0">{t('actual')}:</span>
+                                                <code className="font-mono text-destructive bg-destructive/10 px-1.5 py-px rounded text-[0.72rem]">{result.actual}</code>
                                             </div>
                                         )}
                                     </div>
@@ -329,7 +361,10 @@ export function ChallengePanel({
 
             {/* Results summary */}
             {displayResults.length > 0 && (
-                <div className={`results-summary ${allVisiblePassed ? 'summary-pass' : 'summary-fail'}`}>
+                <div className={`mx-5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-center ${allVisiblePassed
+                        ? 'bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald'
+                        : 'bg-destructive/10 border border-destructive/20 text-destructive'
+                    }`}>
                     {allVisiblePassed
                         ? t('allTestsPassed')
                         : t('someTestsFailed', { count: failedCount })}
@@ -339,7 +374,7 @@ export function ChallengePanel({
             {/* Mark complete */}
             {allVisiblePassed && !isCompleted && (
                 <button
-                    className="complete-btn"
+                    className="mx-5 my-3 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-green-emerald to-brand-green-dark hover:-translate-y-0.5 hover:shadow-lg transition-all"
                     onClick={handleMarkComplete}
                     type="button"
                 >
@@ -348,7 +383,7 @@ export function ChallengePanel({
             )}
 
             {isCompleted && (
-                <div className="completed-indicator">
+                <div className="mx-5 my-3 py-3 rounded-xl bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald text-center text-sm font-semibold">
                     {t('completed')}
                 </div>
             )}
@@ -374,13 +409,15 @@ export function ChallengePanel({
                 />
             )}
             {showSuccess && !MOCK_MODE && (
-                <div className="success-overlay" onClick={() => setShowSuccess(false)}>
-                    <div className="success-card">
-                        <div className="success-icon">{'\u2713'}</div>
-                        <h3 className="success-title">{t('successTitle')}</h3>
-                        <p className="success-message">{t('successMessage', { xp: xpReward })}</p>
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] animate-in fade-in duration-300" onClick={() => setShowSuccess(false)}>
+                    <div className="bg-card border border-brand-green-emerald/30 rounded-2xl p-10 text-center max-w-[360px] animate-in zoom-in-95 duration-300">
+                        <div className="w-16 h-16 rounded-full bg-brand-green-emerald/15 text-brand-green-emerald text-3xl flex items-center justify-center mx-auto mb-4">
+                            <Check className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-foreground mb-2">{t('successTitle')}</h3>
+                        <p className="text-sm text-muted-foreground mb-6">{t('successMessage', { xp: xpReward })}</p>
                         <button
-                            className="success-btn"
+                            className="px-8 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-green-emerald to-brand-green-dark hover:-translate-y-0.5 hover:shadow-lg transition-all"
                             onClick={handleMarkComplete}
                             type="button"
                         >
@@ -389,315 +426,6 @@ export function ChallengePanel({
                     </div>
                 </div>
             )}
-
-            <style jsx>{`
-                .challenge-panel {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-                    background: #1a1a2e;
-                    overflow-y: auto;
-                }
-                .challenge-header {
-                    padding: 16px 20px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                }
-                .challenge-badge {
-                    display: inline-block;
-                    font-size: 0.65rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.08em;
-                    color: #14F195;
-                    background: rgba(20, 241, 149, 0.1);
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                    padding: 3px 8px;
-                    border-radius: 4px;
-                    margin-bottom: 10px;
-                }
-                .challenge-instructions {
-                    font-size: 0.85rem;
-                    color: rgba(255, 255, 255, 0.7);
-                    line-height: 1.6;
-                }
-                .challenge-editor {
-                    flex: 1;
-                    min-height: 200px;
-                    max-height: 400px;
-                }
-                .challenge-toolbar {
-                    display: flex;
-                    gap: 8px;
-                    padding: 8px 20px;
-                    background: rgba(0, 0, 0, 0.2);
-                    border-top: 1px solid rgba(255, 255, 255, 0.06);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                }
-                .toolbar-btn {
-                    padding: 6px 14px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 6px;
-                    background: transparent;
-                    color: rgba(255, 255, 255, 0.6);
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.15s;
-                }
-                .toolbar-btn:hover:not(:disabled) {
-                    background: rgba(255, 255, 255, 0.05);
-                    color: rgba(255, 255, 255, 0.9);
-                }
-                .toolbar-btn:disabled {
-                    opacity: 0.4;
-                    cursor: not-allowed;
-                }
-                .run-btn {
-                    margin-left: auto;
-                    background: rgba(20, 241, 149, 0.1);
-                    border-color: rgba(20, 241, 149, 0.2);
-                    color: #14F195;
-                }
-                .run-btn:hover:not(:disabled) {
-                    background: rgba(20, 241, 149, 0.2);
-                }
-                /* Tab bar */
-                .panel-tabs {
-                    display: flex;
-                    background: rgba(0, 0, 0, 0.3);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                }
-                .panel-tab {
-                    flex: 1;
-                    padding: 7px 16px;
-                    border: none;
-                    border-bottom: 2px solid transparent;
-                    background: transparent;
-                    color: rgba(255, 255, 255, 0.35);
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    cursor: pointer;
-                    transition: all 0.15s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 6px;
-                }
-                .panel-tab:hover {
-                    color: rgba(255, 255, 255, 0.6);
-                    background: rgba(255, 255, 255, 0.02);
-                }
-                .panel-tab-active {
-                    color: rgba(255, 255, 255, 0.85);
-                    border-bottom-color: #9945FF;
-                }
-                .tab-spinner {
-                    width: 10px;
-                    height: 10px;
-                    border: 1.5px solid rgba(255, 255, 255, 0.15);
-                    border-top-color: #14F195;
-                    border-radius: 50%;
-                    animation: spin 0.6s linear infinite;
-                }
-                .tab-badge {
-                    font-size: 0.6rem;
-                    padding: 1px 5px;
-                    border-radius: 8px;
-                    font-weight: 700;
-                }
-                .badge-pass {
-                    background: rgba(20, 241, 149, 0.15);
-                    color: #14F195;
-                }
-                .badge-fail {
-                    background: rgba(255, 107, 107, 0.15);
-                    color: #ff6b6b;
-                }
-                .test-cases {
-                    padding: 12px 20px;
-                }
-                .test-cases-header {
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    color: rgba(255, 255, 255, 0.35);
-                    margin-bottom: 8px;
-                }
-                .test-case {
-                    padding: 10px 12px;
-                    border-radius: 8px;
-                    margin-bottom: 4px;
-                    border: 1px solid rgba(255, 255, 255, 0.04);
-                    background: rgba(255, 255, 255, 0.02);
-                }
-                .test-pass {
-                    border-color: rgba(20, 241, 149, 0.15);
-                    background: rgba(20, 241, 149, 0.03);
-                }
-                .test-fail {
-                    border-color: rgba(255, 107, 107, 0.15);
-                    background: rgba(255, 107, 107, 0.03);
-                }
-                .test-name {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    color: rgba(255, 255, 255, 0.75);
-                }
-                .test-icon {
-                    font-size: 0.85rem;
-                    width: 18px;
-                    text-align: center;
-                }
-                .test-pass .test-icon { color: #14F195; }
-                .test-fail .test-icon { color: #ff6b6b; }
-                .test-pending .test-icon { color: rgba(255, 255, 255, 0.25); }
-                .test-details {
-                    margin-top: 8px;
-                    padding-left: 26px;
-                }
-                .test-row {
-                    display: flex;
-                    gap: 8px;
-                    align-items: baseline;
-                    font-size: 0.75rem;
-                    margin-bottom: 2px;
-                }
-                .test-label {
-                    color: rgba(255, 255, 255, 0.35);
-                    min-width: 60px;
-                    flex-shrink: 0;
-                }
-                .test-value {
-                    font-family: monospace;
-                    color: rgba(255, 255, 255, 0.6);
-                    background: rgba(0, 0, 0, 0.2);
-                    padding: 1px 6px;
-                    border-radius: 3px;
-                    font-size: 0.72rem;
-                }
-                .test-actual .test-value {
-                    color: #ff6b6b;
-                }
-                .results-summary {
-                    margin: 0 20px;
-                    padding: 10px 14px;
-                    border-radius: 8px;
-                    font-size: 0.82rem;
-                    font-weight: 600;
-                    text-align: center;
-                }
-                .summary-pass {
-                    background: rgba(20, 241, 149, 0.08);
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                    color: #14F195;
-                }
-                .summary-fail {
-                    background: rgba(255, 107, 107, 0.08);
-                    border: 1px solid rgba(255, 107, 107, 0.2);
-                    color: #ff6b6b;
-                }
-                .complete-btn {
-                    margin: 12px 20px;
-                    padding: 12px;
-                    border: none;
-                    border-radius: 10px;
-                    background: linear-gradient(135deg, #9945FF, #14F195);
-                    color: white;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .complete-btn:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 20px rgba(153, 69, 255, 0.3);
-                }
-                .completed-indicator {
-                    margin: 12px 20px;
-                    padding: 12px;
-                    border-radius: 10px;
-                    background: rgba(20, 241, 149, 0.08);
-                    border: 1px solid rgba(20, 241, 149, 0.2);
-                    color: #14F195;
-                    text-align: center;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                }
-                .success-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0, 0, 0, 0.7);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 100;
-                    animation: fadeIn 0.3s ease;
-                }
-                .success-card {
-                    background: #1a1a2e;
-                    border: 1px solid rgba(20, 241, 149, 0.3);
-                    border-radius: 20px;
-                    padding: 40px;
-                    text-align: center;
-                    max-width: 360px;
-                    animation: scaleIn 0.3s ease;
-                }
-                .success-icon {
-                    width: 64px;
-                    height: 64px;
-                    border-radius: 50%;
-                    background: rgba(20, 241, 149, 0.15);
-                    color: #14F195;
-                    font-size: 2rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto 16px;
-                }
-                .success-title {
-                    font-size: 1.3rem;
-                    font-weight: 800;
-                    color: rgba(255, 255, 255, 0.95);
-                    margin: 0 0 8px;
-                }
-                .success-message {
-                    font-size: 0.9rem;
-                    color: rgba(255, 255, 255, 0.5);
-                    margin: 0 0 24px;
-                }
-                .success-btn {
-                    padding: 12px 32px;
-                    border: none;
-                    border-radius: 10px;
-                    background: linear-gradient(135deg, #9945FF, #14F195);
-                    color: white;
-                    font-size: 0.9rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .success-btn:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 20px rgba(153, 69, 255, 0.3);
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes scaleIn {
-                    from { transform: scale(0.8); opacity: 0; }
-                    to { transform: scale(1); opacity: 1; }
-                }
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     );
 }
