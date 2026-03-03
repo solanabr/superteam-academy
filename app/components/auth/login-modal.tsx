@@ -13,6 +13,7 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { truncateAddress } from "@/lib/utils";
 
 const WALLET_ICONS: Record<string, string> = {
 	Phantom: "/wallets/phantom.png",
@@ -30,13 +31,8 @@ interface LoginModalProps {
 type Step = "choose" | "wallet-verify";
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
-	const {
-		signInWithOAuth,
-		wallet,
-		verifyWallet,
-		isWalletConnected,
-		ensureWalletAdaptersLoaded,
-	} = useAuth();
+	const { signInWithOAuth, wallet, verifyWallet, isWalletConnected, ensureWalletAdaptersLoaded } =
+		useAuth();
 	const t = useTranslations("auth");
 	const [step, setStep] = useState<Step>("choose");
 	const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -135,9 +131,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 		}
 	}, [verifyWallet, handleOpenChange, t]);
 
-	const truncatedAddress = wallet.publicKey
-		? `${wallet.publicKey.toBase58().slice(0, 4)}...${wallet.publicKey.toBase58().slice(-4)}`
-		: null;
+	const truncatedAddress = wallet.publicKey ? truncateAddress(wallet.publicKey.toBase58()) : null;
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>

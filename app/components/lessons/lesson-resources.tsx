@@ -5,6 +5,7 @@ import { ExternalLink, Download, FileText, Video, Link as LinkIcon, BookOpen } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatFileSize, formatDuration } from "@/lib/utils";
 
 interface Resource {
 	id: string;
@@ -56,23 +57,6 @@ export function LessonResources({ resources, onResourceClick }: LessonResourcesP
 			default:
 				return "text-gray-500";
 		}
-	};
-
-	const formatFileSize = (bytes: number) => {
-		if (bytes === 0) return "0 Bytes";
-		const k = 1024;
-		const sizes = ["Bytes", "KB", "MB", "GB"];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
-	};
-
-	const formatDuration = (minutes: number) => {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		if (hours > 0) {
-			return `${hours}h ${mins}m`;
-		}
-		return `${mins}m`;
 	};
 
 	const handleResourceClick = (resource: Resource) => {

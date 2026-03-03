@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { formatTimestamp } from "@/lib/utils";
 
 interface Note {
 	id: string;
@@ -125,11 +126,7 @@ export function LessonNotes({
 		}
 	}, [notes, lessonId, useApi]);
 
-	const formatTime = (seconds: number) => {
-		const minutes = Math.floor(seconds / 60);
-		const secs = Math.floor(seconds % 60);
-		return `${minutes}:${secs.toString().padStart(2, "0")}`;
-	};
+	const formatTime = formatTimestamp;
 
 	const addNote = async () => {
 		if (!newNoteTitle.trim() || !newNoteContent.trim()) return;

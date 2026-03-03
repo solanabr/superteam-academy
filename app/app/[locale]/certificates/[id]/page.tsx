@@ -8,6 +8,7 @@ import { getTranslations } from "next-intl/server";
 import { getSolanaConnection, getProgramId } from "@/lib/academy";
 import { CredentialService } from "@/services/credential-service";
 import { CertificateActions } from "@/components/credentials/certificate-actions";
+import { truncateAddress } from "@/lib/utils";
 
 interface CertificatePageProps {
 	params: Promise<{ locale: string; id: string }>;
@@ -167,7 +168,7 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 	const trackAttr = metadata.attributes.find((a) => a.trait_type === "Track");
 	const levelAttr = metadata.attributes.find((a) => a.trait_type === "Level");
 
-	const holder = owner ? `${owner.slice(0, 4)}...${owner.slice(-4)}` : "Unknown";
+	const holder = owner ? truncateAddress(owner) : "Unknown";
 
 	return {
 		id,

@@ -18,6 +18,7 @@ import {
 	type ProjectWithMeta,
 } from "@/lib/community-cms";
 import type { ProjectCategory } from "@superteam-academy/cms";
+import { getInitials } from "@/lib/utils";
 
 const CATEGORIES = ["all", "defi", "nft", "tooling", "gaming", "social", "infra"] as const;
 
@@ -36,16 +37,6 @@ type NormalizedProject = {
 	liveUrl?: string;
 	featured: boolean;
 };
-
-// Helper functions
-function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-}
 
 function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]): NormalizedProject {
 	if ("author" in project && typeof project.author === "object" && "initials" in project.author) {

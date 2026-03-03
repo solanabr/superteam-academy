@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStreak } from "@/hooks/use-streak";
 import { useTranslations } from "next-intl";
+import { formatDuration } from "@/lib/utils";
 
 interface CourseProgress {
 	courseId: string;
@@ -68,11 +69,7 @@ export function ProgressTracking({
 	const completedLessons = courses.reduce((acc, course) => acc + course.completedLessons, 0);
 	const totalTimeSpent = courses.reduce((acc, course) => acc + course.timeSpent, 0);
 
-	const formatTime = (minutes: number) => {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-	};
+	const formatTime = formatDuration;
 
 	const getRarityColor = (rarity: string) => {
 		switch (rarity) {

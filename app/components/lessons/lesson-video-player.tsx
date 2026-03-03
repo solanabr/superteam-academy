@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { formatTimestamp } from "@/lib/utils";
 
 interface LessonVideoPlayerProps {
 	videoUrl: string;
@@ -128,11 +129,7 @@ export function LessonVideoPlayer({
 		}
 	};
 
-	const formatTime = (time: number) => {
-		const minutes = Math.floor(time / 60);
-		const seconds = Math.floor(time % 60);
-		return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-	};
+	const formatTime = formatTimestamp;
 
 	return (
 		<div

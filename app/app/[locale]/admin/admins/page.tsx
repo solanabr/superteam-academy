@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
+import { formatDate, truncateAddress } from "@/lib/utils";
 
 interface AdminRow {
 	_id: string;
@@ -126,11 +127,6 @@ export default function AdminTeamPage() {
 		if (res.ok) {
 			setAdmins((prev) => prev.filter((a) => a._id !== userId));
 		}
-	};
-
-	const formatDate = (dateStr?: string) => {
-		if (!dateStr) return "Never";
-		return new Date(dateStr).toLocaleDateString();
 	};
 
 	if (loading) {
@@ -253,7 +249,7 @@ export default function AdminTeamPage() {
 										<TableCell className="text-sm">
 											{admin.email.endsWith(WALLET_EMAIL_DOMAIN)
 												? admin.walletAddress
-													? `${admin.walletAddress.slice(0, 4)}...${admin.walletAddress.slice(-4)}`
+													? truncateAddress(admin.walletAddress)
 													: "Wallet user"
 												: admin.email}
 										</TableCell>

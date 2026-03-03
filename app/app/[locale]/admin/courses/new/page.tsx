@@ -17,6 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { generateId } from "@/lib/utils";
 
 interface LessonDraft {
 	id: string;
@@ -30,10 +31,6 @@ interface ModuleDraft {
 	title: string;
 	description: string;
 	lessons: LessonDraft[];
-}
-
-function generateId() {
-	return Math.random().toString(36).slice(2, 9);
 }
 
 export default function NewCoursePage() {

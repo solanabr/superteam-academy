@@ -29,6 +29,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { generateId } from "@/lib/utils";
 
 type LessonRef = {
 	_id: string;
@@ -92,10 +93,6 @@ type LessonContentResponse = {
 		quiz: (QuizDraft & { _id: string }) | null;
 	};
 };
-
-function newId(prefix: string) {
-	return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
-}
 
 function defaultChallenge(lessonTitle: string): ChallengeDraft {
 	return {
@@ -599,7 +596,7 @@ export default function CourseLessonContentPage() {
 															tests: [
 																...prev.tests,
 																{
-																	id: newId("test"),
+																	id: generateId("test"),
 																	description: "",
 																	type: "unit",
 																},
@@ -865,7 +862,7 @@ export default function CourseLessonContentPage() {
 															questions: [
 																...prev.questions,
 																{
-																	id: newId("q"),
+																	id: generateId("q"),
 																	prompt: "",
 																	options: [
 																		{ id: "a", text: "" },
@@ -1078,7 +1075,7 @@ export default function CourseLessonContentPage() {
 																									[
 																										...item.options,
 																										{
-																											id: newId(
+																											id: generateId(
 																												"o"
 																											),
 																											text: "",

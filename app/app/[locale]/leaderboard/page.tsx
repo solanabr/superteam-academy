@@ -14,7 +14,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { levelFromXP } from "@superteam-academy/gamification";
-import { getGravatarUrl } from "@/lib/utils";
+import { getGravatarUrl, truncateAddress } from "@/lib/utils";
 import { getUsersByWallets, ensureSanityUsersExist, getAllUserWallets } from "@/lib/sanity-users";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { countCompletedLessons } from "@superteam-academy/anchor";
@@ -310,9 +310,7 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 			rank: entry.rank,
 			user: {
 				id: entry.publicKey,
-				name:
-					sanityUser?.name ??
-					`${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
+				name: sanityUser?.name ?? truncateAddress(entry.publicKey),
 				avatar: sanityUser?.image || getGravatarUrl(entry.publicKey),
 				country: sanityUser?.location ?? "--",
 			},
@@ -418,9 +416,7 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 						rank: index + 1,
 						user: {
 							id: entry.wallet,
-							name:
-								sanityUser?.name ??
-								`${entry.wallet.slice(0, 4)}...${entry.wallet.slice(-4)}`,
+							name: sanityUser?.name ?? truncateAddress(entry.wallet),
 							avatar: sanityUser?.image || getGravatarUrl(entry.wallet),
 							country: sanityUser?.location ?? "--",
 						},

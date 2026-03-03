@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { generateId } from "@/lib/utils";
 
 interface ToastProps {
 	title: string;
@@ -15,7 +16,7 @@ export function useToast() {
 	const [toasts, setToasts] = useState<Toast[]>([]);
 
 	const toast = useCallback((props: ToastProps) => {
-		const id = Math.random().toString(36).slice(2);
+		const id = generateId();
 		const newToast: Toast = { ...props, id };
 		setToasts((prev) => [...prev, newToast]);
 

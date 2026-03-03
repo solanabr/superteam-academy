@@ -23,6 +23,7 @@ import {
 } from "@/lib/community-cms";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
+import { getInitials, formatRelativeTime } from "@/lib/utils";
 
 interface NormalizedDiscussion {
 	id: string;
@@ -58,32 +59,6 @@ const CATEGORIES = [
 	"studyGroups",
 	"offTopic",
 ] as const;
-
-// Helper functions
-function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-}
-
-function formatRelativeTime(date: string): string {
-	const now = new Date();
-	const past = new Date(date);
-	const diffMs = now.getTime() - past.getTime();
-	const diffMins = Math.floor(diffMs / 60_000);
-	const diffHours = Math.floor(diffMins / 60);
-	const diffDays = Math.floor(diffHours / 24);
-	const diffWeeks = Math.floor(diffDays / 7);
-
-	if (diffMins < 60) return `${diffMins}m ago`;
-	if (diffHours < 24) return `${diffHours}h ago`;
-	if (diffDays < 7) return `${diffDays}d ago`;
-	if (diffWeeks < 4) return `${diffWeeks}w ago`;
-	return past.toLocaleDateString();
-}
 
 function normalizeDiscussion(
 	d: Awaited<ReturnType<typeof getAllDiscussions>>[number]

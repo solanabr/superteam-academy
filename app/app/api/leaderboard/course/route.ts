@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAcademyClient } from "@/lib/academy";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { levelFromXP } from "@superteam-academy/gamification";
+import { truncateAddress } from "@/lib/utils";
 
 export async function GET() {
 	const academyClient = getAcademyClient();
@@ -35,7 +36,7 @@ export async function GET() {
 				rank: index + 1,
 				user: {
 					id: userId,
-					name: `${userId.slice(0, 4)}...${userId.slice(-4)}`,
+					name: truncateAddress(userId),
 					avatar: "",
 					country: "--",
 				},

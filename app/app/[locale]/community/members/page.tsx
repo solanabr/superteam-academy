@@ -10,6 +10,7 @@ import { getLocalizedPageMetadata } from "@/lib/metadata";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
 import { levelFromXP } from "@superteam-academy/gamification";
+import { getInitials } from "@/lib/utils";
 
 export async function generateMetadata({
 	params,
@@ -35,16 +36,6 @@ type NormalizedMember = {
 	joinedAt: string;
 	badges: string[];
 };
-
-// Helper functions
-function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-}
 
 function normalizeMember(
 	member: MemberWithMeta | AcademyUser | NormalizedMember

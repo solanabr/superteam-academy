@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
+import { formatTimestamp } from "@/lib/utils";
 
 interface QuizQuestion {
 	id: string;
@@ -86,11 +87,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 	const currentQuestion = validQuestions[currentQuestionIndex];
 	const progress = hasQuestions ? ((currentQuestionIndex + 1) / validQuestions.length) * 100 : 0;
 
-	const formatTime = (seconds: number) => {
-		const minutes = Math.floor(seconds / 60);
-		const secs = seconds % 60;
-		return `${minutes}:${secs.toString().padStart(2, "0")}`;
-	};
+	const formatTime = formatTimestamp;
 
 	const handleAnswerSelect = (questionId: string, answerIndex: number) => {
 		setAnswers((prev) => ({

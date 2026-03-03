@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { writeClient } from "@/lib/cms-context";
+import { generateId } from "@/lib/utils";
 
 const execFileAsync = promisify(execFile);
 
@@ -231,7 +232,7 @@ export async function enqueueCourseSyncJob(documentId: string, courseId: string)
 
 		const createdAt = nowIso();
 		const job: CourseSyncJob = {
-			id: `sync-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+			id: `sync-${generateId()}`,
 			idempotencyKey,
 			documentId,
 			courseId,

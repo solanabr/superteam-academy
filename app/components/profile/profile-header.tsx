@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
+import { truncateAddress, getInitials } from "@/lib/utils";
 
 interface User {
 	id: string;
@@ -52,13 +53,9 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 		(walletAddress !== undefined && walletAddress === user.walletAddress);
 	const isOwner = isAuthenticated && (identifiersMatch || isSelfProfileRoute);
 
-	const initials = user.name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase();
+	const initials = getInitials(user.name);
 
-	const shortWallet = `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`;
+	const shortWallet = truncateAddress(user.walletAddress);
 
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">

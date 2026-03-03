@@ -15,6 +15,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
+import { formatDate, truncateAddress } from "@/lib/utils";
 
 interface UserRow {
 	_id: string;
@@ -62,11 +63,6 @@ export default function AdminUsersPage() {
 					(u.walletAddress?.toLowerCase().includes(search.toLowerCase()) ?? false)
 			)
 		: users;
-
-	const formatDate = (dateStr?: string) => {
-		if (!dateStr) return "Never";
-		return new Date(dateStr).toLocaleDateString();
-	};
 
 	return (
 		<div className="p-6 space-y-6">
@@ -139,7 +135,7 @@ export default function AdminUsersPage() {
 										</TableCell>
 										<TableCell className="text-sm font-mono">
 											{user.walletAddress
-												? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`
+												? truncateAddress(user.walletAddress)
 												: "—"}
 										</TableCell>
 										<TableCell>

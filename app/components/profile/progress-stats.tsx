@@ -3,6 +3,7 @@
 import { Clock, BookOpen, Target, Flame, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useStreak } from "@/hooks/use-streak";
+import { formatDuration } from "@/lib/utils";
 
 interface ProgressStatsProps {
 	walletAddress?: string | undefined;
@@ -37,13 +38,6 @@ const STAT_ITEMS = [
 	{ key: "courses", label: "Courses", Icon: BookOpen, color: "text-green bg-green/10" },
 	{ key: "lessons", label: "Lessons", Icon: Target, color: "text-primary bg-primary/10" },
 ] as const;
-
-function formatTime(minutes: number) {
-	if (minutes < 60) return `${minutes}m`;
-	const hours = Math.floor(minutes / 60);
-	const mins = minutes % 60;
-	return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
 
 export function ProgressStats({ stats, walletAddress }: ProgressStatsProps) {
 	const { streakData } = useStreak(walletAddress);
@@ -111,7 +105,7 @@ export function ProgressStats({ stats, walletAddress }: ProgressStatsProps) {
 						{ label: "All time", val: stats.timeSpent.total },
 					].map((t) => (
 						<div key={t.label} className="text-center">
-							<div className="text-lg font-bold">{formatTime(t.val)}</div>
+							<div className="text-lg font-bold">{formatDuration(t.val)}</div>
 							<div className="text-[10px] text-muted-foreground">{t.label}</div>
 						</div>
 					))}

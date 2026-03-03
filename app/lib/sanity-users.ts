@@ -11,6 +11,7 @@ import {
 } from "@superteam-academy/cms/queries";
 import { generateUsername } from "./username-utils";
 import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
+import { truncateAddress } from "@/lib/utils";
 
 export type { AcademyUser };
 
@@ -304,7 +305,7 @@ export async function ensureSanityUsersExist(wallets: string[]): Promise<void> {
 		transaction.create({
 			_type: "academyUser" as const,
 			authId: "",
-			name: `${wallet.slice(0, 4)}...${wallet.slice(-4)}`,
+			name: truncateAddress(wallet),
 			email: "",
 			walletAddress: wallet,
 			role: "learner" as const,

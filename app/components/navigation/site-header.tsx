@@ -31,7 +31,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
-import { cn } from "@/lib/utils";
+import { cn, truncateAddress } from "@/lib/utils";
 import Logo from "@/public/logo.svg";
 
 const SearchModal = dynamic(
@@ -118,9 +118,7 @@ export function SiteHeader() {
 	}, [handleKeyDown]);
 
 	const walletAddress = wallet.publicKey?.toBase58();
-	const displayName =
-		user?.name ??
-		(walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "Learner");
+	const displayName = user?.name ?? (walletAddress ? truncateAddress(walletAddress) : "Learner");
 	const displayMeta = user?.email ?? walletAddress ?? "";
 
 	const handleSignOut = async () => {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslations } from "next-intl";
+import { formatDuration } from "@/lib/utils";
 
 interface Lesson {
 	id: string;
@@ -36,15 +37,6 @@ export function LessonNavigation({
 	const t = useTranslations("lessonNavigation");
 	const currentIndex = lessons.findIndex((lesson) => lesson.id === currentLessonId);
 	const currentLesson = lessons[currentIndex];
-
-	const formatDuration = (minutes: number) => {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		if (hours > 0) {
-			return `${hours}h ${mins}m`;
-		}
-		return `${mins}m`;
-	};
 
 	return (
 		<div className="space-y-4">

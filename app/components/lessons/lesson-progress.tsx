@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { formatDuration } from "@/lib/utils";
 
 interface LessonProgressProps {
 	progress: {
@@ -33,14 +34,7 @@ export function LessonProgress({ progress, currentLesson }: LessonProgressProps)
 	const completionPercentage = (progress.completedLessons / progress.totalLessons) * 100;
 	const xpPercentage = (progress.xpEarned / progress.xpRequired) * 100;
 
-	const formatTime = (minutes: number) => {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		if (hours > 0) {
-			return `${hours}h ${mins}m`;
-		}
-		return `${mins}m`;
-	};
+	const formatTime = formatDuration;
 
 	return (
 		<div className="space-y-4">

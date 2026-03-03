@@ -1,3 +1,5 @@
+import { generateId } from "@/lib/utils";
+
 type ModerationTarget = "discussion" | "event" | "project" | "comment";
 type ModerationStatus = "approved" | "needs_review" | "rejected";
 
@@ -69,7 +71,7 @@ export function enqueueModerationItem(input: {
 	authorId?: string;
 	decision: ModerationDecision;
 }): ModerationQueueItem {
-	const id = `${input.target}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+	const id = `${input.target}-${generateId()}`;
 	const item: ModerationQueueItem = {
 		id,
 		target: input.target,
