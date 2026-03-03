@@ -5,18 +5,18 @@ import { useTranslations, useLocale } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, Globe, Palette, User, Link2, Bell } from "lucide-react";
+import { Check, Loader2, Globe, Palette, User, Link2 } from "lucide-react";
 import { upsertProfile, getProfileByWallet } from "@/lib/supabase";
 
-type SettingsTab = "profile" | "accounts" | "appearance" | "language" | "notifications";
+type SettingsTab = "profile" | "accounts" | "appearance" | "language";
 
 const TABS: Array<{ id: SettingsTab; icon: typeof User; label: string }> = [
   { id: "profile", icon: User, label: "Profile" },
   { id: "accounts", icon: Link2, label: "Linked Accounts" },
   { id: "appearance", icon: Palette, label: "Appearance" },
   { id: "language", icon: Globe, label: "Language" },
-  { id: "notifications", icon: Bell, label: "Notifications" },
 ];
 
 const LANGUAGES = [
@@ -27,10 +27,12 @@ const LANGUAGES = [
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
-  const router = useRouter();
+  useRouter();
   const currentLocale = useLocale();
   const { publicKey, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
+  const { openUserProfile } = useClerk();
+  const { user } = useUser();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [saving, setSaving] = useState(false);
@@ -41,19 +43,15 @@ export default function SettingsPage() {
   const [activeTheme, setActiveTheme] = useState<"dark" | "light">("dark");
   const [twitterHandle, setTwitterHandle] = useState("");
   const [githubHandle, setGithubHandle] = useState("");
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [streakReminder, setStreakReminder] = useState(true);
-  const [achievementNotifs, setAchievementNotifs] = useState(true);
 
-  // Load theme from localStorage
+  const googleAccount = user?.externalAccounts.find((a) => a.provider === "oauth_google");
+  const githubAccount = user?.externalAccounts.find((a) => a.provider === "oauth_github");
+
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark") {
-      setActiveTheme(saved);
-    }
+    if (saved === "light" || saved === "dark") setActiveTheme(saved);
   }, []);
 
-  // Load existing profile data when wallet connects
   useEffect(() => {
     if (!publicKey) return;
     getProfileByWallet(publicKey.toBase58()).then((profile) => {
@@ -69,11 +67,8 @@ export default function SettingsPage() {
   const applyTheme = (theme: "dark" | "light") => {
     setActiveTheme(theme);
     localStorage.setItem("theme", theme);
-    if (theme === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
-    }
+    if (theme === "light") document.documentElement.classList.add("light");
+    else document.documentElement.classList.remove("light");
   };
 
   const handleSaveProfile = async () => {
@@ -99,8 +94,17 @@ export default function SettingsPage() {
   };
 
   const handleLanguageChange = (locale: string) => {
-    // Full page reload for locale change — avoids next-intl typed pathname issues
     window.location.href = `/${locale}/settings`;
+  };
+
+  const handleDisconnectOAuth = async (accountId: string) => {
+    const account = user?.externalAccounts.find((a) => a.id === accountId);
+    if (!account) return;
+    try {
+      await account.destroy();
+    } catch (err) {
+      console.error("Failed to disconnect account:", err);
+    }
   };
 
   return (
@@ -231,15 +235,25 @@ export default function SettingsPage() {
               <AccountRow
                 label={t("accounts.google")}
                 icon="G"
-                connected={false}
-                onConnect={() => {}}
+                value={googleAccount?.emailAddress ?? undefined}
+                connected={!!googleAccount}
+                onConnect={() => openUserProfile()}
+                onDisconnect={googleAccount ? () => handleDisconnectOAuth(googleAccount.id) : undefined}
               />
               <AccountRow
                 label={t("accounts.github")}
                 icon="⌥"
-                connected={false}
-                onConnect={() => {}}
+                value={githubAccount?.username ?? undefined}
+                connected={!!githubAccount}
+                onConnect={() => openUserProfile()}
+                onDisconnect={githubAccount ? () => handleDisconnectOAuth(githubAccount.id) : undefined}
               />
+              <p className="text-[10px] font-mono text-subtle pt-1">
+                Manage sign-in methods via{" "}
+                <button onClick={() => openUserProfile()} className="text-[#14F195] hover:underline">
+                  Clerk profile
+                </button>
+              </p>
             </div>
           )}
 
@@ -291,31 +305,6 @@ export default function SettingsPage() {
                   </button>
                 );
               })}
-            </div>
-          )}
-
-          {activeTab === "notifications" && (
-            <div className="bg-card border border-border rounded p-5 space-y-4">
-              <h2 className="font-mono text-sm font-semibold text-foreground">Notifications</h2>
-              {[
-                { label: "Email notifications", sublabel: "Receive updates via email", state: emailNotifs, set: setEmailNotifs },
-                { label: "Streak reminders", sublabel: "Daily reminders to keep your streak", state: streakReminder, set: setStreakReminder },
-                { label: "Achievement alerts", sublabel: "Get notified when you earn badges", state: achievementNotifs, set: setAchievementNotifs },
-              ].map(({ label, sublabel, state, set }) => (
-                <div key={label} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
-                  <div>
-                    <p className="text-sm font-mono text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">{sublabel}</p>
-                  </div>
-                  <button
-                    onClick={() => { set(!state); localStorage.setItem(`notif_${label}`, String(!state)); }}
-                    className={`w-10 h-5 rounded-full transition-colors relative ${state ? "bg-[#14F195]" : "bg-[#333333]"}`}
-                  >
-                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow ${state ? "left-5" : "left-0.5"}`} />
-                  </button>
-                </div>
-              ))}
-              <p className="text-[10px] text-subtle font-mono">Notification preferences are saved locally.</p>
             </div>
           )}
         </div>
