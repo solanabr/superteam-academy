@@ -1,5 +1,5 @@
 import { Connection } from '@solana/web3.js'
-import { Course, Enrollment, LearningPath } from '../types'
+import { Course, Enrollment, Lesson, LearningPath } from '../types'
 import { OnchainCourseService } from './onchain-course.service'
 import {
   getCourses as getSanityCourses,
@@ -9,7 +9,9 @@ import {
   isSanityConfigured,
   SanityCourse,
   SanityLesson,
+  SanityModule,
 } from '@/lib/sanity'
+import type { Course as OnChainCourse } from '@/lib/anchor/types'
 
 export interface CourseService {
   getCourses(filters?: {
@@ -28,7 +30,7 @@ export interface CourseService {
     lessonId: string,
     code: string
   ): Promise<{ success: boolean; xpAwarded: number; message: string }>
-  getLesson(courseId: string, lessonId: string): Promise<any>
+  getLesson(courseId: string, lessonId: string): Promise<Lesson | null>
 }
 
 const MOCK_COURSES: Course[] = [
@@ -618,9 +620,9 @@ export class LocalCourseService implements CourseService {
     })
   }
 
-  private mapSanityLesson(rawLesson: any): any {
+  private mapSanityLesson(rawLesson: SanityLesson): Lesson {
     const testCases = Array.isArray(rawLesson?.challenge?.testCases)
-      ? rawLesson.challenge.testCases.map((tc: any, idx: number) => ({
+      ? rawLesson.challenge.testCases.map((tc: { input?: string; expectedOutput?: string; description?: string }, idx: number) => ({
           input: tc?.input || '',
           expectedOutput: tc?.expectedOutput || '',
           description: tc?.description || `Test case ${idx + 1}`,
@@ -649,13 +651,13 @@ export class LocalCourseService implements CourseService {
 
   private mapSanityCourse(rawCourse: SanityCourse): Course {
     const mappedModules =
-      rawCourse.modules?.map((module: any) => ({
+      rawCourse.modules?.map((module: SanityModule) => ({
         id: module._id,
         courseId: rawCourse._id,
         title: module.title,
         description: module.description || '',
         order: module.order || 0,
-        lessons: (module.lessons || []).map((lesson: any) => this.mapSanityLesson(lesson)),
+        lessons: (module.lessons || []).map((lesson: SanityLesson) => this.mapSanityLesson(lesson)),
       })) || []
 
     return {
@@ -720,8 +722,8 @@ export class LocalCourseService implements CourseService {
         const onChainCourses = await this.onchainService.getAllCourses()
         // Map on-chain courses to full Course objects using mock data as content source
         courses = onChainCourses
-          .map((oc: any) => {
-            const onChainCourseId = oc.courseId || oc.id
+          .map((oc: OnChainCourse) => {
+            const onChainCourseId = oc.courseId
             const mockCourse = this.findMockCourseByOnChainId(onChainCourseId)
             // If we have mock course, enrich it with on-chain data
             if (mockCourse) {
@@ -785,12 +787,13 @@ export class LocalCourseService implements CourseService {
     // If found, try to enrich with on-chain data
     if (course && this.onchainService) {
       try {
-        const onChainCourse = await this.onchainService.getCourse(course.id)
+        const lookupId = course.onchainCourseId || course.slug || course.id
+        const onChainCourse = await this.onchainService.getCourse(lookupId)
         if (onChainCourse) {
           // Merge on-chain metadata with mock course content
           course = {
             ...course,
-            difficulty: this.difficultyToString((onChainCourse as any).difficulty ?? 0),
+            difficulty: this.difficultyToString(onChainCourse.difficulty ?? 0),
             // Keep mock lesson structure
             modules: course.modules,
           }
@@ -864,7 +867,7 @@ export class LocalCourseService implements CourseService {
     }
   }
 
-  async getLesson(courseId: string, lessonId: string): Promise<any> {
+  async getLesson(courseId: string, lessonId: string): Promise<Lesson | null> {
     if (this.sanityEnabled) {
       try {
         const lesson = await getSanityLesson(courseId, lessonId)

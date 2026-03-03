@@ -14,7 +14,7 @@ export function Footer() {
           <div>
             <h3 className="text-xl font-bold text-neon-cyan font-display mb-4">Superteam</h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Learn Solana development through interactive courses and challenges.
+              {t('footer.tagline')}
             </p>
           </div>
 
@@ -24,17 +24,17 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  All Courses
+                  {t('footer.allCourses')}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  Learning Paths
+                  {t('footer.learningPaths')}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  Certifications
+                  {t('footer.certifications')}
                 </a>
               </li>
             </ul>
@@ -42,7 +42,7 @@ export function Footer() {
 
           {/* Community */}
           <div>
-            <h4 className="text-neon-cyan font-semibold mb-4">Community</h4>
+            <h4 className="text-neon-cyan font-semibold mb-4">{t('footer.community')}</h4>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
@@ -64,21 +64,21 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-neon-cyan font-semibold mb-4">Legal</h4>
+            <h4 className="text-neon-cyan font-semibold mb-4">{t('footer.legal')}</h4>
             <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  Terms
+                  {t('footer.terms')}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  Privacy
+                  {t('footer.privacy')}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-neon-cyan transition-colors">
-                  Contact
+                  {t('footer.contact')}
                 </a>
               </li>
             </ul>
@@ -86,7 +86,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-200 dark:border-terminal-border pt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>© 2026 Superteam Academy. Built by the Solana community.</p>
+          <p>{t('footer.copyright')}</p>
         </div>
       </div>
     </footer>

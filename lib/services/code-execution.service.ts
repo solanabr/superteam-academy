@@ -33,13 +33,13 @@ export class CodeExecutionService {
 
     try {
       // Redirect console methods
-      console.log = (...args: any[]) => {
+      console.log = (...args: unknown[]) => {
         output.push(args.map((arg) => JSON.stringify(arg)).join(' '))
       }
-      console.error = (...args: any[]) => {
+      console.error = (...args: unknown[]) => {
         errors.push(args.map((arg) => JSON.stringify(arg)).join(' '))
       }
-      console.warn = (...args: any[]) => {
+      console.warn = (...args: unknown[]) => {
         errors.push('[WARNING] ' + args.map((arg) => JSON.stringify(arg)).join(' '))
       }
 

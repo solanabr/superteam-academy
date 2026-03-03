@@ -16,7 +16,7 @@ export class UserService {
   /**
    * Get or create user from OAuth provider
    */
-  async getOrCreateUser(provider: string, providerUserId: string, profile: any): Promise<User> {
+  async getOrCreateUser(provider: string, providerUserId: string, profile: { email?: string; name?: string; login?: string; image?: string; avatar_url?: string }): Promise<User> {
     const db = getDatabase()
 
     // Use email as user ID
@@ -125,7 +125,7 @@ export class UserService {
   async updateProfile(userId: string, data: Partial<User>): Promise<User> {
     const db = getDatabase()
 
-    const updates: any = {}
+    const updates: Record<string, string> = {}
     if (data.displayName) updates.display_name = data.displayName
 
     if (Object.keys(updates).length > 0) {
@@ -147,7 +147,7 @@ export class UserService {
       .eq('user_id', userId)
       .order('enrolled_at', { ascending: false })
 
-    return (data || []).map((e: any) => ({
+    return (data || []).map((e: { id: string; course_id: string; lessons_completed: number; total_xp_earned: number; enrolled_at: string; completed_at: string | null }) => ({
       id: e.id,
       courseId: e.course_id,
       lessonsCompleted: e.lessons_completed,
@@ -169,7 +169,7 @@ export class UserService {
       .order('total_xp', { ascending: false })
       .limit(limit)
 
-    return (data || []).map((u: any) => ({
+    return (data || []).map((u: { id: string; display_name: string; avatar_url: string | null; total_xp: number; level: number }) => ({
       id: u.id,
       displayName: u.display_name,
       avatar: u.avatar_url,

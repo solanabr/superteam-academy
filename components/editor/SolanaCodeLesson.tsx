@@ -2,9 +2,12 @@
 
 import React, { useRef, useState, useCallback, useEffect } from 'react'
 import Editor, { OnMount } from '@monaco-editor/react'
-import { Button } from '@/components/ui'
 import { useAwardXP } from '@/lib/hooks/useAwardXP'
 import { trackEvent } from '@/lib/analytics'
+import { TEMPLATES } from './code-templates'
+import { OutputPanel } from './OutputPanel'
+import { HintsRow, SuccessBanner } from './LessonPanels'
+import { runTestsAgainstOutput } from './test-runner'
 
 export type SolanaLanguage = 'rust' | 'typescript' | 'json'
 
@@ -57,320 +60,6 @@ interface SolanaCodeLessonProps {
 }
 
 /* ──────────────────────────────────────────────
-   Templates for each language
-────────────────────────────────────────────── */
-const TEMPLATES: Record<string, Record<string, string>> = {
-    rust: {
-        'Hello World': `fn main() {
-    println!("Hello, Solana!");
-    let lamports: u64 = 1_000_000_000;
-    println!("1 SOL = {} lamports", lamports);
-}`,
-        'Struct & Impl': `#[derive(Debug)]
-struct SolanaAccount {
-    pubkey: String,
-    lamports: u64,
-    owner: String,
-}
-
-impl SolanaAccount {
-    fn new(pubkey: &str, lamports: u64) -> Self {
-        Self {
-            pubkey: pubkey.to_string(),
-            lamports,
-            owner: "11111111111111111111111111111111".to_string(),
-        }
-    }
-
-    fn balance_in_sol(&self) -> f64 {
-        self.lamports as f64 / 1e9
-    }
-}
-
-fn main() {
-    let account = SolanaAccount::new("AbcDef...", 2_000_000_000);
-    println!("Account: {:?}", account);
-    println!("Balance: {} SOL", account.balance_in_sol());
-}`,
-        Anchor: `use anchor_lang::prelude::*;
-
-declare_id!("Fg6PaFpoGXkYsidMpWxTWqNLVJjAiJXPanK5Md1MFhm");
-
-#[program]
-pub mod my_program {
-    use super::*;
-
-    pub fn initialize(ctx: Context<Initialize>, data: u64) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
-        counter.value = data;
-        counter.authority = ctx.accounts.user.key();
-        msg!("Counter initialized to {}", data);
-        Ok(())
-    }
-
-    pub fn increment(ctx: Context<Increment>) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
-        counter.value = counter.value.checked_add(1)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-        msg!("Counter incremented to {}", counter.value);
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(init, payer = user, space = Counter::LEN)]
-    pub counter: Account<'info, Counter>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct Increment<'info> {
-    #[account(mut, has_one = authority)]
-    pub counter: Account<'info, Counter>,
-    pub authority: Signer<'info>,
-}
-
-#[account]
-pub struct Counter {
-    pub value: u64,
-    pub authority: Pubkey,
-}
-
-impl Counter {
-    pub const LEN: usize = 8 + 8 + 32;
-}`,
-        PDA: `use anchor_lang::prelude::*;
-
-declare_id!("Fg6PaFpoGXkYsidMpWxTWqNLVJjAiJXPanK5Md1MFhm");
-
-#[program]
-pub mod pda_example {
-    use super::*;
-
-    pub fn create_user_profile(
-        ctx: Context<CreateUserProfile>,
-        username: String,
-    ) -> Result<()> {
-        require!(username.len() <= 32, ErrorCode::UsernameTooLong);
-        let profile = &mut ctx.accounts.profile;
-        profile.owner = ctx.accounts.user.key();
-        profile.username = username;
-        profile.xp = 0;
-        profile.level = 0;
-        Ok(())
-    }
-
-    pub fn award_xp(ctx: Context<AwardXp>, amount: u64) -> Result<()> {
-        let profile = &mut ctx.accounts.profile;
-        profile.xp = profile.xp.checked_add(amount)
-            .ok_or(ErrorCode::Overflow)?;
-        profile.level = ((profile.xp as f64 / 100.0).sqrt()) as u64;
-        msg!("XP: {}, Level: {}", profile.xp, profile.level);
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-#[instruction(username: String)]
-pub struct CreateUserProfile<'info> {
-    #[account(
-        init,
-        payer = user,
-        space = UserProfile::LEN,
-        seeds = [b"profile", user.key().as_ref()],
-        bump
-    )]
-    pub profile: Account<'info, UserProfile>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct AwardXp<'info> {
-    #[account(mut, has_one = owner)]
-    pub profile: Account<'info, UserProfile>,
-    pub owner: Signer<'info>,
-}
-
-#[account]
-pub struct UserProfile {
-    pub owner: Pubkey,
-    pub username: String,
-    pub xp: u64,
-    pub level: u64,
-}
-
-impl UserProfile {
-    pub const LEN: usize = 8 + 32 + 4 + 32 + 8 + 8;
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Username must be 32 characters or less")]
-    UsernameTooLong,
-    #[msg("Arithmetic overflow")]
-    Overflow,
-}`,
-    },
-    typescript: {
-        'Wallet Connect': `import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
-
-async function main() {
-  const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-
-  // Replace with your wallet address
-  const walletAddress = new PublicKey("11111111111111111111111111111111");
-
-  const balance = await connection.getBalance(walletAddress);
-  console.log(\`Balance: \${balance / LAMPORTS_PER_SOL} SOL\`);
-
-  const slot = await connection.getSlot();
-  console.log(\`Current slot: \${slot}\`);
-}
-
-main().catch(console.error);`,
-        'Send SOL': `import {
-  Connection,
-  Keypair,
-  SystemProgram,
-  Transaction,
-  sendAndConfirmTransaction,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
-
-async function sendSol(
-  connection: Connection,
-  from: Keypair,
-  to: string,
-  amountInSol: number
-) {
-  const transaction = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: from.publicKey,
-      toPubkey: new PublicKey(to),
-      lamports: amountInSol * LAMPORTS_PER_SOL,
-    })
-  );
-
-  const signature = await sendAndConfirmTransaction(connection, transaction, [from]);
-  console.log(\`Transaction: https://explorer.solana.com/tx/\${signature}?cluster=devnet\`);
-  return signature;
-}`,
-        'Anchor Client': `import { Program, AnchorProvider, web3, BN } from "@coral-xyz/anchor";
-import { PublicKey, Connection } from "@solana/web3.js";
-
-// Example: Interact with a deployed Anchor program
-async function interactWithProgram() {
-  const connection = new Connection("https://api.devnet.solana.com");
-  const programId = new PublicKey("YOUR_PROGRAM_ID_HERE");
-
-  // Derive PDA for user profile
-  const [profilePda, bump] = PublicKey.findProgramAddressSync(
-    [Buffer.from("profile"), wallet.publicKey.toBuffer()],
-    programId
-  );
-
-  // Fetch account data
-  const profileAccount = await program.account.userProfile.fetch(profilePda);
-  console.log("Username:", profileAccount.username);
-  console.log("XP:", profileAccount.xp.toString());
-  console.log("Level:", profileAccount.level.toString());
-
-  // Call increment instruction
-  const tx = await program.methods
-    .increment()
-    .accounts({ counter: counterPda, authority: wallet.publicKey })
-    .rpc();
-
-  console.log("Transaction:", tx);
-}`,
-        'Token-2022 XP': `import {
-  Connection,
-  PublicKey,
-  Keypair,
-} from "@solana/web3.js";
-import {
-  getAccount,
-  getAssociatedTokenAddress,
-  TOKEN_2022_PROGRAM_ID,
-  getMint,
-} from "@solana/spl-token";
-
-async function getXPBalance(
-  connection: Connection,
-  walletAddress: string,
-  xpMintAddress: string
-): Promise<number> {
-  const wallet = new PublicKey(walletAddress);
-  const mint = new PublicKey(xpMintAddress);
-
-  // Get the associated token account for the XP mint
-  const ata = await getAssociatedTokenAddress(
-    mint,
-    wallet,
-    false,
-    TOKEN_2022_PROGRAM_ID
-  );
-
-  const account = await getAccount(connection, ata, "confirmed", TOKEN_2022_PROGRAM_ID);
-  const mintInfo = await getMint(connection, mint, "confirmed", TOKEN_2022_PROGRAM_ID);
-
-  const balance = Number(account.amount) / Math.pow(10, mintInfo.decimals);
-  console.log(\`XP Balance: \${balance}\`);
-  console.log(\`Level: \${Math.floor(Math.sqrt(balance / 100))}\`);
-  return balance;
-}`,
-    },
-    json: {
-        IDL: `{
-  "version": "0.1.0",
-  "name": "academy_program",
-  "instructions": [
-    {
-      "name": "initialize",
-      "accounts": [
-        { "name": "config", "isMut": true, "isSigner": false },
-        { "name": "authority", "isMut": true, "isSigner": true },
-        { "name": "systemProgram", "isMut": false, "isSigner": false }
-      ],
-      "args": []
-    },
-    {
-      "name": "createCourse",
-      "accounts": [
-        { "name": "course", "isMut": true, "isSigner": false },
-        { "name": "authority", "isMut": true, "isSigner": true },
-        { "name": "systemProgram", "isMut": false, "isSigner": false }
-      ],
-      "args": [
-        { "name": "courseId", "type": "bytes" },
-        { "name": "totalLessons", "type": "u8" },
-        { "name": "xpReward", "type": "u64" }
-      ]
-    }
-  ],
-  "accounts": [
-    {
-      "name": "Config",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          { "name": "authority", "type": "publicKey" },
-          { "name": "xpMint", "type": "publicKey" },
-          { "name": "totalCourses", "type": "u64" }
-        ]
-      }
-    }
-  ]
-}`,
-    },
-}
-
-/* ──────────────────────────────────────────────
    Status badge colours
 ────────────────────────────────────────────── */
 const statusColour = (s: 'idle' | 'running' | 'success' | 'error') =>
@@ -394,7 +83,7 @@ export function SolanaCodeLesson({
     showTemplates = true,
     onComplete,
 }: SolanaCodeLessonProps) {
-    const editorRef = useRef<any>(null)
+    const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null)
     const outputRef = useRef<HTMLDivElement>(null)
     const { awardXP, isAwarding, error: xpError, isAuthenticated } = useAwardXP()
 
@@ -404,8 +93,6 @@ export function SolanaCodeLesson({
     const [testResult, setTestResult] = useState<TestResult | null>(null)
     const [isRunning, setIsRunning] = useState(false)
     const [status, setStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle')
-    const [showSolution, setShowSolution] = useState(false)
-    const [hintsShown, setHintsShown] = useState(0)
     const [xpClaimed, setXpClaimed] = useState(false)
     const [activeTab, setActiveTab] = useState<'output' | 'tests'>('output')
 
@@ -447,8 +134,7 @@ export function SolanaCodeLesson({
         /* ── Rust/Anchor snippets ── */
         if (activeLanguage === 'rust') {
             monaco.languages.registerCompletionItemProvider('rust', {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                provideCompletionItems: (model: any, position: any) => {
+                provideCompletionItems: (model: import('monaco-editor').editor.ITextModel, position: import('monaco-editor').Position) => {
                     const snippets = [
                         { label: 'anchor_program', insertText: '#[program]\npub mod ${1:my_program} {\n    use super::*;\n\n    pub fn ${2:initialize}(ctx: Context<${3:Initialize}>) -> Result<()> {\n        Ok(())\n    }\n}', detail: 'Anchor #[program] macro' },
                         { label: 'anchor_derive', insertText: '#[derive(Accounts)]\npub struct ${1:MyAccounts}<\'info> {\n    $0\n}', detail: 'Anchor accounts struct' },
@@ -685,198 +371,31 @@ export function SolanaCodeLesson({
                 </div>
 
                 {/* ── Output / Tests Panel ── */}
-                {(runResult || testResult) && (
-                    <div ref={outputRef} className="border-t border-slate-700/50 bg-[#0e0e18] flex-shrink-0">
-                        {/* Tab header */}
-                        <div className="flex items-center gap-0 border-b border-slate-700/50 px-4">
-                            {(['output', 'tests'] as const).map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`px-4 py-2 text-xs font-semibold transition-colors border-b-2 -mb-px ${activeTab === tab
-                                        ? 'border-cyan-400 text-cyan-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-300'
-                                        }`}
-                                >
-                                    {tab === 'output' ? '📤 Output' : `🧪 Tests ${testResult ? `(${testResult.passedCount}/${testResult.totalCount})` : ''}`}
-                                </button>
-                            ))}
-
-                            {runResult && (
-                                <span className={`ml-auto text-xs font-mono ${runResult.success ? 'text-green-400' : 'text-red-400'}`}>
-                                    {runResult.success ? '✓ success' : '✗ failed'} {runResult.compileTime ? `(${runResult.compileTime}ms)` : ''}
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="p-4 space-y-2">
-                            {activeTab === 'output' && runResult && (
-                                <>
-                                    {runResult.warnings && runResult.warnings.length > 0 && (
-                                        <div className="text-xs font-mono text-yellow-400 bg-yellow-900/10 border border-yellow-800/30 rounded p-3 space-y-0.5">
-                                            <p className="font-semibold mb-1">⚠ Warnings</p>
-                                            {runResult.warnings.map((w, i) => <p key={i}>{w}</p>)}
-                                        </div>
-                                    )}
-                                    {runResult.stderr && (
-                                        <pre className="text-xs font-mono text-red-300 bg-red-900/10 border border-red-800/30 rounded p-3 overflow-x-auto whitespace-pre-wrap break-words">
-                                            {runResult.stderr}
-                                        </pre>
-                                    )}
-                                    {runResult.stdout && (
-                                        <pre className="text-xs font-mono text-green-300 bg-green-900/10 border border-green-800/30 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                                            {runResult.stdout}
-                                        </pre>
-                                    )}
-                                    {!runResult.stdout && !runResult.stderr && (
-                                        <p className="text-xs text-gray-500 italic">(no output)</p>
-                                    )}
-                                </>
-                            )}
-
-                            {activeTab === 'tests' && testResult && (
-                                <div className="space-y-2">
-                                    {testResult.results.map((r, i) => (
-                                        <div
-                                            key={i}
-                                            className={`flex items-start gap-3 p-3 rounded text-xs border ${r.passed
-                                                ? 'bg-green-900/10 border-green-800/30'
-                                                : 'bg-red-900/10 border-red-800/30'
-                                                }`}
-                                        >
-                                            <span className={`font-bold mt-0.5 ${r.passed ? 'text-green-400' : 'text-red-400'}`}>
-                                                {r.passed ? '✓' : '✗'}
-                                            </span>
-                                            <div className="flex-1 space-y-1">
-                                                <p className={r.passed ? 'text-green-300' : 'text-red-300'}>{r.description}</p>
-                                                {!r.passed && !r.hidden && (
-                                                    <>
-                                                        <p className="text-gray-400">Expected: <span className="font-mono text-cyan-300">{r.expected}</span></p>
-                                                        <p className="text-gray-400">Got: <span className="font-mono text-orange-300">{r.actual || '(empty)'}</span></p>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                <OutputPanel
+                    runResult={runResult}
+                    testResult={testResult}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
             </div>
 
-            {/* ── Hints row ── */}
-            {hints.length > 0 && (
-                <div className="border-t border-slate-700/50 px-4 py-2.5 bg-[#0e0e18] flex items-center gap-3 flex-shrink-0">
-                    <button
-                        onClick={() => setHintsShown(Math.min(hintsShown + 1, hints.length))}
-                        disabled={hintsShown >= hints.length}
-                        className="text-xs text-yellow-400 hover:text-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                        💡 {hintsShown < hints.length ? `Show hint (${hintsShown + 1}/${hints.length})` : 'All hints shown'}
-                    </button>
-                    {hintsShown > 0 && (
-                        <span className="text-xs text-yellow-200 bg-yellow-900/20 border border-yellow-800/30 rounded px-3 py-1 font-mono">
-                            {hints[hintsShown - 1]}
-                        </span>
-                    )}
-                </div>
-            )}
+            {/* ── Hints ── */}
+            <HintsRow hints={hints} />
 
-            {/* ── Success / Claim XP banner ── */}
-            {allTestsPassed && !xpClaimed && (
-                <div className="border-t border-green-500/30 bg-gradient-to-r from-green-900/20 to-cyan-900/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        <span className="text-2xl">🎉</span>
-                        <div>
-                            <p className="text-sm font-bold text-green-400">All tests passed!</p>
-                            <p className="text-xs text-gray-400">Earn +{xpReward} XP for this challenge</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {solutionCode && (
-                            <button
-                                onClick={() => setShowSolution(!showSolution)}
-                                className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
-                            >
-                                {showSolution ? 'Hide' : 'View'} solution
-                            </button>
-                        )}
-                        {isAuthenticated ? (
-                            <Button
-                                onClick={handleClaimXP}
-                                disabled={isAwarding || xpClaimed}
-                                variant="primary"
-                                size="sm"
-                            >
-                                {isAwarding ? 'Claiming…' : `Claim +${xpReward} XP`}
-                            </Button>
-                        ) : (
-                            <p className="text-xs text-yellow-400">Sign in to claim XP</p>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {xpClaimed && (
-                <div className="border-t border-cyan-500/30 bg-cyan-900/10 px-4 py-2 text-center flex-shrink-0">
-                    <p className="text-xs text-cyan-400 font-semibold">✅ XP claimed! Keep going → next lesson</p>
-                </div>
-            )}
-
-            {/* Solution viewer */}
-            {showSolution && solutionCode && (
-                <div className="border-t border-slate-700/50">
-                    <div className="px-4 py-2 bg-slate-800/50 text-xs text-gray-400 font-semibold">Solution</div>
-                    <Editor
-                        height="200px"
-                        language={activeLanguage}
-                        value={solutionCode}
-                        theme="solana-dark"
-                        options={{ readOnly: true, minimap: { enabled: false }, fontSize: 12, scrollBeyondLastLine: false }}
-                    />
-                </div>
-            )}
-
-            {/* XP claim error */}
-            {xpError && (
-                <div className="border-t border-red-500/30 bg-red-900/10 px-4 py-2 text-xs text-red-400 flex-shrink-0">
-                    ⚠ {xpError}
-                </div>
+            {/* ── Success / Claim XP ── */}
+            {allTestsPassed && (
+                <SuccessBanner
+                    xpReward={xpReward}
+                    xpClaimed={xpClaimed}
+                    isAuthenticated={isAuthenticated}
+                    isAwarding={isAwarding}
+                    xpError={xpError}
+                    solutionCode={solutionCode}
+                    onClaimXP={handleClaimXP}
+                />
             )}
         </div>
     )
 }
 
-/* ──────────────────────────────────────────────
-   Test runner — checks stdout against expected
-────────────────────────────────────────────── */
-function runTestsAgainstOutput(stdout: string, testCases: TestCase[]): TestResult {
-    const outputLines = stdout.trim().split('\n').map(l => l.trim())
-    const results = testCases.map((tc, idx) => {
-        const actual = outputLines[idx] ?? ''
-        let passed: boolean
 
-        if (tc.validator) {
-            passed = tc.validator(stdout)
-        } else {
-            passed = actual.includes(tc.expectedOutput) || stdout.includes(tc.expectedOutput)
-        }
-
-        return {
-            description: tc.description,
-            passed,
-            expected: tc.expectedOutput,
-            actual,
-            hidden: tc.hidden,
-        }
-    })
-
-    const passedCount = results.filter(r => r.passed).length
-    return {
-        passed: passedCount === testCases.length,
-        passedCount,
-        totalCount: testCases.length,
-        results,
-    }
-}

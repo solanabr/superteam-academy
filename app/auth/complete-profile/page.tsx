@@ -3,8 +3,10 @@
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useI18n } from '@/lib/hooks/useI18n'
 
 export default function CompleteProfile() {
+  const { t } = useI18n()
   const { data: session, status, update } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -23,7 +25,7 @@ export default function CompleteProfile() {
       router.push('/auth/signin')
     }
     if (session?.user) {
-      const user = session.user as any
+      const user = session.user
       if (user.name) {
         setFormData(prev => ({ ...prev, displayName: user.name || '' }))
       }
@@ -74,25 +76,25 @@ export default function CompleteProfile() {
 
     try {
       if (!formData.displayName || !formData.age) {
-        setError('All fields are required')
+        setError(t('auth.allFieldsRequired'))
         setLoading(false)
         return
       }
 
-      const userId = (session?.user as any)?.id || (session?.user as any)?.email
+      const userId = session?.user?.id || session?.user?.email
 
       // Create/update user profile in backend
       const response = await fetch(`${apiBaseUrl}/users/oauth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider: (session?.user as any)?.provider || 'google',
+          provider: session?.user?.provider || 'google',
           providerUserId: userId,
           profile: {
-            email: (session?.user as any)?.email,
+            email: session?.user?.email,
             name: formData.displayName,
             age: parseInt(formData.age),
-            image: (session?.user as any)?.image,
+            image: session?.user?.image,
           },
         }),
       })
@@ -102,10 +104,10 @@ export default function CompleteProfile() {
         router.push('/dashboard')
       } else {
         const data = await response.json()
-        setError(data.error || 'Failed to save profile')
+        setError(data.error || t('auth.failedSaveProfile'))
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('auth.errorTryAgain'))
       console.error(err)
     } finally {
       setLoading(false)
@@ -117,7 +119,7 @@ export default function CompleteProfile() {
       <div className="min-h-screen bg-white dark:bg-terminal-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-cyan mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -129,8 +131,8 @@ export default function CompleteProfile() {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-cyan mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-neon-cyan mb-2">Redirecting...</h1>
-            <p className="text-gray-600 dark:text-gray-400">Taking you to your dashboard</p>
+            <h1 className="text-2xl font-bold text-neon-cyan mb-2">{t('auth.redirectingDashboard')}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{t('auth.takingToDashboard')}</p>
           </div>
         </div>
       </div>
@@ -142,8 +144,8 @@ export default function CompleteProfile() {
     <div className="min-h-screen bg-white dark:bg-terminal-bg flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-neon-cyan mb-2">Complete Your Profile</h1>
-          <p className="text-gray-600 dark:text-gray-400">Welcome to Superteam Academy!</p>
+          <h1 className="text-4xl font-bold text-neon-cyan mb-2">{t('auth.completeProfile')}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{t('auth.welcomeAcademy')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,12 +157,12 @@ export default function CompleteProfile() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Display Name
+              {t('auth.displayName')}
             </label>
             <input
               type="text"
               name="displayName"
-              placeholder="How should we call you?"
+              placeholder={t('auth.displayNamePlaceholder')}
               value={formData.displayName}
               onChange={handleChange}
               className="w-full px-4 py-2 bg-gray-100 dark:bg-terminal-surface border-2 border-gray-300 dark:border-terminal-border rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-600 dark:focus:border-neon-cyan transition-colors"
@@ -170,12 +172,12 @@ export default function CompleteProfile() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Age
+              {t('profile.age')}
             </label>
             <input
               type="number"
               name="age"
-              placeholder="Your age"
+              placeholder={t('auth.agePlaceholder')}
               value={formData.age}
               onChange={handleChange}
               min="13"
@@ -191,7 +193,7 @@ export default function CompleteProfile() {
               disabled={loading}
               className="w-full px-4 py-3 bg-neon-cyan text-terminal-bg font-semibold rounded-lg hover:bg-neon-cyan/90 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Creating Account...' : 'Create Account & Continue'}
+              {loading ? t('auth.creatingAccount') : t('auth.createAndContinue')}
             </button>
           </div>
         </form>
@@ -200,12 +202,12 @@ export default function CompleteProfile() {
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
           className="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
         >
-          Sign out
+          {t('auth.signOutBtn')}
         </button>
 
         <div className="p-4 bg-gray-100 dark:bg-terminal-surface rounded-lg">
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            Email: {(session?.user as any)?.email}
+            Email: {session?.user?.email}
           </p>
         </div>
       </div>

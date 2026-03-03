@@ -29,7 +29,7 @@ export function useXPBalance(learnerAddress?: PublicKey, xpTokenMint?: PublicKey
     setError(null)
 
     try {
-      const parseAmount = (tokenBalance: any): number => {
+      const parseAmount = (tokenBalance: { value: { amount: string; decimals: number; uiAmount: number | null; uiAmountString?: string } }): number => {
         const value = tokenBalance?.value
         if (!value) return 0
 

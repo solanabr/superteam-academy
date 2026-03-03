@@ -25,7 +25,7 @@ export function CodeEditor({
   onRun,
 }: CodeEditorProps) {
   const { t } = useI18n()
-  const editorRef = useRef<any>(null)
+  const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null)
   const [isRunning, setIsRunning] = useState(false)
 
   const handleEditorMount: OnMount = (editor) => {

@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useI18n } from '@/lib/hooks/useI18n'
 
 export function AuthButtons() {
+  const { t } = useI18n()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -16,7 +18,7 @@ export function AuthButtons() {
         disabled
         className="px-3 py-1 bg-gray-200 dark:bg-terminal-surface text-gray-500 dark:text-gray-400 rounded text-sm font-semibold cursor-not-allowed"
       >
-        Loading...
+        {t('common.loading')}
       </button>
     )
   }
@@ -43,14 +45,14 @@ export function AuthButtons() {
               className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-terminal-surface/80 text-sm"
               onClick={() => setIsOpen(false)}
             >
-              Profile
+              {t('nav.profile')}
             </Link>
             <Link
               href="/settings"
               className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-terminal-surface/80 text-sm"
               onClick={() => setIsOpen(false)}
             >
-              Settings
+              {t('nav.settings')}
             </Link>
             <button
               onClick={() => {
@@ -59,7 +61,7 @@ export function AuthButtons() {
               }}
               className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-terminal-surface/80 text-sm border-t border-gray-300 dark:border-terminal-border"
             >
-              Sign Out
+              {t('nav.signOut')}
             </button>
           </div>
         )}
@@ -72,7 +74,7 @@ export function AuthButtons() {
       onClick={() => router.push('/auth/signin')}
       className="px-3 py-1 bg-blue-600 dark:bg-neon-cyan hover:bg-blue-700 dark:hover:bg-neon-cyan/90 text-white dark:text-terminal-bg rounded text-sm font-semibold transition-colors"
     >
-      Sign In
+      {t('nav.signIn')}
     </button>
   )
 }

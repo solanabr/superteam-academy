@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/api/api-client'
 import { calculateLevel } from '@/lib/types'
+import type { Achievement, LeaderboardEntry } from '@/lib/types'
+import type { UserProgressResponse, UserRankResponse } from '@/lib/types/shared'
 
 export interface Progress {
-  userId: string
-  totalXP: number
+  totalXp: number
   level: number
-  currentStreak: number
-  longestStreak: number
-  achievements: number[]
+  enrollments: UserProgressResponse['enrollments']
 }
 
 export function useProgress(userId?: string) {
@@ -36,7 +35,14 @@ export function useProgress(userId?: string) {
   const completeLesson = async (courseId: string, lessonId: string, xpReward: number) => {
     try {
       const result = await apiClient.completeLesson(courseId, lessonId, xpReward)
-      setProgress(result.progress)
+      // Update progress with new totals from the completion response
+      if (progress) {
+        setProgress({
+          ...progress,
+          totalXp: result.newTotalXp,
+          level: result.newLevel,
+        })
+      }
       return result
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to complete lesson'
@@ -65,8 +71,8 @@ export function useProgress(userId?: string) {
 }
 
 export function useAchievements(userId?: string) {
-  const [achievements, setAchievements] = useState<any[]>([])
-  const [unlockedAchievements, setUnlockedAchievements] = useState<any[]>([])
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,8 +81,9 @@ export function useAchievements(userId?: string) {
       try {
         setError(null)
         const data = await apiClient.getAchievements()
-        setAchievements(data.allAchievements || data || [])
-        setUnlockedAchievements(data.unlockedAchievements || [])
+        setAchievements(data ?? [])
+        // unlocked achievements are filtered client-side
+        setUnlockedAchievements((data ?? []).filter(a => a.unlockedAt != null))
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to fetch achievements'
         setError(message)
@@ -99,7 +106,7 @@ export function useAchievements(userId?: string) {
 }
 
 export function useLeaderboard(limit = 50, offset = 0) {
-  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -121,17 +128,18 @@ export function useLeaderboard(limit = 50, offset = 0) {
         }
 
         setLeaderboard(
-          data.map((entry: any, idx: number) => {
-            const totalXP = Number(entry.totalXP ?? entry.totalXp ?? entry.xp ?? 0)
+          data.map((entry: Record<string, unknown>, idx: number) => {
+            const totalXp = Number(entry.totalXP ?? entry.totalXp ?? entry.xp ?? 0)
             return {
-              rank: entry.rank ?? offset + idx + 1,
-              userId: entry.userId ?? entry.wallet ?? `user-${idx}`,
-              wallet: entry.wallet ?? entry.userId ?? '',
-              username: entry.username ?? 'Unknown',
-              displayName: entry.displayName ?? entry.username ?? 'Unknown',
-              totalXP,
-              level: entry.level ?? calculateLevel(totalXP),
+              rank: (entry.rank as number) ?? offset + idx + 1,
+              userId: (entry.userId as string) ?? (entry.wallet as string) ?? `user-${idx}`,
+              wallet: (entry.wallet as string) ?? (entry.userId as string) ?? '',
+              username: (entry.username as string) ?? 'Unknown',
+              displayName: (entry.displayName as string) ?? (entry.username as string) ?? 'Unknown',
+              totalXp,
+              level: (entry.level as number) ?? calculateLevel(totalXp),
               currentStreak: Number(entry.currentStreak ?? 0),
+              coursesCompleted: Number(entry.coursesCompleted ?? 0),
             }
           })
         )
@@ -155,7 +163,7 @@ export function useLeaderboard(limit = 50, offset = 0) {
 }
 
 export function useUserRank(userId: string) {
-  const [rank, setRank] = useState<any>(null)
+  const [rank, setRank] = useState<UserRankResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

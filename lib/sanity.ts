@@ -1,5 +1,7 @@
 import imageUrlBuilder from '@sanity/image-url'
 
+type SanityImageSource = Parameters<ReturnType<typeof imageUrlBuilder>['image']>[0]
+
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
 const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2024-02-13'
@@ -11,7 +13,7 @@ export function isSanityConfigured(): boolean {
   return Boolean(projectId && dataset)
 }
 
-export function urlFor(source: any) {
+export function urlFor(source: SanityImageSource) {
   return imageBuilder.image(source)
 }
 
@@ -56,13 +58,13 @@ export interface SanityCourse {
   duration: number
   xpReward: number
   enrollmentCount?: number
-  thumbnail?: any
+  thumbnail?: SanityImageSource
   instructor?: {
     name: string
-    avatar?: any
+    avatar?: SanityImageSource
   }
   tags?: string[]
-  modules?: any[]
+  modules?: SanityModule[]
   status?: string
 }
 
@@ -71,7 +73,7 @@ export interface SanityModule {
   title: string
   description?: string
   order: number
-  lessons?: any[]
+  lessons?: SanityLesson[]
 }
 
 export interface SanityLesson {
@@ -81,7 +83,13 @@ export interface SanityLesson {
   description?: string
   contentText?: string
   type: 'content' | 'challenge'
-  challenge?: any
+  challenge?: {
+    prompt?: string
+    starterCode?: string
+    testCases?: Array<{ input: string; expectedOutput: string; description?: string }>
+    solutionCode?: string
+    hints?: string[]
+  }
   xpReward?: number
   order: number
 }

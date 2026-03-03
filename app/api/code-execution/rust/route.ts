@@ -81,7 +81,7 @@ async function executeRustCode(
       mode: 'debug',
       code,
       edition: '2021',
-      crateType: language === 'anchor' ? 'lib' : 'bin',
+      crateType: 'bin' as const,
       tests: false,
       backtrace: false,
     }

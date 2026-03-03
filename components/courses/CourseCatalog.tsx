@@ -21,6 +21,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
   const [track, setTrack] = useState<string>('')
   const [mounted, setMounted] = useState(false)
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(new Set())
+  const [enrollmentDataMap, setEnrollmentDataMap] = useState<Record<string, { lessonsCompleted: number; totalXPEarned?: number; completedAt?: string | null }>>({})
 
   // Ensure component is mounted before rendering to avoid hydration mismatch
   useEffect(() => {
@@ -29,7 +30,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
 
   useEffect(() => {
     const userId =
-      ((session?.user as any)?.id as string | undefined) ||
+      (session?.user?.id as string | undefined) ||
       session?.user?.email ||
       walletAddress ||
       null
@@ -52,7 +53,17 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
         const enrollments = await response.json()
         if (cancelled || !Array.isArray(enrollments)) return
 
-        setEnrolledCourseIds(new Set(enrollments.map((e: any) => String(e.courseId))))
+        setEnrolledCourseIds(new Set(enrollments.map((e: { courseId: string }) => String(e.courseId))))
+
+        const dataMap: Record<string, { lessonsCompleted: number; totalXPEarned?: number; completedAt?: string | null }> = {}
+        for (const e of enrollments) {
+          dataMap[String(e.courseId)] = {
+            lessonsCompleted: e.lessonsCompleted ?? 0,
+            totalXPEarned: e.totalXPEarned ?? 0,
+            completedAt: e.completedAt ?? null,
+          }
+        }
+        setEnrollmentDataMap(dataMap)
       } catch (error) {
         console.warn('Failed to fetch enrollments:', error)
       }
@@ -123,6 +134,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
             key={course.id}
             course={course}
             isEnrolled={enrolledCourseIds.has(course.id)}
+            enrollmentData={enrollmentDataMap[course.id] ?? null}
             onEnrollmentSuccess={() => {
               setEnrolledCourseIds((previous) => {
                 const next = new Set(previous)

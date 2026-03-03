@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDatabase } from '@/backend/src/db'
 import { PublicKey } from '@solana/web3.js'
+import type { DbResult, EnrollmentCompletionRow, CourseRow, UserXpRow } from '@/lib/types/db'
 
 /**
  * POST /api/courses/finalize
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       .select('id, lessons_completed, completed_at')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<EnrollmentCompletionRow>
 
     if (enrollmentError || !enrollment) {
       return NextResponse.json(
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       .from('courses')
       .select('id, total_lessons, xp_reward, title')
       .eq('id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<CourseRow>
 
     if (courseError || !course) {
       return NextResponse.json(
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       .from('enrollments')
       // @ts-expect-error
       .update({ completed_at: completedAt })
-      .eq('id', enrollment?.id)) as any
+      .eq('id', enrollment?.id)) as DbResult<null>
 
     if (updateError) {
       console.error('Failed to update enrollment:', updateError)
@@ -117,14 +118,14 @@ export async function POST(request: NextRequest) {
           xp_amount: bonusXp,
           reason: 'course_completion_bonus',
           created_at: new Date().toISOString(),
-        }) as any)
+        }) as DbResult<null>)
 
       // Update user total XP
       const { data: currentXp } = (await db
         .from('users')
         .select('total_xp')
         .eq('id', userId)
-        .maybeSingle()) as any
+        .maybeSingle()) as DbResult<UserXpRow>
 
       const newTotalXp = (currentXp?.total_xp || 0) + bonusXp
 
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
         .from('users')
         // @ts-ignore
         .update({ total_xp: newTotalXp })
-        .eq('id', userId)) as any
+        .eq('id', userId)) as DbResult<null>
     }
 
     return NextResponse.json(

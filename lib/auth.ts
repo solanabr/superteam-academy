@@ -2,6 +2,7 @@ import type { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import GitHubProvider from 'next-auth/providers/github'
 import { createClient } from '@supabase/supabase-js'
+import '@/lib/types/next-auth.d'
 
 async function userExistsByEmail(email?: string | null): Promise<boolean> {
   if (!email) return false
@@ -47,14 +48,14 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       // Store provider info in user object for later use
       if (user) {
-        ;(user as any).provider = account?.provider
+        user.provider = account?.provider
       }
       return true
     },
     async jwt({ token, user, account, trigger, session }) {
       if (trigger === 'update' && session) {
-        if (typeof (session as any).needsProfile === 'boolean') {
-          ;(token as any).needsProfile = (session as any).needsProfile
+        if (typeof session.needsProfile === 'boolean') {
+          token.needsProfile = session.needsProfile
         }
       }
 
@@ -75,9 +76,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        ;(session.user as any).id = (token as any).id
-        ;(session.user as any).provider = (token as any).provider
-        ;(session.user as any).needsProfile = Boolean((token as any).needsProfile)
+        session.user.id = token.id ?? ''
+        session.user.provider = token.provider
+        session.user.needsProfile = Boolean(token.needsProfile)
       }
       return session
     },

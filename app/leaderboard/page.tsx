@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
           <h1 className="text-4xl font-display font-bold text-blue-600 dark:text-neon-cyan mb-2">
             {t('leaderboard.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">Compete with developers worldwide and climb the ranks</p>
+          <p className="text-gray-600 dark:text-gray-400">{t('leaderboard.subtitle')}</p>
         </div>
 
         {/* Timeframe Tabs - Coming Soon */}
@@ -68,9 +68,9 @@ export default function LeaderboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Your Rank</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{t('leaderboard.yourRank')}</p>
                   <p className="text-3xl font-bold text-blue-600 dark:text-neon-cyan">
-                    {currentUserEntry ? `# ${currentUserEntry.rank}` : 'Not in top list'}
+                    {currentUserEntry ? `# ${currentUserEntry.rank}` : t('leaderboard.notInTop')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -86,9 +86,9 @@ export default function LeaderboardPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">Top Developers</h2>
+              <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">{t('leaderboard.topDevelopers')}</h2>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {loading ? 'Loading...' : `${leaderboard.length} developers`}
+                {loading ? t('common.loading') : `${leaderboard.length} ${t('leaderboard.developers')}`}
               </span>
             </div>
           </CardHeader>
@@ -134,14 +134,14 @@ export default function LeaderboardPage() {
                                 </span>
                                 {isCurrentUser && (
                                   <span className="ml-2 text-xs bg-blue-600 dark:bg-neon-cyan text-white dark:text-terminal-bg px-2 py-0.5 rounded">
-                                    You
+                                    {t('leaderboard.you')}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </td>
                           <td className="py-4 px-3 text-right text-blue-600 dark:text-neon-cyan font-semibold">
-                            {entry.totalXP.toLocaleString()}
+                            {entry.totalXp.toLocaleString()}
                           </td>
                           <td className="py-4 px-3 text-right text-green-600 dark:text-neon-green font-semibold">
                             {entry.level}
@@ -163,7 +163,7 @@ export default function LeaderboardPage() {
               </div>
             ) : (
               <div className="text-center py-12 text-gray-600 dark:text-gray-400">
-                <p>No leaderboard data available yet</p>
+                <p>{t('leaderboard.noData')}</p>
               </div>
             )}
           </CardContent>

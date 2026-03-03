@@ -2,8 +2,13 @@
 
 import React from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { Button } from '@/components/ui/Button'
+import dynamic from 'next/dynamic'
+
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
+  { ssr: false }
+)
 
 /**
  * Wallet connection button for Header

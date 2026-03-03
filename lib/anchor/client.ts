@@ -1,5 +1,5 @@
-import { Program, AnchorProvider, BN } from '@coral-xyz/anchor';
-import { PublicKey, Connection, Keypair } from '@solana/web3.js';
+import { Program, AnchorProvider, BN, type Idl } from '@coral-xyz/anchor';
+import { PublicKey, Connection, Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
 import IDL from './academy.json';
 import { PROGRAM_ID } from './constants';
 import { normalizeAnchorIdl } from './idl-compat';
@@ -10,11 +10,11 @@ const PROGRAM_IDL = {
 };
 
 /**
- * Initialize Anchor program instance (untyped to avoid missing generated types)
+ * Initialize Anchor program instance
  * For browser/frontend use with wallet adapter provider
  */
-export function getProgram(provider: AnchorProvider): Program<any> {
-  return new Program<any>(PROGRAM_IDL as any, provider as any);
+export function getProgram(provider: AnchorProvider): Program {
+  return new Program(PROGRAM_IDL as Idl, provider);
 }
 
 /**
@@ -24,14 +24,18 @@ export function getProgram(provider: AnchorProvider): Program<any> {
 export function getProgramWithKeypair(
   connection: Connection,
   payer: Keypair
-): Program<any> {
+): Program {
   const provider = new AnchorProvider(
     connection,
-    { publicKey: payer.publicKey, signAllTransactions: async (txs: any[]) => txs, signTransaction: async (tx: any) => tx } as any,
+    {
+      publicKey: payer.publicKey,
+      signAllTransactions: async <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> => txs,
+      signTransaction: async <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> => tx,
+    },
     { commitment: 'confirmed' }
   );
-  
-  return new Program<any>(PROGRAM_IDL as any, provider as any);
+
+  return new Program(PROGRAM_IDL as Idl, provider);
 }
 
 /**

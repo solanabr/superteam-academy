@@ -130,7 +130,7 @@ export class EnrollmentService {
 
     return {
       ...enrollment,
-      completedLessons: (lessonsCompleted || []).map((l: any) => l.lesson_id),
+      completedLessons: (lessonsCompleted || []).map((l: { lesson_id: string }) => l.lesson_id),
     }
   }
 
@@ -156,7 +156,7 @@ export class EnrollmentService {
       totalXP: user?.total_xp || 0,
       level: user?.level || 1,
       currentStreak: user?.current_streak || 0,
-      enrollments: (enrollments || []).map((e: any) => ({
+      enrollments: (enrollments || []).map((e: { course_id: string; lessons_completed: number; total_xp_earned: number; enrolled_at: string; completed_at: string | null }) => ({
         courseId: e.course_id,
         lessonsCompleted: e.lessons_completed,
         totalXPEarned: e.total_xp_earned,

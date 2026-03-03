@@ -2,6 +2,8 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { useQuery } from '@tanstack/react-query';
 import { AnchorProvider } from '@coral-xyz/anchor';
 import { getConfigPda, getProgram } from '@/lib/anchor';
+import type { Config } from '@/lib/anchor/types';
+import { READ_ONLY_WALLET, type UntypedAccountAccess } from '@/lib/types/shared';
 
 /**
  * Hook: Get on-chain config
@@ -12,11 +14,11 @@ export function useConfig() {
   return useQuery({
     queryKey: ['config:onchain'],
     queryFn: async () => {
-      const provider = new AnchorProvider(connection, {} as any, { commitment: 'confirmed' });
+      const provider = new AnchorProvider(connection, READ_ONLY_WALLET, { commitment: 'confirmed' });
       const program = getProgram(provider);
 
       const [configPda] = getConfigPda();
-      return await (program.account as any).config.fetch(configPda);
+      return await (program.account as unknown as UntypedAccountAccess).config.fetch(configPda) as unknown as Config;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

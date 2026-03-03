@@ -44,10 +44,10 @@ export class TestRunnerService {
   private static extractFunctionAndArgs(
     code: string,
     testInput?: string
-  ): { functionName?: string; args?: any[] } {
+  ): { functionName?: string; args?: unknown[] } {
     // Extract function name and arguments from test input
     // Format: "functionName(arg1, arg2)" or just use first defined function
-    const result: { functionName?: string; args?: any[] } = {}
+    const result: { functionName?: string; args?: unknown[] } = {}
 
     if (testInput) {
       const match = testInput.match(/(\w+)\((.*)\)/)
@@ -109,7 +109,7 @@ export class TestRunnerService {
         if (functionName && args) {
           // Create a scope with the code, then call the function
           try {
-            const scope: Record<string, any> = {}
+            const scope: Record<string, unknown> = {}
             const wrappedCode = `
               (function() {
                 ${code}

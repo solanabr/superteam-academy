@@ -5,10 +5,12 @@ import {
   getCoursePda,
   getEnrollmentPda,
   Course as OnChainCourse,
+  Enrollment as OnChainEnrollment,
   isCourseComplete,
   countCompletedLessons,
   getCompletedLessonIndices,
 } from '@/lib/anchor';
+import { READ_ONLY_WALLET, type UntypedAccountAccess, type AccountWrapper } from '@/lib/types/shared';
 
 /**
  * On-Chain Course Service
@@ -28,10 +30,10 @@ export interface CourseProgress {
 }
 
 export class OnchainCourseService {
-  private program: Program<any>;
+  private program: Program;
 
   constructor(connection: Connection) {
-    const provider = new AnchorProvider(connection, {} as any, { commitment: 'confirmed' });
+    const provider = new AnchorProvider(connection, READ_ONLY_WALLET, { commitment: 'confirmed' });
     this.program = getProgram(provider);
   }
 
@@ -40,14 +42,15 @@ export class OnchainCourseService {
    */
   async getAllCourses(): Promise<OnChainCourse[]> {
     try {
-      const allCourses = await (this.program.account as any).course.all();
+      const allCourses = await (this.program.account as unknown as UntypedAccountAccess).course.all();
       return allCourses
-        .filter((c: any) => c.account.isActive)
-        .map((c: any) => c.account)
-        .sort((a: any, b: any) => b.createdAt - a.createdAt);
+        .filter((c: AccountWrapper) => (c.account as Record<string, unknown>).isActive)
+        .map((c: AccountWrapper) => c.account as unknown as OnChainCourse)
+        .sort((a: OnChainCourse, b: OnChainCourse) => b.createdAt - a.createdAt);
     } catch (error) {
-      console.error('Error fetching courses:', error);
-      throw error;
+      // Expected when Anchor program is not deployed or unreachable
+      console.warn('On-chain courses unavailable, falling back to local data');
+      return [];
     }
   }
 
@@ -57,10 +60,10 @@ export class OnchainCourseService {
   async getCourse(courseId: string): Promise<OnChainCourse | null> {
     try {
       const [coursePda] = getCoursePda(courseId);
-      const course = await (this.program.account as any).course.fetch(coursePda);
+      const course = await (this.program.account as unknown as UntypedAccountAccess).course.fetch(coursePda) as unknown as OnChainCourse;
       return course.isActive ? course : null;
     } catch (error) {
-      console.error(`Error fetching course ${courseId}:`, error);
+      // Expected when on-chain account doesn't exist yet (e.g. mock courses)
       return null;
     }
   }
@@ -95,10 +98,10 @@ export class OnchainCourseService {
   async getEnrollment(
     courseId: string,
     learnerAddress: PublicKey
-  ): Promise<(any) | null> {
+  ): Promise<OnChainEnrollment | null> {
     try {
       const [enrollmentPda] = getEnrollmentPda(courseId, learnerAddress);
-      return await (this.program.account as any).enrollment.fetchNullable(enrollmentPda);
+      return await (this.program.account as unknown as UntypedAccountAccess).enrollment.fetchNullable(enrollmentPda) as unknown as OnChainEnrollment | null;
     } catch (error) {
       console.error(
         `Error fetching enrollment for ${courseId} and ${learnerAddress}:`,

@@ -1,6 +1,7 @@
 import { useConnection } from '@solana/wallet-adapter-react'
 import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 import { useMemo } from 'react'
+import { Transaction, VersionedTransaction } from '@solana/web3.js'
 import { useWallet } from './useWallet'
 import { getProgram } from '@/lib/anchor'
 
@@ -25,12 +26,14 @@ export const useProgram = () => {
     }
 
     try {
-      const walletAdapter = (wallet as any)
+      const walletAdapter = wallet as unknown as {
+        signTransaction?: <T extends Transaction | VersionedTransaction>(tx: T) => Promise<T>
+      }
       const walletObj = {
         publicKey,
         signTransaction: walletAdapter.signTransaction,
-        signAllTransactions: async (txs: any[]) => {
-          return Promise.all(txs.map((tx) => walletAdapter.signTransaction?.(tx)))
+        signAllTransactions: async <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> => {
+          return Promise.all(txs.map((tx) => walletAdapter.signTransaction?.(tx) ?? Promise.resolve(tx))) as Promise<T[]>
         },
       } as Wallet
 
@@ -38,7 +41,7 @@ export const useProgram = () => {
         commitment: 'confirmed',
       })
 
-      return getProgram(provider) as any
+      return getProgram(provider)
     } catch (error) {
       console.error('Failed to initialize program:', error)
       return null

@@ -14,6 +14,7 @@ import { useXPBalance } from '@/lib/hooks/useXPBalance'
 import { useCredentials } from '@/lib/hooks/useXp'
 import { getAchievementServiceInstance } from '@/lib/services/achievement.service'
 import { SkillRadar, demoSkillData, calculateSkillsFromProgress } from '@/components/profile'
+import { Achievement } from '@/lib/types'
 
 interface ProfileUser {
   id: string
@@ -35,7 +36,7 @@ export default function ProfilePage() {
   const { data: session, status } = useSession()
   const { connected, publicKey, openWalletModal } = useWallet()
   const rawUserId =
-    ((session?.user as any)?.id as string | undefined) || session?.user?.email || null
+    session?.user?.id || session?.user?.email || null
   const userId =
     typeof rawUserId === 'string' && rawUserId.includes('@')
       ? rawUserId.toLowerCase()
@@ -59,7 +60,7 @@ export default function ProfilePage() {
   const { stats, loading: statsLoading } = useGamification(undefined, { userId })
   const offChainXp = Math.max(stats?.totalXP ?? 0, user?.totalXP ?? 0)
   const totalXp = connected ? Math.max(offChainXp, onChainXp) : offChainXp
-  const level = Math.max(stats?.level ?? user?.level ?? 1, calculateLevel(totalXp), 1)
+  const level = Math.max(stats?.level ?? user?.level ?? 0, calculateLevel(totalXp))
 
   const completedCourses = 0
   const { unlockedAchievements } = useAchievements({
@@ -176,7 +177,7 @@ export default function ProfilePage() {
       <main className="min-h-screen py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl font-display font-bold mb-4">{t('profile.notFound')}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Please sign in to view your profile</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('profile.signInToView')}</p>
           <Link href="/auth/signin">
             <Button>{t('auth.signIn')}</Button>
           </Link>
@@ -201,11 +202,11 @@ export default function ProfilePage() {
 
             <div className="flex-1">
               <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
-                {user.displayName || session?.user?.name || 'Anonymous Learner'}
+                {user.displayName || session?.user?.name || t('profile.anonymousLearner')}
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">{user.email || session?.user?.email || 'No email'}</p>
+              <p className="text-gray-600 dark:text-gray-400">{user.email || session?.user?.email || t('profile.noEmail')}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Age: {typeof user.age === 'number' ? user.age : 'Not set'}
+                {t('profile.age')}: {typeof user.age === 'number' ? user.age : t('profile.notSet')}
               </p>
               
               {isEditing ? (
@@ -215,7 +216,7 @@ export default function ProfilePage() {
                     onChange={(e) => setBioBuffer(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-terminal-border rounded-lg dark:bg-terminal-bg dark:text-white text-sm"
                     rows={2}
-                    placeholder="Write your bio..."
+                    placeholder={t('profile.writeBio')}
                   />
                   <div className="flex gap-2 mt-2">
                     <button
@@ -223,7 +224,7 @@ export default function ProfilePage() {
                       disabled={isSaving}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
                     >
-                      {isSaving ? 'Saving...' : 'Save'}
+                      {isSaving ? t('common.savingEllipsis') : t('common.save')}
                     </button>
                     <button
                       onClick={() => {
@@ -232,14 +233,14 @@ export default function ProfilePage() {
                       }}
                       className="px-4 py-2 bg-gray-300 dark:bg-terminal-bg text-gray-900 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-terminal-surface text-sm"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
                   <p className="text-gray-700 dark:text-gray-300 mb-4">
-                    {user.bio || 'No bio yet'}
+                    {user.bio || t('profile.noBioYet')}
                   </p>
                   <button
                     onClick={() => {
@@ -248,28 +249,28 @@ export default function ProfilePage() {
                     }}
                     className="text-blue-600 dark:text-neon-cyan hover:underline text-sm mb-4"
                   >
-                    Edit bio
+                    {t('profile.editBio')}
                   </button>
                 </>
               )}
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Level</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dashboard.stats.level')}</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-neon-cyan">{level}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total XP</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('profile.totalXp')}</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-neon-cyan">
                     {totalXp.toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Streak</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dashboard.stats.streak')}</p>
                   <p className="text-2xl font-bold text-orange-500">🔥 {streak}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Longest</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('profile.longest')}</p>
                   <p className="text-2xl font-bold text-green-600">
                     {longestStreak}
                   </p>
@@ -294,7 +295,7 @@ export default function ProfilePage() {
             <CardContent>
               {!achievementsLoading ? (
                 <div className="grid grid-cols-4 gap-2">
-                  {achievements.map((achievement) => {
+                  {achievements.map((achievement: Achievement) => {
                     const isUnlocked = unlockedAchievements.some((a) => a.id === achievement.id)
                     return (
                       <div
@@ -331,20 +332,20 @@ export default function ProfilePage() {
             <CardContent>
               {!connected && (
                 <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                  <p>Connect your wallet to load devnet credentials.</p>
+                  <p>{t('profile.connectForCredentials')}</p>
                   <Button variant="secondary" onClick={openWalletModal}>
-                    Connect Wallet
+                    {t('common.connectWallet')}
                   </Button>
                 </div>
               )}
 
               {connected && credentialsLoading && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">Loading on-chain credentials...</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('profile.loadingCredentials')}</p>
               )}
 
               {connected && !credentialsLoading && credentials.length === 0 && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No credentials found for this wallet on devnet yet.
+                  {t('profile.noCredentials')}
                 </p>
               )}
 
@@ -359,17 +360,17 @@ export default function ProfilePage() {
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white">{credential.name}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            Track {credential.trackId} · Level {credential.level}
+                            {t('profile.track')} {credential.trackId} · {t('dashboard.stats.level')} {credential.level}
                           </p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {credential.coursesCompleted} courses · {credential.totalXp} XP
+                            {credential.coursesCompleted} {t('courses.lessons')} · {credential.totalXp} XP
                           </p>
                         </div>
                         <Link
                           href={`/certificates/${credential.assetId}`}
                           className="text-sm text-blue-600 dark:text-neon-cyan hover:underline"
                         >
-                          View
+                          {t('profile.view')}
                         </Link>
                       </div>
                     </div>
@@ -384,15 +385,15 @@ export default function ProfilePage() {
         <Card className="mt-6">
           <CardHeader>
             <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white">
-              Member Since
+              {t('profile.memberSince')}
             </h2>
           </CardHeader>
           <CardContent>
             <div className="text-gray-700 dark:text-gray-300">
-              <p>{memberSince ? memberSince.toLocaleDateString() : 'Unknown'}</p>
+              <p>{memberSince ? memberSince.toLocaleDateString() : t('profile.unknown')}</p>
               {memberSince && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Joined {Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))} days ago
+                  {t('profile.joinedDaysAgo').replace('{days}', String(Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))))}
                 </p>
               )}
             </div>

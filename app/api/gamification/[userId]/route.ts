@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient, HeliusTokenBalance } from '@/lib/types/db'
 
 interface CanonicalUser {
   id: string
@@ -30,7 +31,7 @@ function userIdCandidates(rawUserId: string): string[] {
   return Array.from(new Set([rawUserId, rawUserId.toLowerCase()]))
 }
 
-function parseOnchainAmount(data: any): number | null {
+function parseOnchainAmount(data: HeliusTokenBalance | null | undefined): number | null {
   if (typeof data?.uiAmount === 'number' && Number.isFinite(data.uiAmount)) {
     return data.uiAmount
   }
@@ -78,7 +79,7 @@ async function fetchOnchainXp(walletAddress: string | null | undefined): Promise
   }
 }
 
-async function resolveCanonicalUser(supabase: any, rawUserId: string): Promise<CanonicalUser | null> {
+async function resolveCanonicalUser(supabase: SupabaseClient, rawUserId: string): Promise<CanonicalUser | null> {
   const candidates = Array.from(new Set([rawUserId, rawUserId.toLowerCase()]))
 
   for (const candidate of candidates) {
@@ -177,10 +178,10 @@ export async function GET(
     const totalXP = Math.max(dbXp, txXp, Number(onchainXp || 0))
 
     // Calculate XP progress for next level
-    const xpPerLevel = 100
-    const level = Math.max(Math.floor(Math.sqrt(totalXP / xpPerLevel)), 1)
-    const currentLevelXp = level * level * xpPerLevel
-    const nextLevelXp = (level + 1) * (level + 1) * xpPerLevel
+    // Formula: Level = floor(sqrt(totalXP / 100))
+    const level = Math.floor(Math.sqrt(totalXP / 100))
+    const currentLevelXp = level * level * 100
+    const nextLevelXp = (level + 1) * (level + 1) * 100
     const xpInCurrentLevel = totalXP - currentLevelXp
     const xpNeededForNextLevel = nextLevelXp - currentLevelXp
 

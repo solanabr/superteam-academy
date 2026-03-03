@@ -64,7 +64,7 @@ export function useAwardXP() {
         }
       }
 
-      const userId = (session.user as any).id || session.user.email
+      const userId = session.user.id || session.user.email
       if (!userId) {
         const msg = 'Unable to get user ID'
         setError(msg)
@@ -108,6 +108,15 @@ export function useAwardXP() {
             message: data.message || 'XP awarded successfully',
           }
           return result
+        } else if (response.status === 400 && data.error === 'Lesson already completed') {
+          // Treat already-completed as success — user already earned this XP
+          return {
+            success: true,
+            xpAwarded: 0,
+            totalXp: 0,
+            level: 0,
+            message: 'Lesson already completed',
+          }
         } else {
           const msg = data.error || 'Failed to award XP'
           setError(msg)

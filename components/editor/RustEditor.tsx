@@ -4,7 +4,7 @@ import React, { useRef, useState, useCallback } from 'react'
 import Editor, { OnMount, OnChange } from '@monaco-editor/react'
 import { Button } from '@/components/ui'
 import { useI18n } from '@/lib/hooks/useI18n'
-import { RustExecutionService } from '@/lib/services/rust-execution.service'
+import { RustExecutionService, type RustExecutionOutput } from '@/lib/services/rust-execution.service'
 
 interface RustEditorProps {
   language?: 'rust' | 'anchor'
@@ -13,7 +13,7 @@ interface RustEditorProps {
   readonly?: boolean
   height?: string
   defaultValue?: string
-  onRun?: (code: string, output: any) => void
+  onRun?: (code: string, output: RustExecutionOutput) => void
   showTemplates?: boolean
 }
 
@@ -28,7 +28,7 @@ export function RustEditor({
   showTemplates = true,
 }: RustEditorProps) {
   const { t } = useI18n()
-  const editorRef = useRef<any>(null)
+  const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const [output, setOutput] = useState<string>('')
   const [errors, setErrors] = useState<string>('')
@@ -39,8 +39,8 @@ export function RustEditor({
     editorRef.current = editor
     // Configure Rust syntax highlighting
     editor.updateOptions({
-      'editor.formatOnPaste': true,
-      'editor.formatOnType': true,
+      formatOnPaste: true,
+      formatOnType: true,
     })
   }
 

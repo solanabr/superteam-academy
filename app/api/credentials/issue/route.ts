@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDatabase } from '@/backend/src/db'
 import { PublicKey } from '@solana/web3.js'
 import crypto from 'crypto'
+import type { DbResult, EnrollmentCompletionRow, CredentialRow, UserXpRow } from '@/lib/types/db'
 
 /**
  * POST /api/credentials/issue
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       .select('id, completed_at, lessons_completed')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<EnrollmentCompletionRow>
 
     if (enrollmentError || !enrollment) {
       return NextResponse.json(
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       .select('id, asset_id')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<CredentialRow>
 
     if (existingCredential) {
       return NextResponse.json(
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('total_xp, level')
       .eq('id', userId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<UserXpRow>
 
     const totalXp = user?.total_xp || 0
     const level = user?.level || 1
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       total_xp: totalXp,
       track_id: 'course-completion',
       minted_at: new Date().toISOString(),
-    })) as any
+    })) as DbResult<null>
 
     if (insertError) {
       console.error('Failed to create credential record:', insertError)
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
 /**
  * Helper: Award credential-related achievements
  */
-async function awardCredentialAchievement(db: any, userId: string, courseId: string) {
+async function awardCredentialAchievement(db: ReturnType<typeof getDatabase>, userId: string, courseId: string) {
   try {
     // Count total credentials for this user
     const { data: credentials } = await db
@@ -167,13 +168,13 @@ async function awardCredentialAchievement(db: any, userId: string, courseId: str
  * Helper: Record achievement unlock
  */
 async function recordAchievement(
-  db: any,
+  db: ReturnType<typeof getDatabase>,
   userId: string,
   achievementId: string,
   xpBonus: number
 ) {
   try {
-    const { error } = await db.from('achievement_progress').insert({
+    const { error } = await (db.from('achievement_progress') as ReturnType<typeof db.from>).insert({
       user_id: userId,
       achievement_id: achievementId,
       unlocked_at: new Date().toISOString(),
@@ -185,12 +186,12 @@ async function recordAchievement(
         .from('users')
         .select('total_xp')
         .eq('id', userId)
-        .maybeSingle()
+        .maybeSingle() as { data: { total_xp: number } | null; error: unknown }
 
       const newXp = (user?.total_xp || 0) + xpBonus
 
-      await db
-        .from('users')
+      await (db
+        .from('users') as ReturnType<typeof db.from>)
         .update({ total_xp: newXp })
         .eq('id', userId)
     }

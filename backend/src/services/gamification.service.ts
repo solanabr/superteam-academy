@@ -33,17 +33,19 @@ export class GamificationService {
 
   /**
    * Calculate level from XP
-   * Formula: level = floor(sqrt(total_xp / 100)) + 1
+   * Formula: Level = floor(sqrt(totalXP / 100))
+   * e.g. 0 XP = Level 0, 100 XP = Level 1, 400 XP = Level 2, 900 XP = Level 3
    */
   static calculateLevel(totalXP: number): number {
-    return Math.floor(Math.sqrt(totalXP / 100)) + 1
+    return Math.floor(Math.sqrt(totalXP / 100))
   }
 
   /**
    * Get XP needed for next level
+   * Next level threshold = (currentLevel + 1)^2 * 100
    */
   static getXPForNextLevel(currentLevel: number): number {
-    return currentLevel * currentLevel * 100
+    return (currentLevel + 1) * (currentLevel + 1) * 100
   }
 
   /**

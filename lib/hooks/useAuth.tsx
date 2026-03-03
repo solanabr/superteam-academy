@@ -8,11 +8,11 @@ interface User {
   bio?: string
   avatarUrl?: string
   walletAddress?: string
-  totalXP: number
-  level: number
-  currentStreak: number
-  longestStreak: number
-  createdAt: string
+  totalXP?: number
+  level?: number
+  currentStreak?: number
+  longestStreak?: number
+  createdAt?: string
 }
 
 interface AuthContextType {

@@ -18,6 +18,16 @@ export type { TestCase, TestResult, TestRunnerResult } from './test-runner.servi
 export { transactionService } from './transaction.service'
 export type { SignedTxResponse, CompleteLessonRequest } from './transaction.service'
 
+// Service interfaces
+export type {
+  IXpService,
+  IAchievementService,
+  ICredentialService,
+  ICodeExecutionService,
+  ITestRunnerService,
+  AchievementCheckStats,
+} from '@/lib/types/service-interfaces'
+
 // Service instances (singleton pattern)
 let learningProgressService: LocalLearningProgressService | null = null
 let courseService: LocalCourseService | null = null

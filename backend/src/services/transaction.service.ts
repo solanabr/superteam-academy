@@ -28,10 +28,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Load IDL from file
 const idlPath = path.join(__dirname, '../../../lib/anchor/academy.json')
-let IDL: any
+let IDL: Record<string, unknown> | null
 try {
   const idlContent = fs.readFileSync(idlPath, 'utf-8')
-  IDL = JSON.parse(idlContent)
+  IDL = JSON.parse(idlContent) as Record<string, unknown>
 } catch (error) {
   console.warn('⚠️ Failed to load IDL from', idlPath, '- TX builder will fail')
   IDL = null
@@ -104,11 +104,8 @@ export class TransactionService {
 
       const wallet = new Wallet(this.backendSigner)
       const provider = new AnchorProvider(this.connection, wallet, { commitment: 'confirmed' })
-      const programIdl = {
-        ...IDL,
-        address: this.programId.toBase58(),
-      }
-      this.program = new Program(programIdl as any, this.programId as any, provider)
+      // Anchor v0.29 API: new Program(idl, programId, provider)
+      this.program = new Program(IDL as Parameters<typeof Program>[0], this.programId, provider)
       console.log('✅ Program initialized:', this.programId.toBase58())
     } catch (error) {
       console.error('❌ Failed to initialize program:', error)

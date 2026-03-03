@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+import type { ICredentialService } from '@/lib/types/service-interfaces';
 
 /**
  * Credential Query Service
@@ -35,7 +36,7 @@ export interface Credential {
   mintedAt: string;
 }
 
-export class CredentialService {
+export class CredentialService implements ICredentialService {
   constructor(private heliusRpcUrl: string) {}
 
   /**

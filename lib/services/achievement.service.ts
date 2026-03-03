@@ -1,4 +1,5 @@
 import { Achievement } from '../types'
+import type { IAchievementService } from '@/lib/types/service-interfaces'
 
 export interface AchievementCriteria {
   type: 'lesson_complete' | 'course_complete' | 'xp_threshold' | 'streak' | 'lessons_in_day'
@@ -100,7 +101,7 @@ export interface UserAchievements {
   unlockedAt: Map<string, Date>
 }
 
-export class AchievementService {
+export class AchievementService implements IAchievementService {
   private userAchievements = new Map<string, UserAchievements>()
 
   getAllAchievements(): AchievementWithCriteria[] {

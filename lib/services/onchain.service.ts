@@ -1,7 +1,8 @@
 import { Program, AnchorProvider, BN } from '@coral-xyz/anchor';
-import { Connection, PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, SystemProgram, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, MPL_CORE_PROGRAM_ID } from '@/lib/anchor/constants';
 import { getProgram } from '@/lib/anchor';
+import type { UntypedAccountAccess } from '@/lib/types/shared';
 import {
   getConfigPda,
   getCoursePda,
@@ -19,7 +20,7 @@ import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction 
  */
 
 export class BackendSignerService {
-  private program: Program<any>;
+  private program: Program;
   private backendSigner: Keypair;
 
   constructor(connection: Connection, backendSignerSecretKey: Uint8Array) {
@@ -28,19 +29,23 @@ export class BackendSignerService {
     // Create provider with backend signer
     const backendWallet = {
       publicKey: this.backendSigner.publicKey,
-      signAllTransactions: async (txs: any[]) => {
+      signAllTransactions: async <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> => {
         return txs.map((tx) => {
-          tx.sign([this.backendSigner]);
+          if ('sign' in tx && typeof tx.sign === 'function') {
+            (tx as Transaction).sign(this.backendSigner);
+          }
           return tx;
         });
       },
-      signTransaction: async (tx: any) => {
-        tx.sign([this.backendSigner]);
+      signTransaction: async <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> => {
+        if ('sign' in tx && typeof tx.sign === 'function') {
+          (tx as Transaction).sign(this.backendSigner);
+        }
         return tx;
       },
     };
 
-    const provider = new AnchorProvider(connection, backendWallet as any, { commitment: 'confirmed' });
+    const provider = new AnchorProvider(connection, backendWallet, { commitment: 'confirmed' });
     this.program = getProgram(provider);
   }
 
@@ -66,8 +71,8 @@ export class BackendSignerService {
       TOKEN_2022_PROGRAM_ID
     );
 
-    const config = await (this.program.account as any).config.fetch(configPda);
-    const course = await (this.program.account as any).course.fetch(coursePda);
+    const config = await (this.program.account as unknown as UntypedAccountAccess).config.fetch(configPda);
+    const course = await (this.program.account as unknown as UntypedAccountAccess).course.fetch(coursePda);
 
     const tx = await this.program.methods
       .completeLesson(lessonIndex)
@@ -110,7 +115,7 @@ export class BackendSignerService {
     const [coursePda] = getCoursePda(courseId);
     const [enrollmentPda] = getEnrollmentPda(courseId, learnerAddress);
 
-    const course = await (this.program.account as any).course.fetch(coursePda);
+    const course = await (this.program.account as unknown as UntypedAccountAccess).course.fetch(coursePda) as unknown as { creator: PublicKey };
 
     const learnerXpAta = getAssociatedTokenAddressSync(
       xpMint,

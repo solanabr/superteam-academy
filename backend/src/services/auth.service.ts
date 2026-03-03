@@ -160,7 +160,7 @@ export class AuthService {
    */
   verifyToken(token: string): { userId: string; email: string } | null {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { userId: string; email: string }
       return { userId: decoded.userId, email: decoded.email }
     } catch {
       return null
@@ -173,7 +173,7 @@ export class AuthService {
   async updateProfile(userId: string, updates: Partial<SignupParams>): Promise<AuthResponse> {
     const supabase = getDatabase()
 
-    const updateData: any = {}
+    const updateData: Record<string, string> = {}
     if (updates.bio) updateData.bio = updates.bio
     if (updates.avatar) updateData.avatar_url = updates.avatar
     if (updates.firstName || updates.lastName) {
@@ -186,7 +186,7 @@ export class AuthService {
 
     // Update profile table
     if (updates.firstName || updates.lastName || updates.age) {
-      const profileUpdate: any = {}
+      const profileUpdate: Record<string, string | number> = {}
       if (updates.firstName) profileUpdate.first_name = updates.firstName
       if (updates.lastName) profileUpdate.last_name = updates.lastName
       if (updates.age) profileUpdate.age = updates.age

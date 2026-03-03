@@ -34,27 +34,28 @@ export function useCourseCompletion(courseId?: string, userId?: string) {
         } as CompletionStatus
       }
 
+      const defaultStatus: CompletionStatus = {
+        isCourseComplete: false,
+        lessonsCompleted: 0,
+        totalLessons: 0,
+        completionPercentage: 0,
+        courseFinalized: false,
+        credentialMinted: false,
+      }
+
       try {
         const response = await fetch(
           `/api/enrollments/${encodeURIComponent(userId)}/completion?courseId=${encodeURIComponent(courseId)}`
         )
 
         if (!response.ok) {
-          throw new Error('Failed to fetch completion status')
+          return defaultStatus
         }
 
         const data = await response.json()
         return data as CompletionStatus
-      } catch (error) {
-        console.error('Error fetching course completion:', error)
-        return {
-          isCourseComplete: false,
-          lessonsCompleted: 0,
-          totalLessons: 0,
-          completionPercentage: 0,
-          courseFinalized: false,
-          credentialMinted: false,
-        } as CompletionStatus
+      } catch {
+        return defaultStatus
       }
     },
     enabled: !!courseId && !!userId,

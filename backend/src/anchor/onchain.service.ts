@@ -1,5 +1,5 @@
 import { Program, AnchorProvider } from '@coral-xyz/anchor';
-import { Connection, PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, SystemProgram, Transaction, VersionedTransaction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { TOKEN_2022_PROGRAM_ID, MPL_CORE_PROGRAM_ID } from './constants';
 import IDL from '../../../lib/anchor/academy.json' assert { type: 'json' };
@@ -21,7 +21,7 @@ import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction 
  */
 
 export class BackendSignerService {
-  private program: Program<any>;
+  private program: Program;
   private backendSigner: Keypair;
 
   constructor(connection: Connection, backendSignerSecretKey: Uint8Array) {
@@ -30,24 +30,25 @@ export class BackendSignerService {
     // Create provider with backend signer
     const backendWallet = {
       publicKey: this.backendSigner.publicKey,
-      signAllTransactions: async (txs: any[]) => {
+      signAllTransactions: async <T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> => {
         return txs.map((tx) => {
-          tx.sign([this.backendSigner]);
+          if ('sign' in tx && typeof tx.sign === 'function') {
+            (tx as Transaction).sign(this.backendSigner);
+          }
           return tx;
         });
       },
-      signTransaction: async (tx: any) => {
-        tx.sign([this.backendSigner]);
+      signTransaction: async <T extends Transaction | VersionedTransaction>(tx: T): Promise<T> => {
+        if ('sign' in tx && typeof tx.sign === 'function') {
+          (tx as Transaction).sign(this.backendSigner);
+        }
         return tx;
       },
     };
 
-    const provider = new AnchorProvider(connection, backendWallet as any, { commitment: 'confirmed' });
-    const programIdl = {
-      ...(IDL as Record<string, unknown>),
-      address: PROGRAM_ID.toBase58(),
-    };
-    this.program = new Program<any>(programIdl as any, PROGRAM_ID as any, provider as any);
+    const provider = new AnchorProvider(connection, backendWallet, { commitment: 'confirmed' });
+    // Anchor v0.29 API: new Program(idl, programId, provider)
+    this.program = new Program(IDL as Parameters<typeof Program>[0], PROGRAM_ID, provider);
   }
 
   getBackendSignerPublicKey(): PublicKey {
@@ -71,7 +72,7 @@ export class BackendSignerService {
       // Get learner's XP token account
       const learnerXpAccount = getAssociatedTokenAddressSync(xpMintAddress, learnerAddress);
 
-      const signature = await (this.program.rpc as any).completeLesson(
+      const signature = await (this.program.rpc as unknown as Record<string, CallableFunction>).completeLesson(
         new BN(lessonIndex),
         {
           accounts: {
@@ -110,7 +111,7 @@ export class BackendSignerService {
       // Get learner's XP token account
       const learnerXpAccount = getAssociatedTokenAddressSync(xpMintAddress, learnerAddress);
 
-      const signature = await (this.program.rpc as any).finalizeCourse({
+      const signature = await (this.program.rpc as unknown as Record<string, CallableFunction>).finalizeCourse({
         accounts: {
           learner: learnerAddress,
           course: coursePda,
@@ -150,7 +151,7 @@ export class BackendSignerService {
       // In production, would create collection item via Metaplex Core
       // For now, return a placeholder
 
-      const signature = await (this.program.rpc as any).issueCredential(
+      const signature = await (this.program.rpc as unknown as Record<string, CallableFunction>).issueCredential(
         credentialName,
         metadataUri,
         new BN(coursesCompleted),
@@ -194,7 +195,7 @@ export class BackendSignerService {
       const [coursePda] = getCoursePda(courseId);
       const [configPda] = getConfigPda();
 
-      const signature = await (this.program.rpc as any).upgradeCredential(
+      const signature = await (this.program.rpc as unknown as Record<string, CallableFunction>).upgradeCredential(
         newName,
         newUri,
         new BN(coursesCompleted),

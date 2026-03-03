@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient } from '@/lib/types/db'
 
 async function getSupabaseClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -12,7 +13,7 @@ async function getSupabaseClient() {
   )
 }
 
-async function resolveCanonicalUserId(supabase: any, rawUserId: string): Promise<string | null> {
+async function resolveCanonicalUserId(supabase: SupabaseClient, rawUserId: string): Promise<string | null> {
   const candidates = Array.from(new Set([rawUserId, rawUserId.toLowerCase()]))
 
   for (const candidate of candidates) {

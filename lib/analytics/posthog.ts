@@ -1,37 +1,56 @@
-import posthog from 'posthog-js';
-
 export const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
 export const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
 
-export const initPostHog = () => {
+interface PostHogClient {
+  init: (key: string, config: Record<string, unknown>) => void
+  identify: (id: string, properties?: Record<string, unknown>) => void
+  reset: () => void
+  capture: (event: string, properties?: Record<string, unknown>) => void
+}
+
+let posthogInstance: PostHogClient | null = null;
+
+const getPosthog = async (): Promise<PostHogClient | null> => {
     if (typeof window !== 'undefined' && POSTHOG_KEY) {
-        posthog.init(POSTHOG_KEY, {
+        if (!posthogInstance) {
+            const { default: posthog } = await import('posthog-js');
+            posthogInstance = posthog as unknown as PostHogClient;
+        }
+        return posthogInstance;
+    }
+    return null;
+}
+
+export const initPostHog = async () => {
+    const ph = await getPosthog();
+    if (ph) {
+        ph.init(POSTHOG_KEY, {
             api_host: POSTHOG_HOST,
-            person_profiles: 'identified_only', // or 'always' depending on requirements
-            capture_pageview: false, // We handle this manually to ensure SPA accuracy
+            person_profiles: 'identified_only',
+            capture_pageview: false,
             capture_pageleave: true,
-            autocapture: true, // Captures clicks, inputs, etc automatically
+            autocapture: true,
         });
     }
 };
 
-// Identify the user when they log in
-export const identifyUser = (id: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && POSTHOG_KEY) {
-        posthog.identify(id, properties);
+export const identifyUser = async (id: string, properties?: Record<string, unknown>) => {
+    const ph = await getPosthog();
+    if (ph) {
+        ph.identify(id, properties);
     }
 };
 
-// Reset Posthog on log out
-export const resetUser = () => {
-    if (typeof window !== 'undefined' && POSTHOG_KEY) {
-        posthog.reset();
+export const resetUser = async () => {
+    const ph = await getPosthog();
+    if (ph) {
+        ph.reset();
     }
 };
 
-// Log specific events
-export const capture = (event: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && POSTHOG_KEY) {
-        posthog.capture(event, properties);
+export const capture = async (event: string, properties?: Record<string, unknown>) => {
+    const ph = await getPosthog();
+    if (ph) {
+        ph.capture(event, properties);
     }
 };

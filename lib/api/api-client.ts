@@ -3,6 +3,16 @@
  * Handles all HTTP calls to the backend API
  */
 
+import type {
+  AuthResponse,
+  UserProfileResponse,
+  LessonCompletionResponse,
+  UserProgressResponse,
+  UserRankResponse,
+  GamificationStats,
+} from '@/lib/types/shared'
+import type { LeaderboardEntry, Achievement } from '@/lib/types'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 export interface ApiError {
@@ -44,7 +54,7 @@ class ApiClient {
   private async request<T>(
     method: string,
     endpoint: string,
-    body?: any
+    body?: Record<string, unknown>
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
 
@@ -89,7 +99,7 @@ class ApiClient {
   // ============= Auth =============
 
   async signup(email: string, password: string, displayName: string) {
-    return this.request<{ user: any; token: string }>('POST', '/auth/signup', {
+    return this.request<AuthResponse>('POST', '/auth/signup', {
       email,
       password,
       displayName,
@@ -97,14 +107,18 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    return this.request<{ user: any; token: string }>('POST', '/auth/login', {
+    return this.request<AuthResponse>('POST', '/auth/login', {
       email,
       password,
     })
   }
 
-  async oauthSignup(provider: 'google' | 'github', providerId: string, data: any) {
-    return this.request<{ user: any; token: string }>('POST', '/auth/oauth-signup', {
+  async oauthSignup(
+    provider: 'google' | 'github',
+    providerId: string,
+    data: Record<string, unknown>
+  ) {
+    return this.request<AuthResponse>('POST', '/auth/oauth-signup', {
       provider,
       providerId,
       ...data,
@@ -114,7 +128,7 @@ class ApiClient {
   // ============= User Profile =============
 
   async getProfile() {
-    return this.request<any>('GET', '/user/profile')
+    return this.request<UserProfileResponse>('GET', '/user/profile')
   }
 
   async updateProfile(updates: {
@@ -123,7 +137,7 @@ class ApiClient {
     avatarUrl?: string
     walletAddress?: string
   }) {
-    return this.request<any>('PATCH', '/user/profile', updates)
+    return this.request<UserProfileResponse>('PATCH', '/user/profile', updates as Record<string, unknown>)
   }
 
   async linkOAuth(provider: string, providerId: string) {
@@ -136,27 +150,27 @@ class ApiClient {
   // ============= Gamification =============
 
   async completeLesson(courseId: string, lessonId: string, xpReward: number) {
-    return this.request<any>('POST', `/lessons/${courseId}/${lessonId}/complete`, {
+    return this.request<LessonCompletionResponse>('POST', `/lessons/${courseId}/${lessonId}/complete`, {
       xpReward,
     })
   }
 
   async getProgress() {
-    return this.request<any>('GET', '/user/progress')
+    return this.request<UserProgressResponse>('GET', '/user/progress')
   }
 
   async getAchievements() {
-    return this.request<any>('GET', '/user/achievements')
+    return this.request<Achievement[]>('GET', '/user/achievements')
   }
 
   // ============= Leaderboard =============
 
   async getLeaderboard(limit = 50, offset = 0) {
-    return this.request<any[]>('GET', `/leaderboard?limit=${limit}&offset=${offset}`)
+    return this.request<LeaderboardEntry[]>('GET', `/leaderboard?limit=${limit}&offset=${offset}`)
   }
 
   async getUserRank(userId: string) {
-    return this.request<any>('GET', `/user/${userId}/rank`)
+    return this.request<UserRankResponse>('GET', `/user/${userId}/rank`)
   }
 
   // ============= Health =============

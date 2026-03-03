@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
+import type { SupabaseClient } from '@/lib/types/db'
 
 function normalizeUserId(rawUserId: string): string {
   return rawUserId.includes('@') ? rawUserId.toLowerCase() : rawUserId
@@ -10,7 +11,7 @@ function userIdCandidates(rawUserId: string): string[] {
   return Array.from(new Set([normalized, rawUserId, rawUserId.toLowerCase()]))
 }
 
-async function resolveCanonicalUserId(supabase: any, rawUserId: string): Promise<string | null> {
+async function resolveCanonicalUserId(supabase: SupabaseClient, rawUserId: string): Promise<string | null> {
   for (const candidate of userIdCandidates(rawUserId)) {
     let { data: user } = await supabase
       .from('users')
@@ -44,7 +45,7 @@ async function resolveCanonicalUserId(supabase: any, rawUserId: string): Promise
   return null
 }
 
-async function ensureCanonicalUserId(supabase: any, rawUserId: string): Promise<string> {
+async function ensureCanonicalUserId(supabase: SupabaseClient, rawUserId: string): Promise<string> {
   const existingId = await resolveCanonicalUserId(supabase, rawUserId)
   if (existingId) return existingId
 
@@ -68,10 +69,10 @@ async function ensureCanonicalUserId(supabase: any, rawUserId: string): Promise<
 }
 
 async function findEnrollment(
-  supabase: any,
+  supabase: SupabaseClient,
   userIds: string[],
   courseId: string
-): Promise<any | null> {
+): Promise<{ id: string; course_id: string } | null> {
   for (const candidateUserId of userIds) {
     const { data: enrollment, error } = await supabase
       .from('enrollments')

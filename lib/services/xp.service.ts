@@ -1,13 +1,14 @@
 import { PublicKey, Connection } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { TOKEN_2022_PROGRAM_ID, XP_DECIMALS } from '@/lib/anchor/constants';
+import type { IXpService } from '@/lib/types/service-interfaces';
 
 /**
  * XP Management Service
  * Handles XP balance querying from Token-2022 ATA
  */
 
-export class XpService {
+export class XpService implements IXpService {
   constructor(private connection: Connection) {}
 
   /**
@@ -74,19 +75,20 @@ export class XpService {
 
   /**
    * Calculate XP level from total XP
-   * Can be customized with different progression curves
+   * Formula: Level = floor(sqrt(totalXp / 100))
+   * e.g. 0 XP = Level 0, 100 XP = Level 1, 400 XP = Level 2, 900 XP = Level 3
    */
   static calculateLevel(totalXp: number): number {
-    const xpPerLevel = 1000; // Adjust progressions as needed
-    return Math.floor(totalXp / xpPerLevel);
+    return Math.floor(Math.sqrt(totalXp / 100));
   }
 
   /**
    * Calculate XP needed for next level
+   * Next level threshold = (currentLevel + 1)^2 * 100
    */
   static calculateXpForNextLevel(totalXp: number): number {
     const currentLevel = this.calculateLevel(totalXp);
-    const nextLevelXp = (currentLevel + 1) * 1000;
+    const nextLevelXp = (currentLevel + 1) * (currentLevel + 1) * 100;
     return nextLevelXp - totalXp;
   }
 

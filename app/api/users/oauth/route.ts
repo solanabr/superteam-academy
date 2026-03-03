@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
+import type { SupabaseClient, UserRow } from '@/lib/types/db'
 
-function mapUser(user: any) {
+function mapUser(user: UserRow) {
   return {
     id: user.id,
     email: user.email,
@@ -17,7 +18,7 @@ function mapUser(user: any) {
   }
 }
 
-async function upsertUserAge(supabase: any, userId: string, age: unknown) {
+async function upsertUserAge(supabase: SupabaseClient, userId: string, age: unknown) {
   if (typeof age !== 'number' || !Number.isFinite(age)) return
 
   try {

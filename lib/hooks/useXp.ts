@@ -31,7 +31,7 @@ export function useXpLevel(walletAddress?: PublicKey, xpMintAddress?: PublicKey)
   return {
     totalXp: xpBalance || 0,
     level: xpBalance ? XpService.calculateLevel(xpBalance) : 0,
-    xpForNextLevel: xpBalance ? XpService.calculateXpForNextLevel(xpBalance) : 1000,
+    xpForNextLevel: xpBalance ? XpService.calculateXpForNextLevel(xpBalance) : 100,
     formattedXp: xpBalance ? XpService.formatXp(xpBalance) : '0',
   };
 }

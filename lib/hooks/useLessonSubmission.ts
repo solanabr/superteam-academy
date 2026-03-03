@@ -48,6 +48,16 @@ export async function submitLesson(
         level: data.level,
         message: data.message,
       }
+    } else if (response.status === 400 && data.error === 'Lesson already completed') {
+      // Treat already-completed as a success — user already has the XP
+      return {
+        success: true,
+        alreadyCompleted: true,
+        xpAwarded: 0,
+        totalXp: 0,
+        level: 0,
+        message: 'Lesson already completed',
+      }
     } else {
       return {
         success: false,

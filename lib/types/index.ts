@@ -139,7 +139,9 @@ export interface LeaderboardEntry {
   rank: number
   userId: string
   username: string
+  displayName?: string
   avatar?: string
+  wallet?: string
   totalXp: number
   level: number
   currentStreak: number

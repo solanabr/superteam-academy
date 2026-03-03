@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient, UserRow } from '@/lib/types/db'
 
-function mapUser(user: any, age: number | null = null) {
+function mapUser(user: UserRow, age: number | null = null) {
   return {
     id: user.id,
     email: user.email,
@@ -32,7 +33,7 @@ async function getSupabaseClient() {
 const USER_FIELDS =
   'id, email, display_name, avatar_url, bio, wallet_address, total_xp, level, current_streak, longest_streak, created_at'
 
-async function resolveUserByIdOrEmail(supabase: any, rawUserId: string) {
+async function resolveUserByIdOrEmail(supabase: SupabaseClient, rawUserId: string) {
   const candidates = Array.from(new Set([rawUserId, rawUserId.toLowerCase()]))
 
   for (const candidate of candidates) {
@@ -68,7 +69,7 @@ async function resolveUserByIdOrEmail(supabase: any, rawUserId: string) {
   return null
 }
 
-async function fetchUserAge(supabase: any, userId: string) {
+async function fetchUserAge(supabase: SupabaseClient, userId: string) {
   try {
     const { data } = await supabase
       .from('user_profiles')
@@ -133,7 +134,7 @@ export async function PATCH(
     }
 
     const body = await request.json().catch(() => ({}))
-    const updates: Record<string, any> = {}
+    const updates: Record<string, string | null> = {}
 
     if (typeof body.displayName === 'string') {
       updates.display_name = body.displayName.trim()

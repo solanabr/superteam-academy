@@ -12,6 +12,7 @@ import { CredentialService } from './credential.service'
 import type { Credential as CredentialType } from '../types'
 import { getConfigPda, getProgram } from '@/lib/anchor'
 import { Program, AnchorProvider } from '@coral-xyz/anchor'
+import { READ_ONLY_WALLET, type UntypedAccountAccess } from '@/lib/types/shared'
 
 /**
  * Learning Progress Service
@@ -83,7 +84,7 @@ export class LocalLearningProgressService implements LearningProgressService {
   // Cached config values
   private cachedXpMint: PublicKey | null = null
   private connection: Connection | null = null
-  private program: Program<any> | null = null
+  private program: Program | null = null
 
   constructor() {
     // Initialize on-chain services on client side
@@ -96,7 +97,7 @@ export class LocalLearningProgressService implements LearningProgressService {
         const heliusRpc = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || rpcUrl
         this.credentialService = new CredentialService(heliusRpc)
         // Initialize program for config fetching
-        const provider = new AnchorProvider(this.connection, {} as any, { commitment: 'confirmed' })
+        const provider = new AnchorProvider(this.connection, READ_ONLY_WALLET, { commitment: 'confirmed' })
         this.program = getProgram(provider)
       } catch (error) {
         console.warn('Could not initialize on-chain services:', error)
@@ -114,8 +115,8 @@ export class LocalLearningProgressService implements LearningProgressService {
     if (this.program) {
       try {
         const [configPda] = getConfigPda()
-        const config = await (this.program.account as any).config.fetch(configPda)
-        this.cachedXpMint = config.xpMint
+        const config = await (this.program.account as unknown as UntypedAccountAccess).config.fetch(configPda)
+        this.cachedXpMint = (config.xpMint as PublicKey) ?? null
         return this.cachedXpMint
       } catch (error) {
         console.error('Failed to fetch XP mint from config:', error)

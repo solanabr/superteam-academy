@@ -4,6 +4,7 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useI18n } from '@/lib/hooks/useI18n'
+import type { Language } from '@/lib/i18n/translations'
 import { ThemeSwitcher } from '@/components/ui'
 import { AuthButtons } from '@/components/auth/AuthButtons'
 
@@ -37,7 +38,7 @@ export function Header() {
             {/* Language Selector */}
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value as any)}
+              onChange={(e) => setLanguage(e.target.value as Language)}
               className="bg-gray-100 dark:bg-terminal-surface border border-gray-300 dark:border-terminal-border rounded px-2 py-1 text-sm text-blue-600 dark:text-neon-cyan hover:border-blue-600 dark:hover:border-neon-cyan transition-colors"
             >
               <option value="en">EN</option>

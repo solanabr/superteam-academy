@@ -72,7 +72,7 @@ export function useGamification(
   useEffect(() => {
     const userId =
       options?.userId ||
-      (session?.user as any)?.id ||
+      session?.user?.id ||
       session?.user?.email
     if (!userId) {
       setLoading(false)
@@ -92,7 +92,7 @@ export function useGamification(
       window.clearInterval(intervalId)
       window.removeEventListener('focus', refresh)
     }
-  }, [(session?.user as any)?.id, session?.user?.email, fetchStats, refreshTrigger, options?.userId])
+  }, [session?.user?.id, session?.user?.email, fetchStats, refreshTrigger, options?.userId])
 
   return { stats, loading, refetch: fetchStats }
 }

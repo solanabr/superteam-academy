@@ -1,5 +1,6 @@
 import { sha256 } from '@noble/hashes/sha256'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- IDL normalization requires dynamic JSON traversal
 type AnyRecord = Record<string, any>
 
 function discriminator(namespace: string, name: string): number[] {
@@ -7,6 +8,7 @@ function discriminator(namespace: string, name: string): number[] {
   return Array.from(sha256(preimage).slice(0, 8))
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recursive JSON tree walk
 function normalizeTypeNode(value: any): any {
   if (value === 'publicKey') {
     return 'pubkey'

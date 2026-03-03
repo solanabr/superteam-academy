@@ -38,7 +38,7 @@ export default function Home() {
           {/* Hero Text */}
           <div className="space-y-4">
             <div className="inline-block px-4 py-2 bg-neon-cyan/10 border border-neon-cyan/30 rounded-full text-neon-cyan text-sm font-semibold mb-4">
-              🚀 Learn to Build on Solana
+              🚀 {t('home.heroBadge')}
             </div>
 
             <h1 className="text-6xl md:text-7xl font-display font-bold text-white mb-4">
@@ -70,15 +70,15 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
             <div className="bg-terminal-surface border border-terminal-border rounded-lg p-6">
               <p className="text-4xl font-bold text-neon-cyan mb-2">1,250+</p>
-              <p className="text-gray-400">Active Learners</p>
+              <p className="text-gray-400">{t('home.activeLearners')}</p>
             </div>
             <div className="bg-terminal-surface border border-terminal-border rounded-lg p-6">
               <p className="text-4xl font-bold text-neon-green mb-2">12+</p>
-              <p className="text-gray-400">Courses Available</p>
+              <p className="text-gray-400">{t('home.coursesAvailable')}</p>
             </div>
             <div className="bg-terminal-surface border border-terminal-border rounded-lg p-6">
               <p className="text-4xl font-bold text-neon-yellow mb-2">500K+</p>
-              <p className="text-gray-400">XP Distributed</p>
+              <p className="text-gray-400">{t('home.xpDistributed')}</p>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@ export default function Home() {
       <section className="py-20 bg-terminal-bg/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-display font-bold text-center text-white mb-12">
-            Why Superteam Academy?
+            {t('home.whySuperteam')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -116,9 +116,9 @@ export default function Home() {
         <section className="py-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl font-display font-bold text-white">Popular Courses</h2>
+              <h2 className="text-4xl font-display font-bold text-white">{t('home.popularCourses')}</h2>
               <Link href="/courses">
-                <Button variant="ghost">View All →</Button>
+                <Button variant="ghost">{t('home.viewAll')} →</Button>
               </Link>
             </div>
 
@@ -135,7 +135,7 @@ export default function Home() {
       <section className="py-20 bg-terminal-bg/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-display font-bold text-center text-white mb-12">
-            What Learners Say
+            {t('home.testimonials')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -143,20 +143,17 @@ export default function Home() {
               {
                 name: 'Alex Silva',
                 role: 'Solana Developer',
-                comment:
-                  'Superteam Academy helped me go from zero to deploying my first program in just 2 weeks!',
+                comment: t('home.testimonial1'),
               },
               {
                 name: 'Maria Garcia',
                 role: 'Blockchain Engineer',
-                comment:
-                  'The interactive challenges and on-chain credentials made learning Solana actually fun.',
+                comment: t('home.testimonial2'),
               },
               {
                 name: 'Carlos Rodriguez',
                 role: 'Web3 Enthusiast',
-                comment:
-                  'Best platform for learning Solana. The community support is incredible!',
+                comment: t('home.testimonial3'),
               },
             ].map((testimonial, idx) => (
               <div
@@ -176,12 +173,12 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-r from-neon-cyan/10 to-neon-magenta/10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-display font-bold text-white mb-6">
-            Ready to Start Learning?
+            {t('home.ctaTitle')}
           </h2>
-          <p className="text-xl text-gray-300 mb-8">Join 1,250+ developers learning Solana on Superteam Academy</p>
+          <p className="text-xl text-gray-300 mb-8">{t('home.ctaSubtitle')}</p>
           <Link href="/courses">
             <Button variant="primary" size="lg">
-              Get Started Now →
+              {t('home.ctaButton')} →
             </Button>
           </Link>
         </div>

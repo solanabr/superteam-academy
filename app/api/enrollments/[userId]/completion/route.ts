@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/backend/src/db'
-import { PublicKey } from '@solana/web3.js'
+import type { DbResult, EnrollmentCompletionRow, CredentialRow } from '@/lib/types/db'
+import type { SupabaseClient } from '@/lib/types/db'
+
+async function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null
+  }
+  const { createClient } = await import('@supabase/supabase-js')
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 /**
  * POST /api/enrollments/[userId]/completion
@@ -21,7 +32,20 @@ export async function GET(
       )
     }
 
-    const db = getDatabase()
+    const db = await getSupabaseClient()
+    if (!db) {
+      return NextResponse.json(
+        {
+          isCourseComplete: false,
+          lessonsCompleted: 0,
+          totalLessons: 0,
+          completionPercentage: 0,
+          courseFinalized: false,
+          credentialMinted: false,
+        },
+        { status: 200 }
+      )
+    }
 
     // Get enrollment info
     const { data: enrollment, error: enrollmentError } = (await db
@@ -29,7 +53,7 @@ export async function GET(
       .select('id, lessons_completed, completed_at')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<EnrollmentCompletionRow>
 
     if (enrollmentError) {
       console.error('Database error:', enrollmentError)
@@ -58,7 +82,7 @@ export async function GET(
       .from('courses')
       .select('id, total_lessons')
       .eq('id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<{ id: string; total_lessons: number }>
 
     if (courseError) {
       console.error('Course fetch error:', courseError)
@@ -80,7 +104,7 @@ export async function GET(
       .select('id')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .maybeSingle()) as any
+      .maybeSingle()) as DbResult<{ id: string }>
 
     return NextResponse.json(
       {

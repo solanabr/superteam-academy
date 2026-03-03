@@ -42,7 +42,7 @@ app.use((req: Request, res: Response) => {
 })
 
 // ============= Error Handler =============
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error('Error:', err)
   res.status(500).json({
     error: err.message || 'Internal server error',
