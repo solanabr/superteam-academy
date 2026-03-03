@@ -18,6 +18,7 @@ const navLinks = [
   { href: "/leaderboard", key: "leaderboard" },
   { href: "/dashboard", key: "dashboard" },
   { href: "/community", key: "community" },
+  { href: "/practice", key: "practice" },
 ] as const;
 
 export function Header() {

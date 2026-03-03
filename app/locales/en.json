@@ -31,7 +31,8 @@
     "dashboard": "Dashboard",
     "profile": "Profile",
     "settings": "Settings",
-    "community": "Community"
+    "community": "Community",
+    "practice": "Practice"
   },
   "hero": {
     "badge": "Built on Solana",
@@ -68,6 +69,7 @@
     "platform": "Platform",
     "resources": "Resources",
     "community": "Community",
+    "practice": "Practice",
     "documentation": "Documentation",
     "solanaDocs": "Solana Docs"
   },
