@@ -15,8 +15,14 @@ import {
   Layers,
   Quote,
 } from "lucide-react";
-import { getAllCourses, getPlatformStats } from "@/lib/data-service";
-import { LEARNING_PATHS, DIFFICULTY_BG, TRACKS } from "@/lib/constants";
+import {
+  getAllCourses,
+  getPlatformStats,
+  getAllTracks,
+  getAllDifficulties,
+} from "@/lib/data-service";
+import { LEARNING_PATHS } from "@/lib/constants";
+import { difficultyStyle } from "@/lib/utils";
 import { PARTNER_LOGO_MAP } from "@/components/icons/partner-logos";
 import { CourseIllustration } from "@/components/icons/course-illustration";
 
@@ -79,10 +85,12 @@ const PARTNER_NAMES = [
 ];
 
 export default async function HomePage() {
-  const [courses, t, stats] = await Promise.all([
+  const [courses, t, stats, TRACKS, difficulties] = await Promise.all([
     getAllCourses(),
     getTranslations("landing"),
     getPlatformStats(),
+    getAllTracks(),
+    getAllDifficulties(),
   ]);
 
   const STATS = [
@@ -238,9 +246,12 @@ export default async function HomePage() {
                   />
                   <div className="absolute left-3 top-3">
                     <span
-                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_BG[course.difficulty]}`}
+                      className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                      style={difficultyStyle(
+                        difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                      )}
                     >
-                      {course.difficulty}
+                      {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
                     </span>
                   </div>
                 </div>

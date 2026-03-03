@@ -38,6 +38,11 @@ export function truncateAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
 
+/** Inline style for a difficulty badge given its hex color. */
+export function difficultyStyle(color: string) {
+  return { backgroundColor: `${color}18`, color };
+}
+
 /** Read the current user's display name from localStorage profile. */
 export function getUserDisplayName(): string {
   if (typeof window === "undefined") return "Anonymous";

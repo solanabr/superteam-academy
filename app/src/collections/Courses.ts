@@ -1,6 +1,10 @@
 import type { CollectionConfig } from "payload";
 import { revalidatePath } from "next/cache";
 import {
+  parseDurationToMinutes,
+  formatMinutesToDuration,
+} from "@/lib/duration-utils";
+import {
   lexicalEditor,
   FixedToolbarFeature,
   InlineToolbarFeature,
@@ -70,8 +74,8 @@ export const Courses: CollectionConfig = {
     useAsTitle: "title",
     defaultColumns: [
       "title",
-      "difficulty",
-      "trackName",
+      "difficultyRef",
+      "track",
       "isActive",
       "updatedAt",
     ],
@@ -109,19 +113,74 @@ export const Courses: CollectionConfig = {
       },
     ],
     beforeChange: [
-      ({ data }) => {
+      async ({ data, req }) => {
         if (!data) return data;
-        let total = 0;
+        let totalXp = 0;
+        let totalMinutes = 0;
         if (Array.isArray(data.modules)) {
           for (const mod of data.modules) {
             if (Array.isArray(mod.lessons)) {
               for (const lesson of mod.lessons) {
-                total += Number(lesson.xpReward) || 0;
+                totalXp += Number(lesson.xpReward) || 0;
+                if (lesson.duration) {
+                  totalMinutes += parseDurationToMinutes(
+                    lesson.duration as string,
+                  );
+                }
               }
             }
           }
         }
-        data.xpTotal = total;
+        data.xpTotal = totalXp;
+        // Auto-fill duration from lesson durations when empty
+        if (!data.duration && totalMinutes > 0) {
+          data.duration = formatMinutesToDuration(totalMinutes);
+        }
+        // Auto-populate trackId/trackName from the track relationship
+        if (data.track) {
+          try {
+            const trackDoc =
+              typeof data.track === "object" && data.track !== null
+                ? data.track
+                : await req.payload.findByID({
+                    collection: "tracks",
+                    id: data.track as string,
+                  });
+            data.trackId = (trackDoc as Record<string, unknown>).trackId as number;
+            data.trackName = (trackDoc as Record<string, unknown>).display as string;
+          } catch {
+            // Track doc may not exist yet
+          }
+        } else if (data.trackId != null && !data.trackName) {
+          // Backward compat: seed scripts may set trackId without track ref
+          try {
+            const result = await req.payload.find({
+              collection: "tracks",
+              where: { trackId: { equals: Number(data.trackId) } },
+              limit: 1,
+            });
+            if (result.docs.length > 0) {
+              data.trackName = result.docs[0].display as string;
+            }
+          } catch {
+            // Tracks collection may not be seeded yet
+          }
+        }
+        // Auto-populate difficulty from difficultyRef relationship
+        if (data.difficultyRef) {
+          try {
+            const diffDoc =
+              typeof data.difficultyRef === "object" && data.difficultyRef !== null
+                ? data.difficultyRef
+                : await req.payload.findByID({
+                    collection: "difficulties",
+                    id: data.difficultyRef as string,
+                  });
+            data.difficulty = (diffDoc as Record<string, unknown>).value as string;
+          } catch {
+            // Difficulties collection may not be seeded yet
+          }
+        }
         return data;
       },
     ],
@@ -211,22 +270,26 @@ export const Courses: CollectionConfig = {
       type: "row",
       fields: [
         {
-          name: "difficulty",
-          type: "select",
-          options: [
-            { label: "Beginner", value: "beginner" },
-            { label: "Intermediate", value: "intermediate" },
-            { label: "Advanced", value: "advanced" },
-          ],
-          defaultValue: "beginner",
+          name: "difficultyRef",
+          type: "relationship",
+          relationTo: "difficulties",
           admin: { width: "50%" },
         },
         {
           name: "duration",
           type: "text",
-          admin: { width: "50%", description: 'e.g. "8 hours"' },
+          admin: {
+            width: "50%",
+            description:
+              'Leave empty to auto-calculate from lesson durations. e.g. "8 hours"',
+          },
         },
       ],
+    },
+    {
+      name: "difficulty",
+      type: "text",
+      admin: { condition: () => false },
     },
     {
       type: "row",
@@ -254,25 +317,29 @@ export const Courses: CollectionConfig = {
       type: "row",
       fields: [
         {
-          name: "trackId",
-          type: "number",
-          defaultValue: 1,
-          access: { update: adminFieldUpdate },
-          admin: { width: "25%" },
+          name: "track",
+          type: "relationship",
+          relationTo: "tracks",
+          admin: { width: "50%" },
         },
         {
           name: "trackLevel",
           type: "number",
           defaultValue: 1,
           access: { update: adminFieldUpdate },
-          admin: { width: "25%" },
-        },
-        {
-          name: "trackName",
-          type: "text",
           admin: { width: "50%" },
         },
       ],
+    },
+    {
+      name: "trackId",
+      type: "number",
+      admin: { condition: () => false },
+    },
+    {
+      name: "trackName",
+      type: "text",
+      admin: { condition: () => false },
     },
     {
       type: "row",

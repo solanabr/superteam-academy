@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { DIFFICULTY_BG, TRACKS } from "@/lib/constants";
-import { formatXP } from "@/lib/utils";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
+import { formatXP, difficultyStyle } from "@/lib/utils";
 import type { Course } from "@/types";
 
 type SortField = "title" | "enrollments" | "completions" | "rate" | "xp";
@@ -48,6 +49,8 @@ function completionRate(course: Course): number {
 
 export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
   const t = useTranslations("admin");
+  const TRACKS = useTracks();
+  const difficulties = useDifficulties();
   const [sortField, setSortField] = useState<SortField>("enrollments");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -155,9 +158,12 @@ export function CourseAnalyticsTable({ courses }: CourseAnalyticsTableProps) {
                         </p>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                           <span
-                            className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${DIFFICULTY_BG[course.difficulty]}`}
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                            style={difficultyStyle(
+                              difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                            )}
                           >
-                            {course.difficulty}
+                            {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
                           </span>
                           <span>
                             {course.lessonCount} {t("lessons")} ·{" "}

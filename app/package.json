@@ -16,6 +16,8 @@
     "db:studio": "prisma studio",
     "db:seed-showcase": "NODE_PATH=./node_modules tsx --env-file .env ../../seeds/seed.ts",
     "db:seed-payload": "tsx --env-file .env scripts/seed-payload-course.ts",
+    "db:seed-tracks": "tsx --env-file .env scripts/seed-payload-tracks.ts",
+    "db:seed-difficulties": "tsx --env-file .env scripts/seed-payload-difficulties.ts",
     "payload": "payload"
   },
   "dependencies": {

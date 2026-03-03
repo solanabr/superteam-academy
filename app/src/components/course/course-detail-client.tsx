@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCourses } from "@/lib/hooks/use-courses";
-import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
-import { formatXP } from "@/lib/utils";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
+import { formatXP, difficultyStyle } from "@/lib/utils";
 import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
 import { ModuleList, EnrollButton, ReviewsSection } from "@/components/course";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -40,7 +41,10 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
   const course = maybeCourse;
 
-  const track = TRACKS[course.trackId];
+  const tracks = useTracks();
+  const difficulties = useDifficulties();
+  const track = tracks[course.trackId];
+  const diff = difficulties.find((d) => d.value === course.difficulty);
   const hasModules = course.modules.length > 0;
 
   const isEnrolled =
@@ -81,9 +85,10 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
           <div>
             <div className="flex flex-wrap gap-2">
               <span
-                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${DIFFICULTY_BG[course.difficulty]}`}
+                className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                style={difficultyStyle(diff?.color ?? "#888")}
               >
-                {course.difficulty}
+                {diff?.label ?? course.difficulty}
               </span>
               {track && (
                 <span

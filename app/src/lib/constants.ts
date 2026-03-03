@@ -17,20 +17,24 @@ export const MAX_DAILY_XP = 2000;
 // Streak milestones
 export const STREAK_MILESTONES = [7, 30, 100, 365];
 
-// Difficulty colors
-export const DIFFICULTY_COLORS = {
-  beginner: "text-brazil-green",
-  intermediate: "text-brazil-gold",
-  advanced: "text-brazil-coral",
-} as const;
+// Difficulty metadata
+export interface DifficultyMeta {
+  value: string;
+  label: string;
+  color: string;
+  order: number;
+  defaultXp: number;
+}
 
-export const DIFFICULTY_BG = {
-  beginner: "bg-brazil-green/10 text-brazil-green",
-  intermediate: "bg-brazil-gold/10 text-brazil-gold",
-  advanced: "bg-brazil-coral/10 text-brazil-coral",
-} as const;
+export const DIFFICULTIES: DifficultyMeta[] = [
+  { value: "beginner", label: "Beginner", color: "#2d9b6e", order: 0, defaultXp: 15 },
+  { value: "intermediate", label: "Intermediate", color: "#c8b830", order: 1, defaultXp: 30 },
+  { value: "professional", label: "Professional", color: "#1a5c7a", order: 2, defaultXp: 40 },
+  { value: "advanced", label: "Advanced", color: "#d4755e", order: 3, defaultXp: 50 },
+];
 
 // Track registry (matches on-chain spec)
+// Fallback — canonical source is the Tracks CMS collection (see tracks-service.ts)
 export const TRACKS: Record<
   number,
   { name: string; display: string; short: string; color: string; icon: string }

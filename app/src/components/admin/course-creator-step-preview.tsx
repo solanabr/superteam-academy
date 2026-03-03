@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
+import { difficultyStyle } from "@/lib/utils";
 import { CourseIllustration } from "@/components/icons/course-illustration";
 import { calcTotalXP, calcCourseCounts } from "./course-creator-types";
 import type { DraftCourse } from "./course-creator-types";
@@ -27,7 +29,10 @@ export function CourseCreatorPreview({
   onPublish,
 }: CourseCreatorPreviewProps) {
   const t = useTranslations("admin.creator.preview");
-  const trackMeta = TRACKS[draft.trackId];
+  const tracks = useTracks();
+  const difficulties = useDifficulties();
+  const trackMeta = tracks[draft.trackId];
+  const diff = difficulties.find((d) => d.value === draft.difficulty);
   const { lessonCount } = calcCourseCounts(draft.modules);
   const totalXP = draft.xpTotal || calcTotalXP(draft.modules);
 
@@ -90,9 +95,10 @@ export function CourseCreatorPreview({
                 <div className="flex flex-1 flex-wrap gap-1.5">
                   <Badge
                     variant="outline"
-                    className={`text-xs ${DIFFICULTY_BG[draft.difficulty]}`}
+                    className="text-xs"
+                    style={difficultyStyle(diff?.color ?? "#888")}
                   >
-                    {draft.difficulty}
+                    {diff?.label ?? draft.difficulty}
                   </Badge>
                   {trackMeta && (
                     <Badge

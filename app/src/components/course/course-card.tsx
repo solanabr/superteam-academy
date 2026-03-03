@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { BookOpen, Clock, Zap, CheckCircle2 } from "lucide-react";
-import { TRACKS, DIFFICULTY_BG } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
 import { CourseIllustration } from "@/components/icons/course-illustration";
-import { cn } from "@/lib/utils";
+import { cn, difficultyStyle } from "@/lib/utils";
 import type { Course } from "@/types";
 
 export interface CourseCardProps {
@@ -14,15 +15,12 @@ export interface CourseCardProps {
   progressPct: number;
 }
 
-const DIFFICULTY_LABEL: Record<string, string> = {
-  beginner: "Beginner",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 export function CourseCard({ course, progressPct }: CourseCardProps) {
   const t = useTranslations("courses");
-  const track = TRACKS[course.trackId];
+  const tracks = useTracks();
+  const difficulties = useDifficulties();
+  const track = tracks[course.trackId];
+  const diff = difficulties.find((d) => d.value === course.difficulty);
 
   const ctaLabel =
     progressPct === 100
@@ -77,12 +75,10 @@ export function CourseCard({ course, progressPct }: CourseCardProps) {
         {/* Difficulty badge — right */}
         <div className="absolute right-3 top-3">
           <span
-            className={cn(
-              "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm",
-              DIFFICULTY_BG[course.difficulty],
-            )}
+            className="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
+            style={difficultyStyle(diff?.color ?? "#888")}
           >
-            {DIFFICULTY_LABEL[course.difficulty] ?? course.difficulty}
+            {diff?.label ?? course.difficulty}
           </span>
         </div>
 

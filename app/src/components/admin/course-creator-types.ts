@@ -19,7 +19,7 @@ export interface DraftCourse {
   title: string;
   slug: string;
   description: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
+  difficulty: string;
   trackId: number;
   creator: string;
   tags: string[];

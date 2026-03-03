@@ -93,7 +93,7 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
     title: doc.title ?? "",
     description: doc.description ?? "",
     thumbnail,
-    difficulty: (doc.difficulty ?? "beginner") as Course["difficulty"],
+    difficulty: (doc.difficulty as string) ?? "beginner",
     duration: doc.duration ?? "",
     lessonCount,
     challengeCount,

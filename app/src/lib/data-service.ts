@@ -4,6 +4,9 @@ import { MOCK_COURSES } from "@/lib/mock-courses";
 import { getPayload } from "@/lib/payload";
 import { payloadCourseToCourse } from "@/lib/payload-to-course";
 
+export { getAllTracks } from "@/lib/tracks-service";
+export { getAllDifficulties } from "@/lib/difficulties-service";
+
 // ── Courses ─────────────────────────────────────────────────────────────────
 
 function formatCourse(
@@ -24,7 +27,7 @@ function formatCourse(
     title: c.title,
     description: c.description,
     thumbnail: c.thumbnail ?? "",
-    difficulty: c.difficulty as Course["difficulty"],
+    difficulty: c.difficulty,
     duration: c.duration,
     lessonCount,
     challengeCount,

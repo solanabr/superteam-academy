@@ -8,7 +8,9 @@ import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { CourseFilters, type Duration, type Sort } from "./course-filters";
 import { CourseGrid } from "./course-grid";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
 import { cn } from "@/lib/utils";
+import { parseDurationToMinutes } from "@/lib/duration-utils";
 import type { Course } from "@/types";
 
 export interface CourseCatalogClientProps {
@@ -16,8 +18,7 @@ export interface CourseCatalogClientProps {
 }
 
 function parseDurationHours(duration: string): number {
-  const match = duration.match(/(\d+(?:\.\d+)?)/);
-  return match ? parseFloat(match[1]) : 0;
+  return parseDurationToMinutes(duration) / 60;
 }
 
 function FilterPill({
@@ -44,21 +45,17 @@ function FilterPill({
   );
 }
 
-const DIFFICULTIES = ["beginner", "intermediate", "advanced"] as const;
-const DIFFICULTY_LABEL: Record<string, string> = {
-  beginner: "Beginner",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-};
-
 const DURATION_OPTIONS: { value: Duration; label: string }[] = [
-  { value: "lt2", label: "< 2 hours" },
-  { value: "2to5", label: "2–5 hours" },
-  { value: "gt5", label: "5+ hours" },
+  { value: "lt1", label: "< 1 hour" },
+  { value: "1to3", label: "1–3 hours" },
+  { value: "3to6", label: "3–6 hours" },
+  { value: "6to12", label: "6–12 hours" },
+  { value: "gt12", label: "12+ hours" },
 ];
 
 export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
   const t = useTranslations("courses");
+  const difficulties = useDifficulties();
   const { progressMap } = useLearningProgress();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -144,9 +141,11 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
       const hours = parseDurationHours(course.duration);
       const matchesDuration =
         selectedDuration === "all" ||
-        (selectedDuration === "lt2" && hours < 2) ||
-        (selectedDuration === "2to5" && hours >= 2 && hours <= 5) ||
-        (selectedDuration === "gt5" && hours > 5);
+        (selectedDuration === "lt1" && hours < 1) ||
+        (selectedDuration === "1to3" && hours >= 1 && hours < 3) ||
+        (selectedDuration === "3to6" && hours >= 3 && hours < 6) ||
+        (selectedDuration === "6to12" && hours >= 6 && hours < 12) ||
+        (selectedDuration === "gt12" && hours >= 12);
 
       return (
         matchesSearch && matchesDifficulty && matchesTrack && matchesDuration
@@ -215,15 +214,17 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
       <div className="flex flex-wrap items-center gap-2">
         {/* Difficulty pills */}
         <div className="flex items-center gap-1.5">
-          {DIFFICULTIES.map((d) => (
+          {difficulties.map((d) => (
             <FilterPill
-              key={d}
-              active={selectedDifficulty === d}
+              key={d.value}
+              active={selectedDifficulty === d.value}
               onClick={() =>
-                setSelectedDifficulty(selectedDifficulty === d ? "all" : d)
+                setSelectedDifficulty(
+                  selectedDifficulty === d.value ? "all" : d.value,
+                )
               }
             >
-              {DIFFICULTY_LABEL[d]}
+              {d.label}
             </FilterPill>
           ))}
         </div>

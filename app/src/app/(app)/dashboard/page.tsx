@@ -7,8 +7,9 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Flame, BookOpen, Zap, ChevronRight, Award } from "lucide-react";
 import { formatXP, xpProgress, getUserDisplayName } from "@/lib/utils";
 import { useCourses } from "@/lib/hooks/use-courses";
-import { DIFFICULTY_BG } from "@/lib/constants";
 import { useLearningProgress } from "@/lib/hooks/use-learning-progress";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
+import { difficultyStyle } from "@/lib/utils";
 import { AchievementIcon, ActivityCalendar } from "@/components/gamification";
 import { DailyGoalCard } from "@/components/gamification/daily-goal";
 import { DailyQuestsCard } from "@/components/gamification/daily-quests";
@@ -28,13 +29,6 @@ import {
 import { getPersonalizedRecommendations } from "@/lib/recommendations";
 import { useTracks } from "@/lib/hooks/use-tracks";
 
-const SKILL_BADGE_COLORS = {
-  beginner: "bg-brazil-green/10 text-brazil-green border-brazil-green/30",
-  intermediate: "bg-brazil-gold/10 text-brazil-gold border-brazil-gold/30",
-  professional: "bg-brazil-blue/10 text-brazil-blue border-brazil-blue/30",
-  advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
-} as const;
-
 interface UserOnboardingData {
   skillLevel?: string | null;
   onboardingData?: {
@@ -51,6 +45,7 @@ export default function DashboardPage() {
   const { authenticated } = usePrivy();
   const { courses: allCourses } = useCourses();
   const tracks = useTracks();
+  const difficulties = useDifficulties();
   const {
     xp,
     streak,
@@ -106,9 +101,10 @@ export default function DashboardPage() {
   }
 
   const displayName = getUserDisplayName();
-  const skillLevel = onboarding.skillLevel as
-    | keyof typeof SKILL_BADGE_COLORS
-    | undefined;
+  const skillLevel = onboarding.skillLevel;
+  const skillDiff = skillLevel
+    ? difficulties.find((d) => d.value === skillLevel)
+    : undefined;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -176,7 +172,7 @@ export default function DashboardPage() {
         </Link>
 
         {/* Skill Level Badge (if assessed) */}
-        {skillLevel && SKILL_BADGE_COLORS[skillLevel] && (
+        {skillDiff && (
           <Link href="/profile" className="glass rounded-xl p-6 transition-all hover:border-st-green/30">
             <div className="flex items-center justify-between">
               <div>
@@ -184,15 +180,14 @@ export default function DashboardPage() {
                   {t("skillLevelLabel")}
                 </p>
                 <p
-                  className={`mt-1 inline-flex rounded-full border px-3 py-1 text-lg font-bold ${SKILL_BADGE_COLORS[skillLevel]}`}
+                  className="mt-1 inline-flex rounded-full border px-3 py-1 text-lg font-bold"
+                  style={{
+                    backgroundColor: `${skillDiff.color}18`,
+                    color: skillDiff.color,
+                    borderColor: `${skillDiff.color}50`,
+                  }}
                 >
-                  {t(
-                    `skill${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as
-                      | "skillBeginner"
-                      | "skillIntermediate"
-                      | "skillProfessional"
-                      | "skillAdvanced",
-                  )}
+                  {skillDiff.label}
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -338,11 +333,12 @@ export default function DashboardPage() {
                             {course.title}
                           </h3>
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              DIFFICULTY_BG[course.difficulty]
-                            }`}
+                            className="rounded-full px-2 py-0.5 text-xs font-medium"
+                            style={difficultyStyle(
+                              difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                            )}
                           >
-                            {course.difficulty}
+                            {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
                           </span>
                         </div>
                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -473,11 +469,12 @@ export default function DashboardPage() {
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    DIFFICULTY_BG[course.difficulty]
-                  }`}
+                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={difficultyStyle(
+                    difficulties.find((d) => d.value === course.difficulty)?.color ?? "#888",
+                  )}
                 >
-                  {course.difficulty}
+                  {difficulties.find((d) => d.value === course.difficulty)?.label ?? course.difficulty}
                 </span>
                 <span className="text-xs text-xp">
                   {formatXP(course.xpTotal)} XP

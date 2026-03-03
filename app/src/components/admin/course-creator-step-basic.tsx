@@ -4,7 +4,9 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
+import { difficultyStyle } from "@/lib/utils";
 import type { DraftCourse } from "./course-creator-types";
 
 interface CourseCreatorBasicProps {
@@ -12,19 +14,13 @@ interface CourseCreatorBasicProps {
   onChange: (updates: Partial<DraftCourse>) => void;
 }
 
-const DIFFICULTIES = ["beginner", "intermediate", "advanced"] as const;
-
-const DIFFICULTY_STYLES: Record<string, string> = {
-  beginner: "border-brazil-green text-brazil-green bg-brazil-green/10",
-  intermediate: "border-brazil-gold text-brazil-gold bg-brazil-gold/10",
-  advanced: "border-brazil-coral text-brazil-coral bg-brazil-coral/10",
-};
-
 export function CourseCreatorBasic({
   draft,
   onChange,
 }: CourseCreatorBasicProps) {
   const t = useTranslations("admin.creator.basic");
+  const TRACKS = useTracks();
+  const difficulties = useDifficulties();
 
   function handleTagInput(value: string) {
     const tags = value
@@ -128,18 +124,23 @@ export function CourseCreatorBasic({
         <div className="space-y-2">
           <Label>{t("difficulty")} *</Label>
           <div className="flex gap-2">
-            {DIFFICULTIES.map((diff) => (
+            {difficulties.map((d) => (
               <button
-                key={diff}
+                key={d.value}
                 type="button"
-                onClick={() => onChange({ difficulty: diff })}
-                className={`flex-1 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all ${
-                  draft.difficulty === diff
-                    ? DIFFICULTY_STYLES[diff]
-                    : "border-border text-muted-foreground hover:border-muted-foreground"
-                }`}
+                onClick={() => onChange({ difficulty: d.value })}
+                className="flex-1 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all"
+                style={
+                  draft.difficulty === d.value
+                    ? {
+                        borderColor: d.color,
+                        color: d.color,
+                        backgroundColor: `${d.color}18`,
+                      }
+                    : undefined
+                }
               >
-                {t(`difficultyOption.${diff}`)}
+                {d.label}
               </button>
             ))}
           </div>
@@ -180,9 +181,14 @@ export function CourseCreatorBasic({
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold leading-tight">{draft.title}</h3>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${DIFFICULTY_STYLES[draft.difficulty]}`}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+                  style={difficultyStyle(
+                    difficulties.find((d) => d.value === draft.difficulty)
+                      ?.color ?? "#888",
+                  )}
                 >
-                  {draft.difficulty}
+                  {difficulties.find((d) => d.value === draft.difficulty)
+                    ?.label ?? draft.difficulty}
                 </span>
               </div>
               {draft.description && (

@@ -5,7 +5,7 @@ export interface Course {
   title: string;
   description: string;
   thumbnail: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
+  difficulty: string;
   duration: string; // e.g. "8 hours"
   lessonCount: number;
   challengeCount: number;

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Plus, Trash2, BookOpen, Code, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
 import type {
   DraftCourse,
   DraftModule,
@@ -19,17 +20,14 @@ function genId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-const DEFAULT_XP: Record<DraftCourse["difficulty"], number> = {
-  beginner: 15,
-  intermediate: 30,
-  advanced: 50,
-};
-
 export function CourseCreatorModules({
   draft,
   onChange,
 }: CourseCreatorModulesProps) {
   const t = useTranslations("admin.creator.modules");
+  const difficulties = useDifficulties();
+  const currentDiff = difficulties.find((d) => d.value === draft.difficulty);
+  const defaultXp = currentDiff?.defaultXp ?? 15;
 
   function addModule() {
     const newModule: DraftModule = {
@@ -58,7 +56,7 @@ export function CourseCreatorModules({
       id: genId(),
       title: "",
       type,
-      xpReward: DEFAULT_XP[draft.difficulty],
+      xpReward: defaultXp,
       duration: "10 min",
     };
     onChange({

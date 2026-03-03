@@ -18,7 +18,8 @@ import {
   Shield,
   PenSquare,
 } from "lucide-react";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
 import { formatXP } from "@/lib/utils";
 import type { Course, Achievement } from "@/types";
 import { CourseAnalyticsTable } from "./course-analytics-table";
@@ -116,6 +117,8 @@ const QUICK_LINKS = [
 
 export function AdminDashboard({ courses }: AdminDashboardProps) {
   const t = useTranslations("admin");
+  const TRACKS = useTracks();
+  const difficulties = useDifficulties();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
@@ -142,11 +145,16 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
       : 0;
   const activeCourses = courses.filter((c) => c.isActive).length;
 
-  const difficultyBreakdown = {
-    beginner: courses.filter((c) => c.difficulty === "beginner").length,
-    intermediate: courses.filter((c) => c.difficulty === "intermediate").length,
-    advanced: courses.filter((c) => c.difficulty === "advanced").length,
-  };
+  const difficultyBreakdown = new Map(
+    difficulties.map((d) => [
+      d.value,
+      {
+        label: d.label,
+        color: d.color,
+        count: courses.filter((c) => c.difficulty === d.value).length,
+      },
+    ]),
+  );
 
   const trackBreakdown = Object.entries(TRACKS)
     .map(([id, meta]) => ({
@@ -230,26 +238,17 @@ export function AdminDashboard({ courses }: AdminDashboardProps) {
               {t("byDifficulty")}
             </h3>
             <div className="space-y-3">
-              {(["beginner", "intermediate", "advanced"] as const).map(
-                (diff) => (
-                  <div key={diff} className="flex items-center justify-between">
+              {[...difficultyBreakdown.entries()].map(
+                ([value, { label, color, count }]) => (
+                  <div key={value} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`h-2.5 w-2.5 rounded-full ${
-                          diff === "beginner"
-                            ? "bg-brazil-green"
-                            : diff === "intermediate"
-                              ? "bg-brazil-gold"
-                              : "bg-brazil-coral"
-                        }`}
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: color }}
                       />
-                      <span className="text-sm capitalize">
-                        {t(`difficulty.${diff}`)}
-                      </span>
+                      <span className="text-sm">{label}</span>
                     </div>
-                    <span className="text-sm font-semibold">
-                      {difficultyBreakdown[diff]}
-                    </span>
+                    <span className="text-sm font-semibold">{count}</span>
                   </div>
                 ),
               )}

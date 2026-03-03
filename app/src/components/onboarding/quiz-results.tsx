@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Trophy, Zap, Clock, Sparkles, Award } from "lucide-react";
 import type { Course } from "@/types";
-import { TRACKS } from "@/lib/constants";
+import { useTracks } from "@/lib/hooks/use-tracks";
+import { useDifficulties } from "@/lib/hooks/use-difficulties";
 import { CourseIllustration } from "@/components/icons/course-illustration";
-import { cn } from "@/lib/utils";
+import { cn, difficultyStyle } from "@/lib/utils";
 
 export interface QuizAnswers {
   experience: string;
@@ -74,6 +75,8 @@ function getRecommendedPath(answers: QuizAnswers): RecommendedPath {
 function getRecommendedCourses(
   answers: QuizAnswers,
   courses: Course[],
+  tracks: Record<number, { name: string }>,
+  difficultyOrder: string[],
   skillLevel?: string | null,
 ): Course[] {
   const { experience, interests } = answers;
@@ -89,15 +92,11 @@ function getRecommendedCourses(
     let score = 0;
 
     // Skill level ↔ difficulty match
+    const levelIdx = difficultyOrder.indexOf(level);
+    const courseIdx = difficultyOrder.indexOf(course.difficulty);
     if (course.difficulty === level) {
       score += 5;
-    } else if (
-      (level === "beginner" && course.difficulty === "intermediate") ||
-      (level === "intermediate" &&
-        (course.difficulty === "beginner" ||
-          course.difficulty === "advanced")) ||
-      (level === "advanced" && course.difficulty === "intermediate")
-    ) {
+    } else if (levelIdx >= 0 && courseIdx >= 0 && Math.abs(levelIdx - courseIdx) === 1) {
       score += 2;
     }
 
@@ -108,7 +107,7 @@ function getRecommendedCourses(
       score += 1;
 
     // Interest ↔ track match
-    const track = TRACKS[course.trackId];
+    const track = tracks[course.trackId];
     if (track && interests.includes(track.name)) score += 4;
 
     return { course, score };
@@ -130,12 +129,6 @@ function getEstimatedWeeks(answers: QuizAnswers): number {
   return paceWeeks[answers.pace] ?? 4;
 }
 
-const LEVEL_COLORS = {
-  beginner: "bg-brazil-green/10 text-brazil-green border-brazil-green/30",
-  intermediate: "bg-brazil-gold/10 text-brazil-gold border-brazil-gold/30",
-  advanced: "bg-brazil-coral/10 text-brazil-coral border-brazil-coral/30",
-} as const;
-
 export function QuizResults({
   answers,
   courses,
@@ -146,28 +139,37 @@ export function QuizResults({
   const t = useTranslations("onboarding.results");
   const tc = useTranslations("courses.catalog");
   const td = useTranslations("courses.detail");
+  const tracks = useTracks();
+  const difficulties = useDifficulties();
+  const difficultyOrder = difficulties.map((d) => d.value);
   const recommendedPath = getRecommendedPath(answers);
   const recommendedCourses = getRecommendedCourses(
     answers,
     courses,
+    tracks,
+    difficultyOrder,
     skillLevel,
   );
   const estimatedWeeks = getEstimatedWeeks(answers);
 
-  const levelKey = skillLevel as keyof typeof LEVEL_COLORS | undefined;
-  const levelLabel = levelKey
+  const levelDiff = skillLevel
+    ? difficulties.find((d) => d.value === skillLevel)
+    : undefined;
+  const levelLabel = skillLevel
     ? t(
-        `level${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as
+        `level${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as
           | "levelBeginner"
           | "levelIntermediate"
+          | "levelProfessional"
           | "levelAdvanced",
       )
     : null;
-  const levelDescription = levelKey
+  const levelDescription = skillLevel
     ? t(
-        `levelDescription${levelKey.charAt(0).toUpperCase()}${levelKey.slice(1)}` as
+        `levelDescription${skillLevel.charAt(0).toUpperCase()}${skillLevel.slice(1)}` as
           | "levelDescriptionBeginner"
           | "levelDescriptionIntermediate"
+          | "levelDescriptionProfessional"
           | "levelDescriptionAdvanced",
       )
     : null;
@@ -198,10 +200,16 @@ export function QuizResults({
               </div>
               <div className="flex items-center gap-2">
                 <span
-                  className={cn(
-                    "inline-flex rounded-full border px-3 py-0.5 text-sm font-bold",
-                    LEVEL_COLORS[levelKey!] ?? "bg-muted text-foreground",
-                  )}
+                  className="inline-flex rounded-full border px-3 py-0.5 text-sm font-bold"
+                  style={
+                    levelDiff
+                      ? {
+                          backgroundColor: `${levelDiff.color}18`,
+                          color: levelDiff.color,
+                          borderColor: `${levelDiff.color}50`,
+                        }
+                      : undefined
+                  }
                 >
                   {levelLabel}
                 </span>
@@ -246,7 +254,7 @@ export function QuizResults({
         <h3 className="mb-3 text-lg font-semibold">{t("startWith")}</h3>
         <div className="space-y-3">
           {recommendedCourses.map((course, i) => {
-            const track = TRACKS[course.trackId];
+            const track = tracks[course.trackId];
             return (
               <Link
                 key={course.slug}
