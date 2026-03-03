@@ -2,7 +2,7 @@
 
 **A Solana-native learning management system with gamified progression, on-chain credentials, and verifiable skill tracking.**
 
-Built for [Superteam Brazil](https://superteam.fun/).
+Built for [Superteam Brazil](https://x.com/superteambr). Access [here](https://superteam-academy-gules.vercel.app/en).
 
 ![Superteam Academy Demo](./docs/assets/landing-demo.gif)
 
