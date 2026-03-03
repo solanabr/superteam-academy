@@ -53,14 +53,27 @@ Superteam Academy is an open-source learning management system built on Solana. 
 - 15 achievements across 5 categories (Progress, Streaks, Skills, Community, Special)
 - Celebration popups for level-ups, achievements, and certificate minting
 
+**Community Forum**
+
+- Discussion threads with category browsing and full-text search
+- Answers with upvoting/downvoting and accepted answer marking
+- Content flagging for moderation
+- Community XP rewards for participation
+
+**Daily Quests**
+
+- Rotating daily objectives (complete a lesson, earn XP, etc.)
+- Bonus XP for first daily completion and streak bonuses
+
 **Platform**
 
 - i18n: English, Portuguese (pt-BR), Spanish
 - Dark/light mode with Solana-branded gradient theme
 - Wallet auth (SIWS) supporting Phantom, Solflare, and Backpack
-- Google OAuth for low-friction onboarding
+- Google OAuth + GitHub OAuth for low-friction onboarding
 - Admin panel for deploying courses and achievements on-chain
 - Live leaderboard with weekly, monthly, and all-time XP rankings
+- In-browser program deployment with wallet-signed transactions
 
 ## Tech Stack
 
@@ -73,7 +86,7 @@ Superteam Academy is an open-source learning management system built on Solana. 
 | XP Tokens        | Token-2022 (NonTransferable + PermanentDelegate)                      |
 | Credential NFTs  | Metaplex Core (soulbound via PermanentFreezeDelegate)                 |
 | i18n             | next-intl (EN, PT-BR, ES)                                             |
-| Auth             | SIWS (Sign In With Solana) + Google OAuth                             |
+| Auth             | SIWS (Sign In With Solana) + Google OAuth + GitHub OAuth              |
 | Code Editor      | Monaco Editor                                                         |
 | Build Server     | Rust/Axum on GCP Cloud Run                                            |
 | Analytics        | GA4, PostHog, Sentry (all optional)                                   |
@@ -81,13 +94,11 @@ Superteam Academy is an open-source learning management system built on Solana. 
 | Monorepo         | Turborepo + pnpm 9                                                    |
 | Deployment       | Vercel (web) + GCP Cloud Run (build server)                           |
 
-## Screenshots / Demo
+## Screenshots
 
-> **Add screenshots here before submission.**
-> Suggested: Dashboard, lesson page with Monaco editor, achievement popup, certificate page, admin panel.
->
-> Place files in `docs/screenshots/` and reference them:
-> `![Dashboard](docs/screenshots/dashboard.png)`
+|                  Dashboard                  |                  Code Challenge                  |                   Certificate                   |
+| :-----------------------------------------: | :----------------------------------------------: | :---------------------------------------------: |
+| ![Dashboard](apps/web/public/dashboard.png) | ![Code Challenge](apps/web/public/challenge.png) | ![Certificate](apps/web/public/certificate.png) |
 
 ## Local Development
 
@@ -165,6 +176,7 @@ superteam-academy/
 │   └── tests/                  #   Integration + unit tests
 ├── packages/
 │   ├── types/                  # Shared TypeScript interfaces
+│   ├── deploy/                 # Browser-based Solana program deployment library
 │   └── config/                 # Shared ESLint, TS, Tailwind configs
 ├── sanity/                     # Sanity Studio + schemas + seed data
 ├── supabase/                   # Database schema + migrations
@@ -251,7 +263,7 @@ Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Pos
 
 **Program**: Superteam Academy (`onchain_academy`)
 **Network**: Solana Devnet
-**Program ID**: `GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh`
+**Program ID**: `7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V`
 
 The program manages the full learning lifecycle on-chain:
 
