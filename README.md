@@ -59,11 +59,12 @@ Superteam Academy is a full-stack LMS that demonstrates Solana as a backend stat
 |---|---|---|
 | **Admin Dashboard** | `/admin` | KPIs, charts, course/user management, analytics |
 | **CMS Course Creator** | `/admin/create` | Full form: metadata, curriculum builder, lesson types, XP/duration |
-| **Daily Challenges** | `/challenges` | Timer countdown, starter code, progressive hints, speed leaderboard |
-| **Seasonal Events** | `/challenges` → Events tab | 3 events with XP multiplier, progress tracking, special rewards |
 | **Community Forum** | `/community` | Thread listing, voting, search, tag filtering, sort |
+| **Advanced Gamification** | `/challenges` | Daily challenges (timer, hints) + Seasonal Events with XP multipliers |
 | **Onboarding Quiz** | `/welcome` | 3-step skill assessment, personalized track recommendation |
-| **PWA** | — | Installable, offline-capable, service worker |
+| **PWA & Mobile Nav** | — | Installable PWA, offline-capable, animated mobile bottom tab navigation |
+| **Social & On-Chain UX** | `/certificates/[id]` | Pre-filled 'Share on X' button + Inline live Solana TX Explorer widget |
+| **Production Ready** | — | Custom animated 404 page, auto-generated `/sitemap.xml`, and `/robots.txt` |
 | **E2E Tests** | `e2e/` | 10 Playwright smoke tests covering all critical flows |
 
 ### On-Chain Integration
