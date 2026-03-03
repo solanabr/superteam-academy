@@ -1,3 +1,4 @@
+// app/src/app/[locale]/(dashboard)/dashboard/page.tsx
 "use client";
 
 import { XpStatCard } from "@/components/xp-stat-card";
@@ -7,17 +8,15 @@ import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
-import {DailyQuests} from "@/components/daily-quests"
+import { DailyQuests } from "@/components/daily-quests";
 
-interface UserEnrollment {
-    id: string;
-    courseId: string;
-    enrolledAt: string;
-}
+// УДАЛЕН ИНТЕРФЕЙС UserEnrollment
 
 export default function DashboardPage() {
+  // Получаем enrollments из хука (тип уже выведен как Enrollment[] внутри хука)
   const { userDb, enrollments, loading } = useUser();
-  const userEnrollments = enrollments as UserEnrollment[];
+  
+  // УДАЛЕНА СТРОКА: const userEnrollments = enrollments as UserEnrollment[];
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -34,8 +33,8 @@ export default function DashboardPage() {
             {loading ? (
                 <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
             ) : enrollments.length > 0 ? (
+                // Здесь используем оригинальный enrollments из хука
                 enrollments.map((enrollment: any) => (
-                    // Передаем enrollment целиком как enrollmentData
                     <CourseProgress 
                         key={enrollment.courseId} 
                         courseId={enrollment.courseId} 

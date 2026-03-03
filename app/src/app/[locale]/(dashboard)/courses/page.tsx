@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useRouter } from "@/i18n/navigation";
 import { Search, Filter } from "lucide-react";
+import Image from "next/image"
 
 export default function CoursesPage() {
   const { fetchCourses } = useProgram();
@@ -127,7 +128,7 @@ export default function CoursesPage() {
                   <div className="h-32 relative bg-muted flex items-center justify-center">
                       {/* Если в БД есть картинка - показываем, иначе градиент */}
                       {dbCourse?.imageUrl ? (
-                          <img src={dbCourse.imageUrl} alt={courseId} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                          <Image src={dbCourse.imageUrl} alt={courseId} fill className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                       ) : (
                           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800" />
                       )}
