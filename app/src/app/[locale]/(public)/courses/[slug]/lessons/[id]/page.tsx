@@ -1,4 +1,5 @@
 import { getCourseBySlug } from "@/lib/sanity";
+import { getMockCourseBySlug } from "@/lib/mock-courses";
 import { notFound } from "next/navigation";
 import type { SanityLesson } from "@/types";
 import { LessonView } from "./LessonView";
@@ -10,7 +11,8 @@ interface Props {
 export default async function LessonPage({ params }: Props) {
   const { slug, id } = await params;
 
-  const course = await getCourseBySlug(slug).catch(() => null);
+  let course = await getCourseBySlug(slug).catch(() => null);
+  if (!course) course = getMockCourseBySlug(slug);
   if (!course) notFound();
 
   // Flatten all lessons in order

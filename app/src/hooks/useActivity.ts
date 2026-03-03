@@ -39,7 +39,7 @@ export function useActivity() {
       .select("*")
       .eq("wallet_address", wallet)
       .order("completed_at", { ascending: false })
-      .limit(20);
+      .limit(10);
 
     if (!data) { setLoading(false); return; }
 
@@ -66,7 +66,7 @@ export function useActivity() {
         });
       }
     }
-    setItems(feed.slice(0, 10));
+    setItems(feed.slice(0, 5));
     setLoading(false);
   }, [publicKey]);
 
