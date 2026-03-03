@@ -39,7 +39,12 @@ export function CourseProgress({ courseId, enrollmentData }: CourseProgressProps
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Progress value={progressPercent} className="h-2" aria-label="Learning progress" />
+        <Progress 
+            value={enrollmentData.progressPercent} 
+            className="h-2" 
+            aria-label={`Learning progress for ${courseId}`} 
+            aria-valuenow={enrollmentData.progressPercent}
+        />
         
         <div className="flex justify-between text-xs text-muted-foreground font-medium">
             <span>0%</span>

@@ -93,7 +93,12 @@ export function DailyQuests() {
                                 <span className="text-xs font-mono">{q.currentCount}/{q.targetCount}</span>
                             )}
                         </div>
-                        <Progress value={progress} className="h-1.5" aria-label={`Quest progress: ${q.title}`} />
+                        <Progress 
+                            value={progress} 
+                            className="h-1.5" 
+                            aria-label={`Progress for quest: ${q.title}`}
+                            aria-valuenow={progress}
+                        />
                     </div>
                 );
             }) : (

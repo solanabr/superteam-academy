@@ -43,7 +43,7 @@ export function MainNav({ className }: { className?: string }) {
           href={item.href}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground mt-6",
-            pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+            pathname === item.href ? "bg-accent text-accent-foreground" : "text-foreground/70"
           )}
         >
           <item.icon className="h-4 w-4" />
