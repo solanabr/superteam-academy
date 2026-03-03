@@ -1,29 +1,44 @@
+"use client";
+
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useCallback } from "react";
-import { learningProgressService } from "@/lib/onchain";
+import { fetchEnrollment, fetchXPBalance, buildEnrollTransaction } from "@/lib/onchain/LearningProgressService";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 export function useLearningProgress() {
-  const { publicKey } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
 
-  const recordLesson = useCallback(async (courseId: number, lessonIndex: number, totalLessons: number) => {
+  const recordLesson = useCallback(async (courseId: string, lessonIndex: number) => {
     if (!publicKey) return null;
-    return learningProgressService.recordLessonComplete(publicKey, courseId, lessonIndex, totalLessons);
+    // Lesson completion is backend-signed per the program architecture
+    // Frontend tracks locally until backend integration is complete
+    return null;
   }, [publicKey]);
 
-  const recordCourse = useCallback(async (courseId: number) => {
+  const recordCourse = useCallback(async (courseId: string) => {
     if (!publicKey) return null;
-    return learningProgressService.recordCourseComplete(publicKey, courseId);
+    // Course finalization is backend-signed per the program architecture
+    return null;
   }, [publicKey]);
 
-  const fetchProgress = useCallback(async (courseId: number) => {
+  const fetchProgress = useCallback(async (courseId: string) => {
     if (!publicKey) return null;
-    return learningProgressService.fetchLearningProgress(publicKey, courseId);
+    return fetchEnrollment(publicKey, courseId);
   }, [publicKey]);
 
   const fetchXP = useCallback(async () => {
     if (!publicKey) return null;
-    return learningProgressService.fetchUserXP(publicKey);
+    return fetchXPBalance(publicKey);
   }, [publicKey]);
 
-  return { recordLesson, recordCourse, fetchProgress, fetchXP };
+  const enroll = useCallback(async (courseId: string) => {
+    if (!publicKey) return null;
+    const transaction = await buildEnrollTransaction(publicKey, courseId);
+    const signature = await sendTransaction(transaction, connection);
+    await connection.confirmTransaction(signature, "confirmed");
+    return signature;
+  }, [publicKey, sendTransaction, connection]);
+
+  return { recordLesson, recordCourse, fetchProgress, fetchXP, enroll };
 }

@@ -1,10 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 
-// Stub program ID — replace with real deployed program
-export const PROGRAM_ID = new PublicKey(
-  "AcadXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-);
-
-export const XP_PER_LESSON = 50;
-export const XP_PER_COURSE = 500;
-export const DEVNET_RPC = "https://api.devnet.solana.com";
+export const PROGRAM_ID = new PublicKey("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+export const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+export const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
+export const SOLANA_NETWORK = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || "https://api.devnet.solana.com";

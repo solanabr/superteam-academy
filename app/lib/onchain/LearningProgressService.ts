@@ -1,153 +1,319 @@
-/**
- * LearningProgressService
- *
- * Clean abstraction over Solana on-chain interactions.
- * Currently STUBBED — all methods simulate success and log to console.
- * Replace stub bodies with real Anchor program calls when program is deployed.
- *
- * On-chain program architecture:
- *   - learning_progress PDA: tracks per-user per-course progress
- *   - user_xp PDA: tracks total XP and level
- *   - course_credential PDA: soulbound NFT-like credential on completion
- */
+"use client";
 
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { getLearningProgressPDA, getUserXPAccountPDA, getCourseCredentialPDA } from "./pda";
-import { LearningProgress, UserXPAccount, CourseCredential } from "./types";
-import { DEVNET_RPC, XP_PER_LESSON, XP_PER_COURSE } from "./constants";
+import {
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  clusterApiUrl,
+} from "@solana/web3.js";
+import {
+  getAccount,
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID as SPL_TOKEN_2022,
+} from "@solana/spl-token";
+import { AnchorProvider, Program, BN, Idl } from "@coral-xyz/anchor";
+import { PROGRAM_ID, TOKEN_2022_PROGRAM_ID, SOLANA_NETWORK } from "./constants";
+import { getCoursePDA, getEnrollmentPDA, getConfigPDA } from "./pda";
 
-export class LearningProgressService {
-  private connection: Connection;
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-  constructor(rpcUrl: string = DEVNET_RPC) {
-    this.connection = new Connection(rpcUrl, "confirmed");
+export interface EnrollmentData {
+  course: PublicKey;
+  enrolledAt: number;
+  completedAt: number | null;
+  lessonFlags: number[];
+  credentialAsset: PublicKey | null;
+  bump: number;
+}
+
+export interface LeaderboardEntry {
+  wallet: string;
+  xp: number;
+  level: number;
+  rank: number;
+}
+
+export interface CredentialData {
+  mint: string;
+  name: string;
+  uri: string;
+  coursesCompleted: number;
+  totalXp: number;
+}
+
+// ─── XP Token Mint (from program config) ─────────────────────────────────────
+// This is fetched from the config PDA on first use
+let cachedXpMint: PublicKey | null = null;
+
+// ─── Connection ───────────────────────────────────────────────────────────────
+
+export function getConnection(): Connection {
+  return new Connection(SOLANA_NETWORK, "confirmed");
+}
+
+// ─── Fetch XP Mint from Config PDA ───────────────────────────────────────────
+
+async function fetchXpMint(connection: Connection): Promise<PublicKey | null> {
+  if (cachedXpMint) return cachedXpMint;
+  try {
+    const [configPda] = getConfigPDA();
+    const accountInfo = await connection.getAccountInfo(configPda);
+    if (!accountInfo) return null;
+    // Config account layout: 8 (discriminator) + 32 (authority) + 32 (xp_mint) + ...
+    // Skip discriminator (8) + authority (32) = offset 40
+    const xpMintBytes = accountInfo.data.slice(40, 72);
+    cachedXpMint = new PublicKey(xpMintBytes);
+    return cachedXpMint;
+  } catch {
+    return null;
   }
+}
 
-  /**
-   * Initialize a user's XP account on-chain.
-   * Called once when a user first connects their wallet.
-   * STUB: logs intent, returns mock transaction signature.
-   */
-  async initUserXPAccount(owner: PublicKey): Promise<string> {
-    const [pda, bump] = getUserXPAccountPDA(owner);
-    console.log(`[STUB] initUserXPAccount | owner: ${owner.toBase58()} | PDA: ${pda.toBase58()} | bump: ${bump}`);
+// ─── Fetch XP Balance ─────────────────────────────────────────────────────────
 
-    // TODO: replace with Anchor program call:
-    // await program.methods.initUserXp().accounts({ userXp: pda, owner, systemProgram }).rpc();
+export async function fetchXPBalance(walletPublicKey: PublicKey): Promise<number> {
+  try {
+    const connection = getConnection();
+    const xpMint = await fetchXpMint(connection);
+    if (!xpMint) return 0;
 
-    return "STUB_TX_" + Math.random().toString(36).slice(2, 10).toUpperCase();
+    const ata = getAssociatedTokenAddressSync(
+      xpMint,
+      walletPublicKey,
+      false,
+      TOKEN_2022_PROGRAM_ID
+    );
+
+    const account = await getAccount(connection, ata, "confirmed", TOKEN_2022_PROGRAM_ID);
+    return Number(account.amount);
+  } catch {
+    return 0;
   }
+}
 
-  /**
-   * Record lesson completion on-chain.
-   * Increments lessonsCompleted in the learning_progress account.
-   * STUB: logs intent, returns mock transaction signature.
-   */
-  async recordLessonComplete(
-    owner: PublicKey,
-    courseId: number,
-    lessonIndex: number,
-    totalLessons: number
-  ): Promise<string> {
-    const [progressPda] = getLearningProgressPDA(owner, courseId);
-    const [xpPda] = getUserXPAccountPDA(owner);
+// ─── Fetch Enrollment PDA ─────────────────────────────────────────────────────
 
-    console.log(`[STUB] recordLessonComplete | course: ${courseId} | lesson: ${lessonIndex}/${totalLessons}`);
-    console.log(`[STUB] progress PDA: ${progressPda.toBase58()} | xp PDA: ${xpPda.toBase58()}`);
+export async function fetchEnrollment(
+  walletPublicKey: PublicKey,
+  courseId: string
+): Promise<EnrollmentData | null> {
+  try {
+    const connection = getConnection();
+    const [enrollmentPda] = getEnrollmentPDA(courseId, walletPublicKey);
+    const accountInfo = await connection.getAccountInfo(enrollmentPda);
+    if (!accountInfo) return null;
 
-    // TODO: replace with Anchor program call:
-    // await program.methods
-    //   .recordLessonComplete(courseId, lessonIndex)
-    //   .accounts({ learningProgress: progressPda, userXp: xpPda, owner, systemProgram })
-    //   .rpc();
+    const data = accountInfo.data;
+    let offset = 8; // skip discriminator
 
-    return "STUB_TX_" + Math.random().toString(36).slice(2, 10).toUpperCase();
+    // course: Pubkey (32)
+    const course = new PublicKey(data.slice(offset, offset + 32));
+    offset += 32;
+
+    // enrolled_at: i64 (8)
+    const enrolledAt = Number(data.readBigInt64LE(offset));
+    offset += 8;
+
+    // completed_at: Option<i64> (1 + 8)
+    const hasCompletedAt = data[offset] === 1;
+    offset += 1;
+    const completedAt = hasCompletedAt ? Number(data.readBigInt64LE(offset)) : null;
+    offset += 8;
+
+    // lesson_flags: [u64; 4] (32)
+    const lessonFlags: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      lessonFlags.push(Number(data.readBigUInt64LE(offset)));
+      offset += 8;
+    }
+
+    // credential_asset: Option<Pubkey> (1 + 32)
+    const hasCredential = data[offset] === 1;
+    offset += 1;
+    const credentialAsset = hasCredential ? new PublicKey(data.slice(offset, offset + 32)) : null;
+    offset += 32;
+
+    // bump: u8
+    const bump = data[offset + 4]; // skip _reserved (4)
+
+    return { course, enrolledAt, completedAt, lessonFlags, credentialAsset, bump };
+  } catch {
+    return null;
   }
+}
 
-  /**
-   * Mark a full course as completed and issue a soulbound credential.
-   * STUB: logs intent, returns mock transaction signature.
-   */
-  async recordCourseComplete(
-    owner: PublicKey,
-    courseId: number
-  ): Promise<string> {
-    const [progressPda] = getLearningProgressPDA(owner, courseId);
-    const [credentialPda] = getCourseCredentialPDA(owner, courseId);
-    const [xpPda] = getUserXPAccountPDA(owner);
+// ─── Check if lesson is complete ─────────────────────────────────────────────
 
-    console.log(`[STUB] recordCourseComplete | course: ${courseId}`);
-    console.log(`[STUB] credential PDA: ${credentialPda.toBase58()}`);
+export function isLessonComplete(lessonFlags: number[], lessonIndex: number): boolean {
+  const wordIndex = Math.floor(lessonIndex / 64);
+  const bitIndex = lessonIndex % 64;
+  if (wordIndex >= lessonFlags.length) return false;
+  return (lessonFlags[wordIndex] & (1 << bitIndex)) !== 0;
+}
 
-    // TODO: replace with Anchor program call:
-    // await program.methods
-    //   .completeCourse(courseId)
-    //   .accounts({ learningProgress: progressPda, courseCredential: credentialPda, userXp: xpPda, owner, systemProgram })
-    //   .rpc();
+// ─── Build Enroll Transaction ─────────────────────────────────────────────────
 
-    return "STUB_TX_" + Math.random().toString(36).slice(2, 10).toUpperCase();
+export async function buildEnrollTransaction(
+  walletPublicKey: PublicKey,
+  courseId: string
+): Promise<Transaction> {
+  const connection = getConnection();
+  const [coursePda] = getCoursePDA(courseId);
+  const [enrollmentPda] = getEnrollmentPDA(courseId, walletPublicKey);
+
+  // Fetch IDL dynamically from on-chain
+  const { Program, AnchorProvider } = await import("@coral-xyz/anchor");
+
+  // Build instruction data manually since we don't have IDL file
+  // enroll instruction discriminator: sha256("global:enroll")[0:8]
+  const instructionDiscriminator = Buffer.from([210, 12, 186, 241, 75, 115, 234, 100]);
+  const courseIdBytes = Buffer.from(courseId);
+  const courseIdLen = Buffer.alloc(4);
+  courseIdLen.writeUInt32LE(courseIdBytes.length, 0);
+
+  const data = Buffer.concat([instructionDiscriminator, courseIdLen, courseIdBytes]);
+
+  const { TransactionInstruction } = await import("@solana/web3.js");
+
+  const instruction = new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: coursePda, isSigner: false, isWritable: true },
+      { pubkey: enrollmentPda, isSigner: false, isWritable: true },
+      { pubkey: walletPublicKey, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+
+  const { blockhash } = await connection.getLatestBlockhash();
+  const transaction = new Transaction();
+  transaction.add(instruction);
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = walletPublicKey;
+
+  return transaction;
+}
+
+// ─── Fetch Leaderboard via Helius DAS API ─────────────────────────────────────
+
+export async function fetchLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
+  try {
+    const connection = getConnection();
+    const xpMint = await fetchXpMint(connection);
+    if (!xpMint) return getMockLeaderboard();
+
+    const heliusUrl = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+    if (!heliusUrl) return getMockLeaderboard();
+
+    const response = await fetch(heliusUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "leaderboard",
+        method: "getTokenAccounts",
+        params: {
+          mint: xpMint.toBase58(),
+          limit,
+          options: { showZeroBalance: false },
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.result?.token_accounts) return getMockLeaderboard();
+
+    const entries: LeaderboardEntry[] = data.result.token_accounts
+      .map((account: { owner: string; amount: string }) => ({
+        wallet: account.owner,
+        xp: Number(account.amount),
+        level: Math.floor(Math.sqrt(Number(account.amount) / 100)),
+        rank: 0,
+      }))
+      .sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.xp - a.xp)
+      .map((entry: LeaderboardEntry, index: number) => ({ ...entry, rank: index + 1 }));
+
+    return entries;
+  } catch {
+    return getMockLeaderboard();
   }
+}
 
-  /**
-   * Fetch a user's learning progress for a specific course.
-   * STUB: returns mock data.
-   */
-  async fetchLearningProgress(
-    owner: PublicKey,
-    courseId: number
-  ): Promise<LearningProgress | null> {
-    const [pda, bump] = getLearningProgressPDA(owner, courseId);
-    console.log(`[STUB] fetchLearningProgress | PDA: ${pda.toBase58()}`);
+// ─── Fetch Credentials (Metaplex Core NFTs) ───────────────────────────────────
 
-    // TODO: replace with Anchor account fetch:
-    // return await program.account.learningProgress.fetchNullable(pda);
+export async function fetchCredentials(walletPublicKey: PublicKey): Promise<CredentialData[]> {
+  try {
+    const heliusUrl = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+    if (!heliusUrl) return [];
 
-    return {
-      owner,
-      courseId,
-      lessonsCompleted: 0,
-      totalLessons: 10,
-      xpEarned: 0,
-      completedAt: null,
-      bump,
-    };
-  }
+    const response = await fetch(heliusUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "credentials",
+        method: "searchAssets",
+        params: {
+          ownerAddress: walletPublicKey.toBase58(),
+          compressed: false,
+          page: 1,
+          limit: 50,
+        },
+      }),
+    });
 
-  /**
-   * Fetch a user's total XP and level from chain.
-   * STUB: returns mock data.
-   */
-  async fetchUserXP(owner: PublicKey): Promise<UserXPAccount | null> {
-    const [pda, bump] = getUserXPAccountPDA(owner);
-    console.log(`[STUB] fetchUserXP | PDA: ${pda.toBase58()}`);
+    const data = await response.json();
+    if (!data.result?.items) return [];
 
-    // TODO: replace with Anchor account fetch:
-    // return await program.account.userXp.fetchNullable(pda);
+    // Filter for assets from our program
+    const credentials = data.result.items
+      .filter((asset: { authorities?: Array<{ address: string }> }) =>
+        asset.authorities?.some(
+          (auth: { address: string }) => auth.address === PROGRAM_ID.toBase58()
+        )
+      )
+      .map((asset: {
+        id: string;
+        content?: { metadata?: { name?: string; symbol?: string }; json_uri?: string };
+        token_info?: { supply?: number };
+      }) => ({
+        mint: asset.id,
+        name: asset.content?.metadata?.name || "Academy Credential",
+        uri: asset.content?.json_uri || "",
+        coursesCompleted: 0,
+        totalXp: 0,
+      }));
 
-    return {
-      owner,
-      totalXp: 0,
-      level: 1,
-      streak: 0,
-      lastActiveDay: Date.now(),
-      bump,
-    };
-  }
-
-  /**
-   * Fetch all course credentials (soulbound NFTs) for a user.
-   * STUB: returns empty array.
-   */
-  async fetchCredentials(owner: PublicKey): Promise<CourseCredential[]> {
-    console.log(`[STUB] fetchCredentials | owner: ${owner.toBase58()}`);
-
-    // TODO: replace with Anchor getProgramAccounts:
-    // return await program.account.courseCredential.all([
-    //   { memcmp: { offset: 8, bytes: owner.toBase58() } }
-    // ]);
-
+    return credentials;
+  } catch {
     return [];
   }
 }
 
-export const learningProgressService = new LearningProgressService();
+// ─── Mock Leaderboard Fallback ────────────────────────────────────────────────
+
+function getMockLeaderboard(): LeaderboardEntry[] {
+  return [
+    { wallet: "7xKX...mE4f", xp: 12500, level: 11, rank: 1 },
+    { wallet: "3nPQ...vR2k", xp: 9800, level: 9, rank: 2 },
+    { wallet: "5mBY...wT8j", xp: 8200, level: 9, rank: 3 },
+    { wallet: "9aZW...nK5p", xp: 7100, level: 8, rank: 4 },
+    { wallet: "2cLF...hG3q", xp: 6500, level: 8, rank: 5 },
+  ];
+}
+
+// ─── Singleton export ─────────────────────────────────────────────────────────
+
+export const learningProgressService = {
+  fetchXPBalance,
+  fetchEnrollment,
+  fetchLeaderboard,
+  fetchCredentials,
+  buildEnrollTransaction,
+  isLessonComplete,
+  getConnection,
+};
+
+export default learningProgressService;
