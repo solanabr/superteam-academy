@@ -5,7 +5,7 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Light Mode */
-  --background: 250 250 250;
+  --background: 248 250 252;
   --foreground: 15 23 42;
   --card: 255 255 255;
   --card-foreground: 15 23 42;
@@ -16,7 +16,7 @@
   --secondary: 241 245 249;
   --secondary-foreground: 15 23 42;
   --muted: 241 245 249;
-  --muted-foreground: 100 116 139;
+  --muted-foreground: 71 85 105;
   --accent: 20 184 166;
   --accent-foreground: 255 255 255;
   --destructive: 239 68 68;
@@ -29,7 +29,7 @@
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #06b6d4 50%, #10b981 100%);
   --gradient-card: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
-  --gradient-hero: linear-gradient(135deg, #0f0b1e 0%, #1a0e3e 30%, #0d1f3c 60%, #0a1628 100%);
+  --gradient-hero: linear-gradient(135deg, #1e1044 0%, #2d1b69 30%, #1a2e54 60%, #0f1f3d 100%);
 
   /* XP Colors */
   --xp-bronze: #cd7f32;

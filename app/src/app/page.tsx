@@ -18,6 +18,12 @@ import {
   Sparkles,
   GraduationCap,
   Rocket,
+  Anchor,
+  Layers,
+  Palette,
+  Terminal,
+  Lock,
+  Coins,
 } from "lucide-react";
 import { TRACKS } from "@/lib/constants";
 import { MOCK_COURSES } from "@/lib/mock-data";
@@ -176,9 +182,9 @@ export default function HomePage() {
       </section>
 
       {/* Learning Paths */}
-      <section className="py-20 relative">
+      <section className="py-24 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -198,51 +204,69 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {TRACKS.map((track, i) => (
-              <motion.div
-                key={track.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link
-                  href={`/courses?track=${track.id}`}
-                  className="group block p-6 rounded-2xl card-hover relative overflow-hidden"
-                  style={{
-                    background: `linear-gradient(135deg, ${track.color}08 0%, ${track.color}03 100%)`,
-                    border: `1px solid ${track.color}20`,
-                  }}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {TRACKS.map((track, i) => {
+              const trackIcons: Record<string, React.ReactNode> = {
+                "solana-fundamentals": <BookOpen className="w-6 h-6" />,
+                "anchor-development": <Anchor className="w-6 h-6" />,
+                "defi-developer": <Coins className="w-6 h-6" />,
+                "nft-creator": <Palette className="w-6 h-6" />,
+                "security-auditor": <Shield className="w-6 h-6" />,
+                "full-stack-solana": <Terminal className="w-6 h-6" />,
+              };
+              const trackDescs: Record<string, string> = {
+                "solana-fundamentals": "Accounts, Transactions, Programs",
+                "anchor-development": "Rust, PDAs, Testing, Deploy",
+                "defi-developer": "AMMs, Lending, Yield Vaults",
+                "nft-creator": "Metaplex, Collections, Metadata",
+                "security-auditor": "Vulnerabilities, Audits, Fuzzing",
+                "full-stack-solana": "React, Next.js, Wallet Adapter",
+              };
+              const courseCount = MOCK_COURSES.filter((c) =>
+                c.track.toLowerCase().includes(track.id.split("-")[0])
+              ).length;
+              return (
+                <motion.div
+                  key={track.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"
-                    style={{ backgroundColor: track.color }} />
-                  <div
-                    className="w-10 h-10 rounded-lg mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: `${track.color}15` }}
+                  <Link
+                    href={`/courses?track=${track.id}`}
+                    className="group block p-6 rounded-2xl card-hover relative overflow-hidden h-full"
+                    style={{
+                      background: `linear-gradient(135deg, ${track.color}08 0%, ${track.color}03 100%)`,
+                      border: `1px solid ${track.color}20`,
+                    }}
                   >
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: track.color }}
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {track.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {MOCK_COURSES.filter((c) =>
-                      c.track
-                        .toLowerCase()
-                        .includes(track.id.split("-")[0])
-                    ).length}{" "}
-                    {t("common.coursesAvailable")}
-                  </p>
-                  <div className="flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    {t("common.startLearningPath")} <ChevronRight className="w-4 h-4" />
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                    <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-[0.07] group-hover:opacity-[0.15] transition-opacity"
+                      style={{ backgroundColor: track.color }} />
+                    <div className="flex items-start justify-between mb-4">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
+                        style={{ backgroundColor: `${track.color}15`, color: track.color }}
+                      >
+                        {trackIcons[track.id]}
+                      </div>
+                      <span className="text-xs font-medium px-2 py-1 rounded-md" style={{ backgroundColor: `${track.color}15`, color: track.color }}>
+                        {courseCount} {courseCount === 1 ? "curso" : "cursos"}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-primary transition-colors">
+                      {track.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4 font-mono">
+                      {trackDescs[track.id]}
+                    </p>
+                    <div className="flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      {t("common.startLearningPath")} <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -471,31 +495,61 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 relative">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-24 relative">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="p-10 rounded-3xl relative overflow-hidden"
-            style={{ background: "var(--gradient-hero)" }}
+            className="relative rounded-3xl overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-emerald-600/10" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-purple-500/10 rounded-full blur-3xl" />
-            <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                {t("landing.readyTitle")}
-              </h2>
-              <p className="text-gray-300 mb-8 max-w-xl mx-auto">
-                {t("landing.readyDescription")}
-              </p>
-              <Link
-                href="/courses"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 transition-all shadow-2xl shadow-purple-500/25 hover:-translate-y-0.5"
-              >
-                {t("common.startLearning")}
-                <ArrowRight className="w-5 h-5" />
-              </Link>
+            {/* Animated gradient border */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-emerald-500 to-purple-600 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+            <div className="m-[2px] rounded-[22px] relative overflow-hidden" style={{ background: 'var(--gradient-hero)' }}>
+              {/* Background effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-transparent to-emerald-600/10" />
+              <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-500/15 rounded-full blur-3xl animate-float" />
+              <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+              {/* Grid pattern */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{
+                backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+              }} />
+
+              <div className="relative px-8 py-16 sm:px-12 sm:py-20">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 mb-6 text-sm text-gray-300">
+                  <Rocket className="w-4 h-4 text-emerald-400" />
+                  {t("common.free")}
+                </div>
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-5 tracking-tight">
+                  {t("landing.readyTitle")}
+                </h2>
+                <p className="text-gray-300 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
+                  {t("landing.readyDescription")}
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href="/courses"
+                    className="group flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-emerald-500 hover:from-purple-500 hover:to-emerald-400 transition-all shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 hover:-translate-y-0.5"
+                  >
+                    {t("common.startLearning")}
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    className="flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold text-white/80 border border-white/10 hover:bg-white/5 transition-all"
+                  >
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                    {t("nav.leaderboard")}
+                  </Link>
+                </div>
+                {/* Trust badges at bottom */}
+                <div className="flex items-center justify-center gap-6 mt-10 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> {t("landing.onChainCredentials")}</div>
+                  <div className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> 3 {t("common.language")}s</div>
+                  <div className="flex items-center gap-1.5"><Code className="w-3.5 h-3.5" /> Open Source</div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
