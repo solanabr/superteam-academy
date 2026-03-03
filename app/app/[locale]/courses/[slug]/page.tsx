@@ -21,6 +21,9 @@ import type { Lesson } from "@/lib/services";
 import { levelBadgeClasses } from "@/lib/utils";
 import { getTranslations, getLocale } from "next-intl/server";
 
+// Use courseService (stubs) for now - swap to sanityCourseService when Sanity has data
+const courses = courseService;
+
 function lessonTypeIcon(type: Lesson["type"]) {
   switch (type) {
     case "reading":
@@ -39,8 +42,8 @@ export default async function CourseDetailPage({
 }) {
   const { slug } = await params;
   const [course, lessons] = await Promise.all([
-    sanityCourseService.getCourse(slug),
-    sanityCourseService.getLessons(slug),
+    courses.getCourse(slug),
+    courses.getLessons(slug),
   ]);
 
   if (!course) notFound();

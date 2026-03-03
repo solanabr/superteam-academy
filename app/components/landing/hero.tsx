@@ -30,9 +30,6 @@ export function Hero() {
             <Link href={"/" + locale + "/courses"}>
               <Button variant="outline" size="lg">{t("exploreCourses")}</Button>
             </Link>
-            <Link href={"/" + locale + "/leaderboard"}>
-              <Button variant="ghost" size="lg">{t("viewLeaderboard")}</Button>
-            </Link>
           </div>
         </div>
         <div aria-hidden="true" className="pointer-events-none absolute -right-20 top-1/2 hidden h-80 w-80 -translate-y-1/2 rounded-full border border-border opacity-30 lg:block" />
