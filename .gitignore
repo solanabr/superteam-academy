@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 
+# Next.js build artifacts
+.next/
+out/
+*.tsbuildinfo
+
 # Rust / Anchor build artifacts
 target/
 .anchor/
