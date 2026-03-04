@@ -29,10 +29,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
   getAchievements,
   getCompletedCourses,
@@ -180,9 +185,9 @@ function buildSkillScores(input: {
 }
 
 function RadarChart({ scores }: { scores: number[] }) {
-  const size = 260;
+  const size = 168;
   const center = size / 2;
-  const radius = 90;
+  const radius = 52;
   const axisCount = radarSkills.length;
 
   const points = scores.map((score, index) => {
@@ -194,7 +199,7 @@ function RadarChart({ scores }: { scores: number[] }) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-[18rem]">
+    <div className="mx-auto w-full max-w-[11rem]">
       <svg
         viewBox={`0 0 ${size} ${size}`}
         className="h-auto w-full"
@@ -242,20 +247,6 @@ function RadarChart({ scores }: { scores: number[] }) {
           strokeWidth="2"
         />
       </svg>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-        {radarSkills.map((skill, index) => (
-          <div
-            key={skill}
-            className="flex items-center justify-between rounded-md border border-border/80 bg-background/60 px-2 py-1.5"
-          >
-            <span>{skill}</span>
-            <span className="font-semibold text-foreground">
-              {scores[index]}
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -516,10 +507,184 @@ export function ProfilePageClient({
     website,
   ]);
 
+  const hasOnchainActivity =
+    achievements.length > 0 || credentials.length > 0 || completed.length > 0;
+  const showComposerFirst = canEdit && !profile;
+
+  const profileForm = canEdit ? (
+    <Card className="border-border/90 shadow-sm">
+      <CardHeader className="space-y-2 pb-3">
+        <CardTitle className="font-heading text-2xl font-bold">
+          {profile ? "Edit profile" : "Create your profile"}
+        </CardTitle>
+        <CardDescription className="max-w-2xl text-base text-muted-foreground">
+          One wallet signature updates your public builder card. Keep it crisp
+          and easy to scan.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-1">
+        <section className="space-y-3 rounded-xl border border-border/70 bg-muted/25 p-3">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold">
+            <UserCircle className="size-4 text-primary" />
+            Identity
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="username" className="text-sm font-medium">
+                Username *
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <InputGroupText>@</InputGroupText>
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="username"
+                  placeholder="builder_name"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  maxLength={64}
+                />
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="displayName" className="text-sm font-medium">
+                Display Name
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <UserCircle className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="displayName"
+                  placeholder="Your display name"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  maxLength={128}
+                />
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="bio" className="text-sm font-medium">
+                Bio
+              </label>
+              <InputGroup className="h-auto rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon align="block-start">
+                  <InputGroupText>
+                    <Sparkle className="size-4" />
+                    About you
+                  </InputGroupText>
+                </InputGroupAddon>
+                <InputGroupTextarea
+                  id="bio"
+                  placeholder="Share what you build, learn, and ship."
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  maxLength={500}
+                  className="min-h-24"
+                />
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="avatarUrl" className="text-sm font-medium">
+                Avatar URL
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <LinkSimpleHorizontal className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="avatarUrl"
+                  placeholder="https://..."
+                  value={avatarUrl}
+                  onChange={(event) => setAvatarUrl(event.target.value)}
+                />
+              </InputGroup>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-3 rounded-xl border border-border/70 bg-muted/25 p-3">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold">
+            <LinkSimpleHorizontal className="size-4 text-primary" />
+            Links
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="twitter" className="text-sm font-medium">
+                X / Twitter
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <GlobeHemisphereWest className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="twitter"
+                  placeholder="https://x.com/..."
+                  value={twitter}
+                  onChange={(event) => setTwitter(event.target.value)}
+                />
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="github" className="text-sm font-medium">
+                GitHub
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <GithubLogo className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="github"
+                  placeholder="https://github.com/..."
+                  value={github}
+                  onChange={(event) => setGithub(event.target.value)}
+                />
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <label htmlFor="website" className="text-sm font-medium">
+                Website
+              </label>
+              <InputGroup className="h-11 rounded-xl border-border/80 bg-background/80">
+                <InputGroupAddon>
+                  <GlobeHemisphereWest className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="website"
+                  placeholder="https://..."
+                  value={website}
+                  onChange={(event) => setWebsite(event.target.value)}
+                />
+              </InputGroup>
+            </div>
+          </div>
+        </section>
+      </CardContent>
+      <CardFooter className="flex-wrap items-center justify-between gap-3 border-t bg-muted/35">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-border/80 bg-background/80 px-3 py-2">
+          <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+          <span className="text-sm">
+            Visibility:
+            <span className="ml-1 font-semibold">
+              {isPublic ? "Public" : "Private"}
+            </span>
+          </span>
+        </div>
+        <Button
+          onClick={() => void saveProfile()}
+          disabled={saving}
+          className="min-w-36"
+        >
+          {saving ? "Saving..." : profile ? "Save Changes" : "Create Profile"}
+        </Button>
+      </CardFooter>
+    </Card>
+  ) : null;
+
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
-        <div className="grid gap-5 lg:grid-cols-2">
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
+        <div className="grid gap-4 lg:grid-cols-2">
           <Skeleton className="h-72 w-full rounded-xl" />
           <Skeleton className="h-72 w-full rounded-xl" />
         </div>
@@ -528,35 +693,32 @@ export function ProfilePageClient({
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6">
-      <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-card px-5 py-6 shadow-sm">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,color-mix(in_srgb,var(--primary)_22%,transparent),transparent_48%),radial-gradient(circle_at_88%_88%,color-mix(in_srgb,var(--secondary)_26%,transparent),transparent_45%)]" />
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+    <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
+      <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-card px-5 py-5 shadow-sm">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,color-mix(in_srgb,var(--primary)_18%,transparent),transparent_45%),radial-gradient(circle_at_90%_90%,color-mix(in_srgb,var(--secondary)_22%,transparent),transparent_40%)]" />
+        <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
               <Sparkle className="size-3.5" weight="fill" />
-              Builder Identity
+              Builder identity
             </p>
-            <h1 className="mt-2 font-heading text-3xl font-black tracking-tight sm:text-4xl">
-              Profile & On-Chain Reputation
+            <h1 className="mt-1.5 font-heading text-2xl font-black tracking-tight sm:text-3xl">
+              Profile & Reputation
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Your public builder card with skills, achievements, credentials,
-              and course proof.
+            <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+              Credentials, achievements, and a clear public card for your work.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <Badge variant="outline">{credentials.length} Credentials</Badge>
             <Badge variant="outline">{achievements.length} Achievements</Badge>
-            <Badge variant="outline">
-              {completed.length} Courses Completed
-            </Badge>
+            <Badge variant="outline">{completed.length} Courses</Badge>
           </div>
         </div>
       </section>
 
       {error ? (
-        <Card className="mt-5 border-destructive/40">
+        <Card className="mt-4 border-destructive/40">
           <CardContent className="flex items-center gap-2 py-4 text-destructive">
             <XCircle className="size-5" />
             {error}
@@ -565,8 +727,8 @@ export function ProfilePageClient({
       ) : null}
 
       {!canEdit && !isPublicView ? (
-        <Card className="mt-5 border-dashed">
-          <CardContent className="flex items-center gap-2 py-5 text-muted-foreground">
+        <Card className="mt-4 border-dashed">
+          <CardContent className="flex items-center gap-2 py-4 text-muted-foreground">
             <UserCircle className="size-5" />
             Connect your wallet to create or edit your profile.
           </CardContent>
@@ -574,19 +736,21 @@ export function ProfilePageClient({
       ) : null}
 
       {isPublicView && !profile ? (
-        <Card className="mt-5 border-dashed">
-          <CardContent className="py-5 text-muted-foreground">
+        <Card className="mt-4 border-dashed">
+          <CardContent className="py-4 text-muted-foreground">
             Public profile not found, or this profile is private.
           </CardContent>
         </Card>
       ) : null}
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-[1.3fr_1fr]">
-        <Card className="overflow-hidden">
-          <div className="h-2 w-full bg-gradient-to-r from-primary via-secondary to-primary" />
-          <CardContent className="py-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              <Avatar data-size="lg" className="size-20 ring-2 ring-border">
+      {showComposerFirst ? <section className="mt-4">{profileForm}</section> : null}
+
+      <section className="mt-4 grid items-stretch gap-4 lg:grid-cols-[1.55fr_0.85fr]">
+        <Card className="h-full overflow-hidden border-border/80 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--primary)_5%,var(--card)),var(--card))]">
+          <CardContent className="py-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-start gap-3">
+                <Avatar data-size="lg" className="size-16 ring-2 ring-border">
                 {activeProfile.avatarUrl ? (
                   <AvatarImage
                     src={activeProfile.avatarUrl}
@@ -596,312 +760,223 @@ export function ProfilePageClient({
                 <AvatarFallback className="text-lg font-semibold">
                   {displayTitle.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
-              </Avatar>
+                </Avatar>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate font-heading text-2xl font-bold">
-                    {displayTitle}
-                  </h2>
-                  <Badge variant="outline">@{activeProfile.username}</Badge>
-                  {activeProfile.visibility === "public" ? (
-                    <Badge variant="secondary">Public</Badge>
-                  ) : (
-                    <Badge variant="destructive">Private</Badge>
-                  )}
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="truncate font-heading text-xl font-bold sm:text-2xl">
+                      {displayTitle}
+                    </h2>
+                    {activeProfile.visibility === "public" ? (
+                      <Badge variant="secondary">Public</Badge>
+                    ) : (
+                      <Badge variant="destructive">Private</Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline">@{activeProfile.username}</Badge>
+                    <Badge variant="outline">
+                      Joined {formatDate(activeProfile.joinDate)}
+                    </Badge>
+                    {activeProfile.wallet ? (
+                      <Badge variant="outline">
+                        Wallet {shortWallet(activeProfile.wallet)}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {activeProfile.bio?.trim() ||
+                      "Add a short bio so people quickly understand what you build."}
+                  </p>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {activeProfile.bio?.trim() ||
-                    "Add a bio to tell people what you build."}
-                </p>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Joined {formatDate(activeProfile.joinDate)}
-                  {activeProfile.wallet
-                    ? ` • Wallet ${shortWallet(activeProfile.wallet)}`
-                    : ""}
-                </p>
+              </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {(Object.keys(activeSocials) as (keyof SocialLinks)[])
-                    .filter((key) => !!activeSocials[key])
-                    .map((key) => {
-                      const Icon = socialIconFor(key);
-                      return (
-                        <a
-                          key={key}
-                          href={activeSocials[key]}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/70 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        >
-                          <Icon className="size-3.5" />
-                          {key}
-                        </a>
-                      );
-                    })}
-                </div>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {(Object.keys(activeSocials) as (keyof SocialLinks)[])
+                  .filter((key) => !!activeSocials[key])
+                  .map((key) => {
+                    const Icon = socialIconFor(key);
+                    return (
+                      <a
+                        key={key}
+                        href={activeSocials[key]}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Icon className="size-3.5" />
+                        {key}
+                      </a>
+                    );
+                  })}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="h-full overflow-hidden border-border/80">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm">Skill Radar</CardTitle>
             <CardDescription>
               Skill signal from completed tracks and credentials.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <RadarChart scores={scores} />
-          </CardContent>
-        </Card>
-      </section>
-
-      {canEdit ? (
-        <Card className="mt-5">
-          <CardHeader>
-            <CardTitle>{profile ? "Edit Profile" : "Create Profile"}</CardTitle>
-            <CardDescription>
-              One wallet signature updates your profile settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <label htmlFor="username" className="text-sm font-medium">
-                Username *
-              </label>
-              <Input
-                id="username"
-                placeholder="builder_name"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                maxLength={64}
-              />
+          <CardContent className="flex h-full flex-col space-y-2 pb-3">
+            <div className="flex h-40 items-center justify-center rounded-xl border border-border/70 bg-muted/20 py-1">
+              <RadarChart scores={scores} />
             </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="displayName" className="text-sm font-medium">
-                Display Name
-              </label>
-              <Input
-                id="displayName"
-                placeholder="Your display name"
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                maxLength={128}
-              />
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="bio" className="text-sm font-medium">
-                Bio
-              </label>
-              <Textarea
-                id="bio"
-                placeholder="Share your builder story..."
-                value={bio}
-                onChange={(event) => setBio(event.target.value)}
-                maxLength={500}
-                className="min-h-24"
-              />
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="avatarUrl" className="text-sm font-medium">
-                Avatar URL
-              </label>
-              <Input
-                id="avatarUrl"
-                placeholder="https://..."
-                value={avatarUrl}
-                onChange={(event) => setAvatarUrl(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="twitter" className="text-sm font-medium">
-                Twitter
-              </label>
-              <Input
-                id="twitter"
-                placeholder="https://x.com/..."
-                value={twitter}
-                onChange={(event) => setTwitter(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="github" className="text-sm font-medium">
-                GitHub
-              </label>
-              <Input
-                id="github"
-                placeholder="https://github.com/..."
-                value={github}
-                onChange={(event) => setGithub(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="website" className="text-sm font-medium">
-                Website
-              </label>
-              <Input
-                id="website"
-                placeholder="https://..."
-                value={website}
-                onChange={(event) => setWebsite(event.target.value)}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              <span className="text-sm">
-                Visibility:{" "}
-                <span className="font-semibold">
-                  {isPublic ? "Public" : "Private"}
-                </span>
-              </span>
-            </div>
-            <Button onClick={() => void saveProfile()} disabled={saving}>
-              {saving
-                ? "Saving..."
-                : profile
-                ? "Save Changes"
-                : "Create Profile"}
-            </Button>
-          </CardFooter>
-        </Card>
-      ) : null}
-
-      <section className="mt-5 grid gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Trophy className="size-4 text-primary" />
-              Achievement Badges
-            </CardTitle>
-            <CardDescription>
-              Verified badges earned by this builder.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {achievements.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No achievements yet.
-              </p>
-            ) : (
-              achievements.map((achievement) => (
-                <article
-                  key={`${achievement.asset}-${achievement.achievementId}`}
-                  className="rounded-lg border border-border/80 bg-background/60 p-3"
+            <div className="grid grid-cols-3 gap-1.5">
+              {radarSkills.map((skill, index) => (
+                <div
+                  key={`mini-${skill}`}
+                  className="rounded-md border border-border/70 bg-background/70 px-2 py-1"
                 >
-                  <p className="text-sm font-medium">{achievement.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Awarded{" "}
-                    {formatDate(
-                      new Date(achievement.awardedAt * 1000).toISOString()
-                    )}
-                  </p>
-                </article>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <SealCheck className="size-4 text-primary" />
-              On-Chain Credentials (cNFTs)
-            </CardTitle>
-            <CardDescription>
-              Evolving credentials with track, level, and verification links.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            {credentials.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No credential cNFTs minted yet.
-              </p>
-            ) : (
-              credentials.map((credential) => (
-                <article
-                  key={credential.asset}
-                  className="rounded-lg border border-border/80 bg-background/60 p-3"
-                >
-                  <p className="text-sm font-medium">
-                    {getTrackLabel(credential.trackId)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Level {credential.trackLevel}
-                  </p>
-                  <a
-                    href={credential.verificationLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    Verify credential <ArrowSquareOut className="size-3" />
-                  </a>
-                </article>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <Card className="mt-5">
-        <CardHeader>
-          <CardTitle className="text-sm">Completed Courses</CardTitle>
-          <CardDescription>
-            Course completions with track level and credential asset links.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {completed.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No completed courses yet.
-            </p>
-          ) : (
-            completed.map((course) => (
-              <article
-                key={`${course.id}-${course.courseId}`}
-                className={cn(
-                  "rounded-lg border border-border/80 bg-background/60 p-3"
-                )}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {course.courseId}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {getTrackLabel(course.trackId)} • Level{" "}
-                      {course.trackLevel}
-                    </p>
+                  <div className="flex items-center justify-between text-[10px] leading-tight">
+                    <span className="text-muted-foreground">{skill}</span>
+                    <span className="font-semibold text-foreground">
+                      {scores[index]}
+                    </span>
                   </div>
-                  <Badge variant="outline">
-                    {formatDate(course.completedAt)}
-                  </Badge>
                 </div>
-                {course.credentialAsset ? (
-                  <a
-                    href={assetExplorerUrl(course.credentialAsset)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {!showComposerFirst ? <section className="mt-4">{profileForm}</section> : null}
+
+      {hasOnchainActivity || isPublicView ? (
+        <>
+          <section className="mt-4 grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Trophy className="size-4 text-primary" />
+                  Achievement Badges
+                </CardTitle>
+                <CardDescription>
+                  Verified badges earned by this builder.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {achievements.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No achievements yet.
+                  </p>
+                ) : (
+                  achievements.map((achievement) => (
+                    <article
+                      key={`${achievement.asset}-${achievement.achievementId}`}
+                      className="rounded-lg border border-border/80 bg-background/60 p-3"
+                    >
+                      <p className="text-sm font-medium">{achievement.name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Awarded{" "}
+                        {formatDate(
+                          new Date(achievement.awardedAt * 1000).toISOString()
+                        )}
+                      </p>
+                    </article>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <SealCheck className="size-4 text-primary" />
+                  On-Chain Credentials (cNFTs)
+                </CardTitle>
+                <CardDescription>
+                  Evolving credentials with track, level, and verification
+                  links.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-2">
+                {credentials.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No credential cNFTs minted yet.
+                  </p>
+                ) : (
+                  credentials.map((credential) => (
+                    <article
+                      key={credential.asset}
+                      className="rounded-lg border border-border/80 bg-background/60 p-3"
+                    >
+                      <p className="text-sm font-medium">
+                        {getTrackLabel(credential.trackId)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Level {credential.trackLevel}
+                      </p>
+                      <a
+                        href={credential.verificationLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        Verify credential <ArrowSquareOut className="size-3" />
+                      </a>
+                    </article>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="text-sm">Completed Courses</CardTitle>
+              <CardDescription>
+                Course completions with track level and credential asset links.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {completed.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No completed courses yet.
+                </p>
+              ) : (
+                completed.map((course) => (
+                  <article
+                    key={`${course.id}-${course.courseId}`}
+                    className={cn(
+                      "rounded-lg border border-border/80 bg-background/60 p-3"
+                    )}
                   >
-                    View credential asset <ArrowSquareOut className="size-3" />
-                  </a>
-                ) : null}
-              </article>
-            ))
-          )}
-        </CardContent>
-      </Card>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {course.courseId}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {getTrackLabel(course.trackId)} • Level{" "}
+                          {course.trackLevel}
+                        </p>
+                      </div>
+                      <Badge variant="outline">
+                        {formatDate(course.completedAt)}
+                      </Badge>
+                    </div>
+                    {course.credentialAsset ? (
+                      <a
+                        href={assetExplorerUrl(course.credentialAsset)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        View credential asset <ArrowSquareOut className="size-3" />
+                      </a>
+                    ) : null}
+                  </article>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
     </main>
   );
 }
