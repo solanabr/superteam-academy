@@ -18,20 +18,20 @@ const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 const MPL_CORE_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 
 const achievements = [
-    { id: "first-steps", name: "First Steps", desc: "Complete your first lesson.", xp: 50, supply: 10000, image: "/images/achievements/first-steps.png" },
-    { id: "course-completer", name: "Course Completer", desc: "Complete a full course.", xp: 200, supply: 10000, image: "/images/achievements/course-completer.png" },
-    { id: "speed-runner", name: "Speed Runner", desc: "Complete 5 lessons in one day.", xp: 100, supply: 5000, image: "/images/achievements/speed-runner.png" },
+    { id: "first-steps-v2", name: "First Steps", desc: "Complete your first lesson.", xp: 50, supply: 10000, image: "/images/achievements/first-steps.png" },
+    { id: "course-completer-v2", name: "Course Completer", desc: "Complete a full course.", xp: 200, supply: 10000, image: "/images/achievements/course-completer.png" },
+    { id: "speed-runner-v2", name: "Speed Runner", desc: "Complete 5 lessons in one day.", xp: 100, supply: 5000, image: "/images/achievements/speed-runner.png" },
     
-    { id: "week-warrior", name: "Week Warrior", desc: "7 day streak.", xp: 150, supply: 5000, image: "/images/achievements/week-warrior.png" },
-    { id: "monthly-master", name: "Monthly Master", desc: "30 day streak.", xp: 500, supply: 1000, image: "/images/achievements/monthly-master.png" },
-    { id: "consistency-king", name: "Consistency King", desc: "100 day streak.", xp: 2000, supply: 100, image: "/images/achievements/consistency-king.png" },
+    { id: "week-warrior-v2", name: "Week Warrior", desc: "7 day streak.", xp: 150, supply: 5000, image: "/images/achievements/week-warrior.png" },
+    { id: "monthly-master-v2", name: "Monthly Master", desc: "30 day streak.", xp: 500, supply: 1000, image: "/images/achievements/monthly-master.png" },
+    { id: "consistency-king-v2", name: "Consistency King", desc: "100 day streak.", xp: 2000, supply: 100, image: "/images/achievements/consistency-king.png" },
 
-    { id: "rust-rookie", name: "Rust Rookie", desc: "Complete Rust module.", xp: 100, supply: 10000, image: "/images/achievements/rust-rookie.png" },
-    { id: "anchor-expert", name: "Anchor Expert", desc: "Complete Anchor advanced course.", xp: 300, supply: 5000, image: "/images/achievements/anchor-expert.png" },
-    { id: "full-stack-solana", name: "Full Stack Solana", desc: "Complete frontend & backend courses.", xp: 500, supply: 1000, image: "/images/achievements/full-stack-solana.png" },
+    { id: "rust-rookie-v2", name: "Rust Rookie", desc: "Complete Rust module.", xp: 100, supply: 10000, image: "/images/achievements/rust-rookie.png" },
+    { id: "anchor-expert-v2", name: "Anchor Expert", desc: "Complete Anchor advanced course.", xp: 300, supply: 5000, image: "/images/achievements/anchor-expert.png" },
+    { id: "full-stack-solana-v2", name: "Full Stack Solana", desc: "Complete frontend & backend courses.", xp: 500, supply: 1000, image: "/images/achievements/full-stack-solana.png" },
 
-    { id: "helper", name: "Helper", desc: "Helped others in Discord.", xp: 100, supply: 1000, image: "/images/achievements/helper.png" },
-    { id: "early-adopter", name: "Early Adopter", desc: "Joined during beta.", xp: 50, supply: 1000, image: "/images/achievements/early-adopter.png" },
+    { id: "helper-v2", name: "Helper", desc: "Helped others in Discord.", xp: 100, supply: 1000, image: "/images/achievements/helper.png" },
+    { id: "early-adopter-v2", name: "Early Adopter", desc: "Joined during beta.", xp: 50, supply: 1000, image: "/images/achievements/early-adopter.png" },
 ];
 
 async function main() {

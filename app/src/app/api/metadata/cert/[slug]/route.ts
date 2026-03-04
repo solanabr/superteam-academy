@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
       symbol: "ACADEMY",
       description: `Official completion certificate for the ${course.title} course on Superteam Academy.`,
       // Используем картинку курса или дефолтную для сертификата
-      image: course.imageUrl?.startsWith('/') ? `${baseUrl}${course.imageUrl}` : (course.imageUrl || `${baseUrl}/images/certificates/default.png`),
+      image: course.imageUrl?.startsWith('/') ? `${baseUrl}${course.imageUrl}` : (course.imageUrl || `${baseUrl}/images/certificates/certificate-001.png`),
       attributes: [
         {
           trait_type: "Course",
@@ -49,7 +49,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
         category: "image",
         files: [
           {
-            uri: course.imageUrl || "https://arweave.net/Yx0n2TqR0GqNeJnoYx4SMCjZt0r9uS-KRwQoK_vG2Wc",
+            uri: course.imageUrl || "https://superteam-academy-beta.vercel.app/images/certificates/certificate-001.png",
             type: "image/png"
           }
         ]

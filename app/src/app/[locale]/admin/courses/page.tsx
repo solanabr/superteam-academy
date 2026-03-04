@@ -60,13 +60,17 @@ export default function AdminCoursesPage() {
                             <TableCell className="font-medium">{course.title}</TableCell>
                             <TableCell className="font-mono text-xs">{course.slug}</TableCell>
                             <TableCell>
-                                {/* ИСПРАВЛЕНИЕ: Используем course.status */}
                                 {course.status === "APPROVED" ? (
                                     <Badge className="bg-green-500/10 text-green-500">Published</Badge>
                                 ) : course.status === "PENDING" ? (
                                     <Badge className="bg-yellow-500/10 text-yellow-500">In Review</Badge>
                                 ) : (
-                                    <Badge variant="secondary">Draft</Badge>
+                                    // ИСПРАВЛЕНИЕ: Добавляем проверку на REJECTED
+                                    course.status === "REJECTED" ? (
+                                        <Badge variant="destructive">Rejected</Badge>
+                                    ) : (
+                                        <Badge variant="secondary">Draft</Badge>
+                                    )
                                 )}
                             </TableCell>
                             <TableCell>{course.modules?.length || 0}</TableCell>

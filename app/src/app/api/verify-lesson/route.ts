@@ -371,12 +371,12 @@ export async function POST(request: Request) {
         
         // Если это был первый урок (totalCompletedInDb сейчас будет >= 1, т.к. мы только что сохранили)
         if (totalCompletedInDb === 1) {
-            achievementsToCheck.push("first-steps");
+            achievementsToCheck.push("first-steps-v2");
         }
 
         // Условие 2: Завершение курса ("course-champion")
         if (typeof completedCount !== 'undefined' && completedCount >= totalLessons) {
-            achievementsToCheck.push("course-completer"); // Убедись, что слаг совпадает со скриптом!
+            achievementsToCheck.push("course-completer-v2"); // Убедись, что слаг совпадает со скриптом!
         }
 
         //TODO: сделать для всех ачивок.

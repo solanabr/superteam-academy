@@ -254,13 +254,20 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                     <BookOpen className="h-5 w-5 text-purple-500" />
                     Course Credentials
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex flex-wrap gap-8 justify-center sm:justify-start">
                     {nftLoading ? (
                         <Skeleton className="h-[400px] w-full rounded-xl" />
                     ) : certificates.length > 0 ? (
                         certificates.map((nft) => (
                             // УБРАЛИ onClick ОТСЮДА
-                            <div key={nft.id} className="w-full max-w-[280px] mx-auto">
+                            <div key={nft.id} style={{ width: "280px", height: "380px", position: "relative" }}>
+                            <a 
+                                href={`/certificates/${nft.id}`} 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="absolute inset-0 z-50 block"
+                                aria-label={`View certificate ${nft.name}`}
+                            />
                                 <CredentialCard 
                                     name={nft.name}
                                     imageUrl={nft.image}

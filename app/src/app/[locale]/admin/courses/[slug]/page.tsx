@@ -105,7 +105,7 @@ export default function CreateCoursePage() {
     }
   }, [slugParam, isNew, router]);
 
-  const isLockedOnChain = !isNew && course.isPublished;
+  const isLockedOnChain = !isNew && course.status === 'APPROVED';
 
   const addModule = () => {
       setCourse({ ...course, modules: [...course.modules, { title: `Module ${course.modules.length + 1}`, lessons: [] }] });
@@ -168,11 +168,16 @@ export default function CreateCoursePage() {
 
       setLoading(true);
       try {
+
+          const payloadToSave = {
+              ...course,
+              // Если тумблер включен, ставим APPROVED, иначе оставляем текущий или DRAFT
+              status: course.isPublished ? 'APPROVED' : (course.status === 'APPROVED' ? 'APPROVED' : course.status)
+          };
           const res = await fetch('/api/admin/courses', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              // ВАЖНО: Если редактируем, slug может быть read-only, но мы отправляем его для upsert
-              body: JSON.stringify(course)
+              body: JSON.stringify(payloadToSave) // Отправляем исправленный payload
           });
 
           if (!res.ok) {
@@ -245,7 +250,7 @@ export default function CreateCoursePage() {
                             onChange={e => setCourse({...course, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} 
                             // Блокируем ТОЛЬКО если опубликован
                             disabled={isLockedOnChain} 
-                            className={isLockedOnChain ? "bg-muted" : ""}
+                            className={isLockedOnChain ? "bg-muted cursor-not-allowed opacity-50" : ""}
                         />
                         <p className="text-xs text-muted-foreground">Unique identifier used on-chain. {isLockedOnChain ? "Locked (Published)." : ""}</p>
                     </div>
@@ -284,6 +289,7 @@ export default function CreateCoursePage() {
                                 value={course.xpPerLesson} 
                                 onChange={e => setCourse({...course, xpPerLesson: parseInt(e.target.value) || 0})} 
                                 disabled={isLockedOnChain} // Блокируем
+                                className={isLockedOnChain ? "bg-muted cursor-not-allowed opacity-50" : ""}
                             />
                         </div>
                     </div>
@@ -360,7 +366,15 @@ export default function CreateCoursePage() {
                                                         <Label>Interactive Coding</Label>
                                                         <p className="text-[10px] text-muted-foreground">Enable code editor for this lesson</p>
                                                     </div>
-                                                    <Switch checked={lesson.isChallenge} onCheckedChange={(val) => updateLesson(mIndex, lIndex, 'isChallenge', val)} />
+                                                    <div className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-lg">
+                                                        <Label htmlFor="publish-mode" className="font-semibold cursor-pointer">Publish On-Chain</Label>
+                                                        <Switch 
+                                                            id="publish-mode" 
+                                                            checked={course.isPublished || course.status === 'APPROVED'} // Всегда On, если APPROVED
+                                                            disabled={isLockedOnChain} // Заблокирован, если уже опубликован (нельзя отменить)
+                                                            onCheckedChange={(val) => setCourse({...course, isPublished: val})} 
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 {lesson.isChallenge && (
