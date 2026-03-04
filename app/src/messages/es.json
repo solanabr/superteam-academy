@@ -180,5 +180,21 @@
         "daily_active": "Usuarios Diarios",
         "recent_activity": "Actividad Reciente",
         "system_alerts": "Alertas del Sistema"
+    },
+    "onboarding": {
+        "step": "Paso",
+        "of": "de",
+        "completed": "completado",
+        "q_experience_title": "¿Cuál es tu experiencia en desarrollo?",
+        "opt_new": "Soy totalmente nuevo en programación",
+        "opt_web2": "Tengo experiencia en Web2",
+        "opt_solana": "Ya conozco lo básico de Solana",
+        "q_goal_title": "¿Qué quieres construir?",
+        "opt_smart_contracts": "Smart Contracts (Anchor/Rust)",
+        "opt_frontend": "Frontend Web3 (React/Next.js)",
+        "opt_fullstack": "dApps Fullstack en Solana",
+        "path_ready": "¡Tu Ruta de Aprendizaje está Lista!",
+        "path_desc": "Basándonos en tus respuestas, hemos creado una ruta de aprendizaje personalizada según tus objetivos y nivel de experiencia.",
+        "start_learning": "Empezar a Aprender"
     }
 }
