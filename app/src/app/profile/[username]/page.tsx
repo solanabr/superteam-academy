@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
+import { AchievementBadges } from "@/components/GamificationOverview";
 
 export default async function PublicProfilePage({
   params,
@@ -50,16 +51,7 @@ export default async function PublicProfilePage({
         {/* Achievements */}
         <div className="mt-8">
           <h2 className="text-lg font-semibold">Achievements</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {["First Lesson", "3-Day Streak", "SPL Explorer"].map((a) => (
-              <span
-                key={a}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium"
-              >
-                🏆 {a}
-              </span>
-            ))}
-          </div>
+          <AchievementBadges />
           <p className="mt-3 text-xs text-zinc-500">
             Achievements will be backed by on-chain cNFTs (devnet).
           </p>
