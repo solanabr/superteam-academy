@@ -38,11 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Preconnect to third-party origins used by PostHog (surveys load Google Fonts) */}
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect to PostHog CDN */}
         <link rel="dns-prefetch" href="https://us-assets.i.posthog.com" />
         <link rel="preconnect" href="https://us-assets.i.posthog.com" crossOrigin="anonymous" />
 

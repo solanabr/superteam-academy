@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '1mb',
     },
+    optimizePackageImports: ['lucide-react'],
   },
   async headers() {
     return [
