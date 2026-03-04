@@ -5,7 +5,16 @@
   },
   "header": {
     "goHome": "Ir para o início",
-    "courses": "Cursos"
+    "courses": "Cursos",
+    "leaderboard": "Ranking"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "description": "Top builders por XP na Superteam Academy",
+    "xpAmount": "{amount} XP",
+    "empty": "Ainda não há titulares de XP. Complete lições para ganhar XP e aparecer aqui.",
+    "unavailable": "O ranking está temporariamente indisponível.",
+    "demoData": "Dados de exemplo — o ranking real será exibido quando a API estiver disponível."
   },
   "theme": {
     "label": "Selecionar tema",

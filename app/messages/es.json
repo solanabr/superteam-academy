@@ -5,7 +5,16 @@
   },
   "header": {
     "goHome": "Ir al inicio",
-    "courses": "Cursos"
+    "courses": "Cursos",
+    "leaderboard": "Clasificación"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "description": "Mejores builders por XP en Superteam Academy",
+    "xpAmount": "{amount} XP",
+    "empty": "Aún no hay titulares de XP. Completa lecciones para ganar XP y aparecer aquí.",
+    "unavailable": "La clasificación no está disponible temporalmente.",
+    "demoData": "Datos de ejemplo — la clasificación real se mostrará cuando la API esté disponible."
   },
   "theme": {
     "label": "Seleccionar tema",

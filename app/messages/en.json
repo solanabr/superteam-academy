@@ -5,7 +5,16 @@
   },
   "header": {
     "goHome": "Go to home",
-    "courses": "Courses"
+    "courses": "Courses",
+    "leaderboard": "Leaderboard"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "description": "Top builders by XP earned on Superteam Academy",
+    "xpAmount": "{amount} XP",
+    "empty": "No XP holders yet. Complete lessons to earn XP and appear here.",
+    "unavailable": "Leaderboard is temporarily unavailable.",
+    "demoData": "Sample data — real leaderboard will show when the API is available."
   },
   "theme": {
     "label": "Select theme",

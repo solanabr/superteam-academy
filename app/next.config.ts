@@ -4,7 +4,8 @@ import "@/lib/env";
 
 const withNextIntl = createNextIntlPlugin();
 
-const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+const posthogHost =
+  process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
 const isEu = posthogHost.includes("eu.i.posthog.com");
 const assetsHost = isEu
   ? "https://eu-assets.i.posthog.com"
@@ -23,7 +24,10 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
-      { source: "/ph/static/:path*", destination: `${assetsHost}/static/:path*` },
+      {
+        source: "/ph/static/:path*",
+        destination: `${assetsHost}/static/:path*`,
+      },
       { source: "/ph/:path*", destination: `${apiHost}/:path*` },
     ];
   },
