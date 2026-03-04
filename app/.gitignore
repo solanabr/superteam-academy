@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
 
 # next.js
 /.next/
@@ -42,3 +45,4 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+/src/app/(payload)/cms/importMap.js
