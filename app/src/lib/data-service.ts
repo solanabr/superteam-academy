@@ -107,7 +107,47 @@ async function fetchCourseRaw(slug: string) {
 }
 
 export async function getAllCourses(): Promise<Course[]> {
-  // Fetch Prisma courses first (fast, reliable)
+  // Payload CMS is the source of truth for content
+  try {
+    const payload = await getPayload();
+    const [result, completionGroups] = await Promise.all([
+      payload.find({
+        collection: "courses",
+        where: { isActive: { equals: true } },
+        sort: "trackNumId",
+        limit: 1000,
+      }),
+      prisma.enrollment.groupBy({
+        by: ["courseId"],
+        where: { completedAt: { not: null } },
+        _count: { courseId: true },
+      }),
+    ]);
+
+    if (result.docs.length > 0) {
+      const completionMap = new Map(
+        completionGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+      const enrollmentGroups = await prisma.enrollment.groupBy({
+        by: ["courseId"],
+        _count: { courseId: true },
+      });
+      const enrollmentMap = new Map(
+        enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+
+      return result.docs.map((doc) => {
+        const course = payloadCourseToCourse(doc);
+        course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
+        course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
+        return course;
+      });
+    }
+  } catch {
+    // Payload not configured — fall through to Prisma
+  }
+
+  // Prisma fallback
   const [courses, completionGroups] = await Promise.all([
     prisma.course.findMany({
       where: { isActive: true },
@@ -121,29 +161,11 @@ export async function getAllCourses(): Promise<Course[]> {
     }),
   ]);
 
-  const completionMap = new Map(
-    completionGroups.map((g) => [g.courseId, g._count.courseId]),
-  );
-  const prismaCourses = courses.map((c) =>
-    formatCourse(c, completionMap.get(c.id) ?? 0),
-  );
-
-  if (prismaCourses.length > 0) return prismaCourses;
-
-  // Fall back to Payload CMS if Prisma has no courses
-  try {
-    const payload = await getPayload();
-    const result = await payload.find({
-      collection: "courses",
-      where: { isActive: { equals: true } },
-      sort: "trackId",
-      limit: 1000,
-    });
-    if (result.docs.length > 0) {
-      return result.docs.map(payloadCourseToCourse);
-    }
-  } catch {
-    // Payload not configured or DB not available
+  if (courses.length > 0) {
+    const completionMap = new Map(
+      completionGroups.map((g) => [g.courseId, g._count.courseId]),
+    );
+    return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
   }
 
   return MOCK_COURSES;
@@ -161,7 +183,17 @@ export async function getCourseBySlug(
       limit: 1,
     });
     if (result.docs.length > 0) {
-      return payloadCourseToCourse(result.docs[0]);
+      const course = payloadCourseToCourse(result.docs[0]);
+      const courseId = String(result.docs[0].id);
+      const [enrollments, completions] = await Promise.all([
+        prisma.enrollment.count({ where: { courseId } }),
+        prisma.enrollment.count({
+          where: { courseId, completedAt: { not: null } },
+        }),
+      ]);
+      course.totalEnrollments = enrollments;
+      course.totalCompletions = completions;
+      return course;
     }
   } catch {
     // Payload not configured or DB not available — fall through to Prisma
@@ -176,6 +208,49 @@ export async function getCourseBySlug(
 }
 
 export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
+  try {
+    const payload = await getPayload();
+    const [result, completionGroups, enrollmentGroups] = await Promise.all([
+      payload.find({
+        collection: "courses",
+        where: {
+          and: [
+            { trackNumId: { equals: trackId } },
+            { isActive: { equals: true } },
+          ],
+        },
+        sort: "trackLevel",
+        limit: 1000,
+      }),
+      prisma.enrollment.groupBy({
+        by: ["courseId"],
+        where: { completedAt: { not: null } },
+        _count: { courseId: true },
+      }),
+      prisma.enrollment.groupBy({
+        by: ["courseId"],
+        _count: { courseId: true },
+      }),
+    ]);
+
+    if (result.docs.length > 0) {
+      const completionMap = new Map(
+        completionGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+      const enrollmentMap = new Map(
+        enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+      return result.docs.map((doc) => {
+        const course = payloadCourseToCourse(doc);
+        course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
+        course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
+        return course;
+      });
+    }
+  } catch {
+    // Payload not configured — fall through to Prisma
+  }
+
   const [courses, completionGroups] = await Promise.all([
     prisma.course.findMany({
       where: { trackId, isActive: true },
@@ -201,6 +276,49 @@ export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
 export async function getCoursesByDifficulty(
   difficulty: Course["difficulty"],
 ): Promise<Course[]> {
+  try {
+    const payload = await getPayload();
+    const [result, completionGroups, enrollmentGroups] = await Promise.all([
+      payload.find({
+        collection: "courses",
+        where: {
+          and: [
+            { difficultyValue: { equals: difficulty } },
+            { isActive: { equals: true } },
+          ],
+        },
+        sort: "trackNumId",
+        limit: 1000,
+      }),
+      prisma.enrollment.groupBy({
+        by: ["courseId"],
+        where: { completedAt: { not: null } },
+        _count: { courseId: true },
+      }),
+      prisma.enrollment.groupBy({
+        by: ["courseId"],
+        _count: { courseId: true },
+      }),
+    ]);
+
+    if (result.docs.length > 0) {
+      const completionMap = new Map(
+        completionGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+      const enrollmentMap = new Map(
+        enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
+      );
+      return result.docs.map((doc) => {
+        const course = payloadCourseToCourse(doc);
+        course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
+        course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
+        return course;
+      });
+    }
+  } catch {
+    // Payload not configured — fall through to Prisma
+  }
+
   const [courses, completionGroups] = await Promise.all([
     prisma.course.findMany({
       where: { difficulty, isActive: true },

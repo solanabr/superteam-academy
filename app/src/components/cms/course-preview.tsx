@@ -2,7 +2,8 @@
 
 import React from "react";
 import { useLivePreview } from "@payloadcms/live-preview-react";
-import { RichText } from "@payloadcms/richtext-lexical/react";
+import { MarkdownContent } from "@/components/course/markdown-content";
+import { convertLexicalContent } from "@/lib/lexical-to-string";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LexicalData = any;
@@ -38,7 +39,7 @@ interface PayloadCourseDoc {
   title: string;
   slug: string;
   description?: string;
-  difficulty?: "beginner" | "intermediate" | "advanced";
+  difficulty?: string | number | { id: string; value?: string; label?: string; color?: string; [key: string]: unknown };
   duration?: string;
   xpTotal?: number;
   isActive?: boolean;
@@ -53,6 +54,22 @@ const difficultyColors: Record<string, string> = {
   intermediate: "#eab308",
   advanced: "#ef4444",
 };
+
+function getDifficulty(d: unknown): { value: string; label: string; color: string } | null {
+  if (!d) return null;
+  // Payload relationship: populated doc object
+  if (typeof d === "object" && d !== null) {
+    const obj = d as Record<string, unknown>;
+    const value = String(obj.value || obj.name || obj.label || obj.id || "");
+    if (!value) return null;
+    const label = String(obj.label || obj.name || value);
+    const color = (typeof obj.color === "string" && obj.color) || difficultyColors[value.toLowerCase()] || "#666";
+    return { value, label: label.charAt(0).toUpperCase() + label.slice(1), color };
+  }
+  // Primitive (string, number, unpopulated relationship ID)
+  const s = String(d);
+  return { value: s, label: s.charAt(0).toUpperCase() + s.slice(1), color: difficultyColors[s.toLowerCase()] || "#666" };
+}
 
 export function CoursePreview({
   initialData,
@@ -103,21 +120,23 @@ export function CoursePreview({
             alignItems: "center",
           }}
         >
-          {data.difficulty && (
-            <span
-              style={{
-                padding: "0.25rem 0.75rem",
-                borderRadius: 9999,
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                backgroundColor: difficultyColors[data.difficulty] || "#666",
-                color: "#fff",
-              }}
-            >
-              {data.difficulty.charAt(0).toUpperCase() +
-                data.difficulty.slice(1)}
-            </span>
-          )}
+          {(() => {
+            const diff = getDifficulty(data.difficulty);
+            return diff ? (
+              <span
+                style={{
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: 9999,
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  backgroundColor: diff.color,
+                  color: "#fff",
+                }}
+              >
+                {diff.label}
+              </span>
+            ) : null;
+          })()}
           {data.duration && (
             <span style={{ fontSize: "0.9rem", opacity: 0.7 }}>
               {data.duration}
@@ -244,9 +263,7 @@ export function CoursePreview({
 
               {/* Content lesson — render rich text */}
               {lesson.type === "content" && lesson.content && (
-                <div className="prose">
-                  <RichText data={lesson.content} />
-                </div>
+                <MarkdownContent content={convertLexicalContent(lesson.content) ?? ""} />
               )}
 
               {/* Challenge lesson */}
@@ -263,9 +280,7 @@ export function CoursePreview({
                       >
                         Prompt
                       </h4>
-                      <div className="prose">
-                        <RichText data={lesson.challenge.prompt} />
-                      </div>
+                      <MarkdownContent content={convertLexicalContent(lesson.challenge.prompt) ?? ""} />
                     </div>
                   )}
                   {lesson.challenge.starterCode && (

@@ -72,13 +72,7 @@ export const Courses: CollectionConfig = {
   slug: "courses",
   admin: {
     useAsTitle: "title",
-    defaultColumns: [
-      "title",
-      "difficultyRef",
-      "track",
-      "isActive",
-      "updatedAt",
-    ],
+    defaultColumns: ["title", "difficulty", "track", "isActive", "updatedAt"],
   },
   access: {
     read: allowPublicRead,
@@ -113,7 +107,7 @@ export const Courses: CollectionConfig = {
       },
     ],
     beforeChange: [
-      async ({ data, req }) => {
+      ({ data }) => {
         if (!data) return data;
         let totalXp = 0;
         let totalMinutes = 0;
@@ -132,57 +126,43 @@ export const Courses: CollectionConfig = {
           }
         }
         data.xpTotal = totalXp;
-        // Auto-fill duration from lesson durations when empty
         if (!data.duration && totalMinutes > 0) {
           data.duration = formatMinutesToDuration(totalMinutes);
         }
-        // Auto-populate trackId/trackName from the track relationship
+        return data;
+      },
+      async ({ data, req }) => {
+        if (!data) return data;
         if (data.track) {
           try {
-            const trackDoc =
-              typeof data.track === "object" && data.track !== null
-                ? data.track
-                : await req.payload.findByID({
-                    collection: "tracks",
-                    id: data.track as string,
-                  });
-            data.trackId = (trackDoc as Record<string, unknown>)
-              .trackId as number;
-            data.trackName = (trackDoc as Record<string, unknown>)
-              .display as string;
-          } catch {
-            // Track doc may not exist yet
-          }
-        } else if (data.trackId != null && !data.trackName) {
-          // Backward compat: seed scripts may set trackId without track ref
-          try {
-            const result = await req.payload.find({
+            const trackDoc = await req.payload.findByID({
               collection: "tracks",
-              where: { trackId: { equals: Number(data.trackId) } },
-              limit: 1,
+              id: String(data.track),
+              depth: 0,
             });
-            if (result.docs.length > 0) {
-              data.trackName = result.docs[0].display as string;
+            if (trackDoc) {
+              data.trackNumId = (trackDoc as Record<string, unknown>)
+                .trackId as number;
+              data.trackName = (trackDoc as Record<string, unknown>)
+                .name as string;
             }
           } catch {
-            // Tracks collection may not be seeded yet
+            /* don't block save */
           }
         }
-        // Auto-populate difficulty from difficultyRef relationship
-        if (data.difficultyRef) {
+        if (data.difficulty) {
           try {
-            const diffDoc =
-              typeof data.difficultyRef === "object" &&
-              data.difficultyRef !== null
-                ? data.difficultyRef
-                : await req.payload.findByID({
-                    collection: "difficulties",
-                    id: data.difficultyRef as string,
-                  });
-            data.difficulty = (diffDoc as Record<string, unknown>)
-              .value as string;
+            const diffDoc = await req.payload.findByID({
+              collection: "difficulties",
+              id: String(data.difficulty),
+              depth: 0,
+            });
+            if (diffDoc) {
+              data.difficultyValue = (diffDoc as Record<string, unknown>)
+                .value as string;
+            }
           } catch {
-            // Difficulties collection may not be seeded yet
+            /* don't block save */
           }
         }
         return data;
@@ -274,7 +254,7 @@ export const Courses: CollectionConfig = {
       type: "row",
       fields: [
         {
-          name: "difficultyRef",
+          name: "difficulty",
           type: "relationship",
           relationTo: "difficulties",
           admin: { width: "50%" },
@@ -289,11 +269,6 @@ export const Courses: CollectionConfig = {
           },
         },
       ],
-    },
-    {
-      name: "difficulty",
-      type: "text",
-      admin: { condition: () => false },
     },
     {
       type: "row",
@@ -331,19 +306,24 @@ export const Courses: CollectionConfig = {
           type: "number",
           defaultValue: 1,
           access: { update: adminFieldUpdate },
-          admin: { width: "50%" },
+          admin: { hidden: true },
         },
       ],
     },
     {
-      name: "trackId",
+      name: "trackNumId",
       type: "number",
-      admin: { condition: () => false },
+      admin: { hidden: true },
     },
     {
       name: "trackName",
       type: "text",
-      admin: { condition: () => false },
+      admin: { hidden: true },
+    },
+    {
+      name: "difficultyValue",
+      type: "text",
+      admin: { hidden: true },
     },
     {
       type: "row",

@@ -1,6 +1,83 @@
+"use client";
+
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import hljs from "highlight.js/lib/core";
+import rust from "highlight.js/lib/languages/rust";
+import typescript from "highlight.js/lib/languages/typescript";
+import javascript from "highlight.js/lib/languages/javascript";
+import json from "highlight.js/lib/languages/json";
+import bash from "highlight.js/lib/languages/bash";
+import toml from "highlight.js/lib/languages/ini";
 import type { Lesson } from "@/types";
+
+hljs.registerLanguage("rust", rust);
+hljs.registerLanguage("typescript", typescript);
+hljs.registerLanguage("ts", typescript);
+hljs.registerLanguage("javascript", javascript);
+hljs.registerLanguage("js", javascript);
+hljs.registerLanguage("json", json);
+hljs.registerLanguage("bash", bash);
+hljs.registerLanguage("sh", bash);
+hljs.registerLanguage("shell", bash);
+hljs.registerLanguage("toml", toml);
+
+// GitHub Dark theme colors — inlined to avoid CSS specificity/loading issues
+const THEME: Record<string, string> = {
+  "hljs-doctag": "#ff7b72",
+  "hljs-keyword": "#ff7b72",
+  "hljs-template-tag": "#ff7b72",
+  "hljs-template-variable": "#ff7b72",
+  "hljs-type": "#ff7b72",
+  "hljs-title": "#d2a8ff",
+  "hljs-attr": "#79c0ff",
+  "hljs-attribute": "#79c0ff",
+  "hljs-literal": "#79c0ff",
+  "hljs-meta": "#79c0ff",
+  "hljs-number": "#79c0ff",
+  "hljs-operator": "#79c0ff",
+  "hljs-variable": "#79c0ff",
+  "hljs-selector-attr": "#79c0ff",
+  "hljs-selector-class": "#79c0ff",
+  "hljs-selector-id": "#79c0ff",
+  "hljs-regexp": "#a5d6ff",
+  "hljs-string": "#a5d6ff",
+  "hljs-built_in": "#ffa657",
+  "hljs-symbol": "#ffa657",
+  "hljs-comment": "#8b949e",
+  "hljs-code": "#8b949e",
+  "hljs-formula": "#8b949e",
+  "hljs-name": "#7ee787",
+  "hljs-quote": "#7ee787",
+  "hljs-selector-tag": "#7ee787",
+  "hljs-selector-pseudo": "#7ee787",
+  "hljs-subst": "#c9d1d9",
+  "hljs-section": "#1f6feb",
+  "hljs-bullet": "#f2cc60",
+  "hljs-addition": "#aff5b4",
+  "hljs-deletion": "#ffdcd7",
+};
+
+/** Convert hljs class-based spans to inline style spans */
+function toInlineStyles(html: string): string {
+  return html.replace(/class="([^"]*)"/g, (original, classes: string) => {
+    for (const cls of classes.split(" ")) {
+      const color = THEME[cls];
+      if (color) return `style="color:${color}"`;
+    }
+    return original;
+  });
+}
+
+function highlightCode(code: string, lang?: string): string {
+  let html: string;
+  if (lang && hljs.getLanguage(lang)) {
+    html = hljs.highlight(code, { language: lang }).value;
+  } else {
+    html = hljs.highlightAuto(code).value;
+  }
+  return toInlineStyles(html);
+}
 
 export interface MarkdownContentProps {
   content: string;
@@ -64,6 +141,8 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
             const isBlock = className?.startsWith("language-");
             if (isBlock) {
               const lang = className?.replace("language-", "");
+              const raw = String(children).replace(/\n$/, "");
+              const highlighted = highlightCode(raw, lang);
               return (
                 <div className="my-4 overflow-hidden rounded-lg border border-[#333] bg-[#1e1e1e]">
                   {lang && (
@@ -72,9 +151,10 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
                     </div>
                   )}
                   <pre className="overflow-x-auto p-4">
-                    <code className="font-mono text-sm leading-relaxed text-[#d4d4d4]">
-                      {children}
-                    </code>
+                    <code
+                      className="font-mono text-sm leading-relaxed text-[#d4d4d4]"
+                      dangerouslySetInnerHTML={{ __html: highlighted }}
+                    />
                   </pre>
                 </div>
               );

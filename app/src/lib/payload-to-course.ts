@@ -5,6 +5,22 @@ import type { Course } from "@/types";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PayloadCourse = Record<string, any>;
 
+function extractRawText(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const root = (data as any).root;
+  if (!Array.isArray(root?.children) || root.children.length !== 1)
+    return undefined;
+  const para = root.children[0];
+  if (para.type !== "paragraph" || para.children?.length !== 1)
+    return undefined;
+  const textNode = para.children[0];
+  if (textNode.type !== "text" || typeof textNode.text !== "string")
+    return undefined;
+  if (!/^#|\*\*|`/.test(textNode.text)) return undefined;
+  return textNode.text;
+}
+
 function lexicalToHtml(data: unknown): string | undefined {
   if (!data) return undefined;
   try {
@@ -20,7 +36,7 @@ function lexicalToHtml(data: unknown): string | undefined {
 export function payloadCourseToCourse(doc: PayloadCourse): Course {
   const modules = (doc.modules ?? []).map((m: PayloadCourse, mIdx: number) => {
     const lessons = (m.lessons ?? []).map((l: PayloadCourse, lIdx: number) => {
-      const content = lexicalToHtml(l.content);
+      const content = extractRawText(l.content) ?? lexicalToHtml(l.content);
       const isChallenge = l.type === "challenge";
 
       return {
@@ -38,7 +54,10 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
             ? {
                 id: l.id ?? `${doc.id}-m${mIdx}-l${lIdx}-c`,
                 prompt:
-                  lexicalToHtml(l.challenge.prompt) ?? l.challenge.prompt ?? "",
+                  extractRawText(l.challenge.prompt) ??
+                  lexicalToHtml(l.challenge.prompt) ??
+                  l.challenge.prompt ??
+                  "",
                 starterCode: l.challenge.starterCode ?? "",
                 language: (l.challenge.language ?? "typescript") as
                   | "rust"
@@ -88,17 +107,22 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
       : ((doc.thumbnail as string | undefined) ?? "");
 
   return {
-    id: doc.id,
+    id: String(doc.id),
     slug: doc.slug ?? "",
     title: doc.title ?? "",
     description: doc.description ?? "",
     thumbnail,
-    difficulty: (doc.difficulty as string) ?? "beginner",
+    difficulty:
+      (doc.difficultyValue as string) ??
+      (typeof doc.difficulty === "object"
+        ? ((doc.difficulty as PayloadCourse)?.value as string)
+        : (doc.difficulty as string)) ??
+      "beginner",
     duration: doc.duration ?? "",
     lessonCount,
     challengeCount,
     xpTotal: doc.xpTotal ?? 0,
-    trackId: doc.trackId ?? 1,
+    trackId: doc.trackNumId ?? doc.trackId ?? 1,
     trackLevel: doc.trackLevel ?? 1,
     trackName: doc.trackName ?? "",
     creator: doc.creator ?? "",

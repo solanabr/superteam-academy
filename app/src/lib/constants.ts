@@ -55,6 +55,13 @@ export const DIFFICULTIES: DifficultyMeta[] = [
     order: 3,
     defaultXp: 50,
   },
+  {
+    value: "expert",
+    label: "Expert",
+    color: "#8b2252",
+    order: 4,
+    defaultXp: 65,
+  },
 ];
 
 // Track registry (matches on-chain spec)

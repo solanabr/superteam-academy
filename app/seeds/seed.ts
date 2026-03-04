@@ -1,6 +1,9 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { getPayload } from "./utils/payload";
+import { TRACKS, DIFFICULTIES } from "../src/lib/constants";
+import { prismaToPayloadCourse } from "./utils/prisma-to-payload";
 import { getAchievements } from "./data/achievements";
 import {
   getCourse1,
@@ -36,15 +39,46 @@ function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = Record<string, any>;
+
 async function main() {
   const start = Date.now();
 
   console.log("🌱 Seeding database...\n");
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 1. Clear all tables (FK-safe order)
+  // 1. Initialize Payload
   // ═══════════════════════════════════════════════════════════════════════════
-  console.log("  Clearing existing data...");
+  console.log("  Initializing Payload CMS...");
+  const payload = await getPayload();
+  console.log("  ✓ Payload ready\n");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2. Clear Payload collections
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("  Clearing Payload collections...");
+  const [existingCourses, existingTracks, existingDifficulties] =
+    await Promise.all([
+      payload.find({ collection: "courses", limit: 1000 }),
+      payload.find({ collection: "tracks", limit: 1000 }),
+      payload.find({ collection: "difficulties", limit: 1000 }),
+    ]);
+  for (const doc of existingCourses.docs) {
+    await payload.delete({ collection: "courses", id: doc.id });
+  }
+  for (const doc of existingTracks.docs) {
+    await payload.delete({ collection: "tracks", id: doc.id });
+  }
+  for (const doc of existingDifficulties.docs) {
+    await payload.delete({ collection: "difficulties", id: doc.id });
+  }
+  console.log("  ✓ Payload cleared\n");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 3. Clear Prisma tables (FK-safe order)
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("  Clearing Prisma tables...");
   await prisma.commentVote.deleteMany();
   await prisma.threadVote.deleteMany();
   await prisma.comment.deleteMany();
@@ -68,10 +102,51 @@ async function main() {
   await prisma.socialLinks.deleteMany();
   await prisma.newsletter.deleteMany();
   await prisma.user.deleteMany();
-  console.log("  ✓ Cleared\n");
+  console.log("  ✓ Prisma cleared\n");
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 2. Seed achievements
+  // 4. Seed tracks into Payload
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("  Seeding tracks (Payload)...");
+  const trackDocIdMap = new Map<number, number | string>();
+  for (const [id, track] of Object.entries(TRACKS)) {
+    const doc = await payload.create({
+      collection: "tracks",
+      data: {
+        trackId: Number(id),
+        name: track.name,
+        display: track.display,
+        short: track.short,
+        color: track.color,
+        icon: track.icon,
+      },
+    });
+    trackDocIdMap.set(Number(id), doc.id);
+  }
+  console.log(`  ✓ ${Object.keys(TRACKS).length} tracks\n`);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5. Seed difficulties into Payload
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("  Seeding difficulties (Payload)...");
+  const difficultyDocIdMap = new Map<string, number | string>();
+  for (const diff of DIFFICULTIES) {
+    const doc = await payload.create({
+      collection: "difficulties",
+      data: {
+        value: diff.value,
+        label: diff.label,
+        color: diff.color,
+        order: diff.order,
+        defaultXp: diff.defaultXp,
+      },
+    });
+    difficultyDocIdMap.set(diff.value, doc.id);
+  }
+  console.log(`  ✓ ${DIFFICULTIES.length} difficulties\n`);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 6. Seed achievements
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding achievements...");
   const achievements = getAchievements();
@@ -81,7 +156,7 @@ async function main() {
   console.log(`  ✓ ${achievements.length} achievements\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 3. Seed courses
+  // 7. Seed courses → Payload first, then Prisma mirrors
   // ═══════════════════════════════════════════════════════════════════════════
   const allCourseData = [
     getCourse1(),
@@ -96,24 +171,125 @@ async function main() {
 
   let totalModules = 0;
   let totalLessons = 0;
+
   for (const courseData of allCourseData) {
     console.log(`  Seeding course: ${courseData.title}...`);
-    await prisma.course.create({ data: courseData });
-    const mc = courseData.modules.create.length;
-    const lc = courseData.modules.create.reduce(
-      (sum: number, m: { lessons: { create: unknown[] } }) =>
-        sum + m.lessons.create.length,
-      0,
-    );
-    totalModules += mc;
-    totalLessons += lc;
+
+    // Create in Payload CMS (source of truth)
+    const payloadData = prismaToPayloadCourse(courseData);
+    payloadData.track = trackDocIdMap.get(courseData.trackId);
+    payloadData.difficulty = difficultyDocIdMap.get(courseData.difficulty);
+    const payloadCourse = await payload.create({
+      collection: "courses",
+      data: payloadData,
+    });
+
+    // Create Prisma mirror record for FK integrity
+    const payloadModules = (payloadCourse as AnyRecord).modules ?? [];
+
+    const prismaCourse = await prisma.course.create({
+      data: {
+        id: String(payloadCourse.id),
+        slug: courseData.slug,
+        title: courseData.title,
+        description: courseData.description,
+        thumbnail: courseData.thumbnail ?? null,
+        difficulty: courseData.difficulty,
+        duration: courseData.duration,
+        xpTotal: courseData.xpTotal,
+        trackId: courseData.trackId,
+        trackLevel: courseData.trackLevel,
+        trackName: courseData.trackName,
+        creator: courseData.creator,
+        isActive: courseData.isActive ?? true,
+        tags: courseData.tags,
+        prerequisites: courseData.prerequisites,
+      },
+    });
+
+    // Create mirror Module/Lesson/Challenge/TestCase records
+    for (let mIdx = 0; mIdx < courseData.modules.create.length; mIdx++) {
+      const moduleData = courseData.modules.create[mIdx];
+      const payloadModule = payloadModules[mIdx];
+      const moduleId = payloadModule?.id ?? `${prismaCourse.id}-m${mIdx}`;
+
+      const prismaModule = await prisma.module.create({
+        data: {
+          id: moduleId,
+          courseId: prismaCourse.id,
+          title: moduleData.title,
+          description: moduleData.description,
+          order: moduleData.order,
+        },
+      });
+
+      const payloadLessons = payloadModule?.lessons ?? [];
+
+      for (let lIdx = 0; lIdx < moduleData.lessons.create.length; lIdx++) {
+        const lessonData = moduleData.lessons.create[lIdx];
+        const payloadLesson = payloadLessons[lIdx];
+        const lessonId =
+          payloadLesson?.id ?? `${prismaCourse.id}-m${mIdx}-l${lIdx}`;
+
+        const prismaLesson = await prisma.lesson.create({
+          data: {
+            id: lessonId,
+            moduleId: prismaModule.id,
+            title: lessonData.title,
+            description: lessonData.description,
+            type: lessonData.type,
+            order: lessonData.order,
+            xpReward: lessonData.xpReward,
+            content: "",
+            duration: lessonData.duration ?? "",
+          },
+        });
+
+        if (lessonData.challenge) {
+          const rawChallenge = lessonData.challenge;
+          const challengeData =
+            "create" in rawChallenge ? rawChallenge.create : rawChallenge;
+          const testCases = Array.isArray(challengeData.testCases)
+            ? challengeData.testCases
+            : (challengeData.testCases?.create ?? []);
+
+          const prismaChallenge = await prisma.challenge.create({
+            data: {
+              lessonId: prismaLesson.id,
+              prompt: "",
+              starterCode: challengeData.starterCode,
+              language: challengeData.language,
+              hints: challengeData.hints ?? [],
+              solution: challengeData.solution ?? "",
+            },
+          });
+
+          for (let tIdx = 0; tIdx < testCases.length; tIdx++) {
+            const tc = testCases[tIdx];
+            await prisma.testCase.create({
+              data: {
+                challengeId: prismaChallenge.id,
+                name: tc.name,
+                input: tc.input,
+                expectedOutput: tc.expectedOutput,
+                order: tc.order ?? tIdx,
+              },
+            });
+          }
+        }
+
+        totalLessons++;
+      }
+
+      totalModules++;
+    }
   }
   console.log(
     `  ✓ ${allCourseData.length} courses, ${totalModules} modules, ${totalLessons} lessons\n`,
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 4. Seed users (with social links via nested create)
+  // 8. Seed users (with social links via nested create)
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding users...");
   const seedUsers = getUsers();
@@ -148,11 +324,10 @@ async function main() {
   console.log(`  ✓ ${seedUsers.length} users\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 5. Seed enrollments + lesson completions
+  // 9. Seed enrollments + lesson completions
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding enrollments & lesson completions...");
 
-  // Query back courses with their lessons
   const courses = await prisma.course.findMany({
     include: {
       modules: {
@@ -163,7 +338,6 @@ async function main() {
     orderBy: { createdAt: "asc" },
   });
 
-  // Define enrollment patterns per archetype
   const enrollmentPlan: Record<
     SeedUser["archetype"],
     { courseCount: number; completionRate: number }
@@ -204,7 +378,6 @@ async function main() {
       });
       enrollmentCount++;
 
-      // Create lesson completions
       const lessonsToComplete = allLessons.slice(0, completedCount);
       for (const lesson of lessonsToComplete) {
         await prisma.lessonCompletion.create({
@@ -224,7 +397,7 @@ async function main() {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 6. Seed XP events + streaks + daily activities
+  // 10. Seed XP events + streaks + daily activities
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding XP events & streaks...");
 
@@ -239,7 +412,6 @@ async function main() {
   let xpEventCount = 0;
 
   for (const user of seedUsers) {
-    // XP events based on archetype
     const eventCounts: Record<SeedUser["archetype"], number> = {
       power: 120,
       active: 60,
@@ -274,7 +446,6 @@ async function main() {
   }
   console.log(`  ✓ ${xpEventCount} XP events`);
 
-  // Streaks for non-new users
   const streakUsers = seedUsers.filter((u) => u.archetype !== "new");
   let streakCount = 0;
   for (const user of streakUsers) {
@@ -302,7 +473,6 @@ async function main() {
     });
     streakCount++;
 
-    // Daily activities for the streak period
     for (let d = 0; d < currentStreak; d++) {
       await prisma.dailyActivity.create({
         data: {
@@ -316,11 +486,10 @@ async function main() {
   console.log(`  ✓ ${streakCount} streaks\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 7. Seed user achievements + credentials + activities
+  // 11. Seed user achievements + credentials + activities
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding achievements & credentials...");
 
-  // Achievement claims — power users get more
   const achievementClaims: { userId: string; achievementId: number }[] = [];
   const achievementMap = new Map(achievements.map((a) => [a.id, a]));
 
@@ -356,7 +525,6 @@ async function main() {
   }
   console.log(`  ✓ ${claimCount} achievement claims`);
 
-  // Credentials for power & active users
   const credentialUsers = seedUsers.filter((u) =>
     ["power", "active"].includes(u.archetype),
   );
@@ -384,7 +552,6 @@ async function main() {
   }
   console.log(`  ✓ ${credentialCount} credentials`);
 
-  // Activity log entries
   const activityTypes = [
     "lesson_completed",
     "challenge_passed",
@@ -412,7 +579,7 @@ async function main() {
   console.log(`  ✓ ${activityCount} activities\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 8. Seed discussions (threads + comments + votes)
+  // 12. Seed discussions (threads + comments + votes)
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding discussions...");
 
@@ -421,7 +588,6 @@ async function main() {
   let commentTotal = 0;
   let voteTotal = 0;
 
-  // For lesson-scoped threads, pick real lesson/course IDs
   const firstCourseLessons = courses[0]?.modules[0]?.lessons ?? [];
   const secondCourseLessons = courses[1]?.modules[0]?.lessons ?? [];
 
@@ -429,7 +595,6 @@ async function main() {
     const td = threadDefs[ti];
     const authorId = seedUsers[td.authorIndex].id;
 
-    // Assign real lesson/course IDs for lesson-scoped threads
     let lessonId: string | null = null;
     let courseId: string | null = null;
     if (td.scope === "lesson") {
@@ -459,7 +624,6 @@ async function main() {
     });
     threadCount++;
 
-    // Flatten comment tree and create with materialized paths
     interface FlatComment {
       authorIndex: number;
       body: string;
@@ -501,7 +665,6 @@ async function main() {
 
     const flatComments = flattenComments(td.comments, "", null, 0);
 
-    // Create comments in order, tracking IDs for parent references
     const pathToId = new Map<string, string>();
     for (const fc of flatComments) {
       const realParentId = fc.parentId
@@ -522,7 +685,6 @@ async function main() {
       pathToId.set(fc.parentPath, comment.id);
       commentTotal++;
 
-      // Random votes on comments
       const numVotes = randomBetween(0, 3);
       let commentVoteScore = 0;
       const voterIndices = new Set<number>();
@@ -553,17 +715,15 @@ async function main() {
       }
     }
 
-    // Update thread comment count
     await prisma.thread.update({
       where: { id: thread.id },
       data: { commentCount: flatComments.length },
     });
 
-    // Thread votes
     const threadVoteCount = randomBetween(1, 6);
     let threadVoteScore = 0;
     const threadVoterIndices = new Set<number>();
-    threadVoterIndices.add(td.authorIndex); // author can't vote own thread
+    threadVoterIndices.add(td.authorIndex);
     for (let v = 0; v < threadVoteCount; v++) {
       let voterIdx: number;
       do {
@@ -593,7 +753,7 @@ async function main() {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 9. Seed notifications
+  // 13. Seed notifications
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding notifications...");
 
@@ -649,7 +809,7 @@ async function main() {
   console.log(`  ✓ ${notifications.length} notifications\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 10. Seed daily challenge completions
+  // 14. Seed daily challenge completions
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Seeding daily challenge completions...");
 
@@ -661,7 +821,6 @@ async function main() {
   for (const user of challengeUsers) {
     const daysToSeed = user.archetype === "power" ? 14 : 7;
     for (let d = 0; d < daysToSeed; d++) {
-      // Skip some days randomly for realism
       if (Math.random() < 0.3) continue;
 
       const date = daysAgo(d);
@@ -736,6 +895,7 @@ async function main() {
 
   await prisma.$disconnect();
   await pool.end();
+  process.exit(0);
 }
 
 main().catch(async (e) => {
