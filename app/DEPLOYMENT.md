@@ -1,27 +1,45 @@
-# Deployment (MVP)
+# DEPLOYMENT.md
 
-This is the Next.js MVP scaffold for Superteam Academy.
+## Deploy to Vercel
 
-## Local dev
+1. Push branch to remote
+2. Import repository in Vercel
+3. Set **Root Directory** to `app`
+4. Framework: **Next.js**
+5. Build command: `pnpm build`
+6. Install command: `pnpm install`
+7. Output directory: `.next`
 
-```bash
-cd app
-pnpm install
-pnpm dev
-```
+## Environment variables
 
-Open http://localhost:3000
+Set only what you need; all integrations are optional.
 
-## Vercel
+### Auth
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
-- Import the repo in Vercel
-- Set **Root Directory** to `app/`
-- Framework preset: Next.js
-- Build command: `pnpm build`
-- Output: `.next`
+### Solana
+- `NEXT_PUBLIC_SOLANA_RPC_URL`
+- `NEXT_PUBLIC_XP_TOKEN_MINT`
+- `NEXT_PUBLIC_DAS_API_URL`
 
-## Notes
+### Sanity
+- `NEXT_PUBLIC_SANITY_PROJECT_ID`
+- `NEXT_PUBLIC_SANITY_DATASET`
+- `NEXT_PUBLIC_SANITY_API_VERSION`
+- `SANITY_API_TOKEN`
 
-- Auth is currently a stub (httpOnly cookie via `/api/auth/login`).
-- Course data is mocked in `src/lib/courses.ts`.
-- Next: replace stub auth with Auth.js/Clerk/Supabase + add a CMS (Sanity/Contentlayer/etc).
+### Analytics & Monitoring
+- `NEXT_PUBLIC_GA4_ID`
+- `NEXT_PUBLIC_POSTHOG_KEY`
+- `NEXT_PUBLIC_POSTHOG_HOST`
+- `NEXT_PUBLIC_SENTRY_DSN`
+
+## Verification checklist
+
+- [ ] `pnpm build` passes with no env vars
+- [ ] Site loads routes under `/courses`, `/dashboard`, `/leaderboard`
+- [ ] Wallet connect works in browser
+- [ ] Optional providers activate only when env vars are set
