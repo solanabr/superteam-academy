@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Github, Twitter, Mail } from "lucide-react";
@@ -89,8 +90,19 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="relative overflow-hidden border-t border-border bg-card">
+      {/* Decorative background banner */}
+      <Image
+        src="/capa-nova1.jpg"
+        alt=""
+        fill
+        className="object-cover opacity-20 pointer-events-none"
+        priority={false}
+      />
+      {/* Fade overlay: transparent top → solid card color bottom */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[var(--card)]" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
