@@ -23,6 +23,7 @@ import { useCodeExecution } from '@/context/hooks/useCodeExecution';
 import { ClaimXpPopup } from '@/components/streak/ClaimXpPopup';
 import { Check, X, Circle, RotateCcw, Play, Loader2 } from 'lucide-react';
 import type { SanityChallenge, SanityTestCase, SanityCodeBlock } from '@/context/types/course';
+import { markdownToHtml } from '@/lib/markdown-to-html';
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 
@@ -220,9 +221,19 @@ export function ChallengePanel({
                 <div className="inline-block text-[0.65rem] font-bold uppercase tracking-wider text-brand-green-emerald bg-brand-green-emerald/10 border border-brand-green-emerald/20 px-2 py-0.5 rounded mb-2.5">
                     {t('challenge')}
                 </div>
-                <div className="text-sm text-foreground/70 leading-relaxed font-supreme whitespace-pre-wrap">
-                    {challenge.instructions}
-                </div>
+                <div
+                    className="text-sm text-foreground/70 leading-relaxed font-supreme
+                        prose prose-sm dark:prose-invert max-w-none
+                        prose-headings:text-foreground prose-headings:font-display
+                        prose-h2:text-base prose-h2:mt-5 prose-h2:mb-2
+                        prose-h3:text-sm prose-h3:mt-4 prose-h3:mb-1.5
+                        prose-code:text-brand-green-emerald prose-code:bg-muted/40 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+                        prose-pre:bg-muted/60 prose-pre:border prose-pre:border-border prose-pre:rounded-lg prose-pre:p-3 prose-pre:text-xs
+                        prose-blockquote:border-l-2 prose-blockquote:border-brand-green-emerald/40 prose-blockquote:pl-3 prose-blockquote:italic
+                        prose-li:text-foreground/70
+                        prose-strong:text-foreground/90"
+                    dangerouslySetInnerHTML={{ __html: markdownToHtml(challenge.instructions) }}
+                />
             </div>
 
             {/* Editor */}
@@ -264,8 +275,8 @@ export function ChallengePanel({
             <div className="flex bg-muted/20 border-b border-border">
                 <button
                     className={`flex-1 py-2 px-4 border-b-2 text-[0.7rem] font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${activeTab === 'output'
-                            ? 'text-foreground border-brand-green-emerald'
-                            : 'text-muted-foreground border-transparent hover:text-foreground/60'
+                        ? 'text-foreground border-brand-green-emerald'
+                        : 'text-muted-foreground border-transparent hover:text-foreground/60'
                         }`}
                     onClick={() => setActiveTab('output')}
                     type="button"
@@ -275,8 +286,8 @@ export function ChallengePanel({
                 </button>
                 <button
                     className={`flex-1 py-2 px-4 border-b-2 text-[0.7rem] font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${activeTab === 'tests'
-                            ? 'text-foreground border-brand-green-emerald'
-                            : 'text-muted-foreground border-transparent hover:text-foreground/60'
+                        ? 'text-foreground border-brand-green-emerald'
+                        : 'text-muted-foreground border-transparent hover:text-foreground/60'
                         }`}
                     onClick={() => setActiveTab('tests')}
                     type="button"
@@ -284,8 +295,8 @@ export function ChallengePanel({
                     {t('testCases')}
                     {displayResults.length > 0 && (
                         <span className={`text-[0.6rem] px-1.5 py-px rounded-full font-bold ${allVisiblePassed
-                                ? 'bg-brand-green-emerald/15 text-brand-green-emerald'
-                                : 'bg-destructive/15 text-destructive'
+                            ? 'bg-brand-green-emerald/15 text-brand-green-emerald'
+                            : 'bg-destructive/15 text-destructive'
                             }`}>
                             {displayResults.filter((r) => r.passed).length}/{displayResults.length}
                         </span>
@@ -317,10 +328,10 @@ export function ChallengePanel({
                             <div
                                 key={tc.name}
                                 className={`px-3 py-2.5 rounded-lg mb-1 border ${isPassed
-                                        ? 'border-brand-green-emerald/15 bg-brand-green-emerald/5'
-                                        : isFailed
-                                            ? 'border-destructive/15 bg-destructive/5'
-                                            : 'border-border/50 bg-card/50'
+                                    ? 'border-brand-green-emerald/15 bg-brand-green-emerald/5'
+                                    : isFailed
+                                        ? 'border-destructive/15 bg-destructive/5'
+                                        : 'border-border/50 bg-card/50'
                                     }`}
                             >
                                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground/75">
@@ -362,8 +373,8 @@ export function ChallengePanel({
             {/* Results summary */}
             {displayResults.length > 0 && (
                 <div className={`mx-5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-center ${allVisiblePassed
-                        ? 'bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald'
-                        : 'bg-destructive/10 border border-destructive/20 text-destructive'
+                    ? 'bg-brand-green-emerald/10 border border-brand-green-emerald/20 text-brand-green-emerald'
+                    : 'bg-destructive/10 border border-destructive/20 text-destructive'
                     }`}>
                     {allVisiblePassed
                         ? t('allTestsPassed')

@@ -227,8 +227,8 @@ export function QuizSection({ quiz, onPass, disabled = false }: QuizSectionProps
                     padding: 12px;
                     border: none;
                     border-radius: 10px;
-                    background: linear-gradient(135deg, #9945FF, #14F195);
-                    color: white;
+                    background: #14F195;
+                    color: #0a1510;
                     font-size: 0.9rem;
                     font-weight: 700;
                     cursor: pointer;

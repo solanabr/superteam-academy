@@ -69,19 +69,9 @@ export function LandingAssessment() {
                     </p>
                 </div>
 
-                {/* Result card with restart button beside it */}
-                <div className="mx-auto flex max-w-[520px] items-start justify-center gap-4">
-                    <button
-                        type="button"
-                        onClick={restart}
-                        aria-label="Restart assessment"
-                        className="mt-2 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 font-supreme text-sm font-medium text-brand-green-dark transition-colors hover:bg-brand-green-dark/10 dark:text-brand-yellow dark:hover:bg-brand-yellow/10"
-                    >
-                        <RotateCcw size={16} strokeWidth={2} aria-hidden="true" />
-                        {t('assessment.retake')}
-                    </button>
-
-                    <div className="w-full max-w-[380px]">
+                {/* Result card with restart button below */}
+                <div className="mx-auto flex max-w-[380px] flex-col items-center gap-5">
+                    <div className="w-full">
                         <CourseCard
                             image={
                                 <Image
@@ -139,6 +129,17 @@ export function LandingAssessment() {
                             </a>
                         </CourseCard>
                     </div>
+
+                    {/* Retake button — below the card */}
+                    <button
+                        type="button"
+                        onClick={restart}
+                        aria-label="Restart assessment"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand-green-dark/30 px-5 py-2.5 font-supreme text-sm font-bold text-foreground transition-colors hover:border-brand-green-dark/60 hover:bg-brand-green-dark/5 dark:border-white/30 dark:text-white dark:hover:border-white/50 dark:hover:bg-white/10"
+                    >
+                        <RotateCcw size={16} strokeWidth={2} aria-hidden="true" />
+                        {t('assessment.retake')}
+                    </button>
                 </div>
             </section>
         );

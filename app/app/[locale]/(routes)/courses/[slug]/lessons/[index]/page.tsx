@@ -12,6 +12,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Link } from '@/context/i18n/navigation';
 import { useCourseDetails } from '@/context/hooks/useCourseDetails';
+import { markdownToHtml } from '@/lib/markdown-to-html';
 import {
     useLessonCompletion,
     useCourseProgress,
@@ -55,7 +56,7 @@ export default function LessonViewPage() {
         // In mock mode, use the content field from the lesson data directly
         if (MOCK_MODE) {
             if (lesson && 'content' in lesson && typeof (lesson as Record<string, unknown>).content === 'string') {
-                setLessonContent((lesson as Record<string, unknown>).content as string);
+                setLessonContent(markdownToHtml((lesson as Record<string, unknown>).content as string));
             } else {
                 setLessonContent(null);
             }

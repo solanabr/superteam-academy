@@ -11,6 +11,7 @@ import type { Lesson, SanityCodeBlock } from '@/context/types/course';
 import type { CompletionStep } from '@/context/hooks/useLessonCompletion';
 import { QuizSection } from './QuizSection';
 import { HintsPanel } from '@/components/editor/HintsPanel';
+import { ClaimXpPopup } from '@/components/streak/ClaimXpPopup';
 
 interface LessonContentProps {
     lesson: Lesson;
@@ -39,6 +40,7 @@ export function LessonContent({
 }: LessonContentProps) {
     const t = useTranslations('lesson');
     const [quizPassed, setQuizPassed] = useState(false);
+    const [showXpPopup, setShowXpPopup] = useState(false);
     const hasQuiz = !!lesson.quiz;
     const canComplete = isCompleted || (!hasQuiz || quizPassed);
 
@@ -120,8 +122,13 @@ export function LessonContent({
                     </div>
                 ) : (
                     <button
-                        className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-accent to-brand-green-emerald hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                        onClick={onComplete}
+                        className="w-full py-3.5 rounded-xl font-bold text-sm text-[#0a1510] bg-brand-green-emerald hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => {
+                            onComplete();
+                            if (!hasQuiz || quizPassed) {
+                                setShowXpPopup(true);
+                            }
+                        }}
                         disabled={!canComplete || isCompleting}
                         type="button"
                     >
@@ -134,6 +141,15 @@ export function LessonContent({
                     </button>
                 )}
             </div>
+
+            {/* XP claim popup */}
+            {showXpPopup && (
+                <ClaimXpPopup
+                    xpAmount={xpReward}
+                    streakDay={0}
+                    onClose={() => setShowXpPopup(false)}
+                />
+            )}
         </div>
     );
 }
