@@ -206,11 +206,18 @@ model Lesson {
 
 model Challenge {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String   // "Complete 3 lessons today"
+  title       String
   description String
   xpReward    Int      @default(25)
-  targetCount Int      // Сколько действий нужно сделать (например, 3)
+  targetCount Int
   type        String   // "LESSON_COUNT", "LOGIN_STREAK"
+  
+  // НОВОЕ: Тип периода
+  period      String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
+  
+  // Опционально: дата окончания сезона
+  expiresAt   DateTime? 
+  
   isActive    Boolean  @default(true)
   
   userChallenges UserChallenge[]

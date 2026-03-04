@@ -196,20 +196,21 @@ export async function POST(request: Request) {
 
         // НОВОЕ: Трекинг Daily Challenges
         const todayStr = new Date().toISOString().split('T')[0];
+        const thisMonthStr = todayStr.substring(0, 7);
                 
-        // Получаем все активные задания типа LESSON_COUNT
         const activeChallenges = await tx.challenge.findMany({
             where: { type: "LESSON_COUNT", isActive: true }
         });
 
         for (const challenge of activeChallenges) {
             // Ищем текущий прогресс на сегодня
+            const dateKeyStr = challenge.period === "MONTHLY" ? thisMonthStr : todayStr;
             const userCh = await tx.userChallenge.findUnique({
                 where: {
                     userId_challengeId_dateKey: {
                         userId: user.id,
                         challengeId: challenge.id,
-                        dateKey: todayStr
+                        dateKey: dateKeyStr
                     }
                 }
             });
@@ -222,20 +223,16 @@ export async function POST(request: Request) {
                     userId_challengeId_dateKey: {
                         userId: user.id,
                         challengeId: challenge.id,
-                        dateKey: todayStr
+                        dateKey: dateKeyStr
                     }
                 },
-                update: {
-                    currentCount: currentCount,
-                    isCompleted: isCompleted,
-                     // Мы не ставим claimedAt автоматически. Юзер должен сам "забрать" награду.
-                },
+                update: { currentCount, isCompleted },
                 create: {
                     userId: user.id,
                     challengeId: challenge.id,
-                    dateKey: todayStr,
-                    currentCount: currentCount,
-                    isCompleted: isCompleted
+                    dateKey: dateKeyStr,
+                    currentCount,
+                    isCompleted
                 }
             });
         }

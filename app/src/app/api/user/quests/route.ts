@@ -1,3 +1,4 @@
+// app/src/app/api/user/quests/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
@@ -8,45 +9,46 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const wallet = searchParams.get("wallet");
 
-    if (!wallet) return NextResponse.json([]);
+    if (!wallet) return NextResponse.json({ daily: [], seasonal: [] });
 
     const user = await prisma.user.findUnique({ where: { walletAddress: wallet } });
-    if (!user) return NextResponse.json([]);
+    if (!user) return NextResponse.json({ daily: [], seasonal: [] });
 
     const todayStr = new Date().toISOString().split('T')[0];
+    const thisMonthStr = todayStr.substring(0, 7); // "YYYY-MM"
 
-    // 1. Получаем все активные глобальные задания
     const activeChallenges = await prisma.challenge.findMany({
         where: { isActive: true }
     });
 
-    // 2. Получаем прогресс юзера по этим заданиям НА СЕГОДНЯ
     const userChallenges = await prisma.userChallenge.findMany({
-        where: {
-            userId: user.id,
-            dateKey: todayStr
-        }
+        where: { userId: user.id }
     });
 
-    // 3. Формируем ответ, объединяя данные
-    const responseData = activeChallenges.map(challenge => {
-        // Ищем, есть ли прогресс
-        const progress = userChallenges.find(uc => uc.challengeId === challenge.id);
-
+    const formatQuest = (challenge: any, dateKeyStr: string) => {
+        const progress = userChallenges.find(uc => uc.challengeId === challenge.id && uc.dateKey === dateKeyStr);
         return {
-            // Если прогресса еще нет, мы должны создать фейковый ID для UI
-            // Но кнопка Claim все равно недоступна, пока isCompleted не станет true (а это случится только при реальной записи)
-            id: progress?.id || `virtual_${challenge.id}`, 
+            id: progress?.id || `virtual_${challenge.id}_${dateKeyStr}`, 
             title: challenge.title,
+            description: challenge.description,
             xpReward: challenge.xpReward,
             targetCount: challenge.targetCount,
             currentCount: progress?.currentCount || 0,
             isCompleted: progress?.isCompleted || false,
             claimedAt: progress?.claimedAt || null
         };
-    });
+    };
 
-    return NextResponse.json(responseData);
+    // Разделяем на Daily и Monthly
+    const dailyQuests = activeChallenges
+        .filter(c => c.period === "DAILY")
+        .map(c => formatQuest(c, todayStr));
+
+    const seasonalQuests = activeChallenges
+        .filter(c => c.period === "MONTHLY")
+        .map(c => formatQuest(c, thisMonthStr));
+
+    return NextResponse.json({ daily: dailyQuests, seasonal: seasonalQuests });
 
   } catch (error) {
     console.error("Quests error:", error);
