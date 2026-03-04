@@ -28,6 +28,8 @@ type UserProfile = {
     twitterHandle?: string | null;
     githubHandle?: string | null;
     xp: number;
+    createdAt?: Date | string;
+    lastLogin?: Date | string;
     enrollments: { courseId: string; enrolledAt: string; }[];
     achievements: { 
         id: string;
@@ -68,7 +70,9 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
   const [allAchievements, setAllAchievements] = useState<AchievementType[]>([]);
   
   
-  const joinDate = new Date(parseInt(user.id.substring(0, 8), 16) * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const joinDateObj = user.createdAt ? new Date(user.createdAt) : (user.lastLogin ? new Date(user.lastLogin) : new Date());
+
+  const joinDate = joinDateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   useEffect(() => {
       fetch('/api/achievements').then(res => res.json()).then(setAllAchievements);
@@ -255,11 +259,13 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                         <Skeleton className="h-[400px] w-full rounded-xl" />
                     ) : certificates.length > 0 ? (
                         certificates.map((nft) => (
-                            <div key={nft.id} className="aspect-[3/4] cursor-pointer" onClick={() => window.open(`/certificates/${nft.id}`, '_blank')}>
+                            // УБРАЛИ onClick ОТСЮДА
+                            <div key={nft.id}>
                                 <CredentialCard 
                                     name={nft.name}
                                     imageUrl={nft.image}
                                     level={parseInt(nft.attributes.find(a => a.trait_type === "Level" || a.trait_type === "level")?.value || "1")}
+                                    onClick={() => window.open(`/certificates/${nft.id}`, '_blank')} // ПЕРЕДАЛИ СЮДА
                                 />
                             </div>
                         ))

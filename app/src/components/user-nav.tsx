@@ -5,6 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +25,10 @@ import {useUser} from '@/hooks/useUser'
 const WalletButton = dynamic(() => import("@/components/WalletButton"), { ssr: false });
 
 export function UserNav() {
-  const { publicKey, disconnect } = useWallet();
+  const { publicKey, disconnect, connecting, wallet } = useWallet();
   const { data: session } = useSession();
-  const { userDb } = useUser(); 
+  const { userDb } = useUser();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Определяем, залогинен ли пользователь хоть как-то
   const isLoggedIn = !!publicKey || !!session;
@@ -42,9 +44,15 @@ export function UserNav() {
     if (session) await signOut();
   };
 
+  useEffect(() => {
+    if (isModalOpen && (wallet || connecting)) {
+        setIsModalOpen(false);
+    }
+  }, [wallet, connecting, isModalOpen]);
+
   if (!isLoggedIn) {
     return (
-      <Dialog>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogTrigger asChild>
           <Button>Sign In</Button>
         </DialogTrigger>

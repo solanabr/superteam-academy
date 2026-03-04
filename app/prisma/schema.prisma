@@ -43,6 +43,7 @@ model User {
   streak        Int       @default(0)
   lastLogin     DateTime  @default(now())
   lastLessonAt  DateTime?
+  createdAt     DateTime  @default(now())
 
   hasCompletedOnboarding Boolean @default(false)
   preferences            Json?   // JSON поддерживается в Postgres

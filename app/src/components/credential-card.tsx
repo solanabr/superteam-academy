@@ -9,9 +9,10 @@ interface CredentialCardProps {
   name: string;
   imageUrl: string;
   level: number;
+  onClick?: () => void;
 }
 
-export function CredentialCard({ name, imageUrl, level }: CredentialCardProps) {
+export function CredentialCard({ name, imageUrl, level, onClick }: CredentialCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
 
@@ -31,15 +32,13 @@ export function CredentialCard({ name, imageUrl, level }: CredentialCardProps) {
     setRotate({ x: 0, y: 0 });
   };
 
-  return (
+    return (
     <motion.div
       ref={cardRef}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
-      style={{
-        perspective: "1000px",
-      }}
-      className="w-full h-full"
+      style={{ perspective: "1000px" }}
+      className="w-full h-full flex justify-center" // Добавлен flex justify-center
     >
       <motion.div
         style={{
@@ -47,25 +46,23 @@ export function CredentialCard({ name, imageUrl, level }: CredentialCardProps) {
           transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
         }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="w-full h-full"
+        className="w-full max-w-[280px] aspect-[3/4]" // ОГРАНИЧЕНИЕ ШИРИНЫ ЗДЕСЬ
       >
-        <Card className="w-full h-full overflow-hidden bg-gradient-to-br from-purple-900/50 to-pink-900/50 relative">
+        {/* ПОВЕСИЛИ onClick НА КАРТОЧКУ И ДОБАВИЛИ cursor-pointer */}
+        <Card 
+            onClick={onClick}
+            className="w-full h-full overflow-hidden bg-gradient-to-br from-purple-900/50 to-pink-900/50 relative cursor-pointer hover:shadow-2xl transition-shadow"
+        >
           <motion.img 
             src={imageUrl} 
             alt={name} 
             className="w-full h-full object-cover"
-            style={{ transform: "translateZ(50px)" }} // Эффект глубины
+            style={{ transform: "translateZ(50px)" }} 
           />
-          <div 
-            className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" 
-            style={{ transform: "translateZ(51px)" }} 
-          />
-          <CardContent 
-            className="absolute bottom-0 left-0 p-4 text-white"
-            style={{ transform: "translateZ(52px)" }}
-          >
-            <h3 className="text-xl font-bold">{name}</h3>
-            <p className="text-sm">Level {level}</p>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" style={{ transform: "translateZ(51px)" }} />
+          <CardContent className="absolute bottom-0 left-0 p-6 text-white" style={{ transform: "translateZ(52px)" }}>
+            <h3 className="text-xl font-bold leading-tight mb-1">{name}</h3>
+            <p className="text-sm text-purple-200">Level {level}</p>
           </CardContent>
         </Card>
       </motion.div>

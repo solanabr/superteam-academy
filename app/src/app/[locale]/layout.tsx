@@ -19,7 +19,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Superteam Academy",
-  description: "The ultimate interactive learning platform for Solana developers. Learn Rust, Anchor, and DeFi by building real dApps.",
+  description: "The ultimate interactive learning platform for Solana developers.",
   keywords: "Solana, Web3, Rust, Anchor, Smart Contracts, LMS, Education",
   openGraph: {
     title: "Superteam Academy",
@@ -28,11 +28,16 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   themeColor: "#a855f7",
+  
+  // ИСПРАВЛЕНИЕ: Замени appleWebApp на современный формат
   appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
     title: "Academy",
+    statusBarStyle: "black-translucent",
   },
+  // И добавь это для Android/Chrome PWA
+  other: {
+    "mobile-web-app-capable": "yes"
+  }
 };
 
 export default async function RootLayout({
