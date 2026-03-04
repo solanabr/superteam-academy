@@ -63,6 +63,7 @@ const loadBackendWallet = (): Wallet => {
     throw new Error(`Backend wallet configuration error: ${error.message}`);
   }
 };
+//
 
 // ──────────────────────────────────────────────
 // Основные экспорты
