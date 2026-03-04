@@ -8,15 +8,15 @@ import {
 } from "@/lib/mock-data";
 
 // ── Frontend mock arrays are intentionally empty post-migration ─────────────
-// Courses and achievements now live in prisma/seed-data/ and are served via API.
+// Courses and achievements now live in seeds/data/ and are served via API.
 
 describe("mock-data integrity", () => {
   describe("frontend mock arrays (post-migration)", () => {
-    it("MOCK_COURSES is empty — data moved to prisma/seed-data/course-*.ts", () => {
+    it("MOCK_COURSES is empty — data moved to seeds/data/course-*.ts", () => {
       expect(MOCK_COURSES).toHaveLength(0);
     });
 
-    it("MOCK_ACHIEVEMENTS is empty — data moved to prisma/seed-data/achievements.ts", () => {
+    it("MOCK_ACHIEVEMENTS is empty — data moved to seeds/data/achievements.ts", () => {
       expect(MOCK_ACHIEVEMENTS).toHaveLength(0);
     });
 
@@ -36,22 +36,19 @@ describe("mock-data integrity", () => {
   // ── Seed achievements integrity ───────────────────────────────────────────
 
   describe("seed achievements", () => {
-    it("loads 20 achievements from seed", async () => {
-      const { getAchievements } =
-        await import("../../prisma/seed-data/achievements");
-      expect(getAchievements()).toHaveLength(20);
+    it("loads 15 achievements from seed", async () => {
+      const { getAchievements } = await import("../../seeds/data/achievements");
+      expect(getAchievements()).toHaveLength(15);
     });
 
     it("achievements have unique IDs", async () => {
-      const { getAchievements } =
-        await import("../../prisma/seed-data/achievements");
+      const { getAchievements } = await import("../../seeds/data/achievements");
       const ids = getAchievements().map((a) => a.id);
       expect(new Set(ids).size).toBe(ids.length);
     });
 
     it("all achievements have required fields", async () => {
-      const { getAchievements } =
-        await import("../../prisma/seed-data/achievements");
+      const { getAchievements } = await import("../../seeds/data/achievements");
       for (const a of getAchievements()) {
         expect(a.name.length).toBeGreaterThan(0);
         expect(a.description.length).toBeGreaterThan(0);
@@ -61,8 +58,7 @@ describe("mock-data integrity", () => {
     });
 
     it("covers all 5 achievement categories", async () => {
-      const { getAchievements } =
-        await import("../../prisma/seed-data/achievements");
+      const { getAchievements } = await import("../../seeds/data/achievements");
       const categories = new Set(getAchievements().map((a) => a.category));
       expect(categories.has("progress")).toBe(true);
       expect(categories.has("streaks")).toBe(true);

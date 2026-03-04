@@ -144,7 +144,10 @@ export default async function HomePage() {
           <HeroFloatingElements />
 
           <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 sm:pb-28 sm:pt-32 lg:px-8">
-            <AnimatedSection className="mx-auto max-w-3xl text-center" variant="scaleIn">
+            <AnimatedSection
+              className="mx-auto max-w-3xl text-center"
+              variant="scaleIn"
+            >
               {/* Shimmer badge */}
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-4 py-1.5 text-sm text-primary animate-shimmer">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -265,7 +268,10 @@ export default async function HomePage() {
       <section className="relative overflow-hidden">
         <SectionFloatingElements variant="b" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <AnimatedSection className="flex items-end justify-between" variant="slideLeft">
+          <AnimatedSection
+            className="flex items-end justify-between"
+            variant="slideLeft"
+          >
             <div>
               <h2 className="font-heading text-3xl font-bold sm:text-4xl">
                 {t("popularCourses.title")}

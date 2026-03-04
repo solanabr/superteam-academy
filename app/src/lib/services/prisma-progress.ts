@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 import type { LearningProgressService } from "./learning-progress";
 import { NotificationService } from "./notification-service";
-import { getAchievements as getSeedAchievements } from "../../../prisma/seed-data/achievements";
+import { getAchievements as getSeedAchievements } from "../../../seeds/data/achievements";
 
 const notifService = new NotificationService();
 

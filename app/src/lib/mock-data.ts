@@ -2,7 +2,7 @@ import type { Course, Achievement } from "@/types";
 import { MOCK_COURSES } from "./mock-courses";
 export { MOCK_COURSES };
 
-// Achievements are seeded from prisma/seed-data/achievements.ts and served via API.
+// Achievements are seeded from seeds/data/achievements.ts and served via API.
 export const MOCK_ACHIEVEMENTS: Achievement[] = [];
 
 export function getCourseBySlug(slug: string): Course | undefined {
