@@ -148,7 +148,7 @@ export function PlatformNavbar() {
                                 <img src={`https://api.dicebear.com/9.x/bottts/svg?seed=${user.walletAddress}&backgroundColor=0a0a0b&baseColor=14f195&radius=50&sidesProbability=0&topProbability=0`} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
                                 <span className="font-mono text-xs text-white">
-                                    {(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || "DV"}
+                                    {(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || ".."}
                                 </span>
                             )}
                         </div>
@@ -163,7 +163,7 @@ export function PlatformNavbar() {
                             <div className="w-56 rounded-lg bg-void/95 backdrop-blur-md border border-white/10 shadow-xl overflow-hidden">
                                 <div className="p-3 border-b border-white/10">
                                     <p className="text-sm font-medium text-white truncate">
-                                        {(user?.profile as any)?.displayName || "DevUser"}
+                                        {(user?.profile as any)?.displayName || "Student"}
                                     </p>
                                     <p className="text-xs font-mono text-solana truncate">
                                         {user?.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Not Connected"}

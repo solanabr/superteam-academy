@@ -58,6 +58,7 @@ export type UserState = {
 
     // Loading states
     isLoading: boolean;
+    syncComplete: boolean;
     isProgressLoading: boolean;
     isCredentialsLoading: boolean;
     hasMoreCredentials: boolean;
@@ -75,6 +76,7 @@ export type UserState = {
     setProgressLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
     setProgressError: (error: string | null) => void;
+    setSyncComplete: (complete: boolean) => void;
 
     fetchUser: (walletAddress: string, background?: boolean) => Promise<void>;
     fetchProgress: (walletAddress: string) => Promise<void>;
@@ -93,6 +95,7 @@ const initialState = {
     credentials: [],
     recentActivities: [],
     isLoading: false,
+    syncComplete: false,
     isProgressLoading: false,
     isCredentialsLoading: false,
     hasMoreCredentials: true,
@@ -116,6 +119,8 @@ export const useUserStore = create<UserState>((set, get) => ({
     setError: (error) => set({ error }),
 
     setProgressError: (progressError) => set({ progressError }),
+
+    setSyncComplete: (syncComplete) => set({ syncComplete }),
 
     fetchUser: async (walletAddress, background = false) => {
         const state = get();

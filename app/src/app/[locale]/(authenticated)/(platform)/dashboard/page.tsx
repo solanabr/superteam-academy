@@ -198,12 +198,12 @@ export default function DashboardPage() {
                                 ) : user?.walletAddress ? (
                                     <Image src={`https://api.dicebear.com/9.x/bottts/svg?seed=${user.walletAddress}&backgroundColor=0a0a0b&baseColor=14f195&radius=50&sidesProbability=0&topProbability=0`} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" unoptimized />
                                 ) : (
-                                    <span className="font-mono text-xl text-white">{(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || "DV"}</span>
+                                    <span className="font-mono text-xl text-white">{(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || ".."}</span>
                                 )}
                             </div>
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-display font-bold text-white tracking-tight">
-                                    {t("welcome", { name: (user?.profile as any)?.displayName || (user?.walletAddress ? "Dev" : "Student") })}
+                                    {t("welcome", { name: (user?.profile as any)?.displayName || "Student" })}
                                 </h2>
                                 <p className="font-mono text-text-muted text-sm flex items-center gap-2 mt-1">
                                     <Wallet className="h-3.5 w-3.5" />

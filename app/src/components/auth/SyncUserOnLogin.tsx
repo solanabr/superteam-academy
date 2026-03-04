@@ -14,6 +14,7 @@ export function SyncUserOnLogin() {
   const setError = useUserStore((s: UserState) => s.setError);
   const fetchProgress = useUserStore((s: UserState) => s.fetchProgress);
   const setProgressDirect = useUserStore((s: UserState) => s.setProgressDirect);
+  const setSyncComplete = useUserStore((s: UserState) => s.setSyncComplete);
   const synced = useRef(false);
 
   const linkedAddress =
@@ -58,8 +59,13 @@ export function SyncUserOnLogin() {
       .catch((err) => {
         console.error("SyncUserOnLogin: Network error during sync", err);
         synced.current = false;
+      })
+      .finally(() => {
+        // Signal that the sync attempt has completed (success or failure)
+        // so AuthGuard can safely evaluate the onboarding gate
+        setSyncComplete(true);
       });
-  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, fetchProgress, setProgressDirect]);
+  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, fetchProgress, setProgressDirect, setSyncComplete]);
 
   return null;
 }

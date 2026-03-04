@@ -8,7 +8,7 @@ import { useUserStore } from "@/store/user-store";
 import { OnboardingModal } from "./OnboardingModal";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 /**
  * Client-side auth guard. Wraps protected pages.
@@ -29,6 +29,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const isLoading = useUserStore((s) => s.isLoading);
     const fetchUser = useUserStore((s) => s.fetchUser);
     const error = useUserStore((s) => s.error);
+    const syncComplete = useUserStore((s) => s.syncComplete);
 
     // Discover wallet address — may be undefined initially after OAuth login
     const walletAddress =
@@ -108,11 +109,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
 
-    // If it's a public path, we skip all auth-related blocking UI
-    if (isPublicPath) {
-        return <>{children}</>;
-    }
-
     // Still loading Privy - show a simple background or nothing to avoid flicker
     if (!ready) {
         return <div className="fixed inset-0 z-50 bg-void" />;
@@ -133,6 +129,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Render children if authenticated, even if user data is still syncing in background
+    // LOADING GATE: Don't render dashboard until we have a definitive user state.
+    // This prevents the "DevUser" flash and ensures onboarding is properly evaluated.
+    // We wait if: user is null AND (sync hasn't completed OR data is still loading OR wallet not yet discovered)
+    if (!user && (!syncComplete || isLoading || !walletAddress)) {
+        return (
+            <div className="fixed inset-0 z-50 bg-void flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-solana" />
+            </div>
+        );
+    }
+
+    // Render children if authenticated and user state is resolved
     return <>{children}</>;
 }
