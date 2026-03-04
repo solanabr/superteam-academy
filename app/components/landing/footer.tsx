@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations, useLocale } from "next-intl";
+import { Newsletter } from "./newsletter";
 
 export function Footer() {
   const t = useTranslations();
@@ -36,14 +37,17 @@ export function Footer() {
   return (
     <footer className="bg-muted/30">
       <div className="mx-auto max-w-6xl px-8 py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="lg:col-span-2">
             <span className="text-sm font-semibold text-foreground">
               {t("common.brandName")}
             </span>
             <p className="mt-2 text-sm text-muted-foreground">
               {t("footer.tagline")}
             </p>
+            <div className="mt-4">
+              <Newsletter />
+            </div>
           </div>
 
           {Object.values(footerLinks).map((section) => (

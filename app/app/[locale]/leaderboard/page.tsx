@@ -10,27 +10,44 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+type TimeFilter = 'all-time' | 'monthly' | 'weekly';
+type SortFilter = 'xp' | 'streak' | 'level';
+
 export default function LeaderboardPage() {
   const { user, authenticated } = usePrivy();
   const [users, setUsers] = useState<UserProfileRow[]>([]);
-  const [filter, setFilter] = useState<'xp' | 'streak' | 'level'>('xp');
+  const [sortBy, setSortBy] = useState<SortFilter>('xp');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all-time');
   const [loading, setLoading] = useState(true);
   const wallet = user?.wallet?.address || '';
 
   async function loadLeaderboard() {
     setLoading(true);
-    const { data } = await supabase
+    
+    let query = supabase
       .from('user_profiles')
       .select('*')
-      .eq('show_in_leaderboard', true)
-      .order(filter === 'xp' ? 'xp' : filter === 'streak' ? 'streak' : 'level', { ascending: false })
+      .eq('show_in_leaderboard', true);
+    
+    if (timeFilter === 'weekly') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      query = query.gte('updated_at', weekAgo.toISOString());
+    } else if (timeFilter === 'monthly') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      query = query.gte('updated_at', monthAgo.toISOString());
+    }
+    
+    const { data } = await query
+      .order(sortBy === 'xp' ? 'xp' : sortBy === 'streak' ? 'streak' : 'level', { ascending: false })
       .limit(50);
+    
     setUsers((data || []) as UserProfileRow[]);
     setLoading(false);
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadLeaderboard(); }, [filter]);
+  useEffect(() => { loadLeaderboard(); }, [sortBy, timeFilter]);
 
   const myRank = users.findIndex(u => u.wallet === wallet) + 1;
 
@@ -46,13 +63,23 @@ export default function LeaderboardPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="flex gap-2 mb-8">
-          {(['xp', 'streak', 'level'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-5 py-2 rounded-full text-sm font-medium capitalize transition-colors ${filter === f ? 'bg-purple-600 text-white' : 'bg-gray-900 text-gray-400 border border-gray-800'}`}>
-              {f === 'xp' ? '⚡ XP' : f === 'streak' ? '🔥 Streak' : '⭐ Level'}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex gap-1 bg-gray-900 rounded-lg p-1">
+            {(['all-time', 'monthly', 'weekly'] as const).map(t => (
+              <button key={t} onClick={() => setTimeFilter(t)}
+                className={`px-4 py-1.5 rounded-md text-xs font-medium capitalize transition-colors ${timeFilter === t ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                {t === 'all-time' ? 'All Time' : t === 'monthly' ? 'Monthly' : 'Weekly'}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 bg-gray-900 rounded-lg p-1">
+            {(['xp', 'streak', 'level'] as const).map(f => (
+              <button key={f} onClick={() => setSortBy(f)}
+                className={`px-4 py-1.5 rounded-md text-xs font-medium capitalize transition-colors ${sortBy === f ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                {f === 'xp' ? '⚡ XP' : f === 'streak' ? '🔥 Streak' : '⭐ Level'}
+              </button>
+            ))}
+          </div>
           {authenticated && myRank > 0 && (
             <span className="ml-auto text-sm text-gray-500 self-center">Your rank: <span className="text-purple-400 font-bold">#{myRank}</span></span>
           )}
@@ -79,7 +106,7 @@ export default function LeaderboardPage() {
                     <p className="text-gray-500 text-xs">Level {u.level ?? 1}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-purple-400 font-bold">{filter === 'xp' ? `${u.xp ?? 0} XP` : filter === 'streak' ? `${u.streak ?? 0} days` : `Lvl ${u.level ?? 1}`}</p>
+                    <p className="text-purple-400 font-bold">{sortBy === 'xp' ? `${u.xp ?? 0} XP` : sortBy === 'streak' ? `${u.streak ?? 0} days` : `Lvl ${u.level ?? 1}`}</p>
                   </div>
                 </div>
               );

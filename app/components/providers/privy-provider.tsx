@@ -9,6 +9,7 @@ export function PrivyProvider({ children }: { children: ReactNode }) {
     <PrivyProviderBase
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'placeholder'}
       config={{
+        loginMethods: ['wallet', 'google', 'github'],
         appearance: {
           walletChainType: 'solana-only',
         },

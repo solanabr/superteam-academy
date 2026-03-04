@@ -11,12 +11,45 @@ const ACHIEVEMENTS = [
 ];
 
 const SKILLS = [
-  { name: "Rust", level: 65 },
-  { name: "Anchor", level: 40 },
-  { name: "Frontend", level: 75 },
-  { name: "DeFi", level: 30 },
-  { name: "Security", level: 20 },
+  { name: "Rust", level: 65, angle: 0 },
+  { name: "Anchor", level: 40, angle: 72 },
+  { name: "Frontend", level: 75, angle: 144 },
+  { name: "DeFi", level: 30, angle: 216 },
+  { name: "Security", level: 20, angle: 288 },
 ];
+
+function SkillRadar() {
+  const center = 80;
+  const maxRadius = 60;
+  
+  return (
+    <div className="border border-border rounded-xl p-6 bg-card">
+      <h2 className="font-bold mb-4">Skill Radar</h2>
+      <svg viewBox="0 0 200 200" className="w-full h-auto">
+        {[20, 40, 60, 80, 100].map((r, i) => (
+          <circle key={r} cx={center} cy={center} r={maxRadius * r / 100} fill="none" stroke="#374151" strokeWidth="1" />
+        ))}
+        {[0, 72, 144, 216, 288].map((angle, i) => (
+          <line key={angle} x1={center} y1={center} x2={center + maxRadius * Math.sin(angle * Math.PI / 180)} y2={center - maxRadius * Math.cos(angle * Math.PI / 180)} stroke="#374151" strokeWidth="1" />
+        ))}
+        {SKILLS.map((skill, i) => {
+          const angle = (skill.angle - 90) * Math.PI / 180;
+          const r = maxRadius * skill.level / 100;
+          const x = center + r * Math.cos(angle);
+          const y = center + r * Math.sin(angle);
+          return (
+            <g key={skill.name}>
+              <circle cx={x} cy={y} r="4" fill="#a855f7" />
+              <text x={center + (maxRadius + 15) * Math.cos(angle)} y={center + (maxRadius + 15) * Math.sin(angle)} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#9ca3af">
+                {skill.name}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { address } = useWallet();
@@ -37,17 +70,7 @@ export default function ProfilePage() {
         <Button variant="outline">Edit Profile</Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="border border-border rounded-xl p-6 bg-card">
-          <h2 className="font-bold mb-4">Skills</h2>
-          <div className="flex flex-col gap-3">
-            {SKILLS.map(s => (
-              <div key={s.name}>
-                <div className="flex justify-between text-sm mb-1"><span>{s.name}</span><span>{s.level}%</span></div>
-                <div className="w-full bg-border rounded-full h-2"><div className="bg-primary h-2 rounded-full" style={{ width: s.level + "%" }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SkillRadar />
         <div className="border border-border rounded-xl p-6 bg-card">
           <h2 className="font-bold mb-4">Achievements</h2>
           <div className="grid grid-cols-2 gap-3">

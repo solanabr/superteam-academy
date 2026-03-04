@@ -44,3 +44,17 @@ All data access goes through service interfaces in lib/services/:
 - Credentials: Metaplex Core NFTs with PermanentFreezeDelegate
 - Enrollment: Direct PDA instruction signed by learner
 - Leaderboard: Indexed via Helius DAS API
+
+## Authentication
+We use **Privy** as the primary auth abstraction, which internally wraps **@solana/wallet-adapter-react**. This provides:
+- Multi-wallet support (Phantom, Solflare, Backpack)
+- OAuth login (Google, GitHub) - bonus requirement
+- Embedded wallet creation for seamless onboarding
+- Wallet Adapter compatibility for on-chain transactions
+
+The `usePrivy` hook provides unified access to:
+- `user.wallet.address` - connected wallet address
+- `login()` / `logout()` - auth flows
+- `authenticated` - auth state
+
+All on-chain transactions use the wallet via Privy's `signAndSendTransaction` feature.
