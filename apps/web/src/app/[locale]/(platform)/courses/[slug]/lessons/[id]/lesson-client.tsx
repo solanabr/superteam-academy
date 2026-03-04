@@ -19,6 +19,7 @@ import {
   CheckCircle,
   ArrowLeft,
   ChatCircle,
+  Sparkle,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
@@ -29,6 +30,7 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import { AiChatSidebar } from "@/components/ai/ai-chat-sidebar";
 import type { Lesson } from "@/lib/sanity/types";
 
 function CodeBlockWithCopy({
@@ -195,6 +197,7 @@ export function LessonPageClient({
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -537,6 +540,25 @@ export function LessonPageClient({
               )}
           </div>
         </div>
+
+        {/* AI Chat floating button + sidebar */}
+        {!isAiChatOpen && (
+          <button
+            type="button"
+            onClick={() => setIsAiChatOpen(true)}
+            className="fixed right-6 top-20 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+            aria-label={t("askAi")}
+          >
+            <Sparkle size={22} weight="fill" />
+          </button>
+        )}
+        <AiChatSidebar
+          open={isAiChatOpen}
+          onClose={() => setIsAiChatOpen(false)}
+          lessonId={lesson._id}
+          lessonTitle={lesson.title}
+          lessonContent={lesson.content}
+        />
       </div>
     );
   }
@@ -764,6 +786,25 @@ export function LessonPageClient({
           defaultScope={{ courseId, lessonId: lesson._id }}
         />
       </div>
+
+      {/* AI Chat floating button + sidebar */}
+      {!isAiChatOpen && (
+        <button
+          type="button"
+          onClick={() => setIsAiChatOpen(true)}
+          className="fixed right-6 top-20 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+          aria-label={t("askAi")}
+        >
+          <Sparkle size={22} weight="fill" />
+        </button>
+      )}
+      <AiChatSidebar
+        open={isAiChatOpen}
+        onClose={() => setIsAiChatOpen(false)}
+        lessonId={lesson._id}
+        lessonTitle={lesson.title}
+        lessonContent={lesson.content}
+      />
     </div>
   );
 }

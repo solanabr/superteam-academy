@@ -4836,3 +4836,52 @@ a.path-step-card:hover .path-step-title {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── AI Suggestion decorations ─────────────────────────────────────── */
+.ai-suggestion-error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent) !important;
+  border-left: 3px solid var(--danger) !important;
+}
+.ai-suggestion-warning {
+  background: color-mix(in srgb, var(--xp) 12%, transparent) !important;
+  border-left: 3px solid var(--xp) !important;
+}
+.ai-suggestion-info {
+  background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+  border-left: 3px solid var(--primary) !important;
+}
+
+/* Glyph margin icons */
+.ai-glyph-error,
+.ai-glyph-warning,
+.ai-glyph-info {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.ai-glyph-error::before {
+  content: "";
+}
+.ai-glyph-warning::before {
+  content: "";
+}
+.ai-glyph-info::before {
+  content: "";
+}
+
+/* Inline hint text after the line */
+.ai-inline-hint {
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.85;
+  padding-left: 1rem;
+}
+.ai-inline-error {
+  color: var(--danger);
+}
+.ai-inline-warning {
+  color: var(--xp);
+}
+.ai-inline-info {
+  color: var(--primary);
+}
