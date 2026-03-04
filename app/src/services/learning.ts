@@ -152,9 +152,11 @@ export class LocalStorageLearningService implements LearningProgressService {
 
   async getAchievements(userId: string): Promise<Achievement[]> {
     return [
-      { id: "1", name: "First Steps", description: "Complete your first lesson", earned: true, earnedAt: "2026-01-01", icon: "🎯" },
-      { id: "2", name: "Week Warrior", description: "7-day streak", earned: true, earnedAt: "2026-01-08", icon: "🔥" },
-      { id: "3", name: "Course Completer", description: "Complete a full course", earned: true, earnedAt: "2026-01-15", icon: "🏆" },
+      { id: "first-step", name: "First Step", description: "Complete your first lesson", earned: true, earnedAt: "2026-01-01", icon: "🎯" },
+      { id: "streak-7", name: "Week Warrior", description: "7-day streak", earned: true, earnedAt: "2026-01-08", icon: "🔥" },
+      { id: "rust-rookie", name: "Rust Rookie", description: "Complete all basic Rust modules", earned: true, earnedAt: "2026-01-12", icon: "🦀" },
+      { id: "early-adopter", name: "Early Adopter", description: "Joined during beta", earned: true, earnedAt: "2026-01-01", icon: "🚀" },
+      { id: "course-completer", name: "Course Completer", description: "Complete a full course", earned: false, icon: "🏆" },
     ];
   }
 

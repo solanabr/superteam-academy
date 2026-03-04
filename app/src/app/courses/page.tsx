@@ -10,9 +10,26 @@ import { useI18n } from "@/components/I18nProvider";
 const TRACKS = ["All", "Development", "Advanced", "Infrastructure", "Security", "DeFi", "NFTs"];
 const DIFFICULTIES = ["All", "Beginner", "Intermediate", "Advanced"];
 
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+
 export default function CoursesPage() {
+  const router = useRouter();
+  const { publicKey, connected } = useWallet();
   const { t } = useI18n();
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    // Check if assessment completed for this wallet or as guest
+    const assessmentKey = publicKey ? `assessment_${publicKey.toString()}` : 'assessment_guest';
+    const hasCompleted = localStorage.getItem(assessmentKey);
+
+    if (!hasCompleted) {
+      router.push("/onboarding?redirect=/courses");
+    }
+  }, [connected, publicKey, router]);
+
   const [selectedTrack, setSelectedTrack] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");

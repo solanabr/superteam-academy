@@ -8,7 +8,8 @@
     "achievements": "Achievements",
     "connectWallet": "Connect Wallet",
     "superteamAcademy": "Superteam Academy",
-    "challenges": "Challenges"
+    "challenges": "Challenges",
+    "assessment": "Assessment"
   },
   "footer": {
     "community": "Community",
@@ -125,13 +126,61 @@
       "title": "First Step",
       "desc": "Complete your first lesson on Superteam Academy."
     },
-    "anchorMaster": {
-      "title": "Anchor Master",
-      "desc": "Complete the Anchor Fundamentals course with all challenges passed."
+    "courseCompleter": {
+      "title": "Course Completer",
+      "desc": "Successfully finish your first full course."
+    },
+    "speedRunner": {
+      "title": "Speed Runner",
+      "desc": "Complete a course in record time."
     },
     "streak7": {
       "title": "Week Warrior",
       "desc": "Maintain a 7-day learning streak."
+    },
+    "monthlyMaster": {
+      "title": "Monthly Master",
+      "desc": "Maintain a 30-day learning streak."
+    },
+    "consistencyKing": {
+      "title": "Consistency King",
+      "desc": "Maintain a 100-day learning streak."
+    },
+    "rustRookie": {
+      "title": "Rust Rookie",
+      "desc": "Complete all basic Rust modules."
+    },
+    "anchorExpert": {
+      "title": "Anchor Expert",
+      "desc": "Master all advanced Anchor framework modules."
+    },
+    "fullStackSolana": {
+      "title": "Full Stack Solana",
+      "desc": "Complete both program and frontend integration tracks."
+    },
+    "helper": {
+      "title": "Helper",
+      "desc": "Help other students in the community."
+    },
+    "firstComment": {
+      "title": "First Comment",
+      "desc": "Engage with the community for the first time."
+    },
+    "topContributor": {
+      "title": "Top Contributor",
+      "desc": "Rank among the top helpful community members."
+    },
+    "earlyAdopter": {
+      "title": "Early Adopter",
+      "desc": "Joined during the platform's early beta phase."
+    },
+    "bugHunter": {
+      "title": "Bug Hunter",
+      "desc": "Reported a valid security or technical bug."
+    },
+    "perfectScore": {
+      "title": "Perfect Score",
+      "desc": "Complete an assessment with 100% accuracy."
     },
     "topLeaderboard": {
       "title": "Elite Builder",

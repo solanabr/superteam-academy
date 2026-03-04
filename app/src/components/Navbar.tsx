@@ -57,7 +57,6 @@ export function Navbar({ showNavLinks = true }: NavbarProps) {
               <NavLink href="/courses" icon={BookOpen} label={t("nav.courses")} />
               <NavLink href="/challenges" icon={Zap} label={t("nav.challenges")} />
               <NavLink href="/leaderboard" icon={Trophy} label={t("nav.leaderboard")} />
-              <NavLink href="/onboarding" icon={Sparkles} label="Assessment" />
               <NavLink href="/achievements" icon={Award} label={t("nav.achievements")} />
               {mounted && connected && (
                 <>
