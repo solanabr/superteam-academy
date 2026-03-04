@@ -1,0 +1,332 @@
+{
+  "nav": {
+    "dashboard": "Painel",
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "signIn": "Entrar",
+    "signOut": "Sair"
+  },
+  "navPublic": {
+    "howItWorks": "Como Funciona",
+    "tracks": "Trilhas",
+    "features": "Recursos",
+    "getStarted": "Começar"
+  },
+  "landing": {
+    "hero": {
+      "title": "Construa na Solana.",
+      "subtitle": "Aprenda fazendo.",
+      "description": "Educação gratuita e gamificada para desenvolvedores Solana na LATAM. Ganhe XP, colecione credenciais on-chain e junte-se ao ecossistema blockchain de crescimento mais rápido.",
+      "cta": "Começar Gratuitamente",
+      "exploreCourses": "Explorar Cursos"
+    },
+    "stats": {
+      "learners": "Aprendizes",
+      "courses": "Cursos",
+      "xpAwarded": "XP Distribuído",
+      "countries": "Países"
+    }
+  },
+  "landingPage": {
+    "hero": {
+      "badge": "Aprendizado DeFi + credenciais on-chain",
+      "titleLine1Lead": "Domine",
+      "titleLine1Accent": "Web3",
+      "titleLine2Lead": "passo a",
+      "titleLine2Accent": "passo.",
+      "description": "Aprenda Solana construindo projetos reais. Matricule-se com sua carteira, ganhe XP Token-2022, acompanhe níveis e desbloqueie credenciais soulbound que provam seu progresso on-chain.",
+      "panel": {
+        "activeTrack": "Trilha ativa",
+        "path": "Trilha Builder",
+        "description": "Matrícula assinada com carteira. XP Token-2022. Credencial soulbound.",
+        "streak": "Sequência",
+        "walletEnrollment": "Matrícula com Carteira",
+        "xpProgress": "Progresso de XP (Token-2022)",
+        "credentialReadiness": "Prontidão da Credencial"
+      },
+      "floating": {
+        "credential": "Credencial desbloqueada",
+        "credentialDesc": "NFT Metaplex Core, verificável na Solana.",
+        "xpMilestone": "Marco de XP",
+        "xpDesc": "O saldo de XP é atualizado da sua conta Token-2022."
+      }
+    },
+    "howItWorks": {
+      "pill": "Como funciona",
+      "titleHighlight": "Sistema claro.",
+      "titleRest": "Progresso real.",
+      "description": "Matricule-se com sua carteira, conclua lições e desafios e transforme progresso em prova verificável.",
+      "steps": {
+        "one": {
+          "title": "Conecte e matricule-se",
+          "desc": "Conecte sua carteira e assine a matrícula diretamente na Devnet."
+        },
+        "two": {
+          "title": "Ganhe XP on-chain",
+          "desc": "O XP é lido da sua conta Token-2022 e convertido em níveis."
+        },
+        "three": {
+          "title": "Verifique credenciais",
+          "desc": "Desbloqueie e verifique credenciais soulbound Metaplex Core por trilha."
+        }
+      }
+    },
+    "cards": {
+      "projectFirst": {
+        "title": "Currículo orientado a projetos",
+        "desc": "Aprenda construindo produtos Solana práticos, não apenas tutoriais passivos."
+      },
+      "xpProgression": {
+        "title": "Progressão de XP com Token-2022",
+        "desc": "Seu XP é um saldo Token-2022 intransferível vinculado à sua carteira."
+      },
+      "soulbound": {
+        "title": "Credenciais soulbound",
+        "desc": "Credenciais por trilha são verificáveis e evoluem no mesmo NFT."
+      }
+    },
+    "tracks": {
+      "pill": "Para quem é",
+      "titleLead": "Todo papel em Web3,",
+      "titleAccent": "uma plataforma.",
+      "description": "Feito para desenvolvedores, pesquisadores, criadores e operadores que querem progresso Web3 mensurável.",
+      "cards": {
+        "builders": {
+          "title": "Builders",
+          "desc": "Smart contracts, dApps, ferramentas e integrações."
+        },
+        "defiResearch": {
+          "title": "DeFi e Pesquisa",
+          "desc": "Protocolos, modelos de token, risco e estratégia."
+        },
+        "creators": {
+          "title": "Criadores e Marketing",
+          "desc": "Narrativas, crescimento, campanhas e comunidade."
+        },
+        "designProduct": {
+          "title": "Design e Produto",
+          "desc": "UX, pensamento de produto, sistemas e entrega."
+        },
+        "governance": {
+          "title": "Governança e DAOs",
+          "desc": "Operações, coordenação e mecânicas de governança."
+        },
+        "founders": {
+          "title": "Fundadores",
+          "desc": "Da ideia ao lançamento: estratégia, time e execução."
+        }
+      }
+    },
+    "platform": {
+      "pill": "Plataforma",
+      "titleLead": "Tudo que você precisa para aprender",
+      "titleAccent": "Web3 do jeito certo.",
+      "cards": {
+        "curriculum": {
+          "title": "Currículo estruturado",
+          "desc": "Trilhas claras dos fundamentos até especializações avançadas."
+        },
+        "xpLevels": {
+          "title": "XP on-chain + níveis",
+          "desc": "O nível é derivado do XP com mecânica de progressão transparente."
+        },
+        "challenges": {
+          "title": "Aprendizado por desafios",
+          "desc": "Lições interativas e desafios de código reforçam domínio."
+        },
+        "verification": {
+          "title": "Verificação de credenciais",
+          "desc": "Inspecione credenciais na carteira e verifique no explorer."
+        },
+        "community": {
+          "title": "Modelo pronto para comunidade",
+          "desc": "Projetado para cohorts, comunidades e colaboração open source."
+        },
+        "latam": {
+          "title": "Acessibilidade LATAM-first",
+          "desc": "Preparado para experiências em PT-BR, ES e EN."
+        }
+      }
+    },
+    "finalCta": {
+      "badge": "Grátis para começar. Feito para builders reais da Solana.",
+      "titleLead": "Comece sua jornada de aprendizado Web3",
+      "titleAccent": "hoje.",
+      "description": "Comece com uma trilha, prove habilidades on-chain e construa um perfil de desenvolvedor que se fortalece com o tempo.",
+      "exploreTracks": "Explorar Trilhas",
+      "points": {
+        "noCard": "Sem cartão de crédito",
+        "walletNative": "Progressão nativa de carteira",
+        "verifiable": "Credenciais on-chain verificáveis"
+      }
+    }
+  },
+  "footer": {
+    "description": "Aprendizado nativo da Solana para builders. Lance projetos, ganhe XP e desbloqueie credenciais verificáveis.",
+    "badge": "Stack de aprendizado pronto para Devnet",
+    "columns": {
+      "platform": "Plataforma",
+      "account": "Conta",
+      "community": "Comunidade"
+    },
+    "securityText": "Auth wallet-first, credenciais on-chain e progresso transparente.",
+    "startLearning": "Começar a aprender",
+    "rights": "Todos os direitos reservados.",
+    "links": {
+      "courses": "Cursos",
+      "leaderboard": "Ranking",
+      "learningTracks": "Trilhas de Aprendizado",
+      "howItWorks": "Como Funciona",
+      "createAccount": "Criar Conta",
+      "superteamBrazil": "Superteam Brazil",
+      "discord": "Discord",
+      "twitter": "Twitter / X"
+    }
+  },
+  "coursesPage": {
+    "title": "Catálogo de Cursos",
+    "coursesCount": "curso(s) disponíveis",
+    "searchPlaceholder": "Buscar cursos...",
+    "filters": {
+      "all": "Todos"
+    },
+    "allTracks": "Todas as Trilhas",
+    "noCourses": "Nenhum curso encontrado",
+    "adjustFilters": "Tente ajustar seus filtros",
+    "clearFilters": "Limpar filtros",
+    "enrolled": "Matriculado",
+    "lessons": "aulas",
+    "complete": "concluído",
+    "startCourse": "Iniciar Curso"
+  },
+  "profilePage": {
+    "editProfile": "Editar Perfil",
+    "website": "Website",
+    "achievements": "Conquistas",
+    "noAchievements": "Ainda sem conquistas - comece a aprender!",
+    "onchainCredentials": "Credenciais On-Chain",
+    "connectWallet": "Conecte sua carteira",
+    "connectWalletDesc": "Vincule uma carteira Solana para receber credenciais on-chain ao concluir cursos",
+    "connectWalletCta": "Conectar Carteira",
+    "credentialsPlaceholder": "Conclua cursos para receber credenciais NFT soulbound",
+    "completedCourses": "Cursos Concluídos",
+    "private": "Privado",
+    "joined": "Entrou em",
+    "toLevel": "para Nível",
+    "noCredentials": "Ainda sem credenciais",
+    "noCredentialsDesc": "Conclua cursos para ganhar credenciais NFT soulbound na Solana",
+    "privateProfile": "Este perfil é privado",
+    "privateProfileDesc": "definiu seu perfil como privado."
+  },
+  "course": {
+    "enroll": "Matricular Gratuitamente",
+    "continue": "Continuar Aprendendo",
+    "start": "Começar a Aprender",
+    "complete": "Marcar como Completo",
+    "completed": "Completo",
+    "lessons": "aulas",
+    "sections": "seções",
+    "progress": "Progresso"
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo de volta",
+    "greeting": "Bem-vindo de volta",
+    "builder": "Builder",
+    "browseCourses": "Explorar Cursos",
+    "yourXp": "Seu XP",
+    "streak": "Dias Seguidos",
+    "streakStartToday": "Comece hoje",
+    "streakOneDay": "1 dia - continue",
+    "days": "dias",
+    "level": "Nível",
+    "totalXp": "XP Total",
+    "courses": "Cursos",
+    "completed": "concluídos",
+    "achievements": "Conquistas Recentes",
+    "continuelearning": "Continuar Aprendendo",
+    "recommended": "Recomendados",
+    "viewAll": "Ver todos",
+    "noCoursesInProgress": "Nenhum curso em andamento",
+    "pickCoursePrompt": "Escolha um curso e comece a construir na Solana",
+    "beginner": "iniciante",
+    "lessons": "aulas",
+    "leaderboard": "Ranking",
+    "fullLeaderboard": "Ranking completo",
+    "noLeaderboardEntries": "Ainda não há entradas no ranking.",
+    "you": "você",
+    "yourRank": "Sua posição",
+    "completeLessonsToClimb": "Conclua lições para subir no ranking global",
+    "anonymous": "Anônimo"
+  },
+  "settings": {
+    "pageTitle": "Configurações",
+    "pageSubtitle": "Gerencie as preferências da sua conta e serviços conectados",
+    "profile": "Perfil",
+    "account": "Conta",
+    "preferences": "Preferências",
+    "privacy": "Privacidade",
+    "save": "Salvar Alterações",
+    "saving": "Salvando...",
+    "savePrivacy": "Salvar Configurações de Privacidade",
+    "languageSaved": "Idioma atualizado"
+  },
+  "auth": {
+    "providers": {
+      "google": "Google",
+      "github": "GitHub"
+    },
+    "common": {
+      "email": "E-mail",
+      "password": "Senha",
+      "emailCode": "Código por E-mail",
+      "signIn": "Entrar",
+      "continue": "Continuar",
+      "enterVerificationCode": "Digite o código de verificação",
+      "resendCode": "Reenviar código",
+      "back": "Voltar"
+    },
+    "errors": {
+      "generic": "Algo deu errado. Tente novamente.",
+      "invalidEmailPassword": "E-mail ou senha inválidos.",
+      "passwordMin": "A senha deve ter pelo menos 8 caracteres.",
+      "passwordMismatch": "As senhas não coincidem.",
+      "sendCodeFailed": "Falha ao enviar o código. Tente novamente.",
+      "resendFailed": "Falha ao reenviar o código.",
+      "invalidCode": "Código inválido ou expirado.",
+      "invalidCodeRetry": "Código inválido ou expirado. Tente novamente."
+    },
+    "signIn": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "Faça login para continuar sua jornada de aprendizado",
+      "orEmail": "Ou entre com e-mail",
+      "sendCode": "Enviar Código de Verificação",
+      "orWallet": "Ou entre com carteira",
+      "noAccount": "Ainda não tem conta?",
+      "createFree": "Crie uma grátis"
+    },
+    "signUp": {
+      "title": "Crie sua conta",
+      "subtitle": "Grátis para sempre. Sem cartão de crédito.",
+      "verifyTitle": "Digite o código",
+      "sentCodePrefix": "Enviamos um código de 6 dígitos para",
+      "orEmail": "Ou cadastre-se com e-mail",
+      "fullName": "Nome completo",
+      "fullNamePlaceholder": "Seu nome",
+      "passwordPlaceholder": "Mínimo de 8 caracteres",
+      "confirmPassword": "Confirmar",
+      "confirmPasswordPlaceholder": "Repita a senha",
+      "alreadyHaveAccount": "Já tem uma conta?"
+    },
+    "signInVerify": {
+      "title": "Verifique seu código",
+      "subtitlePrefix": "Digite o código de 6 dígitos enviado para",
+      "subtitleFallback": "Digite o código do seu e-mail.",
+      "verifyCta": "Verificar Código",
+      "useDifferentEmail": "Usar outro e-mail",
+      "codeResent": "Um novo código foi enviado.",
+      "missingEmail": "E-mail ausente. Volte e solicite um novo código."
+    }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "course_files" ADD COLUMN "downloadable" boolean DEFAULT false NOT NULL;

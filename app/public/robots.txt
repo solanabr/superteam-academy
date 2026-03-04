@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://superteam-lms-alpha.vercel.app/sitemap.xml

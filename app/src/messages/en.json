@@ -1,0 +1,332 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "navPublic": {
+    "howItWorks": "How It Works",
+    "tracks": "Tracks",
+    "features": "Features",
+    "getStarted": "Get Started"
+  },
+  "landing": {
+    "hero": {
+      "title": "Build on Solana.",
+      "subtitle": "Learn by doing.",
+      "description": "Free, gamified Solana developer education for LATAM. Earn XP, collect on-chain credentials, and join the fastest-growing blockchain ecosystem.",
+      "cta": "Start Learning Free",
+      "exploreCourses": "Explore Courses"
+    },
+    "stats": {
+      "learners": "Learners",
+      "courses": "Courses",
+      "xpAwarded": "XP Awarded",
+      "countries": "Countries"
+    }
+  },
+  "landingPage": {
+    "hero": {
+      "badge": "DeFi learning + on-chain credentials",
+      "titleLine1Lead": "Master",
+      "titleLine1Accent": "Web3",
+      "titleLine2Lead": "step by",
+      "titleLine2Accent": "step.",
+      "description": "Learn Solana by shipping real projects. Enroll with your wallet, earn Token-2022 XP, track level progression, and unlock soulbound credentials that prove your progress on-chain.",
+      "panel": {
+        "activeTrack": "Active track",
+        "path": "Builder Path",
+        "description": "Wallet-signed enrollment. Token-2022 XP. Soulbound credential.",
+        "streak": "Streak",
+        "walletEnrollment": "Wallet Enrollment",
+        "xpProgress": "XP Progress (Token-2022)",
+        "credentialReadiness": "Credential Readiness"
+      },
+      "floating": {
+        "credential": "Credential unlocked",
+        "credentialDesc": "Metaplex Core NFT, verifiable on Solana.",
+        "xpMilestone": "XP milestone",
+        "xpDesc": "XP balance updates from your Token-2022 account."
+      }
+    },
+    "howItWorks": {
+      "pill": "How it works",
+      "titleHighlight": "Clear system.",
+      "titleRest": "Real progress.",
+      "description": "Enroll with your wallet, complete lessons and challenges, and turn progress into verifiable proof.",
+      "steps": {
+        "one": {
+          "title": "Connect and enroll",
+          "desc": "Connect your wallet and sign enrollment directly on Devnet."
+        },
+        "two": {
+          "title": "Earn on-chain XP",
+          "desc": "XP is read from your Token-2022 account and converted into levels."
+        },
+        "three": {
+          "title": "Verify credentials",
+          "desc": "Unlock and verify soulbound Metaplex Core credentials by track."
+        }
+      }
+    },
+    "cards": {
+      "projectFirst": {
+        "title": "Project-first curriculum",
+        "desc": "Learn by building practical Solana products, not passive tutorials."
+      },
+      "xpProgression": {
+        "title": "Token-2022 XP progression",
+        "desc": "Your XP is a non-transferable Token-2022 balance tied to your wallet."
+      },
+      "soulbound": {
+        "title": "Soulbound credentials",
+        "desc": "Track-level credentials are verifiable and upgrade in-place on-chain."
+      }
+    },
+    "tracks": {
+      "pill": "Who it's for",
+      "titleLead": "Every Web3 role,",
+      "titleAccent": "one platform.",
+      "description": "Built for developers, researchers, creators, and operators who want measurable Web3 progress.",
+      "cards": {
+        "builders": {
+          "title": "Builders",
+          "desc": "Smart contracts, dApps, tooling, integrations."
+        },
+        "defiResearch": {
+          "title": "DeFi & Research",
+          "desc": "Protocols, token models, risk, strategy."
+        },
+        "creators": {
+          "title": "Creators & Marketing",
+          "desc": "Narratives, growth, campaigns, community."
+        },
+        "designProduct": {
+          "title": "Design & Product",
+          "desc": "UX, product thinking, systems, shipping."
+        },
+        "governance": {
+          "title": "Governance & DAOs",
+          "desc": "Ops, coordination, governance mechanics."
+        },
+        "founders": {
+          "title": "Founders",
+          "desc": "From idea to launch: strategy, team, execution."
+        }
+      }
+    },
+    "platform": {
+      "pill": "Platform",
+      "titleLead": "Everything you need to learn",
+      "titleAccent": "Web3 properly.",
+      "cards": {
+        "curriculum": {
+          "title": "Structured curriculum",
+          "desc": "Clear learning paths from fundamentals to advanced specializations."
+        },
+        "xpLevels": {
+          "title": "On-chain XP + levels",
+          "desc": "Level is derived from XP with transparent progression mechanics."
+        },
+        "challenges": {
+          "title": "Challenge-driven learning",
+          "desc": "Interactive lessons and coding challenges reinforce mastery."
+        },
+        "verification": {
+          "title": "Credential verification",
+          "desc": "Inspect wallet-owned credentials and verify on explorer."
+        },
+        "community": {
+          "title": "Community-ready model",
+          "desc": "Designed for cohorts, communities, and open-source collaboration."
+        },
+        "latam": {
+          "title": "LATAM-first accessibility",
+          "desc": "Prepared for PT-BR, ES, and EN learning experiences."
+        }
+      }
+    },
+    "finalCta": {
+      "badge": "Free to start. Built for real Solana builders.",
+      "titleLead": "Start your Web3 learning journey",
+      "titleAccent": "today.",
+      "description": "Start with one track, prove skills on-chain, and build a developer profile that compounds.",
+      "exploreTracks": "Explore Tracks",
+      "points": {
+        "noCard": "No credit card required",
+        "walletNative": "Wallet-native progression",
+        "verifiable": "Verifiable on-chain credentials"
+      }
+    }
+  },
+  "footer": {
+    "description": "Solana-native learning for builders. Ship projects, earn XP, and unlock verifiable credentials.",
+    "badge": "Devnet-ready learning stack",
+    "columns": {
+      "platform": "Platform",
+      "account": "Account",
+      "community": "Community"
+    },
+    "securityText": "Wallet-first auth, on-chain credentials, and transparent progress.",
+    "startLearning": "Start learning",
+    "rights": "All rights reserved.",
+    "links": {
+      "courses": "Courses",
+      "leaderboard": "Leaderboard",
+      "learningTracks": "Learning Tracks",
+      "howItWorks": "How It Works",
+      "createAccount": "Create Account",
+      "superteamBrazil": "Superteam Brazil",
+      "discord": "Discord",
+      "twitter": "Twitter / X"
+    }
+  },
+  "coursesPage": {
+    "title": "Course Catalog",
+    "coursesCount": "course(s) available",
+    "searchPlaceholder": "Search courses...",
+    "filters": {
+      "all": "All"
+    },
+    "allTracks": "All Tracks",
+    "noCourses": "No courses found",
+    "adjustFilters": "Try adjusting your filters",
+    "clearFilters": "Clear filters",
+    "enrolled": "Enrolled",
+    "lessons": "lessons",
+    "complete": "complete",
+    "startCourse": "Start Course"
+  },
+  "profilePage": {
+    "editProfile": "Edit Profile",
+    "website": "Website",
+    "achievements": "Achievements",
+    "noAchievements": "No achievements yet - start learning!",
+    "onchainCredentials": "On-Chain Credentials",
+    "connectWallet": "Connect your wallet",
+    "connectWalletDesc": "Link a Solana wallet to receive on-chain credentials when you complete courses",
+    "connectWalletCta": "Connect Wallet",
+    "credentialsPlaceholder": "Complete courses to receive soulbound NFT credentials",
+    "completedCourses": "Completed Courses",
+    "private": "Private",
+    "joined": "Joined",
+    "toLevel": "to Level",
+    "noCredentials": "No credentials yet",
+    "noCredentialsDesc": "Complete courses to earn soulbound NFT credentials on Solana",
+    "privateProfile": "This profile is private",
+    "privateProfileDesc": "has set their profile to private."
+  },
+  "course": {
+    "enroll": "Enroll for Free",
+    "continue": "Continue Learning",
+    "start": "Start Learning",
+    "complete": "Mark Complete",
+    "completed": "Completed",
+    "lessons": "lessons",
+    "sections": "sections",
+    "progress": "Progress"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "greeting": "Welcome back",
+    "builder": "Builder",
+    "browseCourses": "Browse Courses",
+    "yourXp": "Your XP",
+    "streak": "Day Streak",
+    "streakStartToday": "Start today!",
+    "streakOneDay": "1 day - keep going!",
+    "days": "days",
+    "level": "Level",
+    "totalXp": "Total XP",
+    "courses": "Courses",
+    "completed": "completed",
+    "achievements": "Recent Achievements",
+    "continuelearning": "Continue Learning",
+    "recommended": "Recommended",
+    "viewAll": "View all",
+    "noCoursesInProgress": "No courses in progress",
+    "pickCoursePrompt": "Pick a course and start building on Solana",
+    "beginner": "beginner",
+    "lessons": "lessons",
+    "leaderboard": "Leaderboard",
+    "fullLeaderboard": "Full leaderboard",
+    "noLeaderboardEntries": "No leaderboard entries yet.",
+    "you": "you",
+    "yourRank": "Your rank",
+    "completeLessonsToClimb": "Complete lessons to climb the global leaderboard",
+    "anonymous": "Anonymous"
+  },
+  "settings": {
+    "pageTitle": "Settings",
+    "pageSubtitle": "Manage your account preferences and connected services",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "savePrivacy": "Save Privacy Settings",
+    "languageSaved": "Language updated"
+  },
+  "auth": {
+    "providers": {
+      "google": "Google",
+      "github": "GitHub"
+    },
+    "common": {
+      "email": "Email",
+      "password": "Password",
+      "emailCode": "Email Code",
+      "signIn": "Sign In",
+      "continue": "Continue",
+      "enterVerificationCode": "Enter verification code",
+      "resendCode": "Resend code",
+      "back": "Back"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "invalidEmailPassword": "Invalid email or password.",
+      "passwordMin": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "sendCodeFailed": "Failed to send code. Try again.",
+      "resendFailed": "Failed to resend code.",
+      "invalidCode": "Invalid or expired code.",
+      "invalidCodeRetry": "Invalid or expired code. Please try again."
+    },
+    "signIn": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue your learning journey",
+      "orEmail": "Or sign in with email",
+      "sendCode": "Send Verification Code",
+      "orWallet": "Or sign in with wallet",
+      "noAccount": "No account yet?",
+      "createFree": "Create one free"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "subtitle": "Free forever. No credit card required.",
+      "verifyTitle": "Enter code",
+      "sentCodePrefix": "We sent a 6-digit code to",
+      "orEmail": "Or sign up with email",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your name",
+      "passwordPlaceholder": "Min 8 chars",
+      "confirmPassword": "Confirm",
+      "confirmPasswordPlaceholder": "Repeat password",
+      "alreadyHaveAccount": "Already have an account?"
+    },
+    "signInVerify": {
+      "title": "Verify your code",
+      "subtitlePrefix": "Enter the 6-digit code sent to",
+      "subtitleFallback": "Enter the code from your email.",
+      "verifyCta": "Verify Code",
+      "useDifferentEmail": "Use a different email",
+      "codeResent": "A new code has been sent.",
+      "missingEmail": "Missing email. Go back and request a new code."
+    }
+  }
+}

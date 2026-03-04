@@ -1,0 +1,16 @@
+export * from "./schema/course"
+export * from "./schema/courseSection"
+export * from "./schema/lesson"
+export * from "./schema/user"
+export * from "./schema/userCourseAccess"
+export * from "./schema/userLessonComplete"
+export * from "./schema/category"
+export * from "./schema/courseFile"
+export * from "./schema/assignment"
+export * from "./schema/assignmentSubmission"
+// Auth tables (NextAuth v5)
+export * from "./schema/authTables"
+// Gamification
+export * from "./schema/achievement"
+export * from "./schema/userXpEvent"
+export * from "./schema/walletAddress"

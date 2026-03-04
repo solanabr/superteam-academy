@@ -1,0 +1,90 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1763496874968,
+      "tag": "0000_lying_namor",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765519651386,
+      "tag": "0001_large_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765648777519,
+      "tag": "0002_lonely_black_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765934996155,
+      "tag": "0003_curious_moira_mactaggert",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1768549289564,
+      "tag": "0004_dapper_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768556791523,
+      "tag": "0005_brainy_silverclaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770488761045,
+      "tag": "0006_youthful_absorbing_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771577427394,
+      "tag": "0007_fluffy_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771655921535,
+      "tag": "0008_perpetual_steve_rogers",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1771686356306,
+      "tag": "0009_deep_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771785600000,
+      "tag": "0010_fancy_onchain_course_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1771922350486,
+      "tag": "0011_steady_blade",
+      "breakpoints": true
+    }
+  ]
+}
