@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { PostHogPageView } from "@/components/providers/posthog-provider";
+import { GA4Provider, GA4PageView } from "@/components/providers/ga4-provider";
+import { SentryProvider } from "@/components/providers/sentry-provider";
 import { SessionHydrator } from "@/components/providers/session-hydrator";
 import { WalletProvider } from "@/components/providers/wallet-provider";
 import { WalletSync } from "@/components/providers/wallet-sync";
@@ -46,18 +48,23 @@ export default async function LocaleLayout({ children, params }: Props): Promise
       <LocaleLang locale={locale} />
       <NextIntlClientProvider messages={messages}>
         <QueryProvider>
-        <PostHogProvider>
-          <ThemeProvider>
-            <WalletProvider>
-              <WalletSync />
-              <PostHogPageView />
-              <SessionHydrator />
-              <ServiceWorkerRegister />
-              {children}
-            </WalletProvider>
-          </ThemeProvider>
-        </PostHogProvider>
-      </QueryProvider>
+          <SentryProvider>
+            <GA4Provider>
+              <PostHogProvider>
+                <ThemeProvider>
+                  <WalletProvider>
+                    <WalletSync />
+                    <PostHogPageView />
+                    <GA4PageView />
+                    <SessionHydrator />
+                    <ServiceWorkerRegister />
+                    {children}
+                  </WalletProvider>
+                </ThemeProvider>
+              </PostHogProvider>
+            </GA4Provider>
+          </SentryProvider>
+        </QueryProvider>
       </NextIntlClientProvider>
     </>
   );

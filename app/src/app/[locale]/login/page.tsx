@@ -14,10 +14,11 @@ import { Label } from "@/components/ui/label";
 import { getData, postData } from "@/lib/api/config";
 import { useAuthStore, type AuthState } from "@/store/auth-store";
 import { AuthSocialButtons } from "@/components/auth/auth-social-buttons";
+// import { SentryTestButton } from "@/components/debug/sentry-test-button";
 import { z } from "zod";
 
 const login_schema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(1),
 });
 
@@ -168,6 +169,7 @@ function LoginPageInner(): React.ReactElement {
         <div className="mt-6 border-t-2 border-dashed border-border pt-4">
           <AuthSocialButtons callback_url={callback_url} />
         </div>
+        {/* <SentryTestButton /> */}
         <p className="mt-4 text-center text-xs font-mono text-muted-foreground">
           <Link
             href="/register"
