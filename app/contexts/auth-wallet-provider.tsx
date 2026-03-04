@@ -110,10 +110,20 @@ function AuthProviderInner({
 	}, [refreshSession, initialSession]);
 
 	useEffect(() => {
-		if (!wallet.connected) {
+		if (!wallet.connected || !wallet.publicKey) {
 			setIsWalletVerified(false);
+			return;
 		}
-	}, [wallet.connected]);
+
+		// Auto-restore verified state when the session already covers this wallet
+		const currentWallet = wallet.publicKey.toBase58();
+		if (
+			session?.userId &&
+			(user?.email === walletEmail(currentWallet) || user?.walletAddress === currentWallet)
+		) {
+			setIsWalletVerified(true);
+		}
+	}, [wallet.connected, wallet.publicKey, session?.userId, user?.email, user?.walletAddress]);
 
 	const verifyWallet = useCallback(async () => {
 		if (!wallet.publicKey || !wallet.signMessage) {
@@ -125,7 +135,10 @@ function AuthProviderInner({
 			return;
 		}
 
-		if (session?.userId && user?.email === walletEmail(currentWallet)) {
+		if (
+			session?.userId &&
+			(user?.email === walletEmail(currentWallet) || user?.walletAddress === currentWallet)
+		) {
 			setIsWalletVerified(true);
 			return;
 		}

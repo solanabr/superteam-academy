@@ -19,13 +19,19 @@ export async function sendAndConfirmTx(
 	const tx = new Transaction().add(instruction);
 	tx.feePayer = wallet.publicKey as PublicKey;
 
-	// Let the wallet adapter handle blockhash assignment right before signing.
-	// Fetching the blockhash early causes "block height exceeded" errors when
-	// the user takes time to approve the transaction in their wallet UI.
-	const signature = await wallet.sendTransaction(tx, connection);
+	// Fetch blockhash ourselves and set it on the tx so we hold the matching
+	// lastValidBlockHeight for confirmation. The wallet adapter's
+	// prepareTransaction skips refetching when recentBlockhash is already set.
+	// Using a mismatched blockhash/lastValidBlockHeight pair (the previous
+	// approach) caused "block height exceeded" errors because confirmation
+	// tracked a different validity window than the transaction's actual one.
+	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+	tx.recentBlockhash = blockhash;
 
-	// Fetch a fresh blockhash for confirmation tracking after the tx is sent
-	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+	const signature = await wallet.sendTransaction(tx, connection, {
+		maxRetries: 5,
+	});
+
 	await connection.confirmTransaction(
 		{ signature, blockhash, lastValidBlockHeight },
 		"confirmed"
