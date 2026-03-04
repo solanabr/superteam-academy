@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import {
   RadarChart,
   PolarGrid,
@@ -9,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
+import { useTheme } from '@/lib/hooks/useTheme'
 
 export interface SkillData {
   skill: string
@@ -36,6 +38,8 @@ export function SkillRadar({
   title = 'Skills',
   size = 'medium' 
 }: SkillRadarProps) {
+  const { isDark } = useTheme()
+
   const sizeConfig = {
     small: 250,
     medium: 350,
@@ -44,21 +48,30 @@ export function SkillRadar({
 
   const height = sizeConfig[size]
 
-  const angleAxisStyle = {
-    fontSize: 12,
-    fill: '#9ca3af',
-    fontFamily: 'inherit',
-  }
+  const angleAxisStyle = useMemo(
+    () => ({
+      fontSize: 12,
+      fill: isDark ? '#94a3b8' : '#475569',
+      fontFamily: 'inherit',
+    }),
+    [isDark]
+  )
 
-  const radiusAxisStyle = {
-    fontSize: 10,
-    fill: '#6b7280',
-  }
+  const radiusAxisStyle = useMemo(
+    () => ({
+      fontSize: 10,
+      fill: isDark ? '#64748b' : '#64748b',
+    }),
+    [isDark]
+  )
+
+  const gridStroke = isDark ? '#334155' : '#cbd5e1'
+  const radarColor = isDark ? '#00F0FF' : '#2563eb'
 
   return (
     <div className="w-full">
       {title && (
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
           {title}
         </h3>
       )}
@@ -66,7 +79,7 @@ export function SkillRadar({
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
             <PolarGrid 
-              stroke="#374151" 
+              stroke={gridStroke}
               strokeDasharray="3 3"
             />
             <PolarAngleAxis
@@ -82,16 +95,16 @@ export function SkillRadar({
             <Radar
               name="Skill Level"
               dataKey="value"
-              stroke="#00F0FF"
-              fill="#00F0FF"
+              stroke={radarColor}
+              fill={radarColor}
               fillOpacity={0.3}
               strokeWidth={2}
             />
             <Legend 
               verticalAlign="bottom"
               height={36}
-              formatter={(value) => (
-                <span className="text-gray-400 text-sm">{value}</span>
+              formatter={(value: string) => (
+                <span className="text-sm text-slate-600 dark:text-gray-300">{value}</span>
               )}
             />
           </RadarChart>
@@ -104,10 +117,10 @@ export function SkillRadar({
             key={skill.skill} 
             className="flex items-center justify-between text-sm"
           >
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-slate-600 dark:text-gray-400">
               {skill.skill}
             </span>
-            <span className="font-medium text-neon-cyan dark:text-neon-cyan">
+            <span className="font-medium text-blue-700 dark:text-neon-cyan">
               {skill.value}%
             </span>
           </div>

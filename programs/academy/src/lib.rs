@@ -5,89 +5,91 @@ pub mod instructions;
 pub mod state;
 pub mod utils;
 
+use instructions::*;
+
 declare_id!("2JEFfbRwBqZB3nf5JkTGsievs43CDuGettfzBWzf94Mw");
 
 #[program]
 pub mod academy {
     use super::*;
 
-    pub fn initialize(ctx: Context<instructions::initialize::Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         instructions::initialize::initialize(ctx)
     }
 
     pub fn update_config(
-        ctx: Context<instructions::update_config::UpdateConfig>,
+        ctx: Context<UpdateConfig>,
         changes: state::ConfigUpdate,
     ) -> Result<()> {
         instructions::update_config::update_config(ctx, changes)
     }
 
     pub fn create_course(
-        ctx: Context<instructions::create_course::CreateCourse>,
+        ctx: Context<CreateCourse>,
         params: state::CreateCourseParams,
     ) -> Result<()> {
         instructions::create_course::create_course(ctx, params)
     }
 
     pub fn update_course(
-        ctx: Context<instructions::update_course::UpdateCourse>,
+        ctx: Context<UpdateCourse>,
         changes: state::CourseUpdate,
     ) -> Result<()> {
         instructions::update_course::update_course(ctx, changes)
     }
 
     pub fn register_minter(
-        ctx: Context<instructions::register_minter::RegisterMinter>,
+        ctx: Context<RegisterMinter>,
         params: state::RegisterMinterParams,
     ) -> Result<()> {
         instructions::register_minter::register_minter(ctx, params)
     }
 
-    pub fn revoke_minter(ctx: Context<instructions::revoke_minter::RevokeMinter>) -> Result<()> {
+    pub fn revoke_minter(ctx: Context<RevokeMinter>) -> Result<()> {
         instructions::revoke_minter::revoke_minter(ctx)
     }
 
     pub fn create_achievement_type(
-        ctx: Context<instructions::create_achievement_type::CreateAchievementType>,
+        ctx: Context<CreateAchievementType>,
         params: state::CreateAchievementTypeParams,
     ) -> Result<()> {
         instructions::create_achievement_type::create_achievement_type(ctx, params)
     }
 
     pub fn deactivate_achievement_type(
-        ctx: Context<instructions::deactivate_achievement_type::DeactivateAchievementType>,
+        ctx: Context<DeactivateAchievementType>,
     ) -> Result<()> {
         instructions::deactivate_achievement_type::deactivate_achievement_type(ctx)
     }
 
     pub fn enroll(
-        ctx: Context<instructions::enroll::Enroll>,
+        ctx: Context<Enroll>,
         course_id: String,
     ) -> Result<()> {
         instructions::enroll::enroll(ctx, course_id)
     }
 
     pub fn close_enrollment(
-        ctx: Context<instructions::close_enrollment::CloseEnrollment>,
+        ctx: Context<CloseEnrollment>,
     ) -> Result<()> {
         instructions::close_enrollment::close_enrollment(ctx)
     }
 
     pub fn complete_lesson(
-        ctx: Context<instructions::complete_lesson::CompleteLesson>,
+        ctx: Context<CompleteLesson>,
         lesson_index: u8,
     ) -> Result<()> {
         instructions::complete_lesson::complete_lesson(ctx, lesson_index)
     }
 
     pub fn finalize_course(
-        ctx: Context<instructions::finalize_course::FinalizeCourse>,
+        ctx: Context<FinalizeCourse>,
     ) -> Result<()> {
         instructions::finalize_course::finalize_course(ctx)
     }
 
     pub fn issue_credential(
-        ctx: Context<instructions::issue_credential::IssueCredential>,
+        ctx: Context<IssueCredential>,
         credential_name: String,
         metadata_uri: String,
         courses_completed: u32,
@@ -103,7 +105,7 @@ pub mod academy {
     }
 
     pub fn upgrade_credential(
-        ctx: Context<instructions::upgrade_credential::UpgradeCredential>,
+        ctx: Context<UpgradeCredential>,
         new_name: String,
         new_uri: String,
         courses_completed: u32,
@@ -119,7 +121,7 @@ pub mod academy {
     }
 
     pub fn reward_xp(
-        ctx: Context<instructions::reward_xp::RewardXp>,
+        ctx: Context<RewardXp>,
         amount: state::I80F48,
         reason: String,
     ) -> Result<()> {
@@ -127,7 +129,7 @@ pub mod academy {
     }
 
     pub fn award_achievement(
-        ctx: Context<instructions::award_achievement::AwardAchievement>,
+        ctx: Context<AwardAchievement>,
     ) -> Result<()> {
         instructions::award_achievement::award_achievement(ctx)
     }

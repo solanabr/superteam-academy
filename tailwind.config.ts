@@ -10,17 +10,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        foreground: 'hsl(210 40% 98%)',
+        foreground: 'hsl(var(--foreground))',
         neon: {
           cyan: '#00F0FF',
           magenta: '#FF00FF',
           green: '#00FF41',
           yellow: '#FFFF00',
         },
+        superteam: {
+          emerald: '#129D49',
+          forest: '#306C40',
+          yellow: '#FBD800',
+          navy: '#233A75',
+          offwhite: '#FFF8E6',
+        },
         terminal: {
-          bg: '#0A0E14',
-          surface: '#1A1F29',
-          border: '#2D3748',
+          bg: 'hsl(var(--terminal-bg))',
+          surface: 'hsl(var(--terminal-surface))',
+          border: 'hsl(var(--terminal-border))',
         },
         solana: {
           purple: '#9945FF',

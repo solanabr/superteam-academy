@@ -33,10 +33,10 @@ export const MPL_CORE_PROGRAM_ID = new PublicKey('CoREENxT6tW1HoK8ypY1SxRMZTcVPm
  * Devnet Deployment IDs (for reference)
  */
 export const DEVNET = {
-  CONFIG_PDA: new PublicKey('GjsatVW8i6vvHHGtTd59xhRPud1SfoS8ckxL5bGeM7sc'),
-  XP_MINT: new PublicKey('xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3'),
-  AUTHORITY: new PublicKey('ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn'),
-  MOCK_COURSE: new PublicKey('7MRgCuJAbDCP1T5b3B5hkE36wAU7hvZQT7eNAn8Ag3rC'),
+  CONFIG_PDA: new PublicKey('He7zEv5PBMg96zqhqZUghjJqDKjXi3MZGZyAPT86o5wM'),
+  XP_MINT: new PublicKey('DkEZUnfkvh8RTSmASY2zdjrzCn7sGvgX6n45ygyi2tAd'),
+  AUTHORITY: new PublicKey('6HJo2VY5NgAeTWcNq22qU6EKfsdcUPCEmC1fu1e3hvQ1'),
+  MOCK_COURSE: new PublicKey('4kNo8Q5ybj6a8xWrwssQRPK9UH359kqma8H5QF5fhwC6'),
   MOCK_TRACK_COLLECTION: new PublicKey('HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX'),
 };
 

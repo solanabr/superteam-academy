@@ -14,25 +14,32 @@ pub fn enroll(ctx: Context<Enroll>, course_id: String) -> Result<()> {
             AcademyError::MissingPrerequisiteEnrollment
         );
 
-        let prereq_course: Account<Course> = Account::try_from(&ctx.remaining_accounts[0])?;
+        // Deserialize remaining accounts without Account wrapper to avoid lifetime issues
+        let prereq_course_info = &ctx.remaining_accounts[0];
         require_keys_eq!(
-            prereq_course.key(),
+            prereq_course_info.key(),
             prereq_course_key,
             AcademyError::PrerequisiteNotMet
         );
+        let prereq_course_data = Course::try_deserialize(
+            &mut &prereq_course_info.try_borrow_data()?[..],
+        )?;
 
-        let prereq_enrollment: Account<Enrollment> = Account::try_from(&ctx.remaining_accounts[1])?;
+        let prereq_enrollment_info = &ctx.remaining_accounts[1];
+        let prereq_enrollment_data = Enrollment::try_deserialize(
+            &mut &prereq_enrollment_info.try_borrow_data()?[..],
+        )?;
         require!(
-            prereq_enrollment.course_id == prereq_course.course_id,
+            prereq_enrollment_data.course_id == prereq_course_data.course_id,
             AcademyError::PrerequisiteNotMet
         );
         require_keys_eq!(
-            prereq_enrollment.learner,
+            prereq_enrollment_data.learner,
             ctx.accounts.learner.key(),
             AcademyError::PrerequisiteNotMet
         );
         require!(
-            prereq_enrollment.completed_at.is_some(),
+            prereq_enrollment_data.completed_at.is_some(),
             AcademyError::PrerequisiteNotMet
         );
     }

@@ -15,6 +15,7 @@ import { useCredentials } from '@/lib/hooks/useXp'
 import { getAchievementServiceInstance } from '@/lib/services/achievement.service'
 import { SkillRadar, demoSkillData, calculateSkillsFromProgress } from '@/components/profile'
 import { Achievement } from '@/lib/types'
+import { Award, CalendarClock, Flame, PencilLine, ShieldCheck, Sparkles, Wallet } from 'lucide-react'
 
 interface ProfileUser {
   id: string
@@ -31,16 +32,17 @@ interface ProfileUser {
   createdAt: string
 }
 
+function formatAddress(address: string): string {
+  if (address.length <= 10) return address
+  return `${address.slice(0, 4)}...${address.slice(-4)}`
+}
+
 export default function ProfilePage() {
   const { t } = useI18n()
   const { data: session, status } = useSession()
   const { connected, publicKey, openWalletModal } = useWallet()
-  const rawUserId =
-    session?.user?.id || session?.user?.email || null
-  const userId =
-    typeof rawUserId === 'string' && rawUserId.includes('@')
-      ? rawUserId.toLowerCase()
-      : rawUserId
+  const rawUserId = session?.user?.id || session?.user?.email || null
+  const userId = typeof rawUserId === 'string' && rawUserId.includes('@') ? rawUserId.toLowerCase() : rawUserId
   const [user, setUser] = useState<ProfileUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -63,11 +65,19 @@ export default function ProfilePage() {
   const level = Math.max(stats?.level ?? user?.level ?? 0, calculateLevel(totalXp))
 
   const completedCourses = 0
+  const lessonsCompleted = stats?.lessonsCompleted ?? 0
+  const skillData = useMemo(() => {
+    if (lessonsCompleted > 0 || completedCourses > 0) {
+      return calculateSkillsFromProgress(completedCourses, lessonsCompleted)
+    }
+    return demoSkillData
+  }, [completedCourses, lessonsCompleted])
+
   const { unlockedAchievements } = useAchievements({
     userId: userId || 'guest',
     stats: {
       totalXp,
-      totalLessonsCompleted: stats?.lessonsCompleted || 0,
+      totalLessonsCompleted: lessonsCompleted,
       totalCoursesCompleted: completedCourses,
       currentStreak: stats?.currentStreak || 0,
       lessonsCompletedToday: stats?.lessonsCompletedToday || 0,
@@ -133,7 +143,7 @@ export default function ProfilePage() {
 
   const handleSaveBio = async () => {
     if (!user || !userId) return
-    
+
     setIsSaving(true)
     try {
       const response = await fetch(`/api/users/${encodeURIComponent(userId)}/profile`, {
@@ -159,13 +169,17 @@ export default function ProfilePage() {
 
   if (status === 'loading' || loading) {
     return (
-      <main className="min-h-screen py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-40 bg-gray-200 dark:bg-terminal-bg rounded-lg animate-pulse mb-6" />
-          <div className="grid grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-gray-200 dark:bg-terminal-bg rounded-lg animate-pulse" />
+      <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/40 py-12 dark:from-[#060d1a] dark:via-[#071427] dark:to-[#091224]">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 h-56 animate-pulse rounded-2xl border border-slate-200 bg-white/90 dark:border-superteam-navy/40 dark:bg-superteam-navy/30" />
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white/90 dark:border-superteam-navy/40 dark:bg-superteam-navy/30" />
             ))}
+          </div>
+          <div className="grid gap-6 xl:grid-cols-5">
+            <div className="xl:col-span-3 h-72 animate-pulse rounded-2xl border border-slate-200 bg-white/90 dark:border-superteam-navy/40 dark:bg-superteam-navy/30" />
+            <div className="xl:col-span-2 h-72 animate-pulse rounded-2xl border border-slate-200 bg-white/90 dark:border-superteam-navy/40 dark:bg-superteam-navy/30" />
           </div>
         </div>
       </main>
@@ -174,13 +188,19 @@ export default function ProfilePage() {
 
   if (status !== 'authenticated' || !user) {
     return (
-      <main className="min-h-screen py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-display font-bold mb-4">{t('profile.notFound')}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('profile.signInToView')}</p>
-          <Link href="/auth/signin">
-            <Button>{t('auth.signIn')}</Button>
-          </Link>
+      <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-emerald-50/40 py-12 dark:from-[#060d1a] dark:via-[#071427] dark:to-[#091224]">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+          <Card className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-superteam-navy/35 dark:shadow-none">
+            <CardContent className="py-12">
+              <h1 className="mb-3 text-4xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
+                {t('profile.notFound')}
+              </h1>
+              <p className="mb-6 text-slate-600 dark:text-gray-300">{t('profile.signInToView')}</p>
+              <Link href="/auth/signin">
+                <Button>{t('auth.signIn')}</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </main>
     )
@@ -189,216 +209,271 @@ export default function ProfilePage() {
   const streak = stats?.currentStreak ?? user.currentStreak ?? 0
   const longestStreak = stats?.longestStreak ?? user.longestStreak ?? 0
   const memberSince = user.createdAt ? new Date(user.createdAt) : null
+  const daysSinceJoin = memberSince ? Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24)) : null
+  const displayName = user.displayName || session?.user?.name || t('profile.anonymousLearner')
+  const walletAddress = publicKey?.toBase58() || user.walletAddress || ''
+
+  const statCards = [
+    {
+      label: t('dashboard.stats.level'),
+      value: String(level),
+      className: 'text-blue-700 dark:text-neon-cyan',
+      icon: <Sparkles size={14} />,
+    },
+    {
+      label: t('profile.totalXp'),
+      value: totalXp.toLocaleString(),
+      className: 'text-superteam-forest dark:text-superteam-yellow',
+      icon: <Award size={14} />,
+    },
+    {
+      label: t('dashboard.stats.streak'),
+      value: String(streak),
+      className: 'text-orange-600 dark:text-orange-300',
+      icon: <Flame size={14} />,
+    },
+    {
+      label: t('profile.longest'),
+      value: String(longestStreak),
+      className: 'text-emerald-700 dark:text-emerald-300',
+      icon: <ShieldCheck size={14} />,
+    },
+  ]
 
   return (
-    <main className="min-h-screen py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Profile Header */}
-        <Card className="mb-8">
-          <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-8 pt-6">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-6xl font-bold text-white">
-              {(user?.displayName || 'U')[0].toUpperCase()}
-            </div>
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-emerald-50/40 py-12 dark:from-[#060d1a] dark:via-[#071427] dark:to-[#091224]">
+      <div className="pointer-events-none absolute -left-20 top-32 h-72 w-72 rounded-full bg-emerald-300/25 blur-3xl dark:bg-superteam-emerald/10" />
+      <div className="pointer-events-none absolute -right-20 top-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-superteam-navy/25" />
 
-            <div className="flex-1">
-              <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2">
-                {user.displayName || session?.user?.name || t('profile.anonymousLearner')}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">{user.email || session?.user?.email || t('profile.noEmail')}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {t('profile.age')}: {typeof user.age === 'number' ? user.age : t('profile.notSet')}
-              </p>
-              
-              {isEditing ? (
-                <div className="mb-4">
-                  <textarea
-                    value={bioBuffer}
-                    onChange={(e) => setBioBuffer(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-terminal-border rounded-lg dark:bg-terminal-bg dark:text-white text-sm"
-                    rows={2}
-                    placeholder={t('profile.writeBio')}
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={handleSaveBio}
-                      disabled={isSaving}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
-                    >
-                      {isSaving ? t('common.savingEllipsis') : t('common.save')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false)
-                        setBioBuffer(user.bio || '')
-                      }}
-                      className="px-4 py-2 bg-gray-300 dark:bg-terminal-bg text-gray-900 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-terminal-surface text-sm"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                  </div>
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Card className="mb-6 border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-[#0c1730]/85 dark:shadow-none">
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start">
+              <div className="flex items-center gap-4">
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border border-blue-300 bg-gradient-to-br from-blue-500 to-purple-600 text-4xl font-bold text-white shadow-sm dark:border-superteam-emerald/40 dark:shadow-none">
+                  {displayName[0]?.toUpperCase() || 'U'}
                 </div>
-              ) : (
-                <>
-                  <p className="text-gray-700 dark:text-gray-300 mb-4">
-                    {user.bio || t('profile.noBioYet')}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setIsEditing(true)
-                      setBioBuffer(user.bio || '')
-                    }}
-                    className="text-blue-600 dark:text-neon-cyan hover:underline text-sm mb-4"
-                  >
-                    {t('profile.editBio')}
-                  </button>
-                </>
-              )}
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dashboard.stats.level')}</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-neon-cyan">{level}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('profile.totalXp')}</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-neon-cyan">
-                    {totalXp.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('dashboard.stats.streak')}</p>
-                  <p className="text-2xl font-bold text-orange-500">🔥 {streak}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('profile.longest')}</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {longestStreak}
-                  </p>
+                <div className="md:hidden">
+                  <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">{displayName}</h1>
+                  <p className="text-sm text-slate-600 dark:text-gray-300">{user.email || session?.user?.email || t('profile.noEmail')}</p>
                 </div>
               </div>
 
-              <Link href="/settings">
-                <Button variant="secondary">{t('profile.editProfile')}</Button>
-              </Link>
+              <div className="flex-1">
+                <div className="mb-4 hidden md:block">
+                  <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">{displayName}</h1>
+                  <p className="text-slate-600 dark:text-gray-300">{user.email || session?.user?.email || t('profile.noEmail')}</p>
+                </div>
+
+                <div className="mb-4 flex flex-wrap gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 font-semibold text-emerald-800 dark:border-superteam-emerald/45 dark:bg-superteam-emerald/10 dark:text-superteam-emerald">
+                    <CalendarClock size={12} />
+                    {memberSince ? memberSince.toLocaleDateString() : t('profile.unknown')}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-50 px-3 py-1 font-semibold text-blue-800 dark:border-superteam-navy/60 dark:bg-superteam-navy/35 dark:text-superteam-offwhite">
+                    <Wallet size={12} />
+                    {walletAddress ? formatAddress(walletAddress) : t('profile.notSet')}
+                  </span>
+                </div>
+
+                {isEditing ? (
+                  <div className="mb-4">
+                    <textarea
+                      value={bioBuffer}
+                      onChange={(e) => setBioBuffer(e.target.value)}
+                      className="min-h-[88px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-blue-500 dark:border-superteam-navy/55 dark:bg-[#07132a] dark:text-gray-100 dark:focus:border-superteam-emerald"
+                      placeholder={t('profile.writeBio')}
+                    />
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" onClick={handleSaveBio} disabled={isSaving}>
+                        {isSaving ? t('common.savingEllipsis') : t('common.save')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setIsEditing(false)
+                          setBioBuffer(user.bio || '')
+                        }}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <p className="mb-2 text-slate-700 dark:text-gray-200">{user.bio || t('profile.noBioYet')}</p>
+                    <button
+                      onClick={() => {
+                        setIsEditing(true)
+                        setBioBuffer(user.bio || '')
+                      }}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-600 hover:underline dark:text-neon-cyan dark:hover:text-neon-cyan/80"
+                    >
+                      <PencilLine size={13} />
+                      {t('profile.editBio')}
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/settings">
+                    <Button variant="secondary">{t('profile.editProfile')}</Button>
+                  </Link>
+                  {!connected && (
+                    <Button variant="ghost" onClick={openWalletModal}>
+                      {t('common.connectWallet')}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Achievements */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white">
-                {t('profile.achievements')} ({unlockedAchievements.length}/{achievements.length})
-              </h2>
-            </CardHeader>
-            <CardContent>
-              {!achievementsLoading ? (
-                <div className="grid grid-cols-4 gap-2">
-                  {achievements.map((achievement: Achievement) => {
-                    const isUnlocked = unlockedAchievements.some((a) => a.id === achievement.id)
-                    return (
-                      <div
-                        key={achievement.id}
-                        title={achievement.title}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-2xl border-2 transition-all ${
-                          isUnlocked
-                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600 cursor-pointer hover:scale-110'
-                            : 'bg-gray-100 dark:bg-terminal-bg border-gray-300 dark:border-terminal-border opacity-50'
-                        }`}
-                      >
-                        {achievement.icon || '🏅'}
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div key={i} className="aspect-square bg-gray-200 dark:bg-terminal-bg rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Credentials */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white">
-                {t('profile.credentials')}
-              </h2>
-            </CardHeader>
-            <CardContent>
-              {!connected && (
-                <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                  <p>{t('profile.connectForCredentials')}</p>
-                  <Button variant="secondary" onClick={openWalletModal}>
-                    {t('common.connectWallet')}
-                  </Button>
-                </div>
-              )}
-
-              {connected && credentialsLoading && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('profile.loadingCredentials')}</p>
-              )}
-
-              {connected && !credentialsLoading && credentials.length === 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('profile.noCredentials')}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {statCards.map((card) => (
+            <Card
+              key={card.label}
+              hover={false}
+              className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-superteam-navy/35 dark:shadow-none"
+            >
+              <CardContent className="pt-6">
+                <p className="mb-2 inline-flex items-center gap-1 text-xs uppercase tracking-wide text-slate-500 dark:text-gray-400">
+                  {card.icon}
+                  {card.label}
                 </p>
-              )}
-
-              {connected && !credentialsLoading && credentials.length > 0 && (
-                <div className="space-y-3">
-                  {credentials.map((credential) => (
-                    <div
-                      key={credential.assetId}
-                      className="rounded-lg border border-terminal-border p-3 bg-gray-100 dark:bg-terminal-bg"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">{credential.name}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {t('profile.track')} {credential.trackId} · {t('dashboard.stats.level')} {credential.level}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {credential.coursesCompleted} {t('courses.lessons')} · {credential.totalXp} XP
-                          </p>
-                        </div>
-                        <Link
-                          href={`/certificates/${credential.assetId}`}
-                          className="text-sm text-blue-600 dark:text-neon-cyan hover:underline"
-                        >
-                          {t('profile.view')}
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                <p className={`text-2xl font-display font-bold ${card.className}`}>{card.value}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Member Since */}
-        <Card className="mt-6">
-          <CardHeader>
-            <h2 className="text-xl font-display font-bold text-gray-900 dark:text-white">
-              {t('profile.memberSince')}
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="text-gray-700 dark:text-gray-300">
-              <p>{memberSince ? memberSince.toLocaleDateString() : t('profile.unknown')}</p>
-              {memberSince && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  {t('profile.joinedDaysAgo').replace('{days}', String(Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))))}
+        <div className="grid gap-6 xl:grid-cols-5">
+          <div className="space-y-6 xl:col-span-3">
+            <Card className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-[#0c1730]/85 dark:shadow-none">
+              <CardHeader>
+                <h2 className="text-xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
+                  {t('profile.achievements')} ({unlockedAchievements.length}/{achievements.length})
+                </h2>
+              </CardHeader>
+              <CardContent>
+                {!achievementsLoading ? (
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                    {achievements.map((achievement: Achievement) => {
+                      const isUnlocked = unlockedAchievements.some((a) => a.id === achievement.id)
+                      return (
+                        <div
+                          key={achievement.id}
+                          title={achievement.title}
+                          className={`aspect-square rounded-xl border-2 text-2xl transition-all ${
+                            isUnlocked
+                              ? 'border-amber-300 bg-amber-50 shadow-sm hover:scale-105 dark:border-amber-500/60 dark:bg-amber-900/20 dark:shadow-none'
+                              : 'border-slate-300 bg-slate-100 opacity-60 dark:border-superteam-navy/55 dark:bg-[#091226]'
+                          } flex items-center justify-center`}
+                        >
+                          {achievement.icon || '🏅'}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                      <div key={i} className="aspect-square animate-pulse rounded-xl border border-slate-300 bg-slate-100 dark:border-superteam-navy/55 dark:bg-[#091226]" />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-[#0c1730]/85 dark:shadow-none">
+              <CardHeader>
+                <h2 className="text-xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
+                  Skill Map
+                </h2>
+              </CardHeader>
+              <CardContent>
+                <SkillRadar data={skillData} size="small" />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6 xl:col-span-2">
+            <Card className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-[#0c1730]/85 dark:shadow-none">
+              <CardHeader>
+                <h2 className="text-xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
+                  {t('profile.credentials')}
+                </h2>
+              </CardHeader>
+              <CardContent>
+                {!connected && (
+                  <div className="space-y-3 text-sm text-slate-600 dark:text-gray-300">
+                    <p>{t('profile.connectForCredentials')}</p>
+                    <Button variant="secondary" onClick={openWalletModal}>
+                      {t('common.connectWallet')}
+                    </Button>
+                  </div>
+                )}
+
+                {connected && credentialsLoading && (
+                  <p className="text-sm text-slate-600 dark:text-gray-300">{t('profile.loadingCredentials')}</p>
+                )}
+
+                {connected && !credentialsLoading && credentials.length === 0 && (
+                  <p className="text-sm text-slate-600 dark:text-gray-300">{t('profile.noCredentials')}</p>
+                )}
+
+                {connected && !credentialsLoading && credentials.length > 0 && (
+                  <div className="space-y-3">
+                    {credentials.map((credential) => (
+                      <div
+                        key={credential.assetId}
+                        className="rounded-xl border border-slate-300 bg-slate-50 p-3 dark:border-superteam-navy/55 dark:bg-[#091226]"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-white">{credential.name}</p>
+                            <p className="text-xs text-slate-600 dark:text-gray-400">
+                              {t('profile.track')} {credential.trackId} · {t('dashboard.stats.level')} {credential.level}
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-gray-400">
+                              {credential.coursesCompleted} {t('courses.lessons')} · {credential.totalXp} XP
+                            </p>
+                          </div>
+                          <Link
+                            href={`/certificates/${credential.assetId}`}
+                            className="text-sm font-medium text-blue-700 hover:underline dark:text-neon-cyan"
+                          >
+                            {t('profile.view')}
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-300 bg-white/95 shadow-sm dark:border-superteam-navy/45 dark:bg-[#0c1730]/85 dark:shadow-none">
+              <CardHeader>
+                <h2 className="text-xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
+                  {t('profile.memberSince')}
+                </h2>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-800 dark:text-gray-200">
+                  {memberSince ? memberSince.toLocaleDateString() : t('profile.unknown')}
                 </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                {daysSinceJoin !== null && (
+                  <p className="mt-2 text-sm text-slate-600 dark:text-gray-400">
+                    {t('profile.joinedDaysAgo').replace('{days}', String(daysSinceJoin))}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </main>
   )

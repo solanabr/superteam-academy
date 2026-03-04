@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/backend/src/db'
+import { getDatabase } from '@/lib/db'
 import { PublicKey } from '@solana/web3.js'
 import type { DbResult, EnrollmentCompletionRow, CourseRow, UserXpRow } from '@/lib/types/db'
+import { tryCreateBackendSigner, getXpMint } from '@/lib/services/onchain.service'
+import { syncEnrollment, syncXpBalance } from '@/lib/services/onchain-sync.service'
+
+/* ─── Dev logger ─── */
+const isDev = process.env.NODE_ENV !== 'production'
+function devLog(tag: string, ...args: unknown[]) {
+  if (isDev) console.log(`[api/courses/finalize:${tag}]`, ...args)
+}
 
 /**
  * POST /api/courses/finalize
- * Finalize a course and prepare for credential issuance
+ * Finalize a course: on-chain first (bonus XP + bitmap), then DB fallback
  */
 export async function POST(request: NextRequest) {
   try {
@@ -86,6 +94,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ──────────────────────────────────────────────
+    // ON-CHAIN: Finalize course (mints bonus XP on-chain)
+    // ──────────────────────────────────────────────
+    let onchainTxId: string | null = null
+    let onchainError: string | null = null
+
+    const signer = tryCreateBackendSigner()
+    if (signer) {
+      try {
+        const xpMint = getXpMint()
+        const learner = new PublicKey(walletAddress)
+
+        devLog('onchain', '🔗 Calling finalizeCourse', { courseId, wallet: walletAddress })
+
+        onchainTxId = await signer.finalizeCourse(courseId, learner, xpMint)
+
+        devLog('onchain', '✅ Course finalized on-chain!', { txId: onchainTxId })
+      } catch (err) {
+        onchainError = err instanceof Error ? err.message : String(err)
+        devLog('onchain', '⚠️ On-chain finalize failed, falling back to DB-only:', onchainError)
+      }
+    } else {
+      devLog('onchain', '⏭️ Signer not configured — DB-only mode')
+    }
+
+    // ──────────────────────────────────────────────
+    // DB: Mark course as completed (always runs)
+    // ──────────────────────────────────────────────
+
     // Mark course as completed
     const completedAt = new Date().toISOString()
     // @ts-ignore
@@ -137,6 +174,21 @@ export async function POST(request: NextRequest) {
         .eq('id', userId)) as DbResult<null>
     }
 
+    // ──────────────────────────────────────────────
+    // POST-TX SYNC: Reconcile on-chain enrollment + XP → DB
+    // ──────────────────────────────────────────────
+    let enrollmentSync = null
+    let xpSync = null
+    if (onchainTxId) {
+      try {
+        enrollmentSync = await syncEnrollment(userId, walletAddress, courseId)
+        xpSync = await syncXpBalance(userId, walletAddress)
+        devLog('sync', '✅ Post-finalize sync:', { enrollmentSync, xpSync })
+      } catch (err) {
+        devLog('sync', '⚠️ Post-finalize sync failed (non-fatal):', err)
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -145,6 +197,15 @@ export async function POST(request: NextRequest) {
         bonusXp,
         courseTitle: course?.title,
         readyForCredential: true,
+        onchain: {
+          txId: onchainTxId,
+          error: onchainError,
+          mode: onchainTxId ? 'on-chain' : 'db-only',
+        },
+        sync: {
+          enrollment: enrollmentSync,
+          xp: xpSync ? { onchainXp: xpSync.onchainXp, resolvedXp: xpSync.resolvedXp } : null,
+        },
       },
       { status: 200 }
     )
