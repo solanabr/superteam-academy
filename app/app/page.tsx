@@ -3,10 +3,12 @@
 import {
   HeroSection,
   FeaturesSection,
+  StatsSection,
   CoursesSection,
   AssessmentSection,
-  LeaderboardSection,
   TestimonialsSection,
+  FAQSection,
+  CTASection,
   Footer,
 } from "@/components/landing";
 
@@ -16,12 +18,14 @@ export default function HomePage() {
       <main className="flex-1">
         <HeroSection />
         <FeaturesSection />
+        <StatsSection />
         <CoursesSection />
         <AssessmentSection />
         <TestimonialsSection />
+        <FAQSection />
+        <CTASection />
       </main>
       <Footer />
     </div>
   );
 }
-
