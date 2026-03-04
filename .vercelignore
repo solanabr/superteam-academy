@@ -1,8 +1,16 @@
 node_modules
 .next
+target
 backend
 programs
 wallets
 .env.local
 .env
 *.pem
+Logo
+visual reference
+color-palette.*
+logo-examples.*
+*.ai
+docs/internal
+scripts
