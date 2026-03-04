@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Shell } from "@/components/Shell";
 import { getCourse } from "@/lib/courses";
+import { CodeEditor } from "@/components/CodeEditor";
 
 export default async function LessonPage({
   params,
@@ -49,14 +50,9 @@ export default async function LessonPage({
               will be rendered from a CMS (Sanity / MDX) with rich text,
               embedded code blocks, and interactive challenges.
             </p>
-            <div className="rounded-xl bg-zinc-900 p-5 font-mono text-xs text-zinc-100">
-              <div className="mb-2 text-zinc-500">// code editor placeholder</div>
-              <div>{"const connection = new Connection(clusterApiUrl('devnet'));"}</div>
-              <div>{"const balance = await connection.getBalance(publicKey);"}</div>
-              <div>{"console.log(`Balance: ${balance / LAMPORTS_PER_SOL} SOL`);"}</div>
-            </div>
+            <CodeEditor initialLanguage={lesson.slug.includes("pda") ? "rust" : "typescript"} />
             <p>
-              The code editor will use Monaco/CodeMirror with a run + feedback
+              Interactive code blocks now use Monaco with a stubbed run + feedback
               loop for hands-on challenges.
             </p>
           </div>
