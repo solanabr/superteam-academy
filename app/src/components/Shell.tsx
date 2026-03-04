@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
+import { AuthControls } from "@/components/AuthControls";
 
 const nav = [
   { href: "/courses", label: "Courses" },
@@ -33,9 +35,8 @@ export function Shell({
             ))}
           </nav>
           <div className="flex items-center gap-3 text-sm">
-            <Link className="underline" href="/login">
-              Sign in
-            </Link>
+            <WalletConnectButton />
+            <AuthControls />
           </div>
         </div>
       </header>

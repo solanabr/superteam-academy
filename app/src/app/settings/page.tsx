@@ -1,4 +1,5 @@
 import { Shell } from "@/components/Shell";
+import { SettingsAccountLinking } from "@/components/SettingsAccountLinking";
 
 export default function SettingsPage() {
   return (
@@ -13,12 +14,7 @@ export default function SettingsPage() {
             Next: language switcher (PT-BR/ES/EN) + light/dark.
           </div>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold">Account</div>
-          <div className="mt-3 text-sm text-zinc-600">
-            Next: wallet adapter + Google sign-in + linking.
-          </div>
-        </div>
+        <SettingsAccountLinking />
       </div>
     </Shell>
   );

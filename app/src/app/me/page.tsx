@@ -26,11 +26,9 @@ export default async function MePage() {
           >
             Browse courses
           </Link>
-          <form action="/api/auth/logout" method="post">
-            <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white">
-              Logout
-            </button>
-          </form>
+          <Link className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white" href="/settings">
+            Manage account links
+          </Link>
         </div>
       </div>
     </div>
