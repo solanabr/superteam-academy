@@ -70,6 +70,8 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
                     longestStreak: user.longestStreak,
                     lastActive: user.lastActive ?? null,
 
+                    role: user.role,
+
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
                 },

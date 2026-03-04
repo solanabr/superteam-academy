@@ -26,16 +26,15 @@ export default {
             validation: (Rule) => Rule.required().min(1).max(5),
         },
         {
-            name: 'tests',
-            title: 'Tests',
-            type: 'array',
-            description: 'Add quizzes or code challenges for this milestone',
-            of: [
-                { type: 'reference', to: [{ type: 'quiz' }] },
-                { type: 'reference', to: [{ type: 'codeChallenge' }] },
-            ],
-            validation: (Rule) => Rule.required().min(1),
-        },
+    name: 'tests',
+    title: 'Tests',
+    type: 'array',
+    description: 'Add quizzes or code challenges for this milestone',
+    of: [
+        { type: 'reference', to: [{ type: 'quiz' }, { type: 'codeChallenge' }] },
+    ],
+    validation: (Rule) => Rule.required().min(1),
+},
     ],
     preview: {
         select: { title: 'title', order: 'order' },

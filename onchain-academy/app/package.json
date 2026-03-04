@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",
@@ -24,11 +25,11 @@
     "@portabletext/react": "^3.1.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@sanity/client": "^7.12.0",
-    "@sanity/code-input": "^7.0.8",
-    "@sanity/icons": "^3.7.4",
+    "@sanity/code-input": "^7.0.4",
+    "@sanity/icons": "^3.5.6",
     "@sanity/image-url": "^1.1.0",
-    "@sanity/ui": "^3.1.13",
-    "@sanity/vision": "^3.71.0",
+    "@sanity/ui": "^2.15.14",
+    "@sanity/vision": "^3.62.1",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-react": "^0.15.39",
     "@solana/wallet-adapter-react-ui": "^0.9.39",
@@ -42,12 +43,12 @@
     "next": "15.5.12",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.8.3",
-    "next-sanity": "^12.1.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "next-sanity": "^9.6.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^3.7.0",
-    "sanity": "^5.13.0",
+    "sanity": "5.12.0",
     "styled-components": "^6.3.11",
     "tailwind-merge": "^3.4.1"
   },
@@ -61,5 +62,9 @@
     "eslint-config-next": "15.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }
