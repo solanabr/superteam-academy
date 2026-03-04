@@ -73,6 +73,20 @@ Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) o
 - **[Deployment Guide](docs/DEPLOY-PROGRAM.md)** — Deploy your own program instance on devnet
 - **[Frontend Bounty](docs/bounty.md)** — $4,800 USDC bounty for building the frontend
 
+## Frontend App (Bounty Delivery)
+
+The implementation for this bounty lives in:
+
+- `onchain-academy/app` — Next.js frontend
+- `onchain-academy/backend` — backend stub notes for signed flows
+
+Frontend-specific docs:
+
+- `onchain-academy/app/README.md`
+- `onchain-academy/app/ARCHITECTURE.md`
+- `onchain-academy/app/CMS_GUIDE.md`
+- `onchain-academy/app/CUSTOMIZATION.md`
+
 ## Contributing
 
 ```bash

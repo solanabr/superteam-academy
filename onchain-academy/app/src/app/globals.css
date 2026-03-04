@@ -1,0 +1,168 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+:root,
+.light {
+  --background: #f7f7f8;
+  --foreground: #111114;
+  --muted: #61616a;
+  --surface: #ffffff;
+  --surface-hover: #f1f1f3;
+  --line: #e5e5ea;
+  --brand: #111114;
+  --brand-hover: #33333b;
+  --accent: #111114;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #888888;
+  --surface: #0a0a0a;
+  --surface-hover: #1a1a1a;
+  --line: #222222;
+  --brand: #ffffff;
+  --brand-hover: #e0e0e0;
+  --accent: #ffffff;
+}
+
+.landing-force-dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #888888;
+  --surface: #0a0a0a;
+  --surface-hover: #1a1a1a;
+  --line: #222222;
+  --brand: #ffffff;
+  --brand-hover: #e0e0e0;
+  --accent: #ffffff;
+}
+
+/* Platform-only light mode compatibility layer for existing dark-first utility classes */
+.light .platform-shell [class*="text-white/70"],
+.light .platform-shell [class*="text-white/60"],
+.light .platform-shell [class*="text-white/50"],
+.light .platform-shell [class*="text-white/40"],
+.light .platform-shell [class*="text-white/30"] {
+  color: #6b7280 !important;
+}
+
+.light .platform-shell [class*="text-white"] {
+  color: #111114 !important;
+}
+
+.light .platform-shell [class*="bg-[#050505]"],
+.light .platform-shell [class*="bg-[#000000]"],
+.light .platform-shell [class*="bg-black"] {
+  background-color: #ffffff !important;
+}
+
+.light .platform-shell [class*="border-white/10"],
+.light .platform-shell [class*="border-white/5"] {
+  border-color: #e5e7eb !important;
+}
+
+.light .platform-shell [class*="bg-white/10"],
+.light .platform-shell [class*="bg-white/5"] {
+  background-color: #f3f4f6 !important;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-accent: var(--accent);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+}
+
+/* Typography Overrides */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+
+/* Glassmorphism */
+.glass-nav {
+  background-color: rgba(0, 0, 0, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.light .glass-nav {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.glass-card {
+  background-color: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Soft Shadows */
+.apple-shadow {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+.apple-shadow-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-shadow-hover:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  transform: translateY(-4px);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 3px solid var(--background);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.75rem)); }
+}
+
+@keyframes marqueeReverse {
+  0% { transform: translateX(calc(-50% - 0.75rem)); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee-fast {
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee-reverse {
+  animation: marqueeReverse 45s linear infinite;
+}

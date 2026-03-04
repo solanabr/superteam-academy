@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Learn Solana by Building Real dApps",
+    "subtitle": "Interactive lessons, code challenges, and on-chain credentials for crypto-native developers.",
+    "ctaPrimary": "Sign Up",
+    "ctaSecondary": "Explore Courses"
+  },
+  "common": {
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "search": "Search",
+    "enroll": "Enroll",
+    "continue": "Continue",
+    "run": "Run",
+    "complete": "Complete"
+  }
+}
