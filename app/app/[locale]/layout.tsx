@@ -76,6 +76,7 @@ export default async function LocaleLayout({
 		const syncData = await syncAuthSession(initialSession);
 		initialSession.user = {
 			...initialSession.user,
+			name: syncData?.name || initialSession.user.name,
 			email: syncData?.email || initialSession.user.email,
 			role: syncData?.role,
 			onboardingCompleted:
