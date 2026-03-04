@@ -81,10 +81,10 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
   const isUnlocked = (achId: string) => user.achievements.some(ua => ua.achievement.id === achId);
 
   const categories = {
-      "Progress": allAchievements.filter(a => ["first-steps", "course-completer", "speed-runner"].includes(a.slug)),
-      "Streaks": allAchievements.filter(a => a.slug.includes("streak") || ["week-warrior", "monthly-master", "consistency-king"].includes(a.slug)),
-      "Skills": allAchievements.filter(a => ["rust-rookie", "anchor-expert", "full-stack-solana"].includes(a.slug)),
-      "Community": allAchievements.filter(a => ["helper", "early-adopter"].includes(a.slug)),
+      "Progress": allAchievements.filter(a => ["first-steps-v2", "course-completer-v2", "speed-runner-v2"].includes(a.slug)),
+      "Streaks": allAchievements.filter(a => a.slug.includes("streak") || ["week-warrior-v2", "monthly-master-v2", "consistency-king-v2"].includes(a.slug)),
+      "Skills": allAchievements.filter(a => ["rust-rookie-v2", "anchor-expert-v2", "full-stack-solana-v2"].includes(a.slug)),
+      "Community": allAchievements.filter(a => ["helper-v2", "early-adopter-v2"].includes(a.slug)),
   };
 
   const handleShare = async () => {
