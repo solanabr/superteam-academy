@@ -39,6 +39,32 @@ export async function POST(request: NextRequest) {
 			identifier: parsed.data.publicKey,
 		});
 
+		if (!result.linked && result.reason === "linked-to-different-user") {
+			// Merge duplicate user records by wallet, then retry linking on the surviving user.
+			await syncUserToSanity({
+				authId: session.user.id,
+				name: session.user.name,
+				email: session.user.email,
+				walletAddress: parsed.data.publicKey,
+				...(session.user.image ? { image: session.user.image } : {}),
+			});
+
+			const retry = await upsertLinkedAccount({
+				userId: session.user.id,
+				provider: "wallet",
+				identifier: parsed.data.publicKey,
+			});
+
+			if (!retry.linked) {
+				return NextResponse.json(
+					{ error: "Wallet already linked to a different account" },
+					{ status: 409 }
+				);
+			}
+
+			return NextResponse.json({ success: true, merged: true });
+		}
+
 		if (!result.linked) {
 			if (result.reason === "storage-unavailable") {
 				return NextResponse.json({ error: "Sanity storage unavailable" }, { status: 503 });

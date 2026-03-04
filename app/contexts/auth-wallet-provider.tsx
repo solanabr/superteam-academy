@@ -5,6 +5,7 @@ import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-ad
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
 import { walletEmail } from "@superteam-academy/auth";
+import { isWalletEmail } from "@superteam-academy/auth";
 import { syncAuthSession } from "../app/api/auth/sync/action";
 import { AuthContext, type AuthSession, type AuthUser, type AuthContextType } from "./auth-context";
 import { getGravatarUrl } from "@/lib/utils";
@@ -136,13 +137,36 @@ function AuthProviderInner({
 		const message = createSignInMessage(nonce, domain);
 		const messageBytes = new TextEncoder().encode(message);
 		const signatureBytes = await wallet.signMessage(messageBytes);
+		const signature = Buffer.from(signatureBytes).toString("base64");
+
+		const isOAuthSession = Boolean(session?.userId) && Boolean(user?.email);
+		const hasWalletEmail = Boolean(user?.email && isWalletEmail(user.email));
+
+		if (isOAuthSession && !hasWalletEmail) {
+			const linkRes = await fetch("/api/auth/link-wallet", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					publicKey: wallet.publicKey.toBase58(),
+					signature,
+					message,
+				}),
+			});
+
+			if (!linkRes.ok && linkRes.status !== 409) {
+				const errorData = (await linkRes.json().catch(() => null)) as
+					| { error?: string }
+					| null;
+				throw new Error(errorData?.error || "Wallet linking failed");
+			}
+		}
 
 		const verifyRes = await fetch("/api/auth/wallet/verify", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				publicKey: wallet.publicKey.toBase58(),
-				signature: Buffer.from(signatureBytes).toString("base64"),
+				signature,
 				message,
 			}),
 		});

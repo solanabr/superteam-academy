@@ -3,6 +3,7 @@ import { walletFromEmail } from "@superteam-academy/auth";
 import { PublicKey } from "@solana/web3.js";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
+import { getUserByAuthId } from "@/lib/sanity-users";
 
 const authConfig: ServerAuthConfig = {
 	baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
@@ -80,6 +81,27 @@ export async function getLinkedWallet() {
 	if (stored) {
 		try {
 			return new PublicKey(stored).toBase58();
+		} catch {
+			return undefined;
+		}
+	}
+
+	// Fallback to Sanity profile for older/broken sessions that do not expose walletAddress.
+	const sanityUser = await getUserByAuthId(session.user.id).catch(() => null);
+	const sanityWallet = sanityUser?.walletAddress?.trim();
+	if (sanityWallet) {
+		try {
+			return new PublicKey(sanityWallet).toBase58();
+		} catch {
+			/* ignore invalid stored wallet */
+		}
+	}
+
+	const linkedWallet = sanityUser?.linkedAccounts?.find((entry) => entry.provider === "wallet")
+		?.identifier;
+	if (linkedWallet) {
+		try {
+			return new PublicKey(linkedWallet).toBase58();
 		} catch {
 			return undefined;
 		}

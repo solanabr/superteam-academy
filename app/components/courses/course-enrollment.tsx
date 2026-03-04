@@ -93,7 +93,18 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			await sendAndConfirmTx(connection, wallet, ix);
 
+			const client = getAcademyClient();
+			const learner = wallet.publicKey as PublicKey;
+			const startedAt = Date.now();
+			const timeoutMs = 12_000;
+			while (Date.now() - startedAt < timeoutMs) {
+				const enrolledAccount = await client.fetchEnrollment(course.id, learner);
+				if (enrolledAccount) break;
+				await new Promise((resolve) => setTimeout(resolve, 700));
+			}
+
 			refetch();
+			router.refresh();
 			router.push(`/courses/${course.id}/lessons/1-1`);
 		} catch (error) {
 			console.error("Enrollment failed:", error);

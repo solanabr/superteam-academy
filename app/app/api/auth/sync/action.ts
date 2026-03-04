@@ -16,11 +16,16 @@ export async function syncAuthSession(
 
 	const existing = await getUserByAuthId(user.id);
 	if (existing) {
+		const linkedWallet =
+			existing.linkedAccounts?.find((entry) => entry.provider === "wallet")?.identifier ??
+			undefined;
+		const resolvedWallet = walletAddress ?? existing.walletAddress ?? linkedWallet;
+
 		const syncPromise = syncUserToSanity({
 			authId: user.id,
 			name: user.name,
 			email: existing.email,
-			...(walletAddress ? { walletAddress } : {}),
+			...(resolvedWallet ? { walletAddress: resolvedWallet } : {}),
 			...(user.image ? { image: user.image } : {}),
 		});
 		const synced = await syncPromise.catch(() => null);
@@ -31,7 +36,7 @@ export async function syncAuthSession(
 			role: effectiveRole,
 			email: existing.email,
 			onboardingCompleted: synced?.onboardingCompleted ?? false,
-			walletAddress: walletAddress ?? existing.walletAddress,
+			walletAddress: resolvedWallet,
 		};
 	}
 

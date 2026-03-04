@@ -61,6 +61,15 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
+						{cert.imageUrl ? (
+							<div className="rounded-xl border border-border/60 bg-muted/30 overflow-hidden">
+								<img
+									src={cert.imageUrl}
+									alt={cert.title}
+									className="w-full h-56 object-cover"
+								/>
+							</div>
+						) : null}
 						<div className="grid grid-cols-2 gap-4">
 							<div>
 								<p className="text-sm text-muted-foreground">{t("holder")}</p>
@@ -149,6 +158,7 @@ interface Certificate {
 	level: string;
 	issuedAt: string;
 	xpEarned: number;
+	imageUrl: string;
 	onChainAddress: string | null;
 }
 
@@ -179,6 +189,7 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 		level: levelAttr?.value ?? "Beginner",
 		issuedAt: verification.credential.issuedAt.toISOString(),
 		xpEarned: verification.credential.totalXp,
+		imageUrl: metadata.image,
 		onChainAddress: id,
 	};
 }

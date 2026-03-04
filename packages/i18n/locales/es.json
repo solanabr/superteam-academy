@@ -3593,6 +3593,18 @@
 	"profile": {
 		"completeness": {
 			"cta": "Cta",
+			"fields": {
+				"bio": "Biografia",
+				"experienceLevel": "Nivel de experiencia",
+				"github": "GitHub",
+				"learningGoals": "Objetivos de aprendizaje",
+				"linkedin": "LinkedIn",
+				"location": "Ubicacion",
+				"name": "Nombre",
+				"professionalTitle": "Titulo profesional",
+				"skills": "Habilidades",
+				"username": "Nombre de usuario"
+			},
 			"missingInformation": "Información faltante",
 			"percentComplete": "Porcentaje completado",
 			"status": {

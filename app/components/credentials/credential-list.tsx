@@ -1,4 +1,5 @@
 import { Award, ExternalLink, Star } from "lucide-react";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
@@ -34,8 +35,19 @@ export function CredentialList({ credentials }: CredentialListProps) {
 			<CardContent>
 				<div className="grid gap-4 sm:grid-cols-2">
 					{credentials.map((cred) => (
-						<Card key={cred.id} className="border-border/60">
+						<Link key={cred.id} href={`/certificates/${cred.id}`}>
+							<Card className="border-border/60 h-full hover:border-primary/40 transition-colors">
 							<CardContent className="pt-4 space-y-2">
+								{cred.imageUrl ? (
+									<div className="overflow-hidden rounded-lg border border-border/60 bg-muted/30">
+										<img
+											src={cred.imageUrl}
+											alt={cred.title}
+											className="h-32 w-full object-cover"
+											loading="lazy"
+										/>
+									</div>
+								) : null}
 								<div className="flex items-start justify-between">
 									<h3 className="font-medium text-sm">{cred.title}</h3>
 									<Badge
@@ -61,6 +73,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										href={`https://explorer.solana.com/address/${cred.id}?cluster=devnet`}
 										target="_blank"
 										rel="noopener noreferrer"
+										onClick={(event) => event.stopPropagation()}
 										className="flex items-center gap-1 hover:text-foreground transition-colors"
 									>
 										<ExternalLink className="h-3 w-3" />
@@ -68,7 +81,8 @@ export function CredentialList({ credentials }: CredentialListProps) {
 									</a>
 								</div>
 							</CardContent>
-						</Card>
+							</Card>
+						</Link>
 					))}
 				</div>
 			</CardContent>

@@ -173,8 +173,15 @@ export function ProfileSkeleton() {
 
 async function getDynamicProfile(inputWalletAddress?: string, username?: string) {
 	const sanityUserByUsername = username ? await getUserByUsername(username) : null;
+	const usernameLinkedWallet = sanityUserByUsername?.linkedAccounts?.find(
+		(entry) => entry.provider === "wallet"
+	)?.identifier;
 
-	const walletAddress = inputWalletAddress || sanityUserByUsername?.walletAddress || undefined;
+	const walletAddress =
+		inputWalletAddress ||
+		sanityUserByUsername?.walletAddress ||
+		usernameLinkedWallet ||
+		undefined;
 
 	if (!walletAddress) {
 		const gravatarKey = sanityUserByUsername?.email || "anonymous";
@@ -280,10 +287,11 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	);
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
+		const coursePk = entry.account.course.toBase58();
 		const completedLessons = countBits(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
 		return {
-			id: course?.courseId ?? entry.pubkey.toBase58(),
+			id: course?.courseId ?? coursePk,
 			title: course?.courseId ?? "Course",
 			instructor: { name: "Superteam" },
 			progress: {
@@ -344,18 +352,56 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	}));
 
 	if (achievements.length === 0) {
-		achievements.push({
-			id: "onchain-learner",
-			title: "On-Chain Learner",
-			description: "Enrolled in at least one on-chain course",
-			icon: "book",
-			category: "learning" as const,
-			rarity: "common" as const,
-			xpReward: 0,
-			...(enrolledCourses.length > 0
-				? { unlockedAt: new Date().toISOString() }
-				: { progress: { current: 0, total: 1 } }),
-		});
+		achievements.push(
+			{
+				id: "onchain-learner",
+				title: "On-Chain Learner",
+				description: "Enroll in your first on-chain course",
+				icon: "book",
+				category: "learning" as const,
+				rarity: "common" as const,
+				xpReward: 0,
+				...(enrolledCourses.length > 0
+					? { unlockedAt: new Date().toISOString() }
+					: { progress: { current: 0, total: 1 } }),
+			},
+			{
+				id: "first-lesson",
+				title: "First Lesson",
+				description: "Complete your first lesson",
+				icon: "target",
+				category: "learning" as const,
+				rarity: "common" as const,
+				xpReward: 0,
+				...(totalLessonsCompleted > 0
+					? { unlockedAt: new Date().toISOString() }
+					: { progress: { current: totalLessonsCompleted, total: 1 } }),
+			},
+			{
+				id: "course-completer",
+				title: "Course Completer",
+				description: "Complete your first course",
+				icon: "award",
+				category: "completion" as const,
+				rarity: "rare" as const,
+				xpReward: 0,
+				...(completedCourses > 0
+					? { unlockedAt: new Date().toISOString() }
+					: { progress: { current: completedCourses, total: 1 } }),
+			},
+			{
+				id: "credential-earner",
+				title: "Credential Earner",
+				description: "Earn your first on-chain credential",
+				icon: "zap",
+				category: "special" as const,
+				rarity: "epic" as const,
+				xpReward: 0,
+				...(credentials.length > 0
+					? { unlockedAt: new Date().toISOString() }
+					: { progress: { current: credentials.length, total: 1 } }),
+			}
+		);
 	}
 
 	const unlockedCount = achievements.filter((a) => "unlockedAt" in a).length;
