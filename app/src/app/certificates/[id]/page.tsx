@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,18 +12,22 @@ import {
   Download,
   Link2,
   Award,
+  Loader2,
 } from "lucide-react";
-import { credentials, getCredentialById, userProfile } from "@/data/profile";
-import { courses } from "@/data/courses";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale } from "@/providers/locale-provider";
-
-const MOCK_OWNER = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
+import { useAuth } from "@/providers/auth-provider";
+import { credentialService } from "@/services";
+import { getAllCourses } from "@/lib/sanity-fetch";
+import type { Credential, CourseDetail } from "@/types";
 
 /* -- Track -> Course slug mapping -- */
 const trackToCourse: Record<string, string> = {
   "Solana Core": "solana-fundamentals",
   "Anchor Framework": "anchor-development",
   "Program Security": "program-security",
+  DeFi: "defi-fundamentals",
+  Testing: "solana-testing",
 };
 
 /* -- NFT Artwork (inline SVG per credential) -- */
@@ -55,7 +59,7 @@ function NftArt({
       </defs>
       <circle cx="120" cy="120" r="100" fill={`url(#gc${variant})`} />
 
-      {variant === 0 && (
+      {variant % 3 === 0 && (
         <>
           <polygon
             points={hex(120, 120, 80)}
@@ -110,7 +114,7 @@ function NftArt({
         </>
       )}
 
-      {variant === 1 && (
+      {variant % 3 === 1 && (
         <>
           <circle
             cx="120"
@@ -208,7 +212,7 @@ function NftArt({
         </>
       )}
 
-      {variant === 2 && (
+      {variant % 3 === 2 && (
         <>
           {[60, 90, 150, 180].map((v) => (
             <line
@@ -345,9 +349,54 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 
 export default function CertificatePage() {
   const { id } = useParams<{ id: string }>();
-  const credential = getCredentialById(id);
-  const variant = credentials.findIndex((c) => c.id === id);
+  const { publicKey } = useWallet();
+  const { user } = useAuth();
   const { t } = useLocale();
+
+  const [credential, setCredential] = useState<Credential | null>(null);
+  const [allCreds, setAllCreds] = useState<Credential[]>([]);
+  const [courses, setCourses] = useState<CourseDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+
+      // Try fetching by mint address first (works for anyone viewing the link)
+      const byMint = await credentialService.getCredentialByMint(id);
+      if (byMint) {
+        setCredential(byMint);
+      }
+
+      // Also load all credentials for the connected wallet (for variant index)
+      if (publicKey) {
+        const wallet = publicKey.toBase58();
+        const creds = await credentialService.getCredentials(wallet);
+        setAllCreds(creds);
+        // If mint lookup failed, try finding in wallet credentials
+        if (!byMint) {
+          const found = creds.find(
+            (c) => c.id === id || c.mintAddress === id,
+          );
+          if (found) setCredential(found);
+        }
+      }
+
+      const allCourses = await getAllCourses();
+      setCourses(allCourses);
+      setLoading(false);
+    }
+    load();
+  }, [id, publicKey]);
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 bg-mesh animate-drift-2" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground/40" />
+      </div>
+    );
+  }
 
   if (!credential) {
     return (
@@ -373,11 +422,15 @@ export default function CertificatePage() {
     );
   }
 
+  const variant = allCreds.findIndex((c) => c.mintAddress === credential.mintAddress);
+  const ownerAddress = publicKey?.toBase58() ?? "";
   const truncatedMint =
     credential.mintAddress.slice(0, 4) +
     "..." +
     credential.mintAddress.slice(-4);
-  const truncatedOwner = MOCK_OWNER.slice(0, 4) + "..." + MOCK_OWNER.slice(-4);
+  const truncatedOwner = ownerAddress
+    ? ownerAddress.slice(0, 4) + "..." + ownerAddress.slice(-4)
+    : "–";
 
   const courseSlug = trackToCourse[credential.track];
   const relatedCourse = courseSlug
@@ -385,6 +438,7 @@ export default function CertificatePage() {
     : undefined;
 
   const shareText = `I earned the ${credential.track} (${credential.level}) credential on Superteam Academy! 🎓`;
+  const username = user?.username ?? "learner";
 
   const details = [
     {
@@ -393,12 +447,16 @@ export default function CertificatePage() {
       full: credential.mintAddress,
       copyable: true,
     },
-    {
-      label: t("certificates.owner"),
-      value: truncatedOwner,
-      full: MOCK_OWNER,
-      copyable: true,
-    },
+    ...(ownerAddress
+      ? [
+          {
+            label: t("certificates.owner"),
+            value: truncatedOwner,
+            full: ownerAddress,
+            copyable: true,
+          },
+        ]
+      : []),
     {
       label: t("certificates.standard"),
       value: t("certificates.metaplexCore"),
@@ -406,8 +464,24 @@ export default function CertificatePage() {
     { label: t("certificates.type"), value: t("certificates.soulbound") },
     {
       label: t("certificates.network"),
-      value: t("certificates.solanaMainnet"),
+      value: "Solana Devnet",
     },
+    ...(credential.coursesCompleted > 0
+      ? [
+          {
+            label: t("certificates.coursesCompleted"),
+            value: String(credential.coursesCompleted),
+          },
+        ]
+      : []),
+    ...(credential.totalXp > 0
+      ? [
+          {
+            label: t("certificates.totalXp"),
+            value: `${credential.totalXp.toLocaleString()} XP`,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -428,8 +502,8 @@ export default function CertificatePage() {
         <div className="mt-8 max-w-sm mx-auto">
           <NftArt
             accent={credential.accent}
-            variant={variant}
-            className="w-full aspect-square rounded-xl"
+            variant={variant >= 0 ? variant : 0}
+            className="cert-artwork w-full aspect-square rounded-xl"
           />
         </div>
 
@@ -448,7 +522,7 @@ export default function CertificatePage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground/60">
-            {t("certificates.issuedTo", { username: userProfile.username })}
+            {t("certificates.issuedTo", { username })}
           </p>
         </div>
 
@@ -472,7 +546,30 @@ export default function CertificatePage() {
             <Link2 className="size-3.5" />
             {t("common.copyLink")}
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg border border-border/40 px-3 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors">
+          <button
+            onClick={() => {
+              const svg = document.querySelector<SVGSVGElement>(".cert-artwork");
+              if (!svg) return;
+              const svgData = new XMLSerializer().serializeToString(svg);
+              const canvas = document.createElement("canvas");
+              canvas.width = 960;
+              canvas.height = 960;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) return;
+              const img = new Image();
+              img.onload = () => {
+                ctx.drawImage(img, 0, 0, 960, 960);
+                const a = document.createElement("a");
+                a.download = `${credential.track.replace(/\s+/g, "-").toLowerCase()}-credential.png`;
+                a.href = canvas.toDataURL("image/png");
+                a.click();
+              };
+              img.src = "data:image/svg+xml;base64," + btoa(
+                Array.from(new TextEncoder().encode(svgData), (b) => String.fromCharCode(b)).join("")
+              );
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-border/40 px-3 py-2 text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
             <Download className="size-3.5" />
             {t("common.download")}
           </button>
@@ -494,13 +591,15 @@ export default function CertificatePage() {
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-mono">{row.value}</span>
-                  {row.copyable && row.full && <CopyButton text={row.full} />}
+                  {"copyable" in row && row.copyable && "full" in row && row.full && (
+                    <CopyButton text={row.full} />
+                  )}
                 </div>
               </div>
             ))}
             <div className="px-4 py-3">
               <a
-                href={`https://explorer.solana.com/address/${credential.mintAddress}`}
+                href={`https://explorer.solana.com/address/${credential.mintAddress}?cluster=devnet`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-primary hover:underline"
@@ -511,6 +610,21 @@ export default function CertificatePage() {
             </div>
           </div>
         </div>
+
+        {/* Metadata URI */}
+        {credential.metadataUri && (
+          <div className="mt-4">
+            <a
+              href={credential.metadataUri}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="size-3" />
+              {t("certificates.viewMetadata")}
+            </a>
+          </div>
+        )}
 
         {/* Related Course */}
         {relatedCourse && (

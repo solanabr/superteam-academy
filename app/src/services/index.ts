@@ -10,7 +10,7 @@
  */
 
 export { LocalProgressService } from "./progress.service";
-export { LocalXpService, addXp } from "./xp.service";
+export { LocalXpService, addXp, getLocalXp } from "./xp.service";
 export { LocalStreakService } from "./streak.service";
 export { LocalCredentialService } from "./credential.service";
 export { LocalLeaderboardService } from "./leaderboard.service";

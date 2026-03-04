@@ -69,9 +69,9 @@ export function createServices(): Services {
   const xpMint = new PublicKey(xpMintStr);
 
   return {
-    xpService: new DevnetXpService(connection, xpMint),
+    xpService: new LocalXpService(),
     credentialService: new DevnetCredentialService(heliusUrl),
-    leaderboardService: new DevnetLeaderboardService(),
+    leaderboardService: new LocalLeaderboardService(),
     progressService: new DevnetProgressService(connection),
     streakService,
     achievementService,

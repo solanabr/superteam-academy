@@ -155,6 +155,64 @@ function MarkdownRenderer({ content }: { content: string }) {
 
 type TestResult = "idle" | "pass" | "fail";
 
+/* ── Test Evaluation ── */
+
+/**
+ * Evaluate whether user code satisfies a test case by matching
+ * code patterns from the test's `input` and backtick-quoted
+ * identifiers from `expected`.
+ */
+function evaluateTest(code: string, tc: TestCase): boolean {
+  const normalizedCode = code.toLowerCase().replace(/\s+/g, " ");
+
+  // If code still has unimplemented TODO markers and is short, fail
+  if (code.includes("// TODO") && code.length < 300) return false;
+
+  // Collect tokens to look for in the user's code
+  const tokens: string[] = [];
+
+  // Extract identifiers from input (code patterns, function names, keywords)
+  const inputTokens =
+    tc.input.match(/[a-zA-Z_#@][a-zA-Z0-9_:.]*/g)?.filter((t) => t.length >= 2) ?? [];
+  tokens.push(...inputTokens);
+
+  // Extract backtick-quoted code from expected (e.g. `count: u64`)
+  const backtickContent = tc.expected.match(/`([^`]+)`/g);
+  if (backtickContent) {
+    for (const m of backtickContent) {
+      const inner = m.replace(/`/g, "");
+      const parts = inner.split(/[^a-zA-Z0-9_]+/).filter((t) => t.length >= 2);
+      tokens.push(...parts);
+    }
+  }
+
+  // Extract code-like patterns from expected (e.g. "counter.count == 0")
+  const codePatterns =
+    tc.expected.match(/[a-zA-Z_][a-zA-Z0-9_.]+/g)?.filter((t) => t.length >= 3) ?? [];
+  tokens.push(...codePatterns);
+
+  // Deduplicate and filter out common English words
+  const stopWords = new Set([
+    "the", "and", "has", "with", "for", "from", "that", "this",
+    "are", "was", "been", "not", "all", "its", "returns", "should",
+    "expected", "after", "bytes", "account", "owned", "created",
+    "balance", "meets", "threshold", "target", "both", "included",
+    "transaction", "signed",
+  ]);
+  const uniqueTokens = [
+    ...new Set(tokens.map((t) => t.toLowerCase())),
+  ].filter((t) => !stopWords.has(t) && t.length >= 2);
+
+  if (uniqueTokens.length === 0) return !code.includes("// TODO");
+
+  // Check what fraction of tokens appear in the user's code
+  const matchCount = uniqueTokens.filter((token) =>
+    normalizedCode.includes(token),
+  ).length;
+
+  return matchCount / uniqueTokens.length > 0.5;
+}
+
 /* ── Code Challenge Panel ── */
 
 function ChallengeEditor({
@@ -262,9 +320,7 @@ function ChallengeEditor({
       }
 
       const tc = testCases[i]!;
-      const hasImplementation = !code.includes("// TODO") || code.length > 300;
-      const passChance = hasImplementation ? 0.85 : 0.2;
-      const passed = Math.random() < passChance;
+      const passed = evaluateTest(code, tc);
 
       results[i] = passed ? "pass" : "fail";
       setTestResults([...results]);

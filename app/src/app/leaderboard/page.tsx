@@ -4,15 +4,18 @@ import { useState, useMemo, useEffect } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { courseFilters } from "@/data/leaderboard";
 import type { TimeFilter, LeaderboardEntry } from "@/types";
-import { leaderboardService } from "@/services";
+import { leaderboardService, xpService, streakService } from "@/services";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useAuth } from "@/providers/auth-provider";
 import { useLocale } from "@/providers/locale-provider";
+import { deriveLevel } from "@/types";
 
 const medalEmoji = ["🥇", "🥈", "🥉"];
 const medalColors = ["#ca8a04", "#94a3b8", "#b45309"];
 
 export default function LeaderboardPage() {
   const { publicKey } = useWallet();
+  const { user } = useAuth();
   const { t } = useLocale();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all-time");
   const [courseFilter, setCourseFilter] = useState("all");
@@ -24,11 +27,39 @@ export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
+    const wallet = publicKey?.toBase58();
     leaderboardService
       .getEntries(timeFilter, undefined, 1, 1000)
-      .then(({ entries: data }) => setEntries(data))
+      .then(async ({ entries: data }) => {
+        if (wallet && !data.find((e) => e.walletAddress === wallet)) {
+          const xp = await xpService.getBalance(wallet);
+          if (xp > 0) {
+            const streak = await streakService.getStreak(wallet);
+            const name = user?.name || `Learner ${wallet.slice(0, 6)}`;
+            const short = wallet.slice(0, 6);
+            data.push({
+              rank: 0,
+              name,
+              username: user?.username || `learner_${short.toLowerCase()}`,
+              initials: user?.initials || short.slice(0, 2).toUpperCase(),
+              level: deriveLevel(xp),
+              xp,
+              streak: streak.currentStreak,
+              accent: "#34d399",
+              walletAddress: wallet,
+              isCurrentUser: true,
+            });
+            data.sort((a, b) => b.xp - a.xp);
+            data.forEach((e, i) => (e.rank = i + 1));
+          }
+        } else if (wallet) {
+          const entry = data.find((e) => e.walletAddress === wallet);
+          if (entry) entry.isCurrentUser = true;
+        }
+        setEntries(data);
+      })
       .catch(() => setEntries([]));
-  }, [timeFilter]);
+  }, [timeFilter, publicKey, user]);
 
   const wallet = publicKey?.toBase58();
   const me = useMemo(() => {

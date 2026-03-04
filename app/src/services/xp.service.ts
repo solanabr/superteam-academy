@@ -17,6 +17,12 @@ function saveXp(data: Record<string, number>): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+/** Read XP balance from localStorage for a wallet */
+export function getLocalXp(wallet: string): number {
+  const data = loadXp();
+  return data[wallet] ?? 0;
+}
+
 /** Add XP to a wallet (internal helper) */
 export function addXp(wallet: string, amount: number): number {
   const data = loadXp();

@@ -3,6 +3,7 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import type { XpService } from "../interfaces";
 import { deriveLevel } from "@/types";
 import { TOKEN_2022_PROGRAM_ID } from "@/lib/solana/constants";
+import { getLocalXp } from "../xp.service";
 
 /**
  * Devnet XP service — reads Token-2022 ATA balance on-chain.
@@ -20,6 +21,7 @@ export class DevnetXpService implements XpService {
   }
 
   async getBalance(wallet: string): Promise<number> {
+    let onChain = 0;
     try {
       const walletPubkey = new PublicKey(wallet);
       const xpAta = getAssociatedTokenAddressSync(
@@ -29,11 +31,11 @@ export class DevnetXpService implements XpService {
         TOKEN_2022_PROGRAM_ID,
       );
       const balance = await this.connection.getTokenAccountBalance(xpAta);
-      return Number(balance.value.amount);
+      onChain = Number(balance.value.amount);
     } catch {
       // ATA doesn't exist (new user) or RPC error → 0
-      return 0;
     }
+    return onChain + getLocalXp(wallet);
   }
 
   async getLevel(wallet: string): Promise<number> {

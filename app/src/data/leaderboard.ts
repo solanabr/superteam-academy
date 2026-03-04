@@ -321,22 +321,9 @@ function generateFillerEntries(): Omit<LeaderboardEntry, "rank">[] {
   });
 }
 
-// Current user sits around rank ~100
-const currentUserEntry: Omit<LeaderboardEntry, "rank"> = {
-  name: "Learner",
-  username: "solana_learner",
-  initials: "SL",
-  level: 7,
-  xp: 450,
-  streak: 12,
-  accent: "#34d399",
-  isCurrentUser: true,
-};
-
 const allBaseEntries = [
   ...topEntries,
   ...generateFillerEntries(),
-  currentUserEntry,
 ];
 
 /* ── Helpers ── */

@@ -343,7 +343,10 @@
     "profileVisibleOnlyYou": "Solo tú puedes ver tu perfil",
     "totalXp": "XP Total",
     "credentialsEarned": "{count} credenciales obtenidas",
-    "inProgress": "En progreso"
+    "inProgress": "En progreso",
+    "profileNotFound": "Perfil No Encontrado",
+    "profileNotFoundDesc": "Este perfil no existe o está configurado como privado.",
+    "viewLeaderboard": "Ver Clasificación"
   },
   "settings": {
     "title": "Configuración",
@@ -404,7 +407,10 @@
     "viewOnExplorer": "Ver en Solana Explorer",
     "relatedCourse": "Curso Relacionado",
     "issuedTo": "Emitido a @{username}",
-    "earnedAt": "Obtenido en {date}"
+    "earnedAt": "Obtenido en {date}",
+    "coursesCompleted": "Cursos Completados",
+    "totalXp": "XP Total",
+    "viewMetadata": "Ver Metadatos"
   },
   "footer": {
     "platform": "Plataforma",

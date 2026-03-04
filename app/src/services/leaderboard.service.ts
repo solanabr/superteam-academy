@@ -1,9 +1,10 @@
 import type { LeaderboardService } from "./interfaces";
 import type { LeaderboardEntry, TimeFilter } from "@/types";
 import { getLeaderboard } from "@/data/leaderboard";
+import { getLocalXp } from "./xp.service";
 
 /**
- * Stub leaderboard service using mock data.
+ * Stub leaderboard service using mock data + localStorage XP.
  *
  * On-chain swap:
  * - getEntries → Helius DAS getTokenAccounts for XP mint, sorted by balance desc
@@ -29,9 +30,11 @@ export class LocalLeaderboardService implements LeaderboardService {
     return { entries, total };
   }
 
-  async getRank(_wallet: string): Promise<number | null> {
+  async getRank(wallet: string): Promise<number | null> {
+    const xp = getLocalXp(wallet);
+    if (xp <= 0) return null;
     const entries = getLeaderboard("all-time");
-    const entry = entries.find((e) => e.isCurrentUser);
-    return entry?.rank ?? null;
+    const rank = entries.filter((e) => e.xp > xp).length + 1;
+    return rank;
   }
 }

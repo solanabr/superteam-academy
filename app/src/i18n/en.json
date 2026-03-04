@@ -343,7 +343,10 @@
     "profileVisibleOnlyYou": "Only you can see your profile",
     "totalXp": "Total XP",
     "credentialsEarned": "{count} credentials earned",
-    "inProgress": "In progress"
+    "inProgress": "In progress",
+    "profileNotFound": "Profile Not Found",
+    "profileNotFoundDesc": "This profile doesn't exist or is set to private.",
+    "viewLeaderboard": "View Leaderboard"
   },
   "settings": {
     "title": "Settings",
@@ -404,7 +407,10 @@
     "viewOnExplorer": "View on Solana Explorer",
     "relatedCourse": "Related Course",
     "issuedTo": "Issued to @{username}",
-    "earnedAt": "Earned {date}"
+    "earnedAt": "Earned {date}",
+    "coursesCompleted": "Courses Completed",
+    "totalXp": "Total XP",
+    "viewMetadata": "View Metadata"
   },
   "footer": {
     "platform": "Platform",
