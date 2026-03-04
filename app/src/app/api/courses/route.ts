@@ -6,6 +6,8 @@ import {
 } from "@/lib/data-service";
 import type { Course } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const difficulty = searchParams.get("difficulty");

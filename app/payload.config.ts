@@ -6,6 +6,8 @@ import { resendAdapter } from "@payloadcms/email-resend";
 import * as Sentry from "@sentry/nextjs";
 import sharp from "sharp";
 import { Courses } from "./src/collections/Courses";
+import { Modules } from "./src/collections/Modules";
+import { Lessons } from "./src/collections/Lessons";
 import { Media } from "./src/collections/Media";
 import { Tracks } from "./src/collections/Tracks";
 import { Difficulties } from "./src/collections/Difficulties";
@@ -43,7 +45,7 @@ export default buildConfig({
     admin: "/cms",
     api: "/cms-api",
   },
-  collections: [Users, Courses, Media, Tracks, Difficulties],
+  collections: [Users, Courses, Modules, Lessons, Media, Tracks, Difficulties],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL!,

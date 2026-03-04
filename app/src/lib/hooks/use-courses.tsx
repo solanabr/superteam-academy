@@ -26,6 +26,8 @@ const CoursesContext = createContext<CoursesContextValue>({
 });
 
 let cachedCourses: Course[] | null = null;
+let cachedAt = 0;
+const CACHE_TTL = 30_000;
 
 export function CoursesProvider({
   children,
@@ -42,14 +44,16 @@ export function CoursesProvider({
   useEffect(() => {
     if (initialCourses) {
       cachedCourses = initialCourses;
+      cachedAt = Date.now();
       return;
     }
-    if (cachedCourses) return;
+    if (cachedCourses && Date.now() - cachedAt < CACHE_TTL) return;
 
     fetch("/api/courses")
       .then((res) => res.json())
       .then((data: Course[]) => {
         cachedCourses = data;
+        cachedAt = Date.now();
         setCourses(data);
       })
       .catch(console.error)

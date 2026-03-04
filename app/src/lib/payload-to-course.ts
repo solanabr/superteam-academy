@@ -1,9 +1,8 @@
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import type { Course } from "@/types";
 
-// Payload generates these types after `payload generate:types` — we use `any` until then
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PayloadCourse = Record<string, any>;
+type PayloadRecord = Record<string, any>;
 
 function extractRawText(data: unknown): string | undefined {
   if (!data || typeof data !== "object") return undefined;
@@ -33,14 +32,24 @@ function lexicalToHtml(data: unknown): string | undefined {
   }
 }
 
-export function payloadCourseToCourse(doc: PayloadCourse): Course {
-  const modules = (doc.modules ?? []).map((m: PayloadCourse, mIdx: number) => {
-    const lessons = (m.lessons ?? []).map((l: PayloadCourse, lIdx: number) => {
+/**
+ * Converts a Payload course doc + separately-fetched modules (with nested lessons)
+ * into the frontend Course type.
+ *
+ * @param doc       - Payload course document
+ * @param payloadModules - Array of module docs, each with a `lessons` array attached
+ */
+export function payloadCourseToCourse(
+  doc: PayloadRecord,
+  payloadModules: PayloadRecord[] = [],
+): Course {
+  const modules = payloadModules.map((m: PayloadRecord, mIdx: number) => {
+    const lessons = (m.lessons ?? []).map((l: PayloadRecord, lIdx: number) => {
       const content = extractRawText(l.content) ?? lexicalToHtml(l.content);
       const isChallenge = l.type === "challenge";
 
       return {
-        id: l.id ?? `${doc.id}-m${mIdx}-l${lIdx}`,
+        id: String(l.id ?? `${doc.id}-m${mIdx}-l${lIdx}`),
         title: l.title ?? "",
         description: l.description ?? "",
         type: (l.type ?? "content") as "content" | "challenge",
@@ -52,7 +61,7 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
         challenge:
           isChallenge && l.challenge
             ? {
-                id: l.id ?? `${doc.id}-m${mIdx}-l${lIdx}-c`,
+                id: String(l.id ?? `${doc.id}-m${mIdx}-l${lIdx}-c`),
                 prompt:
                   extractRawText(l.challenge.prompt) ??
                   lexicalToHtml(l.challenge.prompt) ??
@@ -64,11 +73,11 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
                   | "typescript"
                   | "json",
                 hints: (l.challenge.hints ?? []).map(
-                  (h: PayloadCourse) => h.hint ?? h,
+                  (h: PayloadRecord) => h.hint ?? h,
                 ),
                 testCases: (l.challenge.testCases ?? []).map(
-                  (t: PayloadCourse, tIdx: number) => ({
-                    id: t.id ?? `${doc.id}-m${mIdx}-l${lIdx}-t${tIdx}`,
+                  (t: PayloadRecord, tIdx: number) => ({
+                    id: String(t.id ?? `${doc.id}-m${mIdx}-l${lIdx}-t${tIdx}`),
                     name: t.name ?? "",
                     input: t.input ?? "",
                     expectedOutput: t.expectedOutput ?? "",
@@ -85,7 +94,7 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
     ).length;
 
     return {
-      id: m.id ?? `${doc.id}-m${mIdx}`,
+      id: String(m.id ?? `${doc.id}-m${mIdx}`),
       title: m.title ?? "",
       description: m.description ?? "",
       order: m.order ?? mIdx,
@@ -95,10 +104,10 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
     };
   });
 
-  const allLessons = modules.flatMap((m: { lessons: unknown[] }) => m.lessons);
+  const allLessons = modules.flatMap((m) => m.lessons);
   const lessonCount = allLessons.length;
   const challengeCount = allLessons.filter(
-    (l: { type: string }) => l.type === "challenge",
+    (l) => l.type === "challenge",
   ).length;
 
   const thumbnail =
@@ -115,7 +124,7 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
     difficulty:
       (doc.difficultyValue as string) ??
       (typeof doc.difficulty === "object"
-        ? ((doc.difficulty as PayloadCourse)?.value as string)
+        ? ((doc.difficulty as PayloadRecord)?.value as string)
         : (doc.difficulty as string)) ??
       "beginner",
     duration: doc.duration ?? "",
@@ -132,9 +141,9 @@ export function payloadCourseToCourse(doc: PayloadCourse): Course {
     totalCompletions: 0,
     modules,
     prerequisites: (doc.prerequisites ?? []).map(
-      (p: PayloadCourse) => p.slug ?? p,
+      (p: PayloadRecord) => p.slug ?? p,
     ),
-    tags: (doc.tags ?? []).map((t: PayloadCourse) => t.tag ?? t),
+    tags: (doc.tags ?? []).map((t: PayloadRecord) => t.tag ?? t),
     createdAt: doc.createdAt ?? new Date().toISOString(),
     updatedAt: doc.updatedAt ?? new Date().toISOString(),
   };

@@ -39,7 +39,16 @@ interface PayloadCourseDoc {
   title: string;
   slug: string;
   description?: string;
-  difficulty?: string | number | { id: string; value?: string; label?: string; color?: string; [key: string]: unknown };
+  difficulty?:
+    | string
+    | number
+    | {
+        id: string;
+        value?: string;
+        label?: string;
+        color?: string;
+        [key: string]: unknown;
+      };
   duration?: string;
   xpTotal?: number;
   isActive?: boolean;
@@ -55,7 +64,9 @@ const difficultyColors: Record<string, string> = {
   advanced: "#ef4444",
 };
 
-function getDifficulty(d: unknown): { value: string; label: string; color: string } | null {
+function getDifficulty(
+  d: unknown,
+): { value: string; label: string; color: string } | null {
   if (!d) return null;
   // Payload relationship: populated doc object
   if (typeof d === "object" && d !== null) {
@@ -63,12 +74,23 @@ function getDifficulty(d: unknown): { value: string; label: string; color: strin
     const value = String(obj.value || obj.name || obj.label || obj.id || "");
     if (!value) return null;
     const label = String(obj.label || obj.name || value);
-    const color = (typeof obj.color === "string" && obj.color) || difficultyColors[value.toLowerCase()] || "#666";
-    return { value, label: label.charAt(0).toUpperCase() + label.slice(1), color };
+    const color =
+      (typeof obj.color === "string" && obj.color) ||
+      difficultyColors[value.toLowerCase()] ||
+      "#666";
+    return {
+      value,
+      label: label.charAt(0).toUpperCase() + label.slice(1),
+      color,
+    };
   }
   // Primitive (string, number, unpopulated relationship ID)
   const s = String(d);
-  return { value: s, label: s.charAt(0).toUpperCase() + s.slice(1), color: difficultyColors[s.toLowerCase()] || "#666" };
+  return {
+    value: s,
+    label: s.charAt(0).toUpperCase() + s.slice(1),
+    color: difficultyColors[s.toLowerCase()] || "#666",
+  };
 }
 
 export function CoursePreview({
@@ -263,7 +285,9 @@ export function CoursePreview({
 
               {/* Content lesson — render rich text */}
               {lesson.type === "content" && lesson.content && (
-                <MarkdownContent content={convertLexicalContent(lesson.content) ?? ""} />
+                <MarkdownContent
+                  content={convertLexicalContent(lesson.content) ?? ""}
+                />
               )}
 
               {/* Challenge lesson */}
@@ -280,7 +304,11 @@ export function CoursePreview({
                       >
                         Prompt
                       </h4>
-                      <MarkdownContent content={convertLexicalContent(lesson.challenge.prompt) ?? ""} />
+                      <MarkdownContent
+                        content={
+                          convertLexicalContent(lesson.challenge.prompt) ?? ""
+                        }
+                      />
                     </div>
                   )}
                   {lesson.challenge.starterCode && (

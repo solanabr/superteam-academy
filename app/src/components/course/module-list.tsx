@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Check, Code, Play } from "lucide-react";
@@ -18,6 +19,16 @@ export function ModuleList({
   completedLessons,
 }: ModuleListProps) {
   const tc = useTranslations("common");
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.startsWith("#module-")) return;
+    const el = document.getElementById(hash.slice(1));
+    if (el instanceof HTMLDetailsElement) {
+      el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   if (modules.length === 0) {
     return (
@@ -62,6 +73,7 @@ function ModuleAccordion({
 }: ModuleAccordionProps) {
   return (
     <details
+      id={`module-${module.id}`}
       className="group rounded-xl border border-border bg-card"
       open={moduleIndex === 0}
     >

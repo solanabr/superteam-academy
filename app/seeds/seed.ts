@@ -3,7 +3,11 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { getPayload } from "./utils/payload";
 import { TRACKS, DIFFICULTIES } from "../src/lib/constants";
-import { prismaToPayloadCourse } from "./utils/prisma-to-payload";
+import {
+  prismaToPayloadCourse,
+  convertModuleForPayload,
+  convertLessonForPayload,
+} from "./utils/prisma-to-payload";
 import { getAchievements } from "./data/achievements";
 import {
   getCourse1,
@@ -58,12 +62,26 @@ async function main() {
   // 2. Clear Payload collections
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("  Clearing Payload collections...");
-  const [existingCourses, existingTracks, existingDifficulties] =
-    await Promise.all([
-      payload.find({ collection: "courses", limit: 1000 }),
-      payload.find({ collection: "tracks", limit: 1000 }),
-      payload.find({ collection: "difficulties", limit: 1000 }),
-    ]);
+  const [
+    existingLessons,
+    existingModules,
+    existingCourses,
+    existingTracks,
+    existingDifficulties,
+  ] = await Promise.all([
+    payload.find({ collection: "lessons", limit: 100000 }),
+    payload.find({ collection: "modules", limit: 10000 }),
+    payload.find({ collection: "courses", limit: 1000 }),
+    payload.find({ collection: "tracks", limit: 1000 }),
+    payload.find({ collection: "difficulties", limit: 1000 }),
+  ]);
+  // FK-safe order: lessons → modules → courses
+  for (const doc of existingLessons.docs) {
+    await payload.delete({ collection: "lessons", id: doc.id });
+  }
+  for (const doc of existingModules.docs) {
+    await payload.delete({ collection: "modules", id: doc.id });
+  }
   for (const doc of existingCourses.docs) {
     await payload.delete({ collection: "courses", id: doc.id });
   }
@@ -175,7 +193,7 @@ async function main() {
   for (const courseData of allCourseData) {
     console.log(`  Seeding course: ${courseData.title}...`);
 
-    // Create in Payload CMS (source of truth)
+    // Create course in Payload CMS (source of truth)
     const payloadData = prismaToPayloadCourse(courseData);
     payloadData.track = trackDocIdMap.get(courseData.trackId);
     payloadData.difficulty = difficultyDocIdMap.get(courseData.difficulty);
@@ -185,8 +203,6 @@ async function main() {
     });
 
     // Create Prisma mirror record for FK integrity
-    const payloadModules = (payloadCourse as AnyRecord).modules ?? [];
-
     const prismaCourse = await prisma.course.create({
       data: {
         id: String(payloadCourse.id),
@@ -207,15 +223,20 @@ async function main() {
       },
     });
 
-    // Create mirror Module/Lesson/Challenge/TestCase records
+    // Create modules and lessons as separate Payload documents
     for (let mIdx = 0; mIdx < courseData.modules.create.length; mIdx++) {
       const moduleData = courseData.modules.create[mIdx];
-      const payloadModule = payloadModules[mIdx];
-      const moduleId = payloadModule?.id ?? `${prismaCourse.id}-m${mIdx}`;
 
+      // Create module in Payload
+      const payloadModule = await payload.create({
+        collection: "modules",
+        data: convertModuleForPayload(moduleData, payloadCourse.id),
+      });
+
+      // Create Prisma mirror module
       const prismaModule = await prisma.module.create({
         data: {
-          id: moduleId,
+          id: String(payloadModule.id),
           courseId: prismaCourse.id,
           title: moduleData.title,
           description: moduleData.description,
@@ -223,17 +244,19 @@ async function main() {
         },
       });
 
-      const payloadLessons = payloadModule?.lessons ?? [];
-
       for (let lIdx = 0; lIdx < moduleData.lessons.create.length; lIdx++) {
         const lessonData = moduleData.lessons.create[lIdx];
-        const payloadLesson = payloadLessons[lIdx];
-        const lessonId =
-          payloadLesson?.id ?? `${prismaCourse.id}-m${mIdx}-l${lIdx}`;
 
+        // Create lesson in Payload
+        const payloadLesson = await payload.create({
+          collection: "lessons",
+          data: convertLessonForPayload(lessonData, payloadModule.id),
+        });
+
+        // Create Prisma mirror lesson
         const prismaLesson = await prisma.lesson.create({
           data: {
-            id: lessonId,
+            id: String(payloadLesson.id),
             moduleId: prismaModule.id,
             title: lessonData.title,
             description: lessonData.description,

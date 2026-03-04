@@ -1,77 +1,17 @@
 import type { CollectionConfig } from "payload";
 import { revalidatePath } from "next/cache";
 import {
-  parseDurationToMinutes,
-  formatMinutesToDuration,
-} from "@/lib/duration-utils";
-import {
-  lexicalEditor,
-  FixedToolbarFeature,
-  InlineToolbarFeature,
-  HeadingFeature,
-  BoldFeature,
-  ItalicFeature,
-  UnderlineFeature,
-  StrikethroughFeature,
-  SubscriptFeature,
-  SuperscriptFeature,
-  InlineCodeFeature,
-  AlignFeature,
-  IndentFeature,
-  OrderedListFeature,
-  UnorderedListFeature,
-  ChecklistFeature,
-  BlockquoteFeature,
-  LinkFeature,
-  HorizontalRuleFeature,
-  BlocksFeature,
-  CodeBlock,
-} from "@payloadcms/richtext-lexical";
-import {
   allowPublicRead,
   isAdminOrEditor,
   isAdmin,
   adminFieldUpdate,
 } from "./access";
 
-const richTextFeatures = [
-  FixedToolbarFeature(),
-  InlineToolbarFeature(),
-  HeadingFeature({ enabledHeadingSizes: ["h1", "h2", "h3"] }),
-  BoldFeature(),
-  ItalicFeature(),
-  UnderlineFeature(),
-  StrikethroughFeature(),
-  SubscriptFeature(),
-  SuperscriptFeature(),
-  InlineCodeFeature(),
-  AlignFeature(),
-  IndentFeature(),
-  OrderedListFeature(),
-  UnorderedListFeature(),
-  ChecklistFeature(),
-  BlockquoteFeature(),
-  LinkFeature(),
-  HorizontalRuleFeature(),
-  BlocksFeature({ blocks: [CodeBlock()] }),
-];
-
-const promptFeatures = [
-  FixedToolbarFeature(),
-  InlineToolbarFeature(),
-  HeadingFeature({ enabledHeadingSizes: ["h2", "h3"] }),
-  BoldFeature(),
-  ItalicFeature(),
-  InlineCodeFeature(),
-  OrderedListFeature(),
-  UnorderedListFeature(),
-  BlocksFeature({ blocks: [CodeBlock()] }),
-];
-
 export const Courses: CollectionConfig = {
   slug: "courses",
   admin: {
     useAsTitle: "title",
+    group: "Content",
     defaultColumns: ["title", "difficulty", "track", "isActive", "updatedAt"],
   },
   access: {
@@ -89,48 +29,7 @@ export const Courses: CollectionConfig = {
     },
   },
   hooks: {
-    beforeValidate: [
-      ({ data }) => {
-        if (!data?.modules || !Array.isArray(data.modules)) return data;
-        const titles = new Set<string>();
-        for (const mod of data.modules) {
-          const title = (mod.title as string)?.trim().toLowerCase();
-          if (!title) continue;
-          if (titles.has(title)) {
-            throw new Error(
-              `Duplicate module title "${mod.title}". Each module must have a unique title within a course.`,
-            );
-          }
-          titles.add(title);
-        }
-        return data;
-      },
-    ],
     beforeChange: [
-      ({ data }) => {
-        if (!data) return data;
-        let totalXp = 0;
-        let totalMinutes = 0;
-        if (Array.isArray(data.modules)) {
-          for (const mod of data.modules) {
-            if (Array.isArray(mod.lessons)) {
-              for (const lesson of mod.lessons) {
-                totalXp += Number(lesson.xpReward) || 0;
-                if (lesson.duration) {
-                  totalMinutes += parseDurationToMinutes(
-                    lesson.duration as string,
-                  );
-                }
-              }
-            }
-          }
-        }
-        data.xpTotal = totalXp;
-        if (!data.duration && totalMinutes > 0) {
-          data.duration = formatMinutesToDuration(totalMinutes);
-        }
-        return data;
-      },
       async ({ data, req }) => {
         if (!data) return data;
         if (data.track) {
@@ -349,144 +248,6 @@ export const Courses: CollectionConfig = {
       name: "prerequisites",
       type: "array",
       fields: [{ name: "slug", type: "text" }],
-    },
-    {
-      name: "modules",
-      type: "array",
-      minRows: 1,
-      admin: { description: "Course modules, each containing lessons" },
-      fields: [
-        {
-          name: "title",
-          type: "text",
-          required: true,
-        },
-        {
-          name: "description",
-          type: "textarea",
-        },
-        {
-          name: "order",
-          type: "number",
-          defaultValue: 0,
-        },
-        {
-          name: "lessons",
-          type: "array",
-          minRows: 1,
-          admin: {
-            description:
-              "Set type to Content for reading material or Challenge for coding exercises.",
-          },
-          fields: [
-            {
-              name: "title",
-              type: "text",
-              required: true,
-            },
-            {
-              name: "description",
-              type: "textarea",
-            },
-            {
-              name: "type",
-              type: "select",
-              options: [
-                { label: "Content", value: "content" },
-                { label: "Challenge", value: "challenge" },
-              ],
-              defaultValue: "content",
-              admin: {
-                description:
-                  "Content = reading/video lesson. Challenge = interactive coding exercise.",
-              },
-            },
-            {
-              name: "order",
-              type: "number",
-              defaultValue: 0,
-            },
-            {
-              name: "xpReward",
-              type: "number",
-              defaultValue: 0,
-            },
-            {
-              name: "duration",
-              type: "text",
-            },
-            {
-              name: "videoUrl",
-              type: "text",
-              admin: {
-                description: "YouTube/Vimeo embed URL for video lessons",
-                condition: (_, siblingData) => siblingData?.type === "content",
-              },
-            },
-            {
-              name: "content",
-              type: "richText",
-              editor: lexicalEditor({ features: richTextFeatures }),
-              admin: {
-                description:
-                  "Lesson body — rich text with headings, lists, code blocks, etc.",
-                condition: (_, siblingData) => siblingData?.type === "content",
-              },
-            },
-            {
-              name: "challenge",
-              type: "group",
-              admin: {
-                condition: (_, siblingData) =>
-                  siblingData?.type === "challenge",
-              },
-              fields: [
-                {
-                  name: "prompt",
-                  type: "richText",
-                  editor: lexicalEditor({ features: promptFeatures }),
-                },
-                {
-                  name: "starterCode",
-                  type: "code",
-                  required: true,
-                  admin: { language: "typescript" },
-                },
-                {
-                  name: "language",
-                  type: "select",
-                  options: [
-                    { label: "Rust", value: "rust" },
-                    { label: "TypeScript", value: "typescript" },
-                    { label: "JSON", value: "json" },
-                  ],
-                  defaultValue: "typescript",
-                },
-                {
-                  name: "hints",
-                  type: "array",
-                  fields: [{ name: "hint", type: "text" }],
-                },
-                {
-                  name: "solution",
-                  type: "code",
-                  admin: { language: "typescript" },
-                },
-                {
-                  name: "testCases",
-                  type: "array",
-                  minRows: 1,
-                  fields: [
-                    { name: "name", type: "text", required: true },
-                    { name: "input", type: "text" },
-                    { name: "expectedOutput", type: "text", required: true },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
     },
   ],
 };

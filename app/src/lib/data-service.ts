@@ -1,11 +1,76 @@
 import { prisma } from "@/lib/db";
 import type { Course, Achievement, LearningPath } from "@/types";
+import type { Payload } from "payload";
 import { MOCK_COURSES } from "@/lib/mock-courses";
 import { getPayload } from "@/lib/payload";
 import { payloadCourseToCourse } from "@/lib/payload-to-course";
 
 export { getAllTracks } from "@/lib/tracks-service";
 export { getAllDifficulties } from "@/lib/difficulties-service";
+
+// ── Payload module/lesson fetcher ────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = Record<string, any>;
+
+/**
+ * Fetches all modules (with their lessons nested) for the given course IDs.
+ * Returns a Map keyed by course ID → array of module records with `.lessons`.
+ * Uses 2 queries total: one for modules, one for lessons.
+ */
+async function fetchModulesWithLessons(
+  payload: Payload,
+  courseIds: (string | number)[],
+): Promise<Map<string, AnyRecord[]>> {
+  if (courseIds.length === 0) return new Map();
+
+  const modulesResult = await payload.find({
+    collection: "modules",
+    where: { course: { in: courseIds } },
+    sort: "order",
+    limit: 10000,
+  });
+
+  const moduleIds = modulesResult.docs.map((m) => m.id);
+  if (moduleIds.length === 0) return new Map();
+
+  const lessonsResult = await payload.find({
+    collection: "lessons",
+    where: { module: { in: moduleIds } },
+    sort: "order",
+    limit: 100000,
+  });
+
+  // Group lessons by module ID
+  const lessonsByModule = new Map<string, AnyRecord[]>();
+  for (const lesson of lessonsResult.docs) {
+    const modId = String(
+      typeof (lesson as AnyRecord).module === "object"
+        ? ((lesson as AnyRecord).module as AnyRecord).id
+        : (lesson as AnyRecord).module,
+    );
+    if (!lessonsByModule.has(modId)) lessonsByModule.set(modId, []);
+    lessonsByModule.get(modId)!.push(lesson as AnyRecord);
+  }
+
+  // Group modules by course ID, attaching lessons
+  const result = new Map<string, AnyRecord[]>();
+  for (const mod of modulesResult.docs) {
+    const courseId = String(
+      typeof (mod as AnyRecord).course === "object"
+        ? ((mod as AnyRecord).course as AnyRecord).id
+        : (mod as AnyRecord).course,
+    );
+    if (!result.has(courseId)) result.set(courseId, []);
+    const moduleWithLessons = {
+      ...(mod as AnyRecord),
+      lessons: lessonsByModule.get(String(mod.id)) ?? [],
+    };
+    result.get(courseId)!.push(moduleWithLessons);
+  }
+
+  return result;
+}
 
 // ── Courses ─────────────────────────────────────────────────────────────────
 
@@ -125,19 +190,25 @@ export async function getAllCourses(): Promise<Course[]> {
     ]);
 
     if (result.docs.length > 0) {
+      const courseIds = result.docs.map((d) => d.id);
+      const [modulesMap, enrollmentGroups] = await Promise.all([
+        fetchModulesWithLessons(payload, courseIds),
+        prisma.enrollment.groupBy({
+          by: ["courseId"],
+          _count: { courseId: true },
+        }),
+      ]);
+
       const completionMap = new Map(
         completionGroups.map((g) => [g.courseId, g._count.courseId]),
       );
-      const enrollmentGroups = await prisma.enrollment.groupBy({
-        by: ["courseId"],
-        _count: { courseId: true },
-      });
       const enrollmentMap = new Map(
         enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
       );
 
       return result.docs.map((doc) => {
-        const course = payloadCourseToCourse(doc);
+        const modules = modulesMap.get(String(doc.id)) ?? [];
+        const course = payloadCourseToCourse(doc, modules);
         course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
         course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
         return course;
@@ -183,14 +254,17 @@ export async function getCourseBySlug(
       limit: 1,
     });
     if (result.docs.length > 0) {
-      const course = payloadCourseToCourse(result.docs[0]);
-      const courseId = String(result.docs[0].id);
-      const [enrollments, completions] = await Promise.all([
+      const doc = result.docs[0];
+      const courseId = String(doc.id);
+      const [modulesMap, enrollments, completions] = await Promise.all([
+        fetchModulesWithLessons(payload, [doc.id]),
         prisma.enrollment.count({ where: { courseId } }),
         prisma.enrollment.count({
           where: { courseId, completedAt: { not: null } },
         }),
       ]);
+      const modules = modulesMap.get(courseId) ?? [];
+      const course = payloadCourseToCourse(doc, modules);
       course.totalEnrollments = enrollments;
       course.totalCompletions = completions;
       return course;
@@ -234,6 +308,9 @@ export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
     ]);
 
     if (result.docs.length > 0) {
+      const courseIds = result.docs.map((d) => d.id);
+      const modulesMap = await fetchModulesWithLessons(payload, courseIds);
+
       const completionMap = new Map(
         completionGroups.map((g) => [g.courseId, g._count.courseId]),
       );
@@ -241,7 +318,8 @@ export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
         enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
       );
       return result.docs.map((doc) => {
-        const course = payloadCourseToCourse(doc);
+        const modules = modulesMap.get(String(doc.id)) ?? [];
+        const course = payloadCourseToCourse(doc, modules);
         course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
         course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
         return course;
@@ -302,6 +380,9 @@ export async function getCoursesByDifficulty(
     ]);
 
     if (result.docs.length > 0) {
+      const courseIds = result.docs.map((d) => d.id);
+      const modulesMap = await fetchModulesWithLessons(payload, courseIds);
+
       const completionMap = new Map(
         completionGroups.map((g) => [g.courseId, g._count.courseId]),
       );
@@ -309,7 +390,8 @@ export async function getCoursesByDifficulty(
         enrollmentGroups.map((g) => [g.courseId, g._count.courseId]),
       );
       return result.docs.map((doc) => {
-        const course = payloadCourseToCourse(doc);
+        const modules = modulesMap.get(String(doc.id)) ?? [];
+        const course = payloadCourseToCourse(doc, modules);
         course.totalEnrollments = enrollmentMap.get(String(doc.id)) ?? 0;
         course.totalCompletions = completionMap.get(String(doc.id)) ?? 0;
         return course;
