@@ -902,3 +902,107 @@ Recent iterations focused heavily on edge-case bug resolution and UX optimizatio
 3. **Course Content Classification:** Added proper frontend filtering and UI taxonomy support for the `other` track (non-Solana/Rust generic courses), expanding on the primary curriculum tracks.
 4. **Idempotency Safeguards:** Critical endpoints like `/api/graduation` now run explicit checks against the database (`completedAt != null`) before submitting an Inngest background minting job, entirely preventing race conditions where users could spam "Get Certificate" to farm graduation XP repeatedly.
 5. **Optimistic Completion Persistence:** The "Get Certificate" dynamic button relied on API timings. The `lesson-store` now writes completed lessons and course states to `localStorage` (via Zustand `persist`). When a user returns via a hard refresh, the client hydrated state instantly matches the server, preventing button pop-in delays.
+
+---
+
+## 20. Analytics Architecture
+
+Analytics is implemented using GA4 via the official `@next/third-parties/google` library for Next.js — a performance-optimized loader that does NOT block page rendering.
+
+### 20.1 GA4 Custom Events
+
+All events fire via the `sendGAEvent()` helper in `src/components/analytics/ThirdPartyScripts.tsx`:
+
+| Event | Source File | Trigger | Key Parameters |
+|---|---|---|---|
+| `login` | `SyncUserOnLogin.tsx` | User profile synced to DB | `method: "wallet"/"google"/"email"`, `wallet` |
+| `enroll` | `enrollment-store.ts` | Enrollment TX confirmed | `course_id`, `wallet` |
+| `complete_lesson` | `lesson-store.ts` | Lesson TX confirmed | `course_id`, `lesson_index`, `xp_earned` |
+| `graduate` | `enrollment-store.ts` | Graduation TX confirmed | `course_id`, `wallet`, `xp_earned: 500` |
+| `claim_achievement` | `AchievementList.tsx` | Achievement NFT minted | `achievement_id`, `wallet` |
+| `change_language` | `LocaleSwitcher.tsx` | User switches locale | `from`, `to` |
+
+### 20.2 Sentry Error Monitoring (3-Layer)
+
+| Layer | Config File | Captures |
+|---|---|---|
+| **Client** | `sentry.client.config.ts` | Browser errors + Session Replay (10% of sessions, 100% on error) |
+| **Server** | `sentry.server.config.ts` | API route errors, DB query failures, performance traces |
+| **Edge** | `sentry.edge.config.ts` | Middleware and edge function errors |
+
+Sentry is integrated via `withSentryConfig` in `next.config.ts`, using the `webpack.treeshake.removeDebugLogging` option (v10 configuration, no deprecated options).
+
+---
+
+## 21. Regional Performance — Co-location Strategy
+
+### Problem
+Default Vercel functions deploy to `iad1` (Washington DC). Supabase databases default to `ap-south-1` (Mumbai). Every API call crosses ~14,000km, adding 150-250ms round-trip latency.
+
+### Solution: `vercel.json` Region Pinning
+
+```json
+{
+  "regions": ["bom1"],
+  "functions": {
+    "src/app/api/**": { "maxDuration": 30 }
+  }
+}
+```
+
+By pinning functions to `bom1` (Mumbai), the Vercel function and Supabase database are in the **same AWS region**. Database query round-trips drop from 150-250ms to 2-10ms.
+
+### Performance Results
+
+| Metric | Before | After |
+|---|---|---|
+| DB round-trip (API → Supabase) | 150-250ms | 2-10ms |
+| Lesson completion API (`/api/onchain/complete-lesson`) | 7-10s | 2.5-3.5s |
+| Course page load | ~4s | ~1s |
+| Dashboard API calls (cached) | ~500ms | <10ms |
+| Solana TX (network-bound) | 6-8s | 6-8s (inherent to Devnet) |
+| Lighthouse Performance | ~75 | 90+ |
+
+---
+
+## 22. Future Roadmap
+
+### 22.1 Read Replicas for Global Scale (Standard Industry Practice)
+
+**Current State:** Single primary Supabase database in `ap-south-1` (Mumbai). Fast for Indian and South Asian users, slower (~200-300ms) for Brazilian users.
+
+**The Solution:**
+
+Keep the primary write database in India. Spin up a **Supabase Read Replica** in a Brazil-adjacent region (`sa-east-1`, São Paulo). Vercel's region-specific environment variables allow each function region to point to its local replica:
+
+```
+Brazil users  → Vercel (gru1, São Paulo) → Read Replica (sa-east-1)  ← fast reads
+India users   → Vercel (bom1, Mumbai)    → Primary DB (ap-south-1)  ← fast reads
+
+Writes (enrollments, completions) always route to the primary DB in India.
+```
+
+Since web apps are ~90% reads and ~10% writes, this makes the experience feel locally fast for all users globally. Brazilian users loading their dashboard would read from the local São Paulo replica. Only when they enroll (a write) would the request route to the primary database in India.
+
+> Supabase supports Read Replicas on the **Pro tier** and above.
+
+**Implementation Steps:**
+1. Upgrade Supabase to Pro tier
+2. Create a replica in `sa-east-1`
+3. Add a `DATABASE_URL_SA_EAST_1` Vercel environment variable scoped to `gru1` region
+4. Update connection logic to prefer region-local `DATABASE_URL`
+
+### 22.2 Other Planned Features
+
+| Feature | Priority | Description |
+|---|---|---|
+| **Mainnet Launch** | High | Switch RPC to mainnet; deploy Anchor program to mainnet |
+| **GitHub OAuth** | High | Full GitHub login integration (currently stubbed in Privy) |
+| **E2E Tests** | Medium | Playwright tests covering enrollment → graduation flows |
+| **Admin Dashboard** | Medium | Course analytics, user management, XP audit log UI |
+| **PWA Support** | Medium | Offline-capable, installable, service worker caching |
+| **Community Forum** | Low | Per-course Q&A and discussion threads |
+| **Advanced Gamification** | Low | Daily challenges, seasonal events, streak freezes |
+| **CMS Dashboard** | Low | Richer course creator analytics and preview tools |
+| **On-chain Achievement Types** | Future | Full AchievementType + AchievementReceipt PDA integration |
+

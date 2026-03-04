@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
+import { sendGAEvent } from "../analytics/ThirdPartyScripts";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Languages, ChevronUp, ChevronDown } from "lucide-react";
@@ -31,6 +32,7 @@ export function LocaleSwitcher() {
   }, []);
 
   function onSelectChange(nextLocale: string) {
+    sendGAEvent("change_language", { from: locale, to: nextLocale });
     router.replace(pathname, { locale: nextLocale });
     setIsOpen(false);
   }

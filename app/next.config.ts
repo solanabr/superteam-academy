@@ -107,23 +107,23 @@ export default withSentryConfig(intlConfig, {
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-hidden-source-map
   widenClientFileUpload: true,
 
-  // Automatically annotate React components to show their full name in breadcrumbs and McR
-  reactComponentAnnotation: {
-    enabled: true,
-  },
-
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   // This can increase your server load as well as your Sentry quota.
   // tunnelRoute: "/monitoring",
 
-  // Hides source maps from visitors
+  // Webpack-specific options (not supported with Turbopack — that's expected)
+  webpack: {
+    // Automatically annotate React components to show their full name in breadcrumbs and Session Replay
+    reactComponentAnnotation: {
+      enabled: true,
+    },
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
+    // Automatically tree-shake Sentry logger statements to reduce bundle size
+    treeshake: {
+      removeDebugLogging: true,
+    },
 
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router config route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
+    // Enables automatic instrumentation of Vercel Cron Monitors
+    automaticVercelMonitors: true,
+  },
 });

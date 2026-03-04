@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { useUserStore } from "@/store/user-store";
 import type { UserState } from "@/store/user-store";
+import { sendGAEvent } from "../analytics/ThirdPartyScripts";
 
 /** Syncs the authenticated user (wallet) to our DB on login. Renders nothing. */
 export function SyncUserOnLogin() {
@@ -50,6 +51,13 @@ export function SyncUserOnLogin() {
 
           // Still fetch full progress in background for any additional data
           fetchProgress(walletAddress);
+
+          // Track Login Event for behavior insights
+          const loginMethod = user?.google?.email ? "google" : user?.email ? "email" : "wallet";
+          sendGAEvent("login", {
+            method: loginMethod,
+            wallet: walletAddress
+          });
         } else {
           // If sync fails, we don't block the UI, but we log it for debugging
           console.error("SyncUserOnLogin: Failed to sync user profile");

@@ -180,6 +180,7 @@ export function Footer() {
 
           {/* Legal Links */}
           <div className="flex items-center justify-end gap-8 flex-1">
+            <a href="/lighthouse-report/index.html" target="_blank" rel="noopener noreferrer" className="hover:text-solana transition-colors">Performance Score</a>
             <Link href="/privacy" className="hover:text-solana transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-solana transition-colors">Terms of Service</Link>
           </div>

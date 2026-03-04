@@ -1,78 +1,263 @@
-# Superteam Academy — App
+# Superteam Academy — Frontend App
 
-Next.js frontend for the Superteam Academy LMS (Solana). See repo root `development-journey/IMPLEMENTATION_PLAN_APP.md` for the full build plan.
+> **"Codecademy meets Cyfrin Updraft for Solana"** — The open-source, gamified learning platform for Solana developers across Latin America and beyond.
 
-## Setup
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-aves--superteam--academy.vercel.app-14F195?style=for-the-badge&logo=vercel)](https://aves-superteam-academy.vercel.app)
+[![Lighthouse](https://img.shields.io/badge/Lighthouse-90%2B-4CAF50?style=for-the-badge&logo=lighthouse)](https://aves-superteam-academy.vercel.app/lighthouse-report/index.html)
+[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-9945FF?style=for-the-badge&logo=solana)](https://solana.com)
+
+---
+
+## Overview
+
+Superteam Academy is a production-ready LMS (Learning Management System) built for the Solana ecosystem. It combines gamified progression (XP, levels, streaks, achievements), on-chain credentials via Metaplex Core NFTs, and interactive course delivery — all in a fast, multilingual interface.
+
+**Tech Stack:**
+- **Framework:** Next.js 16 (App Router) + TypeScript (strict)
+- **Styling:** Tailwind CSS v4 with custom design tokens
+- **UI Components:** shadcn/ui + Radix UI (accessible primitives)
+- **Auth:** Privy (Solana wallet + Google/GitHub OAuth)
+- **CMS:** Sanity (courses, modules, lessons)
+- **Database:** Supabase (PostgreSQL) + Prisma ORM
+- **On-Chain:** Solana Devnet — Token-2022 (XP), Metaplex Core NFTs (credentials), Anchor program
+- **Background Jobs:** Inngest (async graduation, sync pipelines)
+- **Caching:** Upstash Redis
+- **Analytics:** GA4 (6 custom events) + Sentry error monitoring
+- **i18n:** EN, PT-BR, ES (next-intl)
+- **Deployment:** Vercel (`bom1` — Mumbai, co-located with Supabase)
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+- **Node.js** v20+
+- **pnpm** v9+ (`npm install -g pnpm`)
+- A **Phantom** or any Solana wallet browser extension (for testing)
+
+### Step 1 — Clone and Install
 
 ```bash
-pnpm install   # or: npm install
-cp .env.example .env   # then fill in env vars
-pnpm dev       # or: npm run dev
+# From the repo root
+cd app
+pnpm install
 ```
 
-## Scripts
+### Step 2 — Configure Environment Variables
 
-- `pnpm dev` / `npm run dev` — start dev server
-- `pnpm build` / `npm run build` — production build
-- `pnpm start` / `npm start` — start production server
-
-## Logo
-
-Placeholder and branding assets live in `public/logo/`:
-
-- **`logo-horizontal.svg`** — used in the header (horizontal “Superteam Academy” text). Replace with the official Superteam Brazil horizontal logo from `design_assets/superteam brazil assets/Logo/` when available (e.g. `HORIZONTAL/SVG/ST-EMERALD-GREEN-HORIZONTAL.svg` for dark backgrounds, or Off-White variant).
-- For footer or other contexts, add `logo-vertical.svg` or other variants and reference them from the layout/footer components.
-
-Copy from the design kit:
+Copy the example file and fill in each value:
 
 ```bash
-# From repo root, if design_assets is present:
-cp "design_assets/superteam brazil assets/Logo/HORIZONTAL/SVG/ST-EMERALD-GREEN-HORIZONTAL.svg" app/public/logo/logo-horizontal.svg
+cp .env.example .env
 ```
 
-## Env (see `.env.example`)
+> See the **Environment Variables** section below for what each variable does.
 
-- **Supabase (reference_demo_project style):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client/server), `SUPABASE_SERVICE_KEY` (server-only, elevated access). From Project Settings → API Keys (anon key + service_role key).
-- **`DATABASE_URL`** — Postgres for Prisma. Easiest when **SSL enforcement is OFF** (Database → Settings → SSL Configuration): use **Direct** URI with `?sslmode=disable`, e.g. `postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres?sslmode=disable`. Copy the exact URI from Dashboard → **Connect** → **Direct connection** and replace the password.
-- **Privy:** `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET` (server-only). From [Privy Dashboard](https://dashboard.privy.io). If the app ID is unset, the app uses a test ID so build succeeds; set your own for production.
-- **Sanity (Phase 2):** `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`. Create a project at [sanity.io](https://sanity.io), then add these to `.env`. Optional: `NEXT_PUBLIC_SANITY_API_VERSION` (default `2026-02-16`).
-  - **Server-only write token:** `SANITY_API_TOKEN` (Editor role) is required for course creation/editing/publishing from the app’s API routes.
-  - **In-app course management:** Professors/admins manage content from `/teach/courses` (no need to use `/studio` in normal flow). Only **published** courses appear on `/courses`.
+### Step 3 — Set up the Database
 
-### Privy (auth)
+```bash
+# Apply the Prisma schema to your Supabase (or local Postgres) database
+npx prisma generate
+npx prisma db push
+```
 
-- **Dashboard:** In [Privy Dashboard](https://dashboard.privy.io) → **Authentication** → **Login methods**, enable **Email**, **Google**, and **GitHub**. Wallet login is enabled by default for Solana.
-- **Phantom redirect:** The app configures Solana connectors (`toSolanaWalletConnectors`) and a `walletList` so Phantom (and other extensions) connect in-app instead of opening the install page. If Phantom still opens the install page, ensure the extension is installed and refresh.
-- **Embedded wallet:** If a user logs in with **email**, **Google**, or **GitHub** and does **not** connect an external wallet, Privy automatically creates a **Solana embedded wallet** for them (`createOnLogin: 'users-without-wallets'`). So every logged-in user has a wallet address (either linked or embedded).
-- **Email verification:** Privy’s email login uses a **one-time code (OTP)** sent to the user’s email; there is no option to skip this. To avoid any email step, use only Google or GitHub in the Dashboard.
+### Step 4 — Set up Sanity CMS
 
-#### GitHub OAuth: "redirect_uri is not associated with this application"
+```bash
+# Install Sanity CLI (if not already)
+npm install -g @sanity/cli
 
-If you see this error when clicking **Connect with GitHub**, the **Authorization callback URL** in your [GitHub OAuth App](https://github.com/settings/developers) is wrong. GitHub must redirect to **Privy’s** callback, not your app.
+# Log in to Sanity
+sanity login
 
-1. In GitHub: **Settings → Developer settings → OAuth Apps** → your app (e.g. “superteam academy”).
-2. Set **Authorization callback URL** to exactly:
-   ```text
-   https://auth.privy.io/api/v1/oauth/callback
-   ```
-   (Do **not** use `http://localhost:3000/dashboard` or any app URL here.)
-3. **Homepage URL** can stay as your app (e.g. `http://localhost:3000` for local dev).
-4. Save (Update application).
+# Import the sample course data (optional, for dev)
+# See CMS_GUIDE.md for detailed instructions
+```
 
-Privy’s docs: [Configure login methods](https://docs.privy.io/basics/get-started/dashboard/configure-login-methods) — “For all providers, during setup, specify Privy’s OAuth callback endpoint as your redirect URI: `https://auth.privy.io/api/v1/oauth/callback`.”
+### Step 5 — Run the Development Server
 
-**First-time DB setup:** `pnpm prisma migrate dev` (creates tables using `DATABASE_URL`).
+```bash
+pnpm dev
+```
 
-## Project structure and dependencies
+Open [http://localhost:3000](http://localhost:3000). The app will redirect to `/en` by default.
 
-- **`app/`** — Project root for this Next.js app (config, package.json, .env, prisma, public). Not the same as the App Router.
-- **`app/src/`** — Next.js source: `src/app/` = App Router (routes, layouts), `src/components/`, `src/lib/`, `src/messages/`, etc. So “app” at root = project folder; “app” under src = Next.js App Router. No duplication.
-- **i18n:** Single config at **`app/i18n/request.ts`** (used by next-intl when the plugin is enabled in `next.config.ts`). Messages live in `src/messages/*.json`.
-- **Dependencies:** Use **pnpm** from the `app/` directory (`pnpm install`, `pnpm add <pkg>`). pnpm uses a content-addressable **store** (global by default, or a local `.pnpm-store` if configured); **`node_modules`** in `app/` is the symlink tree into that store. To avoid “linked to different store” errors, use one store. This app is configured to use the global pnpm store only (see `app/.npmrc`: `store-dir=~/Library/pnpm/store`). You do not need a repo-level `.pnpm-store`; only `app/node_modules` holds symlinks for this project. If `.pnpm-store` exists at repo root, delete it and run `pnpm install` from `app/` so installs stay consistent.
+---
 
-## Tech
+## Environment Variables
 
-- Next.js 16 (App Router), React 19, TypeScript
-- Tailwind CSS v4 (design tokens in `src/app/globals.css`)
-- shadcn/ui (Button + `cn` util); **next-intl** prepared (`src/messages/*.json`, `i18n/request.ts`, `LocaleSwitcher`) but plugin disabled: Next 16 + Turbopack has a [known issue](https://github.com/amannn/next-intl/issues/740) resolving the config during prerender. Re-enable in `next.config.ts` when using Next 15 or when next-intl supports Next 16 Turbopack.
-- Supabase + Prisma, Privy (Solana) (Phase 1+)
+Create a `.env` file in the `app/` directory with the following:
+
+```env
+# ── Auth (Privy) ──────────────────────────────────────────────────────────────
+# Dashboard: https://dashboard.privy.io
+NEXT_PUBLIC_PRIVY_APP_ID=            # Safe for client (NEXT_PUBLIC_)
+PRIVY_APP_SECRET=                    # Server-only — NEVER expose to client
+
+# ── Database (Supabase + Prisma) ──────────────────────────────────────────────
+# Dashboard: https://supabase.com/dashboard/project/<ref>/settings/database
+NEXT_PUBLIC_SUPABASE_URL=           # e.g. https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=      # Anon key (safe for client)
+SUPABASE_SERVICE_KEY=               # Service role key (server-only)
+
+# Prisma connection — use the "Transaction" pooler URL for serverless
+# Settings > Database > Connection string > Transaction mode
+DATABASE_URL="postgresql://...?pgbouncer=true&connection_limit=20&pool_timeout=20"
+
+# Direct URL for schema migrations (bypasses PgBouncer)
+DIRECT_URL="postgresql://..."
+
+# ── CMS (Sanity) ──────────────────────────────────────────────────────────────
+# Dashboard: https://sanity.io/manage
+NEXT_PUBLIC_SANITY_PROJECT_ID=      # e.g. "unpfqvnd"
+NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_API_TOKEN=                   # Editor-role token for server writes
+
+# ── Solana / On-Chain ─────────────────────────────────────────────────────────
+NEXT_PUBLIC_USE_ONCHAIN=true        # Set false to skip on-chain transactions
+NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_HELIUS_RPC_URL=         # Helius RPC with API key (faster)
+BACKEND_WALLET_PRIVATE_KEY=         # bs58-encoded private key for backend signing
+NEXT_PUBLIC_COLLECTION_ADDRESS=     # Metaplex Core collection address on Devnet
+
+# ── Background Jobs (Inngest) ─────────────────────────────────────────────────
+# Dashboard: https://app.inngest.com
+INNGEST_EVENT_KEY=
+INNGEST_SIGNING_KEY=
+
+# ── Caching (Upstash Redis) ───────────────────────────────────────────────────
+# Dashboard: https://console.upstash.com
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+# ── Analytics & Monitoring ────────────────────────────────────────────────────
+NEXT_PUBLIC_GA_MEASUREMENT_ID=      # GA4 Measurement ID (e.g. G-XXXXXXXXXX)
+NEXT_PUBLIC_SENTRY_DSN=             # Sentry DSN from Project Settings > Client Keys
+SENTRY_ORG=                         # Sentry org slug
+SENTRY_PROJECT=                     # Sentry project slug
+# SENTRY_AUTH_TOKEN=                # Add to Vercel only (source map uploads)
+
+# ── App URL ───────────────────────────────────────────────────────────────────
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Key Setup Notes
+
+**Privy Auth:**
+- Enable **Email**, **Google**, **GitHub**, and **Wallet** login in the Privy dashboard.
+- For GitHub OAuth, set the Authorization callback URL to `https://auth.privy.io/api/v1/oauth/callback` (NOT your app URL).
+- Every user gets a Solana wallet (embedded, if no external wallet is connected).
+
+**Supabase DATABASE_URL:**
+- Use the **Transaction mode** pooler URL (port `6543`) with `?pgbouncer=true` for the app.
+- Use the **Direct** URL (port `5432`) for `DIRECT_URL` to run migrations.
+- Always include `connection_limit=20` in the pooler URL to avoid exhausting connections on serverless.
+
+---
+
+## Available Scripts
+
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start development server (Turbopack) |
+| `pnpm build` | Production build |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `npx prisma db push` | Push schema changes to database |
+| `npx prisma generate` | Regenerate Prisma client after schema changes |
+| `npx prisma studio` | Open Prisma Studio (local DB GUI) |
+
+---
+
+## Project Structure
+
+```
+app/
+├── prisma/                   # Database schema & migrations
+│   └── schema.prisma         # Prisma schema (User, Enrollment, Credential...)
+├── public/                   # Static assets (logos, images, lighthouse report)
+│   └── lighthouse-report/    # Static Lighthouse performance report
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── [locale]/         # i18n-aware routes (en, pt-BR, es)
+│   │   │   ├── page.tsx      # Landing page (/)
+│   │   │   └── (authenticated)/
+│   │   │       └── (platform)/
+│   │   │           ├── dashboard/     # /dashboard
+│   │   │           ├── courses/       # /courses & /courses/[slug]
+│   │   │           ├── achievements/  # /achievements
+│   │   │           ├── leaderboard/   # /leaderboard
+│   │   │           ├── profile/       # /profile/[wallet]
+│   │   │           ├── settings/      # /settings
+│   │   │           ├── certificates/  # /certificates/[id]
+│   │   │           └── teach/         # /teach (course creator dashboard)
+│   │   └── api/              # API routes
+│   │       ├── onchain/      # Solana transaction handlers
+│   │       ├── enrollment/   # Enrollment state management
+│   │       ├── graduation/   # Course completion + XP award
+│   │       ├── sync/         # Background sync (certificates, progress, course)
+│   │       └── ...           # 24 total API route groups
+│   ├── components/           # UI components (17 folders)
+│   │   ├── analytics/        # ThirdPartyScripts + sendGAEvent
+│   │   ├── auth/             # SyncUserOnLogin, AuthGuard
+│   │   ├── courses/          # CourseCard, EnrollButton, LessonList
+│   │   ├── dashboard/        # XPBar, StreakCalendar, ActivityFeed
+│   │   ├── layout/           # Footer, LocaleSwitcher, Navigation
+│   │   ├── lessons/          # LessonView, CodeEditor, QuizModal
+│   │   └── ui/               # SolanaTransactionModal, button, input
+│   ├── store/                # Zustand state management (11 stores)
+│   │   ├── user-store.ts     # User auth, XP, progress, credentials
+│   │   ├── enrollment-store.ts  # Course enrollment & rent reclaim
+│   │   ├── course-store.ts   # Course detail state
+│   │   ├── lesson-store.ts   # Lesson progress & completion
+│   │   └── ...
+│   ├── lib/                  # Utilities and service layer
+│   │   ├── learning-progress/ # LearningProgressService (clean abstraction)
+│   │   ├── solana-connection.ts  # RPC connection management
+│   │   ├── onchain-admin.ts  # Backend wallet for signing transactions
+│   │   ├── cache.ts          # Upstash Redis caching helpers
+│   │   └── db.ts             # Prisma client singleton
+│   ├── messages/             # i18n translation files
+│   │   ├── en.json, pt-BR.json, es.json
+│   └── sanity/               # Sanity client, schemas, queries
+├── sentry.client.config.ts   # Sentry — browser error capture + Session Replay
+├── sentry.server.config.ts   # Sentry — server-side error capture
+├── sentry.edge.config.ts     # Sentry — edge runtime error capture
+├── next.config.ts            # Next.js config (withSentryConfig, next-intl)
+└── vercel.json               # Vercel deployment config (region: bom1)
+```
+
+---
+
+## Deployment (Vercel)
+
+The app is deployed on Vercel with the function region explicitly set to **`bom1` (Mumbai)** to co-locate with the Supabase database in `ap-south-1`, minimizing database query latency.
+
+### Deploy to Vercel
+
+1. **Fork/clone** the repo and push to GitHub.
+2. **Import** the repo into Vercel.
+3. **Set root directory** to `app/` in Vercel project settings.
+4. **Add all environment variables** from the table above.
+5. **Add `SENTRY_AUTH_TOKEN`** (server-only, for source map uploads during build).
+6. Push to the `main` branch to trigger a deployment.
+
+### Performance Results
+
+| Metric | Score |
+|---|---|
+| Lighthouse Performance | 90+ |
+| Lighthouse Accessibility | 95+ |
+| Lighthouse Best Practices | 95+ |
+| Lighthouse SEO | 90+ |
+| API response time (cached) | < 10ms |
+| API response time (DB) | 200–900ms |
+| Solana transaction (Devnet) | 6–8s |
+
+[View Full Lighthouse Report →](https://aves-superteam-academy.vercel.app/lighthouse-report/index.html)
+
+---
+
+## License
+
+MIT — See root `LICENSE` for details.
