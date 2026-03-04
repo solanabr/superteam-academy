@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Shell } from "@/components/Shell";
 import { getCourse } from "@/lib/courses";
-import { notFound } from "next/navigation";
 
-export default async function CoursePage({
+export default async function CourseDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -13,67 +13,69 @@ export default async function CoursePage({
   if (!course) notFound();
 
   return (
-    <Shell title={course.title} subtitle={course.description}>
-      <div className="flex items-center justify-between">
-        <Link className="text-sm underline" href="/courses">
-          ← Back to courses
-        </Link>
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs">
-          {course.level}
-        </span>
-      </div>
-
-      <div className="mt-6 grid gap-6 md:grid-cols-3">
-        <section className="md:col-span-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">Lessons</h2>
-            <ol className="mt-4 space-y-2">
-              {course.lessons.map((l, i) => (
-                <li key={l.slug}>
-                  <Link
-                    href={`/courses/${course.slug}/lessons/${i + 1}`}
-                    className="flex items-center justify-between rounded-xl border border-zinc-200 px-4 py-3 hover:border-zinc-300"
-                  >
-                    <div className="text-sm">
-                      <span className="mr-2 text-zinc-500">{i + 1}.</span>
-                      {l.title}
-                    </div>
-                    <div className="text-xs text-zinc-500">{l.minutes} min</div>
-                  </Link>
-                </li>
-              ))}
-            </ol>
+    <Shell>
+      <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Link
+              href="/courses"
+              className="text-xs text-zinc-500 hover:underline"
+            >
+              ← All courses
+            </Link>
+            <h1 className="mt-2 text-3xl font-semibold">{course.title}</h1>
+            <p className="mt-2 text-sm text-zinc-600">{course.description}</p>
           </div>
-        </section>
+          <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs">
+            {course.level}
+          </span>
+        </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <div className="text-xs text-zinc-500">Course XP (stub)</div>
-            <div className="mt-1 text-2xl font-semibold">+750</div>
-            <div className="mt-3 text-xs text-zinc-500">
-              Real rewards will be wired to the on-chain program; until then we
-              use a typed service interface.
-            </div>
-          </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {course.tags.map((t) => (
+            <span
+              key={t}
+              className="rounded-full border border-zinc-200 px-2.5 py-1 text-xs text-zinc-700"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <div className="text-sm font-semibold">Enrollment</div>
-            <div className="mt-3 flex gap-3">
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold">Lessons</h2>
+          <div className="mt-4 space-y-3">
+            {course.lessons.map((lesson, i) => (
               <Link
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-                href="/login"
+                key={lesson.slug}
+                href={`/courses/${course.slug}/lessons/${lesson.slug}`}
+                className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 transition hover:border-zinc-300"
               >
-                Sign in
+                <div className="flex items-center gap-4">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium">{lesson.title}</span>
+                </div>
+                <span className="text-xs text-zinc-500">
+                  {lesson.minutes} min
+                </span>
               </Link>
-              <Link
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm"
-                href="/me"
-              >
-                Profile
-              </Link>
-            </div>
+            ))}
           </div>
-        </aside>
+        </div>
+
+        <div className="mt-8 flex gap-3">
+          <button className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white">
+            Start course
+          </button>
+          <Link
+            href="/dashboard"
+            className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm"
+          >
+            Dashboard
+          </Link>
+        </div>
       </div>
     </Shell>
   );
