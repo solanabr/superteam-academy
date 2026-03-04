@@ -20,6 +20,8 @@ import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import {useUser} from '@/hooks/useUser'
+import { useAuthWallet } from "@/hooks/useAuthWallet";
+import { useState } from "react";
 
 const WalletButton = dynamic(() => import("@/components/WalletButton"), { ssr: false });
 
@@ -27,6 +29,8 @@ export function UserNav() {
   const { publicKey, disconnect } = useWallet();
   const { data: session } = useSession();
   const { userDb } = useUser(); 
+  const { login } = useAuthWallet();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Определяем, залогинен ли пользователь хоть как-то
   const isLoggedIn = !!publicKey || !!session;
@@ -42,9 +46,20 @@ export function UserNav() {
     if (session) await signOut();
   };
 
+  const handleWalletLogin = async () => {
+    // Закрываем модалку перед вызовом логики кошелька, 
+    // чтобы избежать конфликтов z-index с модалкой WalletAdapter'а (если она понадобится)
+    setIsModalOpen(false);
+      
+    // Небольшая пауза, чтобы DOM успел обновиться
+    setTimeout(() => {
+      login();
+    }, 100);
+  };
+
   if (!isLoggedIn) {
     return (
-      <Dialog>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogTrigger asChild>
           <Button>Sign In</Button>
         </DialogTrigger>
@@ -54,23 +69,25 @@ export function UserNav() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="flex flex-col gap-3">
-               {/* 1. Wallet */}
-               <div className="w-full">
-                 <WalletButton /> 
-                 {/* Примечание: WalletAdapter UI сам рисует кнопку, мы просто оборачиваем ее */}
-               </div>
                
-               <div className="relative">
+               {/* 1. Wallet */}
+               {/* ИСПРАВЛЕНИЕ: Вместо WalletMultiButton используем нашу кнопку, 
+                   которая вызывает наш кастомный хук */}
+               <Button onClick={handleWalletLogin} className="w-full gap-2 bg-purple-600 hover:bg-purple-700">
+                 <Wallet className="h-4 w-4" /> Sign In with Solana Wallet
+               </Button>
+               
+               <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
                </div>
 
                {/* 2. Socials */}
-               <Button variant="outline" onClick={() => signIn('google')} className="gap-2">
-                 <FaGoogle /> Google
-               </Button>
                <Button variant="outline" onClick={() => signIn('github')} className="gap-2">
                  <FaGithub /> GitHub
+               </Button>
+               <Button variant="outline" onClick={() => signIn('google')} className="gap-2">
+                 <FaGoogle /> Google
                </Button>
             </div>
           </div>

@@ -5,54 +5,48 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql" // МЕНЯЕМ ПРОВАЙДЕР
   url      = env("DATABASE_URL")
 }
 
+// 1. Roles (Enum поддерживается в Postgres)
 enum Role {
   USER
   ADMIN
 }
 
 enum CourseStatus {
-  DRAFT       // Черновик (видит только автор)
-  PENDING     // Отправлен на модерацию
-  APPROVED    // Одобрен админом (опубликован в блокчейне)
-  REJECTED    // Отклонен
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
 }
 
-// Модель User (расширенная для NextAuth)
+// 2. User
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  // NextAuth поля
+  id            String    @id @default(cuid()) // БЫЛО: @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
   
-  // Наши поля
   walletAddress String?   @unique
-  
-  // Профиль
-  username      String?   @unique // Уникальный, чтобы не было дублей
-  bio           String?
-  
-  // Соцсети (храним username для отображения)
+  username      String?   @unique
+  bio           String?   @db.Text // Text для длинных строк
   twitterHandle String?
   githubHandle  String?
-
-  role          Role      @default(USER)
-  hasCompletedOnboarding Boolean @default(false)
-  preferences            Json?
   
-  // Геймификация
+  role          Role      @default(USER)
+  
   xp            Int       @default(0)
   level         Int       @default(0)
   streak        Int       @default(0)
   lastLogin     DateTime  @default(now())
   lastLessonAt  DateTime?
 
-  // Связи
+  hasCompletedOnboarding Boolean @default(false)
+  preferences            Json?   // JSON поддерживается в Postgres
+
   accounts      Account[]
   sessions      Session[]
   enrollments   UserEnrollment[]
@@ -64,20 +58,19 @@ model User {
   createdCourses Course[]
 }
 
-
-// NextAuth: Account (хранит связи с GitHub/Google)
+// 3. NextAuth Models
 model Account {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String  @db.ObjectId
+  id                String  @id @default(cuid())
+  userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.String
-  access_token      String? @db.String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.String
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -85,96 +78,28 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-// NextAuth: Session
 model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(cuid())
   sessionToken String   @unique
-  userId       String   @db.ObjectId
+  userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Остальные модели без изменений
-model UserEnrollment {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  user          User     @relation(fields: [userId], references: [id])
-  userId        String   @db.ObjectId
-  courseId      String
-  enrolledAt    DateTime @default(now())
-
-  @@unique([userId, courseId])
-}
-
-model LessonProgress {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String   @db.ObjectId
-  courseId    String
-  lessonIndex Int
-  status      String
-  codeSnippet String?
-  completedAt DateTime?
-
-  @@unique([userId, courseId, lessonIndex])
-}
-
-model Achievement {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug              String   @unique
-  name              String
-  description       String
-  image             String
-  xpReward          Int
-  
-  // НОВОЕ ПОЛЕ: Адрес коллекции (Mint) этого типа ачивки
-  collectionAddress String?  @unique 
-  
-  users             UserAchievement[]
-}
-
-model UserAchievement {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  user          User        @relation(fields: [userId], references: [id])
-  userId        String      @db.ObjectId
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
-  achievementId String      @db.ObjectId
-  earnedAt      DateTime    @default(now())
-  mintAddress   String?     // Адрес NFT в блокчейне (после минта)
-
-  @@unique([userId, achievementId])
-}
-
-model XPHistory {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String   @db.ObjectId
-  amount      Int
-  source      String   // "lesson", "achievement", "bonus"
-  description String?
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
+// 4. Courses (CMS)
 model Course {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  id          String         @id @default(cuid())
   slug        String         @unique
   title       String
-  description String
+  description String         @db.Text
   difficulty  String         @default("Beginner")
   xpPerLesson Int            @default(50)
   imageUrl    String?
   
-  // ИЗМЕНЕНИЕ: Заменяем isPublished на status
-  // isPublished Boolean     @default(false)
   status      CourseStatus   @default(DRAFT)
-  
-  // НОВОЕ: Обратная связь от модератора
-  reviewComment String?
+  reviewComment String?      @db.Text
 
-  // НОВОЕ: Связь с автором (кто создал)
-  authorId    String?        @db.ObjectId
+  authorId    String?
   author      User?          @relation(fields: [authorId], references: [id])
 
   modules     CourseModule[]
@@ -183,77 +108,130 @@ model Course {
 }
 
 model CourseModule {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId    String   @db.ObjectId
+  id          String   @id @default(cuid())
+  courseId    String
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title       String
-  order       Int      // Порядок модуля (1, 2, 3...)
+  order       Int
   
-  lessons     Lesson[] // Связь с уроками
+  lessons     Lesson[]
 }
 
 model Lesson {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  moduleId    String       @db.ObjectId
+  id          String       @id @default(cuid())
+  moduleId    String
   module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   title       String
-  content     String       // Текст урока в формате Markdown
-  initialCode String?      // Стартовый код (для практики)
-  order       Int          // Глобальный индекс урока в курсе (0, 1, 2...) для блокчейна
-  isChallenge Boolean      @default(true) // true = практика с кодом, false = только текст/видео
-  validationRules Json? 
+  content     String       @db.Text
+  initialCode String?      @db.Text
+  order       Int
+  isChallenge Boolean      @default(true)
+  
+  validationRules Json?
+}
+
+// 5. Progress & Gamification
+model UserEnrollment {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  courseId      String
+  enrolledAt    DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  courseId    String
+  lessonIndex Int
+  status      String
+  codeSnippet String?  @db.Text
+  completedAt DateTime?
+
+  @@unique([userId, courseId, lessonIndex])
+}
+
+model XPHistory {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  amount      Int
+  source      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Achievement {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  description       String
+  image             String
+  xpReward          Int
+  collectionAddress String?  @unique 
+  
+  users             UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  achievementId String
+  earnedAt      DateTime    @default(now())
+  mintAddress   String?
+
+  @@unique([userId, achievementId])
 }
 
 model Challenge {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(cuid())
   title       String
   description String
   xpReward    Int      @default(25)
   targetCount Int
-  type        String   // "LESSON_COUNT", "LOGIN_STREAK"
-  
-  // НОВОЕ: Тип периода
-  period      String   @default("DAILY") // "DAILY", "WEEKLY", "MONTHLY"
-  
-  // Опционально: дата окончания сезона
-  expiresAt   DateTime? 
-  
+  type        String
+  period      String   @default("DAILY")
+  expiresAt   DateTime?
   isActive    Boolean  @default(true)
   
   userChallenges UserChallenge[]
 }
 
 model UserChallenge {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String    @db.ObjectId
+  id           String    @id @default(cuid())
+  userId       String
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  challengeId  String    @db.ObjectId
+  challengeId  String
   challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   
-  currentCount Int       @default(0) // Сколько уже сделал сегодня
+  currentCount Int       @default(0)
   isCompleted  Boolean   @default(false)
-  claimedAt    DateTime? // Время, когда забрал награду
-  
-  // Уникальный ключ: юзер + челендж + дата (строка YYYY-MM-DD)
-  // Это позволит каждый день создавать новую запись
+  claimedAt    DateTime?
   dateKey      String    
 
   @@unique([userId, challengeId, dateKey])
 }
 
 model Discussion {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(cuid())
   courseId    String
   lessonIndex Int
   
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
   
-  content     String
+  content     String   @db.Text
   createdAt   DateTime @default(now())
 
-  // НОВОЕ: Самоссылающаяся связь для ответов
-  parentId    String?      @db.ObjectId // Если это ответ, тут будет ID родительского вопроса
+  parentId    String?
   parent      Discussion?  @relation("DiscussionReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies     Discussion[] @relation("DiscussionReplies")
 }
