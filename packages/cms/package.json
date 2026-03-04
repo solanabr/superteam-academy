@@ -10,7 +10,7 @@
 		"./schemas": "./src/schemas.ts"
 	},
 	"files": [
-		"dist"
+		"src"
 	],
 	"scripts": {
 		"build": "tsup",

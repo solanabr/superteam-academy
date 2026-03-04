@@ -1,4 +1,5 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
+import { createHash } from "node:crypto";
 import {
 	PROGRAM_ID,
 	ACCOUNT_SIZES,
@@ -17,6 +18,19 @@ import {
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;
+const ENROLLMENT_DISCRIMINATOR = accountDiscriminator("Enrollment");
+
+function accountDiscriminator(accountName: string): Buffer {
+	return createHash("sha256").update(`account:${accountName}`).digest().subarray(0, 8);
+}
+
+function hasDiscriminator(data: Buffer, discriminator: Buffer): boolean {
+	if (data.length < DISCRIMINATOR_SIZE) return false;
+	for (let i = 0; i < DISCRIMINATOR_SIZE; i += 1) {
+		if (data[i] !== discriminator[i]) return false;
+	}
+	return true;
+}
 
 export class AcademyClient {
 	readonly connection: Connection;
@@ -163,9 +177,7 @@ export class AcademyClient {
 	async fetchEnrollmentsForLearner(
 		learner: PublicKey
 	): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
-		const accounts = await this.connection.getProgramAccounts(this.programId, {
-			filters: [{ dataSize: ACCOUNT_SIZES.Enrollment }],
-		});
+		const accounts = await this.fetchAllEnrollments();
 		const courses = await this.fetchAllCourses();
 		const courseIdByKey = new Map<string, string>();
 		for (const c of courses) {
@@ -173,10 +185,6 @@ export class AcademyClient {
 		}
 
 		return accounts
-			.map((a) => ({
-				pubkey: a.pubkey,
-				account: this.decodeEnrollment(a.account.data),
-			}))
 			.filter((e) => {
 				const courseId = courseIdByKey.get(e.account.course.toBase58());
 				if (!courseId) return false;
@@ -186,14 +194,14 @@ export class AcademyClient {
 	}
 
 	async fetchAllEnrollments(): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
-		const accounts = await this.connection.getProgramAccounts(this.programId, {
-			filters: [{ dataSize: ACCOUNT_SIZES.Enrollment }],
-		});
+		const accounts = await this.connection.getProgramAccounts(this.programId);
 
-		return accounts.map((account) => ({
-			pubkey: account.pubkey,
-			account: this.decodeEnrollment(account.account.data),
-		}));
+		return accounts
+			.filter((account) => hasDiscriminator(account.account.data, ENROLLMENT_DISCRIMINATOR))
+			.map((account) => ({
+				pubkey: account.pubkey,
+				account: this.decodeEnrollment(account.account.data),
+			}));
 	}
 
 	private decodeEnrollment(data: Buffer): EnrollmentAccount {

@@ -15,11 +15,14 @@ import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { levelFromXP } from "@superteam-academy/gamification";
 import { getGravatarUrl, truncateAddress } from "@/lib/utils";
-import { getUsersByWallets, ensureSanityUsersExist, getAllUserWallets } from "@/lib/sanity-users";
+import { getUsersByWallets, ensureSanityUsersExist } from "@/lib/sanity-users";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({
 	params,
@@ -326,76 +329,72 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 
 async function getCourseLeaderboards(includeActivity: boolean) {
 	const academyClient = getAcademyClient();
-	const config = await academyClient.fetchConfig();
 	const [courses, allEnrollments, cmsCourses] = await Promise.all([
 		academyClient.fetchAllCourses(),
 		academyClient.fetchAllEnrollments(),
 		isSanityConfigured ? getCoursesIndex().catch(() => []) : Promise.resolve([]),
 	]);
+	const leaderboardCourses = [...courses]
+		.sort((a, b) => {
+			const enrollmentDelta = b.account.totalEnrollments - a.account.totalEnrollments;
+			if (enrollmentDelta !== 0) return enrollmentDelta;
+			return Number(b.account.createdAt) - Number(a.account.createdAt);
+		})
+		.slice(0, 4);
 
 	const cmsByCourseId = new Map(cmsCourses.map((c) => [c.slug?.current ?? c._id, c]));
 
-	if (!config)
-		return courses.slice(0, 4).map((course) => ({
-			courseId: course.account.courseId,
-			courseName:
-				cmsByCourseId.get(course.account.courseId)?.title ?? course.account.courseId,
-			entries: [] as DisplayLeaderboardEntry[],
-		}));
-
-	// Get global leaderboard wallet addresses (verified correct)
-	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
-	const globalEntries = await service.getLeaderboard(config.xpMint, 100);
-	const globalWallets = globalEntries.map((e) => e.publicKey);
-
-	// Expand wallet pool with Sanity users so course enrollments are resolved
-	const sanityWallets = await getAllUserWallets();
-	const walletAddresses = [...new Set([...globalWallets, ...sanityWallets])];
-
-	// For each course, derive enrollment PDAs for known wallets and match
 	const results = await Promise.all(
-		courses.slice(0, 4).map(async (course) => {
+		leaderboardCourses.map(async (course) => {
 			const courseId = course.account.courseId;
 			const courseKey = course.pubkey.toBase58();
 			const xpPerLesson = course.account.xpPerLesson;
+			const completionBonusXp =
+				Math.floor((course.account.lessonCount * course.account.xpPerLesson) / 2) || 0;
 
-			// Find enrollments for this course
+			// Start from enrollments — guaranteed to find all on-chain enrollments
 			const courseEnrollments = allEnrollments.filter(
 				(e) => e.account.course.toBase58() === courseKey
 			);
 
-			// Build a map of enrollment PDA -> enrollment for quick lookup
-			const enrollmentByPda = new Map(courseEnrollments.map((e) => [e.pubkey.toBase58(), e]));
+			const historyStats = await getCourseHistoryStats({
+				academyClient,
+				coursePubkey: course.pubkey,
+			});
 
-			// For each known wallet, derive the expected enrollment PDA
-			const learnerEntries: Array<{ wallet: string; xp: number }> = [];
-			for (const wallet of walletAddresses) {
-				const [expectedPda] = PublicKey.findProgramAddressSync(
-					[
-						Buffer.from("enrollment"),
-						Buffer.from(courseId),
-						new PublicKey(wallet).toBuffer(),
-					],
-					academyClient.programId
-				);
-				const pdaKey = expectedPda.toBase58();
-				const enrollment = enrollmentByPda.get(pdaKey);
-				if (enrollment) {
-					const completed = countCompletedLessons(enrollment.account.lessonFlags);
-					learnerEntries.push({ wallet, xp: completed * xpPerLesson });
-				}
-			}
+			// Keep current enrollment-account wallets when available, then union with historical learners.
+			const learnersFromAccounts = await Promise.all(
+				courseEnrollments.map((entry) =>
+					resolveEnrollmentLearnerWallet({
+						programId: academyClient.programId,
+						courseId,
+						enrollmentPda: entry.pubkey,
+					})
+				)
+			);
 
-			// Also check enrollments that don't belong to known wallets
-			// by extracting learner wallets from enrollment PDAs matched earlier
-			for (const enrollment of courseEnrollments) {
-				const pdaKey = enrollment.pubkey.toBase58();
-				if (!enrollmentByPda.has(pdaKey)) continue;
-				const alreadyFound = learnerEntries.some(
-					() => enrollmentByPda.get(pdaKey) === enrollment
-				);
-				if (alreadyFound) continue;
-			}
+			const learnerWallets = [
+				...new Set([
+					...historyStats.keys(),
+					...learnersFromAccounts.filter((wallet): wallet is string => Boolean(wallet)),
+				]),
+			];
+
+			const learnerEntries = await Promise.all(
+				learnerWallets.map(async (wallet) => {
+					const enrollment = await academyClient.fetchEnrollment(courseId, new PublicKey(wallet));
+					const completed = enrollment
+						? countCompletedLessons(enrollment.lessonFlags)
+						: (historyStats.get(wallet)?.completedLessons ?? 0);
+					const finalized = enrollment
+						? Boolean(enrollment.completedAt)
+						: (historyStats.get(wallet)?.finalized ?? false);
+					return {
+						wallet,
+						xp: completed * xpPerLesson + (finalized ? completionBonusXp : 0),
+					};
+				})
+			);
 
 			const sorted = learnerEntries.sort((a, b) => b.xp - a.xp).slice(0, 10);
 
@@ -433,6 +432,153 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 	);
 
 	return results;
+}
+
+async function getCourseHistoryStats({
+	academyClient,
+	coursePubkey,
+}: {
+	academyClient: ReturnType<typeof getAcademyClient>;
+	coursePubkey: PublicKey;
+}): Promise<Map<string, { completedLessons: number; finalized: boolean }>> {
+	const signatures = await academyClient.connection.getSignaturesForAddress(coursePubkey, {
+		limit: 250,
+	});
+
+	const learners = new Map<string, { completedLessons: number; finalized: boolean }>();
+	const courseKey = coursePubkey.toBase58();
+
+	const ensureLearner = (wallet: string) => {
+		const existing = learners.get(wallet);
+		if (existing) return existing;
+		const created = { completedLessons: 0, finalized: false };
+		learners.set(wallet, created);
+		return created;
+	};
+
+	for (const signature of signatures) {
+		if (signature.err) continue;
+		const tx = await academyClient.connection.getParsedTransaction(signature.signature, {
+			maxSupportedTransactionVersion: 0,
+		});
+		if (!tx) continue;
+
+		const hasEnrollLog =
+			tx.meta?.logMessages?.some((line) => line.includes("Instruction: Enroll")) ?? false;
+		const hasCompleteLessonLog =
+			tx.meta?.logMessages?.some((line) => line.includes("Instruction: CompleteLesson")) ??
+			false;
+		const hasFinalizeCourseLog =
+			tx.meta?.logMessages?.some((line) => line.includes("Instruction: FinalizeCourse")) ??
+			false;
+		if (!hasEnrollLog && !hasCompleteLessonLog && !hasFinalizeCourseLog) continue;
+
+		for (const instruction of tx.transaction.message.instructions) {
+			if (!("programId" in instruction) || !instruction.programId.equals(academyClient.programId)) {
+				continue;
+			}
+			if (!("accounts" in instruction)) {
+				continue;
+			}
+
+			if (
+				hasEnrollLog &&
+				instruction.accounts.length >= 3 &&
+				instruction.accounts[0]?.toString() === courseKey
+			) {
+				const learner = instruction.accounts[2]?.toString();
+				if (learner) ensureLearner(learner);
+			}
+
+			if (
+				hasCompleteLessonLog &&
+				instruction.accounts.length >= 4 &&
+				instruction.accounts[1]?.toString() === courseKey
+			) {
+				const learner = instruction.accounts[3]?.toString();
+				if (learner) {
+					const stats = ensureLearner(learner);
+					stats.completedLessons += 1;
+				}
+			}
+
+			if (
+				hasFinalizeCourseLog &&
+				instruction.accounts.length >= 4 &&
+				instruction.accounts[1]?.toString() === courseKey
+			) {
+				const learner = instruction.accounts[3]?.toString();
+				if (learner) {
+					const stats = ensureLearner(learner);
+					stats.finalized = true;
+				}
+			}
+		}
+	}
+
+	return learners;
+}
+
+async function resolveEnrollmentLearnerWallet({
+	programId,
+	courseId,
+	enrollmentPda,
+}: {
+	programId: PublicKey;
+	courseId: string;
+	enrollmentPda: PublicKey;
+}): Promise<string | null> {
+	const academyClient = getAcademyClient();
+	const signatureInfos = await academyClient.connection.getSignaturesForAddress(enrollmentPda, {
+		limit: 20,
+	});
+
+	for (const signatureInfo of signatureInfos) {
+		if (signatureInfo.err) continue;
+
+		const tx = await academyClient.connection.getParsedTransaction(signatureInfo.signature, {
+			maxSupportedTransactionVersion: 0,
+		});
+		if (!tx) continue;
+
+		const hasEnrollLog =
+			tx.meta?.logMessages?.some((line) => line.includes("Instruction: Enroll")) ?? false;
+		if (!hasEnrollLog) continue;
+
+		const message = tx.transaction.message;
+		for (const instruction of message.instructions) {
+			if (!("programId" in instruction) || !instruction.programId.equals(programId)) {
+				continue;
+			}
+			if (!("accounts" in instruction) || instruction.accounts.length < 3) {
+				continue;
+			}
+
+			const enrollmentKey = instruction.accounts[1]?.toString();
+			if (enrollmentKey !== enrollmentPda.toBase58()) continue;
+
+			const learner = instruction.accounts[2]?.toString();
+			if (!learner) continue;
+
+			try {
+				const [expectedPda] = PublicKey.findProgramAddressSync(
+					[
+						Buffer.from("enrollment"),
+						Buffer.from(courseId),
+						new PublicKey(learner).toBuffer(),
+					],
+					programId
+				);
+				if (expectedPda.equals(enrollmentPda)) {
+					return learner;
+				}
+			} catch {
+				continue;
+			}
+		}
+	}
+
+	return null;
 }
 
 async function getUserRank(global: DisplayLeaderboardEntry[]) {

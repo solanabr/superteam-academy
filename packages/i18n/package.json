@@ -12,7 +12,7 @@
 		"./proxy": "./src/proxy.ts"
 	},
 	"files": [
-		"dist",
+		"src",
 		"locales"
 	],
 	"scripts": {

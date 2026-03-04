@@ -1,24 +1,24 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { AcademyClient, PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam-academy/anchor";
+import { AcademyClient } from "@superteam-academy/anchor";
 
 let cachedConnection: Connection | null = null;
 let cachedClient: AcademyClient | null = null;
 
 function getRpcUrl(): string {
-	if (process.env.NEXT_PUBLIC_SOLANA_RPC_URL) {
-		return process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-	}
 	const heliusKey = process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? process.env.HELIUS_API_KEY;
 	if (heliusKey) {
 		return `https://devnet.helius-rpc.com/?api-key=${heliusKey}`;
 	}
-	return "https://api.devnet.solana.com";
+	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL??"https://api.devnet.solana.com";
 }
 
 export { getRpcUrl };
 
 export function getProgramId(): PublicKey {
-	const value = process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ?? DEFAULT_PROGRAM_ID;
+	const value = process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID;
+	if(!value){
+		throw new Error("Academy program isnt set")
+	}
 	return new PublicKey(value);
 }
 

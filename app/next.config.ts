@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
 	compiler: {
 		styledComponents: true,
 	},
+	transpilePackages: [
+		"@superteam-academy/anchor",
+		"@superteam-academy/auth",
+		"@superteam-academy/cms",
+		"@superteam-academy/editor",
+		"@superteam-academy/gamification",
+		"@superteam-academy/i18n",
+		"@superteam-academy/solana",
+	],
 	serverExternalPackages: [
 		"@solana/web3.js",
 		"@solana/wallet-adapter-base",
