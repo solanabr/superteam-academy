@@ -32,7 +32,24 @@ export default async function LocaleLayout({
       <SessionProvider>
         <SolanaWalletProvider>
           <ThemeProvider>
-            <Suspense>
+            <Suspense
+              fallback={
+                <div className="flex min-h-screen flex-col">
+                  <div className="sticky top-0 z-50 h-[4.5rem] border-b border-border/40 bg-background/80" />
+                  <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8">
+                    <div className="space-y-4 animate-pulse">
+                      <div className="h-8 w-48 rounded bg-accent" />
+                      <div className="h-4 w-96 rounded bg-accent" />
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="h-48 rounded-xl bg-accent" />
+                        <div className="h-48 rounded-xl bg-accent" />
+                        <div className="h-48 rounded-xl bg-accent" />
+                      </div>
+                    </div>
+                  </main>
+                </div>
+              }
+            >
               <AnalyticsProvider>
                 <div className="flex min-h-screen flex-col">
                   <OfflineBanner />

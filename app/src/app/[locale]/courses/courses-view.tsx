@@ -149,14 +149,15 @@ export default function CoursesView({ courses, tracks }: CoursesViewProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t("searchPlaceholder")}
+            aria-label={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={difficulty} onValueChange={setDifficulty}>
-          <SelectTrigger className="w-full sm:w-40">
-            <Filter className="mr-2 h-4 w-4" />
+          <SelectTrigger className="w-full sm:w-40" aria-label={t("filterDifficulty")}>
+            <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
             <SelectValue placeholder={t("filterDifficulty")} />
           </SelectTrigger>
           <SelectContent>
@@ -167,8 +168,8 @@ export default function CoursesView({ courses, tracks }: CoursesViewProps) {
           </SelectContent>
         </Select>
         <Select value={track} onValueChange={setTrack}>
-          <SelectTrigger className="w-full sm:w-48">
-            <Filter className="mr-2 h-4 w-4" />
+          <SelectTrigger className="w-full sm:w-48" aria-label={t("filterTrack")}>
+            <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
             <SelectValue placeholder={t("filterTrack")} />
           </SelectTrigger>
           <SelectContent>

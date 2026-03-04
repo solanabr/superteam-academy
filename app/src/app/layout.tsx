@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Archivo, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -18,11 +18,36 @@ const inter = Inter({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Superteam Academy",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://academy.superteam.fun"),
+  title: {
+    default: "Superteam Academy",
+    template: "%s | Superteam Academy",
+  },
   description: "Learn Solana. Earn Credentials. Build the Future.",
+  keywords: ["Solana", "Web3", "blockchain", "learn", "academy", "credentials", "XP", "Superteam"],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: "Superteam Academy",
+    title: "Superteam Academy",
+    description: "Learn Solana. Earn Credentials. Build the Future.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Superteam Academy",
+    description: "Learn Solana. Earn Credentials. Build the Future.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffd23f" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b231d" },
+  ],
 };
 
 export default function RootLayout({
@@ -31,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

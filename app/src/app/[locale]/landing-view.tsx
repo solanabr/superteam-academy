@@ -40,40 +40,94 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { SignInModal } from "@/components/auth/sign-in-modal";
+import Image from "next/image";
 
-const fadeIn = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 },
-};
+/* ---------- useScrollReveal hook ---------- */
+function useScrollReveal<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
 
-const staggerContainer = {
-  animate: { transition: { staggerChildren: 0.1 } },
-};
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    // Observe the container and all children with fade-in-view
+    const targets = el.classList.contains("fade-in-view")
+      ? [el]
+      : el.querySelectorAll(".fade-in-view");
+    targets.forEach((t) => observer.observe(t));
+
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
 
 /* ---------- Animated counter component ---------- */
 function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionVal = useMotionValue(0);
-  const rounded = useTransform(motionVal, (v) => {
-    if (Number.isInteger(value)) return Math.round(v).toLocaleString();
-    return v.toFixed(1);
-  });
-  const isInView = useInView(ref, { once: true });
+  const [display, setDisplay] = useState("0");
+  const hasAnimated = useRef(false);
 
   useEffect(() => {
-    if (isInView) {
-      animate(motionVal, value, { duration: 2, ease: "easeOut" });
-    }
-  }, [isInView, motionVal, value]);
+    const el = ref.current;
+    if (!el || hasAnimated.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          hasAnimated.current = true;
+          observer.disconnect();
+
+          const isInt = Number.isInteger(value);
+          const duration = 2000;
+          const start = performance.now();
+
+          function tick(now: number) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // easeOut quad
+            const eased = 1 - (1 - progress) * (1 - progress);
+            const current = eased * value;
+
+            if (isInt) {
+              setDisplay(Math.round(current).toLocaleString());
+            } else {
+              setDisplay(current.toFixed(1));
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(tick);
+            }
+          }
+
+          requestAnimationFrame(tick);
+        }
+      },
+      { once: true } as IntersectionObserverInit,
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value]);
 
   return (
     <span ref={ref} className="tabular-nums">
-      <motion.span>{rounded}</motion.span>
+      <span>{display}</span>
       {suffix}
     </span>
   );
@@ -155,6 +209,14 @@ interface LandingViewProps {
 export default function LandingView({ courseCards, activeTracks, testimonials: dbTestimonials, platformStats }: LandingViewProps) {
   const t = useTranslations("landing");
   const tc = useTranslations("common");
+
+  const heroRef = useScrollReveal<HTMLDivElement>();
+  const statsRef = useScrollReveal<HTMLDivElement>();
+  const featuresRef = useScrollReveal<HTMLDivElement>();
+  const howRef = useScrollReveal<HTMLDivElement>();
+  const pathsRef = useScrollReveal<HTMLDivElement>();
+  const testimonialsRef = useScrollReveal<HTMLDivElement>();
+  const ctaRef = useScrollReveal<HTMLDivElement>();
 
   const features = [
     { icon: BookOpen, title: t("feature1Title"), desc: t("feature1Desc") },
@@ -248,7 +310,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
         <div className="pointer-events-none absolute bottom-0 right-0 h-[300px] w-[400px] rounded-full bg-gold/5 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl text-center">
-          <motion.div {...fadeIn}>
+          <div ref={heroRef} className="fade-in-view">
             {courseCards.length > 0 ? (
               <Link href={`/courses/${courseCards[0].slug}`}>
                 <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm cursor-pointer hover:bg-accent transition-colors">
@@ -305,27 +367,23 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── Stats with animated counters ── */}
       <section className="border-y bg-card/50 px-4 py-12">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 sm:gap-8 md:grid-cols-4">
+        <div ref={statsRef} className="mx-auto grid max-w-7xl grid-cols-2 gap-4 sm:gap-8 md:grid-cols-4">
           {stats.map((stat) => (
-            <motion.div
+            <div
               key={stat.label}
-              className="text-center"
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
+              className="fade-in-view text-center"
             >
               <p className="text-3xl font-bold text-primary sm:text-4xl">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </p>
               <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -349,6 +407,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
             {[...PARTNERS, ...PARTNERS].map((p, i) => (
               <div
                 key={`${p.name}-${i}`}
+                role="img"
                 aria-label={p.name}
                 className="h-8 w-24 shrink-0 bg-current text-muted-foreground/50 transition-colors duration-300 hover:text-foreground sm:h-10 sm:w-32"
                 style={{
@@ -370,24 +429,15 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
 
       {/* ── Features ── */}
       <section className="px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <motion.h2
-            className="text-center text-3xl font-bold sm:text-4xl"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+        <div ref={featuresRef} className="mx-auto max-w-7xl">
+          <h2
+            className="fade-in-view text-center text-3xl font-bold sm:text-4xl"
           >
             {t("featuresTitle")}
-          </motion.h2>
-          <motion.div
-            className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-          >
+          </h2>
+          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => (
-              <motion.div key={feature.title} variants={fadeIn}>
+              <div key={feature.title} className="fade-in-view">
                 <Card className="group h-full transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
                   <CardContent className="p-6">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
@@ -401,35 +451,28 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
       <section className="border-y bg-card/30 px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <motion.h2
-            className="text-center text-3xl font-bold sm:text-4xl"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+        <div ref={howRef} className="mx-auto max-w-7xl">
+          <h2
+            className="fade-in-view text-center text-3xl font-bold sm:text-4xl"
           >
             {t("howItWorksTitle")}
-          </motion.h2>
+          </h2>
           <div className="relative mt-16">
             {/* Horizontal connector line behind the cards (desktop only) */}
             <div className="absolute left-[12.5%] right-[12.5%] top-10 hidden h-px bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10 lg:block" />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {HOW_IT_WORKS.map((step, idx) => (
-                <motion.div
+              {HOW_IT_WORKS.map((step) => (
+                <div
                   key={step.step}
-                  className="relative z-10 text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.15 }}
+                  className="fade-in-view relative z-10 text-center"
                 >
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/20 bg-card shadow-sm">
                     <step.icon className="h-8 w-8 text-primary" />
@@ -441,7 +484,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                   <p className="mt-2 text-sm text-muted-foreground">
                     {t(step.descKey)}
                   </p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -450,16 +493,13 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
 
       {/* ── Learning Paths ── */}
       <section className="px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl">
+        <div ref={pathsRef} className="mx-auto max-w-7xl">
           <div className="text-center">
-            <motion.h2
-              className="text-3xl font-bold sm:text-4xl"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+            <h2
+              className="fade-in-view text-3xl font-bold sm:text-4xl"
             >
               {t("pathsTitle")}
-            </motion.h2>
+            </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
               {t("pathsSubtitle")}
             </p>
@@ -468,7 +508,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
           {showDynamicTracks ? (
             /* Dynamic tracks from Sanity */
             <div className="mt-12 grid gap-6 lg:grid-cols-3">
-              {activeTracks.map((track, idx) => {
+              {activeTracks.map((track) => {
                 const TrackIcon = BookOpen;
                 const courses = getTrackCourses(track);
                 const totalXP = courses.reduce((sum, c) => sum + c.totalXP, 0);
@@ -477,12 +517,9 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                 const cta = getTrackCTA(track);
 
                 return (
-                  <motion.div
+                  <div
                     key={track.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
+                    className="fade-in-view"
                   >
                     <Card className="group relative h-full overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
                       {/* Top accent bar */}
@@ -551,20 +588,17 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           ) : (
             /* Static fallback when program is not configured */
             <div className="mt-12 grid gap-6 lg:grid-cols-3">
-              {LEARNING_PATHS.map((path, idx) => (
-                <motion.div
+              {LEARNING_PATHS.map((path) => (
+                <div
                   key={path.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
+                  className="fade-in-view"
                 >
                   <Card className="group relative h-full overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
                     {/* Top accent bar */}
@@ -621,7 +655,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
@@ -685,16 +719,13 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
 
       {/* ── Testimonials with marquee ── */}
       {displayTestimonials.length > 0 && <section className="px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl">
+        <div ref={testimonialsRef} className="mx-auto max-w-7xl">
           <div className="flex items-center justify-center gap-4">
-            <motion.h2
-              className="text-center text-2xl font-bold sm:text-3xl"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+            <h2
+              className="fade-in-view text-center text-2xl font-bold sm:text-3xl"
             >
               {t("testimonialsTitle")}
-            </motion.h2>
+            </h2>
             {isLoggedIn ? (
               <Dialog open={testimonialOpen} onOpenChange={setTestimonialOpen}>
                 <DialogTrigger asChild>
@@ -710,12 +741,14 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                   <div className="space-y-4">
                     <Textarea
                       placeholder={t("yourTestimonial")}
+                      aria-label={t("yourTestimonial")}
                       value={testimonialQuote}
                       onChange={(e) => setTestimonialQuote(e.target.value)}
                       rows={4}
                     />
                     <Input
                       placeholder={t("yourRole")}
+                      aria-label={t("yourRole")}
                       value={testimonialRole}
                       onChange={(e) => setTestimonialRole(e.target.value)}
                     />
@@ -746,7 +779,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
               {[...displayTestimonials, ...displayTestimonials].map((testimonial, idx) => (
                 <Card key={`${testimonial.id}-${idx}`} className="w-[320px] shrink-0 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                   <CardContent className="p-6">
-                    <div className="flex gap-1 text-primary">
+                    <div role="img" aria-label="5 out of 5 stars" className="flex gap-1 text-primary">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className="h-4 w-4 fill-current" />
                       ))}
@@ -756,10 +789,11 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                     </p>
                     <div className="mt-4 flex items-center gap-3">
                       {testimonial.avatar ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
+                        <Image
                           src={testimonial.avatar}
                           alt={testimonial.name}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (
@@ -791,11 +825,9 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
       {/* ── Final CTA ── */}
       <section className="px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <motion.div
-            className="rounded-2xl bg-gradient-to-r from-primary/10 via-gold/10 to-green-accent/10 p-12"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+          <div
+            ref={ctaRef}
+            className="fade-in-view rounded-2xl bg-gradient-to-r from-primary/10 via-gold/10 to-green-accent/10 p-12"
           >
             {isLoggedIn ? (
               <Rocket className="mx-auto h-12 w-12 text-primary" />
@@ -825,7 +857,7 @@ export default function LandingView({ courseCards, activeTracks, testimonials: d
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
-          </motion.div>
+          </div>
         </div>
       </section>
     </div>

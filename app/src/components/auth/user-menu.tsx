@@ -77,7 +77,7 @@ export function UserMenu() {
   return (
     <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full" aria-label="User menu">
           <Avatar className="h-9 w-9">
             <AvatarImage
               src={session.user.image ?? undefined}

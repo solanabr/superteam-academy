@@ -25,7 +25,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Superteam Academy home">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
@@ -40,6 +40,7 @@ export function Header() {
                 alt="Superteam Brasil"
                 width={130}
                 height={22}
+                priority
                 className="hidden dark:inline-block"
               />
               <Image
@@ -47,6 +48,7 @@ export function Header() {
                 alt="Superteam Brasil"
                 width={130}
                 height={22}
+                priority
                 className="inline-block dark:hidden"
               />
             </div>
@@ -74,7 +76,7 @@ export function Header() {
           {/* Mobile menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

@@ -65,9 +65,6 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      framer-motion:
-        specifier: ^12.34.0
-        version: 12.34.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1

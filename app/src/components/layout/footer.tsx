@@ -230,6 +230,7 @@ export function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={tl("newsletterPlaceholder")}
+                  aria-label={tl("newsletterPlaceholder")}
                   pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                   title="Please enter a valid email (e.g. name@example.com)"
                   className="flex-1 h-9 text-sm"
@@ -240,6 +241,7 @@ export function Footer() {
                   type="submit"
                   className="h-9 gap-1.5 px-4 text-sm"
                   disabled={status === "loading"}
+                  aria-label={tl("newsletterButton")}
                 >
                   {status === "loading" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

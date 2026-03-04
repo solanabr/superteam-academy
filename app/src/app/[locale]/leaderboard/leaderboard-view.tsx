@@ -17,6 +17,7 @@ import {
   Filter,
   Info
 } from "lucide-react";
+import Image from "next/image";
 import { useLeaderboard } from "@/hooks/use-leaderboard";
 import {
   Select,
@@ -52,11 +53,11 @@ function formatRelativeTime(dateStr: string, t: (key: string, values?: Record<st
 }
 
 function getRankIcon(rank: number) {
-  if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
-  if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-  if (rank === 3) return <Medal className="h-5 w-5 text-amber-700" />;
+  if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" aria-hidden="true" />;
+  if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" aria-hidden="true" />;
+  if (rank === 3) return <Medal className="h-5 w-5 text-amber-700" aria-hidden="true" />;
   return (
-    <span className="text-sm font-bold text-muted-foreground">#{rank}</span>
+    <span className="text-sm font-bold text-muted-foreground" aria-hidden="true">#{rank}</span>
   );
 }
 
@@ -155,9 +156,9 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
         </Tabs>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Select value={courseId} onValueChange={setCourseId}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t("allCourses")}>
               <SelectValue placeholder={t("allCourses")} />
             </SelectTrigger>
             <SelectContent>
@@ -170,7 +171,7 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
             </SelectContent>
           </Select>
           <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t("allSources")}>
               <SelectValue placeholder={t("allSources")} />
             </SelectTrigger>
             <SelectContent>
@@ -184,7 +185,7 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
           </Select>
           {achievements.length > 0 && (
             <Select value={achievementId} onValueChange={setAchievementId}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]" aria-label={t("allAchievements")}>
                 <SelectValue placeholder={t("allAchievements")} />
               </SelectTrigger>
               <SelectContent>
@@ -236,10 +237,12 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
       ) : (
         <>
           {/* Top 3 */}
-          <div className="mb-8 grid gap-4 sm:grid-cols-3">
+          <div className="mb-8 grid gap-4 sm:grid-cols-3" role="list" aria-label={t("topLearners")}>
             {top3.map((entry) => (
               <Card
                 key={entry.userId}
+                role="listitem"
+                aria-label={`${t("rank")} ${entry.rank}: ${entry.displayName}, ${entry.totalXP.toLocaleString()} XP`}
                 className={
                   entry.rank === 1 ? "border-yellow-500/50 bg-yellow-500/5 shadow-lg shadow-yellow-500/5" : ""
                 }
@@ -248,9 +251,11 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
                   {getRankIcon(entry.rank)}
                   <div className="group relative mt-3 h-16 w-16 overflow-hidden rounded-full border-2 border-primary/20 bg-primary/10">
                     {entry.avatarUrl ? (
-                      <img
+                      <Image
                         src={entry.avatarUrl}
                         alt={entry.displayName}
+                        width={64}
+                        height={64}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -282,10 +287,12 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
               <CardTitle className="text-lg">{t("topLearners")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y">
+              <div className="divide-y" role="list">
                 {remaining.map((entry) => (
                   <div
                     key={entry.userId}
+                    role="listitem"
+                    aria-label={`${t("rank")} ${entry.rank}: ${entry.displayName}, ${entry.totalXP.toLocaleString()} XP`}
                     className={`flex items-center gap-4 p-4 transition-colors hover:bg-accent/50 ${entry.userId === session?.user?.id ? "bg-primary/5" : ""
                       }`}
                   >
@@ -294,9 +301,11 @@ export default function LeaderboardView({ courses }: LeaderboardViewProps) {
                     </div>
                     <div className="flex h-8 w-8 overflow-hidden items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                       {entry.avatarUrl ? (
-                        <img
+                        <Image
                           src={entry.avatarUrl}
                           alt={entry.displayName}
+                          width={32}
+                          height={32}
                           className="h-full w-full object-cover"
                         />
                       ) : (
