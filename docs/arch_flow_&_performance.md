@@ -264,7 +264,6 @@ sequenceDiagram
 
 - `SyncUserOnLogin` component runs once on login (guarded by `synced` ref)
 - User is upserted in the database — creating if new, updating email if changed
-- Referral codes are auto-generated via `cuid()` in the Prisma schema
 - After user sync, progress (XP, streaks) is fetched in parallel
 
 ---
@@ -292,8 +291,6 @@ erDiagram
         string role
         json profile
         json preferences
-        string referralCode UK
-        string referrerId FK
     }
     Enrollment {
         string id PK
@@ -305,7 +302,7 @@ erDiagram
     }
     Progress {
         string id PK
-        string userId FK_UK
+        string userId FK
         int xp
         int currentStreak
         int longestStreak
@@ -337,7 +334,6 @@ erDiagram
     User ||--o| Progress : has
     User ||--o{ Credential : has
     User ||--o{ XpEvent : has
-    User ||--o{ User : referrals
 ```
 
 **Key design decisions:**
@@ -526,8 +522,7 @@ Inngest handles all long-running operations that would otherwise block API respo
 | `confirmUnenrollment` | `solana/unenrollment.sent` | signature | 1. Confirm TX on-chain 2. Invalidate user cache |
 | `handleGraduation` | `solana/graduation.started` | wallet + courseId | 1. Finalize course on-chain 2. Issue NFT credential 3. Invalidate user cache |
 | `confirmCourseCreation` | `solana/course.published` | courseId | 1. Create Course PDA on-chain |
-| `handleAchievementClaim` | `academy/achievement.claimed` | wallet + achievementId | 1. Process claim in DB/On-chain 2. Invalidate user cache 3. Fan-out referral reward |
-| `handleReferralReward` | `academy/referral.reward` | wallet + type + ID | 1. Locate referrer 2. Award bonus XP in DB 3. Create XP event |
+| `handleAchievementClaim` | `academy/achievement.claimed` | wallet + achievementId | 1. Process claim in DB/On-chain 2. Invalidate user cache |
 
 ### Error Handling
 
@@ -760,7 +755,6 @@ To achieve near-instant navigation, we leverage Next.js `Link` prefetching acros
 
 We have migrated core academic events to a **Platinum Durable Execution** model:
 - **Asynchronous Achievement Claims**: Reduces API response time from ~3s to <100ms by offloading processing to Inngest.
-- **Isolated Referral Fan-outs**: Referral rewards are processed in a separate job. A failure in referral logic **never** blocks the primary learner's update.
 - **Deterministic Idempotency**: composite keys (e.g., `wallet + achievementId`) prevent duplicate XP/NFT rewards during network retries.
 - **Double-Guard Optimistic UI**: Zustand stores hold the "claimed" state locally (persisted to localStorage) until the background sync definitively completes.
 
