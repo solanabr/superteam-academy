@@ -34,8 +34,8 @@ function WalletListItemRow({
         onClick={onClick}
         tabIndex={tabIndex}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-game text-lg transition-colors",
-          "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          "group flex w-full items-center gap-3 rounded-xl px-4 py-3 min-h-[44px] sm:min-h-0 text-left font-game text-lg transition-colors",
+          "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent/80 touch-manipulation"
         )}
       >
         {wallet.adapter.icon && (
@@ -145,7 +145,7 @@ export function CustomWalletModal() {
       aria-modal="true"
       aria-labelledby="wallet-modal-title"
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200",
+        "fixed inset-0 z-50 flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] transition-opacity duration-200",
         mounted ? "opacity-100" : "opacity-0"
       )}
     >
@@ -157,7 +157,7 @@ export function CustomWalletModal() {
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-[440px] rounded-2xl border-4 border-border bg-card text-card-foreground shadow-xl transition-[transform,opacity] duration-200",
+          "relative z-10 w-full max-w-[440px] max-h-[85dvh] flex flex-col rounded-2xl border-4 border-border bg-card text-card-foreground shadow-xl transition-[transform,opacity] duration-200",
           mounted ? "scale-100 opacity-100" : "scale-95 opacity-0"
         )}
       >
@@ -180,7 +180,7 @@ export function CustomWalletModal() {
           </button>
         </div>
 
-        <div className="max-h-[min(70vh,420px)] overflow-y-auto px-5 py-4">
+        <div className="max-h-[min(70vh,70dvh,420px)] overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-5 overscroll-contain">
           {installed.length > 0 ? (
             <>
               <p className="mb-3 font-game text-lg text-muted-foreground">

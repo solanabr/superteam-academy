@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Languages } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const LOCALES: { value: Locale; label: string }[] = [
   { value: "en", label: "English" },
@@ -20,7 +21,11 @@ const LOCALES: { value: Locale; label: string }[] = [
   { value: "es", label: "Español" },
 ];
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({
+  triggerClassName,
+}: {
+  triggerClassName?: string;
+} = {}) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -40,7 +45,10 @@ export function LanguageSwitcher() {
       disabled={isPending}
     >
       <SelectTrigger
-        className="w-[130px] gap-2 font-game bg-background border-border text-foreground hover:bg-accent/50 [&_svg]:text-muted-foreground"
+        className={cn(
+          "w-[130px] gap-2 font-game bg-background border-border text-foreground hover:bg-accent/50 [&_svg]:text-muted-foreground",
+          triggerClassName
+        )}
         aria-label="Select language"
       >
         <Languages className="h-4 w-4 shrink-0" />

@@ -31,7 +31,12 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
+import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 
 const staticNavItems: { href: string; key: "dashboard" | "courses" | "leaderboard" | "challenges" | "discussions" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
     { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
@@ -45,6 +50,7 @@ const staticNavItems: { href: string; key: "dashboard" | "courses" | "leaderboar
 
 export function AppSidebar() {
     const { isAdmin } = useIsAdmin();
+    const { isMobile } = useSidebar();
     const pathname = usePathname();
     const { data: xp } = useXpBalance();
     const { publicKey } = useWallet();
@@ -147,29 +153,40 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            {/* Footer / XP */}
+            {/* Footer: XP when logged in, then language/theme/wallet (mobile) */}
             <SidebarFooter className="p-3 border-t border-sidebar-border">
-                <div className="group-data-[collapsible=icon]:hidden rounded-xl bg-muted/80 p-3">
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="font-game text-base sm:text-lg text-yellow-500">
-                            Lv.{level}
-                        </span>
-                        <span className="font-game text-base sm:text-lg text-muted-foreground">
-                            Lv.{level + 1}
-                        </span>
-                    </div>
+                {publicKey && (
+                    <div className="group-data-[collapsible=icon]:hidden rounded-xl bg-muted/80 p-3">
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="font-game text-base sm:text-lg text-yellow-500">
+                                Lv.{level}
+                            </span>
+                            <span className="font-game text-base sm:text-lg text-muted-foreground">
+                                Lv.{level + 1}
+                            </span>
+                        </div>
 
-                    <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                            className="h-full rounded-full bg-yellow-500 transition-all duration-500"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
+                        <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-yellow-500 transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
 
-                    <p className="font-game text-sm text-muted-foreground mt-1 text-center">
-                        {xpInLevel} / {xpForNextLevel} {t("xp")}
-                    </p>
-                </div>
+                        <p className="font-game text-sm text-muted-foreground mt-1 text-center">
+                            {xpInLevel} / {xpForNextLevel} {t("xp")}
+                        </p>
+                    </div>
+                )}
+
+                {/* Language, theme, wallet at the end on mobile only (desktop has them in navbar) */}
+                {isMobile && (
+                    <div className={cn("flex flex-col gap-4", publicKey && "mt-4 pt-4 border-t border-sidebar-border")}>
+                        <LanguageSwitcher triggerClassName="w-full justify-between py-2 px-3 rounded-lg font-game text-xl" />
+                        <ThemeToggle showLabel />
+                        <WalletConnectButton className="w-full justify-center" />
+                    </div>
+                )}
             </SidebarFooter>
         </ShadcnSidebar>
     );

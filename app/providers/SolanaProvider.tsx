@@ -1,10 +1,18 @@
 "use client";
 
+import type { Adapter } from "@solana/wallet-adapter-base";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
   WalletProvider as SolanaWalletProvider,
 } from "@solana/wallet-adapter-react";
+import { useStandardWalletAdapters } from "@solana/wallet-standard-wallet-adapter";
+import {
+  createDefaultAuthorizationCache,
+  createDefaultChainSelector,
+  createDefaultWalletNotFoundHandler,
+  registerMwa,
+} from "@solana-mobile/wallet-standard-mobile";
 import { CustomWalletModalProvider } from "@/components/wallet/CustomWalletModalProvider";
 import {
   AlphaWalletAdapter,
@@ -43,16 +51,17 @@ import {
   WalletConnectWalletAdapter,
   XDEFIWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { SOLANA_RPC_ENDPOINT } from "@/config/wallet";
 
 const walletConnectProjectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
 
+
 export function SolanaProvider({ children }: { children: ReactNode }) {
   const endpoint = useMemo(() => SOLANA_RPC_ENDPOINT, []);
 
-  const wallets = useMemo(
+  const baseWallets = useMemo<Adapter[]>(
     () => [
       new AlphaWalletAdapter(),
       new AvanaWalletAdapter(),
@@ -99,6 +108,23 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
     ],
     []
   );
+
+  const wallets = useStandardWalletAdapters(baseWallets);
+
+  useEffect(() => {
+    const origin = window.location.origin;
+    registerMwa({
+      appIdentity: {
+        name: "Superteam Academy",
+        uri: origin,
+        icon: `${origin}/favicon.ico`,
+      },
+      authorizationCache: createDefaultAuthorizationCache(),
+      chains: ["solana:devnet", "solana:mainnet"],
+      chainSelector: createDefaultChainSelector(),
+      onWalletNotFound: createDefaultWalletNotFoundHandler(),
+    });
+  }, []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>

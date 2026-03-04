@@ -107,7 +107,9 @@ export function Navbar() {
               <div className="hidden sm:flex">
                 <NotificationBell />
               </div>
-              <WalletConnectButton />
+              <div className="hidden md:block">
+                <WalletConnectButton />
+              </div>
 
               {/* Mobile nav trigger */}
               <Sheet open={openMobile} onOpenChange={setOpenMobile}>
@@ -117,15 +119,12 @@ export function Navbar() {
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[min(18rem,100vw)] flex flex-col gap-6 pt-8">
+                <SheetContent side="right" className="w-[min(18rem,100vw)] flex flex-col gap-6 pt-12">
                   <SheetHeader className="sr-only">
                     <SheetTitle>Menu</SheetTitle>
                   </SheetHeader>
-                  <div className="flex flex-col gap-4 sm:hidden">
-                    <LanguageSwitcher />
-                    <ThemeToggle />
-                  </div>
-                  <nav className="flex flex-col gap-2">
+                  {/* Links on top (same order as app sidebar) */}
+                  <nav className="flex flex-col gap-2 flex-1 min-h-0">
                     {NAV_LINKS.map((link) => (
                       <Link
                         key={link.href}
@@ -146,6 +145,12 @@ export function Navbar() {
                       </Link>
                     )}
                   </nav>
+                  {/* Language, theme, wallet on bottom */}
+                  <div className="flex flex-col gap-4 sm:hidden mt-2 mx-3 pt-4 border-t border-border">
+                    <LanguageSwitcher triggerClassName="w-full justify-between py-2 px-3 rounded-lg font-game text-xl" />
+                    <ThemeToggle showLabel />
+                    <WalletConnectButton className="w-full justify-center" />
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>
