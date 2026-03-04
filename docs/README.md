@@ -2,7 +2,7 @@
 
 Decentralized learning platform for Solana developers. Learners enroll in courses, complete interactive coding challenges, earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievement badges — all on Solana devnet.
 
-Built as a submission for the [Superteam Brazil LMS dApp bounty](https://superteam.fun/listings/superteam-academy).
+Built as a submission for the [Superteam Brazil LMS dApp bounty](https://superteam.fun/earn/listing/superteam-academy).
 
 ---
 

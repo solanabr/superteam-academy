@@ -207,13 +207,6 @@ Events are sent via `gtag("event", name, properties)` inside `trackEvent()`.
 
 ![PostHog Heatmap](screenshots/posthog_heatmap.png)
 
-### Sentry
-
-<!-- SCREENSHOT: sentry_issues.png — Add screenshot of Issues tab -->
-<!-- SCREENSHOT: sentry_issue_detail.png — Add screenshot of an issue detail -->
-<!-- SCREENSHOT: sentry_performance.png — Add screenshot of Performance tab -->
-<!-- SCREENSHOT: sentry_alerts.png — Add screenshot of alert rules -->
-
 ---
 
 ## Recommended Funnel
