@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
 import { AchievementBadges } from "@/components/GamificationOverview";
+import { OnchainStats } from "@/components/OnchainStats";
 
 export default async function PublicProfilePage({
   params,
@@ -55,6 +56,10 @@ export default async function PublicProfilePage({
           <p className="mt-3 text-xs text-zinc-500">
             Achievements will be backed by on-chain cNFTs (devnet).
           </p>
+        </div>
+
+        <div className="mt-8">
+          <OnchainStats />
         </div>
 
         {/* Certificates */}

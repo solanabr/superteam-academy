@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
 import { GamificationOverview } from "@/components/GamificationOverview";
+import { OnchainStats } from "@/components/OnchainStats";
 
 export default function DashboardPage() {
   return (
@@ -10,6 +11,10 @@ export default function DashboardPage() {
     >
       <div className="grid gap-6 md:grid-cols-3">
         <GamificationOverview />
+      </div>
+
+      <div className="mt-8">
+        <OnchainStats />
       </div>
 
       <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
