@@ -38,7 +38,7 @@ export function StreaksCalendar() {
                 <span className="font-array text-sm font-bold text-foreground">
                     20 day streak!
                 </span>
-                <span className="ml-auto font-supreme text-[10px] font-medium text-muted-foreground">
+                <span className="ml-auto font-supreme text-[10px] font-medium text-foreground">
                     Feb 2026
                 </span>
             </div>
@@ -53,7 +53,7 @@ export function StreaksCalendar() {
                     {WEEKDAYS.map((wd) => (
                         <span
                             key={wd}
-                            className="text-center font-supreme text-[9px] font-semibold uppercase tracking-wider text-[#5a7d60] dark:text-brand-cream/50"
+                            className="text-center font-supreme text-[9px] font-semibold uppercase tracking-wider text-[#1b3320] dark:text-brand-cream/70"
                         >
                             {wd}
                         </span>
@@ -79,7 +79,7 @@ export function StreaksCalendar() {
                                 <span
                                     className={`font-supreme text-[11px] font-semibold ${cell.isToday
                                         ? 'flex h-6 w-6 items-center justify-center rounded-full bg-brand-green-emerald text-white'
-                                        : 'text-[#4a6b50] dark:text-brand-cream/60'
+                                        : 'text-[#1b3320] dark:text-brand-cream/60'
                                         }`}
                                 >
                                     {cell.day}

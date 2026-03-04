@@ -501,15 +501,16 @@ body::-webkit-scrollbar {
 
   0%,
   100% {
-    text-shadow: 0 0 4px rgba(0, 140, 76, 0.4), 0 0 8px rgba(0, 140, 76, 0.2);
+    filter: drop-shadow(0 0 4px rgba(0, 140, 76, 0.4)) drop-shadow(0 0 8px rgba(0, 140, 76, 0.2));
   }
 
   50% {
-    text-shadow: 0 0 8px rgba(0, 140, 76, 0.6), 0 0 16px rgba(0, 140, 76, 0.3);
+    filter: drop-shadow(0 0 8px rgba(0, 140, 76, 0.6)) drop-shadow(0 0 16px rgba(0, 140, 76, 0.3));
   }
 }
 
 .glow-text {
+  will-change: filter;
   animation: glow 3s ease-in-out infinite;
 }
 

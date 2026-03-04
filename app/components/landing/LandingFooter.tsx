@@ -86,7 +86,7 @@ export function LandingFooter() {
             </div>
 
             {/* Copyright */}
-            <p className="mt-4 font-supreme text-[11px] text-brand-cream/70 sm:text-xs">
+            <p className="mt-4 font-supreme text-[11px] text-brand-cream/90 sm:text-xs">
                 {t('footer.copyright', { year: new Date().getFullYear() })}
             </p>
         </footer>
