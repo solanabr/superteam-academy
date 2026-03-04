@@ -18,21 +18,14 @@ import {
   getStructEncoder,
   getU8Decoder,
   getU8Encoder,
-  transformEncoder
+  transformEncoder,
 } from "@solana/kit";
 var ACHIEVEMENT_RECEIPT_DISCRIMINATOR = new Uint8Array([
-  149,
-  5,
-  79,
-  178,
-  116,
-  231,
-  43,
-  248
+  149, 5, 79, 178, 116, 231, 43, 248,
 ]);
 function getAchievementReceiptDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    ACHIEVEMENT_RECEIPT_DISCRIMINATOR
+    ACHIEVEMENT_RECEIPT_DISCRIMINATOR,
   );
 }
 function getAchievementReceiptEncoder() {
@@ -41,9 +34,9 @@ function getAchievementReceiptEncoder() {
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["asset", getAddressEncoder()],
       ["awardedAt", getI64Encoder()],
-      ["bump", getU8Encoder()]
+      ["bump", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: ACHIEVEMENT_RECEIPT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ACHIEVEMENT_RECEIPT_DISCRIMINATOR }),
   );
 }
 function getAchievementReceiptDecoder() {
@@ -51,43 +44,44 @@ function getAchievementReceiptDecoder() {
     ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
     ["asset", getAddressDecoder()],
     ["awardedAt", getI64Decoder()],
-    ["bump", getU8Decoder()]
+    ["bump", getU8Decoder()],
   ]);
 }
 function getAchievementReceiptCodec() {
   return combineCodec(
     getAchievementReceiptEncoder(),
-    getAchievementReceiptDecoder()
+    getAchievementReceiptDecoder(),
   );
 }
 function decodeAchievementReceipt(encodedAccount) {
-  return decodeAccount(
-    encodedAccount,
-    getAchievementReceiptDecoder()
-  );
+  return decodeAccount(encodedAccount, getAchievementReceiptDecoder());
 }
-async function fetchAchievementReceipt(rpc, address, config) {
-  const maybeAccount = await fetchMaybeAchievementReceipt(rpc, address, config);
+async function fetchAchievementReceipt(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeAchievementReceipt(
+    rpc,
+    address2,
+    config,
+  );
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeAchievementReceipt(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount(rpc, address, config);
+async function fetchMaybeAchievementReceipt(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount(rpc, address2, config);
   return decodeAchievementReceipt(maybeAccount);
 }
 async function fetchAllAchievementReceipt(rpc, addresses, config) {
   const maybeAccounts = await fetchAllMaybeAchievementReceipt(
     rpc,
     addresses,
-    config
+    config,
   );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 async function fetchAllMaybeAchievementReceipt(rpc, addresses, config) {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map(
-    (maybeAccount) => decodeAchievementReceipt(maybeAccount)
+  return maybeAccounts.map((maybeAccount) =>
+    decodeAchievementReceipt(maybeAccount),
   );
 }
 function getAchievementReceiptSize() {
@@ -122,21 +116,14 @@ import {
   getU8Encoder as getU8Encoder2,
   getUtf8Decoder,
   getUtf8Encoder,
-  transformEncoder as transformEncoder2
+  transformEncoder as transformEncoder2,
 } from "@solana/kit";
 var ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
-  13,
-  187,
-  114,
-  66,
-  217,
-  154,
-  85,
-  137
+  13, 187, 114, 66, 217, 154, 85, 137,
 ]);
 function getAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize2(getBytesEncoder2(), 8).encode(
-    ACHIEVEMENT_TYPE_DISCRIMINATOR
+    ACHIEVEMENT_TYPE_DISCRIMINATOR,
   );
 }
 function getAchievementTypeEncoder() {
@@ -145,7 +132,7 @@ function getAchievementTypeEncoder() {
       ["discriminator", fixEncoderSize2(getBytesEncoder2(), 8)],
       [
         "achievementId",
-        addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())
+        addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()),
       ],
       ["name", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ["metadataUri", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
@@ -157,9 +144,9 @@ function getAchievementTypeEncoder() {
       ["isActive", getBooleanEncoder()],
       ["createdAt", getI64Encoder2()],
       ["reserved", fixEncoderSize2(getBytesEncoder2(), 8)],
-      ["bump", getU8Encoder2()]
+      ["bump", getU8Encoder2()],
     ]),
-    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR }),
   );
 }
 function getAchievementTypeDecoder() {
@@ -176,40 +163,40 @@ function getAchievementTypeDecoder() {
     ["isActive", getBooleanDecoder()],
     ["createdAt", getI64Decoder2()],
     ["reserved", fixDecoderSize2(getBytesDecoder2(), 8)],
-    ["bump", getU8Decoder2()]
+    ["bump", getU8Decoder2()],
   ]);
 }
 function getAchievementTypeCodec() {
-  return combineCodec2(getAchievementTypeEncoder(), getAchievementTypeDecoder());
-}
-function decodeAchievementType(encodedAccount) {
-  return decodeAccount2(
-    encodedAccount,
-    getAchievementTypeDecoder()
+  return combineCodec2(
+    getAchievementTypeEncoder(),
+    getAchievementTypeDecoder(),
   );
 }
-async function fetchAchievementType(rpc, address, config) {
-  const maybeAccount = await fetchMaybeAchievementType(rpc, address, config);
+function decodeAchievementType(encodedAccount) {
+  return decodeAccount2(encodedAccount, getAchievementTypeDecoder());
+}
+async function fetchAchievementType(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeAchievementType(rpc, address2, config);
   assertAccountExists2(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeAchievementType(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount2(rpc, address, config);
+async function fetchMaybeAchievementType(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount2(rpc, address2, config);
   return decodeAchievementType(maybeAccount);
 }
 async function fetchAllAchievementType(rpc, addresses, config) {
   const maybeAccounts = await fetchAllMaybeAchievementType(
     rpc,
     addresses,
-    config
+    config,
   );
   assertAccountsExist2(maybeAccounts);
   return maybeAccounts;
 }
 async function fetchAllMaybeAchievementType(rpc, addresses, config) {
   const maybeAccounts = await fetchEncodedAccounts2(rpc, addresses, config);
-  return maybeAccounts.map(
-    (maybeAccount) => decodeAchievementType(maybeAccount)
+  return maybeAccounts.map((maybeAccount) =>
+    decodeAchievementType(maybeAccount),
   );
 }
 
@@ -231,17 +218,10 @@ import {
   getStructEncoder as getStructEncoder3,
   getU8Decoder as getU8Decoder3,
   getU8Encoder as getU8Encoder3,
-  transformEncoder as transformEncoder3
+  transformEncoder as transformEncoder3,
 } from "@solana/kit";
 var CONFIG_DISCRIMINATOR = new Uint8Array([
-  155,
-  12,
-  170,
-  224,
-  30,
-  250,
-  204,
-  130
+  155, 12, 170, 224, 30, 250, 204, 130,
 ]);
 function getConfigDiscriminatorBytes() {
   return fixEncoderSize3(getBytesEncoder3(), 8).encode(CONFIG_DISCRIMINATOR);
@@ -254,9 +234,9 @@ function getConfigEncoder() {
       ["backendSigner", getAddressEncoder3()],
       ["xpMint", getAddressEncoder3()],
       ["reserved", fixEncoderSize3(getBytesEncoder3(), 8)],
-      ["bump", getU8Encoder3()]
+      ["bump", getU8Encoder3()],
     ]),
-    (value) => ({ ...value, discriminator: CONFIG_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: CONFIG_DISCRIMINATOR }),
   );
 }
 function getConfigDecoder() {
@@ -266,25 +246,22 @@ function getConfigDecoder() {
     ["backendSigner", getAddressDecoder3()],
     ["xpMint", getAddressDecoder3()],
     ["reserved", fixDecoderSize3(getBytesDecoder3(), 8)],
-    ["bump", getU8Decoder3()]
+    ["bump", getU8Decoder3()],
   ]);
 }
 function getConfigCodec() {
   return combineCodec3(getConfigEncoder(), getConfigDecoder());
 }
 function decodeConfig(encodedAccount) {
-  return decodeAccount3(
-    encodedAccount,
-    getConfigDecoder()
-  );
+  return decodeAccount3(encodedAccount, getConfigDecoder());
 }
-async function fetchConfig(rpc, address, config) {
-  const maybeAccount = await fetchMaybeConfig(rpc, address, config);
+async function fetchConfig(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeConfig(rpc, address2, config);
   assertAccountExists3(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeConfig(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount3(rpc, address, config);
+async function fetchMaybeConfig(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount3(rpc, address2, config);
   return decodeConfig(maybeAccount);
 }
 async function fetchAllConfig(rpc, addresses, config) {
@@ -332,17 +309,10 @@ import {
   getU8Encoder as getU8Encoder4,
   getUtf8Decoder as getUtf8Decoder2,
   getUtf8Encoder as getUtf8Encoder2,
-  transformEncoder as transformEncoder4
+  transformEncoder as transformEncoder4,
 } from "@solana/kit";
 var COURSE_DISCRIMINATOR = new Uint8Array([
-  206,
-  6,
-  78,
-  228,
-  163,
-  138,
-  241,
-  106
+  206, 6, 78, 228, 163, 138, 241, 106,
 ]);
 function getCourseDiscriminatorBytes() {
   return fixEncoderSize4(getBytesEncoder4(), 8).encode(COURSE_DISCRIMINATOR);
@@ -369,9 +339,9 @@ function getCourseEncoder() {
       ["createdAt", getI64Encoder3()],
       ["updatedAt", getI64Encoder3()],
       ["reserved", fixEncoderSize4(getBytesEncoder4(), 8)],
-      ["bump", getU8Encoder4()]
+      ["bump", getU8Encoder4()],
     ]),
-    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR }),
   );
 }
 function getCourseDecoder() {
@@ -395,25 +365,22 @@ function getCourseDecoder() {
     ["createdAt", getI64Decoder3()],
     ["updatedAt", getI64Decoder3()],
     ["reserved", fixDecoderSize4(getBytesDecoder4(), 8)],
-    ["bump", getU8Decoder4()]
+    ["bump", getU8Decoder4()],
   ]);
 }
 function getCourseCodec() {
   return combineCodec4(getCourseEncoder(), getCourseDecoder());
 }
 function decodeCourse(encodedAccount) {
-  return decodeAccount4(
-    encodedAccount,
-    getCourseDecoder()
-  );
+  return decodeAccount4(encodedAccount, getCourseDecoder());
 }
-async function fetchCourse(rpc, address, config) {
-  const maybeAccount = await fetchMaybeCourse(rpc, address, config);
+async function fetchCourse(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeCourse(rpc, address2, config);
   assertAccountExists4(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeCourse(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount4(rpc, address, config);
+async function fetchMaybeCourse(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount4(rpc, address2, config);
   return decodeCourse(maybeAccount);
 }
 async function fetchAllCourse(rpc, addresses, config) {
@@ -452,20 +419,15 @@ import {
   getU64Encoder,
   getU8Decoder as getU8Decoder5,
   getU8Encoder as getU8Encoder5,
-  transformEncoder as transformEncoder5
+  transformEncoder as transformEncoder5,
 } from "@solana/kit";
 var ENROLLMENT_DISCRIMINATOR = new Uint8Array([
-  249,
-  210,
-  64,
-  145,
-  197,
-  241,
-  57,
-  51
+  249, 210, 64, 145, 197, 241, 57, 51,
 ]);
 function getEnrollmentDiscriminatorBytes() {
-  return fixEncoderSize5(getBytesEncoder5(), 8).encode(ENROLLMENT_DISCRIMINATOR);
+  return fixEncoderSize5(getBytesEncoder5(), 8).encode(
+    ENROLLMENT_DISCRIMINATOR,
+  );
 }
 function getEnrollmentEncoder() {
   return transformEncoder5(
@@ -477,9 +439,9 @@ function getEnrollmentEncoder() {
       ["lessonFlags", getArrayEncoder(getU64Encoder(), { size: 4 })],
       ["credentialAsset", getOptionEncoder2(getAddressEncoder5())],
       ["reserved", fixEncoderSize5(getBytesEncoder5(), 4)],
-      ["bump", getU8Encoder5()]
+      ["bump", getU8Encoder5()],
     ]),
-    (value) => ({ ...value, discriminator: ENROLLMENT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ENROLLMENT_DISCRIMINATOR }),
   );
 }
 function getEnrollmentDecoder() {
@@ -491,25 +453,22 @@ function getEnrollmentDecoder() {
     ["lessonFlags", getArrayDecoder(getU64Decoder(), { size: 4 })],
     ["credentialAsset", getOptionDecoder2(getAddressDecoder5())],
     ["reserved", fixDecoderSize5(getBytesDecoder5(), 4)],
-    ["bump", getU8Decoder5()]
+    ["bump", getU8Decoder5()],
   ]);
 }
 function getEnrollmentCodec() {
   return combineCodec5(getEnrollmentEncoder(), getEnrollmentDecoder());
 }
 function decodeEnrollment(encodedAccount) {
-  return decodeAccount5(
-    encodedAccount,
-    getEnrollmentDecoder()
-  );
+  return decodeAccount5(encodedAccount, getEnrollmentDecoder());
 }
-async function fetchEnrollment(rpc, address, config) {
-  const maybeAccount = await fetchMaybeEnrollment(rpc, address, config);
+async function fetchEnrollment(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeEnrollment(rpc, address2, config);
   assertAccountExists5(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeEnrollment(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount5(rpc, address, config);
+async function fetchMaybeEnrollment(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount5(rpc, address2, config);
   return decodeEnrollment(maybeAccount);
 }
 async function fetchAllEnrollment(rpc, addresses, config) {
@@ -552,20 +511,15 @@ import {
   getU8Encoder as getU8Encoder6,
   getUtf8Decoder as getUtf8Decoder3,
   getUtf8Encoder as getUtf8Encoder3,
-  transformEncoder as transformEncoder6
+  transformEncoder as transformEncoder6,
 } from "@solana/kit";
 var MINTER_ROLE_DISCRIMINATOR = new Uint8Array([
-  21,
-  246,
-  6,
-  133,
-  142,
-  211,
-  33,
-  193
+  21, 246, 6, 133, 142, 211, 33, 193,
 ]);
 function getMinterRoleDiscriminatorBytes() {
-  return fixEncoderSize6(getBytesEncoder6(), 8).encode(MINTER_ROLE_DISCRIMINATOR);
+  return fixEncoderSize6(getBytesEncoder6(), 8).encode(
+    MINTER_ROLE_DISCRIMINATOR,
+  );
 }
 function getMinterRoleEncoder() {
   return transformEncoder6(
@@ -578,9 +532,9 @@ function getMinterRoleEncoder() {
       ["isActive", getBooleanEncoder3()],
       ["createdAt", getI64Encoder5()],
       ["reserved", fixEncoderSize6(getBytesEncoder6(), 8)],
-      ["bump", getU8Encoder6()]
+      ["bump", getU8Encoder6()],
     ]),
-    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR }),
   );
 }
 function getMinterRoleDecoder() {
@@ -593,25 +547,22 @@ function getMinterRoleDecoder() {
     ["isActive", getBooleanDecoder3()],
     ["createdAt", getI64Decoder5()],
     ["reserved", fixDecoderSize6(getBytesDecoder6(), 8)],
-    ["bump", getU8Decoder6()]
+    ["bump", getU8Decoder6()],
   ]);
 }
 function getMinterRoleCodec() {
   return combineCodec6(getMinterRoleEncoder(), getMinterRoleDecoder());
 }
 function decodeMinterRole(encodedAccount) {
-  return decodeAccount6(
-    encodedAccount,
-    getMinterRoleDecoder()
-  );
+  return decodeAccount6(encodedAccount, getMinterRoleDecoder());
 }
-async function fetchMinterRole(rpc, address, config) {
-  const maybeAccount = await fetchMaybeMinterRole(rpc, address, config);
+async function fetchMinterRole(rpc, address2, config) {
+  const maybeAccount = await fetchMaybeMinterRole(rpc, address2, config);
   assertAccountExists6(maybeAccount);
   return maybeAccount;
 }
-async function fetchMaybeMinterRole(rpc, address, config) {
-  const maybeAccount = await fetchEncodedAccount6(rpc, address, config);
+async function fetchMaybeMinterRole(rpc, address2, config) {
+  const maybeAccount = await fetchEncodedAccount6(rpc, address2, config);
   return decodeMinterRole(maybeAccount);
 }
 async function fetchAllMinterRole(rpc, addresses, config) {
@@ -625,9 +576,7 @@ async function fetchAllMaybeMinterRole(rpc, addresses, config) {
 }
 
 // src/generated/errors/onchainAcademy.ts
-import {
-  isProgramError
-} from "@solana/kit";
+import { isProgramError } from "@solana/kit";
 
 // src/generated/programs/onchainAcademy.ts
 import {
@@ -638,11 +587,11 @@ import {
   SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
   SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
   SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
-  SolanaError as SolanaError17
+  SolanaError as SolanaError17,
 } from "@solana/kit";
 import {
   addSelfFetchFunctions,
-  addSelfPlanAndSendFunctions
+  addSelfPlanAndSendFunctions,
 } from "@solana/program-client-core";
 
 // src/generated/instructions/awardAchievement.ts
@@ -658,52 +607,48 @@ import {
   getStructEncoder as getStructEncoder7,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
   SolanaError,
-  transformEncoder as transformEncoder7
+  transformEncoder as transformEncoder7,
 } from "@solana/kit";
 import {
   getAccountMetaFactory,
-  getAddressFromResolvedInstructionAccount
+  getAddressFromResolvedInstructionAccount,
 } from "@solana/program-client-core";
 var AWARD_ACHIEVEMENT_DISCRIMINATOR = new Uint8Array([
-  75,
-  47,
-  156,
-  253,
-  124,
-  231,
-  84,
-  12
+  75, 47, 156, 253, 124, 231, 84, 12,
 ]);
 function getAwardAchievementDiscriminatorBytes() {
   return fixEncoderSize7(getBytesEncoder7(), 8).encode(
-    AWARD_ACHIEVEMENT_DISCRIMINATOR
+    AWARD_ACHIEVEMENT_DISCRIMINATOR,
   );
 }
 function getAwardAchievementInstructionDataEncoder() {
   return transformEncoder7(
-    getStructEncoder7([["discriminator", fixEncoderSize7(getBytesEncoder7(), 8)]]),
-    (value) => ({ ...value, discriminator: AWARD_ACHIEVEMENT_DISCRIMINATOR })
+    getStructEncoder7([
+      ["discriminator", fixEncoderSize7(getBytesEncoder7(), 8)],
+    ]),
+    (value) => ({ ...value, discriminator: AWARD_ACHIEVEMENT_DISCRIMINATOR }),
   );
 }
 function getAwardAchievementInstructionDataDecoder() {
   return getStructDecoder7([
-    ["discriminator", fixDecoderSize7(getBytesDecoder7(), 8)]
+    ["discriminator", fixDecoderSize7(getBytesDecoder7(), 8)],
   ]);
 }
 function getAwardAchievementInstructionDataCodec() {
   return combineCodec7(
     getAwardAchievementInstructionDataEncoder(),
-    getAwardAchievementInstructionDataDecoder()
+    getAwardAchievementInstructionDataDecoder(),
   );
 }
 async function getAwardAchievementInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
     achievementReceipt: {
       value: input.achievementReceipt ?? null,
-      isWritable: true
+      isWritable: true,
     },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     asset: { value: input.asset ?? null, isWritable: true },
@@ -711,22 +656,24 @@ async function getAwardAchievementInstructionAsync(input, config) {
     recipient: { value: input.recipient ?? null, isWritable: false },
     recipientTokenAccount: {
       value: input.recipientTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
     minter: { value: input.minter ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.config.value) {
     accounts.config.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
-        getBytesEncoder7().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder7().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.minterRole.value) {
@@ -734,19 +681,20 @@ async function getAwardAchievementInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder7().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114])
+          new Uint8Array([109, 105, 110, 116, 101, 114]),
         ),
         getAddressEncoder7().encode(
           getAddressFromResolvedInstructionAccount(
             "minter",
-            accounts.minter.value
-          )
-        )
-      ]
+            accounts.minter.value,
+          ),
+        ),
+      ],
     });
   }
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -770,20 +718,21 @@ async function getAwardAchievementInstructionAsync(input, config) {
       getAccountMeta("minter", accounts.minter),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getAwardAchievementInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function getAwardAchievementInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
     achievementReceipt: {
       value: input.achievementReceipt ?? null,
-      isWritable: true
+      isWritable: true,
     },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     asset: { value: input.asset ?? null, isWritable: true },
@@ -791,18 +740,19 @@ function getAwardAchievementInstruction(input, config) {
     recipient: { value: input.recipient ?? null, isWritable: false },
     recipientTokenAccount: {
       value: input.recipientTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
     minter: { value: input.minter ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -826,10 +776,10 @@ function getAwardAchievementInstruction(input, config) {
       getAccountMeta("minter", accounts.minter),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getAwardAchievementInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseAwardAchievementInstruction(instruction) {
@@ -838,8 +788,8 @@ function parseAwardAchievementInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 14
-      }
+        expectedAccountMetas: 14,
+      },
     );
   }
   let accountIndex = 0;
@@ -864,9 +814,9 @@ function parseAwardAchievementInstruction(instruction) {
       minter: getNextAccount(),
       mplCoreProgram: getNextAccount(),
       tokenProgram: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getAwardAchievementInstructionDataDecoder().decode(instruction.data)
+    data: getAwardAchievementInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -881,49 +831,43 @@ import {
   getStructEncoder as getStructEncoder8,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS2,
   SolanaError as SolanaError2,
-  transformEncoder as transformEncoder8
+  transformEncoder as transformEncoder8,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory2
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory2 } from "@solana/program-client-core";
 var CLOSE_ENROLLMENT_DISCRIMINATOR = new Uint8Array([
-  236,
-  137,
-  133,
-  253,
-  91,
-  138,
-  217,
-  91
+  236, 137, 133, 253, 91, 138, 217, 91,
 ]);
 function getCloseEnrollmentDiscriminatorBytes() {
   return fixEncoderSize8(getBytesEncoder8(), 8).encode(
-    CLOSE_ENROLLMENT_DISCRIMINATOR
+    CLOSE_ENROLLMENT_DISCRIMINATOR,
   );
 }
 function getCloseEnrollmentInstructionDataEncoder() {
   return transformEncoder8(
-    getStructEncoder8([["discriminator", fixEncoderSize8(getBytesEncoder8(), 8)]]),
-    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR })
+    getStructEncoder8([
+      ["discriminator", fixEncoderSize8(getBytesEncoder8(), 8)],
+    ]),
+    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR }),
   );
 }
 function getCloseEnrollmentInstructionDataDecoder() {
   return getStructDecoder8([
-    ["discriminator", fixDecoderSize8(getBytesDecoder8(), 8)]
+    ["discriminator", fixDecoderSize8(getBytesDecoder8(), 8)],
   ]);
 }
 function getCloseEnrollmentInstructionDataCodec() {
   return combineCodec8(
     getCloseEnrollmentInstructionDataEncoder(),
-    getCloseEnrollmentInstructionDataDecoder()
+    getCloseEnrollmentInstructionDataDecoder(),
   );
 }
 function getCloseEnrollmentInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     course: { value: input.course ?? null, isWritable: false },
     enrollment: { value: input.enrollment ?? null, isWritable: true },
-    learner: { value: input.learner ?? null, isWritable: true }
+    learner: { value: input.learner ?? null, isWritable: true },
   };
   const accounts = originalAccounts;
   const getAccountMeta = getAccountMetaFactory2(programAddress, "programId");
@@ -931,10 +875,10 @@ function getCloseEnrollmentInstruction(input, config) {
     accounts: [
       getAccountMeta("course", accounts.course),
       getAccountMeta("enrollment", accounts.enrollment),
-      getAccountMeta("learner", accounts.learner)
+      getAccountMeta("learner", accounts.learner),
     ],
     data: getCloseEnrollmentInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseCloseEnrollmentInstruction(instruction) {
@@ -943,8 +887,8 @@ function parseCloseEnrollmentInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS2,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3
-      }
+        expectedAccountMetas: 3,
+      },
     );
   }
   let accountIndex = 0;
@@ -958,9 +902,9 @@ function parseCloseEnrollmentInstruction(instruction) {
     accounts: {
       course: getNextAccount(),
       enrollment: getNextAccount(),
-      learner: getNextAccount()
+      learner: getNextAccount(),
     },
-    data: getCloseEnrollmentInstructionDataDecoder().decode(instruction.data)
+    data: getCloseEnrollmentInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -978,49 +922,41 @@ import {
   getU8Encoder as getU8Encoder7,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS3,
   SolanaError as SolanaError3,
-  transformEncoder as transformEncoder9
+  transformEncoder as transformEncoder9,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory3
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory3 } from "@solana/program-client-core";
 var COMPLETE_LESSON_DISCRIMINATOR = new Uint8Array([
-  77,
-  217,
-  53,
-  132,
-  204,
-  150,
-  169,
-  58
+  77, 217, 53, 132, 204, 150, 169, 58,
 ]);
 function getCompleteLessonDiscriminatorBytes() {
   return fixEncoderSize9(getBytesEncoder9(), 8).encode(
-    COMPLETE_LESSON_DISCRIMINATOR
+    COMPLETE_LESSON_DISCRIMINATOR,
   );
 }
 function getCompleteLessonInstructionDataEncoder() {
   return transformEncoder9(
     getStructEncoder9([
       ["discriminator", fixEncoderSize9(getBytesEncoder9(), 8)],
-      ["lessonIndex", getU8Encoder7()]
+      ["lessonIndex", getU8Encoder7()],
     ]),
-    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR }),
   );
 }
 function getCompleteLessonInstructionDataDecoder() {
   return getStructDecoder9([
     ["discriminator", fixDecoderSize9(getBytesDecoder9(), 8)],
-    ["lessonIndex", getU8Decoder7()]
+    ["lessonIndex", getU8Decoder7()],
   ]);
 }
 function getCompleteLessonInstructionDataCodec() {
   return combineCodec9(
     getCompleteLessonInstructionDataEncoder(),
-    getCompleteLessonInstructionDataDecoder()
+    getCompleteLessonInstructionDataDecoder(),
   );
 }
 async function getCompleteLessonInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -1028,11 +964,11 @@ async function getCompleteLessonInstructionAsync(input, config) {
     learner: { value: input.learner ?? null, isWritable: false },
     learnerTokenAccount: {
       value: input.learnerTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1040,8 +976,10 @@ async function getCompleteLessonInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress2({
       programAddress,
       seeds: [
-        getBytesEncoder9().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder9().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.tokenProgram.value) {
@@ -1057,16 +995,15 @@ async function getCompleteLessonInstructionAsync(input, config) {
       getAccountMeta("learnerTokenAccount", accounts.learnerTokenAccount),
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("backendSigner", accounts.backendSigner),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
-    data: getCompleteLessonInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCompleteLessonInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getCompleteLessonInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -1074,11 +1011,11 @@ function getCompleteLessonInstruction(input, config) {
     learner: { value: input.learner ?? null, isWritable: false },
     learnerTokenAccount: {
       value: input.learnerTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1095,12 +1032,10 @@ function getCompleteLessonInstruction(input, config) {
       getAccountMeta("learnerTokenAccount", accounts.learnerTokenAccount),
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("backendSigner", accounts.backendSigner),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
-    data: getCompleteLessonInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCompleteLessonInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseCompleteLessonInstruction(instruction) {
@@ -1109,8 +1044,8 @@ function parseCompleteLessonInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS3,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 8
-      }
+        expectedAccountMetas: 8,
+      },
     );
   }
   let accountIndex = 0;
@@ -1129,9 +1064,9 @@ function parseCompleteLessonInstruction(instruction) {
       learnerTokenAccount: getNextAccount(),
       xpMint: getNextAccount(),
       backendSigner: getNextAccount(),
-      tokenProgram: getNextAccount()
+      tokenProgram: getNextAccount(),
     },
-    data: getCompleteLessonInstructionDataDecoder().decode(instruction.data)
+    data: getCompleteLessonInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -1153,24 +1088,15 @@ import {
   getUtf8Encoder as getUtf8Encoder4,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS4,
   SolanaError as SolanaError4,
-  transformEncoder as transformEncoder10
+  transformEncoder as transformEncoder10,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory4
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory4 } from "@solana/program-client-core";
 var CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
-  231,
-  38,
-  39,
-  228,
-  103,
-  4,
-  229,
-  19
+  231, 38, 39, 228, 103, 4, 229, 19,
 ]);
 function getCreateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize10(getBytesEncoder10(), 8).encode(
-    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
+    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
   );
 }
 function getCreateAchievementTypeInstructionDataEncoder() {
@@ -1179,37 +1105,44 @@ function getCreateAchievementTypeInstructionDataEncoder() {
       ["discriminator", fixEncoderSize10(getBytesEncoder10(), 8)],
       [
         "achievementId",
-        addEncoderSizePrefix4(getUtf8Encoder4(), getU32Encoder4())
+        addEncoderSizePrefix4(getUtf8Encoder4(), getU32Encoder4()),
       ],
       ["name", addEncoderSizePrefix4(getUtf8Encoder4(), getU32Encoder4())],
-      ["metadataUri", addEncoderSizePrefix4(getUtf8Encoder4(), getU32Encoder4())],
+      [
+        "metadataUri",
+        addEncoderSizePrefix4(getUtf8Encoder4(), getU32Encoder4()),
+      ],
       ["maxSupply", getU32Encoder4()],
-      ["xpReward", getU32Encoder4()]
+      ["xpReward", getU32Encoder4()],
     ]),
     (value) => ({
       ...value,
-      discriminator: CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
-    })
+      discriminator: CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    }),
   );
 }
 function getCreateAchievementTypeInstructionDataDecoder() {
   return getStructDecoder10([
     ["discriminator", fixDecoderSize10(getBytesDecoder10(), 8)],
-    ["achievementId", addDecoderSizePrefix4(getUtf8Decoder4(), getU32Decoder4())],
+    [
+      "achievementId",
+      addDecoderSizePrefix4(getUtf8Decoder4(), getU32Decoder4()),
+    ],
     ["name", addDecoderSizePrefix4(getUtf8Decoder4(), getU32Decoder4())],
     ["metadataUri", addDecoderSizePrefix4(getUtf8Decoder4(), getU32Decoder4())],
     ["maxSupply", getU32Decoder4()],
-    ["xpReward", getU32Decoder4()]
+    ["xpReward", getU32Decoder4()],
   ]);
 }
 function getCreateAchievementTypeInstructionDataCodec() {
   return combineCodec10(
     getCreateAchievementTypeInstructionDataEncoder(),
-    getCreateAchievementTypeInstructionDataDecoder()
+    getCreateAchievementTypeInstructionDataDecoder(),
   );
 }
 async function getCreateAchievementTypeInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
@@ -1217,7 +1150,7 @@ async function getCreateAchievementTypeInstructionAsync(input, config) {
     authority: { value: input.authority ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1225,12 +1158,15 @@ async function getCreateAchievementTypeInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress3({
       programAddress,
       seeds: [
-        getBytesEncoder10().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder10().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -1244,16 +1180,15 @@ async function getCreateAchievementTypeInstructionAsync(input, config) {
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getCreateAchievementTypeInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCreateAchievementTypeInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getCreateAchievementTypeInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
@@ -1261,12 +1196,13 @@ function getCreateAchievementTypeInstruction(input, config) {
     authority: { value: input.authority ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -1280,12 +1216,10 @@ function getCreateAchievementTypeInstruction(input, config) {
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getCreateAchievementTypeInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCreateAchievementTypeInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseCreateAchievementTypeInstruction(instruction) {
@@ -1294,8 +1228,8 @@ function parseCreateAchievementTypeInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS4,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 7
-      }
+        expectedAccountMetas: 7,
+      },
     );
   }
   let accountIndex = 0;
@@ -1313,11 +1247,11 @@ function parseCreateAchievementTypeInstruction(instruction) {
       authority: getNextAccount(),
       payer: getNextAccount(),
       mplCoreProgram: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
     data: getCreateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data
-    )
+      instruction.data,
+    ),
   };
 }
 
@@ -1347,24 +1281,15 @@ import {
   getUtf8Encoder as getUtf8Encoder5,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS5,
   SolanaError as SolanaError5,
-  transformEncoder as transformEncoder11
+  transformEncoder as transformEncoder11,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory5
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory5 } from "@solana/program-client-core";
 var CREATE_COURSE_DISCRIMINATOR = new Uint8Array([
-  120,
-  121,
-  154,
-  164,
-  107,
-  180,
-  167,
-  241
+  120, 121, 154, 164, 107, 180, 167, 241,
 ]);
 function getCreateCourseDiscriminatorBytes() {
   return fixEncoderSize11(getBytesEncoder11(), 8).encode(
-    CREATE_COURSE_DISCRIMINATOR
+    CREATE_COURSE_DISCRIMINATOR,
   );
 }
 function getCreateCourseInstructionDataEncoder() {
@@ -1381,9 +1306,9 @@ function getCreateCourseInstructionDataEncoder() {
       ["trackLevel", getU8Encoder8()],
       ["prerequisite", getOptionEncoder3(getAddressEncoder8())],
       ["creatorRewardXp", getU32Encoder5()],
-      ["minCompletionsForReward", getU16Encoder2()]
+      ["minCompletionsForReward", getU16Encoder2()],
     ]),
-    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR }),
   );
 }
 function getCreateCourseInstructionDataDecoder() {
@@ -1399,22 +1324,23 @@ function getCreateCourseInstructionDataDecoder() {
     ["trackLevel", getU8Decoder8()],
     ["prerequisite", getOptionDecoder3(getAddressDecoder7())],
     ["creatorRewardXp", getU32Decoder5()],
-    ["minCompletionsForReward", getU16Decoder2()]
+    ["minCompletionsForReward", getU16Decoder2()],
   ]);
 }
 function getCreateCourseInstructionDataCodec() {
   return combineCodec11(
     getCreateCourseInstructionDataEncoder(),
-    getCreateCourseInstructionDataDecoder()
+    getCreateCourseInstructionDataDecoder(),
   );
 }
 async function getCreateCourseInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     course: { value: input.course ?? null, isWritable: true },
     config: { value: input.config ?? null, isWritable: false },
     authority: { value: input.authority ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1422,8 +1348,10 @@ async function getCreateCourseInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress4({
       programAddress,
       seeds: [
-        getBytesEncoder11().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder11().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.systemProgram.value) {
@@ -1435,21 +1363,20 @@ async function getCreateCourseInstructionAsync(input, config) {
       getAccountMeta("course", accounts.course),
       getAccountMeta("config", accounts.config),
       getAccountMeta("authority", accounts.authority),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getCreateCourseInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCreateCourseInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getCreateCourseInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     course: { value: input.course ?? null, isWritable: true },
     config: { value: input.config ?? null, isWritable: false },
     authority: { value: input.authority ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1462,12 +1389,10 @@ function getCreateCourseInstruction(input, config) {
       getAccountMeta("course", accounts.course),
       getAccountMeta("config", accounts.config),
       getAccountMeta("authority", accounts.authority),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getCreateCourseInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getCreateCourseInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseCreateCourseInstruction(instruction) {
@@ -1476,8 +1401,8 @@ function parseCreateCourseInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS5,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 4
-      }
+        expectedAccountMetas: 4,
+      },
     );
   }
   let accountIndex = 0;
@@ -1492,9 +1417,9 @@ function parseCreateCourseInstruction(instruction) {
       course: getNextAccount(),
       config: getNextAccount(),
       authority: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getCreateCourseInstructionDataDecoder().decode(instruction.data)
+    data: getCreateCourseInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -1510,60 +1435,56 @@ import {
   getStructEncoder as getStructEncoder12,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS6,
   SolanaError as SolanaError6,
-  transformEncoder as transformEncoder12
+  transformEncoder as transformEncoder12,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory6
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory6 } from "@solana/program-client-core";
 var DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
-  185,
-  21,
-  222,
-  243,
-  192,
-  118,
-  71,
-  191
+  185, 21, 222, 243, 192, 118, 71, 191,
 ]);
 function getDeactivateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize12(getBytesEncoder12(), 8).encode(
-    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
+    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
   );
 }
 function getDeactivateAchievementTypeInstructionDataEncoder() {
   return transformEncoder12(
-    getStructEncoder12([["discriminator", fixEncoderSize12(getBytesEncoder12(), 8)]]),
+    getStructEncoder12([
+      ["discriminator", fixEncoderSize12(getBytesEncoder12(), 8)],
+    ]),
     (value) => ({
       ...value,
-      discriminator: DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
-    })
+      discriminator: DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    }),
   );
 }
 function getDeactivateAchievementTypeInstructionDataDecoder() {
   return getStructDecoder12([
-    ["discriminator", fixDecoderSize12(getBytesDecoder12(), 8)]
+    ["discriminator", fixDecoderSize12(getBytesDecoder12(), 8)],
   ]);
 }
 function getDeactivateAchievementTypeInstructionDataCodec() {
   return combineCodec12(
     getDeactivateAchievementTypeInstructionDataEncoder(),
-    getDeactivateAchievementTypeInstructionDataDecoder()
+    getDeactivateAchievementTypeInstructionDataDecoder(),
   );
 }
 async function getDeactivateAchievementTypeInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.config.value) {
     accounts.config.value = await getProgramDerivedAddress5({
       programAddress,
       seeds: [
-        getBytesEncoder12().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder12().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   const getAccountMeta = getAccountMetaFactory6(programAddress, "programId");
@@ -1571,18 +1492,19 @@ async function getDeactivateAchievementTypeInstructionAsync(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("achievementType", accounts.achievementType),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
     data: getDeactivateAchievementTypeInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function getDeactivateAchievementTypeInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     achievementType: { value: input.achievementType ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const getAccountMeta = getAccountMetaFactory6(programAddress, "programId");
@@ -1590,10 +1512,10 @@ function getDeactivateAchievementTypeInstruction(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("achievementType", accounts.achievementType),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
     data: getDeactivateAchievementTypeInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseDeactivateAchievementTypeInstruction(instruction) {
@@ -1602,8 +1524,8 @@ function parseDeactivateAchievementTypeInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS6,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3
-      }
+        expectedAccountMetas: 3,
+      },
     );
   }
   let accountIndex = 0;
@@ -1617,11 +1539,11 @@ function parseDeactivateAchievementTypeInstruction(instruction) {
     accounts: {
       config: getNextAccount(),
       achievementType: getNextAccount(),
-      authority: getNextAccount()
+      authority: getNextAccount(),
     },
     data: getDeactivateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data
-    )
+      instruction.data,
+    ),
   };
 }
 
@@ -1644,23 +1566,14 @@ import {
   getUtf8Encoder as getUtf8Encoder6,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS7,
   SolanaError as SolanaError7,
-  transformEncoder as transformEncoder13
+  transformEncoder as transformEncoder13,
 } from "@solana/kit";
 import {
   getAccountMetaFactory as getAccountMetaFactory7,
   getAddressFromResolvedInstructionAccount as getAddressFromResolvedInstructionAccount2,
-  getNonNullResolvedInstructionInput
+  getNonNullResolvedInstructionInput,
 } from "@solana/program-client-core";
-var ENROLL_DISCRIMINATOR = new Uint8Array([
-  58,
-  12,
-  36,
-  3,
-  142,
-  28,
-  1,
-  43
-]);
+var ENROLL_DISCRIMINATOR = new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43]);
 function getEnrollDiscriminatorBytes() {
   return fixEncoderSize13(getBytesEncoder13(), 8).encode(ENROLL_DISCRIMINATOR);
 }
@@ -1668,30 +1581,31 @@ function getEnrollInstructionDataEncoder() {
   return transformEncoder13(
     getStructEncoder13([
       ["discriminator", fixEncoderSize13(getBytesEncoder13(), 8)],
-      ["courseId", addEncoderSizePrefix6(getUtf8Encoder6(), getU32Encoder6())]
+      ["courseId", addEncoderSizePrefix6(getUtf8Encoder6(), getU32Encoder6())],
     ]),
-    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR }),
   );
 }
 function getEnrollInstructionDataDecoder() {
   return getStructDecoder13([
     ["discriminator", fixDecoderSize13(getBytesDecoder13(), 8)],
-    ["courseId", addDecoderSizePrefix6(getUtf8Decoder6(), getU32Decoder6())]
+    ["courseId", addDecoderSizePrefix6(getUtf8Decoder6(), getU32Decoder6())],
   ]);
 }
 function getEnrollInstructionDataCodec() {
   return combineCodec13(
     getEnrollInstructionDataEncoder(),
-    getEnrollInstructionDataDecoder()
+    getEnrollInstructionDataDecoder(),
   );
 }
 async function getEnrollInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     course: { value: input.course ?? null, isWritable: true },
     enrollment: { value: input.enrollment ?? null, isWritable: true },
     learner: { value: input.learner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1699,11 +1613,13 @@ async function getEnrollInstructionAsync(input, config) {
     accounts.course.value = await getProgramDerivedAddress6({
       programAddress,
       seeds: [
-        getBytesEncoder13().encode(new Uint8Array([99, 111, 117, 114, 115, 101])),
+        getBytesEncoder13().encode(
+          new Uint8Array([99, 111, 117, 114, 115, 101]),
+        ),
         getUtf8Encoder6().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId)
-        )
-      ]
+          getNonNullResolvedInstructionInput("courseId", args.courseId),
+        ),
+      ],
     });
   }
   if (!accounts.enrollment.value) {
@@ -1711,18 +1627,18 @@ async function getEnrollInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder13().encode(
-          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116])
+          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116]),
         ),
         getUtf8Encoder6().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId)
+          getNonNullResolvedInstructionInput("courseId", args.courseId),
         ),
         getAddressEncoder9().encode(
           getAddressFromResolvedInstructionAccount2(
             "learner",
-            accounts.learner.value
-          )
-        )
-      ]
+            accounts.learner.value,
+          ),
+        ),
+      ],
     });
   }
   if (!accounts.systemProgram.value) {
@@ -1734,21 +1650,20 @@ async function getEnrollInstructionAsync(input, config) {
       getAccountMeta("course", accounts.course),
       getAccountMeta("enrollment", accounts.enrollment),
       getAccountMeta("learner", accounts.learner),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getEnrollInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getEnrollInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getEnrollInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     course: { value: input.course ?? null, isWritable: true },
     enrollment: { value: input.enrollment ?? null, isWritable: true },
     learner: { value: input.learner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -1761,12 +1676,10 @@ function getEnrollInstruction(input, config) {
       getAccountMeta("course", accounts.course),
       getAccountMeta("enrollment", accounts.enrollment),
       getAccountMeta("learner", accounts.learner),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getEnrollInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getEnrollInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseEnrollInstruction(instruction) {
@@ -1775,8 +1688,8 @@ function parseEnrollInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS7,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 4
-      }
+        expectedAccountMetas: 4,
+      },
     );
   }
   let accountIndex = 0;
@@ -1791,9 +1704,9 @@ function parseEnrollInstruction(instruction) {
       course: getNextAccount(),
       enrollment: getNextAccount(),
       learner: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getEnrollInstructionDataDecoder().decode(instruction.data)
+    data: getEnrollInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -1809,45 +1722,39 @@ import {
   getStructEncoder as getStructEncoder14,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS8,
   SolanaError as SolanaError8,
-  transformEncoder as transformEncoder14
+  transformEncoder as transformEncoder14,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory8
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory8 } from "@solana/program-client-core";
 var FINALIZE_COURSE_DISCRIMINATOR = new Uint8Array([
-  68,
-  189,
-  122,
-  239,
-  39,
-  121,
-  16,
-  218
+  68, 189, 122, 239, 39, 121, 16, 218,
 ]);
 function getFinalizeCourseDiscriminatorBytes() {
   return fixEncoderSize14(getBytesEncoder14(), 8).encode(
-    FINALIZE_COURSE_DISCRIMINATOR
+    FINALIZE_COURSE_DISCRIMINATOR,
   );
 }
 function getFinalizeCourseInstructionDataEncoder() {
   return transformEncoder14(
-    getStructEncoder14([["discriminator", fixEncoderSize14(getBytesEncoder14(), 8)]]),
-    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR })
+    getStructEncoder14([
+      ["discriminator", fixEncoderSize14(getBytesEncoder14(), 8)],
+    ]),
+    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR }),
   );
 }
 function getFinalizeCourseInstructionDataDecoder() {
   return getStructDecoder14([
-    ["discriminator", fixDecoderSize14(getBytesDecoder14(), 8)]
+    ["discriminator", fixDecoderSize14(getBytesDecoder14(), 8)],
   ]);
 }
 function getFinalizeCourseInstructionDataCodec() {
   return combineCodec14(
     getFinalizeCourseInstructionDataEncoder(),
-    getFinalizeCourseInstructionDataDecoder()
+    getFinalizeCourseInstructionDataDecoder(),
   );
 }
 async function getFinalizeCourseInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: true },
@@ -1855,24 +1762,26 @@ async function getFinalizeCourseInstructionAsync(input, config) {
     learner: { value: input.learner ?? null, isWritable: false },
     learnerTokenAccount: {
       value: input.learnerTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     creatorTokenAccount: {
       value: input.creatorTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     creator: { value: input.creator ?? null, isWritable: false },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.config.value) {
     accounts.config.value = await getProgramDerivedAddress7({
       programAddress,
       seeds: [
-        getBytesEncoder14().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder14().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.tokenProgram.value) {
@@ -1890,14 +1799,15 @@ async function getFinalizeCourseInstructionAsync(input, config) {
       getAccountMeta("creator", accounts.creator),
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("backendSigner", accounts.backendSigner),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getFinalizeCourseInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function getFinalizeCourseInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: true },
@@ -1905,16 +1815,16 @@ function getFinalizeCourseInstruction(input, config) {
     learner: { value: input.learner ?? null, isWritable: false },
     learnerTokenAccount: {
       value: input.learnerTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     creatorTokenAccount: {
       value: input.creatorTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     creator: { value: input.creator ?? null, isWritable: false },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.tokenProgram.value) {
@@ -1932,10 +1842,10 @@ function getFinalizeCourseInstruction(input, config) {
       getAccountMeta("creator", accounts.creator),
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("backendSigner", accounts.backendSigner),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getFinalizeCourseInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseFinalizeCourseInstruction(instruction) {
@@ -1944,8 +1854,8 @@ function parseFinalizeCourseInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS8,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 10
-      }
+        expectedAccountMetas: 10,
+      },
     );
   }
   let accountIndex = 0;
@@ -1966,9 +1876,9 @@ function parseFinalizeCourseInstruction(instruction) {
       creator: getNextAccount(),
       xpMint: getNextAccount(),
       backendSigner: getNextAccount(),
-      tokenProgram: getNextAccount()
+      tokenProgram: getNextAccount(),
     },
-    data: getFinalizeCourseInstructionDataDecoder().decode(instruction.data)
+    data: getFinalizeCourseInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -1985,62 +1895,62 @@ import {
   getStructEncoder as getStructEncoder15,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS9,
   SolanaError as SolanaError9,
-  transformEncoder as transformEncoder15
+  transformEncoder as transformEncoder15,
 } from "@solana/kit";
 import {
   getAccountMetaFactory as getAccountMetaFactory9,
-  getAddressFromResolvedInstructionAccount as getAddressFromResolvedInstructionAccount3
+  getAddressFromResolvedInstructionAccount as getAddressFromResolvedInstructionAccount3,
 } from "@solana/program-client-core";
 var INITIALIZE_DISCRIMINATOR = new Uint8Array([
-  175,
-  175,
-  109,
-  31,
-  13,
-  152,
-  155,
-  237
+  175, 175, 109, 31, 13, 152, 155, 237,
 ]);
 function getInitializeDiscriminatorBytes() {
-  return fixEncoderSize15(getBytesEncoder15(), 8).encode(INITIALIZE_DISCRIMINATOR);
+  return fixEncoderSize15(getBytesEncoder15(), 8).encode(
+    INITIALIZE_DISCRIMINATOR,
+  );
 }
 function getInitializeInstructionDataEncoder() {
   return transformEncoder15(
-    getStructEncoder15([["discriminator", fixEncoderSize15(getBytesEncoder15(), 8)]]),
-    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
+    getStructEncoder15([
+      ["discriminator", fixEncoderSize15(getBytesEncoder15(), 8)],
+    ]),
+    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
   );
 }
 function getInitializeInstructionDataDecoder() {
   return getStructDecoder15([
-    ["discriminator", fixDecoderSize15(getBytesDecoder15(), 8)]
+    ["discriminator", fixDecoderSize15(getBytesDecoder15(), 8)],
   ]);
 }
 function getInitializeInstructionDataCodec() {
   return combineCodec15(
     getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder()
+    getInitializeInstructionDataDecoder(),
   );
 }
 async function getInitializeInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
     backendMinterRole: {
       value: input.backendMinterRole ?? null,
-      isWritable: true
+      isWritable: true,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.config.value) {
     accounts.config.value = await getProgramDerivedAddress8({
       programAddress,
       seeds: [
-        getBytesEncoder15().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder15().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.backendMinterRole.value) {
@@ -2048,15 +1958,15 @@ async function getInitializeInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder15().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114])
+          new Uint8Array([109, 105, 110, 116, 101, 114]),
         ),
         getAddressEncoder10().encode(
           getAddressFromResolvedInstructionAccount3(
             "authority",
-            accounts.authority.value
-          )
-        )
-      ]
+            accounts.authority.value,
+          ),
+        ),
+      ],
     });
   }
   if (!accounts.systemProgram.value) {
@@ -2073,24 +1983,25 @@ async function getInitializeInstructionAsync(input, config) {
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("backendMinterRole", accounts.backendMinterRole),
       getAccountMeta("systemProgram", accounts.systemProgram),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getInitializeInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function getInitializeInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
     backendMinterRole: {
       value: input.backendMinterRole ?? null,
-      isWritable: true
+      isWritable: true,
     },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   if (!accounts.systemProgram.value) {
@@ -2107,10 +2018,10 @@ function getInitializeInstruction(input, config) {
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("backendMinterRole", accounts.backendMinterRole),
       getAccountMeta("systemProgram", accounts.systemProgram),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getInitializeInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseInitializeInstruction(instruction) {
@@ -2119,8 +2030,8 @@ function parseInitializeInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS9,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 6
-      }
+        expectedAccountMetas: 6,
+      },
     );
   }
   let accountIndex = 0;
@@ -2137,9 +2048,9 @@ function parseInitializeInstruction(instruction) {
       authority: getNextAccount(),
       backendMinterRole: getNextAccount(),
       systemProgram: getNextAccount(),
-      tokenProgram: getNextAccount()
+      tokenProgram: getNextAccount(),
     },
-    data: getInitializeInstructionDataDecoder().decode(instruction.data)
+    data: getInitializeInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2163,24 +2074,15 @@ import {
   getUtf8Encoder as getUtf8Encoder7,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS10,
   SolanaError as SolanaError10,
-  transformEncoder as transformEncoder16
+  transformEncoder as transformEncoder16,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory10
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory10 } from "@solana/program-client-core";
 var ISSUE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
-  255,
-  193,
-  171,
-  224,
-  68,
-  171,
-  194,
-  87
+  255, 193, 171, 224, 68, 171, 194, 87,
 ]);
 function getIssueCredentialDiscriminatorBytes() {
   return fixEncoderSize16(getBytesEncoder16(), 8).encode(
-    ISSUE_CREDENTIAL_DISCRIMINATOR
+    ISSUE_CREDENTIAL_DISCRIMINATOR,
   );
 }
 function getIssueCredentialInstructionDataEncoder() {
@@ -2189,32 +2091,39 @@ function getIssueCredentialInstructionDataEncoder() {
       ["discriminator", fixEncoderSize16(getBytesEncoder16(), 8)],
       [
         "credentialName",
-        addEncoderSizePrefix7(getUtf8Encoder7(), getU32Encoder7())
+        addEncoderSizePrefix7(getUtf8Encoder7(), getU32Encoder7()),
       ],
-      ["metadataUri", addEncoderSizePrefix7(getUtf8Encoder7(), getU32Encoder7())],
+      [
+        "metadataUri",
+        addEncoderSizePrefix7(getUtf8Encoder7(), getU32Encoder7()),
+      ],
       ["coursesCompleted", getU32Encoder7()],
-      ["totalXp", getU64Encoder3()]
+      ["totalXp", getU64Encoder3()],
     ]),
-    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR }),
   );
 }
 function getIssueCredentialInstructionDataDecoder() {
   return getStructDecoder16([
     ["discriminator", fixDecoderSize16(getBytesDecoder16(), 8)],
-    ["credentialName", addDecoderSizePrefix7(getUtf8Decoder7(), getU32Decoder7())],
+    [
+      "credentialName",
+      addDecoderSizePrefix7(getUtf8Decoder7(), getU32Decoder7()),
+    ],
     ["metadataUri", addDecoderSizePrefix7(getUtf8Decoder7(), getU32Decoder7())],
     ["coursesCompleted", getU32Decoder7()],
-    ["totalXp", getU64Decoder3()]
+    ["totalXp", getU64Decoder3()],
   ]);
 }
 function getIssueCredentialInstructionDataCodec() {
   return combineCodec16(
     getIssueCredentialInstructionDataEncoder(),
-    getIssueCredentialInstructionDataDecoder()
+    getIssueCredentialInstructionDataDecoder(),
   );
 }
 async function getIssueCredentialInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -2225,7 +2134,7 @@ async function getIssueCredentialInstructionAsync(input, config) {
     payer: { value: input.payer ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2233,12 +2142,15 @@ async function getIssueCredentialInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress9({
       programAddress,
       seeds: [
-        getBytesEncoder16().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder16().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -2255,16 +2167,15 @@ async function getIssueCredentialInstructionAsync(input, config) {
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("backendSigner", accounts.backendSigner),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getIssueCredentialInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getIssueCredentialInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getIssueCredentialInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -2275,12 +2186,13 @@ function getIssueCredentialInstruction(input, config) {
     payer: { value: input.payer ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -2297,12 +2209,10 @@ function getIssueCredentialInstruction(input, config) {
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("backendSigner", accounts.backendSigner),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getIssueCredentialInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getIssueCredentialInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseIssueCredentialInstruction(instruction) {
@@ -2311,8 +2221,8 @@ function parseIssueCredentialInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS10,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 10
-      }
+        expectedAccountMetas: 10,
+      },
     );
   }
   let accountIndex = 0;
@@ -2333,9 +2243,9 @@ function parseIssueCredentialInstruction(instruction) {
       payer: getNextAccount(),
       backendSigner: getNextAccount(),
       mplCoreProgram: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getIssueCredentialInstructionDataDecoder().decode(instruction.data)
+    data: getIssueCredentialInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2361,24 +2271,15 @@ import {
   getUtf8Encoder as getUtf8Encoder8,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS11,
   SolanaError as SolanaError11,
-  transformEncoder as transformEncoder17
+  transformEncoder as transformEncoder17,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory11
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory11 } from "@solana/program-client-core";
 var REGISTER_MINTER_DISCRIMINATOR = new Uint8Array([
-  58,
-  224,
-  74,
-  142,
-  170,
-  95,
-  116,
-  191
+  58, 224, 74, 142, 170, 95, 116, 191,
 ]);
 function getRegisterMinterDiscriminatorBytes() {
   return fixEncoderSize17(getBytesEncoder17(), 8).encode(
-    REGISTER_MINTER_DISCRIMINATOR
+    REGISTER_MINTER_DISCRIMINATOR,
   );
 }
 function getRegisterMinterInstructionDataEncoder() {
@@ -2387,9 +2288,9 @@ function getRegisterMinterInstructionDataEncoder() {
       ["discriminator", fixEncoderSize17(getBytesEncoder17(), 8)],
       ["minter", getAddressEncoder11()],
       ["label", addEncoderSizePrefix8(getUtf8Encoder8(), getU32Encoder8())],
-      ["maxXpPerCall", getU64Encoder4()]
+      ["maxXpPerCall", getU64Encoder4()],
     ]),
-    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR }),
   );
 }
 function getRegisterMinterInstructionDataDecoder() {
@@ -2397,23 +2298,24 @@ function getRegisterMinterInstructionDataDecoder() {
     ["discriminator", fixDecoderSize17(getBytesDecoder17(), 8)],
     ["minter", getAddressDecoder8()],
     ["label", addDecoderSizePrefix8(getUtf8Decoder8(), getU32Decoder8())],
-    ["maxXpPerCall", getU64Decoder4()]
+    ["maxXpPerCall", getU64Decoder4()],
   ]);
 }
 function getRegisterMinterInstructionDataCodec() {
   return combineCodec17(
     getRegisterMinterInstructionDataEncoder(),
-    getRegisterMinterInstructionDataDecoder()
+    getRegisterMinterInstructionDataDecoder(),
   );
 }
 async function getRegisterMinterInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2421,8 +2323,10 @@ async function getRegisterMinterInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress10({
       programAddress,
       seeds: [
-        getBytesEncoder17().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder17().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.systemProgram.value) {
@@ -2435,22 +2339,21 @@ async function getRegisterMinterInstructionAsync(input, config) {
       getAccountMeta("minterRole", accounts.minterRole),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("payer", accounts.payer),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getRegisterMinterInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getRegisterMinterInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getRegisterMinterInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2464,12 +2367,10 @@ function getRegisterMinterInstruction(input, config) {
       getAccountMeta("minterRole", accounts.minterRole),
       getAccountMeta("authority", accounts.authority),
       getAccountMeta("payer", accounts.payer),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getRegisterMinterInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getRegisterMinterInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseRegisterMinterInstruction(instruction) {
@@ -2478,8 +2379,8 @@ function parseRegisterMinterInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS11,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 5
-      }
+        expectedAccountMetas: 5,
+      },
     );
   }
   let accountIndex = 0;
@@ -2495,9 +2396,9 @@ function parseRegisterMinterInstruction(instruction) {
       minterRole: getNextAccount(),
       authority: getNextAccount(),
       payer: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getRegisterMinterInstructionDataDecoder().decode(instruction.data)
+    data: getRegisterMinterInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2513,57 +2414,53 @@ import {
   getStructEncoder as getStructEncoder18,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS12,
   SolanaError as SolanaError12,
-  transformEncoder as transformEncoder18
+  transformEncoder as transformEncoder18,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory12
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory12 } from "@solana/program-client-core";
 var REVOKE_MINTER_DISCRIMINATOR = new Uint8Array([
-  33,
-  91,
-  131,
-  167,
-  62,
-  37,
-  38,
-  105
+  33, 91, 131, 167, 62, 37, 38, 105,
 ]);
 function getRevokeMinterDiscriminatorBytes() {
   return fixEncoderSize18(getBytesEncoder18(), 8).encode(
-    REVOKE_MINTER_DISCRIMINATOR
+    REVOKE_MINTER_DISCRIMINATOR,
   );
 }
 function getRevokeMinterInstructionDataEncoder() {
   return transformEncoder18(
-    getStructEncoder18([["discriminator", fixEncoderSize18(getBytesEncoder18(), 8)]]),
-    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR })
+    getStructEncoder18([
+      ["discriminator", fixEncoderSize18(getBytesEncoder18(), 8)],
+    ]),
+    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR }),
   );
 }
 function getRevokeMinterInstructionDataDecoder() {
   return getStructDecoder18([
-    ["discriminator", fixDecoderSize18(getBytesDecoder18(), 8)]
+    ["discriminator", fixDecoderSize18(getBytesDecoder18(), 8)],
   ]);
 }
 function getRevokeMinterInstructionDataCodec() {
   return combineCodec18(
     getRevokeMinterInstructionDataEncoder(),
-    getRevokeMinterInstructionDataDecoder()
+    getRevokeMinterInstructionDataDecoder(),
   );
 }
 async function getRevokeMinterInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: true }
+    authority: { value: input.authority ?? null, isWritable: true },
   };
   const accounts = originalAccounts;
   if (!accounts.config.value) {
     accounts.config.value = await getProgramDerivedAddress11({
       programAddress,
       seeds: [
-        getBytesEncoder18().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder18().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   const getAccountMeta = getAccountMetaFactory12(programAddress, "programId");
@@ -2571,18 +2468,19 @@ async function getRevokeMinterInstructionAsync(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("minterRole", accounts.minterRole),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
     data: getRevokeMinterInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function getRevokeMinterInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: true }
+    authority: { value: input.authority ?? null, isWritable: true },
   };
   const accounts = originalAccounts;
   const getAccountMeta = getAccountMetaFactory12(programAddress, "programId");
@@ -2590,10 +2488,10 @@ function getRevokeMinterInstruction(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("minterRole", accounts.minterRole),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
     data: getRevokeMinterInstructionDataEncoder().encode({}),
-    programAddress
+    programAddress,
   });
 }
 function parseRevokeMinterInstruction(instruction) {
@@ -2602,8 +2500,8 @@ function parseRevokeMinterInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS12,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3
-      }
+        expectedAccountMetas: 3,
+      },
     );
   }
   let accountIndex = 0;
@@ -2617,9 +2515,9 @@ function parseRevokeMinterInstruction(instruction) {
     accounts: {
       config: getNextAccount(),
       minterRole: getNextAccount(),
-      authority: getNextAccount()
+      authority: getNextAccount(),
     },
-    data: getRevokeMinterInstructionDataDecoder().decode(instruction.data)
+    data: getRevokeMinterInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2644,60 +2542,56 @@ import {
   getUtf8Encoder as getUtf8Encoder9,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS13,
   SolanaError as SolanaError13,
-  transformEncoder as transformEncoder19
+  transformEncoder as transformEncoder19,
 } from "@solana/kit";
 import {
   getAccountMetaFactory as getAccountMetaFactory13,
-  getAddressFromResolvedInstructionAccount as getAddressFromResolvedInstructionAccount4
+  getAddressFromResolvedInstructionAccount as getAddressFromResolvedInstructionAccount4,
 } from "@solana/program-client-core";
 var REWARD_XP_DISCRIMINATOR = new Uint8Array([
-  144,
-  187,
-  117,
-  238,
-  89,
-  118,
-  224,
-  145
+  144, 187, 117, 238, 89, 118, 224, 145,
 ]);
 function getRewardXpDiscriminatorBytes() {
-  return fixEncoderSize19(getBytesEncoder19(), 8).encode(REWARD_XP_DISCRIMINATOR);
+  return fixEncoderSize19(getBytesEncoder19(), 8).encode(
+    REWARD_XP_DISCRIMINATOR,
+  );
 }
 function getRewardXpInstructionDataEncoder() {
   return transformEncoder19(
     getStructEncoder19([
       ["discriminator", fixEncoderSize19(getBytesEncoder19(), 8)],
       ["amount", getU64Encoder5()],
-      ["memo", addEncoderSizePrefix9(getUtf8Encoder9(), getU32Encoder9())]
+      ["memo", addEncoderSizePrefix9(getUtf8Encoder9(), getU32Encoder9())],
     ]),
-    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR }),
   );
 }
 function getRewardXpInstructionDataDecoder() {
   return getStructDecoder19([
     ["discriminator", fixDecoderSize19(getBytesDecoder19(), 8)],
     ["amount", getU64Decoder5()],
-    ["memo", addDecoderSizePrefix9(getUtf8Decoder9(), getU32Decoder9())]
+    ["memo", addDecoderSizePrefix9(getUtf8Decoder9(), getU32Decoder9())],
   ]);
 }
 function getRewardXpInstructionDataCodec() {
   return combineCodec19(
     getRewardXpInstructionDataEncoder(),
-    getRewardXpInstructionDataDecoder()
+    getRewardXpInstructionDataDecoder(),
   );
 }
 async function getRewardXpInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     recipientTokenAccount: {
       value: input.recipientTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     minter: { value: input.minter ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2705,8 +2599,10 @@ async function getRewardXpInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress12({
       programAddress,
       seeds: [
-        getBytesEncoder19().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder19().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.minterRole.value) {
@@ -2714,15 +2610,15 @@ async function getRewardXpInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder19().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114])
+          new Uint8Array([109, 105, 110, 116, 101, 114]),
         ),
         getAddressEncoder12().encode(
           getAddressFromResolvedInstructionAccount4(
             "minter",
-            accounts.minter.value
-          )
-        )
-      ]
+            accounts.minter.value,
+          ),
+        ),
+      ],
     });
   }
   if (!accounts.tokenProgram.value) {
@@ -2736,26 +2632,25 @@ async function getRewardXpInstructionAsync(input, config) {
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("recipientTokenAccount", accounts.recipientTokenAccount),
       getAccountMeta("minter", accounts.minter),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
-    data: getRewardXpInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getRewardXpInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getRewardXpInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     minterRole: { value: input.minterRole ?? null, isWritable: true },
     xpMint: { value: input.xpMint ?? null, isWritable: true },
     recipientTokenAccount: {
       value: input.recipientTokenAccount ?? null,
-      isWritable: true
+      isWritable: true,
     },
     minter: { value: input.minter ?? null, isWritable: false },
-    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false }
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2770,12 +2665,10 @@ function getRewardXpInstruction(input, config) {
       getAccountMeta("xpMint", accounts.xpMint),
       getAccountMeta("recipientTokenAccount", accounts.recipientTokenAccount),
       getAccountMeta("minter", accounts.minter),
-      getAccountMeta("tokenProgram", accounts.tokenProgram)
+      getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
-    data: getRewardXpInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getRewardXpInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseRewardXpInstruction(instruction) {
@@ -2784,8 +2677,8 @@ function parseRewardXpInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS13,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 6
-      }
+        expectedAccountMetas: 6,
+      },
     );
   }
   let accountIndex = 0;
@@ -2802,9 +2695,9 @@ function parseRewardXpInstruction(instruction) {
       xpMint: getNextAccount(),
       recipientTokenAccount: getNextAccount(),
       minter: getNextAccount(),
-      tokenProgram: getNextAccount()
+      tokenProgram: getNextAccount(),
     },
-    data: getRewardXpInstructionDataDecoder().decode(instruction.data)
+    data: getRewardXpInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2824,52 +2717,44 @@ import {
   getStructEncoder as getStructEncoder20,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS14,
   SolanaError as SolanaError14,
-  transformEncoder as transformEncoder20
+  transformEncoder as transformEncoder20,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory14
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory14 } from "@solana/program-client-core";
 var UPDATE_CONFIG_DISCRIMINATOR = new Uint8Array([
-  29,
-  158,
-  252,
-  191,
-  10,
-  83,
-  219,
-  99
+  29, 158, 252, 191, 10, 83, 219, 99,
 ]);
 function getUpdateConfigDiscriminatorBytes() {
   return fixEncoderSize20(getBytesEncoder20(), 8).encode(
-    UPDATE_CONFIG_DISCRIMINATOR
+    UPDATE_CONFIG_DISCRIMINATOR,
   );
 }
 function getUpdateConfigInstructionDataEncoder() {
   return transformEncoder20(
     getStructEncoder20([
       ["discriminator", fixEncoderSize20(getBytesEncoder20(), 8)],
-      ["newBackendSigner", getOptionEncoder4(getAddressEncoder13())]
+      ["newBackendSigner", getOptionEncoder4(getAddressEncoder13())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR }),
   );
 }
 function getUpdateConfigInstructionDataDecoder() {
   return getStructDecoder20([
     ["discriminator", fixDecoderSize20(getBytesDecoder20(), 8)],
-    ["newBackendSigner", getOptionDecoder4(getAddressDecoder9())]
+    ["newBackendSigner", getOptionDecoder4(getAddressDecoder9())],
   ]);
 }
 function getUpdateConfigInstructionDataCodec() {
   return combineCodec20(
     getUpdateConfigInstructionDataEncoder(),
-    getUpdateConfigInstructionDataDecoder()
+    getUpdateConfigInstructionDataDecoder(),
   );
 }
 async function getUpdateConfigInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2877,27 +2762,28 @@ async function getUpdateConfigInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress13({
       programAddress,
       seeds: [
-        getBytesEncoder20().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder20().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   const getAccountMeta = getAccountMetaFactory14(programAddress, "programId");
   return Object.freeze({
     accounts: [
       getAccountMeta("config", accounts.config),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
-    data: getUpdateConfigInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpdateConfigInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getUpdateConfigInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -2905,12 +2791,10 @@ function getUpdateConfigInstruction(input, config) {
   return Object.freeze({
     accounts: [
       getAccountMeta("config", accounts.config),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
-    data: getUpdateConfigInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpdateConfigInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseUpdateConfigInstruction(instruction) {
@@ -2919,8 +2803,8 @@ function parseUpdateConfigInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS14,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 2
-      }
+        expectedAccountMetas: 2,
+      },
     );
   }
   let accountIndex = 0;
@@ -2932,7 +2816,7 @@ function parseUpdateConfigInstruction(instruction) {
   return {
     programAddress: instruction.programAddress,
     accounts: { config: getNextAccount(), authority: getNextAccount() },
-    data: getUpdateConfigInstructionDataDecoder().decode(instruction.data)
+    data: getUpdateConfigInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -2956,24 +2840,15 @@ import {
   getU32Encoder as getU32Encoder10,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS15,
   SolanaError as SolanaError15,
-  transformEncoder as transformEncoder21
+  transformEncoder as transformEncoder21,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory15
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory15 } from "@solana/program-client-core";
 var UPDATE_COURSE_DISCRIMINATOR = new Uint8Array([
-  81,
-  217,
-  18,
-  192,
-  129,
-  233,
-  129,
-  231
+  81, 217, 18, 192, 129, 233, 129, 231,
 ]);
 function getUpdateCourseDiscriminatorBytes() {
   return fixEncoderSize21(getBytesEncoder21(), 8).encode(
-    UPDATE_COURSE_DISCRIMINATOR
+    UPDATE_COURSE_DISCRIMINATOR,
   );
 }
 function getUpdateCourseInstructionDataEncoder() {
@@ -2982,38 +2857,42 @@ function getUpdateCourseInstructionDataEncoder() {
       ["discriminator", fixEncoderSize21(getBytesEncoder21(), 8)],
       [
         "newContentTxId",
-        getOptionEncoder5(fixEncoderSize21(getBytesEncoder21(), 32))
+        getOptionEncoder5(fixEncoderSize21(getBytesEncoder21(), 32)),
       ],
       ["newIsActive", getOptionEncoder5(getBooleanEncoder4())],
       ["newXpPerLesson", getOptionEncoder5(getU32Encoder10())],
       ["newCreatorRewardXp", getOptionEncoder5(getU32Encoder10())],
-      ["newMinCompletionsForReward", getOptionEncoder5(getU16Encoder3())]
+      ["newMinCompletionsForReward", getOptionEncoder5(getU16Encoder3())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR }),
   );
 }
 function getUpdateCourseInstructionDataDecoder() {
   return getStructDecoder21([
     ["discriminator", fixDecoderSize21(getBytesDecoder21(), 8)],
-    ["newContentTxId", getOptionDecoder5(fixDecoderSize21(getBytesDecoder21(), 32))],
+    [
+      "newContentTxId",
+      getOptionDecoder5(fixDecoderSize21(getBytesDecoder21(), 32)),
+    ],
     ["newIsActive", getOptionDecoder5(getBooleanDecoder4())],
     ["newXpPerLesson", getOptionDecoder5(getU32Decoder10())],
     ["newCreatorRewardXp", getOptionDecoder5(getU32Decoder10())],
-    ["newMinCompletionsForReward", getOptionDecoder5(getU16Decoder3())]
+    ["newMinCompletionsForReward", getOptionDecoder5(getU16Decoder3())],
   ]);
 }
 function getUpdateCourseInstructionDataCodec() {
   return combineCodec21(
     getUpdateCourseInstructionDataEncoder(),
-    getUpdateCourseInstructionDataDecoder()
+    getUpdateCourseInstructionDataDecoder(),
   );
 }
 async function getUpdateCourseInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -3021,8 +2900,10 @@ async function getUpdateCourseInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress14({
       programAddress,
       seeds: [
-        getBytesEncoder21().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder21().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   const getAccountMeta = getAccountMetaFactory15(programAddress, "programId");
@@ -3030,20 +2911,19 @@ async function getUpdateCourseInstructionAsync(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("course", accounts.course),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
-    data: getUpdateCourseInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpdateCourseInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getUpdateCourseInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false }
+    authority: { value: input.authority ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -3052,12 +2932,10 @@ function getUpdateCourseInstruction(input, config) {
     accounts: [
       getAccountMeta("config", accounts.config),
       getAccountMeta("course", accounts.course),
-      getAccountMeta("authority", accounts.authority)
+      getAccountMeta("authority", accounts.authority),
     ],
-    data: getUpdateCourseInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpdateCourseInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseUpdateCourseInstruction(instruction) {
@@ -3066,8 +2944,8 @@ function parseUpdateCourseInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS15,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 3
-      }
+        expectedAccountMetas: 3,
+      },
     );
   }
   let accountIndex = 0;
@@ -3081,9 +2959,9 @@ function parseUpdateCourseInstruction(instruction) {
     accounts: {
       config: getNextAccount(),
       course: getNextAccount(),
-      authority: getNextAccount()
+      authority: getNextAccount(),
     },
-    data: getUpdateCourseInstructionDataDecoder().decode(instruction.data)
+    data: getUpdateCourseInstructionDataDecoder().decode(instruction.data),
   };
 }
 
@@ -3107,24 +2985,15 @@ import {
   getUtf8Encoder as getUtf8Encoder10,
   SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS as SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS16,
   SolanaError as SolanaError16,
-  transformEncoder as transformEncoder22
+  transformEncoder as transformEncoder22,
 } from "@solana/kit";
-import {
-  getAccountMetaFactory as getAccountMetaFactory16
-} from "@solana/program-client-core";
+import { getAccountMetaFactory as getAccountMetaFactory16 } from "@solana/program-client-core";
 var UPGRADE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
-  2,
-  121,
-  77,
-  255,
-  103,
-  187,
-  252,
-  169
+  2, 121, 77, 255, 103, 187, 252, 169,
 ]);
 function getUpgradeCredentialDiscriminatorBytes() {
   return fixEncoderSize22(getBytesEncoder22(), 8).encode(
-    UPGRADE_CREDENTIAL_DISCRIMINATOR
+    UPGRADE_CREDENTIAL_DISCRIMINATOR,
   );
 }
 function getUpgradeCredentialInstructionDataEncoder() {
@@ -3133,32 +3002,42 @@ function getUpgradeCredentialInstructionDataEncoder() {
       ["discriminator", fixEncoderSize22(getBytesEncoder22(), 8)],
       [
         "credentialName",
-        addEncoderSizePrefix10(getUtf8Encoder10(), getU32Encoder11())
+        addEncoderSizePrefix10(getUtf8Encoder10(), getU32Encoder11()),
       ],
-      ["metadataUri", addEncoderSizePrefix10(getUtf8Encoder10(), getU32Encoder11())],
+      [
+        "metadataUri",
+        addEncoderSizePrefix10(getUtf8Encoder10(), getU32Encoder11()),
+      ],
       ["coursesCompleted", getU32Encoder11()],
-      ["totalXp", getU64Encoder6()]
+      ["totalXp", getU64Encoder6()],
     ]),
-    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR }),
   );
 }
 function getUpgradeCredentialInstructionDataDecoder() {
   return getStructDecoder22([
     ["discriminator", fixDecoderSize22(getBytesDecoder22(), 8)],
-    ["credentialName", addDecoderSizePrefix10(getUtf8Decoder10(), getU32Decoder11())],
-    ["metadataUri", addDecoderSizePrefix10(getUtf8Decoder10(), getU32Decoder11())],
+    [
+      "credentialName",
+      addDecoderSizePrefix10(getUtf8Decoder10(), getU32Decoder11()),
+    ],
+    [
+      "metadataUri",
+      addDecoderSizePrefix10(getUtf8Decoder10(), getU32Decoder11()),
+    ],
     ["coursesCompleted", getU32Decoder11()],
-    ["totalXp", getU64Decoder6()]
+    ["totalXp", getU64Decoder6()],
   ]);
 }
 function getUpgradeCredentialInstructionDataCodec() {
   return combineCodec22(
     getUpgradeCredentialInstructionDataEncoder(),
-    getUpgradeCredentialInstructionDataDecoder()
+    getUpgradeCredentialInstructionDataDecoder(),
   );
 }
 async function getUpgradeCredentialInstructionAsync(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -3169,7 +3048,7 @@ async function getUpgradeCredentialInstructionAsync(input, config) {
     payer: { value: input.payer ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
@@ -3177,12 +3056,15 @@ async function getUpgradeCredentialInstructionAsync(input, config) {
     accounts.config.value = await getProgramDerivedAddress15({
       programAddress,
       seeds: [
-        getBytesEncoder22().encode(new Uint8Array([99, 111, 110, 102, 105, 103]))
-      ]
+        getBytesEncoder22().encode(
+          new Uint8Array([99, 111, 110, 102, 105, 103]),
+        ),
+      ],
     });
   }
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -3199,16 +3081,15 @@ async function getUpgradeCredentialInstructionAsync(input, config) {
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("backendSigner", accounts.backendSigner),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpgradeCredentialInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpgradeCredentialInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function getUpgradeCredentialInstruction(input, config) {
-  const programAddress = config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? ONCHAIN_ACADEMY_PROGRAM_ADDRESS;
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     course: { value: input.course ?? null, isWritable: false },
@@ -3219,12 +3100,13 @@ function getUpgradeCredentialInstruction(input, config) {
     payer: { value: input.payer ?? null, isWritable: true },
     backendSigner: { value: input.backendSigner ?? null, isWritable: false },
     mplCoreProgram: { value: input.mplCoreProgram ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false }
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts;
   const args = { ...input };
   if (!accounts.mplCoreProgram.value) {
-    accounts.mplCoreProgram.value = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+    accounts.mplCoreProgram.value =
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value = "11111111111111111111111111111111";
@@ -3241,12 +3123,10 @@ function getUpgradeCredentialInstruction(input, config) {
       getAccountMeta("payer", accounts.payer),
       getAccountMeta("backendSigner", accounts.backendSigner),
       getAccountMeta("mplCoreProgram", accounts.mplCoreProgram),
-      getAccountMeta("systemProgram", accounts.systemProgram)
+      getAccountMeta("systemProgram", accounts.systemProgram),
     ],
-    data: getUpgradeCredentialInstructionDataEncoder().encode(
-      args
-    ),
-    programAddress
+    data: getUpgradeCredentialInstructionDataEncoder().encode(args),
+    programAddress,
   });
 }
 function parseUpgradeCredentialInstruction(instruction) {
@@ -3255,8 +3135,8 @@ function parseUpgradeCredentialInstruction(instruction) {
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS16,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 10
-      }
+        expectedAccountMetas: 10,
+      },
     );
   }
   let accountIndex = 0;
@@ -3277,252 +3157,331 @@ function parseUpgradeCredentialInstruction(instruction) {
       payer: getNextAccount(),
       backendSigner: getNextAccount(),
       mplCoreProgram: getNextAccount(),
-      systemProgram: getNextAccount()
+      systemProgram: getNextAccount(),
     },
-    data: getUpgradeCredentialInstructionDataDecoder().decode(instruction.data)
+    data: getUpgradeCredentialInstructionDataDecoder().decode(instruction.data),
   };
 }
 
 // src/generated/programs/onchainAcademy.ts
-var ONCHAIN_ACADEMY_PROGRAM_ADDRESS = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf";
+var ONCHAIN_ACADEMY_PROGRAM_ADDRESS =
+  "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf";
 var OnchainAcademyAccount = /* @__PURE__ */ ((OnchainAcademyAccount2) => {
-  OnchainAcademyAccount2[OnchainAcademyAccount2["AchievementReceipt"] = 0] = "AchievementReceipt";
-  OnchainAcademyAccount2[OnchainAcademyAccount2["AchievementType"] = 1] = "AchievementType";
-  OnchainAcademyAccount2[OnchainAcademyAccount2["Config"] = 2] = "Config";
-  OnchainAcademyAccount2[OnchainAcademyAccount2["Course"] = 3] = "Course";
-  OnchainAcademyAccount2[OnchainAcademyAccount2["Enrollment"] = 4] = "Enrollment";
-  OnchainAcademyAccount2[OnchainAcademyAccount2["MinterRole"] = 5] = "MinterRole";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["AchievementReceipt"] = 0)] =
+    "AchievementReceipt";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["AchievementType"] = 1)] =
+    "AchievementType";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["Config"] = 2)] = "Config";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["Course"] = 3)] = "Course";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["Enrollment"] = 4)] =
+    "Enrollment";
+  OnchainAcademyAccount2[(OnchainAcademyAccount2["MinterRole"] = 5)] =
+    "MinterRole";
   return OnchainAcademyAccount2;
 })(OnchainAcademyAccount || {});
 function identifyOnchainAcademyAccount(account) {
   const data = "data" in account ? account.data : account;
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248]),
+      ),
+      0,
+    )
+  ) {
     return 0 /* AchievementReceipt */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137]),
+      ),
+      0,
+    )
+  ) {
     return 1 /* AchievementType */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130]),
+      ),
+      0,
+    )
+  ) {
     return 2 /* Config */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106]),
+      ),
+      0,
+    )
+  ) {
     return 3 /* Course */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51]),
+      ),
+      0,
+    )
+  ) {
     return 4 /* Enrollment */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193]),
+      ),
+      0,
+    )
+  ) {
     return 5 /* MinterRole */;
   }
   throw new SolanaError17(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
-    { accountData: data, programName: "onchainAcademy" }
+    { accountData: data, programName: "onchainAcademy" },
   );
 }
-var OnchainAcademyInstruction = /* @__PURE__ */ ((OnchainAcademyInstruction2) => {
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["AwardAchievement"] = 0] = "AwardAchievement";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["CloseEnrollment"] = 1] = "CloseEnrollment";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["CompleteLesson"] = 2] = "CompleteLesson";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["CreateAchievementType"] = 3] = "CreateAchievementType";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["CreateCourse"] = 4] = "CreateCourse";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["DeactivateAchievementType"] = 5] = "DeactivateAchievementType";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["Enroll"] = 6] = "Enroll";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["FinalizeCourse"] = 7] = "FinalizeCourse";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["Initialize"] = 8] = "Initialize";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["IssueCredential"] = 9] = "IssueCredential";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["RegisterMinter"] = 10] = "RegisterMinter";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["RevokeMinter"] = 11] = "RevokeMinter";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["RewardXp"] = 12] = "RewardXp";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["UpdateConfig"] = 13] = "UpdateConfig";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["UpdateCourse"] = 14] = "UpdateCourse";
-  OnchainAcademyInstruction2[OnchainAcademyInstruction2["UpgradeCredential"] = 15] = "UpgradeCredential";
+var OnchainAcademyInstruction = /* @__PURE__ */ ((
+  OnchainAcademyInstruction2,
+) => {
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["AwardAchievement"] = 0)
+  ] = "AwardAchievement";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["CloseEnrollment"] = 1)
+  ] = "CloseEnrollment";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["CompleteLesson"] = 2)
+  ] = "CompleteLesson";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["CreateAchievementType"] = 3)
+  ] = "CreateAchievementType";
+  OnchainAcademyInstruction2[(OnchainAcademyInstruction2["CreateCourse"] = 4)] =
+    "CreateCourse";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["DeactivateAchievementType"] = 5)
+  ] = "DeactivateAchievementType";
+  OnchainAcademyInstruction2[(OnchainAcademyInstruction2["Enroll"] = 6)] =
+    "Enroll";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["FinalizeCourse"] = 7)
+  ] = "FinalizeCourse";
+  OnchainAcademyInstruction2[(OnchainAcademyInstruction2["Initialize"] = 8)] =
+    "Initialize";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["IssueCredential"] = 9)
+  ] = "IssueCredential";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["RegisterMinter"] = 10)
+  ] = "RegisterMinter";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["RevokeMinter"] = 11)
+  ] = "RevokeMinter";
+  OnchainAcademyInstruction2[(OnchainAcademyInstruction2["RewardXp"] = 12)] =
+    "RewardXp";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["UpdateConfig"] = 13)
+  ] = "UpdateConfig";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["UpdateCourse"] = 14)
+  ] = "UpdateCourse";
+  OnchainAcademyInstruction2[
+    (OnchainAcademyInstruction2["UpgradeCredential"] = 15)
+  ] = "UpgradeCredential";
   return OnchainAcademyInstruction2;
 })(OnchainAcademyInstruction || {});
 function identifyOnchainAcademyInstruction(instruction) {
   const data = "data" in instruction ? instruction.data : instruction;
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12]),
+      ),
+      0,
+    )
+  ) {
     return 0 /* AwardAchievement */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91]),
+      ),
+      0,
+    )
+  ) {
     return 1 /* CloseEnrollment */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58]),
+      ),
+      0,
+    )
+  ) {
     return 2 /* CompleteLesson */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19]),
+      ),
+      0,
+    )
+  ) {
     return 3 /* CreateAchievementType */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241]),
+      ),
+      0,
+    )
+  ) {
     return 4 /* CreateCourse */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191]),
+      ),
+      0,
+    )
+  ) {
     return 5 /* DeactivateAchievementType */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43]),
+      ),
+      0,
+    )
+  ) {
     return 6 /* Enroll */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218]),
+      ),
+      0,
+    )
+  ) {
     return 7 /* FinalizeCourse */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237]),
+      ),
+      0,
+    )
+  ) {
     return 8 /* Initialize */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87]),
+      ),
+      0,
+    )
+  ) {
     return 9 /* IssueCredential */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191]),
+      ),
+      0,
+    )
+  ) {
     return 10 /* RegisterMinter */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105]),
+      ),
+      0,
+    )
+  ) {
     return 11 /* RevokeMinter */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145]),
+      ),
+      0,
+    )
+  ) {
     return 12 /* RewardXp */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99]),
+      ),
+      0,
+    )
+  ) {
     return 13 /* UpdateConfig */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231]),
+      ),
+      0,
+    )
+  ) {
     return 14 /* UpdateCourse */;
   }
-  if (containsBytes(
-    data,
-    fixEncoderSize23(getBytesEncoder23(), 8).encode(
-      new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169])
-    ),
-    0
-  )) {
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize23(getBytesEncoder23(), 8).encode(
+        new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169]),
+      ),
+      0,
+    )
+  ) {
     return 15 /* UpgradeCredential */;
   }
   throw new SolanaError17(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
-    { instructionData: data, programName: "onchainAcademy" }
+    { instructionData: data, programName: "onchainAcademy" },
   );
 }
 function parseOnchainAcademyInstruction(instruction) {
@@ -3532,112 +3491,112 @@ function parseOnchainAcademyInstruction(instruction) {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 0 /* AwardAchievement */,
-        ...parseAwardAchievementInstruction(instruction)
+        ...parseAwardAchievementInstruction(instruction),
       };
     }
     case 1 /* CloseEnrollment */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 1 /* CloseEnrollment */,
-        ...parseCloseEnrollmentInstruction(instruction)
+        ...parseCloseEnrollmentInstruction(instruction),
       };
     }
     case 2 /* CompleteLesson */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 2 /* CompleteLesson */,
-        ...parseCompleteLessonInstruction(instruction)
+        ...parseCompleteLessonInstruction(instruction),
       };
     }
     case 3 /* CreateAchievementType */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 3 /* CreateAchievementType */,
-        ...parseCreateAchievementTypeInstruction(instruction)
+        ...parseCreateAchievementTypeInstruction(instruction),
       };
     }
     case 4 /* CreateCourse */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 4 /* CreateCourse */,
-        ...parseCreateCourseInstruction(instruction)
+        ...parseCreateCourseInstruction(instruction),
       };
     }
     case 5 /* DeactivateAchievementType */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 5 /* DeactivateAchievementType */,
-        ...parseDeactivateAchievementTypeInstruction(instruction)
+        ...parseDeactivateAchievementTypeInstruction(instruction),
       };
     }
     case 6 /* Enroll */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 6 /* Enroll */,
-        ...parseEnrollInstruction(instruction)
+        ...parseEnrollInstruction(instruction),
       };
     }
     case 7 /* FinalizeCourse */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 7 /* FinalizeCourse */,
-        ...parseFinalizeCourseInstruction(instruction)
+        ...parseFinalizeCourseInstruction(instruction),
       };
     }
     case 8 /* Initialize */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 8 /* Initialize */,
-        ...parseInitializeInstruction(instruction)
+        ...parseInitializeInstruction(instruction),
       };
     }
     case 9 /* IssueCredential */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 9 /* IssueCredential */,
-        ...parseIssueCredentialInstruction(instruction)
+        ...parseIssueCredentialInstruction(instruction),
       };
     }
     case 10 /* RegisterMinter */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 10 /* RegisterMinter */,
-        ...parseRegisterMinterInstruction(instruction)
+        ...parseRegisterMinterInstruction(instruction),
       };
     }
     case 11 /* RevokeMinter */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 11 /* RevokeMinter */,
-        ...parseRevokeMinterInstruction(instruction)
+        ...parseRevokeMinterInstruction(instruction),
       };
     }
     case 12 /* RewardXp */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 12 /* RewardXp */,
-        ...parseRewardXpInstruction(instruction)
+        ...parseRewardXpInstruction(instruction),
       };
     }
     case 13 /* UpdateConfig */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 13 /* UpdateConfig */,
-        ...parseUpdateConfigInstruction(instruction)
+        ...parseUpdateConfigInstruction(instruction),
       };
     }
     case 14 /* UpdateCourse */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 14 /* UpdateCourse */,
-        ...parseUpdateCourseInstruction(instruction)
+        ...parseUpdateCourseInstruction(instruction),
       };
     }
     case 15 /* UpgradeCredential */: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: 15 /* UpgradeCredential */,
-        ...parseUpgradeCredentialInstruction(instruction)
+        ...parseUpgradeCredentialInstruction(instruction),
       };
     }
     default:
@@ -3645,8 +3604,8 @@ function parseOnchainAcademyInstruction(instruction) {
         SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
         {
           instructionType,
-          programName: "onchainAcademy"
-        }
+          programName: "onchainAcademy",
+        },
       );
   }
 }
@@ -3658,99 +3617,115 @@ function onchainAcademyProgram() {
         accounts: {
           achievementReceipt: addSelfFetchFunctions(
             client,
-            getAchievementReceiptCodec()
+            getAchievementReceiptCodec(),
           ),
           achievementType: addSelfFetchFunctions(
             client,
-            getAchievementTypeCodec()
+            getAchievementTypeCodec(),
           ),
           config: addSelfFetchFunctions(client, getConfigCodec()),
           course: addSelfFetchFunctions(client, getCourseCodec()),
           enrollment: addSelfFetchFunctions(client, getEnrollmentCodec()),
-          minterRole: addSelfFetchFunctions(client, getMinterRoleCodec())
+          minterRole: addSelfFetchFunctions(client, getMinterRoleCodec()),
         },
         instructions: {
-          awardAchievement: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getAwardAchievementInstructionAsync({
-              ...input,
-              payer: input.payer ?? client.payer
-            })
-          ),
-          closeEnrollment: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getCloseEnrollmentInstruction(input)
-          ),
-          completeLesson: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getCompleteLessonInstructionAsync(input)
-          ),
-          createAchievementType: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getCreateAchievementTypeInstructionAsync({
-              ...input,
-              payer: input.payer ?? client.payer
-            })
-          ),
-          createCourse: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getCreateCourseInstructionAsync(input)
-          ),
-          deactivateAchievementType: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getDeactivateAchievementTypeInstructionAsync(input)
-          ),
-          enroll: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getEnrollInstructionAsync(input)
-          ),
-          finalizeCourse: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getFinalizeCourseInstructionAsync(input)
-          ),
-          initialize: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getInitializeInstructionAsync(input)
-          ),
-          issueCredential: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getIssueCredentialInstructionAsync({
-              ...input,
-              payer: input.payer ?? client.payer
-            })
-          ),
-          registerMinter: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getRegisterMinterInstructionAsync({
-              ...input,
-              payer: input.payer ?? client.payer
-            })
-          ),
-          revokeMinter: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getRevokeMinterInstructionAsync(input)
-          ),
-          rewardXp: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getRewardXpInstructionAsync(input)
-          ),
-          updateConfig: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getUpdateConfigInstructionAsync(input)
-          ),
-          updateCourse: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getUpdateCourseInstructionAsync(input)
-          ),
-          upgradeCredential: (input) => addSelfPlanAndSendFunctions(
-            client,
-            getUpgradeCredentialInstructionAsync({
-              ...input,
-              payer: input.payer ?? client.payer
-            })
-          )
-        }
-      }
+          awardAchievement: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getAwardAchievementInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+          closeEnrollment: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCloseEnrollmentInstruction(input),
+            ),
+          completeLesson: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCompleteLessonInstructionAsync(input),
+            ),
+          createAchievementType: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateAchievementTypeInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+          createCourse: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateCourseInstructionAsync(input),
+            ),
+          deactivateAchievementType: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getDeactivateAchievementTypeInstructionAsync(input),
+            ),
+          enroll: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getEnrollInstructionAsync(input),
+            ),
+          finalizeCourse: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getFinalizeCourseInstructionAsync(input),
+            ),
+          initialize: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getInitializeInstructionAsync(input),
+            ),
+          issueCredential: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getIssueCredentialInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+          registerMinter: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getRegisterMinterInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+          revokeMinter: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getRevokeMinterInstructionAsync(input),
+            ),
+          rewardXp: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getRewardXpInstructionAsync(input),
+            ),
+          updateConfig: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUpdateConfigInstructionAsync(input),
+            ),
+          updateCourse: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUpdateCourseInstructionAsync(input),
+            ),
+          upgradeCredential: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUpgradeCredentialInstructionAsync({
+                ...input,
+                payer: input.payer ?? client.payer,
+              }),
+            ),
+        },
+      },
     };
   };
 }
@@ -3812,7 +3787,7 @@ if (process.env.NODE_ENV !== "production") {
     [ONCHAIN_ACADEMY_ERROR__OVERFLOW]: `Arithmetic overflow`,
     [ONCHAIN_ACADEMY_ERROR__PREREQUISITE_NOT_MET]: `Prerequisite not met`,
     [ONCHAIN_ACADEMY_ERROR__UNAUTHORIZED]: `Unauthorized signer`,
-    [ONCHAIN_ACADEMY_ERROR__UNENROLL_COOLDOWN]: `Close cooldown not met (24h)`
+    [ONCHAIN_ACADEMY_ERROR__UNENROLL_COOLDOWN]: `Close cooldown not met (24h)`,
   };
 }
 function getOnchainAcademyErrorMessage(code) {
@@ -3826,7 +3801,7 @@ function isOnchainAcademyError(error, transactionMessage, code) {
     error,
     transactionMessage,
     ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-    code
+    code,
   );
 }
 
@@ -3844,30 +3819,36 @@ import {
   getU32Decoder as getU32Decoder12,
   getU32Encoder as getU32Encoder12,
   getUtf8Decoder as getUtf8Decoder11,
-  getUtf8Encoder as getUtf8Encoder11
+  getUtf8Encoder as getUtf8Encoder11,
 } from "@solana/kit";
 function getAchievementAwardedEncoder() {
   return getStructEncoder23([
-    ["achievementId", addEncoderSizePrefix11(getUtf8Encoder11(), getU32Encoder12())],
+    [
+      "achievementId",
+      addEncoderSizePrefix11(getUtf8Encoder11(), getU32Encoder12()),
+    ],
     ["recipient", getAddressEncoder14()],
     ["asset", getAddressEncoder14()],
     ["xpReward", getU32Encoder12()],
-    ["timestamp", getI64Encoder6()]
+    ["timestamp", getI64Encoder6()],
   ]);
 }
 function getAchievementAwardedDecoder() {
   return getStructDecoder23([
-    ["achievementId", addDecoderSizePrefix11(getUtf8Decoder11(), getU32Decoder12())],
+    [
+      "achievementId",
+      addDecoderSizePrefix11(getUtf8Decoder11(), getU32Decoder12()),
+    ],
     ["recipient", getAddressDecoder10()],
     ["asset", getAddressDecoder10()],
     ["xpReward", getU32Decoder12()],
-    ["timestamp", getI64Decoder6()]
+    ["timestamp", getI64Decoder6()],
   ]);
 }
 function getAchievementAwardedCodec() {
   return combineCodec23(
     getAchievementAwardedEncoder(),
-    getAchievementAwardedDecoder()
+    getAchievementAwardedDecoder(),
   );
 }
 
@@ -3885,32 +3866,38 @@ import {
   getU32Decoder as getU32Decoder13,
   getU32Encoder as getU32Encoder13,
   getUtf8Decoder as getUtf8Decoder12,
-  getUtf8Encoder as getUtf8Encoder12
+  getUtf8Encoder as getUtf8Encoder12,
 } from "@solana/kit";
 function getAchievementTypeCreatedEncoder() {
   return getStructEncoder24([
-    ["achievementId", addEncoderSizePrefix12(getUtf8Encoder12(), getU32Encoder13())],
+    [
+      "achievementId",
+      addEncoderSizePrefix12(getUtf8Encoder12(), getU32Encoder13()),
+    ],
     ["collection", getAddressEncoder15()],
     ["creator", getAddressEncoder15()],
     ["maxSupply", getU32Encoder13()],
     ["xpReward", getU32Encoder13()],
-    ["timestamp", getI64Encoder7()]
+    ["timestamp", getI64Encoder7()],
   ]);
 }
 function getAchievementTypeCreatedDecoder() {
   return getStructDecoder24([
-    ["achievementId", addDecoderSizePrefix12(getUtf8Decoder12(), getU32Decoder13())],
+    [
+      "achievementId",
+      addDecoderSizePrefix12(getUtf8Decoder12(), getU32Decoder13()),
+    ],
     ["collection", getAddressDecoder11()],
     ["creator", getAddressDecoder11()],
     ["maxSupply", getU32Decoder13()],
     ["xpReward", getU32Decoder13()],
-    ["timestamp", getI64Decoder7()]
+    ["timestamp", getI64Decoder7()],
   ]);
 }
 function getAchievementTypeCreatedCodec() {
   return combineCodec24(
     getAchievementTypeCreatedEncoder(),
-    getAchievementTypeCreatedDecoder()
+    getAchievementTypeCreatedDecoder(),
   );
 }
 
@@ -3926,24 +3913,30 @@ import {
   getU32Decoder as getU32Decoder14,
   getU32Encoder as getU32Encoder14,
   getUtf8Decoder as getUtf8Decoder13,
-  getUtf8Encoder as getUtf8Encoder13
+  getUtf8Encoder as getUtf8Encoder13,
 } from "@solana/kit";
 function getAchievementTypeDeactivatedEncoder() {
   return getStructEncoder25([
-    ["achievementId", addEncoderSizePrefix13(getUtf8Encoder13(), getU32Encoder14())],
-    ["timestamp", getI64Encoder8()]
+    [
+      "achievementId",
+      addEncoderSizePrefix13(getUtf8Encoder13(), getU32Encoder14()),
+    ],
+    ["timestamp", getI64Encoder8()],
   ]);
 }
 function getAchievementTypeDeactivatedDecoder() {
   return getStructDecoder25([
-    ["achievementId", addDecoderSizePrefix13(getUtf8Decoder13(), getU32Decoder14())],
-    ["timestamp", getI64Decoder8()]
+    [
+      "achievementId",
+      addDecoderSizePrefix13(getUtf8Decoder13(), getU32Decoder14()),
+    ],
+    ["timestamp", getI64Decoder8()],
   ]);
 }
 function getAchievementTypeDeactivatedCodec() {
   return combineCodec25(
     getAchievementTypeDeactivatedEncoder(),
-    getAchievementTypeDeactivatedDecoder()
+    getAchievementTypeDeactivatedDecoder(),
   );
 }
 
@@ -3959,18 +3952,18 @@ import {
   getU32Decoder as getU32Decoder15,
   getU32Encoder as getU32Encoder15,
   getUtf8Decoder as getUtf8Decoder14,
-  getUtf8Encoder as getUtf8Encoder14
+  getUtf8Encoder as getUtf8Encoder14,
 } from "@solana/kit";
 function getConfigUpdatedEncoder() {
   return getStructEncoder26([
     ["field", addEncoderSizePrefix14(getUtf8Encoder14(), getU32Encoder15())],
-    ["timestamp", getI64Encoder9()]
+    ["timestamp", getI64Encoder9()],
   ]);
 }
 function getConfigUpdatedDecoder() {
   return getStructDecoder26([
     ["field", addDecoderSizePrefix14(getUtf8Decoder14(), getU32Decoder15())],
-    ["timestamp", getI64Decoder9()]
+    ["timestamp", getI64Decoder9()],
   ]);
 }
 function getConfigUpdatedCodec() {
@@ -3995,7 +3988,7 @@ import {
   getU8Decoder as getU8Decoder9,
   getU8Encoder as getU8Encoder9,
   getUtf8Decoder as getUtf8Decoder15,
-  getUtf8Encoder as getUtf8Encoder15
+  getUtf8Encoder as getUtf8Encoder15,
 } from "@solana/kit";
 function getCourseCreatedEncoder() {
   return getStructEncoder27([
@@ -4004,7 +3997,7 @@ function getCourseCreatedEncoder() {
     ["creator", getAddressEncoder16()],
     ["trackId", getU16Encoder4()],
     ["trackLevel", getU8Encoder9()],
-    ["timestamp", getI64Encoder10()]
+    ["timestamp", getI64Encoder10()],
   ]);
 }
 function getCourseCreatedDecoder() {
@@ -4014,7 +4007,7 @@ function getCourseCreatedDecoder() {
     ["creator", getAddressDecoder12()],
     ["trackId", getU16Decoder4()],
     ["trackLevel", getU8Decoder9()],
-    ["timestamp", getI64Decoder10()]
+    ["timestamp", getI64Decoder10()],
   ]);
 }
 function getCourseCreatedCodec() {
@@ -4033,7 +4026,7 @@ import {
   getU32Decoder as getU32Decoder17,
   getU32Encoder as getU32Encoder17,
   getU64Decoder as getU64Decoder7,
-  getU64Encoder as getU64Encoder7
+  getU64Encoder as getU64Encoder7,
 } from "@solana/kit";
 function getCourseFinalizedEncoder() {
   return getStructEncoder28([
@@ -4043,7 +4036,7 @@ function getCourseFinalizedEncoder() {
     ["bonusXp", getU64Encoder7()],
     ["creator", getAddressEncoder17()],
     ["creatorXp", getU32Encoder17()],
-    ["timestamp", getI64Encoder11()]
+    ["timestamp", getI64Encoder11()],
   ]);
 }
 function getCourseFinalizedDecoder() {
@@ -4054,11 +4047,14 @@ function getCourseFinalizedDecoder() {
     ["bonusXp", getU64Decoder7()],
     ["creator", getAddressDecoder13()],
     ["creatorXp", getU32Decoder17()],
-    ["timestamp", getI64Decoder11()]
+    ["timestamp", getI64Decoder11()],
   ]);
 }
 function getCourseFinalizedCodec() {
-  return combineCodec28(getCourseFinalizedEncoder(), getCourseFinalizedDecoder());
+  return combineCodec28(
+    getCourseFinalizedEncoder(),
+    getCourseFinalizedDecoder(),
+  );
 }
 
 // src/generated/types/courseUpdated.ts
@@ -4071,20 +4067,20 @@ import {
   getStructDecoder as getStructDecoder29,
   getStructEncoder as getStructEncoder29,
   getU16Decoder as getU16Decoder5,
-  getU16Encoder as getU16Encoder5
+  getU16Encoder as getU16Encoder5,
 } from "@solana/kit";
 function getCourseUpdatedEncoder() {
   return getStructEncoder29([
     ["course", getAddressEncoder18()],
     ["version", getU16Encoder5()],
-    ["timestamp", getI64Encoder12()]
+    ["timestamp", getI64Encoder12()],
   ]);
 }
 function getCourseUpdatedDecoder() {
   return getStructDecoder29([
     ["course", getAddressDecoder14()],
     ["version", getU16Decoder5()],
-    ["timestamp", getI64Decoder12()]
+    ["timestamp", getI64Decoder12()],
   ]);
 }
 function getCourseUpdatedCodec() {
@@ -4103,7 +4099,7 @@ import {
   getU16Decoder as getU16Decoder6,
   getU16Encoder as getU16Encoder6,
   getU8Decoder as getU8Decoder10,
-  getU8Encoder as getU8Encoder10
+  getU8Encoder as getU8Encoder10,
 } from "@solana/kit";
 function getCredentialIssuedEncoder() {
   return getStructEncoder30([
@@ -4111,7 +4107,7 @@ function getCredentialIssuedEncoder() {
     ["trackId", getU16Encoder6()],
     ["credentialAsset", getAddressEncoder19()],
     ["currentLevel", getU8Encoder10()],
-    ["timestamp", getI64Encoder13()]
+    ["timestamp", getI64Encoder13()],
   ]);
 }
 function getCredentialIssuedDecoder() {
@@ -4120,13 +4116,13 @@ function getCredentialIssuedDecoder() {
     ["trackId", getU16Decoder6()],
     ["credentialAsset", getAddressDecoder15()],
     ["currentLevel", getU8Decoder10()],
-    ["timestamp", getI64Decoder13()]
+    ["timestamp", getI64Decoder13()],
   ]);
 }
 function getCredentialIssuedCodec() {
   return combineCodec30(
     getCredentialIssuedEncoder(),
-    getCredentialIssuedDecoder()
+    getCredentialIssuedDecoder(),
   );
 }
 
@@ -4142,7 +4138,7 @@ import {
   getU16Decoder as getU16Decoder7,
   getU16Encoder as getU16Encoder7,
   getU8Decoder as getU8Decoder11,
-  getU8Encoder as getU8Encoder11
+  getU8Encoder as getU8Encoder11,
 } from "@solana/kit";
 function getCredentialUpgradedEncoder() {
   return getStructEncoder31([
@@ -4150,7 +4146,7 @@ function getCredentialUpgradedEncoder() {
     ["trackId", getU16Encoder7()],
     ["credentialAsset", getAddressEncoder20()],
     ["currentLevel", getU8Encoder11()],
-    ["timestamp", getI64Encoder14()]
+    ["timestamp", getI64Encoder14()],
   ]);
 }
 function getCredentialUpgradedDecoder() {
@@ -4159,13 +4155,13 @@ function getCredentialUpgradedDecoder() {
     ["trackId", getU16Decoder7()],
     ["credentialAsset", getAddressDecoder16()],
     ["currentLevel", getU8Decoder11()],
-    ["timestamp", getI64Decoder14()]
+    ["timestamp", getI64Decoder14()],
   ]);
 }
 function getCredentialUpgradedCodec() {
   return combineCodec31(
     getCredentialUpgradedEncoder(),
-    getCredentialUpgradedDecoder()
+    getCredentialUpgradedDecoder(),
   );
 }
 
@@ -4179,14 +4175,14 @@ import {
   getStructDecoder as getStructDecoder32,
   getStructEncoder as getStructEncoder32,
   getU16Decoder as getU16Decoder8,
-  getU16Encoder as getU16Encoder8
+  getU16Encoder as getU16Encoder8,
 } from "@solana/kit";
 function getEnrolledEncoder() {
   return getStructEncoder32([
     ["learner", getAddressEncoder21()],
     ["course", getAddressEncoder21()],
     ["courseVersion", getU16Encoder8()],
-    ["timestamp", getI64Encoder15()]
+    ["timestamp", getI64Encoder15()],
   ]);
 }
 function getEnrolledDecoder() {
@@ -4194,7 +4190,7 @@ function getEnrolledDecoder() {
     ["learner", getAddressDecoder17()],
     ["course", getAddressDecoder17()],
     ["courseVersion", getU16Decoder8()],
-    ["timestamp", getI64Decoder15()]
+    ["timestamp", getI64Decoder15()],
   ]);
 }
 function getEnrolledCodec() {
@@ -4213,7 +4209,7 @@ import {
   getStructDecoder as getStructDecoder33,
   getStructEncoder as getStructEncoder33,
   getU64Decoder as getU64Decoder8,
-  getU64Encoder as getU64Encoder8
+  getU64Encoder as getU64Encoder8,
 } from "@solana/kit";
 function getEnrollmentClosedEncoder() {
   return getStructEncoder33([
@@ -4221,7 +4217,7 @@ function getEnrollmentClosedEncoder() {
     ["course", getAddressEncoder22()],
     ["completed", getBooleanEncoder5()],
     ["rentReclaimed", getU64Encoder8()],
-    ["timestamp", getI64Encoder16()]
+    ["timestamp", getI64Encoder16()],
   ]);
 }
 function getEnrollmentClosedDecoder() {
@@ -4230,13 +4226,13 @@ function getEnrollmentClosedDecoder() {
     ["course", getAddressDecoder18()],
     ["completed", getBooleanDecoder5()],
     ["rentReclaimed", getU64Decoder8()],
-    ["timestamp", getI64Decoder16()]
+    ["timestamp", getI64Decoder16()],
   ]);
 }
 function getEnrollmentClosedCodec() {
   return combineCodec33(
     getEnrollmentClosedEncoder(),
-    getEnrollmentClosedDecoder()
+    getEnrollmentClosedDecoder(),
   );
 }
 
@@ -4252,7 +4248,7 @@ import {
   getU32Decoder as getU32Decoder18,
   getU32Encoder as getU32Encoder18,
   getU8Decoder as getU8Decoder12,
-  getU8Encoder as getU8Encoder12
+  getU8Encoder as getU8Encoder12,
 } from "@solana/kit";
 function getLessonCompletedEncoder() {
   return getStructEncoder34([
@@ -4260,7 +4256,7 @@ function getLessonCompletedEncoder() {
     ["course", getAddressEncoder23()],
     ["lessonIndex", getU8Encoder12()],
     ["xpEarned", getU32Encoder18()],
-    ["timestamp", getI64Encoder17()]
+    ["timestamp", getI64Encoder17()],
   ]);
 }
 function getLessonCompletedDecoder() {
@@ -4269,11 +4265,14 @@ function getLessonCompletedDecoder() {
     ["course", getAddressDecoder19()],
     ["lessonIndex", getU8Decoder12()],
     ["xpEarned", getU32Decoder18()],
-    ["timestamp", getI64Decoder17()]
+    ["timestamp", getI64Decoder17()],
   ]);
 }
 function getLessonCompletedCodec() {
-  return combineCodec34(getLessonCompletedEncoder(), getLessonCompletedDecoder());
+  return combineCodec34(
+    getLessonCompletedEncoder(),
+    getLessonCompletedDecoder(),
+  );
 }
 
 // src/generated/types/minterRegistered.ts
@@ -4292,14 +4291,14 @@ import {
   getU64Decoder as getU64Decoder9,
   getU64Encoder as getU64Encoder9,
   getUtf8Decoder as getUtf8Decoder16,
-  getUtf8Encoder as getUtf8Encoder16
+  getUtf8Encoder as getUtf8Encoder16,
 } from "@solana/kit";
 function getMinterRegisteredEncoder() {
   return getStructEncoder35([
     ["minter", getAddressEncoder24()],
     ["label", addEncoderSizePrefix16(getUtf8Encoder16(), getU32Encoder19())],
     ["maxXpPerCall", getU64Encoder9()],
-    ["timestamp", getI64Encoder18()]
+    ["timestamp", getI64Encoder18()],
   ]);
 }
 function getMinterRegisteredDecoder() {
@@ -4307,13 +4306,13 @@ function getMinterRegisteredDecoder() {
     ["minter", getAddressDecoder20()],
     ["label", addDecoderSizePrefix16(getUtf8Decoder16(), getU32Decoder19())],
     ["maxXpPerCall", getU64Decoder9()],
-    ["timestamp", getI64Decoder18()]
+    ["timestamp", getI64Decoder18()],
   ]);
 }
 function getMinterRegisteredCodec() {
   return combineCodec35(
     getMinterRegisteredEncoder(),
-    getMinterRegisteredDecoder()
+    getMinterRegisteredDecoder(),
   );
 }
 
@@ -4327,20 +4326,20 @@ import {
   getStructDecoder as getStructDecoder36,
   getStructEncoder as getStructEncoder36,
   getU64Decoder as getU64Decoder10,
-  getU64Encoder as getU64Encoder10
+  getU64Encoder as getU64Encoder10,
 } from "@solana/kit";
 function getMinterRevokedEncoder() {
   return getStructEncoder36([
     ["minter", getAddressEncoder25()],
     ["totalXpMinted", getU64Encoder10()],
-    ["timestamp", getI64Encoder19()]
+    ["timestamp", getI64Encoder19()],
   ]);
 }
 function getMinterRevokedDecoder() {
   return getStructDecoder36([
     ["minter", getAddressDecoder21()],
     ["totalXpMinted", getU64Decoder10()],
-    ["timestamp", getI64Decoder19()]
+    ["timestamp", getI64Decoder19()],
   ]);
 }
 function getMinterRevokedCodec() {
@@ -4363,7 +4362,7 @@ import {
   getU64Decoder as getU64Decoder11,
   getU64Encoder as getU64Encoder11,
   getUtf8Decoder as getUtf8Decoder17,
-  getUtf8Encoder as getUtf8Encoder17
+  getUtf8Encoder as getUtf8Encoder17,
 } from "@solana/kit";
 function getXpRewardedEncoder() {
   return getStructEncoder37([
@@ -4371,7 +4370,7 @@ function getXpRewardedEncoder() {
     ["recipient", getAddressEncoder26()],
     ["amount", getU64Encoder11()],
     ["memo", addEncoderSizePrefix17(getUtf8Encoder17(), getU32Encoder20())],
-    ["timestamp", getI64Encoder20()]
+    ["timestamp", getI64Encoder20()],
   ]);
 }
 function getXpRewardedDecoder() {
@@ -4380,11 +4379,118 @@ function getXpRewardedDecoder() {
     ["recipient", getAddressDecoder22()],
     ["amount", getU64Decoder11()],
     ["memo", addDecoderSizePrefix17(getUtf8Decoder17(), getU32Decoder20())],
-    ["timestamp", getI64Decoder20()]
+    ["timestamp", getI64Decoder20()],
   ]);
 }
 function getXpRewardedCodec() {
   return combineCodec37(getXpRewardedEncoder(), getXpRewardedDecoder());
+}
+
+// src/helpers/pdas.ts
+import {
+  getAddressEncoder as getAddressEncoder27,
+  getProgramDerivedAddress as getProgramDerivedAddress16,
+  getUtf8Encoder as getUtf8Encoder18,
+} from "@solana/kit";
+async function getConfigPda(programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS) {
+  const [configPda] = await getProgramDerivedAddress16({
+    programAddress,
+    seeds: [getUtf8Encoder18().encode("config")],
+  });
+  return configPda;
+}
+async function getCoursePda(
+  courseId,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+) {
+  const [coursePda] = await getProgramDerivedAddress16({
+    programAddress,
+    seeds: [
+      getUtf8Encoder18().encode("course"),
+      getUtf8Encoder18().encode(courseId),
+    ],
+  });
+  return coursePda;
+}
+async function getEnrollmentPda(
+  courseId,
+  learner,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+) {
+  const [enrollmentPda] = await getProgramDerivedAddress16({
+    programAddress,
+    seeds: [
+      getUtf8Encoder18().encode("enrollment"),
+      getUtf8Encoder18().encode(courseId),
+      getAddressEncoder27().encode(learner),
+    ],
+  });
+  return enrollmentPda;
+}
+async function getAchievementReceiptPda(
+  achievementId,
+  recipient,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+) {
+  const [pda] = await getProgramDerivedAddress16({
+    programAddress,
+    seeds: [
+      getUtf8Encoder18().encode("achievement_receipt"),
+      getUtf8Encoder18().encode(achievementId),
+      getAddressEncoder27().encode(recipient),
+    ],
+  });
+  return pda;
+}
+
+// src/helpers/ata.ts
+import {
+  address,
+  getAddressEncoder as getAddressEncoder28,
+  getProgramDerivedAddress as getProgramDerivedAddress17,
+} from "@solana/kit";
+var TOKEN_2022_PROGRAM_ADDRESS = address(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+);
+var ASSOCIATED_TOKEN_PROGRAM_ADDRESS = address(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+);
+async function getXpAta(owner, xpMint) {
+  const [ata] = await getProgramDerivedAddress17({
+    programAddress: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+    seeds: [
+      getAddressEncoder28().encode(owner),
+      getAddressEncoder28().encode(TOKEN_2022_PROGRAM_ADDRESS),
+      getAddressEncoder28().encode(xpMint),
+    ],
+  });
+  return ata;
+}
+
+// src/helpers/courses.ts
+async function fetchAllCoursesByProgram(
+  rpc,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+) {
+  const discriminatorB64 = Buffer.from(COURSE_DISCRIMINATOR).toString("base64");
+  const { value: accounts } = await rpc
+    .getProgramAccounts(programAddress, {
+      commitment: "confirmed",
+      filters: [
+        {
+          memcmp: {
+            offset: 0n,
+            bytes: `base64:${discriminatorB64}`,
+          },
+        },
+      ],
+    })
+    .send();
+  if (!accounts || accounts.length === 0) {
+    return [];
+  }
+  const addresses = accounts.map((a) => a.pubkey);
+  return fetchAllMaybeCourse(rpc, addresses);
 }
 export {
   ACHIEVEMENT_RECEIPT_DISCRIMINATOR,
@@ -4451,6 +4557,7 @@ export {
   fetchAllAchievementType,
   fetchAllConfig,
   fetchAllCourse,
+  fetchAllCoursesByProgram,
   fetchAllEnrollment,
   fetchAllMaybeAchievementReceipt,
   fetchAllMaybeAchievementType,
@@ -4476,6 +4583,7 @@ export {
   getAchievementReceiptDecoder,
   getAchievementReceiptDiscriminatorBytes,
   getAchievementReceiptEncoder,
+  getAchievementReceiptPda,
   getAchievementReceiptSize,
   getAchievementTypeCodec,
   getAchievementTypeCreatedCodec,
@@ -4508,6 +4616,7 @@ export {
   getConfigDecoder,
   getConfigDiscriminatorBytes,
   getConfigEncoder,
+  getConfigPda,
   getConfigSize,
   getConfigUpdatedCodec,
   getConfigUpdatedDecoder,
@@ -4522,6 +4631,7 @@ export {
   getCourseFinalizedCodec,
   getCourseFinalizedDecoder,
   getCourseFinalizedEncoder,
+  getCoursePda,
   getCourseUpdatedCodec,
   getCourseUpdatedDecoder,
   getCourseUpdatedEncoder,
@@ -4565,6 +4675,7 @@ export {
   getEnrollmentDecoder,
   getEnrollmentDiscriminatorBytes,
   getEnrollmentEncoder,
+  getEnrollmentPda,
   getFinalizeCourseDiscriminatorBytes,
   getFinalizeCourseInstruction,
   getFinalizeCourseInstructionAsync,
@@ -4633,6 +4744,7 @@ export {
   getUpgradeCredentialInstructionDataCodec,
   getUpgradeCredentialInstructionDataDecoder,
   getUpgradeCredentialInstructionDataEncoder,
+  getXpAta,
   getXpRewardedCodec,
   getXpRewardedDecoder,
   getXpRewardedEncoder,
@@ -4656,5 +4768,5 @@ export {
   parseRewardXpInstruction,
   parseUpdateConfigInstruction,
   parseUpdateCourseInstruction,
-  parseUpgradeCredentialInstruction
+  parseUpgradeCredentialInstruction,
 };

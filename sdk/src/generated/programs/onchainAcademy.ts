@@ -120,7 +120,7 @@ import {
 } from "../instructions";
 
 export const ONCHAIN_ACADEMY_PROGRAM_ADDRESS =
-  "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf" as Address<"ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf">;
+  "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf" as Address<"HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf">;
 
 export enum OnchainAcademyAccount {
   AchievementReceipt,
@@ -413,7 +413,7 @@ export function identifyOnchainAcademyInstruction(
 }
 
 export type ParsedOnchainAcademyInstruction<
-  TProgram extends string = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf",
+  TProgram extends string = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf",
 > =
   | ({
       instructionType: OnchainAcademyInstruction.AwardAchievement;
