@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "dashboard": "Dashboard",
+    "connectWallet": "Connect Wallet"
+  },
+  "landing": {
+    "hero": {
+      "title": "Learn Solana.\nEarn XP.\nGet Hired.",
+      "subtitle": "The interactive learning platform for Solana developers in Latin America. Master blockchain development through hands-on challenges and earn verifiable credentials.",
+      "startLearning": "Start Learning",
+      "viewDashboard": "View Dashboard",
+      "poweredBy": "Powered by Solana"
+    },
+    "stats": {
+      "learners": "Active Learners",
+      "courses": "Courses Available",
+      "xpEarned": "XP Earned"
+    },
+    "features": {
+      "title": "Why Superteam Academy?",
+      "subtitle": "We combine interactive learning with on-chain gamification to create the most engaging Solana education experience.",
+      "codeEditor": {
+        "title": "Interactive Code Editor",
+        "description": "Write and test Solana programs directly in your browser with Monaco Editor."
+      },
+      "gamification": {
+        "title": "Gamified Learning",
+        "description": "Earn XP, level up, and maintain streaks as you progress through courses."
+      },
+      "credentials": {
+        "title": "On-Chain Credentials",
+        "description": "Receive verifiable NFT certificates upon course completion."
+      }
+    },
+    "cta": {
+      "title": "Ready to Start Your Journey?",
+      "subtitle": "Join thousands of developers learning Solana the right way.",
+      "button": "Explore Courses"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {name}!",
+    "subtitle": "Continue your journey to mastering Solana development.",
+    "stats": {
+      "totalXp": "Total XP",
+      "level": "Level",
+      "streak": "Current Streak",
+      "courses": "Courses"
+    },
+    "xpToNextLevel": "{xp} XP to level {level}",
+    "keepLearning": "Keep learning daily!",
+    "completed": "Completed",
+    "availableCourses": "Available Courses",
+    "viewAllCourses": "View All Courses",
+    "startLearning": "Start Learning",
+    "reviewCourse": "Review Course",
+    "lessons": "lessons"
+  },
+  "lesson": {
+    "completeLesson": "Complete Lesson",
+    "completing": "Completing...",
+    "completed": "Completed",
+    "markComplete": "Mark this lesson as complete to earn {xp} XP",
+    "youCompleted": "You've completed this lesson",
+    "starterCode": "Starter Code",
+    "codeEditor": "Code Editor",
+    "output": "Output",
+    "testCases": "Test Cases",
+    "runTests": "Run Tests",
+    "running": "Running...",
+    "allPassed": "All Tests Passed",
+    "testsPassed": "{passed}/{total} Passed",
+    "reset": "Reset",
+    "backToCourse": "Back to {course}"
+  },
+  "course": {
+    "yourProgress": "Your Progress",
+    "lessonsComplete": "{completed} / {total} lessons",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "start": "Start",
+    "done": "Done",
+    "notFound": "Course not found",
+    "notFoundDescription": "The course you're looking for doesn't exist.",
+    "backToCourses": "Back to Courses"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "newAchievement": "New Achievement Unlocked!",
+    "earnedXp": "Earned {xp} XP"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "See how you rank against other developers",
+    "rank": "Rank",
+    "learner": "Learner",
+    "xp": "XP",
+    "level": "Level",
+    "achievements": "Achievements",
+    "you": "You"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "tryAgain": "Try Again",
+    "comingSoon": "Coming Soon",
+    "minutes": "{count}m",
+    "hours": "{count}h",
+    "days": "{count} days"
+  }
+}

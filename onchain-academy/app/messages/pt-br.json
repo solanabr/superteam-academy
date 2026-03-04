@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "leaderboard": "Classificação",
+    "dashboard": "Painel",
+    "connectWallet": "Conectar Carteira"
+  },
+  "landing": {
+    "hero": {
+      "title": "Aprenda Solana.\nGanhe XP.\nConsiga Emprego.",
+      "subtitle": "A plataforma de aprendizado interativo para desenvolvedores Solana na América Latina. Domine o desenvolvimento blockchain através de desafios práticos e ganhe credenciais verificáveis.",
+      "startLearning": "Começar a Aprender",
+      "viewDashboard": "Ver Painel",
+      "poweredBy": "Powered by Solana"
+    },
+    "stats": {
+      "learners": "Alunos Ativos",
+      "courses": "Cursos Disponíveis",
+      "xpEarned": "XP Ganho"
+    },
+    "features": {
+      "title": "Por que Superteam Academy?",
+      "subtitle": "Combinamos aprendizado interativo com gamificação on-chain para criar a experiência de educação Solana mais envolvente.",
+      "codeEditor": {
+        "title": "Editor de Código Interativo",
+        "description": "Escreva e teste programas Solana diretamente no seu navegador com o Monaco Editor."
+      },
+      "gamification": {
+        "title": "Aprendizado Gamificado",
+        "description": "Ganhe XP, suba de nível e mantenha sequências enquanto progride nos cursos."
+      },
+      "credentials": {
+        "title": "Credenciais On-Chain",
+        "description": "Receba certificados NFT verificáveis ao concluir os cursos."
+      }
+    },
+    "cta": {
+      "title": "Pronto para Começar Sua Jornada?",
+      "subtitle": "Junte-se a milhares de desenvolvedores aprendendo Solana da maneira certa.",
+      "button": "Explorar Cursos"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo de volta, {name}!",
+    "subtitle": "Continue sua jornada para dominar o desenvolvimento Solana.",
+    "stats": {
+      "totalXp": "XP Total",
+      "level": "Nível",
+      "streak": "Sequência Atual",
+      "courses": "Cursos"
+    },
+    "xpToNextLevel": "{xp} XP para o nível {level}",
+    "keepLearning": "Continue aprendendo diariamente!",
+    "completed": "Concluído",
+    "availableCourses": "Cursos Disponíveis",
+    "viewAllCourses": "Ver Todos os Cursos",
+    "startLearning": "Começar a Aprender",
+    "reviewCourse": "Revisar Curso",
+    "lessons": "lições"
+  },
+  "lesson": {
+    "completeLesson": "Concluir Lição",
+    "completing": "Concluindo...",
+    "completed": "Concluído",
+    "markComplete": "Marque esta lição como concluída para ganhar {xp} XP",
+    "youCompleted": "Você concluiu esta lição",
+    "starterCode": "Código Inicial",
+    "codeEditor": "Editor de Código",
+    "output": "Saída",
+    "testCases": "Casos de Teste",
+    "runTests": "Executar Testes",
+    "running": "Executando...",
+    "allPassed": "Todos os Testes Passaram",
+    "testsPassed": "{passed}/{total} Aprovados",
+    "reset": "Resetar",
+    "backToCourse": "Voltar para {course}"
+  },
+  "course": {
+    "yourProgress": "Seu Progresso",
+    "lessonsComplete": "{completed} / {total} lições",
+    "difficulty": {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado"
+    },
+    "start": "Começar",
+    "done": "Feito",
+    "notFound": "Curso não encontrado",
+    "notFoundDescription": "O curso que você procura não existe.",
+    "backToCourses": "Voltar aos Cursos"
+  },
+  "achievements": {
+    "title": "Conquistas",
+    "unlocked": "Desbloqueado",
+    "locked": "Bloqueado",
+    "newAchievement": "Nova Conquista Desbloqueada!",
+    "earnedXp": "Ganhou {xp} XP"
+  },
+  "leaderboard": {
+    "title": "Classificação",
+    "subtitle": "Veja como você se classifica em relação a outros desenvolvedores",
+    "rank": "Posição",
+    "learner": "Aluno",
+    "xp": "XP",
+    "level": "Nível",
+    "achievements": "Conquistas",
+    "you": "Você"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "tryAgain": "Tentar Novamente",
+    "comingSoon": "Em Breve",
+    "minutes": "{count}m",
+    "hours": "{count}h",
+    "days": "{count} dias"
+  }
+}

@@ -1,0 +1,122 @@
+// FILE: postcss.config.js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+// ============================================================================
+// FILE: components.json
+// ============================================================================
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "app/globals.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+
+// ============================================================================
+// FILE: vitest.config.ts
+// ============================================================================
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts'],
+    globals: true,
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './'),
+    },
+  },
+});
+
+// ============================================================================
+// FILE: vitest.setup.ts
+// ============================================================================
+import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
+
+expect.extend(matchers);
+
+afterEach(() => {
+  cleanup();
+});
+
+// ============================================================================
+// FILE: i18n.ts
+// ============================================================================
+import { getRequestConfig } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+
+export const locales = ['en', 'pt-br', 'es'] as const;
+export type Locale = typeof locales[number];
+
+export const defaultLocale: Locale = 'en';
+
+export const localeNames: Record<Locale, string> = {
+  'en': 'English',
+  'pt-br': 'Português',
+  'es': 'Español',
+};
+
+export default getRequestConfig(async ({ locale }) => {
+  if (!locales.includes(locale as Locale)) notFound();
+
+  return {
+    messages: (await import(`./messages/${locale}.json`)).default
+  };
+});
+
+// ============================================================================
+// FILE: .env.local
+// ============================================================================
+# Service Mode Configuration
+NEXT_PUBLIC_USE_MOCK_DATA=true
+NEXT_PUBLIC_USE_ON_CHAIN=false
+
+# Solana Network Configuration
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+
+# Program IDs (Update these when you deploy your Anchor program)
+NEXT_PUBLIC_PROGRAM_ID=11111111111111111111111111111111
+NEXT_PUBLIC_METADATA_PROGRAM_ID=metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s
+
+# Analytics (Optional)
+# NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+// ============================================================================
+// FILE: .env.example
+// ============================================================================
+# Service Mode Configuration
+NEXT_PUBLIC_USE_MOCK_DATA=true
+NEXT_PUBLIC_USE_ON_CHAIN=false
+
+# Solana Network Configuration
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+
+# Program IDs
+NEXT_PUBLIC_PROGRAM_ID=11111111111111111111111111111111
+NEXT_PUBLIC_METADATA_PROGRAM_ID=metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s
+
+# Analytics (Optional)
+# NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
