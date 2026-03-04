@@ -10,12 +10,13 @@ import {
 	userStatsQuery,
 } from "@superteam-academy/cms/queries";
 import { generateUsername } from "./username-utils";
-import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
+import { WALLET_EMAIL_DOMAIN, walletEmail } from "@/packages/auth/src/wallet-utils";
 import { truncateAddress } from "@/lib/utils";
 
 export type { AcademyUser };
 
 const DUPLICATE_WALLET_USERS_QUERY = `*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`;
+const DUPLICATE_WALLET_EMAIL_USERS_QUERY = `*[_type == "academyUser" && _id != $keepId && lower(email) == $walletEmailLower]{ _id }`;
 
 type SyncUserParams = {
 	authId: string;
@@ -70,10 +71,13 @@ async function cleanupDuplicateWalletUsers(
 		walletAddress,
 		keepId,
 	});
-	await deleteUsersByIds(
-		client,
-		duplicates.map((user) => user._id)
-	);
+	const walletEmailLower = walletEmail(walletAddress).toLowerCase();
+	const emailGhosts = await client.fetch<Array<{ _id: string }>>(DUPLICATE_WALLET_EMAIL_USERS_QUERY, {
+		walletEmailLower,
+		keepId,
+	});
+	const allIds = [...new Set([...duplicates, ...emailGhosts].map((u) => u._id))];
+	await deleteUsersByIds(client, allIds);
 }
 
 async function patchAndCleanupByWallet(
