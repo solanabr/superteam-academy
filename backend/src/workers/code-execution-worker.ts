@@ -23,20 +23,20 @@ function truncate(str: string, maxBytes: number): string {
 }
 
 function ensureContainerRunning(): void {
-  const inspect = spawnSync("docker", ["ps", "-q", "-f", `name=^${CONTAINER_NAME}$`], {
+  const inspect = spawnSync("sudo docker", ["ps", "-q", "-f", `name=^${CONTAINER_NAME}$`], {
     encoding: "utf8",
     timeout: 5000,
   });
   if (inspect.status === 0 && inspect.stdout.trim().length > 0) {
     return;
   }
-  const start = spawnSync("docker", ["start", CONTAINER_NAME], {
+  const start = spawnSync("sudo docker", ["start", CONTAINER_NAME], {
     encoding: "utf8",
     timeout: 5000,
   });
   if (start.status === 0) return;
   const run = spawnSync(
-    "docker",
+    "sudo docker",
     ["run", "-d", "--name", CONTAINER_NAME, IMAGE_NAME, "sleep", "infinity"],
     { encoding: "utf8", timeout: 15_000 }
   );
@@ -55,7 +55,7 @@ function writeSourceToContainer(language: "typescript" | "rust", source: string)
     language === "rust"
       ? `${CONTAINER_NAME}:/workspace/rust/src/main.rs`
       : `${CONTAINER_NAME}:/workspace/${language}/${filename}`;
-  const cp = spawnSync("docker", ["cp", localPath, destPath], {
+  const cp = spawnSync("sudo docker", ["cp", localPath, destPath], {
     encoding: "utf8",
     timeout: 5000,
   });
@@ -73,7 +73,7 @@ function runInContainer(
   const timeoutSec = Math.ceil(EXECUTION_TIMEOUT_MS / 1000);
   if (language === "rust") {
     const build = spawnSync(
-      "docker",
+      "sudo docker",
       ["exec", CONTAINER_NAME, "bash", "-c", "cd /workspace/rust && cargo build --release 2>&1"],
       { encoding: "utf8", timeout: EXECUTION_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES * 2 }
     );
@@ -88,7 +88,7 @@ function runInContainer(
       };
     }
     const run = spawnSync(
-      "docker",
+      "sudo docker",
       ["exec", CONTAINER_NAME, "bash", "-c", "cd /workspace/rust && timeout " + timeoutSec + " ./target/release/rust 2>&1"],
       { encoding: "utf8", timeout: EXECUTION_TIMEOUT_MS + 10_000, maxBuffer: MAX_OUTPUT_BYTES * 2 }
     );
@@ -101,7 +101,7 @@ function runInContainer(
     };
   }
   const run = spawnSync(
-    "docker",
+    "sudo docker",
     [
       "exec",
       CONTAINER_NAME,
