@@ -1,22 +1,21 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { useRouter, usePathname } from '~/i18n/navigation'
+import { routing } from '~/i18n/routing'
+
+const DEFAULT_LOCALE = routing.defaultLocale  // 'en'
 
 export function useChangeLocale() {
    const router = useRouter()
-   const pathname = usePathname()
-   const currentLocale = useLocale()
+   const pathname = usePathname()      // locale-stripped path, e.g. /dashboard
+   const currentLocale = useLocale()   // e.g. 'es'
 
    const setLocale = (newLocale: string) => {
-      // Replace the locale segment in the path
-      console.log(pathname)
-      let newPath;
-      if (currentLocale === 'en') 
-         newPath = `/${newLocale}${pathname}`
-      else newPath = pathname.replace(`/${currentLocale}`, `/${newLocale}`)
-      console.log(newPath)
-      router.push(newPath)
+      // next-intl's locale-aware router.push() handles prefixing automatically.
+      // usePathname() from ~/i18n/navigation already strips the locale prefix,
+      // so we can pass the clean path directly.
+      router.push(pathname, { locale: newLocale })
    }
 
    return { locale: currentLocale, setLocale }
