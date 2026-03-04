@@ -246,6 +246,7 @@ export async function POST(request: Request) {
     let certificateMint: string | null = null;
     let completedCount = 0;
     let totalLessons = 0;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     
     try {
         const enrollmentAccount = await program.account.enrollment.fetch(enrollmentPda);
@@ -289,12 +290,14 @@ export async function POST(request: Request) {
                 // СЦЕНАРИЙ 1: ПЕРВЫЙ СЕРТИФИКАТ (Создание)
                 console.log("[Verify] Issuing NEW credential...");
                 const credentialAsset = Keypair.generate();
+
+                
+                const metadataUri = `${siteUrl}/api/metadata/cert/${courseId}?level=1`;
                     
                 await program.methods.issueCredential(
                     `${courseDb?.title || courseId} Certificate`, 
-                    // В Этапе 41 мы сделаем динамический URL для JSON, пока заглушка с уровнем 1 TODO
-                    `https://arweave.net/level_1_metadata`, 
-                    1, // coursesCompleted (уровень)
+                    metadataUri, // <-- ДИНАМИЧЕСКИЙ URI
+                    1, 
                     new BN(totalXp)
                 )
                 .accountsPartial({
@@ -329,10 +332,12 @@ export async function POST(request: Request) {
                 });
                 const newLevel = enrollmentsCount > 0 ? enrollmentsCount : 2;
 
+                const upgradeMetadataUri = `${siteUrl}/api/metadata/cert/${courseId}?level=${newLevel}`;
+
                 await program.methods.upgradeCredential(
                     `Superteam Developer - Level ${newLevel}`,
-                    `https://arweave.net/level_${newLevel}_metadata`, // Новая картинка
-                     newLevel, // coursesCompleted
+                    upgradeMetadataUri, // <-- ДИНАМИЧЕСКИЙ URI
+                    newLevel,
                     new BN(totalXp)
                 )
                 .accountsPartial({

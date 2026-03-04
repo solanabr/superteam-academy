@@ -53,13 +53,14 @@ async function main() {
         try {
             // 1. Генерируем просто пустой Keypair для будущей коллекции
             const collectionKeypair = Keypair.generate();
+            const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
             
             // 2. Смарт-контракт сделает всю магию сам
             await program.methods.createAchievementType({
                 achievementId: ach.id,
                 name: ach.name,
-                metadataUri: `https://arweave.net/placeholder_${ach.id}`,
-                maxSupply: ach.supply, // В тестах передают число, не BN
+                metadataUri: `${DOMAIN}/api/metadata/badge/${ach.id}`, // <-- ДИНАМИЧЕСКИЙ URI
+                maxSupply: ach.supply,
                 xpReward: ach.xp
             })
             .accountsPartial({
