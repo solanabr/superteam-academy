@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Shield } from "lucide-react";
 
 import { ProfileHeader } from "@/components/profile/profile-header";
@@ -14,20 +15,21 @@ import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import {
-	fetchIndexedLearnerActivity,
-	getAcademyClient,
-	getSolanaConnection,
-	getProgramId,
+    fetchIndexedLearnerActivity,
+    getAcademyClient,
+    getSolanaConnection,
+    getProgramId,
 } from "@/lib/academy";
 import type { UserPrivacySettings } from "@superteam-academy/cms";
-import { getLinkedWallet } from "@/lib/auth";
+import { getLinkedWallet, serverAuth } from "@/lib/auth";
 import { levelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
 import { AchievementService } from "@/services/achievement-service";
 import { ProfileCompleteness } from "@/components/profile/profile-completeness";
-import { getUserByUsername, getUserByWallet } from "@/lib/sanity-users";
+import { getUserByUsername, getUserByWallet, getUserByAuthId } from "@/lib/sanity-users";
 import { getGravatarUrl } from "@/lib/utils";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
+import { getCoursesCMS } from "@/lib/cms";
 
 export async function generateMetadata({
 	params,
@@ -47,6 +49,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	const linkedWallet = await getLinkedWallet();
 
 	let walletAddress: string | undefined;
+	let sessionUsername: string | undefined;
 
 	if (params?.username) {
 		const user = await getUserByUsername(params.username);
@@ -55,10 +58,24 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 		walletAddress = params?.wallet ?? linkedWallet;
 	}
 
+	// When no wallet and no username, try to resolve from the auth session
+	if (!walletAddress && !params?.username) {
+		const requestHeaders = await headers();
+		const session = await serverAuth.api.getSession({ headers: requestHeaders });
+		if (session?.user?.id) {
+			const sanityUser = await getUserByAuthId(session.user.id);
+			walletAddress = sanityUser?.walletAddress ?? undefined;
+			sessionUsername = sanityUser?.username ?? undefined;
+		}
+	}
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<ProfileSkeleton />}>
-				<ProfileContent walletAddress={walletAddress} username={params?.username} />
+				<ProfileContent
+					walletAddress={walletAddress}
+					username={params?.username ?? sessionUsername}
+				/>
 			</Suspense>
 		</div>
 	);
@@ -234,6 +251,43 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 			credentials: [],
 		};
 	}
+	const sanityUser = await getUserByWallet(learner.toBase58());
+	const resolvedUser = sanityUserByUsername || sanityUser;
+	const gravatarKey = resolvedUser?.email || learner.toBase58();
+
+	const fallbackProfile = {
+		user: {
+			id: resolvedUser?._id || learner.toBase58(),
+			name: resolvedUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
+			email: resolvedUser?.email || "",
+			avatar: resolvedUser?.image || getGravatarUrl(gravatarKey),
+			bio: resolvedUser?.bio || "On-chain academy profile",
+			joinDate: resolvedUser?._createdAt || new Date().toISOString(),
+			location: resolvedUser?.location || "",
+			github: resolvedUser?.github || "",
+			linkedin: resolvedUser?.linkedin || "",
+			username: resolvedUser?.username,
+			walletAddress: learner.toBase58(),
+		},
+		stats: emptyStats(),
+		achievements: [] as never[],
+		activity: [] as never[],
+		courses: [] as never[],
+		credentials: [] as never[],
+	};
+
+	try {
+		return await fetchOnChainProfile(learner, resolvedUser);
+	} catch (err) {
+		console.error("Failed to fetch on-chain profile data, using fallback:", err);
+		return fallbackProfile;
+	}
+}
+
+async function fetchOnChainProfile(
+	learner: PublicKey,
+	resolvedUser: Awaited<ReturnType<typeof getUserByWallet>>,
+) {
 	const academyClient = getAcademyClient();
 	const connection = getSolanaConnection();
 	const programId = getProgramId();
@@ -247,7 +301,7 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		indexedActivity,
 		rawCredentials,
 		onChainAchievements,
-		sanityUser,
+		cmsCourses,
 	] = await Promise.all([
 		academyClient.fetchConfig(),
 		academyClient.fetchAllCourses(),
@@ -255,7 +309,7 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		fetchIndexedLearnerActivity(learner, 10),
 		credentialService.getCredentialsByOwner(learner),
 		achievementService.getLearnerAchievements(learner),
-		getUserByWallet(learner.toBase58()),
+		getCoursesCMS().catch(() => []),
 	]);
 
 	const [credentials, xpBalance] = await Promise.all([
@@ -285,14 +339,22 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	const coursesByKey = new Map(
 		allCourses.map((course) => [course.pubkey.toBase58(), course.account])
 	);
+	// Map on-chain courseId → CMS title for friendly display
+	const cmsTitleBySlug = new Map(
+		(cmsCourses ?? [])
+			.filter((c): c is typeof c & { slug: { current: string }; title: string } =>
+				!!c?.slug?.current && !!c?.title)
+			.map((c) => [c.slug.current, c.title])
+	);
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
 		const coursePk = entry.account.course.toBase58();
+		const courseId = course?.courseId ?? coursePk;
 		const completedLessons = countBits(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
 		return {
-			id: course?.courseId ?? coursePk,
-			title: course?.courseId ?? "Course",
+			id: courseId,
+			title: cmsTitleBySlug.get(courseId) ?? formatCourseId(courseId),
 			instructor: { name: "Superteam" },
 			progress: {
 				completedLessons,
@@ -331,13 +393,30 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	const currentLevelXP = level * level * 100;
 	const nextLevelXP = (level + 1) * (level + 1) * 100;
 	const xpIntoLevel = currentXP - currentLevelXP;
+	type ProfileAchievementCategory =
+		| "learning"
+		| "streak"
+		| "completion"
+		| "social"
+		| "special";
+	type ProfileAchievement = {
+		id: string;
+		title: string;
+		description: string;
+		icon: string;
+		category: ProfileAchievementCategory;
+		rarity: "common" | "rare" | "epic" | "legendary";
+		xpReward: number;
+		unlockedAt?: string;
+		progress?: { current: number; total: number };
+	};
 
-	const achievements = onChainAchievements.map((a) => ({
+	const achievements: ProfileAchievement[] = onChainAchievements.map((a) => ({
 		id: a.achievementId,
 		title: a.name,
 		description: a.earned ? `Earned +${a.xpReward} XP` : `${a.xpReward} XP reward`,
 		icon: "award",
-		category: "learning" as const,
+		category: "learning",
 		rarity: (a.xpReward >= 5000
 			? "legendary"
 			: a.xpReward >= 2500
@@ -452,7 +531,6 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		},
 	}));
 
-	const resolvedUser = sanityUserByUsername || sanityUser;
 	const gravatarKey = resolvedUser?.email || learner.toBase58();
 
 	return {
@@ -511,4 +589,11 @@ function countBits(flags: [bigint, bigint, bigint, bigint]): number {
 		}
 	}
 	return total;
+}
+
+/** Convert a slug-style courseId like "intro-to-solana" to "Intro To Solana" */
+function formatCourseId(courseId: string): string {
+	return courseId
+		.replace(/[-_]/g, " ")
+		.replace(/\b\w/g, (c) => c.toUpperCase());
 }

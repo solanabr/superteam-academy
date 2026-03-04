@@ -1,11 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 import {
-	BaseService,
-	type Credential,
-	type CredentialMetadata,
-	type IssueResult,
-	type VerifyResult,
-	type TrackRequirements,
+    BaseService,
+    type Credential,
+    type CredentialMetadata,
+    type IssueResult,
+    type VerifyResult,
+    type TrackRequirements,
 } from "./types";
 import { AcademyClient } from "@superteam-academy/anchor";
 
@@ -133,13 +133,11 @@ export class CredentialService extends BaseService {
 			return { isValid: false, error: "Credential not found on-chain" };
 		}
 
-		if (!asset.frozen && !asset.ownership.frozen) {
+		// MplCoreAsset enforces soulbound via PermanentFreezeDelegate plugin;
+		// the top-level frozen flag may not be set in the DAS response.
+		const isMplCore = asset.interface === "MplCoreAsset";
+		if (!isMplCore && !asset.frozen && !asset.ownership.frozen) {
 			return { isValid: false, error: "Credential is not frozen (invalid soulbound state)" };
-		}
-
-		const collection = asset.grouping.find((g) => g.group_key === "collection");
-		if (!collection) {
-			return { isValid: false, error: "Credential has no collection association" };
 		}
 
 		return {

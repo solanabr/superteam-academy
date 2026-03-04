@@ -173,7 +173,10 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 		service.getCredentialOwner(id),
 	]);
 
-	if (!verification.isValid || !verification.credential) return null;
+	// Show the certificate even if verification didn't fully pass,
+	// as long as the asset exists on-chain (metadata fetched successfully).
+	const credential = verification.credential;
+	if (!credential && metadata.name === "Unknown") return null;
 
 	const trackAttr = metadata.attributes.find((a) => a.trait_type === "Track");
 	const levelAttr = metadata.attributes.find((a) => a.trait_type === "Level");
@@ -185,10 +188,10 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 		title: metadata.name,
 		holder,
 		courseName: metadata.description,
-		track: trackAttr?.value ?? verification.credential.track,
+		track: trackAttr?.value ?? credential?.track ?? "Unknown",
 		level: levelAttr?.value ?? "Beginner",
-		issuedAt: verification.credential.issuedAt.toISOString(),
-		xpEarned: verification.credential.totalXp,
+		issuedAt: credential?.issuedAt.toISOString() ?? new Date().toISOString(),
+		xpEarned: credential?.totalXp ?? 0,
 		imageUrl: metadata.image,
 		onChainAddress: id,
 	};

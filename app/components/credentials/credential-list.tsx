@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 interface CredentialItem {
 	id: string;
 	title: string;
-	description: string;
+	description?: string;
 	imageUrl: string;
 	track: string;
 	issuedAt: Date;
@@ -35,21 +35,34 @@ export function CredentialList({ credentials }: CredentialListProps) {
 			<CardContent>
 				<div className="grid gap-4 sm:grid-cols-2">
 					{credentials.map((cred) => (
-						<Link key={cred.id} href={`/certificates/${cred.id}`}>
-							<Card className="border-border/60 h-full hover:border-primary/40 transition-colors">
+						<Card
+							key={cred.id}
+							className="border-border/60 h-full hover:border-primary/40 transition-colors"
+						>
 							<CardContent className="pt-4 space-y-2">
 								{cred.imageUrl ? (
 									<div className="overflow-hidden rounded-lg border border-border/60 bg-muted/30">
-										<img
-											src={cred.imageUrl}
-											alt={cred.title}
-											className="h-32 w-full object-cover"
-											loading="lazy"
-										/>
+										<Link href={`/certificates/${cred.id}`}>
+											<img
+												src={cred.imageUrl}
+												alt={cred.title}
+												className="h-32 w-full object-cover"
+												loading="lazy"
+											/>
+										</Link>
 									</div>
-								) : null}
+								) : (
+									<Link
+										href={`/certificates/${cred.id}`}
+										className="flex items-center justify-center h-32 rounded-lg border border-border/60 bg-muted/30"
+									>
+										<Award className="h-10 w-10 text-muted-foreground" />
+									</Link>
+								)}
 								<div className="flex items-start justify-between">
-									<h3 className="font-medium text-sm">{cred.title}</h3>
+									<Link href={`/certificates/${cred.id}`} className="font-medium text-sm hover:underline">
+										{cred.title}
+									</Link>
 									<Badge
 										variant={cred.isActive ? "default" : "secondary"}
 										className="text-xs"
@@ -62,6 +75,14 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										{cred.description}
 									</p>
 								)}
+								<div className="flex items-center gap-2 text-xs text-muted-foreground">
+									{cred.track && cred.track !== "Unknown" && (
+										<Badge variant="outline" className="text-[10px]">
+											{cred.track}
+										</Badge>
+									)}
+									<span>{new Date(cred.issuedAt).toLocaleDateString()}</span>
+								</div>
 								<div className="flex items-center justify-between text-xs text-muted-foreground">
 									{cred.totalXp > 0 && (
 										<span className="flex items-center gap-1">
@@ -73,7 +94,6 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										href={`https://explorer.solana.com/address/${cred.id}?cluster=devnet`}
 										target="_blank"
 										rel="noopener noreferrer"
-										onClick={(event) => event.stopPropagation()}
 										className="flex items-center gap-1 hover:text-foreground transition-colors"
 									>
 										<ExternalLink className="h-3 w-3" />
@@ -81,8 +101,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 									</a>
 								</div>
 							</CardContent>
-							</Card>
-						</Link>
+						</Card>
 					))}
 				</div>
 			</CardContent>

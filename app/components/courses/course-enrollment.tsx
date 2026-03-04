@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginModal } from "@/components/auth/login-modal";
 import { useAuth } from "@/contexts/auth-context";
-import { getProgramId } from "@/lib/academy";
+import { getAcademyClient, getProgramId } from "@/lib/academy";
 import { useRouter } from "@superteam-academy/i18n/navigation";
 import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
 import { sendAndConfirmTx, isWalletReady } from "@/lib/solana-transaction";
@@ -32,7 +32,7 @@ interface CourseEnrollmentProps {
 	};
 }
 
-export function CourseEnrollment({ course }: CourseEnrollmentProps) {
+export function CourseEnrollment({ course }: CourseEnrollmentProps) { 
 	const t = useTranslations("courses");
 	const { wallet, isWalletConnected, isWalletVerified, isAuthenticated, verifyWallet } =
 		useAuth();
@@ -76,8 +76,16 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			setIsVerifying(false);
 		}
 
-		// Step 3: Send enrollment transaction
-		if (!isWalletReady(wallet)) return;
+		// Re-check wallet readiness after verification; the adapter state may
+		// lag one tick behind React re-renders.
+		if (!isWalletReady(wallet)) {
+			// Give the wallet adapter a moment to stabilize after verification
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			if (!isWalletReady(wallet)) {
+				setAuthError(t("enroll.walletRequired"));
+				return;
+			}
+		}
 
 		setIsEnrolling(true);
 		setAuthError(null);
