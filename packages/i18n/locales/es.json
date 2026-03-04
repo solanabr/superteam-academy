@@ -3481,7 +3481,8 @@
 		"tryChallenge": "Intentar el desafío",
 		"takeNotes": "Tomar notas",
 		"markComplete": "Marcar como completado",
-		"fullscreen": "Pantalla completa"
+		"fullscreen": "Pantalla completa",
+		"noQuiz": "No hay cuestionario disponible para esta lección."
 	},
 	"auth": {
 		"welcomeTitle": "Bienvenido a Superteam Academy",

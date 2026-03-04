@@ -14,7 +14,7 @@ const FOOTER_LINKS = {
 	learn: [
 		{ key: "catalog" as const, href: "/courses" },
 		{ key: "topics" as const, href: "/topics" },
-		{ key: "challenges" as const, href: "/courses" },
+		{ key: "challenges" as const, href: "/certificates" },
 	],
 	community: [
 		{ key: "leaderboard" as const, href: "/leaderboard" },

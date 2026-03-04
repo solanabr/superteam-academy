@@ -3481,7 +3481,8 @@
 		"tryChallenge": "Tentar o desafio",
 		"takeNotes": "Faça anotações",
 		"markComplete": "Marcar como concluído",
-		"fullscreen": "Tela cheia"
+		"fullscreen": "Tela cheia",
+		"noQuiz": "Nenhum questionário disponível para esta lição."
 	},
 	"auth": {
 		"welcomeTitle": "Bem-vindo à Academia Superteam",

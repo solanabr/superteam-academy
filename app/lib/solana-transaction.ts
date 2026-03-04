@@ -4,7 +4,7 @@ import { Transaction } from "@solana/web3.js";
 interface MinimalWallet {
 	publicKey: { toBase58(): string } | null;
 	sendTransaction?: (...args: unknown[]) => Promise<string>;
-	signTransaction?: (tx: Transaction) => Promise<Transaction>;
+	signTransaction?: (tx: Transaction | unknown) => Promise<Transaction | unknown>;
 	signMessage?: (message: Uint8Array) => Promise<Uint8Array>;
 }
 
@@ -30,7 +30,7 @@ export async function sendAndConfirmTx(
 	tx.recentBlockhash = blockhash;
 
 	// Sign via wallet popup — only signs, does NOT send.
-	const signed = await wallet.signTransaction(tx);
+	const signed = (await wallet.signTransaction(tx)) as Transaction;
 
 	// Send through OUR Helius RPC (not the wallet's internal RPC which may
 	// silently drop transactions on devnet).

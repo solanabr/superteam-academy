@@ -17,11 +17,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
 import { PublicKey } from "@solana/web3.js";
-import {
-	countCompletedLessons,
-	isLessonCompleted,
-	type CourseAccount,
-} from "@superteam-academy/anchor";
+import { countCompletedLessons, isLessonCompleted } from "@superteam-academy/anchor";
 
 interface CourseDetailPageProps {
 	params: Promise<{
@@ -222,16 +218,10 @@ async function getCourse(id: string) {
 		getCourseReviews(id).catch(() => []),
 	]);
 
-	let onchainCourse: CourseAccount | null = null;
-	let onchainCourses: Array<{ pubkey: PublicKey; account: CourseAccount }> = [];
-	try {
-		[onchainCourse, onchainCourses] = await Promise.all([
-			academyClient.fetchCourse(id),
-			academyClient.fetchAllCourses(),
-		]);
-	} catch (error) {
-		console.warn("Onchain course fetch failed", error);
-	}
+	const [onchainCourse, onchainCourses] = await Promise.all([
+		academyClient.fetchCourse(id),
+		academyClient.fetchAllCourses(),
+	]);
 
 	const learner = wallet ? new PublicKey(wallet) : null;
 	let prerequisiteInfo: {
@@ -249,15 +239,11 @@ async function getCourse(id: string) {
 		let completed = false;
 
 		if (learner && prerequisiteCourseId) {
-			try {
-				const prereqEnrollment = await academyClient.fetchEnrollment(
-					prerequisiteCourseId,
-					learner
-				);
-				completed = Boolean(prereqEnrollment?.completedAt);
-			} catch (error) {
-				console.warn("Onchain prerequisite enrollment fetch failed", error);
-			}
+			const prereqEnrollment = await academyClient.fetchEnrollment(
+				prerequisiteCourseId,
+				learner
+			);
+			completed = Boolean(prereqEnrollment?.completedAt);
 		}
 
 		prerequisiteInfo = {
@@ -276,23 +262,19 @@ async function getCourse(id: string) {
 	} | null = null;
 
 	if (wallet && learner && onchainCourse) {
-		try {
-			const enrollmentData = await academyClient.fetchEnrollment(id, learner);
-			if (enrollmentData) {
-				const completed = countCompletedLessons(enrollmentData.lessonFlags);
-				const lessonStates = Array.from({ length: onchainCourse.lessonCount }, (_, index) =>
-					isLessonCompleted(enrollmentData.lessonFlags, index)
-				);
-				enrollment = {
-					enrolled: true,
-					completedLessons: completed,
-					xpEarned: completed * onchainCourse.xpPerLesson,
-					finalized: !!enrollmentData.completedAt,
-					lessonStates,
-				};
-			}
-		} catch (error) {
-			console.warn("Onchain enrollment fetch failed", error);
+		const enrollmentData = await academyClient.fetchEnrollment(id, learner);
+		if (enrollmentData) {
+			const completed = countCompletedLessons(enrollmentData.lessonFlags);
+			const lessonStates = Array.from({ length: onchainCourse.lessonCount }, (_, index) =>
+				isLessonCompleted(enrollmentData.lessonFlags, index)
+			);
+			enrollment = {
+				enrolled: true,
+				completedLessons: completed,
+				xpEarned: completed * onchainCourse.xpPerLesson,
+				finalized: !!enrollmentData.completedAt,
+				lessonStates,
+			};
 		}
 	}
 

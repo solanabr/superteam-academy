@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { ChallengeContent } from "./challenge-content";
 import { getChallengePageData } from "@/lib/challenge-content";
+import { getAcademyClient } from "@/lib/academy";
 
 interface ChallengePageProps {
 	params: Promise<{
@@ -17,6 +18,12 @@ interface ChallengePageProps {
 export async function generateMetadata({ params }: ChallengePageProps): Promise<Metadata> {
 	const { id, challengeId, locale } = await params;
 	const t = await getTranslations({ locale, namespace: "seo.dynamic.challenge" });
+
+	const onchainCourse = await getAcademyClient().fetchCourse(id);
+	if (!onchainCourse) {
+		return { title: t("notFoundTitle", { challengeId }) };
+	}
+
 	const pageData = await getChallengePageData(id, challengeId);
 	if (!pageData) {
 		return {
@@ -37,10 +44,12 @@ export async function generateMetadata({ params }: ChallengePageProps): Promise<
 
 export default async function ChallengePage({ params }: ChallengePageProps) {
 	const { id, challengeId } = await params;
+
+	const onchainCourse = await getAcademyClient().fetchCourse(id);
+	if (!onchainCourse) notFound();
+
 	const pageData = await getChallengePageData(id, challengeId);
-	if (!pageData) {
-		notFound();
-	}
+	if (!pageData) notFound();
 
 	const challengeData = {
 		id: pageData.lesson.slug?.current ?? pageData.lesson._id,
@@ -48,7 +57,7 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
 		description: pageData.challenge.description,
 		difficulty: pageData.challenge.difficulty,
 		estimatedTime: pageData.challenge.estimatedTime,
-		xpReward: pageData.challenge.xpReward,
+		xpReward: onchainCourse.xpPerLesson,
 		language: pageData.challenge.language,
 		starterCode: pageData.challenge.starterCode,
 		instructions: pageData.challenge.instructions,
