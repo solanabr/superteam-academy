@@ -9,6 +9,7 @@ import {
 import { Transaction } from "@solana/web3.js";
 import { buildUpdateCourseInstruction, type CourseAccount } from "@superteam-academy/anchor";
 import { courseFields, moduleFields, lessonFields } from "@superteam-academy/cms/queries";
+import { resolveCourseImageUrl } from "@/lib/cms";
 import {
 	requireAdmin,
 	sanityReadClient,
@@ -54,6 +55,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 		track?: string;
 		published?: boolean;
 		onchainStatus?: string;
+		image?: { _type: "image"; asset: { _ref: string; _type: "reference" } };
+		overview?: string;
+		learningObjectives?: string;
+		requirements?: string;
+		targetAudience?: string;
 		modules?: Array<{
 			_id: string;
 			title: string;
@@ -108,6 +114,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 			track: cmsCourse?.track ?? "",
 			published: onchain?.isActive ?? Boolean(cmsCourse?.published),
 			onchainStatus: onchain ? "succeeded" : (cmsCourse?.onchainStatus ?? "draft"),
+			image: cmsCourse?.image ?? null,
+			imageUrl: cmsCourse?.image ? resolveCourseImageUrl(cmsCourse.image, 960, 540) : null,
+			overview: cmsCourse?.overview ?? "",
+			learningObjectives: cmsCourse?.learningObjectives ?? "",
+			requirements: cmsCourse?.requirements ?? "",
+			targetAudience: cmsCourse?.targetAudience ?? "",
 			modules: cmsCourse?.modules ?? [],
 		},
 	});
@@ -182,6 +194,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		"xpReward",
 		"track",
 		"published",
+		"image",
+		"overview",
+		"learningObjectives",
+		"requirements",
+		"targetAudience",
 	] as const;
 	const patch: Record<string, unknown> = {};
 	for (const key of ALLOWED) {
@@ -201,9 +218,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 					track?: string;
 					published?: boolean;
 					onchainStatus?: string;
+					image?: unknown;
+					overview?: string;
+					learningObjectives?: string;
+					requirements?: string;
+					targetAudience?: string;
 				} | null>(
 					`*[_type == "course" && (_id == $id || slug.current == $id)][0]{
-				_id, title, description, slug, level, duration, xpReward, track, published, onchainStatus
+				_id, title, description, slug, level, duration, xpReward, track, published, onchainStatus,
+				image, overview, learningObjectives, requirements, targetAudience
 			}`,
 					{ id: courseId }
 				)
@@ -307,6 +330,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		published: effectivePublished,
 		onchainStatus: "succeeded",
 		...(onchainSignature ? { updateSignature: onchainSignature } : {}),
+		...(patch.image != null ? { image: patch.image } : {}),
+		...(typeof patch.overview === "string" ? { overview: patch.overview } : {}),
+		...(typeof patch.learningObjectives === "string"
+			? { learningObjectives: patch.learningObjectives }
+			: {}),
+		...(typeof patch.requirements === "string" ? { requirements: patch.requirements } : {}),
+		...(typeof patch.targetAudience === "string"
+			? { targetAudience: patch.targetAudience }
+			: {}),
 	};
 
 	try {

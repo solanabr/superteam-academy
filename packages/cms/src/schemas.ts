@@ -51,6 +51,10 @@ export type Course = SanityDocument & {
 	xpReward: number;
 	track?: string;
 	author?: { _ref: string } | CourseAuthor;
+	overview?: string;
+	learningObjectives?: string;
+	requirements?: string;
+	targetAudience?: string;
 	onchainStatus?: "queued" | "running" | "succeeded" | "failed" | "draft";
 	arweaveTxId?: string;
 	coursePda?: string;

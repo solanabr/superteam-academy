@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RichTextContent } from "@/components/ui/rich-text-content";
 import { CourseModules } from "./course-modules";
 import { CourseReviews } from "./course-reviews";
 import { CourseInstructor } from "./course-instructor";
@@ -75,24 +76,45 @@ export function CourseDetailTabs({ course, courseId, initialTab }: CourseDetailT
 			<TabsContent value="overview" className="space-y-6">
 				<div className="prose prose-gray dark:prose-invert max-w-none">
 					<h2>{t("overview.title")}</h2>
-					<p className="text-lg leading-relaxed">{course.description}</p>
+					{course.overviewHtml ? (
+						<RichTextContent html={course.overviewHtml} />
+					) : (
+						<p className="text-lg leading-relaxed">{course.description}</p>
+					)}
 
 					<h3>{t("overview.whatYouWillLearn")}</h3>
-					<ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-						{course.learningObjectives.map((objective, index) => (
-							<li key={index} className="flex items-start gap-2">
-								<CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-								<span>{objective}</span>
-							</li>
-						))}
-					</ul>
+					{course.learningObjectivesHtml ? (
+						<RichTextContent html={course.learningObjectivesHtml} />
+					) : (
+						<ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+							{course.learningObjectives.map((objective, index) => (
+								<li key={index} className="flex items-start gap-2">
+									<CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+									<span>{objective}</span>
+								</li>
+							))}
+						</ul>
+					)}
 
 					<h3>{t("overview.requirements")}</h3>
-					<ul>
-						{course.requirements.map((requirement, index) => (
-							<li key={index}>{requirement}</li>
-						))}
-					</ul>
+					{course.requirementsHtml ? (
+						<RichTextContent html={course.requirementsHtml} />
+					) : (
+						<ul>
+							{course.requirements.map((requirement, index) => (
+								<li key={index}>{requirement}</li>
+							))}
+						</ul>
+					)}
+
+					{course.targetAudienceHtml && (
+						<>
+							<h3>
+								{t("overview.targetAudience", { defaultValue: "Target Audience" })}
+							</h3>
+							<RichTextContent html={course.targetAudienceHtml} />
+						</>
+					)}
 
 					<h3>{t("overview.skills")}</h3>
 					<div className="flex flex-wrap gap-2">

@@ -68,6 +68,10 @@ export type CourseDetailView = {
 	learningObjectives: string[];
 	requirements: string[];
 	skills: string[];
+	overviewHtml?: string;
+	learningObjectivesHtml?: string;
+	requirementsHtml?: string;
+	targetAudienceHtml?: string;
 	modules: Array<{
 		id: string;
 		title: string;
@@ -260,6 +264,10 @@ export async function mapCourseToDetail(
 		],
 		requirements: ["Solana wallet", "Basic development knowledge"],
 		skills: [course?.track ?? "solana"],
+		overviewHtml: course?.overview ?? undefined,
+		learningObjectivesHtml: course?.learningObjectives ?? undefined,
+		requirementsHtml: course?.requirements ?? undefined,
+		targetAudienceHtml: course?.targetAudience ?? undefined,
 		modules:
 			modules.length > 0
 				? modules

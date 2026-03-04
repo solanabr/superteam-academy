@@ -102,6 +102,11 @@ export async function POST(request: NextRequest) {
 		xpReward?: number;
 		track?: string;
 		published?: boolean;
+		image?: { _type: "image"; asset: { _ref: string; _type: "reference" } } | null;
+		overview?: string;
+		learningObjectives?: string;
+		requirements?: string;
+		targetAudience?: string;
 		modules?: Array<{
 			title: string;
 			description?: string;
@@ -215,6 +220,11 @@ export async function POST(request: NextRequest) {
 		onchainStatus: "succeeded",
 		coursePda: coursePda.toBase58(),
 		createSignature: signature,
+		...(body.image ? { image: body.image } : {}),
+		...(body.overview ? { overview: body.overview } : {}),
+		...(body.learningObjectives ? { learningObjectives: body.learningObjectives } : {}),
+		...(body.requirements ? { requirements: body.requirements } : {}),
+		...(body.targetAudience ? { targetAudience: body.targetAudience } : {}),
 	};
 
 	const course = existingBySlug

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Play, Heart, Star, Users, Clock, Award } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,6 +12,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { LoginModal } from "@/components/auth/login-modal";
 import { ShareMenu } from "@/components/courses/share-menu";
 import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
+import { CourseImage } from "@/components/courses/course-image";
 
 interface CourseHeroProps {
 	course: {
@@ -216,13 +216,12 @@ export function CourseHero({ course }: CourseHeroProps) {
 
 					<div className="relative">
 						<div className="relative aspect-video overflow-hidden rounded-lg shadow-2xl">
-							<Image
+							<CourseImage
 								src={course.image}
 								alt={course.title}
 								fill={true}
 								className="object-cover"
 								priority={true}
-								sizes="(max-width: 768px) 100vw, 50vw"
 							/>
 							{course.videoPreview && (
 								<div className="absolute inset-0 bg-black/50 flex items-center justify-center">

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { CourseImage } from "@/components/courses/course-image";
 import type { Course } from "@/types/course";
 import { LEVEL_COLORS } from "@/types/course";
 
@@ -29,7 +30,12 @@ export function CourseList({ courses }: CourseListProps) {
 						<div
 							className={`relative w-28 h-20 shrink-0 rounded-xl bg-linear-to-br ${gradient} overflow-hidden`}
 						>
-							<div className="absolute inset-0 bg-black/5" />
+							<CourseImage
+								src={course.image}
+								alt={course.title}
+								fill={true}
+								className="object-cover"
+							/>
 							{course.featured && (
 								<Badge className="absolute top-1.5 left-1.5 bg-white/20 text-white backdrop-blur-sm border-0 text-[10px] px-1.5 py-0">
 									Featured

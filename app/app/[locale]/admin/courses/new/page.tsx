@@ -17,6 +17,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { generateId } from "@/lib/utils";
 
 interface LessonDraft {
@@ -45,6 +47,15 @@ export default function NewCoursePage() {
 	const [track, setTrack] = useState("");
 	const [published, setPublished] = useState(false);
 	const [modules, setModules] = useState<ModuleDraft[]>([]);
+	const [image, setImage] = useState<{
+		_type: "image";
+		asset: { _ref: string; _type: "reference" };
+	} | null>(null);
+	const [imagePreview, setImagePreview] = useState<string | null>(null);
+	const [overview, setOverview] = useState("");
+	const [learningObjectives, setLearningObjectives] = useState("");
+	const [requirements, setRequirements] = useState("");
+	const [targetAudience, setTargetAudience] = useState("");
 
 	const addModule = () => {
 		setModules((prev) => [
@@ -119,6 +130,11 @@ export default function NewCoursePage() {
 			xpReward,
 			track: track.trim(),
 			published,
+			image,
+			overview,
+			learningObjectives,
+			requirements,
+			targetAudience,
 			modules: modules
 				.filter((m) => m.title.trim())
 				.map((m, mi) => ({
@@ -167,6 +183,16 @@ export default function NewCoursePage() {
 					<CardTitle>Course Details</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
+					<div className="space-y-2">
+						<Label>Thumbnail</Label>
+						<ImageUpload
+							value={image ? image.asset._ref : null}
+							onChange={setImage}
+							previewUrl={imagePreview}
+							onPreviewChange={setImagePreview}
+						/>
+					</div>
+
 					<div className="space-y-2">
 						<Label htmlFor="title">Title *</Label>
 						<Input
@@ -238,6 +264,49 @@ export default function NewCoursePage() {
 					<div className="flex items-center gap-3">
 						<Switch id="published" checked={published} onCheckedChange={setPublished} />
 						<Label htmlFor="published">Publish immediately</Label>
+					</div>
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle>Course Content</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="space-y-2">
+						<Label>Overview</Label>
+						<RichTextEditor
+							value={overview}
+							onChange={setOverview}
+							placeholder="Provide a detailed overview of this course..."
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label>What You&apos;ll Learn</Label>
+						<RichTextEditor
+							value={learningObjectives}
+							onChange={setLearningObjectives}
+							placeholder="List the key learning objectives..."
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label>Requirements</Label>
+						<RichTextEditor
+							value={requirements}
+							onChange={setRequirements}
+							placeholder="What should learners know before starting..."
+						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label>Target Audience</Label>
+						<RichTextEditor
+							value={targetAudience}
+							onChange={setTargetAudience}
+							placeholder="Who is this course designed for..."
+						/>
 					</div>
 				</CardContent>
 			</Card>
