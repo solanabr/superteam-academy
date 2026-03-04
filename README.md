@@ -14,7 +14,9 @@
 
 **Deployed on Vercel:** [https://superteam-academy-nu.vercel.app/](https://superteam-academy-nu.vercel.app/)
 
-**Video Walkthrough:** [https://vimeo.com/superteam-academy/walkthrough](https://vimeo.com/superteam-academy/walkthrough)
+**Video Walkthrough:** [https://youtu.be/9tsGeCwoeaQ](https://youtu.be/9tsGeCwoeaQ)
+
+**X Tweet:** [https://x.com/AbhijeetKakade0/status/2029193398205464666](https://x.com/AbhijeetKakade0/status/2029193398205464666)
 
 ---
 
