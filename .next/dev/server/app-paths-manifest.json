@@ -1,0 +1,6 @@
+{
+  "/[locale]/auth/page": "app/[locale]/auth/page.js",
+  "/[locale]/page": "app/[locale]/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/signing-mode/route": "app/api/signing-mode/route.js"
+}

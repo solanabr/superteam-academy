@@ -1,0 +1,35 @@
+{
+  "title": {
+    "en": "Accounts and Ownership",
+    "pt": "Contas e Ownership",
+    "es": "Cuentas y Ownership"
+  },
+  "description": {
+    "en": "Programs can only mutate accounts they own. Implement a checker for writable account permissions.",
+    "pt": "Programas so podem alterar contas que possuem. Implemente um verificador de permissao de escrita.",
+    "es": "Los programas solo pueden modificar cuentas que poseen. Implementa un verificador de permisos de escritura."
+  },
+  "hints": [
+    {
+      "en": "Writable requires account.isWritable to be true.",
+      "pt": "Writable exige account.isWritable igual a true.",
+      "es": "Writable requiere account.isWritable igual a true."
+    },
+    {
+      "en": "Owner must match programId.",
+      "pt": "Owner deve ser igual ao programId.",
+      "es": "Owner debe coincidir con programId."
+    },
+    {
+      "en": "Return deniedReason when access is blocked.",
+      "pt": "Retorne deniedReason quando o acesso for bloqueado.",
+      "es": "Devuelve deniedReason cuando el acceso sea bloqueado."
+    }
+  ],
+  "starterCode": "function canWriteAccount(programId, account) {\n  const ownerMatches = /* TODO */;\n  const writable = /* TODO */;\n  const allowed = /* TODO */;\n\n  return {\n    allowed,\n    deniedReason: allowed ? null : (ownerMatches ? 'not_writable' : 'wrong_owner'),\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "videoUrl": "https://www.youtube.com/watch?v=-AAtfPHEMbA",
+  "solutionCode": "function canWriteAccount(programId, account) {\n  const ownerMatches = account.owner === programId;\n  const writable = account.isWritable === true;\n  const allowed = ownerMatches && writable;\n\n  return {\n    allowed,\n    deniedReason: allowed ? null : (ownerMatches ? 'not_writable' : 'wrong_owner'),\n  };\n}\n",
+  "testCode": "const ok = canWriteAccount('Prog111', { owner: 'Prog111', isWritable: true });\nassert(ok.allowed === true, 'expected allowed');\nassert(ok.deniedReason === null, 'deniedReason should be null');\n\nconst bad1 = canWriteAccount('Prog111', { owner: 'Prog222', isWritable: true });\nassert(bad1.allowed === false, 'expected denied');\nassert(bad1.deniedReason === 'wrong_owner', 'wrong owner reason expected');\n\nconst bad2 = canWriteAccount('Prog111', { owner: 'Prog111', isWritable: false });\nassert(bad2.deniedReason === 'not_writable', 'not writable reason expected');\n"
+}

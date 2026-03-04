@@ -1,0 +1,35 @@
+{
+  "title": {
+    "en": "Solana Accounts",
+    "pt": "Contas Solana",
+    "es": "Cuentas de Solana"
+  },
+  "description": {
+    "en": "Every piece of state on Solana lives in an account. Accounts store lamports (SOL), raw data bytes, and a reference to the program that owns them. Complete the function below to extract the key fields from an account object.",
+    "pt": "Todo estado no Solana vive em uma conta. Contas armazenam lamports (SOL), bytes de dados brutos e uma referência ao programa que as possui. Complete a função abaixo para extrair os campos principais de um objeto de conta.",
+    "es": "Todo el estado en Solana vive en una cuenta. Las cuentas almacenan lamports (SOL), bytes de datos sin formato y una referencia al programa que las posee. Completa la función a continuación para extraer los campos clave de un objeto de cuenta."
+  },
+  "hints": [
+    {
+      "en": "An account object has: `lamports` (number), `owner` (PublicKey), `data` (Buffer), `executable` (boolean).",
+      "pt": "Um objeto de conta possui: `lamports` (número), `owner` (PublicKey), `data` (Buffer), `executable` (booleano).",
+      "es": "Un objeto de cuenta tiene: `lamports` (número), `owner` (PublicKey), `data` (Buffer), `executable` (booleano)."
+    },
+    {
+      "en": "Call `.toBase58()` on a PublicKey to get its string representation.",
+      "pt": "Chame `.toBase58()` em uma PublicKey para obter sua representação em string.",
+      "es": "Llama a `.toBase58()` en una PublicKey para obtener su representación en cadena."
+    },
+    {
+      "en": "The data length is `account.data.length` — no parsing needed for this exercise.",
+      "pt": "O tamanho dos dados é `account.data.length` — sem análise necessária para este exercício.",
+      "es": "La longitud de los datos es `account.data.length` — no se necesita análisis para este ejercicio."
+    }
+  ],
+  "starterCode": "// Complete the function: extract key fields from a Solana account\nfunction describeAccount(account) {\n  return {\n    lamports: /* TODO: account's SOL balance in lamports */,\n    owner: /* TODO: owner pubkey as base58 string */,\n    dataLength: /* TODO: byte length of account data */,\n    executable: /* TODO: is this a program account? */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "videoUrl": "https://www.youtube.com/watch?v=90BTugVYGqQ",
+  "solutionCode": "function describeAccount(account) {\n  return {\n    lamports: account.lamports,\n    owner: account.owner.toBase58(),\n    dataLength: account.data.length,\n    executable: account.executable,\n  };\n}\n",
+  "testCode": "const { PublicKey } = require(\"@solana/web3.js\");\n\nconst mockAccount = {\n  lamports: 2_039_280,\n  owner: new PublicKey(\"TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb\"),\n  data: Buffer.from([1, 2, 3, 4, 5]),\n  executable: false,\n};\n\nconst result = describeAccount(mockAccount);\nassert(result.lamports === 2_039_280, \"lamports should match\");\nassert(result.owner === \"TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb\", \"owner should be base58 string\");\nassert(result.dataLength === 5, \"dataLength should be 5\");\nassert(result.executable === false, \"executable should be false\");\n"
+}

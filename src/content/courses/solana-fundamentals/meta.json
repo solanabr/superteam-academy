@@ -1,0 +1,14 @@
+{
+  "courseId": "solana-fundamentals",
+  "title": {
+    "en": "Solana Fundamentals",
+    "pt": "Fundamentos do Solana",
+    "es": "Fundamentos de Solana"
+  },
+  "description": {
+    "en": "Master the core concepts of Solana: the account model, programs, transactions, and the runtime. No prior blockchain experience needed.",
+    "pt": "Domine os conceitos centrais do Solana: modelo de contas, programas, transações e o runtime. Sem necessidade de experiência prévia em blockchain.",
+    "es": "Domina los conceptos fundamentales de Solana: modelo de cuentas, programas, transacciones y el runtime. No se requiere experiencia previa en blockchain."
+  },
+  "trackCollection": "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+}

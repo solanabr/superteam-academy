@@ -1,0 +1,34 @@
+{
+  "title": {
+    "en": "Instructions and Transactions",
+    "pt": "Instruções e Transações",
+    "es": "Instrucciones y Transacciones"
+  },
+  "description": {
+    "en": "A Solana transaction contains one or more instructions. Each instruction targets a program, passes accounts, and provides instruction data. Implement a helper that describes a SOL transfer instruction.",
+    "pt": "Uma transação Solana contém uma ou mais instruções. Cada instrução tem como alvo um programa, passa contas e fornece dados de instrução. Implemente um auxiliar que descreva uma instrução de transferência de SOL.",
+    "es": "Una transacción de Solana contiene una o más instrucciones. Cada instrucción apunta a un programa, pasa cuentas y proporciona datos de instrucción. Implementa un helper que describa una instrucción de transferencia de SOL."
+  },
+  "hints": [
+    {
+      "en": "A transfer instruction needs: `fromPubkey`, `toPubkey`, and `lamports`.",
+      "pt": "Uma instrução de transferência precisa de: `fromPubkey`, `toPubkey` e `lamports`.",
+      "es": "Una instrucción de transferencia necesita: `fromPubkey`, `toPubkey` y `lamports`."
+    },
+    {
+      "en": "Convert PublicKey to string with `.toBase58()` before returning.",
+      "pt": "Converta PublicKey para string com `.toBase58()` antes de retornar.",
+      "es": "Convierte PublicKey a cadena con `.toBase58()` antes de devolver."
+    },
+    {
+      "en": "The System Program ID is `11111111111111111111111111111111` — it owns all transfer instructions.",
+      "pt": "O ID do Programa do Sistema é `11111111111111111111111111111111` — ele é dono de todas as instruções de transferência.",
+      "es": "El ID del Programa del Sistema es `11111111111111111111111111111111` — posee todas las instrucciones de transferencia."
+    }
+  ],
+  "starterCode": "// Describe a SOL transfer instruction\nfunction buildTransfer(fromPubkey, toPubkey, lamports) {\n  return {\n    programId: /* TODO: System Program ID as base58 string */,\n    from: /* TODO: fromPubkey as base58 string */,\n    to: /* TODO: toPubkey as base58 string */,\n    lamports: /* TODO: amount to transfer */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "solutionCode": "function buildTransfer(fromPubkey, toPubkey, lamports) {\n  return {\n    programId: \"11111111111111111111111111111111\",\n    from: fromPubkey.toBase58(),\n    to: toPubkey.toBase58(),\n    lamports,\n  };\n}\n",
+  "testCode": "const { PublicKey } = require(\"@solana/web3.js\");\n\nconst from = new PublicKey(\"So11111111111111111111111111111111111111112\");\nconst to = new PublicKey(\"TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb\");\nconst result = buildTransfer(from, to, 5000);\n\nassert(result.lamports === 5000, \"lamports should be 5000\");\nassert(result.from === from.toBase58(), \"from pubkey mismatch\");\nassert(result.to === to.toBase58(), \"to pubkey mismatch\");\nassert(result.programId === \"11111111111111111111111111111111\", \"programId should be System Program\");\n"
+}

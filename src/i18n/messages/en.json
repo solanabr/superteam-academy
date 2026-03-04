@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "connectWallet": "Connect Wallet"
+  },
+  "hero": {
+    "title": "Learn Solana Development",
+    "titleHighlight": "The Right Way",
+    "subtitle": "Interactive, project-based courses with gamified progression, on-chain credentials, and a community of builders. Go from zero to deploying production-ready dApps.",
+    "cta": "Start Learning",
+    "exploreCourses": "Explore Courses",
+    "statsStudents": "Active Learners",
+    "statsCourses": "Courses",
+    "statsCredentials": "Credentials Issued",
+    "statsXP": "XP Earned"
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Master Solana development with hands-on, project-based learning",
+    "allTracks": "All Tracks",
+    "allDifficulties": "All Levels",
+    "search": "Search courses...",
+    "duration": "Duration",
+    "lessons": "Lessons",
+    "challenges": "Challenges",
+    "xp": "XP",
+    "enroll": "Enroll Now",
+    "continue": "Continue Learning",
+    "completed": "Completed",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "prerequisite": "Prerequisite",
+    "enrolled": "students enrolled",
+    "completions": "completions"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "currentCourses": "Current Courses",
+    "xpBalance": "XP Balance",
+    "level": "Level",
+    "streak": "Current Streak",
+    "rank": "Global Rank",
+    "achievements": "Achievements",
+    "nextLesson": "Continue Learning",
+    "recommended": "Recommended For You",
+    "recentActivity": "Recent Activity",
+    "days": "days"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top builders ranked by XP",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time",
+    "rank": "Rank",
+    "learner": "Learner",
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak"
+  },
+  "profile": {
+    "title": "Profile",
+    "joined": "Joined",
+    "coursesCompleted": "Courses Completed",
+    "credentials": "Credentials",
+    "skills": "Skill Radar",
+    "achievements": "Achievements",
+    "publicProfile": "Public Profile"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "language": "Language",
+    "theme": "Theme",
+    "save": "Save Changes",
+    "connectedWallets": "Connected Wallets",
+    "connectedAccounts": "Connected Accounts"
+  },
+  "lesson": {
+    "previous": "Previous",
+    "next": "Next",
+    "complete": "Mark Complete",
+    "hints": "Show Hints",
+    "solution": "Show Solution",
+    "runCode": "Run Code",
+    "submit": "Submit",
+    "pass": "Pass",
+    "fail": "Fail",
+    "output": "Output",
+    "testCases": "Test Cases"
+  },
+  "certificate": {
+    "title": "Certificate of Completion",
+    "verifyOnChain": "Verify On-Chain",
+    "download": "Download Certificate",
+    "share": "Share",
+    "mintAddress": "Mint Address",
+    "issuedOn": "Issued On",
+    "earnedBy": "Earned By"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "noResults": "No results found",
+    "viewAll": "View All"
+  },
+  "footer": {
+    "about": "About",
+    "docs": "Documentation",
+    "github": "GitHub",
+    "discord": "Discord",
+    "twitter": "Twitter",
+    "newsletter": "Newsletter",
+    "newsletterPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "rights": "All rights reserved.",
+    "builtBy": "Built by Superteam Brazil"
+  }
+}

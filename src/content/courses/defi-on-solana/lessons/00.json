@@ -1,0 +1,35 @@
+{
+  "title": {
+    "en": "AMM Price Impact Basics",
+    "pt": "Fundamentos de Impacto de Preco em AMM",
+    "es": "Fundamentos de Impacto de Precio en AMM"
+  },
+  "description": {
+    "en": "In constant-product AMMs, larger trades move price more. Implement a simple price impact estimator.",
+    "pt": "Em AMMs de produto constante, trades maiores movem mais o preco. Implemente um estimador simples de price impact.",
+    "es": "En AMMs de producto constante, trades mas grandes mueven mas el precio. Implementa un estimador simple de impacto de precio."
+  },
+  "hints": [
+    {
+      "en": "Use impactPct = (tradeSize / poolSize) * 100.",
+      "pt": "Use impactPct = (tradeSize / poolSize) * 100.",
+      "es": "Usa impactPct = (tradeSize / poolSize) * 100."
+    },
+    {
+      "en": "Round to 2 decimals.",
+      "pt": "Arredonde para 2 casas decimais.",
+      "es": "Redondea a 2 decimales."
+    },
+    {
+      "en": "High impact when impactPct >= 5.",
+      "pt": "Impacto alto quando impactPct >= 5.",
+      "es": "Impacto alto cuando impactPct >= 5."
+    }
+  ],
+  "starterCode": "function estimatePriceImpact(poolSize, tradeSize) {\n  const impactPct = /* TODO */;\n  return {\n    impactPct,\n    highImpact: /* TODO */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "videoUrl": "https://www.youtube.com/watch?v=8iT2yXvhg60",
+  "solutionCode": "function estimatePriceImpact(poolSize, tradeSize) {\n  const raw = (tradeSize / poolSize) * 100;\n  const impactPct = Math.round(raw * 100) / 100;\n  return {\n    impactPct,\n    highImpact: impactPct >= 5,\n  };\n}\n",
+  "testCode": "const r1 = estimatePriceImpact(100000, 1000);\nassert(r1.impactPct === 1, 'impact should be 1%');\nassert(r1.highImpact === false, 'should not be high impact');\n\nconst r2 = estimatePriceImpact(100000, 7000);\nassert(r2.impactPct === 7, 'impact should be 7%');\nassert(r2.highImpact === true, 'should be high impact');\n"
+}

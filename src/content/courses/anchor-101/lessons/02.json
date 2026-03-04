@@ -1,0 +1,34 @@
+{
+  "title": {
+    "en": "Program Derived Addresses (PDAs)",
+    "pt": "Endereços Derivados de Programa (PDAs)",
+    "es": "Direcciones Derivadas de Programa (PDAs)"
+  },
+  "description": {
+    "en": "PDAs are deterministic addresses derived from a program ID and seeds. Unlike regular keypairs, PDAs have no private key — only the program can sign for them. Implement a function that describes the seeds needed to derive a PDA for an enrollment account.",
+    "pt": "PDAs são endereços determinísticos derivados de um ID de programa e sementes. Ao contrário de pares de chaves regulares, PDAs não têm chave privada — apenas o programa pode assinar por eles. Implemente uma função que descreva as sementes necessárias para derivar um PDA para uma conta de inscrição.",
+    "es": "Los PDAs son direcciones deterministas derivadas de un ID de programa y semillas. A diferencia de los pares de claves regulares, los PDAs no tienen clave privada — solo el programa puede firmar por ellos. Implementa una función que describa las semillas necesarias para derivar un PDA para una cuenta de inscripción."
+  },
+  "hints": [
+    {
+      "en": "The enrollment PDA seeds are: `[\"enrollment\", courseId, learnerPubkey]` (as Buffers).",
+      "pt": "As sementes do PDA de inscrição são: `[\"enrollment\", courseId, learnerPubkey]` (como Buffers).",
+      "es": "Las semillas del PDA de inscripción son: `[\"enrollment\", courseId, learnerPubkey]` (como Buffers)."
+    },
+    {
+      "en": "Use `Buffer.from(str)` to convert a string seed and `learner.toBuffer()` for a PublicKey seed.",
+      "pt": "Use `Buffer.from(str)` para converter uma semente de string e `learner.toBuffer()` para uma semente PublicKey.",
+      "es": "Usa `Buffer.from(str)` para convertir una semilla de cadena y `learner.toBuffer()` para una semilla PublicKey."
+    },
+    {
+      "en": "Return `{ seeds, count }` where `count` is the number of seeds and `seeds` is an array of their string representations.",
+      "pt": "Retorne `{ seeds, count }` onde `count` é o número de sementes e `seeds` é um array de suas representações em string.",
+      "es": "Devuelve `{ seeds, count }` donde `count` es el número de semillas y `seeds` es un array de sus representaciones en cadena."
+    }
+  ],
+  "starterCode": "// Describe the seeds for an enrollment PDA\nfunction describeEnrollmentSeeds(courseId, learnerPubkey) {\n  return {\n    // The 3 seeds used to derive the enrollment PDA\n    seeds: [\n      /* TODO: first seed — the discriminator string \"enrollment\" */,\n      /* TODO: second seed — the course ID string */,\n      /* TODO: third seed — the learner's pubkey as base58 string */,\n    ],\n    count: /* TODO: how many seeds? */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "solutionCode": "function describeEnrollmentSeeds(courseId, learnerPubkey) {\n  const seeds = [\"enrollment\", courseId, learnerPubkey.toBase58()];\n\n  return {\n    seeds,\n    count: seeds.length,\n  };\n}\n",
+  "testCode": "const { PublicKey } = require(\"@solana/web3.js\");\n\nconst learner = new PublicKey(\"So11111111111111111111111111111111111111112\");\nconst result = describeEnrollmentSeeds(\"anchor-101\", learner);\n\nassert(result.count === 3, \"enrollment PDA uses 3 seeds\");\nassert(result.seeds[0] === \"enrollment\", \"first seed should be 'enrollment'\");\nassert(result.seeds[1] === \"anchor-101\", \"second seed should be the course ID\");\nassert(result.seeds[2] === learner.toBase58(), \"third seed should be learner pubkey\");\n"
+}

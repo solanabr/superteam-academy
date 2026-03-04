@@ -1,0 +1,35 @@
+{
+  "title": {
+    "en": "Token-2022 Extensions",
+    "pt": "Extensoes do Token-2022",
+    "es": "Extensiones de Token-2022"
+  },
+  "description": {
+    "en": "Token-2022 adds optional extensions like non-transferable tokens and transfer hooks. Build a helper that classifies enabled extensions.",
+    "pt": "Token-2022 adiciona extensoes opcionais como tokens intransferiveis e transfer hooks. Monte um helper para classificar extensoes ativadas.",
+    "es": "Token-2022 agrega extensiones opcionales como tokens no transferibles y transfer hooks. Construye un helper para clasificar extensiones activas."
+  },
+  "hints": [
+    {
+      "en": "Input has boolean flags: nonTransferable, transferHook, confidential.",
+      "pt": "A entrada possui flags booleanas: nonTransferable, transferHook, confidential.",
+      "es": "La entrada tiene flags booleanas: nonTransferable, transferHook, confidential."
+    },
+    {
+      "en": "Push extension names in order: NonTransferable, TransferHook, ConfidentialTransfer.",
+      "pt": "Adicione nomes na ordem: NonTransferable, TransferHook, ConfidentialTransfer.",
+      "es": "Agrega nombres en orden: NonTransferable, TransferHook, ConfidentialTransfer."
+    },
+    {
+      "en": "Return count equal to enabled array length.",
+      "pt": "Retorne count igual ao tamanho de enabled.",
+      "es": "Devuelve count igual al tamano de enabled."
+    }
+  ],
+  "starterCode": "function listEnabledExtensions(flags) {\n  const enabled = [];\n  // TODO: populate enabled[]\n  return {\n    enabled,\n    count: /* TODO */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "videoUrl": "https://www.youtube.com/watch?v=g2YK_YBWA9A",
+  "solutionCode": "function listEnabledExtensions(flags) {\n  const enabled = [];\n  if (flags.nonTransferable) enabled.push('NonTransferable');\n  if (flags.transferHook) enabled.push('TransferHook');\n  if (flags.confidential) enabled.push('ConfidentialTransfer');\n  return {\n    enabled,\n    count: enabled.length,\n  };\n}\n",
+  "testCode": "const r = listEnabledExtensions({ nonTransferable: true, transferHook: false, confidential: true });\nassert(r.count === 2, 'count mismatch');\nassert(r.enabled[0] === 'NonTransferable', 'first extension mismatch');\nassert(r.enabled[1] === 'ConfidentialTransfer', 'second extension mismatch');\n"
+}

@@ -1,0 +1,14 @@
+{
+  "courseId": "token-2022-deep-dive",
+  "title": {
+    "en": "Token-2022 Deep Dive",
+    "pt": "Mergulho Profundo no Token-2022",
+    "es": "Inmersión en Token-2022"
+  },
+  "description": {
+    "en": "Explore the new Solana Token Extensions program: soulbound tokens, transfer hooks, confidential transfers, and more. Build the future of tokenized assets.",
+    "pt": "Explore o novo programa Token Extensions do Solana: tokens soulbound, hooks de transferência, transferências confidenciais e mais. Construa o futuro dos ativos tokenizados.",
+    "es": "Explora el nuevo programa Token Extensions de Solana: tokens soulbound, hooks de transferencia, transferencias confidenciales y más. Construye el futuro de los activos tokenizados."
+  },
+  "trackCollection": "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+}

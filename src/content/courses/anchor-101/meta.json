@@ -1,0 +1,14 @@
+{
+  "courseId": "anchor-101",
+  "title": {
+    "en": "Anchor 101",
+    "pt": "Anchor 101",
+    "es": "Anchor 101"
+  },
+  "description": {
+    "en": "Learn Solana program development with Anchor — accounts, instructions, and PDAs from the ground up.",
+    "pt": "Aprenda desenvolvimento de programas Solana com Anchor — contas, instruções e PDAs do zero.",
+    "es": "Aprende desarrollo de programas Solana con Anchor — cuentas, instrucciones y PDAs desde cero."
+  },
+  "trackCollection": "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+}

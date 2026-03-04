@@ -1,0 +1,9 @@
+{
+  "[project]/node_modules/@solana/wallet-adapter-react-ui/lib/esm/index.js [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/node_modules/@solana/wallet-adapter-react-ui/lib/esm/index.js [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/node_modules_@solana_f14a5ced._.js",
+      "static/chunks/node_modules_@solana_wallet-adapter-react-ui_lib_esm_index_1c8cda99.js"
+    ]
+  }
+}

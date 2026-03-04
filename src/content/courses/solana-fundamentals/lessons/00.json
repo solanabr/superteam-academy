@@ -1,0 +1,35 @@
+{
+  "title": {
+    "en": "Solana Runtime Basics",
+    "pt": "Fundamentos do Runtime Solana",
+    "es": "Fundamentos del Runtime de Solana"
+  },
+  "description": {
+    "en": "Understand validators, slots, and how Solana executes transactions quickly. Complete the function to summarize a slot execution payload.",
+    "pt": "Entenda validadores, slots e como Solana executa transacoes com baixa latencia. Complete a funcao para resumir um payload de execucao de slot.",
+    "es": "Entiende validadores, slots y como Solana ejecuta transacciones con baja latencia. Completa la funcion para resumir un payload de ejecucion de slot."
+  },
+  "hints": [
+    {
+      "en": "Return the slot number unchanged.",
+      "pt": "Retorne o numero do slot sem alterar.",
+      "es": "Devuelve el numero de slot sin cambios."
+    },
+    {
+      "en": "TPS estimate is txCount divided by seconds.",
+      "pt": "Estimativa de TPS e txCount dividido por seconds.",
+      "es": "La estimacion de TPS es txCount dividido por seconds."
+    },
+    {
+      "en": "Mark healthy when finalized is true and TPS >= 1000.",
+      "pt": "Marque healthy quando finalized for true e TPS >= 1000.",
+      "es": "Marca healthy cuando finalized sea true y TPS >= 1000."
+    }
+  ],
+  "starterCode": "function summarizeSlot(slot, txCount, seconds, finalized) {\n  const tps = /* TODO */;\n  return {\n    slot: /* TODO */,\n    tps,\n    healthy: /* TODO */,\n  };\n}\n",
+  "language": "javascript",
+  "fileName": "solution.js",
+  "videoUrl": "https://www.youtube.com/watch?v=90BTugVYGqQ",
+  "solutionCode": "function summarizeSlot(slot, txCount, seconds, finalized) {\n  const tps = txCount / seconds;\n  return {\n    slot,\n    tps,\n    healthy: finalized && tps >= 1000,\n  };\n}\n",
+  "testCode": "const r1 = summarizeSlot(101, 20000, 10, true);\nassert(r1.slot === 101, 'slot mismatch');\nassert(r1.tps === 2000, 'tps mismatch');\nassert(r1.healthy === true, 'healthy should be true');\n\nconst r2 = summarizeSlot(102, 3000, 5, false);\nassert(r2.healthy === false, 'healthy should be false when not finalized');\n"
+}

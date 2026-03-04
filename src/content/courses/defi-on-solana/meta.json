@@ -1,0 +1,14 @@
+{
+  "courseId": "defi-on-solana",
+  "title": {
+    "en": "DeFi on Solana",
+    "pt": "DeFi no Solana",
+    "es": "DeFi en Solana"
+  },
+  "description": {
+    "en": "Build decentralized finance apps on Solana: AMMs, liquidity pools, SPL token swaps, and yield farming. Practical projects with on-chain programs.",
+    "pt": "Construa aplicações de finanças descentralizadas no Solana: AMMs, pools de liquidez, trocas de tokens SPL e yield farming. Projetos práticos com programas on-chain.",
+    "es": "Construye aplicaciones de finanzas descentralizadas en Solana: AMMs, pools de liquidez, swaps de tokens SPL y yield farming. Proyectos prácticos con programas on-chain."
+  },
+  "trackCollection": "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+}

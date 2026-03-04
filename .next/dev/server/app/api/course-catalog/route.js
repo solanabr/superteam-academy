@@ -1,0 +1,11 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/course-catalog/route.js")
+R.c("server/chunks/node_modules_@sanity_72c45a3f._.js")
+R.c("server/chunks/node_modules_next_321fedfd._.js")
+R.c("server/chunks/node_modules_@opentelemetry_api_build_esm_7e8f41ca._.js")
+R.c("server/chunks/a8ce2_rxjs_dist_cjs_836c9868._.js")
+R.c("server/chunks/node_modules_@sanity_client_dist_351a83c7._.js")
+R.c("server/chunks/node_modules_76f731b1._.js")
+R.c("server/chunks/[root-of-the-server]__2da27b55._.js")
+R.c("server/chunks/_next-internal_server_app_api_course-catalog_route_actions_d59f9312.js")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/course-catalog/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/course-catalog/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

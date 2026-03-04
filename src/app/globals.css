@@ -1,0 +1,575 @@
+/* Wallet adapter CSS relocated to layout.tsx to fix build */
+@import "../../node_modules/tailwindcss";
+
+/* ── Superteam Academy Design Tokens ──────────────────────────────────────── */
+/* Brand: Solana official SVG gradient (#9945FF → #8752F3 → #5497D5 →         */
+/*        #43B4CA → #28E0B9 → #19FB9B). Dark-mode first.                      */
+
+:root {
+  --font-geist-sans: "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
+  --font-geist-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  /* Solana brand — sourced from official Solana logotype SVG */
+  --solana-purple: #9945ff;
+  --solana-violet: #8752f3;
+  --solana-blue: #5497d5;
+  --solana-cyan: #43b4ca;
+  --solana-teal: #28e0b9;
+  --solana-green: #19fb9b;
+
+  /* Superteam Brasil brand palette (from solana-brand/color-palette.jpg) */
+  --brand-yellow: #ffd23f;
+  --brand-emerald: #008c4c;
+  --brand-dark-green: #2f6b3f;
+  --brand-dark: #1b231d;
+  --brand-off-white: #f7eacb;
+
+
+  /* Hover/dim variants */
+  --solana-purple-dim: #7c2fdb;
+  --solana-green-dim: #0dcc80;
+
+  /* Background layers — dark-first, near-black as Solana brand specifies */
+  --bg-base: #06060a;
+  --bg-base-rgb: 6, 6, 10;
+  --bg-surface: #0f0f16;
+  --bg-elevated: #19192a;
+  --bg-overlay: #22223a;
+
+  /* Border system */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-purple: rgba(153, 69, 255, 0.30);
+  --border-green: rgba(25, 251, 155, 0.30);
+
+  /* Text hierarchy */
+  --text-primary: #f0f0fa;
+  --text-secondary: #9898b8;
+  --text-muted: #8d8db0;
+  --text-purple: #b685ff;
+  --text-green: #19fb9b;
+
+  /* Focus ring */
+  --ring-purple: rgba(153, 69, 255, 0.5);
+
+  /* Tailwind aliases */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+
+  /* Card shadows */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-subtle);
+  --shadow-card-hover: 0 4px 20px rgba(153, 69, 255, 0.15), 0 0 0 1px var(--border-purple);
+
+  /* ── shadcn/ui semantic tokens (mapped to Solana brand) ─────────────── */
+  --primary: var(--solana-purple);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bg-elevated);
+  --secondary-foreground: var(--text-primary);
+  --accent: var(--bg-elevated);
+  --accent-foreground: var(--text-primary);
+  --muted: var(--bg-surface);
+  --muted-foreground: var(--text-muted);
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --popover: var(--bg-surface);
+  --popover-foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--solana-purple);
+  --radius: 0.75rem;
+
+  /* Chart colors (shadcn charts) */
+  --chart-1: var(--solana-purple);
+  --chart-2: var(--solana-green);
+  --chart-3: var(--solana-cyan);
+  --chart-4: var(--solana-violet);
+  --chart-5: var(--solana-teal);
+
+  /* Sidebar (shadcn sidebar component) */
+  --sidebar: var(--bg-surface);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--solana-purple);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--bg-elevated);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--ring-purple);
+}
+
+/* ── Light theme ─────────────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --bg-base: #f7f8fb;
+  --bg-base-rgb: 247, 248, 251;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f2f4f9;
+  --bg-overlay: #e8edf5;
+
+  --border-subtle: rgba(18, 26, 38, 0.08);
+  --border-default: rgba(18, 26, 38, 0.16);
+  --border-strong: rgba(0, 0, 0, 0.20);
+  --border-purple: rgba(153, 69, 255, 0.25);
+  --border-green: rgba(25, 200, 130, 0.25);
+
+  --text-primary: #0f0f16;
+  --text-secondary: #2f3e50;
+  --text-muted: #526173;
+  --text-purple: #7c3aed;
+  --text-green: #059669;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--border-subtle);
+  --shadow-card-hover: 0 4px 20px rgba(153, 69, 255, 0.12), 0 0 0 1px var(--border-purple);
+
+  --primary: var(--solana-purple);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bg-elevated);
+  --secondary-foreground: var(--text-primary);
+  --accent: var(--bg-elevated);
+  --accent-foreground: var(--text-primary);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--text-muted);
+  --destructive: #ef4444;
+  --popover: var(--bg-surface);
+  --popover-foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--solana-purple);
+}
+
+/* ── Tailwind v4 theme extension ─────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius: 0.75rem;
+
+  /* Full Solana gradient palette */
+  --color-solana-purple: var(--solana-purple);
+  --color-solana-violet: var(--solana-violet);
+  --color-solana-blue: var(--solana-blue);
+  --color-solana-cyan: var(--solana-cyan);
+  --color-solana-teal: var(--solana-teal);
+  --color-solana-green: var(--solana-green);
+
+  /* Background layers */
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-overlay: var(--bg-overlay);
+
+  /* shadcn/ui semantic color tokens */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ── Base styles ─────────────────────────────────────────────────────────── */
+html {
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+}
+
+/* ── Focus rings ─────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--solana-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 12px;
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--solana-purple);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  transition: top 120ms ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 10px;
+}
+
+/* ── Solana gradient utilities ───────────────────────────────────────────── */
+/* Full 6-stop canonical gradient — matches official Solana logotype SVG      */
+.gradient-solana {
+  background: linear-gradient(to right,
+      #9945ff 0%,
+      #8752f3 25%,
+      #5497d5 50%,
+      #43b4ca 62%,
+      #28e0b9 74%,
+      #19fb9b 100%);
+}
+
+/* Gradient text — only use at ≥24px per brand rules */
+.gradient-solana-text {
+  background: linear-gradient(to right,
+      #9945ff 0%,
+      #8752f3 25%,
+      #5497d5 50%,
+      #43b4ca 62%,
+      #28e0b9 74%,
+      #19fb9b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Two-stop convenience for small accents */
+.gradient-solana-short {
+  background: linear-gradient(to right, var(--solana-purple), var(--solana-green));
+}
+
+/* ── Card base utility ───────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.card-hover:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-purple);
+}
+
+/* ── Skeleton shimmer ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      var(--bg-elevated) 25%,
+      var(--bg-overlay) 50%,
+      var(--bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Motion: respect prefers-reduced-motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Wallet adapter overrides ────────────────────────────────────────────── */
+.wallet-adapter-button {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: 8px !important;
+  font-family: var(--font-geist-sans), system-ui, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  height: 38px !important;
+  padding: 0 14px !important;
+  color: var(--text-primary) !important;
+  transition: background 150ms ease, border-color 150ms ease !important;
+}
+
+.wallet-adapter-button:hover:not([disabled]) {
+  background: var(--bg-overlay) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.wallet-adapter-button-trigger {
+  background: var(--solana-purple) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+.wallet-adapter-button-trigger:hover:not([disabled]) {
+  background: var(--solana-purple-dim) !important;
+}
+
+/* ── Scrollbar (Webkit) ──────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-overlay);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-default);
+}
+
+/* ── Floating orb animation (landing page hero) ──────────────────────── */
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.05);
+    opacity: 1;
+  }
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+/* Continuous testimonial marquee */
+.testimonials-marquee {
+  width: 100%;
+  overflow: hidden;
+}
+
+.testimonials-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: testimonials-marquee 64s linear infinite;
+  will-change: transform;
+}
+
+.testimonials-marquee.group:hover .testimonials-marquee-track {
+  animation-play-state: paused;
+}
+
+.testimonials-marquee-strip {
+  display: flex;
+  gap: 1.25rem;
+  padding-right: 1.25rem;
+  flex-shrink: 0;
+}
+
+@keyframes testimonials-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Selection highlight ─────────────────────────────────────────────── */
+::selection {
+  background: rgba(153, 69, 255, 0.3);
+  color: var(--text-primary);
+}
+
+/* ── Smooth page transitions ─────────────────────────────────────────── */
+.page-enter {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── XP flyup animation (lesson completion) ──────────────────────────── */
+@keyframes xp-flyup {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0) scale(0.8);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px) scale(1.05);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-40px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-80px) scale(0.9);
+  }
+}
+
+/* ── Streak heatmap pulse ─────────────────────────────────────────────── */
+@keyframes streak-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(153, 69, 255, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(153, 69, 255, 0.2);
+  }
+}
+
+.streak-today {
+  animation: streak-pulse 2s ease-in-out infinite;
+}
+
+/* ── Level-up modal entrance ─────────────────────────────────────────── */
+@keyframes level-up-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+
+  60% {
+    transform: scale(1.06) translateY(-4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.level-up-modal {
+  animation: level-up-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Daily goal ring (SVG progress circle) ───────────────────────────── */
+.goal-ring-track {
+  stroke: var(--bg-elevated);
+}
+
+.goal-ring-fill {
+  stroke: url(#goal-gradient);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .floating-orb,
+  .streak-today,
+  .level-up-modal,
+  .goal-ring-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .testimonials-marquee {
+    overflow-x: auto;
+  }
+
+  .testimonials-marquee-track {
+    animation: none !important;
+  }
+}
+
+/* ── Achievement unlock toast ────────────────────────────────────────── */
+@keyframes achievement-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+
+  60% {
+    transform: translateY(-4px) scale(1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Global click affordance */
+a[href],
+button,
+[role="button"],
+summary,
+label[for],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}

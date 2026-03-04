@@ -1,0 +1,3255 @@
+(globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
+"[project]/superteam-academy/node_modules/@radix-ui/primitive/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "canUseDOM",
+    ()=>canUseDOM,
+    "composeEventHandlers",
+    ()=>composeEventHandlers,
+    "getActiveElement",
+    ()=>getActiveElement,
+    "getOwnerDocument",
+    ()=>getOwnerDocument,
+    "getOwnerWindow",
+    ()=>getOwnerWindow,
+    "isFrame",
+    ()=>isFrame
+]);
+// src/primitive.tsx
+var canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
+function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
+    return function handleEvent(event) {
+        originalEventHandler?.(event);
+        if (checkForDefaultPrevented === false || !event.defaultPrevented) {
+            return ourEventHandler?.(event);
+        }
+    };
+}
+function getOwnerWindow(element) {
+    if (!canUseDOM) {
+        throw new Error("Cannot access window outside of the DOM");
+    }
+    return element?.ownerDocument?.defaultView ?? window;
+}
+function getOwnerDocument(element) {
+    if (!canUseDOM) {
+        throw new Error("Cannot access document outside of the DOM");
+    }
+    return element?.ownerDocument ?? document;
+}
+function getActiveElement(node, activeDescendant = false) {
+    const { activeElement } = getOwnerDocument(node);
+    if (!activeElement?.nodeName) {
+        return null;
+    }
+    if (isFrame(activeElement) && activeElement.contentDocument) {
+        return getActiveElement(activeElement.contentDocument.body, activeDescendant);
+    }
+    if (activeDescendant) {
+        const id = activeElement.getAttribute("aria-activedescendant");
+        if (id) {
+            const element = getOwnerDocument(activeElement).getElementById(id);
+            if (element) {
+                return element;
+            }
+        }
+    }
+    return activeElement;
+}
+function isFrame(element) {
+    return element.tagName === "IFRAME";
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "composeRefs",
+    ()=>composeRefs,
+    "useComposedRefs",
+    ()=>useComposedRefs
+]);
+// packages/react/compose-refs/src/compose-refs.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+function setRef(ref, value) {
+    if (typeof ref === "function") {
+        return ref(value);
+    } else if (ref !== null && ref !== void 0) {
+        ref.current = value;
+    }
+}
+function composeRefs(...refs) {
+    return (node)=>{
+        let hasCleanup = false;
+        const cleanups = refs.map((ref)=>{
+            const cleanup = setRef(ref, node);
+            if (!hasCleanup && typeof cleanup == "function") {
+                hasCleanup = true;
+            }
+            return cleanup;
+        });
+        if (hasCleanup) {
+            return ()=>{
+                for(let i = 0; i < cleanups.length; i++){
+                    const cleanup = cleanups[i];
+                    if (typeof cleanup == "function") {
+                        cleanup();
+                    } else {
+                        setRef(refs[i], null);
+                    }
+                }
+            };
+        }
+    };
+}
+function useComposedRefs(...refs) {
+    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"](composeRefs(...refs), refs);
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-context/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "createContext",
+    ()=>createContext2,
+    "createContextScope",
+    ()=>createContextScope
+]);
+// packages/react/context/src/create-context.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+;
+;
+function createContext2(rootComponentName, defaultContext) {
+    const Context = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"](defaultContext);
+    const Provider = (props)=>{
+        const { children, ...context } = props;
+        const value = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+            "createContext2.Provider.useMemo[value]": ()=>context
+        }["createContext2.Provider.useMemo[value]"], Object.values(context));
+        return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(Context.Provider, {
+            value,
+            children
+        });
+    };
+    Provider.displayName = rootComponentName + "Provider";
+    function useContext2(consumerName) {
+        const context = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useContext"](Context);
+        if (context) return context;
+        if (defaultContext !== void 0) return defaultContext;
+        throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+    }
+    return [
+        Provider,
+        useContext2
+    ];
+}
+function createContextScope(scopeName, createContextScopeDeps = []) {
+    let defaultContexts = [];
+    function createContext3(rootComponentName, defaultContext) {
+        const BaseContext = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"](defaultContext);
+        const index = defaultContexts.length;
+        defaultContexts = [
+            ...defaultContexts,
+            defaultContext
+        ];
+        const Provider = (props)=>{
+            const { scope, children, ...context } = props;
+            const Context = scope?.[scopeName]?.[index] || BaseContext;
+            const value = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+                "createContextScope.createContext3.Provider.useMemo[value]": ()=>context
+            }["createContextScope.createContext3.Provider.useMemo[value]"], Object.values(context));
+            return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(Context.Provider, {
+                value,
+                children
+            });
+        };
+        Provider.displayName = rootComponentName + "Provider";
+        function useContext2(consumerName, scope) {
+            const Context = scope?.[scopeName]?.[index] || BaseContext;
+            const context = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useContext"](Context);
+            if (context) return context;
+            if (defaultContext !== void 0) return defaultContext;
+            throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+        }
+        return [
+            Provider,
+            useContext2
+        ];
+    }
+    const createScope = ()=>{
+        const scopeContexts = defaultContexts.map((defaultContext)=>{
+            return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"](defaultContext);
+        });
+        return function useScope(scope) {
+            const contexts = scope?.[scopeName] || scopeContexts;
+            return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+                "createContextScope.createScope.useScope.useMemo": ()=>({
+                        [`__scope${scopeName}`]: {
+                            ...scope,
+                            [scopeName]: contexts
+                        }
+                    })
+            }["createContextScope.createScope.useScope.useMemo"], [
+                scope,
+                contexts
+            ]);
+        };
+    };
+    createScope.scopeName = scopeName;
+    return [
+        createContext3,
+        composeContextScopes(createScope, ...createContextScopeDeps)
+    ];
+}
+function composeContextScopes(...scopes) {
+    const baseScope = scopes[0];
+    if (scopes.length === 1) return baseScope;
+    const createScope = ()=>{
+        const scopeHooks = scopes.map((createScope2)=>({
+                useScope: createScope2(),
+                scopeName: createScope2.scopeName
+            }));
+        return function useComposedScopes(overrideScopes) {
+            const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName })=>{
+                const scopeProps = useScope(overrideScopes);
+                const currentScope = scopeProps[`__scope${scopeName}`];
+                return {
+                    ...nextScopes2,
+                    ...currentScope
+                };
+            }, {});
+            return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+                "composeContextScopes.createScope.useComposedScopes.useMemo": ()=>({
+                        [`__scope${baseScope.scopeName}`]: nextScopes
+                    })
+            }["composeContextScopes.createScope.useComposedScopes.useMemo"], [
+                nextScopes
+            ]);
+        };
+    };
+    createScope.scopeName = baseScope.scopeName;
+    return createScope;
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-slot/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Root",
+    ()=>Slot,
+    "Slot",
+    ()=>Slot,
+    "Slottable",
+    ()=>Slottable,
+    "createSlot",
+    ()=>createSlot,
+    "createSlottable",
+    ()=>createSlottable
+]);
+// src/slot.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+;
+;
+;
+// @__NO_SIDE_EFFECTS__
+function createSlot(ownerName) {
+    const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
+    const Slot2 = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+        const { children, ...slotProps } = props;
+        const childrenArray = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].toArray(children);
+        const slottable = childrenArray.find(isSlottable);
+        if (slottable) {
+            const newElement = slottable.props.children;
+            const newChildren = childrenArray.map((child)=>{
+                if (child === slottable) {
+                    if (__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].count(newElement) > 1) return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].only(null);
+                    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["isValidElement"](newElement) ? newElement.props.children : null;
+                } else {
+                    return child;
+                }
+            });
+            return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(SlotClone, {
+                ...slotProps,
+                ref: forwardedRef,
+                children: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["isValidElement"](newElement) ? __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cloneElement"](newElement, void 0, newChildren) : null
+            });
+        }
+        return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(SlotClone, {
+            ...slotProps,
+            ref: forwardedRef,
+            children
+        });
+    });
+    Slot2.displayName = `${ownerName}.Slot`;
+    return Slot2;
+}
+var Slot = /* @__PURE__ */ createSlot("Slot");
+// @__NO_SIDE_EFFECTS__
+function createSlotClone(ownerName) {
+    const SlotClone = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+        const { children, ...slotProps } = props;
+        if (__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["isValidElement"](children)) {
+            const childrenRef = getElementRef(children);
+            const props2 = mergeProps(slotProps, children.props);
+            if (children.type !== __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"]) {
+                props2.ref = forwardedRef ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeRefs"])(forwardedRef, childrenRef) : childrenRef;
+            }
+            return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cloneElement"](children, props2);
+        }
+        return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].count(children) > 1 ? __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].only(null) : null;
+    });
+    SlotClone.displayName = `${ownerName}.SlotClone`;
+    return SlotClone;
+}
+var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
+// @__NO_SIDE_EFFECTS__
+function createSlottable(ownerName) {
+    const Slottable2 = ({ children })=>{
+        return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+            children
+        });
+    };
+    Slottable2.displayName = `${ownerName}.Slottable`;
+    Slottable2.__radixId = SLOTTABLE_IDENTIFIER;
+    return Slottable2;
+}
+var Slottable = /* @__PURE__ */ createSlottable("Slottable");
+function isSlottable(child) {
+    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["isValidElement"](child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+}
+function mergeProps(slotProps, childProps) {
+    const overrideProps = {
+        ...childProps
+    };
+    for(const propName in childProps){
+        const slotPropValue = slotProps[propName];
+        const childPropValue = childProps[propName];
+        const isHandler = /^on[A-Z]/.test(propName);
+        if (isHandler) {
+            if (slotPropValue && childPropValue) {
+                overrideProps[propName] = (...args)=>{
+                    const result = childPropValue(...args);
+                    slotPropValue(...args);
+                    return result;
+                };
+            } else if (slotPropValue) {
+                overrideProps[propName] = slotPropValue;
+            }
+        } else if (propName === "style") {
+            overrideProps[propName] = {
+                ...slotPropValue,
+                ...childPropValue
+            };
+        } else if (propName === "className") {
+            overrideProps[propName] = [
+                slotPropValue,
+                childPropValue
+            ].filter(Boolean).join(" ");
+        }
+    }
+    return {
+        ...slotProps,
+        ...overrideProps
+    };
+}
+function getElementRef(element) {
+    let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
+    let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+    if (mayWarn) {
+        return element.ref;
+    }
+    getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
+    mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+    if (mayWarn) {
+        return element.props.ref;
+    }
+    return element.props.ref || element.ref;
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Primitive",
+    ()=>Primitive,
+    "Root",
+    ()=>Root,
+    "dispatchDiscreteCustomEvent",
+    ()=>dispatchDiscreteCustomEvent
+]);
+// src/primitive.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2d$dom$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react-dom/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-slot/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+;
+;
+;
+;
+var NODES = [
+    "a",
+    "button",
+    "div",
+    "form",
+    "h2",
+    "h3",
+    "img",
+    "input",
+    "label",
+    "li",
+    "nav",
+    "ol",
+    "p",
+    "select",
+    "span",
+    "svg",
+    "ul"
+];
+var Primitive = NODES.reduce((primitive, node)=>{
+    const Slot = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createSlot"])(`Primitive.${node}`);
+    const Node = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+        const { asChild, ...primitiveProps } = props;
+        const Comp = asChild ? Slot : node;
+        if (typeof window !== "undefined") {
+            window[Symbol.for("radix-ui")] = true;
+        }
+        return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(Comp, {
+            ...primitiveProps,
+            ref: forwardedRef
+        });
+    });
+    Node.displayName = `Primitive.${node}`;
+    return {
+        ...primitive,
+        [node]: Node
+    };
+}, {});
+function dispatchDiscreteCustomEvent(target, event) {
+    if (target) __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2d$dom$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["flushSync"](()=>target.dispatchEvent(event));
+}
+var Root = Primitive;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useCallbackRef",
+    ()=>useCallbackRef
+]);
+// packages/react/use-callback-ref/src/use-callback-ref.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+function useCallbackRef(callback) {
+    const callbackRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](callback);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "useCallbackRef.useEffect": ()=>{
+            callbackRef.current = callback;
+        }
+    }["useCallbackRef.useEffect"]);
+    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+        "useCallbackRef.useMemo": ()=>({
+                "useCallbackRef.useMemo": (...args)=>callbackRef.current?.(...args)
+            })["useCallbackRef.useMemo"]
+    }["useCallbackRef.useMemo"], []);
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useEscapeKeydown",
+    ()=>useEscapeKeydown
+]);
+// packages/react/use-escape-keydown/src/use-escape-keydown.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs [app-client] (ecmascript)");
+;
+;
+function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
+    const onEscapeKeyDown = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onEscapeKeyDownProp);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "useEscapeKeydown.useEffect": ()=>{
+            const handleKeyDown = {
+                "useEscapeKeydown.useEffect.handleKeyDown": (event)=>{
+                    if (event.key === "Escape") {
+                        onEscapeKeyDown(event);
+                    }
+                }
+            }["useEscapeKeydown.useEffect.handleKeyDown"];
+            ownerDocument.addEventListener("keydown", handleKeyDown, {
+                capture: true
+            });
+            return ({
+                "useEscapeKeydown.useEffect": ()=>ownerDocument.removeEventListener("keydown", handleKeyDown, {
+                        capture: true
+                    })
+            })["useEscapeKeydown.useEffect"];
+        }
+    }["useEscapeKeydown.useEffect"], [
+        onEscapeKeyDown,
+        ownerDocument
+    ]);
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Branch",
+    ()=>Branch,
+    "DismissableLayer",
+    ()=>DismissableLayer,
+    "DismissableLayerBranch",
+    ()=>DismissableLayerBranch,
+    "Root",
+    ()=>Root
+]);
+// src/dismissable-layer.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$escape$2d$keydown$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+;
+;
+var DISMISSABLE_LAYER_NAME = "DismissableLayer";
+var CONTEXT_UPDATE = "dismissableLayer.update";
+var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
+var FOCUS_OUTSIDE = "dismissableLayer.focusOutside";
+var originalBodyPointerEvents;
+var DismissableLayerContext = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"]({
+    layers: /* @__PURE__ */ new Set(),
+    layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
+    branches: /* @__PURE__ */ new Set()
+});
+var DismissableLayer = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { disableOutsidePointerEvents = false, onEscapeKeyDown, onPointerDownOutside, onFocusOutside, onInteractOutside, onDismiss, ...layerProps } = props;
+    const context = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useContext"](DismissableLayerContext);
+    const [node, setNode] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const ownerDocument = node?.ownerDocument ?? globalThis?.document;
+    const [, force] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]({});
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, {
+        "DismissableLayer.useComposedRefs[composedRefs]": (node2)=>setNode(node2)
+    }["DismissableLayer.useComposedRefs[composedRefs]"]);
+    const layers = Array.from(context.layers);
+    const [highestLayerWithOutsidePointerEventsDisabled] = [
+        ...context.layersWithOutsidePointerEventsDisabled
+    ].slice(-1);
+    const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(highestLayerWithOutsidePointerEventsDisabled);
+    const index = node ? layers.indexOf(node) : -1;
+    const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
+    const isPointerEventsEnabled = index >= highestLayerWithOutsidePointerEventsDisabledIndex;
+    const pointerDownOutside = usePointerDownOutside({
+        "DismissableLayer.usePointerDownOutside[pointerDownOutside]": (event)=>{
+            const target = event.target;
+            const isPointerDownOnBranch = [
+                ...context.branches
+            ].some({
+                "DismissableLayer.usePointerDownOutside[pointerDownOutside].isPointerDownOnBranch": (branch)=>branch.contains(target)
+            }["DismissableLayer.usePointerDownOutside[pointerDownOutside].isPointerDownOnBranch"]);
+            if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
+            onPointerDownOutside?.(event);
+            onInteractOutside?.(event);
+            if (!event.defaultPrevented) onDismiss?.();
+        }
+    }["DismissableLayer.usePointerDownOutside[pointerDownOutside]"], ownerDocument);
+    const focusOutside = useFocusOutside({
+        "DismissableLayer.useFocusOutside[focusOutside]": (event)=>{
+            const target = event.target;
+            const isFocusInBranch = [
+                ...context.branches
+            ].some({
+                "DismissableLayer.useFocusOutside[focusOutside].isFocusInBranch": (branch)=>branch.contains(target)
+            }["DismissableLayer.useFocusOutside[focusOutside].isFocusInBranch"]);
+            if (isFocusInBranch) return;
+            onFocusOutside?.(event);
+            onInteractOutside?.(event);
+            if (!event.defaultPrevented) onDismiss?.();
+        }
+    }["DismissableLayer.useFocusOutside[focusOutside]"], ownerDocument);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$escape$2d$keydown$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEscapeKeydown"])({
+        "DismissableLayer.useEscapeKeydown": (event)=>{
+            const isHighestLayer = index === context.layers.size - 1;
+            if (!isHighestLayer) return;
+            onEscapeKeyDown?.(event);
+            if (!event.defaultPrevented && onDismiss) {
+                event.preventDefault();
+                onDismiss();
+            }
+        }
+    }["DismissableLayer.useEscapeKeydown"], ownerDocument);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DismissableLayer.useEffect": ()=>{
+            if (!node) return;
+            if (disableOutsidePointerEvents) {
+                if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
+                    originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
+                    ownerDocument.body.style.pointerEvents = "none";
+                }
+                context.layersWithOutsidePointerEventsDisabled.add(node);
+            }
+            context.layers.add(node);
+            dispatchUpdate();
+            return ({
+                "DismissableLayer.useEffect": ()=>{
+                    if (disableOutsidePointerEvents && context.layersWithOutsidePointerEventsDisabled.size === 1) {
+                        ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
+                    }
+                }
+            })["DismissableLayer.useEffect"];
+        }
+    }["DismissableLayer.useEffect"], [
+        node,
+        ownerDocument,
+        disableOutsidePointerEvents,
+        context
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DismissableLayer.useEffect": ()=>{
+            return ({
+                "DismissableLayer.useEffect": ()=>{
+                    if (!node) return;
+                    context.layers.delete(node);
+                    context.layersWithOutsidePointerEventsDisabled.delete(node);
+                    dispatchUpdate();
+                }
+            })["DismissableLayer.useEffect"];
+        }
+    }["DismissableLayer.useEffect"], [
+        node,
+        context
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DismissableLayer.useEffect": ()=>{
+            const handleUpdate = {
+                "DismissableLayer.useEffect.handleUpdate": ()=>force({})
+            }["DismissableLayer.useEffect.handleUpdate"];
+            document.addEventListener(CONTEXT_UPDATE, handleUpdate);
+            return ({
+                "DismissableLayer.useEffect": ()=>document.removeEventListener(CONTEXT_UPDATE, handleUpdate)
+            })["DismissableLayer.useEffect"];
+        }
+    }["DismissableLayer.useEffect"], []);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+        ...layerProps,
+        ref: composedRefs,
+        style: {
+            pointerEvents: isBodyPointerEventsDisabled ? isPointerEventsEnabled ? "auto" : "none" : void 0,
+            ...props.style
+        },
+        onFocusCapture: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onFocusCapture, focusOutside.onFocusCapture),
+        onBlurCapture: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onBlurCapture, focusOutside.onBlurCapture),
+        onPointerDownCapture: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onPointerDownCapture, pointerDownOutside.onPointerDownCapture)
+    });
+});
+DismissableLayer.displayName = DISMISSABLE_LAYER_NAME;
+var BRANCH_NAME = "DismissableLayerBranch";
+var DismissableLayerBranch = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const context = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useContext"](DismissableLayerContext);
+    const ref = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, ref);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DismissableLayerBranch.useEffect": ()=>{
+            const node = ref.current;
+            if (node) {
+                context.branches.add(node);
+                return ({
+                    "DismissableLayerBranch.useEffect": ()=>{
+                        context.branches.delete(node);
+                    }
+                })["DismissableLayerBranch.useEffect"];
+            }
+        }
+    }["DismissableLayerBranch.useEffect"], [
+        context.branches
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+        ...props,
+        ref: composedRefs
+    });
+});
+DismissableLayerBranch.displayName = BRANCH_NAME;
+function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?.document) {
+    const handlePointerDownOutside = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onPointerDownOutside);
+    const isPointerInsideReactTreeRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const handleClickRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"]({
+        "usePointerDownOutside.useRef[handleClickRef]": ()=>{}
+    }["usePointerDownOutside.useRef[handleClickRef]"]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "usePointerDownOutside.useEffect": ()=>{
+            const handlePointerDown = {
+                "usePointerDownOutside.useEffect.handlePointerDown": (event)=>{
+                    if (event.target && !isPointerInsideReactTreeRef.current) {
+                        let handleAndDispatchPointerDownOutsideEvent2 = {
+                            "usePointerDownOutside.useEffect.handlePointerDown.handleAndDispatchPointerDownOutsideEvent2": function() {
+                                handleAndDispatchCustomEvent(POINTER_DOWN_OUTSIDE, handlePointerDownOutside, eventDetail, {
+                                    discrete: true
+                                });
+                            }
+                        }["usePointerDownOutside.useEffect.handlePointerDown.handleAndDispatchPointerDownOutsideEvent2"];
+                        var handleAndDispatchPointerDownOutsideEvent = handleAndDispatchPointerDownOutsideEvent2;
+                        const eventDetail = {
+                            originalEvent: event
+                        };
+                        if (event.pointerType === "touch") {
+                            ownerDocument.removeEventListener("click", handleClickRef.current);
+                            handleClickRef.current = handleAndDispatchPointerDownOutsideEvent2;
+                            ownerDocument.addEventListener("click", handleClickRef.current, {
+                                once: true
+                            });
+                        } else {
+                            handleAndDispatchPointerDownOutsideEvent2();
+                        }
+                    } else {
+                        ownerDocument.removeEventListener("click", handleClickRef.current);
+                    }
+                    isPointerInsideReactTreeRef.current = false;
+                }
+            }["usePointerDownOutside.useEffect.handlePointerDown"];
+            const timerId = window.setTimeout({
+                "usePointerDownOutside.useEffect.timerId": ()=>{
+                    ownerDocument.addEventListener("pointerdown", handlePointerDown);
+                }
+            }["usePointerDownOutside.useEffect.timerId"], 0);
+            return ({
+                "usePointerDownOutside.useEffect": ()=>{
+                    window.clearTimeout(timerId);
+                    ownerDocument.removeEventListener("pointerdown", handlePointerDown);
+                    ownerDocument.removeEventListener("click", handleClickRef.current);
+                }
+            })["usePointerDownOutside.useEffect"];
+        }
+    }["usePointerDownOutside.useEffect"], [
+        ownerDocument,
+        handlePointerDownOutside
+    ]);
+    return {
+        // ensures we check React component tree (not just DOM tree)
+        onPointerDownCapture: ()=>isPointerInsideReactTreeRef.current = true
+    };
+}
+function useFocusOutside(onFocusOutside, ownerDocument = globalThis?.document) {
+    const handleFocusOutside = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onFocusOutside);
+    const isFocusInsideReactTreeRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "useFocusOutside.useEffect": ()=>{
+            const handleFocus = {
+                "useFocusOutside.useEffect.handleFocus": (event)=>{
+                    if (event.target && !isFocusInsideReactTreeRef.current) {
+                        const eventDetail = {
+                            originalEvent: event
+                        };
+                        handleAndDispatchCustomEvent(FOCUS_OUTSIDE, handleFocusOutside, eventDetail, {
+                            discrete: false
+                        });
+                    }
+                }
+            }["useFocusOutside.useEffect.handleFocus"];
+            ownerDocument.addEventListener("focusin", handleFocus);
+            return ({
+                "useFocusOutside.useEffect": ()=>ownerDocument.removeEventListener("focusin", handleFocus)
+            })["useFocusOutside.useEffect"];
+        }
+    }["useFocusOutside.useEffect"], [
+        ownerDocument,
+        handleFocusOutside
+    ]);
+    return {
+        onFocusCapture: ()=>isFocusInsideReactTreeRef.current = true,
+        onBlurCapture: ()=>isFocusInsideReactTreeRef.current = false
+    };
+}
+function dispatchUpdate() {
+    const event = new CustomEvent(CONTEXT_UPDATE);
+    document.dispatchEvent(event);
+}
+function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
+    const target = detail.originalEvent.target;
+    const event = new CustomEvent(name, {
+        bubbles: false,
+        cancelable: true,
+        detail
+    });
+    if (handler) target.addEventListener(name, handler, {
+        once: true
+    });
+    if (discrete) {
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["dispatchDiscreteCustomEvent"])(target, event);
+    } else {
+        target.dispatchEvent(event);
+    }
+}
+var Root = DismissableLayer;
+var Branch = DismissableLayerBranch;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useLayoutEffect",
+    ()=>useLayoutEffect2
+]);
+// packages/react/use-layout-effect/src/use-layout-effect.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+var useLayoutEffect2 = globalThis?.document ? __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"] : ()=>{};
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-id/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useId",
+    ()=>useId
+]);
+// packages/react/id/src/id.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+;
+;
+var useReactId = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__[" useId ".trim().toString()] || (()=>void 0);
+var count = 0;
+function useId(deterministicId) {
+    const [id, setId] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useState(useReactId());
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "useId.useLayoutEffect": ()=>{
+            if (!deterministicId) setId({
+                "useId.useLayoutEffect": (reactId)=>reactId ?? String(count++)
+            }["useId.useLayoutEffect"]);
+        }
+    }["useId.useLayoutEffect"], [
+        deterministicId
+    ]);
+    return deterministicId || (id ? `radix-${id}` : "");
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-arrow/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Arrow",
+    ()=>Arrow,
+    "Root",
+    ()=>Root
+]);
+// src/arrow.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+;
+;
+;
+var NAME = "Arrow";
+var Arrow = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { children, width = 10, height = 5, ...arrowProps } = props;
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].svg, {
+        ...arrowProps,
+        ref: forwardedRef,
+        width,
+        height,
+        viewBox: "0 0 30 10",
+        preserveAspectRatio: "none",
+        children: props.asChild ? children : /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("polygon", {
+            points: "0,0 30,0 15,10"
+        })
+    });
+});
+Arrow.displayName = NAME;
+var Root = Arrow;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-size/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useSize",
+    ()=>useSize
+]);
+// packages/react/use-size/src/use-size.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+;
+;
+function useSize(element) {
+    const [size, setSize] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](void 0);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "useSize.useLayoutEffect": ()=>{
+            if (element) {
+                setSize({
+                    width: element.offsetWidth,
+                    height: element.offsetHeight
+                });
+                const resizeObserver = new ResizeObserver({
+                    "useSize.useLayoutEffect": (entries)=>{
+                        if (!Array.isArray(entries)) {
+                            return;
+                        }
+                        if (!entries.length) {
+                            return;
+                        }
+                        const entry = entries[0];
+                        let width;
+                        let height;
+                        if ("borderBoxSize" in entry) {
+                            const borderSizeEntry = entry["borderBoxSize"];
+                            const borderSize = Array.isArray(borderSizeEntry) ? borderSizeEntry[0] : borderSizeEntry;
+                            width = borderSize["inlineSize"];
+                            height = borderSize["blockSize"];
+                        } else {
+                            width = element.offsetWidth;
+                            height = element.offsetHeight;
+                        }
+                        setSize({
+                            width,
+                            height
+                        });
+                    }
+                }["useSize.useLayoutEffect"]);
+                resizeObserver.observe(element, {
+                    box: "border-box"
+                });
+                return ({
+                    "useSize.useLayoutEffect": ()=>resizeObserver.unobserve(element)
+                })["useSize.useLayoutEffect"];
+            } else {
+                setSize(void 0);
+            }
+        }
+    }["useSize.useLayoutEffect"], [
+        element
+    ]);
+    return size;
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-popper/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "ALIGN_OPTIONS",
+    ()=>ALIGN_OPTIONS,
+    "Anchor",
+    ()=>Anchor,
+    "Arrow",
+    ()=>Arrow,
+    "Content",
+    ()=>Content,
+    "Popper",
+    ()=>Popper,
+    "PopperAnchor",
+    ()=>PopperAnchor,
+    "PopperArrow",
+    ()=>PopperArrow,
+    "PopperContent",
+    ()=>PopperContent,
+    "Root",
+    ()=>Root2,
+    "SIDE_OPTIONS",
+    ()=>SIDE_OPTIONS,
+    "createPopperScope",
+    ()=>createPopperScope
+]);
+// src/popper.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@floating-ui/react-dom/dist/floating-ui.react-dom.mjs [app-client] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$dom$2f$dist$2f$floating$2d$ui$2e$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs [app-client] (ecmascript) <locals>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$arrow$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-arrow/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-context/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$size$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-size/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+var SIDE_OPTIONS = [
+    "top",
+    "right",
+    "bottom",
+    "left"
+];
+var ALIGN_OPTIONS = [
+    "start",
+    "center",
+    "end"
+];
+var POPPER_NAME = "Popper";
+var [createPopperContext, createPopperScope] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContextScope"])(POPPER_NAME);
+var [PopperProvider, usePopperContext] = createPopperContext(POPPER_NAME);
+var Popper = (props)=>{
+    const { __scopePopper, children } = props;
+    const [anchor, setAnchor] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(PopperProvider, {
+        scope: __scopePopper,
+        anchor,
+        onAnchorChange: setAnchor,
+        children
+    });
+};
+Popper.displayName = POPPER_NAME;
+var ANCHOR_NAME = "PopperAnchor";
+var PopperAnchor = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopePopper, virtualRef, ...anchorProps } = props;
+    const context = usePopperContext(ANCHOR_NAME, __scopePopper);
+    const ref = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, ref);
+    const anchorRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "PopperAnchor.useEffect": ()=>{
+            const previousAnchor = anchorRef.current;
+            anchorRef.current = virtualRef?.current || ref.current;
+            if (previousAnchor !== anchorRef.current) {
+                context.onAnchorChange(anchorRef.current);
+            }
+        }
+    }["PopperAnchor.useEffect"]);
+    return virtualRef ? null : /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+        ...anchorProps,
+        ref: composedRefs
+    });
+});
+PopperAnchor.displayName = ANCHOR_NAME;
+var CONTENT_NAME = "PopperContent";
+var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME);
+var PopperContent = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopePopper, side = "bottom", sideOffset = 0, align = "center", alignOffset = 0, arrowPadding = 0, avoidCollisions = true, collisionBoundary = [], collisionPadding: collisionPaddingProp = 0, sticky = "partial", hideWhenDetached = false, updatePositionStrategy = "optimized", onPlaced, ...contentProps } = props;
+    const context = usePopperContext(CONTENT_NAME, __scopePopper);
+    const [content, setContent] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, {
+        "PopperContent.useComposedRefs[composedRefs]": (node)=>setContent(node)
+    }["PopperContent.useComposedRefs[composedRefs]"]);
+    const [arrow, setArrow] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const arrowSize = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$size$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSize"])(arrow);
+    const arrowWidth = arrowSize?.width ?? 0;
+    const arrowHeight = arrowSize?.height ?? 0;
+    const desiredPlacement = side + (align !== "center" ? "-" + align : "");
+    const collisionPadding = typeof collisionPaddingProp === "number" ? collisionPaddingProp : {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        ...collisionPaddingProp
+    };
+    const boundary = Array.isArray(collisionBoundary) ? collisionBoundary : [
+        collisionBoundary
+    ];
+    const hasExplicitBoundaries = boundary.length > 0;
+    const detectOverflowOptions = {
+        padding: collisionPadding,
+        boundary: boundary.filter(isNotNull),
+        // with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
+        altBoundary: hasExplicitBoundaries
+    };
+    const { refs, floatingStyles, placement, isPositioned, middlewareData } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["useFloating"])({
+        // default to `fixed` strategy so users don't have to pick and we also avoid focus scroll issues
+        strategy: "fixed",
+        placement: desiredPlacement,
+        whileElementsMounted: {
+            "PopperContent.useFloating": (...args)=>{
+                const cleanup = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$dom$2f$dist$2f$floating$2d$ui$2e$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["autoUpdate"])(...args, {
+                    animationFrame: updatePositionStrategy === "always"
+                });
+                return cleanup;
+            }
+        }["PopperContent.useFloating"],
+        elements: {
+            reference: context.anchor
+        },
+        middleware: [
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["offset"])({
+                mainAxis: sideOffset + arrowHeight,
+                alignmentAxis: alignOffset
+            }),
+            avoidCollisions && (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["shift"])({
+                mainAxis: true,
+                crossAxis: false,
+                limiter: sticky === "partial" ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["limitShift"])() : void 0,
+                ...detectOverflowOptions
+            }),
+            avoidCollisions && (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["flip"])({
+                ...detectOverflowOptions
+            }),
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["size"])({
+                ...detectOverflowOptions,
+                apply: {
+                    "PopperContent.useFloating": ({ elements, rects, availableWidth, availableHeight })=>{
+                        const { width: anchorWidth, height: anchorHeight } = rects.reference;
+                        const contentStyle = elements.floating.style;
+                        contentStyle.setProperty("--radix-popper-available-width", `${availableWidth}px`);
+                        contentStyle.setProperty("--radix-popper-available-height", `${availableHeight}px`);
+                        contentStyle.setProperty("--radix-popper-anchor-width", `${anchorWidth}px`);
+                        contentStyle.setProperty("--radix-popper-anchor-height", `${anchorHeight}px`);
+                    }
+                }["PopperContent.useFloating"]
+            }),
+            arrow && (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["arrow"])({
+                element: arrow,
+                padding: arrowPadding
+            }),
+            transformOrigin({
+                arrowWidth,
+                arrowHeight
+            }),
+            hideWhenDetached && (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$floating$2d$ui$2f$react$2d$dom$2f$dist$2f$floating$2d$ui$2e$react$2d$dom$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["hide"])({
+                strategy: "referenceHidden",
+                ...detectOverflowOptions
+            })
+        ]
+    });
+    const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
+    const handlePlaced = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onPlaced);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "PopperContent.useLayoutEffect": ()=>{
+            if (isPositioned) {
+                handlePlaced?.();
+            }
+        }
+    }["PopperContent.useLayoutEffect"], [
+        isPositioned,
+        handlePlaced
+    ]);
+    const arrowX = middlewareData.arrow?.x;
+    const arrowY = middlewareData.arrow?.y;
+    const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0;
+    const [contentZIndex, setContentZIndex] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]();
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "PopperContent.useLayoutEffect": ()=>{
+            if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
+        }
+    }["PopperContent.useLayoutEffect"], [
+        content
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("div", {
+        ref: refs.setFloating,
+        "data-radix-popper-content-wrapper": "",
+        style: {
+            ...floatingStyles,
+            transform: isPositioned ? floatingStyles.transform : "translate(0, -200%)",
+            // keep off the page when measuring
+            minWidth: "max-content",
+            zIndex: contentZIndex,
+            ["--radix-popper-transform-origin"]: [
+                middlewareData.transformOrigin?.x,
+                middlewareData.transformOrigin?.y
+            ].join(" "),
+            // hide the content if using the hide middleware and should be hidden
+            // set visibility to hidden and disable pointer events so the UI behaves
+            // as if the PopperContent isn't there at all
+            ...middlewareData.hide?.referenceHidden && {
+                visibility: "hidden",
+                pointerEvents: "none"
+            }
+        },
+        dir: props.dir,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(PopperContentProvider, {
+            scope: __scopePopper,
+            placedSide,
+            onArrowChange: setArrow,
+            arrowX,
+            arrowY,
+            shouldHideArrow: cannotCenterArrow,
+            children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+                "data-side": placedSide,
+                "data-align": placedAlign,
+                ...contentProps,
+                ref: composedRefs,
+                style: {
+                    ...contentProps.style,
+                    // if the PopperContent hasn't been placed yet (not all measurements done)
+                    // we prevent animations so that users's animation don't kick in too early referring wrong sides
+                    animation: !isPositioned ? "none" : void 0
+                }
+            })
+        })
+    });
+});
+PopperContent.displayName = CONTENT_NAME;
+var ARROW_NAME = "PopperArrow";
+var OPPOSITE_SIDE = {
+    top: "bottom",
+    right: "left",
+    bottom: "top",
+    left: "right"
+};
+var PopperArrow = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"](function PopperArrow2(props, forwardedRef) {
+    const { __scopePopper, ...arrowProps } = props;
+    const contentContext = useContentContext(ARROW_NAME, __scopePopper);
+    const baseSide = OPPOSITE_SIDE[contentContext.placedSide];
+    return(// we have to use an extra wrapper because `ResizeObserver` (used by `useSize`)
+    // doesn't report size as we'd expect on SVG elements.
+    // it reports their bounding box which is effectively the largest path inside the SVG.
+    /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("span", {
+        ref: contentContext.onArrowChange,
+        style: {
+            position: "absolute",
+            left: contentContext.arrowX,
+            top: contentContext.arrowY,
+            [baseSide]: 0,
+            transformOrigin: {
+                top: "",
+                right: "0 0",
+                bottom: "center 0",
+                left: "100% 0"
+            }[contentContext.placedSide],
+            transform: {
+                top: "translateY(100%)",
+                right: "translateY(50%) rotate(90deg) translateX(-50%)",
+                bottom: `rotate(180deg)`,
+                left: "translateY(50%) rotate(-90deg) translateX(50%)"
+            }[contentContext.placedSide],
+            visibility: contentContext.shouldHideArrow ? "hidden" : void 0
+        },
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$arrow$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Root"], {
+            ...arrowProps,
+            ref: forwardedRef,
+            style: {
+                ...arrowProps.style,
+                // ensures the element can be measured correctly (mostly for if SVG)
+                display: "block"
+            }
+        })
+    }));
+});
+PopperArrow.displayName = ARROW_NAME;
+function isNotNull(value) {
+    return value !== null;
+}
+var transformOrigin = (options)=>({
+        name: "transformOrigin",
+        options,
+        fn (data) {
+            const { placement, rects, middlewareData } = data;
+            const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0;
+            const isArrowHidden = cannotCenterArrow;
+            const arrowWidth = isArrowHidden ? 0 : options.arrowWidth;
+            const arrowHeight = isArrowHidden ? 0 : options.arrowHeight;
+            const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement);
+            const noArrowAlign = {
+                start: "0%",
+                center: "50%",
+                end: "100%"
+            }[placedAlign];
+            const arrowXCenter = (middlewareData.arrow?.x ?? 0) + arrowWidth / 2;
+            const arrowYCenter = (middlewareData.arrow?.y ?? 0) + arrowHeight / 2;
+            let x = "";
+            let y = "";
+            if (placedSide === "bottom") {
+                x = isArrowHidden ? noArrowAlign : `${arrowXCenter}px`;
+                y = `${-arrowHeight}px`;
+            } else if (placedSide === "top") {
+                x = isArrowHidden ? noArrowAlign : `${arrowXCenter}px`;
+                y = `${rects.floating.height + arrowHeight}px`;
+            } else if (placedSide === "right") {
+                x = `${-arrowHeight}px`;
+                y = isArrowHidden ? noArrowAlign : `${arrowYCenter}px`;
+            } else if (placedSide === "left") {
+                x = `${rects.floating.width + arrowHeight}px`;
+                y = isArrowHidden ? noArrowAlign : `${arrowYCenter}px`;
+            }
+            return {
+                data: {
+                    x,
+                    y
+                }
+            };
+        }
+    });
+function getSideAndAlignFromPlacement(placement) {
+    const [side, align = "center"] = placement.split("-");
+    return [
+        side,
+        align
+    ];
+}
+var Root2 = Popper;
+var Anchor = PopperAnchor;
+var Content = PopperContent;
+var Arrow = PopperArrow;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-portal/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Portal",
+    ()=>Portal,
+    "Root",
+    ()=>Root
+]);
+// src/portal.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2d$dom$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react-dom/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+var PORTAL_NAME = "Portal";
+var Portal = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { container: containerProp, ...portalProps } = props;
+    const [mounted, setMounted] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](false);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "Portal.useLayoutEffect": ()=>setMounted(true)
+    }["Portal.useLayoutEffect"], []);
+    const container = containerProp || mounted && globalThis?.document?.body;
+    return container ? __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2d$dom$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].createPortal(/* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+        ...portalProps,
+        ref: forwardedRef
+    }), container) : null;
+});
+Portal.displayName = PORTAL_NAME;
+var Root = Portal;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-presence/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Presence",
+    ()=>Presence,
+    "Root",
+    ()=>Root
+]);
+// src/presence.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+function useStateMachine(initialState, machine) {
+    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useReducer"]({
+        "useStateMachine.useReducer": (state, event)=>{
+            const nextState = machine[state][event];
+            return nextState ?? state;
+        }
+    }["useStateMachine.useReducer"], initialState);
+}
+// src/presence.tsx
+var Presence = (props)=>{
+    const { present, children } = props;
+    const presence = usePresence(present);
+    const child = typeof children === "function" ? children({
+        present: presence.isPresent
+    }) : __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].only(children);
+    const ref = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(presence.ref, getElementRef(child));
+    const forceMount = typeof children === "function";
+    return forceMount || presence.isPresent ? __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cloneElement"](child, {
+        ref
+    }) : null;
+};
+Presence.displayName = "Presence";
+function usePresence(present) {
+    const [node, setNode] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]();
+    const stylesRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const prevPresentRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](present);
+    const prevAnimationNameRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"]("none");
+    const initialState = present ? "mounted" : "unmounted";
+    const [state, send] = useStateMachine(initialState, {
+        mounted: {
+            UNMOUNT: "unmounted",
+            ANIMATION_OUT: "unmountSuspended"
+        },
+        unmountSuspended: {
+            MOUNT: "mounted",
+            ANIMATION_END: "unmounted"
+        },
+        unmounted: {
+            MOUNT: "mounted"
+        }
+    });
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "usePresence.useEffect": ()=>{
+            const currentAnimationName = getAnimationName(stylesRef.current);
+            prevAnimationNameRef.current = state === "mounted" ? currentAnimationName : "none";
+        }
+    }["usePresence.useEffect"], [
+        state
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "usePresence.useLayoutEffect": ()=>{
+            const styles = stylesRef.current;
+            const wasPresent = prevPresentRef.current;
+            const hasPresentChanged = wasPresent !== present;
+            if (hasPresentChanged) {
+                const prevAnimationName = prevAnimationNameRef.current;
+                const currentAnimationName = getAnimationName(styles);
+                if (present) {
+                    send("MOUNT");
+                } else if (currentAnimationName === "none" || styles?.display === "none") {
+                    send("UNMOUNT");
+                } else {
+                    const isAnimating = prevAnimationName !== currentAnimationName;
+                    if (wasPresent && isAnimating) {
+                        send("ANIMATION_OUT");
+                    } else {
+                        send("UNMOUNT");
+                    }
+                }
+                prevPresentRef.current = present;
+            }
+        }
+    }["usePresence.useLayoutEffect"], [
+        present,
+        send
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+        "usePresence.useLayoutEffect": ()=>{
+            if (node) {
+                let timeoutId;
+                const ownerWindow = node.ownerDocument.defaultView ?? window;
+                const handleAnimationEnd = {
+                    "usePresence.useLayoutEffect.handleAnimationEnd": (event)=>{
+                        const currentAnimationName = getAnimationName(stylesRef.current);
+                        const isCurrentAnimation = currentAnimationName.includes(CSS.escape(event.animationName));
+                        if (event.target === node && isCurrentAnimation) {
+                            send("ANIMATION_END");
+                            if (!prevPresentRef.current) {
+                                const currentFillMode = node.style.animationFillMode;
+                                node.style.animationFillMode = "forwards";
+                                timeoutId = ownerWindow.setTimeout({
+                                    "usePresence.useLayoutEffect.handleAnimationEnd": ()=>{
+                                        if (node.style.animationFillMode === "forwards") {
+                                            node.style.animationFillMode = currentFillMode;
+                                        }
+                                    }
+                                }["usePresence.useLayoutEffect.handleAnimationEnd"]);
+                            }
+                        }
+                    }
+                }["usePresence.useLayoutEffect.handleAnimationEnd"];
+                const handleAnimationStart = {
+                    "usePresence.useLayoutEffect.handleAnimationStart": (event)=>{
+                        if (event.target === node) {
+                            prevAnimationNameRef.current = getAnimationName(stylesRef.current);
+                        }
+                    }
+                }["usePresence.useLayoutEffect.handleAnimationStart"];
+                node.addEventListener("animationstart", handleAnimationStart);
+                node.addEventListener("animationcancel", handleAnimationEnd);
+                node.addEventListener("animationend", handleAnimationEnd);
+                return ({
+                    "usePresence.useLayoutEffect": ()=>{
+                        ownerWindow.clearTimeout(timeoutId);
+                        node.removeEventListener("animationstart", handleAnimationStart);
+                        node.removeEventListener("animationcancel", handleAnimationEnd);
+                        node.removeEventListener("animationend", handleAnimationEnd);
+                    }
+                })["usePresence.useLayoutEffect"];
+            } else {
+                send("ANIMATION_END");
+            }
+        }
+    }["usePresence.useLayoutEffect"], [
+        node,
+        send
+    ]);
+    return {
+        isPresent: [
+            "mounted",
+            "unmountSuspended"
+        ].includes(state),
+        ref: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+            "usePresence.useCallback": (node2)=>{
+                stylesRef.current = node2 ? getComputedStyle(node2) : null;
+                setNode(node2);
+            }
+        }["usePresence.useCallback"], [])
+    };
+}
+function getAnimationName(styles) {
+    return styles?.animationName || "none";
+}
+function getElementRef(element) {
+    let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
+    let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+    if (mayWarn) {
+        return element.ref;
+    }
+    getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
+    mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+    if (mayWarn) {
+        return element.props.ref;
+    }
+    return element.props.ref || element.ref;
+}
+var Root = Presence;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-effect-event/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useEffectEvent",
+    ()=>useEffectEvent
+]);
+// src/use-effect-event.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+;
+var useReactEffectEvent = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__[" useEffectEvent ".trim().toString()];
+var useReactInsertionEffect = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__[" useInsertionEffect ".trim().toString()];
+function useEffectEvent(callback) {
+    if (typeof useReactEffectEvent === "function") {
+        return useReactEffectEvent(callback);
+    }
+    const ref = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef({
+        "useEffectEvent.useRef[ref]": ()=>{
+            throw new Error("Cannot call an event handler while rendering.");
+        }
+    }["useEffectEvent.useRef[ref]"]);
+    if (typeof useReactInsertionEffect === "function") {
+        useReactInsertionEffect({
+            "useEffectEvent.useReactInsertionEffect": ()=>{
+                ref.current = callback;
+            }
+        }["useEffectEvent.useReactInsertionEffect"]);
+    } else {
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"])({
+            "useEffectEvent.useLayoutEffect": ()=>{
+                ref.current = callback;
+            }
+        }["useEffectEvent.useLayoutEffect"]);
+    }
+    return __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useMemo({
+        "useEffectEvent.useMemo": ()=>({
+                "useEffectEvent.useMemo": (...args)=>ref.current?.(...args)
+            })["useEffectEvent.useMemo"]
+    }["useEffectEvent.useMemo"], []);
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useControllableState",
+    ()=>useControllableState,
+    "useControllableStateReducer",
+    ()=>useControllableStateReducer
+]);
+// src/use-controllable-state.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$effect$2d$event$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-effect-event/dist/index.mjs [app-client] (ecmascript)");
+;
+;
+var useInsertionEffect = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__[" useInsertionEffect ".trim().toString()] || __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$layout$2d$effect$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLayoutEffect"];
+function useControllableState({ prop, defaultProp, onChange = ()=>{}, caller }) {
+    const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
+        defaultProp,
+        onChange
+    });
+    const isControlled = prop !== void 0;
+    const value = isControlled ? prop : uncontrolledProp;
+    if ("TURBOPACK compile-time truthy", 1) {
+        const isControlledRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef(prop !== void 0);
+        __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useEffect({
+            "useControllableState.useEffect": ()=>{
+                const wasControlled = isControlledRef.current;
+                if (wasControlled !== isControlled) {
+                    const from = wasControlled ? "controlled" : "uncontrolled";
+                    const to = isControlled ? "controlled" : "uncontrolled";
+                    console.warn(`${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`);
+                }
+                isControlledRef.current = isControlled;
+            }
+        }["useControllableState.useEffect"], [
+            isControlled,
+            caller
+        ]);
+    }
+    const setValue = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useCallback({
+        "useControllableState.useCallback[setValue]": (nextValue)=>{
+            if (isControlled) {
+                const value2 = isFunction(nextValue) ? nextValue(prop) : nextValue;
+                if (value2 !== prop) {
+                    onChangeRef.current?.(value2);
+                }
+            } else {
+                setUncontrolledProp(nextValue);
+            }
+        }
+    }["useControllableState.useCallback[setValue]"], [
+        isControlled,
+        prop,
+        setUncontrolledProp,
+        onChangeRef
+    ]);
+    return [
+        value,
+        setValue
+    ];
+}
+function useUncontrolledState({ defaultProp, onChange }) {
+    const [value, setValue] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useState(defaultProp);
+    const prevValueRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef(value);
+    const onChangeRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef(onChange);
+    useInsertionEffect({
+        "useUncontrolledState.useInsertionEffect": ()=>{
+            onChangeRef.current = onChange;
+        }
+    }["useUncontrolledState.useInsertionEffect"], [
+        onChange
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useEffect({
+        "useUncontrolledState.useEffect": ()=>{
+            if (prevValueRef.current !== value) {
+                onChangeRef.current?.(value);
+                prevValueRef.current = value;
+            }
+        }
+    }["useUncontrolledState.useEffect"], [
+        value,
+        prevValueRef
+    ]);
+    return [
+        value,
+        setValue,
+        onChangeRef
+    ];
+}
+function isFunction(value) {
+    return typeof value === "function";
+}
+;
+;
+var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
+function useControllableStateReducer(reducer, userArgs, initialArg, init) {
+    const { prop: controlledState, defaultProp, onChange: onChangeProp, caller } = userArgs;
+    const isControlled = controlledState !== void 0;
+    const onChange = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$effect$2d$event$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffectEvent"])(onChangeProp);
+    if ("TURBOPACK compile-time truthy", 1) {
+        const isControlledRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef(controlledState !== void 0);
+        __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useEffect({
+            "useControllableStateReducer.useEffect": ()=>{
+                const wasControlled = isControlledRef.current;
+                if (wasControlled !== isControlled) {
+                    const from = wasControlled ? "controlled" : "uncontrolled";
+                    const to = isControlled ? "controlled" : "uncontrolled";
+                    console.warn(`${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`);
+                }
+                isControlledRef.current = isControlled;
+            }
+        }["useControllableStateReducer.useEffect"], [
+            isControlled,
+            caller
+        ]);
+    }
+    const args = [
+        {
+            ...initialArg,
+            state: defaultProp
+        }
+    ];
+    if (init) {
+        args.push(init);
+    }
+    const [internalState, dispatch] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useReducer({
+        "useControllableStateReducer.useReducer": (state2, action)=>{
+            if (action.type === SYNC_STATE) {
+                return {
+                    ...state2,
+                    state: action.state
+                };
+            }
+            const next = reducer(state2, action);
+            if (isControlled && !Object.is(next.state, state2.state)) {
+                onChange(next.state);
+            }
+            return next;
+        }
+    }["useControllableStateReducer.useReducer"], ...args);
+    const uncontrolledState = internalState.state;
+    const prevValueRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useRef(uncontrolledState);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useEffect({
+        "useControllableStateReducer.useEffect": ()=>{
+            if (prevValueRef.current !== uncontrolledState) {
+                prevValueRef.current = uncontrolledState;
+                if (!isControlled) {
+                    onChange(uncontrolledState);
+                }
+            }
+        }
+    }["useControllableStateReducer.useEffect"], [
+        onChange,
+        uncontrolledState,
+        prevValueRef,
+        isControlled
+    ]);
+    const state = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useMemo({
+        "useControllableStateReducer.useMemo[state]": ()=>{
+            const isControlled2 = controlledState !== void 0;
+            if (isControlled2) {
+                return {
+                    ...internalState,
+                    state: controlledState
+                };
+            }
+            return internalState;
+        }
+    }["useControllableStateReducer.useMemo[state]"], [
+        internalState,
+        controlledState
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__.useEffect({
+        "useControllableStateReducer.useEffect": ()=>{
+            if (isControlled && !Object.is(controlledState, internalState.state)) {
+                dispatch({
+                    type: SYNC_STATE,
+                    state: controlledState
+                });
+            }
+        }
+    }["useControllableStateReducer.useEffect"], [
+        controlledState,
+        internalState.state,
+        isControlled
+    ]);
+    return [
+        state,
+        dispatch
+    ];
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-visually-hidden/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Root",
+    ()=>Root,
+    "VISUALLY_HIDDEN_STYLES",
+    ()=>VISUALLY_HIDDEN_STYLES,
+    "VisuallyHidden",
+    ()=>VisuallyHidden
+]);
+// src/visually-hidden.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+;
+;
+;
+var VISUALLY_HIDDEN_STYLES = Object.freeze({
+    // See: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_visually-hidden.scss
+    position: "absolute",
+    border: 0,
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clip: "rect(0, 0, 0, 0)",
+    whiteSpace: "nowrap",
+    wordWrap: "normal"
+});
+var NAME = "VisuallyHidden";
+var VisuallyHidden = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].span, {
+        ...props,
+        ref: forwardedRef,
+        style: {
+            ...VISUALLY_HIDDEN_STYLES,
+            ...props.style
+        }
+    });
+});
+VisuallyHidden.displayName = NAME;
+var Root = VisuallyHidden;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-tooltip/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Arrow",
+    ()=>Arrow2,
+    "Content",
+    ()=>Content2,
+    "Portal",
+    ()=>Portal,
+    "Provider",
+    ()=>Provider,
+    "Root",
+    ()=>Root3,
+    "Tooltip",
+    ()=>Tooltip,
+    "TooltipArrow",
+    ()=>TooltipArrow,
+    "TooltipContent",
+    ()=>TooltipContent,
+    "TooltipPortal",
+    ()=>TooltipPortal,
+    "TooltipProvider",
+    ()=>TooltipProvider,
+    "TooltipTrigger",
+    ()=>TooltipTrigger,
+    "Trigger",
+    ()=>Trigger,
+    "createTooltipScope",
+    ()=>createTooltipScope
+]);
+// src/tooltip.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-context/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dismissable$2d$layer$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-id/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-popper/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$portal$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-portal/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-presence/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-slot/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$controllable$2d$state$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$visually$2d$hidden$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-visually-hidden/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+var [createTooltipContext, createTooltipScope] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContextScope"])("Tooltip", [
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createPopperScope"]
+]);
+var usePopperScope = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createPopperScope"])();
+var PROVIDER_NAME = "TooltipProvider";
+var DEFAULT_DELAY_DURATION = 700;
+var TOOLTIP_OPEN = "tooltip.open";
+var [TooltipProviderContextProvider, useTooltipProviderContext] = createTooltipContext(PROVIDER_NAME);
+var TooltipProvider = (props)=>{
+    const { __scopeTooltip, delayDuration = DEFAULT_DELAY_DURATION, skipDelayDuration = 300, disableHoverableContent = false, children } = props;
+    const isOpenDelayedRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](true);
+    const isPointerInTransitRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const skipDelayTimerRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](0);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipProvider.useEffect": ()=>{
+            const skipDelayTimer = skipDelayTimerRef.current;
+            return ({
+                "TooltipProvider.useEffect": ()=>window.clearTimeout(skipDelayTimer)
+            })["TooltipProvider.useEffect"];
+        }
+    }["TooltipProvider.useEffect"], []);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TooltipProviderContextProvider, {
+        scope: __scopeTooltip,
+        isOpenDelayedRef,
+        delayDuration,
+        onOpen: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+            "TooltipProvider.useCallback": ()=>{
+                window.clearTimeout(skipDelayTimerRef.current);
+                isOpenDelayedRef.current = false;
+            }
+        }["TooltipProvider.useCallback"], []),
+        onClose: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+            "TooltipProvider.useCallback": ()=>{
+                window.clearTimeout(skipDelayTimerRef.current);
+                skipDelayTimerRef.current = window.setTimeout({
+                    "TooltipProvider.useCallback": ()=>isOpenDelayedRef.current = true
+                }["TooltipProvider.useCallback"], skipDelayDuration);
+            }
+        }["TooltipProvider.useCallback"], [
+            skipDelayDuration
+        ]),
+        isPointerInTransitRef,
+        onPointerInTransitChange: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+            "TooltipProvider.useCallback": (inTransit)=>{
+                isPointerInTransitRef.current = inTransit;
+            }
+        }["TooltipProvider.useCallback"], []),
+        disableHoverableContent,
+        children
+    });
+};
+TooltipProvider.displayName = PROVIDER_NAME;
+var TOOLTIP_NAME = "Tooltip";
+var [TooltipContextProvider, useTooltipContext] = createTooltipContext(TOOLTIP_NAME);
+var Tooltip = (props)=>{
+    const { __scopeTooltip, children, open: openProp, defaultOpen, onOpenChange, disableHoverableContent: disableHoverableContentProp, delayDuration: delayDurationProp } = props;
+    const providerContext = useTooltipProviderContext(TOOLTIP_NAME, props.__scopeTooltip);
+    const popperScope = usePopperScope(__scopeTooltip);
+    const [trigger, setTrigger] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const contentId = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useId"])();
+    const openTimerRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](0);
+    const disableHoverableContent = disableHoverableContentProp ?? providerContext.disableHoverableContent;
+    const delayDuration = delayDurationProp ?? providerContext.delayDuration;
+    const wasOpenDelayedRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const [open, setOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$controllable$2d$state$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useControllableState"])({
+        prop: openProp,
+        defaultProp: defaultOpen ?? false,
+        onChange: {
+            "Tooltip.useControllableState": (open2)=>{
+                if (open2) {
+                    providerContext.onOpen();
+                    document.dispatchEvent(new CustomEvent(TOOLTIP_OPEN));
+                } else {
+                    providerContext.onClose();
+                }
+                onOpenChange?.(open2);
+            }
+        }["Tooltip.useControllableState"],
+        caller: TOOLTIP_NAME
+    });
+    const stateAttribute = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
+        "Tooltip.useMemo[stateAttribute]": ()=>{
+            return open ? wasOpenDelayedRef.current ? "delayed-open" : "instant-open" : "closed";
+        }
+    }["Tooltip.useMemo[stateAttribute]"], [
+        open
+    ]);
+    const handleOpen = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "Tooltip.useCallback[handleOpen]": ()=>{
+            window.clearTimeout(openTimerRef.current);
+            openTimerRef.current = 0;
+            wasOpenDelayedRef.current = false;
+            setOpen(true);
+        }
+    }["Tooltip.useCallback[handleOpen]"], [
+        setOpen
+    ]);
+    const handleClose = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "Tooltip.useCallback[handleClose]": ()=>{
+            window.clearTimeout(openTimerRef.current);
+            openTimerRef.current = 0;
+            setOpen(false);
+        }
+    }["Tooltip.useCallback[handleClose]"], [
+        setOpen
+    ]);
+    const handleDelayedOpen = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "Tooltip.useCallback[handleDelayedOpen]": ()=>{
+            window.clearTimeout(openTimerRef.current);
+            openTimerRef.current = window.setTimeout({
+                "Tooltip.useCallback[handleDelayedOpen]": ()=>{
+                    wasOpenDelayedRef.current = true;
+                    setOpen(true);
+                    openTimerRef.current = 0;
+                }
+            }["Tooltip.useCallback[handleDelayedOpen]"], delayDuration);
+        }
+    }["Tooltip.useCallback[handleDelayedOpen]"], [
+        delayDuration,
+        setOpen
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "Tooltip.useEffect": ()=>{
+            return ({
+                "Tooltip.useEffect": ()=>{
+                    if (openTimerRef.current) {
+                        window.clearTimeout(openTimerRef.current);
+                        openTimerRef.current = 0;
+                    }
+                }
+            })["Tooltip.useEffect"];
+        }
+    }["Tooltip.useEffect"], []);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Root"], {
+        ...popperScope,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TooltipContextProvider, {
+            scope: __scopeTooltip,
+            contentId,
+            open,
+            stateAttribute,
+            trigger,
+            onTriggerChange: setTrigger,
+            onTriggerEnter: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+                "Tooltip.useCallback": ()=>{
+                    if (providerContext.isOpenDelayedRef.current) handleDelayedOpen();
+                    else handleOpen();
+                }
+            }["Tooltip.useCallback"], [
+                providerContext.isOpenDelayedRef,
+                handleDelayedOpen,
+                handleOpen
+            ]),
+            onTriggerLeave: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+                "Tooltip.useCallback": ()=>{
+                    if (disableHoverableContent) {
+                        handleClose();
+                    } else {
+                        window.clearTimeout(openTimerRef.current);
+                        openTimerRef.current = 0;
+                    }
+                }
+            }["Tooltip.useCallback"], [
+                handleClose,
+                disableHoverableContent
+            ]),
+            onOpen: handleOpen,
+            onClose: handleClose,
+            disableHoverableContent,
+            children
+        })
+    });
+};
+Tooltip.displayName = TOOLTIP_NAME;
+var TRIGGER_NAME = "TooltipTrigger";
+var TooltipTrigger = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeTooltip, ...triggerProps } = props;
+    const context = useTooltipContext(TRIGGER_NAME, __scopeTooltip);
+    const providerContext = useTooltipProviderContext(TRIGGER_NAME, __scopeTooltip);
+    const popperScope = usePopperScope(__scopeTooltip);
+    const ref = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, ref, context.onTriggerChange);
+    const isPointerDownRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const hasPointerMoveOpenedRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const handlePointerUp = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "TooltipTrigger.useCallback[handlePointerUp]": ()=>isPointerDownRef.current = false
+    }["TooltipTrigger.useCallback[handlePointerUp]"], []);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipTrigger.useEffect": ()=>{
+            return ({
+                "TooltipTrigger.useEffect": ()=>document.removeEventListener("pointerup", handlePointerUp)
+            })["TooltipTrigger.useEffect"];
+        }
+    }["TooltipTrigger.useEffect"], [
+        handlePointerUp
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Anchor"], {
+        asChild: true,
+        ...popperScope,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].button, {
+            "aria-describedby": context.open ? context.contentId : void 0,
+            "data-state": context.stateAttribute,
+            ...triggerProps,
+            ref: composedRefs,
+            onPointerMove: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onPointerMove, (event)=>{
+                if (event.pointerType === "touch") return;
+                if (!hasPointerMoveOpenedRef.current && !providerContext.isPointerInTransitRef.current) {
+                    context.onTriggerEnter();
+                    hasPointerMoveOpenedRef.current = true;
+                }
+            }),
+            onPointerLeave: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onPointerLeave, ()=>{
+                context.onTriggerLeave();
+                hasPointerMoveOpenedRef.current = false;
+            }),
+            onPointerDown: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onPointerDown, ()=>{
+                if (context.open) {
+                    context.onClose();
+                }
+                isPointerDownRef.current = true;
+                document.addEventListener("pointerup", handlePointerUp, {
+                    once: true
+                });
+            }),
+            onFocus: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onFocus, ()=>{
+                if (!isPointerDownRef.current) context.onOpen();
+            }),
+            onBlur: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onBlur, context.onClose),
+            onClick: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onClick, context.onClose)
+        })
+    });
+});
+TooltipTrigger.displayName = TRIGGER_NAME;
+var PORTAL_NAME = "TooltipPortal";
+var [PortalProvider, usePortalContext] = createTooltipContext(PORTAL_NAME, {
+    forceMount: void 0
+});
+var TooltipPortal = (props)=>{
+    const { __scopeTooltip, forceMount, children, container } = props;
+    const context = useTooltipContext(PORTAL_NAME, __scopeTooltip);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(PortalProvider, {
+        scope: __scopeTooltip,
+        forceMount,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Presence"], {
+            present: forceMount || context.open,
+            children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$portal$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Portal"], {
+                asChild: true,
+                container,
+                children
+            })
+        })
+    });
+};
+TooltipPortal.displayName = PORTAL_NAME;
+var CONTENT_NAME = "TooltipContent";
+var TooltipContent = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const portalContext = usePortalContext(CONTENT_NAME, props.__scopeTooltip);
+    const { forceMount = portalContext.forceMount, side = "top", ...contentProps } = props;
+    const context = useTooltipContext(CONTENT_NAME, props.__scopeTooltip);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Presence"], {
+        present: forceMount || context.open,
+        children: context.disableHoverableContent ? /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TooltipContentImpl, {
+            side,
+            ...contentProps,
+            ref: forwardedRef
+        }) : /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TooltipContentHoverable, {
+            side,
+            ...contentProps,
+            ref: forwardedRef
+        })
+    });
+});
+var TooltipContentHoverable = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const context = useTooltipContext(CONTENT_NAME, props.__scopeTooltip);
+    const providerContext = useTooltipProviderContext(CONTENT_NAME, props.__scopeTooltip);
+    const ref = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, ref);
+    const [pointerGraceArea, setPointerGraceArea] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const { trigger, onClose } = context;
+    const content = ref.current;
+    const { onPointerInTransitChange } = providerContext;
+    const handleRemoveGraceArea = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "TooltipContentHoverable.useCallback[handleRemoveGraceArea]": ()=>{
+            setPointerGraceArea(null);
+            onPointerInTransitChange(false);
+        }
+    }["TooltipContentHoverable.useCallback[handleRemoveGraceArea]"], [
+        onPointerInTransitChange
+    ]);
+    const handleCreateGraceArea = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "TooltipContentHoverable.useCallback[handleCreateGraceArea]": (event, hoverTarget)=>{
+            const currentTarget = event.currentTarget;
+            const exitPoint = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            const exitSide = getExitSideFromRect(exitPoint, currentTarget.getBoundingClientRect());
+            const paddedExitPoints = getPaddedExitPoints(exitPoint, exitSide);
+            const hoverTargetPoints = getPointsFromRect(hoverTarget.getBoundingClientRect());
+            const graceArea = getHull([
+                ...paddedExitPoints,
+                ...hoverTargetPoints
+            ]);
+            setPointerGraceArea(graceArea);
+            onPointerInTransitChange(true);
+        }
+    }["TooltipContentHoverable.useCallback[handleCreateGraceArea]"], [
+        onPointerInTransitChange
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipContentHoverable.useEffect": ()=>{
+            return ({
+                "TooltipContentHoverable.useEffect": ()=>handleRemoveGraceArea()
+            })["TooltipContentHoverable.useEffect"];
+        }
+    }["TooltipContentHoverable.useEffect"], [
+        handleRemoveGraceArea
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipContentHoverable.useEffect": ()=>{
+            if (trigger && content) {
+                const handleTriggerLeave = {
+                    "TooltipContentHoverable.useEffect.handleTriggerLeave": (event)=>handleCreateGraceArea(event, content)
+                }["TooltipContentHoverable.useEffect.handleTriggerLeave"];
+                const handleContentLeave = {
+                    "TooltipContentHoverable.useEffect.handleContentLeave": (event)=>handleCreateGraceArea(event, trigger)
+                }["TooltipContentHoverable.useEffect.handleContentLeave"];
+                trigger.addEventListener("pointerleave", handleTriggerLeave);
+                content.addEventListener("pointerleave", handleContentLeave);
+                return ({
+                    "TooltipContentHoverable.useEffect": ()=>{
+                        trigger.removeEventListener("pointerleave", handleTriggerLeave);
+                        content.removeEventListener("pointerleave", handleContentLeave);
+                    }
+                })["TooltipContentHoverable.useEffect"];
+            }
+        }
+    }["TooltipContentHoverable.useEffect"], [
+        trigger,
+        content,
+        handleCreateGraceArea,
+        handleRemoveGraceArea
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipContentHoverable.useEffect": ()=>{
+            if (pointerGraceArea) {
+                const handleTrackPointerGrace = {
+                    "TooltipContentHoverable.useEffect.handleTrackPointerGrace": (event)=>{
+                        const target = event.target;
+                        const pointerPosition = {
+                            x: event.clientX,
+                            y: event.clientY
+                        };
+                        const hasEnteredTarget = trigger?.contains(target) || content?.contains(target);
+                        const isPointerOutsideGraceArea = !isPointInPolygon(pointerPosition, pointerGraceArea);
+                        if (hasEnteredTarget) {
+                            handleRemoveGraceArea();
+                        } else if (isPointerOutsideGraceArea) {
+                            handleRemoveGraceArea();
+                            onClose();
+                        }
+                    }
+                }["TooltipContentHoverable.useEffect.handleTrackPointerGrace"];
+                document.addEventListener("pointermove", handleTrackPointerGrace);
+                return ({
+                    "TooltipContentHoverable.useEffect": ()=>document.removeEventListener("pointermove", handleTrackPointerGrace)
+                })["TooltipContentHoverable.useEffect"];
+            }
+        }
+    }["TooltipContentHoverable.useEffect"], [
+        trigger,
+        content,
+        pointerGraceArea,
+        onClose,
+        handleRemoveGraceArea
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TooltipContentImpl, {
+        ...props,
+        ref: composedRefs
+    });
+});
+var [VisuallyHiddenContentContextProvider, useVisuallyHiddenContentContext] = createTooltipContext(TOOLTIP_NAME, {
+    isInside: false
+});
+var Slottable = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createSlottable"])("TooltipContent");
+var TooltipContentImpl = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeTooltip, children, "aria-label": ariaLabel, onEscapeKeyDown, onPointerDownOutside, ...contentProps } = props;
+    const context = useTooltipContext(CONTENT_NAME, __scopeTooltip);
+    const popperScope = usePopperScope(__scopeTooltip);
+    const { onClose } = context;
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipContentImpl.useEffect": ()=>{
+            document.addEventListener(TOOLTIP_OPEN, onClose);
+            return ({
+                "TooltipContentImpl.useEffect": ()=>document.removeEventListener(TOOLTIP_OPEN, onClose)
+            })["TooltipContentImpl.useEffect"];
+        }
+    }["TooltipContentImpl.useEffect"], [
+        onClose
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TooltipContentImpl.useEffect": ()=>{
+            if (context.trigger) {
+                const handleScroll = {
+                    "TooltipContentImpl.useEffect.handleScroll": (event)=>{
+                        const target = event.target;
+                        if (target?.contains(context.trigger)) onClose();
+                    }
+                }["TooltipContentImpl.useEffect.handleScroll"];
+                window.addEventListener("scroll", handleScroll, {
+                    capture: true
+                });
+                return ({
+                    "TooltipContentImpl.useEffect": ()=>window.removeEventListener("scroll", handleScroll, {
+                            capture: true
+                        })
+                })["TooltipContentImpl.useEffect"];
+            }
+        }
+    }["TooltipContentImpl.useEffect"], [
+        context.trigger,
+        onClose
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dismissable$2d$layer$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DismissableLayer"], {
+        asChild: true,
+        disableOutsidePointerEvents: false,
+        onEscapeKeyDown,
+        onPointerDownOutside,
+        onFocusOutside: (event)=>event.preventDefault(),
+        onDismiss: onClose,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Content"], {
+            "data-state": context.stateAttribute,
+            ...popperScope,
+            ...contentProps,
+            ref: forwardedRef,
+            style: {
+                ...contentProps.style,
+                // re-namespace exposed content custom properties
+                ...{
+                    "--radix-tooltip-content-transform-origin": "var(--radix-popper-transform-origin)",
+                    "--radix-tooltip-content-available-width": "var(--radix-popper-available-width)",
+                    "--radix-tooltip-content-available-height": "var(--radix-popper-available-height)",
+                    "--radix-tooltip-trigger-width": "var(--radix-popper-anchor-width)",
+                    "--radix-tooltip-trigger-height": "var(--radix-popper-anchor-height)"
+                }
+            },
+            children: [
+                /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(Slottable, {
+                    children
+                }),
+                /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(VisuallyHiddenContentContextProvider, {
+                    scope: __scopeTooltip,
+                    isInside: true,
+                    children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$visually$2d$hidden$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Root"], {
+                        id: context.contentId,
+                        role: "tooltip",
+                        children: ariaLabel || children
+                    })
+                })
+            ]
+        })
+    });
+});
+TooltipContent.displayName = CONTENT_NAME;
+var ARROW_NAME = "TooltipArrow";
+var TooltipArrow = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeTooltip, ...arrowProps } = props;
+    const popperScope = usePopperScope(__scopeTooltip);
+    const visuallyHiddenContentContext = useVisuallyHiddenContentContext(ARROW_NAME, __scopeTooltip);
+    return visuallyHiddenContentContext.isInside ? null : /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$popper$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Arrow"], {
+        ...popperScope,
+        ...arrowProps,
+        ref: forwardedRef
+    });
+});
+TooltipArrow.displayName = ARROW_NAME;
+function getExitSideFromRect(point, rect) {
+    const top = Math.abs(rect.top - point.y);
+    const bottom = Math.abs(rect.bottom - point.y);
+    const right = Math.abs(rect.right - point.x);
+    const left = Math.abs(rect.left - point.x);
+    switch(Math.min(top, bottom, right, left)){
+        case left:
+            return "left";
+        case right:
+            return "right";
+        case top:
+            return "top";
+        case bottom:
+            return "bottom";
+        default:
+            throw new Error("unreachable");
+    }
+}
+function getPaddedExitPoints(exitPoint, exitSide, padding = 5) {
+    const paddedExitPoints = [];
+    switch(exitSide){
+        case "top":
+            paddedExitPoints.push({
+                x: exitPoint.x - padding,
+                y: exitPoint.y + padding
+            }, {
+                x: exitPoint.x + padding,
+                y: exitPoint.y + padding
+            });
+            break;
+        case "bottom":
+            paddedExitPoints.push({
+                x: exitPoint.x - padding,
+                y: exitPoint.y - padding
+            }, {
+                x: exitPoint.x + padding,
+                y: exitPoint.y - padding
+            });
+            break;
+        case "left":
+            paddedExitPoints.push({
+                x: exitPoint.x + padding,
+                y: exitPoint.y - padding
+            }, {
+                x: exitPoint.x + padding,
+                y: exitPoint.y + padding
+            });
+            break;
+        case "right":
+            paddedExitPoints.push({
+                x: exitPoint.x - padding,
+                y: exitPoint.y - padding
+            }, {
+                x: exitPoint.x - padding,
+                y: exitPoint.y + padding
+            });
+            break;
+    }
+    return paddedExitPoints;
+}
+function getPointsFromRect(rect) {
+    const { top, right, bottom, left } = rect;
+    return [
+        {
+            x: left,
+            y: top
+        },
+        {
+            x: right,
+            y: top
+        },
+        {
+            x: right,
+            y: bottom
+        },
+        {
+            x: left,
+            y: bottom
+        }
+    ];
+}
+function isPointInPolygon(point, polygon) {
+    const { x, y } = point;
+    let inside = false;
+    for(let i = 0, j = polygon.length - 1; i < polygon.length; j = i++){
+        const ii = polygon[i];
+        const jj = polygon[j];
+        const xi = ii.x;
+        const yi = ii.y;
+        const xj = jj.x;
+        const yj = jj.y;
+        const intersect = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi;
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+function getHull(points) {
+    const newPoints = points.slice();
+    newPoints.sort((a, b)=>{
+        if (a.x < b.x) return -1;
+        else if (a.x > b.x) return 1;
+        else if (a.y < b.y) return -1;
+        else if (a.y > b.y) return 1;
+        else return 0;
+    });
+    return getHullPresorted(newPoints);
+}
+function getHullPresorted(points) {
+    if (points.length <= 1) return points.slice();
+    const upperHull = [];
+    for(let i = 0; i < points.length; i++){
+        const p = points[i];
+        while(upperHull.length >= 2){
+            const q = upperHull[upperHull.length - 1];
+            const r = upperHull[upperHull.length - 2];
+            if ((q.x - r.x) * (p.y - r.y) >= (q.y - r.y) * (p.x - r.x)) upperHull.pop();
+            else break;
+        }
+        upperHull.push(p);
+    }
+    upperHull.pop();
+    const lowerHull = [];
+    for(let i = points.length - 1; i >= 0; i--){
+        const p = points[i];
+        while(lowerHull.length >= 2){
+            const q = lowerHull[lowerHull.length - 1];
+            const r = lowerHull[lowerHull.length - 2];
+            if ((q.x - r.x) * (p.y - r.y) >= (q.y - r.y) * (p.x - r.x)) lowerHull.pop();
+            else break;
+        }
+        lowerHull.push(p);
+    }
+    lowerHull.pop();
+    if (upperHull.length === 1 && lowerHull.length === 1 && upperHull[0].x === lowerHull[0].x && upperHull[0].y === lowerHull[0].y) {
+        return upperHull;
+    } else {
+        return upperHull.concat(lowerHull);
+    }
+}
+var Provider = TooltipProvider;
+var Root3 = Tooltip;
+var Trigger = TooltipTrigger;
+var Portal = TooltipPortal;
+var Content2 = TooltipContent;
+var Arrow2 = TooltipArrow;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-tooltip/dist/index.mjs [app-client] (ecmascript) <export * as Tooltip>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Tooltip",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$tooltip$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$tooltip$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-tooltip/dist/index.mjs [app-client] (ecmascript)");
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-focus-scope/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "FocusScope",
+    ()=>FocusScope,
+    "Root",
+    ()=>Root
+]);
+// src/focus-scope.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
+var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
+var EVENT_OPTIONS = {
+    bubbles: false,
+    cancelable: true
+};
+var FOCUS_SCOPE_NAME = "FocusScope";
+var FocusScope = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { loop = false, trapped = false, onMountAutoFocus: onMountAutoFocusProp, onUnmountAutoFocus: onUnmountAutoFocusProp, ...scopeProps } = props;
+    const [container, setContainer] = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const onMountAutoFocus = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onMountAutoFocusProp);
+    const onUnmountAutoFocus = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$callback$2d$ref$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallbackRef"])(onUnmountAutoFocusProp);
+    const lastFocusedElementRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, {
+        "FocusScope.useComposedRefs[composedRefs]": (node)=>setContainer(node)
+    }["FocusScope.useComposedRefs[composedRefs]"]);
+    const focusScope = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"]({
+        paused: false,
+        pause () {
+            this.paused = true;
+        },
+        resume () {
+            this.paused = false;
+        }
+    }).current;
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "FocusScope.useEffect": ()=>{
+            if (trapped) {
+                let handleFocusIn2 = {
+                    "FocusScope.useEffect.handleFocusIn2": function(event) {
+                        if (focusScope.paused || !container) return;
+                        const target = event.target;
+                        if (container.contains(target)) {
+                            lastFocusedElementRef.current = target;
+                        } else {
+                            focus(lastFocusedElementRef.current, {
+                                select: true
+                            });
+                        }
+                    }
+                }["FocusScope.useEffect.handleFocusIn2"], handleFocusOut2 = {
+                    "FocusScope.useEffect.handleFocusOut2": function(event) {
+                        if (focusScope.paused || !container) return;
+                        const relatedTarget = event.relatedTarget;
+                        if (relatedTarget === null) return;
+                        if (!container.contains(relatedTarget)) {
+                            focus(lastFocusedElementRef.current, {
+                                select: true
+                            });
+                        }
+                    }
+                }["FocusScope.useEffect.handleFocusOut2"], handleMutations2 = {
+                    "FocusScope.useEffect.handleMutations2": function(mutations) {
+                        const focusedElement = document.activeElement;
+                        if (focusedElement !== document.body) return;
+                        for (const mutation of mutations){
+                            if (mutation.removedNodes.length > 0) focus(container);
+                        }
+                    }
+                }["FocusScope.useEffect.handleMutations2"];
+                var handleFocusIn = handleFocusIn2, handleFocusOut = handleFocusOut2, handleMutations = handleMutations2;
+                document.addEventListener("focusin", handleFocusIn2);
+                document.addEventListener("focusout", handleFocusOut2);
+                const mutationObserver = new MutationObserver(handleMutations2);
+                if (container) mutationObserver.observe(container, {
+                    childList: true,
+                    subtree: true
+                });
+                return ({
+                    "FocusScope.useEffect": ()=>{
+                        document.removeEventListener("focusin", handleFocusIn2);
+                        document.removeEventListener("focusout", handleFocusOut2);
+                        mutationObserver.disconnect();
+                    }
+                })["FocusScope.useEffect"];
+            }
+        }
+    }["FocusScope.useEffect"], [
+        trapped,
+        container,
+        focusScope.paused
+    ]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "FocusScope.useEffect": ()=>{
+            if (container) {
+                focusScopesStack.add(focusScope);
+                const previouslyFocusedElement = document.activeElement;
+                const hasFocusedCandidate = container.contains(previouslyFocusedElement);
+                if (!hasFocusedCandidate) {
+                    const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT, EVENT_OPTIONS);
+                    container.addEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+                    container.dispatchEvent(mountEvent);
+                    if (!mountEvent.defaultPrevented) {
+                        focusFirst(removeLinks(getTabbableCandidates(container)), {
+                            select: true
+                        });
+                        if (document.activeElement === previouslyFocusedElement) {
+                            focus(container);
+                        }
+                    }
+                }
+                return ({
+                    "FocusScope.useEffect": ()=>{
+                        container.removeEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+                        setTimeout({
+                            "FocusScope.useEffect": ()=>{
+                                const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS);
+                                container.addEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+                                container.dispatchEvent(unmountEvent);
+                                if (!unmountEvent.defaultPrevented) {
+                                    focus(previouslyFocusedElement ?? document.body, {
+                                        select: true
+                                    });
+                                }
+                                container.removeEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+                                focusScopesStack.remove(focusScope);
+                            }
+                        }["FocusScope.useEffect"], 0);
+                    }
+                })["FocusScope.useEffect"];
+            }
+        }
+    }["FocusScope.useEffect"], [
+        container,
+        onMountAutoFocus,
+        onUnmountAutoFocus,
+        focusScope
+    ]);
+    const handleKeyDown = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+        "FocusScope.useCallback[handleKeyDown]": (event)=>{
+            if (!loop && !trapped) return;
+            if (focusScope.paused) return;
+            const isTabKey = event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;
+            const focusedElement = document.activeElement;
+            if (isTabKey && focusedElement) {
+                const container2 = event.currentTarget;
+                const [first, last] = getTabbableEdges(container2);
+                const hasTabbableElementsInside = first && last;
+                if (!hasTabbableElementsInside) {
+                    if (focusedElement === container2) event.preventDefault();
+                } else {
+                    if (!event.shiftKey && focusedElement === last) {
+                        event.preventDefault();
+                        if (loop) focus(first, {
+                            select: true
+                        });
+                    } else if (event.shiftKey && focusedElement === first) {
+                        event.preventDefault();
+                        if (loop) focus(last, {
+                            select: true
+                        });
+                    }
+                }
+            }
+        }
+    }["FocusScope.useCallback[handleKeyDown]"], [
+        loop,
+        trapped,
+        focusScope.paused
+    ]);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+        tabIndex: -1,
+        ...scopeProps,
+        ref: composedRefs,
+        onKeyDown: handleKeyDown
+    });
+});
+FocusScope.displayName = FOCUS_SCOPE_NAME;
+function focusFirst(candidates, { select = false } = {}) {
+    const previouslyFocusedElement = document.activeElement;
+    for (const candidate of candidates){
+        focus(candidate, {
+            select
+        });
+        if (document.activeElement !== previouslyFocusedElement) return;
+    }
+}
+function getTabbableEdges(container) {
+    const candidates = getTabbableCandidates(container);
+    const first = findVisible(candidates, container);
+    const last = findVisible(candidates.reverse(), container);
+    return [
+        first,
+        last
+    ];
+}
+function getTabbableCandidates(container) {
+    const nodes = [];
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: (node)=>{
+            const isHiddenInput = node.tagName === "INPUT" && node.type === "hidden";
+            if (node.disabled || node.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP;
+            return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        }
+    });
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    return nodes;
+}
+function findVisible(elements, container) {
+    for (const element of elements){
+        if (!isHidden(element, {
+            upTo: container
+        })) return element;
+    }
+}
+function isHidden(node, { upTo }) {
+    if (getComputedStyle(node).visibility === "hidden") return true;
+    while(node){
+        if (upTo !== void 0 && node === upTo) return false;
+        if (getComputedStyle(node).display === "none") return true;
+        node = node.parentElement;
+    }
+    return false;
+}
+function isSelectableInput(element) {
+    return element instanceof HTMLInputElement && "select" in element;
+}
+function focus(element, { select = false } = {}) {
+    if (element && element.focus) {
+        const previouslyFocusedElement = document.activeElement;
+        element.focus({
+            preventScroll: true
+        });
+        if (element !== previouslyFocusedElement && isSelectableInput(element) && select) element.select();
+    }
+}
+var focusScopesStack = createFocusScopesStack();
+function createFocusScopesStack() {
+    let stack = [];
+    return {
+        add (focusScope) {
+            const activeFocusScope = stack[0];
+            if (focusScope !== activeFocusScope) {
+                activeFocusScope?.pause();
+            }
+            stack = arrayRemove(stack, focusScope);
+            stack.unshift(focusScope);
+        },
+        remove (focusScope) {
+            stack = arrayRemove(stack, focusScope);
+            stack[0]?.resume();
+        }
+    };
+}
+function arrayRemove(array, item) {
+    const updatedArray = [
+        ...array
+    ];
+    const index = updatedArray.indexOf(item);
+    if (index !== -1) {
+        updatedArray.splice(index, 1);
+    }
+    return updatedArray;
+}
+function removeLinks(items) {
+    return items.filter((item)=>item.tagName !== "A");
+}
+var Root = FocusScope;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-focus-guards/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "FocusGuards",
+    ()=>FocusGuards,
+    "Root",
+    ()=>FocusGuards,
+    "useFocusGuards",
+    ()=>useFocusGuards
+]);
+// src/focus-guards.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+"use client";
+;
+var count = 0;
+function FocusGuards(props) {
+    useFocusGuards();
+    return props.children;
+}
+function useFocusGuards() {
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "useFocusGuards.useEffect": ()=>{
+            const edgeGuards = document.querySelectorAll("[data-radix-focus-guard]");
+            document.body.insertAdjacentElement("afterbegin", edgeGuards[0] ?? createFocusGuard());
+            document.body.insertAdjacentElement("beforeend", edgeGuards[1] ?? createFocusGuard());
+            count++;
+            return ({
+                "useFocusGuards.useEffect": ()=>{
+                    if (count === 1) {
+                        document.querySelectorAll("[data-radix-focus-guard]").forEach({
+                            "useFocusGuards.useEffect": (node)=>node.remove()
+                        }["useFocusGuards.useEffect"]);
+                    }
+                    count--;
+                }
+            })["useFocusGuards.useEffect"];
+        }
+    }["useFocusGuards.useEffect"], []);
+}
+function createFocusGuard() {
+    const element = document.createElement("span");
+    element.setAttribute("data-radix-focus-guard", "");
+    element.tabIndex = 0;
+    element.style.outline = "none";
+    element.style.opacity = "0";
+    element.style.position = "fixed";
+    element.style.pointerEvents = "none";
+    return element;
+}
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-dialog/dist/index.mjs [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Close",
+    ()=>Close,
+    "Content",
+    ()=>Content,
+    "Description",
+    ()=>Description,
+    "Dialog",
+    ()=>Dialog,
+    "DialogClose",
+    ()=>DialogClose,
+    "DialogContent",
+    ()=>DialogContent,
+    "DialogDescription",
+    ()=>DialogDescription,
+    "DialogOverlay",
+    ()=>DialogOverlay,
+    "DialogPortal",
+    ()=>DialogPortal,
+    "DialogTitle",
+    ()=>DialogTitle,
+    "DialogTrigger",
+    ()=>DialogTrigger,
+    "Overlay",
+    ()=>Overlay,
+    "Portal",
+    ()=>Portal,
+    "Root",
+    ()=>Root,
+    "Title",
+    ()=>Title,
+    "Trigger",
+    ()=>Trigger,
+    "WarningProvider",
+    ()=>WarningProvider,
+    "createDialogScope",
+    ()=>createDialogScope
+]);
+// src/dialog.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-compose-refs/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-context/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-id/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$controllable$2d$state$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dismissable$2d$layer$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$focus$2d$scope$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-focus-scope/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$portal$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-portal/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-presence/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-primitive/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$focus$2d$guards$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-focus-guards/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$react$2d$remove$2d$scroll$2f$dist$2f$es2015$2f$Combination$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__RemoveScroll$3e$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/react-remove-scroll/dist/es2015/Combination.js [app-client] (ecmascript) <export default as RemoveScroll>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$aria$2d$hidden$2f$dist$2f$es2015$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/aria-hidden/dist/es2015/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-slot/dist/index.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/next/dist/compiled/react/jsx-runtime.js [app-client] (ecmascript)");
+"use client";
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+;
+var DIALOG_NAME = "Dialog";
+var [createDialogContext, createDialogScope] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContextScope"])(DIALOG_NAME);
+var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
+var Dialog = (props)=>{
+    const { __scopeDialog, children, open: openProp, defaultOpen, onOpenChange, modal = true } = props;
+    const triggerRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const contentRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const [open, setOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$use$2d$controllable$2d$state$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useControllableState"])({
+        prop: openProp,
+        defaultProp: defaultOpen ?? false,
+        onChange: onOpenChange,
+        caller: DIALOG_NAME
+    });
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogProvider, {
+        scope: __scopeDialog,
+        triggerRef,
+        contentRef,
+        contentId: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useId"])(),
+        titleId: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useId"])(),
+        descriptionId: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$id$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useId"])(),
+        open,
+        onOpenChange: setOpen,
+        onOpenToggle: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"]({
+            "Dialog.useCallback": ()=>setOpen({
+                    "Dialog.useCallback": (prevOpen)=>!prevOpen
+                }["Dialog.useCallback"])
+        }["Dialog.useCallback"], [
+            setOpen
+        ]),
+        modal,
+        children
+    });
+};
+Dialog.displayName = DIALOG_NAME;
+var TRIGGER_NAME = "DialogTrigger";
+var DialogTrigger = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, ...triggerProps } = props;
+    const context = useDialogContext(TRIGGER_NAME, __scopeDialog);
+    const composedTriggerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, context.triggerRef);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].button, {
+        type: "button",
+        "aria-haspopup": "dialog",
+        "aria-expanded": context.open,
+        "aria-controls": context.contentId,
+        "data-state": getState(context.open),
+        ...triggerProps,
+        ref: composedTriggerRef,
+        onClick: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onClick, context.onOpenToggle)
+    });
+});
+DialogTrigger.displayName = TRIGGER_NAME;
+var PORTAL_NAME = "DialogPortal";
+var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME, {
+    forceMount: void 0
+});
+var DialogPortal = (props)=>{
+    const { __scopeDialog, forceMount, children, container } = props;
+    const context = useDialogContext(PORTAL_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(PortalProvider, {
+        scope: __scopeDialog,
+        forceMount,
+        children: __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Children"].map(children, (child)=>/* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Presence"], {
+                present: forceMount || context.open,
+                children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$portal$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Portal"], {
+                    asChild: true,
+                    container,
+                    children: child
+                })
+            }))
+    });
+};
+DialogPortal.displayName = PORTAL_NAME;
+var OVERLAY_NAME = "DialogOverlay";
+var DialogOverlay = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
+    return context.modal ? /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Presence"], {
+        present: forceMount || context.open,
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogOverlayImpl, {
+            ...overlayProps,
+            ref: forwardedRef
+        })
+    }) : null;
+});
+DialogOverlay.displayName = OVERLAY_NAME;
+var Slot = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$slot$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createSlot"])("DialogOverlay.RemoveScroll");
+var DialogOverlayImpl = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
+    return(// Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
+    // ie. when `Overlay` and `Content` are siblings
+    /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$react$2d$remove$2d$scroll$2f$dist$2f$es2015$2f$Combination$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__RemoveScroll$3e$__["RemoveScroll"], {
+        as: Slot,
+        allowPinchZoom: true,
+        shards: [
+            context.contentRef
+        ],
+        children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].div, {
+            "data-state": getState(context.open),
+            ...overlayProps,
+            ref: forwardedRef,
+            style: {
+                pointerEvents: "auto",
+                ...overlayProps.style
+            }
+        })
+    }));
+});
+var CONTENT_NAME = "DialogContent";
+var DialogContent = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const portalContext = usePortalContext(CONTENT_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$presence$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Presence"], {
+        present: forceMount || context.open,
+        children: context.modal ? /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogContentModal, {
+            ...contentProps,
+            ref: forwardedRef
+        }) : /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogContentNonModal, {
+            ...contentProps,
+            ref: forwardedRef
+        })
+    });
+});
+DialogContent.displayName = CONTENT_NAME;
+var DialogContentModal = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const contentRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, context.contentRef, contentRef);
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DialogContentModal.useEffect": ()=>{
+            const content = contentRef.current;
+            if (content) return (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$aria$2d$hidden$2f$dist$2f$es2015$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["hideOthers"])(content);
+        }
+    }["DialogContentModal.useEffect"], []);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogContentImpl, {
+        ...props,
+        ref: composedRefs,
+        trapFocus: context.open,
+        disableOutsidePointerEvents: true,
+        onCloseAutoFocus: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onCloseAutoFocus, (event)=>{
+            event.preventDefault();
+            context.triggerRef.current?.focus();
+        }),
+        onPointerDownOutside: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onPointerDownOutside, (event)=>{
+            const originalEvent = event.detail.originalEvent;
+            const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
+            const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
+            if (isRightClick) event.preventDefault();
+        }),
+        onFocusOutside: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onFocusOutside, (event)=>event.preventDefault())
+    });
+});
+var DialogContentNonModal = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const hasInteractedOutsideRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    const hasPointerDownOutsideRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](false);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DialogContentImpl, {
+        ...props,
+        ref: forwardedRef,
+        trapFocus: false,
+        disableOutsidePointerEvents: false,
+        onCloseAutoFocus: (event)=>{
+            props.onCloseAutoFocus?.(event);
+            if (!event.defaultPrevented) {
+                if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
+                event.preventDefault();
+            }
+            hasInteractedOutsideRef.current = false;
+            hasPointerDownOutsideRef.current = false;
+        },
+        onInteractOutside: (event)=>{
+            props.onInteractOutside?.(event);
+            if (!event.defaultPrevented) {
+                hasInteractedOutsideRef.current = true;
+                if (event.detail.originalEvent.type === "pointerdown") {
+                    hasPointerDownOutsideRef.current = true;
+                }
+            }
+            const target = event.target;
+            const targetIsTrigger = context.triggerRef.current?.contains(target);
+            if (targetIsTrigger) event.preventDefault();
+            if (event.detail.originalEvent.type === "focusin" && hasPointerDownOutsideRef.current) {
+                event.preventDefault();
+            }
+        }
+    });
+});
+var DialogContentImpl = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, __scopeDialog);
+    const contentRef = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"](null);
+    const composedRefs = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$compose$2d$refs$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useComposedRefs"])(forwardedRef, contentRef);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$focus$2d$guards$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFocusGuards"])();
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+        children: [
+            /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$focus$2d$scope$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["FocusScope"], {
+                asChild: true,
+                loop: true,
+                trapped: trapFocus,
+                onMountAutoFocus: onOpenAutoFocus,
+                onUnmountAutoFocus: onCloseAutoFocus,
+                children: /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dismissable$2d$layer$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DismissableLayer"], {
+                    role: "dialog",
+                    id: context.contentId,
+                    "aria-describedby": context.descriptionId,
+                    "aria-labelledby": context.titleId,
+                    "data-state": getState(context.open),
+                    ...contentProps,
+                    ref: composedRefs,
+                    onDismiss: ()=>context.onOpenChange(false)
+                })
+            }),
+            /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                children: [
+                    /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(TitleWarning, {
+                        titleId: context.titleId
+                    }),
+                    /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(DescriptionWarning, {
+                        contentRef,
+                        descriptionId: context.descriptionId
+                    })
+                ]
+            })
+        ]
+    });
+});
+var TITLE_NAME = "DialogTitle";
+var DialogTitle = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, ...titleProps } = props;
+    const context = useDialogContext(TITLE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].h2, {
+        id: context.titleId,
+        ...titleProps,
+        ref: forwardedRef
+    });
+});
+DialogTitle.displayName = TITLE_NAME;
+var DESCRIPTION_NAME = "DialogDescription";
+var DialogDescription = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, ...descriptionProps } = props;
+    const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].p, {
+        id: context.descriptionId,
+        ...descriptionProps,
+        ref: forwardedRef
+    });
+});
+DialogDescription.displayName = DESCRIPTION_NAME;
+var CLOSE_NAME = "DialogClose";
+var DialogClose = __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["forwardRef"]((props, forwardedRef)=>{
+    const { __scopeDialog, ...closeProps } = props;
+    const context = useDialogContext(CLOSE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])(__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Primitive"].button, {
+        type: "button",
+        ...closeProps,
+        ref: forwardedRef,
+        onClick: (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$primitive$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["composeEventHandlers"])(props.onClick, ()=>context.onOpenChange(false))
+    });
+});
+DialogClose.displayName = CLOSE_NAME;
+function getState(open) {
+    return open ? "open" : "closed";
+}
+var TITLE_WARNING_NAME = "DialogTitleWarning";
+var [WarningProvider, useWarningContext] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$context$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createContext"])(TITLE_WARNING_NAME, {
+    contentName: CONTENT_NAME,
+    titleName: TITLE_NAME,
+    docsSlug: "dialog"
+});
+var TitleWarning = ({ titleId })=>{
+    const titleWarningContext = useWarningContext(TITLE_WARNING_NAME);
+    const MESSAGE = `\`${titleWarningContext.contentName}\` requires a \`${titleWarningContext.titleName}\` for the component to be accessible for screen reader users.
+
+If you want to hide the \`${titleWarningContext.titleName}\`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/${titleWarningContext.docsSlug}`;
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "TitleWarning.useEffect": ()=>{
+            if (titleId) {
+                const hasTitle = document.getElementById(titleId);
+                if (!hasTitle) console.error(MESSAGE);
+            }
+        }
+    }["TitleWarning.useEffect"], [
+        MESSAGE,
+        titleId
+    ]);
+    return null;
+};
+var DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
+var DescriptionWarning = ({ contentRef, descriptionId })=>{
+    const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
+    const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
+    __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
+        "DescriptionWarning.useEffect": ()=>{
+            const describedById = contentRef.current?.getAttribute("aria-describedby");
+            if (descriptionId && describedById) {
+                const hasDescription = document.getElementById(descriptionId);
+                if (!hasDescription) console.warn(MESSAGE);
+            }
+        }
+    }["DescriptionWarning.useEffect"], [
+        MESSAGE,
+        contentRef,
+        descriptionId
+    ]);
+    return null;
+};
+var Root = Dialog;
+var Trigger = DialogTrigger;
+var Portal = DialogPortal;
+var Overlay = DialogOverlay;
+var Content = DialogContent;
+var Title = DialogTitle;
+var Description = DialogDescription;
+var Close = DialogClose;
+;
+ //# sourceMappingURL=index.mjs.map
+}),
+"[project]/superteam-academy/node_modules/@radix-ui/react-dialog/dist/index.mjs [app-client] (ecmascript) <export * as Dialog>", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "Dialog",
+    ()=>__TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dialog$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$superteam$2d$academy$2f$node_modules$2f40$radix$2d$ui$2f$react$2d$dialog$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/superteam-academy/node_modules/@radix-ui/react-dialog/dist/index.mjs [app-client] (ecmascript)");
+}),
+]);
+
+//# sourceMappingURL=134ab_%40radix-ui_8c952d11._.js.map

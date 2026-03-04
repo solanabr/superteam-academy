@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "dashboard": "Painel",
+    "leaderboard": "Classificação",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "connectWallet": "Conectar Carteira"
+  },
+  "hero": {
+    "title": "Aprenda Desenvolvimento Solana",
+    "titleHighlight": "Do Jeito Certo",
+    "subtitle": "Cursos interativos e baseados em projetos com progressão gamificada, credenciais on-chain e uma comunidade de builders. Do zero ao deploy de dApps prontas para produção.",
+    "cta": "Começar a Aprender",
+    "exploreCourses": "Explorar Cursos",
+    "statsStudents": "Alunos Ativos",
+    "statsCourses": "Cursos",
+    "statsCredentials": "Credenciais Emitidas",
+    "statsXP": "XP Ganho"
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Domine desenvolvimento Solana com aprendizado prático e baseado em projetos",
+    "allTracks": "Todas as Trilhas",
+    "allDifficulties": "Todos os Níveis",
+    "search": "Buscar cursos...",
+    "duration": "Duração",
+    "lessons": "Aulas",
+    "challenges": "Desafios",
+    "xp": "XP",
+    "enroll": "Inscrever-se",
+    "continue": "Continuar Aprendendo",
+    "completed": "Concluído",
+    "beginner": "Iniciante",
+    "intermediate": "Intermediário",
+    "advanced": "Avançado",
+    "prerequisite": "Pré-requisito",
+    "enrolled": "alunos inscritos",
+    "completions": "conclusões"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo de volta",
+    "currentCourses": "Cursos Atuais",
+    "xpBalance": "Saldo de XP",
+    "level": "Nível",
+    "streak": "Sequência Atual",
+    "rank": "Ranking Global",
+    "achievements": "Conquistas",
+    "nextLesson": "Continuar Aprendendo",
+    "recommended": "Recomendado Para Você",
+    "recentActivity": "Atividade Recente",
+    "days": "dias"
+  },
+  "leaderboard": {
+    "title": "Classificação",
+    "subtitle": "Top builders ranqueados por XP",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "allTime": "Geral",
+    "rank": "Posição",
+    "learner": "Estudante",
+    "xp": "XP",
+    "level": "Nível",
+    "streak": "Sequência"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "retry": "Tentar Novamente",
+    "noResults": "Nenhum resultado encontrado",
+    "viewAll": "Ver Tudo"
+  },
+  "footer": {
+    "about": "Sobre",
+    "docs": "Documentação",
+    "github": "GitHub",
+    "discord": "Discord",
+    "twitter": "Twitter",
+    "newsletter": "Newsletter",
+    "newsletterPlaceholder": "Digite seu email",
+    "subscribe": "Inscrever-se",
+    "rights": "Todos os direitos reservados.",
+    "builtBy": "Construído pela Superteam Brasil"
+  }
+}
