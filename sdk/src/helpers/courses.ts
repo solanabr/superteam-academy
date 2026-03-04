@@ -15,10 +15,10 @@ export async function fetchAllCoursesByProgram(
       config?: {
         commitment?: string;
         filters?: Array<{ memcmp: { offset: bigint; bytes: string } }>;
-      },
+      }
     ) => { send: () => Promise<{ value: Array<{ pubkey: Address }> }> };
   },
-  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ) {
   const discriminatorB64 = Buffer.from(COURSE_DISCRIMINATOR).toString("base64");
   const { value: accounts } = await rpc

@@ -52,7 +52,7 @@ export const CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 
 export function getCreateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 
@@ -63,11 +63,13 @@ export type CreateAchievementTypeInstruction<
   TAccountCollection extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -96,7 +98,7 @@ export type CreateAchievementTypeInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -133,7 +135,7 @@ export function getCreateAchievementTypeInstructionDataEncoder(): Encoder<Create
     (value) => ({
       ...value,
       discriminator: CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
-    }),
+    })
   );
 }
 
@@ -154,7 +156,7 @@ export function getCreateAchievementTypeInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getCreateAchievementTypeInstructionDataEncoder(),
-    getCreateAchievementTypeInstructionDataDecoder(),
+    getCreateAchievementTypeInstructionDataDecoder()
   );
 }
 
@@ -165,7 +167,7 @@ export type CreateAchievementTypeAsyncInput<
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -190,7 +192,7 @@ export async function getCreateAchievementTypeInstructionAsync<
   TAccountPayer extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateAchievementTypeAsyncInput<
     TAccountConfig,
@@ -201,7 +203,7 @@ export async function getCreateAchievementTypeInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   CreateAchievementTypeInstruction<
     TProgramAddress,
@@ -266,19 +268,10 @@ export async function getCreateAchievementTypeInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCreateAchievementTypeInstructionDataEncoder().encode(
-      args as CreateAchievementTypeInstructionDataArgs,
+      args as CreateAchievementTypeInstructionDataArgs
     ),
     programAddress,
-  } as CreateAchievementTypeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAchievementType,
-    TAccountCollection,
-    TAccountAuthority,
-    TAccountPayer,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as CreateAchievementTypeInstruction<TProgramAddress, TAccountConfig, TAccountAchievementType, TAccountCollection, TAccountAuthority, TAccountPayer, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type CreateAchievementTypeInput<
@@ -288,7 +281,7 @@ export type CreateAchievementTypeInput<
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -313,7 +306,7 @@ export function getCreateAchievementTypeInstruction<
   TAccountPayer extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateAchievementTypeInput<
     TAccountConfig,
@@ -324,7 +317,7 @@ export function getCreateAchievementTypeInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): CreateAchievementTypeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -379,24 +372,15 @@ export function getCreateAchievementTypeInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCreateAchievementTypeInstructionDataEncoder().encode(
-      args as CreateAchievementTypeInstructionDataArgs,
+      args as CreateAchievementTypeInstructionDataArgs
     ),
     programAddress,
-  } as CreateAchievementTypeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAchievementType,
-    TAccountCollection,
-    TAccountAuthority,
-    TAccountPayer,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as CreateAchievementTypeInstruction<TProgramAddress, TAccountConfig, TAccountAchievementType, TAccountCollection, TAccountAuthority, TAccountPayer, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type ParsedCreateAchievementTypeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -414,11 +398,11 @@ export type ParsedCreateAchievementTypeInstruction<
 
 export function parseCreateAchievementTypeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateAchievementTypeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     throw new SolanaError(
@@ -426,7 +410,7 @@ export function parseCreateAchievementTypeInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 7,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -447,7 +431,7 @@ export function parseCreateAchievementTypeInstruction<
       systemProgram: getNextAccount(),
     },
     data: getCreateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data,
+      instruction.data
     ),
   };
 }

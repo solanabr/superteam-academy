@@ -55,11 +55,13 @@ export type InitializeInstruction<
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountBackendMinterRole extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -84,7 +86,7 @@ export type InitializeInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -95,7 +97,7 @@ export type InitializeInstructionDataArgs = {};
 export function getInitializeInstructionDataEncoder(): FixedSizeEncoder<InitializeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
   );
 }
 
@@ -111,7 +113,7 @@ export function getInitializeInstructionDataCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder(),
+    getInitializeInstructionDataDecoder()
   );
 }
 
@@ -121,7 +123,7 @@ export type InitializeAsyncInput<
   TAccountAuthority extends string = string,
   TAccountBackendMinterRole extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   /**
@@ -143,7 +145,7 @@ export async function getInitializeInstructionAsync<
   TAccountBackendMinterRole extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: InitializeAsyncInput<
     TAccountConfig,
@@ -153,7 +155,7 @@ export async function getInitializeInstructionAsync<
     TAccountSystemProgram,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   InitializeInstruction<
     TProgramAddress,
@@ -200,13 +202,13 @@ export async function getInitializeInstructionAsync<
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114]),
+          new Uint8Array([109, 105, 110, 116, 101, 114])
         ),
         getAddressEncoder().encode(
           getAddressFromResolvedInstructionAccount(
             "authority",
-            accounts.authority.value,
-          ),
+            accounts.authority.value
+          )
         ),
       ],
     });
@@ -232,15 +234,7 @@ export async function getInitializeInstructionAsync<
     ],
     data: getInitializeInstructionDataEncoder().encode({}),
     programAddress,
-  } as InitializeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountXpMint,
-    TAccountAuthority,
-    TAccountBackendMinterRole,
-    TAccountSystemProgram,
-    TAccountTokenProgram
-  >);
+  } as InitializeInstruction<TProgramAddress, TAccountConfig, TAccountXpMint, TAccountAuthority, TAccountBackendMinterRole, TAccountSystemProgram, TAccountTokenProgram>);
 }
 
 export type InitializeInput<
@@ -249,7 +243,7 @@ export type InitializeInput<
   TAccountAuthority extends string = string,
   TAccountBackendMinterRole extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   /**
@@ -271,7 +265,7 @@ export function getInitializeInstruction<
   TAccountBackendMinterRole extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: InitializeInput<
     TAccountConfig,
@@ -281,7 +275,7 @@ export function getInitializeInstruction<
     TAccountSystemProgram,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): InitializeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -334,20 +328,12 @@ export function getInitializeInstruction<
     ],
     data: getInitializeInstructionDataEncoder().encode({}),
     programAddress,
-  } as InitializeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountXpMint,
-    TAccountAuthority,
-    TAccountBackendMinterRole,
-    TAccountSystemProgram,
-    TAccountTokenProgram
-  >);
+  } as InitializeInstruction<TProgramAddress, TAccountConfig, TAccountXpMint, TAccountAuthority, TAccountBackendMinterRole, TAccountSystemProgram, TAccountTokenProgram>);
 }
 
 export type ParsedInitializeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -368,11 +354,11 @@ export type ParsedInitializeInstruction<
 
 export function parseInitializeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
     throw new SolanaError(
@@ -380,7 +366,7 @@ export function parseInitializeInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 6,
-      },
+      }
     );
   }
   let accountIndex = 0;

@@ -75,30 +75,30 @@ declare function getAchievementReceiptCodec(): FixedSizeCodec<
   AchievementReceipt
 >;
 declare function decodeAchievementReceipt<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<AchievementReceipt, TAddress>;
 declare function decodeAchievementReceipt<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<AchievementReceipt, TAddress>;
 declare function fetchAchievementReceipt<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<AchievementReceipt, TAddress>>;
 declare function fetchMaybeAchievementReceipt<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<AchievementReceipt, TAddress>>;
 declare function fetchAllAchievementReceipt(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<AchievementReceipt>[]>;
 declare function fetchAllMaybeAchievementReceipt(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<AchievementReceipt>[]>;
 declare function getAchievementReceiptSize(): number;
 
@@ -159,30 +159,30 @@ declare function getAchievementTypeCodec(): Codec<
   AchievementType
 >;
 declare function decodeAchievementType<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<AchievementType, TAddress>;
 declare function decodeAchievementType<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<AchievementType, TAddress>;
 declare function fetchAchievementType<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<AchievementType, TAddress>>;
 declare function fetchMaybeAchievementType<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<AchievementType, TAddress>>;
 declare function fetchAllAchievementType(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<AchievementType>[]>;
 declare function fetchAllMaybeAchievementType(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<AchievementType>[]>;
 
 /**
@@ -227,30 +227,30 @@ declare function getConfigDecoder(): FixedSizeDecoder<Config>;
 /** Gets the codec for {@link Config} account data. */
 declare function getConfigCodec(): FixedSizeCodec<ConfigArgs, Config>;
 declare function decodeConfig<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<Config, TAddress>;
 declare function decodeConfig<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<Config, TAddress>;
 declare function fetchConfig<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<Config, TAddress>>;
 declare function fetchMaybeConfig<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<Config, TAddress>>;
 declare function fetchAllConfig(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<Config>[]>;
 declare function fetchAllMaybeConfig(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<Config>[]>;
 declare function getConfigSize(): number;
 
@@ -316,30 +316,30 @@ declare function getCourseDecoder(): Decoder<Course>;
 /** Gets the codec for {@link Course} account data. */
 declare function getCourseCodec(): Codec<CourseArgs, Course>;
 declare function decodeCourse<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<Course, TAddress>;
 declare function decodeCourse<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<Course, TAddress>;
 declare function fetchCourse<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<Course, TAddress>>;
 declare function fetchMaybeCourse<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<Course, TAddress>>;
 declare function fetchAllCourse(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<Course>[]>;
 declare function fetchAllMaybeCourse(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<Course>[]>;
 
 /**
@@ -398,30 +398,30 @@ declare function getEnrollmentDecoder(): Decoder<Enrollment>;
 /** Gets the codec for {@link Enrollment} account data. */
 declare function getEnrollmentCodec(): Codec<EnrollmentArgs, Enrollment>;
 declare function decodeEnrollment<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<Enrollment, TAddress>;
 declare function decodeEnrollment<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<Enrollment, TAddress>;
 declare function fetchEnrollment<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<Enrollment, TAddress>>;
 declare function fetchMaybeEnrollment<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<Enrollment, TAddress>>;
 declare function fetchAllEnrollment(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<Enrollment>[]>;
 declare function fetchAllMaybeEnrollment(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<Enrollment>[]>;
 
 /**
@@ -470,30 +470,30 @@ declare function getMinterRoleDecoder(): Decoder<MinterRole>;
 /** Gets the codec for {@link MinterRole} account data. */
 declare function getMinterRoleCodec(): Codec<MinterRoleArgs, MinterRole>;
 declare function decodeMinterRole<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<MinterRole, TAddress>;
 declare function decodeMinterRole<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<MinterRole, TAddress>;
 declare function fetchMinterRole<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<MinterRole, TAddress>>;
 declare function fetchMaybeMinterRole<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<MinterRole, TAddress>>;
 declare function fetchAllMinterRole(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<MinterRole>[]>;
 declare function fetchAllMaybeMinterRole(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<MinterRole>[]>;
 
 /**
@@ -587,10 +587,10 @@ type OnchainAcademyError =
   | typeof ONCHAIN_ACADEMY_ERROR__UNAUTHORIZED
   | typeof ONCHAIN_ACADEMY_ERROR__UNENROLL_COOLDOWN;
 declare function getOnchainAcademyErrorMessage(
-  code: OnchainAcademyError,
+  code: OnchainAcademyError
 ): string;
 declare function isOnchainAcademyError<
-  TProgramErrorCode extends OnchainAcademyError,
+  TProgramErrorCode extends OnchainAcademyError
 >(
   error: unknown,
   transactionMessage: {
@@ -601,7 +601,7 @@ declare function isOnchainAcademyError<
       }
     >;
   },
-  code?: TProgramErrorCode,
+  code?: TProgramErrorCode
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
   Readonly<{
     context: Readonly<{
@@ -631,7 +631,7 @@ declare function identifyOnchainAcademyAccount(
     | {
         data: ReadonlyUint8Array;
       }
-    | ReadonlyUint8Array,
+    | ReadonlyUint8Array
 ): OnchainAcademyAccount;
 declare enum OnchainAcademyInstruction {
   AwardAchievement = 0,
@@ -656,10 +656,10 @@ declare function identifyOnchainAcademyInstruction(
     | {
         data: ReadonlyUint8Array;
       }
-    | ReadonlyUint8Array,
+    | ReadonlyUint8Array
 ): OnchainAcademyInstruction;
 type ParsedOnchainAcademyInstruction<
-  TProgram extends string = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf",
+  TProgram extends string = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf"
 > =
   | ({
       instructionType: OnchainAcademyInstruction.AwardAchievement;
@@ -710,7 +710,7 @@ type ParsedOnchainAcademyInstruction<
       instructionType: OnchainAcademyInstruction.UpgradeCredential;
     } & ParsedUpgradeCredentialInstruction<TProgram>);
 declare function parseOnchainAcademyInstruction<TProgram extends string>(
-  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
 ): ParsedOnchainAcademyInstruction<TProgram>;
 type OnchainAcademyPlugin = {
   accounts: OnchainAcademyPluginAccounts;
@@ -732,66 +732,66 @@ type OnchainAcademyPluginAccounts = {
 };
 type OnchainAcademyPluginInstructions = {
   awardAchievement: (
-    input: MakeOptional<AwardAchievementAsyncInput, "payer">,
+    input: MakeOptional<AwardAchievementAsyncInput, "payer">
   ) => ReturnType<typeof getAwardAchievementInstructionAsync> &
     SelfPlanAndSendFunctions;
   closeEnrollment: (
-    input: CloseEnrollmentInput,
+    input: CloseEnrollmentInput
   ) => ReturnType<typeof getCloseEnrollmentInstruction> &
     SelfPlanAndSendFunctions;
   completeLesson: (
-    input: CompleteLessonAsyncInput,
+    input: CompleteLessonAsyncInput
   ) => ReturnType<typeof getCompleteLessonInstructionAsync> &
     SelfPlanAndSendFunctions;
   createAchievementType: (
-    input: MakeOptional<CreateAchievementTypeAsyncInput, "payer">,
+    input: MakeOptional<CreateAchievementTypeAsyncInput, "payer">
   ) => ReturnType<typeof getCreateAchievementTypeInstructionAsync> &
     SelfPlanAndSendFunctions;
   createCourse: (
-    input: CreateCourseAsyncInput,
+    input: CreateCourseAsyncInput
   ) => ReturnType<typeof getCreateCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   deactivateAchievementType: (
-    input: DeactivateAchievementTypeAsyncInput,
+    input: DeactivateAchievementTypeAsyncInput
   ) => ReturnType<typeof getDeactivateAchievementTypeInstructionAsync> &
     SelfPlanAndSendFunctions;
   enroll: (
-    input: EnrollAsyncInput,
+    input: EnrollAsyncInput
   ) => ReturnType<typeof getEnrollInstructionAsync> & SelfPlanAndSendFunctions;
   finalizeCourse: (
-    input: FinalizeCourseAsyncInput,
+    input: FinalizeCourseAsyncInput
   ) => ReturnType<typeof getFinalizeCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   initialize: (
-    input: InitializeAsyncInput,
+    input: InitializeAsyncInput
   ) => ReturnType<typeof getInitializeInstructionAsync> &
     SelfPlanAndSendFunctions;
   issueCredential: (
-    input: MakeOptional<IssueCredentialAsyncInput, "payer">,
+    input: MakeOptional<IssueCredentialAsyncInput, "payer">
   ) => ReturnType<typeof getIssueCredentialInstructionAsync> &
     SelfPlanAndSendFunctions;
   registerMinter: (
-    input: MakeOptional<RegisterMinterAsyncInput, "payer">,
+    input: MakeOptional<RegisterMinterAsyncInput, "payer">
   ) => ReturnType<typeof getRegisterMinterInstructionAsync> &
     SelfPlanAndSendFunctions;
   revokeMinter: (
-    input: RevokeMinterAsyncInput,
+    input: RevokeMinterAsyncInput
   ) => ReturnType<typeof getRevokeMinterInstructionAsync> &
     SelfPlanAndSendFunctions;
   rewardXp: (
-    input: RewardXpAsyncInput,
+    input: RewardXpAsyncInput
   ) => ReturnType<typeof getRewardXpInstructionAsync> &
     SelfPlanAndSendFunctions;
   updateConfig: (
-    input: UpdateConfigAsyncInput,
+    input: UpdateConfigAsyncInput
   ) => ReturnType<typeof getUpdateConfigInstructionAsync> &
     SelfPlanAndSendFunctions;
   updateCourse: (
-    input: UpdateCourseAsyncInput,
+    input: UpdateCourseAsyncInput
   ) => ReturnType<typeof getUpdateCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   upgradeCredential: (
-    input: MakeOptional<UpgradeCredentialAsyncInput, "payer">,
+    input: MakeOptional<UpgradeCredentialAsyncInput, "payer">
   ) => ReturnType<typeof getUpgradeCredentialInstructionAsync> &
     SelfPlanAndSendFunctions;
 };
@@ -802,9 +802,9 @@ type OnchainAcademyPluginRequirements = ClientWithRpc<
   ClientWithTransactionPlanning &
   ClientWithTransactionSending;
 declare function onchainAcademyProgram(): <
-  T extends OnchainAcademyPluginRequirements,
+  T extends OnchainAcademyPluginRequirements
 >(
-  client: T,
+  client: T
 ) => T & {
   onchainAcademy: OnchainAcademyPlugin;
 };
@@ -833,13 +833,16 @@ type AwardAchievementInstruction<
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMinter extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -889,7 +892,7 @@ type AwardAchievementInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type AwardAchievementInstructionData = {
@@ -916,7 +919,7 @@ type AwardAchievementAsyncInput<
   TAccountMinter extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountTokenProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -949,7 +952,7 @@ declare function getAwardAchievementInstructionAsync<
   TAccountMplCoreProgram extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: AwardAchievementAsyncInput<
     TAccountConfig,
@@ -969,7 +972,7 @@ declare function getAwardAchievementInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   AwardAchievementInstruction<
     TProgramAddress,
@@ -1003,7 +1006,7 @@ type AwardAchievementInput<
   TAccountMinter extends string = string,
   TAccountMplCoreProgram extends string = string,
   TAccountTokenProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -1036,7 +1039,7 @@ declare function getAwardAchievementInstruction<
   TAccountMplCoreProgram extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: AwardAchievementInput<
     TAccountConfig,
@@ -1056,7 +1059,7 @@ declare function getAwardAchievementInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): AwardAchievementInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -1076,7 +1079,7 @@ declare function getAwardAchievementInstruction<
 >;
 type ParsedAwardAchievementInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1100,11 +1103,11 @@ type ParsedAwardAchievementInstruction<
 };
 declare function parseAwardAchievementInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedAwardAchievementInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1122,7 +1125,7 @@ type CloseEnrollmentInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountEnrollment extends string | AccountMeta<string> = string,
   TAccountLearner extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1137,7 +1140,7 @@ type CloseEnrollmentInstruction<
         ? WritableSignerAccount<TAccountLearner> &
             AccountSignerMeta<TAccountLearner>
         : TAccountLearner,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type CloseEnrollmentInstructionData = {
@@ -1153,7 +1156,7 @@ declare function getCloseEnrollmentInstructionDataCodec(): FixedSizeCodec<
 type CloseEnrollmentInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
-  TAccountLearner extends string = string,
+  TAccountLearner extends string = string
 > = {
   course: Address<TAccountCourse>;
   enrollment: Address<TAccountEnrollment>;
@@ -1163,7 +1166,7 @@ declare function getCloseEnrollmentInstruction<
   TAccountCourse extends string,
   TAccountEnrollment extends string,
   TAccountLearner extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CloseEnrollmentInput<
     TAccountCourse,
@@ -1172,7 +1175,7 @@ declare function getCloseEnrollmentInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): CloseEnrollmentInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -1181,7 +1184,7 @@ declare function getCloseEnrollmentInstruction<
 >;
 type ParsedCloseEnrollmentInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1193,11 +1196,11 @@ type ParsedCloseEnrollmentInstruction<
 };
 declare function parseCloseEnrollmentInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCloseEnrollmentInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1219,9 +1222,10 @@ type CompleteLessonInstruction<
   TAccountLearnerTokenAccount extends string | AccountMeta<string> = string,
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1251,7 +1255,7 @@ type CompleteLessonInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type CompleteLessonInstructionData = {
@@ -1275,7 +1279,7 @@ type CompleteLessonAsyncInput<
   TAccountLearnerTokenAccount extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -1296,7 +1300,7 @@ declare function getCompleteLessonInstructionAsync<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CompleteLessonAsyncInput<
     TAccountConfig,
@@ -1310,7 +1314,7 @@ declare function getCompleteLessonInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   CompleteLessonInstruction<
     TProgramAddress,
@@ -1332,7 +1336,7 @@ type CompleteLessonInput<
   TAccountLearnerTokenAccount extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -1353,7 +1357,7 @@ declare function getCompleteLessonInstruction<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CompleteLessonInput<
     TAccountConfig,
@@ -1367,7 +1371,7 @@ declare function getCompleteLessonInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): CompleteLessonInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -1381,7 +1385,7 @@ declare function getCompleteLessonInstruction<
 >;
 type ParsedCompleteLessonInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1398,11 +1402,11 @@ type ParsedCompleteLessonInstruction<
 };
 declare function parseCompleteLessonInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCompleteLessonInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1422,11 +1426,13 @@ type CreateAchievementTypeInstruction<
   TAccountCollection extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1455,7 +1461,7 @@ type CreateAchievementTypeInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type CreateAchievementTypeInstructionData = {
@@ -1486,7 +1492,7 @@ type CreateAchievementTypeAsyncInput<
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -1510,7 +1516,7 @@ declare function getCreateAchievementTypeInstructionAsync<
   TAccountPayer extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateAchievementTypeAsyncInput<
     TAccountConfig,
@@ -1523,7 +1529,7 @@ declare function getCreateAchievementTypeInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   CreateAchievementTypeInstruction<
     TProgramAddress,
@@ -1543,7 +1549,7 @@ type CreateAchievementTypeInput<
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -1567,7 +1573,7 @@ declare function getCreateAchievementTypeInstruction<
   TAccountPayer extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateAchievementTypeInput<
     TAccountConfig,
@@ -1580,7 +1586,7 @@ declare function getCreateAchievementTypeInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): CreateAchievementTypeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -1593,7 +1599,7 @@ declare function getCreateAchievementTypeInstruction<
 >;
 type ParsedCreateAchievementTypeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1610,11 +1616,11 @@ type ParsedCreateAchievementTypeInstruction<
 };
 declare function parseCreateAchievementTypeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateAchievementTypeInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1632,9 +1638,10 @@ type CreateCourseInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1652,7 +1659,7 @@ type CreateCourseInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type CreateCourseInstructionData = {
@@ -1692,7 +1699,7 @@ type CreateCourseAsyncInput<
   TAccountCourse extends string = string,
   TAccountConfig extends string = string,
   TAccountAuthority extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   config?: Address<TAccountConfig>;
@@ -1715,7 +1722,7 @@ declare function getCreateCourseInstructionAsync<
   TAccountConfig extends string,
   TAccountAuthority extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateCourseAsyncInput<
     TAccountCourse,
@@ -1725,7 +1732,7 @@ declare function getCreateCourseInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   CreateCourseInstruction<
     TProgramAddress,
@@ -1739,7 +1746,7 @@ type CreateCourseInput<
   TAccountCourse extends string = string,
   TAccountConfig extends string = string,
   TAccountAuthority extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   config: Address<TAccountConfig>;
@@ -1762,7 +1769,7 @@ declare function getCreateCourseInstruction<
   TAccountConfig extends string,
   TAccountAuthority extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateCourseInput<
     TAccountCourse,
@@ -1772,7 +1779,7 @@ declare function getCreateCourseInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): CreateCourseInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -1782,7 +1789,7 @@ declare function getCreateCourseInstruction<
 >;
 type ParsedCreateCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1795,11 +1802,11 @@ type ParsedCreateCourseInstruction<
 };
 declare function parseCreateCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateCourseInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1817,7 +1824,7 @@ type DeactivateAchievementTypeInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAchievementType extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1832,7 +1839,7 @@ type DeactivateAchievementTypeInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type DeactivateAchievementTypeInstructionData = {
@@ -1848,7 +1855,7 @@ declare function getDeactivateAchievementTypeInstructionDataCodec(): FixedSizeCo
 type DeactivateAchievementTypeAsyncInput<
   TAccountConfig extends string = string,
   TAccountAchievementType extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -1858,7 +1865,7 @@ declare function getDeactivateAchievementTypeInstructionAsync<
   TAccountConfig extends string,
   TAccountAchievementType extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: DeactivateAchievementTypeAsyncInput<
     TAccountConfig,
@@ -1867,7 +1874,7 @@ declare function getDeactivateAchievementTypeInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   DeactivateAchievementTypeInstruction<
     TProgramAddress,
@@ -1879,7 +1886,7 @@ declare function getDeactivateAchievementTypeInstructionAsync<
 type DeactivateAchievementTypeInput<
   TAccountConfig extends string = string,
   TAccountAchievementType extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -1889,7 +1896,7 @@ declare function getDeactivateAchievementTypeInstruction<
   TAccountConfig extends string,
   TAccountAchievementType extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: DeactivateAchievementTypeInput<
     TAccountConfig,
@@ -1898,7 +1905,7 @@ declare function getDeactivateAchievementTypeInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): DeactivateAchievementTypeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -1907,7 +1914,7 @@ declare function getDeactivateAchievementTypeInstruction<
 >;
 type ParsedDeactivateAchievementTypeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -1919,11 +1926,11 @@ type ParsedDeactivateAchievementTypeInstruction<
 };
 declare function parseDeactivateAchievementTypeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedDeactivateAchievementTypeInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -1941,9 +1948,10 @@ type EnrollInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountEnrollment extends string | AccountMeta<string> = string,
   TAccountLearner extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -1961,7 +1969,7 @@ type EnrollInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type EnrollInstructionData = {
@@ -1981,7 +1989,7 @@ type EnrollAsyncInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
   TAccountLearner extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course?: Address<TAccountCourse>;
   enrollment?: Address<TAccountEnrollment>;
@@ -1994,7 +2002,7 @@ declare function getEnrollInstructionAsync<
   TAccountEnrollment extends string,
   TAccountLearner extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: EnrollAsyncInput<
     TAccountCourse,
@@ -2004,7 +2012,7 @@ declare function getEnrollInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   EnrollInstruction<
     TProgramAddress,
@@ -2018,7 +2026,7 @@ type EnrollInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
   TAccountLearner extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   enrollment: Address<TAccountEnrollment>;
@@ -2031,7 +2039,7 @@ declare function getEnrollInstruction<
   TAccountEnrollment extends string,
   TAccountLearner extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: EnrollInput<
     TAccountCourse,
@@ -2041,7 +2049,7 @@ declare function getEnrollInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): EnrollInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -2051,7 +2059,7 @@ declare function getEnrollInstruction<
 >;
 type ParsedEnrollInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -2064,11 +2072,11 @@ type ParsedEnrollInstruction<
 };
 declare function parseEnrollInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedEnrollInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -2092,9 +2100,10 @@ type FinalizeCourseInstruction<
   TAccountCreator extends string | AccountMeta<string> = string,
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -2130,7 +2139,7 @@ type FinalizeCourseInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type FinalizeCourseInstructionData = {
@@ -2153,7 +2162,7 @@ type FinalizeCourseAsyncInput<
   TAccountCreator extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -2177,7 +2186,7 @@ declare function getFinalizeCourseInstructionAsync<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: FinalizeCourseAsyncInput<
     TAccountConfig,
@@ -2193,7 +2202,7 @@ declare function getFinalizeCourseInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   FinalizeCourseInstruction<
     TProgramAddress,
@@ -2219,7 +2228,7 @@ type FinalizeCourseInput<
   TAccountCreator extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -2243,7 +2252,7 @@ declare function getFinalizeCourseInstruction<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: FinalizeCourseInput<
     TAccountConfig,
@@ -2259,7 +2268,7 @@ declare function getFinalizeCourseInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): FinalizeCourseInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -2275,7 +2284,7 @@ declare function getFinalizeCourseInstruction<
 >;
 type ParsedFinalizeCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -2294,11 +2303,11 @@ type ParsedFinalizeCourseInstruction<
 };
 declare function parseFinalizeCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedFinalizeCourseInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -2317,11 +2326,13 @@ type InitializeInstruction<
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountBackendMinterRole extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -2346,7 +2357,7 @@ type InitializeInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type InitializeInstructionData = {
@@ -2365,7 +2376,7 @@ type InitializeAsyncInput<
   TAccountAuthority extends string = string,
   TAccountBackendMinterRole extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   /**
@@ -2386,7 +2397,7 @@ declare function getInitializeInstructionAsync<
   TAccountBackendMinterRole extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: InitializeAsyncInput<
     TAccountConfig,
@@ -2398,7 +2409,7 @@ declare function getInitializeInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   InitializeInstruction<
     TProgramAddress,
@@ -2416,7 +2427,7 @@ type InitializeInput<
   TAccountAuthority extends string = string,
   TAccountBackendMinterRole extends string = string,
   TAccountSystemProgram extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   /**
@@ -2437,7 +2448,7 @@ declare function getInitializeInstruction<
   TAccountBackendMinterRole extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: InitializeInput<
     TAccountConfig,
@@ -2449,7 +2460,7 @@ declare function getInitializeInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): InitializeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -2461,7 +2472,7 @@ declare function getInitializeInstruction<
 >;
 type ParsedInitializeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -2481,11 +2492,11 @@ type ParsedInitializeInstruction<
 };
 declare function parseInitializeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedInitializeInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -2508,11 +2519,13 @@ type IssueCredentialInstruction<
   TAccountTrackCollection extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -2550,7 +2563,7 @@ type IssueCredentialInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type IssueCredentialInstructionData = {
@@ -2582,7 +2595,7 @@ type IssueCredentialAsyncInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -2611,7 +2624,7 @@ declare function getIssueCredentialInstructionAsync<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: IssueCredentialAsyncInput<
     TAccountConfig,
@@ -2627,7 +2640,7 @@ declare function getIssueCredentialInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   IssueCredentialInstruction<
     TProgramAddress,
@@ -2653,7 +2666,7 @@ type IssueCredentialInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -2682,7 +2695,7 @@ declare function getIssueCredentialInstruction<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: IssueCredentialInput<
     TAccountConfig,
@@ -2698,7 +2711,7 @@ declare function getIssueCredentialInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): IssueCredentialInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -2714,7 +2727,7 @@ declare function getIssueCredentialInstruction<
 >;
 type ParsedIssueCredentialInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -2734,11 +2747,11 @@ type ParsedIssueCredentialInstruction<
 };
 declare function parseIssueCredentialInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedIssueCredentialInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -2757,9 +2770,10 @@ type RegisterMinterInstruction<
   TAccountMinterRole extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -2781,7 +2795,7 @@ type RegisterMinterInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type RegisterMinterInstructionData = {
@@ -2806,7 +2820,7 @@ type RegisterMinterAsyncInput<
   TAccountMinterRole extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -2823,7 +2837,7 @@ declare function getRegisterMinterInstructionAsync<
   TAccountAuthority extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RegisterMinterAsyncInput<
     TAccountConfig,
@@ -2834,7 +2848,7 @@ declare function getRegisterMinterInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   RegisterMinterInstruction<
     TProgramAddress,
@@ -2850,7 +2864,7 @@ type RegisterMinterInput<
   TAccountMinterRole extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -2867,7 +2881,7 @@ declare function getRegisterMinterInstruction<
   TAccountAuthority extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RegisterMinterInput<
     TAccountConfig,
@@ -2878,7 +2892,7 @@ declare function getRegisterMinterInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): RegisterMinterInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -2889,7 +2903,7 @@ declare function getRegisterMinterInstruction<
 >;
 type ParsedRegisterMinterInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -2903,11 +2917,11 @@ type ParsedRegisterMinterInstruction<
 };
 declare function parseRegisterMinterInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRegisterMinterInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -2925,7 +2939,7 @@ type RevokeMinterInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountMinterRole extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -2940,7 +2954,7 @@ type RevokeMinterInstruction<
         ? WritableSignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type RevokeMinterInstructionData = {
@@ -2956,7 +2970,7 @@ declare function getRevokeMinterInstructionDataCodec(): FixedSizeCodec<
 type RevokeMinterAsyncInput<
   TAccountConfig extends string = string,
   TAccountMinterRole extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -2966,7 +2980,7 @@ declare function getRevokeMinterInstructionAsync<
   TAccountConfig extends string,
   TAccountMinterRole extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RevokeMinterAsyncInput<
     TAccountConfig,
@@ -2975,7 +2989,7 @@ declare function getRevokeMinterInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   RevokeMinterInstruction<
     TProgramAddress,
@@ -2987,7 +3001,7 @@ declare function getRevokeMinterInstructionAsync<
 type RevokeMinterInput<
   TAccountConfig extends string = string,
   TAccountMinterRole extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -2997,7 +3011,7 @@ declare function getRevokeMinterInstruction<
   TAccountConfig extends string,
   TAccountMinterRole extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RevokeMinterInput<
     TAccountConfig,
@@ -3006,7 +3020,7 @@ declare function getRevokeMinterInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): RevokeMinterInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -3015,7 +3029,7 @@ declare function getRevokeMinterInstruction<
 >;
 type ParsedRevokeMinterInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -3027,11 +3041,11 @@ type ParsedRevokeMinterInstruction<
 };
 declare function parseRevokeMinterInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRevokeMinterInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -3051,9 +3065,10 @@ type RewardXpInstruction<
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountRecipientTokenAccount extends string | AccountMeta<string> = string,
   TAccountMinter extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -3077,7 +3092,7 @@ type RewardXpInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type RewardXpInstructionData = {
@@ -3101,7 +3116,7 @@ type RewardXpAsyncInput<
   TAccountXpMint extends string = string,
   TAccountRecipientTokenAccount extends string = string,
   TAccountMinter extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole?: Address<TAccountMinterRole>;
@@ -3121,7 +3136,7 @@ declare function getRewardXpInstructionAsync<
   TAccountRecipientTokenAccount extends string,
   TAccountMinter extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RewardXpAsyncInput<
     TAccountConfig,
@@ -3133,7 +3148,7 @@ declare function getRewardXpInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   RewardXpInstruction<
     TProgramAddress,
@@ -3151,7 +3166,7 @@ type RewardXpInput<
   TAccountXpMint extends string = string,
   TAccountRecipientTokenAccount extends string = string,
   TAccountMinter extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -3171,7 +3186,7 @@ declare function getRewardXpInstruction<
   TAccountRecipientTokenAccount extends string,
   TAccountMinter extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RewardXpInput<
     TAccountConfig,
@@ -3183,7 +3198,7 @@ declare function getRewardXpInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): RewardXpInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -3195,7 +3210,7 @@ declare function getRewardXpInstruction<
 >;
 type ParsedRewardXpInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -3212,11 +3227,11 @@ type ParsedRewardXpInstruction<
 };
 declare function parseRewardXpInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRewardXpInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -3233,7 +3248,7 @@ type UpdateConfigInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -3245,7 +3260,7 @@ type UpdateConfigInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type UpdateConfigInstructionData = {
@@ -3263,7 +3278,7 @@ declare function getUpdateConfigInstructionDataCodec(): Codec<
 >;
 type UpdateConfigAsyncInput<
   TAccountConfig extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   authority: TransactionSigner<TAccountAuthority>;
@@ -3272,18 +3287,18 @@ type UpdateConfigAsyncInput<
 declare function getUpdateConfigInstructionAsync<
   TAccountConfig extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateConfigAsyncInput<TAccountConfig, TAccountAuthority>,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority>
 >;
 type UpdateConfigInput<
   TAccountConfig extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   authority: TransactionSigner<TAccountAuthority>;
@@ -3292,16 +3307,16 @@ type UpdateConfigInput<
 declare function getUpdateConfigInstruction<
   TAccountConfig extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateConfigInput<TAccountConfig, TAccountAuthority>,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority>;
 type ParsedUpdateConfigInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -3312,11 +3327,11 @@ type ParsedUpdateConfigInstruction<
 };
 declare function parseUpdateConfigInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpdateConfigInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -3334,7 +3349,7 @@ type UpdateCourseInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -3349,7 +3364,7 @@ type UpdateCourseInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type UpdateCourseInstructionData = {
@@ -3376,7 +3391,7 @@ declare function getUpdateCourseInstructionDataCodec(): Codec<
 type UpdateCourseAsyncInput<
   TAccountConfig extends string = string,
   TAccountCourse extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -3391,7 +3406,7 @@ declare function getUpdateCourseInstructionAsync<
   TAccountConfig extends string,
   TAccountCourse extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateCourseAsyncInput<
     TAccountConfig,
@@ -3400,7 +3415,7 @@ declare function getUpdateCourseInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   UpdateCourseInstruction<
     TProgramAddress,
@@ -3412,7 +3427,7 @@ declare function getUpdateCourseInstructionAsync<
 type UpdateCourseInput<
   TAccountConfig extends string = string,
   TAccountCourse extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -3427,12 +3442,12 @@ declare function getUpdateCourseInstruction<
   TAccountConfig extends string,
   TAccountCourse extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateCourseInput<TAccountConfig, TAccountCourse, TAccountAuthority>,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): UpdateCourseInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -3441,7 +3456,7 @@ declare function getUpdateCourseInstruction<
 >;
 type ParsedUpdateCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -3453,11 +3468,11 @@ type ParsedUpdateCourseInstruction<
 };
 declare function parseUpdateCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpdateCourseInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -3480,11 +3495,13 @@ type UpgradeCredentialInstruction<
   TAccountTrackCollection extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -3521,7 +3538,7 @@ type UpgradeCredentialInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 type UpgradeCredentialInstructionData = {
@@ -3553,7 +3570,7 @@ type UpgradeCredentialAsyncInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -3582,7 +3599,7 @@ declare function getUpgradeCredentialInstructionAsync<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpgradeCredentialAsyncInput<
     TAccountConfig,
@@ -3598,7 +3615,7 @@ declare function getUpgradeCredentialInstructionAsync<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): Promise<
   UpgradeCredentialInstruction<
     TProgramAddress,
@@ -3624,7 +3641,7 @@ type UpgradeCredentialInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -3653,7 +3670,7 @@ declare function getUpgradeCredentialInstruction<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpgradeCredentialInput<
     TAccountConfig,
@@ -3669,7 +3686,7 @@ declare function getUpgradeCredentialInstruction<
   >,
   config?: {
     programAddress?: TProgramAddress;
-  },
+  }
 ): UpgradeCredentialInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -3685,7 +3702,7 @@ declare function getUpgradeCredentialInstruction<
 >;
 type ParsedUpgradeCredentialInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -3705,11 +3722,11 @@ type ParsedUpgradeCredentialInstruction<
 };
 declare function parseUpgradeCredentialInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpgradeCredentialInstruction<TProgram, TAccountMetas>;
 
 /**
@@ -4128,17 +4145,17 @@ declare function getXpRewardedCodec(): Codec<XpRewardedArgs, XpRewarded>;
 declare function getConfigPda(programAddress?: Address): Promise<Address>;
 declare function getCoursePda(
   courseId: string,
-  programAddress?: Address,
+  programAddress?: Address
 ): Promise<Address>;
 declare function getEnrollmentPda(
   courseId: string,
   learner: Address,
-  programAddress?: Address,
+  programAddress?: Address
 ): Promise<Address>;
 declare function getAchievementReceiptPda(
   achievementId: string,
   recipient: Address,
-  programAddress?: Address,
+  programAddress?: Address
 ): Promise<Address>;
 
 /**
@@ -4162,7 +4179,7 @@ declare function fetchAllCoursesByProgram(
             bytes: string;
           };
         }>;
-      },
+      }
     ) => {
       send: () => Promise<{
         value: Array<{
@@ -4171,7 +4188,7 @@ declare function fetchAllCoursesByProgram(
       }>;
     };
   },
-  programAddress?: Address,
+  programAddress?: Address
 ): Promise<_solana_kit.MaybeAccount<Course>[]>;
 
 export {

@@ -102,7 +102,7 @@ export function getMinterRoleEncoder(): Encoder<MinterRoleArgs> {
       ["reserved", fixEncoderSize(getBytesEncoder(), 8)],
       ["bump", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR })
   );
 }
 
@@ -127,24 +127,24 @@ export function getMinterRoleCodec(): Codec<MinterRoleArgs, MinterRole> {
 }
 
 export function decodeMinterRole<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<MinterRole, TAddress>;
 export function decodeMinterRole<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<MinterRole, TAddress>;
 export function decodeMinterRole<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
 ): Account<MinterRole, TAddress> | MaybeAccount<MinterRole, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getMinterRoleDecoder(),
+    getMinterRoleDecoder()
   );
 }
 
 export async function fetchMinterRole<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<MinterRole, TAddress>> {
   const maybeAccount = await fetchMaybeMinterRole(rpc, address, config);
   assertAccountExists(maybeAccount);
@@ -154,7 +154,7 @@ export async function fetchMinterRole<TAddress extends string = string>(
 export async function fetchMaybeMinterRole<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<MinterRole, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
   return decodeMinterRole(maybeAccount);
@@ -163,7 +163,7 @@ export async function fetchMaybeMinterRole<TAddress extends string = string>(
 export async function fetchAllMinterRole(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<MinterRole>[]> {
   const maybeAccounts = await fetchAllMaybeMinterRole(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
@@ -173,7 +173,7 @@ export async function fetchAllMinterRole(
 export async function fetchAllMaybeMinterRole(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<MinterRole>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeMinterRole(maybeAccount));

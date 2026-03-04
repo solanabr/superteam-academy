@@ -25,7 +25,7 @@ var ACHIEVEMENT_RECEIPT_DISCRIMINATOR = new Uint8Array([
 ]);
 function getAchievementReceiptDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    ACHIEVEMENT_RECEIPT_DISCRIMINATOR,
+    ACHIEVEMENT_RECEIPT_DISCRIMINATOR
   );
 }
 function getAchievementReceiptEncoder() {
@@ -36,7 +36,7 @@ function getAchievementReceiptEncoder() {
       ["awardedAt", getI64Encoder()],
       ["bump", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: ACHIEVEMENT_RECEIPT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ACHIEVEMENT_RECEIPT_DISCRIMINATOR })
   );
 }
 function getAchievementReceiptDecoder() {
@@ -50,7 +50,7 @@ function getAchievementReceiptDecoder() {
 function getAchievementReceiptCodec() {
   return combineCodec(
     getAchievementReceiptEncoder(),
-    getAchievementReceiptDecoder(),
+    getAchievementReceiptDecoder()
   );
 }
 function decodeAchievementReceipt(encodedAccount) {
@@ -60,7 +60,7 @@ async function fetchAchievementReceipt(rpc, address2, config) {
   const maybeAccount = await fetchMaybeAchievementReceipt(
     rpc,
     address2,
-    config,
+    config
   );
   assertAccountExists(maybeAccount);
   return maybeAccount;
@@ -73,7 +73,7 @@ async function fetchAllAchievementReceipt(rpc, addresses, config) {
   const maybeAccounts = await fetchAllMaybeAchievementReceipt(
     rpc,
     addresses,
-    config,
+    config
   );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
@@ -81,7 +81,7 @@ async function fetchAllAchievementReceipt(rpc, addresses, config) {
 async function fetchAllMaybeAchievementReceipt(rpc, addresses, config) {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) =>
-    decodeAchievementReceipt(maybeAccount),
+    decodeAchievementReceipt(maybeAccount)
   );
 }
 function getAchievementReceiptSize() {
@@ -123,7 +123,7 @@ var ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize2(getBytesEncoder2(), 8).encode(
-    ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 function getAchievementTypeEncoder() {
@@ -146,7 +146,7 @@ function getAchievementTypeEncoder() {
       ["reserved", fixEncoderSize2(getBytesEncoder2(), 8)],
       ["bump", getU8Encoder2()],
     ]),
-    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR })
   );
 }
 function getAchievementTypeDecoder() {
@@ -169,7 +169,7 @@ function getAchievementTypeDecoder() {
 function getAchievementTypeCodec() {
   return combineCodec2(
     getAchievementTypeEncoder(),
-    getAchievementTypeDecoder(),
+    getAchievementTypeDecoder()
   );
 }
 function decodeAchievementType(encodedAccount) {
@@ -188,7 +188,7 @@ async function fetchAllAchievementType(rpc, addresses, config) {
   const maybeAccounts = await fetchAllMaybeAchievementType(
     rpc,
     addresses,
-    config,
+    config
   );
   assertAccountsExist2(maybeAccounts);
   return maybeAccounts;
@@ -196,7 +196,7 @@ async function fetchAllAchievementType(rpc, addresses, config) {
 async function fetchAllMaybeAchievementType(rpc, addresses, config) {
   const maybeAccounts = await fetchEncodedAccounts2(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) =>
-    decodeAchievementType(maybeAccount),
+    decodeAchievementType(maybeAccount)
   );
 }
 
@@ -236,7 +236,7 @@ function getConfigEncoder() {
       ["reserved", fixEncoderSize3(getBytesEncoder3(), 8)],
       ["bump", getU8Encoder3()],
     ]),
-    (value) => ({ ...value, discriminator: CONFIG_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: CONFIG_DISCRIMINATOR })
   );
 }
 function getConfigDecoder() {
@@ -341,7 +341,7 @@ function getCourseEncoder() {
       ["reserved", fixEncoderSize4(getBytesEncoder4(), 8)],
       ["bump", getU8Encoder4()],
     ]),
-    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR })
   );
 }
 function getCourseDecoder() {
@@ -426,7 +426,7 @@ var ENROLLMENT_DISCRIMINATOR = new Uint8Array([
 ]);
 function getEnrollmentDiscriminatorBytes() {
   return fixEncoderSize5(getBytesEncoder5(), 8).encode(
-    ENROLLMENT_DISCRIMINATOR,
+    ENROLLMENT_DISCRIMINATOR
   );
 }
 function getEnrollmentEncoder() {
@@ -441,7 +441,7 @@ function getEnrollmentEncoder() {
       ["reserved", fixEncoderSize5(getBytesEncoder5(), 4)],
       ["bump", getU8Encoder5()],
     ]),
-    (value) => ({ ...value, discriminator: ENROLLMENT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ENROLLMENT_DISCRIMINATOR })
   );
 }
 function getEnrollmentDecoder() {
@@ -518,7 +518,7 @@ var MINTER_ROLE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getMinterRoleDiscriminatorBytes() {
   return fixEncoderSize6(getBytesEncoder6(), 8).encode(
-    MINTER_ROLE_DISCRIMINATOR,
+    MINTER_ROLE_DISCRIMINATOR
   );
 }
 function getMinterRoleEncoder() {
@@ -534,7 +534,7 @@ function getMinterRoleEncoder() {
       ["reserved", fixEncoderSize6(getBytesEncoder6(), 8)],
       ["bump", getU8Encoder6()],
     ]),
-    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: MINTER_ROLE_DISCRIMINATOR })
   );
 }
 function getMinterRoleDecoder() {
@@ -618,7 +618,7 @@ var AWARD_ACHIEVEMENT_DISCRIMINATOR = new Uint8Array([
 ]);
 function getAwardAchievementDiscriminatorBytes() {
   return fixEncoderSize7(getBytesEncoder7(), 8).encode(
-    AWARD_ACHIEVEMENT_DISCRIMINATOR,
+    AWARD_ACHIEVEMENT_DISCRIMINATOR
   );
 }
 function getAwardAchievementInstructionDataEncoder() {
@@ -626,7 +626,7 @@ function getAwardAchievementInstructionDataEncoder() {
     getStructEncoder7([
       ["discriminator", fixEncoderSize7(getBytesEncoder7(), 8)],
     ]),
-    (value) => ({ ...value, discriminator: AWARD_ACHIEVEMENT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: AWARD_ACHIEVEMENT_DISCRIMINATOR })
   );
 }
 function getAwardAchievementInstructionDataDecoder() {
@@ -637,7 +637,7 @@ function getAwardAchievementInstructionDataDecoder() {
 function getAwardAchievementInstructionDataCodec() {
   return combineCodec7(
     getAwardAchievementInstructionDataEncoder(),
-    getAwardAchievementInstructionDataDecoder(),
+    getAwardAchievementInstructionDataDecoder()
   );
 }
 async function getAwardAchievementInstructionAsync(input, config) {
@@ -671,7 +671,7 @@ async function getAwardAchievementInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder7().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -681,13 +681,13 @@ async function getAwardAchievementInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder7().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114]),
+          new Uint8Array([109, 105, 110, 116, 101, 114])
         ),
         getAddressEncoder7().encode(
           getAddressFromResolvedInstructionAccount(
             "minter",
-            accounts.minter.value,
-          ),
+            accounts.minter.value
+          )
         ),
       ],
     });
@@ -789,7 +789,7 @@ function parseAwardAchievementInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 14,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -839,7 +839,7 @@ var CLOSE_ENROLLMENT_DISCRIMINATOR = new Uint8Array([
 ]);
 function getCloseEnrollmentDiscriminatorBytes() {
   return fixEncoderSize8(getBytesEncoder8(), 8).encode(
-    CLOSE_ENROLLMENT_DISCRIMINATOR,
+    CLOSE_ENROLLMENT_DISCRIMINATOR
   );
 }
 function getCloseEnrollmentInstructionDataEncoder() {
@@ -847,7 +847,7 @@ function getCloseEnrollmentInstructionDataEncoder() {
     getStructEncoder8([
       ["discriminator", fixEncoderSize8(getBytesEncoder8(), 8)],
     ]),
-    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR })
   );
 }
 function getCloseEnrollmentInstructionDataDecoder() {
@@ -858,7 +858,7 @@ function getCloseEnrollmentInstructionDataDecoder() {
 function getCloseEnrollmentInstructionDataCodec() {
   return combineCodec8(
     getCloseEnrollmentInstructionDataEncoder(),
-    getCloseEnrollmentInstructionDataDecoder(),
+    getCloseEnrollmentInstructionDataDecoder()
   );
 }
 function getCloseEnrollmentInstruction(input, config) {
@@ -888,7 +888,7 @@ function parseCloseEnrollmentInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -930,7 +930,7 @@ var COMPLETE_LESSON_DISCRIMINATOR = new Uint8Array([
 ]);
 function getCompleteLessonDiscriminatorBytes() {
   return fixEncoderSize9(getBytesEncoder9(), 8).encode(
-    COMPLETE_LESSON_DISCRIMINATOR,
+    COMPLETE_LESSON_DISCRIMINATOR
   );
 }
 function getCompleteLessonInstructionDataEncoder() {
@@ -939,7 +939,7 @@ function getCompleteLessonInstructionDataEncoder() {
       ["discriminator", fixEncoderSize9(getBytesEncoder9(), 8)],
       ["lessonIndex", getU8Encoder7()],
     ]),
-    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR })
   );
 }
 function getCompleteLessonInstructionDataDecoder() {
@@ -951,7 +951,7 @@ function getCompleteLessonInstructionDataDecoder() {
 function getCompleteLessonInstructionDataCodec() {
   return combineCodec9(
     getCompleteLessonInstructionDataEncoder(),
-    getCompleteLessonInstructionDataDecoder(),
+    getCompleteLessonInstructionDataDecoder()
   );
 }
 async function getCompleteLessonInstructionAsync(input, config) {
@@ -977,7 +977,7 @@ async function getCompleteLessonInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder9().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1045,7 +1045,7 @@ function parseCompleteLessonInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 8,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1096,7 +1096,7 @@ var CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getCreateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize10(getBytesEncoder10(), 8).encode(
-    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 function getCreateAchievementTypeInstructionDataEncoder() {
@@ -1118,7 +1118,7 @@ function getCreateAchievementTypeInstructionDataEncoder() {
     (value) => ({
       ...value,
       discriminator: CREATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
-    }),
+    })
   );
 }
 function getCreateAchievementTypeInstructionDataDecoder() {
@@ -1137,7 +1137,7 @@ function getCreateAchievementTypeInstructionDataDecoder() {
 function getCreateAchievementTypeInstructionDataCodec() {
   return combineCodec10(
     getCreateAchievementTypeInstructionDataEncoder(),
-    getCreateAchievementTypeInstructionDataDecoder(),
+    getCreateAchievementTypeInstructionDataDecoder()
   );
 }
 async function getCreateAchievementTypeInstructionAsync(input, config) {
@@ -1159,7 +1159,7 @@ async function getCreateAchievementTypeInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder10().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1229,7 +1229,7 @@ function parseCreateAchievementTypeInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 7,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1250,7 +1250,7 @@ function parseCreateAchievementTypeInstruction(instruction) {
       systemProgram: getNextAccount(),
     },
     data: getCreateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data,
+      instruction.data
     ),
   };
 }
@@ -1289,7 +1289,7 @@ var CREATE_COURSE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getCreateCourseDiscriminatorBytes() {
   return fixEncoderSize11(getBytesEncoder11(), 8).encode(
-    CREATE_COURSE_DISCRIMINATOR,
+    CREATE_COURSE_DISCRIMINATOR
   );
 }
 function getCreateCourseInstructionDataEncoder() {
@@ -1308,7 +1308,7 @@ function getCreateCourseInstructionDataEncoder() {
       ["creatorRewardXp", getU32Encoder5()],
       ["minCompletionsForReward", getU16Encoder2()],
     ]),
-    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR })
   );
 }
 function getCreateCourseInstructionDataDecoder() {
@@ -1330,7 +1330,7 @@ function getCreateCourseInstructionDataDecoder() {
 function getCreateCourseInstructionDataCodec() {
   return combineCodec11(
     getCreateCourseInstructionDataEncoder(),
-    getCreateCourseInstructionDataDecoder(),
+    getCreateCourseInstructionDataDecoder()
   );
 }
 async function getCreateCourseInstructionAsync(input, config) {
@@ -1349,7 +1349,7 @@ async function getCreateCourseInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder11().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1402,7 +1402,7 @@ function parseCreateCourseInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 4,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1443,7 +1443,7 @@ var DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getDeactivateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize12(getBytesEncoder12(), 8).encode(
-    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 function getDeactivateAchievementTypeInstructionDataEncoder() {
@@ -1454,7 +1454,7 @@ function getDeactivateAchievementTypeInstructionDataEncoder() {
     (value) => ({
       ...value,
       discriminator: DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
-    }),
+    })
   );
 }
 function getDeactivateAchievementTypeInstructionDataDecoder() {
@@ -1465,7 +1465,7 @@ function getDeactivateAchievementTypeInstructionDataDecoder() {
 function getDeactivateAchievementTypeInstructionDataCodec() {
   return combineCodec12(
     getDeactivateAchievementTypeInstructionDataEncoder(),
-    getDeactivateAchievementTypeInstructionDataDecoder(),
+    getDeactivateAchievementTypeInstructionDataDecoder()
   );
 }
 async function getDeactivateAchievementTypeInstructionAsync(input, config) {
@@ -1482,7 +1482,7 @@ async function getDeactivateAchievementTypeInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder12().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1525,7 +1525,7 @@ function parseDeactivateAchievementTypeInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1542,7 +1542,7 @@ function parseDeactivateAchievementTypeInstruction(instruction) {
       authority: getNextAccount(),
     },
     data: getDeactivateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data,
+      instruction.data
     ),
   };
 }
@@ -1583,7 +1583,7 @@ function getEnrollInstructionDataEncoder() {
       ["discriminator", fixEncoderSize13(getBytesEncoder13(), 8)],
       ["courseId", addEncoderSizePrefix6(getUtf8Encoder6(), getU32Encoder6())],
     ]),
-    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR })
   );
 }
 function getEnrollInstructionDataDecoder() {
@@ -1595,7 +1595,7 @@ function getEnrollInstructionDataDecoder() {
 function getEnrollInstructionDataCodec() {
   return combineCodec13(
     getEnrollInstructionDataEncoder(),
-    getEnrollInstructionDataDecoder(),
+    getEnrollInstructionDataDecoder()
   );
 }
 async function getEnrollInstructionAsync(input, config) {
@@ -1614,10 +1614,10 @@ async function getEnrollInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder13().encode(
-          new Uint8Array([99, 111, 117, 114, 115, 101]),
+          new Uint8Array([99, 111, 117, 114, 115, 101])
         ),
         getUtf8Encoder6().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId),
+          getNonNullResolvedInstructionInput("courseId", args.courseId)
         ),
       ],
     });
@@ -1627,16 +1627,16 @@ async function getEnrollInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder13().encode(
-          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116]),
+          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116])
         ),
         getUtf8Encoder6().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId),
+          getNonNullResolvedInstructionInput("courseId", args.courseId)
         ),
         getAddressEncoder9().encode(
           getAddressFromResolvedInstructionAccount2(
             "learner",
-            accounts.learner.value,
-          ),
+            accounts.learner.value
+          )
         ),
       ],
     });
@@ -1689,7 +1689,7 @@ function parseEnrollInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 4,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1730,7 +1730,7 @@ var FINALIZE_COURSE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getFinalizeCourseDiscriminatorBytes() {
   return fixEncoderSize14(getBytesEncoder14(), 8).encode(
-    FINALIZE_COURSE_DISCRIMINATOR,
+    FINALIZE_COURSE_DISCRIMINATOR
   );
 }
 function getFinalizeCourseInstructionDataEncoder() {
@@ -1738,7 +1738,7 @@ function getFinalizeCourseInstructionDataEncoder() {
     getStructEncoder14([
       ["discriminator", fixEncoderSize14(getBytesEncoder14(), 8)],
     ]),
-    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR })
   );
 }
 function getFinalizeCourseInstructionDataDecoder() {
@@ -1749,7 +1749,7 @@ function getFinalizeCourseInstructionDataDecoder() {
 function getFinalizeCourseInstructionDataCodec() {
   return combineCodec14(
     getFinalizeCourseInstructionDataEncoder(),
-    getFinalizeCourseInstructionDataDecoder(),
+    getFinalizeCourseInstructionDataDecoder()
   );
 }
 async function getFinalizeCourseInstructionAsync(input, config) {
@@ -1779,7 +1779,7 @@ async function getFinalizeCourseInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder14().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1855,7 +1855,7 @@ function parseFinalizeCourseInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -1906,7 +1906,7 @@ var INITIALIZE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getInitializeDiscriminatorBytes() {
   return fixEncoderSize15(getBytesEncoder15(), 8).encode(
-    INITIALIZE_DISCRIMINATOR,
+    INITIALIZE_DISCRIMINATOR
   );
 }
 function getInitializeInstructionDataEncoder() {
@@ -1914,7 +1914,7 @@ function getInitializeInstructionDataEncoder() {
     getStructEncoder15([
       ["discriminator", fixEncoderSize15(getBytesEncoder15(), 8)],
     ]),
-    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
   );
 }
 function getInitializeInstructionDataDecoder() {
@@ -1925,7 +1925,7 @@ function getInitializeInstructionDataDecoder() {
 function getInitializeInstructionDataCodec() {
   return combineCodec15(
     getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder(),
+    getInitializeInstructionDataDecoder()
   );
 }
 async function getInitializeInstructionAsync(input, config) {
@@ -1948,7 +1948,7 @@ async function getInitializeInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder15().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -1958,13 +1958,13 @@ async function getInitializeInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder15().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114]),
+          new Uint8Array([109, 105, 110, 116, 101, 114])
         ),
         getAddressEncoder10().encode(
           getAddressFromResolvedInstructionAccount3(
             "authority",
-            accounts.authority.value,
-          ),
+            accounts.authority.value
+          )
         ),
       ],
     });
@@ -2031,7 +2031,7 @@ function parseInitializeInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 6,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2082,7 +2082,7 @@ var ISSUE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
 ]);
 function getIssueCredentialDiscriminatorBytes() {
   return fixEncoderSize16(getBytesEncoder16(), 8).encode(
-    ISSUE_CREDENTIAL_DISCRIMINATOR,
+    ISSUE_CREDENTIAL_DISCRIMINATOR
   );
 }
 function getIssueCredentialInstructionDataEncoder() {
@@ -2100,7 +2100,7 @@ function getIssueCredentialInstructionDataEncoder() {
       ["coursesCompleted", getU32Encoder7()],
       ["totalXp", getU64Encoder3()],
     ]),
-    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR })
   );
 }
 function getIssueCredentialInstructionDataDecoder() {
@@ -2118,7 +2118,7 @@ function getIssueCredentialInstructionDataDecoder() {
 function getIssueCredentialInstructionDataCodec() {
   return combineCodec16(
     getIssueCredentialInstructionDataEncoder(),
-    getIssueCredentialInstructionDataDecoder(),
+    getIssueCredentialInstructionDataDecoder()
   );
 }
 async function getIssueCredentialInstructionAsync(input, config) {
@@ -2143,7 +2143,7 @@ async function getIssueCredentialInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder16().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2222,7 +2222,7 @@ function parseIssueCredentialInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2279,7 +2279,7 @@ var REGISTER_MINTER_DISCRIMINATOR = new Uint8Array([
 ]);
 function getRegisterMinterDiscriminatorBytes() {
   return fixEncoderSize17(getBytesEncoder17(), 8).encode(
-    REGISTER_MINTER_DISCRIMINATOR,
+    REGISTER_MINTER_DISCRIMINATOR
   );
 }
 function getRegisterMinterInstructionDataEncoder() {
@@ -2290,7 +2290,7 @@ function getRegisterMinterInstructionDataEncoder() {
       ["label", addEncoderSizePrefix8(getUtf8Encoder8(), getU32Encoder8())],
       ["maxXpPerCall", getU64Encoder4()],
     ]),
-    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR })
   );
 }
 function getRegisterMinterInstructionDataDecoder() {
@@ -2304,7 +2304,7 @@ function getRegisterMinterInstructionDataDecoder() {
 function getRegisterMinterInstructionDataCodec() {
   return combineCodec17(
     getRegisterMinterInstructionDataEncoder(),
-    getRegisterMinterInstructionDataDecoder(),
+    getRegisterMinterInstructionDataDecoder()
   );
 }
 async function getRegisterMinterInstructionAsync(input, config) {
@@ -2324,7 +2324,7 @@ async function getRegisterMinterInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder17().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2380,7 +2380,7 @@ function parseRegisterMinterInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 5,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2422,7 +2422,7 @@ var REVOKE_MINTER_DISCRIMINATOR = new Uint8Array([
 ]);
 function getRevokeMinterDiscriminatorBytes() {
   return fixEncoderSize18(getBytesEncoder18(), 8).encode(
-    REVOKE_MINTER_DISCRIMINATOR,
+    REVOKE_MINTER_DISCRIMINATOR
   );
 }
 function getRevokeMinterInstructionDataEncoder() {
@@ -2430,7 +2430,7 @@ function getRevokeMinterInstructionDataEncoder() {
     getStructEncoder18([
       ["discriminator", fixEncoderSize18(getBytesEncoder18(), 8)],
     ]),
-    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR })
   );
 }
 function getRevokeMinterInstructionDataDecoder() {
@@ -2441,7 +2441,7 @@ function getRevokeMinterInstructionDataDecoder() {
 function getRevokeMinterInstructionDataCodec() {
   return combineCodec18(
     getRevokeMinterInstructionDataEncoder(),
-    getRevokeMinterInstructionDataDecoder(),
+    getRevokeMinterInstructionDataDecoder()
   );
 }
 async function getRevokeMinterInstructionAsync(input, config) {
@@ -2458,7 +2458,7 @@ async function getRevokeMinterInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder18().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2501,7 +2501,7 @@ function parseRevokeMinterInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2553,7 +2553,7 @@ var REWARD_XP_DISCRIMINATOR = new Uint8Array([
 ]);
 function getRewardXpDiscriminatorBytes() {
   return fixEncoderSize19(getBytesEncoder19(), 8).encode(
-    REWARD_XP_DISCRIMINATOR,
+    REWARD_XP_DISCRIMINATOR
   );
 }
 function getRewardXpInstructionDataEncoder() {
@@ -2563,7 +2563,7 @@ function getRewardXpInstructionDataEncoder() {
       ["amount", getU64Encoder5()],
       ["memo", addEncoderSizePrefix9(getUtf8Encoder9(), getU32Encoder9())],
     ]),
-    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR })
   );
 }
 function getRewardXpInstructionDataDecoder() {
@@ -2576,7 +2576,7 @@ function getRewardXpInstructionDataDecoder() {
 function getRewardXpInstructionDataCodec() {
   return combineCodec19(
     getRewardXpInstructionDataEncoder(),
-    getRewardXpInstructionDataDecoder(),
+    getRewardXpInstructionDataDecoder()
   );
 }
 async function getRewardXpInstructionAsync(input, config) {
@@ -2600,7 +2600,7 @@ async function getRewardXpInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder19().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2610,13 +2610,13 @@ async function getRewardXpInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder19().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114]),
+          new Uint8Array([109, 105, 110, 116, 101, 114])
         ),
         getAddressEncoder12().encode(
           getAddressFromResolvedInstructionAccount4(
             "minter",
-            accounts.minter.value,
-          ),
+            accounts.minter.value
+          )
         ),
       ],
     });
@@ -2678,7 +2678,7 @@ function parseRewardXpInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 6,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2725,7 +2725,7 @@ var UPDATE_CONFIG_DISCRIMINATOR = new Uint8Array([
 ]);
 function getUpdateConfigDiscriminatorBytes() {
   return fixEncoderSize20(getBytesEncoder20(), 8).encode(
-    UPDATE_CONFIG_DISCRIMINATOR,
+    UPDATE_CONFIG_DISCRIMINATOR
   );
 }
 function getUpdateConfigInstructionDataEncoder() {
@@ -2734,7 +2734,7 @@ function getUpdateConfigInstructionDataEncoder() {
       ["discriminator", fixEncoderSize20(getBytesEncoder20(), 8)],
       ["newBackendSigner", getOptionEncoder4(getAddressEncoder13())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR })
   );
 }
 function getUpdateConfigInstructionDataDecoder() {
@@ -2746,7 +2746,7 @@ function getUpdateConfigInstructionDataDecoder() {
 function getUpdateConfigInstructionDataCodec() {
   return combineCodec20(
     getUpdateConfigInstructionDataEncoder(),
-    getUpdateConfigInstructionDataDecoder(),
+    getUpdateConfigInstructionDataDecoder()
   );
 }
 async function getUpdateConfigInstructionAsync(input, config) {
@@ -2763,7 +2763,7 @@ async function getUpdateConfigInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder20().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2804,7 +2804,7 @@ function parseUpdateConfigInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 2,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2848,7 +2848,7 @@ var UPDATE_COURSE_DISCRIMINATOR = new Uint8Array([
 ]);
 function getUpdateCourseDiscriminatorBytes() {
   return fixEncoderSize21(getBytesEncoder21(), 8).encode(
-    UPDATE_COURSE_DISCRIMINATOR,
+    UPDATE_COURSE_DISCRIMINATOR
   );
 }
 function getUpdateCourseInstructionDataEncoder() {
@@ -2864,7 +2864,7 @@ function getUpdateCourseInstructionDataEncoder() {
       ["newCreatorRewardXp", getOptionEncoder5(getU32Encoder10())],
       ["newMinCompletionsForReward", getOptionEncoder5(getU16Encoder3())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR })
   );
 }
 function getUpdateCourseInstructionDataDecoder() {
@@ -2883,7 +2883,7 @@ function getUpdateCourseInstructionDataDecoder() {
 function getUpdateCourseInstructionDataCodec() {
   return combineCodec21(
     getUpdateCourseInstructionDataEncoder(),
-    getUpdateCourseInstructionDataDecoder(),
+    getUpdateCourseInstructionDataDecoder()
   );
 }
 async function getUpdateCourseInstructionAsync(input, config) {
@@ -2901,7 +2901,7 @@ async function getUpdateCourseInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder21().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -2945,7 +2945,7 @@ function parseUpdateCourseInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -2993,7 +2993,7 @@ var UPGRADE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
 ]);
 function getUpgradeCredentialDiscriminatorBytes() {
   return fixEncoderSize22(getBytesEncoder22(), 8).encode(
-    UPGRADE_CREDENTIAL_DISCRIMINATOR,
+    UPGRADE_CREDENTIAL_DISCRIMINATOR
   );
 }
 function getUpgradeCredentialInstructionDataEncoder() {
@@ -3011,7 +3011,7 @@ function getUpgradeCredentialInstructionDataEncoder() {
       ["coursesCompleted", getU32Encoder11()],
       ["totalXp", getU64Encoder6()],
     ]),
-    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR })
   );
 }
 function getUpgradeCredentialInstructionDataDecoder() {
@@ -3032,7 +3032,7 @@ function getUpgradeCredentialInstructionDataDecoder() {
 function getUpgradeCredentialInstructionDataCodec() {
   return combineCodec22(
     getUpgradeCredentialInstructionDataEncoder(),
-    getUpgradeCredentialInstructionDataDecoder(),
+    getUpgradeCredentialInstructionDataDecoder()
   );
 }
 async function getUpgradeCredentialInstructionAsync(input, config) {
@@ -3057,7 +3057,7 @@ async function getUpgradeCredentialInstructionAsync(input, config) {
       programAddress,
       seeds: [
         getBytesEncoder22().encode(
-          new Uint8Array([99, 111, 110, 102, 105, 103]),
+          new Uint8Array([99, 111, 110, 102, 105, 103])
         ),
       ],
     });
@@ -3136,7 +3136,7 @@ function parseUpgradeCredentialInstruction(instruction) {
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -3185,9 +3185,9 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248]),
+        new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248])
       ),
-      0,
+      0
     )
   ) {
     return 0 /* AchievementReceipt */;
@@ -3196,9 +3196,9 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137]),
+        new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137])
       ),
-      0,
+      0
     )
   ) {
     return 1 /* AchievementType */;
@@ -3207,9 +3207,9 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130]),
+        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130])
       ),
-      0,
+      0
     )
   ) {
     return 2 /* Config */;
@@ -3218,9 +3218,9 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106]),
+        new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106])
       ),
-      0,
+      0
     )
   ) {
     return 3 /* Course */;
@@ -3229,9 +3229,9 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51]),
+        new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51])
       ),
-      0,
+      0
     )
   ) {
     return 4 /* Enrollment */;
@@ -3240,20 +3240,20 @@ function identifyOnchainAcademyAccount(account) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193]),
+        new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193])
       ),
-      0,
+      0
     )
   ) {
     return 5 /* MinterRole */;
   }
   throw new SolanaError17(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
-    { accountData: data, programName: "onchainAcademy" },
+    { accountData: data, programName: "onchainAcademy" }
   );
 }
 var OnchainAcademyInstruction = /* @__PURE__ */ ((
-  OnchainAcademyInstruction2,
+  OnchainAcademyInstruction2
 ) => {
   OnchainAcademyInstruction2[
     (OnchainAcademyInstruction2["AwardAchievement"] = 0)
@@ -3307,9 +3307,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12]),
+        new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12])
       ),
-      0,
+      0
     )
   ) {
     return 0 /* AwardAchievement */;
@@ -3318,9 +3318,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91]),
+        new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91])
       ),
-      0,
+      0
     )
   ) {
     return 1 /* CloseEnrollment */;
@@ -3329,9 +3329,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58]),
+        new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58])
       ),
-      0,
+      0
     )
   ) {
     return 2 /* CompleteLesson */;
@@ -3340,9 +3340,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19]),
+        new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19])
       ),
-      0,
+      0
     )
   ) {
     return 3 /* CreateAchievementType */;
@@ -3351,9 +3351,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241]),
+        new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241])
       ),
-      0,
+      0
     )
   ) {
     return 4 /* CreateCourse */;
@@ -3362,9 +3362,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191]),
+        new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191])
       ),
-      0,
+      0
     )
   ) {
     return 5 /* DeactivateAchievementType */;
@@ -3373,9 +3373,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43]),
+        new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43])
       ),
-      0,
+      0
     )
   ) {
     return 6 /* Enroll */;
@@ -3384,9 +3384,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218]),
+        new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218])
       ),
-      0,
+      0
     )
   ) {
     return 7 /* FinalizeCourse */;
@@ -3395,9 +3395,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237]),
+        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237])
       ),
-      0,
+      0
     )
   ) {
     return 8 /* Initialize */;
@@ -3406,9 +3406,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87]),
+        new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87])
       ),
-      0,
+      0
     )
   ) {
     return 9 /* IssueCredential */;
@@ -3417,9 +3417,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191]),
+        new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191])
       ),
-      0,
+      0
     )
   ) {
     return 10 /* RegisterMinter */;
@@ -3428,9 +3428,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105]),
+        new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105])
       ),
-      0,
+      0
     )
   ) {
     return 11 /* RevokeMinter */;
@@ -3439,9 +3439,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145]),
+        new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145])
       ),
-      0,
+      0
     )
   ) {
     return 12 /* RewardXp */;
@@ -3450,9 +3450,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99]),
+        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99])
       ),
-      0,
+      0
     )
   ) {
     return 13 /* UpdateConfig */;
@@ -3461,9 +3461,9 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231]),
+        new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231])
       ),
-      0,
+      0
     )
   ) {
     return 14 /* UpdateCourse */;
@@ -3472,16 +3472,16 @@ function identifyOnchainAcademyInstruction(instruction) {
     containsBytes(
       data,
       fixEncoderSize23(getBytesEncoder23(), 8).encode(
-        new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169]),
+        new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169])
       ),
-      0,
+      0
     )
   ) {
     return 15 /* UpgradeCredential */;
   }
   throw new SolanaError17(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
-    { instructionData: data, programName: "onchainAcademy" },
+    { instructionData: data, programName: "onchainAcademy" }
   );
 }
 function parseOnchainAcademyInstruction(instruction) {
@@ -3605,7 +3605,7 @@ function parseOnchainAcademyInstruction(instruction) {
         {
           instructionType,
           programName: "onchainAcademy",
-        },
+        }
       );
   }
 }
@@ -3617,11 +3617,11 @@ function onchainAcademyProgram() {
         accounts: {
           achievementReceipt: addSelfFetchFunctions(
             client,
-            getAchievementReceiptCodec(),
+            getAchievementReceiptCodec()
           ),
           achievementType: addSelfFetchFunctions(
             client,
-            getAchievementTypeCodec(),
+            getAchievementTypeCodec()
           ),
           config: addSelfFetchFunctions(client, getConfigCodec()),
           course: addSelfFetchFunctions(client, getCourseCodec()),
@@ -3635,17 +3635,17 @@ function onchainAcademyProgram() {
               getAwardAchievementInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           closeEnrollment: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCloseEnrollmentInstruction(input),
+              getCloseEnrollmentInstruction(input)
             ),
           completeLesson: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCompleteLessonInstructionAsync(input),
+              getCompleteLessonInstructionAsync(input)
             ),
           createAchievementType: (input) =>
             addSelfPlanAndSendFunctions(
@@ -3653,32 +3653,32 @@ function onchainAcademyProgram() {
               getCreateAchievementTypeInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           createCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateCourseInstructionAsync(input),
+              getCreateCourseInstructionAsync(input)
             ),
           deactivateAchievementType: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getDeactivateAchievementTypeInstructionAsync(input),
+              getDeactivateAchievementTypeInstructionAsync(input)
             ),
           enroll: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getEnrollInstructionAsync(input),
+              getEnrollInstructionAsync(input)
             ),
           finalizeCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getFinalizeCourseInstructionAsync(input),
+              getFinalizeCourseInstructionAsync(input)
             ),
           initialize: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getInitializeInstructionAsync(input),
+              getInitializeInstructionAsync(input)
             ),
           issueCredential: (input) =>
             addSelfPlanAndSendFunctions(
@@ -3686,7 +3686,7 @@ function onchainAcademyProgram() {
               getIssueCredentialInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           registerMinter: (input) =>
             addSelfPlanAndSendFunctions(
@@ -3694,27 +3694,27 @@ function onchainAcademyProgram() {
               getRegisterMinterInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           revokeMinter: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getRevokeMinterInstructionAsync(input),
+              getRevokeMinterInstructionAsync(input)
             ),
           rewardXp: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getRewardXpInstructionAsync(input),
+              getRewardXpInstructionAsync(input)
             ),
           updateConfig: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateConfigInstructionAsync(input),
+              getUpdateConfigInstructionAsync(input)
             ),
           updateCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateCourseInstructionAsync(input),
+              getUpdateCourseInstructionAsync(input)
             ),
           upgradeCredential: (input) =>
             addSelfPlanAndSendFunctions(
@@ -3722,7 +3722,7 @@ function onchainAcademyProgram() {
               getUpgradeCredentialInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
         },
       },
@@ -3801,7 +3801,7 @@ function isOnchainAcademyError(error, transactionMessage, code) {
     error,
     transactionMessage,
     ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-    code,
+    code
   );
 }
 
@@ -3848,7 +3848,7 @@ function getAchievementAwardedDecoder() {
 function getAchievementAwardedCodec() {
   return combineCodec23(
     getAchievementAwardedEncoder(),
-    getAchievementAwardedDecoder(),
+    getAchievementAwardedDecoder()
   );
 }
 
@@ -3897,7 +3897,7 @@ function getAchievementTypeCreatedDecoder() {
 function getAchievementTypeCreatedCodec() {
   return combineCodec24(
     getAchievementTypeCreatedEncoder(),
-    getAchievementTypeCreatedDecoder(),
+    getAchievementTypeCreatedDecoder()
   );
 }
 
@@ -3936,7 +3936,7 @@ function getAchievementTypeDeactivatedDecoder() {
 function getAchievementTypeDeactivatedCodec() {
   return combineCodec25(
     getAchievementTypeDeactivatedEncoder(),
-    getAchievementTypeDeactivatedDecoder(),
+    getAchievementTypeDeactivatedDecoder()
   );
 }
 
@@ -4053,7 +4053,7 @@ function getCourseFinalizedDecoder() {
 function getCourseFinalizedCodec() {
   return combineCodec28(
     getCourseFinalizedEncoder(),
-    getCourseFinalizedDecoder(),
+    getCourseFinalizedDecoder()
   );
 }
 
@@ -4122,7 +4122,7 @@ function getCredentialIssuedDecoder() {
 function getCredentialIssuedCodec() {
   return combineCodec30(
     getCredentialIssuedEncoder(),
-    getCredentialIssuedDecoder(),
+    getCredentialIssuedDecoder()
   );
 }
 
@@ -4161,7 +4161,7 @@ function getCredentialUpgradedDecoder() {
 function getCredentialUpgradedCodec() {
   return combineCodec31(
     getCredentialUpgradedEncoder(),
-    getCredentialUpgradedDecoder(),
+    getCredentialUpgradedDecoder()
   );
 }
 
@@ -4232,7 +4232,7 @@ function getEnrollmentClosedDecoder() {
 function getEnrollmentClosedCodec() {
   return combineCodec33(
     getEnrollmentClosedEncoder(),
-    getEnrollmentClosedDecoder(),
+    getEnrollmentClosedDecoder()
   );
 }
 
@@ -4271,7 +4271,7 @@ function getLessonCompletedDecoder() {
 function getLessonCompletedCodec() {
   return combineCodec34(
     getLessonCompletedEncoder(),
-    getLessonCompletedDecoder(),
+    getLessonCompletedDecoder()
   );
 }
 
@@ -4312,7 +4312,7 @@ function getMinterRegisteredDecoder() {
 function getMinterRegisteredCodec() {
   return combineCodec35(
     getMinterRegisteredEncoder(),
-    getMinterRegisteredDecoder(),
+    getMinterRegisteredDecoder()
   );
 }
 
@@ -4401,7 +4401,7 @@ async function getConfigPda(programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS) {
 }
 async function getCoursePda(
   courseId,
-  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ) {
   const [coursePda] = await getProgramDerivedAddress16({
     programAddress,
@@ -4415,7 +4415,7 @@ async function getCoursePda(
 async function getEnrollmentPda(
   courseId,
   learner,
-  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ) {
   const [enrollmentPda] = await getProgramDerivedAddress16({
     programAddress,
@@ -4430,7 +4430,7 @@ async function getEnrollmentPda(
 async function getAchievementReceiptPda(
   achievementId,
   recipient,
-  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ) {
   const [pda] = await getProgramDerivedAddress16({
     programAddress,
@@ -4450,10 +4450,10 @@ import {
   getProgramDerivedAddress as getProgramDerivedAddress17,
 } from "@solana/kit";
 var TOKEN_2022_PROGRAM_ADDRESS = address(
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 );
 var ASSOCIATED_TOKEN_PROGRAM_ADDRESS = address(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
 async function getXpAta(owner, xpMint) {
   const [ata] = await getProgramDerivedAddress17({
@@ -4470,7 +4470,7 @@ async function getXpAta(owner, xpMint) {
 // src/helpers/courses.ts
 async function fetchAllCoursesByProgram(
   rpc,
-  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ) {
   const discriminatorB64 = Buffer.from(COURSE_DISCRIMINATOR).toString("base64");
   const { value: accounts } = await rpc

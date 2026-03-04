@@ -61,9 +61,10 @@ export type EnrollInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountEnrollment extends string | AccountMeta<string> = string,
   TAccountLearner extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -81,7 +82,7 @@ export type EnrollInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -98,7 +99,7 @@ export function getEnrollInstructionDataEncoder(): Encoder<EnrollInstructionData
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["courseId", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
-    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ENROLL_DISCRIMINATOR })
   );
 }
 
@@ -115,7 +116,7 @@ export function getEnrollInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getEnrollInstructionDataEncoder(),
-    getEnrollInstructionDataDecoder(),
+    getEnrollInstructionDataDecoder()
   );
 }
 
@@ -123,7 +124,7 @@ export type EnrollAsyncInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
   TAccountLearner extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course?: Address<TAccountCourse>;
   enrollment?: Address<TAccountEnrollment>;
@@ -137,7 +138,7 @@ export async function getEnrollInstructionAsync<
   TAccountEnrollment extends string,
   TAccountLearner extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: EnrollAsyncInput<
     TAccountCourse,
@@ -145,7 +146,7 @@ export async function getEnrollInstructionAsync<
     TAccountLearner,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   EnrollInstruction<
     TProgramAddress,
@@ -181,7 +182,7 @@ export async function getEnrollInstructionAsync<
       seeds: [
         getBytesEncoder().encode(new Uint8Array([99, 111, 117, 114, 115, 101])),
         getUtf8Encoder().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId),
+          getNonNullResolvedInstructionInput("courseId", args.courseId)
         ),
       ],
     });
@@ -191,16 +192,16 @@ export async function getEnrollInstructionAsync<
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116]),
+          new Uint8Array([101, 110, 114, 111, 108, 108, 109, 101, 110, 116])
         ),
         getUtf8Encoder().encode(
-          getNonNullResolvedInstructionInput("courseId", args.courseId),
+          getNonNullResolvedInstructionInput("courseId", args.courseId)
         ),
         getAddressEncoder().encode(
           getAddressFromResolvedInstructionAccount(
             "learner",
-            accounts.learner.value,
-          ),
+            accounts.learner.value
+          )
         ),
       ],
     });
@@ -219,23 +220,17 @@ export async function getEnrollInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getEnrollInstructionDataEncoder().encode(
-      args as EnrollInstructionDataArgs,
+      args as EnrollInstructionDataArgs
     ),
     programAddress,
-  } as EnrollInstruction<
-    TProgramAddress,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountSystemProgram
-  >);
+  } as EnrollInstruction<TProgramAddress, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountSystemProgram>);
 }
 
 export type EnrollInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
   TAccountLearner extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   enrollment: Address<TAccountEnrollment>;
@@ -249,7 +244,7 @@ export function getEnrollInstruction<
   TAccountEnrollment extends string,
   TAccountLearner extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: EnrollInput<
     TAccountCourse,
@@ -257,7 +252,7 @@ export function getEnrollInstruction<
     TAccountLearner,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): EnrollInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -299,21 +294,15 @@ export function getEnrollInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getEnrollInstructionDataEncoder().encode(
-      args as EnrollInstructionDataArgs,
+      args as EnrollInstructionDataArgs
     ),
     programAddress,
-  } as EnrollInstruction<
-    TProgramAddress,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountSystemProgram
-  >);
+  } as EnrollInstruction<TProgramAddress, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountSystemProgram>);
 }
 
 export type ParsedEnrollInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -327,11 +316,11 @@ export type ParsedEnrollInstruction<
 
 export function parseEnrollInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedEnrollInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     throw new SolanaError(
@@ -339,7 +328,7 @@ export function parseEnrollInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 4,
-      },
+      }
     );
   }
   let accountIndex = 0;

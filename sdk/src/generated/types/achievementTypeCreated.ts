@@ -72,6 +72,6 @@ export function getAchievementTypeCreatedCodec(): Codec<
 > {
   return combineCodec(
     getAchievementTypeCreatedEncoder(),
-    getAchievementTypeCreatedDecoder(),
+    getAchievementTypeCreatedDecoder()
   );
 }

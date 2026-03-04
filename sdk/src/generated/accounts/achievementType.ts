@@ -53,7 +53,7 @@ export const ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 
 export function getAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 
@@ -117,7 +117,7 @@ export function getAchievementTypeEncoder(): Encoder<AchievementTypeArgs> {
       ["reserved", fixEncoderSize(getBytesEncoder(), 8)],
       ["bump", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ACHIEVEMENT_TYPE_DISCRIMINATOR })
   );
 }
 
@@ -149,26 +149,26 @@ export function getAchievementTypeCodec(): Codec<
 }
 
 export function decodeAchievementType<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<AchievementType, TAddress>;
 export function decodeAchievementType<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<AchievementType, TAddress>;
 export function decodeAchievementType<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
 ):
   | Account<AchievementType, TAddress>
   | MaybeAccount<AchievementType, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getAchievementTypeDecoder(),
+    getAchievementTypeDecoder()
   );
 }
 
 export async function fetchAchievementType<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<AchievementType, TAddress>> {
   const maybeAccount = await fetchMaybeAchievementType(rpc, address, config);
   assertAccountExists(maybeAccount);
@@ -176,11 +176,11 @@ export async function fetchAchievementType<TAddress extends string = string>(
 }
 
 export async function fetchMaybeAchievementType<
-  TAddress extends string = string,
+  TAddress extends string = string
 >(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<AchievementType, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
   return decodeAchievementType(maybeAccount);
@@ -189,12 +189,12 @@ export async function fetchMaybeAchievementType<
 export async function fetchAllAchievementType(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<AchievementType>[]> {
   const maybeAccounts = await fetchAllMaybeAchievementType(
     rpc,
     addresses,
-    config,
+    config
   );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
@@ -203,10 +203,10 @@ export async function fetchAllAchievementType(
 export async function fetchAllMaybeAchievementType(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<AchievementType>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) =>
-    decodeAchievementType(maybeAccount),
+    decodeAchievementType(maybeAccount)
   );
 }

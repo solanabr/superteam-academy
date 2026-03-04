@@ -64,9 +64,10 @@ export type RewardXpInstruction<
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountRecipientTokenAccount extends string | AccountMeta<string> = string,
   TAccountMinter extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -90,7 +91,7 @@ export type RewardXpInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -112,7 +113,7 @@ export function getRewardXpInstructionDataEncoder(): Encoder<RewardXpInstruction
       ["amount", getU64Encoder()],
       ["memo", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
-    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REWARD_XP_DISCRIMINATOR })
   );
 }
 
@@ -130,7 +131,7 @@ export function getRewardXpInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getRewardXpInstructionDataEncoder(),
-    getRewardXpInstructionDataDecoder(),
+    getRewardXpInstructionDataDecoder()
   );
 }
 
@@ -140,7 +141,7 @@ export type RewardXpAsyncInput<
   TAccountXpMint extends string = string,
   TAccountRecipientTokenAccount extends string = string,
   TAccountMinter extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole?: Address<TAccountMinterRole>;
@@ -161,7 +162,7 @@ export async function getRewardXpInstructionAsync<
   TAccountRecipientTokenAccount extends string,
   TAccountMinter extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RewardXpAsyncInput<
     TAccountConfig,
@@ -171,7 +172,7 @@ export async function getRewardXpInstructionAsync<
     TAccountMinter,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   RewardXpInstruction<
     TProgramAddress,
@@ -221,13 +222,13 @@ export async function getRewardXpInstructionAsync<
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([109, 105, 110, 116, 101, 114]),
+          new Uint8Array([109, 105, 110, 116, 101, 114])
         ),
         getAddressEncoder().encode(
           getAddressFromResolvedInstructionAccount(
             "minter",
-            accounts.minter.value,
-          ),
+            accounts.minter.value
+          )
         ),
       ],
     });
@@ -248,18 +249,10 @@ export async function getRewardXpInstructionAsync<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getRewardXpInstructionDataEncoder().encode(
-      args as RewardXpInstructionDataArgs,
+      args as RewardXpInstructionDataArgs
     ),
     programAddress,
-  } as RewardXpInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountXpMint,
-    TAccountRecipientTokenAccount,
-    TAccountMinter,
-    TAccountTokenProgram
-  >);
+  } as RewardXpInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountXpMint, TAccountRecipientTokenAccount, TAccountMinter, TAccountTokenProgram>);
 }
 
 export type RewardXpInput<
@@ -268,7 +261,7 @@ export type RewardXpInput<
   TAccountXpMint extends string = string,
   TAccountRecipientTokenAccount extends string = string,
   TAccountMinter extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -289,7 +282,7 @@ export function getRewardXpInstruction<
   TAccountRecipientTokenAccount extends string,
   TAccountMinter extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RewardXpInput<
     TAccountConfig,
@@ -299,7 +292,7 @@ export function getRewardXpInstruction<
     TAccountMinter,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): RewardXpInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -350,23 +343,15 @@ export function getRewardXpInstruction<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getRewardXpInstructionDataEncoder().encode(
-      args as RewardXpInstructionDataArgs,
+      args as RewardXpInstructionDataArgs
     ),
     programAddress,
-  } as RewardXpInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountXpMint,
-    TAccountRecipientTokenAccount,
-    TAccountMinter,
-    TAccountTokenProgram
-  >);
+  } as RewardXpInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountXpMint, TAccountRecipientTokenAccount, TAccountMinter, TAccountTokenProgram>);
 }
 
 export type ParsedRewardXpInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -384,11 +369,11 @@ export type ParsedRewardXpInstruction<
 
 export function parseRewardXpInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRewardXpInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
     throw new SolanaError(
@@ -396,7 +381,7 @@ export function parseRewardXpInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 6,
-      },
+      }
     );
   }
   let accountIndex = 0;

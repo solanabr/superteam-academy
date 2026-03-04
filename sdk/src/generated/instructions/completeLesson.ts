@@ -47,7 +47,7 @@ export const COMPLETE_LESSON_DISCRIMINATOR = new Uint8Array([
 
 export function getCompleteLessonDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    COMPLETE_LESSON_DISCRIMINATOR,
+    COMPLETE_LESSON_DISCRIMINATOR
   );
 }
 
@@ -60,9 +60,10 @@ export type CompleteLessonInstruction<
   TAccountLearnerTokenAccount extends string | AccountMeta<string> = string,
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -92,7 +93,7 @@ export type CompleteLessonInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -109,7 +110,7 @@ export function getCompleteLessonInstructionDataEncoder(): FixedSizeEncoder<Comp
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["lessonIndex", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: COMPLETE_LESSON_DISCRIMINATOR })
   );
 }
 
@@ -126,7 +127,7 @@ export function getCompleteLessonInstructionDataCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getCompleteLessonInstructionDataEncoder(),
-    getCompleteLessonInstructionDataDecoder(),
+    getCompleteLessonInstructionDataDecoder()
   );
 }
 
@@ -138,7 +139,7 @@ export type CompleteLessonAsyncInput<
   TAccountLearnerTokenAccount extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -160,7 +161,7 @@ export async function getCompleteLessonInstructionAsync<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CompleteLessonAsyncInput<
     TAccountConfig,
@@ -172,7 +173,7 @@ export async function getCompleteLessonInstructionAsync<
     TAccountBackendSigner,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   CompleteLessonInstruction<
     TProgramAddress,
@@ -239,20 +240,10 @@ export async function getCompleteLessonInstructionAsync<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getCompleteLessonInstructionDataEncoder().encode(
-      args as CompleteLessonInstructionDataArgs,
+      args as CompleteLessonInstructionDataArgs
     ),
     programAddress,
-  } as CompleteLessonInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountLearnerTokenAccount,
-    TAccountXpMint,
-    TAccountBackendSigner,
-    TAccountTokenProgram
-  >);
+  } as CompleteLessonInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountLearnerTokenAccount, TAccountXpMint, TAccountBackendSigner, TAccountTokenProgram>);
 }
 
 export type CompleteLessonInput<
@@ -263,7 +254,7 @@ export type CompleteLessonInput<
   TAccountLearnerTokenAccount extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -285,7 +276,7 @@ export function getCompleteLessonInstruction<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CompleteLessonInput<
     TAccountConfig,
@@ -297,7 +288,7 @@ export function getCompleteLessonInstruction<
     TAccountBackendSigner,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): CompleteLessonInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -354,25 +345,15 @@ export function getCompleteLessonInstruction<
       getAccountMeta("tokenProgram", accounts.tokenProgram),
     ],
     data: getCompleteLessonInstructionDataEncoder().encode(
-      args as CompleteLessonInstructionDataArgs,
+      args as CompleteLessonInstructionDataArgs
     ),
     programAddress,
-  } as CompleteLessonInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountLearnerTokenAccount,
-    TAccountXpMint,
-    TAccountBackendSigner,
-    TAccountTokenProgram
-  >);
+  } as CompleteLessonInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountLearnerTokenAccount, TAccountXpMint, TAccountBackendSigner, TAccountTokenProgram>);
 }
 
 export type ParsedCompleteLessonInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -390,11 +371,11 @@ export type ParsedCompleteLessonInstruction<
 
 export function parseCompleteLessonInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCompleteLessonInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     throw new SolanaError(
@@ -402,7 +383,7 @@ export function parseCompleteLessonInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 8,
-      },
+      }
     );
   }
   let accountIndex = 0;

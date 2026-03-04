@@ -45,7 +45,7 @@ export const REVOKE_MINTER_DISCRIMINATOR = new Uint8Array([
 
 export function getRevokeMinterDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    REVOKE_MINTER_DISCRIMINATOR,
+    REVOKE_MINTER_DISCRIMINATOR
   );
 }
 
@@ -54,7 +54,7 @@ export type RevokeMinterInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountMinterRole extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -69,7 +69,7 @@ export type RevokeMinterInstruction<
         ? WritableSignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -80,7 +80,7 @@ export type RevokeMinterInstructionDataArgs = {};
 export function getRevokeMinterInstructionDataEncoder(): FixedSizeEncoder<RevokeMinterInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REVOKE_MINTER_DISCRIMINATOR })
   );
 }
 
@@ -96,14 +96,14 @@ export function getRevokeMinterInstructionDataCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getRevokeMinterInstructionDataEncoder(),
-    getRevokeMinterInstructionDataDecoder(),
+    getRevokeMinterInstructionDataDecoder()
   );
 }
 
 export type RevokeMinterAsyncInput<
   TAccountConfig extends string = string,
   TAccountMinterRole extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -114,14 +114,14 @@ export async function getRevokeMinterInstructionAsync<
   TAccountConfig extends string,
   TAccountMinterRole extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RevokeMinterAsyncInput<
     TAccountConfig,
     TAccountMinterRole,
     TAccountAuthority
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   RevokeMinterInstruction<
     TProgramAddress,
@@ -164,18 +164,13 @@ export async function getRevokeMinterInstructionAsync<
     ],
     data: getRevokeMinterInstructionDataEncoder().encode({}),
     programAddress,
-  } as RevokeMinterInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountAuthority
-  >);
+  } as RevokeMinterInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountAuthority>);
 }
 
 export type RevokeMinterInput<
   TAccountConfig extends string = string,
   TAccountMinterRole extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -186,14 +181,14 @@ export function getRevokeMinterInstruction<
   TAccountConfig extends string,
   TAccountMinterRole extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RevokeMinterInput<
     TAccountConfig,
     TAccountMinterRole,
     TAccountAuthority
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): RevokeMinterInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -224,17 +219,12 @@ export function getRevokeMinterInstruction<
     ],
     data: getRevokeMinterInstructionDataEncoder().encode({}),
     programAddress,
-  } as RevokeMinterInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountAuthority
-  >);
+  } as RevokeMinterInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountAuthority>);
 }
 
 export type ParsedRevokeMinterInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -247,11 +237,11 @@ export type ParsedRevokeMinterInstruction<
 
 export function parseRevokeMinterInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRevokeMinterInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     throw new SolanaError(
@@ -259,7 +249,7 @@ export function parseRevokeMinterInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;

@@ -55,7 +55,7 @@ export const REGISTER_MINTER_DISCRIMINATOR = new Uint8Array([
 
 export function getRegisterMinterDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    REGISTER_MINTER_DISCRIMINATOR,
+    REGISTER_MINTER_DISCRIMINATOR
   );
 }
 
@@ -65,9 +65,10 @@ export type RegisterMinterInstruction<
   TAccountMinterRole extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -89,7 +90,7 @@ export type RegisterMinterInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -114,7 +115,7 @@ export function getRegisterMinterInstructionDataEncoder(): Encoder<RegisterMinte
       ["label", addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ["maxXpPerCall", getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: REGISTER_MINTER_DISCRIMINATOR })
   );
 }
 
@@ -133,7 +134,7 @@ export function getRegisterMinterInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getRegisterMinterInstructionDataEncoder(),
-    getRegisterMinterInstructionDataDecoder(),
+    getRegisterMinterInstructionDataDecoder()
   );
 }
 
@@ -142,7 +143,7 @@ export type RegisterMinterAsyncInput<
   TAccountMinterRole extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -160,7 +161,7 @@ export async function getRegisterMinterInstructionAsync<
   TAccountAuthority extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RegisterMinterAsyncInput<
     TAccountConfig,
@@ -169,7 +170,7 @@ export async function getRegisterMinterInstructionAsync<
     TAccountPayer,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   RegisterMinterInstruction<
     TProgramAddress,
@@ -224,17 +225,10 @@ export async function getRegisterMinterInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRegisterMinterInstructionDataEncoder().encode(
-      args as RegisterMinterInstructionDataArgs,
+      args as RegisterMinterInstructionDataArgs
     ),
     programAddress,
-  } as RegisterMinterInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountAuthority,
-    TAccountPayer,
-    TAccountSystemProgram
-  >);
+  } as RegisterMinterInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountAuthority, TAccountPayer, TAccountSystemProgram>);
 }
 
 export type RegisterMinterInput<
@@ -242,7 +236,7 @@ export type RegisterMinterInput<
   TAccountMinterRole extends string = string,
   TAccountAuthority extends string = string,
   TAccountPayer extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   minterRole: Address<TAccountMinterRole>;
@@ -260,7 +254,7 @@ export function getRegisterMinterInstruction<
   TAccountAuthority extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: RegisterMinterInput<
     TAccountConfig,
@@ -269,7 +263,7 @@ export function getRegisterMinterInstruction<
     TAccountPayer,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): RegisterMinterInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -314,22 +308,15 @@ export function getRegisterMinterInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getRegisterMinterInstructionDataEncoder().encode(
-      args as RegisterMinterInstructionDataArgs,
+      args as RegisterMinterInstructionDataArgs
     ),
     programAddress,
-  } as RegisterMinterInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountMinterRole,
-    TAccountAuthority,
-    TAccountPayer,
-    TAccountSystemProgram
-  >);
+  } as RegisterMinterInstruction<TProgramAddress, TAccountConfig, TAccountMinterRole, TAccountAuthority, TAccountPayer, TAccountSystemProgram>);
 }
 
 export type ParsedRegisterMinterInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -344,11 +331,11 @@ export type ParsedRegisterMinterInstruction<
 
 export function parseRegisterMinterInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedRegisterMinterInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     throw new SolanaError(
@@ -356,7 +343,7 @@ export function parseRegisterMinterInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 5,
-      },
+      }
     );
   }
   let accountIndex = 0;

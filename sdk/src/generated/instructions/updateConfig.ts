@@ -50,7 +50,7 @@ export const UPDATE_CONFIG_DISCRIMINATOR = new Uint8Array([
 
 export function getUpdateConfigDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    UPDATE_CONFIG_DISCRIMINATOR,
+    UPDATE_CONFIG_DISCRIMINATOR
   );
 }
 
@@ -58,7 +58,7 @@ export type UpdateConfigInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -70,7 +70,7 @@ export type UpdateConfigInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -89,7 +89,7 @@ export function getUpdateConfigInstructionDataEncoder(): Encoder<UpdateConfigIns
       ["discriminator", fixEncoderSize(getBytesEncoder(), 8)],
       ["newBackendSigner", getOptionEncoder(getAddressEncoder())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR })
   );
 }
 
@@ -106,13 +106,13 @@ export function getUpdateConfigInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getUpdateConfigInstructionDataEncoder(),
-    getUpdateConfigInstructionDataDecoder(),
+    getUpdateConfigInstructionDataDecoder()
   );
 }
 
 export type UpdateConfigAsyncInput<
   TAccountConfig extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   authority: TransactionSigner<TAccountAuthority>;
@@ -122,10 +122,10 @@ export type UpdateConfigAsyncInput<
 export async function getUpdateConfigInstructionAsync<
   TAccountConfig extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateConfigAsyncInput<TAccountConfig, TAccountAuthority>,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority>
 > {
@@ -163,19 +163,15 @@ export async function getUpdateConfigInstructionAsync<
       getAccountMeta("authority", accounts.authority),
     ],
     data: getUpdateConfigInstructionDataEncoder().encode(
-      args as UpdateConfigInstructionDataArgs,
+      args as UpdateConfigInstructionDataArgs
     ),
     programAddress,
-  } as UpdateConfigInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAuthority
-  >);
+  } as UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority>);
 }
 
 export type UpdateConfigInput<
   TAccountConfig extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   authority: TransactionSigner<TAccountAuthority>;
@@ -185,10 +181,10 @@ export type UpdateConfigInput<
 export function getUpdateConfigInstruction<
   TAccountConfig extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateConfigInput<TAccountConfig, TAccountAuthority>,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority> {
   // Program address.
   const programAddress =
@@ -214,19 +210,15 @@ export function getUpdateConfigInstruction<
       getAccountMeta("authority", accounts.authority),
     ],
     data: getUpdateConfigInstructionDataEncoder().encode(
-      args as UpdateConfigInstructionDataArgs,
+      args as UpdateConfigInstructionDataArgs
     ),
     programAddress,
-  } as UpdateConfigInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAuthority
-  >);
+  } as UpdateConfigInstruction<TProgramAddress, TAccountConfig, TAccountAuthority>);
 }
 
 export type ParsedUpdateConfigInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -238,11 +230,11 @@ export type ParsedUpdateConfigInstruction<
 
 export function parseUpdateConfigInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpdateConfigInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     throw new SolanaError(
@@ -250,7 +242,7 @@ export function parseUpdateConfigInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 2,
-      },
+      }
     );
   }
   let accountIndex = 0;

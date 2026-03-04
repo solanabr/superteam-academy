@@ -61,7 +61,7 @@ export const CREATE_COURSE_DISCRIMINATOR = new Uint8Array([
 
 export function getCreateCourseDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CREATE_COURSE_DISCRIMINATOR,
+    CREATE_COURSE_DISCRIMINATOR
   );
 }
 
@@ -70,9 +70,10 @@ export type CreateCourseInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -90,7 +91,7 @@ export type CreateCourseInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -139,7 +140,7 @@ export function getCreateCourseInstructionDataEncoder(): Encoder<CreateCourseIns
       ["creatorRewardXp", getU32Encoder()],
       ["minCompletionsForReward", getU16Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: CREATE_COURSE_DISCRIMINATOR })
   );
 }
 
@@ -166,7 +167,7 @@ export function getCreateCourseInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getCreateCourseInstructionDataEncoder(),
-    getCreateCourseInstructionDataDecoder(),
+    getCreateCourseInstructionDataDecoder()
   );
 }
 
@@ -174,7 +175,7 @@ export type CreateCourseAsyncInput<
   TAccountCourse extends string = string,
   TAccountConfig extends string = string,
   TAccountAuthority extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   config?: Address<TAccountConfig>;
@@ -198,7 +199,7 @@ export async function getCreateCourseInstructionAsync<
   TAccountConfig extends string,
   TAccountAuthority extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateCourseAsyncInput<
     TAccountCourse,
@@ -206,7 +207,7 @@ export async function getCreateCourseInstructionAsync<
     TAccountAuthority,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   CreateCourseInstruction<
     TProgramAddress,
@@ -258,23 +259,17 @@ export async function getCreateCourseInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCreateCourseInstructionDataEncoder().encode(
-      args as CreateCourseInstructionDataArgs,
+      args as CreateCourseInstructionDataArgs
     ),
     programAddress,
-  } as CreateCourseInstruction<
-    TProgramAddress,
-    TAccountCourse,
-    TAccountConfig,
-    TAccountAuthority,
-    TAccountSystemProgram
-  >);
+  } as CreateCourseInstruction<TProgramAddress, TAccountCourse, TAccountConfig, TAccountAuthority, TAccountSystemProgram>);
 }
 
 export type CreateCourseInput<
   TAccountCourse extends string = string,
   TAccountConfig extends string = string,
   TAccountAuthority extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   course: Address<TAccountCourse>;
   config: Address<TAccountConfig>;
@@ -298,7 +293,7 @@ export function getCreateCourseInstruction<
   TAccountConfig extends string,
   TAccountAuthority extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CreateCourseInput<
     TAccountCourse,
@@ -306,7 +301,7 @@ export function getCreateCourseInstruction<
     TAccountAuthority,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): CreateCourseInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -348,21 +343,15 @@ export function getCreateCourseInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getCreateCourseInstructionDataEncoder().encode(
-      args as CreateCourseInstructionDataArgs,
+      args as CreateCourseInstructionDataArgs
     ),
     programAddress,
-  } as CreateCourseInstruction<
-    TProgramAddress,
-    TAccountCourse,
-    TAccountConfig,
-    TAccountAuthority,
-    TAccountSystemProgram
-  >);
+  } as CreateCourseInstruction<TProgramAddress, TAccountCourse, TAccountConfig, TAccountAuthority, TAccountSystemProgram>);
 }
 
 export type ParsedCreateCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -376,11 +365,11 @@ export type ParsedCreateCourseInstruction<
 
 export function parseCreateCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateCourseInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     throw new SolanaError(
@@ -388,7 +377,7 @@ export function parseCreateCourseInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 4,
-      },
+      }
     );
   }
   let accountIndex = 0;

@@ -45,7 +45,7 @@ export const DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR = new Uint8Array([
 
 export function getDeactivateAchievementTypeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
+    DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR
   );
 }
 
@@ -54,7 +54,7 @@ export type DeactivateAchievementTypeInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountAchievementType extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -69,7 +69,7 @@ export type DeactivateAchievementTypeInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -85,7 +85,7 @@ export function getDeactivateAchievementTypeInstructionDataEncoder(): FixedSizeE
     (value) => ({
       ...value,
       discriminator: DEACTIVATE_ACHIEVEMENT_TYPE_DISCRIMINATOR,
-    }),
+    })
   );
 }
 
@@ -101,14 +101,14 @@ export function getDeactivateAchievementTypeInstructionDataCodec(): FixedSizeCod
 > {
   return combineCodec(
     getDeactivateAchievementTypeInstructionDataEncoder(),
-    getDeactivateAchievementTypeInstructionDataDecoder(),
+    getDeactivateAchievementTypeInstructionDataDecoder()
   );
 }
 
 export type DeactivateAchievementTypeAsyncInput<
   TAccountConfig extends string = string,
   TAccountAchievementType extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -119,14 +119,14 @@ export async function getDeactivateAchievementTypeInstructionAsync<
   TAccountConfig extends string,
   TAccountAchievementType extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: DeactivateAchievementTypeAsyncInput<
     TAccountConfig,
     TAccountAchievementType,
     TAccountAuthority
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   DeactivateAchievementTypeInstruction<
     TProgramAddress,
@@ -169,18 +169,13 @@ export async function getDeactivateAchievementTypeInstructionAsync<
     ],
     data: getDeactivateAchievementTypeInstructionDataEncoder().encode({}),
     programAddress,
-  } as DeactivateAchievementTypeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAchievementType,
-    TAccountAuthority
-  >);
+  } as DeactivateAchievementTypeInstruction<TProgramAddress, TAccountConfig, TAccountAchievementType, TAccountAuthority>);
 }
 
 export type DeactivateAchievementTypeInput<
   TAccountConfig extends string = string,
   TAccountAchievementType extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   achievementType: Address<TAccountAchievementType>;
@@ -191,14 +186,14 @@ export function getDeactivateAchievementTypeInstruction<
   TAccountConfig extends string,
   TAccountAchievementType extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: DeactivateAchievementTypeInput<
     TAccountConfig,
     TAccountAchievementType,
     TAccountAuthority
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): DeactivateAchievementTypeInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -229,17 +224,12 @@ export function getDeactivateAchievementTypeInstruction<
     ],
     data: getDeactivateAchievementTypeInstructionDataEncoder().encode({}),
     programAddress,
-  } as DeactivateAchievementTypeInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountAchievementType,
-    TAccountAuthority
-  >);
+  } as DeactivateAchievementTypeInstruction<TProgramAddress, TAccountConfig, TAccountAchievementType, TAccountAuthority>);
 }
 
 export type ParsedDeactivateAchievementTypeInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -252,11 +242,11 @@ export type ParsedDeactivateAchievementTypeInstruction<
 
 export function parseDeactivateAchievementTypeInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedDeactivateAchievementTypeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     throw new SolanaError(
@@ -264,7 +254,7 @@ export function parseDeactivateAchievementTypeInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;
@@ -281,7 +271,7 @@ export function parseDeactivateAchievementTypeInstruction<
       authority: getNextAccount(),
     },
     data: getDeactivateAchievementTypeInstructionDataDecoder().decode(
-      instruction.data,
+      instruction.data
     ),
   };
 }

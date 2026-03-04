@@ -54,7 +54,7 @@ export const ISSUE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
 
 export function getIssueCredentialDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    ISSUE_CREDENTIAL_DISCRIMINATOR,
+    ISSUE_CREDENTIAL_DISCRIMINATOR
   );
 }
 
@@ -68,11 +68,13 @@ export type IssueCredentialInstruction<
   TAccountTrackCollection extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -110,7 +112,7 @@ export type IssueCredentialInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -141,7 +143,7 @@ export function getIssueCredentialInstructionDataEncoder(): Encoder<IssueCredent
       ["coursesCompleted", getU32Encoder()],
       ["totalXp", getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: ISSUE_CREDENTIAL_DISCRIMINATOR })
   );
 }
 
@@ -161,7 +163,7 @@ export function getIssueCredentialInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getIssueCredentialInstructionDataEncoder(),
-    getIssueCredentialInstructionDataDecoder(),
+    getIssueCredentialInstructionDataDecoder()
   );
 }
 
@@ -175,7 +177,7 @@ export type IssueCredentialAsyncInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -205,7 +207,7 @@ export async function getIssueCredentialInstructionAsync<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: IssueCredentialAsyncInput<
     TAccountConfig,
@@ -219,7 +221,7 @@ export async function getIssueCredentialInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   IssueCredentialInstruction<
     TProgramAddress,
@@ -293,22 +295,10 @@ export async function getIssueCredentialInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getIssueCredentialInstructionDataEncoder().encode(
-      args as IssueCredentialInstructionDataArgs,
+      args as IssueCredentialInstructionDataArgs
     ),
     programAddress,
-  } as IssueCredentialInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountCredentialAsset,
-    TAccountTrackCollection,
-    TAccountPayer,
-    TAccountBackendSigner,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as IssueCredentialInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountCredentialAsset, TAccountTrackCollection, TAccountPayer, TAccountBackendSigner, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type IssueCredentialInput<
@@ -321,7 +311,7 @@ export type IssueCredentialInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -351,7 +341,7 @@ export function getIssueCredentialInstruction<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: IssueCredentialInput<
     TAccountConfig,
@@ -365,7 +355,7 @@ export function getIssueCredentialInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): IssueCredentialInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -429,27 +419,15 @@ export function getIssueCredentialInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getIssueCredentialInstructionDataEncoder().encode(
-      args as IssueCredentialInstructionDataArgs,
+      args as IssueCredentialInstructionDataArgs
     ),
     programAddress,
-  } as IssueCredentialInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountCredentialAsset,
-    TAccountTrackCollection,
-    TAccountPayer,
-    TAccountBackendSigner,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as IssueCredentialInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountCredentialAsset, TAccountTrackCollection, TAccountPayer, TAccountBackendSigner, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type ParsedIssueCredentialInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -470,11 +448,11 @@ export type ParsedIssueCredentialInstruction<
 
 export function parseIssueCredentialInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedIssueCredentialInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 10) {
     throw new SolanaError(
@@ -482,7 +460,7 @@ export function parseIssueCredentialInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;

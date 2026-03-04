@@ -66,6 +66,6 @@ export function getMinterRegisteredCodec(): Codec<
 > {
   return combineCodec(
     getMinterRegisteredEncoder(),
-    getMinterRegisteredDecoder(),
+    getMinterRegisteredDecoder()
   );
 }

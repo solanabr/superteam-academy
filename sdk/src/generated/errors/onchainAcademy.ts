@@ -134,7 +134,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function getOnchainAcademyErrorMessage(
-  code: OnchainAcademyError,
+  code: OnchainAcademyError
 ): string {
   if (process.env.NODE_ENV !== "production") {
     return (onchainAcademyErrorMessages as Record<OnchainAcademyError, string>)[
@@ -146,19 +146,19 @@ export function getOnchainAcademyErrorMessage(
 }
 
 export function isOnchainAcademyError<
-  TProgramErrorCode extends OnchainAcademyError,
+  TProgramErrorCode extends OnchainAcademyError
 >(
   error: unknown,
   transactionMessage: {
     instructions: Record<number, { programAddress: Address }>;
   },
-  code?: TProgramErrorCode,
+  code?: TProgramErrorCode
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
   Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
   return isProgramError<TProgramErrorCode>(
     error,
     transactionMessage,
     ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-    code,
+    code
   );
 }

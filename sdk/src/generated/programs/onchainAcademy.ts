@@ -132,16 +132,16 @@ export enum OnchainAcademyAccount {
 }
 
 export function identifyOnchainAcademyAccount(
-  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): OnchainAcademyAccount {
   const data = "data" in account ? account.data : account;
   if (
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248]),
+        new Uint8Array([149, 5, 79, 178, 116, 231, 43, 248])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.AchievementReceipt;
@@ -150,9 +150,9 @@ export function identifyOnchainAcademyAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137]),
+        new Uint8Array([13, 187, 114, 66, 217, 154, 85, 137])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.AchievementType;
@@ -161,9 +161,9 @@ export function identifyOnchainAcademyAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130]),
+        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.Config;
@@ -172,9 +172,9 @@ export function identifyOnchainAcademyAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106]),
+        new Uint8Array([206, 6, 78, 228, 163, 138, 241, 106])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.Course;
@@ -183,9 +183,9 @@ export function identifyOnchainAcademyAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51]),
+        new Uint8Array([249, 210, 64, 145, 197, 241, 57, 51])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.Enrollment;
@@ -194,16 +194,16 @@ export function identifyOnchainAcademyAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193]),
+        new Uint8Array([21, 246, 6, 133, 142, 211, 33, 193])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyAccount.MinterRole;
   }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
-    { accountData: data, programName: "onchainAcademy" },
+    { accountData: data, programName: "onchainAcademy" }
   );
 }
 
@@ -227,16 +227,16 @@ export enum OnchainAcademyInstruction {
 }
 
 export function identifyOnchainAcademyInstruction(
-  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): OnchainAcademyInstruction {
   const data = "data" in instruction ? instruction.data : instruction;
   if (
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12]),
+        new Uint8Array([75, 47, 156, 253, 124, 231, 84, 12])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.AwardAchievement;
@@ -245,9 +245,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91]),
+        new Uint8Array([236, 137, 133, 253, 91, 138, 217, 91])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.CloseEnrollment;
@@ -256,9 +256,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58]),
+        new Uint8Array([77, 217, 53, 132, 204, 150, 169, 58])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.CompleteLesson;
@@ -267,9 +267,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19]),
+        new Uint8Array([231, 38, 39, 228, 103, 4, 229, 19])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.CreateAchievementType;
@@ -278,9 +278,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241]),
+        new Uint8Array([120, 121, 154, 164, 107, 180, 167, 241])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.CreateCourse;
@@ -289,9 +289,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191]),
+        new Uint8Array([185, 21, 222, 243, 192, 118, 71, 191])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.DeactivateAchievementType;
@@ -300,9 +300,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43]),
+        new Uint8Array([58, 12, 36, 3, 142, 28, 1, 43])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.Enroll;
@@ -311,9 +311,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218]),
+        new Uint8Array([68, 189, 122, 239, 39, 121, 16, 218])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.FinalizeCourse;
@@ -322,9 +322,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237]),
+        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.Initialize;
@@ -333,9 +333,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87]),
+        new Uint8Array([255, 193, 171, 224, 68, 171, 194, 87])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.IssueCredential;
@@ -344,9 +344,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191]),
+        new Uint8Array([58, 224, 74, 142, 170, 95, 116, 191])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.RegisterMinter;
@@ -355,9 +355,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105]),
+        new Uint8Array([33, 91, 131, 167, 62, 37, 38, 105])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.RevokeMinter;
@@ -366,9 +366,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145]),
+        new Uint8Array([144, 187, 117, 238, 89, 118, 224, 145])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.RewardXp;
@@ -377,9 +377,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99]),
+        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.UpdateConfig;
@@ -388,9 +388,9 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231]),
+        new Uint8Array([81, 217, 18, 192, 129, 233, 129, 231])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.UpdateCourse;
@@ -399,21 +399,21 @@ export function identifyOnchainAcademyInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169]),
+        new Uint8Array([2, 121, 77, 255, 103, 187, 252, 169])
       ),
-      0,
+      0
     )
   ) {
     return OnchainAcademyInstruction.UpgradeCredential;
   }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
-    { instructionData: data, programName: "onchainAcademy" },
+    { instructionData: data, programName: "onchainAcademy" }
   );
 }
 
 export type ParsedOnchainAcademyInstruction<
-  TProgram extends string = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf",
+  TProgram extends string = "HxomCaGhymNEFWTBXKokAjxYcsQhJ6WLJqEjKcX4mLKf"
 > =
   | ({
       instructionType: OnchainAcademyInstruction.AwardAchievement;
@@ -465,7 +465,7 @@ export type ParsedOnchainAcademyInstruction<
     } & ParsedUpgradeCredentialInstruction<TProgram>);
 
 export function parseOnchainAcademyInstruction<TProgram extends string>(
-  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
 ): ParsedOnchainAcademyInstruction<TProgram> {
   const instructionType = identifyOnchainAcademyInstruction(instruction);
   switch (instructionType) {
@@ -587,7 +587,7 @@ export function parseOnchainAcademyInstruction<TProgram extends string>(
         {
           instructionType: instructionType as string,
           programName: "onchainAcademy",
-        },
+        }
       );
   }
 }
@@ -614,66 +614,66 @@ export type OnchainAcademyPluginAccounts = {
 
 export type OnchainAcademyPluginInstructions = {
   awardAchievement: (
-    input: MakeOptional<AwardAchievementAsyncInput, "payer">,
+    input: MakeOptional<AwardAchievementAsyncInput, "payer">
   ) => ReturnType<typeof getAwardAchievementInstructionAsync> &
     SelfPlanAndSendFunctions;
   closeEnrollment: (
-    input: CloseEnrollmentInput,
+    input: CloseEnrollmentInput
   ) => ReturnType<typeof getCloseEnrollmentInstruction> &
     SelfPlanAndSendFunctions;
   completeLesson: (
-    input: CompleteLessonAsyncInput,
+    input: CompleteLessonAsyncInput
   ) => ReturnType<typeof getCompleteLessonInstructionAsync> &
     SelfPlanAndSendFunctions;
   createAchievementType: (
-    input: MakeOptional<CreateAchievementTypeAsyncInput, "payer">,
+    input: MakeOptional<CreateAchievementTypeAsyncInput, "payer">
   ) => ReturnType<typeof getCreateAchievementTypeInstructionAsync> &
     SelfPlanAndSendFunctions;
   createCourse: (
-    input: CreateCourseAsyncInput,
+    input: CreateCourseAsyncInput
   ) => ReturnType<typeof getCreateCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   deactivateAchievementType: (
-    input: DeactivateAchievementTypeAsyncInput,
+    input: DeactivateAchievementTypeAsyncInput
   ) => ReturnType<typeof getDeactivateAchievementTypeInstructionAsync> &
     SelfPlanAndSendFunctions;
   enroll: (
-    input: EnrollAsyncInput,
+    input: EnrollAsyncInput
   ) => ReturnType<typeof getEnrollInstructionAsync> & SelfPlanAndSendFunctions;
   finalizeCourse: (
-    input: FinalizeCourseAsyncInput,
+    input: FinalizeCourseAsyncInput
   ) => ReturnType<typeof getFinalizeCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   initialize: (
-    input: InitializeAsyncInput,
+    input: InitializeAsyncInput
   ) => ReturnType<typeof getInitializeInstructionAsync> &
     SelfPlanAndSendFunctions;
   issueCredential: (
-    input: MakeOptional<IssueCredentialAsyncInput, "payer">,
+    input: MakeOptional<IssueCredentialAsyncInput, "payer">
   ) => ReturnType<typeof getIssueCredentialInstructionAsync> &
     SelfPlanAndSendFunctions;
   registerMinter: (
-    input: MakeOptional<RegisterMinterAsyncInput, "payer">,
+    input: MakeOptional<RegisterMinterAsyncInput, "payer">
   ) => ReturnType<typeof getRegisterMinterInstructionAsync> &
     SelfPlanAndSendFunctions;
   revokeMinter: (
-    input: RevokeMinterAsyncInput,
+    input: RevokeMinterAsyncInput
   ) => ReturnType<typeof getRevokeMinterInstructionAsync> &
     SelfPlanAndSendFunctions;
   rewardXp: (
-    input: RewardXpAsyncInput,
+    input: RewardXpAsyncInput
   ) => ReturnType<typeof getRewardXpInstructionAsync> &
     SelfPlanAndSendFunctions;
   updateConfig: (
-    input: UpdateConfigAsyncInput,
+    input: UpdateConfigAsyncInput
   ) => ReturnType<typeof getUpdateConfigInstructionAsync> &
     SelfPlanAndSendFunctions;
   updateCourse: (
-    input: UpdateCourseAsyncInput,
+    input: UpdateCourseAsyncInput
   ) => ReturnType<typeof getUpdateCourseInstructionAsync> &
     SelfPlanAndSendFunctions;
   upgradeCredential: (
-    input: MakeOptional<UpgradeCredentialAsyncInput, "payer">,
+    input: MakeOptional<UpgradeCredentialAsyncInput, "payer">
   ) => ReturnType<typeof getUpgradeCredentialInstructionAsync> &
     SelfPlanAndSendFunctions;
 };
@@ -693,11 +693,11 @@ export function onchainAcademyProgram() {
         accounts: {
           achievementReceipt: addSelfFetchFunctions(
             client,
-            getAchievementReceiptCodec(),
+            getAchievementReceiptCodec()
           ),
           achievementType: addSelfFetchFunctions(
             client,
-            getAchievementTypeCodec(),
+            getAchievementTypeCodec()
           ),
           config: addSelfFetchFunctions(client, getConfigCodec()),
           course: addSelfFetchFunctions(client, getCourseCodec()),
@@ -711,17 +711,17 @@ export function onchainAcademyProgram() {
               getAwardAchievementInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           closeEnrollment: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCloseEnrollmentInstruction(input),
+              getCloseEnrollmentInstruction(input)
             ),
           completeLesson: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCompleteLessonInstructionAsync(input),
+              getCompleteLessonInstructionAsync(input)
             ),
           createAchievementType: (input) =>
             addSelfPlanAndSendFunctions(
@@ -729,32 +729,32 @@ export function onchainAcademyProgram() {
               getCreateAchievementTypeInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           createCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateCourseInstructionAsync(input),
+              getCreateCourseInstructionAsync(input)
             ),
           deactivateAchievementType: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getDeactivateAchievementTypeInstructionAsync(input),
+              getDeactivateAchievementTypeInstructionAsync(input)
             ),
           enroll: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getEnrollInstructionAsync(input),
+              getEnrollInstructionAsync(input)
             ),
           finalizeCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getFinalizeCourseInstructionAsync(input),
+              getFinalizeCourseInstructionAsync(input)
             ),
           initialize: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getInitializeInstructionAsync(input),
+              getInitializeInstructionAsync(input)
             ),
           issueCredential: (input) =>
             addSelfPlanAndSendFunctions(
@@ -762,7 +762,7 @@ export function onchainAcademyProgram() {
               getIssueCredentialInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           registerMinter: (input) =>
             addSelfPlanAndSendFunctions(
@@ -770,27 +770,27 @@ export function onchainAcademyProgram() {
               getRegisterMinterInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
           revokeMinter: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getRevokeMinterInstructionAsync(input),
+              getRevokeMinterInstructionAsync(input)
             ),
           rewardXp: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getRewardXpInstructionAsync(input),
+              getRewardXpInstructionAsync(input)
             ),
           updateConfig: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateConfigInstructionAsync(input),
+              getUpdateConfigInstructionAsync(input)
             ),
           updateCourse: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getUpdateCourseInstructionAsync(input),
+              getUpdateCourseInstructionAsync(input)
             ),
           upgradeCredential: (input) =>
             addSelfPlanAndSendFunctions(
@@ -798,7 +798,7 @@ export function onchainAcademyProgram() {
               getUpgradeCredentialInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
-              }),
+              })
             ),
         },
       },

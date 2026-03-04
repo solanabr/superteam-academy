@@ -66,6 +66,6 @@ export function getCredentialUpgradedCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getCredentialUpgradedEncoder(),
-    getCredentialUpgradedDecoder(),
+    getCredentialUpgradedDecoder()
   );
 }

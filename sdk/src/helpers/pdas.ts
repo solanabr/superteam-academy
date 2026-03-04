@@ -7,7 +7,7 @@ import {
 import { ONCHAIN_ACADEMY_PROGRAM_ADDRESS } from "../generated/programs";
 
 export async function getConfigPda(
-  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ): Promise<Address> {
   const [configPda] = await getProgramDerivedAddress({
     programAddress,
@@ -18,7 +18,7 @@ export async function getConfigPda(
 
 export async function getCoursePda(
   courseId: string,
-  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ): Promise<Address> {
   const [coursePda] = await getProgramDerivedAddress({
     programAddress,
@@ -33,7 +33,7 @@ export async function getCoursePda(
 export async function getEnrollmentPda(
   courseId: string,
   learner: Address,
-  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ): Promise<Address> {
   const [enrollmentPda] = await getProgramDerivedAddress({
     programAddress,
@@ -49,7 +49,7 @@ export async function getEnrollmentPda(
 export async function getAchievementReceiptPda(
   achievementId: string,
   recipient: Address,
-  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  programAddress: Address = ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 ): Promise<Address> {
   const [pda] = await getProgramDerivedAddress({
     programAddress,

@@ -45,7 +45,7 @@ export const FINALIZE_COURSE_DISCRIMINATOR = new Uint8Array([
 
 export function getFinalizeCourseDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    FINALIZE_COURSE_DISCRIMINATOR,
+    FINALIZE_COURSE_DISCRIMINATOR
   );
 }
 
@@ -60,9 +60,10 @@ export type FinalizeCourseInstruction<
   TAccountCreator extends string | AccountMeta<string> = string,
   TAccountXpMint extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends string | AccountMeta<string> =
-    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountTokenProgram extends
+    | string
+    | AccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -98,7 +99,7 @@ export type FinalizeCourseInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -111,7 +112,7 @@ export type FinalizeCourseInstructionDataArgs = {};
 export function getFinalizeCourseInstructionDataEncoder(): FixedSizeEncoder<FinalizeCourseInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: FINALIZE_COURSE_DISCRIMINATOR })
   );
 }
 
@@ -127,7 +128,7 @@ export function getFinalizeCourseInstructionDataCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getFinalizeCourseInstructionDataEncoder(),
-    getFinalizeCourseInstructionDataDecoder(),
+    getFinalizeCourseInstructionDataDecoder()
   );
 }
 
@@ -141,7 +142,7 @@ export type FinalizeCourseAsyncInput<
   TAccountCreator extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -166,7 +167,7 @@ export async function getFinalizeCourseInstructionAsync<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: FinalizeCourseAsyncInput<
     TAccountConfig,
@@ -180,7 +181,7 @@ export async function getFinalizeCourseInstructionAsync<
     TAccountBackendSigner,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   FinalizeCourseInstruction<
     TProgramAddress,
@@ -254,19 +255,7 @@ export async function getFinalizeCourseInstructionAsync<
     ],
     data: getFinalizeCourseInstructionDataEncoder().encode({}),
     programAddress,
-  } as FinalizeCourseInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountLearnerTokenAccount,
-    TAccountCreatorTokenAccount,
-    TAccountCreator,
-    TAccountXpMint,
-    TAccountBackendSigner,
-    TAccountTokenProgram
-  >);
+  } as FinalizeCourseInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountLearnerTokenAccount, TAccountCreatorTokenAccount, TAccountCreator, TAccountXpMint, TAccountBackendSigner, TAccountTokenProgram>);
 }
 
 export type FinalizeCourseInput<
@@ -279,7 +268,7 @@ export type FinalizeCourseInput<
   TAccountCreator extends string = string,
   TAccountXpMint extends string = string,
   TAccountBackendSigner extends string = string,
-  TAccountTokenProgram extends string = string,
+  TAccountTokenProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -304,7 +293,7 @@ export function getFinalizeCourseInstruction<
   TAccountXpMint extends string,
   TAccountBackendSigner extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: FinalizeCourseInput<
     TAccountConfig,
@@ -318,7 +307,7 @@ export function getFinalizeCourseInstruction<
     TAccountBackendSigner,
     TAccountTokenProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): FinalizeCourseInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -382,24 +371,12 @@ export function getFinalizeCourseInstruction<
     ],
     data: getFinalizeCourseInstructionDataEncoder().encode({}),
     programAddress,
-  } as FinalizeCourseInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountLearnerTokenAccount,
-    TAccountCreatorTokenAccount,
-    TAccountCreator,
-    TAccountXpMint,
-    TAccountBackendSigner,
-    TAccountTokenProgram
-  >);
+  } as FinalizeCourseInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountLearnerTokenAccount, TAccountCreatorTokenAccount, TAccountCreator, TAccountXpMint, TAccountBackendSigner, TAccountTokenProgram>);
 }
 
 export type ParsedFinalizeCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -419,11 +396,11 @@ export type ParsedFinalizeCourseInstruction<
 
 export function parseFinalizeCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedFinalizeCourseInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 10) {
     throw new SolanaError(
@@ -431,7 +408,7 @@ export function parseFinalizeCourseInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;

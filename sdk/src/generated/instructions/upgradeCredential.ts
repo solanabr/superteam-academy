@@ -54,7 +54,7 @@ export const UPGRADE_CREDENTIAL_DISCRIMINATOR = new Uint8Array([
 
 export function getUpgradeCredentialDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    UPGRADE_CREDENTIAL_DISCRIMINATOR,
+    UPGRADE_CREDENTIAL_DISCRIMINATOR
   );
 }
 
@@ -68,11 +68,13 @@ export type UpgradeCredentialInstruction<
   TAccountTrackCollection extends string | AccountMeta<string> = string,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountBackendSigner extends string | AccountMeta<string> = string,
-  TAccountMplCoreProgram extends string | AccountMeta<string> =
-    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    "11111111111111111111111111111111",
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TAccountMplCoreProgram extends
+    | string
+    | AccountMeta<string> = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  TAccountSystemProgram extends
+    | string
+    | AccountMeta<string> = "11111111111111111111111111111111",
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -109,7 +111,7 @@ export type UpgradeCredentialInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -140,7 +142,7 @@ export function getUpgradeCredentialInstructionDataEncoder(): Encoder<UpgradeCre
       ["coursesCompleted", getU32Encoder()],
       ["totalXp", getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPGRADE_CREDENTIAL_DISCRIMINATOR })
   );
 }
 
@@ -160,7 +162,7 @@ export function getUpgradeCredentialInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getUpgradeCredentialInstructionDataEncoder(),
-    getUpgradeCredentialInstructionDataDecoder(),
+    getUpgradeCredentialInstructionDataDecoder()
   );
 }
 
@@ -174,7 +176,7 @@ export type UpgradeCredentialAsyncInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -204,7 +206,7 @@ export async function getUpgradeCredentialInstructionAsync<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpgradeCredentialAsyncInput<
     TAccountConfig,
@@ -218,7 +220,7 @@ export async function getUpgradeCredentialInstructionAsync<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   UpgradeCredentialInstruction<
     TProgramAddress,
@@ -292,22 +294,10 @@ export async function getUpgradeCredentialInstructionAsync<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getUpgradeCredentialInstructionDataEncoder().encode(
-      args as UpgradeCredentialInstructionDataArgs,
+      args as UpgradeCredentialInstructionDataArgs
     ),
     programAddress,
-  } as UpgradeCredentialInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountCredentialAsset,
-    TAccountTrackCollection,
-    TAccountPayer,
-    TAccountBackendSigner,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as UpgradeCredentialInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountCredentialAsset, TAccountTrackCollection, TAccountPayer, TAccountBackendSigner, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type UpgradeCredentialInput<
@@ -320,7 +310,7 @@ export type UpgradeCredentialInput<
   TAccountPayer extends string = string,
   TAccountBackendSigner extends string = string,
   TAccountMplCoreProgram extends string = string,
-  TAccountSystemProgram extends string = string,
+  TAccountSystemProgram extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -350,7 +340,7 @@ export function getUpgradeCredentialInstruction<
   TAccountBackendSigner extends string,
   TAccountMplCoreProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpgradeCredentialInput<
     TAccountConfig,
@@ -364,7 +354,7 @@ export function getUpgradeCredentialInstruction<
     TAccountMplCoreProgram,
     TAccountSystemProgram
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): UpgradeCredentialInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -428,27 +418,15 @@ export function getUpgradeCredentialInstruction<
       getAccountMeta("systemProgram", accounts.systemProgram),
     ],
     data: getUpgradeCredentialInstructionDataEncoder().encode(
-      args as UpgradeCredentialInstructionDataArgs,
+      args as UpgradeCredentialInstructionDataArgs
     ),
     programAddress,
-  } as UpgradeCredentialInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner,
-    TAccountCredentialAsset,
-    TAccountTrackCollection,
-    TAccountPayer,
-    TAccountBackendSigner,
-    TAccountMplCoreProgram,
-    TAccountSystemProgram
-  >);
+  } as UpgradeCredentialInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountEnrollment, TAccountLearner, TAccountCredentialAsset, TAccountTrackCollection, TAccountPayer, TAccountBackendSigner, TAccountMplCoreProgram, TAccountSystemProgram>);
 }
 
 export type ParsedUpgradeCredentialInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -469,11 +447,11 @@ export type ParsedUpgradeCredentialInstruction<
 
 export function parseUpgradeCredentialInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpgradeCredentialInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 10) {
     throw new SolanaError(
@@ -481,7 +459,7 @@ export function parseUpgradeCredentialInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 10,
-      },
+      }
     );
   }
   let accountIndex = 0;

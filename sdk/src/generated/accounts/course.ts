@@ -133,7 +133,7 @@ export function getCourseEncoder(): Encoder<CourseArgs> {
       ["reserved", fixEncoderSize(getBytesEncoder(), 8)],
       ["bump", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: COURSE_DISCRIMINATOR })
   );
 }
 
@@ -169,24 +169,24 @@ export function getCourseCodec(): Codec<CourseArgs, Course> {
 }
 
 export function decodeCourse<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<Course, TAddress>;
 export function decodeCourse<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<Course, TAddress>;
 export function decodeCourse<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
 ): Account<Course, TAddress> | MaybeAccount<Course, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getCourseDecoder(),
+    getCourseDecoder()
   );
 }
 
 export async function fetchCourse<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<Course, TAddress>> {
   const maybeAccount = await fetchMaybeCourse(rpc, address, config);
   assertAccountExists(maybeAccount);
@@ -196,7 +196,7 @@ export async function fetchCourse<TAddress extends string = string>(
 export async function fetchMaybeCourse<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<Course, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
   return decodeCourse(maybeAccount);
@@ -205,7 +205,7 @@ export async function fetchMaybeCourse<TAddress extends string = string>(
 export async function fetchAllCourse(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<Course>[]> {
   const maybeAccounts = await fetchAllMaybeCourse(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
@@ -215,7 +215,7 @@ export async function fetchAllCourse(
 export async function fetchAllMaybeCourse(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<Course>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeCourse(maybeAccount));

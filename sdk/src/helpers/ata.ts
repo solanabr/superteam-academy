@@ -6,10 +6,10 @@ import {
 } from "@solana/kit";
 
 const TOKEN_2022_PROGRAM_ADDRESS = address(
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 );
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = address(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
 
 /**
@@ -18,7 +18,7 @@ const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = address(
  */
 export async function getXpAta(
   owner: Address,
-  xpMint: Address,
+  xpMint: Address
 ): Promise<Address> {
   const [ata] = await getProgramDerivedAddress({
     programAddress: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,

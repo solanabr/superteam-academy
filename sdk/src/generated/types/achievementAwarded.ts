@@ -68,6 +68,6 @@ export function getAchievementAwardedCodec(): Codec<
 > {
   return combineCodec(
     getAchievementAwardedEncoder(),
-    getAchievementAwardedDecoder(),
+    getAchievementAwardedDecoder()
   );
 }

@@ -55,7 +55,7 @@ export const UPDATE_COURSE_DISCRIMINATOR = new Uint8Array([
 
 export function getUpdateCourseDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    UPDATE_COURSE_DISCRIMINATOR,
+    UPDATE_COURSE_DISCRIMINATOR
   );
 }
 
@@ -64,7 +64,7 @@ export type UpdateCourseInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountAuthority extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -79,7 +79,7 @@ export type UpdateCourseInstruction<
         ? ReadonlySignerAccount<TAccountAuthority> &
             AccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -113,7 +113,7 @@ export function getUpdateCourseInstructionDataEncoder(): Encoder<UpdateCourseIns
       ["newCreatorRewardXp", getOptionEncoder(getU32Encoder())],
       ["newMinCompletionsForReward", getOptionEncoder(getU16Encoder())],
     ]),
-    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UPDATE_COURSE_DISCRIMINATOR })
   );
 }
 
@@ -134,14 +134,14 @@ export function getUpdateCourseInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getUpdateCourseInstructionDataEncoder(),
-    getUpdateCourseInstructionDataDecoder(),
+    getUpdateCourseInstructionDataDecoder()
   );
 }
 
 export type UpdateCourseAsyncInput<
   TAccountConfig extends string = string,
   TAccountCourse extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config?: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -157,14 +157,14 @@ export async function getUpdateCourseInstructionAsync<
   TAccountConfig extends string,
   TAccountCourse extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateCourseAsyncInput<
     TAccountConfig,
     TAccountCourse,
     TAccountAuthority
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): Promise<
   UpdateCourseInstruction<
     TProgramAddress,
@@ -209,21 +209,16 @@ export async function getUpdateCourseInstructionAsync<
       getAccountMeta("authority", accounts.authority),
     ],
     data: getUpdateCourseInstructionDataEncoder().encode(
-      args as UpdateCourseInstructionDataArgs,
+      args as UpdateCourseInstructionDataArgs
     ),
     programAddress,
-  } as UpdateCourseInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountAuthority
-  >);
+  } as UpdateCourseInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountAuthority>);
 }
 
 export type UpdateCourseInput<
   TAccountConfig extends string = string,
   TAccountCourse extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountAuthority extends string = string
 > = {
   config: Address<TAccountConfig>;
   course: Address<TAccountCourse>;
@@ -239,10 +234,10 @@ export function getUpdateCourseInstruction<
   TAccountConfig extends string,
   TAccountCourse extends string,
   TAccountAuthority extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: UpdateCourseInput<TAccountConfig, TAccountCourse, TAccountAuthority>,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): UpdateCourseInstruction<
   TProgramAddress,
   TAccountConfig,
@@ -275,20 +270,15 @@ export function getUpdateCourseInstruction<
       getAccountMeta("authority", accounts.authority),
     ],
     data: getUpdateCourseInstructionDataEncoder().encode(
-      args as UpdateCourseInstructionDataArgs,
+      args as UpdateCourseInstructionDataArgs
     ),
     programAddress,
-  } as UpdateCourseInstruction<
-    TProgramAddress,
-    TAccountConfig,
-    TAccountCourse,
-    TAccountAuthority
-  >);
+  } as UpdateCourseInstruction<TProgramAddress, TAccountConfig, TAccountCourse, TAccountAuthority>);
 }
 
 export type ParsedUpdateCourseInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -301,11 +291,11 @@ export type ParsedUpdateCourseInstruction<
 
 export function parseUpdateCourseInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedUpdateCourseInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     throw new SolanaError(
@@ -313,7 +303,7 @@ export function parseUpdateCourseInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;

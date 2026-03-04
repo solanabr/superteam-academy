@@ -66,6 +66,6 @@ export function getEnrollmentClosedCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getEnrollmentClosedEncoder(),
-    getEnrollmentClosedDecoder(),
+    getEnrollmentClosedDecoder()
   );
 }

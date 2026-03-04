@@ -44,7 +44,7 @@ export const CLOSE_ENROLLMENT_DISCRIMINATOR = new Uint8Array([
 
 export function getCloseEnrollmentDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CLOSE_ENROLLMENT_DISCRIMINATOR,
+    CLOSE_ENROLLMENT_DISCRIMINATOR
   );
 }
 
@@ -53,7 +53,7 @@ export type CloseEnrollmentInstruction<
   TAccountCourse extends string | AccountMeta<string> = string,
   TAccountEnrollment extends string | AccountMeta<string> = string,
   TAccountLearner extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+  TRemainingAccounts extends readonly AccountMeta<string>[] = []
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
@@ -68,7 +68,7 @@ export type CloseEnrollmentInstruction<
         ? WritableSignerAccount<TAccountLearner> &
             AccountSignerMeta<TAccountLearner>
         : TAccountLearner,
-      ...TRemainingAccounts,
+      ...TRemainingAccounts
     ]
   >;
 
@@ -81,7 +81,7 @@ export type CloseEnrollmentInstructionDataArgs = {};
 export function getCloseEnrollmentInstructionDataEncoder(): FixedSizeEncoder<CloseEnrollmentInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: CLOSE_ENROLLMENT_DISCRIMINATOR })
   );
 }
 
@@ -97,14 +97,14 @@ export function getCloseEnrollmentInstructionDataCodec(): FixedSizeCodec<
 > {
   return combineCodec(
     getCloseEnrollmentInstructionDataEncoder(),
-    getCloseEnrollmentInstructionDataDecoder(),
+    getCloseEnrollmentInstructionDataDecoder()
   );
 }
 
 export type CloseEnrollmentInput<
   TAccountCourse extends string = string,
   TAccountEnrollment extends string = string,
-  TAccountLearner extends string = string,
+  TAccountLearner extends string = string
 > = {
   course: Address<TAccountCourse>;
   enrollment: Address<TAccountEnrollment>;
@@ -115,14 +115,14 @@ export function getCloseEnrollmentInstruction<
   TAccountCourse extends string,
   TAccountEnrollment extends string,
   TAccountLearner extends string,
-  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS
 >(
   input: CloseEnrollmentInput<
     TAccountCourse,
     TAccountEnrollment,
     TAccountLearner
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): CloseEnrollmentInstruction<
   TProgramAddress,
   TAccountCourse,
@@ -153,17 +153,12 @@ export function getCloseEnrollmentInstruction<
     ],
     data: getCloseEnrollmentInstructionDataEncoder().encode({}),
     programAddress,
-  } as CloseEnrollmentInstruction<
-    TProgramAddress,
-    TAccountCourse,
-    TAccountEnrollment,
-    TAccountLearner
-  >);
+  } as CloseEnrollmentInstruction<TProgramAddress, TAccountCourse, TAccountEnrollment, TAccountLearner>);
 }
 
 export type ParsedCloseEnrollmentInstruction<
   TProgram extends string = typeof ONCHAIN_ACADEMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[]
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -176,11 +171,11 @@ export type ParsedCloseEnrollmentInstruction<
 
 export function parseCloseEnrollmentInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly AccountMeta[]
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>,
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedCloseEnrollmentInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     throw new SolanaError(
@@ -188,7 +183,7 @@ export function parseCloseEnrollmentInstruction<
       {
         actualAccountMetas: instruction.accounts.length,
         expectedAccountMetas: 3,
-      },
+      }
     );
   }
   let accountIndex = 0;

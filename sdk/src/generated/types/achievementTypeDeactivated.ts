@@ -53,6 +53,6 @@ export function getAchievementTypeDeactivatedCodec(): Codec<
 > {
   return combineCodec(
     getAchievementTypeDeactivatedEncoder(),
-    getAchievementTypeDeactivatedDecoder(),
+    getAchievementTypeDeactivatedDecoder()
   );
 }
