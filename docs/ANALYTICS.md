@@ -203,17 +203,9 @@ Events are sent via `gtag("event", name, properties)` inside `trackEvent()`.
 
 ![PostHog Live Events](screenshots/posthog_live_events.png)
 
-**Heatmap** — See [setup guide](#posthog-heatmap-setup) below
+**Heatmap** — PostHog → Add authorized URL → Launch Toolbar → Heatmap
 
-<!-- SCREENSHOT: posthog_heatmap.png — Add after generating heatmap data -->
-
-**Funnel** — See [setup guide](#posthog-funnel-setup) below
-
-<!-- SCREENSHOT: posthog_funnel.png — Add after creating funnel -->
-
-**Dashboard** — See [setup guide](#posthog-dashboard-setup) below
-
-<!-- SCREENSHOT: posthog_dashboard.png — Add after creating dashboard -->
+![PostHog Heatmap](screenshots/posthog_heatmap.png)
 
 ### Sentry
 
@@ -283,106 +275,3 @@ export function trackEvent(event: EventName, properties?: Record<string, unknown
 5. Verify in PostHog Live Events and GA4 Realtime after deploying
 
 ---
-
-## PostHog Setup Guides
-
-These features are empty until you configure them. They require event data to already be flowing in (which it is — you can see events in Live Events). Follow each guide below.
-
-### PostHog Heatmap Setup
-
-Heatmaps need the **PostHog Toolbar** enabled and real page visits to have been captured.
-
-1. Go to your PostHog project
-2. Click the **Toolbar** launcher (rocket icon in bottom-left, or go to project settings and look for "Toolbar")
-3. If you don't see the Toolbar icon:
-   - Go to **Settings** (gear icon) → **Project Settings**
-   - Scroll to **"Toolbar"** section → make sure it's **Enabled**
-   - Add your site URL (e.g. `https://academy.superteam.fun`) to **"Authorized Toolbar URLs"**
-4. Click **"Launch Toolbar"** — this opens your site with the PostHog toolbar overlay
-5. In the toolbar floating on your site, click the **heatmap icon** (fire/flame icon)
-6. You'll see a click heatmap overlaid on the current page
-7. Navigate to different pages to see heatmaps per page
-8. Take a screenshot for `docs/screenshots/posthog_heatmap.png`
-
-**Note:** Heatmaps are generated from `autocapture` click events. If you just deployed, browse around your site for a few minutes first to generate data. Heatmaps won't show data from before `enable_heatmaps: true` was added.
-
-**Alternative (no Toolbar):**
-- PostHog has been rolling out a **Heatmaps** tab under **Product Analytics** in newer versions
-- If you see it: go to **Product Analytics → Heatmaps**, enter a page URL, and view
-- If you don't see it: your PostHog plan/version may not include it — use the Toolbar method above
-
-### PostHog Funnel Setup
-
-Funnels must be manually created — PostHog doesn't auto-generate them.
-
-1. Go to **Product Analytics** → **New Insight** (or click **"+ New Insight"** button)
-2. Change the insight type from **"Trends"** to **"Funnels"** (dropdown at the top)
-3. Add funnel steps (click **"Add step"** for each):
-   - Step 1: `course_view`
-   - Step 2: `enrollment`
-   - Step 3: `lesson_start`
-   - Step 4: `lesson_complete`
-   - Step 5: `course_complete`
-4. Set the **conversion window** to **30 days** (top-right dropdown)
-5. Click **"Calculate"** to see the funnel
-6. You'll see conversion rates and drop-off between each step
-7. Click **"Save"** → name it "Learning Funnel"
-8. Take a screenshot for `docs/screenshots/posthog_funnel.png`
-
-**Second funnel to create (Challenge funnel):**
-1. New Insight → Funnels
-2. Steps:
-   - Step 1: `challenge_attempt`
-   - Step 2: `challenge_pass`
-3. Save as "Challenge Pass Rate"
-
-### PostHog Dashboard Setup
-
-Dashboards are custom — you build them from saved insights.
-
-1. Go to **Dashboards** → click **"+ New Dashboard"**
-2. Name it "Superteam Academy Overview"
-3. Click **"Add insight"** and create each one (or add previously saved insights):
-
-**Insight 1 — Daily Active Users:**
-- Type: **Trends**
-- Event: `page_view` → count unique users
-- Date range: Last 30 days
-- Display: Line chart
-
-**Insight 2 — Enrollments (weekly):**
-- Type: **Trends**
-- Event: `enrollment` → total count
-- Group by: Week
-- Date range: Last 90 days
-
-**Insight 3 — Lesson Completions (weekly):**
-- Type: **Trends**
-- Event: `lesson_complete` → total count
-- Group by: Week
-- Date range: Last 90 days
-
-**Insight 4 — Challenge Pass vs Fail:**
-- Type: **Trends**
-- Event 1: `challenge_pass` → total count
-- Event 2: `challenge_fail` → total count
-- Display: Bar chart
-- Date range: Last 30 days
-
-**Insight 5 — Achievements Claimed:**
-- Type: **Trends**
-- Event: `achievement_unlocked` → total count
-- Group by: Week
-
-**Insight 6 — Streak Health:**
-- Type: **Trends**
-- Event 1: `streak_milestone` → total count
-- Event 2: `streak_broken` → total count
-- Display: Line chart
-- Date range: Last 30 days
-
-4. Arrange the tiles on the dashboard by dragging
-5. Click **"Save"**
-6. Take a screenshot for `docs/screenshots/posthog_dashboard.png`
-
-**Tip:** If insights show "No data" — that's normal if the events haven't fired yet in production. Browse the site, complete a lesson, change theme/language to generate some events first.
