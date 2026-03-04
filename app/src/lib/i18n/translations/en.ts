@@ -1,0 +1,233 @@
+const en = {
+  // Common
+  common: {
+    loading: "Loading...",
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    signOut: "Sign out",
+    startLearning: "Start Learning",
+    browseCourses: "Browse Courses",
+    exploreCourses: "Explore Courses",
+    backToCourse: "Back to course",
+    viewAll: "Browse all",
+    save: "Save Changes",
+    saving: "Saving...",
+    cancel: "Cancel",
+    edit: "Edit",
+    enrolled: "Enrolled!",
+    goToDashboard: "Go to Dashboard",
+    noResults: "No results found",
+    comingSoon: "Coming soon",
+  },
+
+  // Navbar
+  nav: {
+    courses: "Courses",
+    leaderboard: "Leaderboard",
+    dashboard: "Dashboard",
+    profile: "Profile",
+    settings: "Settings",
+    connectWallet: "Connect Wallet",
+    admin: "Admin",
+  },
+
+  // Landing
+  landing: {
+    heroTitle: "Your Path to Solana Mastery",
+    heroSubtitle: "Interactive courses, on-chain credentials, and a gamified learning experience built for crypto builders.",
+    watchDemo: "Watch the demo",
+    demoComingSoon: "Platform demo coming soon",
+    featuresTitle: "Learn. Build. Earn.",
+    featuresSubtitle: "Interactive Solana courses with a built-in code editor, on-chain credentials, and XP-based progression.",
+    featureEditor: "Interactive Code Editor",
+    featureEditorDesc: "Write Rust and TypeScript directly in the browser with syntax highlighting and instant feedback.",
+    featureCredentials: "On-Chain Credentials",
+    featureCredentialsDesc: "Earn evolving compressed NFTs that upgrade as you progress through learning tracks.",
+    featureXP: "XP & Gamification",
+    featureXPDesc: "Earn soulbound XP tokens, maintain streaks, unlock achievements, and climb the leaderboard.",
+    pathsTitle: "Learning paths for every stage of your Solana journey.",
+    socialProofTitle: "Trusted by builders across Latin America and beyond.",
+    ctaTitle: "Ready to Build?",
+    ctaSubtitle: "Join thousands of developers learning Solana with interactive courses, on-chain credentials, and a vibrant community.",
+  },
+
+  // Dashboard
+  dashboard: {
+    welcomeBack: "Welcome back",
+    totalXP: "Total XP",
+    level: "Level",
+    currentStreak: "Current Streak",
+    achievements: "Achievements",
+    toNext: "to next",
+    levelProgress: "Level {level} Progress",
+    xpToLevel: "{xp} XP to Level {level}",
+    activity: "Activity (Last 30 Days)",
+    myCourses: "My Courses",
+    noCourses: "You haven't enrolled in any courses yet.",
+    days: "days",
+    best: "Best: {n} days",
+    lessons: "lessons",
+    completed: "Completed",
+    started: "Started {date}",
+  },
+
+  // Courses
+  courses: {
+    title: "Courses",
+    subtitle: "Master Solana development step by step. Each course combines interactive lessons, coding challenges, and real-world projects.",
+    all: "All",
+    noCourses: "No courses available yet.",
+    checkBack: "Check back soon - new content is being added regularly.",
+    modules: "modules",
+    prerequisitesTitle: "Prerequisites",
+    curriculumTitle: "Curriculum",
+    curriculumPending: "Curriculum details are being finalized. Check back soon.",
+    module: "Module {n}",
+    enrollCTA: "Enroll in this Course",
+    signInToEnroll: "Sign in to Enroll",
+    enrolling: "Enrolling...",
+  },
+
+  // Lesson
+  lesson: {
+    notFound: "Lesson not found",
+    contentPending: "Lesson content is being prepared. Check back soon.",
+    challenge: "Challenge",
+    expectedOutput: "Expected Output",
+    showHints: "Show hints ({n})",
+    hideHints: "Hide hints",
+    viewSolution: "View solution",
+    reset: "Reset",
+    markComplete: "Mark as Complete",
+    completing: "Completing...",
+    signInToTrack: "Sign in to track progress",
+    lessonComplete: "Lesson Complete! +{xp} XP",
+    nextLesson: "Next Lesson",
+  },
+
+  // Leaderboard
+  leaderboard: {
+    title: "Leaderboard",
+    subtitle: "Top learners ranked by XP earned. Keep learning to climb the ranks.",
+    allTime: "All Time",
+    monthly: "Monthly",
+    weekly: "Weekly",
+    noEntries: "No entries yet",
+    noEntriesDesc: "Complete lessons to earn XP and appear on the leaderboard.",
+    learner: "Learner",
+    xp: "XP",
+    streak: "Streak",
+    you: "(you)",
+  },
+
+  // Profile
+  profile: {
+    title: "Profile",
+    signInPrompt: "Sign in to view your profile",
+    displayName: "Display Name",
+    username: "Username",
+    bio: "Bio",
+    bioPlaceholder: "Tell us about yourself...",
+    twitter: "Twitter",
+    github: "GitHub",
+    discord: "Discord",
+    website: "Website",
+    linkedWallets: "Linked Wallets",
+    noWallets: "No wallets linked yet. Connect your Solana wallet from the navbar to link it to your account.",
+    walletLinked: "Linked {date}",
+    active: "Active",
+    credentials: "On-Chain Credentials",
+    credentialsDesc: "Compressed NFT credentials will appear here once you complete tracks. This feature connects to Solana devnet.",
+    noCredentials: "No credentials earned yet",
+    walletUser: "Wallet user",
+  },
+
+  // Settings
+  settings: {
+    title: "Settings",
+    appearance: "Appearance",
+    theme: "Theme",
+    light: "Light",
+    dark: "Dark",
+    system: "System",
+    language: "Language",
+    notifications: "Notifications",
+    emailNotifs: "Email Notifications",
+    emailNotifsDesc: "Receive emails about course updates and streak reminders",
+    weeklyDigest: "Weekly Digest",
+    weeklyDigestDesc: "Get a weekly summary of your progress",
+    privacy: "Privacy",
+    publicProfile: "Public Profile",
+    publicProfileDesc: "Allow other users to see your profile and achievements",
+    showLeaderboard: "Show on Leaderboard",
+    showLeaderboardDesc: "Appear in the public leaderboard rankings",
+    dangerZone: "Danger Zone",
+    exportData: "Export Data",
+    deleteAccount: "Delete Account",
+  },
+
+  // Certificates
+  certificate: {
+    title: "Certificate of Completion",
+    completedOn: "Completed on {date}",
+    verifyOnChain: "Verify On-Chain",
+    download: "Download Certificate",
+    share: "Share",
+    mintAddress: "Mint Address",
+    owner: "Owner",
+    noCertificates: "No certificates earned yet",
+    noCertificatesDesc: "Complete a course to earn your first on-chain certificate.",
+  },
+
+  // Admin
+  admin: {
+    overview: "Overview",
+    users: "Users",
+    courses: "Courses",
+    analytics: "Analytics",
+    totalUsers: "Total Users",
+    totalEnrollments: "Total Enrollments",
+    totalXPAwarded: "Total XP Awarded",
+    activeLearners: "Active Learners (7d)",
+    recentSignups: "Recent Signups",
+    recentEnrollments: "Recent Enrollments",
+    name: "Name",
+    email: "Email",
+    joined: "Joined",
+    course: "Course",
+    enrolledDate: "Enrolled",
+    search: "Search users...",
+    coursesEnrolled: "Courses",
+    totalXP: "Total XP",
+    streak: "Streak",
+    enrollments: "Enrollments",
+    avgCompletion: "Avg Completion",
+    completions: "Completions",
+    manageSanity: "Manage in Sanity Studio",
+    xpDistribution: "XP Distribution",
+    streakStats: "Streak Stats",
+    enrollmentTrends: "Enrollment Trends",
+    achievementRates: "Achievement Unlock Rates",
+    activeUsers: "Active Users",
+    avgStreak: "Avg Streak",
+    week: "Week",
+    count: "Count",
+    percentile: "Percentile",
+    noData: "No data available",
+  },
+
+  // Footer
+  footer: {
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
+    openSource: "Open Source",
+  },
+} as const;
+
+// Recursively map all leaf strings to `string` so translation files can use different text
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepStringify<T[K]>;
+};
+
+export type TranslationKeys = DeepStringify<typeof en>;
+export default en;
