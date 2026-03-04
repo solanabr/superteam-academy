@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEnroll, useEnrollment } from "@/hooks";
-import { countCompletedLessons, getCompletedAtFromEnrollment, getLessonFlagsFromEnrollment, isLessonComplete } from "@/lib/lesson-bitmap";
+import { countCompletedLessons, getCompletedAtFromEnrollment, getLessonFlagsFromEnrollment } from "@/lib/lesson-bitmap";
 import { urlFor } from "@/lib/sanity/client";
 import { getAllLessonsFlat, getCourseBySlug, getCourseIdForProgram } from "@/lib/services/content-service";
+import { BN } from "@coral-xyz/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
     BookOpen,
@@ -65,11 +66,27 @@ export default function CourseDetailPage({
 
     const allLessons = getAllLessonsFlat(course);
     const totalXp = course.lessonCount * course.xpPerLesson;
-    const isEnrolled = !!enrollment;
+    const isEnrolled = !!enrollment || enroll.isSuccess;
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
+    const isFlagComplete = (lessonIndex: number): boolean => {
+        if (!Number.isInteger(lessonIndex) || lessonIndex < 0) return false;
+        const wordIndex = Math.floor(lessonIndex / 64);
+        const bitIndex = lessonIndex % 64;
+        const rawWord = lessonFlags[wordIndex] as unknown;
+        if (!rawWord) return false;
+        try {
+            const word = rawWord instanceof BN ? rawWord : new BN(String(rawWord));
+            return word.testn(bitIndex);
+        } catch {
+            return false;
+        }
+    };
     const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
     const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
     const isCourseComplete = completedAt != null;
+    const nextLessonIndex = allLessons.findIndex((_, idx) => !isFlagComplete(idx));
+    const continueLesson =
+        allLessons[nextLessonIndex >= 0 ? nextLessonIndex : 0] ?? allLessons[0] ?? null;
 
     const handleEnroll = () => {
         if (!publicKey) {
@@ -162,7 +179,7 @@ export default function CourseDetailPage({
                                     </>
                                 ) : (
                                     <Button asChild variant="pixel" className="w-full font-game text-lg">
-                                        <Link href={`/courses/${slug}/lessons/${allLessons[0]?.id}`}>
+                                        <Link href={continueLesson ? `/courses/${slug}/lessons/${continueLesson.id}` : `/courses/${slug}`}>
                                             <Play className="mr-2 h-4 w-4" />
                                             Continue Learning
                                         </Link>
@@ -203,8 +220,8 @@ export default function CourseDetailPage({
                             <div className="divide-y divide-border">
                                 {mod.lessons.map((lesson, li) => {
                                     const flatIndex = lessonIndexStart + li;
-                                    const completed = isEnrolled && isLessonComplete(lessonFlags, flatIndex);
-                                    const prevCompleted = flatIndex === 0 || (isEnrolled && isLessonComplete(lessonFlags, flatIndex - 1));
+                                    const completed = isEnrolled && isFlagComplete(flatIndex);
+                                    const prevCompleted = flatIndex === 0 || (isEnrolled && isFlagComplete(flatIndex - 1));
                                     const canAccess = !isEnrolled ? false : prevCompleted;
                                     return (
                                         <div

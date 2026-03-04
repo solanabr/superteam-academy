@@ -1,7 +1,8 @@
 "use client";
+/* @refresh reset */
 
-import { use, useState, useEffect, useMemo } from "react";
-import { notFound } from "next/navigation";
+import { use, useEffect, useMemo, useState } from "react";
+import { notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -12,6 +13,7 @@ import {
     Loader2,
     RotateCcw,
     BookOpen,
+    Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +25,10 @@ import {
     getCourseIdForProgram,
 } from "@/lib/services/content-service";
 import { useEnrollment, useCompleteLesson, useCourse, useCredentialCollectionsList } from "@/hooks";
-import { getLessonFlagsFromEnrollment, isLessonComplete, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
+import { getLessonFlagsFromEnrollment, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
 import { getEffectiveLessonCount } from "@/lib/services/content-service";
 import { urlFor } from "@/lib/sanity/client";
+import { BN } from "@coral-xyz/anchor";
 import { toast } from "sonner";
 
 function toSafeNumber(value: unknown): number | null {
@@ -59,6 +62,8 @@ function resolveTrackIdFromCourseAccount(courseAccount: unknown): number | null 
     return parsed != null && parsed >= 0 ? parsed : null;
 }
 
+type LessonPageData = NonNullable<Awaited<ReturnType<typeof getLessonById>>>;
+
 export default function LessonPage({
     params,
 }: {
@@ -67,35 +72,18 @@ export default function LessonPage({
     const { slug, id } = use(params);
     const [result, setResult] = useState<Awaited<ReturnType<typeof getLessonById>>>(undefined);
     const [isLoading, setIsLoading] = useState(true);
-    const [testOutput, setTestOutput] = useState<string | null>(null);
-    const [code, setCode] = useState("");
-    const [courseCompleteData, setCourseCompleteData] = useState<{
-        courseId: string;
-        courseName: string;
-        xpEarned: number;
-    } | null>(null);
-
-    const courseId = result?.course ? getCourseIdForProgram(result.course) : null;
-    const { data: enrollment } = useEnrollment(courseId);
-    const { data: onChainCourse, isLoading: isCourseLoading } = useCourse(courseId);
-    const { data: credentialCollectionsList, isLoading: isCollectionsLoading } = useCredentialCollectionsList();
-    const completeLesson = useCompleteLesson();
-    const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
-    const trackId = useMemo(() => resolveTrackIdFromCourseAccount(onChainCourse), [onChainCourse]);
-    const trackCollection = useMemo(() => {
-        if (trackId == null || !credentialCollectionsList?.length) return "";
-        const row = credentialCollectionsList.find((item) => item.trackId === trackId);
-        return row?.collectionAddress ?? "";
-    }, [credentialCollectionsList, trackId]);
 
     useEffect(() => {
-        getLessonById(slug, id).then((data) => {
+        let cancelled = false;
+        setIsLoading(true);
+        void getLessonById(slug, id).then((data) => {
+            if (cancelled) return;
             setResult(data);
             setIsLoading(false);
-            if (data?.lesson.challengeCode) {
-                setCode(data.lesson.challengeCode);
-            }
         });
+        return () => {
+            cancelled = true;
+        };
     }, [slug, id]);
 
     if (isLoading) {
@@ -108,28 +96,103 @@ export default function LessonPage({
 
     if (!result) return notFound();
 
+    return <LessonPageContent key={`${slug}:${id}`} slug={slug} result={result as LessonPageData} />;
+}
+
+function LessonPageContent({
+    slug,
+    result,
+}: {
+    slug: string;
+    result: LessonPageData;
+}) {
     const { course, lesson, moduleTitle, lessonIndex } = result;
+    const [code, setCode] = useState(result.lesson.challengeCode ?? "");
+    const [isSavingOffline, setIsSavingOffline] = useState(false);
+    const [courseCompleteData, setCourseCompleteData] = useState<{
+        courseId: string;
+        courseName: string;
+        xpEarned: number;
+    } | null>(null);
+    const router = useRouter();
+
+    const courseId = getCourseIdForProgram(course);
+    const { data: enrollment } = useEnrollment(courseId);
+    const { data: onChainCourse, isLoading: isCourseLoading } = useCourse(courseId);
+    const { data: credentialCollectionsList, isLoading: isCollectionsLoading } = useCredentialCollectionsList();
+    const completeLesson = useCompleteLesson();
+    const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
+
+    const isFlagComplete = (targetLessonIndex: number): boolean => {
+        if (!Number.isInteger(targetLessonIndex) || targetLessonIndex < 0) return false;
+        const wordIndex = Math.floor(targetLessonIndex / 64);
+        const bitIndex = targetLessonIndex % 64;
+        const rawWord = lessonFlags[wordIndex] as unknown;
+        if (!rawWord) return false;
+        try {
+            const word = rawWord instanceof BN ? rawWord : new BN(String(rawWord));
+            return word.testn(bitIndex);
+        } catch {
+            return false;
+        }
+    };
+
+    const trackId = useMemo(() => resolveTrackIdFromCourseAccount(onChainCourse), [onChainCourse]);
+    const trackCollection = useMemo(() => {
+        if (trackId == null || !credentialCollectionsList?.length) return "";
+        const row = credentialCollectionsList.find((item) => item.trackId === trackId);
+        return row?.collectionAddress ?? "";
+    }, [credentialCollectionsList, trackId]);
+
     const allLessons = getAllLessonsFlat(course);
     const contentCount = allLessons.length;
-    const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
-    const nextLesson = lessonIndex < contentCount - 1 ? allLessons[lessonIndex + 1] : null;
+    const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] ?? null : null;
+    const nextLesson = lessonIndex < contentCount - 1 ? allLessons[lessonIndex + 1] ?? null : null;
 
     const isChallenge = lesson.type === "challenge";
     const isEnrolled = !!enrollment;
-    const isCompleted = isEnrolled && lessonFlags.length > 0 && isLessonComplete(lessonFlags, lessonIndex);
-    const prevLessonCompleted = lessonIndex === 0 || (isEnrolled && lessonFlags.length > 0 && isLessonComplete(lessonFlags, lessonIndex - 1));
+    const isCompleted = isEnrolled && isFlagComplete(lessonIndex);
+    const prevLessonCompleted = lessonIndex === 0 || (isEnrolled && isFlagComplete(lessonIndex - 1));
     const canAccessLesson = !isEnrolled || prevLessonCompleted;
     const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
     const isCourseComplete = completedAt != null;
+    const lessonImageUrl = lesson.image
+        ? urlFor(lesson.image).width(1024).height(512).url()
+        : null;
 
-    const handleRunTests = () => {
-        setTestOutput("Running tests...\n\n✅ All tests passed!");
-    };
+    const handleSaveOffline = async () => {
+        if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+            toast.error("Offline download is not supported in this browser.");
+            return;
+        }
 
-    const handleReset = () => {
-        if (result) {
-            setCode(result.lesson.challengeCode ?? "");
-            setTestOutput(null);
+        setIsSavingOffline(true);
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const activeWorker = navigator.serviceWorker.controller ?? registration.active;
+            if (!activeWorker) {
+                toast.error("Offline cache is not ready yet. Try again in a few seconds.");
+                return;
+            }
+
+            const urls = [
+                window.location.pathname,
+                `/courses/${slug}`,
+                prevLesson ? `/courses/${slug}/lessons/${prevLesson.id}` : null,
+                nextLesson ? `/courses/${slug}/lessons/${nextLesson.id}` : null,
+                lessonImageUrl,
+            ].filter((value): value is string => Boolean(value));
+
+            activeWorker.postMessage({
+                type: "CACHE_URLS",
+                urls: Array.from(new Set(urls)),
+            });
+            toast.success("Lesson downloaded for offline access.");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Failed to download lesson.";
+            toast.error(message);
+        } finally {
+            setIsSavingOffline(false);
         }
     };
 
@@ -169,24 +232,36 @@ export default function LessonPage({
                             }`}
                     >
                         <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-                            <div className="flex items-center gap-2">
-                                {isChallenge ? (
-                                    <Badge
-                                        variant="outline"
-                                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                    >
-                                        <Code2 className="mr-1 h-3 w-3" />
-                                        Challenge
-                                    </Badge>
-                                ) : (
-                                    <Badge variant="outline">
-                                        <BookOpen className="mr-1 h-3 w-3" />
-                                        Lesson
-                                    </Badge>
-                                )}
-                                <span className="text-xs text-muted-foreground">
-                                    {lesson.duration}
-                                </span>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    {isChallenge ? (
+                                        <Badge
+                                            variant="outline"
+                                            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                        >
+                                            <Code2 className="mr-1 h-3 w-3" />
+                                            Challenge
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline">
+                                            <BookOpen className="mr-1 h-3 w-3" />
+                                            Lesson
+                                        </Badge>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">
+                                        {lesson.duration}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="font-game text-sm"
+                                    onClick={handleSaveOffline}
+                                    disabled={isSavingOffline}
+                                >
+                                    <Download className="mr-1 h-3.5 w-3.5" />
+                                    {isSavingOffline ? "Saving..." : "Download Offline"}
+                                </Button>
                             </div>
 
                             <h1 className="text-xl font-bold">{lesson.title}</h1>
@@ -252,39 +327,42 @@ export default function LessonPage({
                                             size="sm"
                                             className="font-game text-md"
                                             onClick={() => {
-                                                if (!courseId) return;
-                                                const course = result?.course;
-                                                const effectiveCount = course
-                                                    ? getEffectiveLessonCount(course, onChainCourse ?? null)
-                                                    : contentCount;
-                                                const xpPerLesson = course?.xpPerLesson ?? 0;
+                                                const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
+                                                const xpPerLesson = course.xpPerLesson ?? 0;
                                                 const isLastLesson =
                                                     effectiveCount > 0 && lessonIndex === effectiveCount - 1;
                                                 const xpEarned = isLastLesson
                                                     ? xpPerLesson +
                                                       Math.floor((xpPerLesson * effectiveCount) / 2)
                                                     : xpPerLesson;
-                                                completeLesson.mutate({
-                                                    courseId,
-                                                    lessonIndex,
-                                                    xpEarned: xpEarned > 0 ? xpEarned : undefined,
-                                                    effectiveCount,
-                                                    onCourseComplete: isLastLesson
-                                                        ? () => {
-                                                              if (!courseId || !result?.course) return;
-                                                              const xp =
-                                                                  (result.course.xpPerLesson ?? 0);
-                                                              const totalXp =
-                                                                  effectiveCount * xp +
-                                                                  Math.floor((xp * effectiveCount) / 2);
-                                                              setCourseCompleteData({
-                                                                  courseId,
-                                                                  courseName: result.course.title,
-                                                                  xpEarned: totalXp,
-                                                              });
-                                                          }
-                                                        : undefined,
-                                                });
+                                                completeLesson.mutate(
+                                                    {
+                                                        courseId,
+                                                        lessonIndex,
+                                                        xpEarned: xpEarned > 0 ? xpEarned : undefined,
+                                                        effectiveCount,
+                                                        onCourseComplete: isLastLesson
+                                                            ? () => {
+                                                                  const xp = (course.xpPerLesson ?? 0);
+                                                                  const totalXp =
+                                                                      effectiveCount * xp +
+                                                                      Math.floor((xp * effectiveCount) / 2);
+                                                                  setCourseCompleteData({
+                                                                      courseId,
+                                                                      courseName: course.title,
+                                                                      xpEarned: totalXp,
+                                                                  });
+                                                              }
+                                                            : undefined,
+                                                    },
+                                                    {
+                                                        onSuccess: () => {
+                                                            if (!isLastLesson && nextLesson) {
+                                                                router.push(`/courses/${slug}/lessons/${nextLesson.id}`);
+                                                            }
+                                                        },
+                                                    }
+                                                );
                                             }}
                                             disabled={completeLesson.isPending}
                                         >
@@ -382,7 +460,7 @@ export default function LessonPage({
                                             try {
                                                 await navigator.clipboard.writeText(code || lesson.challengeCode || "");
                                                 toast.success("Starter code copied to clipboard!");
-                                            } catch (err) {
+                                            } catch {
                                                 toast.error("Failed to copy code. Please copy manually.");
                                             }
                                         }}
@@ -414,8 +492,7 @@ export default function LessonPage({
                     xpEarned={courseCompleteData.xpEarned}
                     trackCollection={trackCollection}
                     isTrackCollectionLoading={
-                        (isCourseLoading && !!courseId) ||
-                        (isCollectionsLoading && trackId != null)
+                        isCourseLoading || (isCollectionsLoading && trackId != null)
                     }
                     onClose={() => setCourseCompleteData(null)}
                 />
