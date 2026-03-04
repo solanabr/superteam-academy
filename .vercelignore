@@ -7,7 +7,6 @@ wallets
 .env.local
 .env
 *.pem
-Logo
 visual reference
 color-palette.*
 logo-examples.*
