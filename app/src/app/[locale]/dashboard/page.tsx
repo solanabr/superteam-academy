@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useCoursesCompleted } from "@/hooks/use-courses-completed";
-import { RentReclaimBanner } from "@/components/dashboard/rent-reclaim-banner";
+import { CredentialClaimBanner } from "@/components/dashboard/credential-claim-banner";
 import { DailyChallengeCard } from "@/components/dashboard/daily-challenge-card";
 import { AchievementGrid } from "@/components/dashboard/achievement-grid";
 import { StatsBar } from "@/components/stats-bar";
@@ -51,6 +51,7 @@ export default function DashboardPage() {
   // Courses completed (credentials + finalized enrollments) via shared hook
   const {
     coursesCompleted,
+    credentials,
     allCourses,
     enrollments,
     loading: loadingCoursesCompleted,
@@ -118,14 +119,27 @@ export default function DashboardPage() {
       return { ...c, progress: e.progressPct };
     });
 
-  // Finalized enrollments that can collect credential + close
-  const completedEnrollments = allCourses.flatMap((c) => {
+  // Finalized enrollments that still need credential collection.
+  // Exclude courses where:
+  // 1. The enrollment already has credentialAsset set (original issue course)
+  // 2. The course appears in a credential's completedCourseIds (from DAS URI)
+  const credentialCourseIds = new Set(
+    credentials.flatMap((c) => c.completedCourseIds ?? []),
+  );
+  const credentialTrackIds = new Set(credentials.map((c) => c.trackId));
+  const uncollectedEnrollments = allCourses.flatMap((c) => {
     if (!c.courseId) return [];
+    if (credentialCourseIds.has(c.courseId)) return [];
     const e = enrollments.find((e) => e.courseId === c.courseId);
     if (!e) return [];
     const isFinalized = e.progressPct >= 100 || e.completedAt !== null;
     if (!isFinalized) return [];
-    return [{ courseId: c.courseId, title: c.title, isFinalized }];
+    // Skip if this enrollment already had a credential issued through it
+    if (
+      e.credentialAsset &&
+      e.credentialAsset.toBase58() !== "11111111111111111111111111111111"
+    ) return [];
+    return [{ courseId: c.courseId, title: c.title }];
   });
 
   const streak = playerStats.streak;
@@ -203,8 +217,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Rent reclaim banner — only shown when wallet connected and completed enrollments exist */}
-      {!loadingEnrollments && completedEnrollments.length > 0 && (
-        <RentReclaimBanner courses={completedEnrollments} />
+      {!loadingCoursesCompleted && uncollectedEnrollments.length > 0 && (
+        <CredentialClaimBanner courses={uncollectedEnrollments} />
       )}
 
       {/* Stats Row */}

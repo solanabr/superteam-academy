@@ -1,68 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { toast } from "sonner";
-import type { OnchainAcademy } from "@/lib/solana/types";
-import IDL from "@/lib/solana/idl.json";
-import { getCoursePDA, getEnrollmentPDA } from "@/lib/solana/enrollments";
-import { parseEnrollError } from "@/hooks/use-enrollment";
 import { CredentialModal, type CredentialModalData } from "@/components/credential-modal";
-import { Coins, X, Loader2, GraduationCap } from "lucide-react";
+import { X, Loader2, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export interface ClosableEnrollment {
+export interface CollectableEnrollment {
   courseId: string;
   title: string;
-  /** True when course is finalized (all lessons done / completedAt set) */
-  isFinalized?: boolean;
 }
 
-export function RentReclaimBanner({ courses }: { courses: ClosableEnrollment[] }) {
+export function CredentialClaimBanner({ courses }: { courses: CollectableEnrollment[] }) {
   const t = useTranslations("dashboard");
-  const { publicKey, signTransaction, signAllTransactions } = useWallet();
-  const { connection } = useConnection();
   const [dismissed, setDismissed] = useState(false);
-  const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
-  const [closingId, setClosingId] = useState<string | null>(null);
+  const [collectedIds, setCollectedIds] = useState<Set<string>>(new Set());
   const [collectingId, setCollectingId] = useState<string | null>(null);
   const [credentialModal, setCredentialModal] = useState<CredentialModalData | null>(null);
 
-  // Only show finalized courses (completed ones that need credential collection)
-  const visible = courses.filter((c) => !closedIds.has(c.courseId) && c.isFinalized);
+  const visible = courses.filter((c) => !collectedIds.has(c.courseId));
 
   if (dismissed || visible.length === 0) return null;
 
-  async function handleClose(courseId: string) {
-    if (!publicKey || !signTransaction || !signAllTransactions) return;
-    setClosingId(courseId);
-    try {
-      const provider = new AnchorProvider(
-        connection,
-        { publicKey, signTransaction, signAllTransactions },
-        { commitment: "confirmed" },
-      );
-      const prog = new Program<OnchainAcademy>(IDL as OnchainAcademy, provider);
-      await prog.methods
-        .closeEnrollment()
-        .accountsPartial({
-          learner: publicKey,
-          course: getCoursePDA(courseId),
-          enrollment: getEnrollmentPDA(courseId, publicKey),
-        })
-        .rpc();
-      setClosedIds((prev) => new Set([...prev, courseId]));
-      toast.success(t("rentReclaimSuccess"));
-    } catch (err) {
-      toast.error(parseEnrollError(err));
-    } finally {
-      setClosingId(null);
-    }
-  }
-
-  async function handleCollectAndClose(courseId: string) {
+  async function handleCollect(courseId: string) {
     setCollectingId(courseId);
     try {
       const res = await fetch("/api/credentials/collect", {
@@ -75,8 +36,7 @@ export function RentReclaimBanner({ courses }: { courses: ClosableEnrollment[] }
         throw new Error((data as { error?: string }).error || "Credential collection failed");
       }
       const data = await res.json();
-      // Auto-trigger close enrollment while showing celebration modal
-      handleClose(courseId);
+      setCollectedIds((prev) => new Set([...prev, courseId]));
       setCredentialModal({
         credentialAsset: data.credentialAsset,
         signature: data.signature,
@@ -93,10 +53,6 @@ export function RentReclaimBanner({ courses }: { courses: ClosableEnrollment[] }
     } finally {
       setCollectingId(null);
     }
-  }
-
-  function handleCredentialModalClose() {
-    setCredentialModal(null);
   }
 
   return (
@@ -121,23 +77,18 @@ export function RentReclaimBanner({ courses }: { courses: ClosableEnrollment[] }
                       <Button
                         size="sm"
                         className="h-7 shrink-0 gap-1 text-xs"
-                        disabled={collectingId === c.courseId || closingId === c.courseId}
-                        onClick={() => handleCollectAndClose(c.courseId)}
+                        disabled={collectingId === c.courseId}
+                        onClick={() => handleCollect(c.courseId)}
                       >
                         {collectingId === c.courseId ? (
                           <>
                             <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                             {t("collecting")}
                           </>
-                        ) : closingId === c.courseId ? (
-                          <>
-                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                            {t("closing")}
-                          </>
                         ) : (
                           <>
                             <GraduationCap className="h-3 w-3" />
-                            {t("collectAndClose")}
+                            {t("collectCredential")}
                           </>
                         )}
                       </Button>
@@ -159,7 +110,7 @@ export function RentReclaimBanner({ courses }: { courses: ClosableEnrollment[] }
 
       <CredentialModal
         open={!!credentialModal}
-        onClose={handleCredentialModalClose}
+        onClose={() => setCredentialModal(null)}
         data={credentialModal}
       />
     </>

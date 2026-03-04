@@ -191,8 +191,35 @@ export async function POST(req: NextRequest) {
                 .map((s) => s.trim())
                 .filter(Boolean);
             }
+            // Fallback: parse completedCourseIds from the on-chain metadata URI query params
+            // (DAS may not index JSON from localhost/private backend URLs)
+            if (existingCompletedCourseIds.length === 0) {
+              const jsonUri = (content?.json_uri as string) ?? "";
+              try {
+                const uriParams = new URL(jsonUri).searchParams;
+                const idsParam = uriParams.get("completedCourseIds");
+                if (idsParam) {
+                  existingCompletedCourseIds = idsParam
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                }
+              } catch {
+                // Invalid URI — skip
+              }
+            }
             const levelAttr = attrs.find((a) => a.trait_type === "level");
-            if (levelAttr) existingLevel = parseInt(levelAttr.value, 10) || 0;
+            if (levelAttr) existingLevel = Math.max(existingLevel, parseInt(levelAttr.value, 10) || 0);
+            // Also parse level from URI if not found in attributes
+            if (existingLevel === 0) {
+              const jsonUri = (content?.json_uri as string) ?? "";
+              try {
+                const lvl = new URL(jsonUri).searchParams.get("level");
+                if (lvl) existingLevel = parseInt(lvl, 10) || 0;
+              } catch {
+                // skip
+              }
+            }
             break;
           }
         }
@@ -247,6 +274,23 @@ export async function POST(req: NextRequest) {
               .filter(Boolean);
           }
         }
+        // Fallback: parse from on-chain metadata URI query params
+        if (existingCompletedCourseIds.length === 0) {
+          const assetContent = asset.content as Record<string, unknown> | undefined;
+          const jsonUri = (assetContent?.json_uri as string) ?? "";
+          try {
+            const uriParams = new URL(jsonUri).searchParams;
+            const idsParam = uriParams.get("completedCourseIds");
+            if (idsParam) {
+              existingCompletedCourseIds = idsParam
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+            }
+          } catch {
+            // Invalid URI — skip
+          }
+        }
       }
     } catch {
       // Non-fatal — use PDA-derived stats as fallback
@@ -263,6 +307,49 @@ export async function POST(req: NextRequest) {
   const level = isUpgrade
     ? Math.max(existingLevel, enrollmentData.trackLevel)
     : enrollmentData.trackLevel;
+
+  // For upgrades where the current enrollment doesn't have credential_asset
+  // (2nd+ course in same track), find the original courseId whose enrollment
+  // has the credential stored. The on-chain upgrade_credential instruction
+  // validates enrollment.credential_asset matches the passed asset.
+  let upgradeCourseId = courseId;
+  if (isUpgrade && !enrollmentData.credentialAsset) {
+    try {
+      const { PublicKey } = await import("@solana/web3.js");
+      const { getEnrollmentPDA } = await import("@/lib/solana/enrollments");
+      const { program } = await import("@/lib/solana/program");
+      const learner = new PublicKey(walletAddress);
+
+      // Find all on-chain courses in the same track
+      const allCourses = await program.account.course.all();
+      const trackCourses = allCourses
+        .filter((c) => c.account.trackId === enrollmentData.trackId)
+        .map((c) => c.account.courseId as string);
+
+      for (const cid of trackCourses) {
+        if (cid === courseId) continue;
+        try {
+          const enrollmentPDA = getEnrollmentPDA(cid, learner);
+          const enrollment = await program.account.enrollment.fetch(enrollmentPDA);
+          const credAsset = enrollment.credentialAsset as {
+            toBase58?: () => string;
+          } | null;
+          if (
+            credAsset &&
+            credAsset.toBase58 &&
+            credAsset.toBase58() === existingCredentialAsset
+          ) {
+            upgradeCourseId = cid;
+            break;
+          }
+        } catch {
+          // Enrollment doesn't exist or was closed — skip
+        }
+      }
+    } catch {
+      // Non-fatal — will fall through and try with current courseId
+    }
+  }
 
   // Fetch track name for metadata
   let trackName = `Track ${enrollmentData.trackId}`;
@@ -283,12 +370,12 @@ export async function POST(req: NextRequest) {
   let result: { signature: string; credentialAsset: string };
 
   if (isUpgrade) {
-    // Upgrade existing credential
+    // Upgrade existing credential — use the enrollment that has credential_asset
     const res = await fetch(`${BACKEND_URL}/upgrade-credential`, {
       method: "POST",
       headers,
       body: JSON.stringify({
-        courseId,
+        courseId: upgradeCourseId,
         learnerWallet: walletAddress,
         credentialAsset: existingCredentialAsset,
         credentialName,

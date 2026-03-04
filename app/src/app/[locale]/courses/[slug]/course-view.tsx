@@ -24,6 +24,13 @@ import {
 import type { Course } from "@/types/course";
 import { SUBMISSION_STATUS } from "@/types/course";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   BookOpen,
   Clock,
   Star,
@@ -37,6 +44,7 @@ import {
   X,
   GraduationCap,
   MessageSquare,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -66,6 +74,7 @@ export default function CourseView({ course, slug, preview = false }: { course: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user, sessionProvider]);
   // Check if this course was already completed via credential completedCourseIds
+  // or via the enrollment PDA having credentialAsset set
   const { credentials, loading: credentialsLoading } = useOnChainProgress(walletAddress);
   const alreadyCompleted = useMemo(() => {
     if (!course.courseId || !course.track.trackId) return false;
@@ -95,8 +104,16 @@ export default function CourseView({ course, slug, preview = false }: { course: 
   }, [slug]);
 
   const isFinalized = !!enrollment?.completedAt;
-  const hasCredential = !!enrollment?.credentialAsset &&
+  const hasTrackCredential = useMemo(() => {
+    if (!course.track.trackId) return false;
+    return credentials.some((c) => c.trackId === course.track.trackId);
+  }, [credentials, course.track.trackId]);
+  // True when this specific enrollment already had a credential issued through it
+  const enrollmentHasCredential = !!enrollment?.credentialAsset &&
     enrollment.credentialAsset.toBase58() !== "11111111111111111111111111111111";
+
+  const [credentialCollected, setCredentialCollected] = useState(false);
+  const [closeWarningOpen, setCloseWarningOpen] = useState(false);
 
   const handleCollectCredential = useCallback(async () => {
     if (!course.courseId) return;
@@ -122,8 +139,7 @@ export default function CourseView({ course, slug, preview = false }: { course: 
         isUpgrade: data.isUpgrade,
         imageUrl: data.imageUrl,
       });
-      // Auto-trigger close enrollment while showing celebration modal
-      closeEnrollment(course.courseId);
+      setCredentialCollected(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to collect credential";
       toast.error(message);
@@ -131,7 +147,7 @@ export default function CourseView({ course, slug, preview = false }: { course: 
     } finally {
       setCollecting(false);
     }
-  }, [course.courseId, closeEnrollment]);
+  }, [course.courseId]);
 
   const handleCredentialModalClose = useCallback(() => {
     setCredentialModal(null);
@@ -385,19 +401,38 @@ export default function CourseView({ course, slug, preview = false }: { course: 
                     <CheckCircle2 className="h-4 w-4" />
                     {t("enrolledCompleted")}
                   </Button>
-                  <Button
-                    className="w-full gap-2 border-2 border-gold bg-gold/15 text-foreground hover:bg-gold/25"
-                    size="lg"
-                    disabled={collecting || !course.courseId}
-                    onClick={handleCollectCredential}
-                  >
-                    <GraduationCap className="h-4 w-4" />
-                    {collecting
-                      ? t("collecting")
-                      : hasCredential
-                        ? t("upgradeCredentialAndClose")
-                        : t("collectCredentialAndClose")}
-                  </Button>
+                  {credentialCollected || alreadyCompleted || enrollmentHasCredential ? (
+                    <>
+                      <Badge variant="outline" className="flex w-full items-center justify-center gap-1.5 border-green-500/50 py-2 text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {t("credentialCollected")}
+                      </Badge>
+                      <Button
+                        className="w-full gap-2"
+                        size="sm"
+                        variant="ghost"
+                        disabled={closing || !course.courseId}
+                        onClick={() => setCloseWarningOpen(true)}
+                      >
+                        <X className="h-3 w-3" />
+                        {closing ? t("closing") : t("closeEnrollment")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      className="w-full gap-2 border-2 border-gold bg-gold/15 text-foreground hover:bg-gold/25"
+                      size="lg"
+                      disabled={collecting || !course.courseId}
+                      onClick={handleCollectCredential}
+                    >
+                      <GraduationCap className="h-4 w-4" />
+                      {collecting
+                        ? t("collecting")
+                        : hasTrackCredential
+                          ? t("upgradeCredential")
+                          : t("collectCredential")}
+                    </Button>
+                  )}
                 </div>
               ) : enrolled ? (
                 <div className="space-y-2">
@@ -500,6 +535,43 @@ export default function CourseView({ course, slug, preview = false }: { course: 
           </Card>
         </div>
       </div>
+
+      <Dialog open={closeWarningOpen} onOpenChange={setCloseWarningOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {t("closeEnrollmentTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>{t("closeEnrollmentWarning1")}</p>
+            <p>{t("closeEnrollmentWarning2")}</p>
+            <p>{t("closeEnrollmentWarning3")}</p>
+            <p className="rounded-md bg-muted/50 p-3 text-xs italic">
+              {t("closeEnrollmentNote")}
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCloseWarningOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={closing}
+              onClick={() => {
+                if (course.courseId) {
+                  closeEnrollment(course.courseId);
+                  trackEvent(ANALYTICS_EVENTS.UNENROLLMENT, { courseId: course.courseId, slug });
+                  setCloseWarningOpen(false);
+                }
+              }}
+            >
+              {closing ? t("closing") : t("closeEnrollmentConfirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CredentialModal
         open={!!credentialModal}
