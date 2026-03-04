@@ -90,6 +90,10 @@ export type { Achievement };
 
 /* ── Helpers ── */
 
+export function getCredentialById(id: string) {
+  return credentials.find((c) => c.id === id);
+}
+
 export function getCompletedCourses() {
   // Simulate: first 3 courses have progress
   return courses.slice(0, 3).map((c, i) => ({

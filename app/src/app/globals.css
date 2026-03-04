@@ -123,7 +123,7 @@
   --sidebar-ring: #34d399;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
