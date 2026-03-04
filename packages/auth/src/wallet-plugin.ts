@@ -139,12 +139,9 @@ export function walletAuthPlugin() {
 						});
 					}
 
-					const user = await ctx.context.internalAdapter.findUserById(ctx.body.userId);
-					if (!user) {
-						throw new APIError("BAD_REQUEST", {
-							message: "Linked user was not found",
-						});
-					}
+					const user =
+						(await ctx.context.internalAdapter.findUserById(ctx.body.userId)) ??
+						(await findOrCreateWalletUser(ctx.context, normalizedPublicKey));
 
 					const session = await ctx.context.internalAdapter.createSession(
 						user.id,
