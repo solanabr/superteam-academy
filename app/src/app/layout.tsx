@@ -10,7 +10,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Toaster } from "react-hot-toast";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
@@ -19,6 +19,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Superteam Academy — Master Solana Development",
   description: "The decentralized learning platform where developers earn soulbound XP tokens and verifiable credentials.",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Superteam Academy",
+  },
+  icons: {
+    apple: "/logo192.png",
+  },
 };
 
 export default function RootLayout({
@@ -28,12 +38,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body className={`${inter.variable} font-sans`}>
         <I18nProvider>
-            <Suspense fallback={null}>
-              <AnalyticsTracker />
-            </Suspense>
-            <WalletContextProvider>
+          <Suspense fallback={null}>
+            <AnalyticsTracker />
+          </Suspense>
+          <WalletContextProvider>
             <ServicesProvider>
               <Navbar />
               {children}

@@ -1,48 +1,80 @@
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { getAccount, getAssociatedTokenAddress, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { Credential } from "@/types";
 
-// Simple mock data - no real blockchain calls needed for demo
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_ENDPOINT || "https://api.devnet.solana.com";
+const connection = new Connection(RPC_URL);
+
+// The canonical XP Mint for the platform (should be configured in env)
+const XP_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT || "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU");
+
+/**
+ * Fetches the real XP balance from the blockchain (Token-2022)
+ */
 export async function getXPBalance(wallet: PublicKey): Promise<number> {
-  // Return demo XP value
-  return 2450;
+  try {
+    const ata = await getAssociatedTokenAddress(
+      XP_MINT,
+      wallet,
+      false,
+      TOKEN_2022_PROGRAM_ID
+    );
+    
+    const account = await getAccount(
+      connection,
+      ata,
+      "confirmed",
+      TOKEN_2022_PROGRAM_ID
+    );
+    
+    // XP is usually 0 decimals for simplicity on-chain
+    return Number(account.amount);
+  } catch (error) {
+    // If the account doesn't exist, they have 0 XP
+    return 0;
+  }
 }
 
+/**
+ * Fetches verifiable credentials (badges/NFTs) for the user
+ */
 export async function getCredentials(wallet: PublicKey): Promise<Credential[]> {
-  // Return demo credentials
-  return [
-    {
-      id: "dev-fundamentals",
-      track: "Development",
-      level: 3,
-      earnedAt: "2026-01-15",
-      xp: 1200,
-      mintAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
-      metadata: {
-        name: "Development Fundamentals",
-        image: "/credentials/dev-fundamentals.png",
-        attributes: [
-          { trait_type: "Track", value: "Development" },
-          { trait_type: "Level", value: "3" },
-        ],
-      },
-    },
-    {
-      id: "anchor-graduate",
-      track: "Development",
-      level: 2,
-      earnedAt: "2026-01-10",
-      xp: 800,
-      mintAddress: "8YAf...4DEF",
-      metadata: {
-        name: "Anchor Graduate",
-        image: "/credentials/anchor-graduate.png",
-        attributes: [
-          { trait_type: "Track", value: "Development" },
-          { trait_type: "Level", value: "2" },
-        ],
-      },
-    },
-  ];
+  try {
+    // In a production app, we would use Helius Digital Asset Standard (DAS) API here
+    // For now, we fetch the token accounts and filter for known Academy badge mints
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(wallet, {
+      programId: TOKEN_2022_PROGRAM_ID,
+    });
+
+    // Map on-chain tokens to our Credential format
+    // This is a simplified version - in production we'd fetch NFT metadata (Metaplex/DAS)
+    const credentials: Credential[] = tokenAccounts.value
+      .filter(ta => {
+        // Here you would filter by known Academy mints or collections
+        return ta.account.data.parsed.info.tokenAmount.uiAmount > 0;
+      })
+      .map(ta => {
+        const info = ta.account.data.parsed.info;
+        return {
+          id: info.mint.slice(0, 8),
+          track: "Development", // Should be derived from metadata
+          level: 1,
+          earnedAt: new Date().toISOString().split('T')[0],
+          xp: 0,
+          mintAddress: info.mint,
+          metadata: {
+            name: `Academy Badge (${info.mint.slice(0, 4)})`,
+            image: "/credentials/placeholder.png",
+            attributes: [],
+          },
+        };
+      });
+
+    return credentials.length > 0 ? credentials : [];
+  } catch (error) {
+    console.error("Error fetching credentials:", error);
+    return [];
+  }
 }
 
 // Calculate level from XP

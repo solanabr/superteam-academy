@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { BookOpen, Trophy, User, Settings, Globe, Award, Menu, X, Zap } from "lucide-react";
+import { BookOpen, Trophy, User, Settings, Globe, Award, Menu, X, Zap, Sparkles } from "lucide-react";
 import { SolanaLogo } from "./SolanaLogo";
 import { useI18n, languages } from "./I18nProvider";
 import { useState, useEffect } from "react";
@@ -57,6 +57,7 @@ export function Navbar({ showNavLinks = true }: NavbarProps) {
               <NavLink href="/courses" icon={BookOpen} label={t("nav.courses")} />
               <NavLink href="/challenges" icon={Zap} label={t("nav.challenges")} />
               <NavLink href="/leaderboard" icon={Trophy} label={t("nav.leaderboard")} />
+              <NavLink href="/onboarding" icon={Sparkles} label="Assessment" />
               <NavLink href="/achievements" icon={Award} label={t("nav.achievements")} />
               {mounted && connected && (
                 <>
