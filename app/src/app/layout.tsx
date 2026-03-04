@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { XpAnimationProvider } from "@/context/XpAnimationContext";
 import { LanguageProvider } from "@/context/LanguageContext"
 import Script from "next/script";
-import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import * as Sentry from '@sentry/nextjs';
 import { Suspense } from "react";
 import { RootProviders } from "@/components/RootProviders";
@@ -16,6 +15,10 @@ const SolanaProviders = dynamic(
   { ssr: false }
 );
 
+const AnalyticsProvider = dynamic(
+  () => import("@/components/AnalyticsProvider").then(m => m.AnalyticsProvider),
+  { ssr: false }
+);
 
 const Header = dynamic(
   () => import("@/components/layout/Header").then((mod) => mod.Header),
@@ -29,12 +32,14 @@ const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
+  display: "swap",
 });
 
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+  display: "swap",
 });
 
 export function generateMetadata(): Metadata {
@@ -54,7 +59,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://api.devnet.solana.com" />
+        <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -91,10 +100,13 @@ export default function RootLayout({
       <RootProviders>
         <QueryProvider>
           <ThemeProvider>
+          
+
           <SolanaProviders>
             <LanguageProvider>
-            <XpAnimationProvider>
               <Header />
+            <XpAnimationProvider>
+              
               <Suspense fallback={null}>
                 <AnalyticsProvider />
               </Suspense>
@@ -104,6 +116,7 @@ export default function RootLayout({
             </XpAnimationProvider>
             </LanguageProvider>
           </SolanaProviders>
+          
           </ThemeProvider>
         </QueryProvider>
       </RootProviders>

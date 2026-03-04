@@ -173,7 +173,10 @@
   "home.learn.point2": "Desarrollo de programas con Anchor",
   "home.learn.point3": "Integración de Token-2022",
   "home.learn.point4": "Patrones CPI y arquitectura PDA",
-
+  "home.proof.wallet": "Identidad basada en wallet",
+  "home.proof.xp": "Reputación basada en XP",
+  "home.proof.cert": "Certificados verificables",
+  "home.identityHint": "La wallet es tu identidad on-chain. Google es opcional para guardar preferencias y progreso.",
   "home.earn.title": "Gana",
   "home.earn.subtitle": "Construye credibilidad medible en cadena",
   "home.earn.point1": "XP por cada lección completada",

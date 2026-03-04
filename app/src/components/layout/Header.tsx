@@ -1,20 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useXpBalance } from "@/hooks/useXpBalance";
-import { useXpAnimation } from "@/context/XpAnimationContext";
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import dynamic from "next/dynamic";
 
 export function Header() {
   const { connected } = useWallet();
-  const { data: xp, isLoading, error } = useXpBalance();
+
+  // Always call hooks (React rule)
+  const xpQuery = useXpBalance();
+  const xp = connected ? xpQuery.data : undefined;
+  const isLoading = connected ? xpQuery.isLoading : false;
+  const error = connected ? xpQuery.error : null;
+
   const { language, setLanguage, t } = useLanguage();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -24,6 +30,10 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
 
   const previousXpRef = useRef<number>(0);
+  const WalletButton = dynamic(
+    () => import("@solana/wallet-adapter-react-ui").then(m => m.WalletMultiButton),
+    { ssr: false }
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -32,20 +42,31 @@ export function Header() {
   /* ---------------- Sync Initial XP ---------------- */
 
   useEffect(() => {
+    if (!mounted) return;
+
     if (xp !== undefined && xp !== null) {
       setAnimatedXp(xp);
       previousXpRef.current = xp;
     }
-  }, [xp]);
+  }, [xp, mounted]);
 
   /* ---------------- Animate XP Increase ---------------- */
 
   useEffect(() => {
-    if (!xp || xp <= previousXpRef.current) return;
+    if (!mounted) return;
+    if (xp === undefined || xp === null) return;
+
+    // Prevent animation on first load
+    if (previousXpRef.current === 0) {
+      previousXpRef.current = xp;
+      return;
+    }
+
+    if (xp <= previousXpRef.current) return;
 
     const start = previousXpRef.current;
     const end = xp;
-    const duration = 700;
+    const duration = 600;
     const startTime = performance.now();
 
     setIsPulsing(true);
@@ -54,6 +75,7 @@ export function Header() {
       const progress = Math.min((time - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.floor(start + (end - start) * eased);
+
       setAnimatedXp(current);
 
       if (progress < 1) {
@@ -65,30 +87,33 @@ export function Header() {
     }
 
     requestAnimationFrame(animate);
-  }, [xp]);
 
-  /* ---------------- Persist Language ---------------- */
+  }, [xp, mounted]);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("superteam:language");
-    if (stored) {
-      setLanguage(stored as "en" | "pt" | "es");
-    }
-  }, [setLanguage]);
+  /* ---------------- Load Language Once ---------------- */
 
   useEffect(() => {
-    localStorage.setItem("superteam:language", language);
-  }, [language]);
+  if (!mounted) return;
 
-  if (!mounted) return null;
+  const id = setTimeout(() => {
+      const stored = localStorage.getItem("superteam:language");
+      if (stored && stored !== language) {
+        setLanguage(stored as "en" | "pt" | "es");
+      }
+    }, 0);
 
-  const navItems = [
-    { href: "/dashboard", label: t("nav.dashboard") },
-    { href: "/courses", label: t("nav.courses") },
-    { href: "/profile", label: t("nav.profile") },
-    { href: "/leaderboard", label: t("nav.leaderboard") },
-    { href: "/settings", label: t("nav.settings") },
-  ];
+    return () => clearTimeout(id);
+  }, [mounted]);
+
+  const navItems = useMemo(() => [
+  { href: "/dashboard", label: t("nav.dashboard") },
+  { href: "/courses", label: t("nav.courses") },
+  { href: "/profile", label: t("nav.profile") },
+  { href: "/leaderboard", label: t("nav.leaderboard") },
+  { href: "/settings", label: t("nav.settings") },
+], [t]);
+
+if (!mounted) return null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-md shadow-sm">
@@ -96,13 +121,13 @@ export function Header() {
 
         {/* Brand */}
         <Link href="/" className="flex flex-col leading-tight group">
-        <span className="text-lg font-semibold tracking-tight group-hover:opacity-80 transition-opacity">
-          Superteam Academy
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {t("nav.tagline")}
-        </span>
-      </Link>
+          <span className="text-lg font-semibold tracking-tight group-hover:opacity-80 transition-opacity">
+            Superteam Academy
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {t("nav.tagline")}
+          </span>
+        </Link>
 
         {/* Navigation */}
         {connected && (
@@ -111,26 +136,20 @@ export function Header() {
               const isActive = pathname === item.href;
 
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="relative group"
-                >
+                <Link key={item.href} href={item.href} className="relative group">
                   <span
-                    className={`transition-colors ${
+                    className={
                       isActive
                         ? "text-foreground font-medium"
-                        : "text-muted-foreground group-hover:text-foreground"
-                    }`}
+                        : "text-muted-foreground group-hover:text-foreground transition-colors"
+                    }
                   >
                     {item.label}
                   </span>
 
                   <span
-                    className={`absolute left-0 -bottom-2 h-[2px] rounded-full transition-all duration-300 ${
-                      isActive
-                        ? "w-full bg-foreground"
-                        : "w-0 bg-foreground group-hover:w-full"
+                    className={`absolute left-0 -bottom-2 h-[2px] rounded-full transition-[width] duration-300 ${
+                      isActive ? "w-full bg-foreground" : "w-0 bg-foreground group-hover:w-full"
                     }`}
                   />
                 </Link>
@@ -150,7 +169,7 @@ export function Header() {
               setTheme(theme === "dark" ? "light" : "dark")
             }
           >
-            {mounted && (theme === "dark" ? "☀️" : "🌙")}
+            {theme === "dark" ? "☀️" : "🌙"}
           </Button>
 
           {/* Language */}
@@ -158,9 +177,11 @@ export function Header() {
             <span className="text-sm">🌍</span>
             <select
               value={language}
-              onChange={(e) =>
-                setLanguage(e.target.value as "en" | "pt" | "es")
-              }
+              onChange={(e) => {
+                const newLang = e.target.value as "en" | "pt" | "es";
+                setLanguage(newLang);
+                localStorage.setItem("superteam:language", newLang);
+              }}
               className="text-sm bg-transparent focus:outline-none cursor-pointer"
             >
               <option value="en">EN</option>
@@ -172,7 +193,7 @@ export function Header() {
           {/* XP */}
           {connected && (
             <div
-              className={`flex items-center gap-2 px-5 py-2 rounded-full border bg-muted/40 text-sm font-medium transition-all duration-300 ${
+              className={`flex items-center gap-2 px-5 py-2 rounded-full border bg-muted/40 text-sm font-medium transition-transform duration-300 ${
                 isPulsing ? "scale-105" : "scale-100"
               }`}
             >
@@ -202,7 +223,10 @@ export function Header() {
           )}
 
           {/* Wallet */}
-          <WalletMultiButton />
+          
+            <WalletButton />
+          
+
         </div>
       </div>
     </header>

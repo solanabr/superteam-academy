@@ -164,7 +164,10 @@
   "home.why.point3": "Infraestrutura de certificados verificáveis",
   "home.why.point4": "Currículo de Solana orientado à produção",
   "home.why.point5": "Construído para contribuição real ao ecossistema",
-
+  "home.proof.wallet": "Identidade baseada em carteira",
+  "home.proof.xp": "Reputação baseada em XP",
+  "home.proof.cert": "Certificados verificáveis",
+  "home.identityHint": "A carteira é sua identidade on-chain. O Google é opcional para salvar preferências e progresso.",
   "home.learn.title": "Aprender",
   "home.learn.subtitle": "Domine engenharia Solana em nível profissional",
   "home.learn.point1": "Modelo de contas e transações",

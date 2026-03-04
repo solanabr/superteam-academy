@@ -157,6 +157,10 @@
 
   "home.hero.title": "Become a Verifiable Solana Builder",
   "home.hero.subtitle": "Superteam Academy transforms learning into on-chain reputation. Complete production-grade challenges, earn wallet-bound XP, and showcase verifiable credentials that signal real Solana engineering skill.",
+  "home.proof.wallet": "Wallet-native identity",
+  "home.proof.xp": "XP-based reputation",
+  "home.proof.cert": "Verifiable certificates",
+  "home.identityHint" : "Wallet is your on-chain identity. Google linking is optional for saving preferences and progress.",
 
   "home.why.title": "Why Superteam Academy?",
   "home.why.subtitle": "Structured learning meets verifiable on-chain progress",
