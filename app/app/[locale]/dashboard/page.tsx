@@ -1,4 +1,9 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
+import { useWallet } from "@/hooks/use-wallet";
 import {
   Card,
   CardHeader,
@@ -21,20 +26,98 @@ import {
 import {
   learningProgressService,
   courseService,
+  onChainUserService,
 } from "@/lib/services";
-import { getTranslations, getLocale } from "next-intl/server";
+import { useTranslations } from "next-intl";
 
-export default async function DashboardPage() {
-  const [xp, streak, credentials, enrollments, courses] = await Promise.all([
-    learningProgressService.getXpSummary(),
-    learningProgressService.getStreak(),
-    learningProgressService.getCredentials(),
-    learningProgressService.getEnrollments(),
-    courseService.getCourses(),
-  ]);
+export default function DashboardPage() {
+  const { address, authenticated } = useWallet();
+  const t = useTranslations();
+  const locale = useLocale();
+  const [mounted, setMounted] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return true;
+  });
+  const [xp, setXp] = useState({ total: 0, level: 1 });
+  const [streak, setStreak] = useState({ current: 0, longest: 0, lastActiveDate: "" });
+  const [credentials, setCredentials] = useState<Array<{ id: string; track: string; level: number; issuedAt: string }>>([]);
+  const [enrollments, setEnrollments] = useState<Array<{ courseSlug: string; completedLessons: number; totalLessons: number; isCompleted: boolean }>>([]);
+  const [courses, setCourses] = useState<Array<{ slug: string; title: string; lessonCount: number }>>([]);
+  const [loading, setLoading] = useState(true);
 
-  const t = await getTranslations();
-  const locale = await getLocale();
+  useEffect(() => {
+    async function loadData() {
+      const coursesData = await courseService.getCourses();
+      setCourses(coursesData);
+      
+      const shouldUseOnChain = address && authenticated;
+      
+      if (shouldUseOnChain) {
+        try {
+          const [xpData, streakData, creds, enrollData] = await Promise.all([
+            onChainUserService.getXpSummary(address),
+            onChainUserService.getStreak(address),
+            onChainUserService.getCredentials(address),
+            onChainUserService.getEnrollments(address),
+          ]);
+          
+          setXp(xpData);
+          setStreak(streakData);
+          setCredentials(creds);
+          setEnrollments(enrollData);
+        } catch (error) {
+          console.error("Error fetching on-chain data:", error);
+          const [fallbackXp, fallbackStreak, fallbackCreds, fallbackEnroll] = await Promise.all([
+            learningProgressService.getXpSummary(),
+            learningProgressService.getStreak(),
+            learningProgressService.getCredentials(),
+            learningProgressService.getEnrollments(),
+          ]);
+          setXp(fallbackXp);
+          setStreak(fallbackStreak);
+          setCredentials(fallbackCreds);
+          setEnrollments(fallbackEnroll);
+        }
+      } else {
+        const [fallbackXp, fallbackStreak, fallbackCreds, fallbackEnroll] = await Promise.all([
+          learningProgressService.getXpSummary(),
+          learningProgressService.getStreak(),
+          learningProgressService.getCredentials(),
+          learningProgressService.getEnrollments(),
+        ]);
+        setXp(fallbackXp);
+        setStreak(fallbackStreak);
+        setCredentials(fallbackCreds);
+        setEnrollments(fallbackEnroll);
+      }
+      
+      setLoading(false);
+    }
+    
+    loadData();
+  }, [address, authenticated]);
+
+  if (!mounted || loading) {
+    return (
+      <div className="py-4">
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {t("dashboard.heading")}
+          </h1>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="pt-4">
+                <div className="h-16 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const courseMap = new Map(courses.map((c) => [c.slug, c]));
 
   return (

@@ -33,4 +33,10 @@ export {
 export { sanityCourseService } from "./sanity-course";
 
 // On-chain services (use real Solana data when available)
-export { onChainUserService, onChainLeaderboardService } from "./onchain";
+export {
+  onChainUserService,
+  onChainLeaderboardService,
+  onChainEnrollmentAction,
+  onChainLessonAction,
+  getUserProfile,
+} from "./onchain";
