@@ -151,7 +151,12 @@ export function GenericProgramExplorer({
       (idl as { metadata?: { name?: string } } | null)?.metadata?.name ?? "",
     [idl]
   );
-  const storagePrefix = `${programName}-${courseSlug}`;
+
+  // Wallet-scoped localStorage key prefix to prevent cross-user cache leaks
+  const walletPrefix = publicKey ? publicKey.toBase58().slice(0, 8) : "";
+  const storagePrefix = walletPrefix
+    ? `${walletPrefix}-${programName}-${courseSlug}`
+    : `${programName}-${courseSlug}`;
 
   // Instruction coder (singleton per IDL)
   const instructionCoder = useMemo(() => {
@@ -240,11 +245,16 @@ export function GenericProgramExplorer({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`program-${courseSlug}`);
-      if (stored) setProgramId(stored);
-    } catch {
-      // non-critical
+    // Read from wallet-scoped localStorage key
+    if (walletPrefix) {
+      try {
+        const stored = localStorage.getItem(
+          `program-${walletPrefix}-${courseSlug}`
+        );
+        if (stored) setProgramId(stored);
+      } catch {
+        // non-critical
+      }
     }
 
     async function checkServer() {
@@ -256,10 +266,15 @@ export function GenericProgramExplorer({
         const data = await res.json();
         if (data.deployed && data.programId) {
           setProgramId(data.programId);
-          try {
-            localStorage.setItem(`program-${courseSlug}`, data.programId);
-          } catch {
-            // non-critical
+          if (walletPrefix) {
+            try {
+              localStorage.setItem(
+                `program-${walletPrefix}-${courseSlug}`,
+                data.programId
+              );
+            } catch {
+              // non-critical
+            }
           }
         }
       } catch {
@@ -267,7 +282,7 @@ export function GenericProgramExplorer({
       }
     }
     checkServer();
-  }, [courseSlug, courseId]);
+  }, [courseSlug, courseId, walletPrefix]);
 
   // Auto-scroll tx history
   useEffect(() => {

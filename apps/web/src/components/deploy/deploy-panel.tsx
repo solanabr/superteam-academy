@@ -162,15 +162,19 @@ export function DeployPanel({
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [txLog]);
 
+  // Wallet-scoped localStorage key prefix to prevent cross-user cache leaks
+  const walletPrefix = publicKey ? publicKey.toBase58().slice(0, 8) : "";
+
   // Check for existing deployment on mount — try localStorage first (has stats),
   // then fall back to server API (only has programId).
   useEffect(() => {
     async function checkExistingDeployment() {
       // 1. Try localStorage (preserves stats across refresh)
       try {
-        const cached = localStorage.getItem(
-          `deploy-result-${courseSlug}-${lessonId}`
-        );
+        const key = walletPrefix
+          ? `deploy-result-${walletPrefix}-${courseSlug}-${lessonId}`
+          : null;
+        const cached = key ? localStorage.getItem(key) : null;
         if (cached) {
           const parsed = JSON.parse(cached) as {
             programId: string;
@@ -218,7 +222,7 @@ export function DeployPanel({
       }
     }
     checkExistingDeployment();
-  }, [lessonId, courseId, courseSlug]);
+  }, [lessonId, courseId, courseSlug, walletPrefix]);
 
   // Check for resumable state on mount
   useEffect(() => {
@@ -275,20 +279,26 @@ export function DeployPanel({
       setPanelState("success");
       clearSavedState(buildUuid);
 
-      // Save program ID + stats to localStorage for use in later lessons and refresh
-      try {
-        localStorage.setItem(`program-${courseSlug}`, deployResult.programId);
-        localStorage.setItem(
-          `deploy-result-${courseSlug}-${lessonId}`,
-          JSON.stringify({
-            programId: deployResult.programId,
-            totalChunks: deployResult.totalChunks,
-            durationMs: deployResult.durationMs,
-            rentLamports: deployResult.rentLamports,
-          })
-        );
-      } catch {
-        // non-critical
+      // Save program ID + stats to localStorage for use in later lessons and refresh.
+      // Keys are scoped by wallet to prevent cross-user cache leaks.
+      if (walletPrefix) {
+        try {
+          localStorage.setItem(
+            `program-${walletPrefix}-${courseSlug}`,
+            deployResult.programId
+          );
+          localStorage.setItem(
+            `deploy-result-${walletPrefix}-${courseSlug}-${lessonId}`,
+            JSON.stringify({
+              programId: deployResult.programId,
+              totalChunks: deployResult.totalChunks,
+              durationMs: deployResult.durationMs,
+              rentLamports: deployResult.rentLamports,
+            })
+          );
+        } catch {
+          // non-critical
+        }
       }
 
       // Fire confetti celebration
@@ -318,7 +328,7 @@ export function DeployPanel({
         // ignore
       }
     },
-    [buildUuid, courseSlug, lessonId, courseId]
+    [buildUuid, courseSlug, lessonId, courseId, walletPrefix]
   );
 
   // Deploy handler
