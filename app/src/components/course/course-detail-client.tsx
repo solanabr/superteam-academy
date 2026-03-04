@@ -31,10 +31,22 @@ export interface CourseDetailClientProps {
 export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
-  const { getCourseBySlug, courses: allCourses } = useCourses();
+  const { getCourseBySlug, courses: allCourses, isLoading } = useCourses();
   const maybeCourse = getCourseBySlug(slug);
   const { enrolledCourseIds, progressMap, enrollInCourse } =
     useLearningProgress();
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="h-4 w-96 rounded bg-muted" />
+          <div className="h-64 rounded bg-muted" />
+        </div>
+      </div>
+    );
+  }
 
   if (!maybeCourse) {
     notFound();

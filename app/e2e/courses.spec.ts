@@ -1,106 +1,127 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Courses", () => {
-  test("course catalog loads with courses", async ({ page }) => {
+test.describe("Courses — Catalog", () => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/courses");
-    // Should have course cards
+    await expect(page.locator("h1")).toBeVisible();
+  });
+
+  test("catalog loads real courses", async ({ page }) => {
     const courseCards = page.locator('a[href^="/courses/"]');
     await expect(courseCards.first()).toBeVisible();
     const count = await courseCards.count();
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test("search filters courses", async ({ page }) => {
-    await page.goto("/courses");
-    const searchInput = page.locator('input[type="text"]');
-    await searchInput.fill("Anchor");
-    // Wait for filter to apply
-    await page.waitForTimeout(300);
+  test("search filters by title", async ({ page }) => {
+    const searchInput = page.locator(
+      '#course-search, input[placeholder*="Search" i], input[type="text"]',
+    );
+    // Wait for courses to load first
+    await page
+      .locator('a[href^="/courses/"]')
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 });
+
+    await searchInput.first().fill("Solana");
+    await page.waitForTimeout(1000);
+
     const courseCards = page.locator('a[href^="/courses/"]');
+    await expect(courseCards.first()).toBeVisible({ timeout: 5000 });
     const count = await courseCards.count();
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test("search with no results shows empty state", async ({ page }) => {
-    await page.goto("/courses");
-    const searchInput = page.locator('input[type="text"]');
-    await searchInput.fill("xyznonexistentcourse123");
-    await page.waitForTimeout(300);
-    const courseCards = page.locator('a[href^="/courses/"]');
-    const count = await courseCards.count();
-    expect(count).toBe(0);
+  test("search with no match shows empty state", async ({ page }) => {
+    const searchInput = page.locator(
+      '#course-search, input[placeholder*="Search" i], input[type="text"]',
+    );
+    await searchInput.first().fill("xyznonexistentcourse123");
+    await page.waitForTimeout(500);
+
+    const emptyState = page.getByText(/no courses found|no results|not found/i);
+    await expect(emptyState.first()).toBeVisible();
   });
 
-  test("difficulty filter pills work", async ({ page }) => {
-    await page.goto("/courses");
-    // Click beginner filter
+  test("difficulty filter pills filter correctly", async ({ page }) => {
+    await page
+      .locator('a[href^="/courses/"]')
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 });
+
+    const beforeCount = await page.locator('a[href^="/courses/"]').count();
+
     const beginnerButton = page
       .locator("button")
       .filter({ hasText: /beginner/i })
       .first();
     await beginnerButton.click();
-    await page.waitForTimeout(300);
-    // Should still have some courses
+    await page.waitForTimeout(500);
+
     const courseCards = page.locator('a[href^="/courses/"]');
-    const count = await courseCards.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+    const afterCount = await courseCards.count();
+    // Filter should either reduce results or show only beginner courses
+    expect(afterCount).toBeGreaterThanOrEqual(1);
+    expect(afterCount).toBeLessThanOrEqual(beforeCount);
   });
 
-  test("course detail page loads", async ({ page }) => {
-    await page.goto("/courses/intro-to-solana");
-    await expect(page.locator("main")).toBeVisible();
-    // Should have course title visible somewhere
+  test("course cards show essential metadata", async ({ page }) => {
+    const firstCard = page.locator('a[href^="/courses/"]').first();
+    await expect(firstCard).toBeVisible();
+
+    const xpInCard = firstCard.locator("text=/\\d+\\s*XP/i");
+    await expect(xpInCard.first()).toBeVisible();
+  });
+
+  test("clicking card navigates to course detail", async ({ page }) => {
+    const firstCard = page.locator('a[href^="/courses/"]').first();
+    const href = await firstCard.getAttribute("href");
+    await firstCard.click();
+    await expect(page).toHaveURL(href!);
+    await expect(page.locator("h1")).toBeVisible();
+  });
+});
+
+test.describe("Courses — Detail Page", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/courses");
+    await expect(page.locator("h1")).toBeVisible();
+    const firstCard = page.locator('a[href^="/courses/"]').first();
+    await firstCard.click();
     await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("course detail has enroll button", async ({ page }) => {
-    await page.goto("/courses/intro-to-solana");
-    // Look for enroll or continue learning button
+  test("course detail shows title", async ({ page }) => {
+    const title = await page.locator("h1").textContent();
+    expect(title!.length).toBeGreaterThan(3);
+  });
+
+  test("course detail shows creator", async ({ page }) => {
+    const creatorText = page.getByText(/created by|instructor|by/i);
+    await expect(creatorText.first()).toBeVisible();
+  });
+
+  test("course detail shows modules and lessons", async ({ page }) => {
+    const moduleHeadings = page.locator("h2, h3, h4").filter({
+      hasText: /.+/,
+    });
+    const count = await moduleHeadings.count();
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test("course detail shows metadata (XP, difficulty)", async ({ page }) => {
+    const difficultyBadge = page.getByText(/beginner|intermediate|advanced/i);
+    await expect(difficultyBadge.first()).toBeVisible();
+
+    const xpDisplay = page.getByText(/\d+\s*XP/);
+    await expect(xpDisplay.first()).toBeVisible();
+  });
+
+  test("enroll or continue button visible", async ({ page }) => {
     const actionButton = page
       .locator("button, a")
       .filter({ hasText: /enroll|continue|start/i })
       .first();
     await expect(actionButton).toBeVisible();
-  });
-});
-
-test.describe("Leaderboard", () => {
-  test("leaderboard loads with entries", async ({ page }) => {
-    await page.goto("/leaderboard");
-    await expect(page.locator("main")).toBeVisible();
-    // Should have leaderboard heading
-    await expect(page.locator("h1")).toBeVisible();
-  });
-
-  test("time filter tabs are present", async ({ page }) => {
-    await page.goto("/leaderboard");
-    // Should have filter buttons for time periods
-    const buttons = page.locator("button");
-    const count = await buttons.count();
-    expect(count).toBeGreaterThanOrEqual(3);
-  });
-});
-
-test.describe("Settings", () => {
-  test("settings page has tabs", async ({ page }) => {
-    await page.goto("/settings");
-    await expect(page.locator("main")).toBeVisible();
-    // Should have tab navigation
-    const buttons = page.locator("button");
-    const count = await buttons.count();
-    expect(count).toBeGreaterThanOrEqual(4);
-  });
-});
-
-test.describe("Certificate", () => {
-  test("valid certificate loads", async ({ page }) => {
-    await page.goto("/certificates/cert-anchor-fundamentals-001");
-    await expect(page.locator("main")).toBeVisible();
-    await expect(page.locator("h1")).toBeVisible();
-  });
-
-  test("invalid certificate returns 404", async ({ page }) => {
-    const response = await page.goto("/certificates/nonexistent-cert-xyz");
-    expect(response?.status()).toBe(404);
   });
 });

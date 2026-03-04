@@ -107,22 +107,7 @@ async function fetchCourseRaw(slug: string) {
 }
 
 export async function getAllCourses(): Promise<Course[]> {
-  // Try Payload CMS first
-  try {
-    const payload = await getPayload();
-    const result = await payload.find({
-      collection: "courses",
-      where: { isActive: { equals: true } },
-      sort: "trackId",
-      limit: 1000,
-    });
-    if (result.docs.length > 0) {
-      return result.docs.map(payloadCourseToCourse);
-    }
-  } catch {
-    // Payload not configured or DB not available — fall through to Prisma
-  }
-
+  // Fetch Prisma courses first (fast, reliable)
   const [courses, completionGroups] = await Promise.all([
     prisma.course.findMany({
       where: { isActive: true },
@@ -136,12 +121,32 @@ export async function getAllCourses(): Promise<Course[]> {
     }),
   ]);
 
-  if (courses.length === 0) return MOCK_COURSES;
-
   const completionMap = new Map(
     completionGroups.map((g) => [g.courseId, g._count.courseId]),
   );
-  return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
+  const prismaCourses = courses.map((c) =>
+    formatCourse(c, completionMap.get(c.id) ?? 0),
+  );
+
+  if (prismaCourses.length > 0) return prismaCourses;
+
+  // Fall back to Payload CMS if Prisma has no courses
+  try {
+    const payload = await getPayload();
+    const result = await payload.find({
+      collection: "courses",
+      where: { isActive: { equals: true } },
+      sort: "trackId",
+      limit: 1000,
+    });
+    if (result.docs.length > 0) {
+      return result.docs.map(payloadCourseToCourse);
+    }
+  } catch {
+    // Payload not configured or DB not available
+  }
+
+  return MOCK_COURSES;
 }
 
 export async function getCourseBySlug(
