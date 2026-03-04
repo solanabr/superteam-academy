@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "pnpm build",
   "installCommand": "npm i -g pnpm && pnpm install",
-  "outputDirectory": "app/.next",
+  "outputDirectory": ".next",
   "cleanUrls": true,
   "framework": "nextjs"
 }
