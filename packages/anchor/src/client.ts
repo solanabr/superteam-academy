@@ -1,20 +1,20 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
 import { createHash } from "node:crypto";
 import {
-	PROGRAM_ID,
-	ACCOUNT_SIZES,
-	type ConfigAccount,
-	type CourseAccount,
-	type EnrollmentAccount,
-	type MinterRoleAccount,
-	type AchievementTypeAccount,
-	type AchievementReceiptAccount,
+    PROGRAM_ID,
+    ACCOUNT_SIZES,
+    type ConfigAccount,
+    type CourseAccount,
+    type EnrollmentAccount,
+    type MinterRoleAccount,
+    type AchievementTypeAccount,
+    type AchievementReceiptAccount,
 } from "./idl";
 import {
-	findConfigPDA,
-	findMinterRolePDA,
-	findAchievementTypePDA,
-	findAchievementReceiptPDA,
+    findConfigPDA,
+    findMinterRolePDA,
+    findAchievementTypePDA,
+    findAchievementReceiptPDA,
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;
@@ -174,23 +174,40 @@ export class AcademyClient {
 		return this.decodeEnrollment(info.data);
 	}
 
+	/**
+	 * Fetch enrollments by deriving each enrollment PDA from known courses.
+	 * Uses getMultipleAccountsInfo for a single batched RPC call instead of
+	 * scanning all program accounts.
+	 */
 	async fetchEnrollmentsForLearner(
-		learner: PublicKey
+		learner: PublicKey,
+		courses?: Array<{ pubkey: PublicKey; account: CourseAccount }>
 	): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
-		const accounts = await this.fetchAllEnrollments();
-		const courses = await this.fetchAllCourses();
-		const courseIdByKey = new Map<string, string>();
-		for (const c of courses) {
-			courseIdByKey.set(c.pubkey.toBase58(), c.account.courseId);
-		}
+		const allCourses = courses ?? await this.fetchAllCourses();
+		if (allCourses.length === 0) return [];
 
-		return accounts
-			.filter((e) => {
-				const courseId = courseIdByKey.get(e.account.course.toBase58());
-				if (!courseId) return false;
-				const [expectedPda] = this.findEnrollmentPDA(courseId, learner);
-				return e.pubkey.equals(expectedPda);
-			});
+		const pdas = allCourses.map((c) => {
+			const [pda] = this.findEnrollmentPDA(c.account.courseId, learner);
+			return pda;
+		});
+
+		// Batch fetch all enrollment PDAs in one RPC call
+		const infos = await this.connection.getMultipleAccountsInfo(pdas);
+
+		const results: Array<{ pubkey: PublicKey; account: EnrollmentAccount }> = [];
+		for (let i = 0; i < infos.length; i++) {
+			const info = infos[i];
+			if (!info) continue;
+			try {
+				results.push({
+					pubkey: pdas[i],
+					account: this.decodeEnrollment(info.data as Buffer),
+				});
+			} catch {
+				// Skip accounts that fail to decode
+			}
+		}
+		return results;
 	}
 
 	async fetchAllEnrollments(): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {

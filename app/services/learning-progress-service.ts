@@ -65,8 +65,8 @@ export class LearningProgressService extends BaseService {
 		this.achievementService = new AchievementService(this.connection, this.programId);
 	}
 
-	async getLearnerStats(learner: PublicKey, xpMint: PublicKey | null): Promise<LearnerStats> {
-		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(learner);
+	async getLearnerStats(learner: PublicKey, xpMint: PublicKey | null, courses?: Array<{ pubkey: PublicKey; account: import("@superteam-academy/anchor").CourseAccount }>): Promise<LearnerStats> {
+		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(learner, courses);
 		const xpBalance = xpMint
 			? await this.academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))
 			: 0n;
@@ -87,14 +87,14 @@ export class LearningProgressService extends BaseService {
 	}
 
 	async getLearnerOverview(learner: PublicKey): Promise<LearnerOverview> {
-		const [config, allCourses, enrollments, allAchievements] = await Promise.all([
+		const [config, allCourses, allAchievements] = await Promise.all([
 			this.academyClient.fetchConfig(),
 			this.academyClient.fetchAllCourses(),
-			this.academyClient.fetchEnrollmentsForLearner(learner),
 			this.achievementService.getLearnerAchievements(learner),
 		]);
 
-		const stats = await this.getLearnerStats(learner, config?.xpMint ?? null);
+		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(learner, allCourses);
+		const stats = await this.getLearnerStats(learner, config?.xpMint ?? null, allCourses);
 		const coursesByKey = new Map(
 			allCourses.map((course) => [course.pubkey.toBase58(), course])
 		);

@@ -294,23 +294,50 @@ async function fetchOnChainProfile(
 	const credentialService = new CredentialService(connection, programId);
 	const achievementService = new AchievementService(connection, programId);
 
+	// On-chain first: fetch courses, then derive enrollment PDAs directly
 	const [
 		config,
 		allCourses,
-		enrollments,
 		indexedActivity,
 		rawCredentials,
 		onChainAchievements,
 		cmsCourses,
 	] = await Promise.all([
-		academyClient.fetchConfig(),
-		academyClient.fetchAllCourses(),
-		academyClient.fetchEnrollmentsForLearner(learner),
-		fetchIndexedLearnerActivity(learner, 10),
-		credentialService.getCredentialsByOwner(learner),
-		achievementService.getLearnerAchievements(learner),
+		academyClient.fetchConfig().catch((err) => {
+			console.error("[profile] fetchConfig failed:", err);
+			return null;
+		}),
+		academyClient.fetchAllCourses().catch((err) => {
+			console.error("[profile] fetchAllCourses failed:", err);
+			return [] as Awaited<ReturnType<typeof academyClient.fetchAllCourses>>;
+		}),
+		fetchIndexedLearnerActivity(learner, 10).catch(() => []),
+		credentialService.getCredentialsByOwner(learner).catch((err) => {
+			console.error("[profile] getCredentialsByOwner failed:", err);
+			return [] as Awaited<ReturnType<typeof credentialService.getCredentialsByOwner>>;
+		}),
+		achievementService.getLearnerAchievements(learner).catch((err) => {
+			console.error("[profile] getLearnerAchievements failed:", err);
+			return [] as Awaited<ReturnType<typeof achievementService.getLearnerAchievements>>;
+		}),
 		getCoursesCMS().catch(() => []),
 	]);
+
+	// Derive enrollment PDAs from known courses and batch-fetch them
+	const enrollments = await academyClient
+		.fetchEnrollmentsForLearner(learner, allCourses)
+		.catch((err) => {
+			console.error("[profile] fetchEnrollmentsForLearner failed:", err);
+			return [] as Awaited<ReturnType<typeof academyClient.fetchEnrollmentsForLearner>>;
+		});
+
+	console.log(
+		`[profile] on-chain data for ${learner.toBase58().slice(0, 8)}:`,
+		`courses=${allCourses.length}`,
+		`enrollments=${enrollments.length}`,
+		`credentials=${rawCredentials.length}`,
+		`achievements=${onChainAchievements.length}`,
+	);
 
 	const [credentials, xpBalance] = await Promise.all([
 		Promise.all(
@@ -346,12 +373,10 @@ async function fetchOnChainProfile(
 				!!c?.slug?.current && !!c?.title)
 			.map((c) => [c.slug.current, c.title])
 	);
-	const onChainCourseIds = new Set<string>();
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
 		const coursePk = entry.account.course.toBase58();
 		const courseId = course?.courseId ?? coursePk;
-		onChainCourseIds.add(courseId);
 		const completedLessons = countBits(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
 		return {
@@ -374,22 +399,6 @@ async function fetchOnChainProfile(
 			certificateEarned: Boolean(entry.account.credentialAsset),
 		};
 	});
-
-	// Merge CMS-tracked enrollments that aren't already present on-chain
-	const cmsEnrolled = resolvedUser?.enrolledCourses ?? [];
-	for (const slug of cmsEnrolled) {
-		if (onChainCourseIds.has(slug)) continue;
-		const cmsCourse = (cmsCourses ?? []).find((c) => c?.slug?.current === slug);
-		const moduleLessonCount = (cmsCourse?.modules ?? []).reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
-		enrolledCourses.push({
-			id: slug,
-			title: cmsCourse?.title ?? cmsTitleBySlug.get(slug) ?? formatCourseId(slug),
-			instructor: { name: "Superteam" },
-			progress: { completedLessons: 0, totalLessons: moduleLessonCount, timeSpent: 0 },
-			status: "not_started" as const,
-			certificateEarned: false,
-		});
-	}
 
 	const completedCourses = enrolledCourses.filter(
 		(course) => course.status === "completed"
