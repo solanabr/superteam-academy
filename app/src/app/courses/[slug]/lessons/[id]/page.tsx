@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Shell } from "@/components/Shell";
 import { getCourse } from "@/lib/courses";
 import { CodeEditor } from "@/components/CodeEditor";
+import { LessonTrackingButtons } from "@/components/LessonTrackingButtons";
 
 export default async function LessonPage({
   params,
@@ -57,34 +58,7 @@ export default async function LessonPage({
             </p>
           </div>
 
-          {/* Nav */}
-          <div className="mt-10 flex items-center justify-between border-t border-zinc-200 pt-6">
-            {prev ? (
-              <Link
-                href={`/courses/${slug}/lessons/${prev.slug}`}
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm hover:border-zinc-300"
-              >
-                ← {prev.title}
-              </Link>
-            ) : (
-              <span />
-            )}
-            {next ? (
-              <Link
-                href={`/courses/${slug}/lessons/${next.slug}`}
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-              >
-                {next.title} →
-              </Link>
-            ) : (
-              <Link
-                href={`/courses/${slug}`}
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
-              >
-                Complete ✓
-              </Link>
-            )}
-          </div>
+          <LessonTrackingButtons slug={slug} prev={prev} next={next} />
         </div>
 
         {/* Sidebar */}
