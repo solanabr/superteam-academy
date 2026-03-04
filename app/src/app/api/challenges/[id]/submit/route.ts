@@ -6,11 +6,15 @@ import { submit_challenge_body_schema } from "@/lib/validators/challenge";
 import { db } from "@/lib/db";
 import { challenges, user_challenge_attempts, wallets } from "@/lib/db/schema";
 import { record_streak_event } from "@/lib/services/streak-service";
+import { evaluate_and_award_criteria_achievements } from "@/lib/services/achievement-service";
 import { reward_xp_onchain } from "@/lib/services/blockchain-service";
 import { run_challenge_tests } from "@/lib/services/challenge-runner";
+import { get_challenge_by_id, is_sanity_configured } from "@/lib/services/course-service";
 import { check_rate_limit } from "@/lib/security/rate-limit";
 
 type Params = Promise<{ id: string }>;
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function PATCH(request: NextRequest, { params }: { params: Params }): Promise<Response> {
   const result = await require_auth();
@@ -34,7 +38,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
   const { solution_code } = parsed.data;
   const { session } = result;
 
-  // Require linked wallet for challenge submissions (XP and streak depend on wallet identity)
   const [wallet] = await db
     .select()
     .from(wallets)
@@ -45,30 +48,76 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
     return api_error("Wallet not linked", 400);
   }
 
-  // Fetch challenge metadata
-  const [challenge] = await db
-    .select()
-    .from(challenges)
-    .where(and(eq(challenges.id, id), isNull(challenges.deleted_at)))
-    .limit(1);
+  let challengeDetail: {
+    id: string;
+    xp_reward: number;
+    test_cases: Array<{ input: string; expected: string }>;
+    language: string;
+  };
+  let isExternal: boolean;
 
-  if (!challenge) {
-    return api_error("Challenge not found", 404);
+  if (is_sanity_configured()) {
+    const sanityChallenge = await get_challenge_by_id(id, false);
+    if (sanityChallenge) {
+      challengeDetail = {
+        id: sanityChallenge.id,
+        xp_reward: sanityChallenge.xp_reward,
+        test_cases: sanityChallenge.test_cases,
+        language: sanityChallenge.language,
+      };
+      isExternal = true;
+    } else if (UUID_REGEX.test(id)) {
+      const [dbRow] = await db
+        .select()
+        .from(challenges)
+        .where(and(eq(challenges.id, id), isNull(challenges.deleted_at)))
+        .limit(1);
+      if (!dbRow) return api_error("Challenge not found", 404);
+      challengeDetail = {
+        id: dbRow.id,
+        xp_reward: dbRow.xp_reward,
+        test_cases: dbRow.test_cases ?? [],
+        language: dbRow.language,
+      };
+      isExternal = false;
+    } else {
+      return api_error("Challenge not found", 404);
+    }
+  } else {
+    if (!UUID_REGEX.test(id)) return api_error("Challenge not found", 404);
+    const [dbRow] = await db
+      .select()
+      .from(challenges)
+      .where(and(eq(challenges.id, id), isNull(challenges.deleted_at)))
+      .limit(1);
+    if (!dbRow) return api_error("Challenge not found", 404);
+    challengeDetail = {
+      id: dbRow.id,
+      xp_reward: dbRow.xp_reward,
+      test_cases: dbRow.test_cases ?? [],
+      language: dbRow.language,
+    };
+    isExternal = false;
   }
 
   const now = new Date();
 
-  // Idempotency guard: if user already passed this challenge, do not re-award XP
+  const previousPassCondition = isExternal
+    ? and(
+        eq(user_challenge_attempts.user_id, session.sub),
+        eq(user_challenge_attempts.external_challenge_id, id),
+        eq(user_challenge_attempts.passed, true),
+      )
+    : and(
+        eq(user_challenge_attempts.user_id, session.sub),
+        eq(user_challenge_attempts.challenge_id, id),
+        eq(user_challenge_attempts.passed, true),
+      );
+
   const [previousPass] = await db
     .select()
     .from(user_challenge_attempts)
-    .where(
-      and(
-        eq(user_challenge_attempts.user_id, session.sub),
-        eq(user_challenge_attempts.challenge_id, challenge.id),
-        eq(user_challenge_attempts.passed, true),
-      ),
-    )
+    .where(previousPassCondition)
     .limit(1);
 
   if (previousPass) {
@@ -79,25 +128,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
     );
   }
 
-  const run = await run_challenge_tests(solution_code, challenge);
+  const run = await run_challenge_tests(solution_code, {
+    test_cases: challengeDetail.test_cases,
+    language: challengeDetail.language,
+  });
   const passed = run.passed;
   let xp_awarded = 0;
 
   let tx_signature: string | null = null;
-  if (passed && challenge.xp_reward > 0) {
-    xp_awarded = challenge.xp_reward;
+  if (passed && challengeDetail.xp_reward > 0) {
+    xp_awarded = challengeDetail.xp_reward;
     tx_signature = await reward_xp_onchain({
       wallet_public_key: wallet.public_key,
       amount: xp_awarded,
       reason: "challenge",
-      challenge_id: challenge.id,
+      challenge_id: challengeDetail.id,
     });
-    // TODO (later step): record tx_signature in transaction log + xp_snapshots
   }
 
   await db.insert(user_challenge_attempts).values({
     user_id: session.sub,
-    challenge_id: challenge.id,
+    challenge_id: isExternal ? null : id,
+    external_challenge_id: isExternal ? id : null,
     solution_code,
     passed,
     xp_awarded,
@@ -108,6 +160,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
 
   if (passed) {
     await record_streak_event(session.sub, "challenge_complete", now);
+    await evaluate_and_award_criteria_achievements(session.sub);
   }
 
   return api_success({ passed, xp_awarded }, "Challenge submission recorded", 200);

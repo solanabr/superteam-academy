@@ -1,9 +1,7 @@
-import type { InferSelectModel } from "drizzle-orm";
-import type { challenges } from "@/lib/db/schema";
-
-type ChallengeRow = InferSelectModel<typeof challenges>;
-
-type TestCase = NonNullable<ChallengeRow["test_cases"]>[number];
+export type ChallengeForRunner = {
+  test_cases: Array<{ input: string; expected: string }> | null | undefined;
+  language: string;
+};
 
 export type ChallengeRunResult = {
   passed: boolean;
@@ -12,9 +10,9 @@ export type ChallengeRunResult = {
 
 export async function run_challenge_tests(
   solution_code: string,
-  challenge: ChallengeRow,
+  challenge: ChallengeForRunner,
 ): Promise<ChallengeRunResult> {
-  const test_cases: TestCase[] = challenge.test_cases ?? [];
+  const test_cases = challenge.test_cases ?? [];
   if (test_cases.length === 0) {
     return { passed: true, details: [] };
   }

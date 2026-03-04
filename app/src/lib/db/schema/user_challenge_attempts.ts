@@ -9,9 +9,8 @@ export const user_challenge_attempts = pgTable(
     user_id: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    challenge_id: uuid("challenge_id")
-      .notNull()
-      .references(() => challenges.id, { onDelete: "cascade" }),
+    challenge_id: uuid("challenge_id").references(() => challenges.id, { onDelete: "cascade" }),
+    external_challenge_id: text("external_challenge_id"),
     solution_code: text("solution_code"),
     passed: boolean("passed").notNull().default(false),
     xp_awarded: integer("xp_awarded").notNull().default(0),
@@ -23,6 +22,8 @@ export const user_challenge_attempts = pgTable(
   (t) => [
     index("user_challenge_attempts_user_id_idx").on(t.user_id),
     index("user_challenge_attempts_challenge_id_idx").on(t.challenge_id),
+    index("user_challenge_attempts_external_challenge_id_idx").on(t.external_challenge_id),
     index("user_challenge_attempts_user_challenge_idx").on(t.user_id, t.challenge_id),
+    index("user_challenge_attempts_user_external_challenge_idx").on(t.user_id, t.external_challenge_id),
   ],
 );

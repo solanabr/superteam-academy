@@ -4,47 +4,72 @@ import { require_admin_role } from "@/lib/api/guard";
 import { json_error, json_ok } from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { admin_logs, challenges } from "@/lib/db/schema";
+import { get_challenge_by_id, is_sanity_configured } from "@/lib/services/course-service";
 import { patch_challenge_body_schema } from "@/lib/validators/challenge";
 
 type Params = Promise<{ id: string }>;
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(_request: NextRequest, { params }: { params: Params }): Promise<Response> {
   const { id } = await params;
 
-  const rows = await db
-    .select({
-      id: challenges.id,
-      external_id: challenges.external_id,
-      title: challenges.title,
-      description: challenges.description,
-      difficulty: challenges.difficulty,
-      starter_code: challenges.starter_code,
-      language: challenges.language,
-      test_cases: challenges.test_cases,
-      xp_reward: challenges.xp_reward,
-      time_estimate_minutes: challenges.time_estimate_minutes,
-      track_association: challenges.track_association,
-      deleted_at: challenges.deleted_at,
-      created_at: challenges.created_at,
-      updated_at: challenges.updated_at,
-    })
-    .from(challenges)
-    .where(eq(challenges.id, id))
-    .limit(1);
-
-  const challenge = rows[0];
-  if (!challenge) {
-    return json_error("Challenge not found", 404);
+  if (is_sanity_configured()) {
+    const sanity_challenge = await get_challenge_by_id(id, false);
+    if (sanity_challenge) {
+      const payload = {
+        id: sanity_challenge.id,
+        title: sanity_challenge.title,
+        description: sanity_challenge.description,
+        difficulty: sanity_challenge.difficulty,
+        starter_code: sanity_challenge.starter_code,
+        language: sanity_challenge.language,
+        test_cases: sanity_challenge.test_cases,
+        xp_reward: sanity_challenge.xp_reward,
+        time_estimate_minutes: sanity_challenge.time_estimate_minutes,
+        track_association: sanity_challenge.track_association,
+        created_at: sanity_challenge.created_at ?? null,
+        updated_at: sanity_challenge.updated_at ?? null,
+      };
+      return json_ok(payload);
+    }
   }
 
-  const payload = {
-    ...challenge,
-    deleted_at: challenge.deleted_at ? challenge.deleted_at.toISOString() : null,
-    created_at: challenge.created_at.toISOString(),
-    updated_at: challenge.updated_at.toISOString(),
-  };
+  if (UUID_REGEX.test(id)) {
+    const rows = await db
+      .select({
+        id: challenges.id,
+        external_id: challenges.external_id,
+        title: challenges.title,
+        description: challenges.description,
+        difficulty: challenges.difficulty,
+        starter_code: challenges.starter_code,
+        language: challenges.language,
+        test_cases: challenges.test_cases,
+        xp_reward: challenges.xp_reward,
+        time_estimate_minutes: challenges.time_estimate_minutes,
+        track_association: challenges.track_association,
+        deleted_at: challenges.deleted_at,
+        created_at: challenges.created_at,
+        updated_at: challenges.updated_at,
+      })
+      .from(challenges)
+      .where(eq(challenges.id, id))
+      .limit(1);
 
-  return json_ok(payload);
+    const challenge = rows[0];
+    if (challenge && !challenge.deleted_at) {
+      const payload = {
+        ...challenge,
+        deleted_at: challenge.deleted_at ? challenge.deleted_at.toISOString() : null,
+        created_at: challenge.created_at.toISOString(),
+        updated_at: challenge.updated_at.toISOString(),
+      };
+      return json_ok(payload);
+    }
+  }
+
+  return json_error("Challenge not found", 404);
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Params }): Promise<Response> {

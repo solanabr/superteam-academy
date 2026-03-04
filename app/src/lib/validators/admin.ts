@@ -32,22 +32,30 @@ export const admin_achievements_query_schema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+export const ACHIEVEMENT_CRITERIA_TYPES = ["xp_reached", "lessons_completed", "challenges_completed", "streak_days"] as const;
+
 export const admin_achievement_create_body_schema = z.object({
   achievement_id: z.string().min(1),
   name: z.string().min(1),
-  metadata_uri: z.string().min(1),
+  metadata_uri: z.string().min(1).optional(),
+  image_url: z.string().optional().nullable(),
   xp_reward: z.coerce.number().int().min(0),
   supply_cap: z.coerce.number().int().min(1).optional(),
   is_active: z.boolean().optional(),
+  criteria_type: z.enum(ACHIEVEMENT_CRITERIA_TYPES).optional().nullable(),
+  criteria_value: z.coerce.number().int().min(0).optional().nullable(),
 });
 
 export const admin_achievement_update_body_schema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).optional(),
   metadata_uri: z.string().min(1).optional(),
+  image_url: z.string().optional().nullable(),
   xp_reward: z.coerce.number().int().min(0).optional(),
   supply_cap: z.coerce.number().int().min(1).optional(),
   is_active: z.boolean().optional(),
+  criteria_type: z.enum(ACHIEVEMENT_CRITERIA_TYPES).optional().nullable(),
+  criteria_value: z.coerce.number().int().min(0).optional().nullable(),
 });
 
 export const admin_certificates_query_schema = z.object({

@@ -50,10 +50,13 @@ export type AdminAchievementRow = {
   id: string;
   achievement_id: string;
   name: string;
+  image_url: string | null;
   xp_reward: number;
   is_active: boolean;
   supply_cap: number | null;
   current_supply: number;
+  criteria_type: string | null;
+  criteria_value: number | null;
   created_at: string;
 };
 

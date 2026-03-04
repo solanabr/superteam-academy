@@ -5,6 +5,8 @@
  */
 import { sanity_client, is_sanity_configured } from "@/lib/sanity/client";
 
+export { is_sanity_configured } from "@/lib/sanity/client";
+
 export type Course = {
   slug: string;
   title: string;
@@ -38,6 +40,23 @@ export type ChallengeMeta = {
   time_estimate_minutes: number | null;
   language: string;
   track_association: string | null;
+  created_at?: string | null;
+};
+
+/** Full challenge detail for detail view and runner (Sanity or DB). */
+export type ChallengeDetail = {
+  id: string;
+  title: string;
+  description: string | null;
+  difficulty: "easy" | "medium" | "hard" | "hell";
+  starter_code: string | null;
+  language: string;
+  test_cases: Array<{ input: string; expected: string }>;
+  xp_reward: number;
+  time_estimate_minutes: number | null;
+  track_association: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 type Sanity_lesson = {
@@ -74,6 +93,15 @@ type Sanity_challenge_meta = {
   time_estimate_minutes?: number | null;
   language?: string | null;
   track_association?: string | null;
+  _createdAt?: string | null;
+};
+
+type Sanity_test_case = { input?: string | null; expected?: string | null };
+
+type Sanity_challenge_detail = Sanity_challenge_meta & {
+  starter_code?: string | null;
+  test_cases?: Sanity_test_case[] | null;
+  _updatedAt?: string | null;
 };
 
 function map_sanity_lesson(doc: Sanity_lesson): Lesson {
@@ -128,7 +156,7 @@ function build_course_query(draft: boolean): string {
       slug,
       "slug": coalesce(slug.current, slug),
       title,
-      description,
+      "description": coalesce(shortDescription, pt::text(description)),
       "image_url": coalesce(image.asset->url, null),
       published,
       modules[]{
@@ -141,7 +169,7 @@ function build_course_query(draft: boolean): string {
           "slug": coalesce(slug.current, slug),
           title,
           order,
-          content,
+          "content": coalesce(pt::text(content), ""),
           challenge_id
         }
       }
@@ -175,17 +203,18 @@ export async function get_challenges(draft = false): Promise<ChallengeMeta[]> {
 
   const visibility_filter = draft ? "" : ' && !(_id in path("drafts.**")) && defined(published) && published == true';
   const query =
-    '*[_type == "challenge" || _type == "challenge_meta"' +
+    '*[_type == "challenge"' +
     visibility_filter +
     `]{
       _id,
       title,
-      description,
+      "description": pt::text(description),
       difficulty,
       xp_reward,
       time_estimate_minutes,
       language,
-      track_association
+      track_association,
+      _createdAt
     }`;
 
   const sanity_challenges = await sanity_client.fetch<Sanity_challenge_meta[]>(query);
@@ -208,8 +237,63 @@ export async function get_challenges(draft = false): Promise<ChallengeMeta[]> {
       time_estimate_minutes: doc.time_estimate_minutes ?? null,
       language: doc.language ?? "typescript",
       track_association: doc.track_association ?? null,
+      created_at: doc._createdAt ?? null,
     };
   });
 
   return mapped;
+}
+
+export async function get_challenge_by_id(id: string, draft = false): Promise<ChallengeDetail | null> {
+  if (!is_sanity_configured()) return null;
+
+  const visibility_filter = draft ? "" : ' && !(_id in path("drafts.**")) && defined(published) && published == true';
+  const query =
+    `*[_type == "challenge" && _id == $id` +
+    visibility_filter +
+    `][0]{
+      _id,
+      title,
+      "description": pt::text(description),
+      difficulty,
+      xp_reward,
+      time_estimate_minutes,
+      language,
+      track_association,
+      starter_code,
+      test_cases,
+      _createdAt,
+      _updatedAt
+    }`;
+
+  const doc = await sanity_client.fetch<Sanity_challenge_detail | null>(query, { id });
+  if (!doc) return null;
+
+  const difficulty_raw = doc.difficulty ?? "easy";
+  const allowed_difficulty: ChallengeDetail["difficulty"][] = ["easy", "medium", "hard", "hell"];
+  const difficulty = allowed_difficulty.includes(difficulty_raw as ChallengeDetail["difficulty"])
+    ? (difficulty_raw as ChallengeDetail["difficulty"])
+    : "easy";
+
+  const test_cases = (doc.test_cases ?? [])
+    .map((tc) => ({
+      input: tc.input ?? "",
+      expected: tc.expected ?? "",
+    }))
+    .filter((tc) => tc.input !== "" || tc.expected !== "");
+
+  return {
+    id: doc._id,
+    title: doc.title ?? doc._id,
+    description: doc.description ?? null,
+    difficulty,
+    starter_code: doc.starter_code ?? null,
+    language: doc.language ?? "typescript",
+    test_cases,
+    xp_reward: doc.xp_reward ?? 0,
+    time_estimate_minutes: doc.time_estimate_minutes ?? null,
+    track_association: doc.track_association ?? null,
+    created_at: doc._createdAt ?? null,
+    updated_at: doc._updatedAt ?? null,
+  };
 }

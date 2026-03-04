@@ -252,12 +252,15 @@
       "title": "Logros",
       "id": "ID",
       "name": "Nombre",
+      "imageUrl": "URL de imagen",
       "xpReward": "Recompensa XP",
       "status": "Estado",
       "active": "Activo",
       "deprecated": "Obsoleto",
       "supplyCap": "Límite de oferta",
       "currentSupply": "Oferta actual",
+      "criteriaType": "Tipo de criterio",
+      "criteriaValue": "Valor objetivo",
       "create": "Crear logro",
       "update": "Actualizar logro",
       "deprecate": "Depreciar",
@@ -265,7 +268,9 @@
       "user": "Usuario",
       "awardDate": "Fecha",
       "txSignature": "Transacción",
-      "noRows": "No se encontraron logros"
+      "noRows": "No se encontraron logros",
+      "requiredError": "Este campo es obligatorio",
+      "saving": "Guardando..."
     },
     "leaderboard": {
       "title": "Controles de ranking",

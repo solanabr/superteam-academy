@@ -253,12 +253,15 @@
       "title": "Achievements",
       "id": "ID",
       "name": "Name",
+      "imageUrl": "Image URL",
       "xpReward": "XP reward",
       "status": "Status",
       "active": "Active",
       "deprecated": "Deprecated",
       "supplyCap": "Supply cap",
       "currentSupply": "Current supply",
+      "criteriaType": "Criteria type",
+      "criteriaValue": "Target value",
       "create": "Create achievement",
       "update": "Update achievement",
       "deprecate": "Deprecate",
@@ -266,7 +269,9 @@
       "user": "User",
       "awardDate": "Award date",
       "txSignature": "Transaction",
-      "noRows": "No achievements found"
+      "noRows": "No achievements found",
+      "requiredError": "This field is required",
+      "saving": "Saving..."
     },
     "leaderboard": {
       "title": "Leaderboard controls",

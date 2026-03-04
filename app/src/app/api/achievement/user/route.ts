@@ -14,6 +14,7 @@ export async function GET(): Promise<Response> {
       achievement_id: achievements.achievement_id,
       name: achievements.name,
       metadata_uri: achievements.metadata_uri,
+      image_url: achievements.image_url,
       xp_reward: achievements.xp_reward,
       awarded_at: achievement_awards.awarded_at,
       tx_signature: achievement_awards.tx_signature,
@@ -24,5 +25,10 @@ export async function GET(): Promise<Response> {
       and(eq(achievement_awards.achievement_id, achievements.id), eq(achievement_awards.user_id, session.sub)),
     );
 
-  return api_success({ achievements: rows }, "User achievements fetched", 200);
+  const achievements_payload = rows.map((r) => ({
+    ...r,
+    image_url: r.image_url ?? undefined,
+  }));
+
+  return api_success({ achievements: achievements_payload }, "User achievements fetched", 200);
 }

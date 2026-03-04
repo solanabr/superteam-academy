@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import { getData, patchData, postData } from "@/lib/api/config";
 import type { AdminAchievementRow, AdminAchievementsResponse } from "@/lib/types/admin";
 import { AdminAchievementsSkeleton } from "./achievements-skeleton";
@@ -32,34 +33,72 @@ export function AdminAchievementsView(): ReactNode {
   const [mode, set_mode] = useState<"create" | "edit">("create");
   const [selected, set_selected] = useState<AdminAchievementRow | null>(null);
 
+  const CRITERIA_OPTIONS = [
+    { value: "", label: "— None (manual award only)" },
+    { value: "xp_reached", label: "XP reached" },
+    { value: "lessons_completed", label: "Lessons completed" },
+    { value: "challenges_completed", label: "Challenges completed" },
+    { value: "streak_days", label: "Streak days" },
+  ] as const;
+
   type Form_state = {
     achievement_id: string;
     name: string;
-    metadata_uri: string;
+    image_url: string;
     xp_reward: number;
     supply_cap: number | "";
     is_active: boolean;
+    criteria_type: string;
+    criteria_value: number | "";
   };
 
   const [form_state, set_form_state] = useState<Form_state>({
     achievement_id: "",
     name: "",
-    metadata_uri: "",
+    image_url: "",
     xp_reward: 0,
     supply_cap: "",
     is_active: true,
+    criteria_type: "",
+    criteria_value: "",
   });
+
+  type FieldErrors = Partial<Record<keyof Form_state, string>>;
+  const [field_errors, set_field_errors] = useState<FieldErrors>({});
+
+  const clear_field_error = (field: keyof Form_state) => {
+    set_field_errors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validate_required = (): boolean => {
+    const errors: FieldErrors = {};
+    if (!form_state.achievement_id.trim()) {
+      errors.achievement_id = t("requiredError");
+    }
+    if (!form_state.name.trim()) {
+      errors.name = t("requiredError");
+    }
+    set_field_errors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const open_create_sheet = (): void => {
     set_selected(null);
     set_mode("create");
+    set_field_errors({});
     set_form_state({
       achievement_id: "",
       name: "",
-      metadata_uri: "",
+      image_url: "",
       xp_reward: 0,
       supply_cap: "",
       is_active: true,
+      criteria_type: "",
+      criteria_value: "",
     });
     set_is_sheet_open(true);
   };
@@ -67,13 +106,16 @@ export function AdminAchievementsView(): ReactNode {
   const open_edit_sheet = (row: AdminAchievementRow): void => {
     set_selected(row);
     set_mode("edit");
+    set_field_errors({});
     set_form_state({
       achievement_id: row.achievement_id,
       name: row.name,
-      metadata_uri: "",
+      image_url: row.image_url ?? "",
       xp_reward: row.xp_reward,
       supply_cap: row.supply_cap ?? "",
       is_active: row.is_active,
+      criteria_type: row.criteria_type ?? "",
+      criteria_value: row.criteria_value ?? "",
     });
     set_is_sheet_open(true);
   };
@@ -83,13 +125,16 @@ export function AdminAchievementsView(): ReactNode {
       postData<{ id: string }>("/api/admin/achievements", {
         achievement_id: payload.achievement_id,
         name: payload.name,
-        metadata_uri: payload.metadata_uri,
+        image_url: payload.image_url.trim() || undefined,
         xp_reward: payload.xp_reward,
         supply_cap: payload.supply_cap === "" ? undefined : payload.supply_cap,
         is_active: payload.is_active,
+        criteria_type: payload.criteria_type || undefined,
+        criteria_value: payload.criteria_value === "" ? undefined : Number(payload.criteria_value),
       }),
     onSuccess: async () => {
       await query_client.invalidateQueries({ queryKey: ["admin-achievements"] });
+      set_field_errors({});
       set_is_sheet_open(false);
     },
   });
@@ -99,16 +144,21 @@ export function AdminAchievementsView(): ReactNode {
       patchData<{ ok: boolean }>("/api/admin/achievements", {
         id: payload.id,
         name: payload.form.name,
-        metadata_uri: payload.form.metadata_uri || undefined,
+        image_url: payload.form.image_url.trim() || undefined,
         xp_reward: payload.form.xp_reward,
         supply_cap: payload.form.supply_cap === "" ? undefined : payload.form.supply_cap,
         is_active: payload.form.is_active,
+        criteria_type: payload.form.criteria_type || undefined,
+        criteria_value: payload.form.criteria_value === "" ? undefined : Number(payload.form.criteria_value),
       }),
     onSuccess: async () => {
       await query_client.invalidateQueries({ queryKey: ["admin-achievements"] });
+      set_field_errors({});
       set_is_sheet_open(false);
     },
   });
+
+  const is_submitting = create_mutation.isPending || update_mutation.isPending;
 
   const columns: ColumnDef<AdminAchievementRow>[] = useMemo(
     () => [
@@ -204,41 +254,93 @@ export function AdminAchievementsView(): ReactNode {
               <label className="block text-[11px] uppercase tracking-wide">{t("id")}</label>
               <Input
                 value={form_state.achievement_id}
-                onChange={(event) =>
-                  set_form_state({
-                    ...form_state,
-                    achievement_id: event.target.value,
-                  })
-                }
-                className="h-8 rounded-none border-border px-2 py-1 text-xs"
+                onChange={(event) => {
+                  set_form_state({ ...form_state, achievement_id: event.target.value });
+                  clear_field_error("achievement_id");
+                }}
+                onBlur={() => {
+                  if (!form_state.achievement_id.trim()) {
+                    set_field_errors((prev) => ({ ...prev, achievement_id: t("requiredError") }));
+                  }
+                }}
+                className={`h-8 rounded-none border-border px-2 py-1 text-xs ${field_errors.achievement_id ? "border-destructive" : ""}`}
                 disabled={mode === "edit"}
+                aria-invalid={Boolean(field_errors.achievement_id)}
+                aria-describedby={field_errors.achievement_id ? "achievement_id-error" : undefined}
               />
+              {field_errors.achievement_id && (
+                <p id="achievement_id-error" className="text-[11px] text-destructive">
+                  {field_errors.achievement_id}
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="block text-[11px] uppercase tracking-wide">{t("name")}</label>
               <Input
                 value={form_state.name}
+                onChange={(event) => {
+                  set_form_state({ ...form_state, name: event.target.value });
+                  clear_field_error("name");
+                }}
+                onBlur={() => {
+                  if (!form_state.name.trim()) {
+                    set_field_errors((prev) => ({ ...prev, name: t("requiredError") }));
+                  }
+                }}
+                className={`h-8 rounded-none border-border px-2 py-1 text-xs ${field_errors.name ? "border-destructive" : ""}`}
+                aria-invalid={Boolean(field_errors.name)}
+                aria-describedby={field_errors.name ? "name-error" : undefined}
+              />
+              {field_errors.name && (
+                <p id="name-error" className="text-[11px] text-destructive">
+                  {field_errors.name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="block text-[11px] uppercase tracking-wide">{t("imageUrl")}</label>
+              <Input
+                value={form_state.image_url}
                 onChange={(event) =>
-                  set_form_state({
-                    ...form_state,
-                    name: event.target.value,
-                  })
+                  set_form_state({ ...form_state, image_url: event.target.value })
                 }
+                placeholder="Fallback: /award.webp"
                 className="h-8 rounded-none border-border px-2 py-1 text-xs"
               />
             </div>
-            <div className="space-y-1">
-              <label className="block text-[11px] uppercase tracking-wide">Metadata URI</label>
-              <Input
-                value={form_state.metadata_uri}
-                onChange={(event) =>
-                  set_form_state({
-                    ...form_state,
-                    metadata_uri: event.target.value,
-                  })
-                }
-                className="h-8 rounded-none border-border px-2 py-1 text-xs"
-              />
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1">
+                <label className="block text-[11px] uppercase tracking-wide">{t("criteriaType")}</label>
+                <select
+                  value={form_state.criteria_type}
+                  onChange={(event) =>
+                    set_form_state({ ...form_state, criteria_type: event.target.value })
+                  }
+                  className="h-8 w-full rounded-none border border-border bg-background px-2 py-1 text-xs"
+                >
+                  {CRITERIA_OPTIONS.map((opt) => (
+                    <option key={opt.value || "none"} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 space-y-1">
+                <label className="block text-[11px] uppercase tracking-wide">{t("criteriaValue")}</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form_state.criteria_value === "" ? "" : form_state.criteria_value}
+                  onChange={(event) =>
+                    set_form_state({
+                      ...form_state,
+                      criteria_value: event.target.value === "" ? "" : Number(event.target.value),
+                    })
+                  }
+                  placeholder="e.g. 1000"
+                  className="h-8 rounded-none border-border px-2 py-1 text-xs"
+                />
+              </div>
             </div>
             <div className="flex gap-2">
               <div className="flex-1 space-y-1">
@@ -298,13 +400,11 @@ export function AdminAchievementsView(): ReactNode {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               className="h-8 rounded-none border-border px-2 py-1 text-[10px] font-mono uppercase"
-              disabled={create_mutation.isPending || update_mutation.isPending}
+              disabled={is_submitting}
               onClick={() => {
-                if (!form_state.name || !form_state.achievement_id) {
-                  return;
-                }
+                if (!validate_required()) return;
                 if (mode === "create") {
                   create_mutation.mutate(form_state);
                 } else if (selected) {
@@ -315,7 +415,14 @@ export function AdminAchievementsView(): ReactNode {
                 }
               }}
             >
-              {t_admin("confirm")}
+              {is_submitting ? (
+                <>
+                  <Loader2 className="mr-1.5 size-3.5 animate-spin" aria-hidden />
+                  {t("saving")}
+                </>
+              ) : (
+                t_admin("confirm")
+              )}
             </Button>
           </SheetFooter>
         </SheetContent>

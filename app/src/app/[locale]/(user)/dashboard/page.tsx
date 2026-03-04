@@ -41,9 +41,12 @@ type LeaderboardEntry = {
 type AchievementItem = {
   achievement_id: string;
   name: string | null;
+  image_url?: string | null;
   xp_reward: number | null;
   awarded_at: string | null;
 };
+
+const AWARD_IMAGE_FALLBACK = "/award.webp";
 
 type EnrollmentItem = {
   course_slug: string;
@@ -352,13 +355,20 @@ export default function DashboardPage() {
                 ) : (
                   <ul className="divide-y-2 divide-border">
                     {recentActivity.map((item) => (
-                      <li key={item.achievement_id} className="py-3 first:pt-0">
-                        <span className="text-sm font-medium">
-                          {t("achievementAward")}: {item.name ?? "—"}
-                        </span>
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {formatDate(item.awarded_at)}
-                        </span>
+                      <li key={item.achievement_id} className="flex items-center gap-3 py-3 first:pt-0">
+                        <img
+                          src={item.image_url ?? AWARD_IMAGE_FALLBACK}
+                          alt=""
+                          className="size-10 shrink-0 rounded-none border-2 border-border object-cover"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">
+                            {t("achievementAward")}: {item.name ?? "—"}
+                          </span>
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {formatDate(item.awarded_at)}
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>

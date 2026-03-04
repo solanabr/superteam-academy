@@ -252,12 +252,15 @@
       "title": "अचीवमेंट्स",
       "id": "ID",
       "name": "नाम",
+      "imageUrl": "इमेज URL",
       "xpReward": "XP रिवार्ड",
       "status": "स्टेटस",
       "active": "एक्टिव",
       "deprecated": "डिप्रीकेटेड",
       "supplyCap": "सप्लाई कैप",
       "currentSupply": "मौजूदा सप्लाई",
+      "criteriaType": "क्राइटेरिया प्रकार",
+      "criteriaValue": "लक्ष्य मान",
       "create": "अचीवमेंट बनाएं",
       "update": "अचीवमेंट अपडेट करें",
       "deprecate": "डिप्रीकेट",
@@ -265,7 +268,9 @@
       "user": "यूज़र",
       "awardDate": "तारीख",
       "txSignature": "ट्रांज़ैक्शन",
-      "noRows": "कोई अचीवमेंट नहीं मिला"
+      "noRows": "कोई अचीवमेंट नहीं मिला",
+      "requiredError": "यह फ़ील्ड आवश्यक है",
+      "saving": "सेव हो रहा है..."
     },
     "leaderboard": {
       "title": "लीडरबोर्ड कंट्रोल",

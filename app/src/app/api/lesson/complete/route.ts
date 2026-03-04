@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { lesson_progress, wallets } from "@/lib/db/schema";
 import { get_enrollment_status } from "@/lib/services/blockchain-service";
 import { record_streak_event } from "@/lib/services/streak-service";
+import { evaluate_and_award_criteria_achievements } from "@/lib/services/achievement-service";
 import { check_rate_limit } from "@/lib/security/rate-limit";
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
   await record_streak_event(session.sub, "lesson_complete", now);
-  // TODO (later steps): on-chain complete_lesson + XP snapshot + transaction logging
+  await evaluate_and_award_criteria_achievements(session.sub);
 
   return api_success({ completed: true }, "Lesson marked complete", 200);
 }

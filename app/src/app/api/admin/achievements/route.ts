@@ -34,10 +34,13 @@ export async function GET(request: NextRequest): Promise<Response> {
       achievement_id: achievements.achievement_id,
       name: achievements.name,
       metadata_uri: achievements.metadata_uri,
+      image_url: achievements.image_url,
       xp_reward: achievements.xp_reward,
       is_active: achievements.is_active,
       supply_cap: achievements.supply_cap,
       current_supply: achievements.current_supply,
+      criteria_type: achievements.criteria_type,
+      criteria_value: achievements.criteria_value,
       created_at: achievements.created_at,
     })
     .from(achievements)
@@ -49,10 +52,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     id: row.id,
     achievement_id: row.achievement_id,
     name: row.name,
+    image_url: row.image_url,
     xp_reward: row.xp_reward,
     is_active: row.is_active,
     supply_cap: row.supply_cap,
     current_supply: row.current_supply,
+    criteria_type: row.criteria_type,
+    criteria_value: row.criteria_value,
     created_at: row.created_at.toISOString(),
   }));
 
@@ -81,15 +87,23 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const now = new Date();
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const metadata_uri =
+    body.metadata_uri?.trim() ||
+    (baseUrl ? `${baseUrl.replace(/\/$/, "")}/api/metadata/achievements/${encodeURIComponent(body.achievement_id)}` : `achievement:${body.achievement_id}`);
+
   const inserted = await db
     .insert(achievements)
     .values({
       achievement_id: body.achievement_id,
       name: body.name,
-      metadata_uri: body.metadata_uri,
+      metadata_uri,
+      image_url: (body.image_url?.trim() && body.image_url) ? body.image_url.trim() : null,
       xp_reward: body.xp_reward,
       supply_cap: body.supply_cap ?? null,
       is_active: body.is_active ?? true,
+      criteria_type: body.criteria_type ?? null,
+      criteria_value: body.criteria_value ?? null,
       created_at: now,
       updated_at: now,
     })
@@ -142,9 +156,12 @@ export async function PATCH(request: NextRequest): Promise<Response> {
     .set({
       name: body.name ?? existing.name,
       metadata_uri: body.metadata_uri ?? existing.metadata_uri,
+      image_url: body.image_url !== undefined ? (body.image_url?.trim() || null) : existing.image_url,
       xp_reward: body.xp_reward ?? existing.xp_reward,
       supply_cap: body.supply_cap ?? existing.supply_cap,
       is_active: body.is_active ?? existing.is_active,
+      criteria_type: body.criteria_type !== undefined ? body.criteria_type : existing.criteria_type,
+      criteria_value: body.criteria_value !== undefined ? body.criteria_value : existing.criteria_value,
       updated_at: now,
     })
     .where(eq(achievements.id, body.id));

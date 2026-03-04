@@ -252,12 +252,15 @@
       "title": "Conquistas",
       "id": "ID",
       "name": "Nome",
+      "imageUrl": "URL da imagem",
       "xpReward": "Recompensa XP",
       "status": "Status",
       "active": "Ativa",
       "deprecated": "Descontinuada",
       "supplyCap": "Limite de oferta",
       "currentSupply": "Oferta atual",
+      "criteriaType": "Tipo de critério",
+      "criteriaValue": "Valor alvo",
       "create": "Criar conquista",
       "update": "Atualizar conquista",
       "deprecate": "Descontinuar",
@@ -265,7 +268,9 @@
       "user": "Usuário",
       "awardDate": "Data",
       "txSignature": "Transação",
-      "noRows": "Nenhuma conquista encontrada"
+      "noRows": "Nenhuma conquista encontrada",
+      "requiredError": "Este campo é obrigatório",
+      "saving": "Salvando..."
     },
     "leaderboard": {
       "title": "Controlo do ranking",
