@@ -475,3 +475,96 @@ input[type="submit"],
   font-family: var(--font-game), sans-serif !important;
   font-size: 1rem !important;
 }
+
+/* ─── Landing Page Animations ────────────────────────────────── */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(3deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(14px) rotate(-2deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.3), 0 0 24px rgba(250, 204, 21, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(250, 204, 21, 0.5), 0 0 40px rgba(250, 204, 21, 0.2);
+  }
+}
+
+@keyframes scroll-hint {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 7s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+.animate-scroll-hint {
+  animation: scroll-hint 2s ease-in-out infinite;
+}
+
+/* ─── Marquee Edge Fade ──────────────────────────────────────── */
+.marquee-fade-edges {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+}
+
+/* ─── Accessibility: Reduced Motion ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-reverse,
+  .animate-glow-pulse,
+  .animate-scroll-hint,
+  .animate-marquee-left,
+  .animate-marquee-right,
+  .animate-achievement-bounce,
+  .animate-badge-shake,
+  .animate-spin-slow {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -171,7 +171,7 @@ export function AssessmentSection({
 
     return (
         <section className={cn("w-full", isOnboarding ? "bg-transparent py-6" : "bg-background py-20")}>
-            <div className="mx-auto max-w-2xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl px-4 sm:px-6 rounded-2xl border border-white/10 bg-card/30 backdrop-blur-sm p-4 sm:p-8">
                 <motion.div
                     ref={sectionRef}
                     initial={{ opacity: 0, y: 16 }}
@@ -226,7 +226,7 @@ export function AssessmentSection({
                                             key={i}
                                             onClick={() => selectOption(i)}
                                             className={cn(
-                                                "rounded-xl border-2 px-5 py-4 text-left font-game text-lg sm:text-xl transition-all",
+                                                "rounded-xl border-2 px-5 py-4 text-left font-game text-lg sm:text-xl transition-all hover:scale-[1.01]",
                                                 isSelected
                                                     ? "border-yellow-400 bg-yellow-400/10 text-yellow-400"
                                                     : "border-border hover:border-yellow-400/40 hover:bg-accent"

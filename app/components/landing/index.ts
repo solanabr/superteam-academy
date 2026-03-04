@@ -1,8 +1,11 @@
 export { Navbar } from "./Navbar";
 export { HeroSection } from "./HeroSection";
 export { FeaturesSection } from "./FeaturesSection";
+export { StatsSection } from "./StatsSection";
 export { CoursesSection } from "./CoursesSection";
 export { AssessmentSection } from "./AssessmentSection";
 export { LeaderboardSection } from "./LeaderboardSection";
 export { TestimonialsSection } from "./TestimonialsSection";
+export { CTASection } from "./CTASection";
+export { FAQSection } from "./FAQSection";
 export { Footer } from "./Footer";
