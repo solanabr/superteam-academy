@@ -42,7 +42,7 @@ export function Navbar({ content }: NavbarProps) {
         >
           <Image
             src={logoSrc}
-            alt="Superteam Brazil"
+            alt="Superteam Academy"
             fill
             className="object-cover"
             priority
@@ -54,7 +54,7 @@ export function Navbar({ content }: NavbarProps) {
         <li>
           <Link
             href="/#why"
-            className="font-mono text-xs font-medium text-muted-foreground hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
           >
             {content.about}
           </Link>
@@ -62,7 +62,7 @@ export function Navbar({ content }: NavbarProps) {
         <li>
           <Link
             href="/#features"
-            className="font-mono text-xs font-medium text-muted-foreground hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
           >
             {content.platform}
           </Link>
@@ -70,7 +70,7 @@ export function Navbar({ content }: NavbarProps) {
         <li>
           <Link
             href="/#how"
-            className="font-mono text-xs font-medium text-muted-foreground hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
           >
             {content.howItWorks}
           </Link>
@@ -78,9 +78,25 @@ export function Navbar({ content }: NavbarProps) {
         <li>
           <Link
             href="/#community"
-            className="font-mono text-xs font-medium text-muted-foreground hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
           >
             {content.community}
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/challenges"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+          >
+            Challenges
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/leaderboard"
+            className="font-mono text-xs font-medium text-muted-foreground dark:text-black! hover:text-primary dark:hover:text-accent no-underline tracking-wide uppercase transition-colors duration-150"
+          >
+            Leaderboard
           </Link>
         </li>
       </ul>

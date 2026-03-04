@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { WalletStatus } from "@/components/layout/wallet-status";
 
 export function Header(): React.ReactElement {
   return (
@@ -10,6 +11,7 @@ export function Header(): React.ReactElement {
           Superteam Academy
         </Link>
         <nav className="flex items-center gap-4">
+          <WalletStatus />
           <LocaleSwitcher />
           <ThemeToggle />
         </nav>

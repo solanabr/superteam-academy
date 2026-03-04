@@ -11,6 +11,7 @@ import { PostHogPageView } from "@/components/providers/posthog-provider";
 import { SessionHydrator } from "@/components/providers/session-hydrator";
 import { WalletProvider } from "@/components/providers/wallet-provider";
 import { WalletSync } from "@/components/providers/wallet-sync";
+import { ServiceWorkerRegister } from "@/components/providers/sw-register";
 import { LocaleLang } from "@/components/layout/locale-lang";
 import { routing } from "@/i18n/routing";
 
@@ -51,6 +52,7 @@ export default async function LocaleLayout({ children, params }: Props): Promise
               <WalletSync />
               <PostHogPageView />
               <SessionHydrator />
+              <ServiceWorkerRegister />
               {children}
             </WalletProvider>
           </ThemeProvider>

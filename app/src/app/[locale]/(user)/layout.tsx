@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
+import { UserLayout } from "@/components/layout/user-layout";
 
-export default function UserLayout({ children }: { children: ReactNode }): ReactNode {
-  return <div className="min-h-screen bg-background">{children}</div>;
+export default function UserLayoutRoute({
+  children,
+}: {
+  children: ReactNode;
+}): ReactNode {
+  return <UserLayout>{children}</UserLayout>;
 }

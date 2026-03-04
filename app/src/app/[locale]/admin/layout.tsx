@@ -1,12 +1,21 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { get_session } from "@/lib/auth/session";
+import { require_admin } from "@/lib/auth/role-guard";
+import { AdminLayoutShell } from "@/components/layout/admin-layout";
 
-export default function AdminLayout({ children }: { children: ReactNode }): ReactNode {
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b p-4">
-        <h1 className="text-lg font-semibold">Admin</h1>
-      </header>
-      {children}
-    </div>
-  );
+type AdminLayoutProps = {
+  children: ReactNode;
+  params: Promise<{ locale: string }>;
+};
+
+export default async function AdminLayout({ children, params }: AdminLayoutProps): Promise<ReactNode> {
+  const { locale } = await params;
+  const session = await get_session();
+  if (!session || !require_admin(session.role)) {
+    redirect(`/${locale}/login`);
+  }
+
+  return <AdminLayoutShell session={session} locale={locale}>{children}</AdminLayoutShell>;
 }
+

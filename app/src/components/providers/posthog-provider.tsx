@@ -5,14 +5,22 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
+declare global {
+  interface Window {
+    __posthog_initialized?: boolean;
+  }
+}
+
 const posthog_key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const posthog_host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://app.posthog.com";
 
 export function PostHogProvider({ children }: { children: ReactNode }): ReactNode {
   useEffect(() => {
-    if (typeof window !== "undefined" && posthog_key) {
-      posthog.init(posthog_key, { api_host: posthog_host });
-    }
+    if (typeof window === "undefined") return;
+    if (!posthog_key) return;
+    if (window.__posthog_initialized) return;
+    posthog.init(posthog_key, { api_host: posthog_host });
+    window.__posthog_initialized = true;
   }, []);
 
   if (!posthog_key) {

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getData, postData } from "@/lib/api/config";
 import { useAuthStore, type AuthState } from "@/store/auth-store";
+import { AuthSocialButtons } from "@/components/auth/auth-social-buttons";
 import { z } from "zod";
 
 const register_schema = z
@@ -29,6 +30,7 @@ const register_schema = z
 export default function RegisterPage(): React.ReactElement {
   const t = useTranslations("auth");
   const t_common = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
   const set_session = useAuthStore((s: AuthState) => s.set_session);
 
@@ -193,32 +195,7 @@ export default function RegisterPage(): React.ReactElement {
           </Button>
         </form>
         <div className="mt-6 border-t-2 border-dashed border-border pt-4">
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("loginWithGoogle")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("loginWithGitHub")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("connectWallet")}
-            </Button>
-          </div>
+          <AuthSocialButtons callback_url={`/${locale}/dashboard`} />
         </div>
         <p className="mt-4 text-center text-xs font-mono text-muted-foreground">
           <Link href="/login" className="text-primary underline-offset-4 hover:text-accent hover:underline">

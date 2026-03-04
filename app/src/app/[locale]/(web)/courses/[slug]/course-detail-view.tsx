@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Link } from "@/i18n/navigation";
 import { useAPIQuery, useAPIMutation } from "@/lib/api/useAPI";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ export function CourseDetailView({ slug }: { slug: string }) {
   const t_auth = useTranslations("auth");
   const session = useAuthStore((s) => s.session);
   const wallet_connected = useWalletStore((s) => s.connected);
+  const wallet_public_key = useWalletStore((s) => s.public_key);
+  const { signMessage } = useWallet();
 
   const { data: course, isPending, error } = useAPIQuery<Course>({
     queryKey: ["course", slug],
@@ -36,10 +39,24 @@ export function CourseDetailView({ slug }: { slug: string }) {
   const [enroll_error, set_enroll_error] = useState<string | null>(null);
   const [enroll_success, set_enroll_success] = useState(false);
 
-  const enroll_mutation = useAPIMutation<{ ok: boolean }, { course_slug: string }>(
+  const { data: enrollment_status, isPending: is_status_pending } = useAPIQuery<{
+    enrolled: boolean;
+    source: "db" | "on_chain" | "none";
+  }>({
+    queryKey: ["enrollment-status", slug],
+    path: `/api/enrollment/status?course_slug=${encodeURIComponent(slug)}`,
+    enabled: Boolean(session),
+  });
+
+  const enroll_prepare_mutation = useAPIMutation<{ message: string }, { course_slug: string }>(
     "post",
-    (vars) => "/api/enrollment/sync",
+    "/api/enrollment/sync",
   );
+
+  const enroll_confirm_mutation = useAPIMutation<
+    { enrolled: boolean; already_enrolled?: boolean },
+    { course_slug: string; message: string; signature: string }
+  >("post", "/api/enrollment/sync/confirm");
 
   const handle_enroll = async () => {
     set_enroll_error(null);
@@ -47,12 +64,25 @@ export function CourseDetailView({ slug }: { slug: string }) {
       set_enroll_error(t_auth("validationError"));
       return;
     }
-    if (!wallet_connected) {
+    if (!wallet_connected || !wallet_public_key) {
       set_enroll_error(t("enrollmentError"));
       return;
     }
+    if (!signMessage) {
+      set_enroll_error("Wallet does not support message signing.");
+      return;
+    }
     try {
-      await enroll_mutation.mutateAsync({ course_slug: slug });
+      const prepared = await enroll_prepare_mutation.mutateAsync({ course_slug: slug });
+      const message = prepared.message;
+      const encoder = new TextEncoder();
+      const signed = await signMessage(encoder.encode(message));
+      const signature_base64 = btoa(String.fromCharCode(...signed));
+      await enroll_confirm_mutation.mutateAsync({
+        course_slug: slug,
+        message,
+        signature: signature_base64,
+      });
       set_enroll_success(true);
     } catch (err) {
       set_enroll_error(err instanceof Error ? err.message : "Enrollment failed");
@@ -93,10 +123,16 @@ export function CourseDetailView({ slug }: { slug: string }) {
       <div className="mt-4">
         <Button
           onClick={handle_enroll}
-          disabled={enroll_success || enroll_mutation.isPending}
+          disabled={
+            enroll_success ||
+            is_status_pending ||
+            enrollment_status?.enrolled === true ||
+            enroll_prepare_mutation.isPending ||
+            enroll_confirm_mutation.isPending
+          }
           className="rounded-none"
         >
-          {enroll_success ? t("enrolled") : t("enroll")}
+          {enrollment_status?.enrolled || enroll_success ? t("enrolled") : t("enroll")}
         </Button>
       </div>
 

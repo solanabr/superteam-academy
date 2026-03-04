@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getData, postData } from "@/lib/api/config";
 import { useAuthStore, type AuthState } from "@/store/auth-store";
+import { AuthSocialButtons } from "@/components/auth/auth-social-buttons";
 import { z } from "zod";
 
 const login_schema = z.object({
@@ -23,9 +24,11 @@ const login_schema = z.object({
 export default function LoginPage(): React.ReactElement {
   const t = useTranslations("auth");
   const t_common = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
   const search_params = useSearchParams();
-  const callback_url = search_params.get("callbackUrl") ?? "/dashboard";
+  const callback_url = search_params.get("callbackUrl") ?? `/${locale}/dashboard`;
+  const oauth_error = search_params.get("error");
   const set_session = useAuthStore((s: AuthState) => s.set_session);
 
   const [email, set_email] = useState("");
@@ -85,9 +88,21 @@ export default function LoginPage(): React.ReactElement {
           </h1>
         </div>
         <form onSubmit={handle_submit} className="mt-6 space-y-4">
-          {inline_error && (
+          {(inline_error || oauth_error) && (
             <p className="rounded-none border-2 border-destructive bg-destructive/10 px-3 py-2 text-xs font-mono text-destructive">
-              {inline_error}
+              {oauth_error === "oauth_not_configured"
+                ? t("oauthNotConfigured")
+                : oauth_error === "oauth_denied"
+                  ? t("oauthDenied")
+                  : oauth_error === "oauth_no_email"
+                    ? t("oauthNoEmail")
+                    : oauth_error === "account_disabled"
+                      ? t("accountDisabled")
+                      : oauth_error === "oauth_invalid_state"
+                        ? t("oauthInvalidState")
+                        : oauth_error === "oauth_missing"
+                          ? t("oauthMissing")
+                          : inline_error ?? t_common("error")}
             </p>
           )}
           <div className="space-y-2">
@@ -137,32 +152,7 @@ export default function LoginPage(): React.ReactElement {
           </Button>
         </form>
         <div className="mt-6 border-t-2 border-dashed border-border pt-4">
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("loginWithGoogle")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("loginWithGitHub")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-none border-2 border-border bg-background font-mono text-xs uppercase tracking-wide shadow-(--shadow-flat) hover:translate-x-px hover:translate-y-px hover:shadow-none"
-              disabled
-            >
-              {t("connectWallet")}
-            </Button>
-          </div>
+          <AuthSocialButtons callback_url={callback_url} />
         </div>
         <p className="mt-4 text-center text-xs font-mono text-muted-foreground">
           <Link

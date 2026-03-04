@@ -8,6 +8,13 @@
       "when": 1772435759872,
       "tag": "0000_lumpy_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772569095356,
+      "tag": "0001_wakeful_archangel",
+      "breakpoints": true
     }
   ]
 }

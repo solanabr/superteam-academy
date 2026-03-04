@@ -15,4 +15,6 @@ export * from "./course_enrollments";
 export * from "./challenges";
 export * from "./user_challenge_attempts";
 export * from "./xp_snapshots";
+export * from "./achievements";
 export * from "./admin_logs";
+export * from "./rate_limits";

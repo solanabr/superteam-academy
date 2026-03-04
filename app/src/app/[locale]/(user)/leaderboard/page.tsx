@@ -16,12 +16,12 @@ type LeaderboardEntry = {
 export default function LeaderboardPage() {
   const t = useTranslations("leaderboard");
   const t_common = useTranslations("common");
-  const [period, set_period] = useState<"weekly" | "monthly" | "allTime">("allTime");
+  const [period, set_period] = useState<"24h" | "7d" | "30d" | "all_time">("all_time");
   const [search, set_search] = useState("");
 
   const { data, isPending, error } = useAPIQuery<{ entries: LeaderboardEntry[] }>({
     queryKey: ["leaderboard", period],
-    path: `/api/leaderboard?limit=50&offset=0`,
+    path: `/api/leaderboard?timeframe=${period}&limit=50&offset=0`,
   });
 
   const entries = data?.entries ?? [];
@@ -47,22 +47,29 @@ export default function LeaderboardPage() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => set_period("weekly")}
-            className={`border px-3 py-2 text-sm rounded-none ${period === "weekly" ? "border-primary bg-primary/10" : "border-border"}`}
+            onClick={() => set_period("24h")}
+            className={`border px-3 py-2 text-sm rounded-none ${period === "24h" ? "border-primary bg-primary/10" : "border-border"}`}
+          >
+            {t("last24h")}
+          </button>
+          <button
+            type="button"
+            onClick={() => set_period("7d")}
+            className={`border px-3 py-2 text-sm rounded-none ${period === "7d" ? "border-primary bg-primary/10" : "border-border"}`}
           >
             {t("weekly")}
           </button>
           <button
             type="button"
-            onClick={() => set_period("monthly")}
-            className={`border px-3 py-2 text-sm rounded-none ${period === "monthly" ? "border-primary bg-primary/10" : "border-border"}`}
+            onClick={() => set_period("30d")}
+            className={`border px-3 py-2 text-sm rounded-none ${period === "30d" ? "border-primary bg-primary/10" : "border-border"}`}
           >
             {t("monthly")}
           </button>
           <button
             type="button"
-            onClick={() => set_period("allTime")}
-            className={`border px-3 py-2 text-sm rounded-none ${period === "allTime" ? "border-primary bg-primary/10" : "border-border"}`}
+            onClick={() => set_period("all_time")}
+            className={`border px-3 py-2 text-sm rounded-none ${period === "all_time" ? "border-primary bg-primary/10" : "border-border"}`}
           >
             {t("allTime")}
           </button>
