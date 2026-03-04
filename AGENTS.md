@@ -18,3 +18,12 @@ Use **Connector Kit** (`@solana/connector`) for wallet connection and **@solana/
 - Use `useKitTransactionSigner`, `useSolanaClient`, `useTransactionPreparer`, and kit types/addresses instead.
 
 **Reference**: [Connector Kit](https://www.connectorkit.dev/), app wallet setup in `app/components/providers.tsx` and `app/components/connect-wallet.tsx`.
+
+## Program ID and SDK
+
+The app (and any client) gets the on-chain program ID from **@superteam/academy-sdk** (`ONCHAIN_ACADEMY_PROGRAM_ADDRESS`). The SDK is Codama-generated from the Anchor IDL; the IDL gets its address from `declare_id!` in the program.
+
+**When the program ID changes** (new keypair, redeploy):
+
+1. Update program + Anchor config: `./scripts/update-program-id.sh` (uses `wallets/program-keypair.json`, updates `lib.rs` and `Anchor.toml`).
+2. **Always run `pnpm build:sdk`** from repo root so the IDL is refreshed and the SDK (and thus the app) gets the new address. Skipping this leaves the client using the old program ID and causes subtle failures (wrong PDAs, account not found, etc.).

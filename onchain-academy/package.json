@@ -8,6 +8,7 @@
     "script:init": "ts-node scripts/initialize.ts",
     "script:track": "ts-node scripts/create-mock-track.ts",
     "script:course": "ts-node scripts/create-mock-course.ts",
+    "script:course:anchor-fundamentals": "ts-node scripts/create-course-anchor-fundamentals.ts",
     "script:e2e": "ts-node scripts/e2e-flow.ts",
     "devnet:flow": "yarn script:init && yarn script:track && yarn script:course && yarn script:e2e"
   },

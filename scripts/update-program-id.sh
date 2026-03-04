@@ -26,4 +26,6 @@ ANCHOR_TOML="$ROOT_DIR/onchain-academy/Anchor.toml"
 sed -i '' "s/onchain_academy = \"[^\"]*\"/onchain_academy = \"$PUBKEY\"/" "$ANCHOR_TOML"
 echo "Updated $ANCHOR_TOML"
 
-echo "Done. Run 'anchor build' to rebuild with the new program ID."
+echo ""
+echo "Next: run from repo root: pnpm build:sdk"
+echo "  (anchor build → codama → sdk build so the client gets the new program ID)"

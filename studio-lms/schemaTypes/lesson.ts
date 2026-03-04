@@ -30,7 +30,10 @@ export const contentLessonType = defineType({
     defineField({
       name: 'body',
       type: 'text',
-      rows: 4,
+      title: 'Content (Markdown)',
+      description:
+        'Write in Markdown: # heading, ## subheading, **bold**, *italic*, - list, ``` code blocks ```, [links](url).',
+      rows: 16,
       validation: (rule) => rule.required(),
     }),
     defineField({
