@@ -1,7 +1,6 @@
 import { QueryProvider } from "@/providers/QueryProvider";
 import { SolanaProvider } from "@/providers/SolanaProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
-import { AuthProvider } from "@/providers/AuthProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics/Analytics";
 import { NavbarWrapper } from "@/components/landing/NavbarWrapper";
@@ -79,16 +78,14 @@ export default async function RootLayout({
         />
         <ThemeProvider>
           <SolanaProvider>
-            <AuthProvider>
-              <QueryProvider>
-                <NextIntlClientProvider messages={messages} locale={locale}>
-                  <Analytics />
-                  <ServiceWorkerRegister />
-                  <NavbarWrapper />
-                  {children}
-                </NextIntlClientProvider>
-              </QueryProvider>
-            </AuthProvider>
+            <QueryProvider>
+              <NextIntlClientProvider messages={messages} locale={locale}>
+                <Analytics />
+                <ServiceWorkerRegister />
+                <NavbarWrapper />
+                {children}
+              </NextIntlClientProvider>
+            </QueryProvider>
           </SolanaProvider>
         </ThemeProvider>
         <Toaster />

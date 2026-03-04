@@ -11,7 +11,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
-import { SocialAuthButton } from "@/components/auth/SocialAuthButton";
 import { useIsAdmin } from "@/hooks";
 import { Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -28,7 +27,7 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const NAV_LINKS = [
-  { key: "courses" as const, href: "/courses" },
+  { key: "courses" as const, href: "/courses/intro-to-solana" },
   { key: "leaderboard" as const, href: "/leaderboard" },
   { key: "challenges" as const, href: "/challenges" },
   { key: "discussions" as const, href: "/discussions" },
@@ -108,9 +107,6 @@ export function Navbar() {
               <div className="hidden sm:flex">
                 <NotificationBell />
               </div>
-              <div className="hidden sm:flex">
-                <SocialAuthButton />
-              </div>
               <WalletConnectButton />
 
               {/* Mobile nav trigger */}
@@ -128,7 +124,6 @@ export function Navbar() {
                   <div className="flex flex-col gap-4 sm:hidden">
                     <LanguageSwitcher />
                     <ThemeToggle />
-                    <SocialAuthButton />
                   </div>
                   <nav className="flex flex-col gap-2">
                     {NAV_LINKS.map((link) => (

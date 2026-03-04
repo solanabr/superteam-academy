@@ -1,10 +1,12 @@
 "use client";
 
 import { DailyReward, ProgressBar, StreakCalendar } from "@/components/app";
+import { OnboardingAssessmentModal } from "@/components/app/OnboardingAssessmentModal";
 import { Button } from "@/components/ui/button";
 import { useChallenges, useCourse, useEnrollment, useXpBalance } from "@/hooks";
 import { countCompletedLessons, getCompletedAtFromEnrollment, getLessonFlagsFromEnrollment } from "@/lib/lesson-bitmap";
 import { levelFromXp } from "@/lib/level";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import type { MockCourse } from "@/lib/services/content-service";
 import { getAllCourses, getCourseIdForProgram, getEffectiveLessonCount } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
@@ -58,6 +60,7 @@ export default function DashboardPage() {
     const streak = getMockStreakData();
     const [courses, setCourses] = useState<MockCourse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const t = useTranslations("dashboard");
     const tCommon = useTranslations("common");
 
@@ -68,11 +71,24 @@ export default function DashboardPage() {
         });
     }, []);
 
+    useEffect(() => {
+        if (!wallet) {
+            setShowOnboardingModal(false);
+            return;
+        }
+        setShowOnboardingModal(!hasCompletedOnboarding(wallet));
+    }, [wallet]);
+
     const xpValue = xp ?? 0;
     const level = levelFromXp(xpValue);
 
     return (
         <div className="flex h-full min-h-0 flex-col overflow-hidden -m-4 sm:-m-6">
+            <OnboardingAssessmentModal
+                open={showOnboardingModal}
+                walletAddress={wallet ?? null}
+                onOpenChange={setShowOnboardingModal}
+            />
             <DailyReward streakCount={streak.current} />
             <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-7">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-7">

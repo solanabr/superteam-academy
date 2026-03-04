@@ -43,7 +43,7 @@ export function HeroSection() {
                         Hands-on courses, soulbound credentials, and real-world projects
                     </p>
 
-                    <Link href="/courses" className="mt-10">
+                    <Link href="/courses/intro-to-solana" className="mt-10">
                         <Button
                             variant="pixel"
                             className="px-8 py-6 text-xl sm:text-2xl md:text-3xl font-game"

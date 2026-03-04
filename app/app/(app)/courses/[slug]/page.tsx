@@ -109,94 +109,97 @@ export default function CourseDetailPage({
 
             {/* Course header */}
             <div className="rounded-2xl border-4 border-border bg-card p-4 sm:p-6">
-                {course.image && (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-border bg-muted/40">
-                        <Image
-                            src={urlFor(course.image).width(1024).height(512).url()}
-                            alt={course.title}
-                            width={256}
-                            height={128}
-                            className="h-full  w-full object-cover"
-                            priority={false}
-                        />
-                    </div>
-                )}
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch lg:justify-between lg:gap-8 xl:gap-16">
+                    {course.image && (
+                        <div className="w-full overflow-hidden rounded-xl border border-border bg-muted/40 lg:w-[44%] xl:w-[42%]">
+                            <Image
+                                src={urlFor(course.image).width(2048).height(1024).url()}
+                                alt={course.title}
+                                width={1024}
+                                height={512}
+                                sizes="(max-width: 1024px) 100vw, 42vw"
+                                className="h-full min-h-[220px] w-full object-cover"
+                                priority={false}
+                            />
+                        </div>
+                    )}
 
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Badge
-                                variant="outline"
-                                className={`text-base font-game capitalize ${difficultyColors[course.difficulty]}`}
-                            >
-                                {course.difficulty}
-                            </Badge>
-                            {course.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs border-border font-game">
-                                    {tag}
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-5">
+                        <div className="space-y-3 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Badge
+                                    variant="outline"
+                                    className={`text-base font-game capitalize ${difficultyColors[course.difficulty]}`}
+                                >
+                                    {course.difficulty}
                                 </Badge>
-                            ))}
+                                {course.tags.map((tag) => (
+                                    <Badge key={tag} variant="outline" className="text-xs border-border font-game">
+                                        {tag}
+                                    </Badge>
+                                ))}
+                            </div>
+
+                            <h1 className="font-game text-2xl tracking-tight lg:text-3xl">
+                                {course.title}
+                            </h1>
+                            <p className="max-w-2xl text-muted-foreground font-game text-lg">
+                                {course.description}
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-5 text-lg text-muted-foreground font-game">
+                                <span className="inline-flex items-center gap-1.5">
+                                    <BookOpen className="h-4 w-4" />
+                                    {course.lessonCount} lessons
+                                </span>
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Sparkles className="h-4 w-4" />
+                                    {totalXp} XP
+                                </span>
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Clock className="h-4 w-4" />
+                                    {course.duration}
+                                </span>
+                            </div>
                         </div>
 
-                        <h1 className="font-game text-2xl tracking-tight lg:text-3xl">
-                            {course.title}
-                        </h1>
-                        <p className="max-w-2xl text-muted-foreground font-game text-lg">
-                            {course.description}
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-5 text-lg text-muted-foreground font-game">
-                            <span className="inline-flex items-center gap-1.5">
-                                <BookOpen className="h-4 w-4" />
-                                {course.lessonCount} lessons
-                            </span>
-                            <span className="inline-flex items-center gap-1.5">
-                                <Sparkles className="h-4 w-4" />
-                                {totalXp} XP
-                            </span>
-                            <span className="inline-flex items-center gap-1.5">
-                                <Clock className="h-4 w-4" />
-                                {course.duration}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="shrink-0 w-full lg:w-auto">
-                        {isEnrolled ? (
-                            <div className="space-y-3 w-full min-w-0 max-w-xs lg:max-w-sm">
-                                <ProgressBar value={completedCount} max={course.lessonCount} label="Progress" className="font-game text-sm" />
-                                {isCourseComplete ? (
-                                    <>
-                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 text-base font-game">
-                                            <Trophy className="mr-1 h-4 w-4" />
-                                            Course Complete
-                                        </Badge>
+                        <div className="w-full lg:max-w-sm">
+                            {isEnrolled ? (
+                                <div className="space-y-3 w-full min-w-0">
+                                    <ProgressBar value={completedCount} max={course.lessonCount} label="Progress" className="font-game text-sm" />
+                                    {isCourseComplete ? (
+                                        <>
+                                            <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 text-base font-game">
+                                                <Trophy className="mr-1 h-4 w-4" />
+                                                Course Complete
+                                            </Badge>
+                                            <Button asChild variant="pixel" className="w-full font-game text-lg">
+                                                <Link href="/certificates">
+                                                    View Certificates
+                                                </Link>
+                                            </Button>
+                                        </>
+                                    ) : (
                                         <Button asChild variant="pixel" className="w-full font-game text-lg">
-                                            <Link href="/certificates">
-                                                View Certificates
+                                            <Link href={continueLesson ? `/courses/${slug}/lessons/${continueLesson.id}` : `/courses/${slug}`}>
+                                                <Play className="mr-2 h-4 w-4" />
+                                                Continue Learning
                                             </Link>
                                         </Button>
-                                    </>
-                                ) : (
-                                    <Button asChild variant="pixel" className="w-full font-game text-lg">
-                                        <Link href={continueLesson ? `/courses/${slug}/lessons/${continueLesson.id}` : `/courses/${slug}`}>
-                                            <Play className="mr-2 h-4 w-4" />
-                                            Continue Learning
-                                        </Link>
-                                    </Button>
-                                )}
-                            </div>
-                        ) : (
-                            <Button
-                                variant="pixel"
-                                size="lg"
-                                onClick={handleEnroll}
-                                disabled={enroll.isPending}
-                                className="font-game text-lg"
-                            >
-                                {enroll.isPending ? "Enrolling..." : "Enroll Now"}
-                            </Button>
-                        )}
+                                    )}
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="pixel"
+                                    size="lg"
+                                    onClick={handleEnroll}
+                                    disabled={enroll.isPending}
+                                    className="w-full font-game text-lg lg:w-auto"
+                                >
+                                    {enroll.isPending ? "Enrolling..." : "Enroll Now"}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

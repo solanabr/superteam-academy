@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { ChartNoAxesColumnIncreasing, BookOpen, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface Course {
+    slug: string;
     title: string;
     description: string;
     level: string;
@@ -14,26 +16,22 @@ interface Course {
 
 const COURSES: Course[] = [
     {
-        title: "Solana Fundamentals",
-        description: "Learn the core concepts of Solana: accounts, transactions, programs, and the runtime model.",
+        slug: "intro-to-solana",
+        title: "Intro to Solana",
+        description: "Learn the core Solana mental model: accounts, transactions, programs, and how to build with confidence.",
         level: "Beginner",
         lessons: 5,
         xp: 500,
         image: "/courses/sol-fundamentals.png",
     },
-    {
-        title: "Anchor Program Development",
-        description: "Build Solana programs with the Anchor framework. Learn IDL generation, account validation, and testing.",
-        level: "Intermediate",
-        lessons: 8,
-        xp: 1200,
-        image: "/courses/anchor-dev.png",
-    }
 ];
 
 function CourseCard({ course }: { course: Course }) {
     return (
-        <div className="border-4 rounded-xl hover:bg-accent cursor-pointer transition-colors">
+        <Link
+            href={`/courses/${course.slug}`}
+            className="block border-4 rounded-xl hover:bg-accent cursor-pointer transition-colors"
+        >
             <Image
                 src={course.image}
                 alt={course.title}
@@ -58,7 +56,7 @@ function CourseCard({ course }: { course: Course }) {
                     </span>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
@@ -67,7 +65,7 @@ export function CoursesSection() {
         <section className="w-full py-16 bg-background">
             <div className="mx-auto max-w-7xl px-6">
                 <h2 className="text-4xl mb-4 font-game">Browse Courses</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {COURSES.map((course) => (
                         <CourseCard key={course.title} course={course} />
                     ))}

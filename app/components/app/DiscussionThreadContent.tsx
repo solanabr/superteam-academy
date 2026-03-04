@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRequireWallet } from "@/hooks/useRequireWallet";
-import { useSession } from "next-auth/react";
 import { ArrowLeft, MessageSquareText } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,7 +53,6 @@ export function DiscussionThreadContent() {
   const params = useParams<{ id: string }>();
   const { publicKey } = useWallet();
   const { requireWallet } = useRequireWallet();
-  const { data: session } = useSession();
 
   const [loading, setLoading] = useState(true);
   const [thread, setThread] = useState<CommunityThread | null>(null);
@@ -106,16 +104,11 @@ export function DiscussionThreadContent() {
   }, [fetchThread]);
 
   const canReply = replyBody.trim().length >= 2 && !isReplying && Boolean(thread);
-  const canParticipate = !!publicKey || !!session?.user;
-  const sessionDisplayName =
-    session?.user?.name?.trim() ||
-    session?.user?.email?.split("@")[0]?.trim() ||
-    "";
 
   async function onSubmitReply(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!thread || !canReply) return;
-    if (!canParticipate && !requireWallet()) return;
+    if (!requireWallet()) return;
 
     setIsReplying(true);
     try {
@@ -124,7 +117,7 @@ export function DiscussionThreadContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           body: replyBody.trim(),
-          authorName: authorName.trim() || sessionDisplayName,
+          authorName: authorName.trim(),
           walletAddress: publicKey?.toBase58() ?? null,
         }),
       });

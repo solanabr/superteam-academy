@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "path";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   // Acknowledge Turbopack when webpack is also configured (e.g. for production build).
-  turbopack: {},
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg"],
   images: {
     remotePatterns: [

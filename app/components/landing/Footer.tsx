@@ -7,7 +7,7 @@ const LINK_COLUMNS = [
     {
         title: "Learn",
         links: [
-            { label: "All Courses", href: "/courses" },
+            { label: "Intro to Solana", href: "/courses/intro-to-solana" },
             { label: "Learning Tracks", href: "/tracks" },
             { label: "Certifications", href: "/certifications" },
         ],

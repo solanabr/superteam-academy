@@ -1,43 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Superteam Academy App
 
-## Integrations
+Frontend for the Superteam Academy learning platform. This app provides wallet-based learning flows, on-chain progress tracking, credentials/certificates, daily challenges, leaderboard, discussions, admin tools, and Sanity CMS integration.
 
-- **shadcn/ui** — UI components (`components.json`, `components/ui/`).
-- **Wallet Adapter (Anza)** — Solana multi-wallet connection ([anza-xyz/wallet-adapter](https://github.com/anza-xyz/wallet-adapter)); provider in `components/providers/SolanaProvider.tsx`, config in `config/wallet.ts`.
+## Overview
 
-See [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) for setup and usage details.
+Key capabilities:
 
-## Getting Started
+- Wallet-first authentication and profile experience (Solana Wallet Adapter)
+- Course catalog and lesson player
+- Enrollment + progress tracking backed by on-chain PDAs
+- XP, leaderboard, streaks, and achievements UI
+- Certificate and credential views (Metaplex Core assets)
+- Daily challenge flow with code execution and completion tracking
+- Community discussions backed by Postgres (Prisma)
+- Admin console for config, courses, minters, credentials, achievements, challenges
+- Sanity Studio integration for content operations
+- PWA support for offline caching of visited content
 
-First, run the development server:
+## Tech Stack
+
+| Layer | Stack |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling/UI | Tailwind CSS v4, shadcn/ui, Radix primitives, Lucide icons |
+| Wallet/Web3 | `@solana/wallet-adapter-*`, `@solana/web3.js`, Anchor client |
+| State/Data | TanStack Query |
+| Community DB | PostgreSQL + Prisma + `@prisma/adapter-pg` |
+| Content | Sanity (`next-sanity`, `@sanity/client`) with mock fallback |
+| Analytics/Monitoring | GA4, Microsoft Clarity, Sentry (optional) |
+| PWA | Service worker + manifest (`/public/sw.js`, `app/manifest.ts`) |
+
+## Local Development Setup
+
+### Prerequisites
+
+- Node.js 20+
+- `pnpm` 10+
+- A running backend (`../backend`) for academy/challenge/admin proxy actions
+- A Postgres database for discussions
+- A browser wallet (Phantom/Solflare/etc.)
+
+### Run Locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd app
+pnpm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Update `.env.local` with your values, then:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm db:generate
+pnpm db:push   # first run or after schema changes
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Use `.env.example` as the source of truth.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Core (public / wallet / chain)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_PROGRAM_ID` | Yes | On-chain academy program id |
+| `NEXT_PUBLIC_XP_MINT` | Yes | Token-2022 XP mint |
+| `NEXT_PUBLIC_BACKEND_SIGNER` | Yes | Backend signer pubkey |
+| `NEXT_PUBLIC_CLUSTER` | Recommended | Default `devnet` |
+| `NEXT_PUBLIC_SOLANA_RPC` | Recommended | RPC endpoint for client reads/writes |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional | Enables WalletConnect adapter |
 
-## Deploy on Vercel
+### Community (Postgres)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes (for discussions) | Used by Prisma in `lib/prisma.ts` |
+| `DATABASE_URL_SSL_REJECT_UNAUTHORIZED` | Optional | Set `false` only when required |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Backend proxy (server-only)
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `BACKEND_URL` | Yes for academy/admin/challenges APIs | Defaults to `http://localhost:3001` |
+| `BACKEND_API_TOKEN` | Yes for `/api/academy/*` and challenge proxy routes | Must match backend |
+| `ADMIN_JWT_SECRET` | Yes for admin-protected actions | Must match backend signer/auth setup |
+
+### Content / CMS
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_USE_SANITY` | Optional | `true` uses Sanity content, `false` uses mock content |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Required when using Sanity | Used by read client + Studio |
+| `NEXT_PUBLIC_SANITY_DATASET` | Required when using Sanity | Usually `production` |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | Optional | Default in code |
+| `SANITY_API_TOKEN` | Optional | Required for write stub endpoints |
+| `SANITY_PROJECT_ID` | Optional | Server-side write client for stub APIs |
+| `SANITY_DATASET` | Optional | Server-side write client for stub APIs |
+| `SANITY_API_VERSION` | Optional | Server-side write client API version |
+
+### Credentials / DAS
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_HELIUS_RPC` | Optional | Helius RPC URL for credential/leaderboard reads |
+| `HELIUS_API_KEY` | Optional | Server-side fallback if public RPC is not set |
+| `NEXT_PUBLIC_CREDENTIAL_TRACK_COLLECTIONS` | Optional | Comma-separated Metaplex Core collection addresses |
+| `NEXT_PUBLIC_CREDENTIAL_PLACEHOLDER_URI` | Optional | URI treated as placeholder image |
+
+### Optional telemetry
+
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+- `NEXT_PUBLIC_CLARITY_PROJECT_ID`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `SENTRY_AUTH_TOKEN`
+
+## Useful Scripts
+
+```bash
+pnpm dev          # Start Next.js app
+pnpm build        # Production build
+pnpm start        # Production server
+pnpm lint         # ESLint
+pnpm db:generate  # Prisma client generation
+pnpm db:push      # Push Prisma schema to DB
+pnpm test:e2e     # Playwright tests
+```
+
+## Deployment
+
+### Build and run
+
+```bash
+pnpm install
+pnpm db:generate
+pnpm build
+pnpm start
+```
+
+### Deployment checklist
+
+- Set all required environment variables in your hosting provider
+- Ensure `BACKEND_URL` is reachable from deployed app runtime
+- Ensure `DATABASE_URL` points to the intended production DB
+- Run `pnpm db:push` (or equivalent migration workflow) before serving discussions
+- If using Sanity, set `NEXT_PUBLIC_USE_SANITY=true` plus Sanity env values
+- Set `NEXT_PUBLIC_APP_URL` if you need absolute URL API calls
+- Verify service worker behavior in production (it is disabled in dev by design)
+
+### Vercel notes
+
+- If deploying from monorepo root, set project root directory to `app`
+- Add all env vars under project settings
+- Confirm API routes can reach backend and Postgres from Vercel region/network
+
+## Additional Docs
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
+- [CMS_GUIDE.md](./CMS_GUIDE.md)
+- [CUSTOMIZATION.md](./CUSTOMIZATION.md)

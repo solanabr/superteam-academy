@@ -166,7 +166,7 @@ export function CustomWalletModal() {
             id="wallet-modal-title"
             className="font-game text-3xl font-semibold text-foreground"
           >
-            Connect wallet
+            Connect Wallet
           </h2>
           <button
             type="button"

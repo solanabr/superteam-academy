@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView, AnimatePresence } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, BookOpen, Trophy, RotateCcw } from "lucide-react";
 import Link from "next/link";
@@ -67,7 +67,7 @@ const QUESTIONS: Question[] = [
     },
 ];
 
-interface CourseRecommendation {
+export interface CourseRecommendation {
     slug: string;
     title: string;
     difficulty: string;
@@ -78,31 +78,31 @@ interface CourseRecommendation {
 
 const COURSES: CourseRecommendation[] = [
     {
-        slug: "solana-fundamentals",
-        title: "Solana Fundamentals",
-        difficulty: "Beginner",
+        slug: "intro-to-solana",
+        title: "Intro to Solana",
+        difficulty: "Starter Path",
         color: "from-blue-500/20 to-cyan-500/20 border-blue-500/40",
         summary:
-            "Start here. Learn accounts, programs, transactions, and the Solana execution model with practical @solana/web3.js exercises.",
+            "Start from first principles and build a strong Solana foundation with accounts, transactions, and core runtime concepts.",
         emoji: "🌱",
     },
     {
-        slug: "anchor-development",
-        title: "Anchor Program Development",
-        difficulty: "Intermediate",
+        slug: "intro-to-solana",
+        title: "Intro to Solana",
+        difficulty: "Builder Path",
         color: "from-purple-500/20 to-pink-500/20 border-purple-500/40",
         summary:
-            "Build real on-chain programs with Anchor's Rust framework — IDL generation, PDAs, account validation, and testing.",
-        emoji: "⚓",
+            "You already have momentum. Use Intro to Solana as the fast track to align your Web3 experience with Solana's account model.",
+        emoji: "🚀",
     },
     {
-        slug: "token-extensions",
-        title: "Token Extensions (Token-2022)",
-        difficulty: "Advanced",
+        slug: "intro-to-solana",
+        title: "Intro to Solana",
+        difficulty: "Accelerated Path",
         color: "from-yellow-500/20 to-orange-500/20 border-yellow-500/40",
         summary:
-            "Master the Token-2022 standard — transfer hooks, confidential transfers, non-transferable tokens, and token-gated apps.",
-        emoji: "🪩",
+            "Even with advanced experience, Intro to Solana is the recommended entry point here because it maps directly to the academy's hands-on progression.",
+        emoji: "⚡",
     },
 ];
 
@@ -114,23 +114,41 @@ function getRecommendation(answers: Record<number, number>): CourseRecommendatio
     const max = QUESTIONS.reduce((s, q) => s + Math.max(...q.scores), 0);
     const ratio = total / max;
 
-    if (ratio < 0.33) return COURSES[0]; // Fundamentals
-    if (ratio < 0.67) return COURSES[1]; // Anchor
-    return COURSES[2];                   // Token Extensions
+    if (ratio < 0.33) return COURSES[0];
+    if (ratio < 0.67) return COURSES[1];
+    return COURSES[2];
 }
 
-export function AssessmentSection() {
+interface AssessmentSectionProps {
+    mode?: "landing" | "onboarding";
+    showSecondaryAction?: boolean;
+    onComplete?: (recommendation: CourseRecommendation, answers: Record<number, number>) => void;
+}
+
+export function AssessmentSection({
+    mode = "landing",
+    showSecondaryAction = mode !== "onboarding",
+    onComplete,
+}: AssessmentSectionProps = {}) {
     const [currentStep, setCurrentStep] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [showResults, setShowResults] = useState(false);
+    const completionNotified = useRef(false);
 
     const sectionRef = useRef<HTMLDivElement>(null);
     const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
+    const isOnboarding = mode === "onboarding";
 
     const totalSteps = QUESTIONS.length;
     const question = QUESTIONS[currentStep];
     const progress = showResults ? 100 : ((currentStep + 1) / totalSteps) * 100;
     const recommendation = showResults ? getRecommendation(answers) : null;
+
+    useEffect(() => {
+        if (!showResults || !recommendation || completionNotified.current) return;
+        completionNotified.current = true;
+        onComplete?.(recommendation, answers);
+    }, [showResults, recommendation, answers, onComplete]);
 
     function selectOption(optionIndex: number) {
         setAnswers((prev) => ({ ...prev, [currentStep]: optionIndex }));
@@ -148,10 +166,11 @@ export function AssessmentSection() {
         setCurrentStep(0);
         setAnswers({});
         setShowResults(false);
+        completionNotified.current = false;
     }
 
     return (
-        <section className="w-full bg-background py-20">
+        <section className={cn("w-full", isOnboarding ? "bg-transparent py-6" : "bg-background py-20")}>
             <div className="mx-auto max-w-2xl px-4 sm:px-6">
                 <motion.div
                     ref={sectionRef}
@@ -161,15 +180,15 @@ export function AssessmentSection() {
                     className="text-center"
                 >
                     <p className="mb-2 font-game text-lg tracking-widest text-yellow-400 uppercase">
-                        Assessment
+                        {isOnboarding ? "Onboarding" : "Assessment"}
                     </p>
                     <h2 className="text-3xl sm:text-4xl font-game">
-                        Find the right course for yourself
+                        {isOnboarding ? "Skill Assessment Quiz" : "Find the right course for yourself"}
                     </h2>
                     <p className="mt-3 font-game text-lg sm:text-xl text-muted-foreground">
                         {showResults
-                            ? "Based on your answers, here's where you should start"
-                            : `Answer ${totalSteps} questions to find which course to start with`}
+                            ? "Based on your answers, here's your recommended start point"
+                            : `Answer ${totalSteps} questions to get your starting recommendation`}
                     </p>
                 </motion.div>
 
@@ -298,18 +317,28 @@ export function AssessmentSection() {
                                         className="font-game text-lg flex-1"
                                     >
                                         <Link href={`/courses/${recommendation!.slug}`}>
-                                            Start Course
+                                            {isOnboarding ? "Start Learning" : "Start Course"}
                                             <ArrowRight className="ml-2 h-5 w-5" />
                                         </Link>
                                     </Button>
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        size="lg"
-                                        className="font-game text-lg flex-1"
-                                    >
-                                        <Link href="/courses">Browse All Courses</Link>
-                                    </Button>
+                                    {showSecondaryAction && (
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="lg"
+                                            className="font-game text-lg flex-1"
+                                        >
+                                            <Link
+                                                href={
+                                                    isOnboarding
+                                                        ? "/dashboard"
+                                                        : "/courses/intro-to-solana"
+                                                }
+                                            >
+                                                {isOnboarding ? "Go to Dashboard" : "View Course"}
+                                            </Link>
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
