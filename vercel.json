@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "buildCommand": "cd app && pnpm install && pnpm build",
+  "installCommand": "npm i -g pnpm && pnpm install",
+  "outputDirectory": "app/.next"
+}
