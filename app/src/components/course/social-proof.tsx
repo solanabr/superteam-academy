@@ -123,7 +123,7 @@ export function SocialProof() {
 
         {/* Testimonials */}
         <div className="mt-20">
-          <p className="text-center text-xs font-medium uppercase tracking-widest text-muted-foreground/60">
+          <p className="text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
             {t("landing.lovedByStudents")}
           </p>
 

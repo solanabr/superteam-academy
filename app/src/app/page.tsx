@@ -229,7 +229,7 @@ export default function LandingPage() {
                   {t("landing.step1Description")}
                 </p>
                 {/* Mini wallet mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]" aria-hidden="true">
                   <div className="flex items-center gap-2 border-b border-border/30 px-3 py-2">
                     <div className="size-4 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500" />
                     <span className="text-[10px] font-medium text-muted-foreground/60">
@@ -316,7 +316,7 @@ export default function LandingPage() {
                   {t("landing.step2Description")}
                 </p>
                 {/* Mini editor mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e]" aria-hidden="true">
                   <div className="flex items-center gap-1.5 border-b border-border/30 px-3 py-1.5">
                     <div className="size-1.5 rounded-full bg-[#ff5f57]" />
                     <div className="size-1.5 rounded-full bg-[#febc2e]" />
@@ -371,7 +371,7 @@ export default function LandingPage() {
                   {t("landing.step3Description")}
                 </p>
                 {/* Mini NFT certificate mockup */}
-                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e] p-4">
+                <div className="mx-auto mt-5 max-w-[200px] overflow-hidden rounded-lg border border-border/50 bg-[#0c0c0e] p-4" aria-hidden="true">
                   <div className="mx-auto flex size-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/10">
                     <GraduationCap className="size-6 text-primary" />
                   </div>
