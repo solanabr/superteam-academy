@@ -1,26 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 export function StreakCalendar() {
-  const [activity, setActivity] = useState<Record<string, boolean>>({});
-  const [streak, setStreak] = useState(0);
-
-  useEffect(() => {
+  const [activity] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
     const stored = JSON.parse(localStorage.getItem("streak_activity") || "{}");
     const today = new Date().toISOString().split("T")[0];
     stored[today] = true;
     localStorage.setItem("streak_activity", JSON.stringify(stored));
-    setActivity(stored);
+    return stored;
+  });
 
-    // Calculate streak
+  const streak = useMemo(() => {
     let count = 0;
     const d = new Date();
-    while (stored[d.toISOString().split("T")[0]]) {
+    while (activity[d.toISOString().split("T")[0]]) {
       count++;
       d.setDate(d.getDate() - 1);
     }
-    setStreak(count);
-  }, []);
+    return count;
+  }, [activity]);
 
   const days = Array.from({ length: 30 }, (_, i) => {
     const d = new Date();

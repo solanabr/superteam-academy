@@ -1,6 +1,5 @@
-import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { connection, XP_MINT_DEVNET, PROGRAM_ID, getXpBalance, getCredentialNfts, getLeaderboardData, getTrackName } from '@/lib/solana/client';
 import type { XpSummary, StreakData, Credential, UserProfile, LeaderboardEntry, Enrollment, EnrollmentAction, LessonAction } from './types';
+import { getXpBalance, getCredentialNfts, getLeaderboardData } from '@/lib/solana/client';
 
 const STUB_XP: XpSummary = { total: 2700, level: 5 };
 const STUB_STREAK: StreakData = { current: 5, longest: 12, lastActiveDate: new Date().toISOString().split('T')[0] };
@@ -130,19 +129,19 @@ export const onChainLeaderboardService = {
 };
 
 export const onChainEnrollmentAction: EnrollmentAction = {
-  async enroll(courseSlug: string): Promise<{ success: boolean; txHash?: string }> {
+  async enroll(_courseSlug: string): Promise<{ success: boolean; txHash?: string }> {
     updateStreak();
     
     return { success: true, txHash: 'stub-enrollment-tx' };
   },
   
-  async closeEnrollment(courseSlug: string): Promise<{ success: boolean; txHash?: string }> {
+  async closeEnrollment(_courseSlug: string): Promise<{ success: boolean; txHash?: string }> {
     return { success: true, txHash: 'stub-close-enrollment-tx' };
   },
 };
 
 export const onChainLessonAction: LessonAction = {
-  async completeLesson(courseSlug: string, lessonId: string): Promise<{ success: boolean; xpAwarded?: number }> {
+  async completeLesson(_courseSlug: string, _lessonId: string): Promise<{ success: boolean; xpAwarded?: number }> {
     updateStreak();
     
     return { success: true, xpAwarded: 100 };

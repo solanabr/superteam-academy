@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase, type PracticeChallenge } from "@/lib/supabase";
@@ -30,7 +30,7 @@ export default function PracticePage() {
     const wallet = user?.wallet?.address || user?.id;
     supabase.from("challenge_attempts").select("challenge_id").eq("user_wallet", wallet).eq("passed", true)
       .then(({ data }) => {
-        const ids = new Set((data || []).map((a: any) => a.challenge_id));
+      const ids = new Set((data || []).map((a: { challenge_id: string }) => a.challenge_id));
         setCompleted(new Set(challenges.filter(c => ids.has(c.id)).map(c => c.slug)));
       });
   }, [user, challenges]);
@@ -60,7 +60,7 @@ export default function PracticePage() {
             const ok = JSON.stringify(result) === JSON.stringify(tc.expected);
             if (!ok) allPassed = false;
             results.push(ok ? `✅ f(${JSON.stringify(tc.input)}) → ${result}` : `❌ f(${JSON.stringify(tc.input)}) → got ${result}, expected ${tc.expected}`);
-          } catch (e: any) { allPassed = false; results.push(`❌ Error: ${e.message}`); }
+          } catch (e: unknown) { allPassed = false; results.push(`❌ Error: ${e instanceof Error ? e.message : String(e)}`); }
         }
         passed = allPassed; message = results.join("\n");
       }
@@ -71,7 +71,7 @@ export default function PracticePage() {
         await supabase.from("xp_transactions").insert({ user_wallet: wallet, amount: selected.xp_reward, reason: `challenge:${selected.slug}` });
       }
       setOutput({ passed, message, xp: passed ? selected.xp_reward : undefined });
-    } catch (e: any) { setOutput({ passed: false, message: `❌ ${e.message}` }); }
+    } catch (e: unknown) { setOutput({ passed: false, message: `❌ ${e instanceof Error ? e.message : String(e)}` }); }
     setRunning(false);
   };
 

@@ -13,14 +13,10 @@ import { LessonAiMentor } from "@/components/lesson/lesson-ai-mentor";
 import { useLessonTests } from "@/components/lesson/use-lesson-tests";
 import { useAiChat } from "@/components/lesson/use-ai-chat";
 
-interface LessonWithMeta extends Lesson {
-  lessonNumber: number;
-}
-
 interface LessonClientProps {
   lesson: Lesson;
   courseSlug: string;
-  allLessons: LessonWithMeta[];
+  allLessons: Lesson[];
   prevLesson?: { id: string; title: string };
   nextLesson?: { id: string; title: string };
   locale?: 'en' | 'pt-BR' | 'es';
@@ -63,7 +59,7 @@ export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextL
     t
   );
 
-  const { chatMessages, chatInput, setChatInput, isAiLoading, sendChatMessage, handleChatSubmit, retryLastMessage } = useAiChat(
+  const { chatMessages, chatInput, setChatInput, isAiLoading, sendChatMessage, retryLastMessage } = useAiChat(
     lesson.title,
     currentLocale,
     t

@@ -5,6 +5,71 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// -- User Profiles --
+
+export type UserProfileRow = {
+  wallet: string;
+  display_name: string | null;
+  bio: string | null;
+  twitter: string | null;
+  github: string | null;
+  xp: number;
+  level: number;
+  streak: number;
+  show_in_leaderboard: boolean;
+  profile_public: boolean;
+  created_at: string;
+};
+
+// -- Courses --
+
+export type CourseRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  lesson_count: number;
+  duration_minutes: number;
+  xp_reward: number;
+  order_index: number;
+  is_published: boolean;
+};
+
+// -- Quiz Questions --
+
+export type QuizQuestionRow = {
+  id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation: string;
+  category: string;
+  difficulty: string;
+  is_active: boolean;
+};
+
+// -- Achievements --
+
+export type AchievementRow = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+};
+
+// -- XP Transactions --
+
+export type XpTransactionRow = {
+  id: string;
+  user_wallet: string;
+  amount: number;
+  reason: string;
+  created_at: string;
+};
+
 export type Thread = {
   id: string;
   title: string;
@@ -42,7 +107,7 @@ export type PracticeChallenge = {
   category: string;
   xp_reward: number;
   starter_code: string;
-  test_cases: { input: any; expected: any; hidden: boolean }[];
+  test_cases: { input: unknown; expected: unknown; hidden: boolean }[];
   hints: string[];
   order_index: number;
 };

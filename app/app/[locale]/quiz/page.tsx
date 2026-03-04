@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { createClient } from '@supabase/supabase-js';
 
@@ -46,7 +46,6 @@ const DIFFICULTY_BADGE: Record<string, string> = {
 export default function QuizPage() {
   const { user, authenticated } = usePrivy();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [filteredQuestions, setFilteredQuestions] = useState<QuizQuestion[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [quizMode, setQuizMode] = useState<'browse' | 'quiz' | 'results'>('browse');
@@ -60,21 +59,21 @@ export default function QuizPage() {
 
   const wallet = user?.wallet?.address || '';
 
-  useEffect(() => { loadQuestions(); }, []);
-
-  useEffect(() => {
-    let filtered = questions;
-    if (selectedCategory !== 'all') filtered = filtered.filter(q => q.category === selectedCategory);
-    if (selectedDifficulty !== 'all') filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
-    setFilteredQuestions(filtered);
-  }, [questions, selectedCategory, selectedDifficulty]);
-
   async function loadQuestions() {
     setLoading(true);
     const { data } = await supabase.from('quiz_questions').select('*').eq('is_active', true).order('category').order('difficulty');
     setQuestions(data || []);
     setLoading(false);
   }
+
+  useEffect(() => { loadQuestions(); }, []);
+
+  const filteredQuestions = useMemo(() => {
+    let filtered = questions;
+    if (selectedCategory !== 'all') filtered = filtered.filter(q => q.category === selectedCategory);
+    if (selectedDifficulty !== 'all') filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
+    return filtered;
+  }, [questions, selectedCategory, selectedDifficulty]);
 
   function startQuiz(questionSet: QuizQuestion[]) {
     const shuffled = [...questionSet].sort(() => Math.random() - 0.5).slice(0, Math.min(10, questionSet.length));

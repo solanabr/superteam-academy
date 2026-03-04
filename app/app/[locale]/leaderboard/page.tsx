@@ -3,29 +3,19 @@
 import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { createClient } from '@supabase/supabase-js';
+import type { UserProfileRow } from '@/lib/supabase';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface LeaderboardEntry {
-  rank: number;
-  wallet: string;
-  username?: string;
-  xp: number;
-  level: number;
-  credentialCount: number;
-}
-
 export default function LeaderboardPage() {
   const { user, authenticated } = usePrivy();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserProfileRow[]>([]);
   const [filter, setFilter] = useState<'xp' | 'streak' | 'level'>('xp');
   const [loading, setLoading] = useState(true);
   const wallet = user?.wallet?.address || '';
-
-  useEffect(() => { loadLeaderboard(); }, [filter]);
 
   async function loadLeaderboard() {
     setLoading(true);
@@ -35,9 +25,12 @@ export default function LeaderboardPage() {
       .eq('show_in_leaderboard', true)
       .order(filter === 'xp' ? 'xp' : filter === 'streak' ? 'streak' : 'level', { ascending: false })
       .limit(50);
-    setUsers(data || []);
+    setUsers((data || []) as UserProfileRow[]);
     setLoading(false);
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadLeaderboard(); }, [filter]);
 
   const myRank = users.findIndex(u => u.wallet === wallet) + 1;
 
@@ -79,14 +72,14 @@ export default function LeaderboardPage() {
                     {i < 3 ? <span className="text-2xl">{MEDALS[i]}</span> : <span className="text-gray-500">#{i + 1}</span>}
                   </div>
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center text-white font-bold text-sm">
-                    {(u.display_name || u.wallet || '?')[0].toUpperCase()}
+                    {(u.display_name || u.wallet || '?')[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium truncate">{u.display_name || `${u.wallet?.slice(0,4)}...${u.wallet?.slice(-4)}`} {isMe && <span className="text-purple-400 text-xs">(you)</span>}</p>
-                    <p className="text-gray-500 text-xs">Level {u.level || 1}</p>
+                    <p className="text-gray-500 text-xs">Level {u.level ?? 1}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-purple-400 font-bold">{filter === 'xp' ? `${u.xp || 0} XP` : filter === 'streak' ? `${u.streak || 0} days` : `Lvl ${u.level || 1}`}</p>
+                    <p className="text-purple-400 font-bold">{filter === 'xp' ? `${u.xp ?? 0} XP` : filter === 'streak' ? `${u.streak ?? 0} days` : `Lvl ${u.level ?? 1}`}</p>
                   </div>
                 </div>
               );

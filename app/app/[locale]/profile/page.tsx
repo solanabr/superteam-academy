@@ -19,7 +19,7 @@ const SKILLS = [
 ];
 
 export default function ProfilePage() {
-  const { address, authenticated } = useWallet();
+  const { address } = useWallet();
   const shortAddr = address ? address.slice(0,4) + "..." + address.slice(-4) : "Not connected";
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">

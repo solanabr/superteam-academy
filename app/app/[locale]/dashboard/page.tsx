@@ -54,17 +54,13 @@ export default function DashboardPage() {
   const { address, authenticated } = useWallet();
   const t = useTranslations();
   const locale = useLocale();
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [xp, setXp] = useState({ total: 0, level: 1 });
   const [streak, setStreak] = useState({ current: 0, longest: 0, lastActiveDate: "" });
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!mounted) return;

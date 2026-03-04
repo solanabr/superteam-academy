@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -16,7 +15,7 @@ import {
   SourceCodeSquareIcon,
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
-import { courseService, sanityCourseService } from "@/lib/services";
+import { courseService } from "@/lib/services";
 import type { Lesson } from "@/lib/services";
 import { levelBadgeClasses } from "@/lib/utils";
 import { getTranslations, getLocale } from "next-intl/server";

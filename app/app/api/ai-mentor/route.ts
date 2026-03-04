@@ -121,7 +121,7 @@ async function generateWithFallback(input: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, error: prompt, locale } = await req.json();
+    const { error: prompt, locale } = await req.json();
     
     if (!prompt) {
       return NextResponse.json({ explanation: "No prompt provided" }, { status: 400 });

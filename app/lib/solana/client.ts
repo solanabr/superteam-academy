@@ -1,7 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 
 const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC || 'https://api.devnet.solana.com';
-const DAS_API_URL = RPC_URL.replace('api.devnet', 'api.devnet');
 
 export const connection = new Connection(RPC_URL, 'confirmed');
 

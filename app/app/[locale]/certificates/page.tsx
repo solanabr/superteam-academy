@@ -34,7 +34,7 @@ export default async function CertificatesPage() {
   const t = await getTranslations();
   const locale = await getLocale();
   const credentials = await credentialService.getCredentials();
-  const profile = await userService.getProfile();
+  await userService.getProfile();
 
   return (
     <div className="py-4">

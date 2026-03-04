@@ -4,10 +4,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import type { Lesson } from "@/lib/services/types";
 
-interface LessonWithMeta extends Lesson {
-  lessonNumber: number;
-}
-
 interface LessonReadingContentProps {
   lesson: Lesson;
   courseSlug: string;
@@ -16,7 +12,7 @@ interface LessonReadingContentProps {
   allLessonsLength: number;
   prevLesson?: { id: string; title: string };
   nextLesson?: { id: string; title: string };
-  t: (key: string, values?: any) => string;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
 }
 
 export function LessonReadingContent({

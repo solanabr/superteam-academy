@@ -21,11 +21,6 @@ export default function SettingsPage() {
   const [editor, setEditor] = useState({ editor_font_size: 14, editor_theme: 'vs-dark' });
   const [privacy, setPrivacy] = useState({ show_in_leaderboard: true, profile_public: true });
 
-  useEffect(() => {
-    if (!authenticated || !wallet) return;
-    loadSettings();
-  }, [authenticated, wallet]);
-
   async function loadSettings() {
     const [{ data: p }, { data: s }] = await Promise.all([
       supabase.from('user_profiles').select('*').eq('wallet', wallet).single(),
@@ -38,6 +33,12 @@ export default function SettingsPage() {
       setPrivacy({ show_in_leaderboard: s.show_in_leaderboard ?? true, profile_public: s.profile_public ?? true });
     }
   }
+
+  useEffect(() => {
+    if (!authenticated || !wallet) return;
+    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, wallet]);
 
   async function save() {
     if (!wallet) return;

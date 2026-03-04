@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
 import { supabase, type Thread } from "@/lib/supabase";
 

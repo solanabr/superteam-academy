@@ -26,7 +26,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
-  const { ready, authenticated, login, logout, address, user } = useWallet();
+  const { ready, authenticated, login, logout, address } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
   const formatAddress = (addr: string) => {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { createClient } from '@supabase/supabase-js';
+import type { CourseRow } from '@/lib/supabase';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,27 +23,28 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function CoursesPage() {
   const { user, authenticated } = usePrivy();
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CourseRow[]>([]);
   const [enrollments, setEnrollments] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState<string | null>(null);
   const wallet = user?.wallet?.address || '';
 
-  useEffect(() => { loadCourses(); }, []);
-  useEffect(() => { if (authenticated && wallet) loadEnrollments(); }, [authenticated, wallet]);
-
   async function loadCourses() {
     setLoading(true);
     const { data } = await supabase.from('courses').select('*').eq('is_published', true).order('order_index');
-    setCourses(data || []);
+    setCourses((data || []) as CourseRow[]);
     setLoading(false);
   }
 
   async function loadEnrollments() {
     const { data } = await supabase.from('enrollments').select('course_id').eq('user_wallet', wallet);
-    setEnrollments((data || []).map((e: any) => e.course_id));
+    setEnrollments((data || []).map((e: { course_id: string }) => e.course_id));
   }
+
+  useEffect(() => { loadCourses(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (authenticated && wallet) loadEnrollments(); }, [authenticated, wallet]);
 
   async function enroll(courseId: string) {
     if (!authenticated || !wallet) return;
@@ -53,7 +55,7 @@ export default function CoursesPage() {
   }
 
   const filtered = selectedCategory === 'all' ? courses : courses.filter(c => c.category === selectedCategory);
-  const categories = ['all', ...Array.from(new Set(courses.map((c: any) => c.category)))];
+  const categories = ['all', ...Array.from(new Set(courses.map((c) => c.category)))];
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">

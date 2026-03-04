@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Connection, Keypair, Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Connection, Keypair, Transaction, SystemProgram, PublicKey } from "@solana/web3.js";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     await connection.confirmTransaction(sig, "confirmed");
 
     return NextResponse.json({ success: true, signature: sig, course: courseSlug });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

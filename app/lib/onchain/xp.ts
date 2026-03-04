@@ -1,6 +1,11 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 
+void Connection;
+void PublicKey;
+
 const HELIUS_RPC = "https://devnet.helius-rpc.com/?api-key=" + process.env.NEXT_PUBLIC_HELIUS_API_KEY;
+
+void HELIUS_RPC; // Used for future RPC calls
 
 export async function getXPBalance(walletAddress: string): Promise<number> {
   try {
@@ -23,7 +28,7 @@ export async function getLeaderboard(): Promise<{address: string, xp: number, ra
       body: JSON.stringify({ programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" })
     });
     const data = await res.json();
-    return (data.result || []).slice(0, 10).map((item: any, i: number) => ({
+    return (data.result || []).slice(0, 10).map((item: { owner: string; amount?: number }, i: number) => ({
       address: item.owner,
       xp: item.amount || 0,
       rank: i + 1

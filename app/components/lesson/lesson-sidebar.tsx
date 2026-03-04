@@ -13,14 +13,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import type { Lesson } from "@/lib/services/types";
 
-interface LessonWithMeta extends Lesson {
-  lessonNumber: number;
-}
-
 interface LessonSidebarProps {
   courseSlug: string;
   currentLocale: string;
-  allLessons: LessonWithMeta[];
+  allLessons: Lesson[];
   lesson: Lesson;
   currentIndex: number;
   progress: number;
@@ -28,7 +24,7 @@ interface LessonSidebarProps {
   nextLesson?: { id: string; title: string };
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
-  t: (key: string, values?: any) => string;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
 }
 
 const getLessonIcon = (type: string) => {

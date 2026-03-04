@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import type { UserProfileRow, CourseRow, QuizQuestionRow, AchievementRow, XpTransactionRow } from '@/lib/supabase';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,18 +15,16 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState('');
   const [tab, setTab] = useState('overview');
-  const [stats, setStats] = useState<any>({});
-  const [users, setUsers] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
-  const [xpLog, setXpLog] = useState<any[]>([]);
+  const [stats, setStats] = useState<Record<string, number>>({});
+  const [users, setUsers] = useState<UserProfileRow[]>([]);
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestionRow[]>([]);
+  const [achievements, setAchievements] = useState<AchievementRow[]>([]);
+  const [xpLog, setXpLog] = useState<XpTransactionRow[]>([]);
   const [awardWallet, setAwardWallet] = useState('');
   const [awardAmount, setAwardAmount] = useState('');
   const [awardReason, setAwardReason] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => { if (authed) loadAll(); }, [authed, tab]);
+  const [, setLoading] = useState(false);
 
   async function loadAll() {
     setLoading(true);
@@ -44,8 +43,8 @@ export default function AdminPage() {
       supabase.from('quiz_attempts').select('*', { count: 'exact', head: true }),
       supabase.from('xp_transactions').select('amount'),
     ]);
-    const totalXp = (xpData || []).reduce((s: number, r: any) => s + (r.amount || 0), 0);
-    setStats({ userCount, enrollCount, threadCount, challengeCount, quizCount, totalXp });
+    const totalXp = (xpData || []).reduce((s: number, r) => s + (r.amount || 0), 0);
+    setStats({ userCount: userCount || 0, enrollCount: enrollCount || 0, threadCount: threadCount || 0, challengeCount: challengeCount || 0, quizCount: quizCount || 0, totalXp });
 
     const [{ data: u }, { data: c }, { data: q }, { data: a }, { data: xl }] = await Promise.all([
       supabase.from('user_profiles').select('*').order('xp', { ascending: false }).limit(20),
@@ -54,13 +53,15 @@ export default function AdminPage() {
       supabase.from('achievements').select('*'),
       supabase.from('xp_transactions').select('*').order('created_at', { ascending: false }).limit(30),
     ]);
-    setUsers(u || []);
-    setCourses(c || []);
-    setQuestions(q || []);
-    setAchievements(a || []);
-    setXpLog(xl || []);
+    setUsers((u || []) as UserProfileRow[]);
+    setCourses((c || []) as CourseRow[]);
+    setQuestions((q || []) as QuizQuestionRow[]);
+    setAchievements((a || []) as AchievementRow[]);
+    setXpLog((xl || []) as XpTransactionRow[]);
     setLoading(false);
   }
+
+  useEffect(() => { if (authed) loadAll(); }, [authed, tab]);
 
   async function awardXp() {
     if (!awardWallet || !awardAmount) return;
@@ -145,7 +146,7 @@ export default function AdminPage() {
                 {users.slice(0, 10).map((u, i) => (
                   <div key={u.wallet} className="flex items-center gap-3 p-3 bg-gray-800 rounded-xl">
                     <span className="text-gray-500 w-6 text-sm">#{i+1}</span>
-                    <span className="text-white flex-1 text-sm truncate">{u.display_name || u.wallet?.slice(0,8)+'...'}</span>
+                    <span className="text-white flex-1 text-sm truncate">{u.display_name || (u.wallet?.slice(0,8)+'...')}</span>
                     <span className="text-purple-400 text-sm font-semibold">{u.xp || 0} XP</span>
                     <span className="text-gray-500 text-xs">Lvl {u.level || 1}</span>
                   </div>
@@ -172,9 +173,9 @@ export default function AdminPage() {
                   <tr key={u.wallet} className="border-b border-gray-800/50 hover:bg-gray-800/50">
                     <td className="p-4 font-mono text-gray-400 text-xs">{u.wallet?.slice(0,8)}...</td>
                     <td className="p-4 text-white">{u.display_name || '—'}</td>
-                    <td className="p-4 text-right text-purple-400 font-semibold">{u.xp || 0}</td>
-                    <td className="p-4 text-right text-gray-300">{u.level || 1}</td>
-                    <td className="p-4 text-right text-orange-400">{u.streak || 0}🔥</td>
+                    <td className="p-4 text-right text-purple-400 font-semibold">{u.xp ?? 0}</td>
+                    <td className="p-4 text-right text-gray-300">{u.level ?? 1}</td>
+                    <td className="p-4 text-right text-orange-400">{u.streak ?? 0}🔥</td>
                   </tr>
                 ))}
               </tbody>

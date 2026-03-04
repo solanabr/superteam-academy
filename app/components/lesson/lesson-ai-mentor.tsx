@@ -170,7 +170,7 @@ export function LessonAiMentor({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleChatSubmit(e as any, code);
+                  handleChatSubmit(e as React.FormEvent, code);
                 }
               }}
             />
