@@ -19,31 +19,24 @@ export async function sendAndConfirmTx(
 	const tx = new Transaction().add(instruction);
 	tx.feePayer = wallet.publicKey as PublicKey;
 
-	// Fetch blockhash and set it on the tx before the wallet signs so we hold
-	// the matching lastValidBlockHeight for our confirmation poll. The wallet
-	// adapter's prepareTransaction skips refetching when recentBlockhash is
-	// already present.
-	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-	tx.recentBlockhash = blockhash;
-
+	// Do NOT pre-set recentBlockhash. The wallet adapter's prepareTransaction
+	// fetches it right before signing — this keeps the blockhash as fresh as
+	// possible, even if the user takes 30-60s to approve in their wallet popup.
 	const signature = await wallet.sendTransaction(tx, connection, {
 		maxRetries: 5,
 		skipPreflight: true,
 	});
 
-	// Poll with getSignatureStatuses instead of confirmTransaction.
-	// confirmTransaction relies on WebSocket subscriptions which are unreliable
-	// from localhost (and in many browser environments). Polling over HTTP is
-	// rock-solid and typically confirms within 1-3 iterations.
-	const POLL_INTERVAL_MS = 1000;
-	for (;;) {
-		const currentHeight = await connection.getBlockHeight("confirmed");
-		if (currentHeight > lastValidBlockHeight) {
-			throw new Error(
-				`Transaction ${signature} expired: block height ${currentHeight} exceeded lastValidBlockHeight ${lastValidBlockHeight}`
-			);
-		}
+	// Poll for confirmation using getSignatureStatuses over HTTP.
+	// We use a time-based timeout (90s) instead of block-height tracking
+	// because we don't hold the lastValidBlockHeight from the wallet's
+	// blockhash fetch. 90s exceeds the ~60s devnet blockhash validity window,
+	// giving the RPC node enough retries to land the transaction.
+	const POLL_INTERVAL_MS = 1500;
+	const TIMEOUT_MS = 90_000;
+	const deadline = Date.now() + TIMEOUT_MS;
 
+	while (Date.now() < deadline) {
 		const { value } = await connection.getSignatureStatuses([signature]);
 		const status = value?.[0];
 		if (status) {
@@ -60,6 +53,8 @@ export async function sendAndConfirmTx(
 
 		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 	}
+
+	throw new Error(`Transaction ${signature} was not confirmed within ${TIMEOUT_MS / 1000}s`);
 }
 
 export function isWalletReady(wallet: MinimalWallet): boolean {
