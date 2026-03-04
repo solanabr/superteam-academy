@@ -1,17 +1,16 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
-  // i18n: {
-  //   locales: ["pt-BR", "es", "en"],
-  //   defaultLocale: "en",
-    
-  // }
+  // Vercel needs this to find the middleware.js.nft.json file when the
+  // Next.js app lives inside a subdirectory of the repository.
+  outputFileTracingRoot: path.join(__dirname, "../"),
 };
 
 const withNextInt = createNextIntlPlugin()
 
 export default withNextInt(nextConfig);
+
 
