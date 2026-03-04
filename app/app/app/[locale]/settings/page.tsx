@@ -53,6 +53,10 @@ export default function SettingsPage() {
     const [theme, setTheme] = useState<"dark" | "light" | "system">("dark");
     const [lang, setLang] = useState("en");
 
+    const router = useRouter();
+const pathname = usePathname();
+const [, startTransition] = useTransition();
+
     /* Privacy state */
     const [profileVisibility, setProfileVisibility] = useState(true);
     const [showXP, setShowXP] = useState(true);
@@ -536,7 +540,14 @@ export default function SettingsPage() {
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         disabled={saving}
-                                        onClick={() => handleSave({ theme, language: lang })}
+                                        onClick={() => {
+    handleSave({ theme, language: lang }).then(() => {
+        // Tell next-intl to switch the locale
+        startTransition(() => {
+            router.replace(pathname, { locale: lang });
+        });
+    });
+}}
                                         className="btn-hacker bg-white/10 disabled:opacity-50 text-white font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden flex items-center gap-2 px-8 py-4"
                                     >
                                         {saving ? <Loader2 className="w-4 h-4 animate-spin text-neon-green" /> : <Save className="w-4 h-4" />}
