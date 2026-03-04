@@ -3,10 +3,10 @@
 import { Edit, MapPin, Calendar, Github, Linkedin, Wallet, Zap, Flame, Award } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { truncateAddress, getInitials } from "@/lib/utils";
+import { truncateAddress } from "@/lib/utils";
 
 interface User {
 	id: string;
@@ -54,8 +54,6 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 		(walletAddress !== undefined && walletAddress === user.walletAddress);
 	const isOwner = isAuthenticated && (identifiersMatch || isSelfProfileRoute);
 
-	const initials = getInitials(user.name);
-
 	const shortWallet = truncateAddress(user.walletAddress);
 
 	return (
@@ -68,9 +66,6 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 				<div className="flex flex-col sm:flex-row gap-4 sm:items-end">
 					<Avatar className="h-20 w-20 ring-4 ring-card mt-2">
 						<AvatarImage src={user.avatar} alt={user.name} />
-						<AvatarFallback className="text-lg bg-primary text-primary-foreground">
-							{initials}
-						</AvatarFallback>
 					</Avatar>
 
 					<div className="flex-1 min-w-0 sm:pb-1">

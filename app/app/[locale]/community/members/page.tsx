@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getTranslations } from "next-intl/server";
 import { getAllUsers, type AcademyUser } from "@/lib/sanity-users";
 import type { MemberWithMeta } from "@superteam-academy/cms";
@@ -11,7 +11,7 @@ import { getLocalizedPageMetadata } from "@/lib/metadata";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
 import { levelFromXP } from "@superteam-academy/gamification";
-import { getInitials } from "@/lib/utils";
+import { getGravatarUrl } from "@/lib/utils";
 
 export async function generateMetadata({
 	params,
@@ -26,8 +26,7 @@ export async function generateMetadata({
 type NormalizedMember = {
 	id: string;
 	name: string;
-	initials: string;
-	image?: string;
+	image: string;
 	title: string;
 	wallet: string;
 	xp: number;
@@ -42,7 +41,7 @@ type NormalizedMember = {
 function normalizeMember(
 	member: MemberWithMeta | AcademyUser | NormalizedMember
 ): NormalizedMember {
-	if ("initials" in member && "name" in member && typeof member.initials === "string") {
+	if ("image" in member && "name" in member && "wallet" in member) {
 		return member as NormalizedMember;
 	}
 
@@ -51,8 +50,7 @@ function normalizeMember(
 		return {
 			id: user._id,
 			name: user.name,
-			initials: getInitials(user.name),
-			image: user.image,
+			image: user.image || getGravatarUrl(user.email || user.name),
 			title:
 				user.role === "superadmin"
 					? "Super Admin"
@@ -76,11 +74,11 @@ function normalizeMember(
 	}
 
 	const sanityMember = member as MemberWithMeta;
+	const memberName = sanityMember.user?.name || "Unknown";
 	return {
 		id: sanityMember._id,
-		name: sanityMember.user?.name || "Unknown",
-		initials: getInitials(sanityMember.user?.name || "Unknown"),
-		image: sanityMember.user?.image,
+		name: memberName,
+		image: sanityMember.user?.image || getGravatarUrl(memberName),
 		title: sanityMember.title || "Solana Developer",
 		wallet: "",
 		xp: sanityMember.user?.xpBalance || 0,
@@ -170,9 +168,6 @@ export default async function MembersPage() {
 							<div className="relative inline-block mb-2">
 								<Avatar className="h-12 w-12 mx-auto">
 									<AvatarImage src={user.image} alt={user.name} />
-									<AvatarFallback className="text-sm font-medium">
-										{user.initials}
-									</AvatarFallback>
 								</Avatar>
 								{i < 3 && (
 									<span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[#ffd23f] text-[10px] font-bold text-black flex items-center justify-center">
@@ -300,7 +295,6 @@ function MemberRow({
 			</span>
 			<Avatar className="h-10 w-10 shrink-0">
 				<AvatarImage src={member.image} alt={member.name} />
-				<AvatarFallback className="text-xs font-medium">{member.initials}</AvatarFallback>
 			</Avatar>
 			<div className="flex-1 min-w-0">
 				<div className="flex items-center gap-2 flex-wrap">

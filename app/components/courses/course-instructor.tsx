@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
 interface CourseInstructorProps {
@@ -39,12 +39,6 @@ export function CourseInstructor({ instructor, otherCourses = [] }: CourseInstru
 					<div className="flex items-start gap-4">
 						<Avatar className="h-20 w-20">
 							<AvatarImage src={instructor.avatar} alt={instructor.name} />
-							<AvatarFallback className="text-lg">
-								{instructor.name
-									.split(" ")
-									.map((n) => n[0])
-									.join("")}
-							</AvatarFallback>
 						</Avatar>
 
 						<div className="flex-1 space-y-2">

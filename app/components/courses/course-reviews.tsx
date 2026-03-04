@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
@@ -263,12 +263,6 @@ export function CourseReviews({
 											src={review.user.avatar}
 											alt={review.user.name}
 										/>
-										<AvatarFallback>
-											{review.user.name
-												.split(" ")
-												.map((n) => n[0])
-												.join("")}
-										</AvatarFallback>
 									</Avatar>
 									<div>
 										<div className="font-medium">{review.user.name}</div>

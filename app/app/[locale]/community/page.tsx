@@ -23,14 +23,15 @@ import {
 } from "@/lib/community-cms";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
-import { getInitials, formatRelativeTime } from "@/lib/utils";
+import { getGravatarUrl, formatRelativeTime } from "@/lib/utils";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
 interface NormalizedDiscussion {
 	id: string;
 	slug: string;
 	title: string;
 	excerpt: string;
-	author: { name: string; initials: string };
+	author: { name: string; image: string };
 	category: string;
 	views: number;
 	comments: number;
@@ -64,14 +65,13 @@ function normalizeDiscussion(
 	d: Awaited<ReturnType<typeof getAllDiscussions>>[number]
 ): NormalizedDiscussion {
 	const authorName = d.author?.name ?? "Unknown";
-	const authorInitials = getInitials(authorName);
 
 	return {
 		id: d._id,
 		slug: typeof d.slug === "string" ? d.slug : d.slug?.current || d._id,
 		title: d.title,
 		excerpt: d.excerpt,
-		author: { name: authorName, initials: authorInitials },
+		author: { name: authorName, image: d.author?.image || getGravatarUrl(authorName) },
 		category: d.category,
 		views: d.views,
 		comments: d.commentCount,
@@ -283,9 +283,9 @@ function DiscussionRow({
 			className="block rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 transition-colors"
 		>
 			<div className="flex items-start gap-4">
-				<div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-					{d.author.initials}
-				</div>
+				<Avatar className="h-9 w-9 shrink-0">
+					<AvatarImage src={d.author.image} alt={d.author.name} />
+				</Avatar>
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2 mb-1 flex-wrap">
 						{d.pinned && <Pin className="h-3 w-3 text-amber-500 shrink-0" />}

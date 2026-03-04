@@ -18,7 +18,8 @@ import {
 	type ProjectWithMeta,
 } from "@/lib/community-cms";
 import type { ProjectCategory } from "@superteam-academy/cms";
-import { getInitials } from "@/lib/utils";
+import { getGravatarUrl } from "@/lib/utils";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
 const CATEGORIES = ["all", "defi", "nft", "tooling", "gaming", "social", "infra"] as const;
 
@@ -27,7 +28,7 @@ type NormalizedProject = {
 	id: string;
 	title: string;
 	description: string;
-	author: { name: string; initials: string };
+	author: { name: string; image: string };
 	category: string;
 	stars: number;
 	contributors: number;
@@ -39,7 +40,7 @@ type NormalizedProject = {
 };
 
 function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]): NormalizedProject {
-	if ("author" in project && typeof project.author === "object" && "initials" in project.author) {
+	if ("author" in project && typeof project.author === "object" && "image" in project.author) {
 		return project as NormalizedProject;
 	}
 
@@ -50,7 +51,7 @@ function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]):
 		description: sanityProject.description,
 		author: {
 			name: sanityProject.author?.name || "Unknown",
-			initials: getInitials(sanityProject.author?.name || "Unknown"),
+			image: sanityProject.author?.image || getGravatarUrl(sanityProject.author?.name || "Unknown"),
 		},
 		category: sanityProject.category,
 		stars: sanityProject.stars || 0,
@@ -69,7 +70,7 @@ const PROJECTS = [
 		title: "SolSwap Aggregator",
 		description:
 			"A DEX aggregator that finds the best swap routes across Jupiter, Raydium, and Orca. Built during the DeFi track.",
-		author: { name: "Maria Santos", initials: "MS" },
+		author: { name: "Maria Santos", image: getGravatarUrl("Maria Santos") },
 		category: "defi",
 		stars: 67,
 		contributors: 3,
@@ -84,7 +85,7 @@ const PROJECTS = [
 		title: "NFT Launchpad Kit",
 		description:
 			"Open-source toolkit for launching Metaplex Core NFT collections with configurable minting phases, allowlists, and reveal mechanics.",
-		author: { name: "Alex Chen", initials: "AC" },
+		author: { name: "Alex Chen", image: getGravatarUrl("Alex Chen") },
 		category: "nft",
 		stars: 89,
 		contributors: 5,
@@ -99,7 +100,7 @@ const PROJECTS = [
 		title: "Anchor Test Generator",
 		description:
 			"CLI tool that reads your Anchor IDL and auto-generates TypeScript test boilerplate with proper account setup and assertions.",
-		author: { name: "James Wilson", initials: "JW" },
+		author: { name: "James Wilson", image: getGravatarUrl("James Wilson") },
 		category: "tooling",
 		stars: 124,
 		contributors: 2,
@@ -114,7 +115,7 @@ const PROJECTS = [
 		title: "SolQuest",
 		description:
 			"On-chain quest platform where users complete coding challenges and earn soulbound achievement tokens. Built with Token-2022.",
-		author: { name: "Priya Patel", initials: "PP" },
+		author: { name: "Priya Patel", image: getGravatarUrl("Priya Patel") },
 		category: "gaming",
 		stars: 45,
 		contributors: 2,
@@ -129,7 +130,7 @@ const PROJECTS = [
 		title: "Solana Monitoring Dashboard",
 		description:
 			"Real-time monitoring dashboard for Solana programs. Track instruction counts, CU usage, error rates, and account changes.",
-		author: { name: "Carlos Rodriguez", initials: "CR" },
+		author: { name: "Carlos Rodriguez", image: getGravatarUrl("Carlos Rodriguez") },
 		category: "infra",
 		stars: 56,
 		contributors: 1,
@@ -144,7 +145,7 @@ const PROJECTS = [
 		title: "Decentralized Study Group",
 		description:
 			"A social dApp for forming on-chain study groups with shared progress tracking, milestone rewards, and group credentials.",
-		author: { name: "Yuki Tanaka", initials: "YT" },
+		author: { name: "Yuki Tanaka", image: getGravatarUrl("Yuki Tanaka") },
 		category: "social",
 		stars: 32,
 		contributors: 4,
@@ -273,9 +274,9 @@ function ProjectCard({
 			}`}
 		>
 			<div className="flex items-start gap-3 mb-3">
-				<div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-					{p.author.initials}
-				</div>
+				<Avatar className="h-9 w-9 shrink-0">
+					<AvatarImage src={p.author.image} alt={p.author.name} />
+				</Avatar>
 				<div className="flex-1 min-w-0">
 					<p className="text-sm font-semibold truncate">{p.title}</p>
 					<p className="text-xs text-muted-foreground">{p.author.name}</p>

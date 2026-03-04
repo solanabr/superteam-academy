@@ -10,7 +10,7 @@ import {
 	Flame,
 	Zap,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import Link from "next/link";
@@ -123,9 +123,7 @@ export function LeaderboardTable({
 												src={entry.user.avatar}
 												alt={entry.user.name}
 											/>
-											<AvatarFallback className="text-xs">
-												{entry.user.name.charAt(0)}
-											</AvatarFallback>
+
 										</Avatar>
 										<div className="min-w-0">
 											<div className="text-sm font-medium truncate">

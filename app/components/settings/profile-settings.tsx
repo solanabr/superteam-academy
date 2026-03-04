@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsSave } from "@/hooks/use-settings";
@@ -132,9 +132,6 @@ export function ProfileSettings() {
 				<div className="flex items-center gap-4">
 					<Avatar className="h-16 w-16">
 						<AvatarImage src={profile.avatar} alt={profile.name} />
-						<AvatarFallback className="text-lg bg-primary/10 text-primary">
-							{profile.name.charAt(0)}
-						</AvatarFallback>
 					</Avatar>
 					<div>
 						<Label htmlFor="avatar-upload" className="cursor-pointer">
