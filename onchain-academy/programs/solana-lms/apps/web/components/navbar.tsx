@@ -1,5 +1,5 @@
 "use client";
-import { Terminal, Trophy, User, Zap, Menu, X, Wallet } from "lucide-react";
+import { Terminal, Menu, Wallet } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
@@ -8,7 +8,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@workspace/ui/components/sheet";
-import { cn } from "@workspace/ui/lib/utils";
+import { appDomainUrl } from "@/lib/constant";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,7 +34,11 @@ export function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
-            <Link className="text-muted-foreground" key={item.href} href={item.href}>
+            <Link
+              className="text-muted-foreground"
+              key={item.href}
+              href={item.href}
+            >
               {/* <a className={cn(
                   "text-sm font-medium transition-colors hover:text-primary",
                   location.startsWith(item.href) ? "text-primary" : "text-muted-foreground"
@@ -58,14 +62,16 @@ export function Navbar() {
             </div>
           </div> */}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
-          >
-            <Wallet className="w-4 h-4" />
-            Connect
-          </Button>
+          <Link href={appDomainUrl}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary"
+            >
+              <Wallet className="w-4 h-4" />
+              Connect
+            </Button>
+          </Link>
 
           {/* <Link
             className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -99,12 +105,12 @@ export function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <div className="flex flex-col gap-4">
+              <Link href={appDomainUrl} className="flex flex-col gap-4">
                 <Button className="w-full gap-2 bg-linear-to-r from-primary to-secondary text-black font-bold">
                   <Wallet className="w-4 h-4" />
                   Connect Wallet
                 </Button>
-              </div>
+              </Link>
             </div>
           </SheetContent>
         </Sheet>

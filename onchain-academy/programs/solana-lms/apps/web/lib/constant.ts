@@ -1,0 +1,1 @@
+export const appDomainUrl = process.env.NEXT_PUBLIC_APP_DOMAIN_URL!
