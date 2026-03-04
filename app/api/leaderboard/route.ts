@@ -15,6 +15,8 @@ interface SupabaseUser {
   total_xp?: number | null
 }
 
+type Timeframe = 'weekly' | 'monthly' | 'alltime'
+
 function shortWallet(wallet: string): string {
   if (!wallet) return 'Unknown'
   return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`
@@ -43,9 +45,104 @@ async function getSupabaseClient() {
   )
 }
 
-async function buildDbLeaderboard(limit: number, offset: number) {
+function parseTimeframe(timeframe: string | null): Timeframe {
+  if (timeframe === 'weekly' || timeframe === 'monthly' || timeframe === 'alltime') {
+    return timeframe
+  }
+  return 'alltime'
+}
+
+function timeframeStartIso(timeframe: Timeframe): string | null {
+  const now = new Date()
+  if (timeframe === 'weekly') {
+    now.setDate(now.getDate() - 7)
+    return now.toISOString()
+  }
+  if (timeframe === 'monthly') {
+    now.setDate(now.getDate() - 30)
+    return now.toISOString()
+  }
+  return null
+}
+
+async function buildDbLeaderboard(
+  limit: number,
+  offset: number,
+  timeframe: Timeframe,
+  courseId?: string
+) {
   const supabase = await getSupabaseClient()
   if (!supabase) return []
+
+  if (timeframe !== 'alltime' || courseId) {
+    const startIso = timeframeStartIso(timeframe)
+    let txQuery = supabase
+      .from('xp_transactions')
+      .select('user_id, amount, course_id, created_at')
+
+    if (startIso) {
+      txQuery = txQuery.gte('created_at', startIso)
+    }
+
+    if (courseId) {
+      txQuery = txQuery.eq('course_id', courseId)
+    }
+
+    const { data: transactions, error: txError } = await txQuery
+
+    if (txError || !transactions) {
+      if (txError) {
+        console.warn('DB timeframe leaderboard failed:', txError.message)
+      }
+      return []
+    }
+
+    const xpByUser = new Map<string, number>()
+    for (const transaction of transactions) {
+      const userId = String(transaction.user_id || '')
+      const amount = Number(transaction.amount || 0)
+      if (!userId || !Number.isFinite(amount)) continue
+      const current = xpByUser.get(userId) || 0
+      xpByUser.set(userId, current + amount)
+    }
+
+    const ranked = Array.from(xpByUser.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(offset, offset + limit)
+
+    if (ranked.length === 0) return []
+
+    const userIds = ranked.map(([userId]) => userId)
+    const usersById = new Map<string, SupabaseUser>()
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, username, display_name, wallet_address, current_streak')
+      .in('id', userIds)
+
+    if (!usersError && users) {
+      for (const user of users as SupabaseUser[]) {
+        usersById.set(user.id, user)
+      }
+    }
+
+    return ranked.map(([userId, totalXP], idx) => {
+      const user = usersById.get(userId)
+      const wallet = user?.wallet_address || userId
+      const username = user?.username || shortWallet(wallet)
+      const displayName = user?.display_name || user?.username || shortWallet(wallet)
+
+      return {
+        rank: offset + idx + 1,
+        userId,
+        wallet,
+        username,
+        displayName,
+        totalXP,
+        level: deriveLevel(totalXP),
+        currentStreak: user?.current_streak || 0,
+      }
+    })
+  }
 
   const { data, error } = await supabase
     .from('users')
@@ -84,10 +181,16 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '50'), 1), 200)
     const offset = Math.max(parseInt(searchParams.get('offset') || '0'), 0)
+    const timeframe = parseTimeframe(searchParams.get('timeframe'))
+    const courseIdParam = searchParams.get('courseId')
+    const courseId =
+      typeof courseIdParam === 'string' && courseIdParam.length > 0 && courseIdParam !== 'all'
+        ? courseIdParam
+        : undefined
     const xpMint = process.env.NEXT_PUBLIC_XP_TOKEN_MINT || process.env.XP_TOKEN_MINT
     const heliusApiKey = process.env.NEXT_PUBLIC_HELIUS_API_KEY || process.env.HELIUS_API_KEY
 
-    if (xpMint && heliusApiKey) {
+    if (xpMint && heliusApiKey && timeframe === 'alltime' && !courseId) {
       try {
         const holdersLimit = Math.min(offset + limit, 1000)
         const holdersRes = await fetch(`https://api.helius.xyz/v0/token/holders?api_key=${heliusApiKey}`, {
@@ -159,7 +262,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const dbLeaderboard = await buildDbLeaderboard(limit, offset)
+    const dbLeaderboard = await buildDbLeaderboard(limit, offset, timeframe, courseId)
     return NextResponse.json(dbLeaderboard, { status: 200 })
   } catch (error) {
     console.error('Leaderboard error:', error)

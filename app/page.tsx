@@ -24,9 +24,13 @@ interface FeatureCardProps {
 
 interface PathCardProps {
   path: LearningPath
+  trackLabel: string
+  coursesLabel: string
+  onchainReadyLabel: string
 }
 
 const WEB3_TERMS = ['Solana Programs', 'On-chain XP', 'Proof Credentials', 'Real dApps']
+const PARTNER_LOGOS = ['Solana', 'Anchor', 'Metaplex', 'Superteam']
 
 export default function Home() {
   const { t } = useI18n()
@@ -145,7 +149,7 @@ export default function Home() {
                     <ArrowRight size={16} className="ml-2" />
                   </Button>
                 </Link>
-                <Link href="/certificates" className="w-full sm:w-auto">
+                <Link href="/auth/signin" className="w-full sm:w-auto">
                   <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                     {t('home.getStarted')}
                   </Button>
@@ -199,12 +203,36 @@ export default function Home() {
 
             <div className="grid gap-5 md:grid-cols-3">
               {featuredPaths.map((path) => (
-                <PathCard key={path.id} path={path} />
+                <PathCard
+                  key={path.id}
+                  path={path}
+                  trackLabel={t('home.trackLabel')}
+                  coursesLabel={t('home.coursesLabel')}
+                  onchainReadyLabel={t('home.onchainReadyLabel')}
+                />
               ))}
             </div>
           </div>
         </section>
       )}
+
+      <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-superteam-emerald/35 bg-white/80 p-6 backdrop-blur-sm dark:border-superteam-navy/45 dark:bg-[#0b1731]/70 md:p-8">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-superteam-forest dark:text-superteam-yellow">
+            {t('home.socialProofTitle')}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {PARTNER_LOGOS.map((partner) => (
+              <div
+                key={partner}
+                className="rounded-lg border border-superteam-emerald/30 bg-white/75 px-4 py-3 text-center text-sm font-semibold text-superteam-forest dark:border-superteam-navy/45 dark:bg-superteam-navy/30 dark:text-superteam-offwhite"
+              >
+                {partner}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="px-4 pb-16 sm:px-6 lg:px-8">
@@ -294,7 +322,7 @@ export default function Home() {
                 key={testimonial.name}
                 className="rounded-xl border border-superteam-navy/35 bg-white/70 p-6 backdrop-blur-sm dark:bg-[#0f1930]/65"
               >
-                <p className="mb-4 text-gray-700 dark:text-gray-200">"{testimonial.comment}"</p>
+                <p className="mb-4 text-gray-700 dark:text-gray-200">&ldquo;{testimonial.comment}&rdquo;</p>
                 <p className="font-semibold text-superteam-navy dark:text-superteam-offwhite">{testimonial.name}</p>
                 <p className="text-sm text-superteam-emerald dark:text-superteam-yellow">{testimonial.role}</p>
               </div>
@@ -349,19 +377,32 @@ function FeatureCard({ icon, title, description }: FeatureCardProps) {
   )
 }
 
-function PathCard({ path }: PathCardProps) {
+function PathCard({ path, trackLabel, coursesLabel, onchainReadyLabel }: PathCardProps) {
+  const progressValue = Math.min(100, 24 + path.courses.length * 18)
   return (
     <div className="rounded-xl border border-blue-200 bg-white/80 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/55 hover:shadow-[0_14px_28px_-20px_rgba(37,99,235,0.85)] dark:border-superteam-navy/35 dark:bg-[#0d1730]/65 dark:hover:border-superteam-emerald/60 dark:hover:shadow-[0_14px_28px_-20px_rgba(35,58,117,0.95)]">
       <p className="mb-3 inline-flex rounded-full border border-neon-cyan/40 bg-neon-cyan/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:border-superteam-yellow/40 dark:bg-superteam-yellow/10 dark:text-superteam-yellow">
-        Track
+        {trackLabel}
       </p>
       <h3 className="mb-2 line-clamp-1 text-xl font-bold text-blue-900 dark:text-superteam-offwhite">
         {path.title}
       </h3>
       <p className="mb-5 line-clamp-2 text-sm text-gray-600 dark:text-gray-300">{path.description}</p>
+      <div className="mb-4">
+        <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-gray-500 dark:text-gray-300">
+          <span>{coursesLabel}</span>
+          <span>{progressValue}%</span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-superteam-navy/40">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-superteam-emerald to-superteam-yellow"
+            style={{ width: `${progressValue}%` }}
+          />
+        </div>
+      </div>
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-300">
-        <span>{path.courses.length} courses</span>
-        <span className="font-semibold text-superteam-emerald">On-chain ready</span>
+        <span>{`${path.courses.length} ${coursesLabel}`}</span>
+        <span className="font-semibold text-superteam-emerald">{onchainReadyLabel}</span>
       </div>
     </div>
   )

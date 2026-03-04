@@ -17,7 +17,7 @@ export const trackEvent = (
     posthog.capture(eventName, properties);
 };
 
-export const identifyUser = (userId: string, properties?: Record<string, any>) => {
+export const identifyUser = (userId: string, properties?: Record<string, unknown>) => {
     posthog.identifyUser(userId, properties);
 };
 

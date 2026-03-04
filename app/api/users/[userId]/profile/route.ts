@@ -33,7 +33,7 @@ async function getSupabaseClient() {
 const USER_FIELDS =
   'id, email, display_name, avatar_url, bio, wallet_address, total_xp, level, current_streak, longest_streak, created_at'
 
-async function resolveUserByIdOrEmail(supabase: SupabaseClient, rawUserId: string) {
+async function resolveUserByIdentifier(supabase: SupabaseClient, rawUserId: string) {
   const candidates = Array.from(new Set([rawUserId, rawUserId.toLowerCase()]))
 
   for (const candidate of candidates) {
@@ -59,6 +59,15 @@ async function resolveUserByIdOrEmail(supabase: SupabaseClient, rawUserId: strin
         .eq('wallet_address', candidate)
         .maybeSingle()
       user = byWallet.data
+    }
+
+    if (!user) {
+      const byUsername = await supabase
+        .from('users')
+        .select(USER_FIELDS)
+        .eq('username', candidate)
+        .maybeSingle()
+      user = byUsername.data
     }
 
     if (user) {
@@ -98,7 +107,7 @@ export async function GET(
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }
 
-    const user = await resolveUserByIdOrEmail(supabase, userId)
+    const user = await resolveUserByIdentifier(supabase, userId)
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -128,7 +137,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
     }
 
-    const existingUser = await resolveUserByIdOrEmail(supabase, userId)
+    const existingUser = await resolveUserByIdentifier(supabase, userId)
     if (!existingUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
@@ -176,7 +185,7 @@ export async function PATCH(
       }
     }
 
-    const refreshedUser = await resolveUserByIdOrEmail(supabase, existingUser.id)
+    const refreshedUser = await resolveUserByIdentifier(supabase, existingUser.id)
     if (!refreshedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }

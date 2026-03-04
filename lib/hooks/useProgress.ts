@@ -10,6 +10,8 @@ export interface Progress {
   enrollments: UserProgressResponse['enrollments']
 }
 
+export type LeaderboardTimeframe = 'weekly' | 'monthly' | 'alltime'
+
 export function useProgress(userId?: string) {
   const [progress, setProgress] = useState<Progress | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -105,7 +107,12 @@ export function useAchievements(userId?: string) {
   }
 }
 
-export function useLeaderboard(limit = 50, offset = 0) {
+export function useLeaderboard(
+  limit = 50,
+  offset = 0,
+  timeframe: LeaderboardTimeframe = 'alltime',
+  courseId?: string
+) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -113,8 +120,19 @@ export function useLeaderboard(limit = 50, offset = 0) {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
+        setLoading(true)
         setError(null)
-        const response = await fetch(`/api/leaderboard?limit=${limit}&offset=${offset}`, {
+        const searchParams = new URLSearchParams({
+          limit: String(limit),
+          offset: String(offset),
+          timeframe,
+        })
+
+        if (courseId) {
+          searchParams.set('courseId', courseId)
+        }
+
+        const response = await fetch(`/api/leaderboard?${searchParams.toString()}`, {
           cache: 'no-store',
         })
         if (!response.ok) {
@@ -153,7 +171,7 @@ export function useLeaderboard(limit = 50, offset = 0) {
     }
 
     fetchLeaderboard()
-  }, [limit, offset])
+  }, [limit, offset, timeframe, courseId])
 
   return {
     leaderboard,

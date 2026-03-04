@@ -45,8 +45,8 @@ export default function LessonPage() {
       const courseData = await service.getCourse(courseSlug)
       if (courseData) {
         setCourse(courseData as CourseData)
-        for (const module of (courseData as CourseData).modules) {
-          const found = module.lessons.find((l: Lesson) => l.id === lessonId)
+        for (const courseModule of (courseData as CourseData).modules) {
+          const found = courseModule.lessons.find((l: Lesson) => l.id === lessonId)
           if (found) {
             setLesson(enrichAnchorLesson(found, courseSlug))
             break

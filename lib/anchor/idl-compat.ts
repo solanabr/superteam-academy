@@ -1,15 +1,13 @@
 import { sha256 } from '@noble/hashes/sha256'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- IDL normalization requires dynamic JSON traversal
-type AnyRecord = Record<string, any>
+type AnyRecord = Record<string, unknown>
 
 function discriminator(namespace: string, name: string): number[] {
   const preimage = new TextEncoder().encode(`${namespace}:${name}`)
   return Array.from(sha256(preimage).slice(0, 8))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recursive JSON tree walk
-function normalizeTypeNode(value: any): any {
+function normalizeTypeNode(value: unknown): unknown {
   if (value === 'publicKey') {
     return 'pubkey'
   }
@@ -34,10 +32,14 @@ function normalizeTypeNode(value: any): any {
 }
 
 function normalizeInstructionAccount(item: AnyRecord): AnyRecord {
-  if (Array.isArray(item.accounts)) {
+  const nestedAccounts = item.accounts
+
+  if (Array.isArray(nestedAccounts)) {
     return {
       name: item.name,
-      accounts: item.accounts.map(normalizeInstructionAccount),
+      accounts: nestedAccounts.map((account) =>
+        normalizeInstructionAccount(account as AnyRecord)
+      ),
     }
   }
 
@@ -64,65 +66,127 @@ export function normalizeAnchorIdl(idl: AnyRecord): AnyRecord {
   const rawAccounts = Array.isArray(base.accounts) ? base.accounts : []
   const rawEvents = Array.isArray(base.events) ? base.events : []
   const rawTypes = Array.isArray(base.types) ? base.types : []
-  const hasLegacyAccounts = rawAccounts.some((acc) => acc && typeof acc === 'object' && 'type' in acc)
-  const hasLegacyEvents = rawEvents.some((event) => event && typeof event === 'object' && 'fields' in event)
+  const hasLegacyAccounts = rawAccounts.some(
+    (acc) => acc && typeof acc === 'object' && 'type' in (acc as AnyRecord)
+  )
+  const hasLegacyEvents = rawEvents.some(
+    (event) =>
+      event && typeof event === 'object' && 'fields' in (event as AnyRecord)
+  )
 
   const accountTypeDefs = hasLegacyAccounts
-    ? rawAccounts.map((acc) => ({
-        name: acc.name,
-        docs: acc.docs,
-        type: acc.type,
-      }))
+    ? rawAccounts.map((acc) => {
+        const typedAccount = acc as AnyRecord
+        return {
+          name: typedAccount.name,
+          docs: typedAccount.docs,
+          type: typedAccount.type,
+        }
+      })
     : []
   const eventTypeDefs = hasLegacyEvents
-    ? rawEvents.map((event) => ({
-        name: event.name,
-        type: {
-          kind: 'struct',
-          fields: (event.fields || []).map((field: AnyRecord) => ({
-            ...field,
-            type: normalizeTypeNode(field.type),
-          })),
-        },
-      }))
+    ? rawEvents.map((event) => {
+        const typedEvent = event as AnyRecord
+        const fields = Array.isArray(typedEvent.fields)
+          ? typedEvent.fields
+          : []
+
+        return {
+          name: typedEvent.name,
+          type: {
+            kind: 'struct',
+            fields: fields.map((field) => {
+              const typedField = field as AnyRecord
+              return {
+                ...typedField,
+                type: normalizeTypeNode(typedField.type),
+              }
+            }),
+          },
+        }
+      })
     : []
 
   const typesByName = new Map<string, AnyRecord>()
   for (const t of [...rawTypes, ...accountTypeDefs, ...eventTypeDefs]) {
-    if (t?.name && !typesByName.has(t.name)) {
-      typesByName.set(t.name, t)
+    const typedType = t as AnyRecord
+    const typeName = typedType.name
+    if (typeof typeName === 'string' && !typesByName.has(typeName)) {
+      typesByName.set(typeName, typedType)
     }
   }
 
-  const normalizedInstructions = (base.instructions || []).map((ix: AnyRecord) => ({
-    ...ix,
-    accounts: (ix.accounts || []).map(normalizeInstructionAccount),
-    args: (ix.args || []).map((arg: AnyRecord) => ({
-      ...arg,
-      type: normalizeTypeNode(arg.type),
-    })),
-    discriminator: ix.discriminator || discriminator('global', ix.name),
-  }))
+  const instructionNodes = Array.isArray(base.instructions)
+    ? base.instructions
+    : []
+  const normalizedInstructions = instructionNodes.map((ix) => {
+    const typedInstruction = ix as AnyRecord
+    const accounts = Array.isArray(typedInstruction.accounts)
+      ? typedInstruction.accounts
+      : []
+    const args = Array.isArray(typedInstruction.args) ? typedInstruction.args : []
+    const name =
+      typeof typedInstruction.name === 'string' ? typedInstruction.name : 'unknown'
 
-  const normalizedAccounts = rawAccounts.map((acc: AnyRecord) => ({
-    name: acc.name,
-    discriminator: acc.discriminator || discriminator('account', acc.name),
-  }))
+    return {
+      ...typedInstruction,
+      accounts: accounts.map((account) =>
+        normalizeInstructionAccount(account as AnyRecord)
+      ),
+      args: args.map((arg) => {
+        const typedArg = arg as AnyRecord
+        return {
+          ...typedArg,
+          type: normalizeTypeNode(typedArg.type),
+        }
+      }),
+      discriminator:
+        typedInstruction.discriminator || discriminator('global', name),
+    }
+  })
+
+  const normalizedAccounts = rawAccounts.map((acc) => {
+    const typedAccount = acc as AnyRecord
+    const name = typeof typedAccount.name === 'string' ? typedAccount.name : 'unknown'
+
+    return {
+      name,
+      discriminator:
+        typedAccount.discriminator || discriminator('account', name),
+    }
+  })
 
   const normalizedEvents = Array.isArray(base.events)
-    ? base.events.map((event: AnyRecord) => ({
-        name: event.name,
-        discriminator: event.discriminator || discriminator('event', event.name),
-      }))
+    ? base.events.map((event) => {
+        const typedEvent = event as AnyRecord
+        const name = typeof typedEvent.name === 'string' ? typedEvent.name : 'unknown'
+        return {
+          name,
+          discriminator: typedEvent.discriminator || discriminator('event', name),
+        }
+      })
     : base.events
+
+  const metadata =
+    base.metadata && typeof base.metadata === 'object'
+      ? (base.metadata as AnyRecord)
+      : {}
+  const idlName = typeof base.name === 'string' ? base.name : 'onchain_academy'
+  const idlVersion = typeof base.version === 'string' ? base.version : '0.1.0'
+  const metadataName =
+    typeof metadata.name === 'string' ? metadata.name : idlName
+  const metadataVersion =
+    typeof metadata.version === 'string' ? metadata.version : idlVersion
+  const metadataSpec =
+    typeof metadata.spec === 'string' ? metadata.spec : '0.1.0'
 
   return {
     ...base,
     metadata: {
-      ...(base.metadata || {}),
-      name: base.metadata?.name || base.name || 'onchain_academy',
-      version: base.metadata?.version || base.version || '0.1.0',
-      spec: base.metadata?.spec || '0.1.0',
+      ...metadata,
+      name: metadataName,
+      version: metadataVersion,
+      spec: metadataSpec,
     },
     instructions: normalizedInstructions,
     accounts: normalizedAccounts,

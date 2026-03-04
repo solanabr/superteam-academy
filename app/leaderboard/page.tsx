@@ -1,14 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { useI18n } from '@/lib/hooks/useI18n'
 import { useLeaderboard } from '@/lib/hooks/useProgress'
 import { Card, CardContent, CardHeader } from '@/components/ui'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useWallet } from '@/lib/hooks/useWallet'
 import { PublicKey } from '@solana/web3.js'
 import { useXPBalance } from '@/lib/hooks/useXPBalance'
 import { calculateLevel } from '@/lib/types'
 import { Crown, Flame, Medal, Trophy, Zap } from 'lucide-react'
+import { getCourseService } from '@/lib/services'
 
 type Timeframe = 'weekly' | 'monthly' | 'alltime'
 
@@ -42,11 +44,32 @@ function getPodiumCardClass(rank: number): string {
   return 'border-emerald-300 bg-gradient-to-b from-emerald-50 to-white shadow-sm dark:border-superteam-emerald/25 dark:bg-[#0b1830] dark:shadow-none'
 }
 
+function resolveProfilePath(username: string, wallet: string, userId: string): string | null {
+  const candidates = [username, wallet, userId]
+
+  for (const rawCandidate of candidates) {
+    const candidate = rawCandidate.trim()
+    if (!candidate) continue
+    if (candidate.includes('...')) continue
+    if (candidate.toLowerCase() === 'unknown') continue
+    return `/profile/${encodeURIComponent(candidate)}`
+  }
+
+  return null
+}
+
 export default function LeaderboardPage() {
   const { t } = useI18n()
   const { connected, publicKey, walletAddress } = useWallet()
-  const { leaderboard, loading, error } = useLeaderboard()
-  const [timeframe] = useState<Timeframe>('alltime')
+  const [timeframe, setTimeframe] = useState<Timeframe>('alltime')
+  const [courseFilter, setCourseFilter] = useState<string>('all')
+  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([])
+  const { leaderboard, loading, error } = useLeaderboard(
+    100,
+    0,
+    timeframe,
+    courseFilter === 'all' ? undefined : courseFilter
+  )
   const xpMint = useMemo(() => {
     const mintStr = process.env.NEXT_PUBLIC_XP_TOKEN_MINT
     if (!mintStr) return undefined
@@ -58,6 +81,34 @@ export default function LeaderboardPage() {
   }, [])
   const { balance: walletXp } = useXPBalance(publicKey || undefined, xpMint)
   const walletLevel = calculateLevel(walletXp)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadCourses() {
+      try {
+        const service = getCourseService()
+        const allCourses = await service.getCourses()
+        if (!active) return
+
+        setCourses(
+          allCourses.map((course) => ({
+            id: course.id,
+            title: course.title,
+          }))
+        )
+      } catch {
+        if (!active) return
+        setCourses([])
+      }
+    }
+
+    void loadCourses()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const normalizedLeaderboard = useMemo(() => {
     return [...leaderboard]
@@ -78,6 +129,13 @@ export default function LeaderboardPage() {
   const averageXp = normalizedLeaderboard.length
     ? Math.round(normalizedLeaderboard.reduce((sum, entry) => sum + entry.totalXp, 0) / normalizedLeaderboard.length)
     : 0
+  const timeframeLabel =
+    timeframe === 'weekly'
+      ? t('leaderboard.weekly')
+      : timeframe === 'monthly'
+      ? t('leaderboard.monthly')
+      : t('leaderboard.allTime')
+  const selectedCourse = courses.find((course) => course.id === courseFilter)
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-emerald-50/30 py-12 dark:from-[#060d1a] dark:via-[#071427] dark:to-[#091224]">
@@ -89,7 +147,8 @@ export default function LeaderboardPage() {
         <div className="mb-8 rounded-2xl border border-emerald-300/60 bg-gradient-to-r from-white via-slate-50 to-emerald-50/70 p-6 shadow-sm backdrop-blur-sm dark:border-superteam-emerald/30 dark:bg-gradient-to-r dark:from-[#111e3a] dark:via-[#152345] dark:to-[#1a2849] dark:shadow-none">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-superteam-yellow/40 bg-superteam-yellow/15 px-3 py-1 text-xs font-semibold tracking-wide text-superteam-forest dark:text-superteam-yellow">
             <Trophy size={14} />
-            {t('leaderboard.allTime').toUpperCase()} XP
+            {`${timeframeLabel} XP`}
+            {selectedCourse ? ` • ${selectedCourse.title}` : ''}
           </div>
           <h1 className="mb-2 text-4xl font-display font-bold text-slate-900 dark:text-superteam-offwhite">
             {t('leaderboard.title')}
@@ -97,17 +156,14 @@ export default function LeaderboardPage() {
           <p className="text-slate-600 dark:text-gray-300">{t('leaderboard.subtitle')}</p>
         </div>
 
-        {/* Timeframe Tabs - Coming Soon */}
-        <div className="mb-8 flex gap-2">
+        <div className="mb-8 flex flex-wrap items-center gap-3">
           {(['weekly', 'monthly', 'alltime'] as const).map((tf: Timeframe) => (
             <button
               key={tf}
-              disabled={tf !== 'alltime'}
+              onClick={() => setTimeframe(tf)}
               className={`rounded-lg border px-5 py-2 font-semibold transition-all duration-200 ${
                 timeframe === tf
                   ? 'border-emerald-300 bg-emerald-100 text-emerald-800 shadow-sm dark:border-superteam-emerald/45 dark:bg-superteam-emerald/20 dark:text-superteam-emerald dark:shadow-none'
-                  : tf !== 'alltime'
-                  ? 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-400 dark:border-superteam-navy/50 dark:bg-superteam-navy/25 dark:text-slate-400'
                   : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-400 dark:border-superteam-navy/40 dark:bg-superteam-navy/30 dark:text-gray-300 dark:hover:border-superteam-yellow/45'
               }`}
             >
@@ -118,6 +174,21 @@ export default function LeaderboardPage() {
                   : t('leaderboard.allTime')}
             </button>
           ))}
+
+          <div className="min-w-[220px]">
+            <select
+              value={courseFilter}
+              onChange={(event) => setCourseFilter(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 transition-colors hover:border-emerald-400 focus:border-emerald-400 focus:outline-none dark:border-superteam-navy/40 dark:bg-superteam-navy/30 dark:text-gray-300 dark:hover:border-superteam-yellow/45 dark:focus:border-superteam-yellow/45"
+            >
+              <option value="all">{t('leaderboard.courseLeaderboard')}: {t('courses.allCourses')}</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -183,6 +254,7 @@ export default function LeaderboardPage() {
                   const name = entry.displayName || entry.username || 'Anonymous'
                   const wallet = entry.wallet || entry.userId || ''
                   const showWallet = wallet.length > 0
+                  const profilePath = resolveProfilePath(entry.username, entry.wallet || '', entry.userId)
 
                   return (
                     <div
@@ -195,7 +267,16 @@ export default function LeaderboardPage() {
                         </div>
                         <span className="text-xs font-semibold text-slate-600 dark:text-gray-300">#{rank}</span>
                       </div>
-                      <p className="line-clamp-1 text-lg font-bold text-slate-900 dark:text-white">{name}</p>
+                      {profilePath ? (
+                        <Link
+                          href={profilePath}
+                          className="line-clamp-1 text-lg font-bold text-slate-900 hover:text-blue-700 dark:text-white dark:hover:text-superteam-emerald"
+                        >
+                          {name}
+                        </Link>
+                      ) : (
+                        <p className="line-clamp-1 text-lg font-bold text-slate-900 dark:text-white">{name}</p>
+                      )}
                       {showWallet && (
                         <p className="mt-1 text-xs text-slate-600 dark:text-gray-300">{formatWalletAddress(wallet)}</p>
                       )}
@@ -241,6 +322,7 @@ export default function LeaderboardPage() {
                       const rank = entry.rank
                       const name = entry.displayName || entry.username || 'Anonymous'
                       const displayWallet = entry.wallet || entry.userId || ''
+                      const profilePath = resolveProfilePath(entry.username, entry.wallet || '', entry.userId)
                       return (
                         <tr
                           key={`${entry.userId}-${rank}`}
@@ -261,9 +343,18 @@ export default function LeaderboardPage() {
                                 {getInitial(name)}
                               </span>
                               <div>
-                                <span className="font-semibold text-slate-900 dark:text-white">
-                                  {name}
-                                </span>
+                                {profilePath ? (
+                                  <Link
+                                    href={profilePath}
+                                    className="font-semibold text-slate-900 hover:text-blue-700 dark:text-white dark:hover:text-superteam-emerald"
+                                  >
+                                    {name}
+                                  </Link>
+                                ) : (
+                                  <span className="font-semibold text-slate-900 dark:text-white">
+                                    {name}
+                                  </span>
+                                )}
                                 {displayWallet && (
                                   <p className="text-xs text-gray-500 dark:text-gray-400">{formatWalletAddress(displayWallet)}</p>
                                 )}
