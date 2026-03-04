@@ -23,102 +23,131 @@ type Props = {
   lessonContext: LessonWithContext;
 };
 
-export function ChallengeLessonView({
-  course,
-  lesson,
-  lessonContext,
-}: Props) {
+export function ChallengeLessonView({ course, lesson, lessonContext }: Props) {
   const t = useTranslations("lessonView");
-  const { isComplete, markComplete } = useLessonCompletion(course.id);
+  const { isComplete, markComplete, isMarkingComplete, connected, enrolled } =
+    useLessonCompletion(course.id, course.totalLessons);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
   const completed = isComplete(lessonContext.lessonIndex);
-  const canMarkComplete = allTestsPassed && !completed;
-  const { prevLesson, nextLesson, moduleIndex, lessonIndexInModule } = lessonContext;
+  const canProceed = lesson.language === "rust" || allTestsPassed;
+  const canMarkComplete =
+    canProceed && connected && enrolled && !completed && !isMarkingComplete;
+  const { prevLesson, nextLesson, moduleIndex, lessonIndexInModule } =
+    lessonContext;
+
+  const handleMarkComplete = async () => {
+    await markComplete(lessonContext.lessonIndex);
+  };
 
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="h-full min-h-[400px]"
-    >
-      {/* Left: Lesson content */}
-      <ResizablePanel defaultSize={42} minSize={30}>
-        <div className="flex h-full flex-col overflow-hidden bg-background">
-          {/* Lesson header */}
-          <div className="shrink-0 space-y-1 border-b border-border px-6 py-5">
-            <p className="font-mono text-xs text-muted-foreground">
-              {course.title} / Lesson {moduleIndex + 1}.{lessonIndexInModule}
-            </p>
-            <h1 className="font-heading text-2xl font-bold">{lesson.title}</h1>
-          </div>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border">
+      <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
+        {/* Left: Instructions — min 34% so text stays readable */}
+        <ResizablePanel defaultSize="42%" minSize="34%" maxSize="58%">
+          <div className="flex h-full min-w-0 flex-col bg-card">
+            {/* Header */}
+            <div className="shrink-0 border-b border-border px-4 py-3">
+              <p className="font-mono text-[11px] tracking-wide text-muted-foreground">
+                {course.title} / Lesson {moduleIndex + 1}.{lessonIndexInModule}
+              </p>
+              <h1 className="mt-0.5 font-heading text-base font-bold leading-snug text-card-foreground">
+                {lesson.title}
+              </h1>
+            </div>
 
-          {/* Scrollable content */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-            <div className="space-y-4">
-              <LessonMarkdown content={lesson.prompt} />
+            {/* Scrollable body — min-w-0 so flex doesn't overflow */}
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="space-y-4 px-4 py-3 text-[13px] leading-relaxed text-card-foreground/90 break-words">
+                <LessonMarkdown content={lesson.prompt} />
 
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-                <h3 className="mb-2 flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400">
-                  Your Mission
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Complete the challenge in the editor and run tests to verify your solution.
-                </p>
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+                  <p className="text-xs font-semibold text-primary">
+                    Your Mission
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {lesson.language === "rust"
+                      ? "Complete the challenge in the editor, then use Mark complete below (no in-browser tests for Rust)."
+                      : "Complete the challenge in the editor and run tests to verify your solution."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 border-t border-border px-4 py-2.5">
+              <Button
+                onClick={() => void handleMarkComplete()}
+                disabled={!canMarkComplete}
+                size="sm"
+                className="w-full"
+              >
+                {completed
+                  ? "Completed"
+                  : isMarkingComplete
+                    ? "Completing..."
+                    : !connected
+                      ? "Connect wallet"
+                      : !enrolled
+                        ? "Enroll first"
+                        : t("markComplete")}
+              </Button>
+
+              <div className="mt-2.5 flex items-center justify-between gap-2">
+                {prevLesson ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className="h-7 max-w-[48%] px-2 text-xs text-muted-foreground"
+                  >
+                    <Link
+                      href={`/courses/${course.slug}/lessons/${prevLesson.id}?type=${prevLesson.type}`}
+                    >
+                      <CaretLeft
+                        className="mr-0.5 size-3.5 shrink-0"
+                        weight="bold"
+                      />
+                      <span className="truncate">{prevLesson.title}</span>
+                    </Link>
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {nextLesson ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className="h-7 max-w-[48%] px-2 text-xs text-muted-foreground"
+                  >
+                    <Link
+                      href={`/courses/${course.slug}/lessons/${nextLesson.id}?type=${nextLesson.type}`}
+                    >
+                      <span className="truncate">{nextLesson.title}</span>
+                      <CaretRight
+                        className="ml-0.5 size-3.5 shrink-0"
+                        weight="bold"
+                      />
+                    </Link>
+                  </Button>
+                ) : (
+                  <span />
+                )}
               </div>
             </div>
           </div>
+        </ResizablePanel>
 
-          {/* Bottom: Mark Complete + Prev/Next */}
-          <div className="shrink-0 space-y-4 border-t border-border px-6 py-4">
-            <Button
-              onClick={() => markComplete(lessonContext.lessonIndex)}
-              disabled={!canMarkComplete}
-              className="w-full bg-emerald-600 hover:bg-emerald-500"
-            >
-              {completed ? (
-                <>
-                  <span className="mr-2">✓</span>
-                  Completed
-                </>
-              ) : (
-                t("markComplete")
-              )}
-            </Button>
+        <ResizableHandle withHandle />
 
-            <div className="flex flex-wrap justify-between gap-3">
-              {prevLesson ? (
-                <Button variant="outline" size="sm" asChild className="max-w-[50%]">
-                  <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
-                    <CaretLeft className="mr-1 size-4 shrink-0" weight="bold" />
-                    <span className="truncate">Previous: {prevLesson.title}</span>
-                  </Link>
-                </Button>
-              ) : (
-                <span />
-              )}
-              {nextLesson ? (
-                <Button variant="outline" size="sm" asChild className="max-w-[50%]">
-                  <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
-                    <span className="truncate">Next: {nextLesson.title}</span>
-                    <CaretRight className="ml-1 size-4 shrink-0" weight="bold" />
-                  </Link>
-                </Button>
-              ) : (
-                <span />
-              )}
-            </div>
-          </div>
-        </div>
-      </ResizablePanel>
-
-      <ResizableHandle withHandle />
-
-      {/* Right: Code editor + terminal */}
-      <ResizablePanel defaultSize={58} minSize={40}>
-        <ChallengeEditorPanel
-          lesson={lesson}
-          onAllTestsPass={() => setAllTestsPassed(true)}
-        />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        {/* Right: Editor */}
+        <ResizablePanel defaultSize="58%" minSize="42%">
+          <ChallengeEditorPanel
+            lesson={lesson}
+            onAllTestsPass={() => setAllTestsPassed(true)}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
   );
 }

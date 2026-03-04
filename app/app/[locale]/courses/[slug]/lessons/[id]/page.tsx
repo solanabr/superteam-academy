@@ -35,18 +35,21 @@ export default async function LessonPage({ params }: Props) {
   const track = getTrackById(course.trackId);
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-64px)] w-full max-w-full flex-col overflow-hidden px-4 pt-10 pb-4 sm:px-6">
+    <main className="flex h-[calc(100dvh-64px)] w-full flex-col overflow-hidden">
+      {/* Breadcrumb */}
       <nav
         aria-label="Breadcrumb"
-        className="mb-6 shrink-0 text-sm text-muted-foreground"
+        className="shrink-0 border-b border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground sm:px-6"
       >
-        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           <li>
             <Link href="/" className="hover:text-foreground hover:underline">
               Catalog
             </Link>
           </li>
-          <li aria-hidden>/</li>
+          <li aria-hidden className="opacity-60">
+            /
+          </li>
           <li>
             <Link
               href={`/courses?track=${course.trackId}`}
@@ -55,7 +58,9 @@ export default async function LessonPage({ params }: Props) {
               {track?.name ?? "Track"}
             </Link>
           </li>
-          <li aria-hidden>/</li>
+          <li aria-hidden className="opacity-60">
+            /
+          </li>
           <li>
             <Link
               href={`/courses/${slug}`}
@@ -64,11 +69,16 @@ export default async function LessonPage({ params }: Props) {
               {course.title}
             </Link>
           </li>
-          <li aria-hidden>/</li>
-          <li className="text-foreground">{ctx.lesson.title}</li>
+          <li aria-hidden className="opacity-60">
+            /
+          </li>
+          <li className="max-w-[200px] truncate font-medium text-foreground sm:max-w-[320px]">
+            {ctx.lesson.title}
+          </li>
         </ol>
       </nav>
 
+      {/* Lesson content — takes remaining height */}
       <div className="min-h-0 flex-1 overflow-hidden">
         <LessonView course={course} lessonContext={ctx} />
       </div>

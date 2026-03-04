@@ -21,7 +21,7 @@ type Props = {
 
 function runTypeScriptTests(
   code: string,
-  testCases: TestCase[]
+  testCases: TestCase[],
 ): { results: TestResult[]; output: string; error: string | null } {
   const results: TestResult[] = [];
   let output = "";
@@ -29,7 +29,7 @@ function runTypeScriptTests(
 
   try {
     const fnMatch = code.match(
-      /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>,\s\[\]]+)?\s*\{/
+      /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>,\s\[\]]+)?\s*\{/,
     );
     const fnName = fnMatch?.[1] ?? "solution";
 
@@ -80,7 +80,8 @@ export function ChallengeRunner({ lesson, onAllTestsPass }: Props) {
   const [running, setRunning] = useState(false);
 
   const canRun = lesson.language === "typescript";
-  const allPassed = results !== null && results.length > 0 && results.every((r) => r.passed);
+  const allPassed =
+    results !== null && results.length > 0 && results.every((r) => r.passed);
 
   const handleRun = () => {
     if (lesson.language !== "typescript") return;
@@ -90,7 +91,11 @@ export function ChallengeRunner({ lesson, onAllTestsPass }: Props) {
     setOutput("");
 
     setTimeout(() => {
-      const { results: r, output: o, error: e } = runTypeScriptTests(code, lesson.testCases);
+      const {
+        results: r,
+        output: o,
+        error: e,
+      } = runTypeScriptTests(code, lesson.testCases);
       setResults(r);
       setOutput(o);
       setError(e);
@@ -126,7 +131,9 @@ export function ChallengeRunner({ lesson, onAllTestsPass }: Props) {
 
       {(output || error) && (
         <div className="mt-3 rounded-lg border bg-muted/30 p-3 font-mono text-sm">
-          <p className="mb-1 font-semibold text-muted-foreground">{t("output")}</p>
+          <p className="mb-1 font-semibold text-muted-foreground">
+            {t("output")}
+          </p>
           <pre className="whitespace-pre-wrap break-words">
             {error ? (
               <span className="text-destructive">{error}</span>
@@ -142,16 +149,21 @@ export function ChallengeRunner({ lesson, onAllTestsPass }: Props) {
           <p className="font-semibold text-muted-foreground">{t("tests")}</p>
           <ul className="space-y-1.5">
             {results.map((r, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-2 text-sm"
-              >
+              <li key={i} className="flex items-center gap-2 text-sm">
                 {r.passed ? (
-                  <CheckCircle className="size-4 shrink-0 text-green-600" weight="fill" />
+                  <CheckCircle
+                    className="size-4 shrink-0 text-green-600"
+                    weight="fill"
+                  />
                 ) : (
-                  <XCircle className="size-4 shrink-0 text-destructive" weight="fill" />
+                  <XCircle
+                    className="size-4 shrink-0 text-destructive"
+                    weight="fill"
+                  />
                 )}
-                <span className={r.passed ? "text-foreground" : "text-destructive"}>
+                <span
+                  className={r.passed ? "text-foreground" : "text-destructive"}
+                >
                   {r.label} {r.passed ? t("pass") : t("fail")}
                 </span>
               </li>

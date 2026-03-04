@@ -15,7 +15,7 @@ const ChallengeLessonView = dynamic<{
     import("./challenge-lesson-view").then((m) => ({
       default: m.ChallengeLessonView,
     })),
-  { ssr: false }
+  { ssr: false },
 );
 
 type Props = {

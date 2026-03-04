@@ -43,16 +43,19 @@ export function LessonModuleOverview({
               return (
                 <li key={lesson.id}>
                   <Link
-                    href={`/courses/${courseSlug}/lessons/${lesson.id}`}
+                    href={`/courses/${courseSlug}/lessons/${lesson.id}?type=${lesson.type}`}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
                       isCurrent && "bg-primary/10 font-medium text-primary",
                       !isCurrent && "hover:bg-muted/50",
-                      completed && !isCurrent && "text-muted-foreground"
+                      completed && !isCurrent && "text-muted-foreground",
                     )}
                   >
                     {completed ? (
-                      <CheckCircle className="size-4 shrink-0 text-primary" weight="fill" />
+                      <CheckCircle
+                        className="size-4 shrink-0 text-primary"
+                        weight="fill"
+                      />
                     ) : (
                       <span className="size-4 shrink-0 font-mono text-xs text-muted-foreground">
                         {i + 1}

@@ -3,6 +3,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { rust } from "@codemirror/lang-rust";
+import { academyEditorTheme } from "./editor-theme";
 
 type Props = {
   value: string;
@@ -34,7 +35,7 @@ export function CodeEditor({
         highlightActiveLine: !readOnly,
         highlightActiveLineGutter: !readOnly,
       }}
-      theme="dark"
+      theme={academyEditorTheme}
     />
   );
 }
