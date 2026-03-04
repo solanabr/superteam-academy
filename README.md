@@ -1,96 +1,171 @@
-# Superteam Academy
+# Superteam Academy App
 
-Decentralized learning platform on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. Platform governed by multisig authority.
+Frontend for the Superteam Academy learning platform. This app provides wallet-based learning flows, on-chain progress tracking, credentials/certificates, daily challenges, leaderboard, discussions, admin tools, and Sanity CMS integration.
 
-## Monorepo Structure
+## Monorepo Context
 
-```
-superteam-academy/
-├── onchain-academy/          ← Anchor program (deployed on devnet)
-│   ├── programs/             ← Rust program source (16 instructions)
-│   ├── tests/                ← 77 Rust + 62 TypeScript tests
-│   └── scripts/              ← Devnet interaction scripts
-├── app/                      ← Next.js frontend (bounty)
-├── sdk/                      ← TypeScript SDK (future)
-├── docs/                     ← Documentation
-│   ├── SPEC.md               ← Program specification
-│   ├── ARCHITECTURE.md       ← Account maps, data flows, CU budgets
-│   ├── INTEGRATION.md        ← Frontend integration guide
-│   └── DEPLOY-PROGRAM.md     ← Deploy your own devnet instance
-└── wallets/                  ← Keypairs (gitignored)
-```
+This repository includes multiple workspaces (`app`, `backend`, `onchain-academy`). This README documents the frontend app in `./app`.
 
-## Quick Start
+## Overview
 
-```bash
-git clone https://github.com/solanabr/superteam-academy.git
-cd superteam-academy/onchain-academy
+Key capabilities:
 
-# Install dependencies
-yarn install
-
-# Build the program
-anchor build
-
-# Run tests (localnet)
-anchor test
-
-# Rust unit tests
-cargo test --manifest-path tests/rust/Cargo.toml
-```
-
-## Devnet Deployment
-
-The program is live on devnet:
-
-| | Address |
-|---|---|
-| **Program** | [`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet) |
-| **XP Mint** | [`xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`](https://explorer.solana.com/address/xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3?cluster=devnet) |
-| **Authority** | [`ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn`](https://explorer.solana.com/address/ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn?cluster=devnet) |
-
-Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) on devnet.
+- Wallet-first authentication and profile experience (Solana Wallet Adapter)
+- Course catalog and lesson player
+- Enrollment + progress tracking backed by on-chain PDAs
+- XP, leaderboard, streaks, and achievements UI
+- Certificate and credential views (Metaplex Core assets)
+- Daily challenge flow with code execution and completion tracking
+- Community discussions backed by Postgres (Prisma)
+- Admin console for config, courses, minters, credentials, achievements, challenges
+- Sanity Studio integration for content operations
+- PWA support for offline caching of visited content
 
 ## Tech Stack
 
 | Layer | Stack |
-|---|---|
-| **Programs** | Anchor 0.31+, Rust 1.82+ |
-| **XP Tokens** | Token-2022 (NonTransferable, PermanentDelegate) |
-| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| **Testing** | ts-mocha/Chai, Cargo test |
-| **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
-| **Multisig** | Squads (platform authority) |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling/UI | Tailwind CSS v4, shadcn/ui, Radix primitives, Lucide icons |
+| Wallet/Web3 | `@solana/wallet-adapter-*`, `@solana/web3.js`, Anchor client |
+| State/Data | TanStack Query |
+| Community DB | PostgreSQL + Prisma + `@prisma/adapter-pg` |
+| Content | Sanity (`next-sanity`, `@sanity/client`) with mock fallback |
+| Analytics/Monitoring | GA4, Microsoft Clarity, Sentry (optional) |
+| PWA | Service worker + manifest (`/public/sw.js`, `app/manifest.ts`) |
 
-## Documentation
+## Local Development Setup
 
-- **[Program Specification](docs/SPEC.md)** — 16 instructions, 6 PDA types, 26 errors, 15 events
-- **[Architecture](docs/ARCHITECTURE.md)** — Account maps, data flows, CU budgets
-- **[Frontend Integration](docs/INTEGRATION.md)** — PDA derivation, instruction usage, events, error handling
-- **[Deployment Guide](docs/DEPLOY-PROGRAM.md)** — Deploy your own program instance on devnet
-- **[Frontend Bounty](docs/bounty.md)** — $4,800 USDC bounty for building the frontend
+### Prerequisites
 
-## Contributing
+- Node.js 20+
+- `pnpm` 10+
+- A running backend (`./backend`) for academy/challenge/admin proxy actions
+- A Postgres database for discussions
+- A browser wallet (Phantom/Solflare/etc.)
+
+### Run Locally
 
 ```bash
-# Branch naming
-git checkout -b <type>/<scope>-<description>-<DD-MM-YYYY>
-# Examples:
-#   feat/enrollment-lessons-11-02-2026
-#   fix/cooldown-check-12-02-2026
-#   docs/integration-guide-17-02-2026
-
-# Before merging
-anchor build
-cargo fmt
-cargo clippy -- -W clippy::all
-cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
-anchor test
+cd app
+pnpm install
+cp .env.example .env.local
 ```
 
-## License
+Update `.env.local` with your values, then:
 
-[MIT](LICENSE)
+```bash
+pnpm db:generate
+pnpm db:push   # first run or after schema changes
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Environment Variables
+
+Use `app/.env.example` as the source of truth.
+
+### Core (public / wallet / chain)
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_PROGRAM_ID` | Yes | On-chain academy program id |
+| `NEXT_PUBLIC_XP_MINT` | Yes | Token-2022 XP mint |
+| `NEXT_PUBLIC_BACKEND_SIGNER` | Yes | Backend signer pubkey |
+| `NEXT_PUBLIC_CLUSTER` | Recommended | Default `devnet` |
+| `NEXT_PUBLIC_SOLANA_RPC` | Recommended | RPC endpoint for client reads/writes |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Optional | Enables WalletConnect adapter |
+
+### Community (Postgres)
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes (for discussions) | Used by Prisma in `lib/prisma.ts` |
+| `DATABASE_URL_SSL_REJECT_UNAUTHORIZED` | Optional | Set `false` only when required |
+
+### Backend proxy (server-only)
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `BACKEND_URL` | Yes for academy/admin/challenges APIs | Defaults to `http://localhost:3001` |
+| `BACKEND_API_TOKEN` | Yes for `/api/academy/*` and challenge proxy routes | Must match backend |
+| `ADMIN_JWT_SECRET` | Yes for admin-protected actions | Must match backend signer/auth setup |
+
+### Content / CMS
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_USE_SANITY` | Optional | `true` uses Sanity content, `false` uses mock content |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Required when using Sanity | Used by read client + Studio |
+| `NEXT_PUBLIC_SANITY_DATASET` | Required when using Sanity | Usually `production` |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | Optional | Default in code |
+| `SANITY_API_TOKEN` | Optional | Required for write stub endpoints |
+| `SANITY_PROJECT_ID` | Optional | Server-side write client for stub APIs |
+| `SANITY_DATASET` | Optional | Server-side write client for stub APIs |
+| `SANITY_API_VERSION` | Optional | Server-side write client API version |
+
+### Credentials / DAS
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_HELIUS_RPC` | Optional | Helius RPC URL for credential/leaderboard reads |
+| `HELIUS_API_KEY` | Optional | Server-side fallback if public RPC is not set |
+| `NEXT_PUBLIC_CREDENTIAL_TRACK_COLLECTIONS` | Optional | Comma-separated Metaplex Core collection addresses |
+| `NEXT_PUBLIC_CREDENTIAL_PLACEHOLDER_URI` | Optional | URI treated as placeholder image |
+
+### Optional telemetry
+
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+- `NEXT_PUBLIC_CLARITY_PROJECT_ID`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `SENTRY_AUTH_TOKEN`
+
+## Useful Scripts
+
+```bash
+cd app
+pnpm dev          # Start Next.js app
+pnpm build        # Production build
+pnpm start        # Production server
+pnpm lint         # ESLint
+pnpm db:generate  # Prisma client generation
+pnpm db:push      # Push Prisma schema to DB
+pnpm test:e2e     # Playwright tests
+```
+
+## Deployment
+
+### Build and run
+
+```bash
+cd app
+pnpm install
+pnpm db:generate
+pnpm build
+pnpm start
+```
+
+### Deployment checklist
+
+- Set all required environment variables in your hosting provider
+- Ensure `BACKEND_URL` is reachable from deployed app runtime
+- Ensure `DATABASE_URL` points to the intended production DB
+- Run `pnpm db:push` (or equivalent migration workflow) before serving discussions
+- If using Sanity, set `NEXT_PUBLIC_USE_SANITY=true` plus Sanity env values
+- Set `NEXT_PUBLIC_APP_URL` if you need absolute URL API calls
+- Verify service worker behavior in production (it is disabled in dev by design)
+
+### Vercel notes
+
+- If deploying from monorepo root, set project root directory to `app`
+- Add all env vars under project settings
+- Confirm API routes can reach backend and Postgres from Vercel region/network
+
+## Additional Docs
+
+- [ARCHITECTURE](./docs/ARCHITECTURE.md)
+- [CMS Guide](./docs/CMS_GUIDE.md)
+- [Customization](./docs/CUSTOMIZATION.md)
