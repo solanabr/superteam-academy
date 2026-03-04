@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none">
+  <rect width="192" height="192" rx="32" fill="#7C3AED"/>
+  <!-- Graduation cap body -->
+  <rect x="56" y="104" width="80" height="10" rx="4" fill="white"/>
+  <!-- Graduation cap top (mortarboard) -->
+  <polygon points="96,60 148,84 96,108 44,84" fill="white"/>
+  <!-- Tassel string -->
+  <line x1="148" y1="84" x2="148" y2="114" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="148" cy="118" r="5" fill="#14F195"/>
+  <!-- Diploma roll -->
+  <rect x="68" y="122" width="56" height="14" rx="4" fill="#14F195"/>
+</svg>

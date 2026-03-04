@@ -1,0 +1,937 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "noResults": "No results found",
+    "connectWallet": "Connect Wallet",
+    "disconnectWallet": "Disconnect Wallet",
+    "signIn": "Sign Up",
+    "signOut": "Sign Out",
+    "level": "Level",
+    "xp": "XP",
+    "lessons": "Lessons",
+    "courses": "Courses",
+    "students": "Students",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "notStarted": "Not Started",
+    "enrolled": "Enrolled",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "viewAll": "View all",
+    "learnMore": "Learn more",
+    "share": "Share",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copyCode": "Copy code",
+    "minutesShort": "min",
+    "daysShort": "d",
+    "appDescription": "A gamified Solana education platform. Complete courses, earn XP tokens, and collect soulbound credential NFTs.",
+    "close": "Close",
+    "copyAddress": "Copy Address",
+    "disconnect": "Disconnect",
+    "signInGoogle": "Sign in with Google",
+    "signInGithub": "Sign in with GitHub",
+    "lessonsDone": "Lessons done",
+    "lessonsTotal": "{count, plural, one {# lesson total} other {# lessons total}}",
+    "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}",
+    "browseCourses": "Browse courses",
+    "linkCopied": "Link copied to clipboard",
+    "downloadComingSoon": "Download coming soon",
+    "progressExported": "Progress exported",
+    "menu": "Menu",
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Try again",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme",
+    "toggleTheme": "Toggle theme",
+    "selectLanguage": "Select language",
+    "language": "Language",
+    "walletOptions": "Wallet options",
+    "accountMenu": "Account menu",
+    "openMenu": "Open mobile menu",
+    "viewOnExplorer": "View on Explorer",
+    "video": "Video",
+    "videoTitle": "Video: {title}",
+    "opensInNewTab": "Opens in new tab",
+    "skipToContent": "Skip to content",
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "breadcrumb": "Breadcrumb",
+    "levelProgress": "Level progress",
+    "courseProgress": "Course progress",
+    "edit": "Edit"
+  },
+  "landing": {
+    "hero": {
+      "title": "Learn Solana and Earn On-Chain Rewards",
+      "subtitle": "Superteam's decentralized learning platform. Complete lessons, earn soulbound XP, and build your on-chain reputation.",
+      "cta": "Start Learning Free",
+      "badge": "Powered by Solana"
+    },
+    "stats": {
+      "leaderboard": "View Leaderboard",
+      "courses": "Courses",
+      "lessons": "Lessons",
+      "challenges": "Challenges",
+      "languages": "Languages",
+      "coursesValue": "2",
+      "lessonsValue": "12+",
+      "challengesValue": "12",
+      "languagesValue": "3"
+    },
+    "featuredCourses": {
+      "title": "Featured Courses",
+      "subtitle": "Hand-picked courses to kickstart your Solana journey",
+      "viewAll": "View all courses"
+    },
+    "features": {
+      "title": "Why Superteam Academy?",
+      "onChain": {
+        "title": "On-Chain Verified",
+        "description": "All progress is recorded on Solana. Your XP and credentials are soulbound — no one can take them away."
+      },
+      "soulboundXP": {
+        "title": "Soulbound XP",
+        "description": "Earn non-transferable Token-2022 XP tokens for every completed lesson. Your score is yours forever."
+      },
+      "nftCredentials": {
+        "title": "NFT Credentials",
+        "description": "Receive Metaplex Core credential NFTs upon completing a course, visible in any Solana wallet."
+      },
+      "openSource": {
+        "title": "Open Source",
+        "description": "Built on open-source Solana programs. Fully verifiable, transparent, and community-driven."
+      }
+    },
+    "howItWorks": {
+      "title": "How it Works",
+      "step1": {
+        "title": "Join for Free",
+        "description": "Sign up with Google or GitHub in seconds — no wallet required to start."
+      },
+      "step2": {
+        "title": "Browse Courses",
+        "description": "Explore Solana courses from beginner to advanced and find the right path for your goals."
+      },
+      "step3": {
+        "title": "Complete Lessons",
+        "description": "Learn at your own pace, complete code challenges, and earn XP tokens for every finished lesson."
+      },
+      "step4": {
+        "title": "Earn Credentials",
+        "description": "Get on-chain NFT certificates that prove your achievement and live in your Solana wallet."
+      }
+    },
+    "testimonials": {
+      "title": "What students say",
+      "subtitle": "Builders from around the world trust Superteam Academy to level up their Solana skills",
+      "items": [
+        {
+          "name": "Alex Rivera",
+          "role": "Solana Developer",
+          "text": "The interactive code challenges are what set Superteam Academy apart. I went from zero Rust knowledge to deploying my first Anchor program in three weeks — the hands-on approach makes everything click."
+        },
+        {
+          "name": "Sarah Chen",
+          "role": "DeFi Protocol Builder",
+          "text": "The on-chain credential system is a game changer. My Metaplex Core NFT certificates are visible in my wallet and verifiable by any employer. It's real proof of work, not just a PDF."
+        },
+        {
+          "name": "Marcus Johnson",
+          "role": "Community Builder",
+          "text": "The XP leaderboard and achievement badges made learning addictive. I never thought I'd finish three courses in a month, but the gamification kept me coming back every single day."
+        }
+      ]
+    },
+    "partners": {
+      "title": "Built on the best of the Solana ecosystem"
+    },
+    "cta": {
+      "title": "Your Solana journey starts here.",
+      "subtitle": "Join for free, earn real on-chain credentials, and become part of the Superteam builder community.",
+      "button": "Explore Courses"
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Learn Solana from beginner to advanced with practical, up-to-date content.",
+    "filter": {
+      "all": "All",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "search": "Search courses...",
+      "noResults": "No courses match your filters.",
+      "emptyDescription": "Try adjusting your search or filters",
+      "clearFilters": "Clear filters",
+      "topic": "Topic",
+      "allTopics": "All topics",
+      "duration": "Duration",
+      "allDurations": "All durations",
+      "durationShort": "Short (<30 min)",
+      "durationMedium": "Medium (30–60 min)",
+      "durationLong": "Long (>60 min)",
+      "difficulty": "Filter by difficulty"
+    },
+    "comingSoon": "Courses coming soon!",
+    "comingSoonDescription": "We're preparing amazing Solana content for you.",
+    "errorLoading": "Failed to load courses",
+    "retry": "Try again",
+    "card": {
+      "lessons": "lessons",
+      "xpPerLesson": "XP per lesson",
+      "enrolled": "enrolled",
+      "progress": "Progress",
+      "startCourse": "Start course",
+      "continueLearning": "Continue learning",
+      "completed": "Completed",
+      "minutes": "min",
+      "hours": "h"
+    },
+    "detail": {
+      "about": "About this course",
+      "syllabus": "Syllabus",
+      "prerequisites": "Prerequisites",
+      "enrollNow": "Enroll now",
+      "alreadyEnrolled": "You are already enrolled",
+      "lessonCount": "lessons total",
+      "totalXp": "Total XP",
+      "difficulty": "Difficulty",
+      "track": "Track",
+      "instructor": "Instructor",
+      "enrollments": "enrollments"
+    },
+    "lesson": {
+      "markComplete": "Mark as complete",
+      "completed": "Lesson completed",
+      "completedBadge": "Completed",
+      "nextLesson": "Next lesson",
+      "previousLesson": "Previous lesson",
+      "backToCourse": "Back to course",
+      "progress": "Course progress",
+      "notFound": "Lesson not found.",
+      "noContent": "No content available for this lesson.",
+      "challenge": "Code Challenge",
+      "completionError": "Failed to mark lesson complete. Please try again.",
+      "allLessons": "All Lessons",
+      "lessonList": "Lesson List",
+      "notCompleted": "Not completed",
+      "connectWalletToTrack": "Connect wallet to track progress",
+      "connectWalletTooltip": "Connect your wallet to mark lessons complete and earn XP",
+      "lessonTab": "Lesson"
+    },
+    "enrollment": {
+      "success": "Successfully enrolled! Let's start learning!",
+      "error": "Enrollment failed. Please try again.",
+      "prerequisiteRequired": "You need to complete the prerequisite before enrolling in this course.",
+      "walletRequired": "Connect your wallet to enroll.",
+      "errorCancelled": "Transaction cancelled.",
+      "errorInsufficientFunds": "Insufficient SOL for transaction fee.",
+      "errorFailed": "Transaction failed.",
+      "connectWalletToEnroll": "Connect wallet to enroll in course",
+      "enrollInCourse": "Enroll in course",
+      "continueLearning": "Continue Learning",
+      "enrolled": "Enrolled"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "level": "Current level",
+    "xpToNext": "XP to next level",
+    "activeCourses": "Active courses",
+    "continue": "Continue",
+    "continueLearning": "Continue Learning",
+    "savedCourses": "Saved Courses",
+    "savedEmpty": "Save courses to find them easily later",
+    "completedCourses": "Completed courses",
+    "achievements": "Achievements",
+    "streak": {
+      "title": "Study streak",
+      "days": "days",
+      "current": "Current streak",
+      "longest": "Longest streak"
+    },
+    "streakFreezes": "Streak Freezes",
+    "freezeUsed": "Freeze used!",
+    "recentActivity": {
+      "title": "Recent activity",
+      "lessonCompleted": "Lesson completed",
+      "courseEnrolled": "Enrolled in course",
+      "courseCompleted": "Course completed",
+      "achievementEarned": "Achievement unlocked",
+      "noActivity": "No recent activity. Start studying now!"
+    },
+    "skills": {
+      "title": "Your skills"
+    },
+    "time": {
+      "minutesAgo": "{count}m ago",
+      "hoursAgo": "{count}h ago",
+      "daysAgo": "{count}d ago"
+    },
+    "recommendations": {
+      "title": "Recommended For You",
+      "start": "Start",
+      "empty": "You are enrolled in all available courses!"
+    },
+    "empty": {
+      "title": "Start your learning journey",
+      "description": "You are not enrolled in any courses yet. Explore the catalog and start earning XP today.",
+      "cta": "Explore courses"
+    },
+    "levelProgress": "Level progress",
+    "signInRequired": {
+      "title": "Join to access your dashboard",
+      "description": "Create a free account to track your XP, credentials, and learning progress.",
+      "cta": "Join Now"
+    },
+    "walletRequired": {
+      "title": "Connect your Solana wallet",
+      "description": "Connect your wallet to track on-chain XP and credentials. Your course progress is already being saved."
+    },
+    "rank": "Rank",
+    "unranked": "Unranked"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "The top XP earners at Superteam Academy",
+    "rank": "Rank",
+    "address": "Wallet",
+    "xp": "XP",
+    "level": "Level",
+    "you": "You",
+    "timeFilter": "Filter by time period",
+    "courseFilter": "Filter by course",
+    "filters": {
+      "allTime": "All Time",
+      "monthly": "This Month",
+      "weekly": "This Week",
+      "allCourses": "All Courses"
+    },
+    "empty": "Be the first to earn XP!",
+    "emptyDescription": "Complete courses and lessons to earn soulbound XP tokens and appear on the leaderboard.",
+    "comingSoon": "Coming soon",
+    "cumulativeNote": "On-chain XP is cumulative and does not have per-period timestamps. Showing all-time totals.",
+    "courseFilterNote": "XP is global across all courses. Showing all-time totals.",
+    "refresh": "Refresh",
+    "streakDays": "{count, plural, one {# day streak} other {# day streak}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": {
+      "title": "Profile",
+      "description": "Set your public display name, bio, avatar, and social links",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Your name",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell people a little about yourself...",
+      "avatarUrl": "Avatar URL",
+      "socialLinks": "Social links",
+      "twitter": "Twitter",
+      "github": "GitHub",
+      "saveButton": "Save profile",
+      "saved": "Profile saved!"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "description": "Control who can see your profile",
+      "public": "Public Profile",
+      "private": "Private Profile",
+      "publicDesc": "Your profile is visible to other learners.",
+      "privateDesc": "Your profile is hidden from other learners."
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose your interface language"
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "Customize the appearance of the platform",
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    },
+    "accounts": {
+      "title": "Connected accounts",
+      "description": "Manage the accounts and wallet linked to your profile",
+      "wallet": "Solana Wallet",
+      "google": "Google",
+      "github": "GitHub",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "link": "Link",
+      "unlink": "Unlink",
+      "unlinkSuccess": "{provider} account unlinked",
+      "walletDisconnected": "Wallet disconnected"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage how you want to be notified",
+      "email": "Email notifications",
+      "push": "Push notifications"
+    },
+    "export": {
+      "title": "Export data",
+      "description": "Download all your learning data and progress",
+      "button": "Export data"
+    },
+    "streakFreeze": {
+      "title": "Streak Freeze",
+      "description": "Freezes protect your streak when you miss a day. Earn more by reaching streak milestones (7, 30, 100 days).",
+      "freezesRemaining": "{count, plural, one {# freeze remaining} other {# freezes remaining}}",
+      "earnMore": "Reach 7, 30, or 100-day streaks to earn more freezes",
+      "recentlyUsed": "Recently used"
+    }
+  },
+  "challenge": {
+    "title": "Code Challenge",
+    "codeEditorLabel": "Code editor",
+    "instructions": "Instructions",
+    "runTests": "Run tests",
+    "submit": "Submit solution",
+    "reset": "Reset code",
+    "hints": {
+      "title": "Need Help?",
+      "nudge": "Nudge",
+      "approach": "Approach",
+      "solutionGuide": "Solution Guide",
+      "getNextHint": "Get Next Hint",
+      "usedHints": "Used {count}/{total} hints",
+      "noMoreHints": "No more hints available",
+      "thinkFirst": "Try thinking about it first before using hints!"
+    },
+    "showHint": "Show hint",
+    "showSolution": "Show solution",
+    "testsPassing": "tests passing",
+    "testsFailing": "Tests failing",
+    "allTestsPassed": "All tests passed!",
+    "output": "Output",
+    "notFound": "Challenge not found.",
+    "xpEarned": "XP Earned!",
+    "pageTitle": "Challenge",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "testCases": "Test Cases",
+    "tests": {
+      "running": "Running tests...",
+      "noImplementation": "No implementation found",
+      "implementationDetected": "Implementation detected",
+      "allPassed": "All tests passed!",
+      "passCount": "All {count} test(s) passed!",
+      "failCount": "{count} test(s) failed:",
+      "pass": "PASS",
+      "fail": "FAIL"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "memberSince": "Member since",
+    "totalXp": "Total XP",
+    "coursesCompleted": "Courses in progress",
+    "achievements": "Credentials",
+    "credentials": "On-Chain Credentials",
+    "noCredentials": "No credentials yet. Complete a course to earn your first one!",
+    "connectRequired": "Connect your wallet",
+    "connectRequiredDesc": "Connect a Solana wallet to view your on-chain profile.",
+    "signInRequired": "Sign in to view your profile",
+    "signInRequiredDesc": "Create a free account or sign in to access your profile.",
+    "walletRequired": "Connect your Solana wallet",
+    "walletRequiredDesc": "Connect your wallet to view your on-chain XP and credentials.",
+    "bio": {
+      "title": "About me",
+      "placeholder": "Write a short bio about yourself...",
+      "saved": "Bio saved",
+      "empty": "No bio yet. Click Edit to add one."
+    },
+    "badges": {
+      "title": "Achievement Badges",
+      "minted": "Minted",
+      "noBadges": "No certificates yet",
+      "noBadgesDescription": "Complete courses to earn soulbound NFT credentials that prove your skills on-chain.",
+      "viewCertificate": "View certificate"
+    },
+    "skills": {
+      "title": "Skill Distribution",
+      "noSkills": "Start learning to see your skill breakdown.",
+      "lessonsCompleted": "lessons completed"
+    },
+    "tracks": {
+      "solanaFundamentals": "Solana Fundamentals",
+      "anchorDevelopment": "Anchor Development",
+      "token2022Nfts": "Token-2022 & NFTs",
+      "defiProtocols": "DeFi Protocols",
+      "web3Frontend": "Web3 Frontend"
+    },
+    "achievementBadges": {
+      "title": "Achievement Badges"
+    },
+    "privacy": {
+      "title": "Profile Visibility",
+      "public": "Public Profile",
+      "private": "Private Profile",
+      "publicDesc": "Your profile is visible to other learners.",
+      "privateDesc": "Your profile is hidden from other learners.",
+      "privateIndicator": "Your profile is currently private."
+    },
+    "completedCourses": "Completed Courses",
+    "noCompletedCourses": "No courses completed yet",
+    "browseCourses": "Browse Courses",
+    "startLearning": "Start Learning",
+    "completedCoursesList": "Completed Courses",
+    "streak": "Current Streak",
+    "streakDays": "days",
+    "publicProfile": {
+      "backToMyProfile": "Back to my profile",
+      "backToProfile": "Back to Profile",
+      "publicProfile": "Public Profile",
+      "publicProfileDescription": "Public profiles will be available when user accounts are fully connected.",
+      "comingSoon": "Public profiles will be available when user accounts are fully connected.",
+      "coursesSection": "Completed Courses",
+      "achievementsSection": "Achievements",
+      "metaDescription": "View {username}'s learning profile on Superteam Academy."
+    }
+  },
+  "certificate": {
+    "title": "Certificate of Completion",
+    "verifyOnChain": "Verify on-chain",
+    "mintDate": "Issue date",
+    "track": "Track",
+    "share": "Share certificate",
+    "shareOnX": "Share on X",
+    "shareOnLinkedIn": "Share on LinkedIn",
+    "download": "Download certificate",
+    "print": "Print Certificate",
+    "downloadReady": "Certificate sent to printer",
+    "notFound": "Certificate not found.",
+    "pageTitle": "Certificate",
+    "fallbackCourseName": "Solana Course",
+    "downloadImage": "Download as Image",
+    "awardedTo": "Awarded to",
+    "ownership": "Ownership",
+    "ownedBy": "Owned by",
+    "youOwnThis": "You own this credential",
+    "verifiedOnChain": "Verified on-chain",
+    "metadataSection": "Metadata",
+    "metadataUri": "Metadata URI"
+  },
+  "errors": {
+    "walletNotConnected": "Wallet not connected. Connect your wallet to continue.",
+    "transactionFailed": "Transaction failed. Check your wallet and try again.",
+    "networkError": "Network error. Check your connection and try again.",
+    "notFound": "Page not found.",
+    "unauthorized": "You do not have permission to access this page.",
+    "generic": "Something went wrong. Please try again.",
+    "backToHome": "Back to Home",
+    "notFoundTitle": "404",
+    "notFoundDescription": "The page you are looking for does not exist or has been moved.",
+    "errorTitle": "Something went wrong",
+    "tryAgain": "Try Again",
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "goHome": "Go to homepage"
+  },
+  "footer": {
+    "description": "Superteam's decentralized learning platform. Learn, earn XP, and build your on-chain reputation.",
+    "newsletter": {
+      "title": "Stay in the loop",
+      "placeholder": "Get the latest Solana tutorials and updates",
+      "inputPlaceholder": "Your email address",
+      "button": "Subscribe",
+      "success": "You're subscribed! Welcome to the Superteam builder community."
+    },
+    "links": {
+      "courses": "Courses",
+      "leaderboard": "Leaderboard",
+      "dashboard": "Dashboard",
+      "profile": "Profile",
+      "settings": "Settings",
+      "about": "About",
+      "docs": "Docs",
+      "github": "GitHub"
+    },
+    "social": {
+      "title": "Social",
+      "twitter": "Twitter",
+      "discord": "Discord",
+      "github": "GitHub"
+    },
+    "copyright": "© {year} Superteam Academy. All rights reserved."
+  },
+  "nav": {
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard",
+    "community": "Community",
+    "settings": "Settings",
+    "getStarted": "Get Started"
+  },
+  "gamification": {
+    "levelUp": {
+      "title": "Level Up!",
+      "description": "You advanced from level {oldLevel} to level {newLevel}",
+      "level": "LVL",
+      "keepGoing": "Keep learning to reach level {nextLevel}!"
+    },
+    "streakLabel": "{count, plural, one {# day learning streak} other {# day learning streak}}",
+    "streakDaysShort": "{count}d",
+    "streakFreezeEarned": "Streak Freeze Earned!",
+    "streakFreezeUsed": "Streak freeze used to protect your streak.",
+    "calendar": {
+      "title": "Activity Calendar",
+      "activityOn": "Activity on {date}",
+      "noActivity": "No activity",
+      "weeks": "Last 12 weeks"
+    }
+  },
+  "reviews": {
+    "title": "Student Reviews",
+    "averageRating": "Average Rating",
+    "totalReviews": "{count, plural, one {# review} other {# reviews}}",
+    "writeReview": "Write a Review",
+    "connectToReview": "Sign in to write a review",
+    "noReviews": "No reviews yet. Be the first to review this course!",
+    "beFirst": "Be the first to review!",
+    "submitReview": "Submit Review",
+    "commentPlaceholder": "Share your experience with this course...",
+    "submitted": "Review Submitted!",
+    "submittedMessage": "Your review has been published."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "achievementUnlocked": "Achievement Unlocked!",
+    "courseCompleted": "Course Completed!",
+    "streakMilestone": "Streak Milestone!",
+    "levelUp": "Level Up!",
+    "xpEarned": "XP Earned!"
+  },
+  "learningPaths": {
+    "title": "Learning Paths",
+    "subtitle": "Structured tracks to guide your Solana journey from zero to builder",
+    "courses": "{count, plural, one {# course} other {# courses}}",
+    "comingSoon": "Coming soon",
+    "startPath": "Start Path",
+    "paths": {
+      "solanaFundamentals": {
+        "title": "Solana Fundamentals",
+        "description": "Master the core concepts of Solana: accounts, transactions, programs, and the runtime. Perfect starting point for any Solana developer."
+      },
+      "defiDevelopment": {
+        "title": "DeFi Development",
+        "description": "Build decentralized finance applications on Solana. Learn AMMs, lending protocols, liquidity pools, and token economics."
+      },
+      "nftGaming": {
+        "title": "NFT & Gaming",
+        "description": "Create NFT collections, gaming assets, and on-chain game mechanics using Metaplex Core and Token-2022."
+      },
+      "advancedProtocol": {
+        "title": "Advanced Protocol Development",
+        "description": "Deep dive into complex Solana programs: CPI, PDAs, cross-program composition, and performance optimization."
+      },
+      "anchorDevelopment": {
+        "title": "Anchor Development",
+        "description": "Build robust Solana programs with the Anchor framework. Learn IDL generation, account validation, and program testing."
+      },
+      "web3Frontend": {
+        "title": "Web3 Frontend",
+        "description": "Build modern dApps with React and Next.js. Learn wallet adapters, transaction signing, and real-time on-chain data."
+      }
+    },
+    "filter": {
+      "label": "Learning Path",
+      "all": "All Paths"
+    }
+  },
+  "auth": {
+    "signInTitle": "Start Your Web3 Journey",
+    "signInSubtitle": "Join thousands of builders learning Solana — earn XP, collect on-chain credentials, and level up your career.",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithGithub": "Continue with GitHub",
+    "continueWithWallet": "Continue with Wallet",
+    "connectingWallet": "Connecting...",
+    "walletSignInMessage": "Sign in to Superteam Academy",
+    "signInModalTitle": "Join Superteam Academy",
+    "termsText": "By continuing, you agree to the platform's usage terms.",
+    "alreadySignedIn": "You're already signed in",
+    "socialProof": "Join 1,000+ learners on Solana's learning platform"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Discuss, share, and learn together with fellow Solana builders.",
+    "newThread": "New Thread",
+    "signInToPost": "Sign in to post",
+    "searchPlaceholder": "Search discussions...",
+    "filterByCategory": "Filter by category",
+    "allCategories": "All",
+    "pinned": "Pinned",
+    "threadCount": "{count, plural, one {# thread} other {# threads}}",
+    "noThreads": "No threads match your search.",
+    "noThreadsDescription": "Start the first discussion or adjust your search filters.",
+    "threadList": "Discussion threads",
+    "replies": "{count, plural, one {# reply} other {# replies}}",
+    "categories": {
+      "general": "General Discussion",
+      "help": "Help & Support",
+      "showntell": "Show & Tell",
+      "resources": "Resources"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "previous": "Previous",
+    "getStarted": "Get Started",
+    "stepIndicator": "Step indicator",
+    "stepN": "Go to step {n}",
+    "step1": {
+      "title": "Welcome to Superteam Academy",
+      "description": "The premier Solana learning platform built for builders. Earn real on-chain credentials as you level up your skills."
+    },
+    "step2": {
+      "title": "Learn by Doing",
+      "description": "Complete hands-on lessons to earn XP tokens. Each lesson you finish adds to your on-chain reputation and helps you level up."
+    },
+    "step3": {
+      "title": "Collect Credentials",
+      "description": "Earn soulbound NFT certificates for every course you complete. Your achievements live on-chain — permanent and verifiable by anyone."
+    },
+    "step4": {
+      "title": "Join the Community",
+      "description": "Connect your wallet, start learning, and join thousands of Solana builders. Your journey to Web3 mastery starts now."
+    }
+  },
+  "achievements": {
+    "title": "Achievement Badges",
+    "subtitle": "Unlock badges by completing lessons, streaks, challenges, and more",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "xpReward": "XP",
+    "categories": {
+      "progress": "Progress",
+      "streaks": "Streaks",
+      "skills": "Skills",
+      "community": "Community",
+      "special": "Special"
+    },
+    "badges": {
+      "first_lesson": {
+        "name": "First Step",
+        "description": "Complete your first lesson"
+      },
+      "ten_lessons": {
+        "name": "Getting Momentum",
+        "description": "Complete 10 lessons"
+      },
+      "fifty_lessons": {
+        "name": "Knowledge Seeker",
+        "description": "Complete 50 lessons"
+      },
+      "first_course": {
+        "name": "Graduate",
+        "description": "Complete your first full course"
+      },
+      "five_courses": {
+        "name": "Master Builder",
+        "description": "Complete 5 courses"
+      },
+      "streak_7": {
+        "name": "Week Warrior",
+        "description": "Maintain a 7-day learning streak"
+      },
+      "streak_30": {
+        "name": "Monthly Grinder",
+        "description": "Maintain a 30-day learning streak"
+      },
+      "streak_100": {
+        "name": "Centurion",
+        "description": "Maintain a 100-day learning streak"
+      },
+      "first_challenge": {
+        "name": "Code Starter",
+        "description": "Complete your first code challenge"
+      },
+      "challenge_master": {
+        "name": "Challenge Master",
+        "description": "Complete 10 code challenges"
+      },
+      "multi_track": {
+        "name": "Multi-Track",
+        "description": "Make progress in 3 different learning tracks"
+      },
+      "first_review": {
+        "name": "Helpful Voice",
+        "description": "Write your first course review"
+      },
+      "helpful_builder": {
+        "name": "Helpful Builder",
+        "description": "Receive 5 helpful votes on your reviews"
+      },
+      "early_adopter": {
+        "name": "Early Adopter",
+        "description": "Join Superteam Academy in its first wave"
+      },
+      "speed_runner": {
+        "name": "Speed Runner",
+        "description": "Complete a course in under 24 hours"
+      }
+    }
+  },
+  "search": {
+    "placeholder": "Search courses, lessons, challenges...",
+    "noResults": "No results found",
+    "pages": "Pages",
+    "courses": "Courses",
+    "lessons": "Lessons",
+    "challenges": "Challenges",
+    "openSearch": "Search"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "Platform overview and on-chain stats.",
+    "manageContent": "Manage Content (Studio)",
+    "signInRequired": {
+      "title": "Sign in required",
+      "description": "You must be signed in to access the admin dashboard.",
+      "cta": "Sign In"
+    },
+    "walletRequired": {
+      "title": "Connect your Solana wallet",
+      "description": "Connect your wallet to load on-chain statistics."
+    },
+    "stats": {
+      "totalCourses": "Total Courses",
+      "totalEnrollments": "Total Enrollments",
+      "totalXpMinted": "Total XP Minted",
+      "activeLearners": "Active Learners"
+    },
+    "courses": {
+      "title": "Course Management",
+      "empty": "No on-chain courses found.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "cols": {
+        "courseId": "Course",
+        "enrollments": "Enrollments",
+        "completions": "Completions",
+        "xpPerLesson": "XP / Lesson",
+        "status": "Status"
+      }
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "enrolled": "New enrollment",
+      "lessonCompleted": "Lesson completed"
+    }
+  },
+  "bookmarks": {
+    "save": "Save",
+    "saved": "Saved",
+    "savedCourses": "Saved Courses",
+    "empty": "Save courses to find them easily later",
+    "addBookmark": "Save course",
+    "removeBookmark": "Remove from saved"
+  },
+  "xpPopover": {
+    "levelLabel": "Level {level}",
+    "progressLabel": "{pct}% to Level {next}",
+    "streakLabel": "{days} day streak",
+    "rankLabel": "#{rank} on leaderboard",
+    "rankLoading": "Fetching rank...",
+    "viewDashboard": "View Dashboard"
+  },
+  "lessonComplete": {
+    "title": "Lesson Complete!",
+    "xpEarned": "XP Earned",
+    "firstOfDay": "First of the Day!",
+    "streakDays": "{days, plural, one {# Day Streak} other {# Day Streak}}",
+    "nextLesson": "Next Lesson",
+    "backToCourse": "Back to Course",
+    "courseComplete": "Course Complete!"
+  },
+  "onboardingQuiz": {
+    "title": "Find Your Learning Path",
+    "subtitle": "Answer 4 quick questions and we'll recommend the perfect track for you",
+    "stepLabel": "Question {current} of {total}",
+    "back": "Back",
+    "next": "Next",
+    "seeResults": "See My Results",
+    "q1": {
+      "question": "What's your programming experience?",
+      "beginner": "Beginner — I'm just getting started",
+      "intermediate": "Intermediate — I know the basics",
+      "advanced": "Advanced — I build production software"
+    },
+    "q2": {
+      "question": "What interests you most about Solana?",
+      "defi": "DeFi — Protocols & Finance",
+      "nfts": "NFTs & Gaming",
+      "infrastructure": "Infrastructure & Protocol Design",
+      "daos": "DAOs & Governance"
+    },
+    "q3": {
+      "question": "How much time can you dedicate weekly?",
+      "light": "1–3 hours — light pace",
+      "moderate": "3–7 hours — steady pace",
+      "intensive": "7+ hours — full commitment"
+    },
+    "q4": {
+      "question": "What's your goal?",
+      "buildDapp": "Build a dApp",
+      "getJob": "Get a job in Web3",
+      "learnFun": "Learn for fun",
+      "startProject": "Start my own project"
+    },
+    "result": {
+      "recommendedTrack": "Your recommended track",
+      "xpAward": "+{xp} XP for completing the assessment!",
+      "startLearning": "Start Learning",
+      "retake": "Retake the quiz"
+    },
+    "tracks": {
+      "solana-fundamentals": {
+        "title": "Solana Fundamentals",
+        "description": "Master the core concepts of Solana: accounts, transactions, programs, and the runtime. The perfect starting point for any Solana developer."
+      },
+      "defi-development": {
+        "title": "DeFi Development",
+        "description": "Build decentralized finance applications on Solana. Learn AMMs, lending protocols, liquidity pools, and tokenomics."
+      },
+      "nft-gaming": {
+        "title": "NFT & Gaming",
+        "description": "Create NFT collections, game assets, and on-chain mechanics using Metaplex Core and Token-2022."
+      },
+      "advanced-protocol": {
+        "title": "Advanced Protocol Development",
+        "description": "Dive deep into complex Solana programs: CPIs, PDAs, cross-program composition, and performance optimization."
+      }
+    },
+    "banner": {
+      "title": "Not sure where to start?",
+      "description": "Take our 4-question skill assessment and get a personalized track recommendation.",
+      "cta": "Take the assessment",
+      "xpReward": "+50 XP reward"
+    }
+  }
+}
