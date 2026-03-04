@@ -10,7 +10,7 @@ export default async function LessonPage({
   params: Promise<{ slug: string; id: string }>;
 }) {
   const { slug, id } = await params;
-  const course = getCourse(slug);
+  const course = await getCourse(slug);
   if (!course) notFound();
 
   const lessonIdx = course.lessons.findIndex((l) => l.slug === id);

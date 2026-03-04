@@ -1,3 +1,5 @@
+import { sanityClient, sanityEnabled } from "@/lib/sanity";
+
 export type Course = {
   slug: string;
   title: string;
@@ -47,6 +49,30 @@ export const COURSES: Course[] = [
   },
 ];
 
-export function getCourse(slug: string): Course | undefined {
-  return COURSES.find((c) => c.slug === slug);
+export async function getCourses(): Promise<Course[]> {
+  if (!sanityEnabled || !sanityClient) return COURSES;
+
+  try {
+    const sanityCourses = await sanityClient.fetch<Course[]>(`*[_type == "course"]{
+      "slug": slug.current,
+      title,
+      description,
+      level,
+      tags,
+      "lessons": *[_type == "lesson" && references(^._id)]{
+        "slug": slug.current,
+        title,
+        minutes
+      }
+    }`);
+
+    return sanityCourses.length ? sanityCourses : COURSES;
+  } catch {
+    return COURSES;
+  }
+}
+
+export async function getCourse(slug: string): Promise<Course | undefined> {
+  const courses = await getCourses();
+  return courses.find((c) => c.slug === slug);
 }

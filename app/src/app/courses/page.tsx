@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { Shell } from "@/components/Shell";
-import { COURSES } from "@/lib/courses";
+import { getCourses } from "@/lib/courses";
 
-export default function CoursesPage() {
+export default async function CoursesPage() {
+  const courses = await getCourses();
+
   return (
     <Shell
       title="Courses"
       subtitle="A production catalog will be powered by a CMS; this is a typed mock so we can build UX first."
     >
       <div className="grid gap-4 md:grid-cols-2">
-        {COURSES.map((c) => (
+        {courses.map((c) => (
           <Link
             key={c.slug}
             href={`/courses/${c.slug}`}
