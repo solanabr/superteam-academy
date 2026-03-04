@@ -1,6 +1,6 @@
 // Solana-flavored wallet name generator
-// Format: {Adjective}{Noun}_{4-digit number}
-// ~32M unique combinations (60 adj x 60 nouns x 9000 numbers)
+// Format: {Adjective}{Noun}
+// Falls back to appending a short suffix on uniqueness collision (handled by callers)
 
 const adjectives = [
   // Solana core concepts
@@ -158,8 +158,7 @@ const nouns = [
 export function generateWalletName(): string {
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)]!;
   const noun = nouns[Math.floor(Math.random() * nouns.length)]!;
-  const num = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-  return `${adj}${noun}_${num}`;
+  return `${adj}${noun}`;
 }
 
 export { adjectives, nouns };

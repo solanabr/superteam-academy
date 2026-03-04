@@ -1,11 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
 import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
-import type { CodeEditorProps, EditorLanguage } from "./types";
+import type {
+  CodeEditorProps,
+  CodeEditorHandle,
+  EditorLanguage,
+} from "./types";
 import { cn } from "@/lib/utils";
 
 const AUTOSAVE_DELAY_MS = 1000;
@@ -40,160 +50,174 @@ function EditorSkeleton() {
   );
 }
 
-export function CodeEditor({
-  lessonId,
-  initialCode,
-  language,
-  value,
-  onChange,
-  readOnly = false,
-  className,
-}: CodeEditorProps) {
-  const { resolvedTheme } = useTheme();
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isExternalUpdate = useRef(false);
-
-  const themeName =
-    resolvedTheme === "light" ? THEME_MAP.light : THEME_MAP.dark;
-
-  const handleBeforeMount: BeforeMount = useCallback((monaco) => {
-    monaco.editor.defineTheme("superteam-dark", superteamDark);
-    monaco.editor.defineTheme("superteam-light", superteamLight);
-
-    // Disable semantic validation (cannot resolve @solana/web3.js in browser)
-    // Keep syntax validation so typos are still caught
-    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: true,
-      noSuggestionDiagnostics: true,
-    });
-    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: true,
-      noSuggestionDiagnostics: true,
-    });
-  }, []);
-
-  const handleMount: OnMount = useCallback(
-    (editorInstance) => {
-      editorRef.current = editorInstance;
-
-      // Restore saved code from localStorage
-      try {
-        const saved = localStorage.getItem(getStorageKey(lessonId));
-        if (saved) {
-          editorInstance.setValue(saved);
-        }
-      } catch {
-        // localStorage may be unavailable
-      }
+export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
+  function CodeEditor(
+    {
+      lessonId,
+      initialCode,
+      language,
+      value,
+      onChange,
+      readOnly = false,
+      className,
     },
-    [lessonId]
-  );
+    ref
+  ) {
+    const { resolvedTheme } = useTheme();
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
-  const handleChange = useCallback(
-    (value: string | undefined) => {
-      const code = value ?? "";
-      onChange?.(code);
+    useImperativeHandle(
+      ref,
+      () => ({
+        getEditor: () => editorRef.current,
+      }),
+      []
+    );
 
-      // Debounced autosave
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-      autosaveTimerRef.current = setTimeout(() => {
+    const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isExternalUpdate = useRef(false);
+
+    const themeName =
+      resolvedTheme === "light" ? THEME_MAP.light : THEME_MAP.dark;
+
+    const handleBeforeMount: BeforeMount = useCallback((monaco) => {
+      monaco.editor.defineTheme("superteam-dark", superteamDark);
+      monaco.editor.defineTheme("superteam-light", superteamLight);
+
+      // Disable semantic validation (cannot resolve @solana/web3.js in browser)
+      // Keep syntax validation so typos are still caught
+      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: true,
+        noSuggestionDiagnostics: true,
+      });
+      monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: true,
+        noSuggestionDiagnostics: true,
+      });
+    }, []);
+
+    const handleMount: OnMount = useCallback(
+      (editorInstance) => {
+        editorRef.current = editorInstance;
+
+        // Restore saved code from localStorage
         try {
-          localStorage.setItem(getStorageKey(lessonId), code);
+          const saved = localStorage.getItem(getStorageKey(lessonId));
+          if (saved) {
+            editorInstance.setValue(saved);
+          }
         } catch {
           // localStorage may be unavailable
         }
-      }, AUTOSAVE_DELAY_MS);
-    },
-    [lessonId, onChange]
-  );
+      },
+      [lessonId]
+    );
 
-  // Sync external value changes (Reset / Show Solution) into Monaco
-  useEffect(() => {
-    if (value === undefined) return;
-    const editor = editorRef.current;
-    if (!editor) return;
-    const currentValue = editor.getValue();
-    if (currentValue !== value) {
-      isExternalUpdate.current = true;
-      editor.setValue(value);
-      isExternalUpdate.current = false;
-    }
-  }, [value]);
+    const handleChange = useCallback(
+      (value: string | undefined) => {
+        const code = value ?? "";
+        onChange?.(code);
 
-  // Cleanup autosave timer on unmount
-  useEffect(() => {
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
+        // Debounced autosave
+        if (autosaveTimerRef.current) {
+          clearTimeout(autosaveTimerRef.current);
+        }
+        autosaveTimerRef.current = setTimeout(() => {
+          try {
+            localStorage.setItem(getStorageKey(lessonId), code);
+          } catch {
+            // localStorage may be unavailable
+          }
+        }, AUTOSAVE_DELAY_MS);
+      },
+      [lessonId, onChange]
+    );
+
+    // Sync external value changes (Reset / Show Solution) into Monaco
+    useEffect(() => {
+      if (value === undefined) return;
+      const editor = editorRef.current;
+      if (!editor) return;
+      const currentValue = editor.getValue();
+      if (currentValue !== value) {
+        isExternalUpdate.current = true;
+        editor.setValue(value);
+        isExternalUpdate.current = false;
       }
-    };
-  }, []);
+    }, [value]);
 
-  return (
-    <div
-      className={cn(
-        "relative h-full w-full overflow-hidden rounded-md border",
-        className
-      )}
-      aria-label="Code editor"
-    >
-      <Editor
-        defaultValue={initialCode}
-        language={getMonacoLanguage(language)}
-        theme={themeName}
-        beforeMount={handleBeforeMount}
-        onMount={handleMount}
-        onChange={handleChange}
-        loading={<EditorSkeleton />}
-        options={{
-          readOnly,
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineHeight: 22,
-          fontFamily:
-            "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
-          fontLigatures: true,
-          tabSize: 2,
-          insertSpaces: true,
-          wordWrap: "on",
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          padding: { top: 16, bottom: 16 },
-          renderLineHighlight: "line",
-          cursorBlinking: "smooth",
-          cursorSmoothCaretAnimation: "on",
-          smoothScrolling: true,
-          bracketPairColorization: { enabled: true },
-          guides: {
-            bracketPairs: true,
-            indentation: true,
-          },
-          suggest: {
-            showKeywords: true,
-            showSnippets: true,
-          },
-          quickSuggestions: {
-            other: true,
-            comments: false,
-            strings: false,
-          },
-          scrollbar: {
-            verticalScrollbarSize: 8,
-            horizontalScrollbarSize: 8,
-          },
-          overviewRulerBorder: false,
-          hideCursorInOverviewRuler: true,
-          fixedOverflowWidgets: true,
-          contextmenu: true,
-          accessibilitySupport: "auto",
-        }}
-      />
-    </div>
-  );
-}
+    // Cleanup autosave timer on unmount
+    useEffect(() => {
+      return () => {
+        if (autosaveTimerRef.current) {
+          clearTimeout(autosaveTimerRef.current);
+        }
+      };
+    }, []);
+
+    return (
+      <div
+        className={cn(
+          "relative h-full w-full overflow-hidden rounded-md border",
+          className
+        )}
+        aria-label="Code editor"
+      >
+        <Editor
+          defaultValue={initialCode}
+          language={getMonacoLanguage(language)}
+          theme={themeName}
+          beforeMount={handleBeforeMount}
+          onMount={handleMount}
+          onChange={handleChange}
+          loading={<EditorSkeleton />}
+          options={{
+            readOnly,
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineHeight: 22,
+            fontFamily:
+              "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
+            fontLigatures: true,
+            tabSize: 2,
+            insertSpaces: true,
+            wordWrap: "on",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            padding: { top: 16, bottom: 16 },
+            renderLineHighlight: "line",
+            cursorBlinking: "smooth",
+            cursorSmoothCaretAnimation: "on",
+            smoothScrolling: true,
+            bracketPairColorization: { enabled: true },
+            guides: {
+              bracketPairs: true,
+              indentation: true,
+            },
+            suggest: {
+              showKeywords: true,
+              showSnippets: true,
+            },
+            quickSuggestions: {
+              other: true,
+              comments: false,
+              strings: false,
+            },
+            scrollbar: {
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+            },
+            overviewRulerBorder: false,
+            hideCursorInOverviewRuler: true,
+            fixedOverflowWidgets: true,
+            contextmenu: true,
+            accessibilitySupport: "auto",
+          }}
+        />
+      </div>
+    );
+  }
+);
 
 export function resetEditorStorage(lessonId: string): void {
   try {

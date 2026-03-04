@@ -37,7 +37,10 @@
     "community": "Comunidade",
     "profile": "Perfil",
     "settings": "Configurações",
-    "certificates": "Certificados"
+    "certificates": "Certificados",
+    "lowSolBalance": "Saldo SOL baixo.",
+    "getDevnetSol": "Obter SOL devnet ->",
+    "dismissBanner": "Fechar"
   },
   "auth": {
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
@@ -185,7 +188,22 @@
     "linkWalletSettings": "Ir para Configurações →",
     "discussion": "Discussão",
     "askQuestion": "Fazer uma Pergunta",
-    "signInToAsk": "Entre para fazer uma pergunta"
+    "signInToAsk": "Entre para fazer uma pergunta",
+    "aiHelp": "Ajuda IA",
+    "aiHelpLoading": "Analisando...",
+    "aiHelpError": "Nao foi possivel obter sugestoes. Tente novamente.",
+    "aiHelpRateLimited": "Muitas solicitacoes. Aguarde um momento.",
+    "aiHelpRunFirst": "Execute seu codigo primeiro para obter sugestoes da IA.",
+    "dismissSuggestion": "Dispensar",
+    "dismissAllSuggestions": "Dispensar Todas",
+    "askAi": "Perguntar IA",
+    "aiChat": "Tutor IA",
+    "aiChatPlaceholder": "Pergunte sobre esta aula...",
+    "aiChatSend": "Enviar",
+    "aiChatLimit": "{remaining} de {total} mensagens restantes",
+    "aiChatLimitReached": "Voce usou todas as {total} mensagens de IA para esta aula.",
+    "aiChatError": "Nao foi possivel obter uma resposta. Tente novamente.",
+    "aiChatThinking": "Pensando..."
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",

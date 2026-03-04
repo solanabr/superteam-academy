@@ -16,6 +16,7 @@ import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { useXpBalance } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
+import { LowSolBanner } from "@/components/layout/low-sol-banner";
 
 const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
@@ -138,6 +139,7 @@ export function Header() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[200]">
       <div className="relative bg-transparent backdrop-blur-md">
+        <LowSolBanner />
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
           {/* Left: Logo (desktop lg+) */}
           <Link
