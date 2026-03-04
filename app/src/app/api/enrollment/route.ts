@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
         completedAt: enrollment.completedAt,
         bonusClaimed: enrollment.bonusClaimed,
         lessonFlags: Array.from(enrollment.lessonFlags),
-        onChainActive: true, // If enrolled via on-chain, account exists
+        onChainActive: !enrollment.rentReclaimed, // True if rent hasn't been reclaimed
         mintAddress: credential?.mintAddress ?? null,
         credentialId: credential?.id ?? null,
       });

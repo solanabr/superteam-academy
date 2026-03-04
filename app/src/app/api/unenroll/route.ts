@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 
 /** POST /api/unenroll — delete enrollment user (by wallet) in a course. Body: { wallet, courseId } */
 export async function POST(request: NextRequest) {
-    let body: { wallet?: string; courseId?: string };
+    let body: { wallet?: string; courseId?: string; reclaimRent?: boolean };
     try {
         body = await request.json();
     } catch {
@@ -23,24 +23,34 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // 0. Guard: Do not allow unenrollment (deletion) if course is completed
+    // 0. Guard: Do not allow unenrollment (deletion) if course is completed, unless just reclaiming rent
     const existing = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId } }
     });
 
-    if (existing?.completedAt) {
+    if (existing?.completedAt && !body.reclaimRent) {
         return NextResponse.json({
             error: "Cannot unenroll from a completed course. Use 'Reclaim Rent' instead to close your on-chain account while preserving your achievement."
         }, { status: 403 });
     }
 
-    // 1. Delete from Prisma
-    await prisma.enrollment.deleteMany({
-        where: {
-            userId: user.id,
-            courseId: courseId
-        }
-    });
+    if (body.reclaimRent) {
+        // Just mark rent as reclaimed, do not delete progress history
+        await prisma.enrollment.update({
+            where: {
+                userId_courseId: { userId: user.id, courseId: courseId }
+            },
+            data: { rentReclaimed: true }
+        });
+    } else {
+        // 1. Delete from Prisma
+        await prisma.enrollment.deleteMany({
+            where: {
+                userId: user.id,
+                courseId: courseId
+            }
+        });
+    }
 
     // 2. Invalidate Cache immediately
     const { invalidatePattern } = await import("@/lib/cache");

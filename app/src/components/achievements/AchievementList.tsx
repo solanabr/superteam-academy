@@ -138,12 +138,10 @@ export function AchievementList() {
                     type: "success",
                     message: "🎉 Congrats, continue on your journey soldier!",
                 });
-                setClaimedFlags(prev => {
-                    const next = [...prev];
-                    const idx = ACHIEVEMENTS.findIndex(ach => ach.id === achievement.id);
-                    if (idx >= 0) next[idx] = true;
-                    return next;
-                });
+
+                // Immediately refresh progress from DB to ensure local state matches server
+                await fetchProgress();
+
                 sendGAEvent('claim_achievement', { achievement_id: achievement.id, wallet: walletAddress });
             } else {
                 // Requirements not met — show friendly message

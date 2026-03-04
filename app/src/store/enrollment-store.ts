@@ -531,8 +531,13 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         console.log("Rent reclaimed successfully:", signature);
       });
 
-      // 1. Surgical Sync - Invalidate specific course/certificate caches
+      // 1. Surgical Sync - Update Backend Flag & Invalidate specific course/certificate caches
       await Promise.all([
+        fetch("/api/unenroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: walletAddress, courseId, reclaimRent: true }),
+        }),
         fetch("/api/sync/course", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

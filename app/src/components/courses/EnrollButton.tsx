@@ -166,7 +166,24 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
                 Note: Unfinished courses require a 24h cooldown after enrollment before rent can be reclaimed.
               </p>
             )}
+            {txError && !txModalOpen && <p className="text-rust text-[10px]">{txError}</p>}
           </div>
+        </div>
+      );
+    }
+
+    // Scenario 2.5: Successfully Reclaimed Rent (progress is null, but success flag is true)
+    const store = useCourseStore.getState();
+    if (store.txSuccess && store.lastMutation === 'unenroll') {
+      return (
+        <div className="flex flex-col gap-2">
+          <Button disabled variant="outline" className={`w-fit ${className ?? ""} border-solana text-solana bg-solana/10`}>
+            <Wallet size={16} className="mr-2" />
+            Rent Reclaimed
+          </Button>
+          <p className="text-[10px] text-text-muted italic max-w-[200px] leading-tight">
+            Rent has been reclaimed successfully.
+          </p>
         </div>
       );
     }
@@ -211,6 +228,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         isLoading={loading}
         success={txSuccess}
         error={txError}
+        isReclaim={txDetails.type === 'unenroll'}
         successMessage={txDetails.type === 'enroll'
           ? "Enrollment is successful, continue learning, and rent is reclaimable after course's completion."
           : "rent reclaimed successfully"

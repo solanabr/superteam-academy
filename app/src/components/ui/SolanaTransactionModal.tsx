@@ -26,6 +26,7 @@ interface SolanaTransactionModalProps {
     error?: string | null;
     success?: boolean;
     successMessage?: string;
+    isReclaim?: boolean;
 }
 
 export function SolanaTransactionModal({
@@ -40,7 +41,8 @@ export function SolanaTransactionModal({
     isLoading,
     error,
     success,
-    successMessage
+    successMessage,
+    isReclaim = false
 }: SolanaTransactionModalProps) {
     const [fee, setFee] = useState<number | null>(null);
 
@@ -139,7 +141,9 @@ export function SolanaTransactionModal({
                     <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-solana/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-solana/10 transition-all duration-500" />
                         <div className="relative">
-                            <p className="text-[10px] text-text-muted uppercase tracking-[0.2em] mb-1 font-bold">You Pay</p>
+                            <p className="text-[10px] text-text-muted uppercase tracking-[0.2em] mb-1 font-bold">
+                                {isReclaim ? "You Receive" : "You Pay"}
+                            </p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-display font-bold text-white tracking-tighter">
                                     {amount.toFixed(3)}

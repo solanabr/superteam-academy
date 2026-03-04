@@ -156,10 +156,13 @@ export const useCourseStore = create<CourseState>((set, get) => ({
             const { useEnrollmentStore } = await import("./enrollment-store");
             await useEnrollmentStore.getState().reclaimRent(wallet, courseId, signTx, walletAdapter, uiOptions);
 
-            set({ txSuccess: true, isLoading: false });
-
-            // Refresh detailed progress and clear loading
-            await get().fetchProgress(wallet, courseId);
+            // Reclaiming rent closes the on-chain account but keeps the DB history for Course Completed tags.
+            const currentProgress = get().progress;
+            if (currentProgress) {
+                set({ txSuccess: true, isLoading: false, progress: { ...currentProgress, onChainActive: false } });
+            } else {
+                set({ txSuccess: true, isLoading: false });
+            }
         } catch (e: any) {
             set({ txError: e.message, isLoading: false });
             throw e;

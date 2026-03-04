@@ -33,6 +33,7 @@ model Enrollment {
   lessonFlags  Bytes     @map("lesson_flags")
   completedAt  DateTime? @map("completed_at")
   bonusClaimed Boolean   @default(false) @map("bonus_claimed")
+  rentReclaimed Boolean  @default(false) @map("rent_reclaimed")
 
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
