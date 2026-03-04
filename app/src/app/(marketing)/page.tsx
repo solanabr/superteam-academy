@@ -132,10 +132,10 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <GridBackground variant="dots">
+      <GridBackground variant="lines">
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-st-green-dark/30 via-background to-background" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-st-green-dark/50 via-st-green-dark/20 to-background" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-st-green/15 via-transparent to-transparent" />
 
           {/* Animated gradient orbs */}
           <div className="absolute top-[-20%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl animate-orb" />
@@ -169,14 +169,14 @@ export default async function HomePage() {
                 {/* Glow pulse CTA */}
                 <Link
                   href="/onboarding"
-                  className="group inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] animate-glow-pulse"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-st-green to-brazil-gold px-8 py-3.5 text-base font-semibold text-white shadow-[0_4px_0_0_#3d6e22,0_6px_12px_rgba(61,110,34,0.35)] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_6px_0_0_#3d6e22,0_10px_20px_rgba(61,110,34,0.4)] active:translate-y-[2px] active:shadow-[0_0px_0_0_#3d6e22,0_2px_4px_rgba(61,110,34,0.2)] active:scale-[0.98] animate-glow-pulse"
                 >
                   {t("hero.cta")}
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/courses"
-                  className="group inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 backdrop-blur-sm px-8 py-3.5 text-base font-semibold transition-all duration-300 hover:bg-muted hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 active:translate-y-0 active:scale-[0.98]"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 backdrop-blur-sm px-8 py-3.5 text-base font-semibold transition-all duration-300 shadow-[0_4px_0_0_var(--color-border),0_6px_12px_rgba(0,0,0,0.1)] hover:-translate-y-[2px] hover:shadow-[0_6px_0_0_var(--color-border),0_10px_20px_rgba(0,0,0,0.15)] hover:bg-muted hover:border-primary/30 active:translate-y-[2px] active:shadow-[0_0px_0_0_var(--color-border),0_2px_4px_rgba(0,0,0,0.08)] active:scale-[0.98]"
                 >
                   {t("hero.exploreCourses")}
                   <BookOpen className="h-4 w-4 transition-transform duration-300 group-hover:rotate-6" />
@@ -508,7 +508,7 @@ export default async function HomePage() {
                   <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                     <Link
                       href="/onboarding"
-                      className="group inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] animate-glow-pulse"
+                      className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-st-green to-brazil-gold px-8 py-3.5 text-base font-semibold text-white shadow-[0_4px_0_0_#3d6e22,0_6px_12px_rgba(61,110,34,0.35)] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-[0_6px_0_0_#3d6e22,0_10px_20px_rgba(61,110,34,0.4)] active:translate-y-[2px] active:shadow-[0_0px_0_0_#3d6e22,0_2px_4px_rgba(61,110,34,0.2)] active:scale-[0.98] animate-glow-pulse"
                     >
                       {t("cta.button")}
                       <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

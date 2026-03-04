@@ -9,8 +9,11 @@ export const Modules: CollectionConfig = {
     group: "Content",
     defaultColumns: ["title", "course", "order", "updatedAt"],
     preview: async (doc, { req }) => {
+      const courseRef = doc.course as Record<string, unknown> | string | null;
       const courseId =
-        typeof doc.course === "object" ? doc.course.id : doc.course;
+        courseRef != null && typeof courseRef === "object"
+          ? (courseRef as { id?: string }).id
+          : courseRef;
       if (!courseId) return null;
       const course = await req.payload.findByID({
         collection: "courses",

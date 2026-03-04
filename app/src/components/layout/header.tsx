@@ -10,12 +10,12 @@ import {
   Moon,
   Menu,
   X,
-  Globe,
   BookOpen,
   Trophy,
   Zap,
   Bell,
   MessageSquare,
+  ChevronDown,
 } from "lucide-react";
 import { useEffect, useCallback, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -137,14 +137,17 @@ export function Header({ appSlot }: HeaderProps) {
             <button
               onClick={() => setLangMenuOpen(!langMenuOpen)}
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "flex h-9 items-center gap-1 rounded-lg px-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                 isPending && "opacity-50",
               )}
               aria-label="Change language"
               aria-expanded={langMenuOpen}
               aria-haspopup="true"
             >
-              <Globe className="h-4 w-4" />
+              <span className="text-base leading-none">
+                {localeFlags[currentLocale as Locale]}
+              </span>
+              <ChevronDown className="h-3 w-3" />
             </button>
             {langMenuOpen && (
               <>

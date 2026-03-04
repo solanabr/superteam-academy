@@ -476,10 +476,10 @@ body {
   animation: gradient-shift 6s ease-in-out infinite;
 }
 
-/* Pulsing glow for CTA and primary buttons */
+/* Pulsing glow for CTA and primary buttons — uses filter so box-shadow stays free for 3D ledge */
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px 0 rgba(68, 128, 56, 0.2); }
-  50% { box-shadow: 0 0 40px 8px rgba(68, 128, 56, 0.35); }
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(68, 128, 56, 0.25)); }
+  50% { filter: drop-shadow(0 0 28px rgba(68, 128, 56, 0.45)); }
 }
 
 .animate-glow-pulse {
@@ -614,18 +614,108 @@ body {
 /* Grid background — lines */
 .bg-grid-lines {
   background-image:
-    linear-gradient(rgba(237, 230, 210, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(237, 230, 210, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(237, 230, 210, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(237, 230, 210, 0.08) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
 .light .bg-grid-lines {
   background-image:
-    linear-gradient(rgba(26, 48, 32, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 48, 32, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(26, 48, 32, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 48, 32, 0.08) 1px, transparent 1px);
 }
 
 /* 3D perspective container */
 .perspective-container {
   perspective: 1000px;
 }
+
+/* ── Certificate Premium Effects ── */
+
+/* Holographic shimmer sweep across certificate */
+@keyframes cert-holo-sweep {
+  0% { transform: translateX(-100%) rotate(-15deg); }
+  100% { transform: translateX(200%) rotate(-15deg); }
+}
+
+.cert-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.cert-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(212, 194, 61, 0.06) 45%,
+    rgba(67, 181, 160, 0.08) 50%,
+    rgba(212, 194, 61, 0.06) 55%,
+    transparent 60%
+  );
+  animation: cert-holo-sweep 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Spinning conic-gradient border for certificate */
+.cert-border-animated {
+  position: relative;
+  z-index: 0;
+}
+.cert-border-animated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle),
+    #e8cc4a 0%,
+    #d4b83d 20%,
+    #346b4a 40%,
+    #43b5a0 60%,
+    #d4b83d 80%,
+    #e8cc4a 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: border-rotate 4s linear infinite;
+  z-index: -1;
+}
+.cert-border-animated::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(1rem + 4px);
+  background: conic-gradient(
+    from var(--border-angle),
+    #e8cc4a 0%,
+    #d4b83d 20%,
+    #346b4a 40%,
+    #43b5a0 60%,
+    #d4b83d 80%,
+    #e8cc4a 100%
+  );
+  filter: blur(12px);
+  opacity: 0.3;
+  animation: border-rotate 4s linear infinite;
+  z-index: -2;
+}
+
+/* Corner ornament lines */
+.cert-corner-ornament {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+}
+.cert-corner-ornament::before,
+.cert-corner-ornament::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, var(--brazil-gold), transparent);
+  opacity: 0.4;
+}
+.cert-corner-ornament::before { width: 100%; height: 1px; }
+.cert-corner-ornament::after { width: 1px; height: 100%; }

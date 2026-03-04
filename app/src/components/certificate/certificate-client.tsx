@@ -30,6 +30,25 @@ export interface CertificateClientProps {
   certId: string;
 }
 
+const DEMO_CERT_DATA = {
+  id: "0",
+  courseName: "Introduction to Solana",
+  recipient: "Demo...xxxx",
+  completionDate: new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }),
+  xpEarned: 600,
+  track: "Solana Core",
+  trackLevel: "Beginner (Level 1)",
+  mintAddress: "DeMo1CeRtAddr3ss11111111111111111111111111",
+  explorerUrl:
+    "https://explorer.solana.com/address/DeMo1CeRtAddr3ss11111111111111111111111111?cluster=devnet",
+  ownerAddress: "DeMoWaLLeTAddr3ss1111111111111111111111111",
+  isVerifiedOnChain: true,
+};
+
 /** Format a difficulty string into a human-readable level label */
 function formatTrackLevel(difficulty: string, trackLevel: number): string {
   const label =
@@ -39,6 +58,303 @@ function formatTrackLevel(difficulty: string, trackLevel: number): string {
         ? "Intermediate"
         : "Advanced";
   return `${label} (Level ${trackLevel})`;
+}
+
+function DemoCertificateView({
+  certData,
+  t,
+  tc,
+}: {
+  certData: typeof DEMO_CERT_DATA;
+  t: ReturnType<typeof useTranslations>;
+  tc: ReturnType<typeof useTranslations>;
+}) {
+  const certificateRef = useRef<HTMLDivElement>(null);
+
+  async function handleDownloadImage() {
+    if (!certificateRef.current) return;
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(certificateRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: "#1e3a28",
+      });
+      const link = document.createElement("a");
+      link.download = `superteam-certificate-demo.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to generate certificate image:", err);
+    }
+  }
+
+  function handleCopyMintAddress() {
+    navigator.clipboard.writeText(certData.mintAddress);
+  }
+
+  const tweetText = encodeURIComponent(
+    `I just completed "${certData.courseName}" on @SuperteamAcademy and earned ${certData.xpEarned} XP! \n\nVerifiable on-chain credential on Solana.\n\n#Solana #SuperteamAcademy #Web3`,
+  );
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-background bg-grid-dots">
+      {/* Floating gradient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="animate-orb absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-brazil-gold/15 blur-3xl" />
+        <div className="animate-orb-delayed absolute -bottom-32 right-1/4 h-96 w-96 rounded-full bg-brazil-teal/15 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+        <Link
+          href="/courses"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {tc("back")}
+        </Link>
+
+        {/* Demo banner */}
+        <div className="glass mb-6 flex items-center gap-2 rounded-xl border-brazil-gold/30 bg-brazil-gold/5 px-4 py-3">
+          <Award className="h-4 w-4 flex-shrink-0 text-brazil-gold" />
+          <p className="text-sm text-foreground">
+            <span className="font-semibold">Demo Certificate</span> — This is a
+            preview. Complete a course to earn a real on-chain credential.
+          </p>
+        </div>
+
+        {/* Certificate Card with animated border */}
+        <div className="perspective-container">
+          <div className="cert-border-animated rounded-2xl">
+            <div
+              ref={certificateRef}
+              className="cert-shimmer relative aspect-video overflow-hidden rounded-2xl px-6 py-6 sm:px-12 sm:py-8"
+            >
+              {/* Toucan background illustration */}
+              <img
+                src="/certificates/toucan-bg.jpg"
+                alt=""
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+              />
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-card/97" />
+
+              {/* Corner ornaments */}
+              <div
+                className="cert-corner-ornament"
+                style={{ top: 16, left: 16 }}
+              />
+              <div
+                className="cert-corner-ornament"
+                style={{
+                  top: 16,
+                  right: 16,
+                  transform: "scaleX(-1)",
+                }}
+              />
+              <div
+                className="cert-corner-ornament"
+                style={{
+                  bottom: 16,
+                  left: 16,
+                  transform: "scaleY(-1)",
+                }}
+              />
+              <div
+                className="cert-corner-ornament"
+                style={{
+                  bottom: 16,
+                  right: 16,
+                  transform: "scale(-1)",
+                }}
+              />
+
+              {/* ST logo watermark */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <img
+                  src="/certificates/st-logo-watermark.svg"
+                  alt=""
+                  className="h-72 w-72 opacity-[0.06]"
+                />
+              </div>
+
+              {/* Content (above shimmer z-index) */}
+              <div className="relative z-[2]">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-st-green/10">
+                    <Award className="h-5 w-5 text-st-green" />
+                  </div>
+                  <span className="font-heading text-lg font-bold tracking-wide text-foreground">
+                    Superteam Academy
+                  </span>
+                </div>
+
+                <h1 className="text-gradient-animated mt-4 text-center font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+                  {t("title")}
+                </h1>
+
+                <div className="mx-auto mt-3 h-[2px] w-48 rounded-full bg-gradient-to-r from-brazil-gold-light via-brazil-gold to-st-green" />
+
+                <p className="mt-4 text-center text-sm font-medium uppercase tracking-widest text-muted-foreground">
+                  {t("forCompleting")}
+                </p>
+                <h2 className="mt-3 text-center font-heading text-2xl font-bold text-foreground sm:text-3xl">
+                  {certData.courseName}
+                </h2>
+
+                <p className="mt-3 text-center text-sm font-medium uppercase tracking-widest text-muted-foreground">
+                  {t("awardedTo")}
+                </p>
+                <p className="mt-1 text-center font-heading text-xl font-bold text-gradient-brand sm:text-2xl">
+                  {certData.recipient}
+                </p>
+
+                <div className="mx-auto mt-5 grid max-w-lg grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="text-center">
+                    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                      {t("issuedOn", { date: "" })}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {certData.completionDate}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                      XP
+                    </p>
+                    <p
+                      className="mt-1 text-lg font-bold text-xp"
+                      style={{
+                        textShadow: "0 0 12px rgba(200, 184, 48, 0.4)",
+                      }}
+                    >
+                      {certData.xpEarned.toLocaleString()} XP
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                      {t("trackLevel")}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {certData.track}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {certData.trackLevel}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mx-auto mt-5 h-[2px] w-48 rounded-full bg-gradient-to-r from-st-green via-brazil-teal to-brazil-gold-light" />
+
+                <div className="animate-glow-pulse mt-3 flex items-center justify-center gap-2 text-sm text-brazil-green">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">{t("verified")}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* On-chain Verification */}
+        <section className="mt-10">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-st-green" />
+            <h3 className="font-heading text-lg font-bold">
+              {t("onChainDetails")}
+            </h3>
+            <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+              On-chain
+            </span>
+          </div>
+
+          <div className="glass mt-4 rounded-xl border-l-2 border-l-brazil-gold/30 p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    {t("credentialId")}
+                  </p>
+                  <p className="mt-1 font-mono text-sm text-foreground">
+                    {truncateAddress(certData.mintAddress, 6)}
+                  </p>
+                </div>
+                <button
+                  onClick={handleCopyMintAddress}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-st-green/30 hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {tc("copy")}
+                </button>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  {t("solanaExplorer")}
+                </p>
+                <a
+                  href={certData.explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-st-green transition-colors hover:text-st-green-light"
+                >
+                  {tc("viewOnExplorer")}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-lg bg-brazil-green/5 px-4 py-3">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 text-brazil-green" />
+                <p className="text-sm text-foreground">
+                  {t("ownershipVerified", {
+                    wallet: truncateAddress(certData.ownerAddress, 6),
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Social Sharing & Download */}
+        <section className="mt-10">
+          <div className="flex items-center gap-2">
+            <Share2 className="h-5 w-5 text-st-green" />
+            <h3 className="font-heading text-lg font-bold">{t("share")}</h3>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <a
+              href={tweetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1DA1F2]/10 px-5 py-2.5 text-sm font-semibold text-[#1DA1F2] transition-colors hover:bg-[#1DA1F2]/20"
+            >
+              <Twitter className="h-4 w-4" />
+              {t("shareTwitter")}
+            </a>
+
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://academy.superteam.fun/certificates/0")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0A66C2]/10 px-5 py-2.5 text-sm font-semibold text-[#0A66C2] transition-colors hover:bg-[#0A66C2]/20"
+            >
+              <Share2 className="h-4 w-4" />
+              {t("shareLinkedIn")}
+            </a>
+
+            <button
+              onClick={handleDownloadImage}
+              className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-brazil-gold/30 hover:bg-muted"
+            >
+              <Download className="h-4 w-4" />
+              {t("download")}
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
 
 export default function CertificateClient({ certId }: CertificateClientProps) {
@@ -100,6 +416,11 @@ export default function CertificateClient({ certId }: CertificateClientProps) {
       isVerifiedOnChain: !!realMintAddress,
     };
   }, [course, progress, publicKey, certId, onChainCredentials]);
+
+  // Demo certificate — hardcoded data, no wallet/course required
+  if (certId === "0") {
+    return <DemoCertificateView certData={DEMO_CERT_DATA} t={t} tc={tc} />;
+  }
 
   // Loading state
   if (coursesLoading || !progressLoaded) {

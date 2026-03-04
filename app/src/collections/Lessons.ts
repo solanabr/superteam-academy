@@ -15,8 +15,11 @@ export const Lessons: CollectionConfig = {
     group: "Content",
     defaultColumns: ["title", "module", "type", "xpReward", "order"],
     preview: async (doc, { req }) => {
+      const moduleRef = doc.module as Record<string, unknown> | string | null;
       const moduleId =
-        typeof doc.module === "object" ? doc.module.id : doc.module;
+        moduleRef != null && typeof moduleRef === "object"
+          ? (moduleRef as { id?: string }).id
+          : moduleRef;
       if (!moduleId) return null;
       const mod = await req.payload.findByID({
         collection: "modules",
@@ -164,8 +167,9 @@ export const Lessons: CollectionConfig = {
       relationTo: "modules",
       required: true,
       filterOptions: ({ siblingData }) => {
-        if (siblingData?.course) {
-          return { course: { equals: siblingData.course } };
+        const sd = siblingData as Record<string, unknown> | undefined;
+        if (sd?.course) {
+          return { course: { equals: sd.course } };
         }
         return true;
       },

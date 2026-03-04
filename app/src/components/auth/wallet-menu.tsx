@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Copy,
@@ -9,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
   Wallet,
+  User,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -159,6 +161,13 @@ export function WalletMenu() {
           <WalletIcon walletClientType={clientType} size={20} />
           <span className="font-medium text-foreground">{walletName}</span>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <User className="h-4 w-4" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleCopy}>
           {copied ? (
