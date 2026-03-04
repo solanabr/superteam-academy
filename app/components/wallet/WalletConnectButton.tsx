@@ -82,7 +82,8 @@ export function WalletConnectButton({
         pathname === "/studio" ||
         pathname?.startsWith("/studio/") ||
         pathname?.startsWith("/admin") ||
-        pathname?.startsWith("/profile");
+        pathname?.startsWith("/profile") ||
+        pathname === "/test-playground";
       if (!stayOn) {
         router.push("/dashboard");
       }

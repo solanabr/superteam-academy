@@ -152,3 +152,18 @@ model Notification {
   @@index([targetRole, readAt])
   @@map("notifications")
 }
+
+model CodeExecution {
+  id        String   @id @default(cuid())
+  status    String   // "queued" | "running" | "success" | "failed"
+  language  String   // "typescript" | "rust"
+  source    String   @db.Text
+  stdout    String?  @db.Text
+  stderr    String?  @db.Text
+  exitCode  Int?     @map("exit_code")
+  error     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("code_executions")
+}

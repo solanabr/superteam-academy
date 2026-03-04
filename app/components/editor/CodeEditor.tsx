@@ -250,15 +250,16 @@ declare module "@coral-xyz/anchor" {
       moduleResolution: 2,
       allowNonTsExtensions: true,
     });
-    // Suppress "Cannot find name 'require'" (TS2580) if extraLib isn't picked up by the worker
-    const ignoreRequire = { diagnosticCodesToIgnore: [2580] };
+    // Suppress resolution errors in the IDE (code runs in container with deps); keep syntax only
+    // 2580 = Cannot find name 'require', 2307 = Cannot find module 'X'
+    const ignoreResolution = { diagnosticCodesToIgnore: [2580, 2307] };
     ts.typescriptDefaults.setDiagnosticsOptions({
       ...ts.typescriptDefaults.getDiagnosticsOptions(),
-      ...ignoreRequire,
+      ...ignoreResolution,
     });
     ts.javascriptDefaults.setDiagnosticsOptions({
       ...ts.javascriptDefaults.getDiagnosticsOptions(),
-      ...ignoreRequire,
+      ...ignoreResolution,
     });
     typescriptSupportConfigured = true;
   } catch (_) {

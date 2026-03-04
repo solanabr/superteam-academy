@@ -1,0 +1,12 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Solana client / RPC (pre-installed so only user code recompiles)
+solana-client = "2.1"
+solana-sdk = "2.1"
+solana-transaction-status = "2.1"
+# Async runtime
+tokio = { version = "1", features = ["full"] }

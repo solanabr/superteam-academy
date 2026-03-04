@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "tsx scripts/smoke-test-academy.ts",
-    "cron:leaderboard": "tsx src/jobs/sync-leaderboard.ts"
+    "cron:leaderboard": "tsx src/jobs/sync-leaderboard.ts",
+    "worker:code": "tsx src/workers/code-execution-worker.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
@@ -32,6 +33,8 @@
     "hono-rate-limiter": "^0.5.3",
     "jose": "^6.1.3",
     "node-cron": "^4.2.1",
+    "bullmq": "^5.34.0",
+    "ioredis": "^5.4.1",
     "vm2": "^3.10.5"
   },
   "devDependencies": {

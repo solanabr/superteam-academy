@@ -1,0 +1,19 @@
+{
+  "name": "typescript",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.4",
+    "bn.js": "^5.2.3",
+    "borsh": "^0.4.0",
+    "buffer": "^6.0.3",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "typescript": "^5.9.0"
+  }
+}

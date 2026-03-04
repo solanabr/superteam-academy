@@ -10,6 +10,7 @@ import { registerSeasonRoutes } from "../academy/routes/season-routes.js";
 import { registerNotificationRoutes } from "../academy/routes/notification-routes.js";
 import { registerChallengeConfigSyncRoutes } from "../academy/routes/challenge-config-sync.js";
 import { registerChallengeCodeRoutes } from "../academy/routes/challenge-code.js";
+import { registerCodeExecuteRoutes } from "../academy/routes/code-execute.js";
 
 const app = new Hono();
 
@@ -22,6 +23,7 @@ registerLeaderboardRoutes(app);
 registerChallengeRoutes(app);
 registerChallengeConfigSyncRoutes(app);
 registerChallengeCodeRoutes(app);
+registerCodeExecuteRoutes(app);
 registerSeasonRoutes(app);
 registerNotificationRoutes(app);
 
