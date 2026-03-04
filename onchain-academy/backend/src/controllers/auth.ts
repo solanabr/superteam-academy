@@ -75,6 +75,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
           username: user.username,
           totalXP: user.totalXP,
           level: user.level,
+          role: user.role,
         },
       });
       return;
@@ -365,6 +366,7 @@ export const verifyWallet = async (req: Request, res: Response): Promise<void> =
           username: user.username,
           totalXP: user.totalXP,
           level: user.level,
+          role: user.role,
         },
       });
       return;
@@ -398,6 +400,7 @@ export const verifyWallet = async (req: Request, res: Response): Promise<void> =
         username: user.username,
         totalXP: user.totalXP,
         level: user.level,
+        role: user.role,
       },
     });
   } catch (error) {
