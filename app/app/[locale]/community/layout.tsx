@@ -1,6 +1,6 @@
 import { Header } from "@/components/landing/header";
 
-export default function CoursesLayout({
+export default function CommunityLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -8,7 +8,7 @@ export default function CoursesLayout({
   return (
     <>
       <Header />
-      <main className="mx-auto w-full">{children}</main>
+      <main className="mx-auto w-full px-4 py-8">{children}</main>
     </>
   );
 }

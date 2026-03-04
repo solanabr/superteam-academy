@@ -1,22 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { 
-  ArrowLeft02Icon, 
-  PlayIcon, 
-  CheckmarkCircle02Icon, 
-  Cancel01Icon,
-  BookOpen01Icon,
-  CodeIcon,
-  CheckmarkSquare01Icon
-} from "@hugeicons/core-free-icons";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { CodeEditor } from "@/components/code-editor";
 import type { Lesson } from "@/lib/services/types";
+import { LessonSidebar } from "@/components/lesson/lesson-sidebar";
+import { LessonContent } from "@/components/lesson/lesson-content";
+import { LessonConsole } from "@/components/lesson/lesson-console";
+import { LessonEditorToolbar } from "@/components/lesson/lesson-editor-toolbar";
+import { LessonReadingContent } from "@/components/lesson/lesson-reading-content";
+import { LessonAiMentor } from "@/components/lesson/lesson-ai-mentor";
+import { useLessonTests } from "@/components/lesson/use-lesson-tests";
+import { useAiChat } from "@/components/lesson/use-ai-chat";
 
 interface LessonWithMeta extends Lesson {
   lessonNumber: number;
@@ -31,285 +26,225 @@ interface LessonClientProps {
   locale?: 'en' | 'pt-BR' | 'es';
 }
 
+interface FileTab {
+  name: string;
+  language: string;
+  content: string;
+}
+
 export function LessonClient({ lesson, courseSlug, allLessons, prevLesson, nextLesson, locale = 'en' }: LessonClientProps) {
   const t = useTranslations("lesson");
+  const localeHook = useLocale();
+  const currentLocale = locale || localeHook;
+
   const [code, setCode] = useState(lesson.starterCode || "");
-  const [isRunning, setIsRunning] = useState(false);
-  const [testResults, setTestResults] = useState<{ passed: boolean; message: string }[]>([]);
+  const [files, setFiles] = useState<FileTab[]>([
+    { name: "solution.ts", language: "typescript", content: lesson.starterCode || "" }
+  ]);
+  const [activeFile, setActiveFile] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(200);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(30);
+  const [isResizingH, setIsResizingH] = useState(false);
+  const [isResizingV, setIsResizingV] = useState(false);
+  const [isResizingAI, setIsResizingAI] = useState(false);
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
+  const [aiSidebarWidth, setAiSidebarWidth] = useState(380);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
+  const progress = ((currentIndex + 1) / allLessons.length) * 100;
 
-  const runTests = useCallback(async () => {
-    setIsRunning(true);
-    setTestResults([]);
+  const { isRunning, testResults, consoleOutput, runTests } = useLessonTests(
+    lesson.testCases,
+    currentIndex,
+    t
+  );
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  const { chatMessages, chatInput, setChatInput, isAiLoading, sendChatMessage, handleChatSubmit, retryLastMessage } = useAiChat(
+    lesson.title,
+    currentLocale,
+    t
+  );
 
-    const results: { passed: boolean; message: string }[] = [];
+  const allPassed = testResults.length > 0 && testResults.every(r => r.passed);
 
-    if (lesson.testCases && lesson.testCases.length > 0) {
-      for (const testCase of lesson.testCases) {
-        try {
-          let result: string;
-          
-          const logs: string[] = [];
-          const mockConsole = {
-            log: (...args: unknown[]) => logs.push(args.map(String).join(" ")),
-            error: (...args: unknown[]) => logs.push("ERROR: " + args.map(String).join(" ")),
-          };
-          
-          try {
-            const fn = new Function("console", code);
-            fn(mockConsole);
-            result = logs[logs.length - 1] || "";
-          } catch {
-            result = "ERROR";
-          }
-
-          const passed = testCase.expected === "PASS" 
-            ? result.includes("PASS") || result.includes("true")
-            : result.includes(testCase.expected) || result === testCase.expected;
-
-          results.push({
-            passed,
-            message: testCase.description || `Test: ${testCase.expected}`,
-          });
-        } catch {
-          results.push({
-            passed: false,
-            message: testCase.description || t("testFailed"),
-          });
-        }
-      }
-    } else {
-      results.push({
-        passed: true,
-        message: t("noTests"),
-      });
+  const handleCodeChange = useCallback((value: string | undefined) => {
+    if (value !== undefined) {
+      setCode(value);
+      setFiles(files.map((f, i) => i === activeFile ? { ...f, content: value } : f));
     }
+  }, [files, activeFile]);
 
-    setTestResults(results);
-    setIsRunning(false);
-  }, [code, lesson.testCases, t]);
-
-  const getLessonIcon = (type: string) => {
-    switch (type) {
-      case "coding": return <HugeiconsIcon icon={CodeIcon} size={14} />;
-      case "quiz": return <HugeiconsIcon icon={CheckmarkSquare01Icon} size={14} />;
-      default: return <HugeiconsIcon icon={BookOpen01Icon} size={14} />;
+  const handleRunTests = useCallback(async () => {
+    const results = await runTests(code);
+    if (results && results.length > 0 && results.every(r => r.passed)) {
+      setIsCompleted(true);
     }
+  }, [code, runTests]);
+
+  const handleSendChatMessage = useCallback((message: string) => {
+    sendChatMessage(message, code);
+  }, [code, sendChatMessage]);
+
+  const handleChatSubmitWithCode = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendChatMessage(chatInput);
+  }, [chatInput, handleSendChatMessage]);
+
+  const handleMarkComplete = () => {
+    setIsCompleted(true);
   };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const handleMouseMoveH = useCallback((e: React.MouseEvent) => {
+    if (!isResizingH || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+    setLeftPanelWidth(Math.min(Math.max(newWidth, 20), 50));
+  }, [isResizingH]);
+
+  const handleMouseMoveV = useCallback((e: React.MouseEvent) => {
+    if (!isResizingV || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const newHeight = rect.bottom - e.clientY;
+    setBottomPanelHeight(Math.min(Math.max(newHeight, 100), 400));
+  }, [isResizingV]);
+
+  const handleMouseMoveAI = useCallback((e: React.MouseEvent) => {
+    if (!isResizingAI || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const newWidth = rect.right - e.clientX;
+    setAiSidebarWidth(Math.min(Math.max(newWidth, 320), 500));
+  }, [isResizingAI]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizingH(false);
+    setIsResizingV(false);
+    setIsResizingAI(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizingH || isResizingV || isResizingAI) {
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => document.removeEventListener("mouseup", handleMouseUp);
+    }
+  }, [isResizingH, isResizingV, isResizingAI, handleMouseUp]);
 
   if (lesson.type === "reading") {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)]">
-        {/* Sidebar */}
-        <div className="w-64 border-r border-border bg-card flex-shrink-0 flex flex-col">
-          <div className="p-4 border-b border-border">
-            <Link 
-              href={`/${locale}/courses/${courseSlug}`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-              {t("backToCourse")}
-            </Link>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            {allLessons.map((l, idx) => (
-              <Link
-                key={l.id}
-                href={`/${locale}/courses/${courseSlug}/lessons/${l.id}`}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  l.id === lesson.id 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {getLessonIcon(l.type)}
-                <span className="truncate">{idx + 1}. {l.title}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Badge variant="outline">{t("reading")}</Badge>
-              <span className="text-sm text-muted-foreground">{t("lessonOf", { current: currentIndex + 1, total: allLessons.length })}</span>
-            </div>
-            
-            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">
-              {lesson.title}
-            </h1>
-            
-            <div className="prose prose-muted max-w-none">
-              <p>{t("readingPlaceholder")}</p>
-              <p className="mt-4">
-                In a full implementation, this would contain:
-              </p>
-              <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li>Formatted markdown content</li>
-                <li>Code snippets with syntax highlighting</li>
-                <li>Images and diagrams</li>
-                <li>Links to external resources</li>
-              </ul>
-            </div>
-
-            <div className="mt-8 flex justify-between pt-6 border-t border-border">
-              {prevLesson ? (
-                <Link 
-                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.id}`}
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-                  {t("previous")}
-                </Link>
-              ) : <div />}
-              
-              {nextLesson && (
-                <Link 
-                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.id}`}
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  {t("next")}
-                  <HugeiconsIcon icon={ArrowLeft02Icon} size={16} className="rotate-180" />
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
+        <LessonSidebar
+          courseSlug={courseSlug}
+          currentLocale={currentLocale}
+          allLessons={allLessons}
+          lesson={lesson}
+          currentIndex={currentIndex}
+          progress={progress}
+          prevLesson={prevLesson}
+          nextLesson={nextLesson}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={setIsSidebarCollapsed}
+          t={t}
+        />
+        <LessonReadingContent
+          lesson={lesson}
+          courseSlug={courseSlug}
+          currentLocale={currentLocale}
+          currentIndex={currentIndex}
+          allLessonsLength={allLessons.length}
+          prevLesson={prevLesson}
+          nextLesson={nextLesson}
+          t={t}
+        />
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      {/* Sidebar - Lesson Navigation */}
-      <div className="w-64 border-r border-border bg-card flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b border-border">
-          <Link 
-            href={`/${locale}/courses/${courseSlug}`}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-            {t("backToCourse")}
-          </Link>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2">
-          {allLessons.map((l, idx) => (
-            <Link
-              key={l.id}
-              href={`/${locale}/courses/${courseSlug}/lessons/${l.id}`}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                l.id === lesson.id 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              {getLessonIcon(l.type)}
-              <span className="truncate">{idx + 1}. {l.title}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
+    <div 
+      className={`flex h-[calc(100vh-3.5rem)] overflow-hidden bg-background ${isResizingH || isResizingV || isResizingAI ? 'select-none' : ''}`}
+      ref={containerRef}
+      onMouseMove={isResizingH ? handleMouseMoveH : isResizingV ? handleMouseMoveV : isResizingAI ? handleMouseMoveAI : undefined}
+    >
+      <LessonSidebar
+        courseSlug={courseSlug}
+        currentLocale={currentLocale}
+        allLessons={allLessons}
+        lesson={lesson}
+        currentIndex={currentIndex}
+        progress={progress}
+        prevLesson={prevLesson}
+        nextLesson={nextLesson}
+        isSidebarCollapsed={isSidebarCollapsed}
+        setIsSidebarCollapsed={setIsSidebarCollapsed}
+        t={t}
+      />
 
-      {/* Main Area - 3:7 Split */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Instructions Panel - 30% */}
-        <div className="w-[30%] border-r border-border overflow-y-auto">
-          <div className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary">{lesson.xpReward} XP</Badge>
-              <Badge variant="outline">{t("coding")}</Badge>
-              <span className="text-sm text-muted-foreground">{t("lessonN", { n: currentIndex + 1 })}</span>
-            </div>
-            
-            <h1 className="text-xl font-bold text-foreground mb-4">
-              {lesson.title}
-            </h1>
+      <div className="flex-1 flex flex-row overflow-hidden">
+        <LessonContent
+          lesson={lesson}
+          isCompleted={isCompleted}
+          leftPanelWidth={leftPanelWidth}
+          t={t}
+        />
 
-            <div className="prose prose-muted max-w-none text-sm">
-              <p>{t("completeChallenge")}</p>
-              
-              {lesson.testCases && lesson.testCases.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-medium text-foreground mb-2">{t("testCases")}</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {lesson.testCases.map((tc, i) => (
-                      <li key={i} className="text-muted-foreground">{tc.description}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+        <div className="w-1 bg-border/50 hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-colors relative z-10" onMouseDown={() => setIsResizingH(true)} />
 
-            <div className="mt-6 flex flex-col gap-2">
-              {prevLesson && (
-                <Link 
-                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.id}`}
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <HugeiconsIcon icon={ArrowLeft02Icon} size={14} />
-                  {t("previousLesson", { title: prevLesson.title })}
-                </Link>
-              )}
-              {nextLesson && (
-                <Link 
-                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.id}`}
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  {t("nextLesson", { title: nextLesson.title })}
-                  <HugeiconsIcon icon={ArrowLeft02Icon} size={14} className="rotate-180" />
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <LessonEditorToolbar
+            files={files}
+            activeFile={activeFile}
+            setActiveFile={setActiveFile}
+            isRunning={isRunning}
+            isCompleted={isCompleted}
+            allPassed={allPassed}
+            aiSidebarOpen={aiSidebarOpen}
+            runTests={handleRunTests}
+            handleMarkComplete={handleMarkComplete}
+            setAiSidebarOpen={setAiSidebarOpen}
+            t={t}
+          />
 
-        {/* Code Editor Panel - 70% */}
-        <div className="flex-1 flex flex-col overflow-y-auto bg-card">
-          {/* Toolbar */}
-          <div className="h-12 border-b border-border flex items-center px-4 flex-shrink-0">
-            <span className="text-sm font-medium">{t("codeEditor")}</span>
-          </div>
-
-          {/* Editor */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             <CodeEditor
-              value={code}
-              onChange={setCode}
+              value={files[activeFile].content}
+              onChange={handleCodeChange}
               language="typescript"
-              height="400px"
             />
           </div>
 
-          {/* Test Results */}
-          {testResults.length > 0 && (
-            <div className="h-40 border-t border-border overflow-y-auto flex-shrink-0">
-              <div className="p-4">
-                <h4 className="text-sm font-medium mb-2">{t("testResults")}</h4>
-                <div className="space-y-2">
-                  {testResults.map((result, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-2 text-sm ${
-                        result.passed ? "text-green-500" : "text-red-500"
-                      }`}
-                    >
-                      <HugeiconsIcon
-                        icon={result.passed ? CheckmarkCircle02Icon : Cancel01Icon}
-                        size={14}
-                      />
-                      {result.message}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="h-1 bg-border/50 hover:bg-primary/50 cursor-row-resize flex-shrink-0 transition-colors relative z-10" onMouseDown={() => setIsResizingV(true)} />
+
+          <LessonConsole
+            bottomPanelHeight={bottomPanelHeight}
+            testResults={testResults}
+            consoleOutput={consoleOutput}
+            allPassed={allPassed}
+            t={t}
+          />
         </div>
+
+        <LessonAiMentor
+          aiSidebarOpen={aiSidebarOpen}
+          setAiSidebarOpen={setAiSidebarOpen}
+          aiSidebarWidth={aiSidebarWidth}
+          setIsResizingAI={setIsResizingAI}
+          chatMessages={chatMessages}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          handleChatSubmit={handleChatSubmitWithCode}
+          code={code}
+          isAiLoading={isAiLoading}
+          retryLastMessage={retryLastMessage}
+          chatEndRef={chatEndRef}
+          t={t}
+        />
       </div>
     </div>
   );

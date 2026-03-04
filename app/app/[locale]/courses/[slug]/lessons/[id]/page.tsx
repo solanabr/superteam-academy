@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { sanityCourseService, courseService } from "@/lib/services";
+import { courseService } from "@/lib/services";
 import { LessonClient } from "./lesson-client";
 
 export default async function LessonPage({
@@ -11,14 +11,9 @@ export default async function LessonPage({
   const { slug, id } = await params;
   const locale = await getLocale();
 
-  let lesson = await sanityCourseService.getLesson(slug, id).catch(() => null);
-  let allLessons = lesson ? await sanityCourseService.getLessons(slug).catch(() => []) : [];
-
-  // Fall back to stubs if Sanity has no content
-  if (!lesson) {
-    lesson = await courseService.getLesson(slug, id).catch(() => null);
-    allLessons = lesson ? await courseService.getLessons(slug).catch(() => []) : [];
-  }
+  // Use stubs directly for now
+  const lesson = await courseService.getLesson(slug, id);
+  const allLessons = await courseService.getLessons(slug);
 
   if (!lesson) notFound();
 
