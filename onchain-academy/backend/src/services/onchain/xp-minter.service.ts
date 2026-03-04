@@ -25,8 +25,8 @@ export interface MintXPResult {
 
 export class XPMinterService {
   private connection: Connection;
-  private mintAuthority: Keypair;
-  private xpMint: PublicKey;
+  private mintAuthority: Keypair | null = null;
+  private xpMint: PublicKey | null = null;
   private decimals: number = 9;
   
   constructor() {
@@ -36,16 +36,34 @@ export class XPMinterService {
       'confirmed'
     );
     
-    // Load mint authority keypair (your wallet that created the token)
-    const keypairPath = process.env.MINT_AUTHORITY_KEYPAIR_PATH || 
-                        path.join(process.env.HOME!, '.config/solana/id.json');
-    
-    this.mintAuthority = Keypair.fromSecretKey(
-      Buffer.from(JSON.parse(fs.readFileSync(keypairPath, 'utf-8')))
-    );
+    // Load keypair from environment variable OR file
+    if (process.env.MINT_AUTHORITY_PRIVATE_KEY) {
+      // From environment variable (for production)
+      const secretKey = JSON.parse(process.env.MINT_AUTHORITY_PRIVATE_KEY);
+      this.mintAuthority = Keypair.fromSecretKey(new Uint8Array(secretKey));
+    } else if (process.env.MINT_AUTHORITY_KEYPAIR_PATH) {
+      // From file (for local development)
+      const keypairPath = process.env.MINT_AUTHORITY_KEYPAIR_PATH;
+      if (fs.existsSync(keypairPath)) {
+        this.mintAuthority = Keypair.fromSecretKey(
+          Buffer.from(JSON.parse(fs.readFileSync(keypairPath, 'utf-8')))
+        );
+      } else {
+        console.warn(`⚠️ Keypair file not found at ${keypairPath}. On-chain XP disabled.`);
+        return;
+      }
+    } else {
+      console.warn('⚠️ No mint authority configured. On-chain XP disabled.');
+      return;
+    }
     
     // Load XP mint address
-    this.xpMint = new PublicKey(process.env.XP_MINT!);
+    if (process.env.XP_MINT) {
+      this.xpMint = new PublicKey(process.env.XP_MINT);
+    } else {
+      console.warn('⚠️ No XP mint address configured. On-chain XP disabled.');
+      return;
+    }
     
     console.log('XP Minter initialized');
     console.log('Mint Authority:', this.mintAuthority.publicKey.toBase58());
@@ -65,7 +83,7 @@ export class XPMinterService {
     
     // Get user's associated token account address
     const userTokenAccount = await getAssociatedTokenAddress(
-      this.xpMint,
+      this.xpMint!,
       userPublicKey,
       false, // Not a PDA
       TOKEN_2022_PROGRAM_ID
@@ -83,10 +101,10 @@ export class XPMinterService {
       console.log('Creating token account...');
       transaction.add(
         createAssociatedTokenAccountInstruction(
-          this.mintAuthority.publicKey, // Payer
+          this.mintAuthority!.publicKey, // Payer
           userTokenAccount,             // Account to create
           userPublicKey,                // Owner
-          this.xpMint,                  // Mint
+          this.xpMint!,                  // Mint
           TOKEN_2022_PROGRAM_ID
         )
       );
@@ -97,9 +115,9 @@ export class XPMinterService {
     
     transaction.add(
       createMintToInstruction(
-        this.xpMint,                     // Mint
+        this.xpMint!,                     // Mint
         userTokenAccount,                // Destination
-        this.mintAuthority.publicKey,   // Mint authority
+        this.mintAuthority!.publicKey,   // Mint authority
         amountInBaseUnits,               // Amount in base units
         [],                              // No multisig signers
         TOKEN_2022_PROGRAM_ID
@@ -110,7 +128,7 @@ export class XPMinterService {
     const signature = await sendAndConfirmTransaction(
       this.connection,
       transaction,
-      [this.mintAuthority],
+      [this.mintAuthority!],
       { commitment: 'confirmed' }
     );
     
@@ -135,7 +153,7 @@ export class XPMinterService {
       const userPublicKey = new PublicKey(userWallet);
       
       const userTokenAccount = await getAssociatedTokenAddress(
-        this.xpMint,
+        this.xpMint!,
         userPublicKey,
         false,
         TOKEN_2022_PROGRAM_ID
@@ -157,14 +175,14 @@ export class XPMinterService {
   async healthCheck(): Promise<boolean> {
     try {
       // Check mint exists
-      const mintInfo = await this.connection.getAccountInfo(this.xpMint);
+      const mintInfo = await this.connection.getAccountInfo(this.xpMint!);
       if (!mintInfo) {
         console.error('❌ XP Mint does not exist');
         return false;
       }
       
       // Check authority has SOL
-      const balance = await this.connection.getBalance(this.mintAuthority.publicKey);
+      const balance = await this.connection.getBalance(this.mintAuthority!.publicKey);
       if (balance < 0.01 * 1e9) {
         console.error('❌ Mint authority has insufficient SOL');
         return false;

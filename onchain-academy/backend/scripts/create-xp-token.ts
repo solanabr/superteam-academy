@@ -79,7 +79,7 @@ async function main() {
       TOKEN_2022_PROGRAM_ID
     )
   );
-  
+
   // Send transaction
   console.log('\nSending transaction...');
   const signature = await sendAndConfirmTransaction(
