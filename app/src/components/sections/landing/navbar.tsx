@@ -51,6 +51,7 @@ export function Navbar({ content }: NavbarProps) {
             fill
             className="object-cover"
             priority
+            loading="eager"
           />
         </span>
       </Link>

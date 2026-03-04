@@ -91,7 +91,7 @@ export default function RegisterPage(): React.ReactElement {
           className="flex items-center gap-2.5 font-archivo text-lg font-semibold text-foreground no-underline"
         >
           <span className="relative flex h-10 w-32 items-center justify-center overflow-hidden border-2 border-border bg-card shadow-(--shadow-flat) dark:shadow-(--shadow-flat-yellow)">
-            <Image src={logo_src} alt="Superteam Academy" fill className="object-cover" priority />
+            <Image src={logo_src} alt="Superteam Academy" fill className="object-cover" priority loading="eager" />
           </span>
         </Link>
         <LocaleSwitcher />

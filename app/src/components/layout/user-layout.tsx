@@ -166,6 +166,7 @@ export function UserLayout({ children, pageTitle }: UserLayoutProps): ReactNode 
               alt="Superteam Academy"
               width={100}
               height={24}
+              loading="eager"
             />
           </Link>
           <h1 className="text-lg font-bold text-foreground">

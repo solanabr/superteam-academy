@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import Image from "next/image";
 
 const cardClass =
   "rounded-none border-2 border-border bg-card shadow-[3px_3px_0_0_hsl(var(--foreground)_/_0.15)]";
@@ -102,9 +103,10 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <Avatar className="size-20 rounded-none border-2 border-border">
                     {profile.image_url ? (
-                      <img
+                      <Image
                         src={profile.image_url}
                         alt=""
+                        fill
                         className="size-full object-cover"
                       />
                     ) : (

@@ -32,7 +32,7 @@ export function Footer({ content }: FooterProps) {
               className="flex items-center gap-2.5 font-extrabold text-(--color-cream) no-underline [font-family:var(--font-archivo)] text-lg mb-4"
             >
               <span className="relative w-32 h-10 shrink-0 overflow-hidden rounded-md border-2 border-border">
-                <Image src={logoSrc} alt="" fill className="object-cover" />
+                <Image src={logoSrc} alt="" fill className="object-cover" loading="eager" />
               </span>
             </Link>
             <p className="text-sm text-(--color-code-muted) leading-relaxed max-w-[240px]">

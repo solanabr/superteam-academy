@@ -45,6 +45,7 @@ function MobileWebNavbar({ content }: MobileWebNavbarProps): ReactNode {
             fill
             className="object-cover"
             priority
+            loading="eager"
           />
         </span>
       </Link>
