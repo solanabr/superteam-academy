@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Superteam Academy LMS (Next.js 16)
 
-## Getting Started
+Production-oriented LMS scaffold for Solana-native education.
 
-First, run the development server:
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local # optional, all integrations are optional
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Build works with zero env vars configured (external providers are optional and gracefully disabled).
 
-## Learn More
+## Architecture overview
 
-To learn more about Next.js, take a look at the following resources:
+- **App Router** pages for courses, lessons, dashboard, leaderboard, auth, settings, profile
+- **Auth**: NextAuth + Google OAuth (optional) + wallet adapter (Phantom/Solflare/Backpack)
+- **I18N**: locale cookie + middleware + EN/PT-BR/ES dictionaries
+- **Code editor**: Monaco on lesson pages with stub run feedback loop
+- **CMS**: Sanity client + schema stubs + typed fallback to local mock data
+- **Gamification**: XP/level/streak + achievements service using localStorage
+- **Devnet reads**: XP token and cNFT DAS request scaffold
+- **Analytics**: GA4/PostHog/Sentry optional providers and event tracking
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Demo URL: `TBD`
+- Demo video: `TBD`
+- X post: `TBD`
