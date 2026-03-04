@@ -42,6 +42,7 @@ export const LessonContents: CollectionConfig = {
         {
           name: 'content',
           type: 'textarea',
+          localized: true,
           admin: {
             description: 'Markdown content or callout text',
             condition: (_data, siblingData) =>
@@ -61,6 +62,7 @@ export const LessonContents: CollectionConfig = {
         {
           name: 'videoTitle',
           type: 'text',
+          localized: true,
           admin: {
             condition: (_data, siblingData) =>
               siblingData?.blockType === 'video',
@@ -86,11 +88,18 @@ export const LessonContents: CollectionConfig = {
       type: 'group',
       admin: { description: 'Code challenge config (optional)' },
       fields: [
-        { name: 'prompt', type: 'textarea' },
+        { name: 'prompt', type: 'textarea', localized: true },
         {
           name: 'objectives',
           type: 'array',
-          fields: [{ name: 'objective', type: 'text', required: true }],
+          fields: [
+            {
+              name: 'objective',
+              type: 'text',
+              required: true,
+              localized: true,
+            },
+          ],
         },
         {
           name: 'starterCode',
@@ -110,7 +119,7 @@ export const LessonContents: CollectionConfig = {
           name: 'testCases',
           type: 'array',
           fields: [
-            { name: 'name', type: 'text', required: true },
+            { name: 'name', type: 'text', required: true, localized: true },
             { name: 'expected', type: 'text', required: true },
           ],
         },
@@ -141,11 +150,23 @@ export const LessonContents: CollectionConfig = {
                 { label: 'Code', value: 'code' },
               ],
             },
-            { name: 'prompt', type: 'textarea', required: true },
+            {
+              name: 'prompt',
+              type: 'textarea',
+              required: true,
+              localized: true,
+            },
             {
               name: 'options',
               type: 'array',
-              fields: [{ name: 'option', type: 'text', required: true }],
+              fields: [
+                {
+                  name: 'option',
+                  type: 'text',
+                  required: true,
+                  localized: true,
+                },
+              ],
               admin: {
                 condition: (_data, siblingData) =>
                   siblingData?.questionType === 'radio' ||
@@ -202,11 +223,12 @@ export const LessonContents: CollectionConfig = {
     {
       name: 'hints',
       type: 'array',
-      fields: [{ name: 'hint', type: 'text', required: true }],
+      fields: [{ name: 'hint', type: 'text', required: true, localized: true }],
     },
     {
       name: 'solution',
       type: 'textarea',
+      localized: true,
       admin: { description: 'Solution explanation or code' },
     },
   ],

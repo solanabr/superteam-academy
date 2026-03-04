@@ -1,4 +1,5 @@
 'use client'
+'use client'
 
 import {
   ADMIN_COURSES,

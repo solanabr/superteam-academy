@@ -17,6 +17,7 @@ export const Lessons: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'module',

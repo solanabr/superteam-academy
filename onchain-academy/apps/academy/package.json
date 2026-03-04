@@ -2,11 +2,15 @@
   "name": "lms",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "better:migrate": "npx @better-auth/cli migrate --config libs/auth.ts --yes",
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation npx tsx -r dotenv/config scripts/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -38,6 +42,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "codemirror": "^6.0.2",
+    "cross-env": "^10.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.34.3",
     "graphql": "^16.13.0",

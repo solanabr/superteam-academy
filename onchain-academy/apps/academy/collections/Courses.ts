@@ -21,6 +21,7 @@ export const Courses: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'slug',
@@ -37,10 +38,12 @@ export const Courses: CollectionConfig = {
       type: 'textarea',
       required: true,
       maxLength: 300,
+      localized: true,
     },
     {
       name: 'longDescription',
       type: 'richText',
+      localized: true,
     },
     {
       name: 'difficulty',
@@ -85,22 +88,16 @@ export const Courses: CollectionConfig = {
     {
       name: 'learningOutcomes',
       type: 'array',
-      fields: [{ name: 'outcome', type: 'text', required: true }],
+      fields: [
+        { name: 'outcome', type: 'text', required: true, localized: true },
+      ],
     },
     {
       name: 'prerequisites',
       type: 'array',
-      fields: [{ name: 'prerequisite', type: 'text', required: true }],
-    },
-    {
-      name: 'language',
-      type: 'select',
-      options: [
-        { label: 'English', value: 'en' },
-        { label: 'Português', value: 'pt-br' },
-        { label: 'Español', value: 'es' },
+      fields: [
+        { name: 'prerequisite', type: 'text', required: true, localized: true },
       ],
-      defaultValue: 'en',
     },
     {
       name: 'trackId',

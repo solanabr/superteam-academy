@@ -1,3 +1,8 @@
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import path from 'path'
+import { buildConfig } from 'payload'
+import { fileURLToPath } from 'url'
 import {
   Courses,
   LessonContents,
@@ -7,17 +12,17 @@ import {
   Reviews,
   Streaks,
   Users,
-} from '@/collections'
-import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import path from 'path'
-import { buildConfig } from 'payload'
-import { fileURLToPath } from 'url'
+} from './collections'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  localization: {
+    locales: ['en', 'es', 'pt-br'],
+    defaultLocale: 'en',
+    fallback: true,
+  },
   collections: [
     Users,
     Courses,
@@ -34,6 +39,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL!,
     },
+    push: false,
   }),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

@@ -7,7 +7,7 @@ const provider = anchor.AnchorProvider.env()
 anchor.setProvider(provider)
 const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>
 
-const courseId = process.argv[2] || 'demo-course'
+const courseId = process.argv[2] || 'nft-development'
 
 const [coursePda] = PublicKey.findProgramAddressSync(
   [Buffer.from('course'), Buffer.from(courseId)],

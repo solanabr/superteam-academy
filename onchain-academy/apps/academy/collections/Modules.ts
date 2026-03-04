@@ -17,6 +17,7 @@ export const Modules: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'course',
