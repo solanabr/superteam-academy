@@ -1,0 +1,5 @@
+# Backend service: use Dockerfile so backend/dist is in the runtime image.
+# In Railway Dashboard → backend service → Settings → set "Config file path" to: backend/railway.toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.backend"

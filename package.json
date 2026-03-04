@@ -8,6 +8,7 @@
     "dev:backend": "pnpm -C backend dev",
     "build:backend": "pnpm -C sdk build && pnpm -C backend build",
     "start:backend": "node backend/dist/src/index.js",
+    "start:backend:railway": "pnpm run build:backend && node backend/dist/src/index.js",
     "build:app": "pnpm -C sdk build && pnpm -C app build",
     "start:app": "pnpm -C app start"
   },

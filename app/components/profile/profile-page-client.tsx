@@ -743,7 +743,9 @@ export function ProfilePageClient({
         </Card>
       ) : null}
 
-      {showComposerFirst ? <section className="mt-4">{profileForm}</section> : null}
+      {showComposerFirst ? (
+        <section className="mt-4">{profileForm}</section>
+      ) : null}
 
       <section className="mt-4 grid items-stretch gap-4 lg:grid-cols-[1.55fr_0.85fr]">
         <Card className="h-full overflow-hidden border-border/80 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--primary)_5%,var(--card)),var(--card))]">
@@ -751,15 +753,15 @@ export function ProfilePageClient({
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-start gap-3">
                 <Avatar data-size="lg" className="size-16 ring-2 ring-border">
-                {activeProfile.avatarUrl ? (
-                  <AvatarImage
-                    src={activeProfile.avatarUrl}
-                    alt={displayTitle}
-                  />
-                ) : null}
-                <AvatarFallback className="text-lg font-semibold">
-                  {displayTitle.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
+                  {activeProfile.avatarUrl ? (
+                    <AvatarImage
+                      src={activeProfile.avatarUrl}
+                      alt={displayTitle}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-lg font-semibold">
+                    {displayTitle.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
 
                 <div className="min-w-0 flex-1 space-y-2">
@@ -844,7 +846,9 @@ export function ProfilePageClient({
         </Card>
       </section>
 
-      {!showComposerFirst ? <section className="mt-4">{profileForm}</section> : null}
+      {!showComposerFirst ? (
+        <section className="mt-4">{profileForm}</section>
+      ) : null}
 
       {hasOnchainActivity || isPublicView ? (
         <>
@@ -967,7 +971,8 @@ export function ProfilePageClient({
                         rel="noreferrer"
                         className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                       >
-                        View credential asset <ArrowSquareOut className="size-3" />
+                        View credential asset{" "}
+                        <ArrowSquareOut className="size-3" />
                       </a>
                     ) : null}
                   </article>

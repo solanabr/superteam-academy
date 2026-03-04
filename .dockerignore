@@ -1,0 +1,11 @@
+# Used by Dockerfile.backend; keep context small
+.git
+node_modules
+app/.next
+backend/dist
+sdk/dist
+onchain-academy/target
+*.log
+.env
+.env.*
+!.env.example

@@ -34,6 +34,7 @@ export async function Header() {
           </Link>
           <nav className="hidden items-center gap-1 sm:flex">
             <HeaderNav href="/courses" label={tHeader("courses")} />
+            <HeaderNav href="/dashboard" label={tHeader("dashboard")} />
             <HeaderNav href="/leaderboard" label={tHeader("leaderboard")} />
             <HeaderNav href="/profile" label={tHeader("profile")} />
           </nav>

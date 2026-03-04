@@ -6,6 +6,7 @@
   "header": {
     "goHome": "Go to home",
     "courses": "Courses",
+    "dashboard": "Dashboard",
     "leaderboard": "Leaderboard",
     "profile": "Profile"
   },

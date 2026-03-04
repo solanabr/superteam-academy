@@ -74,11 +74,6 @@ export default function Page() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
             <div className="animate-in slide-in-from-bottom-5 fade-in-0 duration-700 lg:col-span-7 lg:pr-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/45 bg-background/65 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--primary)_26%,transparent)] backdrop-blur">
-                <span className="inline-block size-1.5 rounded-full bg-primary" />
-                Solana Learning Engine
-              </span>
-
               <h1 className="mt-4 max-w-3xl text-4xl leading-[0.98] font-black tracking-tight sm:text-5xl lg:text-[4.4rem]">
                 <span className="font-heading">Learn like a builder.</span>
                 <span className="mt-2 block bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text font-heading text-transparent">
@@ -298,8 +293,8 @@ export default function Page() {
                     Why teams trust this
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    No toy exercises. Learners complete challenge-validated
-                    work and graduate with wallet-native credentials.
+                    No toy exercises. Learners complete challenge-validated work
+                    and graduate with wallet-native credentials.
                   </p>
                 </article>
                 <article className="rounded-xl border border-border/70 bg-card/78 p-3">
@@ -307,8 +302,8 @@ export default function Page() {
                     Built for outcomes
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Structured tracks, production patterns, and visible proof
-                    of progress on-chain.
+                    Structured tracks, production patterns, and visible proof of
+                    progress on-chain.
                   </p>
                 </article>
               </div>
