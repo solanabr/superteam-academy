@@ -5,7 +5,11 @@
     "build:sdk": "cd onchain-academy && anchor build && cd .. && codama run js && pnpm -C sdk build",
     "codama:js": "codama run js",
     "build": "pnpm run build:sdk && pnpm -C app build",
-    "dev:backend": "pnpm -C backend dev"
+    "dev:backend": "pnpm -C backend dev",
+    "build:backend": "pnpm -C sdk build && pnpm -C backend build",
+    "start:backend": "node backend/dist/src/index.js",
+    "build:app": "pnpm -C sdk build && pnpm -C app build",
+    "start:app": "pnpm -C app start"
   },
   "devDependencies": {
     "codama": "latest",

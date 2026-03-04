@@ -55,6 +55,9 @@ onchain-academy/trident-tests/fuzz/artifacts/
 # Verifiable build artifacts
 onchain-academy/target/verifiable/
 
+# Backend build output
+backend/dist/
+
 # Misc
 *.log
 *.tmp
