@@ -93,7 +93,7 @@ graph TB
 | **Framework** | Next.js 16.1 (App Router, Turbopack) | Server/client rendering, API routes |
 | **Styling** | Tailwind CSS + custom design tokens | Dark theme with `--solana` accent color |
 | **Fonts** | Space Grotesk (headings), Inter (body), JetBrains Mono (code) | Typography via `next/font/google` |
-| **Auth** | Privy (`@privy-io/react-auth`) | Solana wallet-based authentication |
+| **Auth** | Privy (`@privy-io/react-auth`) | Wallet + Google + GitHub + Email authentication |
 | **State** | Zustand | Client-side state management |
 | **CMS** | Sanity v3 | Course/lesson content authoring |
 | **Database** | PostgreSQL (Supabase) via Prisma ORM | User data, progress, credentials |
@@ -230,11 +230,12 @@ Validation rules:
 
 ## 5. Authentication — Privy
 
-Authentication uses [Privy](https://privy.io) configured for **Solana-only** wallet connections.
+Authentication uses [Privy](https://privy.io) configured for **Solana-only** wallet connections with multiple login methods.
 
 ### Configuration (AuthProvider)
 
 ```
+Login methods: Wallet, Google, GitHub, Email (configured in Privy Dashboard)
 Supported wallets: Phantom, Solflare, Backpack, detected Solana wallets, WalletConnect
 Embedded wallets: Auto-created for users without wallets on login
 Theme: Dark
@@ -997,7 +998,7 @@ Since web apps are ~90% reads and ~10% writes, this makes the experience feel lo
 | Feature | Priority | Description |
 |---|---|---|
 | **Mainnet Launch** | High | Switch RPC to mainnet; deploy Anchor program to mainnet |
-| **GitHub OAuth** | High | Full GitHub login integration (currently stubbed in Privy) |
+| **Multi-Region Deployment** | High | Deploy Vercel functions to multiple regions (bom1, gru1) with Read Replicas for global low-latency |
 | **E2E Tests** | Medium | Playwright tests covering enrollment → graduation flows |
 | **Admin Dashboard** | Medium | Course analytics, user management, XP audit log UI |
 | **PWA Support** | Medium | Offline-capable, installable, service worker caching |

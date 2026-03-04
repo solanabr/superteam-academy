@@ -1,6 +1,6 @@
 # Superteam Academy — Frontend App
 
-> **"Codecademy meets Cyfrin Updraft for Solana"** — The open-source, gamified learning platform for Solana developers across Latin America and beyond.
+— The open-source, gamified learning platform for Solana developers across Latin America and beyond.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-aves--superteam--academy.vercel.app-14F195?style=for-the-badge&logo=vercel)](https://aves-superteam-academy.vercel.app)
 [![Lighthouse](https://img.shields.io/badge/Lighthouse-90%2B-4CAF50?style=for-the-badge&logo=lighthouse)](https://aves-superteam-academy.vercel.app/lighthouse-report/index.html)
@@ -16,7 +16,7 @@ Superteam Academy is a production-ready LMS (Learning Management System) built f
 - **Framework:** Next.js 16 (App Router) + TypeScript (strict)
 - **Styling:** Tailwind CSS v4 with custom design tokens
 - **UI Components:** shadcn/ui + Radix UI (accessible primitives)
-- **Auth:** Privy (Solana wallet + Google/GitHub OAuth)
+- **Auth:** Privy (Solana wallet + Google + GitHub + Email OAuth)
 - **CMS:** Sanity (courses, modules, lessons)
 - **Database:** Supabase (PostgreSQL) + Prisma ORM
 - **On-Chain:** Solana Devnet — Token-2022 (XP), Metaplex Core NFTs (credentials), Anchor program
