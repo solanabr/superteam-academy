@@ -52,12 +52,52 @@ function mergeStringLists(...lists: (string[] | undefined)[]): string[] {
 	return Array.from(new Set(lists.flatMap((l) => l ?? [])));
 }
 
-async function deleteUsersByIds(client: NonNullable<typeof writeClient>, ids: string[]) {
-	for (const id of ids) {
+function rewriteRefs(obj: unknown, oldRef: string, newRef: string): unknown {
+	if (obj === null || obj === undefined) return obj;
+	if (Array.isArray(obj)) return obj.map((item) => rewriteRefs(item, oldRef, newRef));
+	if (typeof obj === "object") {
+		const rec = obj as Record<string, unknown>;
+		if (rec._type === "reference" && rec._ref === oldRef) {
+			return { ...rec, _ref: newRef };
+		}
+		const result: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(rec)) {
+			result[key] = rewriteRefs(value, oldRef, newRef);
+		}
+		return result;
+	}
+	return obj;
+}
+
+const REFERENCING_DOCS_QUERY = `*[references($oldId)]{ _id }`;
+
+async function rewriteReferencesAndDelete(
+	client: NonNullable<typeof writeClient>,
+	keepId: string,
+	deleteIds: string[]
+) {
+	for (const oldId of deleteIds) {
 		try {
-			await client.delete(id);
+			const referencingDocs = await client.fetch<Array<{ _id: string }>>(
+				REFERENCING_DOCS_QUERY,
+				{ oldId }
+			);
+
+			for (const ref of referencingDocs) {
+				if (deleteIds.includes(ref._id) || ref._id === keepId) continue;
+				const doc = await client.fetch<Record<string, unknown> | null>(
+					`*[_id == $id][0]`,
+					{ id: ref._id }
+				);
+				if (!doc) continue;
+				const patched = rewriteRefs(doc, oldId, keepId) as Record<string, unknown>;
+				const { _id, _type, _rev, _createdAt, _updatedAt, ...patchable } = patched;
+				await client.patch(ref._id).set(patchable).commit();
+			}
+
+			await client.delete(oldId);
 		} catch (err) {
-			console.error("[sanity-users] Failed to delete duplicate user:", id, err);
+			console.error("[sanity-users] Failed to delete duplicate user:", oldId, err);
 		}
 	}
 }
@@ -78,7 +118,7 @@ async function cleanupDuplicateWalletUsers(
 		keepId,
 	});
 	const allIds = [...new Set([...duplicates, ...emailGhosts].map((u) => u._id))];
-	await deleteUsersByIds(client, allIds);
+	await rewriteReferencesAndDelete(client, keepId, allIds);
 }
 
 async function patchAndCleanupByWallet(
@@ -170,7 +210,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 		}
 
 		await writeClient.patch(existingByWallet._id).set(patch).commit();
-		await deleteUsersByIds(writeClient, [existing._id]);
+		await rewriteReferencesAndDelete(writeClient, existingByWallet._id, [existing._id]);
 		await patchAndCleanupByWallet(
 			writeClient,
 			existingByWallet._id,
