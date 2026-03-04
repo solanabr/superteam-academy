@@ -15,7 +15,7 @@ export function Navbar() {
 
   const navItems = [
     { label: "Courses", href: `${appDomainUrl}/course` },
-    { label: "Leaderboard", href: `${appDomainUrl}/leaderboard`},
+    { label: "Leaderboard", href: `${appDomainUrl}/leaderboard` },
     { label: "Profile", href: `${appDomainUrl}/profile` },
   ];
 
@@ -35,6 +35,7 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
             <Link
+              target="_blank"
               className="text-muted-foreground"
               key={item.href}
               href={item.href}
@@ -62,7 +63,7 @@ export function Navbar() {
             </div>
           </div> */}
 
-          <Link href={appDomainUrl}>
+          <Link target="_blank" href={appDomainUrl}>
             <Button
               variant="outline"
               size="sm"
@@ -105,7 +106,11 @@ export function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <Link href={appDomainUrl} className="flex flex-col gap-4">
+              <Link
+                target="_blank"
+                href={appDomainUrl}
+                className="flex flex-col gap-4"
+              >
                 <Button className="w-full gap-2 bg-linear-to-r from-primary to-secondary text-black font-bold">
                   <Wallet className="w-4 h-4" />
                   Connect Wallet

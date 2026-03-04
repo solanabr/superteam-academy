@@ -18,6 +18,7 @@ import Link from "next/link";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { CourseCard, FeatureCard } from "@workspace/ui/components/custom-card";
+import { appDomainUrl } from "@/lib/constant";
 
 const companies = [
   { name: "Metaplex", icon: Store },
@@ -86,7 +87,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Link className="grid" href="/course">
+            <Link target="_blank" className="grid" href={appDomainUrl}>
               <Button
                 size="lg"
                 className="h-14 px-8 text-base hover:scale-105 transition-all duration-300 font-bold"
