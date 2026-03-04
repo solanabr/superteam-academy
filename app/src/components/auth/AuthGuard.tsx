@@ -8,15 +8,16 @@ import { useUserStore } from "@/store/user-store";
 import { OnboardingModal } from "./OnboardingModal";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 
 /**
  * Client-side auth guard. Wraps protected pages.
  * - Shows loading spinner while Privy initializes
  * - Redirects to landing page if not authenticated (unless public path)
- * - Polls for wallet address after OAuth login (wallet takes 1-3s to initialize)
+ * - Polls for wallet address after OAuth login (wallet takes 1-30s to initialize)
  * - Shows one-time onboarding modal if profile.onboardingComplete is not set
  * - Replaces browser history to prevent back-button exploit
+ * - Has a hard timeout to prevent infinite loading for OAuth embedded wallet creation
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
     const { ready, authenticated, user: privyUser } = usePrivy();
@@ -30,6 +31,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const fetchUser = useUserStore((s) => s.fetchUser);
     const error = useUserStore((s) => s.error);
     const syncComplete = useUserStore((s) => s.syncComplete);
+    const setSyncComplete = useUserStore((s) => s.setSyncComplete);
 
     // Discover wallet address — may be undefined initially after OAuth login
     const walletAddress =
@@ -38,6 +40,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         wallets?.[0]?.address;
 
     const [onboardingDone, setOnboardingDone] = useState(false);
+
+    // Hard timeout: prevents infinite loading for OAuth users with slow embedded wallet creation.
+    // After this timeout, the loading gate unblocks regardless of wallet/sync state.
+    const [hardTimeout, setHardTimeout] = useState(false);
+    useEffect(() => {
+        // Only start the timer if we're authenticated but don't have a user yet
+        if (!authenticated || user) {
+            setHardTimeout(false);
+            return;
+        }
+        const timer = setTimeout(() => setHardTimeout(true), 20000); // 20s max wait
+        return () => clearTimeout(timer);
+    }, [authenticated, user]);
 
     // Some paths within (platform) should be publicly accessible (e.g., certificate verification)
     const isPublicPath = pathname.includes("/certificates/");
@@ -89,10 +104,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 clearInterval(pollRef.current!);
                 pollRef.current = null;
                 fetchUser(addr);
-            } else if (attempts >= 20) {
-                // Give up after 10s
+            } else if (attempts >= 30) {
+                // Give up after 15s — signal that sync won't happen via wallet polling
                 clearInterval(pollRef.current!);
                 pollRef.current = null;
+                setSyncComplete(true);
             }
         }, 500);
 
@@ -102,7 +118,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 pollRef.current = null;
             }
         };
-    }, [authenticated, walletAddress, ready, privyUser, wallets, fetchUser]);
+    }, [authenticated, walletAddress, ready, privyUser, wallets, fetchUser, setSyncComplete]);
 
     // If it's a public path, we skip all auth-related blocking UI (spinner/redirect)
     if (isPublicPath) {
@@ -131,11 +147,59 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // LOADING GATE: Don't render dashboard until we have a definitive user state.
     // This prevents the "DevUser" flash and ensures onboarding is properly evaluated.
-    // We wait if: user is null AND (sync hasn't completed OR data is still loading OR wallet not yet discovered)
-    if (!user && (!syncComplete || isLoading || !walletAddress)) {
+    // We wait if: user is null AND sync hasn't completed AND hard timeout hasn't expired.
+    // NOTE: We do NOT gate on !walletAddress here — that would cause an infinite spinner
+    // for OAuth users whose embedded wallet takes time to create.
+    if (!user && !hardTimeout && (isLoading || !syncComplete)) {
         return (
             <div className="fixed inset-0 z-50 bg-void flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-solana" />
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-solana" />
+                    <p className="text-text-muted text-sm font-mono">Setting up your account...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error/retry state: sync completed or timed out, but we still don't have a user.
+    // This can happen if the embedded wallet took too long or there was a network error.
+    if (!user && (hardTimeout || syncComplete) && !isLoading) {
+        return (
+            <div className="fixed inset-0 z-50 bg-void flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 max-w-sm text-center p-8">
+                    <AlertCircle className="w-10 h-10 text-rust" />
+                    <h2 className="text-lg font-display font-bold text-white">Account Setup Taking Longer Than Expected</h2>
+                    <p className="text-text-muted text-sm">
+                        Your wallet is still being created. This can take a moment for new accounts.
+                    </p>
+                    <div className="flex gap-3 mt-2">
+                        <Button
+                            onClick={() => {
+                                // Reset timeout and retry
+                                setHardTimeout(false);
+                                setSyncComplete(false);
+                                lastFetchedWallet.current = null;
+                                if (walletAddress) {
+                                    fetchUser(walletAddress);
+                                }
+                            }}
+                            className="bg-solana text-black font-bold hover:bg-solana/90"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Retry
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                window.history.replaceState(null, "", "/");
+                                router.replace("/");
+                            }}
+                            className="border-white/10 text-white hover:bg-white/5"
+                        >
+                            Back to Home
+                        </Button>
+                    </div>
+                </div>
             </div>
         );
     }
