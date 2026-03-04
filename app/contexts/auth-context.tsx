@@ -23,6 +23,7 @@ interface WalletState {
 	disconnecting: boolean;
 	publicKey: { toBase58(): string } | null;
 	signMessage?: (message: Uint8Array) => Promise<Uint8Array>;
+	signTransaction?: (transaction: unknown) => Promise<unknown>;
 	sendTransaction?: (...args: unknown[]) => Promise<string>;
 	disconnect: () => Promise<void>;
 	connect: () => Promise<void>;

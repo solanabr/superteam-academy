@@ -4,6 +4,7 @@ import { Transaction } from "@solana/web3.js";
 interface MinimalWallet {
 	publicKey: { toBase58(): string } | null;
 	sendTransaction?: (...args: unknown[]) => Promise<string>;
+	signTransaction?: (tx: Transaction) => Promise<Transaction>;
 	signMessage?: (message: Uint8Array) => Promise<Uint8Array>;
 }
 
@@ -12,36 +13,49 @@ export async function sendAndConfirmTx(
 	wallet: MinimalWallet,
 	instruction: TransactionInstruction
 ): Promise<string> {
-	if (!wallet.publicKey || !wallet.sendTransaction) {
+	if (!wallet.publicKey) {
 		throw new Error("Wallet not connected");
+	}
+	if (!wallet.signTransaction) {
+		throw new Error("Wallet does not support signTransaction");
 	}
 
 	const tx = new Transaction().add(instruction);
 	tx.feePayer = wallet.publicKey as PublicKey;
 
-	// Do NOT pre-set recentBlockhash. The wallet adapter's prepareTransaction
-	// fetches it right before signing — this keeps the blockhash as fresh as
-	// possible, even if the user takes 30-60s to approve in their wallet popup.
-	const signature = await wallet.sendTransaction(tx, connection, {
+	// Fetch a fresh blockhash from OUR connection (Helius) right before
+	// asking the wallet to sign. User approval time in the popup doesn't
+	// matter much — blockhashes are valid for ~60s on devnet.
+	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+	tx.recentBlockhash = blockhash;
+
+	// Sign via wallet popup — only signs, does NOT send.
+	const signed = await wallet.signTransaction(tx);
+
+	// Send through OUR Helius RPC (not the wallet's internal RPC which may
+	// silently drop transactions on devnet).
+	const signature = await connection.sendRawTransaction(signed.serialize(), {
 		maxRetries: 5,
 		skipPreflight: true,
 	});
 
-	// Poll for confirmation using getSignatureStatuses over HTTP.
-	// We use a time-based timeout (90s) instead of block-height tracking
-	// because we don't hold the lastValidBlockHeight from the wallet's
-	// blockhash fetch. 90s exceeds the ~60s devnet blockhash validity window,
-	// giving the RPC node enough retries to land the transaction.
+	// Poll for confirmation using getSignatureStatuses (HTTP, always reliable).
 	const POLL_INTERVAL_MS = 1500;
-	const TIMEOUT_MS = 90_000;
-	const deadline = Date.now() + TIMEOUT_MS;
+	const deadline = Date.now() + 60_000;
 
 	while (Date.now() < deadline) {
+		const currentHeight = await connection.getBlockHeight("confirmed");
+		if (currentHeight > lastValidBlockHeight) {
+			throw new Error(
+				"Transaction was not confirmed: block height exceeded. Please try again."
+			);
+		}
+
 		const { value } = await connection.getSignatureStatuses([signature]);
 		const status = value?.[0];
 		if (status) {
 			if (status.err) {
-				throw new Error(`Transaction ${signature} failed: ${JSON.stringify(status.err)}`);
+				throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
 			}
 			if (
 				status.confirmationStatus === "confirmed" ||
@@ -54,11 +68,11 @@ export async function sendAndConfirmTx(
 		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 	}
 
-	throw new Error(`Transaction ${signature} was not confirmed within ${TIMEOUT_MS / 1000}s`);
+	throw new Error("Transaction was not confirmed in time. Please try again.");
 }
 
 export function isWalletReady(wallet: MinimalWallet): boolean {
-	return !!(wallet.publicKey && wallet.sendTransaction);
+	return !!(wallet.publicKey && wallet.signTransaction);
 }
 
 export function canSignMessage(wallet: MinimalWallet): boolean {
