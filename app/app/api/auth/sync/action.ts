@@ -36,6 +36,7 @@ export async function syncAuthSession(
 		return {
 			synced: true,
 			role: effectiveRole,
+			name: synced?.name ?? existing.name,
 			email: existing.email,
 			onboardingCompleted: synced?.onboardingCompleted ?? false,
 			walletAddress: resolvedWallet,
@@ -56,6 +57,7 @@ export async function syncAuthSession(
 
 	return {
 		synced: true,
+		name: sanityUser.name,
 		email: sanityUser.email,
 		role: sanityUser.role,
 		onboardingCompleted: sanityUser.onboardingCompleted ?? false,

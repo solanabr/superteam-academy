@@ -80,7 +80,7 @@ function AuthProviderInner({
 					getGravatarUrl(syncedData?.email || result.data.user.email);
 				const userData: AuthUser = {
 					id: result.data.user.id,
-					name: result.data.user.name,
+					name: syncedData?.name || result.data.user.name,
 					email: syncedData?.email || result.data.user.email,
 					image,
 					role: serverRole,
@@ -154,9 +154,9 @@ function AuthProviderInner({
 			});
 
 			if (!linkRes.ok && linkRes.status !== 409) {
-				const errorData = (await linkRes.json().catch(() => null)) as
-					| { error?: string }
-					| null;
+				const errorData = (await linkRes.json().catch(() => null)) as {
+					error?: string;
+				} | null;
 				throw new Error(errorData?.error || "Wallet linking failed");
 			}
 		}

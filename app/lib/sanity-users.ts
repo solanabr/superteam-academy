@@ -69,7 +69,7 @@ function rewriteRefs(obj: unknown, oldRef: string, newRef: string): unknown {
 	return obj;
 }
 
-const REFERENCING_DOCS_QUERY = `*[references($oldId)]{ _id }`;
+const REFERENCING_DOCS_QUERY = "*[references($oldId)]{ _id }";
 
 async function rewriteReferencesAndDelete(
 	client: NonNullable<typeof writeClient>,
@@ -85,10 +85,9 @@ async function rewriteReferencesAndDelete(
 
 			for (const ref of referencingDocs) {
 				if (deleteIds.includes(ref._id) || ref._id === keepId) continue;
-				const doc = await client.fetch<Record<string, unknown> | null>(
-					`*[_id == $id][0]`,
-					{ id: ref._id }
-				);
+				const doc = await client.fetch<Record<string, unknown> | null>("*[_id == $id][0]", {
+					id: ref._id,
+				});
 				if (!doc) continue;
 				const patched = rewriteRefs(doc, oldId, keepId) as Record<string, unknown>;
 				const { _id, _type, _rev, _createdAt, _updatedAt, ...patchable } = patched;
@@ -113,10 +112,13 @@ async function cleanupDuplicateWalletUsers(
 		keepId,
 	});
 	const walletEmailLower = walletEmail(walletAddress).toLowerCase();
-	const emailGhosts = await client.fetch<Array<{ _id: string }>>(DUPLICATE_WALLET_EMAIL_USERS_QUERY, {
-		walletEmailLower,
-		keepId,
-	});
+	const emailGhosts = await client.fetch<Array<{ _id: string }>>(
+		DUPLICATE_WALLET_EMAIL_USERS_QUERY,
+		{
+			walletEmailLower,
+			keepId,
+		}
+	);
 	const allIds = [...new Set([...duplicates, ...emailGhosts].map((u) => u._id))];
 	await rewriteReferencesAndDelete(client, keepId, allIds);
 }
@@ -171,7 +173,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 		target: AcademyUser
 	): Promise<Record<string, unknown>> => {
 		const patch: Record<string, unknown> = {
-			name: params.name,
+			name: target.name || params.name,
 			email: params.email,
 			walletAddress: normalizedWalletAddress || target.walletAddress || "",
 			lastActiveAt: now,
