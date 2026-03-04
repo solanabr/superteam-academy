@@ -57,9 +57,19 @@ export default async function LocaleLayout({
         </NextIntlClientProvider>
         <Toaster richColors position="top-right" />
         <GoogleAnalytics gaId="G-STACADEMY26" />
-        <Script id="heatmap-analytics" strategy="afterInteractive">
-          {`console.log("Heatmap initialized in privacy-mode.");`}
-        </Script>
+        <Script
+          id="heatmap-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(c,l,a,r,i,t,y){
+                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || "placeholder_clarity_id");
+            `,
+          }}
+        />
       </body>
     </html>
   );
