@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 262.1 83.3% 57.8%;
+    --chart-1: 262 83% 58%;
+    --chart-2: 292 84% 61%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 30 80% 55%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 5.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 5.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 13%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 13%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 13%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262.1 83.3% 57.8%;
+    --chart-1: 262 83% 58%;
+    --chart-2: 292 84% 61%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 30 80% 55%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-transparent;
+  }
+
+  .glass {
+    @apply border border-border/40 bg-background/80 backdrop-blur-xl;
+  }
+}
+
+/* Wallet adapter overrides */
+.wallet-adapter-modal-wrapper {
+  font-family: var(--font-geist-sans), system-ui, sans-serif !important;
+}
+
+.wallet-adapter-button {
+  @apply !bg-violet-600 hover:!bg-violet-700 !transition-colors;
+}
+
+/* Prose / lesson content */
+.prose-lesson {
+  @apply max-w-none;
+}
+
+.prose-lesson h1 {
+  @apply text-3xl font-bold mt-8 mb-4 text-foreground;
+}
+
+.prose-lesson h2 {
+  @apply text-2xl font-semibold mt-6 mb-3 text-foreground;
+}
+
+.prose-lesson h3 {
+  @apply text-xl font-semibold mt-5 mb-2 text-foreground;
+}
+
+.prose-lesson p {
+  @apply my-3 leading-relaxed text-foreground/80;
+}
+
+.prose-lesson ul,
+.prose-lesson ol {
+  @apply my-3 pl-6;
+}
+
+.prose-lesson li {
+  @apply my-1 text-foreground/80;
+}
+
+.prose-lesson ul li {
+  @apply list-disc;
+}
+
+.prose-lesson ol li {
+  @apply list-decimal;
+}
+
+.prose-lesson strong {
+  @apply font-bold text-foreground;
+}
+
+.prose-lesson code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose-lesson pre {
+  @apply bg-muted rounded-lg p-4 my-4 overflow-x-auto;
+}
+
+.prose-lesson pre code {
+  @apply bg-transparent p-0 text-sm;
+}
+
+.prose-lesson blockquote {
+  @apply border-l-4 border-primary/40 pl-4 my-4 italic text-muted-foreground;
+}
+
+.prose-lesson a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80;
+}
+
+.prose-lesson hr {
+  @apply my-6 border-border;
+}
+
+.prose-lesson table {
+  @apply w-full my-4 border-collapse;
+}
+
+.prose-lesson th {
+  @apply border border-border px-3 py-2 text-left font-semibold bg-muted;
+}
+
+.prose-lesson td {
+  @apply border border-border px-3 py-2;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.15);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
