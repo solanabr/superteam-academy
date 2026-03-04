@@ -1,123 +1,159 @@
-# Superteam Academy Brazil 🇧🇷 — Decentralized LMS on Solana
+# Superteam Academy — Frontend
 
-> A premium, production-ready decentralized Learning Management System built for **Superteam Brazil**. Complete courses, earn soulbound XP tokens via Token-2022, and receive verifiable Metaplex Core NFT credentials — all on Solana Devnet.
+> Next.js 16 frontend for the Superteam Academy on-chain learning platform.
 
-**Live on Devnet**: Program `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
-
----
-
-## ✨ Highlights
-
-| Criteria | What's Built |
-|----------|-------------|
-| **Pages** | 13 pages (10 core + Admin, Onboarding Quiz, Loading) |
-| **On-Chain** | Token-2022 XP, Metaplex Core NFTs, 6 PDA types, bitmap tracking |
-| **AI** | Vercel AI SDK teaching assistant embedded in the code editor |
-| **i18n** | Portuguese (pt-BR), English (en), Spanish (es) |
-| **Testing** | 12 Playwright E2E tests (landing, courses, quiz, responsive) |
-| **PWA** | Installable via `manifest.json` |
-| **SEO** | Schema.org JSON-LD (Course, ItemList, Organization) |
-| **Docs** | README, ARCHITECTURE.md |
+**🌐 Live Demo:** [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app)
 
 ---
 
-## 🏗 Architecture
+## Getting Started
 
-See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for the full system design, data flow diagrams, PDA account table, service layer interface, and extension guides.
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 14 (App Router, TypeScript strict) |
-| Styling | Tailwind CSS v4 + Custom CSS Variables |
-| Blockchain | `@solana/web3.js`, `@coral-xyz/anchor`, `@solana/spl-token` |
-| Wallets | Phantom, Solflare via `@solana/wallet-adapter` |
-| NFTs | `@metaplex-foundation/mpl-core` + Helius DAS API |
-| AI | Vercel AI SDK + OpenAI (streaming) |
-| Editor | Monaco Editor with academy-dark theme |
-| i18n | `next-intl` (3 locales, 160+ keys each) |
-| Animations | Framer Motion |
-| E2E Tests | Playwright |
-| Fonts | Space Grotesk (headings), Inter (body) |
-
-### Service Layer
-
-Clean `ILearningProgressService` interface in `src/lib/services.ts` with typed methods for all on-chain operations. Mock implementation included — swap for Anchor client to go live.
-
----
-
-## 📄 Pages (13 Total)
-
-| Route | Type | Description |
-|-------|------|-------------|
-| `/` | Static | Landing — animated hero, stats, learning tracks, featured courses |
-| `/courses` | Static | Filterable course catalog with search, track & level filters |
-| `/courses/[slug]` | Dynamic | Course detail — syllabus, enrollment, XP breakdown |
-| `/courses/[slug]/lessons/[id]` | Dynamic | Lesson view — Markdown + Monaco editor + AI Assistant |
-| `/dashboard` | Static | User dashboard — SVG XP ring, streak, course progress |
-| `/leaderboard` | Static | Global/weekly rankings with podium |
-| `/profile/[username]` | Dynamic | Public profile — skills radar, credentials, badges |
-| `/certificates/[id]` | Dynamic | Verifiable certificate with social sharing |
-| `/settings` | Static | Profile edit, wallet info, linked accounts |
-| `/admin` | Static | **[Bonus]** Admin dashboard — KPIs, enrollment chart, course management |
-| `/onboarding` | Static | **[Bonus]** Skill assessment quiz with personalized track recommendation |
-| `/api/chat` | API | **[Bonus]** AI teaching assistant (Vercel AI SDK + OpenAI) |
-| `/api/complete-lesson` | API | Server-side lesson completion signing (stubbed) |
-| `/api/finalize-course` | API | Server-side course finalization (stubbed) |
-
----
-
-## 🎮 Bonus Features
-
-- **Admin Dashboard** — KPI cards, enrollment trend chart, course management table, wallet-gated access
-- **Onboarding Skill Quiz** — 4-question assessment with animated transitions, recommends a learning track
-- **AI Teaching Assistant** — Floating chat in the code editor, streaming responses via Vercel AI SDK
-- **PWA Support** — `manifest.json`, theme color, installable on mobile
-- **Schema.org SEO** — JSON-LD structured data on Course Catalog and Detail pages
-- **Framer Motion Animations** — Staggered hero entrance, scroll-triggered stats counters
-- **E2E Tests (Playwright)** — 12 tests covering critical flows + responsive design
-- **Service Layer** — `ILearningProgressService` with mock implementation for clean architecture
-
----
-
-## 🚀 Getting Started
-
-### Requirements
-- Node.js 18.17+
-- A Solana wallet (Phantom / Solflare) set to Devnet
-
-### Install & Run
 ```bash
-cd app
 npm install
-cp .env.local.example .env.local
 npm run dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+### Environment Variables
 
-### Run E2E Tests
-```bash
-npx playwright install
-npx playwright test
-```
+Create a `.env.local` file:
 
-### Build (Production)
-```bash
-npm run build  # ✅ Passes clean
+```env
+# Solana RPC (Helius recommended for DAS API support)
+NEXT_PUBLIC_SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_KEY
+NEXT_PUBLIC_HELIUS_API_KEY=YOUR_KEY
+
+# Program addresses (devnet)
+NEXT_PUBLIC_PROGRAM_ID=ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf
+NEXT_PUBLIC_XP_MINT=xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3
+
+# Analytics (optional)
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# CMS (optional, for Sanity integration)
+NEXT_PUBLIC_SANITY_PROJECT_ID=your-project-id
+NEXT_PUBLIC_SANITY_DATASET=production
 ```
 
 ---
 
-## 📁 Environment Variables
+## Architecture
 
-See `.env.local.example` for all required variables. Defaults for Devnet are pre-configured.
+```
+src/
+├── app/                    ← App Router (pages & layouts)
+│   ├── layout.tsx          ← Root layout (providers, sidebar, theme)
+│   ├── page.tsx            ← Landing page
+│   ├── dashboard/          ← Learner dashboard
+│   ├── courses/            ← Course catalog & detail
+│   ├── courses/[slug]/     ← Course detail & lessons
+│   ├── leaderboard/        ← XP rankings
+│   ├── profile/[username]/ ← Public profiles
+│   ├── admin/              ← Admin panel
+│   ├── settings/           ← User preferences
+│   ├── certificates/       ← Credential NFTs
+│   ├── onboarding/         ← Skill quiz
+│   └── api/                ← API routes
+├── components/
+│   ├── layout/             ← Sidebar, ThemeToggle, ThemeProvider
+│   ├── course/             ← CourseCard
+│   ├── Analytics.tsx       ← GA4 integration
+│   └── LocaleSwitcher.tsx  ← Language dropdown
+├── lib/
+│   ├── pda.ts              ← PDA derivation (6 account types)
+│   ├── xp.ts               ← XP level calculations & formatting
+│   ├── bitmap.ts           ← On-chain bitmap lesson progress
+│   ├── helius.ts           ← Helius DAS API client
+│   ├── cms.ts              ← CMS interface (Repository Pattern)
+│   ├── courses.ts          ← Static course data (7 courses, 30+ lessons)
+│   ├── services.ts         ← Backend service layer
+│   └── utils.ts            ← Utilities
+├── providers/
+│   ├── WalletProvider.tsx  ← Solana Wallet Adapter setup
+│   ├── Providers.tsx       ← Combined provider tree
+│   └── NextIntlProvider.tsx ← i18n provider
+├── hooks/
+│   └── useXP.ts            ← Real-time XP balance & level hook
+├── messages/
+│   ├── en.json             ← English (270+ strings)
+│   ├── pt-BR.json          ← Portuguese (270+ strings)
+│   └── es.json             ← Spanish (270+ strings)
+└── i18n/
+    └── request.ts          ← next-intl configuration
+```
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_SOLANA_RPC_URL` | Solana RPC endpoint |
-| `NEXT_PUBLIC_PROGRAM_ID` | Anchor program address |
-| `NEXT_PUBLIC_XP_MINT` | Token-2022 XP mint |
-| `NEXT_PUBLIC_HELIUS_API_KEY` | Helius DAS API key |
-| `OPENAI_API_KEY` | AI assistant (optional) |
+---
+
+## On-Chain Integration
+
+### PDA Derivation (`src/lib/pda.ts`)
+
+| PDA | Seeds | Purpose |
+|---|---|---|
+| `platform_config` | `["platform_config"]` | Global platform configuration |
+| `course` | `["course", course_id]` | Course account |
+| `enrollment` | `["enrollment", learner, course_id]` | Learner enrollment |
+| `lesson_progress` | `["progress", learner, course_id]` | Bitmap of completed lessons |
+| `credential` | `["credential", learner, course_id]` | Course completion credential |
+| `achievement` | `["achievement", learner, achievement_id]` | Unlocked badge |
+
+### Token-2022 XP (`src/lib/xp.ts`)
+
+- Reads XP balance from the Token-2022 associated token account
+- Calculates levels using a progressive XP curve
+- Formats display values (e.g., "1.2K XP")
+
+### Helius DAS API (`src/lib/helius.ts`)
+
+- Queries credential NFTs owned by a wallet
+- Fetches asset metadata for certificate display
+- Powers the leaderboard with aggregated on-chain data
+
+### Bitmap Progress (`src/lib/bitmap.ts`)
+
+- Reads the on-chain bitmap to determine which lessons are completed
+- Each bit represents one lesson (supports up to 256 lessons per course)
+
+---
+
+## CMS Integration
+
+See [CMS_GUIDE.md](CMS_GUIDE.md) for full documentation.
+
+The app uses the **Repository Pattern** — swap `StaticCmsService` for `SanityCmsService` in `src/lib/cms.ts` for headless CMS integration.
+
+---
+
+## Design Tokens
+
+| Token | Light | Dark |
+|---|---|---|
+| `--primary` | `263 70% 58%` | `263 90% 67%` |
+| `--background` | `0 0% 98%` | `240 10% 8%` |
+| `--card` | `0 0% 100%` | `240 6% 12%` |
+| `--border` | `0 0% 90%` | `240 6% 18%` |
+
+Theme toggle persists to `localStorage` and defaults to system preference.
+
+---
+
+## Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Deployment
+
+The app is deployed on Vercel. For new deployments:
+
+```bash
+npx vercel deploy --prod
+```
+
+---
+
+## License
+
+[MIT](../LICENSE)

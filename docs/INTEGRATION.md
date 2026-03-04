@@ -1,6 +1,7 @@
 # Superteam Academy — Frontend Integration Guide
 
-Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
+Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`  
+**Live Demo:** [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app) | **Frontend Source:** [`app/`](../app/)
 
 ## Architecture
 
@@ -649,3 +650,21 @@ function getCompletedLessonIndices(lessonFlags: BN[], lessonCount: number): numb
 8. **Issue credential** → backend calls `issue_credential` → NFT appears in wallet
 9. **Show XP** → query Token-2022 ATA balance
 10. **Show credentials** → Helius DAS `getAssetsByOwner` filtered by collection
+
+---
+
+## Live Implementation Reference
+
+The frontend at [`app/`](../app/) implements the patterns described in this guide. Key source files:
+
+| This Guide | Live Implementation |
+|---|---|
+| PDA Derivation | [`app/src/lib/pda.ts`](../app/src/lib/pda.ts) |
+| XP Balance queries | [`app/src/lib/xp.ts`](../app/src/lib/xp.ts) + [`app/src/hooks/useXP.ts`](../app/src/hooks/useXP.ts) |
+| Lesson Bitmap helpers | [`app/src/lib/bitmap.ts`](../app/src/lib/bitmap.ts) |
+| Credential (DAS) queries | [`app/src/lib/helius.ts`](../app/src/lib/helius.ts) |
+| CMS / Course data | [`app/src/lib/cms.ts`](../app/src/lib/cms.ts) + [`app/src/lib/courses.ts`](../app/src/lib/courses.ts) |
+| Wallet setup | [`app/src/providers/WalletProvider.tsx`](../app/src/providers/WalletProvider.tsx) |
+| Backend service layer | [`app/src/lib/services.ts`](../app/src/lib/services.ts) |
+
+For frontend-specific documentation, see [`app/README.md`](../app/README.md) and [`app/CMS_GUIDE.md`](../app/CMS_GUIDE.md).

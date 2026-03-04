@@ -2,6 +2,7 @@
 
 Each bounty applicant deploys their own program instance on devnet. This gives you full authority over the program — no shared keys, no waiting on others, and a clean environment to test your frontend against.
 
+**Live Demo:** [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app)  
 Full instruction reference: [INTEGRATION.md](./INTEGRATION.md) | Program specification: [SPEC.md](./SPEC.md)
 
 ---
@@ -350,3 +351,22 @@ Run `anchor clean` before rebuilding to clear cached artifacts:
 ```bash
 anchor clean && anchor build
 ```
+
+---
+
+## 13. Next Steps: Frontend
+
+Once your program is deployed and initialized, you can run the frontend:
+
+```bash
+cd ../app
+npm install
+
+# Create .env.local with your program addresses (see step 12)
+npm run dev
+# → http://localhost:3000
+```
+
+The frontend is also deployed at **[superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app)**.
+
+For frontend architecture and configuration details, see [`app/README.md`](../app/README.md).

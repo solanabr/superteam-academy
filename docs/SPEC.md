@@ -1,8 +1,10 @@
 # Superteam Academy — On-Chain Program Specification
 
-**Version:** 3.0
-**Network:** Solana Mainnet
-**Framework:** Anchor + Metaplex Core
+**Version:** 3.1  
+**Network:** Solana Devnet  
+**Framework:** Anchor + Metaplex Core  
+**Live Demo:** [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app)  
+**Program ID:** [`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet)
 
 ---
 
@@ -240,4 +242,17 @@ Achievement NFTs are distinct from track credentials — each is a separate Meta
 
 ---
 
-*Specification v3.0 — Superteam Academy*
+## Frontend Implementation
+
+The frontend application is live and implements this specification. See:
+
+- **[Live Demo](https://superteam-academy-sigma.vercel.app)** — Production deployment on Vercel
+- **[Frontend README](../app/README.md)** — Architecture, on-chain integration, environment setup
+- **[CMS Guide](../app/CMS_GUIDE.md)** — Switching from static data to Sanity CMS
+- **[Frontend Integration](./INTEGRATION.md)** — PDA derivation, instruction usage, error handling
+
+The frontend implements all learner-facing flows: enrollment, lesson completion (with Monaco code editor), XP tracking via Token-2022, credential display via Helius DAS API, bitmap progress tracking, and leaderboard rankings.
+
+---
+
+*Specification v3.1 — Superteam Academy*

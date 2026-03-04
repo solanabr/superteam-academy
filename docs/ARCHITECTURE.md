@@ -1,6 +1,7 @@
 # Superteam Academy — Architecture Reference
 
-Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
+Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).  
+**Live Demo:** [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app) | **Program ID:** `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
 
 ---
 
@@ -8,9 +9,19 @@ Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Next.js)                        │
+│                   FRONTEND (Next.js 16 + React 19)               │
 │                                                                  │
-│  Wallet Adapter  ──  Anchor Client  ──  Helius DAS API           │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────────────┐ │
+│  │ Wallet      │  │ Anchor       │  │ Helius DAS API           │ │
+│  │ Adapter     │  │ Client       │  │ (credentials + XP)       │ │
+│  └──────┬──────┘  └──────┬───────┘  └──────────┬───────────────┘ │
+│         │                │                     │                 │
+│  ┌──────┴────────────────┴─────────────────────┴───────────────┐ │
+│  │ Features: i18n (EN/ES/PT-BR) · Dual Theme · Gamification   │ │
+│  │ Monaco Code Editor · Framer Motion · Recharts · Sanity CMS │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│  Pages: Landing · Dashboard · Courses · Lessons · Leaderboard   │
+│         Profile · Admin · Settings · Certificates · Onboarding   │
 └────────┬─────────────────────┬───────────────────┬──────────────┘
          │ learner signs       │ read accounts     │ leaderboard +
          │ (enroll, close)     │ (course, enroll)  │ credential NFTs
@@ -252,4 +263,59 @@ R = read, W = write, I = init, C = close
 
 ---
 
-*For instruction parameter details, account field definitions, and error codes, see [SPEC.md](./SPEC.md). For frontend integration, see [INTEGRATION.md](./INTEGRATION.md).*
+## Frontend Architecture
+
+The Next.js 16 frontend is deployed at [superteam-academy-sigma.vercel.app](https://superteam-academy-sigma.vercel.app). See [app/README.md](../app/README.md) for full frontend documentation.
+
+### Application Routes
+
+| Route | Description | On-Chain Data |
+|---|---|---|
+| `/` | Landing page with hero, stats, learning paths | None (static) |
+| `/courses` | Course catalog with track filtering | Course PDAs |
+| `/courses/[slug]` | Course detail with lessons | Course + Enrollment PDAs |
+| `/courses/[slug]/lessons/[id]` | Lesson viewer with Monaco editor | Enrollment bitmap |
+| `/dashboard` | Personal dashboard (XP ring, streaks) | Token-2022 XP balance |
+| `/leaderboard` | Global XP rankings | Helius DAS API |
+| `/profile/[username]` | Public user profile | Enrollment + Credential NFTs |
+| `/admin` | Admin panel for course management | Course PDAs |
+| `/settings` | User preferences | None (local) |
+| `/certificates` | Credential NFT display | Helius DAS API |
+| `/onboarding` | Skill quiz for new users | None (local) |
+
+### Key Library Modules
+
+| Module | Purpose | On-Chain Dependency |
+|---|---|---|
+| `src/lib/pda.ts` | PDA derivation (6 account types) | Program ID |
+| `src/lib/xp.ts` | XP level calculations, formatting | Token-2022 ATA balance |
+| `src/lib/bitmap.ts` | Lesson progress bitmap parsing | Enrollment account |
+| `src/lib/helius.ts` | Helius DAS API client | Helius RPC |
+| `src/lib/cms.ts` | CMS interface (Repository Pattern) | None |
+| `src/lib/courses.ts` | Static course data (7 courses) | None |
+| `src/lib/services.ts` | Backend service layer | API routes |
+
+### Provider Tree
+
+```
+NextIntlProvider (i18n)
+  └── ThemeProvider (light/dark)
+        └── WalletProvider (Solana Wallet Adapter)
+              └── Sidebar + Main Content
+```
+
+### Tech Stack
+
+| Layer | Stack |
+|---|---|
+| **Framework** | Next.js 16 (App Router), React 19, TypeScript |
+| **Styling** | Tailwind CSS 4, Framer Motion, Lucide React |
+| **Web3** | Solana Wallet Adapter, @coral-xyz/anchor, @solana/web3.js |
+| **i18n** | next-intl (EN, ES, PT-BR — 270+ strings per locale) |
+| **CMS** | Sanity CMS (Repository Pattern — swappable) |
+| **Analytics** | Google Analytics 4 |
+| **Testing** | Playwright |
+
+---
+
+*For instruction parameter details, account field definitions, and error codes, see [SPEC.md](./SPEC.md). For frontend integration, see [INTEGRATION.md](./INTEGRATION.md). For frontend-specific architecture, see [app/README.md](../app/README.md).*
