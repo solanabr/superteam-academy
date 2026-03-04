@@ -4,9 +4,10 @@ const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC || 'https://api.devnet.solana
 
 export const connection = new Connection(RPC_URL, 'confirmed');
 
-export const XP_MINT_DEVNET = 'DpSmA2DT5jCqKfJ3QxqKfJ3QxqKfJ3QxqKfJ3Qxq'; // Placeholder - replace with real XP mint
-export const CREDENTIAL_MINT_DEVNET = 'Acpy8uLgPBh4JXxqKfJ3QxqKfJ3QxqKfJ3QxqKfJ'; // Placeholder for credential NFTs
-export const PROGRAM_ID = 'Acpy8uLgPBh4JXxqKfJ3QxqKfJ3QxqKfJ3QxqKfJ';
+export const PROGRAM_ID = 'ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf';
+export const CONFIG_PDA = 'GjsatVW8i6vvHHGtTd59xhRPud1SfoS8ckxL5bGeM7sc';
+export const XP_MINT_DEVNET = 'xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3';
+export const TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
 
 interface HeliusDASResponse {
   result: Array<{
@@ -78,7 +79,25 @@ export async function getTokenBalance(walletAddress: string, mintAddress: string
 }
 
 export async function getXpBalance(walletAddress: string): Promise<number> {
-  return getTokenBalance(walletAddress, XP_MINT_DEVNET);
+  try {
+    const wallet = new PublicKey(walletAddress);
+    const mint = new PublicKey(XP_MINT_DEVNET);
+    
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(wallet, { 
+      mint,
+      programId: new PublicKey(TOKEN_2022_PROGRAM_ID),
+    });
+    
+    if (tokenAccounts.value.length === 0) {
+      return 0;
+    }
+    
+    const balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+    return typeof balance === 'number' ? balance : parseFloat(balance) || 0;
+  } catch (error) {
+    console.error('Error fetching XP balance:', error);
+    return 0;
+  }
 }
 
 export async function getAllTokenBalances(walletAddress: string): Promise<Array<{ mint: string; balance: number }>> {
@@ -153,12 +172,67 @@ export async function getNFTsByOwner(walletAddress: string): Promise<NFTData[]> 
 
 export async function getCredentialNfts(walletAddress: string): Promise<NFTData[]> {
   const allNfts = await getNFTsByOwner(walletAddress);
-  // Filter for credential NFTs (could check collection or metadata)
   return allNfts.filter(nft => 
     nft.name.toLowerCase().includes('credential') || 
     nft.name.toLowerCase().includes('certificate') ||
     nft.name.toLowerCase().includes('badge')
   );
+}
+
+const ENROLLMENT_DISCRIMINATOR = Buffer.from([141, 44, 114, 20, 192, 193, 95, 92]);
+
+function decodeEnrollment(data: Buffer): { completedAt: number | null; credentialAsset: string | null } {
+  if (!data || data.length < 40) {
+    return { completedAt: null, credentialAsset: null };
+  }
+  
+  const completedAt = data.readBigInt64LE(24);
+  const hasCredential = data[32] === 1;
+  let credentialAsset: string | null = null;
+  
+  if (hasCredential) {
+    credentialAsset = new PublicKey(data.slice(33, 65)).toBase58();
+  }
+  
+  return {
+    completedAt: completedAt === BigInt(0) ? null : Number(completedAt),
+    credentialAsset,
+  };
+}
+
+export async function getCredentialsFromEnrollments(
+  walletAddress: string,
+  courseSlugs: string[]
+): Promise<Array<{ courseSlug: string; credentialMint: string; completedAt: number }>> {
+  const credentials: Array<{ courseSlug: string; credentialMint: string; completedAt: number }> = [];
+  const learner = new PublicKey(walletAddress);
+  
+  for (const courseSlug of courseSlugs) {
+    try {
+      const [enrollmentPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from('enrollment'), Buffer.from(courseSlug), learner.toBuffer()],
+        new PublicKey(PROGRAM_ID)
+      );
+      
+      const account = await connection.getAccountInfo(enrollmentPDA);
+      
+      if (account && account.data.length > 65) {
+        const { completedAt, credentialAsset } = decodeEnrollment(account.data);
+        
+        if (credentialAsset && completedAt) {
+          credentials.push({
+            courseSlug,
+            credentialMint: credentialAsset,
+            completedAt,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching enrollment for ${courseSlug}:`, error);
+    }
+  }
+  
+  return credentials;
 }
 
 export async function getMultipleTokenBalances(mintAddress: string, walletAddresses: string[]): Promise<Array<{ wallet: string; balance: number }>> {
@@ -186,33 +260,44 @@ export function getTrackName(slug: string): string {
 }
 
 export async function getLeaderboardData(): Promise<Array<{ wallet: string; xp: number }>> {
-  // Try to fetch real data from chain
   try {
-    const knownAddresses = [
-      '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-      '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-      '3Kh9sFe4G8XTdEq3X9AwCPYz8W7GzD5Rp4tN2kVL8mQ',
-      '5ygM2xNDfQvVGnR7D1fCqXrU3NbWEKz9TqkL6RyJ2tPw',
-      '4FbQnDR8yJ7pGkW6T2xEMvL9dZ3CsN5HqA7uXjKf8mRe',
-      '8rJ6YkQz2TpWxN4C3mDfR7gL5vHsB9E1aKuXwZj6tMn3',
-      '2mXfH5vNqB8dK3LwJ6rGcT9Y7sZpE4A1hWxUkQ5jRt8n',
-      '6tR9CpWmX3kG7vN8dL2qHjY5sZxE1bA4fKuJwQ6nMr3T',
-      '1nK8JhWx5tR4cP9mQ3dG7vL6bZ2sY8eA5fXuNrTj4Mq7',
-      'BvR3Kp8mN6dW2tJ5xQ9gH7cL4sZ1yE8aF3uXwMj6Tr5n',
-    ];
+    const response = await fetch(
+      `${RPC_URL}?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY || ''}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: '1',
+          method: 'getTokenAccounts',
+          params: {
+            mint: XP_MINT_DEVNET,
+            limit: 100,
+          },
+        }),
+      }
+    );
     
-    const balances = await getMultipleTokenBalances(XP_MINT_DEVNET, knownAddresses);
+    const data = await response.json();
+    const accounts = data.result?.tokenAccounts || [];
     
-    if (balances.some(b => b.balance > 0)) {
-      return balances
-        .map(b => ({ wallet: b.wallet, xp: b.balance }))
-        .sort((a, b) => b.xp - a.xp);
+    if (accounts.length > 0) {
+      const leaderboard = accounts
+        .map((acc: { account: { data: { parsed: { info: { owner: string; tokenAmount: { amount: string } } } } } }) => ({
+          wallet: acc.account.data.parsed.info.owner,
+          xp: parseInt(acc.account.data.parsed.info.tokenAmount.amount) || 0,
+        }))
+        .filter((entry: { xp: number }) => entry.xp > 0)
+        .sort((a: { xp: number }, b: { xp: number }) => b.xp - a.xp);
+      
+      if (leaderboard.length > 0) {
+        return leaderboard;
+      }
     }
   } catch (error) {
     console.error('Error fetching leaderboard from chain:', error);
   }
   
-  // Fallback to mock data with deterministic values
   const mockXp = [8500, 7200, 6400, 5600, 4800, 4200, 3100, 2400, 1800, 1200];
   const mockWallets = [
     '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',

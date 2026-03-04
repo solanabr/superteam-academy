@@ -56,13 +56,7 @@ export function EnrollButton({ courseSlug, t }: EnrollButtonProps) {
 
       const existingEnrollment = await connection.getAccountInfo(enrollmentPDA);
       if (existingEnrollment) {
-        await supabase.from("enrollments").upsert({
-        user_wallet: address,
-        course_id: courseSlug,
-        tx_signature: signature,
-        progress: 0,
-      }, { onConflict: "user_wallet,course_id" });
-      setEnrolled(true);
+        setEnrolled(true);
         return;
       }
 
