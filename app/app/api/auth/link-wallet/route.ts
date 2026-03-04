@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
 import { requireSession } from "@/lib/route-utils";
 import { upsertLinkedAccount } from "@/lib/auth-linking-store";
-import { syncUserToSanity } from "@/lib/sanity-users";
+import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -25,10 +25,15 @@ export async function POST(request: NextRequest) {
 		if (!auth.ok) return auth.response;
 		const { session } = auth;
 
+		// Use the Sanity-stored email (which the user may have updated) instead
+		// of the BetterAuth session email that may still hold the wallet email.
+		const sanityUser = await getUserByAuthId(session.user.id);
+		const email = sanityUser?.email ?? session.user.email;
+
 		await syncUserToSanity({
 			authId: session.user.id,
-			name: session.user.name,
-			email: session.user.email,
+			name: sanityUser?.name ?? session.user.name,
+			email,
 			walletAddress: parsed.data.publicKey,
 			...(session.user.image ? { image: session.user.image } : {}),
 		});
@@ -43,8 +48,8 @@ export async function POST(request: NextRequest) {
 			// Merge duplicate user records by wallet, then retry linking on the surviving user.
 			await syncUserToSanity({
 				authId: session.user.id,
-				name: session.user.name,
-				email: session.user.email,
+				name: sanityUser?.name ?? session.user.name,
+				email,
 				walletAddress: parsed.data.publicKey,
 				...(session.user.image ? { image: session.user.image } : {}),
 			});

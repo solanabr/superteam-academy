@@ -10,7 +10,7 @@ import {
 	userStatsQuery,
 } from "@superteam-academy/cms/queries";
 import { generateUsername } from "./username-utils";
-import { WALLET_EMAIL_DOMAIN, walletEmail } from "@/packages/auth/src/wallet-utils";
+import { WALLET_EMAIL_DOMAIN, walletEmail, isWalletEmail } from "@/packages/auth/src/wallet-utils";
 import { truncateAddress } from "@/lib/utils";
 
 export type { AcademyUser };
@@ -172,9 +172,14 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	const buildExistingUserPatch = async (
 		target: AcademyUser
 	): Promise<Record<string, unknown>> => {
+		// Preserve a user-set email over a system-generated wallet email
+		const resolvedEmail =
+			isWalletEmail(params.email) && target.email && !isWalletEmail(target.email)
+				? target.email
+				: params.email;
 		const patch: Record<string, unknown> = {
 			name: target.name || params.name,
-			email: params.email,
+			email: resolvedEmail,
 			walletAddress: normalizedWalletAddress || target.walletAddress || "",
 			lastActiveAt: now,
 			authId: params.authId,
