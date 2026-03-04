@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -55,6 +56,7 @@ const LANG_DEFAULTS: LangState = {
 
 export function LanguageSettings() {
 	const t = useTranslations("settings.languageSection");
+	const router = useRouter();
 	const {
 		settings,
 		saving,
@@ -64,6 +66,7 @@ export function LanguageSettings() {
 		successTitle: t("toast.savedTitle"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 
 	const locale = getLocale(settings.language);

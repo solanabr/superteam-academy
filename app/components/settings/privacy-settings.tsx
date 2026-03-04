@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Eye, Users, Lock, Download } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -93,6 +94,7 @@ const VISIBILITY_OPTIONS = [
 export function PrivacySettings() {
 	const t = useTranslations("settings.privacySection");
 	const { toast } = useToast();
+	const router = useRouter();
 	const {
 		settings,
 		saving: isLoading,
@@ -103,6 +105,7 @@ export function PrivacySettings() {
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 	const [isExporting, setIsExporting] = useState(false);
 

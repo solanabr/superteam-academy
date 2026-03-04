@@ -22,7 +22,7 @@ interface SettingsResponse {
 let cachedData: SettingsResponse | null = null;
 
 async function fetchSettings(): Promise<SettingsResponse> {
-	const res = await fetch("/api/settings");
+	const res = await fetch("/api/settings", { cache: "no-store" });
 	if (!res.ok) throw new Error("Failed to load");
 	return res.json() as Promise<SettingsResponse>;
 }
@@ -71,6 +71,7 @@ export function useSettingsSave(messages: {
 	successDescription?: string;
 	errorTitle: string;
 	errorDescription: string;
+	onSuccess?: () => void;
 }) {
 	const { data, loading, save } = useSettings();
 	const { toast } = useToast();
@@ -82,6 +83,7 @@ export function useSettingsSave(messages: {
 			try {
 				await save(patch);
 				toast({ title: messages.successTitle, description: messages.successDescription });
+				messages.onSuccess?.();
 			} catch {
 				toast({
 					title: messages.errorTitle,
@@ -99,6 +101,7 @@ export function useSettingsSave(messages: {
 			messages.successDescription,
 			messages.errorTitle,
 			messages.errorDescription,
+			messages.onSuccess,
 		]
 	);
 
@@ -113,6 +116,7 @@ export function useSettingsSection<T extends object>(
 		successDescription?: string;
 		errorTitle: string;
 		errorDescription: string;
+		onSuccess?: () => void;
 	}
 ) {
 	const { data, saving, handleSave: rawSave } = useSettingsSave(messages);

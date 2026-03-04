@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +23,7 @@ const FONT_SIZES = [{ value: "small" }, { value: "medium" }, { value: "large" }]
 export function AppearanceSettings() {
 	const t = useTranslations("settings.appearanceSection");
 	const { theme, setTheme } = useTheme();
+	const router = useRouter();
 	const {
 		data,
 		saving: isLoading,
@@ -31,6 +33,7 @@ export function AppearanceSettings() {
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 	const [currentTheme, setCurrentTheme] = useState<ThemeVal>((theme as ThemeVal) || "system");
 	const [fontSize, setFontSize] = useState("medium");

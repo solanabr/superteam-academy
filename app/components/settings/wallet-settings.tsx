@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Wallet, ExternalLink, Copy, Check, RefreshCw, Link2, Unlink } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
@@ -24,6 +25,7 @@ interface LinkedAccount {
 export function WalletSettings() {
 	const t = useTranslations("settings.walletSection");
 	const { toast } = useToast();
+	const router = useRouter();
 	const { wallet, user } = useAuth();
 	const {
 		data,
@@ -33,6 +35,7 @@ export function WalletSettings() {
 		successTitle: t("toast.savedTitle"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 	const { copied, copy } = useCopyToClipboard();
 	const [autoConnect, setAutoConnect] = useState(true);

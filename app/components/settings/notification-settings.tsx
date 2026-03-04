@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail, MessageSquare, Trophy, BookOpen } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -81,6 +82,7 @@ const TOGGLE_ITEMS = [
 
 export function NotificationSettings() {
 	const t = useTranslations("settings.notificationsSection");
+	const router = useRouter();
 	const {
 		settings,
 		saving: isLoading,
@@ -91,6 +93,7 @@ export function NotificationSettings() {
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 
 	const renderSection = (title: string, section: string) => (

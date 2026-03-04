@@ -65,13 +65,14 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 			try {
 				await signInWithOAuth(provider);
 				handleOpenChange(false);
+				router.refresh();
 			} catch {
 				setError(t("oauthError", { provider }));
 			} finally {
 				setIsLoading(null);
 			}
 		},
-		[signInWithOAuth, handleOpenChange, t]
+		[signInWithOAuth, handleOpenChange, router, t]
 	);
 
 	const handleWalletConnect = useCallback(async () => {

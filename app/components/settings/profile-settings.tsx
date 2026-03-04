@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Camera, Check, X } from "lucide-react";
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ interface ProfileData {
 export function ProfileSettings() {
 	const t = useTranslations("settings.profileSection");
 	const { toast } = useToast();
+	const router = useRouter();
 	const {
 		data,
 		loading,
@@ -36,6 +38,7 @@ export function ProfileSettings() {
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),
+		onSuccess: () => router.refresh(),
 	});
 	const {
 		checking: usernameChecking,
