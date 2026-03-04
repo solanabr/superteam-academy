@@ -1,8 +1,8 @@
 /**
  * Service layer barrel export.
  *
- * All services use localStorage stubs by default.
- * Swap implementations when connecting to on-chain program.
+ * When NEXT_PUBLIC_HELIUS_RPC_URL is configured → Devnet on-chain services.
+ * Otherwise → localStorage stubs (zero change from before).
  *
  * Usage:
  *   import { progressService, xpService } from "@/services";
@@ -30,19 +30,15 @@ export type {
   CourseContentService,
 } from "./interfaces";
 
-// Singleton instances
-import { LocalProgressService } from "./progress.service";
-import { LocalXpService } from "./xp.service";
-import { LocalStreakService } from "./streak.service";
-import { LocalCredentialService } from "./credential.service";
-import { LocalLeaderboardService } from "./leaderboard.service";
-import { LocalAchievementService } from "./achievement.service";
-import { LocalActivityService } from "./activity.service";
+// Singleton instances via factory
+import { createServices } from "./service-factory";
 
-export const progressService = new LocalProgressService();
-export const xpService = new LocalXpService();
-export const streakService = new LocalStreakService();
-export const credentialService = new LocalCredentialService();
-export const leaderboardService = new LocalLeaderboardService();
-export const achievementService = new LocalAchievementService();
-export const activityService = new LocalActivityService();
+const services = createServices();
+
+export const progressService = services.progressService;
+export const xpService = services.xpService;
+export const streakService = services.streakService;
+export const credentialService = services.credentialService;
+export const leaderboardService = services.leaderboardService;
+export const achievementService = services.achievementService;
+export const activityService = services.activityService;

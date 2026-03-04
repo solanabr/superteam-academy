@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { SessionProvider } from "@/providers/session-provider";
 import { WalletProvider } from "@/providers/wallet-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { SolanaProgramProvider } from "@/providers/solana-program-provider";
 import { LocaleProvider } from "@/providers/locale-provider";
 import { AnalyticsProvider } from "@/providers/analytics-provider";
 import { Header } from "@/components/layout/header";
@@ -40,17 +41,19 @@ export default function RootLayout({
         <ThemeProvider>
           <SessionProvider>
             <WalletProvider>
-              <AuthProvider>
-                <LocaleProvider>
-                  <AnalyticsProvider>
-                    <div className="flex min-h-screen flex-col">
-                      <Header />
-                      <main className="flex-1">{children}</main>
-                      <Footer />
-                    </div>
-                  </AnalyticsProvider>
-                </LocaleProvider>
-              </AuthProvider>
+              <SolanaProgramProvider>
+                <AuthProvider>
+                  <LocaleProvider>
+                    <AnalyticsProvider>
+                      <div className="flex min-h-screen flex-col">
+                        <Header />
+                        <main className="flex-1">{children}</main>
+                        <Footer />
+                      </div>
+                    </AnalyticsProvider>
+                  </LocaleProvider>
+                </AuthProvider>
+              </SolanaProgramProvider>
             </WalletProvider>
           </SessionProvider>
         </ThemeProvider>

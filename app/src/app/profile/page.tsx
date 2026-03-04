@@ -707,7 +707,10 @@ export default function ProfilePage() {
                         />
                       </div>
                       <span className="text-[11px] text-muted-foreground/60">
-                        {t("dashboard.lessonsDetail", { completed: course.completed, total: course.lessons })}
+                        {t("dashboard.lessonsDetail", {
+                          completed: course.completed,
+                          total: course.lessons,
+                        })}
                       </span>
                     </div>
                   </div>
@@ -716,7 +719,9 @@ export default function ProfilePage() {
                       {course.xpEarned.toLocaleString()} XP
                     </span>
                     <span className="text-[10px] text-muted-foreground/60">
-                      {course.completedAt === "In progress" ? t("profile.inProgress") : course.completedAt}
+                      {course.completedAt === "In progress"
+                        ? t("profile.inProgress")
+                        : course.completedAt}
                     </span>
                   </div>
                 </Link>

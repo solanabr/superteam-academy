@@ -243,6 +243,8 @@
     "clickRunTests": "Click 'Run Tests' to see output...",
     "lessonNotFound": "Lesson not found",
     "lessonNotFoundDesc": "This lesson doesn't exist or has been removed.",
+    "enrollRequired": "Enrollment required",
+    "enrollRequiredDesc": "You need to enroll in this course before accessing lessons.",
     "backToCourse": "Back to course",
     "done": "Done",
     "testCases": "Test Cases",

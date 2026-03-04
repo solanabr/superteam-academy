@@ -714,6 +714,56 @@ export const courses: CourseDetail[] = [
     ],
   },
   {
+    slug: "solana-mock-test",
+    title: "Solana Quick Start (Devnet Test)",
+    description:
+      "A short test course deployed on devnet. Enroll to test on-chain enrollment, XP tracking, and credentials.",
+    longDescription:
+      "This course exists on-chain on Solana devnet for integration testing. It has 5 lessons covering basic Solana concepts. Use it to verify that wallet enrollment, XP balance reads, and credential queries work end-to-end.",
+    difficulty: "Beginner",
+    topic: "Core",
+    topicLabel: "CORE",
+    duration: "30m",
+    lessons: 5,
+    completed: 0,
+    xp: 500,
+    accent: "#34d399",
+    icon: Blocks,
+    codePreview: [
+      "// On-chain enrollment test",
+      'let course = "solana-mock-test";',
+      "let ix = enroll(course, learner);",
+      "send_transaction(ix);",
+    ],
+    instructor: { name: "Test Instructor", role: "Devnet Testing" },
+    modules: [
+      {
+        id: "m1",
+        title: "Getting Started",
+        lessons: [
+          lesson("l1", "Introduction to Solana", "5 min", "reading"),
+          lesson("l2", "Setting Up Your Wallet", "5 min", "reading"),
+          lesson("l3", "Your First Transaction", "10 min", "challenge"),
+        ],
+      },
+      {
+        id: "m2",
+        title: "On-Chain Basics",
+        lessons: [
+          lesson("l4", "Understanding Accounts", "5 min", "reading"),
+          lesson("l5", "Final Quiz", "5 min", "challenge"),
+        ],
+      },
+    ],
+    reviews: [
+      {
+        name: "Test User",
+        rating: 5,
+        text: "Quick course to verify on-chain integration works correctly.",
+      },
+    ],
+  },
+  {
     slug: "cross-program-invocations",
     title: "Cross-Program Invocations",
     description:

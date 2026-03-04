@@ -48,12 +48,14 @@ function ModuleSection({
   accent,
   courseSlug,
   defaultOpen,
+  locked,
 }: {
   module: Module;
   index: number;
   accent: string;
   courseSlug: string;
   defaultOpen: boolean;
+  locked: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const { t } = useLocale();
@@ -101,30 +103,54 @@ function ModuleSection({
 
       {open && (
         <div className="border-t border-border/50">
-          {module.lessons.map((lesson, i) => (
-            <Link
-              key={lesson.id}
-              href={`/courses/${courseSlug}/lessons/${lesson.id}`}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
-            >
-              <div className="flex size-6 shrink-0 items-center justify-center">
-                {lesson.completed ? (
-                  <CheckCircle2 className="size-4" style={{ color: accent }} />
-                ) : (
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                )}
-              </div>
-              <LessonIcon type={lesson.type} />
-              <span className="flex-1 text-sm truncate">
-                {t(`courseContent.${courseSlug}.${lesson.id}`)}
-              </span>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {lesson.duration}
-              </span>
-            </Link>
-          ))}
+          {module.lessons.map((lesson, i) => {
+            const inner = (
+              <>
+                <div className="flex size-6 shrink-0 items-center justify-center">
+                  {locked ? (
+                    <Lock className="size-3.5 text-muted-foreground/40" />
+                  ) : lesson.completed ? (
+                    <CheckCircle2
+                      className="size-4"
+                      style={{ color: accent }}
+                    />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  )}
+                </div>
+                <LessonIcon type={lesson.type} />
+                <span className="flex-1 text-sm truncate">
+                  {t(`courseContent.${courseSlug}.${lesson.id}`)}
+                </span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {lesson.duration}
+                </span>
+              </>
+            );
+
+            if (locked) {
+              return (
+                <div
+                  key={lesson.id}
+                  className="flex items-center gap-3 px-4 py-3 opacity-50 cursor-not-allowed"
+                >
+                  {inner}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={lesson.id}
+                href={`/courses/${courseSlug}/lessons/${lesson.id}`}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
+              >
+                {inner}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
@@ -177,9 +203,13 @@ export default function CourseDetailPage() {
     }
     if (!publicKey || !course || enrollmentStatus !== "not-enrolled") return;
     setEnrollmentStatus("enrolling");
-    await progressService.enroll(publicKey.toBase58(), course.slug);
-    analyticsEvents.courseEnrolled(course.slug);
-    setEnrollmentStatus("enrolled");
+    try {
+      await progressService.enroll(publicKey.toBase58(), course.slug);
+      analyticsEvents.courseEnrolled(course.slug);
+      setEnrollmentStatus("enrolled");
+    } catch {
+      setEnrollmentStatus("not-enrolled");
+    }
   }, [connected, publicKey, course, enrollmentStatus, setVisible]);
 
   if (!course) {
@@ -476,6 +506,10 @@ export default function CourseDetailPage() {
                 accent={course.accent}
                 courseSlug={course.slug}
                 defaultOpen={i === 0}
+                locked={
+                  enrollmentStatus === "not-enrolled" ||
+                  enrollmentStatus === "enrolling"
+                }
               />
             ))}
           </div>

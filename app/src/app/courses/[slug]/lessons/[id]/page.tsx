@@ -30,6 +30,7 @@ import {
   Trophy,
   Sparkles,
   Save,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -635,13 +636,25 @@ export default function LessonPage() {
 
 function LessonContent({ slug, id }: { slug: string; id: string }) {
   const course = getCourseBySlug(slug);
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { t, locale } = useLocale();
   const lessonContent = getLessonContent(slug, id, locale);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [expandedHints, setExpandedHints] = useState<Set<number>>(new Set());
   const [autoSaved, setAutoSaved] = useState(false);
+  const [enrolled, setEnrolled] = useState<boolean | null>(null);
+
+  // Check enrollment status
+  useEffect(() => {
+    if (!connected || !publicKey || !course) {
+      setEnrolled(false);
+      return;
+    }
+    progressService.getProgress(publicKey.toBase58(), course.slug).then((p) => {
+      setEnrolled(!!p);
+    });
+  }, [connected, publicKey, course]);
 
   // Load saved code from localStorage or use starter code
   const draftKey = `academy_draft_${slug}_${id}`;
@@ -734,6 +747,37 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("lesson.lessonNotFoundDesc")}
+          </p>
+          <Button variant="outline" size="sm" className="mt-4" asChild>
+            <Link href={`/courses/${slug}`}>
+              <ArrowLeft className="size-3.5" />
+              {t("lesson.backToCourse")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Enrollment gate
+  if (enrolled === null) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!enrolled) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Lock className="size-12 text-muted-foreground/60 mx-auto" />
+          <h1 className="mt-4 text-xl font-semibold">
+            {t("lesson.enrollRequired")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+            {t("lesson.enrollRequiredDesc")}
           </p>
           <Button variant="outline" size="sm" className="mt-4" asChild>
             <Link href={`/courses/${slug}`}>

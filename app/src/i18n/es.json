@@ -243,6 +243,8 @@
     "clickRunTests": "Haz clic en 'Ejecutar Pruebas' para ver la salida...",
     "lessonNotFound": "Lección no encontrada",
     "lessonNotFoundDesc": "Esta lección no existe o ha sido eliminada.",
+    "enrollRequired": "Inscripción requerida",
+    "enrollRequiredDesc": "Debes inscribirte en este curso antes de acceder a las lecciones.",
     "backToCourse": "Volver al curso",
     "done": "Hecho",
     "testCases": "Casos de Prueba",

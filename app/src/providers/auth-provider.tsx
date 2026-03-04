@@ -15,10 +15,7 @@ import {
   signOut as nextAuthSignOut,
 } from "next-auth/react";
 import type { UserProfile } from "@/types";
-import {
-  isSupabaseConfigured,
-  getSupabaseBrowserClient,
-} from "@/lib/supabase";
+import { isSupabaseConfigured, getSupabaseBrowserClient } from "@/lib/supabase";
 
 const STORAGE_KEY = "academy_user";
 const ACTIVE_WALLET_KEY = "academy_active_wallet";
@@ -304,9 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           existing = await loadUserFromSupabase(walletAddress);
           if (existing) {
             // Cache in localStorage for next time
-            const all = JSON.parse(
-              localStorage.getItem(STORAGE_KEY) || "{}",
-            );
+            const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
             all[walletAddress] = existing;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
           }
@@ -343,10 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           googleId: linked.googleId,
           githubId: linked.githubId,
           name: displayName,
-          username: displayName
-            .toLowerCase()
-            .replace(/\s+/g, "_")
-            .slice(0, 20),
+          username: displayName.toLowerCase().replace(/\s+/g, "_").slice(0, 20),
           bio: "",
           initials,
           avatarUrl: session.user.image ?? null,

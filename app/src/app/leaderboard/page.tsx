@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import {
-  getLeaderboard,
-  getCurrentUserRank,
-  courseFilters,
-  type TimeFilter,
-} from "@/data/leaderboard";
+import { courseFilters } from "@/data/leaderboard";
+import type { TimeFilter, LeaderboardEntry } from "@/types";
+import { leaderboardService } from "@/services";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -24,8 +21,24 @@ export default function LeaderboardPage() {
   const [page, setPage] = useState(1);
   const perPage = 10;
 
-  const entries = useMemo(() => getLeaderboard(timeFilter), [timeFilter]);
-  const me = getCurrentUserRank(entries);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+
+  useEffect(() => {
+    leaderboardService
+      .getEntries(timeFilter, undefined, 1, 1000)
+      .then(({ entries: data }) => setEntries(data))
+      .catch(() => setEntries([]));
+  }, [timeFilter]);
+
+  const wallet = publicKey?.toBase58();
+  const me = useMemo(() => {
+    if (!wallet) return entries.find((e) => e.isCurrentUser) ?? null;
+    return (
+      entries.find((e) => e.walletAddress === wallet) ??
+      entries.find((e) => e.isCurrentUser) ??
+      null
+    );
+  }, [entries, wallet]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return entries;

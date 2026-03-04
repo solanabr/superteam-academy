@@ -243,6 +243,8 @@
     "clickRunTests": "Clique em 'Executar Testes' para ver a saída...",
     "lessonNotFound": "Aula não encontrada",
     "lessonNotFoundDesc": "Esta aula não existe ou foi removida.",
+    "enrollRequired": "Inscrição necessária",
+    "enrollRequiredDesc": "Você precisa se inscrever neste curso antes de acessar as aulas.",
     "backToCourse": "Voltar ao curso",
     "done": "Pronto",
     "testCases": "Casos de Teste",

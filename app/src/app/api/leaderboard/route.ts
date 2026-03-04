@@ -1,33 +1,42 @@
 import { NextResponse } from "next/server";
 import { getLeaderboard } from "@/data/leaderboard";
-import type { TimeFilter } from "@/types";
+import { fetchHeliusLeaderboard } from "@/services/onchain/leaderboard.service";
+import type { LeaderboardEntry, TimeFilter } from "@/types";
 
 /**
  * GET /api/leaderboard?timeframe=weekly&page=1&pageSize=10
  *
- * Returns leaderboard entries.
- * Currently uses mock data.
+ * When NEXT_PUBLIC_HELIUS_RPC_URL is configured → fetches XP token holders
+ * from Helius DAS and sorts by balance. Otherwise → mock data.
  *
- * On-chain swap:
- * - Call Helius DAS getTokenAccounts for XP mint
- * - Sort by balance descending
- * - Enrich with user profiles from DB
- * - Cache with 5 min TTL
- *
- * Helius DAS call:
- *   POST https://devnet.helius-rpc.com/?api-key=KEY
- *   {
- *     jsonrpc: "2.0",
- *     method: "getTokenAccounts",
- *     params: { mint: "xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3", page: 1, limit: 100 }
- *   }
+ * Cached with 5-min TTL.
  */
 
 let cache: {
-  data: ReturnType<typeof getLeaderboard>;
+  data: LeaderboardEntry[];
   timestamp: number;
 } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const HELIUS_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT;
+
+async function fetchEntries(
+  timeframe: TimeFilter,
+): Promise<LeaderboardEntry[]> {
+  // Try on-chain via Helius DAS
+  if (HELIUS_URL && XP_MINT) {
+    try {
+      const entries = await fetchHeliusLeaderboard(HELIUS_URL, XP_MINT);
+      if (entries.length > 0) return entries;
+    } catch {
+      // Fall through to mock data
+    }
+  }
+
+  // Fallback to mock data
+  return getLeaderboard(timeframe);
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -36,7 +45,6 @@ export async function GET(request: Request) {
   const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
 
   // Use cached data if fresh
-  const cacheKey = timeframe;
   if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
     const entries = cache.data;
     const total = entries.length;
@@ -50,7 +58,7 @@ export async function GET(request: Request) {
   }
 
   // Fetch fresh data
-  const entries = getLeaderboard(timeframe);
+  const entries = await fetchEntries(timeframe);
   cache = { data: entries, timestamp: Date.now() };
 
   const total = entries.length;

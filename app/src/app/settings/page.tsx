@@ -408,13 +408,15 @@ function PrivacySection() {
             </p>
           </div>
         </div>
-        <Toggle enabled={isPublic} onToggle={() => {
-          const next = !isPublic;
-          setIsPublic(next);
-          updateProfile({ isPublic: next });
-        }} />
+        <Toggle
+          enabled={isPublic}
+          onToggle={() => {
+            const next = !isPublic;
+            setIsPublic(next);
+            updateProfile({ isPublic: next });
+          }}
+        />
       </div>
-
     </div>
   );
 }
