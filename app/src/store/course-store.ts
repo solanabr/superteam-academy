@@ -126,19 +126,11 @@ export const useCourseStore = create<CourseState>((set, get) => ({
 
             set({ txSuccess: true, isEnrolling: false });
 
-            // fetchProgress handles setting progress and clearing loading
-            // We poll for up to 10 seconds to ensure sync
-            let attempts = 0;
-            const poll = async () => {
-                if (attempts > 5) return;
-                await get().fetchProgress(wallet, courseId, true, true);
-                const current = get().progress;
-                if (!current && attempts < 5) {
-                    attempts++;
-                    setTimeout(poll, 2000);
-                }
-            };
-            poll();
+            // Single delayed fetch to sync server state — no aggressive polling needed
+            // The enrollment-store already set optimistic state and fires background syncs
+            setTimeout(() => {
+                get().fetchProgress(wallet, courseId, true, true);
+            }, 3000);
 
         } catch (e: any) {
             set({ txError: e.message, isEnrolling: false, progress: null, lastMutation: null });

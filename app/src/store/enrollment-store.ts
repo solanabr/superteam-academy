@@ -268,20 +268,21 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         });
 
         if (res.ok) {
-          // Surgical Sync: Refresh courses grid and current detail
-          await fetch("/api/sync/course", {
+          sendGAEvent('enroll', { course_id: courseId, wallet: walletAddress });
+
+          // Fire-and-forget: sync course data and refresh enrollments in background
+          // UI is already optimistic from setEnrollmentOptimistic above
+          fetch("/api/sync/course", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ wallet: walletAddress }),
           }).catch(() => null);
 
-          sendGAEvent('enroll', { course_id: courseId, wallet: walletAddress });
-
-          // Parallel refresh: Current enrollment + All enrollments (for dashboard)
-          await Promise.all([
+          // Background refresh — don't block UI
+          Promise.all([
             get().fetchEnrollment(walletAddress, courseId, true),
             get().fetchAllEnrollments(walletAddress, true)
-          ]);
+          ]).catch(() => null);
         }
       } catch (e) {
         console.error("Enrollment DB sync failed:", e);

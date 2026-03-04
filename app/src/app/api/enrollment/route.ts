@@ -27,32 +27,33 @@ export async function GET(request: NextRequest) {
       const { countSetBits } = await import("@/lib/bitmap");
 
       // DB-First: Read enrollment directly from Prisma (fast ~10ms)
-      // On-chain is only used for writes (enroll/complete/graduate)
-      const [enrollment, credential] = await Promise.all([
-        prisma.enrollment.findUnique({
-          where: { userId_courseId: { userId: user.id, courseId } },
-        }),
-        // Prioritize courseId match, then lazy-fetch trackId for fallback
-        prisma.credential.findFirst({
-          where: { userId: user.id, courseId },
-          select: { id: true, mintAddress: true }
-        }).then(async (res) => {
-          if (res) return res;
-          // Lazy: only fetch course track from Sanity if no direct credential match
-          const { getCourseById } = await import("@/sanity/lib/queries");
-          const course = await getCourseById(courseId);
-          const trackId = course?.track ?? courseId;
-          return prisma.credential.findFirst({
-            where: { userId: user.id, trackId },
-            orderBy: { earnedAt: 'desc' },
-            select: { id: true, mintAddress: true }
-          });
-        })
-      ]);
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId } },
+      });
 
       if (!enrollment) {
         if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
         return NextResponse.json(null, { status: 404 });
+      }
+
+      // Only lookup credential if course is completed — saves ~2-3s for non-graduated users
+      let credential: { id: string; mintAddress: string | null } | null = null;
+      if (enrollment.completedAt) {
+        credential = await prisma.credential.findFirst({
+          where: { userId: user.id, courseId },
+          select: { id: true, mintAddress: true }
+        });
+        if (!credential) {
+          // Lazy: only fetch course track from Sanity if no direct credential match
+          const { getCourseById } = await import("@/sanity/lib/queries");
+          const course = await getCourseById(courseId);
+          const trackId = course?.track ?? courseId;
+          credential = await prisma.credential.findFirst({
+            where: { userId: user.id, trackId },
+            orderBy: { earnedAt: 'desc' },
+            select: { id: true, mintAddress: true }
+          });
+        }
       }
 
       // Get totalLessons from Sanity (CDN-cached, fast)

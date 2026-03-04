@@ -1,0 +1,10 @@
+{
+    "regions": [
+        "bom1"
+    ],
+    "functions": {
+        "app/**/*.ts": {
+            "maxDuration": 10
+        }
+    }
+}
