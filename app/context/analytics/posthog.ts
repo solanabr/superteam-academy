@@ -21,6 +21,7 @@ export function initPostHog(): void {
         capture_pageview: false, // Manual tracking via useAnalytics hook
         capture_pageleave: true,
         disable_surveys: true, // Prevents surveys.js (31.8 KiB) + DM Sans font load
+        opt_in_site_apps: false, // Blocks toolbar/site apps that also load DM Sans
         disable_session_recording: !isProd,
         session_recording: isProd
             ? { recordCrossOriginIframes: true }
