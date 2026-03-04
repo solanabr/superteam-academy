@@ -21,6 +21,7 @@ anchor-client = "0.30"
 
 [features]
 default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 # cpi = ["anchor-lang/cpi"]
 # light = ["light-sdk"]
 

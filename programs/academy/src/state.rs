@@ -5,7 +5,7 @@ pub const MAX_MINTER_LABEL_LEN: usize = 32;
 pub const MAX_ACHIEVEMENT_ID_LEN: usize = 64;
 pub const MAX_ACHIEVEMENT_NAME_LEN: usize = 64;
 pub const MAX_METADATA_URI_LEN: usize = 200;
-pub const MAX_LESSONS: u8 = 256;
+pub const MAX_LESSONS: u8 = 255;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct I80F48 {

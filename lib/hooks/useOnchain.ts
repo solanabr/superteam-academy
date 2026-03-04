@@ -5,6 +5,7 @@ import { Program, AnchorProvider, type Idl } from '@coral-xyz/anchor';
 import { IDL, PROGRAM_ID, getEnrollmentPda, getCoursePda } from '@/lib/anchor';
 import type { Enrollment as OnChainEnrollment, Course as OnChainCourse } from '@/lib/anchor/types';
 import { READ_ONLY_WALLET, type UntypedAccountAccess, type AccountWrapper } from '@/lib/types/shared';
+import { ensureBalance } from '@/lib/utils/ensure-balance';
 
 const PROGRAM_IDL = {
   ...(IDL as Record<string, unknown>),
@@ -26,6 +27,9 @@ export function useEnrollCourse() {
   return useMutation({
     mutationFn: async ({ courseId }: { courseId: string }) => {
       if (!wallet) throw new Error('Wallet not connected');
+
+      // Ensure wallet has enough SOL for rent + fees (auto-airdrops on devnet)
+      await ensureBalance(connection, wallet.publicKey);
 
       const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
       const program = getProgram(provider);

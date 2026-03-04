@@ -25,12 +25,12 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ className }) => {
       onClick={toggleTheme}
       className={cn(
         'inline-flex items-center justify-center',
-        'p-2 rounded-lg',
-        'bg-gray-100 dark:bg-gray-800',
-        'text-gray-900 dark:text-gray-100',
-        'hover:bg-gray-200 dark:hover:bg-gray-700',
-        'transition-colors duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500',
+        'rounded-lg border border-gray-300 p-2',
+        'bg-white text-blue-700 shadow-sm',
+        'hover:-translate-y-0.5 hover:bg-blue-50 hover:border-blue-500 hover:shadow-[0_8px_16px_-12px_rgba(37,99,235,0.8)]',
+        'dark:border-neon-cyan/45 dark:bg-terminal-surface dark:text-neon-cyan dark:hover:bg-terminal-surface/80',
+        'transition-all duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 dark:focus-visible:ring-neon-cyan/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-terminal-bg',
         className
       )}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}

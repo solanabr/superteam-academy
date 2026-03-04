@@ -13,11 +13,13 @@ declare module 'next-auth' {
       id: string
       provider?: string
       needsProfile?: boolean
+      walletAddress?: string | null
     } & DefaultSession['user']
   }
 
   interface User {
     provider?: string
+    walletAddress?: string | null
   }
 }
 
@@ -26,5 +28,6 @@ declare module 'next-auth/jwt' {
     id?: string
     provider?: string
     needsProfile?: boolean
+    walletAddress?: string | null
   }
 }

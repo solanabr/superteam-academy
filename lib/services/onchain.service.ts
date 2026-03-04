@@ -1,6 +1,6 @@
 import { Program, AnchorProvider, BN } from '@coral-xyz/anchor';
 import { Connection, PublicKey, Keypair, SystemProgram, Transaction, VersionedTransaction } from '@solana/web3.js';
-import { TOKEN_2022_PROGRAM_ID, MPL_CORE_PROGRAM_ID } from '@/lib/anchor/constants';
+import { TOKEN_2022_PROGRAM_ID, MPL_CORE_PROGRAM_ID, DEVNET } from '@/lib/anchor/constants';
 import { getProgram } from '@/lib/anchor';
 import type { UntypedAccountAccess } from '@/lib/types/shared';
 import {
@@ -12,6 +12,14 @@ import {
   getAchievementReceiptPda,
 } from '@/lib/anchor/pda';
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
+
+/* ─── Dev logger (only in non-production) ─── */
+const isDev = process.env.NODE_ENV !== 'production';
+function onchainLog(tag: string, ...args: unknown[]) {
+  if (isDev) {
+    console.log(`[onchain:${tag}]`, ...args);
+  }
+}
 
 /**
  * Backend Signer Service
@@ -233,6 +241,54 @@ export class BackendSignerService {
   }
 
   /**
+   * Reward arbitrary XP using the MinterRole PDA
+   * Used for lesson completion XP when called outside the complete_lesson instruction
+   */
+  async rewardXp(
+    recipientAddress: PublicKey,
+    xpMint: PublicKey,
+    amount: number,
+    reason: string
+  ): Promise<string> {
+    onchainLog('rewardXp', { recipient: recipientAddress.toBase58(), amount, reason });
+
+    const [configPda] = getConfigPda();
+    const [minterRolePda] = getMinterRolePda(this.backendSigner.publicKey);
+
+    const recipientAta = getAssociatedTokenAddressSync(
+      xpMint,
+      recipientAddress,
+      false,
+      TOKEN_2022_PROGRAM_ID
+    );
+
+    const tx = await this.program.methods
+      .rewardXp({ value: new BN(amount) }, reason)
+      .accountsPartial({
+        config: configPda,
+        minterRole: minterRolePda,
+        xpMint: xpMint,
+        recipientTokenAccount: recipientAta,
+        minter: this.backendSigner.publicKey,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .preInstructions([
+        createAssociatedTokenAccountInstruction(
+          this.backendSigner.publicKey,
+          recipientAta,
+          recipientAddress,
+          xpMint,
+          TOKEN_2022_PROGRAM_ID
+        ),
+      ])
+      .signers([this.backendSigner])
+      .rpc({ skipPreflight: true });
+
+    onchainLog('rewardXp', '✅ TX:', tx);
+    return tx;
+  }
+
+  /**
    * Get backend signer public key
    */
   getBackendSignerPublicKey(): PublicKey {
@@ -253,4 +309,50 @@ export function createBackendSignerService(connection: Connection): BackendSigne
   const secretKey = new Uint8Array(secretKeyArray);
 
   return new BackendSignerService(connection, secretKey);
+}
+
+/**
+ * Check whether on-chain signer is configured
+ */
+export function isOnchainConfigured(): boolean {
+  return !!process.env.BACKEND_SIGNER_SECRET_KEY;
+}
+
+/**
+ * Create a Connection using env RPC URL
+ */
+export function getServerConnection(): Connection {
+  const rpcUrl =
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ||
+    process.env.SOLANA_RPC_URL ||
+    'https://api.devnet.solana.com';
+  return new Connection(rpcUrl, 'confirmed');
+}
+
+/**
+ * Get the XP Mint public key from env or constants
+ */
+export function getXpMint(): PublicKey {
+  const mint = process.env.NEXT_PUBLIC_XP_TOKEN_MINT;
+  if (mint) return new PublicKey(mint);
+  return DEVNET.XP_MINT;
+}
+
+/**
+ * Convenience: create service from env (connection + signer key)
+ * Returns null if BACKEND_SIGNER_SECRET_KEY is not set.
+ */
+export function tryCreateBackendSigner(): BackendSignerService | null {
+  if (!isOnchainConfigured()) {
+    onchainLog('init', '⚠️ BACKEND_SIGNER_SECRET_KEY not set — on-chain disabled');
+    return null;
+  }
+  try {
+    const svc = createBackendSignerService(getServerConnection());
+    onchainLog('init', '✅ BackendSignerService ready, signer:', svc.getBackendSignerPublicKey().toBase58());
+    return svc;
+  } catch (err) {
+    onchainLog('init', '❌ Failed to create BackendSignerService:', err);
+    return null;
+  }
 }

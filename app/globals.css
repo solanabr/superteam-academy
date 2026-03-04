@@ -4,16 +4,66 @@
 
 @layer base {
   :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --grid-line: rgba(15, 23, 42, 0.06);
+    --terminal-bg: 0 0% 100%;
+    --terminal-surface: 210 40% 98%;
+    --terminal-border: 214 32% 91%;
+  }
+
+  .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
+    --grid-line: rgba(255, 255, 255, 0.03);
+    --terminal-bg: 222 35% 6%;
+    --terminal-surface: 221 21% 13%;
+    --terminal-border: 215 23% 23%;
   }
   
   body {
     @apply bg-terminal-bg text-foreground;
     background-image: 
-      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: 40px 40px;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* Light-mode readability for legacy dark-first utility usage */
+  html:not(.dark) .text-white {
+    color: rgb(15 23 42);
+  }
+
+  html:not(.dark) .text-gray-300 {
+    color: rgb(71 85 105);
+  }
+
+  html:not(.dark) .text-gray-400 {
+    color: rgb(100 116 139);
+  }
+
+  html:not(.dark) .text-superteam-offwhite {
+    color: rgb(30 41 59);
+  }
+
+  html:not(.dark) .text-neon-cyan {
+    color: rgb(37 99 235);
+  }
+
+  html:not(.dark) .text-neon-green {
+    color: rgb(5 150 105);
+  }
+
+  html:not(.dark) .text-neon-yellow {
+    color: rgb(202 138 4);
   }
 }
 

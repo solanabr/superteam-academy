@@ -44,7 +44,7 @@ export default function RootLayout({
           });
         `}
       </Script>
-      <body className={`${inter.variable} ${jetbrains.variable} ${spaceGrotesk.variable} font-sans bg-white dark:bg-terminal-bg text-foreground transition-colors duration-200`}>
+      <body className={`${inter.variable} ${jetbrains.variable} ${spaceGrotesk.variable} font-sans bg-terminal-bg text-foreground transition-colors duration-200`}>
         <QueryProvider>
           <AnalyticsProvider>
             <AuthProvider>

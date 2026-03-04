@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/backend/src/db'
+import { getDatabase } from '@/lib/db'
 import { PublicKey } from '@solana/web3.js'
+import { BN } from '@coral-xyz/anchor'
 import crypto from 'crypto'
 import type { DbResult, EnrollmentCompletionRow, CredentialRow, UserXpRow } from '@/lib/types/db'
+import { tryCreateBackendSigner, getXpMint } from '@/lib/services/onchain.service'
+import { DEVNET } from '@/lib/anchor/constants'
+import { syncCredential } from '@/lib/services/onchain-sync.service'
+
+/* ─── Dev logger ─── */
+const isDev = process.env.NODE_ENV !== 'production'
+function devLog(tag: string, ...args: unknown[]) {
+  if (isDev) console.log(`[api/credentials/issue:${tag}]`, ...args)
+}
 
 /**
  * POST /api/credentials/issue
- * Issue an on-chain credential (cNFT) for a completed course
+ * Issue an on-chain credential (Metaplex Core NFT) for a completed course
+ * Hybrid: on-chain first → DB always
  */
 export async function POST(request: NextRequest) {
   try {
@@ -83,14 +94,69 @@ export async function POST(request: NextRequest) {
     const totalXp = user?.total_xp || 0
     const level = user?.level || 1
 
-    // Create mock credential metadata
-    // In production, this would mint an actual cNFT on-chain
-    const credentialId = crypto.randomUUID()
-    const assetId = `cred-${credentialId.substring(0, 8).toUpperCase()}`
+    // ──────────────────────────────────────────────
+    // ON-CHAIN: Issue a Metaplex Core credential NFT
+    // ──────────────────────────────────────────────
+    let onchainTxId: string | null = null
+    let onchainAssetAddress: string | null = null
+    let onchainError: string | null = null
+    let assetId: string
+
+    const signer = tryCreateBackendSigner()
+    if (signer) {
+      try {
+        const learner = new PublicKey(walletAddress)
+        const trackCollection = DEVNET.MOCK_TRACK_COLLECTION
+        const metadataUri = `https://arweave.net/placeholder-${courseId}` // TODO: upload real metadata
+        const credentialName = `${courseName} Certificate`
+
+        devLog('onchain', '🔗 Calling issueCredential', {
+          courseId,
+          wallet: walletAddress,
+          totalXp,
+          collection: trackCollection.toBase58(),
+        })
+
+        const result = await signer.issueCredential(
+          courseId,
+          learner,
+          trackCollection,
+          credentialName,
+          metadataUri,
+          1, // coursesCompleted
+          new BN(totalXp)
+        )
+
+        onchainTxId = result.txId
+        onchainAssetAddress = result.assetAddress.toBase58()
+        assetId = onchainAssetAddress // Use real on-chain asset address
+
+        devLog('onchain', '✅ Credential issued on-chain!', {
+          txId: onchainTxId,
+          assetAddress: onchainAssetAddress,
+        })
+      } catch (err) {
+        onchainError = err instanceof Error ? err.message : String(err)
+        devLog('onchain', '⚠️ On-chain credential failed, falling back to mock:', onchainError)
+
+        // Fallback: mock asset ID
+        const credentialId = crypto.randomUUID()
+        assetId = `cred-${credentialId.substring(0, 8).toUpperCase()}`
+      }
+    } else {
+      devLog('onchain', '⏭️ Signer not configured — mock credential mode')
+      const credentialId = crypto.randomUUID()
+      assetId = `cred-${credentialId.substring(0, 8).toUpperCase()}`
+    }
+
+    // ──────────────────────────────────────────────
+    // DB: Record credential (always runs)
+    // ──────────────────────────────────────────────
+    const dbCredentialId = crypto.randomUUID()
 
     // @ts-ignore - Supabase type generation issue
     const { error: insertError } = (await db.from('credentials').insert({
-      id: credentialId,
+      id: dbCredentialId,
       user_id: userId,
       course_id: courseId,
       asset_id: assetId,
@@ -114,18 +180,38 @@ export async function POST(request: NextRequest) {
     // This would trigger achievement checks
     await awardCredentialAchievement(db, userId, courseId)
 
+    // ──────────────────────────────────────────────
+    // POST-TX SYNC: Verify credential on-chain → update DB
+    // ──────────────────────────────────────────────
+    let credentialSync = null
+    if (onchainTxId && onchainAssetAddress) {
+      try {
+        credentialSync = await syncCredential(userId, walletAddress, courseId, onchainAssetAddress)
+        devLog('sync', '✅ Post-credential sync:', credentialSync)
+      } catch (err) {
+        devLog('sync', '⚠️ Post-credential sync failed (non-fatal):', err)
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
         message: 'Credential issued successfully',
         credential: {
-          id: credentialId,
+          id: dbCredentialId,
           assetId,
           name: courseName,
           level,
           totalXp,
           mintedAt: new Date().toISOString(),
         },
+        onchain: {
+          txId: onchainTxId,
+          assetAddress: onchainAssetAddress,
+          error: onchainError,
+          mode: onchainTxId ? 'on-chain' : 'mock',
+        },
+        sync: credentialSync,
       },
       { status: 201 }
     )
