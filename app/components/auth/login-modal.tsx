@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ArrowLeft, Wallet, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { WalletName } from "@solana/wallet-adapter-base";
@@ -40,6 +40,8 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 	const [isLoading, setIsLoading] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [showWalletPicker, setShowWalletPicker] = useState(false);
+	const walletConnectedRef = useRef(isWalletConnected);
+	walletConnectedRef.current = isWalletConnected;
 
 	const reset = useCallback(() => {
 		setStep("choose");
@@ -90,7 +92,11 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 				await wallet.select(defaultWallet);
 				await wallet?.connect();
 			} catch {
-				if (!wallet.connected) {
+				// After ensureWalletAdaptersLoaded, autoConnect may be racing
+				// with manual connect. Yield to let React re-render and
+				// autoConnect settle, then check the latest state via ref.
+				await new Promise((r) => setTimeout(r, 150));
+				if (!walletConnectedRef.current) {
 					setError(t("walletConnectError"));
 					setIsLoading(null);
 					return;
