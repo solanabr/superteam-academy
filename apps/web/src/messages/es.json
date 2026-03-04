@@ -37,7 +37,10 @@
     "community": "Comunidad",
     "profile": "Perfil",
     "settings": "Configuración",
-    "certificates": "Certificados"
+    "certificates": "Certificados",
+    "lowSolBalance": "Saldo SOL bajo.",
+    "getDevnetSol": "Obtener SOL devnet ->",
+    "dismissBanner": "Cerrar"
   },
   "auth": {
     "authFailed": "La autenticación de la billetera falló. Inténtalo de nuevo o usa otro método de inicio de sesión.",
@@ -185,7 +188,22 @@
     "linkWalletSettings": "Ir a Configuración →",
     "discussion": "Discusión",
     "askQuestion": "Hacer una Pregunta",
-    "signInToAsk": "Inicia sesión para hacer una pregunta"
+    "signInToAsk": "Inicia sesión para hacer una pregunta",
+    "aiHelp": "Ayuda IA",
+    "aiHelpLoading": "Analizando...",
+    "aiHelpError": "No se pudieron obtener sugerencias. Intentalo de nuevo.",
+    "aiHelpRateLimited": "Demasiadas solicitudes. Espera un momento.",
+    "aiHelpRunFirst": "Ejecuta tu codigo primero para obtener sugerencias de IA.",
+    "dismissSuggestion": "Descartar",
+    "dismissAllSuggestions": "Descartar Todas",
+    "askAi": "Preguntar IA",
+    "aiChat": "Tutor IA",
+    "aiChatPlaceholder": "Pregunta sobre esta leccion...",
+    "aiChatSend": "Enviar",
+    "aiChatLimit": "{remaining} de {total} mensajes restantes",
+    "aiChatLimitReached": "Has usado todos los {total} mensajes de IA para esta leccion.",
+    "aiChatError": "No se pudo obtener una respuesta. Intentalo de nuevo.",
+    "aiChatThinking": "Pensando..."
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",

@@ -11,6 +11,8 @@ import {
   Trophy,
   Lightning,
   X,
+  Sparkle,
+  CircleNotch,
 } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
@@ -18,6 +20,7 @@ import { ChallengeRunner } from "./challenge-runner";
 import type {
   ChallengeInterfaceProps,
   ChallengeState,
+  CodeEditorHandle,
   ExecutionResult,
 } from "./types";
 import {
@@ -73,6 +76,12 @@ export function ChallengeInterface({
   const [isSaving, setIsSaving] = useState(false);
   const [hiddenHints, setHiddenHints] = useState<Set<number>>(new Set());
 
+  // AI help state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const aiRequestTimestamps = useRef<number[]>([]);
+  const editorHandle = useRef<CodeEditorHandle>(null);
+
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
   // this is when we show the overlay and trigger confetti.
@@ -123,6 +132,7 @@ export function ChallengeInterface({
       hintsRevealed: 0,
       solutionRevealed: prev.solutionRevealed, // Penalty persists — no XP exploit
     }));
+    setAiError(null);
   }, [initialCode, lessonId]);
 
   const handleRevealHint = useCallback(() => {
@@ -226,6 +236,71 @@ export function ChallengeInterface({
   const handleDismissHint = useCallback((index: number) => {
     setHiddenHints((prev) => new Set(prev).add(index));
   }, []);
+
+  const handleAiHelp = useCallback(async () => {
+    if (!challengeState.executionResult) {
+      setAiError(t("aiHelpRunFirst"));
+      setTimeout(() => setAiError(null), 3000);
+      return;
+    }
+
+    // Rate limit: max 3 requests per 5 minutes
+    const now = Date.now();
+    const recentRequests = aiRequestTimestamps.current.filter(
+      (ts) => now - ts < 5 * 60 * 1000
+    );
+    if (recentRequests.length >= 3) {
+      setAiError(t("aiHelpRateLimited"));
+      setTimeout(() => setAiError(null), 3000);
+      return;
+    }
+
+    setAiError(null);
+    setAiLoading(true);
+
+    try {
+      aiRequestTimestamps.current = [...recentRequests, now];
+
+      const response = await fetch("/api/ai/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          tests: tests.map((tc) => ({
+            description: tc.description,
+            input: tc.input,
+            expectedOutput: tc.expectedOutput,
+          })),
+          testResults:
+            challengeState.executionResult.testResults?.map((r) => ({
+              passed: r.passed,
+              description: r.testCase.description,
+              actual: r.actualOutput,
+            })) ?? [],
+          consoleOutput: challengeState.executionResult.output ?? "",
+          description,
+          language,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      const data = await response.json();
+      const generatedCode: string = data.code ?? "";
+
+      if (generatedCode) {
+        // Inject the AI-generated code into the editor
+        setCode(generatedCode);
+      }
+    } catch {
+      setAiError(t("aiHelpError"));
+      setTimeout(() => setAiError(null), 3000);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [code, tests, challengeState.executionResult, description, language, t]);
 
   return (
     <div
@@ -364,7 +439,30 @@ export function ChallengeInterface({
           />
 
           <div className="flex items-center gap-1">
-            {hasMoreHints && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAiHelp}
+              disabled={aiLoading || isComplete}
+              className="gap-1 text-xs"
+              aria-label={t("aiHelp")}
+            >
+              {aiLoading ? (
+                <CircleNotch
+                  size={16}
+                  weight="bold"
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Sparkle size={16} weight="duotone" aria-hidden="true" />
+              )}
+              <span className="hidden sm:inline">
+                {aiLoading ? t("aiHelpLoading") : t("aiHelp")}
+              </span>
+            </Button>
+
+            {hasMoreHints && challengeState.status !== "success" && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -380,18 +478,20 @@ export function ChallengeInterface({
               </Button>
             )}
 
-            {solution && code !== solution && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShowSolution}
-                className="gap-1 text-xs"
-                aria-label={t("showSolution")}
-              >
-                <Eye size={16} weight="duotone" aria-hidden="true" />
-                <span className="hidden sm:inline">{t("showSolution")}</span>
-              </Button>
-            )}
+            {solution &&
+              code !== solution &&
+              challengeState.status !== "success" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShowSolution}
+                  className="gap-1 text-xs"
+                  aria-label={t("showSolution")}
+                >
+                  <Eye size={16} weight="duotone" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t("showSolution")}</span>
+                </Button>
+              )}
 
             <Button
               variant="ghost"
@@ -410,6 +510,13 @@ export function ChallengeInterface({
           </div>
         </div>
       </div>
+
+      {/* AI error message */}
+      {aiError && (
+        <div className="shrink-0 border-b border-border bg-card px-4 py-2">
+          <p className="text-xs text-danger">{aiError}</p>
+        </div>
+      )}
 
       {/* Hints (shown inline when description is hidden, i.e. split-panel mode) */}
       {hideDescription && visibleHints.length > 0 && (
@@ -444,6 +551,7 @@ export function ChallengeInterface({
       {/* Editor */}
       <div className="relative min-h-0 flex-1">
         <CodeEditor
+          ref={editorHandle}
           lessonId={lessonId}
           initialCode={initialCode}
           language={language}

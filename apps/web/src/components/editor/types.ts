@@ -1,4 +1,5 @@
 import type { TestCase, BuildType } from "@superteam-lms/types";
+import type { editor } from "monaco-editor";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
 
@@ -82,4 +83,14 @@ export interface ChallengeInterfaceProps {
   onComplete?: () => void;
   hideDescription?: boolean;
   className?: string;
+}
+
+export interface AiSuggestion {
+  line: number;
+  message: string;
+  severity: "error" | "warning" | "info";
+}
+
+export interface CodeEditorHandle {
+  getEditor: () => editor.IStandaloneCodeEditor | null;
 }

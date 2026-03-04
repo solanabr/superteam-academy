@@ -37,7 +37,10 @@
     "community": "Community",
     "profile": "Profile",
     "settings": "Settings",
-    "certificates": "Certificates"
+    "certificates": "Certificates",
+    "lowSolBalance": "Low SOL balance.",
+    "getDevnetSol": "Get devnet SOL ->",
+    "dismissBanner": "Dismiss"
   },
   "auth": {
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
@@ -185,7 +188,22 @@
     "linkWalletSettings": "Go to Settings →",
     "discussion": "Discussion",
     "askQuestion": "Ask a Question",
-    "signInToAsk": "Sign in to ask a question"
+    "signInToAsk": "Sign in to ask a question",
+    "aiHelp": "AI Help",
+    "aiHelpLoading": "Analyzing...",
+    "aiHelpError": "Could not get suggestions. Try again.",
+    "aiHelpRateLimited": "Too many requests. Wait a moment.",
+    "aiHelpRunFirst": "Run your code first to get AI suggestions.",
+    "dismissSuggestion": "Dismiss",
+    "dismissAllSuggestions": "Dismiss All",
+    "askAi": "Ask AI",
+    "aiChat": "AI Tutor",
+    "aiChatPlaceholder": "Ask about this lesson...",
+    "aiChatSend": "Send",
+    "aiChatLimit": "{remaining} of {total} messages left",
+    "aiChatLimitReached": "You've used all {total} AI messages for this lesson.",
+    "aiChatError": "Could not get a response. Try again.",
+    "aiChatThinking": "Thinking..."
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
