@@ -16,13 +16,17 @@ export async function GET(request: Request, { params }: { params: { slug: string
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const host = request.headers.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
     // Формируем JSON по стандарту Metaplex
     const metadata = {
       name: `${course.title} Certificate`,
       symbol: "ACADEMY",
       description: `Official completion certificate for the ${course.title} course on Superteam Academy.`,
       // Используем картинку курса или дефолтную для сертификата
-      image: course.imageUrl || "https://arweave.net/Yx0n2TqR0GqNeJnoYx4SMCjZt0r9uS-KRwQoK_vG2Wc",
+      image: course.imageUrl?.startsWith('/') ? `${baseUrl}${course.imageUrl}` : (course.imageUrl || `${baseUrl}/images/certificates/default.png`),
       attributes: [
         {
           trait_type: "Course",

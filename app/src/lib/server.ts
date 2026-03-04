@@ -1,6 +1,6 @@
 // app/src/lib/server.ts
 import { Connection, Keypair } from "@solana/web3.js";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import fs from "fs";
 import path from "path";
 
@@ -39,24 +39,25 @@ class BackendWallet {
   }
 }
 
-const loadBackendWallet = () => {
+const loadBackendWallet = (): Wallet => {
   try {
+    // В Vercel читаем из переменной окружения массив напрямую
+    const envKeyArray = process.env.BACKEND_SIGNER_KEY_ARRAY;
+    if (envKeyArray) {
+        const secretKey = new Uint8Array(JSON.parse(envKeyArray));
+        const keypair = Keypair.fromSecretKey(secretKey);
+        return new Wallet(keypair);
+    }
+
+    // Fallback для локальной разработки (читаем из файла)
     const keyPath = process.env.BACKEND_SIGNER_KEYPAIR;
-
-    if (!keyPath) {
-      throw new Error("BACKEND_SIGNER_KEYPAIR not set in .env.local");
+    if (keyPath) {
+        const fullPath = path.resolve(process.cwd(), keyPath);
+        const keypairFile = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+        const keypair = Keypair.fromSecretKey(new Uint8Array(keypairFile));
+        return new Wallet(keypair);
     }
-
-    const fullPath = path.resolve(process.cwd(), keyPath);
-
-    if (!fs.existsSync(fullPath)) {
-      throw new Error(`Keypair file not found: ${fullPath}`);
-    }
-
-    const secretKey = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
-    const keypair = Keypair.fromSecretKey(new Uint8Array(secretKey));
-
-    return new BackendWallet(keypair);
+    throw new Error("No backend signer configured (check env vars)");
   } catch (error: any) {
     console.error("Failed to load backend wallet:", error);
     throw new Error(`Backend wallet configuration error: ${error.message}`);

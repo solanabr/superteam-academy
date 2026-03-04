@@ -14,11 +14,15 @@ export async function GET(request: Request, { params }: { params: { slug: string
       return NextResponse.json({ error: "Achievement not found" }, { status: 404 });
     }
 
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const host = request.headers.get("host");
+    const baseUrl = `${protocol}://${host}`;
+
     const metadata = {
       name: achievement.name,
       symbol: "BADGE",
       description: achievement.description,
-      image: achievement.image, // URL из базы (dicebear или реальный)
+      image: achievement.image?.startsWith('/') ? `${baseUrl}${achievement.image}` : (achievement.image || `${baseUrl}/images/badge/default.png`),
       attributes: [
         {
           trait_type: "Type",
