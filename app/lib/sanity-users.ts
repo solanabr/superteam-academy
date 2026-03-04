@@ -17,6 +17,7 @@ export type { AcademyUser };
 
 const DUPLICATE_WALLET_USERS_QUERY = `*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`;
 const DUPLICATE_WALLET_EMAIL_USERS_QUERY = `*[_type == "academyUser" && _id != $keepId && lower(email) == $walletEmailLower]{ _id }`;
+const WALLET_BY_LOWERED_ADDRESS_QUERY = `*[_type == "academyUser" && defined(walletAddress) && walletAddress != "" && lower(walletAddress) == $localPartLower][0]{ walletAddress }`;
 
 type SyncUserParams = {
 	authId: string;
@@ -90,13 +91,29 @@ async function patchAndCleanupByWallet(
 	await cleanupDuplicateWalletUsers(client, targetId, walletAddress);
 }
 
+async function resolveWalletFromEmail(
+	client: NonNullable<typeof writeClient>,
+	email: string
+): Promise<string | undefined> {
+	if (!email.endsWith(WALLET_EMAIL_DOMAIN)) return undefined;
+	const localPart = email.slice(0, email.length - WALLET_EMAIL_DOMAIN.length);
+	if (!localPart) return undefined;
+	const match = await client.fetch<{ walletAddress: string } | null>(
+		WALLET_BY_LOWERED_ADDRESS_QUERY,
+		{ localPartLower: localPart.toLowerCase() }
+	);
+	return match?.walletAddress;
+}
+
 export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyUser | null> {
 	if (!writeClient) return null;
 
 	const existing = await writeClient.fetch<AcademyUser | null>(userByAuthIdQuery, {
 		authId: params.authId,
 	});
-	const normalizedWalletAddress = params.walletAddress?.trim() || existing?.walletAddress?.trim();
+	const walletFromParams = params.walletAddress?.trim() || existing?.walletAddress?.trim();
+	const normalizedWalletAddress =
+		walletFromParams || (await resolveWalletFromEmail(writeClient, params.email));
 	const roleFromIdentity = determineRole(params.email, normalizedWalletAddress);
 	const existingByWallet = normalizedWalletAddress
 		? await writeClient.fetch<AcademyUser | null>(userByWalletQuery, {

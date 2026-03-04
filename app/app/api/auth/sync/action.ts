@@ -12,7 +12,9 @@ export async function syncAuthSession(
 	}
 
 	const { user } = session;
-	const walletAddress = isWalletEmail(user.email) ? walletFromEmail(user.email) : undefined;
+	const walletAddress =
+		(isWalletEmail(user.email) ? walletFromEmail(user.email) : undefined) ??
+		((user as Record<string, unknown>).walletAddress as string | undefined);
 
 	const existing = await getUserByAuthId(user.id);
 	if (existing) {

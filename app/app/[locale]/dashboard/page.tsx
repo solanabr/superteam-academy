@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
-	BookOpen,
-	Trophy,
-	Flame,
-	ArrowRight,
-	Target,
-	TrendingUp,
-	Clock,
+    BookOpen,
+    Trophy,
+    Flame,
+    ArrowRight,
+    Target,
+    TrendingUp,
+    Clock,
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import type { PublicKey } from "@solana/web3.js";
@@ -24,9 +24,9 @@ import { useTranslations } from "next-intl";
 import { useStreak } from "@/hooks/use-streak";
 import { LearningProgressService } from "@/services/learning-progress-service";
 import {
-	getProgramId,
-	fetchIndexedLearnerActivity,
-	type IndexedLearnerActivity,
+    getProgramId,
+    fetchIndexedLearnerActivity,
+    type IndexedLearnerActivity,
 } from "@/lib/academy";
 
 interface DashboardStats {
