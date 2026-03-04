@@ -112,8 +112,16 @@ async function run() {
     signedMessage: validMessage,
     signature: validSignature,
   });
-  assert.equal(validResult.status, 200, "Expected valid signature to return 200");
-  assert.equal(validResult.body.ok, true, "Expected ok=true for valid signature");
+  assert.equal(
+    validResult.status,
+    200,
+    "Expected valid signature to return 200",
+  );
+  assert.equal(
+    validResult.body.ok,
+    true,
+    "Expected ok=true for valid signature",
+  );
 
   // 2) Wrong signature => 401
   const wrongChallenge = await createChallenge(
@@ -132,7 +140,11 @@ async function run() {
     signedMessage: wrongMessage,
     signature: wrongSignature,
   });
-  assert.equal(wrongResult.status, 401, "Expected wrong signature to return 401");
+  assert.equal(
+    wrongResult.status,
+    401,
+    "Expected wrong signature to return 401",
+  );
   assert.equal(wrongResult.body.error, "INVALID_SIGNATURE");
 
   // 3) Expired timestamp => 401
@@ -146,13 +158,21 @@ async function run() {
   expireNonceForTest(expiredChallenge.body.nonce);
   const expiredMessage = createSignInMessage(expiredChallenge.body.input);
   const expiredSignature = sign(null, Buffer.from(expiredMessage), privateKey);
-  const expiredResult = await verifyChallenge(app, expiredChallenge.body.nonce, {
-    address: wallet,
-    publicKey: publicKeyBytes,
-    signedMessage: expiredMessage,
-    signature: expiredSignature,
-  });
-  assert.equal(expiredResult.status, 401, "Expected expired nonce to return 401");
+  const expiredResult = await verifyChallenge(
+    app,
+    expiredChallenge.body.nonce,
+    {
+      address: wallet,
+      publicKey: publicKeyBytes,
+      signedMessage: expiredMessage,
+      signature: expiredSignature,
+    },
+  );
+  assert.equal(
+    expiredResult.status,
+    401,
+    "Expected expired nonce to return 401",
+  );
   assert.equal(expiredResult.body.error, "EXPIRED_MESSAGE");
 
   // 4) Reused nonce => 409
@@ -179,7 +199,11 @@ async function run() {
     signedMessage: replayMessage,
     signature: replaySignature,
   });
-  assert.equal(replaySecond.status, 409, "Expected replayed nonce to return 409");
+  assert.equal(
+    replaySecond.status,
+    409,
+    "Expected replayed nonce to return 409",
+  );
   assert.equal(replaySecond.body.error, "REPLAYED_NONCE");
 
   console.log("Gate 2 SIWS auth tests passed.");
