@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Flame, Clock, type LucideIcon } from "lucide-react";
+import { ArrowRight, Flame, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -8,24 +8,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import type { CourseDetail } from "@/data/courses";
 
-export interface Course {
-  slug: string;
-  title: string;
-  description: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  topic: string;
-  topicLabel: string;
-  duration: string;
-  lessons: number;
-  completed: number;
-  xp: number;
-  accent: string;
-  icon: LucideIcon;
-  codePreview: string[];
-}
-
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course }: { course: CourseDetail }) {
   const progress =
     course.completed > 0
       ? Math.round((course.completed / course.lessons) * 100)
