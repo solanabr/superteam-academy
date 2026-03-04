@@ -21,17 +21,18 @@ import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import {useUser} from '@/hooks/useUser'
+import { useAuthWallet } from "@/hooks/useAuthWallet";
 
 const WalletButton = dynamic(() => import("@/components/WalletButton"), { ssr: false });
 
 export function UserNav() {
-  const { publicKey, disconnect, connecting, wallet } = useWallet();
-  const { data: session } = useSession();
+  const { publicKey, disconnect, connected } = useWallet();
+  const { data: session, status } = useSession();
   const { userDb } = useUser();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { login } = useAuthWallet();
 
   // Определяем, залогинен ли пользователь хоть как-то
-  const isLoggedIn = !!publicKey || !!session;
+  const isLoggedIn = !!publicKey || status === "authenticated";
 
   const avatarSrc = 
     userDb?.image || // Из БД (GitHub image сохраняется сюда при создании)
@@ -44,46 +45,43 @@ export function UserNav() {
     if (session) await signOut();
   };
 
+
   useEffect(() => {
-    if (isModalOpen && (wallet || connecting)) {
-        setIsModalOpen(false);
+    if (connected && publicKey && status === "unauthenticated") {
+      login();
     }
-  }, [wallet, connecting, isModalOpen]);
+  }, [connected, publicKey, status, login]);
 
   if (!isLoggedIn) {
     return (
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogTrigger asChild>
-          <Button>Sign In</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Sign In to Academy</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col gap-3">
-               {/* 1. Wallet */}
-               <div className="w-full">
-                 <WalletButton /> 
-                 {/* Примечание: WalletAdapter UI сам рисует кнопку, мы просто оборачиваем ее */}
-               </div>
+      <div className="flex items-center gap-2">
+        {/* 1. Кнопка кошелька СНАРУЖИ */}
+        <div className="hidden sm:block">
+            <WalletButton />
+        </div>
 
-               <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
-               </div>
-
-               {/* 2. Socials */}
-               <Button variant="outline" onClick={() => signIn('google')} className="gap-2">
-                 <FaGoogle /> Google
-               </Button>
+        {/* 2. Кнопка Sign In (только соцсети) */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant={connected ? "secondary" : "default"}>
+                {connected ? "Link Socials" : "Sign In"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Sign In with Socials</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
                <Button variant="outline" onClick={() => signIn('github')} className="gap-2">
-                 <FaGithub /> GitHub
+                 <FaGithub /> Continue with GitHub
+               </Button>
+               <Button variant="outline" onClick={() => signIn('google')} className="gap-2">
+                 <FaGoogle /> Continue with Google
                </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 

@@ -260,12 +260,11 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                     ) : certificates.length > 0 ? (
                         certificates.map((nft) => (
                             // УБРАЛИ onClick ОТСЮДА
-                            <div key={nft.id}>
+                            <div key={nft.id} className="w-full max-w-[280px] mx-auto">
                                 <CredentialCard 
                                     name={nft.name}
                                     imageUrl={nft.image}
                                     level={parseInt(nft.attributes.find(a => a.trait_type === "Level" || a.trait_type === "level")?.value || "1")}
-                                    onClick={() => window.open(`/certificates/${nft.id}`, '_blank')} // ПЕРЕДАЛИ СЮДА
                                 />
                             </div>
                         ))
