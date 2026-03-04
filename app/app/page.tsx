@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Terminal, Zap, Trophy, Shield, Code, Globe, Users, Mail, Twitter, Github, ExternalLink } from "lucide-react";
 import { mockCourses } from "@/lib/mockData";
 import { DIFFICULTY_LABELS } from "@/lib/constants";
+import { Http2ServerRequest } from "http2";
 
 const tickerItems = [
   "SOLANA FUNDAMENTALS", "ANCHOR FRAMEWORK", "TOKEN-2022", "METAPLEX CORE",
@@ -309,9 +310,10 @@ export default function HomePage() {
                 </div>
                 <div className="text-[9px] font-mono text-[#444]">+{path.xp.toLocaleString()} XP</div>
               </div>
-              <h3 className="font-display font-black text-xl uppercase mb-2 group-hover:text-[#9945ff] transition-colors">
+              
+              <h2 className="font-display font-black text-xl uppercase mb-2 group-hover:text-[#9945ff] transition-colors">
                 {path.title}
-              </h3>
+              </h2>
               <p className="text-[11px] font-mono text-[#444] mb-5">{path.desc}</p>
               <div className="space-y-2">
                 {path.steps.map((step, si) => (
@@ -358,9 +360,9 @@ export default function HomePage() {
                     {feature.label}
                   </span>
                 </div>
-                <h3 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
+                <h2 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
                   {feature.title}
-                </h3>
+                </h2>
                 <p className="text-xs font-mono text-[#444] leading-relaxed">
                   {feature.desc}
                 </p>
@@ -412,9 +414,9 @@ export default function HomePage() {
                     <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest mb-2">
                       {course.track}
                     </div>
-                    <h3 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
+                    <h2 className="font-display font-black text-lg uppercase tracking-tight mb-3 group-hover:text-[#9945ff] transition-colors">
                       {course.title}
-                    </h3>
+                    </h2>
                     <p className="text-xs font-mono text-[#444] line-clamp-2 mb-4 flex-1 leading-relaxed">
                       {course.description}
                     </p>
@@ -476,7 +478,7 @@ export default function HomePage() {
                 BUILD<br />
                 <span className="text-[#9945ff]">ON</span><br />
                 SOLANA.
-              </h3>
+              </h2>
               <p className="text-xs font-mono text-[#444] max-w-sm leading-relaxed mb-8">
                 Your XP tokens and credentials live on-chain forever.
                 Permanent proof of work. No middlemen. No expiry dates.
@@ -563,7 +565,7 @@ export default function HomePage() {
           <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest mb-4">// STAY UPDATED</div>
           <h2 className="font-display font-black text-3xl md:text-4xl uppercase tracking-tighter mb-4">
             JOIN THE <span className="text-[#9945ff]">NEWSLETTER</span>
-          </h3>
+          </h2>
           <p className="text-xs font-mono text-[#444] mb-8 leading-relaxed">
             Get weekly updates on new courses, Solana ecosystem news, and builder spotlights.
           </p>
@@ -696,5 +698,4 @@ export default function HomePage() {
     </div>
   );
 }
-
 
