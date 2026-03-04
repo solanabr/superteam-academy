@@ -1,8 +1,10 @@
 import { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient, countCompletedLessons } from "@superteam-academy/anchor";
+import { countCompletedLessons } from "@superteam-academy/anchor";
+import type { AcademyClient } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import { incrementMetric, recordDuration } from "@/lib/runtime-observability";
+import { getAcademyClient } from "@/lib/academy";
 
 export interface LeaderboardEntry {
 	rank: number;
@@ -15,7 +17,7 @@ export class LeaderboardService extends BaseService {
 
 	constructor(...args: ConstructorParameters<typeof BaseService>) {
 		super(...args);
-		this.client = new AcademyClient(this.connection, this.programId);
+		this.client = getAcademyClient();
 	}
 
 	async getUserXp(learner: PublicKey, xpMint: PublicKey): Promise<bigint> {

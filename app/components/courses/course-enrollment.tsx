@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginModal } from "@/components/auth/login-modal";
 import { useAuth } from "@/contexts/auth-context";
-import { getAcademyClient, getProgramId } from "@/lib/academy";
+import { getAcademyClient, getProgramId, type CachedAcademyClient } from "@/lib/academy";
 import { useRouter } from "@superteam-academy/i18n/navigation";
 import { useOnchainEnrollment } from "@/hooks/use-onchain-enrollment";
 import { sendAndConfirmTx, isWalletReady } from "@/lib/solana-transaction";
@@ -32,10 +32,16 @@ interface CourseEnrollmentProps {
 	};
 }
 
-export function CourseEnrollment({ course }: CourseEnrollmentProps) { 
+export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const t = useTranslations("courses");
-	const { wallet, isWalletConnected, isWalletVerified, isAuthenticated, verifyWallet, ensureWalletAdaptersLoaded } =
-		useAuth();
+	const {
+		wallet,
+		isWalletConnected,
+		isWalletVerified,
+		isAuthenticated,
+		verifyWallet,
+		ensureWalletAdaptersLoaded,
+	} = useAuth();
 	const { enrolled, refetch } = useOnchainEnrollment(course.id, course.enrolled);
 	const { connection } = useConnection();
 	const router = useRouter();
@@ -110,6 +116,10 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			const client = getAcademyClient();
 			const learner = wallet.publicKey as PublicKey;
+			// Invalidate cached enrollment data so the polling loop gets fresh results
+			if ("invalidateEnrollments" in client) {
+				(client as CachedAcademyClient).invalidateEnrollments(course.id, learner);
+			}
 			const startedAt = Date.now();
 			const timeoutMs = 12_000;
 			while (Date.now() - startedAt < timeoutMs) {
@@ -147,6 +157,14 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			});
 
 			await sendAndConfirmTx(connection, wallet, ix);
+
+			const client = getAcademyClient();
+			if ("invalidateEnrollments" in client) {
+				(client as CachedAcademyClient).invalidateEnrollments(
+					course.id,
+					wallet.publicKey as PublicKey
+				);
+			}
 
 			router.push("/courses");
 		} catch (error) {

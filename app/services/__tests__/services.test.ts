@@ -23,6 +23,19 @@ vi.mock("@superteam-academy/anchor", () => {
 	};
 });
 
+vi.mock("@/lib/academy", () => ({
+	getAcademyClient: () => __mockClient,
+}));
+
+vi.mock("@/lib/rpc-cache", () => ({
+	getRpcCache: () => ({
+		get: (_key: string, fetcher: () => Promise<unknown>) => fetcher(),
+		invalidate: vi.fn(),
+		invalidatePrefix: vi.fn(),
+		clear: vi.fn(),
+	}),
+}));
+
 vi.mock("@superteam-academy/solana", () => ({
 	findToken2022ATA: vi.fn(() => PublicKey.default),
 }));

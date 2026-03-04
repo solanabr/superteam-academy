@@ -1,6 +1,7 @@
 import type { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient, type AchievementTypeAccount } from "@superteam-academy/anchor";
+import type { AcademyClient, AchievementTypeAccount } from "@superteam-academy/anchor";
+import { getAcademyClient } from "@/lib/academy";
 
 interface AchievementInfo {
 	achievementId: string;
@@ -25,7 +26,7 @@ export class AchievementService extends BaseService {
 
 	constructor(...args: ConstructorParameters<typeof BaseService>) {
 		super(...args);
-		this.client = new AcademyClient(this.connection, this.programId);
+		this.client = getAcademyClient();
 	}
 
 	async getAllAchievementTypes(): Promise<AchievementTypeAccount[]> {

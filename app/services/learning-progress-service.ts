@@ -1,8 +1,10 @@
 import type { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient, countCompletedLessons } from "@superteam-academy/anchor";
+import { countCompletedLessons } from "@superteam-academy/anchor";
+import type { AcademyClient } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import { AchievementService } from "./achievement-service";
+import { getAcademyClient } from "@/lib/academy";
 
 export interface LearnerStats {
 	totalXp: bigint;
@@ -61,11 +63,18 @@ export class LearningProgressService extends BaseService {
 
 	constructor(...args: ConstructorParameters<typeof BaseService>) {
 		super(...args);
-		this.client = new AcademyClient(this.connection, this.programId);
+		this.client = getAcademyClient();
 		this.achievementService = new AchievementService(this.connection, this.programId);
 	}
 
-	async getLearnerStats(learner: PublicKey, xpMint: PublicKey | null, courses?: Array<{ pubkey: PublicKey; account: import("@superteam-academy/anchor").CourseAccount }>): Promise<LearnerStats> {
+	async getLearnerStats(
+		learner: PublicKey,
+		xpMint: PublicKey | null,
+		courses?: Array<{
+			pubkey: PublicKey;
+			account: import("@superteam-academy/anchor").CourseAccount;
+		}>
+	): Promise<LearnerStats> {
 		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(learner, courses);
 		const xpBalance = xpMint
 			? await this.academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))
@@ -93,7 +102,10 @@ export class LearningProgressService extends BaseService {
 			this.achievementService.getLearnerAchievements(learner),
 		]);
 
-		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(learner, allCourses);
+		const enrollments = await this.academyClient.fetchEnrollmentsForLearner(
+			learner,
+			allCourses
+		);
 		const stats = await this.getLearnerStats(learner, config?.xpMint ?? null, allCourses);
 		const coursesByKey = new Map(
 			allCourses.map((course) => [course.pubkey.toBase58(), course])

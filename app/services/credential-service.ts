@@ -1,13 +1,15 @@
 import { PublicKey } from "@solana/web3.js";
 import {
-    BaseService,
-    type Credential,
-    type CredentialMetadata,
-    type IssueResult,
-    type VerifyResult,
-    type TrackRequirements,
+	BaseService,
+	type Credential,
+	type CredentialMetadata,
+	type IssueResult,
+	type VerifyResult,
+	type TrackRequirements,
 } from "./types";
-import { AcademyClient } from "@superteam-academy/anchor";
+import type { AcademyClient } from "@superteam-academy/anchor";
+import { getAcademyClient } from "@/lib/academy";
+import { getRpcCache } from "@/lib/rpc-cache";
 
 const TRACK_REQUIREMENTS: Record<string, TrackRequirements> = {
 	Beginner: { courses: 1, xp: 100 },
@@ -42,14 +44,16 @@ interface DasAssetWithAttributes extends DasAsset {
 
 export class CredentialService extends BaseService {
 	private client: AcademyClient;
+	private rpc = getRpcCache();
 
 	constructor(...args: ConstructorParameters<typeof BaseService>) {
 		super(...args);
-		this.client = new AcademyClient(this.connection, this.programId);
+		this.client = getAcademyClient();
 	}
 
 	async getCredentialsByOwner(owner: PublicKey): Promise<Credential[]> {
-		const assets = await this.fetchDasAssets(owner);
+		const key = `dasAssets:${owner.toBase58()}`;
+		const assets = await this.rpc.get(key, () => this.fetchDasAssets(owner), 30_000);
 		return assets.map((asset) => this.dasAssetToCredential(asset));
 	}
 
@@ -147,22 +151,28 @@ export class CredentialService extends BaseService {
 	}
 
 	async getCredentialMetadata(credentialId: string): Promise<CredentialMetadata> {
-		const asset = await this.fetchDasAssetById(credentialId);
-		if (!asset) {
-			return { name: "Unknown", description: "", image: "", attributes: [] };
-		}
+		return this.rpc.get(
+			`credMeta:${credentialId}`,
+			async () => {
+				const asset = await this.fetchDasAssetById(credentialId);
+				if (!asset) {
+					return { name: "Unknown", description: "", image: "", attributes: [] };
+				}
 
-		if (asset.content.json_uri) {
-			const offChain = await this.fetchJsonUri(asset.content.json_uri);
-			if (offChain) return offChain;
-		}
+				if (asset.content.json_uri) {
+					const offChain = await this.fetchJsonUri(asset.content.json_uri);
+					if (offChain) return offChain;
+				}
 
-		return {
-			name: asset.content.metadata.name,
-			description: asset.content.metadata.description,
-			image: asset.content.links?.image ?? "",
-			attributes: [],
-		};
+				return {
+					name: asset.content.metadata.name,
+					description: asset.content.metadata.description,
+					image: asset.content.links?.image ?? "",
+					attributes: [],
+				};
+			},
+			60_000
+		);
 	}
 
 	getTrackRequirements(track: string): TrackRequirements {
