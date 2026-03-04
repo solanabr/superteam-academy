@@ -128,11 +128,12 @@ export const confirmEnrollment = inngest.createFunction(
 
         await step.run("sync-db-state", async () => {
             const user = await prisma.user.findUnique({ where: { walletAddress: wallet } });
-            if (user) {
-                const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
-                const service = createLearningProgressService(prisma);
-                await service.enroll(user.id, courseId);
+            if (!user) {
+                throw new Error(`User not found for wallet ${wallet} — Inngest will retry`);
             }
+            const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
+            const service = createLearningProgressService(prisma);
+            await service.enroll(user.id, courseId);
         });
 
         await step.run("invalidate-user-cache", async () => {
@@ -161,16 +162,17 @@ export const confirmLessonCompletion = inngest.createFunction(
 
         await step.run("sync-db-state", async () => {
             const user = await prisma.user.findUnique({ where: { walletAddress: wallet } });
-            if (user) {
-                const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
-                const service = createLearningProgressService(prisma);
-                await service.completeLesson({
-                    userId: user.id,
-                    courseId,
-                    lessonIndex,
-                    xpReward
-                });
+            if (!user) {
+                throw new Error(`User not found for wallet ${wallet} — Inngest will retry`);
             }
+            const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
+            const service = createLearningProgressService(prisma);
+            await service.completeLesson({
+                userId: user.id,
+                courseId,
+                lessonIndex,
+                xpReward
+            });
         });
 
         await step.run("invalidate-user-cache", async () => {

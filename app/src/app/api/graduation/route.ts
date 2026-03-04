@@ -71,9 +71,16 @@ export async function POST(request: NextRequest) {
                 where: { userId: user.id, courseId },
                 data: { completedAt: new Date() }
             }),
-            prisma.progress.update({
+            prisma.progress.upsert({
                 where: { userId: user.id },
-                data: { xp: { increment: 100 } }
+                create: {
+                    userId: user.id,
+                    xp: 100,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    achievementFlags: Buffer.alloc(32),
+                },
+                update: { xp: { increment: 100 } },
             }),
             prisma.xpEvent.create({
                 data: {

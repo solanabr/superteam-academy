@@ -65,15 +65,6 @@ type AcademyAchievementClaimEvent = {
   };
 };
 
-type AcademyReferralRewardEvent = {
-  data: {
-    wallet: string;
-    courseId?: string;
-    achievementId?: string;
-    type: "enrollment" | "graduation" | "achievement";
-  };
-};
-
 export type Events = {
   "solana/transaction.sent": SolanaTxEvent;
   "solana/enrollment.sent": SolanaEnrollmentEvent;
@@ -83,7 +74,6 @@ export type Events = {
   "solana/unenrollment.sent": SolanaEnrollmentEvent;
   "academy/quiz.completed": AcademyQuizCompleteEvent;
   "academy/achievement.claimed": AcademyAchievementClaimEvent;
-  "academy/referral.reward": AcademyReferralRewardEvent;
 };
 
 // Create a client to send and receive events

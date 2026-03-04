@@ -33,7 +33,7 @@ export function AuditDashboard() {
                     { name: "Continue Learning", status: "Implemented", icon: <Calendar className="text-solana w-4 h-4" /> },
                     { name: "Leaderboard Filters", status: "Wired", icon: <Trophy className="text-amber-500 w-4 h-4" /> },
                     { name: "PWA Manifest", status: "Detected", icon: <Smartphone className="text-blue-500 w-4 h-4" /> },
-                    { name: "Referral System", status: "Active", icon: <Share2 className="text-purple-500 w-4 h-4" /> },
+                    { name: "Achievement System", status: "Active", icon: <Share2 className="text-purple-500 w-4 h-4" /> },
                 ]
             });
         };

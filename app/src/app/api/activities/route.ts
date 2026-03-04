@@ -60,7 +60,6 @@ function formatTitle(source: string, amount: number): string {
     if (source.startsWith("quiz:")) return "Completed a Quiz";
     if (source.includes("lesson")) return "Completed a Lesson";
     if (source.includes("course_completion") || source.includes("graduation")) return "Completed a Course";
-    if (source.includes("referral")) return "Referral Bonus";
     if (source.includes("bonus")) return "Earned a Bonus";
     return "Activity";
 }

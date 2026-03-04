@@ -360,14 +360,17 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       });
       if (!user) throw new Error("User not found");
 
-      progress = await prisma.progress.create({
-        data: {
+      // Use upsert to avoid P2002 race with enroll/completeLesson/logActivity
+      progress = await prisma.progress.upsert({
+        where: { userId: resolvedId },
+        create: {
           userId: resolvedId,
           xp: 0,
           currentStreak: 0,
           longestStreak: 0,
           achievementFlags: Buffer.alloc(32)
         },
+        update: {},
         include: { user: { select: { preferences: true } } }
       });
     }
@@ -677,9 +680,16 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         where: { userId_courseId: { userId, courseId } },
         data: { bonusClaimed: true },
       }),
-      prisma.progress.update({
+      prisma.progress.upsert({
         where: { userId },
-        data: { xp: { increment: xpAmount } },
+        create: {
+          userId,
+          xp: xpAmount,
+          currentStreak: 0,
+          longestStreak: 0,
+          achievementFlags: Buffer.alloc(32),
+        },
+        update: { xp: { increment: xpAmount } },
       }),
       prisma.xpEvent.create({
         data: {
@@ -704,16 +714,20 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     });
 
     if (!progressRow) {
-      // Create their initial progress and grant day 1 streak automatically
-      await prisma.progress.create({
-        data: {
+      // Use upsert to avoid P2002 race with enroll/completeLesson/claimAchievement
+      await prisma.progress.upsert({
+        where: { userId: resolvedId },
+        create: {
           userId: resolvedId,
           xp: 0,
           currentStreak: 1,
           longestStreak: 1,
           lastActivityDate: new Date(),
           achievementFlags: Buffer.alloc(32)
-        }
+        },
+        update: {
+          lastActivityDate: new Date(),
+        },
       });
       return true;
     }
