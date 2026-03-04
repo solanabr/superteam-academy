@@ -123,7 +123,6 @@ export function LeaderboardTable({
 												src={entry.user.avatar}
 												alt={entry.user.name}
 											/>
-
 										</Avatar>
 										<div className="min-w-0">
 											<div className="text-sm font-medium truncate">

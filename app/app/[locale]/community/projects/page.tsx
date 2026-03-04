@@ -51,7 +51,9 @@ function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]):
 		description: sanityProject.description,
 		author: {
 			name: sanityProject.author?.name || "Unknown",
-			image: sanityProject.author?.image || getGravatarUrl(sanityProject.author?.name || "Unknown"),
+			image:
+				sanityProject.author?.image ||
+				getGravatarUrl(sanityProject.author?.name || "Unknown"),
 		},
 		category: sanityProject.category,
 		stars: sanityProject.stars || 0,

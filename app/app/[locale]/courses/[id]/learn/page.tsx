@@ -470,17 +470,26 @@ async function getLessonProgress(courseId: string, lessonId: string) {
 	const academyClient = getAcademyClient();
 	const wallet = await getLinkedWallet();
 
-	const onchainCourse = await academyClient.fetchCourse(courseId);
+	let onchainCourse: Awaited<ReturnType<typeof academyClient.fetchCourse>> = null;
+	try {
+		onchainCourse = await academyClient.fetchCourse(courseId);
+	} catch {
+		// RPC may be unavailable — continue with defaults
+	}
 	const lessonCount = onchainCourse?.lessonCount ?? 1;
 	const lessonIndex = Number.parseInt(lessonId.split("-").at(-1) ?? "1", 10) - 1;
 
 	let completedLessons = 0;
 
 	if (wallet) {
-		const learner = new PublicKey(wallet);
-		const enrollment = await academyClient.fetchEnrollment(courseId, learner);
-		if (enrollment) {
-			completedLessons = countCompletedLessons(enrollment.lessonFlags);
+		try {
+			const learner = new PublicKey(wallet);
+			const enrollment = await academyClient.fetchEnrollment(courseId, learner);
+			if (enrollment) {
+				completedLessons = countCompletedLessons(enrollment.lessonFlags);
+			}
+		} catch {
+			// RPC may be unavailable — continue with zero progress
 		}
 	}
 

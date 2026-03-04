@@ -116,8 +116,10 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 						)}
 						{isOwner ? (
 							<Button variant="outline" size="sm" className="h-8 gap-1.5" asChild>
-								<Link href="/settings"><Edit className="h-3.5 w-3.5" />
-								Edit</Link>
+								<Link href="/settings">
+									<Edit className="h-3.5 w-3.5" />
+									Edit
+								</Link>
 							</Button>
 						) : null}
 					</div>

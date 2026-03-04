@@ -20,6 +20,10 @@ function getRpcUrl(): string {
 	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
 }
 
+function getFallbackRpcUrl(): string {
+	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+}
+
 export { getRpcUrl };
 
 export function getProgramId(): PublicKey {
@@ -35,6 +39,17 @@ export function getSolanaConnection(): Connection {
 		cachedConnection = new Connection(getRpcUrl(), "confirmed");
 	}
 	return cachedConnection;
+}
+
+let fallbackConnection: Connection | null = null;
+
+export function getFallbackConnection(): Connection {
+	const fallbackUrl = getFallbackRpcUrl();
+	if (fallbackUrl === getRpcUrl()) return getSolanaConnection();
+	if (!fallbackConnection) {
+		fallbackConnection = new Connection(fallbackUrl, "confirmed");
+	}
+	return fallbackConnection;
 }
 
 export function getAcademyClient(): CachedAcademyClient {
