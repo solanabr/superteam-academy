@@ -51,7 +51,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 				</div>
 			</div>
 
-			<div className="divide-y divide-border/40">
+			<div className="divide-y divide-border/40 max-h-96 overflow-y-auto">
 				{inProgress.map((course, i) => {
 					const pct = Math.round(
 						(course.progress.completedLessons / course.progress.totalLessons) * 100

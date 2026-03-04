@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getTranslations } from "next-intl/server";
 import { getAllUsers, type AcademyUser } from "@/lib/sanity-users";
 import type { MemberWithMeta } from "@superteam-academy/cms";
@@ -26,6 +27,7 @@ type NormalizedMember = {
 	id: string;
 	name: string;
 	initials: string;
+	image?: string;
 	title: string;
 	wallet: string;
 	xp: number;
@@ -50,6 +52,7 @@ function normalizeMember(
 			id: user._id,
 			name: user.name,
 			initials: getInitials(user.name),
+			image: user.image,
 			title:
 				user.role === "superadmin"
 					? "Super Admin"
@@ -77,6 +80,7 @@ function normalizeMember(
 		id: sanityMember._id,
 		name: sanityMember.user?.name || "Unknown",
 		initials: getInitials(sanityMember.user?.name || "Unknown"),
+		image: sanityMember.user?.image,
 		title: sanityMember.title || "Solana Developer",
 		wallet: "",
 		xp: sanityMember.user?.xpBalance || 0,
@@ -164,9 +168,12 @@ export default async function MembersPage() {
 					{topMembers.map((user, i) => (
 						<div key={user.id} className="p-5 text-center">
 							<div className="relative inline-block mb-2">
-								<div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-sm font-medium mx-auto">
-									{user.initials}
-								</div>
+								<Avatar className="h-12 w-12 mx-auto">
+									<AvatarImage src={user.image} alt={user.name} />
+									<AvatarFallback className="text-sm font-medium">
+										{user.initials}
+									</AvatarFallback>
+								</Avatar>
 								{i < 3 && (
 									<span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[#ffd23f] text-[10px] font-bold text-black flex items-center justify-center">
 										{i + 1}
@@ -291,9 +298,10 @@ function MemberRow({
 			>
 				{rank}
 			</span>
-			<div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-				{member.initials}
-			</div>
+			<Avatar className="h-10 w-10 shrink-0">
+				<AvatarImage src={member.image} alt={member.name} />
+				<AvatarFallback className="text-xs font-medium">{member.initials}</AvatarFallback>
+			</Avatar>
 			<div className="flex-1 min-w-0">
 				<div className="flex items-center gap-2 flex-wrap">
 					<p className="text-sm font-semibold">{member.name}</p>

@@ -67,7 +67,7 @@ export function AchievementGrid({ achievements, unlockedCount, totalCount }: Ach
 				<Progress value={pct} className="h-1.5 mt-2" />
 			</div>
 
-			<div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+			<div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
 				{unlocked.map((a) => {
 					const Icon = ICONS[a.icon] ?? Trophy;
 					return (

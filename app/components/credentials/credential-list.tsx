@@ -33,7 +33,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 max-h-96 overflow-y-auto">
 					{credentials.map((cred) => (
 						<Card
 							key={cred.id}
@@ -57,17 +57,26 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										className="block h-32 rounded-lg border border-border/60 overflow-hidden"
 									>
 										<div className="h-full bg-linear-to-br from-[#0a2a1b] to-[#1a4a2e] flex flex-col items-center justify-center p-3 text-center">
-											<span className="text-[10px] uppercase tracking-widest text-emerald-400/70 mb-1">Superteam Academy</span>
+											<span className="text-[10px] uppercase tracking-widest text-emerald-400/70 mb-1">
+												Superteam Academy
+											</span>
 											<Award className="h-6 w-6 text-emerald-400 mb-1" />
-											<span className="text-xs font-medium text-white/90 line-clamp-2">{cred.title}</span>
+											<span className="text-xs font-medium text-white/90 line-clamp-2">
+												{cred.title}
+											</span>
 											{cred.totalXp > 0 && (
-												<span className="text-[10px] text-emerald-300/70 mt-0.5">{cred.totalXp} XP</span>
+												<span className="text-[10px] text-emerald-300/70 mt-0.5">
+													{cred.totalXp} XP
+												</span>
 											)}
 										</div>
 									</Link>
 								)}
 								<div className="flex items-start justify-between">
-									<Link href={`/certificates/${cred.id}`} className="font-medium text-sm hover:underline">
+									<Link
+										href={`/certificates/${cred.id}`}
+										className="font-medium text-sm hover:underline"
+									>
 										{cred.title}
 									</Link>
 									<Badge

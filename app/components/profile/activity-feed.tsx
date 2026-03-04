@@ -55,7 +55,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 				<h3 className="font-semibold text-sm">Recent Activity</h3>
 			</div>
 
-			<div className="divide-y divide-border/30">
+			<div className="divide-y divide-border/30 max-h-80 overflow-y-auto">
 				{activities.map((activity) => {
 					const config = ACTIVITY_CONFIG[activity.type] ?? ACTIVITY_CONFIG.enrollment;
 					const { Icon, color } = config;
