@@ -4,7 +4,7 @@ import type { CollectionConfig } from 'payload'
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
   admin: {
-    useAsTitle: 'text',
+    useAsTitle: 'reviewerName',
   },
   access: {
     read: () => true,
@@ -21,10 +21,19 @@ export const Reviews: CollectionConfig = {
       index: true,
     },
     {
+      // Optional — null for seeded/anonymous reviews
       name: 'user',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      required: false,
+    },
+    {
+      // Display name used when no User relationship (seeded reviews)
+      name: 'reviewerName',
+      type: 'text',
+      admin: {
+        description: 'Display name for seeded or anonymous reviews',
+      },
     },
     {
       name: 'rating',
@@ -38,6 +47,16 @@ export const Reviews: CollectionConfig = {
       type: 'textarea',
       required: true,
       maxLength: 1000,
+      localized: true,
+    },
+    {
+      // Human-readable relative date for seeded reviews ("2 weeks ago")
+      name: 'displayDate',
+      type: 'text',
+      admin: {
+        description:
+          'Human-readable date for seeded reviews (e.g. "2 weeks ago")',
+      },
     },
     {
       name: 'status',

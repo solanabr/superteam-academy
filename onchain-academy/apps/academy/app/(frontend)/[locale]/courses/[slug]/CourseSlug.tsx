@@ -12,7 +12,7 @@ import { courses } from '@/libs/constants/mockData'
 import type { UIModule } from '@/libs/types/course.types'
 import { toCourseCard, toUIModule } from '@/libs/types/course.types'
 import { useAuthStore } from '@/stores/authStore'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   Award,
@@ -330,11 +330,13 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
     [modulesData],
   )
 
-  const lessonsQueries = moduleIds.map((moduleId) => ({
-    queryKey: ['lessons', moduleId],
-    queryFn: () => modulesAPI.findLessonsByModule(moduleId),
-    staleTime: 1000 * 60 * 5,
-  }))
+  const lessonResults = useQueries({
+    queries: moduleIds.map((moduleId) => ({
+      queryKey: ['lessons', moduleId],
+      queryFn: () => modulesAPI.findLessonsByModule(moduleId),
+      staleTime: 1000 * 60 * 5,
+    })),
+  })
 
   // We use individual useQuery calls per module via a derived state pattern
   // because useQueries is not available without extra setup — instead
@@ -354,12 +356,15 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
   const modules: UIModule[] = useMemo(() => {
     if (modulesData?.docs?.length) {
       // Build UI modules from DB (lessons fetched separately below)
-      return modulesData.docs.map((m) => toUIModule(m, []))
+      return modulesData.docs.map((m, index) => {
+        const lessonsData = lessonResults[index]?.data?.docs || []
+        return toUIModule(m, lessonsData)
+      })
     }
     if (!course) return []
     const ext = extendedModules[course.slug]
     return course.modules.length > 0 ? course.modules : (ext ?? [])
-  }, [modulesData, course])
+  }, [modulesData, course, lessonResults])
 
   const reviews = useMemo(() => {
     if (!course) return []

@@ -1,6 +1,7 @@
 import {
   courseDetailExtras,
   extendedModules,
+  extendedReviews,
 } from '@/libs/constants/courseDetail.constants'
 import { lessonContents } from '@/libs/constants/lesson.constants'
 import { courses } from '@/libs/constants/mockData'
@@ -16,43 +17,61 @@ import type { OnchainAcademy } from '../../../target/types/onchain_academy'
 
 const PROGRAM_ID = new PublicKey(IDL.address)
 
+// ─── Type helpers ───────────────────────────────────────────────
+
+const DIFFICULTY_MAP: Record<string, 'beginner' | 'intermediate' | 'advanced'> =
+  {
+    Beginner: 'beginner',
+    Intermediate: 'intermediate',
+    Advanced: 'advanced',
+  }
+
+const LESSON_TYPE_MAP: Record<
+  string,
+  'video' | 'reading' | 'code_challenge' | 'quiz' | 'hybrid'
+> = {
+  Video: 'video',
+  Reading: 'reading',
+  'Code Challenge': 'code_challenge',
+  Quiz: 'quiz',
+  Hybrid: 'hybrid',
+}
+
+// ─── Seed ───────────────────────────────────────────────────────
+
 async function seed() {
   console.log('🌱 Starting seed process...')
   const payload = await getPayloadClient()
 
+  // ── Find admin user for instructor relationship ──────────────
   let instructorId: number | undefined
   try {
     const users = await payload.find({
       collection: 'users',
-      where: {
-        role: { equals: 'admin' },
-      },
+      where: { role: { equals: 'admin' } },
       limit: 1,
     })
-    console.log('user', users)
 
     if (users.docs.length > 0) {
       instructorId = users.docs[0].id as number
       console.log(`👤 Using existing admin user: ${users.docs[0].email}`)
     } else {
       console.log(
-        '👤 No admin found. Please create one in Payload first or we will try without instructor.',
+        '👤 No admin found — seeding without instructor relationship.',
       )
     }
-  } catch (err: unknown) {
+  } catch (err) {
     console.error('Error fetching users:', err)
   }
 
-  // Anchor provider
+  // ── Anchor provider (optional — skip gracefully) ─────────────
   if (!process.env.ANCHOR_PROVIDER_URL || !process.env.ANCHOR_WALLET) {
     try {
       const output = execSync('solana config get', { encoding: 'utf-8' })
       const rpc = output.match(/RPC URL:\s*(.+)/)?.[1]?.trim()
       const walletPath = output.match(/Keypair Path:\s*(.+)/)?.[1]?.trim()
-
-      if (!process.env.ANCHOR_PROVIDER_URL && rpc) {
+      if (!process.env.ANCHOR_PROVIDER_URL && rpc)
         process.env.ANCHOR_PROVIDER_URL = rpc
-      }
       if (!process.env.ANCHOR_WALLET && walletPath) {
         const possiblePaths = [
           path.resolve(process.cwd(), walletPath),
@@ -61,11 +80,9 @@ async function seed() {
           walletPath,
         ]
         const validPath = possiblePaths.find((p: string) => fs.existsSync(p))
-        if (validPath) {
-          process.env.ANCHOR_WALLET = validPath
-        }
+        if (validPath) process.env.ANCHOR_WALLET = validPath
       }
-    } catch (e) {
+    } catch {
       console.log('Failed to read solana config automatically.')
     }
   }
@@ -75,9 +92,7 @@ async function seed() {
     provider = anchor.AnchorProvider.env()
     anchor.setProvider(provider)
   } catch {
-    console.warn(
-      '⚠️ Could not load AnchorProvider from env. Ensure ANCHOR_WALLET is set if testing on-chain.',
-    )
+    console.warn('⚠️ Could not load AnchorProvider. Skipping on-chain steps.')
   }
 
   const program = provider
@@ -93,7 +108,7 @@ async function seed() {
     console.log(`🔗 Anchor connected. Wallet: ${wallet.publicKey.toBase58()}`)
   } else {
     console.log(
-      `⚠️ Continuing without on-chain interactions (Anchor not configured)`,
+      '⚠️ Continuing without on-chain interactions (Anchor not configured)',
     )
   }
 
@@ -105,15 +120,22 @@ async function seed() {
     )
   }
 
-  for (const course of courses) {
-    console.log(`\n📚 Processing course: ${course.title} (${course.slug})`)
-    const extra = courseDetailExtras[course.slug]
-    const modules = extendedModules[course.slug] || course.modules
+  // ═══════════════════════════════════════════════════════════════
+  //  Main Loop — one course at a time
+  // ═══════════════════════════════════════════════════════════════
 
-    // 1. Initialize Course On-Chain
+  for (const course of courses) {
+    const slug = course.slug
+    console.log(`\n📚 Processing: ${course.title} (${slug})`)
+
+    const extra = courseDetailExtras[slug]
+    // Use extendedModules when available (contains full lesson trees for all courses)
+    const modules = extendedModules[slug] || course.modules
+
+    // ── 1. On-chain (optional) ─────────────────────────────────
     if (program && wallet && configPda) {
       const [coursePda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('course'), Buffer.from(course.slug)],
+        [Buffer.from('course'), Buffer.from(slug)],
         PROGRAM_ID,
       )
 
@@ -125,12 +147,12 @@ async function seed() {
           `   ✅ On-chain course already exists: ${coursePda.toBase58()}`,
         )
       } catch {
-        // Doesn't exist
+        // doesn't exist yet
       }
 
       if (!onchainExists) {
         try {
-          console.log(`   ⏳ Creating on-chain course for ${course.slug}...`)
+          console.log(`   ⏳ Creating on-chain course…`)
           const totalLessons = modules.reduce(
             (acc, m) => acc + m.lessons.length,
             0,
@@ -138,7 +160,7 @@ async function seed() {
 
           await program.methods
             .createCourse({
-              courseId: course.slug,
+              courseId: slug,
               creator: wallet.publicKey,
               contentTxId: Array.from(
                 Buffer.from('mock-arweave-tx-id'.padEnd(32, '0')),
@@ -165,7 +187,7 @@ async function seed() {
             })
             .rpc()
           console.log(`   ✅ On-chain course created!`)
-        } catch (e: unknown) {
+        } catch (e) {
           console.error(
             `   ❌ Failed to create on-chain course:`,
             e instanceof Error ? e.message : String(e),
@@ -174,51 +196,103 @@ async function seed() {
       }
     }
 
-    // 2. Create in Payload Off-Chain
+    // ── 2. Payload — upsert course with ALL fields ─────────────
     let payloadCourseId: string | number | undefined
+
     try {
       const existing = await payload.find({
         collection: 'courses',
-        where: { slug: { equals: course.slug } },
+        where: { slug: { equals: slug } },
       })
+
+      const totalLessonsComputed = modules.reduce(
+        (acc, m) => acc + m.lessons.length,
+        0,
+      )
+
+      // Build richText longDescription from plain string
+      // Payload's default Lexical richText accepts a Lexical JSON structure
+      const longDescriptionLexical = extra?.longDescription
+        ? {
+            root: {
+              type: 'root',
+              children: [
+                {
+                  type: 'paragraph',
+                  children: [
+                    { type: 'text', text: extra.longDescription, version: 1 },
+                  ],
+                  version: 1,
+                },
+              ],
+              direction: null,
+              format: '',
+              indent: 0,
+              version: 1,
+            },
+          }
+        : undefined
+
+      const courseData = {
+        title: course.title,
+        slug,
+        description: course.description,
+        difficulty: DIFFICULTY_MAP[course.difficulty] ?? 'beginner',
+        duration: course.duration,
+        xpReward: course.xp || 0,
+        topic: course.topic,
+        status: 'published' as const,
+        trackId: 1,
+        trackLevel: 1,
+        onChainCourseId: slug,
+        totalLessons: totalLessonsComputed,
+        ...(instructorId ? { instructor: instructorId } : {}),
+        // ─ New fields ─
+        ...(longDescriptionLexical
+          ? { longDescription: longDescriptionLexical }
+          : {}),
+        learningOutcomes: (extra?.learningOutcomes ?? []).map((o) => ({
+          outcome: o,
+        })),
+        prerequisites: (extra?.prerequisites ?? []).map((p) => ({
+          prerequisite: p,
+        })),
+        enrollmentCount: extra?.enrolledCount ?? 0,
+        rating: extra?.rating ?? 0,
+        ratingCount: extra?.ratingCount ?? 0,
+        lastUpdated: extra?.lastUpdated ?? '',
+        language: extra?.language ?? 'English',
+        certificate: extra?.certificate ?? false,
+        onChainCredential: extra?.onChainCredential ?? false,
+      }
 
       if (existing.docs.length > 0) {
         payloadCourseId = existing.docs[0].id
-        console.log(`   ✅ Payload course already exists: ${payloadCourseId}`)
+        console.log(`   ↻  Updating Payload course: ${payloadCourseId}`)
+        await payload.update({
+          collection: 'courses',
+          id: payloadCourseId as number,
+          data: courseData,
+        })
       } else {
-        console.log(`   ⏳ Creating Payload course...`)
+        console.log(`   ⏳ Creating Payload course…`)
         const created = await payload.create({
           collection: 'courses',
-          data: {
-            title: course.title,
-            slug: course.slug,
-            description: course.description,
-            difficulty: course.difficulty.toLowerCase() as
-              | 'beginner'
-              | 'intermediate'
-              | 'advanced',
-            duration: course.duration,
-            xpReward: course.xp || 0,
-            topic: course.topic,
-            status: 'published',
-            trackId: 1,
-            trackLevel: 1,
-            onChainCourseId: course.slug,
-            ...(instructorId ? { instructor: instructorId } : {}),
-            certificate: extra?.certificate ?? false,
-            onChainCredential: extra?.onChainCredential ?? false,
-          },
+          data: courseData,
         })
         payloadCourseId = created.id
         console.log(`   ✅ Payload course created: ${payloadCourseId}`)
       }
 
+      // ── 3. Modules & Lessons ─────────────────────────────────
       if (payloadCourseId) {
         let sortOrderMod = 0
         let onChainLessonIndex = 0
 
         for (const mod of modules) {
+          // Find or create module
           let payloadModuleId: string | number
+
           const existingMod = await payload.find({
             collection: 'modules',
             where: {
@@ -229,6 +303,7 @@ async function seed() {
 
           if (existingMod.docs.length > 0) {
             payloadModuleId = existingMod.docs[0].id
+            console.log(`   📦 Module exists: ${mod.title}`)
           } else {
             const createdMod = await payload.create({
               collection: 'modules',
@@ -239,20 +314,18 @@ async function seed() {
               },
             })
             payloadModuleId = createdMod.id
+            console.log(`   📦 Module created: ${mod.title}`)
           }
           sortOrderMod++
 
+          // Lessons
           let sortOrderLes = 0
           for (const les of mod.lessons) {
-            let payloadLessonId: string | number
+            // Pull xpReward from lessonContents if it exists (solana-fundamentals)
+            const detail = lessonContents[les.id]
+            const xpReward = detail?.xpReward ?? 50
 
-            const typeMap: Record<string, string> = {
-              Video: 'video',
-              Reading: 'reading',
-              'Code Challenge': 'code_challenge',
-              Quiz: 'quiz',
-              Hybrid: 'hybrid',
-            }
+            let payloadLessonId: string | number
 
             const existingLes = await payload.find({
               collection: 'lessons',
@@ -270,33 +343,27 @@ async function seed() {
                 data: {
                   title: les.title,
                   module: payloadModuleId,
-                  type: (typeMap[les.type] || 'reading') as
-                    | 'video'
-                    | 'reading'
-                    | 'code_challenge'
-                    | 'quiz'
-                    | 'hybrid',
+                  type: LESSON_TYPE_MAP[les.type] ?? 'reading',
                   duration: les.duration,
-                  xpReward: 50,
+                  xpReward,
                   sortOrder: sortOrderLes,
-                  onChainLessonIndex: onChainLessonIndex,
+                  onChainLessonIndex,
                 },
               })
               payloadLessonId = createdLes.id
+              console.log(`     ✔  Lesson: ${les.title}`)
             }
             sortOrderLes++
             onChainLessonIndex++
 
-            const detail = lessonContents[les.id]
+            // ── 4. Lesson Contents ─────────────────────────────
             if (detail) {
-              const existingDetails = await payload.find({
+              const existingContent = await payload.find({
                 collection: 'lesson-contents',
-                where: {
-                  lesson: { equals: payloadLessonId },
-                },
+                where: { lesson: { equals: payloadLessonId } },
               })
 
-              if (existingDetails.docs.length === 0) {
+              if (existingContent.docs.length === 0) {
                 const blocks = detail.blocks.map((b) => {
                   if (b.type === 'markdown')
                     return { blockType: 'markdown', content: b.content }
@@ -356,7 +423,6 @@ async function seed() {
                     lesson: payloadLessonId as number,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     blocks: blocks as any,
-                    // blocks: blocks as Record<string, unknown>[],
                     hints: detail.hints?.map((h) => ({ hint: h })) || [],
                     solution: detail.solution || '',
                     ...(challengeData
@@ -367,14 +433,49 @@ async function seed() {
                       : {}),
                   },
                 })
-                console.log(`     ✔️ Lesson content added for: ${les.title}`)
+                console.log(`       📄 Content seeded for: ${les.title}`)
               }
             }
           }
         }
+
+        // ── 5. Reviews ─────────────────────────────────────────
+        // Use extendedReviews when available, fall back to course.reviews
+        const allReviews = [
+          ...(extendedReviews[slug] || []),
+          ...(slug === 'solana-fundamentals' ? course.reviews : []),
+        ]
+
+        for (const review of allReviews) {
+          // Idempotency check: match on reviewerName + course
+          const existingReview = await payload.find({
+            collection: 'reviews',
+            where: {
+              course: { equals: payloadCourseId },
+              reviewerName: { equals: review.name },
+            },
+          })
+
+          if (existingReview.docs.length === 0) {
+            await payload.create({
+              collection: 'reviews',
+              data: {
+                course: payloadCourseId as number,
+                reviewerName: review.name,
+                rating: review.rating,
+                text: review.text,
+                displayDate: review.date,
+                status: 'approved', // seeded reviews are pre-approved
+              },
+            })
+            console.log(
+              `     ⭐ Review seeded: ${review.name} (${review.rating}★)`,
+            )
+          }
+        }
       }
-    } catch (e: unknown) {
-      console.error(`   ❌ Failed Payload sync for ${course.slug}:`, e)
+    } catch (e) {
+      console.error(`   ❌ Failed Payload sync for ${slug}:`, e)
     }
   }
 

@@ -238,7 +238,7 @@ export interface Course {
    */
   duration?: string | null;
   /**
-   * Auto-synced from lesson count
+   * Computed and updated by seed script
    */
   totalLessons?: number | null;
   /**
@@ -262,6 +262,26 @@ export interface Course {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Number of enrolled learners (seeded + live count)
+   */
+  enrollmentCount?: number | null;
+  /**
+   * Average rating (0–5, 1 decimal)
+   */
+  rating?: number | null;
+  /**
+   * Total number of ratings submitted
+   */
+  ratingCount?: number | null;
+  /**
+   * Human-readable update date, e.g. "Feb 2025"
+   */
+  lastUpdated?: string | null;
+  /**
+   * Primary content language
+   */
+  language?: string | null;
   /**
    * Maps to on-chain track ID
    */
@@ -436,9 +456,17 @@ export interface LessonContent {
 export interface Review {
   id: number;
   course: number | Course;
-  user: number | User;
+  user?: (number | null) | User;
+  /**
+   * Display name for seeded or anonymous reviews
+   */
+  reviewerName?: string | null;
   rating: number;
   text: string;
+  /**
+   * Human-readable date for seeded reviews (e.g. "2 weeks ago")
+   */
+  displayDate?: string | null;
   status?: ('pending' | 'approved' | 'rejected') | null;
   updatedAt: string;
   createdAt: string;
@@ -633,6 +661,11 @@ export interface CoursesSelect<T extends boolean = true> {
         prerequisite?: T;
         id?: T;
       };
+  enrollmentCount?: T;
+  rating?: T;
+  ratingCount?: T;
+  lastUpdated?: T;
+  language?: T;
   trackId?: T;
   trackLevel?: T;
   onChainCourseId?: T;
@@ -746,8 +779,10 @@ export interface LessonContentsSelect<T extends boolean = true> {
 export interface ReviewsSelect<T extends boolean = true> {
   course?: T;
   user?: T;
+  reviewerName?: T;
   rating?: T;
   text?: T;
+  displayDate?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;

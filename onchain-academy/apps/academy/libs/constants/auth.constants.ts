@@ -121,9 +121,9 @@ export const SETTINGS_TABS: SettingsTab[] = [
 // ─── Mock User (for settings page) ─────────────────────────────
 
 export const MOCK_USER_SETTINGS = {
-  name: 'Alex Rivera',
-  username: 'alex_dev',
-  email: 'alex.rivera@gmail.com',
+  name: 'Mira',
+  username: 'mira',
+  email: 'mira@gmail.com',
   bio: 'Solana developer building DeFi on-chain. Learning Anchor + Rust full-time. LatAm crypto native.',
   avatar: null as string | null,
   location: 'São Paulo, Brazil',

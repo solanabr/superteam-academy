@@ -17,6 +17,7 @@ export const Courses: CollectionConfig = {
     beforeChange: [slugify],
   },
   fields: [
+    // ─── Core ────────────────────────────────────────────────────
     {
       name: 'title',
       type: 'text',
@@ -65,7 +66,7 @@ export const Courses: CollectionConfig = {
       name: 'totalLessons',
       type: 'number',
       defaultValue: 0,
-      admin: { readOnly: true, description: 'Auto-synced from lesson count' },
+      admin: { description: 'Computed and updated by seed script' },
     },
     {
       name: 'xpReward',
@@ -85,6 +86,7 @@ export const Courses: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
     },
+    // ─── Learning Outcomes & Prerequisites ───────────────────────
     {
       name: 'learningOutcomes',
       type: 'array',
@@ -99,6 +101,41 @@ export const Courses: CollectionConfig = {
         { name: 'prerequisite', type: 'text', required: true, localized: true },
       ],
     },
+    // ─── Social Proof / Display Meta ─────────────────────────────
+    {
+      name: 'enrollmentCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Number of enrolled learners (seeded + live count)',
+      },
+    },
+    {
+      name: 'rating',
+      type: 'number',
+      min: 0,
+      max: 5,
+      defaultValue: 0,
+      admin: { description: 'Average rating (0–5, 1 decimal)' },
+    },
+    {
+      name: 'ratingCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: { description: 'Total number of ratings submitted' },
+    },
+    {
+      name: 'lastUpdated',
+      type: 'text',
+      admin: { description: 'Human-readable update date, e.g. "Feb 2025"' },
+    },
+    {
+      name: 'language',
+      type: 'text',
+      defaultValue: 'English',
+      admin: { description: 'Primary content language' },
+    },
+    // ─── On-chain / Meta ─────────────────────────────────────────
     {
       name: 'trackId',
       type: 'number',
