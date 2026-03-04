@@ -12,7 +12,9 @@
     "features_explore": "Explorar Funciones",
     "courses": "Cursos",
     "features": "Características",
-    "signIn": "Iniciar sesión"
+    "signIn": "Iniciar sesión",
+    "goToDashboard": "Ir al Panel",
+    "devnetLive": "En vivo en Solana Devnet"
   },
   "Header": {
     "signIn": "Iniciar Sesión"
@@ -23,9 +25,26 @@
     "level": "Nivel Actual",
     "achievements": "Logros",
     "myLearning": "Mi Aprendizaje",
-    "activity": "Actividad (Últimos 30 días)",
+    "activity": "Actividad",
     "streak": "Días de Racha",
     "noCourses": "Aún no has comenzado ningún curso.",
     "explore": "Explorar Cursos"
+  },
+  "Profile": {
+    "shareProfile": "Compartir perfil",
+    "shareText": "¡Mira mi perfil de desarrollador Web3 en Superteam Academy! Soy nivel {level} con {xp} XP.",
+    "copied": "¡Enlace del perfil copiado al portapapeles!",
+    "overview": "Resumen",
+    "courses": "Cursos",
+    "credentials": "Credenciales",
+    "skillRadar": "Radar de habilidades",
+    "achievements": "Logros",
+    "enrolledCourses": "Cursos inscritos",
+    "continue": "Continuar",
+    "noActiveCourses": "No hay cursos activos.",
+    "courseCredentials": "Credenciales de curso",
+    "noCourseCredentials": "Aún no hay credenciales de curso. ¡Completa una ruta para conseguir una!",
+    "specialBadges": "Insignias especiales",
+    "noSpecialBadges": "Aún no has ganado insignias especiales."
   }
 }

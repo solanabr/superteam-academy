@@ -415,7 +415,7 @@ export default function CreateCoursePage() {
             </Accordion>
             
             {course.modules.length > 0 && (
-                <Button variant="default" size="lg" className="w-full mt-4" onClick={addModule}>
+                <Button variant="default" size="lg" className="w-full mt-4" onClick={addModule} disabled={isLockedOnChain}>
                     <Plus className="mr-2 h-5 w-5" /> Add Another Module
                 </Button>
             )}

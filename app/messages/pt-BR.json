@@ -9,10 +9,12 @@
     "title": "Construa o Futuro da Web3 na Solana",
     "subtitle": "A plataforma de aprendizado interativo definitiva. Aprenda Rust, Anchor e DeFi construindo dApps reais.",
     "start": "Começar a Aprender",
-    "features_explorer": "Explorar Recursos",
+    "features_explore": "Explorar Recursos",
     "courses": "Cursos",
     "features": "Recursos",
-    "signIn": "Entrar"
+    "signIn": "Entrar",
+    "goToDashboard": "Ir para o Painel",
+    "devnetLive": "Ao vivo na Solana Devnet"
   },
   "Header": {
     "signIn": "Entrar"
@@ -23,9 +25,26 @@
     "level": "Nível Atual",
     "achievements": "Conquistas",
     "myLearning": "Meu Aprendizado",
-    "activity": "Atividade (Últimos 30 Dias)",
-    "streak": "Dias de Ofensiva",
+    "activity": "Atividade",
+    "streak": "Dias de Sequência",
     "noCourses": "Você ainda não começou nenhum curso.",
     "explore": "Explorar Cursos"
+  },
+  "Profile": {
+    "shareProfile": "Compartilhar perfil",
+    "shareText": "Confira meu perfil de desenvolvedor Web3 na Superteam Academy! Estou no nível {level} com {xp} XP.",
+    "copied": "Link do perfil copiado para a área de transferência!",
+    "overview": "Visão geral",
+    "courses": "Cursos",
+    "credentials": "Credenciais",
+    "skillRadar": "Radar de habilidades",
+    "achievements": "Conquistas",
+    "enrolledCourses": "Cursos matriculados",
+    "continue": "Continuar",
+    "noActiveCourses": "Nenhum curso ativo.",
+    "courseCredentials": "Credenciais de curso",
+    "noCourseCredentials": "Ainda não há credenciais de curso. Conclua uma trilha para ganhar uma!",
+    "specialBadges": "Badges especiais",
+    "noSpecialBadges": "Você ainda não ganhou badges especiais."
   }
 }
