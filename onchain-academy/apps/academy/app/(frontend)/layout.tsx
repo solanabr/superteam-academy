@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Playfair_Display } from 'next/font/google'
 import './globals.css'
@@ -62,6 +63,8 @@ export default function RootLayout({
     <html lang='en'>
       <body className={`${playfair.variable} ${dmSans.variable}`}>
         {children}
+
+        <Analytics />
       </body>
     </html>
   )

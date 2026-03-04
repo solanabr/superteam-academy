@@ -26,6 +26,7 @@
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "^5.90.21",
+    "@vercel/analytics": "^1.6.1",
     "better-auth": "^1.5.2",
     "bs58": "^6.0.0",
     "class-variance-authority": "^0.7.1",
