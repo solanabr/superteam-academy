@@ -15,6 +15,15 @@ export function getSupabaseBrowserClient() {
   if (!url || !anonKey) {
     return null;
   }
+  if (!/^https?:\/\//i.test(url)) {
+    return null;
+  }
+  try {
+    // Validate URL early to avoid "Failed to execute 'fetch' on 'Window': Invalid value".
+    new URL(url);
+  } catch {
+    return null;
+  }
 
   browserClient = createClient(url, anonKey, {
     auth: {

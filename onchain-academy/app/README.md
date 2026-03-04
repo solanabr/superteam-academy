@@ -30,6 +30,7 @@ Create `.env.local`:
 ```bash
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
 NEXT_PUBLIC_HELIUS_RPC_URL=
+HELIUS_RPC_URL=
 NEXT_PUBLIC_XP_MINT=xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3
 NEXT_PUBLIC_LEADERBOARD_API_URL=
 NEXT_PUBLIC_POSTHOG_KEY=
@@ -47,6 +48,7 @@ NEXT_PUBLIC_PRIVY_CLIENT_ID=
 ```
 
 If Supabase/Privy variables are not configured, the app automatically falls back to local demo behavior.
+For production, prefer setting `HELIUS_RPC_URL` (server-side) and keep Helius RPC off direct browser calls.
 
 ## Route Map
 
