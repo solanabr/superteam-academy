@@ -9,7 +9,14 @@ import dynamic from "next/dynamic";
 
 const MonacoEditor = dynamic(
   () => import("@monaco-editor/react"),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+        Loading editor...
+      </div>
+    ),
+  }
 );
 
 interface LessonEditorProps {

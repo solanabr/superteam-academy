@@ -62,7 +62,7 @@ export default function DashboardContent({
         <section className="grid gap-5 md:grid-cols-3 mb-8 min-h-[180px]">
 
           {/* XP */}
-          <Card className="border-primary/30 bg-primary/5 shadow-sm">
+          <Card className="relative border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-yellow-400/5 to-transparent shadow-md hover:shadow-yellow-500/20 hover:-translate-y-0.5 transition-all duration-300">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-widest text-primary">
                 {t("dashboard.xpTitle")}
@@ -87,11 +87,14 @@ export default function DashboardContent({
 
               {!isLoading && !error && (
                 <>
-                  <p className="text-4xl font-bold tracking-tight text-primary">
-                    {xp}
-                  </p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-4xl font-extrabold tracking-tight text-yellow-500 drop-shadow-sm">
+                        {xp}
+                        </p>
+                        <span className="text-yellow-400 text-lg">✨</span>
+                    </div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {t("common.xp")} • On-Chain Reputation
+                    Level {Math.floor(xp / 100) + 1} • {xp} XP
                   </p>
                 </>
               )}
@@ -158,7 +161,7 @@ export default function DashboardContent({
                 </p>
 
                 <p className="text-base font-semibold mt-1">
-                  {t("dashboard.continueLearning.courseName")}
+                    {t("dashboard.continueLearning.pickUp")}
                 </p>
               </div>
 

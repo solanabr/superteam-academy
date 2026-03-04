@@ -14,6 +14,29 @@ import { clusterApiUrl } from "@solana/web3.js";
 import { trackEvent } from "@/lib/analytics";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
+const network = WalletAdapterNetwork.Devnet;
+
+function WalletAnalyticsTracker() {
+  const { connected, publicKey } = useWallet();
+  const hasTracked = useRef(false);
+
+  useEffect(() => {
+    if (connected && publicKey && !hasTracked.current) {
+      trackEvent("wallet_connected", {
+        wallet_address: publicKey.toBase58(),
+      });
+
+      hasTracked.current = true;
+    }
+
+    if (!connected) {
+      hasTracked.current = false;
+    }
+  }, [connected, publicKey]);
+
+  return null;
+}
+
 export function SolanaProviders({
   children,
 }: {
@@ -25,9 +48,7 @@ export function SolanaProviders({
     setMounted(true);
   }, []);
 
-  const network = WalletAdapterNetwork.Devnet;
-
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const endpoint = useMemo(() => clusterApiUrl(network), []);
 
   const wallets = useMemo(
     () => [
@@ -37,32 +58,13 @@ export function SolanaProviders({
     []
   );
 
-  function WalletAnalyticsTracker() {
-    const { connected, publicKey } = useWallet();
-    const hasTracked = useRef(false);
-
-    useEffect(() => {
-      if (connected && publicKey && !hasTracked.current) {
-        trackEvent("wallet_connected", {
-          wallet_address: publicKey.toBase58(),
-        });
-
-        hasTracked.current = true;
-      }
-
-      if (!connected) {
-        hasTracked.current = false;
-      }
-    }, [connected, publicKey]);
-
-    return null;
-  }
+  const analyticsTracker = useMemo(() => <WalletAnalyticsTracker />, []);
 
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect={mounted}>
         <WalletModalProvider>
-          <WalletAnalyticsTracker />
+          {analyticsTracker}
           {children}
         </WalletModalProvider>
       </WalletProvider>

@@ -125,7 +125,7 @@ export function CourseList() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-4">
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
       <div className="mb-6 space-y-2">
 
@@ -146,7 +146,7 @@ export function CourseList() {
             placeholder={t("courses.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border rounded-md px-3 py-2 w-full md:w-1/2"
+            className="border rounded-md px-3 py-2 w-full md:w-1/2 bg-background shadow-sm focus:ring-2 focus:ring-primary/40 outline-none"
           />
 
           <select
@@ -156,7 +156,7 @@ export function CourseList() {
                 e.target.value as "All" | Course["difficulty"]
               )
             }
-            className="border rounded-md px-3 py-2 w-full md:w-1/3"
+            className="border rounded-md px-3 py-2 w-full md:w-1/3 bg-background shadow-sm focus:ring-2 focus:ring-primary/40 outline-none"
           >
             <option value="All">{t("courses.allLevels")}</option>
             <option value="Beginner">{t("courses.beginner")}</option>
@@ -174,7 +174,10 @@ export function CourseList() {
 
           return (
             <Link key={course.id} href={`/courses/${course.id}`}>
-              <Card className="group transition-all hover:shadow-xl hover:-translate-y-1 duration-200 border bg-card">
+              <Card
+                className={`group border bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300
+                ${isCompleted ? "border-yellow-400/40 bg-yellow-500/5" : "bg-gradient-to-b from-background to-muted/30"}`}
+              >
 
                 <CardHeader className="space-y-2 pb-3">
 
@@ -210,7 +213,7 @@ export function CourseList() {
                   </div>
 
                   {wallet.connected && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-1">
                       <Progress value={progress} />
                       <div className="text-xs text-muted-foreground text-right">
                         {progress}% {t("courses.complete")}
@@ -218,7 +221,7 @@ export function CourseList() {
                     </div>
                   )}
 
-                  <Button size="sm" className="w-full font-medium">
+                  <Button size="sm" className="w-full font-medium shadow-sm hover:shadow-md transition">
                     {isCompleted
                       ? t("courses.review")
                       : progress > 0

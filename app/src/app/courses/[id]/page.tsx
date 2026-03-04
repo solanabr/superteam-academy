@@ -121,16 +121,16 @@ export default function CourseDetailPage() {
 
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">
-            {course.title}
+            {t(course.title)}
           </h1>
 
           <Badge variant="secondary">
-            {course.difficulty}
+            {t(`courses.${course.difficulty.toLowerCase()}`)}
           </Badge>
         </div>
 
-        <p className="text-muted-foreground text-base max-w-2xl">
-          {course.description}
+        <p className="text-muted-foreground text-base max-w-2xl leading-relaxed">
+          {t(course.description)}
         </p>
 
         {!enrolled && wallet.connected && (
@@ -144,23 +144,23 @@ export default function CourseDetailPage() {
           </Button>
         )}
 
-        <div className="flex gap-8 text-sm text-muted-foreground pt-4 border-t">
+        <div className="flex gap-10 text-sm text-muted-foreground pt-5 border-t">
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-lg text-foreground">
               {course.lessonCount}
             </p>
             <p>{t("courses.lessons")}</p>
           </div>
 
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-lg text-foreground">
               {totalXP}
             </p>
             <p>{t("courses.totalXP")}</p>
           </div>
 
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-lg text-foreground">
               {course.trackLevel}
             </p>
             <p>{t("courses.trackLevel")}</p>
@@ -170,7 +170,7 @@ export default function CourseDetailPage() {
       </div>
 
       {/* PROGRESS */}
-      <div className="rounded-xl border p-4 bg-muted/30 space-y-2">
+      <div className="rounded-xl border p-5 bg-muted/30 space-y-3 shadow-sm">
         <div className="flex justify-between text-sm">
           <span className="font-medium">{t("courses.progress")}</span>
           <span className="text-muted-foreground">
@@ -191,7 +191,7 @@ export default function CourseDetailPage() {
               return (
                 <div
                   key={lesson.id}
-                  className="flex justify-between items-center border rounded-xl px-5 py-4 hover:shadow-sm transition-all duration-200"
+                  className="flex justify-between items-center border rounded-xl px-5 py-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 bg-background"
                 >
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">
@@ -199,7 +199,7 @@ export default function CourseDetailPage() {
                     </p>
 
                     <p className="font-semibold">
-                      {lesson.title}
+                      {t(lesson.title)}
                     </p>
 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -210,12 +210,12 @@ export default function CourseDetailPage() {
                       </span>
 
                       <span>•</span>
-                      <span>{lesson.xpReward} XP</span>
+                      <span>{lesson.xpReward} {t("common.xp")}</span>
 
                       {isCompleted && (
                         <>
                           <span>•</span>
-                          <span className="text-green-600 font-medium">
+                          <span className="text-green-600 font-semibold">
                             {t("courses.completed")}
                           </span>
                         </>
@@ -240,7 +240,7 @@ export default function CourseDetailPage() {
 
           {progressPercentage === 100 && (
             <div className="pt-4 border-t text-center space-y-3">
-              <p className="text-green-600 font-medium text-sm">
+              <p className="text-green-600 font-semibold text-sm">
                 🎉 {t("courses.completedCourse")}
               </p>
 
@@ -252,7 +252,7 @@ export default function CourseDetailPage() {
                 </Link>
 
                 <Link href={`/certificates/${course.id}`}>
-                  <Button size="sm">
+                  <Button size="sm" className="shadow-sm">
                     {t("courses.viewCertificate")}
                   </Button>
                 </Link>

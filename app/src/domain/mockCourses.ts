@@ -1,13 +1,6 @@
 import { CourseDefinition } from "./courses"
 
-/* -------------------------------------------------------------------------- */
-/*                               MOCK COURSES                                 */
-/* -------------------------------------------------------------------------- */
-
 export const mockCourses: CourseDefinition[] = [
-  /* -------------------------------------------------------------------------- */
-  /*                              BEGINNER COURSE                               */
-  /* -------------------------------------------------------------------------- */
   {
     id: "solana-fundamentals",
     title: "courses.solanaFundamentals.title",
@@ -20,78 +13,38 @@ export const mockCourses: CourseDefinition[] = [
     lessons: [
       {
         id: 0,
-        title: "Introduction to Solana Architecture",
+        title: "lessons.solanaFundamentals.architecture.title",
         type: "content",
         xpReward: 30,
-        content: `
-Solana is a high-performance Layer 1 blockchain optimized for speed and low fees.
-
-Core innovations:
-- Proof of History (PoH)
-- Tower BFT
-- Parallel execution
-- Runtime-level optimizations
-
-Solana enables scalable decentralized applications.
-        `,
+        content: "lessons.solanaFundamentals.architecture.content",
       },
       {
         id: 1,
-        title: "The Solana Accounts Model",
+        title: "lessons.solanaFundamentals.accounts.title",
         type: "content",
         xpReward: 30,
-        content: `
-Everything in Solana is an account.
-
-Accounts:
-- Store state
-- Have an owner (program)
-- Require rent exemption
-- Contain lamports and data
-
-Programs modify account state via instructions.
-        `,
+        content: "lessons.solanaFundamentals.accounts.content",
       },
       {
         id: 2,
-        title: "Transactions and Instructions",
+        title: "lessons.solanaFundamentals.transactions.title",
         type: "content",
         xpReward: 30,
-        content: `
-Transactions contain one or more instructions.
-
-Each transaction:
-- Requires valid signers
-- Executes atomically
-- Pays network fees
-
-Signers authorize state transitions.
-        `,
+        content: "lessons.solanaFundamentals.transactions.content",
       },
       {
         id: 3,
-        title: "Program Derived Addresses (PDAs)",
+        title: "lessons.solanaFundamentals.pda.title",
         type: "content",
         xpReward: 30,
-        content: `
-PDAs are deterministic addresses derived from seeds.
-
-Characteristics:
-- Off-curve
-- Owned by programs
-- Secure and predictable
-
-Used for escrow, vaults, state accounts.
-        `,
+        content: "lessons.solanaFundamentals.pda.content",
       },
       {
         id: 4,
-        title: "Build a Simple Function",
+        title: "lessons.solanaFundamentals.helloChallenge.title",
         type: "challenge",
         xpReward: 40,
-        content: `
-Create a function that returns the string "Hello Solana".
-        `,
+        content: "lessons.solanaFundamentals.helloChallenge.content",
         starterCode: `function greet() {
   // return "Hello Solana"
 }`,
@@ -102,12 +55,10 @@ Create a function that returns the string "Hello Solana".
       },
       {
         id: 5,
-        title: "Simulate Deployment",
+        title: "lessons.solanaFundamentals.deployChallenge.title",
         type: "challenge",
         xpReward: 40,
-        content: `
-Simulate deployment by returning true.
-        `,
+        content: "lessons.solanaFundamentals.deployChallenge.content",
         starterCode: `function deploy() {
   // return true
 }`,
@@ -119,9 +70,6 @@ Simulate deployment by returning true.
     ],
   },
 
-  /* -------------------------------------------------------------------------- */
-  /*                           INTERMEDIATE COURSE                              */
-  /* -------------------------------------------------------------------------- */
   {
     id: "anchor-mastery",
     title: "courses.anchorMastery.title",
@@ -134,59 +82,31 @@ Simulate deployment by returning true.
     lessons: [
       {
         id: 0,
-        title: "Anchor Project Architecture",
+        title: "lessons.anchor.architecture.title",
         type: "content",
         xpReward: 45,
-        content: `
-An Anchor project includes:
-
-- programs/
-- tests/
-- migrations/
-- Anchor.toml
-
-Anchor abstracts boilerplate while preserving flexibility.
-        `,
+        content: "lessons.anchor.architecture.content",
       },
       {
         id: 1,
-        title: "Account Constraints Deep Dive",
+        title: "lessons.anchor.constraints.title",
         type: "content",
         xpReward: 45,
-        content: `
-Anchor provides declarative constraints:
-
-- seeds
-- bump
-- has_one
-- payer
-- mut
-
-Constraints improve security and readability.
-        `,
+        content: "lessons.anchor.constraints.content",
       },
       {
         id: 2,
-        title: "Cross Program Invocations (CPI)",
+        title: "lessons.anchor.cpi.title",
         type: "content",
         xpReward: 45,
-        content: `
-CPI allows programs to call other programs.
-
-Important concepts:
-- Program IDs
-- Instruction contexts
-- Signer seeds
-        `,
+        content: "lessons.anchor.cpi.content",
       },
       {
         id: 3,
-        title: "Token-2022 Integration",
+        title: "lessons.anchor.token2022.title",
         type: "challenge",
         xpReward: 60,
-        content: `
-Simulate mint creation by returning "token-2022".
-        `,
+        content: "lessons.anchor.token2022.content",
         starterCode: `function createMint() {
   // return "token-2022"
 }`,
@@ -197,12 +117,10 @@ Simulate mint creation by returning "token-2022".
       },
       {
         id: 4,
-        title: "Implement a CPI Call",
+        title: "lessons.anchor.cpiChallenge.title",
         type: "challenge",
         xpReward: 60,
-        content: `
-Return the string "cpi-success".
-        `,
+        content: "lessons.anchor.cpiChallenge.content",
         starterCode: `function cpi() {
   // return "cpi-success"
 }`,
@@ -213,12 +131,10 @@ Return the string "cpi-success".
       },
       {
         id: 5,
-        title: "Testing Anchor Programs",
+        title: "lessons.anchor.testing.title",
         type: "challenge",
         xpReward: 60,
-        content: `
-Return true to simulate successful test execution.
-        `,
+        content: "lessons.anchor.testing.content",
         starterCode: `function runTests() {
   // return true
 }`,
@@ -230,9 +146,6 @@ Return true to simulate successful test execution.
     ],
   },
 
-  /* -------------------------------------------------------------------------- */
-  /*                               ADVANCED COURSE                              */
-  /* -------------------------------------------------------------------------- */
   {
     id: "solana-protocol-engineering",
     title: "courses.protocolEngineering.title",
@@ -245,54 +158,31 @@ Return true to simulate successful test execution.
     lessons: [
       {
         id: 0,
-        title: "State Compression",
+        title: "lessons.protocol.compression.title",
         type: "content",
         xpReward: 70,
-        content: `
-State compression reduces on-chain storage costs using Merkle trees.
-
-Applications:
-- NFTs
-- Large datasets
-- Scalable protocol design
-        `,
+        content: "lessons.protocol.compression.content",
       },
       {
         id: 1,
-        title: "Optimizing Compute Units",
+        title: "lessons.protocol.compute.title",
         type: "content",
         xpReward: 70,
-        content: `
-Efficient programs reduce compute usage.
-
-Strategies:
-- Avoid unnecessary deserialization
-- Minimize account reads
-- Optimize CPI calls
-        `,
+        content: "lessons.protocol.compute.content",
       },
       {
         id: 2,
-        title: "Security Patterns in Solana",
+        title: "lessons.protocol.security.title",
         type: "content",
         xpReward: 70,
-        content: `
-Common vulnerabilities:
-- Reinitialization attacks
-- PDA misconfiguration
-- Incorrect signer validation
-
-Secure design prevents protocol exploits.
-        `,
+        content: "lessons.protocol.security.content",
       },
       {
         id: 3,
-        title: "Design a Vault System",
+        title: "lessons.protocol.vault.title",
         type: "challenge",
         xpReward: 100,
-        content: `
-Return the string "vault-secured".
-        `,
+        content: "lessons.protocol.vault.content",
         starterCode: `function createVault() {
   // return "vault-secured"
 }`,
@@ -303,12 +193,10 @@ Return the string "vault-secured".
       },
       {
         id: 4,
-        title: "Protocol Upgrade Simulation",
+        title: "lessons.protocol.upgrade.title",
         type: "challenge",
         xpReward: 100,
-        content: `
-Return true to simulate protocol upgrade.
-        `,
+        content: "lessons.protocol.upgrade.content",
         starterCode: `function upgradeProtocol() {
   // return true
 }`,
@@ -319,12 +207,10 @@ Return true to simulate protocol upgrade.
       },
       {
         id: 5,
-        title: "Production Readiness Checklist",
+        title: "lessons.protocol.production.title",
         type: "challenge",
         xpReward: 100,
-        content: `
-Return the string "production-ready".
-        `,
+        content: "lessons.protocol.production.content",
         starterCode: `function audit() {
   // return "production-ready"
 }`,

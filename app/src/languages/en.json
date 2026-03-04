@@ -30,9 +30,9 @@
   "dashboard.footerLine1": "Built with ❤️ for the Solana ecosystem",
   "dashboard.footerLine2": "Powered by Superteam Brazil",
   "dashboard.continueLearning.title": "Continue Learning",
-  "dashboard.continueLearning.inProgress": "You have 1 course in progress",
-  "dashboard.continueLearning.courseName": "Anchor Mastery",
-  "dashboard.continueLearning.resume": "Resume",
+  "dashboard.continueLearning.inProgress": "You have courses in progress",
+  "dashboard.continueLearning.pickUp": "Resume your learning journey",
+  "dashboard.continueLearning.resume": "Browse Courses",
 
   "certificate.loading": "Loading certificate...",
   "certificate.title": "Certificate of Completion",
@@ -82,6 +82,13 @@
   "courses.exploreSubtitle": "Browse available learning tracks. Connect your wallet to track progress and earn XP.",
   "courses.catalogTitle": "Course Catalog",
   "courses.catalogSubtitle": "Continue your learning journey and earn on-chain XP.",
+  "courses.loadingCourse": "Loading course...",
+  "courses.lessonCount": "Lessons",
+  "courses.totalXpLabel": "Total XP",
+  "courses.trackLevelLabel": "Track Level",
+  "courses.progressLabel": "Progress",
+  "courses.lessonType.content": "Content",
+  "courses.lessonType.challenge": "Challenge",
 
   "courses.solanaFundamentals.title": "Solana Fundamentals",
   "courses.solanaFundamentals.description": "Learn the architecture and core concepts of Solana from first principles.",
@@ -107,6 +114,8 @@
   "profile.noCourses": "No completed courses yet.",
   "profile.credentials": "Credentials",
   "profile.noCredentials": "No credentials earned yet.",
+  "profile.xp": "XP",
+  "profile.level": "Level",
 
   "leaderboard.title": "Leaderboard",
   "leaderboard.global": "Global Ranking",
@@ -124,6 +133,8 @@
   "leaderboard.allTime": "All-Time",
   "leaderboard.monthly": "Monthly",
   "leaderboard.weekly": "Weekly",
+  "leaderboard.position": "Position",
+  "leaderboard.points": "XP Points",
 
   "lesson.loading": "Loading lesson...",
   "lesson.notFound": "Lesson not found.",
@@ -134,6 +145,65 @@
   "lesson.next": "Next",
   "lesson.backToCourse": "Back to Course",
   "lesson.completeCourse": "Complete Course",
+  "lesson.reward": "Reward",
+  "lesson.xpEarned": "XP Earned",
+
+  "lessons.solanaFundamentals.architecture.title": "Introduction to Solana Architecture",
+  "lessons.solanaFundamentals.architecture.content": "Solana is a high-performance Layer 1 blockchain optimized for speed and low fees.\n\nCore innovations:\n- Proof of History (PoH)\n- Tower BFT\n- Parallel execution\n- Runtime-level optimizations\n\nSolana enables scalable decentralized applications.",
+
+  "lessons.solanaFundamentals.accounts.title": "The Solana Accounts Model",
+  "lessons.solanaFundamentals.accounts.content": "Everything in Solana is an account.\n\nAccounts:\n- Store state\n- Have an owner (program)\n- Require rent exemption\n- Contain lamports and data\n\nPrograms modify account state via instructions.",
+
+  "lessons.solanaFundamentals.transactions.title": "Transactions and Instructions",
+  "lessons.solanaFundamentals.transactions.content": "Transactions contain one or more instructions.\n\nEach transaction:\n- Requires valid signers\n- Executes atomically\n- Pays network fees\n\nSigners authorize state transitions.",
+
+  "lessons.solanaFundamentals.pda.title": "Program Derived Addresses (PDAs)",
+  "lessons.solanaFundamentals.pda.content": "PDAs are deterministic addresses derived from seeds.\n\nCharacteristics:\n- Off-curve\n- Owned by programs\n- Secure and predictable\n\nUsed for escrow, vaults, state accounts.",
+
+  "lessons.solanaFundamentals.helloChallenge.title": "Build a Simple Function",
+  "lessons.solanaFundamentals.helloChallenge.content": "Create a function that returns the string \"Hello Solana\".",
+
+  "lessons.solanaFundamentals.deployChallenge.title": "Simulate Deployment",
+  "lessons.solanaFundamentals.deployChallenge.content": "Simulate deployment by returning true.",
+
+
+  "lessons.anchor.architecture.title": "Anchor Project Architecture",
+  "lessons.anchor.architecture.content": "An Anchor project includes:\n\n- programs/\n- tests/\n- migrations/\n- Anchor.toml\n\nAnchor abstracts boilerplate while preserving flexibility.",
+
+  "lessons.anchor.constraints.title": "Account Constraints Deep Dive",
+  "lessons.anchor.constraints.content": "Anchor provides declarative constraints:\n\n- seeds\n- bump\n- has_one\n- payer\n- mut\n\nConstraints improve security and readability.",
+
+  "lessons.anchor.cpi.title": "Cross Program Invocations (CPI)",
+  "lessons.anchor.cpi.content": "CPI allows programs to call other programs.\n\nImportant concepts:\n- Program IDs\n- Instruction contexts\n- Signer seeds",
+
+  "lessons.anchor.token2022.title": "Token-2022 Integration",
+  "lessons.anchor.token2022.content": "Simulate mint creation by returning \"token-2022\".",
+
+  "lessons.anchor.cpiChallenge.title": "Implement a CPI Call",
+  "lessons.anchor.cpiChallenge.content": "Return the string \"cpi-success\".",
+
+  "lessons.anchor.testing.title": "Testing Anchor Programs",
+  "lessons.anchor.testing.content": "Return true to simulate successful test execution.",
+
+
+  "lessons.protocol.compression.title": "State Compression",
+  "lessons.protocol.compression.content": "State compression reduces on-chain storage costs using Merkle trees.\n\nApplications:\n- NFTs\n- Large datasets\n- Scalable protocol design",
+
+  "lessons.protocol.compute.title": "Optimizing Compute Units",
+  "lessons.protocol.compute.content": "Efficient programs reduce compute usage.\n\nStrategies:\n- Avoid unnecessary deserialization\n- Minimize account reads\n- Optimize CPI calls",
+
+  "lessons.protocol.security.title": "Security Patterns in Solana",
+  "lessons.protocol.security.content": "Common vulnerabilities:\n- Reinitialization attacks\n- PDA misconfiguration\n- Incorrect signer validation\n\nSecure design prevents protocol exploits.",
+
+  "lessons.protocol.vault.title": "Design a Vault System",
+  "lessons.protocol.vault.content": "Return the string \"vault-secured\".",
+
+  "lessons.protocol.upgrade.title": "Protocol Upgrade Simulation",
+  "lessons.protocol.upgrade.content": "Return true to simulate protocol upgrade.",
+
+  "lessons.protocol.production.title": "Production Readiness Checklist",
+  "lessons.protocol.production.content": "Return the string \"production-ready\".",
+
 
   "settings.title": "Settings",
   "settings.connectWallet": "Connect your wallet to access settings.",
