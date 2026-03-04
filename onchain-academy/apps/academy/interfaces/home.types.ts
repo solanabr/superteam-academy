@@ -1,5 +1,11 @@
 import { ReactNode } from 'react'
 
+export interface PathModuleItem {
+  label: string
+  done?: boolean
+  active?: boolean
+}
+
 export interface PathItem {
   svgKey: string
   slug: string

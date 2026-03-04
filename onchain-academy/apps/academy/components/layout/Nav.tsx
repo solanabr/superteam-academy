@@ -1,6 +1,6 @@
 'use client'
 
-import type { LanguageOption } from '@/app/components/home/home.types'
+import type { LanguageOption } from '@/interfaces/home.types'
 import { useSession } from '@/libs/auth-client'
 import { LANGUAGES } from '@/libs/constants/home.constants'
 import {

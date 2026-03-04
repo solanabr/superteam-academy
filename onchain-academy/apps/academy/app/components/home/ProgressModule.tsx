@@ -1,11 +1,9 @@
 'use client'
 
-import type { PathModuleItem } from '@/app/components/home/home.types'
+import type { PathModuleItem } from '@/interfaces/home.types'
 import { Check } from 'lucide-react'
 
-interface ProgressModuleProps extends PathModuleItem {}
-
-export function ProgressModule({ label, done, active }: ProgressModuleProps) {
+export function ProgressModule({ label, done, active }: PathModuleItem) {
   return (
     <div className='flex items-center gap-2.5 py-[7px] border-b border-[rgba(27,35,29,0.06)]'>
       <div
