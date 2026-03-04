@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       // @ts-ignore
       const userId = session.user.id;
       // Проверка на валидность MongoDB ObjectId
-      if (userId && /^[0-9a-fA-F]{24}$/.test(userId)) {
+      if (userId) {
           user = await prisma.user.findUnique({
             where: { id: userId },
             include: { 
