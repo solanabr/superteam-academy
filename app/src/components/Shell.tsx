@@ -1,17 +1,10 @@
 import Link from "next/link";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { AuthControls } from "@/components/AuthControls";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { dictionary, getLocale } from "@/lib/i18n";
 
-const nav = [
-  { href: "/courses", label: "Courses" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/certificates/demo", label: "Certificates" },
-  { href: "/settings", label: "Settings" },
-  { href: "/profile", label: "Profile" },
-];
-
-export function Shell({
+export async function Shell({
   title,
   subtitle,
   children,
@@ -20,12 +13,24 @@ export function Shell({
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const d = await dictionary();
+
+  const nav = [
+    { href: "/courses", label: d["nav.courses"] },
+    { href: "/dashboard", label: d["nav.dashboard"] },
+    { href: "/leaderboard", label: d["nav.leaderboard"] },
+    { href: "/certificates/demo", label: d["nav.certificates"] },
+    { href: "/settings", label: d["nav.settings"] },
+    { href: "/profile", label: d["nav.profile"] },
+  ];
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="font-semibold">
-            Superteam Academy
+            {d.brand}
           </Link>
           <nav className="hidden items-center gap-4 text-sm md:flex">
             {nav.map((n) => (
@@ -35,6 +40,15 @@ export function Shell({
             ))}
           </nav>
           <div className="flex items-center gap-3 text-sm">
+            <LanguageSwitcher
+              locale={locale}
+              label={d["lang.label"]}
+              options={[
+                { value: "en", label: d["lang.en"] },
+                { value: "pt-br", label: d["lang.pt-br"] },
+                { value: "es", label: d["lang.es"] },
+              ]}
+            />
             <WalletConnectButton />
             <AuthControls />
           </div>
@@ -55,7 +69,7 @@ export function Shell({
 
       <footer className="border-t border-zinc-200 bg-white">
         <div className="mx-auto w-full max-w-6xl px-6 py-8 text-xs text-zinc-500">
-          Open-source LMS scaffold • PR #13
+          {d.footer}
         </div>
       </footer>
     </div>

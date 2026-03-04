@@ -1,0 +1,15 @@
+{
+  "brand": "Superteam Academy",
+  "nav.courses": "Cursos",
+  "nav.dashboard": "Panel",
+  "nav.leaderboard": "Clasificación",
+  "nav.certificates": "Certificados",
+  "nav.settings": "Configuración",
+  "nav.profile": "Perfil",
+  "auth.signIn": "Iniciar sesión",
+  "footer": "Scaffold LMS open-source • PR #13",
+  "lang.label": "Idioma",
+  "lang.en": "Inglés",
+  "lang.pt-br": "Portugués (Brasil)",
+  "lang.es": "Español"
+}

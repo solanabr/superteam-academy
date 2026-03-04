@@ -15,6 +15,7 @@
     "@solana/wallet-adapter-wallets": "^0.19.37",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
+    "next-intl": "^4.8.3",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
