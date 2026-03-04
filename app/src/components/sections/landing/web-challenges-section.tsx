@@ -18,13 +18,18 @@ type ChallengeItem = {
 };
 
 const difficulty_variant: Record<string, string> = {
-  easy: "bg-green-100 text-green-900 border-green-300",
-  medium: "bg-yellow-100 text-yellow-900 border-yellow-300",
-  hard: "bg-orange-100 text-orange-900 border-orange-300",
-  hell: "bg-red-100 text-red-900 border-red-300",
+  easy: "bg-green-100 text-green-900 border-green-300 dark:bg-green-950 dark:text-green-200 dark:border-green-800",
+  medium: "bg-yellow-100 text-yellow-900 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800",
+  hard: "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-800",
+  hell: "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-200 dark:border-red-800",
 };
 
-export default function WebChallengesSection(): ReactNode {
+type WebChallengesSectionProps = {
+  /** When set, only show this many challenges (e.g. 6 for landing preview). Omit for full catalog. */
+  maxItems?: number;
+};
+
+export default function WebChallengesSection({ maxItems }: WebChallengesSectionProps = {}): ReactNode {
   const t = useTranslations("challenges");
   const t_common = useTranslations("common");
   const [search, set_search] = useState("");
@@ -46,8 +51,8 @@ export default function WebChallengesSection(): ReactNode {
       const b_date = b.created_at ? new Date(b.created_at).getTime() : 0;
       return b_date - a_date;
     });
-    return list.slice(0, 6);
-  }, [challenges, search]);
+    return typeof maxItems === "number" ? list.slice(0, maxItems) : list;
+  }, [challenges, search, maxItems]);
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-12 md:px-8">
@@ -78,7 +83,15 @@ export default function WebChallengesSection(): ReactNode {
       </div>
 
       {isPending && (
-        <p className="text-sm text-muted-foreground">{t_common("loading")}</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-40 animate-pulse rounded-none border-2 border-border bg-muted/50"
+              aria-hidden
+            />
+          ))}
+        </div>
       )}
 
       {error && (
@@ -90,7 +103,7 @@ export default function WebChallengesSection(): ReactNode {
       )}
 
       {!isPending && visible.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((challenge) => (
             <article
               key={challenge.id}
@@ -134,17 +147,19 @@ export default function WebChallengesSection(): ReactNode {
         </div>
       )}
 
-      <div className="pt-4">
-        <Link href="/challenges">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-none border-2 border-border text-xs font-mono uppercase tracking-wide sm:w-auto"
-          >
-            {t("title")}
-          </Button>
-        </Link>
-      </div>
+      {typeof maxItems === "number" && (
+        <div className="pt-4">
+          <Link href="/challenges">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-none border-2 border-border px-4 py-2 text-xs font-mono uppercase tracking-wide sm:w-auto"
+            >
+              {t("viewAll")}
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

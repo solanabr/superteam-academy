@@ -7,6 +7,11 @@ export const ACHIEVEMENT_CRITERIA_TYPES = [
   "lessons_completed",
   "challenges_completed",
   "streak_days",
+  // Special non-numeric criteria:
+  // - "registration": first-time user on the platform
+  // - "all_accounts_linked": user has at least one OAuth provider and a wallet linked
+  "registration",
+  "all_accounts_linked",
 ] as const;
 export type AchievementCriteriaType = (typeof ACHIEVEMENT_CRITERIA_TYPES)[number];
 

@@ -5,6 +5,7 @@ import { api_error, api_success } from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { achievement_awards, oauth_accounts, user_streaks, users, wallets, xp_snapshots } from "@/lib/db/schema";
 import { fetch_credential_nfts, get_xp_balance } from "@/lib/services/blockchain-service";
+import { evaluate_and_award_criteria_achievements } from "@/lib/services/achievement-service";
 
 export async function GET(): Promise<Response> {
   const result = await require_auth();
@@ -30,6 +31,9 @@ export async function GET(): Promise<Response> {
 
   const wallet_public_key = wallet?.public_key ?? null;
   const xp = wallet_public_key ? await get_xp_balance(wallet_public_key) : null;
+
+  // Ensure default / criteria-based achievements are awarded
+  await evaluate_and_award_criteria_achievements(session.sub);
 
   const [streak] = await db
     .select()

@@ -5,6 +5,7 @@ import {
   achievements,
   admin_logs,
   lesson_progress,
+  oauth_accounts,
   user_challenge_attempts,
   user_streaks,
   users,
@@ -104,8 +105,11 @@ async function get_user_criteria_stats(user_id: string): Promise<{
   lessons_completed: number;
   challenges_completed: number;
   streak_days: number;
+  has_wallet: boolean;
+  oauth_providers: number;
 }> {
   const [wallet] = await db.select().from(wallets).where(eq(wallets.user_id, user_id)).limit(1);
+  const has_wallet = Boolean(wallet);
   const total_xp = wallet ? (await get_xp_balance(wallet.public_key))?.total_xp ?? 0 : 0;
 
   const [lessonsResult] = await db
@@ -127,7 +131,13 @@ async function get_user_criteria_stats(user_id: string): Promise<{
     .limit(1);
   const streak_days = streakRow?.current_streak_days ?? 0;
 
-  return { total_xp, lessons_completed, challenges_completed, streak_days };
+  const oauthRows = await db
+    .select({ provider: oauth_accounts.provider })
+    .from(oauth_accounts)
+    .where(eq(oauth_accounts.user_id, user_id));
+  const oauth_providers = oauthRows.length;
+
+  return { total_xp, lessons_completed, challenges_completed, streak_days, has_wallet, oauth_providers };
 }
 
 /**
@@ -144,7 +154,6 @@ export async function evaluate_and_award_criteria_achievements(user_id: string):
       and(
         eq(achievements.is_active, true),
         sql`${achievements.criteria_type} is not null`,
-        sql`${achievements.criteria_value} is not null`,
       ),
     );
 
@@ -157,6 +166,8 @@ export async function evaluate_and_award_criteria_achievements(user_id: string):
     else if (criteria_type === "lessons_completed") meets = stats.lessons_completed >= criteria_value;
     else if (criteria_type === "challenges_completed") meets = stats.challenges_completed >= criteria_value;
     else if (criteria_type === "streak_days") meets = stats.streak_days >= criteria_value;
+    else if (criteria_type === "registration") meets = true;
+    else if (criteria_type === "all_accounts_linked") meets = stats.has_wallet && stats.oauth_providers > 0;
 
     if (!meets) continue;
 

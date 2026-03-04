@@ -61,9 +61,15 @@ export async function GET(_request: NextRequest, { params }: { params: Params })
     if (challenge && !challenge.deleted_at) {
       const payload = {
         ...challenge,
-        deleted_at: challenge.deleted_at ? challenge.deleted_at.toISOString() : null,
-        created_at: challenge.created_at.toISOString(),
-        updated_at: challenge.updated_at.toISOString(),
+        deleted_at: null,
+        created_at:
+          challenge.created_at instanceof Date
+            ? challenge.created_at.toISOString()
+            : new Date(challenge.created_at).toISOString(),
+        updated_at:
+          challenge.updated_at instanceof Date
+            ? challenge.updated_at.toISOString()
+            : new Date(challenge.updated_at).toISOString(),
       };
       return json_ok(payload);
     }

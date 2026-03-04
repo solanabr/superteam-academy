@@ -32,7 +32,14 @@ export const admin_achievements_query_schema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-export const ACHIEVEMENT_CRITERIA_TYPES = ["xp_reached", "lessons_completed", "challenges_completed", "streak_days"] as const;
+export const ACHIEVEMENT_CRITERIA_TYPES = [
+  "xp_reached",
+  "lessons_completed",
+  "challenges_completed",
+  "streak_days",
+  "registration",
+  "all_accounts_linked",
+] as const;
 
 export const admin_achievement_create_body_schema = z.object({
   achievement_id: z.string().min(1),

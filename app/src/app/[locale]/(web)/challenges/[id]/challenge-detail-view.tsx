@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
 import { useAPIQuery, useAPIMutation } from "@/lib/api/useAPI";
 import { Button } from "@/components/ui/button";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 import { parse_challenge_spec } from "@/lib/challenge-spec-parser";
 import { Separator } from "@/components/ui/separator";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, MinusIcon, PlusIcon } from "lucide-react";
 
 const ChallengeCodeEditor = dynamic(
   () => import("@/components/editor/code-editor").then((m) => m.CodeEditor),
@@ -27,6 +28,9 @@ type Challenge = {
   starter_code?: string | null;
   xp_reward?: number;
   language?: string | null;
+  time_estimate_minutes?: number | null;
+  track_association?: string | null;
+  test_cases?: Array<{ input: string; expected: string }>;
 };
 
 const SUPPORTED_LANGUAGES = [
@@ -124,12 +128,25 @@ export function ChallengeDetailView({ challenge_id }: { challenge_id: string }) 
   const difficulty_key = difficulty_source as "easy" | "medium" | "hard" | "hell";
   const xp_display = spec?.xp_reward ?? challenge.xp_reward ?? 0;
   const language_display = (spec?.language ?? challenge.language ?? "javascript").toLowerCase();
-  const track_display = spec?.track_association;
-  const time_estimate_display = spec?.time_estimate_minutes;
+  const track_display = spec?.track_association ?? challenge.track_association ?? null;
+  const time_estimate_display =
+    typeof spec?.time_estimate_minutes === "number"
+      ? spec.time_estimate_minutes
+      : challenge.time_estimate_minutes ?? null;
+  const api_test_cases = challenge.test_cases ?? [];
 
   return (
     <div className="w-full mx-auto flex flex-col h-full lg:h-[80vh] lg:flex-row lg:items-start">
       <section aria-label={t("title")} className="w-full px-2 lg:max-w-md lg:pr-4 lg:pl-0">
+        <div className="mb-3">
+          <Link
+            href="/challenges"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" aria-hidden />
+            {t("backToChallenges")}
+          </Link>
+        </div>
         <div className="space-y-2">
           <h1 className="text-xl font-semibold text-foreground md:text-2xl">
             {spec?.title ?? challenge.title}
@@ -177,16 +194,22 @@ export function ChallengeDetailView({ challenge_id }: { challenge_id: string }) 
                     <span className="font-semibold text-foreground">Language:</span>{" "}
                     {language_display}
                   </p>
-                  {typeof time_estimate_display === "number" && (
+                  {(typeof time_estimate_display === "number" && time_estimate_display > 0) && (
                     <p>
                       <span className="font-semibold text-foreground">Estimated Time:</span>{" "}
                       {time_estimate_display} min
                     </p>
                   )}
-                  {typeof track_display === "string" && track_display.length > 0 && (
+                  {track_display && typeof track_display === "string" && track_display.length > 0 && (
                     <p>
                       <span className="font-semibold text-foreground">Track:</span>{" "}
                       {track_display}
+                    </p>
+                  )}
+                  {api_test_cases.length > 0 && (
+                    <p>
+                      <span className="font-semibold text-foreground">Test cases:</span>{" "}
+                      {api_test_cases.length}
                     </p>
                   )}
                 </div>
@@ -285,7 +308,7 @@ export function ChallengeDetailView({ challenge_id }: { challenge_id: string }) 
                 )}
               </div>
 
-              {spec?.test_cases && spec.test_cases.length > 0 && (
+              {(spec?.test_cases && spec.test_cases.length > 0) && (
                 <div className="mt-2 space-y-2">
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Test Cases
@@ -312,6 +335,35 @@ export function ChallengeDetailView({ challenge_id }: { challenge_id: string }) 
                         {test_case.explanation && (
                           <p className="mt-1 text-xs text-muted-foreground">
                             {test_case.explanation}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(!spec?.test_cases || spec.test_cases.length === 0) && api_test_cases.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Test Cases
+                  </h2>
+                  <div className="space-y-2">
+                    {api_test_cases.map((tc, index) => (
+                      <div
+                        key={index}
+                        className="rounded-none border border-border bg-background px-3 py-2 text-xs"
+                      >
+                        <p className="mb-1 font-semibold text-muted-foreground">
+                          Case {index + 1}
+                        </p>
+                        {tc.input && (
+                          <p className="font-mono">
+                            <span className="font-semibold">Input:</span> {tc.input}
+                          </p>
+                        )}
+                        {tc.expected && (
+                          <p className="font-mono">
+                            <span className="font-semibold">Expected:</span> {tc.expected}
                           </p>
                         )}
                       </div>
