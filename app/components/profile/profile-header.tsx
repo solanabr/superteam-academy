@@ -2,6 +2,7 @@
 
 import { Edit, MapPin, Calendar, Github, Linkedin, Wallet, Zap, Flame, Award } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
@@ -119,9 +120,9 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 							</Button>
 						)}
 						{isOwner ? (
-							<Button variant="outline" size="sm" className="h-8 gap-1.5">
-								<Edit className="h-3.5 w-3.5" />
-								Edit
+							<Button variant="outline" size="sm" className="h-8 gap-1.5" asChild>
+								<Link href="/settings"><Edit className="h-3.5 w-3.5" />
+								Edit</Link>
 							</Button>
 						) : null}
 					</div>

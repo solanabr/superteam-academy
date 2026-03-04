@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { truncateAddress } from "@/lib/utils";
+import { useRouter } from "@bprogress/next/app";
 
 const WALLET_ICONS: Record<string, string> = {
 	Phantom: "/wallets/phantom.png",
@@ -33,6 +34,7 @@ type Step = "choose" | "wallet-verify";
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 	const { signInWithOAuth, wallet, verifyWallet, isWalletConnected, ensureWalletAdaptersLoaded } =
 		useAuth();
+	const router = useRouter();
 	const t = useTranslations("auth");
 	const [step, setStep] = useState<Step>("choose");
 	const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -87,12 +89,15 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 				const defaultWallet = wallet.wallets[0]?.adapter.name ?? null;
 				await wallet.select(defaultWallet);
 				await wallet?.connect();
-				setStep("wallet-verify");
 			} catch {
-				setError(t("walletConnectError"));
-			} finally {
-				setIsLoading(null);
+				if (!wallet.connected) {
+					setError(t("walletConnectError"));
+					setIsLoading(null);
+					return;
+				}
 			}
+			setIsLoading(null);
+			setStep("wallet-verify");
 			return;
 		}
 		setIsLoading(null);
@@ -124,12 +129,13 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 		try {
 			await verifyWallet();
 			handleOpenChange(false);
+			router.refresh();
 		} catch {
 			setError(t("walletVerifyError"));
 		} finally {
 			setIsLoading(null);
 		}
-	}, [verifyWallet, handleOpenChange, t]);
+	}, [verifyWallet, handleOpenChange, router, t]);
 
 	const truncatedAddress = wallet.publicKey ? truncateAddress(wallet.publicKey.toBase58()) : null;
 

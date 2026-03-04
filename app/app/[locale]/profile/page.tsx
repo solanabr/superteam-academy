@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { Shield } from "lucide-react";
-
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { AchievementGrid } from "@/components/profile/achievement-grid";
 import { ProgressStats } from "@/components/profile/progress-stats";
@@ -15,12 +15,13 @@ import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import {
-    fetchIndexedLearnerActivity,
-    getAcademyClient,
-    getSolanaConnection,
-    getProgramId,
+	fetchIndexedLearnerActivity,
+	getAcademyClient,
+	getSolanaConnection,
+	getProgramId,
 } from "@/lib/academy";
-import type { UserPrivacySettings } from "@superteam-academy/cms";
+import type { Course as CMSCourse, CourseAuthor, UserPrivacySettings } from "@superteam-academy/cms";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 import { getLinkedWallet, serverAuth } from "@/lib/auth";
 import { levelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
@@ -67,6 +68,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 			walletAddress = sanityUser?.walletAddress ?? undefined;
 			sessionUsername = sanityUser?.username ?? undefined;
 		}
+	}
+
+	// No session, no wallet, no username query param — not found
+	if (!walletAddress && !params?.username && !sessionUsername) {
+		notFound();
 	}
 
 	return (
@@ -255,32 +261,30 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	const resolvedUser = sanityUserByUsername || sanityUser;
 	const gravatarKey = resolvedUser?.email || learner.toBase58();
 
-	const fallbackProfile = {
-		user: {
-			id: resolvedUser?._id || learner.toBase58(),
-			name: resolvedUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
-			email: resolvedUser?.email || "",
-			avatar: resolvedUser?.image || getGravatarUrl(gravatarKey),
-			bio: resolvedUser?.bio || "On-chain academy profile",
-			joinDate: resolvedUser?._createdAt || new Date().toISOString(),
-			location: resolvedUser?.location || "",
-			github: resolvedUser?.github || "",
-			linkedin: resolvedUser?.linkedin || "",
-			username: resolvedUser?.username,
-			walletAddress: learner.toBase58(),
-		},
-		stats: emptyStats(),
-		achievements: [] as never[],
-		activity: [] as never[],
-		courses: [] as never[],
-		credentials: [] as never[],
-	};
-
 	try {
 		return await fetchOnChainProfile(learner, resolvedUser);
 	} catch (err) {
 		console.error("Failed to fetch on-chain profile data, using fallback:", err);
-		return fallbackProfile;
+		return {
+			user: {
+				id: resolvedUser?._id || learner.toBase58(),
+				name: resolvedUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
+				email: resolvedUser?.email || "",
+				avatar: resolvedUser?.image || getGravatarUrl(gravatarKey),
+				bio: resolvedUser?.bio || "On-chain academy profile",
+				joinDate: resolvedUser?._createdAt || new Date().toISOString(),
+				location: resolvedUser?.location || "",
+				github: resolvedUser?.github || "",
+				linkedin: resolvedUser?.linkedin || "",
+				username: resolvedUser?.username,
+				walletAddress: learner.toBase58(),
+			},
+			stats: emptyStats(),
+			achievements: [],
+			activity: [],
+			courses: [],
+			credentials: [],
+		};
 	}
 }
 
@@ -342,7 +346,9 @@ async function fetchOnChainProfile(
 	const [credentials, xpBalance] = await Promise.all([
 		Promise.all(
 			rawCredentials.map(async (cred) => {
-				const metadata = await credentialService.getCredentialMetadata(cred.id);
+				const metadata = await credentialService
+					.getCredentialMetadata(cred.id)
+					.catch(() => ({ name: "Credential", description: "", image: "" }));
 				return {
 					id: cred.id,
 					title: metadata.name,
@@ -366,23 +372,29 @@ async function fetchOnChainProfile(
 	const coursesByKey = new Map(
 		allCourses.map((course) => [course.pubkey.toBase58(), course.account])
 	);
-	// Map on-chain courseId → CMS title for friendly display
-	const cmsTitleBySlug = new Map(
+	// Build CMS course lookup by slug for title enrichment and fallback
+	const cmsCourseBySlug = new Map(
 		(cmsCourses ?? [])
-			.filter((c): c is typeof c & { slug: { current: string }; title: string } =>
+			.filter((c): c is CMSCourse & { slug: { current: string }; title: string } =>
 				!!c?.slug?.current && !!c?.title)
-			.map((c) => [c.slug.current, c.title])
+			.map((c) => [c.slug.current, c])
 	);
+
+	// Build enrolled courses from on-chain enrollment data
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
 		const coursePk = entry.account.course.toBase58();
 		const courseId = course?.courseId ?? coursePk;
-		const completedLessons = countBits(entry.account.lessonFlags);
+		const completedLessons = countCompletedLessons(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
+		const cmsCourse = cmsCourseBySlug.get(courseId);
+		const cmsAuthor = cmsCourse?.author && "name" in cmsCourse.author
+			? (cmsCourse.author as CourseAuthor)
+			: null;
 		return {
 			id: courseId,
-			title: cmsTitleBySlug.get(courseId) ?? formatCourseId(courseId),
-			instructor: { name: "Superteam" },
+			title: cmsCourse?.title ?? formatCourseId(courseId),
+			instructor: { name: cmsAuthor?.name ?? "Superteam" },
 			progress: {
 				completedLessons,
 				totalLessons,
@@ -604,18 +616,6 @@ function emptyStats() {
 		timeSpent: { today: 0, thisWeek: 0, total: 0 },
 		levelHistory: [],
 	};
-}
-
-function countBits(flags: [bigint, bigint, bigint, bigint]): number {
-	let total = 0;
-	for (const word of flags) {
-		let value = word;
-		while (value > 0n) {
-			total += Number(value & 1n);
-			value >>= 1n;
-		}
-	}
-	return total;
 }
 
 /** Convert a slug-style courseId like "intro-to-solana" to "Intro To Solana" */
