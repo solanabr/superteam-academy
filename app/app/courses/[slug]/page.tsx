@@ -126,11 +126,14 @@ export default function CourseDetailPage() {
                   </Link>
                 ) : (
                   <button
-                    onClick={() => enroll(course.id)}
-                    className="w-full py-3 bg-[#9945ff] text-white font-mono text-xs uppercase tracking-widest font-bold hover:bg-[#8835ef] transition-colors flex items-center justify-center gap-2"
-                  >
-                    ENROLL_NOW <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
+  onClick={async () => {
+    await enroll(course.id);
+    window.location.reload();
+  }}
+  className="w-full py-3 bg-[#9945ff] text-white font-mono text-xs uppercase tracking-widest font-bold hover:bg-[#8835ef] transition-colors flex items-center justify-center gap-2"
+>
+  ENROLL_NOW <ArrowUpRight className="w-3.5 h-3.5" />
+</button>
                 )}
               </div>
             </div>
