@@ -1,0 +1,333 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "all": "Todos",
+    "none": "Ninguno",
+    "or": "o",
+    "and": "y"
+  },
+  "nav": {
+    "home": "Inicio",
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "connectWallet": "Conectar Billetera"
+  },
+  "landing": {
+    "hero": {
+      "title": "Domina el Desarrollo en Solana",
+      "subtitle": "La plataforma definitiva de aprendizaje para desarrolladores nativos de Solana. Cursos interactivos, credenciales on-chain y una experiencia impulsada por la comunidad.",
+      "cta": "Empezar a Aprender",
+      "exploreCourses": "Explorar Cursos"
+    },
+    "features": {
+      "title": "¿Por qué Superteam Academy?",
+      "interactive": {
+        "title": "Aprendizaje Interactivo",
+        "description": "Desafíos de código prácticos con retroalimentación en tiempo real"
+      },
+      "credentials": {
+        "title": "Credenciales On-Chain",
+        "description": "Certificados NFT verificables que demuestran tus habilidades"
+      },
+      "gamification": {
+        "title": "Progreso Gamificado",
+        "description": "Gana XP, mantén rachas, desbloquea logros"
+      },
+      "community": {
+        "title": "Impulsado por la Comunidad",
+        "description": "Aprende junto a la comunidad de desarrolladores de Solana"
+      }
+    },
+    "paths": {
+      "title": "Rutas de Aprendizaje",
+      "subtitle": "Pistas estructuradas para llevarte de principiante a experto"
+    },
+    "stats": {
+      "learners": "Aprendices Activos",
+      "courses": "Cursos Disponibles",
+      "credentials": "Credenciales Emitidas",
+      "xpEarned": "XP Total Ganado"
+    },
+    "testimonials": {
+      "title": "Lo Que Dicen los Desarrolladores"
+    },
+    "cta": {
+      "title": "¿Listo para Construir en Solana?",
+      "subtitle": "Únete a miles de desarrolladores aprendiendo a construir el futuro de web3",
+      "button": "Comienza Gratis"
+    }
+  },
+  "courses": {
+    "title": "Catálogo de Cursos",
+    "subtitle": "Explora nuestros cursos y comienza a aprender",
+    "filters": {
+      "difficulty": "Dificultad",
+      "track": "Pista",
+      "duration": "Duración",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado",
+      "short": "< 2 horas",
+      "medium": "2-5 horas",
+      "long": "> 5 horas"
+    },
+    "tracks": {
+      "fundamentals": "Fundamentos",
+      "defi": "DeFi",
+      "nft": "NFT & Metaplex",
+      "gaming": "Juegos",
+      "infrastructure": "Infraestructura",
+      "security": "Seguridad"
+    },
+    "card": {
+      "lessons": "{count} lecciones",
+      "duration": "{duration}",
+      "xp": "{xp} XP",
+      "progress": "{percent}% completado",
+      "enrolled": "Continuar Aprendiendo",
+      "enroll": "Iniciar Curso",
+      "completed": "Completado"
+    },
+    "empty": {
+      "title": "No se encontraron cursos",
+      "description": "Intenta ajustar tus filtros o término de búsqueda"
+    }
+  },
+  "course": {
+    "about": "Sobre este curso",
+    "modules": "Módulos",
+    "reviews": "Reseñas",
+    "instructor": "Instructor",
+    "prerequisites": "Prerrequisitos",
+    "whatYouLearn": "Lo que aprenderás",
+    "enroll": "Inscribirse",
+    "continue": "Continuar Aprendiendo",
+    "completed": "Curso Completado",
+    "xpReward": "Gana {xp} XP",
+    "duration": "Duración: {duration}",
+    "difficulty": "Dificultad: {level}",
+    "lessons": "{count} lecciones",
+    "connectToEnroll": "Conecta tu billetera para inscribirte y ganar credenciales"
+  },
+  "lesson": {
+    "navigation": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "backToCourse": "Volver al Curso"
+    },
+    "content": {
+      "markComplete": "Marcar como Completado",
+      "completed": "Completado",
+      "hint": "Mostrar Pista",
+      "solution": "Mostrar Solución"
+    },
+    "challenge": {
+      "title": "Desafío",
+      "description": "Completa este desafío de código",
+      "run": "Ejecutar Código",
+      "submit": "Enviar Solución",
+      "reset": "Resetear Código",
+      "tests": "Casos de Prueba",
+      "passed": "Pasó",
+      "failed": "Falló",
+      "output": "Salida",
+      "expected": "Esperado",
+      "success": "¡Desafío Completo! +{xp} XP"
+    }
+  },
+  "dashboard": {
+    "welcome": "¡Bienvenido de vuelta, {name}!",
+    "continuelearning": "Continuar Aprendiendo",
+    "stats": {
+      "xp": "XP Total",
+      "level": "Nivel",
+      "rank": "Posición",
+      "streak": "Días de Racha",
+      "courses": "Cursos Completados",
+      "achievements": "Logros"
+    },
+    "streak": {
+      "title": "Tu Racha",
+      "current": "Actual: {days} días",
+      "longest": "Mayor: {days} días",
+      "freezes": "{count} congelaciones disponibles"
+    },
+    "achievements": {
+      "title": "Logros Recientes",
+      "viewAll": "Ver Todos"
+    },
+    "recommended": {
+      "title": "Recomendado para Ti"
+    },
+    "activity": {
+      "title": "Actividad Reciente"
+    }
+  },
+  "profile": {
+    "tabs": {
+      "overview": "Resumen",
+      "credentials": "Credenciales",
+      "achievements": "Logros",
+      "activity": "Actividad"
+    },
+    "stats": {
+      "coursesCompleted": "Cursos",
+      "totalXP": "XP Total",
+      "currentStreak": "Racha",
+      "rank": "Posición Global"
+    },
+    "skills": {
+      "title": "Habilidades",
+      "rust": "Rust",
+      "anchor": "Anchor",
+      "frontend": "Frontend",
+      "security": "Seguridad",
+      "defi": "DeFi",
+      "nft": "NFTs"
+    },
+    "credentials": {
+      "title": "Credenciales On-Chain",
+      "empty": "Sin credenciales aún. ¡Completa un curso para ganar la primera!",
+      "verify": "Verificar en Solana",
+      "level": "Nivel {level}",
+      "courses": "{count} cursos completados"
+    },
+    "visibility": {
+      "public": "Perfil Público",
+      "private": "Perfil Privado"
+    }
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Mejores aprendices por XP",
+    "timeframes": {
+      "weekly": "Esta Semana",
+      "monthly": "Este Mes",
+      "alltime": "Todo el Tiempo"
+    },
+    "columns": {
+      "rank": "Posición",
+      "learner": "Aprendiz",
+      "xp": "XP",
+      "level": "Nivel",
+      "streak": "Racha"
+    },
+    "yourRank": "Tu Posición: #{rank}"
+  },
+  "settings": {
+    "title": "Configuración",
+    "sections": {
+      "profile": "Perfil",
+      "account": "Cuenta",
+      "preferences": "Preferencias",
+      "privacy": "Privacidad"
+    },
+    "profile": {
+      "name": "Nombre de Pantalla",
+      "username": "Nombre de Usuario",
+      "bio": "Biografía",
+      "avatar": "Avatar",
+      "social": "Enlaces Sociales"
+    },
+    "account": {
+      "email": "Correo",
+      "wallets": "Billeteras Conectadas",
+      "google": "Cuenta de Google",
+      "github": "Cuenta de GitHub",
+      "link": "Vincular Cuenta",
+      "unlink": "Desvincular"
+    },
+    "preferences": {
+      "language": "Idioma",
+      "theme": "Tema",
+      "notifications": "Notificaciones",
+      "dark": "Oscuro",
+      "light": "Claro",
+      "system": "Sistema"
+    },
+    "privacy": {
+      "profileVisibility": "Visibilidad del Perfil",
+      "showOnLeaderboard": "Mostrar en Clasificación",
+      "exportData": "Exportar Mis Datos",
+      "deleteAccount": "Eliminar Cuenta"
+    }
+  },
+  "certificate": {
+    "title": "Certificado de Finalización",
+    "awardedTo": "Otorgado a",
+    "completedOn": "Completado el {date}",
+    "verify": "Verificar en Solana Explorer",
+    "download": "Descargar Certificado",
+    "share": "Compartir",
+    "nftDetails": "Detalles del NFT",
+    "mintAddress": "Dirección Mint",
+    "owner": "Propietario"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión",
+    "connectWallet": "Conectar Billetera",
+    "disconnectWallet": "Desconectar",
+    "continueWith": "Continuar con {provider}",
+    "orContinueWith": "O continúa con",
+    "linkWallet": "Vincular Billetera",
+    "linkWalletDescription": "Conecta una billetera para ganar credenciales on-chain"
+  },
+  "gamification": {
+    "xp": {
+      "earned": "+{amount} XP",
+      "total": "{amount} XP"
+    },
+    "level": {
+      "current": "Nivel {level}",
+      "progress": "{current}/{required} XP para siguiente nivel"
+    },
+    "streak": {
+      "days": "racha de {count} días",
+      "frozen": "Racha congelada",
+      "lost": "Racha perdida"
+    },
+    "achievement": {
+      "unlocked": "¡Logro Desbloqueado!",
+      "claim": "Reclamar Recompensa"
+    }
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "unauthorized": "Por favor, inicia sesión para continuar",
+    "forbidden": "No tienes acceso a este recurso",
+    "serverError": "Algo salió mal. Por favor, intenta de nuevo.",
+    "networkError": "Error de red. Por favor, verifica tu conexión.",
+    "walletNotConnected": "Por favor, conecta tu billetera"
+  },
+  "footer": {
+    "about": "Acerca de",
+    "courses": "Cursos",
+    "community": "Comunidad",
+    "docs": "Documentación",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "discord": "Discord",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Servicio",
+    "copyright": "© {year} Superteam Academy. Código abierto bajo licencia MIT."
+  }
+}

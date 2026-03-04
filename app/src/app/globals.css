@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+/* ============================================
+   DESIGN TOKENS - Superteam Academy
+   Dark mode primary as per bounty requirements
+   ============================================ */
+
+@theme inline {
+  /* Typography */
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  
+  /* Spacing scale */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+}
+
+/* Light mode colors */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 98%;
+  
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  
+  --accent: 173 80% 40%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 98%;
+  
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 98%;
+  
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 262 83% 58%;
+  
+  /* Gamification colors */
+  --xp: 50 100% 50%;
+  --streak: 25 95% 53%;
+  --level: 262 83% 58%;
+  
+  /* Track colors */
+  --track-fundamentals: 262 83% 58%;
+  --track-defi: 173 80% 40%;
+  --track-nft: 328 85% 60%;
+  --track-gaming: 38 92% 50%;
+  --track-infrastructure: 200 95% 45%;
+  --track-security: 0 84% 60%;
+  
+  /* Code editor */
+  --editor-bg: 220 13% 18%;
+  --editor-line: 220 13% 22%;
+  --editor-selection: 220 13% 28%;
+}
+
+/* Dark mode colors (primary theme) */
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  
+  --card: 240 10% 5.9%;
+  --card-foreground: 0 0% 98%;
+  
+  --popover: 240 10% 5.9%;
+  --popover-foreground: 0 0% 98%;
+  
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 98%;
+  
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  
+  --accent: 173 80% 40%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --success: 142 70% 45%;
+  --success-foreground: 0 0% 98%;
+  
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 0%;
+  
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 262 83% 58%;
+  
+  /* Gamification colors (brighter for dark mode) */
+  --xp: 50 100% 60%;
+  --streak: 25 95% 60%;
+  --level: 262 83% 68%;
+  
+  /* Code editor */
+  --editor-bg: 220 13% 10%;
+  --editor-line: 220 13% 14%;
+  --editor-selection: 220 13% 20%;
+}
+
+/* Container centering (Tailwind v4 doesn't auto-center) */
+.container {
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* Gamification color utilities */
+.text-xp { color: hsl(var(--xp)); }
+.text-streak { color: hsl(var(--streak)); }
+.text-level { color: hsl(var(--level)); }
+
+/* Base styles */
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: hsl(var(--primary) / 0.3);
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Wallet adapter overrides */
+.wallet-adapter-button {
+  background-color: hsl(var(--primary)) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.wallet-adapter-button:hover {
+  background-color: hsl(var(--primary) / 0.9) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background-color: hsl(var(--background) / 0.8) !important;
+  backdrop-filter: blur(8px);
+}
+
+.wallet-adapter-modal-container {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Animation utilities */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-xp {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes streak-fire {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.1); }
+}
+
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-slide-up { animation: slide-up 0.3s ease-out; }
+.animate-slide-down { animation: slide-down 0.3s ease-out; }
+.animate-scale-in { animation: scale-in 0.2s ease-out; }
+.animate-pulse-xp { animation: pulse-xp 0.6s ease-in-out; }
+.animate-streak-fire { animation: streak-fire 0.5s ease-in-out infinite; }
