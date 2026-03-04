@@ -90,12 +90,12 @@ src/
 
 | PDA | Seeds | Purpose |
 |---|---|---|
-| `platform_config` | `["platform_config"]` | Global platform configuration |
+| `config` | `["config"]` | Singleton platform configuration |
 | `course` | `["course", course_id]` | Course account |
-| `enrollment` | `["enrollment", learner, course_id]` | Learner enrollment |
-| `lesson_progress` | `["progress", learner, course_id]` | Bitmap of completed lessons |
-| `credential` | `["credential", learner, course_id]` | Course completion credential |
-| `achievement` | `["achievement", learner, achievement_id]` | Unlocked badge |
+| `enrollment` | `["enrollment", course_id, learner]` | Learner enrollment + lesson bitmap |
+| `minter_role` | `["minter", minter]` | Registered XP minter |
+| `achievement_type` | `["achievement", achievement_id]` | Achievement definition |
+| `achievement_receipt` | `["achievement_receipt", achievement_id, recipient]` | Proof of award |
 
 ### Token-2022 XP (`src/lib/xp.ts`)
 
