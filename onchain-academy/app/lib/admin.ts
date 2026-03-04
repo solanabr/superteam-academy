@@ -287,3 +287,13 @@ export async function adminUploadAsset(
     if (!res.ok) throw new Error(data.message || "Upload failed");
     return data;
 }
+
+// ─── Sanity CMS Sync ─────────────────────────────────────────────────────────────
+
+export async function adminSyncSanity(): Promise<{
+    created: string[];
+    updated: string[];
+    errors: { slug: string; error: string }[]
+}> {
+    return fetchWithAuth(`/admin/sync-sanity`, { method: "POST" });
+}

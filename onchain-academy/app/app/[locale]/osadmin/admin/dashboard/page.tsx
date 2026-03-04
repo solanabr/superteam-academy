@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { analyticsOverview, AnalyticsOverview } from "@/lib/admin";
+import { analyticsOverview, AnalyticsOverview, adminSyncSanity } from "@/lib/admin";
 import {
     Users,
     BookOpen,
@@ -12,6 +12,7 @@ import {
     Activity,
     CheckCircle2,
     Zap,
+    RefreshCw,
 } from "lucide-react";
 
 interface StatCardProps {
@@ -36,6 +37,8 @@ function StatCard({ label, value, sub, icon, color }: StatCardProps) {
 export default function AdminDashboard() {
     const [data, setData] = useState<AnalyticsOverview | null>(null);
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
+    const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -60,12 +63,39 @@ export default function AdminDashboard() {
             : 0
         : 0;
 
+    const handleSync = async () => {
+        setSyncing(true);
+        setToast(null);
+        try {
+            const res = await adminSyncSanity();
+            const total = res.created.length + res.updated.length;
+            setToast({
+                type: "success",
+                message: `Sync complete! ${total} courses updated (${res.errors.length} errors).`,
+            });
+        } catch (err: any) {
+            setToast({
+                type: "error",
+                message: err.message || "Failed to sync with Sanity.",
+            });
+        } finally {
+            setSyncing(false);
+            setTimeout(() => setToast(null), 5000);
+        }
+    };
+
     return (
         <div>
             <div className="page-header">
                 <h1 className="page-title">Platform Overview</h1>
                 <p className="page-sub">Real-time health metrics for the Osmos platform</p>
             </div>
+
+            {toast && (
+                <div className={`aalert ${toast.type === "success" ? "aalert-success" : "aalert-error"}`} style={{ marginBottom: 20 }}>
+                    {toast.message}
+                </div>
+            )}
 
             {/* Users */}
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--admin-muted)", marginBottom: 10 }}>
@@ -161,6 +191,15 @@ export default function AdminDashboard() {
                         {icon} {label}
                     </Link>
                 ))}
+                <button
+                    className="abtn abtn-primary"
+                    style={{ justifyContent: "flex-start" }}
+                    onClick={handleSync}
+                    disabled={syncing}
+                >
+                    {syncing ? <span className="aspinner" style={{ width: 14, height: 14 }} /> : <RefreshCw size={16} />}
+                    {syncing ? "Syncing..." : "Sync with Sanity"}
+                </button>
             </div>
         </div>
     );
