@@ -246,115 +246,120 @@ export async function POST(request: Request) {
     await updateStreak(walletAddress);
 
     // 6. Проверка на завершение курса
-    let certificateMint = null;
+    let certificateMint: string | null = null;
     let completedCount = 0;
     let totalLessons = 0;
     
     try {
-        // Читаем обновленный аккаунт Enrollment из чейна
         const enrollmentAccount = await program.account.enrollment.fetch(enrollmentPda);
-        const lessonFlags = enrollmentAccount.lessonFlags as BN[];
-        
-        // Читаем аккаунт Course, чтобы узнать lessonCount
         const courseAccount = await program.account.course.fetch(coursePda);
-        const totalLessons = courseAccount.lessonCount; // 5
-        
-        // Считаем пройденные уроки (биты)
-
-        for(let i=0; i < totalLessons; i++) {
-             const wordIndex = Math.floor(i / 64);
-             const bitIndex = i % 64;
-             if (!lessonFlags[wordIndex].and(new BN(1).shln(bitIndex)).isZero()) {
-                 completedCount++;
-             }
+        const totalLessons = courseAccount.lessonCount;
+            
+        let completedCount = 0;
+        const lessonFlags = enrollmentAccount.lessonFlags as BN[];
+        for (let i = 0; i < totalLessons; i++) {
+            if (!lessonFlags[Math.floor(i / 64)].and(new BN(1).shln(i % 64)).isZero()) {
+                completedCount++;
+            }
         }
 
-        console.log(`[Verify] Progress: ${completedCount}/${totalLessons}`);
-
-        // ЕСЛИ КУРС ЗАВЕРШЕН (Все уроки пройдены)
         if (completedCount >= totalLessons) {
-            console.log("[Verify] Course completed! Finalizing...");
-
-            // А. Finalize Course
-            // Проверяем, не финализирован ли уже (completed_at != null)
+            // А. ФИНАЛИЗАЦИЯ (если еще не финализирован)
             if (enrollmentAccount.completedAt === null) {
                 const creatorXpAta = getAssociatedTokenAddressSync(XP_MINT, courseAccount.creator, false, TOKEN_2022_PROGRAM_ID);
-                
                 await program.methods.finalizeCourse()
-                    .accountsPartial({
-                        config: configPda,
-                        course: coursePda,
-                        enrollment: enrollmentPda,
-                        learner: learnerPubkey,
-                        learnerTokenAccount: learnerXpAta,
-                        creatorTokenAccount: creatorXpAta,
-                        creator: courseAccount.creator,
-                        xpMint: XP_MINT,
-                        backendSigner: backendWallet.publicKey,
-                        tokenProgram: TOKEN_2022_PROGRAM_ID,
-                    }as any)
-                    .signers([backendWallet.payer])
-                    .rpc();
+                .accountsPartial({
+                    config: configPda,
+                    course: coursePda,
+                    enrollment: enrollmentPda,
+                    learner: learnerPubkey,
+                    learnerTokenAccount: learnerXpAta,
+                    creatorTokenAccount: creatorXpAta,
+                    creator: courseAccount.creator,
+                    xpMint: XP_MINT,
+                    backendSigner: backendWallet.publicKey,
+                    tokenProgram: TOKEN_2022_PROGRAM_ID,
+                }).signers([backendWallet.payer]).rpc();
                 console.log("[Verify] Course finalized.");
             }
 
-            // Б. Issue Credential
-            // Проверяем, есть ли уже сертификат
+            // Расчет XP для атрибутов
+            const userXp = await prisma.user.findUnique({ where: { walletAddress: walletAddress } });
+            const totalXp = userXp?.xp || completedCount * xpRewardAmount;
+
+            // Б. ЭВОЛЮЦИОНИРУЮЩИЙ NFT (Issue or Upgrade)
             if (enrollmentAccount.credentialAsset === null) {
-                console.log("[Verify] Issuing credential...");
-                console.log(`[Verify] Program ID used: ${PROGRAM_ID.toString()}`);
-                console.log(`[Verify] Track Collection: ${TRACK_COLLECTION.toString()}`);
-                console.log(`[Verify] Config PDA (Signer): ${configPda.toString()}`);
-                const credentialAsset = Keypair.generate(); // Новый адрес для NFT
-
-                console.log(`[Verify] New Asset Keypair: ${credentialAsset.publicKey.toString()}`);
-
-                const totalLessonXp = totalLessons * courseAccount.xpPerLesson;
-                const bonusXp = Math.floor(totalLessonXp / 2);
-                const totalXpInCourse = totalLessonXp + bonusXp
-                
-                try {
-                    await program.methods.issueCredential(
-                        `${courseId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} Certificate`, // "Solana Mock Test Certificate"
-                        "https://arweave.net/Yx0n2TqR0GqNeJnoYx4SMCjZt0r9uS-KRwQoK_vG2Wc", // Красивая картинка
-                        1, // coursesCompleted
-                        new BN(totalXpInCourse)
-                    )
-                    .accountsPartial({
-                        config: configPda,
-                        course: coursePda,
-                        enrollment: enrollmentPda,
-                        learner: learnerPubkey,
-                        credentialAsset: credentialAsset.publicKey,
-                        trackCollection: TRACK_COLLECTION,
-                        payer: backendWallet.publicKey,
-                        backendSigner: backendWallet.publicKey,
-                        mplCoreProgram: MPL_CORE_ID,
-                        systemProgram: SystemProgram.programId, // Используем импорт, а не хардкод
-                    }as any)
-                    .signers([backendWallet.payer, credentialAsset])
-                    .rpc();
+                // СЦЕНАРИЙ 1: ПЕРВЫЙ СЕРТИФИКАТ (Создание)
+                console.log("[Verify] Issuing NEW credential...");
+                const credentialAsset = Keypair.generate();
                     
-                    certificateMint = credentialAsset.publicKey.toString();
-                    console.log("[Verify] ✅ Credential successfully issued:", certificateMint);
-                } catch (issueErr: any) {
-                    console.error("[Verify] ❌ FAILED TO ISSUE CREDENTIAL!");
-                    console.error("[Verify] Error message:", issueErr.message);
-                    if (issueErr.logs) {
-                        console.error("[Verify] Transaction Logs:", issueErr.logs);
-                    }
-                    throw issueErr; // Пробрасываем ошибку дальше, чтобы увидеть в консоли фронтенда
-                }
+                await program.methods.issueCredential(
+                    `${courseDb?.title || courseId} Certificate`, 
+                    // В Этапе 41 мы сделаем динамический URL для JSON, пока заглушка с уровнем 1 TODO
+                    `https://arweave.net/level_1_metadata`, 
+                    1, // coursesCompleted (уровень)
+                    new BN(totalXp)
+                )
+                .accountsPartial({
+                    config: configPda,
+                    course: coursePda,
+                    enrollment: enrollmentPda,
+                    learner: learnerPubkey,
+                    credentialAsset: credentialAsset.publicKey,
+                    trackCollection: TRACK_COLLECTION,
+                    payer: backendWallet.publicKey,
+                    backendSigner: backendWallet.publicKey,
+                    mplCoreProgram: MPL_CORE_ID,
+                    systemProgram: SystemProgram.programId,
+                })
+                .signers([backendWallet.payer, credentialAsset])
+                .rpc();
+                    
+                certificateMint = credentialAsset.publicKey.toString();
+                console.log("[Verify] ✅ New Credential issued:", certificateMint);
             } else {
-                certificateMint = (enrollmentAccount.credentialAsset as PublicKey).toString();
-                console.log("[Verify] Credential already exists:", certificateMint);
+                // СЦЕНАРИЙ 2: АПГРЕЙД СУЩЕСТВУЮЩЕГО СЕРТИФИКАТА
+                // @ts-ignore
+                const existingAssetPubkey = enrollmentAccount.credentialAsset as PublicKey;
+                 certificateMint = existingAssetPubkey.toString();
+                    
+                console.log(`[Verify] Upgrading EXISTING credential: ${certificateMint}`);
+                    
+                // Вычисляем новый уровень (количество пройденных курсов в треке)
+                // Для простоты хакатона мы берем количество enrollmentов у юзера
+                const enrollmentsCount = await prisma.userEnrollment.count({
+                    where: { userId: user.id }
+                });
+                const newLevel = enrollmentsCount > 0 ? enrollmentsCount : 2;
+
+                await program.methods.upgradeCredential(
+                    `Superteam Developer - Level ${newLevel}`,
+                    `https://arweave.net/level_${newLevel}_metadata`, // Новая картинка
+                     newLevel, // coursesCompleted
+                    new BN(totalXp)
+                )
+                .accountsPartial({
+                    config: configPda,
+                    course: coursePda,
+                    enrollment: enrollmentPda,
+                    learner: learnerPubkey,
+                    credentialAsset: existingAssetPubkey,
+                    trackCollection: TRACK_COLLECTION,
+                    payer: backendWallet.publicKey,
+                    backendSigner: backendWallet.publicKey,
+                    mplCoreProgram: MPL_CORE_ID,
+                    systemProgram: SystemProgram.programId,
+                })
+                .signers([backendWallet.payer]) // ВАЖНО: Ассет здесь не нужен, только плательщик
+                .rpc();
+
+                console.log("[Verify] ✅ Credential upgraded!");
             }
         }
-
     } catch (e) {
-        console.error("[Verify] Auto-finalize failed:", e);
-        // Не фейлим запрос, если не удалось выдать сертификат (юзер всё равно прошел урок)
+        console.error("Auto-finalize failed:", e);
     }
+
         const achievementsToCheck = [];
         // Условие 1: Первый урок ("first-steps")
         // Проверяем, сколько уроков пройдено всего

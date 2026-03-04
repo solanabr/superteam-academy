@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Twitter, CheckCircle2, Share2 } from "lucide-react";
+import { ExternalLink, Twitter, CheckCircle2, Share2, Download } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import Image from 'next/image';
 
@@ -41,6 +41,28 @@ export default function CertificatePage() {
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : "";
   const shareText = `I just earned my ${name} on Superteam Academy! Check it out:`;
+
+  const handleDownload = async () => {
+    try {
+      // Fetch картинки и конвертация в Blob
+      const response = await fetch(image);
+      const blob = await response.blob();
+      
+      // Создание временной ссылки для скачивания
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${name.replace(/\s+/g, '_')}_Certificate.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+      // Fallback: просто открываем картинку в новой вкладке
+      window.open(image, '_blank');
+    }
+  };
 
   return (
     <div className="container max-w-4xl py-20">
@@ -99,6 +121,11 @@ export default function CertificatePage() {
                 <Button className="flex-1 gap-2" onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank')}>
                     <Twitter className="h-4 w-4" /> Share Achievement
                 </Button>
+
+                <Button variant="secondary" className="flex-1 gap-2" onClick={handleDownload}>
+                    <Download className="h-4 w-4" /> Download
+                </Button>
+                
                 <Button variant="outline" className="gap-2" onClick={() => navigator.clipboard.writeText(shareUrl)}>
                     <Share2 className="h-4 w-4" /> Copy Link
                 </Button>
