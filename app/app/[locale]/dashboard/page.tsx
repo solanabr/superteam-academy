@@ -7,7 +7,6 @@ import {
 	Trophy,
 	Flame,
 	ArrowRight,
-	GraduationCap,
 	Target,
 	TrendingUp,
 	Clock,
@@ -20,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/auth-context";
+import { AuthGuard } from "@/components/auth/auth-guard";
 import { useTranslations } from "next-intl";
 import { useStreak } from "@/hooks/use-streak";
 import { LearningProgressService } from "@/services/learning-progress-service";
@@ -51,7 +51,7 @@ interface RecentCourse {
 }
 
 export default function DashboardPage() {
-	const { isAuthenticated, user, wallet } = useAuth();
+	const { user, wallet } = useAuth();
 	const { connection } = useConnection();
 	const t = useTranslations("dashboard");
 	const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -133,20 +133,6 @@ export default function DashboardPage() {
 		loadDashboard();
 	}, [loadDashboard]);
 
-	if (!isAuthenticated) {
-		return (
-			<div className="min-h-screen bg-background flex items-center justify-center">
-				<Card className="max-w-md w-full mx-4">
-					<CardContent className="pt-6 text-center space-y-4">
-						<GraduationCap className="w-12 h-12 mx-auto text-muted-foreground" />
-						<h2 className="text-xl font-semibold">{t("signIn")}</h2>
-						<p className="text-muted-foreground">{t("signInDesc")}</p>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
 	if (isLoading || !stats) {
 		return (
 			<div className="min-h-screen bg-background">
@@ -166,6 +152,7 @@ export default function DashboardPage() {
 	const displayName = user?.name || wallet.publicKey?.toBase58().slice(0, 8) || "Learner";
 
 	return (
+		<AuthGuard>
 		<div className="min-h-screen bg-background">
 			<div className="mx-auto px-4 sm:px-6 py-8 space-y-8">
 				<div>
@@ -311,6 +298,7 @@ export default function DashboardPage() {
 				)}
 			</div>
 		</div>
+		</AuthGuard>
 	);
 }
 

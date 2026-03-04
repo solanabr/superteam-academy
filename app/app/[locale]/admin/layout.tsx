@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { BarChart3, BookOpen, Users, Settings, Shield, Lock, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 const ADMIN_NAV = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -17,31 +17,27 @@ const ADMIN_NAV = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-	const { isAuthenticated, isAdmin } = useAuth();
-	const router = useRouter();
+	const { isAdmin } = useAuth();
 	const pathname = usePathname();
 
-	useEffect(() => {
-		if (!isAuthenticated) {
-			router.replace("/");
-		}
-	}, [isAuthenticated, router]);
-
-	if (!isAuthenticated || !isAdmin) {
-		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-center space-y-4">
-					<Lock className="h-12 w-12 mx-auto text-muted-foreground" />
-					<h1 className="text-xl font-bold">Access Denied</h1>
-					<p className="text-muted-foreground text-sm">
-						You need admin privileges to access this area.
-					</p>
-				</div>
+	const accessDenied = (
+		<div className="min-h-screen flex items-center justify-center">
+			<div className="text-center space-y-4">
+				<Lock className="h-12 w-12 mx-auto text-muted-foreground" />
+				<h1 className="text-xl font-bold">Access Denied</h1>
+				<p className="text-muted-foreground text-sm">
+					You need admin privileges to access this area.
+				</p>
 			</div>
-		);
+		</div>
+	);
+
+	if (!isAdmin) {
+		return <AuthGuard fallback={accessDenied}>{accessDenied}</AuthGuard>;
 	}
 
 	return (
+		<AuthGuard>
 		<div className="flex min-h-[calc(100vh-4rem)]">
 			<aside className="hidden lg:flex w-64 flex-col border-r border-border bg-muted/30 p-4 gap-1">
 				<div className="flex items-center gap-2 px-3 py-2 mb-4">
@@ -72,5 +68,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 			</aside>
 			<div className="flex-1 overflow-auto">{children}</div>
 		</div>
+		</AuthGuard>
 	);
 }
