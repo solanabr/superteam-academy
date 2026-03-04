@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useKitTransactionSigner, useSolanaClient } from "@solana/connector/react";
+import {
+  useKitTransactionSigner,
+  useSolanaClient,
+} from "@solana/connector/react";
+import { toast } from "sonner";
 import { sendEnrollTransaction } from "@/lib/academy/enroll";
+import { env } from "@/lib/env";
 
 function mapEnrollErrorMessage(error: unknown): string {
   if (!(error instanceof Error)) return "Failed to enroll";
@@ -39,6 +44,21 @@ export function useEnroll() {
           rpcSubscriptions: client.rpcSubscriptions,
         });
         setLastSignature(signature);
+        const cluster =
+          env.NEXT_PUBLIC_SOLANA_NETWORK === "mainnet-beta"
+            ? "mainnet"
+            : env.NEXT_PUBLIC_SOLANA_NETWORK;
+        const explorerUrl =
+          cluster === "mainnet"
+            ? `https://explorer.solana.com/tx/${signature}`
+            : `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
+        toast.success("Enrolled successfully", {
+          description: `Transaction: ${signature.slice(0, 8)}…${signature.slice(-8)}`,
+          action: {
+            label: "View transaction",
+            onClick: () => window.open(explorerUrl, "_blank"),
+          },
+        });
         return signature;
       } catch (enrollError) {
         const message = mapEnrollErrorMessage(enrollError);
@@ -48,7 +68,7 @@ export function useEnroll() {
         setIsEnrolling(false);
       }
     },
-    [client, clientReady, ready, signer]
+    [client, clientReady, ready, signer],
   );
 
   return {
