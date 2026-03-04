@@ -42,61 +42,134 @@ export function CertificateActions({
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
+		// Background gradient
 		const grad = ctx.createLinearGradient(0, 0, 1200, 630);
-		grad.addColorStop(0, "#0a2a1b");
-		grad.addColorStop(1, "#1a4a2e");
+		grad.addColorStop(0, "#041a10");
+		grad.addColorStop(0.5, "#0a2a1b");
+		grad.addColorStop(1, "#0d3520");
 		ctx.fillStyle = grad;
 		ctx.fillRect(0, 0, 1200, 630);
 
-		ctx.strokeStyle = "#008c4c";
-		ctx.lineWidth = 4;
-		ctx.strokeRect(40, 40, 1120, 550);
-
-		ctx.strokeStyle = "rgba(0, 140, 76, 0.3)";
+		// Subtle diagonal pattern
+		ctx.strokeStyle = "rgba(0, 180, 100, 0.04)";
 		ctx.lineWidth = 1;
-		ctx.strokeRect(50, 50, 1100, 530);
-
-		ctx.fillStyle = "#ffffff";
-		ctx.font = "bold 20px sans-serif";
-		ctx.textAlign = "center";
-		ctx.fillText("SUPERTEAM ACADEMY", 600, 100);
-
-		ctx.fillStyle = "#008c4c";
-		ctx.beginPath();
-		ctx.arc(600, 170, 30, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "#ffffff";
-		ctx.font = "bold 24px sans-serif";
-		ctx.fillText("✓", 600, 178);
-
-		ctx.fillStyle = "#f0f0f0";
-		ctx.font = "bold 36px sans-serif";
-		const titleLines = wrapText(ctx, title, 900);
-		let y = 240;
-		for (const line of titleLines) {
-			ctx.fillText(line, 600, y);
-			y += 44;
+		for (let i = -630; i < 1200; i += 40) {
+			ctx.beginPath();
+			ctx.moveTo(i, 0);
+			ctx.lineTo(i + 630, 630);
+			ctx.stroke();
 		}
 
-		ctx.fillStyle = "#8fa89a";
-		ctx.font = "16px sans-serif";
+		// Outer border
+		ctx.strokeStyle = "#00b464";
+		ctx.lineWidth = 3;
+		ctx.strokeRect(30, 30, 1140, 570);
+
+		// Inner border
+		ctx.strokeStyle = "rgba(0, 180, 100, 0.2)";
+		ctx.lineWidth = 1;
+		ctx.strokeRect(38, 38, 1124, 554);
+
+		// Corner accents
+		const cornerSize = 20;
+		ctx.strokeStyle = "#00b464";
+		ctx.lineWidth = 2;
+		for (const [cx, cy, dx, dy] of [
+			[30, 30, 1, 1], [1170, 30, -1, 1],
+			[30, 600, 1, -1], [1170, 600, -1, -1],
+		] as [number, number, number, number][]) {
+			ctx.beginPath();
+			ctx.moveTo(cx + cornerSize * dx, cy);
+			ctx.lineTo(cx, cy);
+			ctx.lineTo(cx, cy + cornerSize * dy);
+			ctx.stroke();
+		}
+
+		// Top brand bar
+		ctx.fillStyle = "rgba(0, 180, 100, 0.08)";
+		ctx.fillRect(30, 30, 1140, 60);
+
+		// Brand name
+		ctx.fillStyle = "#00b464";
+		ctx.font = "bold 14px sans-serif";
+		ctx.textAlign = "left";
+		ctx.letterSpacing = "3px";
+		ctx.fillText("SUPERTEAM ACADEMY", 60, 67);
+		ctx.letterSpacing = "0px";
+
+		// Brand accent — right side
+		ctx.textAlign = "right";
+		ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+		ctx.font = "12px sans-serif";
+		ctx.fillText("Verified on Solana", 1140, 67);
+
+		// Certificate of Completion label
+		ctx.textAlign = "center";
+		ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+		ctx.font = "12px sans-serif";
+		ctx.letterSpacing = "4px";
+		ctx.fillText("CERTIFICATE OF COMPLETION", 600, 130);
+		ctx.letterSpacing = "0px";
+
+		// Decorative line under label
+		const lineGrad = ctx.createLinearGradient(400, 0, 800, 0);
+		lineGrad.addColorStop(0, "rgba(0, 180, 100, 0)");
+		lineGrad.addColorStop(0.5, "rgba(0, 180, 100, 0.6)");
+		lineGrad.addColorStop(1, "rgba(0, 180, 100, 0)");
+		ctx.strokeStyle = lineGrad;
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(400, 142);
+		ctx.lineTo(800, 142);
+		ctx.stroke();
+
+		// Certificate title
+		ctx.fillStyle = "#ffffff";
+		ctx.font = "bold 32px sans-serif";
+		const titleLines = wrapText(ctx, title, 900);
+		let y = 190;
+		for (const line of titleLines) {
+			ctx.fillText(line, 600, y);
+			y += 40;
+		}
+
+		// "Awarded to" label
+		ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+		ctx.font = "13px sans-serif";
 		ctx.fillText("Awarded to", 600, y + 20);
 
+		// Holder name
 		ctx.fillStyle = "#ffffff";
-		ctx.font = "bold 24px sans-serif";
+		ctx.font = "bold 26px sans-serif";
 		ctx.fillText(holder || "Learner", 600, y + 55);
 
-		ctx.fillStyle = "#8fa89a";
-		ctx.font = "16px sans-serif";
-		ctx.fillText(`Course: ${courseName}`, 600, y + 90);
+		// Course name — prominent
+		ctx.fillStyle = "#00b464";
+		ctx.font = "bold 20px sans-serif";
+		ctx.fillText(courseName, 600, y + 100);
 
-		ctx.fillStyle = "#008c4c";
-		ctx.font = "bold 18px sans-serif";
-		ctx.fillText(`${xpEarned.toLocaleString()} XP`, 600, y + 125);
+		// XP badge
+		const xpText = `${xpEarned.toLocaleString()} XP`;
+		ctx.font = "bold 16px sans-serif";
+		const xpWidth = ctx.measureText(xpText).width;
+		const badgeX = 600 - (xpWidth + 20) / 2;
+		const badgeY = y + 120;
+		ctx.fillStyle = "rgba(0, 180, 100, 0.15)";
+		ctx.beginPath();
+		ctx.roundRect(badgeX, badgeY, xpWidth + 20, 28, 14);
+		ctx.fill();
+		ctx.fillStyle = "#00b464";
+		ctx.font = "bold 14px sans-serif";
+		ctx.fillText(xpText, 600, badgeY + 19);
 
-		ctx.fillStyle = "#4a6a55";
-		ctx.font = "12px sans-serif";
-		ctx.fillText("Verified on Solana · superteam.com.br", 600, 560);
+		// Bottom bar
+		ctx.fillStyle = "rgba(0, 180, 100, 0.08)";
+		ctx.fillRect(30, 570, 1140, 30);
+
+		ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+		ctx.font = "11px sans-serif";
+		ctx.textAlign = "center";
+		ctx.fillText("superteam.com.br  •  Powered by Solana", 600, 590);
 
 		const link = document.createElement("a");
 		link.download = `superteam-certificate-${certificateId.slice(0, 8)}.png`;

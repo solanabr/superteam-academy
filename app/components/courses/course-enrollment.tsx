@@ -58,7 +58,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				setLoginOpen(true);
 				return;
 			}
-			setAuthError(t("enroll.walletRequired"));
+			// OAuth user without connected wallet — open login modal to connect
+			setLoginOpen(true);
 			return;
 		}
 

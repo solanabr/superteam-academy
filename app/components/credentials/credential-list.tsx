@@ -54,9 +54,16 @@ export function CredentialList({ credentials }: CredentialListProps) {
 								) : (
 									<Link
 										href={`/certificates/${cred.id}`}
-										className="flex items-center justify-center h-32 rounded-lg border border-border/60 bg-muted/30"
+										className="block h-32 rounded-lg border border-border/60 overflow-hidden"
 									>
-										<Award className="h-10 w-10 text-muted-foreground" />
+										<div className="h-full bg-linear-to-br from-[#0a2a1b] to-[#1a4a2e] flex flex-col items-center justify-center p-3 text-center">
+											<span className="text-[10px] uppercase tracking-widest text-emerald-400/70 mb-1">Superteam Academy</span>
+											<Award className="h-6 w-6 text-emerald-400 mb-1" />
+											<span className="text-xs font-medium text-white/90 line-clamp-2">{cred.title}</span>
+											{cred.totalXp > 0 && (
+												<span className="text-[10px] text-emerald-300/70 mt-0.5">{cred.totalXp} XP</span>
+											)}
+										</div>
 									</Link>
 								)}
 								<div className="flex items-start justify-between">

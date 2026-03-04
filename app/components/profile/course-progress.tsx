@@ -42,7 +42,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 			<div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
 				<h3 className="font-semibold flex items-center gap-2">
 					<BookOpen className="h-4 w-4 text-primary" />
-					My Courses
+					Enrolled Courses
 				</h3>
 				<div className="flex items-center gap-3 text-xs text-muted-foreground">
 					<span>{completed.length} completed</span>

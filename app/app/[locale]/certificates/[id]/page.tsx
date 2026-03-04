@@ -9,6 +9,8 @@ import { getSolanaConnection, getProgramId } from "@/lib/academy";
 import { CredentialService } from "@/services/credential-service";
 import { CertificateActions } from "@/components/credentials/certificate-actions";
 import { truncateAddress } from "@/lib/utils";
+import { getCoursesCMS } from "@/lib/cms";
+import { Link } from "@superteam-academy/i18n/navigation";
 
 interface CertificatePageProps {
 	params: Promise<{ locale: string; id: string }>;
@@ -77,11 +79,23 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">{t("course")}</p>
-								<p className="font-medium">{cert.courseName}</p>
+								{cert.courseSlug ? (
+									<Link href={`/courses/${cert.courseSlug}`} className="font-medium hover:underline text-primary">
+										{cert.courseName}
+									</Link>
+								) : (
+									<p className="font-medium">{cert.courseName}</p>
+								)}
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">{t("track")}</p>
-								<Badge variant="secondary">{cert.track}</Badge>
+								{cert.courseSlug ? (
+									<Link href={`/courses/${cert.courseSlug}`}>
+										<Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">{cert.track}</Badge>
+									</Link>
+								) : (
+									<Badge variant="secondary">{cert.track}</Badge>
+								)}
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">{t("level")}</p>
@@ -154,6 +168,7 @@ interface Certificate {
 	title: string;
 	holder: string;
 	courseName: string;
+	courseSlug: string | null;
 	track: string;
 	level: string;
 	issuedAt: string;
@@ -167,10 +182,11 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 	const programId = getProgramId();
 	const service = new CredentialService(connection, programId);
 
-	const [metadata, verification, owner] = await Promise.all([
+	const [metadata, verification, owner, cmsCourses] = await Promise.all([
 		service.getCredentialMetadata(id),
 		service.verifyCredential(id),
 		service.getCredentialOwner(id),
+		getCoursesCMS().catch(() => []),
 	]);
 
 	// Show the certificate even if verification didn't fully pass,
@@ -180,15 +196,28 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 
 	const trackAttr = metadata.attributes.find((a) => a.trait_type === "Track");
 	const levelAttr = metadata.attributes.find((a) => a.trait_type === "Level");
+	const courseIdAttr = metadata.attributes.find((a) => a.trait_type === "CourseId");
 
 	const holder = owner ? truncateAddress(owner) : "Unknown";
+	const courseName = metadata.description;
+
+	// Resolve course slug for linking
+	let courseSlug: string | null = courseIdAttr?.value ?? null;
+	if (!courseSlug && cmsCourses.length > 0) {
+		const match = cmsCourses.find(
+			(c) => c?.title?.toLowerCase() === courseName.toLowerCase() ||
+				c?.slug?.current === courseName,
+		);
+		if (match?.slug?.current) courseSlug = match.slug.current;
+	}
 
 	return {
 		id,
 		title: metadata.name,
 		holder,
-		courseName: metadata.description,
-		track: trackAttr?.value ?? credential?.track ?? "Unknown",
+		courseName,
+		courseSlug,
+		track: trackAttr?.value ?? credential?.track ?? (courseName || "Unknown"),
 		level: levelAttr?.value ?? "Beginner",
 		issuedAt: credential?.issuedAt.toISOString() ?? new Date().toISOString(),
 		xpEarned: credential?.totalXp ?? 0,

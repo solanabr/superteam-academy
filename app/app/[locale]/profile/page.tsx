@@ -125,13 +125,6 @@ export async function ProfileContent({
 				<div className="lg:col-span-2 space-y-6">
 					{showProgress && (
 						<>
-							<LevelProgress
-								currentLevel={stats.level}
-								currentXP={stats.xp}
-								nextLevelXP={stats.nextLevelXP}
-								totalXP={stats.totalXP}
-								levelUpHistory={stats.levelHistory}
-							/>
 							<CourseProgress courses={courses} />
 						</>
 					)}
@@ -149,6 +142,13 @@ export async function ProfileContent({
 					<StreakTracker walletAddress={walletAddress} />
 					{showProgress && (
 						<>
+							<LevelProgress
+								currentLevel={stats.level}
+								currentXP={stats.xp}
+								nextLevelXP={stats.nextLevelXP}
+								totalXP={stats.totalXP}
+								levelUpHistory={stats.levelHistory}
+							/>
 							<SkillRadarChart courses={courses} />
 							<ProgressStats stats={stats} walletAddress={walletAddress} />
 						</>
@@ -346,10 +346,12 @@ async function fetchOnChainProfile(
 				!!c?.slug?.current && !!c?.title)
 			.map((c) => [c.slug.current, c.title])
 	);
+	const onChainCourseIds = new Set<string>();
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
 		const coursePk = entry.account.course.toBase58();
 		const courseId = course?.courseId ?? coursePk;
+		onChainCourseIds.add(courseId);
 		const completedLessons = countBits(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
 		return {
@@ -372,6 +374,22 @@ async function fetchOnChainProfile(
 			certificateEarned: Boolean(entry.account.credentialAsset),
 		};
 	});
+
+	// Merge CMS-tracked enrollments that aren't already present on-chain
+	const cmsEnrolled = resolvedUser?.enrolledCourses ?? [];
+	for (const slug of cmsEnrolled) {
+		if (onChainCourseIds.has(slug)) continue;
+		const cmsCourse = (cmsCourses ?? []).find((c) => c?.slug?.current === slug);
+		const moduleLessonCount = (cmsCourse?.modules ?? []).reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
+		enrolledCourses.push({
+			id: slug,
+			title: cmsCourse?.title ?? cmsTitleBySlug.get(slug) ?? formatCourseId(slug),
+			instructor: { name: "Superteam" },
+			progress: { completedLessons: 0, totalLessons: moduleLessonCount, timeSpent: 0 },
+			status: "not_started" as const,
+			certificateEarned: false,
+		});
+	}
 
 	const completedCourses = enrolledCourses.filter(
 		(course) => course.status === "completed"

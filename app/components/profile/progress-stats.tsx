@@ -1,7 +1,6 @@
 "use client";
 
-import { Clock, BookOpen, Target, Flame, Zap } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Clock, BookOpen, Target, Flame } from "lucide-react";
 import { useStreak } from "@/hooks/use-streak";
 import { formatDuration } from "@/lib/utils";
 
@@ -43,26 +42,9 @@ export function ProgressStats({ stats, walletAddress }: ProgressStatsProps) {
 	const { streakData } = useStreak(walletAddress);
 	const streakCurrent = streakData.current || stats.streak.current;
 	const streakLongest = streakData.longest || stats.streak.longest;
-	const xpPct = Math.min(Math.round((stats.xp / stats.nextLevelXP) * 100), 100);
 
 	return (
 		<div className="space-y-4">
-			<div className="rounded-2xl border border-border/60 bg-card p-5">
-				<div className="flex items-center justify-between mb-3">
-					<div className="flex items-center gap-2">
-						<Zap className="h-4 w-4 text-gold" />
-						<span className="text-sm font-medium">Level {stats.level}</span>
-					</div>
-					<span className="text-xs text-muted-foreground">
-						{stats.xp.toLocaleString()} / {stats.nextLevelXP.toLocaleString()} XP
-					</span>
-				</div>
-				<Progress value={xpPct} className="h-2" />
-				<p className="text-xs text-muted-foreground mt-1.5">
-					{(stats.nextLevelXP - stats.xp).toLocaleString()} XP to next level
-				</p>
-			</div>
-
 			<div className="grid grid-cols-3 gap-3">
 				{STAT_ITEMS.map(({ key, label, Icon, color }) => {
 					const value =
