@@ -1,5 +1,30 @@
 create extension if not exists "uuid-ossp";
 
+-- Courses table
+create table if not exists courses (
+  id text primary key,
+  slug text unique not null,
+  title text not null,
+  description text,
+  category text default 'solana',
+  difficulty text check (difficulty in ('beginner','intermediate','advanced')) default 'beginner',
+  lesson_count integer default 5,
+  duration_minutes integer default 60,
+  xp_reward integer default 250,
+  order_index integer default 0,
+  is_published boolean default false,
+  thumbnail_url text,
+  instructor text,
+  created_at timestamptz default now()
+);
+
+-- Insert sample courses
+insert into courses (id, slug, title, description, category, difficulty, lesson_count, duration_minutes, xp_reward, order_index, is_published) values
+('solana-fundamentals', 'solana-fundamentals', 'Solana Fundamentals', 'Learn the basics of Solana blockchain development', 'solana', 'beginner', 12, 180, 1200, 1, true),
+('anchor-development', 'anchor-development', 'Anchor Development', 'Build Solana programs with Anchor framework', 'solana', 'intermediate', 16, 240, 2400, 2, true),
+('token-engineering', 'token-engineering', 'Token Engineering', 'Master Token-2022 and soulbound tokens', 'solana', 'advanced', 10, 150, 2000, 3, true)
+on conflict (id) do nothing;
+
 create table if not exists threads (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -124,3 +149,41 @@ create index idx_threads_created on threads(created_at desc);
 create index idx_replies_thread on replies(thread_id);
 create index idx_attempts_wallet on challenge_attempts(user_wallet);
 create index idx_profiles_wallet on user_profiles(wallet);
+
+-- Quiz Questions table
+create table if not exists quiz_questions (
+  id text primary key,
+  question text not null,
+  options text[] not null,
+  correct_index integer not null,
+  explanation text,
+  category text default 'solana',
+  difficulty text check (difficulty in ('beginner','intermediate','advanced')) default 'beginner',
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- Achievements table
+create table if not exists achievements (
+  id text primary key,
+  title text not null,
+  description text,
+  icon text,
+  rarity text check (rarity in ('common','rare','epic','legendary')) default 'common',
+  xp_reward integer default 50,
+  created_at timestamptz default now()
+);
+
+-- Insert sample quiz questions
+insert into quiz_questions (id, question, options, correct_index, category, difficulty) values
+('q1', 'What is a Solana Program?', '["A smart contract","A wallet","A token","A block"],' 0, 'solana', 'beginner'),
+('q2', 'What is Anchor?', '["A Solana framework","A wallet","A token standard","A blockchain"],' 0, 'solana', 'beginner'),
+('q3', 'What is a PDA?', '["Program Derived Address","Public Data Account","Private Data Array","Program Data Asset"],' 0, 'solana', 'intermediate')
+on conflict (id) do nothing;
+
+-- Insert sample achievements
+insert into achievements (id, title, description, icon, rarity, xp_reward) values
+('first-lesson', 'First Steps', 'Complete your first lesson', '🎯', 'common', 50),
+('week-streak', 'Week Warrior', 'Maintain a 7-day streak', '🔥', 'rare', 200),
+('course-complete', 'Course Completer', 'Complete your first course', '🏆', 'epic', 500)
+on conflict (id) do nothing;
