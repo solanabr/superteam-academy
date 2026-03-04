@@ -1,3 +1,4 @@
+import { solanaAuth } from '@/libs/solana-auth-plugin'
 import { syncUserToPayload } from '@/services/auth-sync.service'
 import { betterAuth } from 'better-auth'
 import { username } from 'better-auth/plugins'
@@ -27,7 +28,7 @@ export const auth = betterAuth({
     },
   },
 
-  plugins: [username()],
+  plugins: [username(), solanaAuth()],
 
   user: {
     additionalFields: {

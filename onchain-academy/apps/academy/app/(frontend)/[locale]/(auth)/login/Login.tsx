@@ -104,36 +104,55 @@ function AuthStep({
   const { connected, publicKey, signMessage, disconnect } = useWallet()
   const { setVisible } = useWalletModal()
 
-  // Wallet connect flow: detect connection → sign message → verify
+  // Wallet connect flow: detect connection → sign message → verify via plugin
   useEffect(() => {
     if (!connected || !publicKey || !signMessage || loading !== 'wallet') return
 
     const authenticateWallet = async () => {
       try {
         setError(null)
-        // Create a nonce message
-        const nonce = crypto.randomUUID()
-        const message = `Sign in to Superteam Academy\n\nNonce: ${nonce}\nTimestamp: ${new Date().toISOString()}`
-        const messageBytes = new TextEncoder().encode(message)
+        const walletAddress = publicKey.toBase58()
 
-        // Request wallet signature
+        // 1. Get nonce from our Solana plugin (goes through [..all] catch-all)
+        const nonceRes = await fetch('/api/auth/solana/nonce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ walletAddress }),
+        })
+
+        if (!nonceRes.ok) {
+          throw new Error('Failed to generate nonce')
+        }
+
+        const { nonce } = await nonceRes.json()
+
+        // 2. Create message and request wallet signature
+        const message = `Sign in to Superteam Academy\n\nNonce: ${nonce}\nAddress: ${walletAddress}\nTimestamp: ${new Date().toISOString()}`
+        const messageBytes = new TextEncoder().encode(message)
         const signatureBytes = await signMessage(messageBytes)
         const signature = bs58.encode(signatureBytes)
 
-        // Send to our verify endpoint
-        const res = await fetch('/api/auth/solana', {
+        // 3. Verify via plugin endpoint (goes through [..all] catch-all)
+        // This calls setSessionCookie internally — same mechanism as OAuth
+        const verifyRes = await fetch('/api/auth/solana/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
-            publicKey: publicKey.toBase58(),
+            walletAddress,
             signature,
             message,
           }),
         })
 
-        if (!res.ok) {
-          const data = await res.json()
-          throw new Error(data.error || 'Authentication failed')
+        if (!verifyRes.ok) {
+          const data = await verifyRes
+            .json()
+            .catch(() => ({ error: 'Verification failed' }))
+          throw new Error(
+            data?.message || data?.error || 'Wallet verification failed',
+          )
         }
 
         // Success — trigger onboarding check
@@ -724,7 +743,11 @@ function SuccessStep() {
         </div>
 
         <button
-          onClick={() => router.push('/en/dashboard')}
+          onClick={async () => {
+            // Refetch session before navigating so AuthProvider sees fresh state
+            await refetch()
+            router.push('/en/dashboard')
+          }}
           className='flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl font-ui text-[0.88rem] font-semibold transition-all hover:-translate-y-0.5 cursor-pointer'
           style={{
             background: 'hsl(var(--green-primary))',
@@ -747,7 +770,7 @@ const Login = () => {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null)
   const [githubUsername, setGithubUsername] = useState('')
   const router = useRouter()
-  const { data: session, isPending } = useSession()
+  const { data: session, isPending, refetch } = useSession()
 
   // If already authenticated and onboarded, redirect to dashboard
   useEffect(() => {
@@ -790,10 +813,12 @@ const Login = () => {
     // For Google/GitHub, the redirect happens in AuthStep
   }
 
-  const handleWalletAuth = useCallback(() => {
+  const handleWalletAuth = useCallback(async () => {
     setAuthMethod('wallet')
+    // Refetch session so useSession has fresh data
+    await refetch()
     setStep('onboarding')
-  }, [])
+  }, [refetch])
 
   const handleOnboardingComplete = () => {
     setStep('success')

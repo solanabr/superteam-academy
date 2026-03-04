@@ -8,22 +8,23 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(req: NextRequest) {
   try {
-    // Read the session token directly from cookies
+    // Reconstruct cookie header for Better Auth session lookup
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('better-auth.session_token')?.value
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join('; ')
 
-    if (!sessionToken) {
-      console.error('[update-profile] No session cookie found')
+    const session = await auth.api.getSession({
+      headers: new Headers({ cookie: cookieHeader }),
+    })
+
+    if (!session?.user) {
+      console.error(
+        '[update-profile] No session found. Cookies:',
+        cookieStore.getAll().map((c) => c.name),
+      )
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    }
-
-    // Verify session via internal adapter
-    const ctx = await auth.$context
-    const session = await ctx.internalAdapter.findSession(sessionToken)
-
-    if (!session?.session || !session?.user) {
-      console.error('[update-profile] Session token invalid')
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
     const body = await req.json()
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
     } = body
 
     // Update user via Better Auth internal adapter
+    const ctx = await auth.$context
     await ctx.internalAdapter.updateUser(session.user.id, {
       name: name || session.user.name,
       ...(username && { username }),

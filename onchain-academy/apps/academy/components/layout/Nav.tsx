@@ -1,6 +1,7 @@
 'use client'
 
 import type { LanguageOption } from '@/app/components/home/home.types'
+import { useSession } from '@/libs/auth-client'
 import { LANGUAGES } from '@/libs/constants/home.constants'
 import {
   BookOpen,
@@ -10,7 +11,6 @@ import {
   Search,
   Settings,
   Trophy,
-  User,
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
@@ -20,6 +20,7 @@ export const Navbar = () => {
   const t = useTranslations('home')
   const locale = useLocale()
   const pathname = usePathname()
+  const { data: session } = useSession()
   const currentLang = LANGUAGES.find((l) => l.code === locale) as LanguageOption
   const [langOpen, setLangOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -45,7 +46,7 @@ export const Navbar = () => {
     { to: '/dashboard', label: t('nav.dashboard'), icon: LayoutGrid },
     { to: '/courses', label: t('nav.courses'), icon: BookOpen },
     { to: '/leaderboard', label: t('nav.leaderboard'), icon: Trophy },
-    { to: '/profile/mira', label: t('nav.profile'), icon: User },
+    // { to: '/profile/mira', label: t('nav.profile'), icon: User },
   ]
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
@@ -140,18 +141,19 @@ export const Navbar = () => {
 
         <div className='hidden sm:block w-px h-5 bg-[rgba(247,234,203,0.12)]' />
 
-        <Link
-          href='/login'
-          className='btn-outline-cream py-2 px-3 sm:py-[7px] sm:px-[18px] rounded-md text-xs sm:text-[13px] font-semibold cursor-pointer font-[inherit] no-underline inline-block'
-        >
-          {t('nav.login')}
-        </Link>
+        {!session?.user && (
+          <Link
+            href='/login'
+            className='btn-outline-cream py-2 px-3 sm:py-[7px] sm:px-[18px] rounded-md text-xs sm:text-[13px] font-semibold cursor-pointer font-[inherit] no-underline inline-block'
+          >
+            {t('nav.login')}
+          </Link>
+        )}
 
         {/* only show if logged in */}
-        {false && (
+        {session?.user && (
           <div className='flex items-center gap-3'>
             <button
-              // onClick={() => setSearchOpen(!searchOpen)}
               className='w-[38px] h-[38px] rounded-lg flex items-center justify-center transition-colors'
               style={{ color: 'hsla(40,82%,88%,0.65)' }}
             >
@@ -164,15 +166,23 @@ export const Navbar = () => {
             >
               <Settings size={18} strokeWidth={1.5} />
             </Link>
-            <div
-              className='w-8 h-8 rounded-full flex items-center justify-center font-ui font-bold text-xs'
+            <Link
+              href={'/profile/' + session.user.username}
+              className='w-8 h-8 rounded-full flex items-center justify-center font-ui font-bold text-xs no-underline'
               style={{
                 background: 'hsl(var(--green-dark))',
                 color: 'hsl(var(--cream))',
               }}
             >
-              LP
-            </div>
+              {session.user.name
+                ? session.user.name
+                    .split(' ')
+                    .map((w: string) => w[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
+                : '?'}
+            </Link>
           </div>
         )}
 
