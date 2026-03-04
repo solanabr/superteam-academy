@@ -34,7 +34,7 @@ interface CourseEnrollmentProps {
 
 export function CourseEnrollment({ course }: CourseEnrollmentProps) { 
 	const t = useTranslations("courses");
-	const { wallet, isWalletConnected, isWalletVerified, isAuthenticated, verifyWallet } =
+	const { wallet, isWalletConnected, isWalletVerified, isAuthenticated, verifyWallet, ensureWalletAdaptersLoaded } =
 		useAuth();
 	const { enrolled, refetch } = useOnchainEnrollment(course.id, course.enrolled);
 	const { connection } = useConnection();
@@ -58,9 +58,15 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				setLoginOpen(true);
 				return;
 			}
-			// OAuth user without connected wallet — open login modal to connect
-			setLoginOpen(true);
-			return;
+			// Authenticated user — try reconnecting the wallet automatically
+			try {
+				await ensureWalletAdaptersLoaded();
+				await wallet.connect();
+			} catch {
+				// Auto-reconnect failed — fall back to login modal
+				setLoginOpen(true);
+				return;
+			}
 		}
 
 		if (!isWalletVerified) {

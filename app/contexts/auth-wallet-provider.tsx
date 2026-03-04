@@ -304,6 +304,15 @@ export function AuthWalletProvider({
 		return load;
 	}, [walletAdaptersLoaded, wallets.length]);
 
+	// Eagerly load wallet adapters when the session has a wallet address
+	// so autoConnect can reconnect without user interaction
+	const hasWalletSession = Boolean(initialSession?.user?.walletAddress);
+	useEffect(() => {
+		if (hasWalletSession && !walletAdaptersLoaded) {
+			void ensureWalletAdaptersLoaded();
+		}
+	}, [hasWalletSession, walletAdaptersLoaded, ensureWalletAdaptersLoaded]);
+
 	return (
 		<ConnectionProvider endpoint={ENDPOINT}>
 			<WalletProvider wallets={wallets} autoConnect={wallets.length > 0}>
