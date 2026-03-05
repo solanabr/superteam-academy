@@ -19,18 +19,20 @@ interface LessonVideoPlayerProps {
  * Returns null for direct video files (.mp4, .webm, etc.).
  */
 function getEmbedUrl(url: string): string | null {
-	if (!url) return null;
+	const trimmed = url?.trim();
+	if (!trimmed) return null;
 
-	// YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
-	const ytMatch = url.match(
-		/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+	// YouTube: watch?v=ID (v= can be any query param position), youtu.be/ID,
+	// embed/ID, shorts/ID, live/ID, v/ID
+	const ytMatch = trimmed.match(
+		/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
 	);
 	if (ytMatch) {
-		return `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+		return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
 	}
 
 	// Vimeo: vimeo.com/ID or vimeo.com/video/ID
-	const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+	const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/);
 	if (vimeoMatch) {
 		return `https://player.vimeo.com/video/${vimeoMatch[1]}?dnt=1&transparent=0`;
 	}
@@ -56,11 +58,15 @@ export function LessonVideoPlayer({
 					className="w-full aspect-video border-0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
 					allowFullScreen
-					referrerPolicy="strict-origin-when-cross-origin"
 					loading="lazy"
 				/>
 			</div>
 		);
+	}
+
+	// No playable video URL — skip rendering
+	if (!videoUrl?.trim()) {
+		return null;
 	}
 
 	// Direct video file — use native <video> with custom controls
