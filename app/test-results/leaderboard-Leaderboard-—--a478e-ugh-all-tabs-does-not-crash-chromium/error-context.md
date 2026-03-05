@@ -57,7 +57,62 @@
               - img
               - generic: Toggle theme
     - main:
-      - status
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=1]: Leaderboard
+            - paragraph: The top XP earners at Superteam Academy
+          - button:
+            - img
+            - generic: Refresh
+        - generic:
+          - generic:
+            - img
+            - generic: Total Platform XP Earned
+          - generic:
+            - generic: 2.3K
+            - generic: XP
+        - generic:
+          - group:
+            - tab [selected]: All Time
+            - tab: This Month
+            - tab: This Week
+          - combobox:
+            - generic: All Courses
+            - img
+        - generic:
+          - region:
+            - generic:
+              - img
+              - generic:
+                - generic:
+                  - generic: AC
+              - generic:
+                - generic: ACAd...gqYn
+                - generic: Lv 4
+                - generic: 2.3K XP
+              - generic:
+                - generic: 1st
+          - generic:
+            - generic:
+              - table "Leaderboard":
+                - rowgroup:
+                  - row "Rank Wallet Level XP":
+                    - columnheader "Rank"
+                    - columnheader "Wallet"
+                    - columnheader "Level"
+                    - columnheader "XP"
+                - rowgroup:
+                  - row "1 ACAd3U...3hgqYn Level 4 2.3K XP":
+                    - cell "1"
+                    - cell:
+                      - generic:
+                        - generic: AC
+                    - cell "ACAd3U...3hgqYn":
+                      - generic: ACAd3U...3hgqYn
+                    - cell "Level 4 2.3K XP":
+                      - generic: Level 4
+                      - generic: 2.3K XP
     - contentinfo:
       - generic:
         - generic:

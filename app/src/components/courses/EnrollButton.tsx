@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useWallet, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@/components/wallet/CustomWalletModalProvider";
@@ -30,6 +31,7 @@ interface EnrollButtonProps {
 export function EnrollButton({ courseId, courseSlug, prerequisiteCourseId, onEnrolled, disabled: disabledProp }: EnrollButtonProps) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
   const { publicKey, connected, sendTransaction } = useWallet();
   const anchorWallet = useAnchorWallet();
   const { connection } = useConnection();
@@ -37,9 +39,18 @@ export function EnrollButton({ courseId, courseSlug, prerequisiteCourseId, onEnr
   const [loading, setLoading] = useState(false);
   const { enrollment, loading: enrollmentLoading } = useEnrollment(courseId);
 
+  const sessionWalletAddress = session?.user?.walletAddress ?? null;
+  const isWalletAuthenticated = connected || !!sessionWalletAddress;
+
   const handleEnroll = async () => {
+    if (!isWalletAuthenticated) {
+      setVisible(true);
+      return;
+    }
+
     if (!connected || !publicKey) {
       setVisible(true);
+      toast.info(t("enrollment.reconnectWallet"));
       return;
     }
 
@@ -111,7 +122,7 @@ export function EnrollButton({ courseId, courseSlug, prerequisiteCourseId, onEnr
     );
   }
 
-  if (!connected) {
+  if (!isWalletAuthenticated) {
     return (
       <Button onClick={() => setVisible(true)} className="w-full" size="lg" aria-label={t("enrollment.connectWalletToEnroll")}>
         {t("enrollment.walletRequired")}

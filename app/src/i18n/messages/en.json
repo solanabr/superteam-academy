@@ -341,7 +341,8 @@
       "continueLearning": "Continue Learning",
       "enrolled": "Enrolled",
       "errorInsufficientFundsDevnet": "Insufficient SOL. Get free devnet SOL from the faucet.",
-      "getFaucetSol": "Get SOL"
+      "getFaucetSol": "Get SOL",
+      "reconnectWallet": "Please reconnect your wallet to sign the enrollment transaction."
     },
     "tracks": {
       "solanaFundamentals": "Solana Fundamentals",

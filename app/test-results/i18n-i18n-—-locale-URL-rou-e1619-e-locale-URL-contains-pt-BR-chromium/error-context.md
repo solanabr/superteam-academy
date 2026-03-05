@@ -1,0 +1,733 @@
+# Page snapshot
+
+```yaml
+- generic:
+  - link:
+    - /url: "#main-content"
+    - text: Pular para o conteúdo
+  - alert
+  - generic:
+    - banner:
+      - generic:
+        - link:
+          - /url: /
+          - img
+          - generic:
+            - generic: Superteam Academy
+            - generic: Brasil
+        - navigation:
+          - link:
+            - /url: /courses
+            - img
+            - text: CURSOS
+          - link:
+            - /url: /dashboard
+            - img
+            - text: PAINEL
+          - link:
+            - /url: /certificates
+            - img
+            - text: CERTIFICADOS
+          - link:
+            - /url: /leaderboard
+            - img
+            - text: CLASSIFICAÇÃO
+          - link:
+            - /url: /community
+            - img
+            - text: COMUNIDADE
+        - generic:
+          - button:
+            - img
+          - generic:
+            - button:
+              - img
+          - generic:
+            - button:
+              - img
+              - generic: Cadastre-se
+            - button:
+              - img
+              - generic: Conectar Carteira
+          - generic:
+            - button:
+              - img
+              - generic: Idioma
+            - button:
+              - img
+              - generic: Alternar tema
+    - main:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - img
+                    - generic: Powered by SOLANA
+                  - generic:
+                    - img
+                    - generic: Superteam Brasil
+                    - generic: ×
+                    - generic: Academy
+                - heading [level=1]:
+                  - generic: Construa Sua
+                  - generic: Identidade On-Chain
+                - paragraph: Escreva código. Ganhe XP soulbound. Seja verificado na Solana.
+                - generic:
+                  - button:
+                    - img
+                    - text: Cadastre-se
+                  - link:
+                    - /url: /courses
+                    - button:
+                      - text: Explorar Cursos
+                      - img
+                - generic:
+                  - generic: 27 builders ativos agora
+                - generic:
+                  - generic:
+                    - generic: 10+
+                    - generic: Cursos Disponíveis
+                  - generic:
+                    - generic: 500+
+                    - generic: Credenciais Emitidas
+                  - generic:
+                    - generic: 1.200+
+                    - generic: Aprendizes Ativos
+              - generic:
+                - generic:
+                  - img:
+                    - generic:
+                      - generic:
+                        - generic: ✓
+                      - generic:
+                        - generic: ⚡
+                      - generic:
+                        - generic: ☆
+                      - generic:
+                        - generic: ❤
+                      - generic:
+                        - generic: </>
+                      - generic:
+                        - generic: ◆
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: // plataforma
+              - heading [level=2]: Por que Superteam Academy?
+            - generic:
+              - generic:
+                - img
+                - heading [level=3]: XP Soulbound
+                - paragraph: Ganhe tokens XP Token-2022 não transferíveis a cada aula concluída. Sua pontuação vive on-chain para sempre.
+              - generic:
+                - img
+                - heading [level=3]: Credenciais NFT
+                - paragraph: Receba NFTs de credencial Metaplex Core ao concluir um curso. Visíveis em qualquer carteira Solana.
+              - generic:
+                - img
+                - heading [level=3]: Editor de Código Integrado
+                - paragraph: Escreva, execute e teste código Rust e Anchor direto no navegador com nosso editor Monaco.
+              - generic:
+                - img
+                - heading [level=3]: Gamificação
+                - paragraph: Desbloqueie conquistas, mantenha sequências de aprendizado e suba no ranking conforme avança.
+              - generic:
+                - img
+                - heading [level=3]: Multi-Idioma
+                - paragraph: Suporte completo para Português, Inglês e Espanhol para que você aprenda no idioma de sua preferência.
+              - generic:
+                - img
+                - heading [level=3]: Fórum da Comunidade
+                - paragraph: Discuta desafios, compartilhe projetos e receba ajuda de outros builders Solana no fórum da comunidade.
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: // desafio
+              - heading [level=2]: Escreva Código. Ganhe XP.
+            - generic:
+              - generic:
+                - generic:
+                  - generic: "Challenge #1"
+                - heading [level=3]: Hello, Solana!
+                - paragraph: Escreva uma função em Rust que retorne "Hello, Solana!" como string.
+                - generic: "Assinatura da função: pub fn greet() -> String"
+                - generic:
+                  - generic: +50 XP
+                  - generic: "|"
+                  - generic: Iniciante
+                  - generic: "|"
+                  - generic: ~2 min
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: main.rs
+                    - generic: test.rs
+                - generic:
+                  - textbox: "pub fn greet() -> String { // your code here }"
+                - generic:
+                  - button: ▶ Executar
+            - generic:
+              - link:
+                - /url: /courses
+                - text: 500+ desafios em todos os níveis
+                - img
+        - generic:
+          - generic:
+            - paragraph: // ranking
+            - heading [level=2]: Top Builders Agora
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic: 7fXk...9mRq
+                  - generic: Lv.12
+                - generic: 🇧🇷 São Paulo
+                - generic: 4,850 XP
+                - generic:
+                  - img
+                  - generic: Anchor Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 72% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: B3nN...4pLw
+                  - generic: Lv.18
+                - generic: 🇧🇷 Rio de Janeiro
+                - generic: 9,200 XP
+                - generic:
+                  - img
+                  - generic: DeFi Builder
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 45% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: Qr2T...8sVx
+                  - generic: Lv.9
+                - generic: 🇧🇷 Belo Horizonte
+                - generic: 2,300 XP
+                - generic:
+                  - img
+                  - generic: Token Master
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 88% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: mK9J...3zPq
+                  - generic: Lv.15
+                - generic: 🇧🇷 Fortaleza
+                - generic: 6,700 XP
+                - generic:
+                  - img
+                  - generic: Protocol Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 31% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: 5wLc...7nBr
+                  - generic: Lv.21
+                - generic: 🇧🇷 Brasília
+                - generic: 12,400 XP
+                - generic:
+                  - img
+                  - generic: Core Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 56% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: xHd8...2kFm
+                  - generic: Lv.7
+                - generic: 🇧🇷 Recife
+                - generic: 1,450 XP
+                - generic:
+                  - img
+                  - generic: NFT Creator
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 93% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: Pn6Y...1vQs
+                  - generic: Lv.11
+                - generic: 🇧🇷 Porto Alegre
+                - generic: 3,900 XP
+                - generic:
+                  - img
+                  - generic: DeFi Builder
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 67% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: 9cRj...5tWe
+                  - generic: Lv.14
+                - generic: 🇧🇷 Salvador
+                - generic: 5,800 XP
+                - generic:
+                  - img
+                  - generic: Anchor Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 22% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: 7fXk...9mRq
+                  - generic: Lv.12
+                - generic: 🇧🇷 São Paulo
+                - generic: 4,850 XP
+                - generic:
+                  - img
+                  - generic: Anchor Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 72% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: B3nN...4pLw
+                  - generic: Lv.18
+                - generic: 🇧🇷 Rio de Janeiro
+                - generic: 9,200 XP
+                - generic:
+                  - img
+                  - generic: DeFi Builder
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 45% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: Qr2T...8sVx
+                  - generic: Lv.9
+                - generic: 🇧🇷 Belo Horizonte
+                - generic: 2,300 XP
+                - generic:
+                  - img
+                  - generic: Token Master
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 88% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: mK9J...3zPq
+                  - generic: Lv.15
+                - generic: 🇧🇷 Fortaleza
+                - generic: 6,700 XP
+                - generic:
+                  - img
+                  - generic: Protocol Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 31% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: 5wLc...7nBr
+                  - generic: Lv.21
+                - generic: 🇧🇷 Brasília
+                - generic: 12,400 XP
+                - generic:
+                  - img
+                  - generic: Core Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 56% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: xHd8...2kFm
+                  - generic: Lv.7
+                - generic: 🇧🇷 Recife
+                - generic: 1,450 XP
+                - generic:
+                  - img
+                  - generic: NFT Creator
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 93% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: Pn6Y...1vQs
+                  - generic: Lv.11
+                - generic: 🇧🇷 Porto Alegre
+                - generic: 3,900 XP
+                - generic:
+                  - img
+                  - generic: DeFi Builder
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 67% para o próximo nível
+              - generic:
+                - generic:
+                  - generic: 9cRj...5tWe
+                  - generic: Lv.14
+                - generic: 🇧🇷 Salvador
+                - generic: 5,800 XP
+                - generic:
+                  - img
+                  - generic: Anchor Dev
+                  - generic:
+                    - img:
+                      - generic: ✓
+                    - generic: on-chain
+                - generic: 22% para o próximo nível
+          - generic:
+            - button:
+              - img
+              - text: Cadastre-se
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img:
+                    - generic:
+                      - generic: São Paulo
+                    - generic:
+                      - generic: Rio de Janeiro
+                    - generic:
+                      - generic: Brasília
+                    - generic:
+                      - generic: Fortaleza
+                    - generic:
+                      - generic: Recife
+                    - generic:
+                      - generic: Porto Alegre
+                    - generic:
+                      - generic: Salvador
+                    - generic:
+                      - generic: Belo Horizonte
+                    - generic:
+                      - generic: Manaus
+              - generic:
+                - generic:
+                  - heading [level=2]: Comunidade Brasil
+                - generic: 500+ Builders
+                - paragraph: São Paulo · Rio · Brasília · Fortaleza · Recife · + 50 cidades
+                - blockquote:
+                  - generic: “Construindo o futuro na blockchain”
+                - link:
+                  - /url: /community
+                  - generic:
+                    - text: Junte-se à Superteam Brasil
+                    - img
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: // trilha
+              - heading [level=2]: Sua Jornada
+            - generic:
+              - img:
+                - generic:
+                  - generic: Solana Fundamentals
+                  - generic:
+                    - generic: ✓
+                    - generic: Hello Solana
+                  - generic:
+                    - generic: ✓
+                    - generic: Accounts
+                  - generic:
+                    - generic: PDAs
+                - generic:
+                  - generic: Anchor Framework
+                  - generic:
+                    - generic: Setup
+                  - generic:
+                    - generic: Programs
+                  - generic:
+                    - generic: CPIs
+                - generic:
+                  - generic: DeFi Development
+                  - generic:
+                    - generic: Token-2022
+                  - generic:
+                    - generic: AMMs
+                  - generic:
+                    - generic: Lending
+                  - generic:
+                    - generic: Yield
+                - generic:
+                  - generic: Advanced Protocol
+                  - generic:
+                    - generic: Oracles
+                  - generic:
+                    - generic: Governance
+                  - generic:
+                    - generic: MEV
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: // cursos
+              - heading [level=2]: Cursos em Destaque
+            - generic:
+              - generic:
+                - button:
+                  - img
+                - link:
+                  - /url: /courses/token-program
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: Intermediário
+                        - generic:
+                          - generic:
+                            - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Intermediário
+                          - generic:
+                            - img
+                            - text: 1h 40min
+                        - heading [level=3]: Token Program em Profundidade
+                        - paragraph: "Explore as extensões avançadas do Token-2022: tokens não-transferíveis, delegação permanente, metadados on-chain e controle de ciclo de vida de mints. Curso intermediário para desenvolvedores que já conhecem os fundamentos da Solana."
+                      - generic:
+                        - generic:
+                          - generic:
+                            - img
+                            - text: 4 aulas
+                          - generic:
+                            - img
+                            - text: 600 XP
+              - generic:
+                - button:
+                  - img
+                - link:
+                  - /url: /courses/solana-intro
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: Iniciante
+                        - generic:
+                          - generic:
+                            - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Iniciante
+                          - generic:
+                            - img
+                            - text: 2h
+                        - heading [level=3]: Introdução ao Solana
+                        - paragraph: "Aprenda os fundamentos da blockchain Solana: arquitetura, carteiras, tokens, PDAs e como construir seu primeiro programa com Anchor. Curso ideal para iniciantes com conhecimento básico de programação."
+                      - generic:
+                        - generic:
+                          - generic:
+                            - img
+                            - text: 5 aulas
+                          - generic:
+                            - img
+                            - text: 500 XP
+              - generic:
+                - button:
+                  - img
+                - link:
+                  - /url: /courses/token-program
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: Intermediário
+                        - generic:
+                          - generic:
+                            - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Intermediário
+                          - generic:
+                            - img
+                            - text: 1h 40min
+                        - heading [level=3]: Token Program em Profundidade
+                        - paragraph: "Explore as extensões avançadas do Token-2022: tokens não-transferíveis, delegação permanente, metadados on-chain e controle de ciclo de vida de mints. Curso intermediário para desenvolvedores que já conhecem os fundamentos da Solana."
+                      - generic:
+                        - generic:
+                          - generic:
+                            - img
+                            - text: 4 aulas
+                          - generic:
+                            - img
+                            - text: 600 XP
+            - generic:
+              - link:
+                - /url: /courses
+                - button:
+                  - text: Ver todos os cursos
+                  - img
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: // depoimentos
+              - heading [level=2]: O que os Alunos Dizem
+            - generic:
+              - generic:
+                - img
+                - paragraph: “Os desafios de código interativos diferenciam a Superteam Academy. Fui do zero em Rust até implantar meu primeiro programa Anchor em três semanas.”
+                - generic:
+                  - paragraph: Lucas Oliveira
+                  - paragraph: Desenvolvedor Solana
+              - generic:
+                - img
+                - paragraph: “O sistema de credenciais on-chain é revolucionário. Meus certificados NFT Metaplex Core ficam visíveis na minha carteira e verificáveis por qualquer empregador.”
+                - generic:
+                  - paragraph: Ana Souza
+                  - paragraph: Construtora de Protocolo DeFi
+              - generic:
+                - img
+                - paragraph: “O ranking de XP e as conquistas tornaram o aprendizado viciante. A gamificação me fez voltar todos os dias.”
+                - generic:
+                  - paragraph: Pedro Martins
+                  - paragraph: Builder Comunitário
+        - generic:
+          - generic:
+            - paragraph: $ construído com o melhor do ecossistema solana
+            - generic:
+              - generic:
+                - img
+                - text: Solana
+              - generic:
+                - img
+                - text: Metaplex
+              - generic:
+                - img
+                - text: Helius
+              - generic:
+                - img
+                - text: Superteam
+              - generic:
+                - img
+                - text: Anchor
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img:
+                    - generic:
+                      - generic:
+                        - generic: ✓
+                      - generic:
+                        - generic: ⚡
+                      - generic:
+                        - generic: ☆
+                      - generic:
+                        - generic: ❤
+                      - generic:
+                        - generic: </>
+                      - generic:
+                        - generic: ◆
+              - heading [level=2]: Comece sua jornada on-chain
+              - paragraph: Junte-se a 500+ devs. Grátis para começar. Credenciais reais on-chain.
+              - button:
+                - img
+                - text: Cadastre-se
+    - contentinfo:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: Fique por dentro
+              - paragraph: Receba os últimos tutoriais e atualizações sobre Solana
+            - generic:
+              - generic:
+                - img
+                - textbox:
+                  - /placeholder: Seu endereço de e-mail
+              - button: Inscrever-se
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - img
+              - img
+              - generic: Superteam Academy
+            - paragraph: A plataforma de aprendizado descentralizada da Superteam. Aprenda, ganhe XP e construa sua reputação on-chain.
+          - generic:
+            - heading [level=4]: Cursos
+            - generic:
+              - link:
+                - /url: /courses
+                - text: Cursos
+              - link:
+                - /url: /leaderboard
+                - text: Classificação
+              - link:
+                - /url: /dashboard
+                - text: Painel
+              - link:
+                - /url: /profile
+                - text: Perfil
+              - link:
+                - /url: /settings
+                - text: Configurações
+          - generic:
+            - heading [level=4]: Sobre
+            - generic:
+              - link:
+                - /url: https://superteam.fun
+                - text: Superteam
+              - link:
+                - /url: https://solana.com
+                - text: Solana
+          - generic:
+            - heading [level=4]: Redes Sociais
+            - generic:
+              - link:
+                - /url: https://twitter.com/SuperteamBR
+                - text: Twitter
+              - link:
+                - /url: https://discord.gg/superteam
+                - text: Discord
+        - generic:
+          - generic: © 2026 Superteam Academy. Todos os direitos reservados.
+          - generic: Powered by Solana
+  - region "Notifications alt+T"
+  - dialog "Bem-vindo à Superteam Academy" [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e5]
+      - heading "Bem-vindo à Superteam Academy" [level=2] [ref=e8]
+      - paragraph [ref=e9]: A plataforma de aprendizado Solana para builders. Ganhe credenciais reais on-chain enquanto evolui suas habilidades.
+    - generic [ref=e10]:
+      - tablist "Indicador de etapas" [ref=e11]:
+        - tab "Ir para a etapa 1" [active] [selected] [ref=e12]
+        - tab "Ir para a etapa 2" [ref=e13]
+        - tab "Ir para a etapa 3" [ref=e14]
+        - tab "Ir para a etapa 4" [ref=e15]
+      - generic [ref=e16]:
+        - button "Pular" [ref=e17]
+        - button "Próximo" [ref=e19]
+    - button "Pular" [ref=e20]:
+      - img [ref=e21]
+```

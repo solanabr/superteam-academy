@@ -341,7 +341,8 @@
       "continueLearning": "Continuar Aprendendo",
       "enrolled": "Matriculado",
       "errorInsufficientFundsDevnet": "SOL insuficiente. Obtenha SOL gratuito na devnet pelo faucet.",
-      "getFaucetSol": "Obter SOL"
+      "getFaucetSol": "Obter SOL",
+      "reconnectWallet": "Por favor, reconecte sua carteira para assinar a transação de matrícula."
     },
     "tracks": {
       "solanaFundamentals": "Fundamentos de Solana",
