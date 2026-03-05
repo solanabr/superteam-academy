@@ -28,6 +28,9 @@
     "activity": "Activity",
     "streak": "Day Streak",
     "noCourses": "You haven't started any courses yet.",
+    "explore": "Explore Courses",
+    "subtitle": "Track your on-chain learning momentum and level up every day."
+=======
     "explore": "Explore Courses"
   },
   "Profile": {
@@ -65,6 +68,9 @@
     "forum": "Forum",
     "leaderboard": "Leaderboard",
     "settings": "Settings",
+    "creatorStudio": "Creator Studio",
+    "backHome": "Back to Home"
+=======
     "creatorStudio": "Creator Studio"
   },
   "DashboardLayout": {
@@ -163,5 +169,33 @@
     "rejectPlaceholder": "E.g., Your code validation rules are broken in Lesson 2...",
     "cancel": "Cancel",
     "confirmReject": "Confirm Rejection"
+  },
+  "DashboardWidgets": {
+    "totalXp": "Total XP",
+    "soulboundTokens": "Soulbound Tokens",
+    "currentLevel": "Current Level",
+    "levelLabel": "Lvl {level}",
+    "toNextLevel": "{value}% to next level",
+    "achievements": "Achievements",
+    "nftBadges": "NFT Badges earned",
+    "lessonsCounter": "{completed} / {total} Lessons",
+    "progressAria": "Learning progress for {courseId}",
+    "completed": "Completed",
+    "reviewMaterial": "Review Material",
+    "continueLearning": "Continue Learning",
+    "activityMap": "Activity Map",
+    "learningConsistency": "Your learning consistency",
+    "dayStreak": "{streak} Day Streak",
+    "lessonsCompleted": "Lessons completed!",
+    "noActivity": "No activity",
+    "less": "Less",
+    "more": "More",
+    "xpClaimed": "XP Claimed!",
+    "claimFailed": "Failed to claim",
+    "noActiveQuests": "No active quests.",
+    "claim": "Claim",
+    "questProgressAria": "Quest progress: {title}",
+    "dailyQuests": "Daily Quests",
+    "seasonBeta": "Season 1 (Beta)"
   }
 }

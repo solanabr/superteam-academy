@@ -204,7 +204,7 @@ export default function CreateCoursePage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-32">
       {/* Header Sticky Bar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b p-4 -mx-8 px-8 flex items-center justify-between mb-8 shadow-sm">
+      <div className="sticky top-0 z-50 -mx-8 mb-8 flex items-center justify-between border-b border-border/60 bg-background/90 p-4 px-8 shadow-sm backdrop-blur">
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.push('/admin/courses')}>
                 <ArrowLeft className="h-5 w-5" />
@@ -236,7 +236,7 @@ export default function CreateCoursePage() {
         
         {/* Basic Info (Left - 4 cols) */}
         <div className="xl:col-span-4 space-y-6">
-            <Card className="sticky top-28 border-primary/20 shadow-lg">
+            <Card className="sticky top-28 border-border/60 bg-card/70 shadow-lg backdrop-blur-md">
                 <CardHeader>
                     <CardTitle>Course Metadata</CardTitle>
                     <CardDescription>Core information displayed on the catalog.</CardDescription>
@@ -312,7 +312,7 @@ export default function CreateCoursePage() {
 
             <Accordion type="multiple" className="space-y-6 w-full">
                 {course.modules.map((module, mIndex) => (
-                    <AccordionItem key={mIndex} value={`mod-${mIndex}`} className="border rounded-xl bg-card overflow-hidden shadow-sm">
+                    <AccordionItem key={mIndex} value={`mod-${mIndex}`} className="border border-border/60 rounded-xl bg-card/70 overflow-hidden shadow-sm">
                         
                         <div className="flex items-center justify-between p-2 pr-4 bg-muted/30 border-b group">
                             <div className="flex-1 flex items-center gap-2">
@@ -323,6 +323,7 @@ export default function CreateCoursePage() {
                                     className="font-bold text-lg bg-transparent border-transparent hover:border-border focus-visible:ring-1 h-9" 
                                     value={module.title} 
                                     onChange={(e) => updateModule(mIndex, e.target.value)} 
+                                    disabled={isLockedOnChain}
                                 />
                             </div>
                             <Button variant="ghost" size="icon" disabled={isLockedOnChain} className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeModule(mIndex)}>
@@ -344,6 +345,7 @@ export default function CreateCoursePage() {
                                                 className="font-semibold text-base border-transparent hover:border-border bg-muted/20" 
                                                 value={lesson.title} 
                                                 onChange={e => updateLesson(mIndex, lIndex, 'title', e.target.value)} 
+                                                disabled={isLockedOnChain}
                                             />
                                         </div>
                                         
@@ -382,7 +384,7 @@ export default function CreateCoursePage() {
                                                         <div className="space-y-2 flex-1 flex flex-col">
                                                             <Label className="text-muted-foreground">Initial Code Template</Label>
                                                             <Textarea 
-                                                                className="font-mono text-xs flex-1 min-h-[100px] bg-[#1e1e1e] text-green-400 border-none" 
+                                                                className="font-mono text-xs flex-1 min-h-[100px] bg-muted/30 border-border/60" 
                                                                 value={lesson.initialCode} 
                                                                 onChange={e => updateLesson(mIndex, lIndex, 'initialCode', e.target.value)} 
                                                             />

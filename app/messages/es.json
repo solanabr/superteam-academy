@@ -28,6 +28,8 @@
     "activity": "Actividad",
     "streak": "Días de Racha",
     "noCourses": "Aún no has comenzado ningún curso.",
+    "explore": "Explorar Cursos",
+    "subtitle": "Sigue tu impulso de aprendizaje on-chain y sube de nivel cada día."
     "explore": "Explorar Cursos"
   },
   "Profile": {
@@ -65,6 +67,8 @@
     "forum": "Foro",
     "leaderboard": "Clasificación",
     "settings": "Ajustes",
+    "creatorStudio": "Creator Studio",
+    "backHome": "Volver al inicio"
     "creatorStudio": "Creator Studio"
   },
   "DashboardLayout": {
@@ -163,5 +167,33 @@
     "rejectPlaceholder": "Ej.: Tus reglas de validación están rotas en la Lección 2...",
     "cancel": "Cancelar",
     "confirmReject": "Confirmar Rechazo"
+  },
+  "DashboardWidgets": {
+    "totalXp": "XP Total",
+    "soulboundTokens": "Tokens Soulbound",
+    "currentLevel": "Nivel Actual",
+    "levelLabel": "Nvl {level}",
+    "toNextLevel": "{value}% para el siguiente nivel",
+    "achievements": "Logros",
+    "nftBadges": "Insignias NFT obtenidas",
+    "lessonsCounter": "{completed} / {total} Lecciones",
+    "progressAria": "Progreso de aprendizaje para {courseId}",
+    "completed": "Completado",
+    "reviewMaterial": "Revisar Material",
+    "continueLearning": "Continuar Aprendiendo",
+    "activityMap": "Mapa de Actividad",
+    "learningConsistency": "Tu consistencia de aprendizaje",
+    "dayStreak": "Racha de {streak} días",
+    "lessonsCompleted": "¡Lecciones completadas!",
+    "noActivity": "Sin actividad",
+    "less": "Menos",
+    "more": "Más",
+    "xpClaimed": "¡XP reclamada!",
+    "claimFailed": "Error al reclamar",
+    "noActiveQuests": "No hay misiones activas.",
+    "claim": "Reclamar",
+    "questProgressAria": "Progreso de misión: {title}",
+    "dailyQuests": "Misiones Diarias",
+    "seasonBeta": "Temporada 1 (Beta)"
   }
 }
