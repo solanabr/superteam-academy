@@ -10,16 +10,18 @@ anchor.setProvider(provider);
 const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
 // Load XP mint keypair
-const xpMintSecret = JSON.parse(fs.readFileSync("../wallets/xp-mint-keypair.json", "utf-8"));
+const xpMintSecret = JSON.parse(
+  fs.readFileSync("../wallets/xp-mint-keypair.json", "utf-8"),
+);
 const xpMintKeypair = Keypair.fromSecretKey(Uint8Array.from(xpMintSecret));
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],
-  program.programId
+  program.programId,
 );
 const [minterRolePda] = PublicKey.findProgramAddressSync(
   [Buffer.from("minter"), provider.wallet.publicKey.toBuffer()],
-  program.programId
+  program.programId,
 );
 
 async function main() {

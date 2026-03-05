@@ -1,0 +1,13 @@
+{
+  "name": "superteam-academy",
+  "private": true,
+  "scripts": {
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "start": "cd app && npm run start",
+    "lint": "cd app && npm run lint"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

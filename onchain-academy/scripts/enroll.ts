@@ -12,11 +12,11 @@ const learner = provider.wallet.publicKey;
 
 const [coursePda] = PublicKey.findProgramAddressSync(
   [Buffer.from("course"), Buffer.from(courseId)],
-  program.programId
+  program.programId,
 );
 const [enrollmentPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()],
-  program.programId
+  program.programId,
 );
 
 async function main() {

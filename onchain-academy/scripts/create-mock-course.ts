@@ -9,13 +9,13 @@ const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],
-  program.programId
+  program.programId,
 );
 
 const courseId = "solana-mock-test";
 const [coursePda] = PublicKey.findProgramAddressSync(
   [Buffer.from("course"), Buffer.from(courseId)],
-  program.programId
+  program.programId,
 );
 
 // Placeholder content tx ID — replace with a real Arweave tx for production

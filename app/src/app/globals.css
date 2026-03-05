@@ -1,0 +1,609 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta: Verde e amarelo dos logotipos Superteam Brasil */
+@layer base {
+  :root {
+    /* Verde escuro da brand (#2f6b3f) */
+    --brand-logo-green: 137 38% 30%;
+    --brand-logo-green-hover: 137 38% 35%;
+    --brand-logo-green-dark: 137 38% 24%;
+    /* Verde médio da brand (#008c4c) */
+    --brand-emerald: 153 100% 27%;
+    /* Amarelo dourado da brand (#ffd23f) */
+    --brand-logo-yellow: 47 100% 63%;
+    --brand-logo-yellow-hover: 47 100% 56%;
+    --brand-logo-yellow-light: 47 100% 70%;
+    /* Bege da brand (#f7eacb) */
+    --brand-beige: 38 73% 88%;
+    /* Quase preto da brand (#1b231d) */
+    --brand-dark: 150 15% 12%;
+    /* Dark theme (default): BG brand dark (#1b231d) */
+    --background: 150 15% 12%;
+    --foreground: 38 73% 88%;
+    /* Cards e boxes: amarelo do logo + textos verde */
+    --card: var(--brand-logo-yellow);
+    --card-foreground: var(--brand-logo-green);
+    --popover: var(--brand-logo-yellow);
+    --popover-foreground: 40 28% 96%;
+    /* Main: amarelo do logo nos botões (primary = CTA) */
+    --primary: var(--brand-logo-yellow);
+    --primary-foreground: 0 0% 9%;
+    /* Green 2 / Green 3 - verde do logo */
+    --secondary: var(--brand-logo-green);
+    --secondary-foreground: 40 28% 96%;
+    --muted: 137 30% 20%;
+    --muted-foreground: 38 40% 65%;
+    /* Verde HOVER (mais claro) - baseado no logo */
+    --accent: 153 100% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 38 73% 88%;
+    /* Tokens Dark Green BORDER */
+    --border: 150 15% 18%;
+    --input: 150 15% 18%;
+    --ring: var(--brand-logo-yellow);
+    --radius: 0.75rem;
+  }
+
+  /* Modo diurno = dark class = usa aparência do modo noturno (tema claro) */
+  .dark {
+    --background: 38 73% 88%;
+    --foreground: 150 15% 12%;
+    --card: 38 73% 92%;
+    --card-foreground: 150 15% 12%;
+    --popover: 38 73% 95%;
+    --popover-foreground: 150 15% 12%;
+    --primary: var(--brand-logo-yellow);
+    --primary-foreground: 150 15% 12%;
+    --secondary: 38 50% 85%;
+    --secondary-foreground: 150 15% 12%;
+    --muted: 38 50% 90%;
+    --muted-foreground: 137 20% 35%;
+    --accent: 153 100% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 153 100% 27%;
+    --input: 153 100% 27%;
+    --ring: var(--brand-logo-yellow);
+  }
+
+  /* Modo noturno = light class = aparência escura: gradiente verde, cards verdes, bordas e XP amarelas */
+  .light {
+    --background: 150 15% 12%;
+    --foreground: 38 73% 88%;
+    --card: var(--brand-emerald);
+    --card-foreground: 38 73% 88%;
+    --popover: var(--brand-emerald);
+    --popover-foreground: 38 73% 88%;
+    --primary: var(--brand-logo-yellow);
+    --primary-foreground: 150 15% 12%;
+    --secondary: var(--brand-logo-green);
+    --secondary-foreground: 38 73% 88%;
+    --muted: 137 30% 20%;
+    --muted-foreground: 38 40% 72%;
+    --accent: 153 100% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 38 73% 88%;
+    --border: 47 100% 63%;
+    --input: 47 80% 55%;
+    --ring: var(--brand-logo-yellow);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Theme-aware action buttons: yellow in noturno (.light), green #008c4C in diurno (.dark) */
+.btn-theme-action {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+  color: hsl(0 0% 9%) !important;
+}
+.btn-theme-action:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+.dark .btn-theme-action {
+  background-color: #008c4C !important;
+  color: #fff !important;
+}
+.dark .btn-theme-action:hover {
+  background-color: #007a42 !important;
+}
+.light .btn-theme-action {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+  color: hsl(0 0% 9%) !important;
+}
+.light .btn-theme-action:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+
+/* Achievement icons: yellow in noturno, blue in diurno */
+.achievement-icon-unlocked {
+  background-color: hsl(var(--brand-logo-yellow) / 0.2);
+  color: hsl(var(--brand-logo-yellow));
+}
+.dark .achievement-icon-unlocked {
+  background-color: rgb(59 130 246 / 0.2);
+  color: rgb(59 130 246);
+}
+
+/* Brand gradient: verde do logo */
+.gradient-solana,
+.gradient-green {
+  background: linear-gradient(135deg, hsl(var(--brand-logo-green-hover)) 0%, hsl(var(--brand-logo-green)) 50%, hsl(var(--brand-logo-green-dark)) 100%);
+}
+
+/* Barra de busca (cursos) e e-mail (footer): modo noturno borda amarela, modo diurno borda verde */
+.search-bar,
+.search-bar:focus {
+  background-color: #fff !important;
+  border-width: 2px;
+  border-color: hsl(var(--brand-logo-yellow));
+  color: hsl(120 15% 12%);
+}
+.dark .search-bar,
+.dark .search-bar:focus {
+  border-color: #008c4C;
+}
+.search-bar::placeholder {
+  color: hsl(120 15% 45%);
+}
+
+/* Cards: fundo amarelo do logo + borda verde #008c4C + textos verde */
+.rounded-lg.border.bg-card,
+.rounded-xl.border.bg-card,
+.rounded-2xl.border.bg-card {
+  border-color: #008c4C !important;
+  border-width: 4px !important;
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+  color: black !important;
+}
+.rounded-lg.border.bg-card h3,
+.rounded-xl.border.bg-card h3,
+.rounded-2xl.border.bg-card h3 {
+  color: hsl(var(--brand-logo-green)) !important;
+}
+.rounded-lg.border.bg-card .text-muted-foreground,
+.rounded-xl.border.bg-card .text-muted-foreground,
+.rounded-2xl.border.bg-card .text-muted-foreground,
+.rounded-lg.border.bg-card [class*="text-muted"],
+.rounded-xl.border.bg-card [class*="text-muted"],
+.rounded-2xl.border.bg-card [class*="text-muted"] {
+  color: black !important;
+}
+/* Badges: amarelo igual ao header (--brand-logo-yellow) */
+.card-badge {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+}
+.card-badge:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+/* Modo diurno: botões verdes, badges amarelos */
+.dark .card-badge {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+}
+.dark .card-badge:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+.dark .card-button {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+  color: hsl(0, 0%, 9%) !important;
+  border-color: hsl(var(--brand-logo-yellow)) !important;
+}
+.dark .card-button:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+  color: hsl(0, 0%, 9%) !important;
+  border-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+
+/* Modo diurno (dark class) = tema claro, TODOS os cards creme/off-white (#f7eacb) */
+.dark .bg-card {
+  background-color: #f7eacb !important;
+}
+.dark .rounded-lg.border.bg-card,
+.dark .rounded-xl.border.bg-card,
+.dark .rounded-2xl.border.bg-card {
+  background-color: #f7eacb !important;
+  border-color: #008c4C !important;
+  border-width: 4px !important;
+  color: hsl(var(--brand-logo-green)) !important;
+}
+/* Modo noturno (light class) = tema escuro, cards verde #008c4c (Superteam Brasil) e bordas amarelas */
+.light .bg-card {
+  background-color: #008c4c !important;
+}
+.light .rounded-lg.border.bg-card,
+.light .rounded-xl.border.bg-card,
+.light .rounded-2xl.border.bg-card {
+  background-color: #008c4c !important;
+  border-color: hsl(var(--brand-logo-yellow)) !important;
+  border-width: 4px !important;
+  color: hsl(40 28% 96%) !important;
+}
+.light .rounded-lg.border.bg-card h3,
+.light .rounded-xl.border.bg-card h3,
+.light .rounded-2xl.border.bg-card h3 {
+  color: hsl(40 28% 96%) !important;
+}
+.light .rounded-lg.border.bg-card .text-muted-foreground,
+.light .rounded-xl.border.bg-card .text-muted-foreground,
+.light .rounded-2xl.border.bg-card .text-muted-foreground,
+.light .rounded-lg.border.bg-card [class*="text-muted"],
+.light .rounded-xl.border.bg-card [class*="text-muted"],
+.light .rounded-2xl.border.bg-card [class*="text-muted"] {
+  color: white !important;
+}
+.light .bg-card .text-black {
+  color: white !important;
+}
+/* Modo noturno: cards do carrossel de instrutores — borda amarela e fundo verde */
+.light .instructor-card,
+.light .instructors-carousel-container .rounded-2xl.border.bg-card,
+.light .instructors-carousel-container .bg-card.rounded-2xl {
+  border-color: hsl(var(--brand-logo-yellow)) !important;
+  border-width: 4px !important;
+  background-color: #008c4c !important;
+}
+.rounded-lg.border.bg-popover {
+  border-color: #008c4C;
+  border-width: 4px;
+  background-color: hsl(var(--brand-logo-yellow));
+}
+/* Modo diurno (dark class) = tema claro, popover creme */
+.dark .rounded-lg.border.bg-popover,
+.dark .bg-popover {
+  background-color: #f7eacb !important;
+  border-color: hsl(var(--brand-logo-yellow));
+  border-width: 4px;
+}
+/* Modo noturno (light class) = tema escuro, popover verde #008c4c e borda amarela */
+.light .rounded-lg.border.bg-popover,
+.light .bg-popover {
+  background-color: #008c4c !important;
+  border-color: hsl(var(--brand-logo-yellow)) !important;
+  border-width: 4px;
+}
+
+/* Superteam Brasil: gradiente com cores do bg (creme #f7eacb, verde #21773D, amarelo #FDCB10) */
+.hero-cream {
+  background-color: #f7eacb !important;
+}
+body.hero-cream {
+  background-color: #f7eacb !important;
+}
+
+/* Background: imagem em gradiente (creme → amarelo → verde) */
+.hero-pattern {
+  background-image: url('/bg-pattern.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Background full-screen (substitui curvas lado a lado) */
+.page-curve-left {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  background: linear-gradient(180deg, hsl(var(--brand-logo-green) / 0.22) 0%, hsl(var(--brand-logo-green) / 0.1) 50%, hsl(var(--brand-logo-yellow) / 0.35) 100%);
+  opacity: 1;
+  border-radius: 0;
+  transform: none;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Modo noturno: gradiente verde (brand #008c4c → #2f6b3f → #1b231d) */
+.light .page-curve-left {
+  background: linear-gradient(180deg, #008c4c 0%, #2f6b3f 40%, #1b231d 100%);
+}
+.light.hero-cream,
+.light .hero-cream {
+  background: linear-gradient(180deg, #008c4c 0%, #2f6b3f 40%, #1b231d 100%) !important;
+}
+body.light.hero-cream {
+  background: linear-gradient(180deg, #008c4c 0%, #2f6b3f 40%, #1b231d 100%) !important;
+}
+/* Streak calendar: modo diurno azul, modo noturno amarelo */
+.streak-day-active {
+  background-color: hsl(199 89% 48%);
+}
+.streak-day-today {
+  ring-color: hsl(199 89% 48%);
+  --tw-ring-color: hsl(199 89% 48%);
+}
+.light .streak-day-active {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+}
+.light .streak-day-today {
+  --tw-ring-color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Skill radar bars: blue default (light mode), yellow in dark mode */
+.light .skill-radar-track {
+  background-color: hsl(var(--brand-logo-yellow) / 0.2) !important;
+}
+.light .skill-radar-bar {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Modo diurno: textos sky-600 dentro de cards permanecem azuis */
+.dark .rounded-lg.border.bg-card .text-sky-600,
+.dark .rounded-xl.border.bg-card .text-sky-600,
+.dark .rounded-2xl.border.bg-card .text-sky-600 {
+  color: rgb(2 132 199) !important;
+}
+/* Modo noturno: barra de progresso amarela */
+.light [role="progressbar"] {
+  background-color: hsl(var(--brand-logo-yellow) / 0.2) !important;
+}
+.light [role="progressbar"] > div {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Modo noturno: XP em amarelo (cor do header) */
+.light .text-sky-600 {
+  color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Modo noturno: badges dos cards em azul */
+.light .card-badge {
+  background-color: hsl(199 89% 48%) !important;
+  color: white !important;
+}
+.light .card-badge:hover {
+  background-color: hsl(199 89% 42%) !important;
+  color: white !important;
+}
+/* Modo noturno: botões dos cards amarelos */
+.light .card-button {
+  background-color: hsl(var(--brand-logo-yellow)) !important;
+  color: hsl(0, 0%, 9%) !important;
+  border-color: hsl(var(--brand-logo-yellow)) !important;
+}
+.light .card-button:hover {
+  background-color: hsl(var(--brand-logo-yellow-hover)) !important;
+  color: hsl(0, 0%, 9%) !important;
+  border-color: hsl(var(--brand-logo-yellow-hover)) !important;
+}
+/* Modo noturno: títulos das páginas amarelo (cor do header), subtítulos brancos */
+.light main h1,
+.light main h2 {
+  color: hsl(var(--brand-logo-yellow)) !important;
+}
+.light main .text-muted-foreground {
+  color: white !important;
+}
+/* Modo noturno: hero — subtítulo branco, tech (Rust · TypeScript…) azul com dropshadow, números (builders/eventos/bounties) amarelos */
+.light .hero-subtitle {
+  color: white !important;
+}
+.light .hero-tech {
+  color: hsl(var(--brand-logo-yellow)) !important;
+}
+.light .hero-stats-number {
+  color: hsl(var(--brand-logo-yellow)) !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+/* Modo noturno: badges de filtro selecionados em azul */
+.light .filter-badge-selected {
+  background-color: hsl(199 89% 48%) !important;
+  color: white !important;
+}
+.light .filter-badge-selected:hover {
+  background-color: hsl(199 89% 42%) !important;
+}
+/* Modo noturno: footer — textos brancos, títulos amarelos, copyright amarelo */
+.light footer p,
+.light footer .text-muted-foreground,
+.light footer nav a,
+.light footer a.text-muted-foreground {
+  color: white !important;
+}
+.light footer h3 {
+  color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Footer: borda do email e botão assinar sempre #008c4C */
+footer .search-bar,
+footer .search-bar:focus {
+  border-color: #008c4C !important;
+}
+.light footer .search-bar,
+.light footer .search-bar:focus {
+  border-color: #008c4C !important;
+}
+.dark footer .search-bar,
+.dark footer .search-bar:focus {
+  border-color: #008c4C !important;
+}
+.light .footer-copyright {
+  color: hsl(var(--brand-logo-yellow)) !important;
+}
+/* Ícones sociais do footer (react-social-icons) — efeito 3D com sombra */
+.footer-social-3d {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.footer-social-3d:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+}
+.page-curve-right {
+  display: none;
+}
+/* Legacy hero curves (when used inside a section) */
+.hero-curve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  height: 200px;
+  background: linear-gradient(135deg, hsl(var(--brand-logo-green-hover)) 0%, hsl(var(--brand-logo-green)) 100%);
+  opacity: 0.15;
+  border-radius: 50% 50% 100% 0 / 100% 100% 0 0;
+  transform: scale(2) translateY(30%);
+  pointer-events: none;
+}
+.hero-curve-right {
+  left: auto;
+  right: 0;
+  width: 35%;
+  background: linear-gradient(225deg, hsl(var(--brand-logo-green)) 0%, hsl(var(--brand-logo-green-dark)) 100%);
+  border-radius: 100% 0 0 50% / 100% 0 0 0;
+  transform: scale(1.8) translateY(20%);
+}
+
+/* Footer: mesma imagem de fundo da página, sem linha de divisão */
+footer.hero-pattern {
+  border-top: none !important;
+  background-image: url('/bg-pattern.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Footer Superteam Brasil: verde escuro, onda suave */
+.footer-superteam {
+  margin-top: auto;
+}
+.footer-wave-wrap {
+  width: 100%;
+  color: #2f6b3f;
+}
+.footer-wave {
+  width: 100%;
+  height: 64px;
+  display: block;
+  vertical-align: middle;
+}
+.footer-inner {
+  background-color: #1b231d;
+  background-image: url('data:image/svg+xml,%3Csvg width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22M0 40 Q20 20 40 40 T80 40%22 fill=%22none%22 stroke=%22%232f6b3f%22 stroke-width=%220.5%22 opacity=%220.18%22/%3E%3Cpath d=%22M40 0 Q60 20 40 40 T40 80%22 fill=%22none%22 stroke=%22%232f6b3f%22 stroke-width=%220.4%22 opacity=%220.12%22/%3E%3C/svg%3E');
+  background-size: 80px 80px;
+}
+.text-footer-light {
+  color: hsl(40 28% 94%);
+}
+
+/* Conteúdo de aula (markdown): evita aparência de bloco de notas */
+.prose,
+.prose-invert {
+  color: inherit;
+  line-height: 1.75;
+}
+.prose h1,
+.prose-invert h1 { font-size: 1.875rem; font-weight: 700; margin-top: 0; margin-bottom: 0.75rem; line-height: 1.2; }
+.prose h2,
+.prose-invert h2 { font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.prose h3,
+.prose-invert h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+.prose p,
+.prose-invert p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+.prose ul,
+.prose-invert ul { list-style-type: disc; margin: 0.75rem 0; padding-left: 1.5rem; }
+.prose ol,
+.prose-invert ol { list-style-type: decimal; margin: 0.75rem 0; padding-left: 1.5rem; }
+.prose li,
+.prose-invert li { margin: 0.25rem 0; }
+.prose strong,
+.prose-invert strong { font-weight: 600; }
+.prose code,
+.prose-invert code {
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  background: hsl(120 15% 18%);
+  color: hsl(129 68% 55%);
+}
+.prose-invert code { background: hsl(120 15% 18%); color: hsl(129 68% 55%); }
+.prose pre,
+.prose-invert pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  background: hsl(120 12% 12%);
+  color: hsl(40 28% 92%);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.prose pre code,
+.prose-invert pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+.prose a,
+.prose-invert a { color: hsl(var(--brand-logo-green)); text-decoration: underline; }
+.prose a:hover,
+.prose-invert a:hover { opacity: 0.9; }
+/* Modo diurno (dark) = tema claro, prose com fundo claro */
+.dark .prose code,
+.dark .prose-invert code { background: hsl(45 22% 92%); color: hsl(var(--brand-logo-green)); }
+.dark .prose pre,
+.dark .prose-invert pre { background: hsl(120 15% 94%); color: hsl(120 15% 15%); }
+.dark .prose a,
+.dark .prose-invert a { color: hsl(var(--brand-logo-green)); }
+
+/* Stats hero — animação scrolling (reel vertical) */
+@keyframes slot-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-33.333%);
+  }
+  65% {
+    transform: translateY(-66.666%);
+  }
+  85% {
+    transform: translateY(-65%);
+  }
+  100% {
+    transform: translateY(-66.666%);
+  }
+}
+.hero-stats-reel {
+  animation: slot-scroll 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 300%;
+}
+.hero-stats-slot {
+  overflow: hidden;
+}
+.hero-stats-reel span {
+  flex: 0 0 33.333%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+.hero-stats-delay-0 .hero-stats-reel { animation-delay: 0ms; }
+.hero-stats-delay-1 .hero-stats-reel { animation-delay: 180ms; }
+.hero-stats-delay-2 .hero-stats-reel { animation-delay: 360ms; }
+
+/* Carrossel de instrutores: loop infinito contínuo (4 cópias, desloca 25% por ciclo) */
+@keyframes instructors-carousel-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-25%); }
+}
+.instructors-carousel-container:hover .instructors-carousel-track {
+  animation-play-state: paused;
+}
+.instructors-carousel-track {
+  width: max-content;
+  animation: instructors-carousel-scroll 40s linear infinite;
+}
