@@ -1,0 +1,138 @@
+# Page snapshot
+
+```yaml
+- generic:
+  - link:
+    - /url: "#main-content"
+    - text: Skip to content
+  - alert
+  - generic:
+    - banner:
+      - generic:
+        - link:
+          - /url: /
+          - img
+          - generic:
+            - generic: Superteam Academy
+            - generic: Brasil
+        - navigation:
+          - link:
+            - /url: /courses
+            - img
+            - text: COURSES
+          - link:
+            - /url: /dashboard
+            - img
+            - text: DASHBOARD
+          - link:
+            - /url: /certificates
+            - img
+            - text: CERTIFICATES
+          - link:
+            - /url: /leaderboard
+            - img
+            - text: LEADERBOARD
+          - link:
+            - /url: /community
+            - img
+            - text: COMMUNITY
+        - generic:
+          - button:
+            - img
+          - generic:
+            - button:
+              - img
+          - generic:
+            - button:
+              - img
+              - generic: Sign Up
+            - button:
+              - img
+              - generic: Connect Wallet
+          - generic:
+            - button:
+              - img
+              - generic: Language
+            - button:
+              - img
+              - generic: Toggle theme
+    - main:
+      - status
+    - contentinfo:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - paragraph: Stay in the loop
+              - paragraph: Get the latest Solana tutorials and updates
+            - generic:
+              - generic:
+                - img
+                - textbox:
+                  - /placeholder: Your email address
+              - button: Subscribe
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - img
+              - img
+              - generic: Superteam Academy
+            - paragraph: Superteam's decentralized learning platform. Learn, earn XP, and build your on-chain reputation.
+          - generic:
+            - heading [level=4]: Courses
+            - generic:
+              - link:
+                - /url: /courses
+                - text: Courses
+              - link:
+                - /url: /leaderboard
+                - text: Leaderboard
+              - link:
+                - /url: /dashboard
+                - text: Dashboard
+              - link:
+                - /url: /profile
+                - text: Profile
+              - link:
+                - /url: /settings
+                - text: Settings
+          - generic:
+            - heading [level=4]: About
+            - generic:
+              - link:
+                - /url: https://superteam.fun
+                - text: Superteam
+              - link:
+                - /url: https://solana.com
+                - text: Solana
+          - generic:
+            - heading [level=4]: Social
+            - generic:
+              - link:
+                - /url: https://twitter.com/SuperteamBR
+                - text: Twitter
+              - link:
+                - /url: https://discord.gg/superteam
+                - text: Discord
+        - generic:
+          - generic: © 2026 Superteam Academy. All rights reserved.
+          - generic: Powered by Solana
+  - region "Notifications alt+T"
+  - dialog "Welcome to Superteam Academy" [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e5]
+      - heading "Welcome to Superteam Academy" [level=2] [ref=e8]
+      - paragraph [ref=e9]: The premier Solana learning platform built for builders. Earn real on-chain credentials as you level up your skills.
+    - generic [ref=e10]:
+      - tablist "Step indicator" [ref=e11]:
+        - tab "Go to step 1" [active] [selected] [ref=e12]
+        - tab "Go to step 2" [ref=e13]
+        - tab "Go to step 3" [ref=e14]
+        - tab "Go to step 4" [ref=e15]
+      - generic [ref=e16]:
+        - button "Skip" [ref=e17]
+        - button "Next" [ref=e19]
+    - button "Skip" [ref=e20]:
+      - img [ref=e21]
+```
