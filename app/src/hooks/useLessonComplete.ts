@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { completeLessonWithProgress, finalizeCourseWithProgress } from "@/lib/services/LearningProgressService";
 import { useProgressStore } from "@/stores/progress-store";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -27,10 +29,13 @@ export interface UseLessonCompleteResult {
 
 export function useLessonComplete(): UseLessonCompleteResult {
   const { publicKey, signMessage } = useWallet();
+  const { data: session } = useSession();
+  const sessionWalletAddress = session?.user?.walletAddress;
+  const effectivePublicKey = publicKey ?? (sessionWalletAddress ? new PublicKey(sessionWalletAddress) : null);
   const [completing, setCompleting] = useState(false);
   const isLessonComplete = useProgressStore((s) => s.isLessonComplete);
   const completedLessons = useProgressStore((s) => s.completedLessons);
-  const { unlockedBitmap } = useAchievements(publicKey);
+  const { unlockedBitmap } = useAchievements(effectivePublicKey);
   const { trigger: triggerAchievement } = useAchievementTrigger();
 
   const markComplete = useCallback(
@@ -53,8 +58,7 @@ export function useLessonComplete(): UseLessonCompleteResult {
       trackId?: string;
       enrollmentTimestamp?: number;
     }): Promise<string | null> => {
-      if (!publicKey) throw new Error("Wallet not connected");
-      if (!signMessage) throw new Error("Wallet does not support message signing");
+      if (!effectivePublicKey) throw new Error("Wallet not connected");
 
       setCompleting(true);
       try {
@@ -65,21 +69,30 @@ export function useLessonComplete(): UseLessonCompleteResult {
         );
         const isFirstLesson = totalLessonsCompleted === 0;
 
-        const result = await completeLessonWithProgress({
-          learner: publicKey.toBase58(),
-          courseId,
-          courseTitle,
-          lessonIndex,
-          lessonTitle,
-          xpEarned: xpPerLesson,
-          signMessage,
-          achievementCtx: {
-            unlockedBitmap,
-            isFirstLesson,
-            // +1 because the optimistic update has already run inside completeLessonWithProgress
-            totalLessonsCompleted: totalLessonsCompleted + 1,
-          },
-        });
+        let result: { signature: string };
+
+        if (signMessage) {
+          // Full on-chain flow with wallet signature
+          result = await completeLessonWithProgress({
+            learner: effectivePublicKey.toBase58(),
+            courseId,
+            courseTitle,
+            lessonIndex,
+            lessonTitle,
+            xpEarned: xpPerLesson,
+            signMessage,
+            achievementCtx: {
+              unlockedBitmap,
+              isFirstLesson,
+              totalLessonsCompleted: totalLessonsCompleted + 1,
+            },
+          });
+        } else {
+          // Session-only: save progress locally (no wallet signature available)
+          const { markLessonComplete } = useProgressStore.getState();
+          markLessonComplete(courseId, lessonIndex, xpPerLesson);
+          result = { signature: "local" };
+        }
 
         // Fire lesson-level achievement checks through the hook so toasts and
         // notifications are shown correctly.
@@ -96,7 +109,7 @@ export function useLessonComplete(): UseLessonCompleteResult {
             useProgressStore.getState().completedLessons[courseId] ?? new Set<number>();
           const isLastLesson = updatedSet.size >= totalLessons;
 
-          if (isLastLesson) {
+          if (isLastLesson && signMessage) {
             const allCompleted = useProgressStore.getState().completedLessons;
             const totalCoursesCompleted = Object.values(allCompleted).filter(
               (s) => s.size > 0
@@ -104,7 +117,7 @@ export function useLessonComplete(): UseLessonCompleteResult {
             const lastLessonTimestamp = Math.floor(Date.now() / 1000);
 
             void finalizeCourseWithProgress({
-              learner: publicKey.toBase58(),
+              learner: effectivePublicKey.toBase58(),
               courseId,
               courseTitle,
               xpPerLesson,
@@ -140,7 +153,7 @@ export function useLessonComplete(): UseLessonCompleteResult {
         setCompleting(false);
       }
     },
-    [publicKey, signMessage, completedLessons, unlockedBitmap, triggerAchievement]
+    [effectivePublicKey, signMessage, completedLessons, unlockedBitmap, triggerAchievement]
   );
 
   return {
