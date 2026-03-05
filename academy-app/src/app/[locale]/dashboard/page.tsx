@@ -147,6 +147,7 @@ export default function DashboardPage() {
          if (pCourses) {
             const resolved = await Promise.all(pCourses)
             const filter = courseList?.filter(c => !!resolved.find(course => course?.course?.courseId === c.courseId))
+            console.log(filter)
             setProgress(resolved.map(c => c.progress))
             setCourses(filter)
          };
@@ -225,7 +226,7 @@ export default function DashboardPage() {
                                  </div>
                               </div>
                               <Link
-                                 href={`/courses/${course.slug.current}/lessons/${0}`}
+                                 href={`/courses/${course.slug.current}/lessons/${progress[index].next}}`}
                                  className="sol-btn-primary shrink-0 text-xs py-2 px-4"
                               >
                                  Continue →

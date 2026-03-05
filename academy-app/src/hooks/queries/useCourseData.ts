@@ -32,7 +32,7 @@ export interface SanityCourseData {
    title: string;
    description: string;
    thumbnail: string;
-   slug: string;
+   slug: {current: string, _type: string};
    difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
    xpPerLesson: number;
    lessonCount: number;

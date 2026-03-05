@@ -5,6 +5,7 @@ export default defineType({
    title: 'Lesson',
    type: 'object',
    fields: [
+      defineField({ name: 'id', type: 'number', title: 'Lesson ID (Number)', validation: R => R.required() }),
       defineField({ name: 'title', type: 'string', validation: R => R.required() }),
       defineField({
          name: 'lessonType',
@@ -83,7 +84,7 @@ export default defineType({
          hidden: ({ parent }) => parent?.lessonType !== 3,
          of: [{ type: 'string' }]
       }),
-      
+
       // Used by document-type lessons for an alternative Markdown editing UX
       defineField({
          name: 'markdownContent',
