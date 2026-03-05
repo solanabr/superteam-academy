@@ -55,7 +55,13 @@
     "tryAgain": "Intentar de nuevo",
     "switchToLight": "Cambiar a tema claro",
     "switchToDark": "Cambiar a tema oscuro",
+    "switchToBrasil": "Cambiar a tema Brasil",
     "toggleTheme": "Alternar tema",
+    "theme": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "brasil": "Brasil"
+    },
     "selectLanguage": "Seleccionar idioma",
     "language": "Idioma",
     "walletOptions": "Opciones de la billetera",
@@ -317,6 +323,7 @@
       "connectWalletToTrack": "Conecta tu billetera para seguir el progreso",
       "connectWalletTooltip": "Conecta tu billetera para marcar lecciones como completas y ganar XP",
       "lessonTab": "Lección",
+      "discussion": "Discusión",
       "showLessons": "Mostrar Lecciones",
       "lessonsProgress": "{completed} de {total} lecciones",
       "timeRemaining": "{time} restante"
@@ -492,7 +499,8 @@
       "description": "Personaliza la apariencia de la plataforma",
       "dark": "Oscuro",
       "light": "Claro",
-      "system": "Sistema"
+      "system": "Sistema",
+      "brasil": "Brasil"
     },
     "accounts": {
       "title": "Cuentas conectadas",
@@ -1282,5 +1290,27 @@
     "install": "Instalar",
     "noWalletsDetected": "No se detectaron billeteras. Instala una billetera Solana para continuar.",
     "poweredBySolana": "Impulsado por Solana"
+  },
+  "discussion": {
+    "title": "Discusión",
+    "signInToAsk": "Inicia sesión para hacer una pregunta",
+    "askQuestion": "Haz una pregunta...",
+    "submit": "Enviar",
+    "latest": "Recientes",
+    "top": "Más votados",
+    "unanswered": "Sin respuesta",
+    "all": "Todo",
+    "questions": "Preguntas",
+    "discussions": "Discusiones",
+    "noQuestions": "Aún no hay preguntas sobre esta lección. ¡Haz la primera!",
+    "replies": "respuestas",
+    "reply": "Responder",
+    "replyPlaceholder": "Escribe una respuesta...",
+    "questionCount": "{count} preguntas",
+    "upvote": "Votar",
+    "typeQuestion": "Pregunta",
+    "typeDiscussion": "Discusión",
+    "postedBy": "Publicado por",
+    "ago": "atrás"
   }
 }

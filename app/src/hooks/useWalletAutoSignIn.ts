@@ -56,9 +56,12 @@ export function useWalletAutoSignIn() {
     const justDisconnected = !connected && prevConnected.current;
     prevConnected.current = connected;
 
-    // Wallet just connected + no session → sign in
+    // Wallet just connected + no session + user explicitly initiated → sign in
     if (justConnected && publicKey && signMessage && status !== "loading" && !session?.user) {
-      void performSignIn();
+      if (sessionStorage.getItem("wallet_signin_pending")) {
+        sessionStorage.removeItem("wallet_signin_pending");
+        void performSignIn();
+      }
     }
 
     // Wallet disconnected + wallet session exists → sign out

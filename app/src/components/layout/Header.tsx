@@ -7,7 +7,7 @@ import { Link, usePathname } from "@/i18n/routing";
 import { WalletButton } from "@/components/wallet/WalletButton";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, BookOpen, BarChart3, Award, Trophy, Users } from "lucide-react";
 import { CommandPalette } from "@/components/search/CommandPalette";
 import { NavGamification } from "@/components/layout/NavGamification";
 import { LocaleSwitcher } from "@/components/layout/LocaleSwitcher";
@@ -22,11 +22,11 @@ import {
 } from "@/components/ui/sheet";
 
 const navItems = [
-  { href: "/courses" as const, key: "courses" as const },
-  { href: "/dashboard" as const, key: "dashboard" as const },
-  { href: "/certificates" as const, key: "certificates" as const },
-  { href: "/leaderboard" as const, key: "leaderboard" as const },
-  { href: "/community" as const, key: "community" as const },
+  { href: "/courses" as const, key: "courses" as const, icon: BookOpen },
+  { href: "/dashboard" as const, key: "dashboard" as const, icon: BarChart3 },
+  { href: "/certificates" as const, key: "certificates" as const, icon: Award },
+  { href: "/leaderboard" as const, key: "leaderboard" as const, icon: Trophy },
+  { href: "/community" as const, key: "community" as const, icon: Users },
 ];
 
 function AcademyLogo() {
@@ -72,18 +72,24 @@ export function Header() {
         {/* Left — Logo (fixed width, never shrinks) */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
           <AcademyLogo />
-          <div className="hidden sm:flex flex-col leading-none">
+          <div className="hidden sm:flex items-center gap-2">
             <span
-              className="text-[13px] font-bold tracking-tight text-foreground"
+              className="text-[15px] font-bold tracking-tight text-foreground leading-none"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              Super<span style={{ color: "var(--sol-green-hex)" }}>team</span>
+              Super<span style={{ color: "var(--sol-green-hex)" }}>team</span>{" "}
+              <span className="text-foreground">Academy</span>
             </span>
             <span
-              className="text-[9px] tracking-[0.18em] uppercase text-muted-foreground/60"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="hidden md:inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] leading-none border"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "#C9903A",
+                borderColor: "rgba(201, 144, 58, 0.3)",
+                background: "rgba(201, 144, 58, 0.08)",
+              }}
             >
-              Academy
+              Brasil
             </span>
           </div>
         </Link>
@@ -97,19 +103,24 @@ export function Header() {
           {navItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "relative shrink min-w-0 px-1.5 lg:px-2 xl:px-3 2xl:px-4 py-2 text-[10px] lg:text-[10.5px] xl:text-[11px] font-semibold tracking-[0.06em] lg:tracking-[0.07em] xl:tracking-[0.1em] transition-all duration-200 whitespace-nowrap truncate",
+                  "relative shrink min-w-0 flex items-center gap-1 xl:gap-1.5 px-1.5 lg:px-2 xl:px-3 2xl:px-4 py-2 text-[10px] lg:text-[10.5px] xl:text-[11px] font-semibold tracking-[0.06em] lg:tracking-[0.07em] xl:tracking-[0.1em] transition-all duration-200 whitespace-nowrap truncate",
                   isActive
                     ? "text-[#0d9668] dark:text-[#14F195]"
                     : "text-[#5C5B6B] hover:text-foreground"
                 )}
                 style={{ fontFamily: "var(--font-mono)" }}
               >
+                <Icon className={cn(
+                  "h-3 w-3 xl:h-3.5 xl:w-3.5 shrink-0 transition-colors duration-200",
+                  isActive ? "opacity-100" : "opacity-50 group-hover:opacity-75"
+                )} aria-hidden="true" />
                 {t(item.key).toUpperCase()}
                 {isActive && (
                   <>
@@ -203,7 +214,8 @@ export function Header() {
                 className="text-[13px] font-bold tracking-tight text-foreground"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                Super<span style={{ color: "var(--sol-green-hex)" }}>team</span>
+                Super<span style={{ color: "var(--sol-green-hex)" }}>team</span>{" "}
+                Academy
               </span>
             </SheetTitle>
           </SheetHeader>
@@ -212,6 +224,7 @@ export function Header() {
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon;
               return (
                 <SheetClose asChild key={item.href}>
                   <Link
@@ -225,15 +238,10 @@ export function Header() {
                     )}
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
-                    {isActive && (
-                      <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0"
-                        style={{
-                          background: "var(--sol-green-hex)",
-                          boxShadow: "0 0 5px color-mix(in srgb, var(--sol-green-hex) 80%, transparent)",
-                        }}
-                      />
-                    )}
+                    <Icon className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive ? "opacity-100" : "opacity-50"
+                    )} aria-hidden="true" />
                     {t(item.key).toUpperCase()}
                   </Link>
                 </SheetClose>

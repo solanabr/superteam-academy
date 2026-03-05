@@ -55,7 +55,13 @@
     "tryAgain": "Try again",
     "switchToLight": "Switch to light theme",
     "switchToDark": "Switch to dark theme",
+    "switchToBrasil": "Switch to Brasil theme",
     "toggleTheme": "Toggle theme",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "brasil": "Brasil"
+    },
     "selectLanguage": "Select language",
     "language": "Language",
     "walletOptions": "Wallet options",
@@ -317,6 +323,7 @@
       "connectWalletToTrack": "Connect wallet to track progress",
       "connectWalletTooltip": "Connect your wallet to mark lessons complete and earn XP",
       "lessonTab": "Lesson",
+      "discussion": "Discussion",
       "showLessons": "Show Lessons",
       "lessonsProgress": "{completed} of {total} lessons",
       "timeRemaining": "{time} remaining"
@@ -492,7 +499,8 @@
       "description": "Customize the appearance of the platform",
       "dark": "Dark",
       "light": "Light",
-      "system": "System"
+      "system": "System",
+      "brasil": "Brasil"
     },
     "accounts": {
       "title": "Connected accounts",
@@ -1282,5 +1290,27 @@
     "install": "Install",
     "noWalletsDetected": "No wallets detected. Install a Solana wallet to continue.",
     "poweredBySolana": "Powered by Solana"
+  },
+  "discussion": {
+    "title": "Discussion",
+    "signInToAsk": "Sign in to ask a question",
+    "askQuestion": "Ask a question...",
+    "submit": "Submit",
+    "latest": "Latest",
+    "top": "Top",
+    "unanswered": "Unanswered",
+    "all": "All",
+    "questions": "Questions",
+    "discussions": "Discussions",
+    "noQuestions": "No questions about this lesson yet. Ask one!",
+    "replies": "replies",
+    "reply": "Reply",
+    "replyPlaceholder": "Write a reply...",
+    "questionCount": "{count} questions",
+    "upvote": "Upvote",
+    "typeQuestion": "Question",
+    "typeDiscussion": "Discussion",
+    "postedBy": "Posted by",
+    "ago": "ago"
   }
 }

@@ -27,15 +27,12 @@ const PROFILE_NAME_KEY = "superteam-profile-name";
 const PROFILE_AVATAR_KEY = "superteam-profile-avatar";
 
 function useProfileData() {
-  const [profileName, setProfileName] = useState("");
-  const [profileAvatar, setProfileAvatar] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setProfileName(localStorage.getItem(PROFILE_NAME_KEY) ?? "");
-      setProfileAvatar(localStorage.getItem(PROFILE_AVATAR_KEY) ?? "");
-    }
-  }, []);
+  const [profileName] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem(PROFILE_NAME_KEY) ?? "") : ""
+  );
+  const [profileAvatar] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem(PROFILE_AVATAR_KEY) ?? "") : ""
+  );
 
   return { profileName, profileAvatar };
 }

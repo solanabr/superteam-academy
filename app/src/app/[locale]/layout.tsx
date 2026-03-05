@@ -75,6 +75,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        {/* Blocking theme-init script prevents flash of unstyled theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme')||'dark';if(!['light','dark','brasil'].includes(t))t='dark';document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
@@ -97,7 +103,8 @@ export default async function LocaleLayout({ children, params }: Props) {
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
+          themes={["light", "dark", "brasil"]}
+          enableSystem={false}
           disableTransitionOnChange
         >
           <SessionProvider>

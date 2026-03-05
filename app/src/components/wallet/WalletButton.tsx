@@ -3,6 +3,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@/components/wallet/CustomWalletModalProvider";
 import { useTranslations } from "next-intl";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, LogOut, Copy, Check, User, Settings } from "lucide-react";
@@ -25,6 +26,7 @@ export function WalletButton() {
   const t = useTranslations("common");
   const { publicKey, disconnect, connected, wallet } = useWallet();
   const { setVisible } = useWalletModal();
+  const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   const prevConnected = useRef(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -41,7 +43,12 @@ export function WalletButton() {
 
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
-  if (!connected || !publicKey) {
+  // Resolve the display address: prefer live wallet adapter, fall back to session
+  const adapterAddress = connected && publicKey ? publicKey.toBase58() : null;
+  const sessionWalletAddress = session?.user?.walletAddress ?? null;
+  const address = adapterAddress ?? sessionWalletAddress;
+
+  if (!address) {
     return (
       <Button
         onClick={() => setVisible(true)}
@@ -55,13 +62,22 @@ export function WalletButton() {
     );
   }
 
-  const address = publicKey.toBase58();
-
   const copyAddress = () => {
     navigator.clipboard.writeText(address).catch(() => {});
     clearTimeout(copyTimerRef.current);
     setCopied(true);
     copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDisconnect = () => {
+    sessionStorage.removeItem("wallet_signin_pending");
+    if (connected) {
+      // Wallet adapter is live — disconnect triggers signOut via useWalletAutoSignIn
+      void disconnect();
+    } else {
+      // Session-only state (adapter disconnected after reload) — sign out directly
+      void signOut({ callbackUrl: "/" });
+    }
   };
 
   return (
@@ -105,7 +121,7 @@ export function WalletButton() {
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => disconnect()}>
+        <DropdownMenuItem onClick={handleDisconnect}>
           <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
           {t("signOut")}
         </DropdownMenuItem>

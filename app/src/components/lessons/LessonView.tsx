@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { CheckCircle2, Circle, Play, Clock, ChevronLeft, ChevronRight, Loader2, VideoIcon, List, Wallet, BookOpen, Code2, ChevronDown } from "lucide-react";
+import { CheckCircle2, Circle, Play, Clock, ChevronLeft, ChevronRight, Loader2, VideoIcon, List, Wallet, BookOpen, Code2, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useLessonComplete } from "@/hooks/useLessonComplete";
@@ -28,6 +28,7 @@ import { useRouter } from "@/i18n/routing";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import type { SanityLesson, SanityCourse } from "@/lib/sanity/queries";
 import { LessonCompleteOverlay } from "@/components/lessons/LessonCompleteOverlay";
+import { LessonDiscussion } from "@/components/lessons/LessonDiscussion";
 
 const CodeChallenge = dynamic(
   () => import("@/components/challenges/CodeChallenge").then(mod => ({ default: mod.CodeChallenge })),
@@ -246,6 +247,7 @@ export function LessonView({ lesson, course }: LessonViewProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [celebrationOpen, setCelebrationOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("lesson");
+  const [discussionOpen, setDiscussionOpen] = useState(false);
 
   const router = useRouter();
   const allLessons = (course.lessons ?? []).length > 0
@@ -404,6 +406,13 @@ export function LessonView({ lesson, course }: LessonViewProps) {
 
       <Separator className="my-8" />
 
+      {/* Lesson-scoped discussion (no-challenge layout only) */}
+      {!lesson.challenge && (
+        <div className="mb-8">
+          <LessonDiscussion lessonSlug={lessonSlug} courseSlug={courseSlug} />
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -468,32 +477,65 @@ export function LessonView({ lesson, course }: LessonViewProps) {
 
   // Tab-based layout (used for all screen sizes)
   const tabContent = lesson.challenge ? (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-[calc(100vh-4rem)] flex-col">
-      <div className="shrink-0 border-b border-border/40 bg-background/80 backdrop-blur-sm px-4 pt-3 pb-0">
-        <TabsList className="h-10 w-auto">
-          <TabsTrigger value="lesson" className="gap-1.5 px-3 sm:gap-2 sm:px-4">
-            <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{t("lesson.lessonTab")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="challenge" className="gap-1.5 px-3 sm:gap-2 sm:px-4">
-            <Code2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{t("lesson.challenge")}</span>
-            <span className="relative flex h-2 w-2 ml-1">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-          </TabsTrigger>
-        </TabsList>
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col min-h-0">
+        <div className="shrink-0 border-b border-border/40 bg-background/80 backdrop-blur-sm px-4 pt-3 pb-0">
+          <TabsList className="h-10 w-auto">
+            <TabsTrigger value="lesson" className="gap-1.5 px-3 sm:gap-2 sm:px-4">
+              <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">{t("lesson.lessonTab")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="challenge" className="gap-1.5 px-3 sm:gap-2 sm:px-4">
+              <Code2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">{t("lesson.challenge")}</span>
+              <span className="relative flex h-2 w-2 ml-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="lesson" className="flex-1 overflow-y-auto mt-0">
+          {lessonContent}
+        </TabsContent>
+        <TabsContent value="challenge" className="flex-1 overflow-hidden mt-0">
+          <ErrorBoundary>
+            <CodeChallenge challenge={lesson.challenge} />
+          </ErrorBoundary>
+        </TabsContent>
+      </Tabs>
+
+      {/* Collapsible discussion bottom panel */}
+      <div className="shrink-0 border-t border-primary/30 bg-[#101018]">
+        <button
+          onClick={() => setDiscussionOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-foreground/90 hover:bg-[#161622] transition-colors"
+          aria-expanded={discussionOpen}
+          aria-controls="discussion-panel"
+        >
+          <span className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+            {t("lesson.discussion")}
+          </span>
+          {discussionOpen ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          ) : (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          )}
+        </button>
+        <div
+          id="discussion-panel"
+          className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
+          style={{ maxHeight: discussionOpen ? "45vh" : "0px" }}
+        >
+          <div className="overflow-y-auto border-t border-border/30" style={{ maxHeight: "45vh" }}>
+            <div className="mx-auto max-w-3xl px-4 sm:px-6 py-4 sm:py-6">
+              <LessonDiscussion lessonSlug={lessonSlug} courseSlug={courseSlug} />
+            </div>
+          </div>
+        </div>
       </div>
-      <TabsContent value="lesson" className="flex-1 overflow-y-auto mt-0">
-        {lessonContent}
-      </TabsContent>
-      <TabsContent value="challenge" className="flex-1 overflow-hidden mt-0">
-        <ErrorBoundary>
-          <CodeChallenge challenge={lesson.challenge} />
-        </ErrorBoundary>
-      </TabsContent>
-    </Tabs>
+    </div>
   ) : null;
 
   return (

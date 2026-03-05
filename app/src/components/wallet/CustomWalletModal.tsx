@@ -22,7 +22,7 @@ interface CustomWalletModalProps {
 export function CustomWalletModal({ open, onOpenChange }: CustomWalletModalProps) {
   const t = useTranslations("wallet");
   const tc = useTranslations("common");
-  const { wallets, select, connecting } = useWallet();
+  const { wallets, select, connect, connecting } = useWallet();
   const [showMore, setShowMore] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
 
@@ -43,15 +43,20 @@ export function CustomWalletModal({ open, onOpenChange }: CustomWalletModalProps
     async (wallet: Wallet) => {
       try {
         setConnectingWallet(wallet.adapter.name);
+        sessionStorage.setItem("wallet_signin_pending", "1");
         select(wallet.adapter.name);
+        // autoConnect is off, so select() alone won't trigger connect().
+        // Explicitly connect after selecting the adapter.
+        await connect();
         onOpenChange(false);
       } catch {
-        // wallet adapter handles errors internally
+        // User rejected or wallet error — clear the pending flag
+        sessionStorage.removeItem("wallet_signin_pending");
       } finally {
         setConnectingWallet(null);
       }
     },
-    [select, onOpenChange]
+    [select, connect, onOpenChange]
   );
 
   const isLoading = connecting || connectingWallet !== null;

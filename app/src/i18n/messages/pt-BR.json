@@ -55,7 +55,13 @@
     "tryAgain": "Tentar novamente",
     "switchToLight": "Mudar para tema claro",
     "switchToDark": "Mudar para tema escuro",
+    "switchToBrasil": "Mudar para tema Brasil",
     "toggleTheme": "Alternar tema",
+    "theme": {
+      "light": "Claro",
+      "dark": "Escuro",
+      "brasil": "Brasil"
+    },
     "selectLanguage": "Selecionar idioma",
     "language": "Idioma",
     "walletOptions": "Opções da carteira",
@@ -317,6 +323,7 @@
       "connectWalletToTrack": "Conecte a carteira para acompanhar o progresso",
       "connectWalletTooltip": "Conecte sua carteira para marcar aulas como concluídas e ganhar XP",
       "lessonTab": "Aula",
+      "discussion": "Discussão",
       "showLessons": "Mostrar Aulas",
       "lessonsProgress": "{completed} de {total} lições",
       "timeRemaining": "{time} restante"
@@ -492,7 +499,8 @@
       "description": "Personalize a aparência da plataforma",
       "dark": "Escuro",
       "light": "Claro",
-      "system": "Sistema"
+      "system": "Sistema",
+      "brasil": "Brasil"
     },
     "accounts": {
       "title": "Contas conectadas",
@@ -1282,5 +1290,27 @@
     "install": "Instalar",
     "noWalletsDetected": "Nenhuma carteira detectada. Instale uma carteira Solana para continuar.",
     "poweredBySolana": "Desenvolvido com Solana"
+  },
+  "discussion": {
+    "title": "Discussão",
+    "signInToAsk": "Entre para fazer uma pergunta",
+    "askQuestion": "Faça uma pergunta...",
+    "submit": "Enviar",
+    "latest": "Recentes",
+    "top": "Mais votados",
+    "unanswered": "Sem resposta",
+    "all": "Tudo",
+    "questions": "Perguntas",
+    "discussions": "Discussões",
+    "noQuestions": "Nenhuma pergunta sobre esta aula ainda. Faça a primeira!",
+    "replies": "respostas",
+    "reply": "Responder",
+    "replyPlaceholder": "Escreva uma resposta...",
+    "questionCount": "{count} perguntas",
+    "upvote": "Votar",
+    "typeQuestion": "Pergunta",
+    "typeDiscussion": "Discussão",
+    "postedBy": "Publicado por",
+    "ago": "atrás"
   }
 }

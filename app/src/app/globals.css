@@ -42,7 +42,7 @@
   padding-right: 1rem !important;
 }
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .brasil *));
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -152,6 +152,41 @@
   /* Solana green as hex — bright neon for dark mode */
   --sol-green-hex: #14F195;
   --sol-purple-hex: #9945FF;
+}
+
+.brasil {
+  --bg-mesh: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 210, 63, 0.1) 0, transparent 60%);
+  --dot-pattern: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  --grid-pattern: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+
+  --background: 136 23% 11%;
+  --foreground: 37 73% 88%;
+  --card: 150 17% 18%;
+  --card-foreground: 37 73% 88%;
+  --popover: 150 17% 18%;
+  --popover-foreground: 37 73% 88%;
+  --primary: 48 100% 62%;
+  --primary-foreground: 136 23% 11%;
+  --secondary: 150 30% 23%;
+  --secondary-foreground: 37 73% 88%;
+  --accent: 145 38% 30%;
+  --accent-foreground: 37 73% 88%;
+  --muted: 150 30% 23%;
+  --muted-foreground: 95 18% 71%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 145 20% 28%;
+  --input: 145 20% 28%;
+  --ring: 48 100% 62%;
+  --chart-1: 48 100% 62%;
+  --chart-2: 145 38% 30%;
+  --chart-3: 95 18% 71%;
+  --chart-4: 37 73% 88%;
+  --chart-5: 150 30% 23%;
+
+  --sol-green-hex: #ffd23f;
+  --sol-purple-hex: #2f6b3f;
 }
 
 @layer base {

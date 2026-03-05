@@ -182,16 +182,15 @@ const lsRepliesKey = (threadId: string) => `community-replies-${threadId}`;
 // ── useCommunityThreads hook ──────────────────────────────────────────────────
 
 function useCommunityThreads() {
-  const [userThreads, setUserThreads] = useState<Thread[]>([]);
-
-  useEffect(() => {
+  const [userThreads, setUserThreads] = useState<Thread[]>(() => {
     try {
       const raw = localStorage.getItem(LS_THREADS_KEY);
-      if (raw) setUserThreads(JSON.parse(raw) as Thread[]);
+      if (raw) return JSON.parse(raw) as Thread[];
     } catch {
       // ignore corrupt storage
     }
-  }, []);
+    return [];
+  });
 
   const addThread = useCallback((thread: Thread) => {
     setUserThreads((prev) => {
@@ -217,16 +216,15 @@ function useCommunityThreads() {
 // ── useThreadReplies hook ─────────────────────────────────────────────────────
 
 function useThreadReplies(threadId: string) {
-  const [replies, setReplies] = useState<Reply[]>([]);
-
-  useEffect(() => {
+  const [replies, setReplies] = useState<Reply[]>(() => {
     try {
       const raw = localStorage.getItem(lsRepliesKey(threadId));
-      if (raw) setReplies(JSON.parse(raw) as Reply[]);
+      if (raw) return JSON.parse(raw) as Reply[];
     } catch {
       // ignore
     }
-  }, [threadId]);
+    return [];
+  });
 
   const addReply = useCallback(
     (reply: Reply) => {

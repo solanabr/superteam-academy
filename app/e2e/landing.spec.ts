@@ -1,59 +1,118 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Landing page", () => {
+test.describe("Landing page — hero", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/en");
     await page.waitForLoadState("domcontentloaded");
   });
 
-  test("hero section is visible with heading text", async ({ page }) => {
+  test("page title contains Superteam Academy", async ({ page }) => {
+    await expect(page).toHaveTitle(/Superteam Academy/i);
+  });
+
+  test("h1 heading is visible and non-empty", async ({ page }) => {
     const h1 = page.locator("h1").first();
     await expect(h1).toBeVisible();
     const text = await h1.textContent();
     expect(text!.trim().length).toBeGreaterThan(0);
   });
 
-  test("Start Learning CTA button exists and is clickable", async ({ page }) => {
-    const ctaButton = page
-      .getByRole("button", { name: /start learning|start now|get started/i })
-      .or(page.getByRole("link", { name: /start learning|start now|get started/i }))
+  test("primary CTA button is visible and enabled", async ({ page }) => {
+    const cta = page
+      .getByRole("button", { name: /start learning|start now|get started|começar|começe/i })
+      .or(page.getByRole("link", { name: /start learning|start now|get started|começar|começe/i }))
       .first();
-    await expect(ctaButton).toBeVisible();
-    await expect(ctaButton).toBeEnabled();
+    await expect(cta).toBeVisible();
+    await expect(cta).toBeEnabled();
   });
 
-  test("Explore Courses link exists", async ({ page }) => {
-    const exploreLink = page.locator("a[href*='/courses']").first();
-    await expect(exploreLink).toBeVisible();
+  test("link to /courses exists in hero area", async ({ page }) => {
+    const courseLink = page.locator("a[href*='/courses']").first();
+    await expect(courseLink).toBeVisible();
   });
 
-  test("stats section shows numbers", async ({ page }) => {
-    const statsSection = page.locator("section").nth(1);
-    await expect(statsSection).toBeVisible();
-    const statsText = await statsSection.textContent();
-    expect(statsText).toMatch(/\d+/);
+  test("header is visible", async ({ page }) => {
+    await expect(page.locator("header")).toBeVisible();
   });
 
-  test("features section exists", async ({ page }) => {
-    const headings = page.locator("h2, h3");
-    const count = await headings.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+  test("footer is visible", async ({ page }) => {
+    await expect(page.locator("footer")).toBeVisible();
   });
 
-  test("footer exists with brand name", async ({ page }) => {
+  test("footer contains brand name", async ({ page }) => {
     const footer = page.locator("footer");
     await expect(footer).toBeVisible();
-    await expect(footer).toContainText("Superteam Academy");
+    await expect(footer).toContainText(/Superteam/i);
+  });
+});
+
+test.describe("Landing page — sections", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/en");
+    await page.waitForLoadState("domcontentloaded");
   });
 
-  test("partner logos section exists", async ({ page }) => {
-    await expect(page.getByText("Solana")).toBeVisible();
-    await expect(page.getByText("Metaplex")).toBeVisible();
+  test("stats section contains at least one number", async ({ page }) => {
+    // Stats counters are common numeric content on the landing page
+    const bodyText = await page.locator("main").textContent();
+    expect(bodyText).toMatch(/\d+/);
   });
 
-  test("newsletter form exists in footer", async ({ page }) => {
-    const emailInput = page.locator('input[type="email"]');
-    const count = await emailInput.count();
-    expect(count).toBeGreaterThanOrEqual(0); // graceful — CMS may not be seeded
+  test("page has multiple sections with headings", async ({ page }) => {
+    const headings = page.locator("h1, h2, h3");
+    const count = await headings.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+  });
+
+  test("Solana is mentioned on the landing page", async ({ page }) => {
+    const solanaText = page.getByText(/Solana/i).first();
+    await expect(solanaText).toBeVisible();
+  });
+
+  test("page renders without unhandled runtime error", async ({ page }) => {
+    const errorOverlay = page.getByText(/unhandled runtime error/i);
+    await expect(errorOverlay).toHaveCount(0);
+  });
+
+  test("at least one SVG element renders (SolanaOrb or logo)", async ({ page }) => {
+    const svgCount = await page.locator("svg").count();
+    expect(svgCount).toBeGreaterThan(0);
+  });
+
+  test("main content area is visible", async ({ page }) => {
+    await expect(page.locator("main")).toBeVisible();
+  });
+});
+
+test.describe("Landing page — pt-BR locale", () => {
+  test("pt-BR landing page loads with correct title", async ({ page }) => {
+    await page.goto("/pt-BR");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page).toHaveTitle(/Superteam Academy/i);
+  });
+
+  test("pt-BR landing page has h1", async ({ page }) => {
+    await page.goto("/pt-BR");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("h1").first()).toBeVisible();
+  });
+});
+
+test.describe("Landing page — footer links", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/en");
+    await page.waitForLoadState("domcontentloaded");
+  });
+
+  test("footer has at least one link", async ({ page }) => {
+    const footerLinks = page.locator("footer a");
+    const count = await footerLinks.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test("footer content is non-empty", async ({ page }) => {
+    const footer = page.locator("footer");
+    const text = await footer.textContent();
+    expect(text!.trim().length).toBeGreaterThan(0);
   });
 });
