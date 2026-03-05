@@ -128,12 +128,25 @@ export async function getCertificateById(
 				let recipient = `OPERATOR_${asset.owner.slice(0, 6)}...`;
 				try {
 					const { db } = await import("@/lib/db");
-					const { user } = await import("@/lib/db/schema");
+					const { user, wallet } = await import("@/lib/db/schema");
 					const { eq } = await import("drizzle-orm");
 
-					const dbUser = await db.query.user.findFirst({
+					// Try user table first
+					let dbUser = await db.query.user.findFirst({
 						where: eq(user.walletAddress, asset.owner),
 					});
+
+					// If not found, check wallet table for linked wallets
+					if (!dbUser) {
+						const linkedWallet = await db.query.wallet.findFirst({
+							where: eq(wallet.address, asset.owner),
+						});
+						if (linkedWallet) {
+							dbUser = await db.query.user.findFirst({
+								where: eq(user.id, linkedWallet.userId),
+							});
+						}
+					}
 
 					if (dbUser?.name) {
 						recipient = dbUser.name.toUpperCase();

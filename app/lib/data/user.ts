@@ -126,7 +126,6 @@ export async function getActiveCourses(
 			and(
 				eq(courseProgress.userId, userId),
 				sql`${courseProgress.completedAt} IS NULL`,
-				sql`${courseProgress.progress} > 0`,
 			),
 		)
 		.orderBy(desc(courseProgress.lastAccessedAt))

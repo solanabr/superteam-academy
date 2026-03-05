@@ -14,7 +14,7 @@ export interface ActivityItem {
 	/** Unique log identifier */
 	id: string;
 	/** classification for icon/styling */
-	type: "lesson_completed" | "level_up" | "achievement" | "course_completed";
+	type: "lesson_completed" | "level_up" | "achievement" | "course_completed" | "enrolled" | "challenge_completed";
 	/** ISO timestamp */
 	timestamp: string;
 	/** Human readable event title */

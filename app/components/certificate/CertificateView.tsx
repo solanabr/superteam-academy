@@ -62,10 +62,10 @@ export function CertificateView({
 
 						{/* Action Bar */}
 						<ActionBar
-							isOwner={isOwner}
-							mintAddress={certificate.onChain.mintAddress}
-							courseName={certificate.courseName}
-						/>
+						isOwner={isOwner}
+						mintAddress={certificate.onChain.mintAddress}
+						courseName={certificate.courseName}
+					/>
 					</div>
 				</section>
 

@@ -219,7 +219,9 @@ export function DashboardView({
 											if (terminalFilter === "lessons")
 												return (
 													activity.type.includes("lesson") ||
-													activity.type.includes("course")
+													activity.type.includes("course") ||
+													activity.type.includes("enrolled") ||
+													activity.type.includes("challenge")
 												);
 											if (terminalFilter === "achievements")
 												return (

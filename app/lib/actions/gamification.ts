@@ -432,13 +432,28 @@ export async function recordEnrollment(courseSlug: string) {
  */
 export async function syncUserEnrollments(
 	userId: string,
-	walletAddress: string,
+	walletAddress?: string,
 ) {
-	if (!userId || !walletAddress) return;
+	if (!userId) return;
 
 	try {
+		// Look up wallet from DB if not provided
+		let address = walletAddress;
+		if (!address) {
+			const { user } = await import("@/lib/db/schema");
+			const { eq } = await import("drizzle-orm");
+			const userRecord = await db
+				.select({ walletAddress: user.walletAddress })
+				.from(user)
+				.where(eq(user.id, userId))
+				.limit(1);
+			address = userRecord[0]?.walletAddress ?? undefined;
+		}
+
+		if (!address) return;
+
 		const program = getProgram();
-		const learnerPubkey = new PublicKey(walletAddress);
+		const learnerPubkey = new PublicKey(address);
 		const onchainEnrollments = await getUserEnrollments(program, learnerPubkey);
 
 		if (onchainEnrollments.length === 0) return;
