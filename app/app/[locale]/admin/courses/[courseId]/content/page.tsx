@@ -224,6 +224,7 @@ export default function CourseLessonContentPage() {
 					body: JSON.stringify({
 						challenge: challengeEnabled ? challenge : null,
 						quiz: quizEnabled ? quiz : null,
+						videoUrl,
 					}),
 				}
 			);
