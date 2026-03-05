@@ -1,0 +1,429 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Background hierarchy */
+  --bg-canvas: #080b10;
+  --bg-surface-1: rgba(14, 19, 26, 0.86);
+  --bg-surface-2: rgba(19, 25, 34, 0.78);
+  --bg-surface-3: rgba(27, 35, 46, 0.74);
+  --bg-inset: #0b1118;
+
+  /* Foreground hierarchy */
+  --fg-primary: #f8fafc;
+  --fg-secondary: #cbd5e1;
+  --fg-muted: #94a3b8;
+
+  /* Borders */
+  --border-subtle: rgba(71, 85, 105, 0.34);
+  --border-default: rgba(100, 116, 139, 0.5);
+  --border-strong: rgba(148, 163, 184, 0.64);
+
+  /* Brand */
+  --brand-primary: #9945ff;
+  --brand-primary-strong: #8039d9;
+  --brand-secondary: #14f195;
+
+  /* XP / Achievement accent */
+  --xp-accent: #f59e0b;
+  --xp-accent-dim: rgba(245, 158, 11, 0.12);
+  --glow-primary: 0 0 40px rgba(153, 69, 255, 0.18);
+  --glow-secondary: 0 0 40px rgba(20, 241, 149, 0.14);
+  --glow-xp: 0 0 20px rgba(245, 158, 11, 0.38);
+
+  /* Semantic */
+  --semantic-success: #14f195;
+  --semantic-warning: #f59e0b;
+  --semantic-error: #f87171;
+
+  /* Legacy aliases */
+  --surface-canvas: var(--bg-canvas);
+  --surface-panel: var(--bg-surface-1);
+  --surface-elevated: var(--bg-surface-2);
+  --surface-inset: var(--bg-inset);
+  --text-primary: var(--fg-primary);
+  --text-secondary: var(--fg-secondary);
+  --text-muted: var(--fg-muted);
+  --brand-emerald: var(--brand-primary);
+  --brand-emerald-strong: var(--brand-primary-strong);
+  --brand-cyan: var(--brand-secondary);
+
+  /* shadcn/ui mapping */
+  --background: 220 33% 5%;
+  --foreground: 210 40% 98%;
+
+  --card: 215 28% 10%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 215 28% 10%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 267 100% 64%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 155 89% 51%;
+  --secondary-foreground: 160 80% 10%;
+
+  --muted: 215 25% 15%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 215 25% 15%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 91% 71%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214 18% 41%;
+  --input: 214 18% 41%;
+  --ring: 267 100% 64%;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 220 33% 5%;
+  --foreground: 210 40% 98%;
+
+  --card: 215 28% 10%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 215 28% 10%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 267 100% 64%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 155 89% 51%;
+  --secondary-foreground: 160 80% 10%;
+
+  --muted: 215 25% 15%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 215 25% 15%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 91% 71%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214 18% 41%;
+  --input: 214 18% 41%;
+  --ring: 267 100% 64%;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border-default);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(
+      circle at 8% -14%,
+      rgba(153, 69, 255, 0.18),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 90% -18%,
+      rgba(20, 241, 149, 0.14),
+      transparent 32%
+    ),
+    var(--bg-canvas);
+  color: var(--fg-primary);
+  font-family: var(--font-body), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+pre,
+code {
+  font-family: var(--font-mono), monospace;
+}
+
+::selection {
+  background: color-mix(in oklab, #14f195 35%, transparent);
+}
+
+.frost-panel {
+  background: var(--bg-surface-1);
+  backdrop-filter: blur(10px);
+}
+
+.ui-panel {
+  border: 1px solid var(--border-default);
+  border-radius: 1rem;
+  background: var(--bg-surface-2);
+}
+
+.ui-panel-muted {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  background: var(--bg-surface-1);
+}
+
+.ui-field {
+  border: 1px solid var(--border-default);
+  border-radius: 0.625rem;
+  background: var(--bg-surface-1);
+  color: var(--fg-primary);
+}
+
+.ui-field::placeholder {
+  color: var(--fg-muted);
+}
+
+.ui-field:focus {
+  outline: none;
+  border-color: var(--brand-secondary);
+  box-shadow: 0 0 0 2px
+    color-mix(in oklab, var(--brand-secondary) 28%, transparent);
+}
+
+.ui-chip {
+  border: 1px solid var(--border-default);
+  border-radius: 0.625rem;
+  background: var(--bg-surface-1);
+  color: var(--fg-secondary);
+}
+
+.ui-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--fg-primary);
+}
+
+.ui-chip[aria-pressed="true"] {
+  border-color: var(--brand-primary);
+  background: color-mix(
+    in oklab,
+    var(--brand-primary) 12%,
+    var(--bg-surface-2)
+  );
+  color: var(--brand-primary);
+}
+
+.ui-link {
+  color: var(--fg-secondary);
+  transition:
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.ui-link:hover {
+  color: var(--brand-secondary);
+}
+
+/* ── XP / Achievement ── */
+.xp-glow {
+  color: var(--xp-accent);
+  text-shadow: var(--glow-xp);
+}
+
+/* ── Leaderboard rank tiers ── */
+.rank-gold {
+  background: linear-gradient(
+    135deg,
+    rgba(250, 204, 21, 0.12),
+    rgba(245, 158, 11, 0.06)
+  );
+  border-color: rgba(250, 204, 21, 0.28);
+}
+
+.rank-silver {
+  background: linear-gradient(
+    135deg,
+    rgba(156, 163, 175, 0.1),
+    rgba(107, 114, 128, 0.05)
+  );
+  border-color: rgba(156, 163, 175, 0.22);
+}
+
+.rank-bronze {
+  background: linear-gradient(
+    135deg,
+    rgba(180, 83, 9, 0.12),
+    rgba(120, 53, 15, 0.06)
+  );
+  border-color: rgba(180, 83, 9, 0.22);
+}
+
+/* ── Scanline texture overlay ── */
+.scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(148, 163, 184, 0.014) 2px,
+    rgba(148, 163, 184, 0.014) 4px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Streak dot ── */
+.streak-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: transform 150ms ease;
+}
+
+.streak-dot:hover {
+  transform: scale(1.4);
+}
+
+/* ── Podium card ── */
+.podium-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid;
+}
+
+.podium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  filter: blur(0);
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* ── Animated row entrance ── */
+@keyframes slideInRow {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.row-enter {
+  animation: slideInRow 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Nav active underline ── */
+.nav-active-bar {
+  position: relative;
+}
+
+.nav-active-bar::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--brand-secondary);
+  box-shadow: 0 0 8px rgba(20, 241, 149, 0.5);
+}
+
+/* ── Progress bar shimmer ── */
+@keyframes progressShimmer {
+  from {
+    background-position: -200% center;
+  }
+  to {
+    background-position: 200% center;
+  }
+}
+
+.progress-shimmer {
+  background-size: 200% 100%;
+  animation: progressShimmer 3s ease-in-out infinite;
+}
+
+@keyframes heroCtaGradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.hero-cta-gradient {
+  background: linear-gradient(135deg, #14f195 0%, #9945ff 50%, #14f195 100%);
+  background-size: 220% 220%;
+  animation: heroCtaGradientFlow 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta-gradient {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
+
+/* ── Testimonial card quote mark ── */
+.quote-mark {
+  font-family: Georgia, serif;
+  font-size: 4rem;
+  line-height: 1;
+  opacity: 0.15;
+  position: absolute;
+  top: -0.25rem;
+  left: 0.5rem;
+  pointer-events: none;
+}
+
+/* ── Wallet button icon shape ── */
+.wallet-pill .wallet-adapter-button-start-icon {
+  border-radius: 9999px;
+  overflow: hidden;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.wallet-pill .wallet-adapter-button-start-icon img,
+.wallet-pill .wallet-adapter-button-start-icon svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  display: block;
+}
+
+.wallet-pill.wallet-adapter-button {
+  min-width: 0 !important;
+  line-height: 1 !important;
+  border: 0 !important;
+  color: #05070f !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #14f195 0%, #9945ff 50%, #14f195 100%) !important;
+  background-size: 220% 220% !important;
+  animation: heroCtaGradientFlow 6s ease-in-out infinite !important;
+  box-shadow: 0 0 50px rgba(153, 69, 255, 0.3) !important;
+}
+
+.wallet-pill.wallet-adapter-button:hover {
+  transform: scale(1.04);
+}
+
+.wallet-pill.wallet-adapter-button:focus-visible {
+  outline: 2px solid rgba(20, 241, 149, 0.7);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallet-pill.wallet-adapter-button {
+    animation: none !important;
+    background-position: 50% 50% !important;
+  }
+}
