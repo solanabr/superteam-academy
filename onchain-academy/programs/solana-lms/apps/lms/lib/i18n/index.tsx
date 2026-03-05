@@ -22,7 +22,6 @@ export const LOCALES: { code: Locale; name: string; flag: string }[] = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "es", name: "Español", flag: "🇪🇸" },
   { code: "pt", name: "Português", flag: "🇧🇷" },
-  { code: "id", name: "Bahasa", flag: "🇮🇩" },
 ];
 
 interface I18nContextType {
@@ -65,7 +64,7 @@ function I18nProviderInner({ children }: { children: ReactNode }): JSX.Element {
 
   // On mount: resolve locale and ensure ?lang= is in the URL (only once)
   useEffect(() => {
-    const urlLang = searchParams.get("lang");
+    const urlLang = searchParams.get("language");
     const resolved = resolveInitialLocale(urlLang);
     setLocaleState(resolved);
     localStorage.setItem("locale", resolved);
@@ -73,7 +72,7 @@ function I18nProviderInner({ children }: { children: ReactNode }): JSX.Element {
     // Only write to URL if lang param is missing or wrong — never on every render
     if (urlLang !== resolved) {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("lang", resolved);
+      params.set("language", resolved);
       // replaceState directly — zero re-render, zero Next.js compilation trigger
       window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
     }
@@ -86,7 +85,7 @@ function I18nProviderInner({ children }: { children: ReactNode }): JSX.Element {
       localStorage.setItem("locale", newLocale);
 
       const params = new URLSearchParams(searchParams.toString());
-      params.set("lang", newLocale);
+      params.set("language", newLocale);
 
       // router.push so CMS fetches re-run on the new locale
       router.push(`${pathname}?${params.toString()}`);
