@@ -30,7 +30,6 @@
     "noCourses": "You haven't started any courses yet.",
     "explore": "Explore Courses",
     "subtitle": "Track your on-chain learning momentum and level up every day."
-    "explore": "Explore Courses"
   },
   "Profile": {
     "shareProfile": "Share Profile",
@@ -69,7 +68,6 @@
     "settings": "Settings",
     "creatorStudio": "Creator Studio",
     "backHome": "Back to Home"
-    "creatorStudio": "Creator Studio"
   },
   "DashboardLayout": {
     "openMenu": "Open menu"

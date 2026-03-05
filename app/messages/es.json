@@ -30,7 +30,6 @@
     "noCourses": "Aún no has comenzado ningún curso.",
     "explore": "Explorar Cursos",
     "subtitle": "Sigue tu impulso de aprendizaje on-chain y sube de nivel cada día."
-    "explore": "Explorar Cursos"
   },
   "Profile": {
     "shareProfile": "Compartir perfil",
@@ -69,7 +68,6 @@
     "settings": "Ajustes",
     "creatorStudio": "Creator Studio",
     "backHome": "Volver al inicio"
-    "creatorStudio": "Creator Studio"
   },
   "DashboardLayout": {
     "openMenu": "Abrir menú"
