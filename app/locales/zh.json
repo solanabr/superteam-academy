@@ -1,0 +1,619 @@
+{
+	"Hero": {
+		"badge": "终端访问已授权",
+		"title": "在 SOLANA 上\n铸造你的未来",
+		"description": "下一代 Solana 架构师的首选技术训练场。通过我们的硬件加速课程，从零基础走向生产就绪。",
+		"explore": "探索课程",
+		"discord": "加入 Discord"
+	},
+	"Navbar": {
+		"brand": "SUPERTEAM ACADEMY",
+		"links": {
+			"catalog": "课程目录",
+			"leaderboard": "排行榜",
+			"community": "社区"
+		},
+		"cta": {
+			"dashboard": "仪表板",
+			"start": "开始学习",
+			"login": "登录"
+		}
+	},
+	"Footer": {
+		"brand": "SUPERTEAM ACADEMY",
+		"description": "Solana 生态系统的去中心化大学。由学生拥有。",
+		"language": "语言：",
+		"copyright": "© 2026 Superteam Academy // 保留所有权利",
+		"headers": {
+			"platform": "平台",
+			"socials": "社交"
+		},
+		"links": {
+			"catalog": "目录",
+			"leaderboard": "排行榜",
+			"dashboard": "仪表板",
+			"profile": "个人资料",
+			"terms": "服务条款",
+			"privacy": "隐私政策"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "链上证明",
+			"description": "您完成的每个模块都会向您的钱包颁发不可转让的凭证。在学习过程中建立可加密验证的简历。"
+		},
+		"compiler": {
+			"title": "实时编译器",
+			"description": "无需环境设置。直接在我们基于浏览器的 IDE 中编写、测试和部署 Solana 程序，并获得实时反馈。"
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "可用操作",
+		"title": "学习路径",
+		"viewAll": "查看所有轨道",
+		"tracks": {
+			"beginner": {
+				"path": "路径 01 // 初学者",
+				"title": "SOLANA 基础",
+				"description": "掌握基础层。账户、交易和 Sealevel 运行时。",
+				"meta": "12 模块 // 40 XP"
+			},
+			"intermediate": {
+				"path": "路径 02 // 中级",
+				"title": "ANCHOR 框架",
+				"description": "使用行业标准的 Rust DSL 进行快速程序开发。",
+				"meta": "8 模块 // 120 XP"
+			},
+			"advanced": {
+				"path": "路径 03 // 高级",
+				"title": "协议安全",
+				"description": "审计技术、常见攻击向量和不变性测试。",
+				"meta": "15 模块 // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "搜索关键词：SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "全部",
+			"dev": "开发",
+			"defi": "DEFI",
+			"difficulty": "难度",
+			"duration": "时长",
+			"active": "活动过滤器"
+		},
+		"curatedPaths": {
+			"title": "精选路径",
+			"subtitle": "推荐序列",
+			"tracks": {
+				"beginner": "初学者轨道",
+				"intermediate": "中级轨道",
+				"advanced": "高级专业化"
+			},
+			"modules": "课程",
+			"complete": "完成",
+			"startPath": "开始路径"
+		},
+		"individualCourses": {
+			"title": "单个课程",
+			"sort": "排序：受欢迎程度"
+		},
+		"difficulty": {
+			"beginner": "初学者",
+			"intermediate": "中级",
+			"advanced": "高级",
+			"expert": "专家"
+		},
+		"locked": "已锁定",
+		"stats": {
+			"title": "会话统计",
+			"totalXP": "总 XP",
+			"coursesActive": "活跃课程",
+			"completionRate": "完成率",
+			"certificates": "证书"
+		},
+		"lastAccessed": {
+			"title": "上次访问",
+			"resume": "恢复模块"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "课程详情",
+			"instructor": "讲师"
+		},
+		"metadata": {
+			"instructor": "讲师",
+			"duration": "时长",
+			"difficulty": "难度"
+		},
+		"xpBounty": "XP 赏金",
+		"buttons": {
+			"enroll": "立即注册",
+			"enrolling": "正在报名...",
+			"continue": "继续课程",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "课程",
+			"completion": "完成"
+		},
+		"reviews": {
+			"title": "学生反馈",
+			"viewAll": "查看所有评论"
+		},
+		"loading": "正在加载协议数据...",
+		"errorLoading": "加载课程数据时出错。",
+		"solveChallenge": "解决挑战",
+		"hint": "提示"
+	},
+	"Lesson": {
+		"reference": "参考",
+		"needHint": "需要提示吗？",
+		"ago": "前",
+		"autosaved": "自动保存",
+		"solution": "解决方案",
+		"output": "输出",
+		"runTests": "运行测试",
+		"module": "模块",
+		"previous": "上一个",
+		"nextLesson": "下一课",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "解决挑战",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "提示"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "当前操作",
+			"title": "活跃课程",
+			"progress": "进度",
+			"resume": "恢复",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "下一个目标",
+			"title": "推荐轨道",
+			"enroll": "注册",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "日志历史",
+			"title": "最近活动",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "操作员资料",
+			"xpBalance": "XP 余额",
+			"globalRank": "全球排名",
+			"level": "等级",
+			"xpToLevel": "升级所需 XP"
+		},
+		"streak": {
+			"title": "活跃连胜",
+			"days": "天"
+		},
+		"achievements": {
+			"title": "最新成就",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "操作员 ID",
+		"enrolledSince": "注册时间",
+		"location": "位置",
+		"skillRadar": {
+			"title": "能力雷达"
+		},
+		"achievements": {
+			"title": "成就 // 展示"
+		},
+		"credentials": {
+			"label": "链上证明",
+			"title": "进化的 cNFTs",
+			"verified": "已验证",
+			"viewOnSolscan": "在 SOLSCAN 上查看"
+		},
+		"quickStats": {
+			"title": "快速统计",
+			"rank": "排名",
+			"vouchers": "代金券"
+		},
+		"courseLedger": {
+			"title": "课程分类账"
+		},
+		"metadata": {
+			"title": "元数据.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "全球排名",
+			"title": "操作员排行榜",
+			"updated": "已更新"
+		},
+		"filters": {
+			"weekly": "每周",
+			"monthly": "每月",
+			"allTime": "所有时间",
+			"allTracks": "过滤器：所有轨道",
+			"rust": "RUST 基础",
+			"solana": "SOLANA 基础",
+			"anchor": "ANCHOR 框架",
+			"cycle": "周期",
+			"stage": "阶段"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "等级",
+			"streak": "天连胜",
+			"you": "你"
+		},
+		"loadMore": "-- [ 查看接下来 50 位操作员 ] --",
+		"userStanding": {
+			"title": "你的排名",
+			"globalRank": "全球排名",
+			"percentile": "百分位",
+			"xpToFirst": "距第一名 XP",
+			"rewards": "奖励",
+			"eligible": "符合资格"
+		},
+		"seasonalPrizes": {
+			"title": "季节性奖品",
+			"topFinishers": "前 3 名完成者："
+		},
+		"activityFeed": {
+			"title": "活动源"
+		}
+	},
+	"Wallet": {
+		"title": "连接钱包",
+		"detected": "已检测"
+	},
+	"Newsletter": {
+		"title": "通讯",
+		"description": "每周接收技术更新和生态系统机会，直接发送到您的收件箱。",
+		"placeholder": "OPERADOR@EMAIL.COM",
+		"button": "订阅"
+	},
+	"Auth": {
+		"login": {
+			"title": "欢迎回来",
+			"subtitle": "访问您的操作员仪表板并继续您的进度。",
+			"emailPlaceholder": "电子邮件地址",
+			"passwordPlaceholder": "密码",
+			"button": "通过电子邮件登录",
+			"authenticating": "认证中...",
+			"noAccount": "还没有账号？",
+			"createLink": "初始化操作员"
+		},
+		"signup": {
+			"title": "初始化操作员",
+			"subtitle": "开始您作为卓越 Solana 架构师的旅程。",
+			"emailPlaceholder": "电子邮件地址",
+			"passwordPlaceholder": "密码",
+			"button": "通过电子邮件初始化",
+			"initializing": "初始化中...",
+			"web3Native": "Web3 原生",
+			"web3NativeDesc": "虽然您可以使用社交身份进行初始化，但真正的进阶需要关联一个安全的 Solana 钱包操作员。",
+			"hasAccount": "已经初始化？",
+			"loginLink": "访问仪表板"
+		},
+		"shared": {
+			"brandingBadgeLogin": "协议入口",
+			"brandingTitleLogin": "在 SOLANA 上\n铸就未来",
+			"brandingDescLogin": "为下一代 Solana 架构师打造的首要技术训练场。通过我们的硬件加速课程，从零基础迈向生产就绪。",
+			"brandingBadgeSignup": "新操作员初始化",
+			"brandingTitleSignup": "获得您的\n链上凭证",
+			"brandingDescSignup": "您完成的每个模块都会向您的钱包发放一份经加密验证的技能证明。在学习的过程中打造一份无懈可击的简历。",
+			"systemOnline": "系统在线 // 终端访问",
+			"orContinueWith": "或继续使用",
+			"accessProtocol": "访问协议",
+			"accessProtocolDesc": "输入您的电子邮件以登录或创建帐户。",
+			"returningOperator": "// 返回操作员 — 进行验证",
+			"newOperator": "// 新操作员 — 账户初始化中",
+			"continue": "继续"
+		},
+		"walletButton": {
+			"github": "继续使用 GitHub",
+			"google": "继续使用 Google",
+			"walletSignIn": "通过钱包登录",
+			"walletConnect": "连接钱包",
+			"authenticating": "认证中..."
+		}
+	},
+	"Onboarding": {
+		"badge": "操作员初始化",
+		"brandingTitle": "初始化\n您的\n操作员",
+		"brandingDesc": "配置您的个人资料以加入Solana构建者网络。每个步骤都会解锁对Academy协议的完整访问权限。",
+		"systemOnline": "系统_在线 — 步骤",
+		"of": "/",
+		"steps": {
+			"identity": "身份",
+			"signature": "神经签名",
+			"profile": "个人资料",
+			"learningPath": "学习路径",
+			"wallet": "钱包"
+		},
+		"step1": {
+			"badge": "步骤 1 / 5",
+			"title": "您的身份",
+			"subtitle": "设置您的操作员显示名称。这将是您在排行榜和个人资料上的显示方式。",
+			"namePlaceholder": "0x您的别名",
+			"nameLabel": "显示名称",
+			"emailLabel": "电子邮件（只读）"
+		},
+		"step2": {
+			"badge": "步骤 2 / 5",
+			"title": "神经签名",
+			"subtitle": "您的数字身份是经过程序化初始化的。您可以重新生成您的唯一签名，直到达到最佳共振。",
+			"reroll": "重新生成签名",
+			"description": "此签名在整个学院协议中充当您的唯一操作员 ID。"
+		},
+		"step3": {
+			"badge": "步骤 3 / 5",
+			"title": "您的个人资料",
+			"subtitle": "向社区介绍自己。所有字段均为可选。",
+			"bioPlaceholder": "资深Solana架构师。正在构建去中心化的未来...",
+			"locationPlaceholder": "位置（如 上海_CN）",
+			"twitterPlaceholder": "X / Twitter @别名",
+			"githubPlaceholder": "GitHub用户名",
+			"websitePlaceholder": "作品集 / 网站URL",
+			"skip": "跳过此步骤"
+		},
+		"step4": {
+			"badge": "步骤 4 / 5",
+			"title": "学习路径",
+			"subtitle": "选择您想要掌握的赛道。至少选择一个。",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "系统编程与性能"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Solana智能合约框架"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "去中心化金融协议"
+				},
+				"security": {
+					"label": "安全",
+					"desc": "审计与漏洞研究"
+				},
+				"frontend": {
+					"label": "前端",
+					"desc": "Web3 dApp开发"
+				}
+			}
+		},
+		"step5": {
+			"badge": "步骤 5 / 5",
+			"title": "连接钱包",
+			"subtitle": "链接Solana钱包以接收链上凭证和XP。您可以跳过并稍后在设置中连接。",
+			"externalLabel": "关联外部账户",
+			"linkGithub": "关联 GitHub",
+			"linkGoogle": "关联 Google",
+			"requiredFor": "需要用于",
+			"requirements": [
+				"链上XP灵魂绑定代币",
+				"Metaplex Core NFT",
+				"课程完成证明"
+			],
+			"launch": "启动仪表板 →",
+			"launching": "初始化中...",
+			"skip": "暂时跳过钱包"
+		},
+		"nav": {
+			"back": "返回",
+			"next": "下一步",
+			"continue": "继续"
+		}
+	},
+	"Settings": {
+		"profile": {
+			"title": "操作员档案",
+			"avatarHint": "头像从您连接的 OAuth 提供商（Google / GitHub）获取。",
+			"nameLabel": "显示名称",
+			"namePlaceholder": "0x您的昵称",
+			"bioLabel": "简介 / 终端问候语",
+			"bioPlaceholder": "资深 Solana 架构师。构建去中心化未来...",
+			"locationLabel": "位置",
+			"locationPlaceholder": "BEIJING_CN",
+			"socialLabel": "社交媒体链接",
+			"twitterPlaceholder": "X / Twitter @昵称",
+			"githubPlaceholder": "GitHub 用户名",
+			"websitePlaceholder": "作品集 / 网站 URL",
+			"save": "保存档案",
+			"saving": "保存中...",
+			"saved": "档案更新成功。"
+		},
+		"account": {
+			"title": "账户与认证",
+			"emailLabel": "主邮箱",
+			"emailHint": "邮箱由您的认证提供商管理。",
+			"walletsLabel": "已连接钱包",
+			"oauthLabel": "OAuth 提供商",
+			"active": "已激活",
+			"linkWallet": "关联钱包",
+			"linking": "关联中...",
+			"link": "关联",
+			"walletLinked": "钱包关联成功。",
+			"walletError": "关联钱包时出错。请确认该钱包未绑定到其他账户。",
+			"oauthError": "无法启动 {provider} 链接"
+		},
+		"tabs": {
+			"profile": "个人资料",
+			"account": "账户",
+			"interface": "界面",
+			"privacy": "隐私"
+		},
+		"view": {
+			"badge": "用户配置",
+			"title": "系统设置"
+		},
+		"interface": {
+			"title": "界面偏好设置",
+			"languageLabel": "系统语言",
+			"themeLabel": "终端主题",
+			"themeDesc": "在亮色和暗色模式之间切换",
+			"themeDark": "深色模式",
+			"themeLight": "浅色模式",
+			"notificationsLabel": "通知",
+			"newCourses": "新课程发布",
+			"leaderboardAlerts": "排行榜排名提醒",
+			"directMessages": "私信",
+			"save": "保存偏好设置",
+			"saving": "保存中...",
+			"saved": "偏好设置已保存。"
+		},
+		"privacy": {
+			"title": "隐私 & 数据",
+			"visibilityLabel": "公开可见性",
+			"visibilityDesc": "在全球排行榜上显示个人资料",
+			"dataArchiveLabel": "数据存档",
+			"exportBtn": "↓ 导出操作员数据 (.JSON)",
+			"save": "提交隐私设置",
+			"saving": "保存中...",
+			"saved": "隐私设置已保存。",
+			"exported": "数据导出成功。"
+		}
+	},
+	"StatsStrip": {
+		"activeStudents": "Active Students",
+		"nodesValidated": "Nodes Validated",
+		"bountiesWon": "Bounties Won",
+		"jobPlacements": "Job Placements"
+	},
+	"Testimonials": {
+		"sectionLabel": "Student Intelligence Report"
+	},
+	"Legal": {
+		"terms": {
+			"title": "服务条款",
+			"lastUpdated": "最后更新：2026年3月4日",
+			"sections": {
+				"01": {
+					"title": "01 // 协议接受",
+					"content": "访问 Superteam Academy 终端即表示您同意遵守本服务条款。这些条款构成了您（“运营商”）与 Superteam Academy 之间关于您访问和使用该协议的有法律约束力的协议。"
+				},
+				"02": {
+					"title": "02 // 运营商资格",
+					"content": "访问此终端仅限于能够根据适用法律签订有法律约束力的合同的个人。通过使用该协议，您声明并保证您满足所有资格要求。"
+				},
+				"03": {
+					"title": "03 // 神经签名与安全",
+					"content": "Superteam Academy 使用加密签名进行会话管理。您全权负责维护您的私钥和连接钱包的机密性与安全。通过您的签名执行的任何操作将被视为已获您的授权。"
+				},
+				"04": {
+					"title": "04 // 知识产权",
+					"content": "学院内所有的课程、代码模板和专有协议均受知识产权法保护。用户被授予有限的、非排他性的许可，仅可将这些材料用于教育目的。"
+				},
+				"05": {
+					"title": "05 // 禁止操作",
+					"content": "严禁对协议进行恶意利用、自动抓取或任何试图绕过游戏化保护的行为。违反这些规定可能导致您的运营商 ID 被永久吊销。"
+				},
+				"06": {
+					"title": "06 // 链上最终性",
+					"content": "涉及 Solana 区块链的操作受亚秒级最终性限制。Superteam Academy 无法撤销链上交易、Gas 费 (SOL) 或永久凭证的颁发。"
+				},
+				"07": {
+					"title": "07 // 责任限制",
+					"content": "Superteam Academy 按“原样”提供。我们对由于软件错误、网络拥塞或钱包配置错误导致的任何损失不承担责任。"
+				},
+				"08": {
+					"title": "08 // 终止访问",
+					"content": "我们保留在不经事先通知的情况下，根据我们的自行判断，对我们认为违反本条款或对其他运营商有害的行为暂停或终止访问终端的权利。"
+				}
+			}
+		},
+		"privacy": {
+			"title": "隐私政策",
+			"lastUpdated": "最后更新：2026年3月4日",
+			"sections": {
+				"01": {
+					"title": "01 // 数据分类",
+					"content": "我们收集两类数据：(A) 与您的钱包地址相关的公共链上数据，以及 (B) 为运行游戏化引擎而产生的运营元数据，包括会话日志和等级进度。"
+				},
+				"02": {
+					"title": "02 // 使用协议",
+					"content": "收集的数据将用于生成您的全球排名、追踪课程进度并颁发经过验证的凭证。我们不会将运营商数据出售给第三方。"
+				},
+				"03": {
+					"title": "03 // 加密存储",
+					"content": "敏感的个人资料数据使用行业标准加密存储。身份验证通过 Better Auth 管理，确保您的神经签名保持安全且去中心化。"
+				},
+				"04": {
+					"title": "04 // 分析与监控",
+					"content": "为了改进用户体验 (UX)，我们使用 PostHog 进行事件追踪，并使用 Sentry 进行错误日志记录。这些服务收集匿名的运营数据，帮助我们优化终端环境。"
+				},
+				"05": {
+					"title": "05 // 运营商权利",
+					"content": "您保留随时通过系统设置导出运营商数据包 (.json) 的权利。您也可以请求删除您的链下个人资料元数据。"
+				},
+				"06": {
+					"title": "06 // 政策演变",
+					"content": "随着协议规模的扩大，本隐私政策可能会发生演变。重大更改将通过终端的全球广播系统宣布。"
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "挑战",
+		"subtitle": "磨练 Solana 技能的独立编码挑战。",
+		"badge": "挑战竞技场",
+		"hero": {
+			"liveLabel": "现场挑战",
+			"startBtn": "开始挑战 →",
+			"completed": "✓ 已完成",
+			"unknownDifficulty": "未知"
+		},
+		"sections": {
+			"updatingMissions": "任务更新中",
+			"allMissions": "所有任务"
+		},
+		"card": {
+			"startBtn": "开始挑战 →",
+			"completed": "✓ 已完成",
+			"releases": "发布日期:"
+		},
+		"filters": {
+			"all": "全部",
+			"fundamentals": "基础",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "前端",
+			"security": "安全",
+			"tokenExtensions": "代币扩展",
+			"beginner": "初级",
+			"intermediate": "中级",
+			"advanced": "高级"
+		},
+		"emptyState": "未找到符合当前过滤条件的任务。"
+	}
+}

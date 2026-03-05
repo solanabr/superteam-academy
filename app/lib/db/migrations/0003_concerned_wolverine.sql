@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "user_course_unique" ON "course_progress" USING btree ("userId","courseId");

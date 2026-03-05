@@ -1,0 +1,622 @@
+{
+	"Hero": {
+		"badge": "Akses Terminal Diberikan",
+		"title": "TEMPA MASA DEPANMU\nDI SOLANA",
+		"description": "Tempat pelatihan teknis utama untuk generasi arsitek Solana berikutnya. Pindah dari nol ke siap produksi dengan kurikulum akselerasi perangkat keras kami.",
+		"explore": "Jelajahi Kursus",
+		"discord": "Bergabung dengan Discord"
+	},
+	"StatsStrip": {
+		"activeStudents": "Siswa Aktif",
+		"nodesValidated": "Node Tervalidasi",
+		"bountiesWon": "Bounty Dimenangkan",
+		"jobPlacements": "Penempatan Kerja"
+	},
+	"Testimonials": {
+		"sectionLabel": "Laporan Kecerdasan Siswa"
+	},
+	"Navbar": {
+		"brand": "AKADEMI SUPERTEAM",
+		"links": {
+			"catalog": "Katalog Kursus",
+			"leaderboard": "Papan Peringkat",
+			"community": "Komunitas"
+		},
+		"cta": {
+			"dashboard": "Dasbor",
+			"start": "Mulai Belajar",
+			"login": "Masuk / Daftar"
+		}
+	},
+	"Footer": {
+		"brand": "AKADEMI SUPERTEAM",
+		"description": "Universitas terdesentralisasi untuk ekosistem Solana. Dimiliki oleh para siswa.",
+		"language": "Bahasa:",
+		"copyright": "© 2026 Akademi Superteam // Hak cipta dilindungi undang-undang",
+		"headers": {
+			"platform": "Platform",
+			"socials": "Sosial"
+		},
+		"links": {
+			"catalog": "Katalog",
+			"leaderboard": "Papan Peringkat",
+			"dashboard": "Dasbor",
+			"profile": "Profil",
+			"terms": "Ketentuan Layanan",
+			"privacy": "Kebijakan Privasi"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "BUKTI ON-CHAIN",
+			"description": "Setiap modul yang Anda selesaikan menerbitkan kredensial yang tidak dapat dipindahtangankan ke dompet Anda. Bangun resume yang dapat diverifikasi secara kriptografis sambil Anda belajar."
+		},
+		"compiler": {
+			"title": "KOMPILER LANGSUNG",
+			"description": "Tidak diperlukan pengaturan lingkungan. Tulis, uji, dan terapkan program Solana langsung di IDE berbasis browser kami dengan umpan balik waktu nyata."
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "Operasi Tersedia",
+		"title": "JALUR PEMBELAJARAN",
+		"viewAll": "Lihat semua jalur",
+		"tracks": {
+			"beginner": {
+				"path": "Jalur 01 // Pemula",
+				"title": "DASAR-DASAR SOLANA",
+				"description": "Kuasai lapisan dasar. Akun, transaksi, dan runtime Sealevel.",
+				"meta": "12 MODUL // 40 XP"
+			},
+			"intermediate": {
+				"path": "Jalur 02 // Menengah",
+				"title": "FRAMEWORK ANCHOR",
+				"description": "Pengembangan program cepat menggunakan DSL Rust standar industri.",
+				"meta": "8 MODUL // 120 XP"
+			},
+			"advanced": {
+				"path": "Jalur 03 // Lanjutan",
+				"title": "KEAMANAN PROTOKOL",
+				"description": "Teknik audit, vektor serangan umum, dan pengujian invarian.",
+				"meta": "15 MODUL // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "KATA KUNCI PENCARIAN: SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "SEMUA",
+			"dev": "DEV",
+			"defi": "DEFI",
+			"difficulty": "KESULITAN",
+			"duration": "DURASI",
+			"active": "FILTER AKTIF"
+		},
+		"curatedPaths": {
+			"title": "JALUR TERKURASI",
+			"subtitle": "URUTAN YANG DIREKOMENDASIKAN",
+			"tracks": {
+				"beginner": "JALUR PEMULA",
+				"intermediate": "JALUR MENENGAH",
+				"advanced": "SPESIALISASI LANJUTAN"
+			},
+			"modules": "KURSUS",
+			"complete": "SELESAI",
+			"startPath": "MULAI JALUR"
+		},
+		"individualCourses": {
+			"title": "KURSUS INDIVIDU",
+			"sort": "URUTKAN: POPULARITAS"
+		},
+		"difficulty": {
+			"beginner": "PEMULA",
+			"intermediate": "MENENGAH",
+			"advanced": "LANJUTAN",
+			"expert": "AHLI"
+		},
+		"locked": "TERKUNCI",
+		"stats": {
+			"title": "STATISTIK SESI",
+			"totalXP": "TOTAL XP",
+			"coursesActive": "KURSUS AKTIF",
+			"completionRate": "TINGKAT PENYELESAIAN",
+			"certificates": "SERTIFIKAT"
+		},
+		"lastAccessed": {
+			"title": "TERAKHIR DIAKSES",
+			"resume": "LANJUTKAN MODUL"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "Detail Kursus",
+			"instructor": "Instruktur"
+		},
+		"metadata": {
+			"instructor": "Instruktur",
+			"duration": "Durasi",
+			"difficulty": "Kesulitan"
+		},
+		"xpBounty": "Bounty XP",
+		"buttons": {
+			"enroll": "DAFTAR SEKARANG",
+			"enrolling": "MENDAFTARKAN...",
+			"continue": "LANJUTKAN KURSUS",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "Kurikulum",
+			"completion": "PENYELESAIAN"
+		},
+		"reviews": {
+			"title": "Umpan Balik Siswa",
+			"viewAll": "LIHAT SEMUA ULASAN"
+		},
+		"loading": "Memuat data protokol...",
+		"errorLoading": "Terjadi kesalahan saat memuat data kursus.",
+		"solveChallenge": "SELESAIKAN TANTANGAN",
+		"hint": "PETUNJUK"
+	},
+	"Lesson": {
+		"reference": "REFERENSI",
+		"needHint": "BUTUH PETUNJUK?",
+		"ago": "yang lalu",
+		"autosaved": "DISIMPAN OTOMATIS",
+		"solution": "SOLUSI",
+		"output": "OUTPUT",
+		"runTests": "JALANKAN TES",
+		"module": "MODUL",
+		"previous": "SEBELUMNYA",
+		"nextLesson": "PELAJARAN BERIKUTNYA",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "SELESAIKAN TANTANGAN",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "PETUNJUK"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "Operasi Saat Ini",
+			"title": "KURSUS AKTIF",
+			"progress": "PROGRES",
+			"resume": "Lanjutkan",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "Target Berikutnya",
+			"title": "JALUR REKOMENDASI",
+			"enroll": "DAFTAR",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "Riwayat Log",
+			"title": "AKTIVITAS TERBARU",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "PROFIL OPERATOR",
+			"xpBalance": "SALDO XP",
+			"globalRank": "PERINGKAT GLOBAL",
+			"level": "LEVEL",
+			"xpToLevel": "XP KE LVL"
+		},
+		"streak": {
+			"title": "Runtutan Aktif",
+			"days": "H"
+		},
+		"achievements": {
+			"title": "Pencapaian Terbaru",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "ID_OPERATOR",
+		"enrolledSince": "TERDAFTAR SEJAK",
+		"location": "LOKASI",
+		"skillRadar": {
+			"title": "RADAR_BAKAT"
+		},
+		"achievements": {
+			"title": "PENCAPAIAN // ETALASE"
+		},
+		"credentials": {
+			"label": "BUKTI_ON-CHAIN",
+			"title": "cNFT BEREVOLUSI",
+			"verified": "TERVERIFIKASI",
+			"viewOnSolscan": "LIHAT_DI_SOLSCAN"
+		},
+		"quickStats": {
+			"title": "STATISTIK_CEPAT",
+			"rank": "PERINGKAT",
+			"vouchers": "VOUCHER"
+		},
+		"courseLedger": {
+			"title": "BUKU_BESAR_KURSUS"
+		},
+		"metadata": {
+			"title": "METADATA.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "Peringkat Global",
+			"title": "PAPAN PERINGKAT OPERATOR",
+			"updated": "Diperbarui"
+		},
+		"filters": {
+			"weekly": "Mingguan",
+			"monthly": "Bulanan",
+			"allTime": "Sepanjang Waktu",
+			"allTracks": "FILTER: SEMUA JALUR",
+			"rust": "DASAR-DASAR RUST",
+			"solana": "DASAR SOLANA",
+			"anchor": "FRAMEWORK ANCHOR",
+			"cycle": "Siklus",
+			"stage": "Tahap"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "LVL",
+			"streak": "H RUNTUTAN",
+			"you": "ANDA"
+		},
+		"loadMore": "--[ LIHAT 50 OPERATOR BERIKUTNYA ] --",
+		"userStanding": {
+			"title": "POSISI ANDA",
+			"globalRank": "PERINGKAT GLOBAL",
+			"percentile": "PERSENTIL",
+			"xpToFirst": "XP KE #1",
+			"rewards": "HADIAH",
+			"eligible": "MEMENUHI SYARAT"
+		},
+		"seasonalPrizes": {
+			"title": "HADIAH MUSIMAN",
+			"topFinishers": "3 Finisher Teratas:"
+		},
+		"activityFeed": {
+			"title": "Umpan Aktivitas"
+		}
+	},
+	"Wallet": {
+		"title": "Hubungkan Dompet",
+		"detected": "TERDETEKSI"
+	},
+	"Newsletter": {
+		"title": "Nawala",
+		"description": "Dapatkan pembaruan teknis mingguan dan peluang ekosistem yang dikirim langsung ke kotak masuk Anda.",
+		"placeholder": "OPERATOR@EMAIL.COM",
+		"button": "Berlangganan"
+	},
+	"Auth": {
+		"login": {
+			"title": "Selamat Datang Kembali",
+			"subtitle": "Akses dasbor operator Anda dan lanjutkan progres Anda.",
+			"emailPlaceholder": "Alamat Email",
+			"passwordPlaceholder": "Kata Sandi",
+			"button": "Masuk via Email",
+			"authenticating": "Mengautentikasi...",
+			"noAccount": "Belum punya akun?",
+			"createLink": "Inisialisasi Operator"
+		},
+		"signup": {
+			"title": "Inisialisasi Operator",
+			"subtitle": "Mulai perjalanan Anda sebagai arsitek Solana terkemuka.",
+			"emailPlaceholder": "Alamat Email",
+			"passwordPlaceholder": "Kata Sandi",
+			"button": "Inisialisasi via Email",
+			"initializing": "MENGINISIALISASI...",
+			"web3Native": "Web3 Native",
+			"web3NativeDesc": "Meskipun Anda dapat melakukan inisialisasi dengan identitas sosial, progres yang sebenarnya membutuhkan penautan dompet Solana yang aman.",
+			"hasAccount": "Sudah diinisialisasi?",
+			"loginLink": "Akses Dasbor"
+		},
+		"shared": {
+			"brandingBadgeLogin": "Pintu Masuk Protokol",
+			"brandingTitleLogin": "TEMPA MASA DEPANMU\nDI SOLANA",
+			"brandingDescLogin": "Tempat pelatihan teknis utama untuk generasi arsitek Solana berikutnya. Pindah dari nol ke siap produksi dengan kurikulum akselerasi perangkat keras kami.",
+			"brandingBadgeSignup": "Inisialisasi Operator Baru",
+			"brandingTitleSignup": "DAPATKAN KREDENSIAL\nON-CHAIN ANDA",
+			"brandingDescSignup": "Setiap modul yang Anda selesaikan menerbitkan bukti keahlian yang dapat diverifikasi secara kriptografis ke dompet Anda.",
+			"systemOnline": "SISTEM ONLINE // AKSES TERMINAL",
+			"orContinueWith": "ATAU LANJUTKAN DENGAN",
+			"accessProtocol": "Akses Protokol",
+			"accessProtocolDesc": "Masukkan email Anda untuk masuk atau membuat akun.",
+			"returningOperator": "// OPERATOR KEMBALI — AUTENTIKASI",
+			"newOperator": "// OPERATOR BARU — INISIALISASI AKUN",
+			"continue": "Lanjutkan"
+		},
+		"walletButton": {
+			"github": "Lanjutkan dengan GitHub",
+			"google": "Lanjutkan dengan Google",
+			"walletSignIn": "Masuk via Dompet",
+			"walletConnect": "Hubungkan Dompet",
+			"authenticating": "Mengautentikasi..."
+		}
+	},
+	"Onboarding": {
+		"badge": "INIT OPERATOR",
+		"brandingTitle": "INISIALISASI\nOPERATOR\nANDA",
+		"brandingDesc": "Konfigurasikan profil Anda untuk bergabung dengan jaringan pembangun Solana. Setiap langkah membuka akses ke protokol Akademi penuh.",
+		"systemOnline": "SISTEM_ONLINE — LANGKAH",
+		"of": "dari",
+		"steps": {
+			"identity": "Identitas",
+			"signature": "Tanda Tangan",
+			"profile": "Profil",
+			"learningPath": "Jalur",
+			"wallet": "Dompet"
+		},
+		"step1": {
+			"badge": "LANGKAH 1 / 5",
+			"title": "Identitas Anda",
+			"subtitle": "Atur nama tampilan operator Anda. Ini adalah cara Anda akan muncul di papan peringkat dan profil.",
+			"namePlaceholder": "0xHandleAnda",
+			"nameLabel": "Nama Tampilan",
+			"emailLabel": "Email (hanya baca)"
+		},
+		"step2": {
+			"badge": "LANGKAH 2 / 5",
+			"title": "Tanda Tangan Neural",
+			"subtitle": "Identitas digital Anda diinisialisasi secara prosedural. Anda dapat mengacak ulang tanda tangan unik Anda hingga mencapai resonansi optimal.",
+			"reroll": "Acak Ulang Tanda Tangan",
+			"description": "Tanda tangan ini berfungsi sebagai ID operator unik Anda di seluruh protokol Akademi."
+		},
+		"step3": {
+			"badge": "LANGKAH 3 / 5",
+			"title": "Profil Anda",
+			"subtitle": "Beri tahu komunitas siapa Anda. Semua bidang opsional.",
+			"bioPlaceholder": "Arsitek Solana Senior. Membangun masa depan yang terdesentralisasi...",
+			"locationPlaceholder": "Lokasi (mis. JAKARTA_ID)",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "Nama pengguna GitHub",
+			"websitePlaceholder": "URL Portofolio / situs web",
+			"skip": "Lewati langkah ini"
+		},
+		"step4": {
+			"badge": "LANGKAH 4 / 5",
+			"title": "Jalur Pembelajaran",
+			"subtitle": "Pilih jalur yang ingin Anda kuasai. Pilih setidaknya satu.",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "Pemrograman sistem & performa"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Kerangka kerja smart contract Solana"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "Protokol keuangan terdesentralisasi"
+				},
+				"security": {
+					"label": "Keamanan",
+					"desc": "Audit & riset kerentanan"
+				},
+				"frontend": {
+					"label": "Frontend",
+					"desc": "Pengembangan dApp Web3"
+				}
+			}
+		},
+		"step5": {
+			"badge": "LANGKAH 5 / 5",
+			"title": "Hubungkan Dompet",
+			"subtitle": "Tautkan dompet Solana untuk menerima kredensial on-chain dan XP. Anda dapat melewati dan menghubungkannya nanti di pengaturan.",
+			"externalLabel": "TAUTKAN AKUN EKSTERNAL",
+			"linkGithub": "Tautkan GitHub",
+			"linkGoogle": "Tautkan Google",
+			"requiredFor": "DIBUTUHKAN UNTUK",
+			"requirements": [
+				"Token Soulbound XP on-chain",
+				"NFT Kredensial Metaplex Core",
+				"Bukti penyelesaian kursus"
+			],
+			"launch": "Luncurkan Dasbor →",
+			"launching": "Menginisialisasi...",
+			"skip": "Lewati dompet untuk saat ini"
+		},
+		"nav": {
+			"back": "Kembali",
+			"next": "Berikutnya",
+			"continue": "Lanjutkan"
+		}
+	},
+	"Settings": {
+		"tabs": {
+			"profile": "Profil",
+			"account": "Akun",
+			"interface": "Antarmuka",
+			"privacy": "Privasi"
+		},
+		"view": {
+			"badge": "Konfigurasi Pengguna",
+			"title": "PENGATURAN SISTEM"
+		},
+		"profile": {
+			"title": "Profil Operator",
+			"avatarHint": "Avatar diambil dari penyedia OAuth yang terhubung.",
+			"nameLabel": "Nama Tampilan",
+			"namePlaceholder": "0xHandleAnda",
+			"bioLabel": "Bio / Salam Terminal",
+			"bioPlaceholder": "Arsitek Solana Senior. Membangun masa depan yang terdesentralisasi...",
+			"locationLabel": "Lokasi",
+			"locationPlaceholder": "JAKARTA_ID",
+			"socialLabel": "Tautan Protokol Sosial",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "Nama pengguna GitHub",
+			"websitePlaceholder": "URL Portofolio / Situs Web",
+			"save": "Simpan Profil",
+			"saving": "Menyimpan...",
+			"saved": "Profil berhasil diperbarui."
+		},
+		"account": {
+			"title": "Akun & Auth",
+			"emailLabel": "Email Utama",
+			"emailHint": "Email dikelola melalui penyedia otentikasi Anda.",
+			"walletsLabel": "Dompet Terhubung",
+			"oauthLabel": "Penyedia OAuth",
+			"active": "AKTIF",
+			"linkWallet": "Tautkan Dompet",
+			"linking": "Menautkan...",
+			"unlinking": "Membatalkan tautan...",
+			"unlink": "Batal Taut",
+			"link": "Tautkan",
+			"walletLinked": "Dompet berhasil ditautkan.",
+			"walletUnlinked": "Dompet berhasil dibatalkan tautannya.",
+			"walletError": "Gagal menautkan dompet.",
+			"oauthError": "Gagal menginisiasi tautan {provider}"
+		},
+		"interface": {
+			"title": "Preferensi Antarmuka",
+			"languageLabel": "Bahasa Sistem",
+			"themeLabel": "Tema Terminal",
+			"themeDesc": "Beralih antara Mode Terang dan Gelap",
+			"themeDark": "Mode Gelap",
+			"themeLight": "Mode Terang",
+			"notificationsLabel": "Notifikasi",
+			"newCourses": "Rilis Kursus Baru",
+			"leaderboardAlerts": "Peringatan Papan Peringkat",
+			"directMessages": "Pesan Langsung",
+			"save": "Simpan Preferensi",
+			"saving": "Menyimpan...",
+			"saved": "Preferensi disimpan."
+		},
+		"privacy": {
+			"title": "Privasi & Data",
+			"visibilityLabel": "Visibilitas Publik",
+			"visibilityDesc": "Tampilkan profil di papan peringkat global",
+			"dataArchiveLabel": "Arsip Data",
+			"exportBtn": "↓ Ekspor Data Operator (.JSON)",
+			"save": "Terapkan Pengaturan Privasi",
+			"saving": "Menyimpan...",
+			"saved": "Pengaturan privasi disimpan.",
+			"exported": "Data berhasil diekspor."
+		}
+	},
+	"Legal": {
+		"terms": {
+			"title": "KETENTUAN LAYANAN",
+			"lastUpdated": "TERAKHIR DIPERBARUI: 04 MARET 2026",
+			"sections": {
+				"01": {
+					"title": "01 // PENERIMAAN PROTOKOL",
+					"content": "Dengan mengakses terminal Superteam Academy, Anda setuju untuk mematuhi Ketentuan Layanan ini. Ketentuan ini merupakan perjanjian yang mengikat secara hukum antara Anda ('Operator') dan Superteam Academy terkait akses dan penggunaan protokol oleh Anda."
+				},
+				"02": {
+					"title": "02 // KELAYAKAN OPERATOR",
+					"content": "Akses ke terminal ini dibatasi bagi individu yang dapat membentuk kontrak yang mengikat secara hukum berdasarkan hukum yang berlaku. Dengan menggunakan protokol, Anda menyatakan dan menjamin bahwa Anda memenuhi semua persyaratan kelayakan."
+				},
+				"03": {
+					"title": "03 // TANDA TANGAN NEURAL & KEAMANAN",
+					"content": "Superteam Academy menggunakan tanda tangan kriptografis untuk manajemen sesi. Anda sepenuhnya bertanggung jawab untuk menjaga kerahasiaan dan keamanan kunci pribadi serta dompet yang terhubung. Setiap operasi yang dilakukan melalui tanda tangan Anda akan dianggap sah oleh Anda."
+				},
+				"04": {
+					"title": "04 // KEKAYAAN INTELEKTUAL",
+					"content": "Semua kurikulum, templat kode, dan protokol eksklusif di dalam Akademi dilindungi oleh undang-undang kekayaan intelektual. Pengguna diberikan lisensi terbatas dan non-eksklusif untuk menggunakan materi ini hanya untuk tujuan pendidikan."
+				},
+				"05": {
+					"title": "05 // OPERASI TERLARANG",
+					"content": "Eksploitasi protokol yang jahat, pengikisan otomatis, atau upaya apa pun untuk melewati perlindungan gamifikasi sangat dilarang. Pelanggaran terhadap aturan ini dapat mengakibatkan pencabutan permanen ID Operator Anda."
+				},
+				"06": {
+					"title": "06 // FINALITAS ON-CHAIN",
+					"content": "Operasi yang melibatkan blockchain Solana tunduk pada finalitas sub-detik. Superteam Academy tidak dapat membatalkan transaksi on-chain, biaya gas (SOL), atau penerbitan kredensial permanen."
+				},
+				"07": {
+					"title": "07 // BATASAN TANGGUNG JAWAB",
+					"content": "Superteam Academy disediakan 'apa adanya' tanpa jaminan apa pun. Kami tidak bertanggung jawab atas kerugian yang diakibatkan oleh bug perangkat lunak, kemacetan jaringan, atau kesalahan konfigurasi dompet."
+				},
+				"08": {
+					"title": "08 // PEMUTUSAN AKSES",
+					"content": "Kami berhak untuk menangguhkan atau menghentikan akses ke terminal atas kebijakan kami sendiri tanpa pemberitahuan sebelumnya atas perilaku yang kami yakini melanggar Ketentuan ini atau merugikan Operator lain."
+				}
+			}
+		},
+		"privacy": {
+			"title": "KEBIJAKAN PRIVASI",
+			"lastUpdated": "TERAKHIR DIPERBARUI: 04 MARET 2026",
+			"sections": {
+				"01": {
+					"title": "01 // KATEGORISASI DATA",
+					"content": "Kami mengumpulkan dua kategori data: (A) Data publik on-chain yang terkait dengan alamat dompet Anda dan (B) metadata operasional termasuk log sesi dan kemajuan level untuk memfasilitasi mesin gamifikasi."
+				},
+				"02": {
+					"title": "02 // PROTOKOL PENGGUNAAN",
+					"content": "Data yang dikumpulkan diproses untuk menghasilkan peringkat global Anda, melacak kemajuan kurikulum, dan menerbitkan kredensial terverifikasi. Kami tidak menjual data operator kepada pihak ketiga."
+				},
+				"03": {
+					"title": "03 // PENYIMPANAN KRIPTOGRAFIS",
+					"content": "Data profil yang sensitif disimpan menggunakan enkripsi standar industri. Autentikasi dikelola melalui Better Auth, memastikan tanda tangan neural Anda tetap aman dan terdesentralisasi."
+				},
+				"04": {
+					"title": "04 // ANALITIK & PEMANTAUAN",
+					"content": "Untuk meningkatkan pengalaman pengguna (UX), kami menggunakan PostHog untuk pelacakan peristiwa dan Sentry untuk pencatatan kesalahan. Layanan ini mengumpulkan data operasional anonim untuk membantu kami mengoptimalkan lingkungan terminal."
+				},
+				"05": {
+					"title": "05 // HAK OPERATOR",
+					"content": "Anda tetap memiliki hak untuk mengekspor paket data operator Anda (.json) kapan saja melalui pengaturan sistem. Anda juga dapat meminta penghapusan metadata profil off-chain Anda."
+				},
+				"06": {
+					"title": "06 // EVOLUSI KEBIJAKAN",
+					"content": "Seiring dengan skala protokol, Kebijakan Privasi ini dapat berkembang. Perubahan signifikan akan diumumkan melalui sistem siaran global terminal."
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "TANTANGAN",
+		"subtitle": "Tantangan coding mandiri untuk mengasah keterampilan Solana Anda.",
+		"badge": "ARENA TANTANGAN",
+		"hero": {
+			"liveLabel": "TANTANGAN LANGSUNG",
+			"startBtn": "MULAI TANTANGAN →",
+			"completed": "✓ SELESAI",
+			"unknownDifficulty": "TIDAK DIKETAHUI"
+		},
+		"sections": {
+			"updatingMissions": "MEMPERBARUI MISI",
+			"allMissions": "SEMUA MISI"
+		},
+		"card": {
+			"startBtn": "MULAI TANTANGAN →",
+			"completed": "✓ SELESAI",
+			"releases": "RILIS:"
+		},
+		"filters": {
+			"all": "Semua",
+			"fundamentals": "Dasar-dasar",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "Frontend",
+			"security": "Keamanan",
+			"tokenExtensions": "Ekstensi Token",
+			"beginner": "PEMULA",
+			"intermediate": "MENENGAH",
+			"advanced": "MAHIR"
+		},
+		"emptyState": "Tidak ada misi yang ditemukan dengan filter saat ini."
+	}
+}

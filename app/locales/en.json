@@ -1,0 +1,622 @@
+{
+	"Hero": {
+		"badge": "Terminal Access Granted",
+		"title": "FORGE YOUR\nFUTURE ON\nSOLANA",
+		"description": "The premier technical training ground for the next generation of Solana architects. Move from zero to production-ready with our hardware-accelerated curriculum.",
+		"explore": "Explore Courses",
+		"discord": "Join Discord"
+	},
+	"StatsStrip": {
+		"activeStudents": "Active Students",
+		"nodesValidated": "Nodes Validated",
+		"bountiesWon": "Bounties Won",
+		"jobPlacements": "Job Placements"
+	},
+	"Testimonials": {
+		"sectionLabel": "Student Intelligence Report"
+	},
+	"Navbar": {
+		"brand": "SUPERTEAM ACADEMY",
+		"links": {
+			"catalog": "Course Catalog",
+			"leaderboard": "Leaderboard",
+			"community": "Community"
+		},
+		"cta": {
+			"dashboard": "Dashboard",
+			"start": "Start Learning",
+			"login": "Login / Sign Up"
+		}
+	},
+	"Footer": {
+		"brand": "SUPERTEAM ACADEMY",
+		"description": "The decentralized university for the Solana ecosystem. Owned by the students.",
+		"language": "Language:",
+		"copyright": "© 2026 Superteam Academy // All rights reserved",
+		"headers": {
+			"platform": "Platform",
+			"socials": "Socials"
+		},
+		"links": {
+			"catalog": "Catalog",
+			"leaderboard": "Leaderboard",
+			"dashboard": "Dashboard",
+			"profile": "Profile",
+			"terms": "Terms",
+			"privacy": "Privacy"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "ON-CHAIN PROOFS",
+			"description": "Every module you complete issues a non-transferable credential to your wallet. Build a cryptographically verifiable resume as you learn."
+		},
+		"compiler": {
+			"title": "LIVE COMPILER",
+			"description": "No environment setup required. Write, test, and deploy Solana programs directly in our browser-based IDE with real-time feedback."
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "Available Operations",
+		"title": "LEARNING PATHS",
+		"viewAll": "View all tracks",
+		"tracks": {
+			"beginner": {
+				"path": "Path 01 // Beginner",
+				"title": "SOLANA FUNDAMENTALS",
+				"description": "Master the base layer. Accounts, transactions, and the Sealevel runtime.",
+				"meta": "12 MODULES // 40 XP"
+			},
+			"intermediate": {
+				"path": "Path 02 // Intermediate",
+				"title": "ANCHOR FRAMEWORK",
+				"description": "Rapid program development using the industry-standard Rust DSL.",
+				"meta": "8 MODULES // 120 XP"
+			},
+			"advanced": {
+				"path": "Path 03 // Advanced",
+				"title": "PROTOCOL SECURITY",
+				"description": "Audit techniques, common attack vectors, and invariant testing.",
+				"meta": "15 MODULES // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "SEARCH KEYWORDS: SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "ALL",
+			"dev": "DEV",
+			"defi": "DEFI",
+			"difficulty": "DIFFICULTY",
+			"duration": "DURATION",
+			"active": "ACTIVE FILTERS"
+		},
+		"curatedPaths": {
+			"title": "CURATED PATHS",
+			"subtitle": "RECOMMENDED SEQUENCES",
+			"tracks": {
+				"beginner": "BEGINNER TRACK",
+				"intermediate": "INTERMEDIATE TRACK",
+				"advanced": "ADVANCED SPECIALIZATION"
+			},
+			"modules": "COURSES",
+			"complete": "COMPLETE",
+			"startPath": "START PATH"
+		},
+		"individualCourses": {
+			"title": "INDIVIDUAL COURSES",
+			"sort": "SORT: POPULARITY"
+		},
+		"difficulty": {
+			"beginner": "BEGINNER",
+			"intermediate": "INTERMEDIATE",
+			"advanced": "ADVANCED",
+			"expert": "EXPERT"
+		},
+		"locked": "LOCKED",
+		"stats": {
+			"title": "SESSION STATS",
+			"totalXP": "TOTAL XP",
+			"coursesActive": "COURSES ACTIVE",
+			"completionRate": "COMPLETION RATE",
+			"certificates": "CERTIFICATES"
+		},
+		"lastAccessed": {
+			"title": "LAST ACCESSED",
+			"resume": "RESUME MODULE"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "Course Detail",
+			"instructor": "Instructor"
+		},
+		"metadata": {
+			"instructor": "Instructor",
+			"duration": "Duration",
+			"difficulty": "Difficulty"
+		},
+		"xpBounty": "XP Bounty",
+		"buttons": {
+			"enroll": "ENROLL NOW",
+			"enrolling": "ENROLLING...",
+			"continue": "CONTINUE COURSE",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "Curriculum",
+			"completion": "COMPLETION"
+		},
+		"reviews": {
+			"title": "Student Feedback",
+			"viewAll": "VIEW ALL REVIEWS"
+		},
+		"loading": "Loading Protocol Data...",
+		"errorLoading": "Error loading course data.",
+		"solveChallenge": "SOLVE CHALLENGE",
+		"hint": "HINT"
+	},
+	"Lesson": {
+		"reference": "REFERENCE",
+		"needHint": "NEED A HINT?",
+		"ago": "ago",
+		"autosaved": "AUTOSAVED",
+		"solution": "SOLUTION",
+		"output": "OUTPUT",
+		"runTests": "RUN TESTS",
+		"module": "MODULE",
+		"previous": "PREVIOUS",
+		"nextLesson": "NEXT LESSON",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "SOLVE CHALLENGE",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "HINT"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "Current Operations",
+			"title": "ACTIVE COURSES",
+			"progress": "PROGRESS",
+			"resume": "Resume",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "Next Targets",
+			"title": "RECOMMENDED TRACKS",
+			"enroll": "ENROLL",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "Log History",
+			"title": "RECENT ACTIVITY",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "OPERATOR PROFILE",
+			"xpBalance": "XP BALANCE",
+			"globalRank": "GLOBAL RANK",
+			"level": "LEVEL",
+			"xpToLevel": "XP TO LVL"
+		},
+		"streak": {
+			"title": "Active Streak",
+			"days": "D"
+		},
+		"achievements": {
+			"title": "Latest Achievements",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "OPERATOR_ID",
+		"enrolledSince": "ENROLLED SINCE",
+		"location": "LOC",
+		"skillRadar": {
+			"title": "APTITUDE_RADAR"
+		},
+		"achievements": {
+			"title": "ACHIEVEMENTS // SHOWCASE"
+		},
+		"credentials": {
+			"label": "ON-CHAIN_PROOFS",
+			"title": "EVOLVING cNFTs",
+			"verified": "VERIFIED",
+			"viewOnSolscan": "VIEW_ON_SOLSCAN"
+		},
+		"quickStats": {
+			"title": "QUICK_STATS",
+			"rank": "RANK",
+			"vouchers": "VOUCHERS"
+		},
+		"courseLedger": {
+			"title": "COURSE_LEDGER"
+		},
+		"metadata": {
+			"title": "METADATA.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "Global Ranking",
+			"title": "OPERATOR LEADERBOARD",
+			"updated": "Updated"
+		},
+		"filters": {
+			"weekly": "Weekly",
+			"monthly": "Monthly",
+			"allTime": "All-Time",
+			"allTracks": "FILTER: ALL TRACKS",
+			"rust": "RUST FUNDAMENTALS",
+			"solana": "SOLANA BASICS",
+			"anchor": "ANCHOR FRAMEWORK",
+			"cycle": "Cycle",
+			"stage": "Stage"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "LVL",
+			"streak": "D STREAK",
+			"you": "YOU"
+		},
+		"loadMore": "-- [ VIEW NEXT 50 OPERATORS ] --",
+		"userStanding": {
+			"title": "YOUR STANDING",
+			"globalRank": "GLOBAL RANK",
+			"percentile": "PERCENTILE",
+			"xpToFirst": "XP TO #1",
+			"rewards": "REWARDS",
+			"eligible": "ELIGIBLE"
+		},
+		"seasonalPrizes": {
+			"title": "SEASONAL PRIZES",
+			"topFinishers": "Top 3 Finishers:"
+		},
+		"activityFeed": {
+			"title": "Activity Feed"
+		}
+	},
+	"Wallet": {
+		"title": "Connect Wallet",
+		"detected": "DETECTED"
+	},
+	"Newsletter": {
+		"title": "Newsletter",
+		"description": "Get weekly technical updates and ecosystem opportunities delivered straight to your inbox.",
+		"placeholder": "OPERATOR@EMAIL.COM",
+		"button": "Subscribe"
+	},
+	"Auth": {
+		"login": {
+			"title": "Welcome Back",
+			"subtitle": "Access your operator dashboard and continue your progress.",
+			"emailPlaceholder": "Email Address",
+			"passwordPlaceholder": "Password",
+			"button": "Login via Email",
+			"authenticating": "Authenticating...",
+			"noAccount": "Don't have an account?",
+			"createLink": "Initialize Operator"
+		},
+		"signup": {
+			"title": "Initialize Operator",
+			"subtitle": "Begin your journey as a distinguished Solana architect.",
+			"emailPlaceholder": "Email Address",
+			"passwordPlaceholder": "Password",
+			"button": "Initialize via Email",
+			"initializing": "INITIALIZING...",
+			"web3Native": "Web3 Native",
+			"web3NativeDesc": "While you can initialize with social identity, true progression requires linking a secure Solana wallet operator.",
+			"hasAccount": "Already initialized?",
+			"loginLink": "Access Dashboard"
+		},
+		"shared": {
+			"brandingBadgeLogin": "Protocol Entrance",
+			"brandingTitleLogin": "FORGE YOUR\nFUTURE ON\nSOLANA",
+			"brandingDescLogin": "The premier technical training ground for the next generation of Solana architects. Move from zero to production-ready with our hardware-accelerated curriculum.",
+			"brandingBadgeSignup": "New Operator Initialization",
+			"brandingTitleSignup": "EARN YOUR\nON-CHAIN\nCREDENTIALS",
+			"brandingDescSignup": "Every module you complete issues a cryptographically verifiable proof of skill to your wallet. Build an unquestionable resume as you learn.",
+			"systemOnline": "SYSTEM ONLINE // TERMINAL ACCESS",
+			"orContinueWith": "OR CONTINUE WITH",
+			"accessProtocol": "Access Protocol",
+			"accessProtocolDesc": "Enter your email to sign in or create an account.",
+			"returningOperator": "// RETURNING OPERATOR — AUTHENTICATE",
+			"newOperator": "// NEW OPERATOR — INITIALIZING ACCOUNT",
+			"continue": "Continue"
+		},
+		"walletButton": {
+			"github": "Continue with GitHub",
+			"google": "Continue with Google",
+			"walletSignIn": "Sign In via Wallet",
+			"walletConnect": "Connect Wallet",
+			"authenticating": "Authenticating..."
+		}
+	},
+	"Onboarding": {
+		"badge": "OPERATOR INIT",
+		"brandingTitle": "INITIALIZE\nYOUR\nOPERATOR",
+		"brandingDesc": "Configure your profile to join the Solana builder network. Each step unlocks access to the full Academy protocol.",
+		"systemOnline": "SYSTEM_ONLINE — STEP",
+		"of": "of",
+		"steps": {
+			"identity": "Identity",
+			"signature": "Signature",
+			"profile": "Profile",
+			"learningPath": "Path",
+			"wallet": "Wallet"
+		},
+		"step1": {
+			"badge": "STEP 1 / 5",
+			"title": "Your Identity",
+			"subtitle": "Set your operator display name. This is how you'll appear on the leaderboard and profile.",
+			"namePlaceholder": "0xYourHandle",
+			"nameLabel": "Display Name",
+			"emailLabel": "Email (read-only)"
+		},
+		"step2": {
+			"badge": "STEP 2 / 5",
+			"title": "Neural Signature",
+			"subtitle": "Your digital identity is procedurally initialized. You can reroll your unique signature until it reaches optimal resonance.",
+			"reroll": "Reroll Signature",
+			"description": "This signature serves as your unique operator ID across the Academy protocol."
+		},
+		"step3": {
+			"badge": "STEP 3 / 5",
+			"title": "Your Profile",
+			"subtitle": "Tell the community who you are. All fields are optional.",
+			"bioPlaceholder": "Senior Solana architect. Building the decentralized future...",
+			"locationPlaceholder": "Location (e.g. BERLIN_DE)",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "GitHub username",
+			"websitePlaceholder": "Portfolio / website URL",
+			"skip": "Skip this step"
+		},
+		"step4": {
+			"badge": "STEP 4 / 5",
+			"title": "Learning Path",
+			"subtitle": "Select the tracks you want to master. Choose at least one.",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "Systems programming & performance"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Solana smart contract framework"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "Decentralized finance protocols"
+				},
+				"security": {
+					"label": "Security",
+					"desc": "Audit & vulnerability research"
+				},
+				"frontend": {
+					"label": "Frontend",
+					"desc": "Web3 dApp development"
+				}
+			}
+		},
+		"step5": {
+			"badge": "STEP 5 / 5",
+			"title": "Connect Wallet",
+			"subtitle": "Link a Solana wallet to receive on-chain credentials and XP. You can skip and connect later in settings.",
+			"externalLabel": "LINK EXTERNAL ACCOUNTS",
+			"linkGithub": "Link GitHub",
+			"linkGoogle": "Link Google",
+			"requiredFor": "REQUIRED FOR",
+			"requirements": [
+				"On-chain XP soulbound tokens",
+				"Metaplex Core credential NFTs",
+				"Course completion proofs"
+			],
+			"launch": "Launch Dashboard →",
+			"launching": "Initializing...",
+			"skip": "Skip wallet for now"
+		},
+		"nav": {
+			"back": "Back",
+			"next": "Next",
+			"continue": "Continue"
+		}
+	},
+	"Settings": {
+		"tabs": {
+			"profile": "Profile",
+			"account": "Account",
+			"interface": "Interface",
+			"privacy": "Privacy"
+		},
+		"view": {
+			"badge": "User Configuration",
+			"title": "SYSTEM SETTINGS"
+		},
+		"profile": {
+			"title": "Operator Profile",
+			"avatarHint": "Avatar is pulled from your connected OAuth provider (Google / GitHub).",
+			"nameLabel": "Display Name",
+			"namePlaceholder": "0xYourHandle",
+			"bioLabel": "Bio / Terminal Greeting",
+			"bioPlaceholder": "Senior Solana architect. Building the decentralized future...",
+			"locationLabel": "Location",
+			"locationPlaceholder": "BERLIN_DE",
+			"socialLabel": "Social Protocol Links",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "GitHub username",
+			"websitePlaceholder": "Portfolio / Website URL",
+			"save": "Save Profile",
+			"saving": "Saving...",
+			"saved": "Profile updated successfully."
+		},
+		"account": {
+			"title": "Account & Auth",
+			"emailLabel": "Primary Email",
+			"emailHint": "Email is managed via your auth provider.",
+			"walletsLabel": "Connected Wallets",
+			"oauthLabel": "OAuth Providers",
+			"active": "ACTIVE",
+			"linkWallet": "Link Wallet",
+			"linking": "Linking...",
+			"unlinking": "Unlinking...",
+			"unlink": "Unlink",
+			"link": "Link",
+			"walletLinked": "Wallet linked successfully.",
+			"walletUnlinked": "Wallet unlinked successfully.",
+			"walletError": "Error linking wallet. Make sure it isn't already attached to another account.",
+			"oauthError": "Failed to initiate {provider} link"
+		},
+		"interface": {
+			"title": "Interface Prefs",
+			"languageLabel": "System Language",
+			"themeLabel": "Terminal Theme",
+			"themeDesc": "Toggle between Light and Dark core",
+			"themeDark": "Dark Mode",
+			"themeLight": "Light Mode",
+			"notificationsLabel": "Notifications",
+			"newCourses": "New Course Releases",
+			"leaderboardAlerts": "Leaderboard Rank Alerts",
+			"directMessages": "Direct Messages",
+			"save": "Save Preferences",
+			"saving": "Saving...",
+			"saved": "Preferences saved."
+		},
+		"privacy": {
+			"title": "Privacy & Data",
+			"visibilityLabel": "Public Visibility",
+			"visibilityDesc": "Show profile on global leaderboard",
+			"dataArchiveLabel": "Data Archive",
+			"exportBtn": "↓ Export Operator Data (.JSON)",
+			"save": "Commit Privacy Settings",
+			"saving": "Saving...",
+			"saved": "Privacy settings saved.",
+			"exported": "Data exported successfully."
+		}
+	},
+	"Legal": {
+		"terms": {
+			"title": "TERMS OF SERVICE",
+			"lastUpdated": "LAST UPDATED: MARCH 04, 2026",
+			"sections": {
+				"01": {
+					"title": "01 // PROTOCOL ACCEPTANCE",
+					"content": "By accessing the Superteam Academy terminal, you agree to be bound by these Terms of Service. These terms constitute a legally binding agreement between you ('the Operator') and Superteam Academy regarding your access to and use of the protocol."
+				},
+				"02": {
+					"title": "02 // OPERATOR ELIGIBILITY",
+					"content": "Access to this terminal is restricted to individuals who can form legally binding contracts under applicable law. By using the protocol, you represent and warrant that you meet all eligibility requirements."
+				},
+				"03": {
+					"title": "03 // NEURAL SIGNATURE & SECURITY",
+					"content": "Superteam Academy utilizes cryptographic signatures for session management. You are solely responsible for maintaining the confidentiality and security of your private keys and connected wallet. Any operations performed via your signature are deemed to be authorized by you."
+				},
+				"04": {
+					"title": "04 // INTELLECTUAL PROPERTY",
+					"content": "All curricula, code templates, and proprietary protocols within the Academy are protected by intellectual property laws. Users are granted a limited, non-exclusive license to use these materials for educational purposes only."
+				},
+				"05": {
+					"title": "05 // PROHIBITED OPERATIONS",
+					"content": "Malicious exploitation of the protocol, automated scraping, or any attempt to circumvent gamification guards is strictly prohibited. Violation of these rules may result in permanent termination of your Operator ID."
+				},
+				"06": {
+					"title": "06 // ON-CHAIN FINALITY",
+					"content": "Operations involving the Solana blockchain are subject to sub-second finality. Superteam Academy cannot reverse on-chain transactions, gas fees (SOL), or permanent credential issuances."
+				},
+				"07": {
+					"title": "07 // LIMITATION OF LIABILITY",
+					"content": "Superteam Academy is provided 'as is' without warranties of any kind. We are not liable for any losses resulting from software bugs, network congestion, or wallet misconfigurations."
+				},
+				"08": {
+					"title": "08 // TERMINATION OF ACCESS",
+					"content": "We reserve the right to suspend or terminate access to the terminal at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other Operators."
+				}
+			}
+		},
+		"privacy": {
+			"title": "PRIVACY POLICY",
+			"lastUpdated": "LAST UPDATED: MARCH 04, 2026",
+			"sections": {
+				"01": {
+					"title": "01 // DATA CATEGORIZATION",
+					"content": "We collect two categories of data: (A) Public on-chain data associated with your wallet address, and (B) Operational metadata including session logs and level progression to facilitate the gamification engine."
+				},
+				"02": {
+					"title": "02 // USAGE PROTOCOLS",
+					"content": "Collected data is processed to generate your global ranking, track curriculum progress, and issue verified credentials. We do not sell operator data to third-party entities."
+				},
+				"03": {
+					"title": "03 // CRYPTOGRAPHIC STORAGE",
+					"content": "Sensitive profile data is stored using industry-standard encryption. Authentication is handled via Better Auth, ensuring your neural signature remains secure and decentralized."
+				},
+				"04": {
+					"title": "04 // ANALYTICS & MONITORING",
+					"content": "To improve the UX, we utilize PostHog for event tracking and Sentry for error logging. These services gather anonymized operational data to help us optimize the terminal environment."
+				},
+				"05": {
+					"title": "05 // OPERATOR RIGHTS",
+					"content": "You retain the right to export your operator data packet (.json) at any time via the system settings. You may also request the deletion of your off-chain profile metadata."
+				},
+				"06": {
+					"title": "06 // POLICY EVOLUTION",
+					"content": "As the protocol scales, this Privacy Policy may evolve. Significant changes will be announced via the terminal's global broadcast system."
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "CHALLENGES",
+		"subtitle": "Standalone coding challenges to sharpen your Solana skills.",
+		"badge": "CHALLENGE ARENA",
+		"hero": {
+			"liveLabel": "LIVE CHALLENGE",
+			"startBtn": "START CHALLENGE →",
+			"completed": "✓ COMPLETED",
+			"unknownDifficulty": "UNKNOWN"
+		},
+		"sections": {
+			"updatingMissions": "UPDATING MISSIONS",
+			"allMissions": "ALL MISSIONS"
+		},
+		"card": {
+			"startBtn": "START CHALLENGE →",
+			"completed": "✓ COMPLETED",
+			"releases": "RELEASES:"
+		},
+		"filters": {
+			"all": "All",
+			"fundamentals": "Fundamentals",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "Frontend",
+			"security": "Security",
+			"tokenExtensions": "Token Extensions",
+			"beginner": "BEGINNER",
+			"intermediate": "INTERMEDIATE",
+			"advanced": "ADVANCED"
+		},
+		"emptyState": "No missions found with current filters."
+	}
+}

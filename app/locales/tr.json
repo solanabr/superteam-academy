@@ -1,0 +1,622 @@
+{
+	"Hero": {
+		"badge": "Terminal Erişimi Onaylandı",
+		"title": "SOLANA'DA\nGELECEĞİNİ\nŞEKİLLENDİR",
+		"description": "Yeni nesil Solana mimarları için önde gelen teknik eğitim alanı. Donanım hızlandırmalı müfredatımızla sıfırdan üretime hazır hale gelin.",
+		"explore": "Kursları Keşfet",
+		"discord": "Discord'a Katıl"
+	},
+	"StatsStrip": {
+		"activeStudents": "Aktif Öğrenciler",
+		"nodesValidated": "Doğrulanan Düğümler",
+		"bountiesWon": "Kazanılan Ödüller",
+		"jobPlacements": "İşe Yerleştirmeler"
+	},
+	"Testimonials": {
+		"sectionLabel": "Öğrenci İstihbarat Raporu"
+	},
+	"Navbar": {
+		"brand": "SUPERTEAM AKADEMİSİ",
+		"links": {
+			"catalog": "Kurs Kataloğu",
+			"leaderboard": "Sıralama Cetveli",
+			"community": "Topluluk"
+		},
+		"cta": {
+			"dashboard": "Kontrol Paneli",
+			"start": "Öğrenmeye Başla",
+			"login": "Giriş Yap / Kayıt Ol"
+		}
+	},
+	"Footer": {
+		"brand": "SUPERTEAM AKADEMİSİ",
+		"description": "Solana ekosistemi için merkeziyetsiz üniversite. Öğrencilere aittir.",
+		"language": "Dil:",
+		"copyright": "© 2026 Superteam Akademisi // Tüm hakları saklıdır",
+		"headers": {
+			"platform": "Platform",
+			"socials": "Sosyal Medya"
+		},
+		"links": {
+			"catalog": "Katalog",
+			"leaderboard": "Liderlik Tablosu",
+			"dashboard": "Kontrol Paneli",
+			"profile": "Profil",
+			"terms": "Kullanım Koşulları",
+			"privacy": "Gizlilik"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "ON-CHAIN KANITLAR",
+			"description": "Tamamladığınız her modül cüzdanınıza transfer edilemez bir kimlik bilgisi verir. Öğrenirken kriptografik olarak doğrulanabilir bir özgeçmiş oluşturun."
+		},
+		"compiler": {
+			"title": "CANLI DERLEYİCİ",
+			"description": "Ortam kurulumuna gerek yok. Gerçek zamanlı geri bildirimle tarayıcı tabanlı IDE'mizde doğrudan Solana programları yazın, test edin ve dağıtın."
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "Mevcut Operasyonlar",
+		"title": "ÖĞRENİM YOLLARI",
+		"viewAll": "Tüm programları görüntüle",
+		"tracks": {
+			"beginner": {
+				"path": "Yol 01 // Başlangıç",
+				"title": "SOLANA TEMELLERİ",
+				"description": "Temel katmanda uzmanlaşın. Hesaplar, işlemler ve Sealevel çalışma zamanı.",
+				"meta": "12 MODÜL // 40 XP"
+			},
+			"intermediate": {
+				"path": "Yol 02 // Orta Seviye",
+				"title": "ANCHOR ÇERÇEVESİ",
+				"description": "Endüstri standardı Rust DSL kullanarak hızlı program geliştirme.",
+				"meta": "8 MODÜL // 120 XP"
+			},
+			"advanced": {
+				"path": "Yol 03 // İleri Seviye",
+				"title": "PROTOKOL GÜVENLİĞİ",
+				"description": "Denetim teknikleri, yaygın saldırı vektörleri ve değişmez testleri.",
+				"meta": "15 MODÜL // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "ARAMA KELİMELERİ: SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "TÜMÜ",
+			"dev": "GELİŞTİRME",
+			"defi": "DEFI",
+			"difficulty": "ZORLUK",
+			"duration": "SÜRE",
+			"active": "AKTİF FİLTRELER"
+		},
+		"curatedPaths": {
+			"title": "ÖZEL YOLLAR",
+			"subtitle": "ÖNERİLEN DİZİLER",
+			"tracks": {
+				"beginner": "BAŞLANGIÇ PROGRAMI",
+				"intermediate": "ORTA SEVİYE PROGRAM",
+				"advanced": "İLERİ SEVİYE UZMANLIK"
+			},
+			"modules": "KURSLAR",
+			"complete": "TAMAMLANDI",
+			"startPath": "YOLA BAŞLA"
+		},
+		"individualCourses": {
+			"title": "BİREYSEL KURSLAR",
+			"sort": "SIRALAMA: POPÜLERLİK"
+		},
+		"difficulty": {
+			"beginner": "BAŞLANGIÇ",
+			"intermediate": "ORTA SEVİYE",
+			"advanced": "İLERİ SEVİYE",
+			"expert": "UZMAN"
+		},
+		"locked": "KİLİTLİ",
+		"stats": {
+			"title": "OTURUM İSTATİSTİKLERİ",
+			"totalXP": "TOPLAM XP",
+			"coursesActive": "AKTİF KURSLAR",
+			"completionRate": "TAMAMLANMA ORANI",
+			"certificates": "SERTİFİKALAR"
+		},
+		"lastAccessed": {
+			"title": "SON ERİŞİLEN",
+			"resume": "MODÜLE DEVAM ET"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "Kurs Detayı",
+			"instructor": "Eğitmen"
+		},
+		"metadata": {
+			"instructor": "Eğitmen",
+			"duration": "Süre",
+			"difficulty": "Zorluk"
+		},
+		"xpBounty": "XP Ödülü",
+		"buttons": {
+			"enroll": "ŞİMDİ KAYDOL",
+			"enrolling": "KAYIT OLUNUYOR...",
+			"continue": "KURSA DEVAM ET",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "Müfredat",
+			"completion": "TAMAMLANMA"
+		},
+		"reviews": {
+			"title": "Öğrenci Geri Bildirimi",
+			"viewAll": "TÜM YORUMLARI GÖRÜNTÜLE"
+		},
+		"loading": "Protokol verileri yükleniyor...",
+		"errorLoading": "Kurs verileri yüklenirken hata oluştu.",
+		"solveChallenge": "MEYDAN OKUMAYI ÇÖZ",
+		"hint": "İPUCU"
+	},
+	"Lesson": {
+		"reference": "REFERANS",
+		"needHint": "İPUCUNA İHTİYACIN VAR MI?",
+		"ago": "önce",
+		"autosaved": "OTOMATİK KAYDEDİLDİ",
+		"solution": "ÇÖZÜM",
+		"output": "ÇIKTI",
+		"runTests": "TESTLERİ ÇALIŞTIR",
+		"module": "MODÜL",
+		"previous": "ÖNCEKİ",
+		"nextLesson": "SONRAKİ DERS",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "MEYDAN OKUMAYI ÇÖZ",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "İPUCU"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "Mevcut Operasyonlar",
+			"title": "AKTİF KURSLAR",
+			"progress": "İLERLEME",
+			"resume": "Devam Et",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "Sonraki Hedefler",
+			"title": "ÖNERİLEN PROGRAMLAR",
+			"enroll": "KAYIT OL",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "Log Geçmişi",
+			"title": "SON AKTİVİTE",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "OPERATÖR PROFİLİ",
+			"xpBalance": "XP BAKİYESİ",
+			"globalRank": "KÜRESEL SIRA",
+			"level": "SEVİYE",
+			"xpToLevel": "SEVİYE İÇİN XP"
+		},
+		"streak": {
+			"title": "Aktif Seri",
+			"days": "G"
+		},
+		"achievements": {
+			"title": "Son Başarılar",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "OPERATÖR_ID",
+		"enrolledSince": "KAYIT TARİHİ",
+		"location": "KONUM",
+		"skillRadar": {
+			"title": "YETENEK_RADARI"
+		},
+		"achievements": {
+			"title": "BAŞARILAR // VİTRİN"
+		},
+		"credentials": {
+			"label": "ON-CHAIN_KANITLAR",
+			"title": "GELİŞEN cNFT'LER",
+			"verified": "DOĞRULANDI",
+			"viewOnSolscan": "SOLSCAN'DA_GÖRÜNTÜLE"
+		},
+		"quickStats": {
+			"title": "HIZLI_İSTATİSTİKLER",
+			"rank": "SIRA",
+			"vouchers": "KUPONLAR"
+		},
+		"courseLedger": {
+			"title": "KURS_DEFTERİ"
+		},
+		"metadata": {
+			"title": "METADATA.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "Küresel Sıralama",
+			"title": "OPERATÖR LİDERLİK TABLOSU",
+			"updated": "Güncellendi"
+		},
+		"filters": {
+			"weekly": "Haftalık",
+			"monthly": "Aylık",
+			"allTime": "Tüm Zamanlar",
+			"allTracks": "FİLTRE: TÜM PROGRAMLAR",
+			"rust": "RUST TEMELLERİ",
+			"solana": "SOLANA TEMELLERİ",
+			"anchor": "ANCHOR ÇERÇEVESİ",
+			"cycle": "Döngü",
+			"stage": "Aşama"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "LVL",
+			"streak": "G SERİ",
+			"you": "SEN"
+		},
+		"loadMore": "--[ SONRAKİ 50 OPERATÖRÜ GÖRÜNTÜLE ] --",
+		"userStanding": {
+			"title": "SİZİN DURUMUNUZ",
+			"globalRank": "KÜRESEL SIRA",
+			"percentile": "YÜZDELİK",
+			"xpToFirst": "#1 İÇİN XP",
+			"rewards": "ÖDÜLLER",
+			"eligible": "UYGUN"
+		},
+		"seasonalPrizes": {
+			"title": "SEZONLUK ÖDÜLLER",
+			"topFinishers": "İlk 3 Kazanan:"
+		},
+		"activityFeed": {
+			"title": "Aktivite Akışı"
+		}
+	},
+	"Wallet": {
+		"title": "Cüzdanı Bağla",
+		"detected": "ALGILANDI"
+	},
+	"Newsletter": {
+		"title": "Bülten",
+		"description": "Haftalık teknik güncellemeleri ve ekosistem fırsatlarını doğrudan gelen kutunuza alın.",
+		"placeholder": "OPERATOR@EMAIL.COM",
+		"button": "Abone Ol"
+	},
+	"Auth": {
+		"login": {
+			"title": "Tekrar Hoş Geldiniz",
+			"subtitle": "Operatör kontrol panelinize erişin ve ilerlemenize devam edin.",
+			"emailPlaceholder": "E-posta Adresi",
+			"passwordPlaceholder": "Şifre",
+			"button": "E-posta ile Giriş Yap",
+			"authenticating": "Doğrulanıyor...",
+			"noAccount": "Hesabınız yok mu?",
+			"createLink": "Operatörü Başlat"
+		},
+		"signup": {
+			"title": "Operatörü Başlat",
+			"subtitle": "Seçkin bir Solana mimarı olarak yolculuğunuza başlayın.",
+			"emailPlaceholder": "E-posta Adresi",
+			"passwordPlaceholder": "Şifre",
+			"button": "E-posta ile Başlat",
+			"initializing": "BAŞLATILIYOR...",
+			"web3Native": "Web3 Yerel",
+			"web3NativeDesc": "Sosyal kimlikle başlatabilseniz de gerçek ilerleme güvenli bir Solana cüzdanını bağlamanızı gerektirir.",
+			"hasAccount": "Zaten başlatıldı mı?",
+			"loginLink": "Kontrol Paneline Eriş"
+		},
+		"shared": {
+			"brandingBadgeLogin": "Protokol Girişi",
+			"brandingTitleLogin": "SOLANA'DA\nGELECEĞİNİ\nŞEKİLLENDİR",
+			"brandingDescLogin": "Yeni nesil Solana mimarları için önde gelen teknik eğitim alanı. Donanım hızlandırmalı müfredatımızla sıfırdan üretime hazır hale gelin.",
+			"brandingBadgeSignup": "Yeni Operatör Başlatma",
+			"brandingTitleSignup": "ON-CHAIN\nKİMLİKLERİNİZİ KAZANIN",
+			"brandingDescSignup": "Tamamladığınız her modül cüzdanınıza kriptografik olarak doğrulanabilir bir yetenek kanıtı verir.",
+			"systemOnline": "SİSTEM ÇEVRİMİÇİ // TERMİNAL ERİŞİMİ",
+			"orContinueWith": "VEYA ŞUNUNLA DEVAM ET",
+			"accessProtocol": "Erişim Protokolü",
+			"accessProtocolDesc": "Giriş yapmak veya hesap oluşturmak için e-postanızı girin.",
+			"returningOperator": "// GERİ DÖNEN OPERATÖR — DOĞRULAMA",
+			"newOperator": "// YENİ OPERATÖR — HESAP BAŞLATILIYOR",
+			"continue": "Devam Et"
+		},
+		"walletButton": {
+			"github": "GitHub ile Devam Et",
+			"google": "Google ile Devam Et",
+			"walletSignIn": "Cüzdan ile Giriş Yap",
+			"walletConnect": "Cüzdanı Bağla",
+			"authenticating": "Doğrulanıyor..."
+		}
+	},
+	"Onboarding": {
+		"badge": "OPERATÖR INIT",
+		"brandingTitle": "OPERATÖRÜNÜZÜ\nBAŞLATIN",
+		"brandingDesc": "Solana ağ oluşturucularına katılmak için profilinizi yapılandırın. Her adım, tam Akademi protokolüne erişimin kilidini açar.",
+		"systemOnline": "SİSTEM_ÇEVRİMİÇİ — ADIM",
+		"of": "/",
+		"steps": {
+			"identity": "Kimlik",
+			"signature": "İmza",
+			"profile": "Profil",
+			"learningPath": "Yol",
+			"wallet": "Cüzdan"
+		},
+		"step1": {
+			"badge": "ADIM 1 / 5",
+			"title": "Kimliğiniz",
+			"subtitle": "Operatör görünen adınızı ayarlayın. Liderlik tablosunda ve profilde bu şekilde görüneceksiniz.",
+			"namePlaceholder": "0xKullaniciAdiniz",
+			"nameLabel": "Görünen Ad",
+			"emailLabel": "E-posta (salt okunur)"
+		},
+		"step2": {
+			"badge": "ADIM 2 / 5",
+			"title": "Nöral İmza",
+			"subtitle": "Dijital kimliğiniz prosedürel olarak başlatılır. Optimal rezonansa ulaşana kadar benzersiz imzanızı yeniden oluşturabilirsiniz.",
+			"reroll": "İmzayı Yeniden Oluştur",
+			"description": "Bu imza, Akademi protokolünde benzersiz operatör ID'niz olarak hizmet eder."
+		},
+		"step3": {
+			"badge": "ADIM 3 / 5",
+			"title": "Profiliniz",
+			"subtitle": "Topluluğa kim olduğunuzu anlatın. Tüm alanlar isteğe bağlıdır.",
+			"bioPlaceholder": "Kıdemli Solana mimarı. Merkeziyetsiz geleceği inşa ediyorum...",
+			"locationPlaceholder": "Konum (örn. ISTANBUL_TR)",
+			"twitterPlaceholder": "X / Twitter @kullaniciadi",
+			"githubPlaceholder": "GitHub kullanıcı adı",
+			"websitePlaceholder": "Portföy / web sitesi URL'si",
+			"skip": "Bu adımı atla"
+		},
+		"step4": {
+			"badge": "ADIM 4 / 5",
+			"title": "Öğrenim Yolu",
+			"subtitle": "Uzmanlaşmak istediğiniz programları seçin. En az birini seçin.",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "Sistem programlama ve performans"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Solana akıllı sözleşme çerçevesi"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "Merkeziyetsiz finans protokolleri"
+				},
+				"security": {
+					"label": "Güvenlik",
+					"desc": "Denetim ve güvenlik açığı araştırması"
+				},
+				"frontend": {
+					"label": "Frontend",
+					"desc": "Web3 dApp geliştirme"
+				}
+			}
+		},
+		"step5": {
+			"badge": "ADIM 5 / 5",
+			"title": "Cüzdanı Bağla",
+			"subtitle": "On-chain kimlik bilgileri ve XP almak için bir Solana cüzdanı bağlayın. Atlayıp daha sonra ayarlardan bağlayabilirsiniz.",
+			"externalLabel": "DIŞ HESAPLARI BAĞLA",
+			"linkGithub": "GitHub Bağla",
+			"linkGoogle": "Google Bağla",
+			"requiredFor": "ŞUNLAR İÇİN GEREKLİ",
+			"requirements": [
+				"On-chain XP soulbound token'ları",
+				"Metaplex Core kimlik bilgisi NFT'leri",
+				"Kurs tamamlama kanıtları"
+			],
+			"launch": "Kontrol Panelini Başlat →",
+			"launching": "Başlatılıyor...",
+			"skip": "Cüzdanı şimdilik atla"
+		},
+		"nav": {
+			"back": "Geri",
+			"next": "İleri",
+			"continue": "Devam Et"
+		}
+	},
+	"Settings": {
+		"tabs": {
+			"profile": "Profil",
+			"account": "Hesap",
+			"interface": "Arayüz",
+			"privacy": "Gizlilik"
+		},
+		"view": {
+			"badge": "Kullanıcı Yapılandırması",
+			"title": "SİSTEM AYARLARI"
+		},
+		"profile": {
+			"title": "Operatör Profili",
+			"avatarHint": "Avatar, bağlı OAuth sağlayıcınızdan (Google / GitHub) çekilir.",
+			"nameLabel": "Görünen Ad",
+			"namePlaceholder": "0xKullaniciAdiniz",
+			"bioLabel": "Biyografi / Terminal Karşılaması",
+			"bioPlaceholder": "Kıdemli Solana mimarı. Merkeziyetsiz geleceği inşa ediyorum...",
+			"locationLabel": "Konum",
+			"locationPlaceholder": "ISTANBUL_TR",
+			"socialLabel": "Sosyal Protokol Bağlantıları",
+			"twitterPlaceholder": "X / Twitter @kullaniciadi",
+			"githubPlaceholder": "GitHub kullanıcı adı",
+			"websitePlaceholder": "Portföy / Web sitesi URL'si",
+			"save": "Profili Kaydet",
+			"saving": "Kaydediliyor...",
+			"saved": "Profil başarıyla güncellendi."
+		},
+		"account": {
+			"title": "Hesap ve Kimlik Doğrulama",
+			"emailLabel": "Birincil E-posta",
+			"emailHint": "E-posta, yetkilendirme sağlayıcınız aracılığıyla yönetilir.",
+			"walletsLabel": "Bağlı Cüzdanlar",
+			"oauthLabel": "OAuth Sağlayıcıları",
+			"active": "AKTİF",
+			"linkWallet": "Cüzdan Bağla",
+			"linking": "Bağlanıyor...",
+			"unlinking": "Bağlantı Kesiliyor...",
+			"unlink": "Bağlantıyı Kes",
+			"link": "Bağla",
+			"walletLinked": "Cüzdan başarıyla bağlandı.",
+			"walletUnlinked": "Cüzdan bağlantısı başarıyla kesildi.",
+			"walletError": "Cüzdan bağlanırken hata oluştu.",
+			"oauthError": "{provider} bağlantısı başlatılamadı"
+		},
+		"interface": {
+			"title": "Arayüz Tercihleri",
+			"languageLabel": "Sistem Dili",
+			"themeLabel": "Terminal Teması",
+			"themeDesc": "Aydınlık ve Karanlık çekirdek arasında geçiş yapın",
+			"themeDark": "Karanlık Mod",
+			"themeLight": "Aydınlık Mod",
+			"notificationsLabel": "Bildirimler",
+			"newCourses": "Yeni Kurs Yayınları",
+			"leaderboardAlerts": "Liderlik Tablosu Sıra Uyarıları",
+			"directMessages": "Doğrudan Mesajlar",
+			"save": "Tercihleri Kaydet",
+			"saving": "Kaydediliyor...",
+			"saved": "Tercihler kaydedildi."
+		},
+		"privacy": {
+			"title": "Gizlilik ve Veri",
+			"visibilityLabel": "Genel Görünürlük",
+			"visibilityDesc": "Profili küresel liderlik tablosunda göster",
+			"dataArchiveLabel": "Veri Arşivi",
+			"exportBtn": "↓ Operatör Verilerini Dışa Aktar (.JSON)",
+			"save": "Gizlilik Ayarlarını İşle",
+			"saving": "Kaydediliyor...",
+			"saved": "Gizlilik ayarları kaydedildi.",
+			"exported": "Veriler başarıyla dışa aktarıldı."
+		}
+	},
+	"Legal": {
+		"terms": {
+			"title": "KULLANIM KOŞULLARI",
+			"lastUpdated": "SON GÜNCELLEME: 04 MART 2026",
+			"sections": {
+				"01": {
+					"title": "01 // PROTOKOL KABULÜ",
+					"content": "Superteam Academy terminaline erişerek bu Kullanım Koşullarına bağlı kalmayı kabul etmiş olursunuz. Bu koşullar, terminale erişiminiz ve protokolü kullanımınızla ilgili olarak siz ('Operatör') ve Superteam Academy arasında yasal olarak bağlayıcı bir anlaşma oluşturur."
+				},
+				"02": {
+					"title": "02 // OPERATÖR UYGUNLUĞU",
+					"content": "Bu terminale erişim, yürürlükteki yasalar uyarınca yasal olarak bağlayıcı sözleşmeler yapabilen bireylerle sınırlıdır. Protokolü kullanarak, tüm uygunluk gereksinimlerini karşıladığınızı beyan ve taahhüt edersiniz."
+				},
+				"03": {
+					"title": "03 // NÖRAL İMZA VE GÜVENLİK",
+					"content": "Superteam Academy, oturum yönetimi için kriptografik imzalar kullanır. Özel anahtarlarınızın ve bağlı cüzdanınızın gizliliğini ve güvenliğini korumaktan yalnızca siz sorumlusunuz. İmzanız aracılığıyla gerçekleştirilen her türlü işlem, sizin tarafınızdan yetkilendirilmiş sayılacaktır."
+				},
+				"04": {
+					"title": "04 // FİKRİ MÜLKİYET",
+					"content": "Akademi bünyesindeki tüm müfredatlar, kod şablonları ve tescilli protokoller fikri mülkiyet yasalarıyla korunmaktadır. Kullanıcılara, bu materyalleri yalnızca eğitim amaçlı kullanmaları için sınırlı, münhasır olmayan bir lisans verilir."
+				},
+				"05": {
+					"title": "05 // YASAKLI İŞLEMLER",
+					"content": "Protokolün kötü niyetli istismarı, otomatik veri kazıma veya oyunlaştırma korumalarını atlatmaya yönelik herhangi bir girişim kesinlikle yasaktır. Bu kuralların ihlali, Operatör Kimliğinizin kalıcı olarak iptal edilmesine neden olabilir."
+				},
+				"06": {
+					"title": "06 // ZİNCİR ÜZERİ KESİNLİK",
+					"content": "Solana blok zincirini içeren işlemler saniyenin altında kesinliğe tabidir. Superteam Academy zincir içi işlemleri, gas ücretlerini (SOL) veya kalıcı sertifika düzenlemelerini geri alamaz."
+				},
+				"07": {
+					"title": "07 // SORUMLULUK SINIRLAMASI",
+					"content": "Superteam Academy 'olduğu gibi' sunulmaktadır. Yazılım hataları, ağ tıkanıklığı veya cüzdan yanlış yapılandırmalarından kaynaklanan hiçbir kayıptan sorumlu değiliz."
+				},
+				"08": {
+					"title": "08 // ERİŞİMİN SONLANDIRILMASI",
+					"content": "Bu Koşulları ihlal ettiğine veya diğer Operatörlere zarar verdiğine inandığımız davranışlar için, tamamen kendi takdirimize bağlı olarak, önceden bildirimde bulunmaksızın terminale erişimi askıya alma veya sonlandırma hakkını saklı tutarız."
+				}
+			}
+		},
+		"privacy": {
+			"title": "GİZLİLİK POLİTİKASI",
+			"lastUpdated": "SON GÜNCELLEME: 04 MART 2026",
+			"sections": {
+				"01": {
+					"title": "01 // VERİ KATEGORİZASYONU",
+					"content": "İki kategori veri topluyoruz: (A) Cüzdan adresinizle ilişkili herkese açık zincir içi veriler ve (B) oyunlaştırma motorunu kolaylaştırmak için oturum günlükleri ve seviye ilerlemesini içeren operasyonel meta veriler."
+				},
+				"02": {
+					"title": "02 // KULLANIM PROTOKOLLERİ",
+					"content": "Toplanan veriler, küresel sıralamanızı oluşturmak, müfredat ilerlemesini izlemek ve doğrulanmış kimlik bilgileri düzenlemek için işlenir. Operatör verilerini Android şahıslara satmıyoruz."
+				},
+				"03": {
+					"title": "03 // KRİPTOGRAFİK DEPOLAMA",
+					"content": "Hassas profil verileri endüstri standardı şifreleme kullanılarak saklanır. Kimlik doğrulama, Better Auth aracılığıyla gerçekleştirilir ve nöral imzanızın güvenli ve merkeziyetsiz kalmasını sağlar."
+				},
+				"04": {
+					"title": "04 // ANALİZ VE İZLEME",
+					"content": "Kullanıcı deneyimini (UX) iyileştirmek için etkinlik izleme için PostHog'u ve hata günlüğü için Sentry'yi kullanıyoruz. Bu hizmetler, terminal ortamını optimize etmemize yardımcı olmak için anonimleştirilmiş operasyonel veriler toplar."
+				},
+				"05": {
+					"title": "05 // OPERATÖR HAKLARI",
+					"content": "Operatör veri paketinizi (.json) sistem ayarları aracılığıyla istediğiniz zaman dışa aktarma hakkınız saklıdır. Ayrıca zincir dışı profil meta verilerinizin silinmesini talep edebilirsiniz."
+				},
+				"06": {
+					"title": "06 // POLİTİKA EVRİMİ",
+					"content": "Protokol ölçeklendikçe bu Gizlilik Politikası gelişebilir. Önemli değişiklikler terminalin küresel yayın sistemi aracılığıyla duyurulacaktır."
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "MÜSABAKALAR",
+		"subtitle": "Solana becerilerinizi geliştirmek için bağımsız kodlama müsabakaları.",
+		"badge": "MÜSABAKA ARENASI",
+		"hero": {
+			"liveLabel": "CANLI MÜSABAKA",
+			"startBtn": "MÜSABAKAYI BAŞLAT →",
+			"completed": "✓ TAMAMLANDI",
+			"unknownDifficulty": "BİLİNMİYOR"
+		},
+		"sections": {
+			"updatingMissions": "GÖREVLER GÜNCELLENİYOR",
+			"allMissions": "TÜM GÖREVLER"
+		},
+		"card": {
+			"startBtn": "MÜSABAKAYI BAŞLAT →",
+			"completed": "✓ TAMAMLANDI",
+			"releases": "YAYINLANMA:"
+		},
+		"filters": {
+			"all": "Hepsi",
+			"fundamentals": "Temeller",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "Ön Yüz",
+			"security": "Güvenlik",
+			"tokenExtensions": "Token Uzantıları",
+			"beginner": "BAŞLANGIÇ",
+			"intermediate": "ORTA",
+			"advanced": "İLERİ"
+		},
+		"emptyState": "Mevcut filtrelerle görev bulunamadı."
+	}
+}
