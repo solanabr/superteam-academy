@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
             try {
                if (!user.email) return false;
 
-               // Use our UserService to find or create this user in LowDB
+               // Use our UserService to find or create this user in MongoDB
                let githubUsername: string | undefined;
                if (account?.provider === "github") {
                   const githubProfile = profile as any;

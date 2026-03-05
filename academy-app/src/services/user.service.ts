@@ -1,7 +1,5 @@
 import { sign, verify } from "jsonwebtoken";
-import { JSONFilePreset } from 'lowdb/node';
-import path from 'path';
-import fs from 'fs';
+import clientPromise from '../lib/mongodb';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback_secret_for_development";
 const JWT_EXPIRES_IN = "7d";
@@ -42,55 +40,40 @@ export interface XPLedgerRecord {
    timestamp: string; // ISO Date String
 }
 
-type DatabaseSchema = {
-   users: UserDBRecord[];
-   xpHistory: XPLedgerRecord[];
-}
-
 export class UserService {
-   // LowDB instance promise
-   private dbPromise: ReturnType<typeof JSONFilePreset<DatabaseSchema>>;
-
-   constructor() {
-      // Ensure data directory exists
-      const dataDir = path.join(process.cwd(), '.data');
-      if (!fs.existsSync(dataDir)) {
-         fs.mkdirSync(dataDir, { recursive: true });
-      }
-
-      const file = path.join(dataDir, 'db.json');
-      const defaultData: DatabaseSchema = { users: [], xpHistory: [] };
-      this.dbPromise = JSONFilePreset(file, defaultData);
+   private async getCollection(colName: string) {
+      const client = await clientPromise;
+      const db = client.db();
+      return db.collection(colName);
    }
 
-   /**
-    * Returns the initialized LowDB instance
-    */
-   private async getDb() {
-      return await this.dbPromise;
-   }
-
-   /**
-    * MOCK DATABASE: In a real implementation, this would be Prisma, Drizzle, or Mongoose.
-    * Currently powered by LowDB for JSON persistence.
-    */
    public async getUser(id: string): Promise<UserDBRecord | null> {
-      const db = await this.getDb();
-      return db.data.users.find(u => u.id === id) || null;
+      const col = await this.getCollection('users');
+      return await col.findOne({ id }) as unknown as UserDBRecord | null;
    }
 
    public async getUserByEmail(email: string): Promise<UserDBRecord | null> {
-      const db = await this.getDb();
-      return db.data.users.find(u => u.email === email) || null;
+      const col = await this.getCollection('users');
+      return await col.findOne({ email }) as unknown as UserDBRecord | null;
    }
 
    public async getUserByWallet(publicKey: string): Promise<UserDBRecord | null> {
-      const db = await this.getDb();
-      return db.data.users.find(u => u.publicKey === publicKey) || null;
+      const col = await this.getCollection('users');
+      return await col.findOne({ publicKey }) as unknown as UserDBRecord | null;
+   }
+
+   public async getAllUsers(): Promise<UserDBRecord[]> {
+      const col = await this.getCollection('users');
+      return await col.find({}).toArray() as unknown as UserDBRecord[];
+   }
+
+   public async getAllXpHistory(): Promise<XPLedgerRecord[]> {
+      const col = await this.getCollection('xpHistory');
+      return await col.find({}).toArray() as unknown as XPLedgerRecord[];
    }
 
    private async dbCreateUser(data: Partial<UserDBRecord>): Promise<UserDBRecord> {
-      const db = await this.getDb();
+      const col = await this.getCollection('users');
       const newUser: UserDBRecord = {
          id: `usr_${Date.now()}`,
          level: 0,
@@ -103,30 +86,29 @@ export class UserService {
          updatedAt: new Date(),
       } as UserDBRecord;
 
-      db.data.users.push(newUser);
-      await db.write();
-
+      await col.insertOne(newUser);
       return newUser;
    }
 
    public async updateUser(id: string, data: Partial<UserDBRecord>): Promise<UserDBRecord> {
-      const db = await this.getDb();
-      const userIndex = db.data.users.findIndex(u => u.id === id);
+      const col = await this.getCollection('users');
 
-      if (userIndex === -1) {
+      const updatedDoc = await col.findOneAndUpdate(
+         { id },
+         {
+            $set: {
+               ...data,
+               updatedAt: new Date(),
+            }
+         },
+         { returnDocument: 'after' }
+      );
+
+      if (!updatedDoc) {
          throw new Error(`User with ID ${id} not found`);
       }
 
-      const updatedUser = {
-         ...db.data.users[userIndex],
-         ...data,
-         updatedAt: new Date(),
-      };
-
-      db.data.users[userIndex] = updatedUser;
-      await db.write();
-
-      return updatedUser;
+      return updatedDoc as unknown as UserDBRecord;
    }
 
    public async trackActivity(userId: string): Promise<UserDBRecord> {
@@ -286,7 +268,7 @@ export class UserService {
     * RECORDS XP EVENT TO THE LEDGER
     */
    public async trackXpReward(userId: string, courseId: string, xpAmount: number, wallet?: string): Promise<XPLedgerRecord> {
-      const db = await this.getDb();
+      const col = await this.getCollection('xpHistory');
 
       const record: XPLedgerRecord = {
          id: `xp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
@@ -297,13 +279,7 @@ export class UserService {
          timestamp: new Date().toISOString()
       };
 
-      // Ensure array exists (migration safety for existing DBs)
-      if (!db.data.xpHistory) {
-         db.data.xpHistory = [];
-      }
-
-      db.data.xpHistory.push(record);
-      await db.write();
+      await col.insertOne(record);
 
       console.log(`[XP Ledger] Mined ${xpAmount} XP for user ${userId} in course ${courseId}`);
       return record;

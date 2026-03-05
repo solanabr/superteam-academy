@@ -43,6 +43,7 @@
     "jsonwebtoken": "^9.0.3",
     "lowdb": "^7.0.1",
     "lucide-react": "^0.575.0",
+    "mongodb": "^7.1.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "next-intl": "^4.8.3",

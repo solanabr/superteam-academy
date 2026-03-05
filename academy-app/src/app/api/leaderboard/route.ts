@@ -21,9 +21,8 @@ export async function GET(req: Request) {
       const period = searchParams.get("period") as "weekly" | "monthly" | "all-time" || "all-time";
       const courseId = searchParams.get("course") || "all";
 
-      const db = await (userService as any).getDb();
-      const users = db.data.users || [];
-      const history = db.data.xpHistory || [];
+      const users = await userService.getAllUsers();
+      const history = await userService.getAllXpHistory();
 
       let rankedUsers: LeaderboardUser[] = [];
 
