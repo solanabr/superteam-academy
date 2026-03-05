@@ -1,14 +1,20 @@
 import Link from "next/link";
-import { DUMMY_MODULE_LESSONS } from "~/lib/dummy-data"; // We will pass this down or fetch it eventually
+export interface LessonSidebarItem {
+   id: number;
+   title: string;
+   active: boolean;
+   done: boolean;
+}
 
 interface Props {
    moduleName: string;
    courseSlug: string;
    sidebarOpen: boolean;
    setSidebarOpen: (open: boolean) => void;
+   lessons: LessonSidebarItem[];
 }
 
-export default function LessonSidebar({ moduleName, courseSlug, sidebarOpen, setSidebarOpen }: Props) {
+export default function LessonSidebar({ moduleName, courseSlug, sidebarOpen, setSidebarOpen, lessons }: Props) {
    return (
       <aside className={[
          "absolute lg:relative z-20 h-full w-64 bg-sol-surface border-r border-sol-border",
@@ -20,7 +26,7 @@ export default function LessonSidebar({ moduleName, courseSlug, sidebarOpen, set
             <div className="text-sm font-semibold text-sol-text">{moduleName}</div>
          </div>
          <div className="flex-1 overflow-y-auto py-2">
-            {DUMMY_MODULE_LESSONS.map(l => (
+            {lessons.map(l => (
                <Link key={l.id}
                   href={`/courses/${courseSlug}/lessons/${l.id}`}
                   onClick={() => setSidebarOpen(false)}

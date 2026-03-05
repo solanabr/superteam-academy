@@ -30,9 +30,9 @@ function StatChip({ icon, label }: { icon: string; label: string }) {
 }
 
 function ModuleRow({
-   mod, slug, lessonsDone, defaultOpen,
+   mod, slug, lessonsDone, defaultOpen, globalStart
 }: {
-   mod: SanityModule; slug: string; lessonsDone: Set<number>; defaultOpen: boolean;
+   mod: SanityModule; slug: string; lessonsDone: Set<number>; defaultOpen: boolean; globalStart: number;
 }) {
    const [open, setOpen] = useState(defaultOpen);
 
@@ -46,7 +46,7 @@ function ModuleRow({
          >
             <div className="flex-1 min-w-0">
                <h3 className="font-semibold text-sol-text text-sm">{mod.title}</h3>
-               <p className="text-xs text-sol-muted mt-0.5">{mod.lessons.length} lessons</p>
+               <p className="text-xs text-sol-muted mt-0.5">{mod.lessons?.length || 0} lessons</p>
             </div>
             <svg
                className={`w-4 h-4 text-sol-muted transition-transform duration-200 shrink-0 ${open ? "rotate-180" : ""}`}
@@ -58,12 +58,12 @@ function ModuleRow({
 
          {open && (
             <div className="border-t border-sol-border divide-y divide-sol-border/40">
-               {mod.lessons.map((l, localIdx) => {
-                  const done = lessonsDone.has(mod.id * 100 + localIdx); // fallback key; real index passed from parent
+               {mod.lessons?.map((l, localIdx) => {
+                  const done = lessonsDone.has(localIdx);
                   return (
                      <Link
-                        key={l.id}
-                        href={`/courses/${slug}/lessons/${l.id}`}
+                        key={localIdx}
+                        href={`/courses/${slug}/lessons/${globalStart + localIdx}`}
                         className={`flex items-center gap-3 px-5 py-3 hover:bg-sol-surface/40 transition-colors group ${done ? "opacity-60" : ""}`}
                      >
                         <div className={[
@@ -136,11 +136,11 @@ export default function Page() {
    const earnedXP = completedCount * (course.xpPerLesson ?? 0);
 
    // Find next unfinished lesson (global index order)
-   let nextLessonId: number | null = null;
+   let nextLessonIndex = 0;
    let globalIdx = 0;
-   outer: for (const mod of course.modules) {
-      for (const lesson of mod.lessons) {
-         if (!lessonsDone.has(globalIdx)) { nextLessonId = lesson.id; break outer; }
+   outer: for (const mod of course.modules || []) {
+      for (const lesson of mod.lessons || []) {
+         if (!lessonsDone.has(globalIdx)) { nextLessonIndex = globalIdx; break outer; }
          globalIdx++;
       }
    }
@@ -155,9 +155,9 @@ export default function Page() {
 
    // Assign global indices to lessons for done-checking
    let lessonGlobalStart = 0;
-   const modulesWithGlobalStart = course.modules.map(mod => {
+   const modulesWithGlobalStart = (course.modules || []).map(mod => {
       const start = lessonGlobalStart;
-      lessonGlobalStart += mod.lessons.length;
+      lessonGlobalStart += mod.lessons?.length || 0;
       return { mod, start };
    });
 
@@ -239,7 +239,7 @@ export default function Page() {
                         {/* CTA */}
                         {enrolled ? (
                            <Link
-                              href={`/courses/${slug}/lessons/${nextLessonId ?? course.modules[0]?.lessons[0]?.id}`}
+                              href={`/courses/${slug}/lessons/${nextLessonIndex}`}
                               className="sol-btn-primary w-full justify-center py-3 text-sm block text-center"
                            >
                               Continue →
@@ -291,13 +291,14 @@ export default function Page() {
                      <div className="space-y-2">
                         {modulesWithGlobalStart.map(({ mod, start }, i) => (
                            <ModuleRow
-                              key={mod.id}
+                              key={i}
                               mod={mod}
                               slug={slug}
                               lessonsDone={new Set(
-                                 [...lessonsDone].map(gi => gi - start).filter(li => li >= 0 && li < mod.lessons.length)
+                                 [...lessonsDone].map(gi => gi - start).filter(li => li >= 0 && li < (mod.lessons?.length || 0))
                               )}
                               defaultOpen={i < 2}
+                              globalStart={start}
                            />
                         ))}
                      </div>

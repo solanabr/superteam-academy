@@ -5,7 +5,6 @@ import { client } from "~/sanity/lib/client";
 
 
 export interface SanityLesson {
-   id: number;
    title: string;
    duration: string;
    lessonType: 1 | 2 | 3; // 1=video, 2=doc, 3=challenge
@@ -20,7 +19,6 @@ export interface SanityLesson {
 }
 
 export interface SanityModule {
-   id: number;
    title: string;
    description: string;
    lessons: SanityLesson[];
@@ -32,7 +30,7 @@ export interface SanityCourseData {
    title: string;
    description: string;
    thumbnail: string;
-   slug: {current: string, _type: string};
+   slug: { current: string, _type: string };
    difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
    xpPerLesson: number;
    lessonCount: number;
@@ -55,11 +53,9 @@ const COURSE_QUERY = `
     creator,
     track,
     modules[] {
-      id,
       title,
       description,
       lessons[] {
-        id,
         title,
         lessonType,
         duration,
@@ -111,12 +107,12 @@ export function useCourseData(slug: string) {
 
 // ── Lesson lookup helper ──────────────────────────────────────────────────────
 
-/** Find a lesson across all modules by its id */
-export function findLesson(course: SanityCourseData, lessonId: number): { lesson: SanityLesson; lessonIndex: number; module: SanityModule } | null {
+/** Find a lesson across all modules by its global index */
+export function findLesson(course: SanityCourseData, lessonIndex: number): { lesson: SanityLesson; lessonIndex: number; module: SanityModule } | null {
    let globalIndex = 0;
-   for (const mod of course.modules) {
-      for (const lesson of mod.lessons) {
-         if (lesson.id === lessonId) {
+   for (const mod of course.modules || []) {
+      for (const lesson of mod.lessons || []) {
+         if (globalIndex === lessonIndex) {
             return { lesson, lessonIndex: globalIndex, module: mod };
          }
          globalIndex++;

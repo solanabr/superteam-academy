@@ -77,9 +77,33 @@ export default function LessonPage() {
 
    const { lesson, module: lessonModule } = lessonResult;
 
+   // Calculate global start index for the current module to render sidebar correctly
+   let currentModuleGlobalStart = 0;
+   let globalCount = 0;
+   for (const mod of course.modules || []) {
+      if (mod.title === lessonModule.title) {
+         currentModuleGlobalStart = globalCount;
+         break;
+      }
+      globalCount += mod.lessons?.length || 0;
+   }
+
+   const sidebarLessons = (lessonModule.lessons || []).map((l, localIdx) => {
+      const gIdx = currentModuleGlobalStart + localIdx;
+      // If gIdx is the current lesson, use `completed` state instead of just `enrollment.lessonsDone`
+      // so the checkmark appears immediately upon finishing
+      const isCurrent = gIdx === lessonIndex;
+      return {
+         id: gIdx,
+         title: l.title,
+         active: isCurrent,
+         done: isCurrent ? completed : (enrollment?.lessonsDone.has(gIdx) ?? false),
+      };
+   });
+
    // Build a Lesson-compatible shape for the existing view components
    const legacyLesson = {
-      id: lesson.id,
+      id: lessonIndex,
       title: lesson.title,
       module: lessonModule.title,
       duration: lesson.duration,
@@ -119,6 +143,7 @@ export default function LessonPage() {
                courseSlug={slug}
                sidebarOpen={sidebarOpen}
                setSidebarOpen={setSidebarOpen}
+               lessons={sidebarLessons}
             />
 
             <main className="flex-1 overflow-y-auto">

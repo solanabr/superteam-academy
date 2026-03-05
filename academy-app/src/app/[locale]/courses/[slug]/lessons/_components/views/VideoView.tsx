@@ -8,6 +8,30 @@ interface Props {
    setCompleted: () => void | Promise<void>;
 }
 
+// Helper to convert standard YouTube URLs to embed URLs
+function getEmbedUrl(url: string | undefined): string | undefined {
+   if (!url) return undefined;
+   try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.hostname.includes("youtube.com") || parsedUrl.hostname.includes("youtu.be")) {
+         // Handle youtu.be/VIDEO_ID
+         if (parsedUrl.hostname === "youtu.be") {
+            return `https://www.youtube.com/embed${parsedUrl.pathname}`;
+         }
+         // Handle youtube.com/watch?v=VIDEO_ID
+         if (parsedUrl.pathname === "/watch") {
+            const videoId = parsedUrl.searchParams.get("v");
+            if (videoId) {
+               return `https://www.youtube.com/embed/${videoId}`;
+            }
+         }
+      }
+   } catch (e) {
+      // Invalid URL
+   }
+   return url;
+}
+
 export default function VideoView({ lesson, completed, setCompleted }: Props) {
    // Mark video as read/watched after 5 seconds for demonstration
    useEffect(() => {
@@ -18,6 +42,8 @@ export default function VideoView({ lesson, completed, setCompleted }: Props) {
          return () => clearTimeout(t);
       }
    }, [completed, setCompleted]);
+
+   const embedUrl = getEmbedUrl(lesson.videoUrl);
 
    return (
       <div className="flex-1 overflow-y-auto w-full h-full bg-sol-bg">
@@ -36,10 +62,10 @@ export default function VideoView({ lesson, completed, setCompleted }: Props) {
             </div>
 
             {/* Video Player */}
-            {lesson.videoUrl && (
+            {embedUrl && (
                <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-sol-border shadow-2xl mb-12 animate-fade-up" style={{ animationDelay: "200ms" }}>
                   <iframe
-                     src={lesson.videoUrl}
+                     src={embedUrl}
                      title={lesson.title}
                      className="absolute inset-0 w-full h-full"
                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
