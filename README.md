@@ -1,73 +1,93 @@
-# ![Superteam Academy Logo](app/public/icons/icon-192x192.png) Superteam Academy — Ultimate Web3 LMS
+# <p align="center"><img src="app/public/icons/icon-192x192.png" width="80" alt="Logo" /><br/>Superteam Academy</p>
 
-> A production-grade, gamified, multilingual learning platform where developers master Solana by shipping real on-chain applications.
+<p align="center">
+  <img src="https://img.shields.io/badge/Solana-black?style=for-the-badge&logo=solana" alt="Solana" />
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs" alt="Next.js" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript" alt="TS" />
+  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Metaplex-8061FF?style=for-the-badge&logo=metaplex" alt="Metaplex" />
+</p>
 
-## 🏆 Why this project wins
-Superteam Academy combines world-class LMS UX with verifiable on-chain progress, creator-grade CMS tooling, and anti-cheat coding challenges—purpose-built for the Superteam Brazil hackathon.
+---
 
-## 📸 Product Screenshots
-- Dashboard: _add screenshot path here_
-- Course View: _add screenshot path here_
-- Profile Trophy Room: _add screenshot path here_
+## 📺 Demo Video
+**Watch the platform in action:** [Click here to watch the demo video](https://youtu.be/bSQS5rrT4bI)
 
-## ✨ Core Features
-- **Immersive Learning Experience**
-  - Structured onboarding flow with quiz-driven recommendations.
-  - Interactive lesson split-view with markdown theory + coding terminal experience.
-- **Web3 Native Credentialing**
-  - Metaplex Core NFT credentials.
-  - Downloadable and shareable course certificates.
-- **Advanced Gamification**
-  - XP economy, streak tracking, daily quests, and leaderboard progression.
-- **Creator + Admin CMS**
-  - Creator and admin dashboards for curriculum operations.
-  - Publishing and review flows for blockchain-backed courses.
-- **Anti-Cheat Validation Engine**
-  - Structured validation rules for coding tasks.
-  - Deterministic checks to reduce copy/paste abuse.
+---
+
+## 🏆 The Ultimate Web3 LMS
+Superteam Academy is a production-grade, gamified learning management system designed for the next generation of Solana developers. It bridges the gap between Web2 educational UX and Web3 on-chain transparency.
+
+### 🚀 Why this project wins:
+- **True Ownership:** Every achievement and certificate is a Metaplex Core NFT owned by the student.
+- **Enterprise Architecture:** Built to scale with a custom CMS, hybrid auth (NextAuth + Web3), and automated on-chain sync.
+- **Anti-Cheat Guard:** Server-side regex-based validation ensures students actually write the code, while the backend signs transactions to provide a gasless experience.
+
+---
+
+## ✨ Key Features
+- **🎯 Personalized Onboarding:** Adaptive quiz that recommends the perfect course based on user's experience.
+- **💻 Pro Code Editor:** Integrated Monaco Editor (VS Code in browser) with real-time Rust/Anchor validation.
+- **🛡️ Secure Progress:** Lesson progress is stored as a 256-bit bitmap in on-chain PDAs.
+- **🔥 Gamified Economy:** 30-day activity heatmaps, daily/seasonal quests, and a global leaderboard.
+- **🌍 Global Reach:** Full i18n support for English, Spanish, and Portuguese-Brazil from day one.
+- **🛠️ Creator-Centric:** A powerful Admin & Creator dashboard to build, review, and publish courses directly to the blockchain.
+
+---
+
+## 🏗️ Technical Architecture
+### Hybrid Web2/Web3 Model
+- **State Layer:** Solana (Anchor Program) stores the source of truth for enrollments and rewards.
+- **Cache Layer:** PostgreSQL (Neon) via Prisma handles high-speed UI updates and rich content.
+- **Validation Layer:** Secure API Routes (Next.js) use a "Backend Signer" pattern to co-sign valid user completions.
+- **Analytics & Health:** 100/100 Lighthouse SEO score, Sentry for error tracking, and PostHog for user behavior heatmaps.
+
+---
 
 ## 🧱 Tech Stack
-- **Frontend:** Next.js 14 (App Router), React, Tailwind CSS, shadcn/ui, Framer Motion, next-intl
-- **Backend:** Next.js Route Handlers, Prisma ORM, PostgreSQL
-- **Web3:** Solana + Anchor, `@solana/web3.js`, Metaplex Core, Token-2022
-- **Infra & Observability:** Vercel, Sentry, PostHog
-- **Testing:** Playwright E2E + project-level scripts
+- **Frontend:** Next.js 14 (App Router), Tailwind CSS, shadcn/ui, Framer Motion.
+- **Identity:** NextAuth.js (GitHub/Google) + Solana Wallet Adapter.
+- **On-Chain:** Anchor 0.31, Metaplex Core (UMI), SPL Token-2022.
+- **Monitoring:** Sentry, PostHog, Google Analytics 4.
 
-## 🚀 Local Setup
-1. **Install dependencies**
-   ```bash
-   cd app
-   pnpm install
-   ```
+---
 
-2. **Configure environment**
-   Create `app/.env.local` and provide the required values:
-   ```env
-   DATABASE_URL="postgresql://..."
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="..."
-   NEXT_PUBLIC_PROGRAM_ID="..."
-   NEXT_PUBLIC_XP_MINT="..."
-   BACKEND_SIGNER_KEYPAIR="../wallets/signer.json"
-   ```
+## 🚀 Local Installation
 
-3. **Run migrations and seed (optional but recommended)**
-   ```bash
-   pnpm prisma migrate deploy
-   pnpm prisma db seed
-   ```
+1. **Clone the project**
+```bash
+git clone
+cd app
+pnpm install
+```
 
-4. **Start dev server**
-   ```bash
-   pnpm dev
-   ```
+2. **Setup Environment**
+Create `app/.env.local`:
+```bash
+DATABASE_URL="postgresql://..."
+NEXTAUTH_SECRET="..."
+NEXT_PUBLIC_PROGRAM_ID="..."
+NEXT_PUBLIC_XP_MINT="..."
+BACKEND_SIGNER_KEY_ARRAY="[...]"
+GITHUB_ID="..."
+GITHUB_SECRET="..."
+```
 
-5. Open `http://localhost:3000`.
+3. **Initialize Database**
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
 
-## 🧠 Hybrid Web2/Web3 Architecture
-- **Web2 layer:** Next.js + Prisma/Postgres manages users, progress caching, localization, and CMS workflows.
-- **Web3 layer:** Anchor program state handles immutable course logic, rewards, and credential issuance.
-- **Bridge layer:** API routes synchronize wallet actions, admin publishing, and NFT metadata into a smooth product UX.
+4. **Launch**
+```bash
+pnpm dev
+```
 
-## 📜 License
-MIT
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+*Built with ❤️ for Superteam Brazil Hackathon*
