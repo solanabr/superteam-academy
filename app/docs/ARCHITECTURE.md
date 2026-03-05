@@ -1,158 +1,355 @@
-# Architecture Guide
+# Architecture
+
+System architecture for the Superteam Academy frontend application.
 
 ## System Overview
 
-Superteam Academy is a decentralized learning platform built on Solana. The frontend is a Next.js application that communicates with on-chain programs via the Solana Wallet Adapter and Anchor framework.
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Frontend (Next.js 16)                   │
+│                                                            │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   Wallet   │  │   Service    │  │    Providers      │  │
+│  │  Adapter   │  │   Layer      │  │  Theme/Auth/i18n  │  │
+│  │ (Phantom,  │  │  8 services  │  │  Wallet/Analytics │  │
+│  │  Solflare) │  │  interfaces  │  │  SolanaProgram    │  │
+│  └─────┬──────┘  └──────┬───────┘  └──────────────────┘  │
+│        │                │                                  │
+│        ▼                ▼                                  │
+│  ┌──────────────────────────────────────┐                 │
+│  │         API Routes (10 endpoints)    │                 │
+│  │   Auth · Lessons · Credentials       │                 │
+│  │   Achievements · Leaderboard · Users │                 │
+│  └──────────┬───────────────────────────┘                 │
+└─────────────┼─────────────────────────────────────────────┘
+              │
+     ┌────────┼────────────────────┐
+     ▼        ▼                    ▼
+┌─────────┐ ┌──────────┐  ┌──────────────┐
+│ Solana  │ │ Supabase │  │  Sanity CMS  │
+│ Devnet  │ │ (users)  │  │  (courses)   │
+└─────────┘ └──────────┘  └──────────────┘
+```
+
+## Provider Hierarchy
+
+Providers wrap the app in `layout.tsx`. Order matters — each layer depends on those above it.
 
 ```
-┌─────────────────────────────────────────────────┐
-│                    Frontend                      │
-│  Next.js 16 · React 19 · Tailwind CSS 4         │
-│                                                  │
-│  ┌─────────┐  ┌──────────┐  ┌───────────────┐  │
-│  │ Wallet  │  │  Service  │  │   Providers   │  │
-│  │ Adapter │  │  Layer    │  │ Auth/i18n/etc │  │
-│  └────┬────┘  └─────┬────┘  └───────────────┘  │
-│       │             │                            │
-│       ▼             ▼                            │
-│  ┌──────────────────────────────┐               │
-│  │      API Routes (7)          │               │
-│  │  Backend-signed transactions │               │
-│  └──────────┬───────────────────┘               │
-└─────────────┼───────────────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────────────┐
-│              Solana Blockchain                   │
-│                                                  │
-│  ┌────────────┐  ┌─────────────┐  ┌──────────┐ │
-│  │ Academy    │  │  Token-2022  │  │ Metaplex │ │
-│  │ Program    │  │  (XP Mint)   │  │ Core     │ │
-│  └────────────┘  └─────────────┘  └──────────┘ │
-│                                                  │
-│  Program: ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf │
-│  XP Mint: xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3 │
-└─────────────────────────────────────────────────┘
+<html>
+  <ThemeProvider>                  next-themes (dark/light/system, default: dark)
+    <SessionProvider>              NextAuth session (Google/GitHub JWT)
+      <WalletProvider>             Solana Wallet Adapter + ConnectionProvider
+        <SolanaProgramProvider>    Anchor program instance (set when wallet connects)
+          <AuthProvider>           User profile from Supabase + wallet linking
+            <LocaleProvider>      i18n context (en, pt-BR, es) persisted to localStorage
+              <AnalyticsProvider>  GA4 + PostHog + Sentry initialization
+                <Header />
+                <main>{children}</main>
+                <Footer />
+```
+
+### Provider Details
+
+| Provider | Source | State Stored | Depends On |
+|----------|--------|-------------|------------|
+| `ThemeProvider` | `next-themes` | `localStorage` (theme) | — |
+| `SessionProvider` | `next-auth` | JWT cookie | — |
+| `WalletProvider` | `@solana/wallet-adapter-react` | Wallet connection | — |
+| `SolanaProgramProvider` | Custom | Anchor `Program` instance | WalletProvider |
+| `AuthProvider` | Custom | User profile (Supabase) | SessionProvider, WalletProvider |
+| `LocaleProvider` | Custom | `localStorage` (locale) | — |
+| `AnalyticsProvider` | Custom | GA4/PostHog/Sentry scripts | — |
+
+## Page Architecture
+
+### Landing Page (`/`)
+
+Hero section with animated code terminal, course catalog preview, social proof testimonial marquee, platform features grid, and bottom CTA. Background: `bg-hero` gradient + animated floating blur orbs (`animate-drift`, `animate-float`).
+
+### Course Catalog (`/courses`)
+
+Filterable grid of `CourseCard` components. Filters by difficulty (Beginner/Intermediate/Advanced), topic (Core/Framework/DeFi/Security), and duration. Includes 4 predefined learning path sections. Data: Sanity CMS → hardcoded fallback.
+
+### Course Detail (`/courses/[slug]`)
+
+Two-column layout:
+- **Left**: Breadcrumb, course metadata, expandable module sections (`ModuleSection` components), student reviews
+- **Right**: Sticky enrollment card with progress bar, stats grid, CTA button, instructor info
+
+Enrollment flow: wallet check → `progressService.enroll()` → analytics event → UI update.
+
+Data loading: synchronous `getCourseBySlug()` from hardcoded data (instant render), then async `getCourse()` from Sanity overlays if available. Progress merged via `useMemo`.
+
+### Lesson Viewer (`/courses/[slug]/lessons/[id]`)
+
+Three distinct layouts based on lesson type:
+
+| Type | Layout | Components |
+|------|--------|------------|
+| `reading` | Full-width markdown | react-markdown + rehype-highlight |
+| `video` | Video player + markdown notes | Embedded player + markdown |
+| `challenge` | Resizable split panel | Monaco editor (left) + test runner (right) |
+
+Challenge features:
+- Monaco editor with Rust/TypeScript language support
+- Auto-save drafts to `localStorage` (key: `code_draft_{courseSlug}_{lessonId}`)
+- Client-side test runner with pass/fail results
+- Progressive hint reveal
+- Solution code toggle
+- `canvas-confetti` animation on all tests passing
+- Sidebar navigation between lessons/modules
+
+### Dashboard (`/dashboard`)
+
+Stats cards (XP, level, streak, courses), activity feed, skill radar chart, achievement badge grid. All data from localStorage services.
+
+### Leaderboard (`/leaderboard`)
+
+Paginated XP rankings. Time filters: weekly/monthly/all-time. Course filter. Current user highlighted. Data: `leaderboardService.getEntries()`.
+
+### Profile (`/profile`, `/profile/[username]`)
+
+User profile with credential NFT display, achievement badges, course completion history. Public profiles accessible by username via Supabase lookup.
+
+### Settings (`/settings`)
+
+Account management: OAuth linking (Google/GitHub via NextAuth), Solana wallet connection, locale selection (3 languages), theme toggle, profile editing (name, bio, username, social links), data export, account deletion.
+
+### Certificates (`/certificates/[id]`)
+
+NFT credential viewer with metadata display and shareable link.
+
+### Sanity Studio (`/studio`)
+
+Embedded Sanity Studio at `/studio/[[...tool]]` for content editors.
+
+## Service Layer
+
+### Architecture
+
+```
+┌───────────────────────────────────────────────┐
+│               Components                       │
+│   import { progressService } from "@/services" │
+└─────────────────────┬─────────────────────────┘
+                      │
+┌─────────────────────▼─────────────────────────┐
+│           Service Factory                      │
+│   createServices() in service-factory.ts       │
+│                                                │
+│   Checks env vars:                             │
+│   HELIUS_RPC_URL + SOLANA_RPC_URL + XP_MINT    │
+│     → set:   Devnet services (4 on-chain)      │
+│     → unset: All localStorage stubs            │
+└─────────────────────┬─────────────────────────┘
+                      │
+        ┌─────────────┴─────────────┐
+        ▼                           ▼
+┌───────────────┐         ┌───────────────────┐
+│ Local Services │         │  Devnet Services   │
+│ (localStorage) │         │  (Solana RPC)      │
+│                │         │                    │
+│ All 7 services │         │ ProgressService    │
+│                │         │ XpService          │
+│                │         │ CredentialService  │
+│                │         │ LeaderboardService │
+└───────────────┘         └───────────────────┘
+
+Always local (frontend-only per spec):
+  StreakService, AchievementService, ActivityService
+```
+
+### Service Interfaces
+
+Defined in `services/interfaces.ts`. Each service has a clear contract:
+
+| Service | Methods | Storage (Local) | Storage (On-Chain) |
+|---------|---------|-----------------|-------------------|
+| **ProgressService** | `getProgress`, `getAllEnrollments`, `enroll`, `completeLesson`, `finalizeCourse`, `closeEnrollment` | localStorage | Enrollment PDAs via RPC |
+| **XpService** | `getBalance`, `getLevel` | localStorage | Token-2022 ATA balance |
+| **CredentialService** | `getCredentials`, `getCredentialByMint`, `issueCredential`, `upgradeCredential` | localStorage | Helius DAS API (Metaplex Core) |
+| **LeaderboardService** | `getEntries`, `getRank` | Hardcoded mock | Helius DAS token holders |
+| **StreakService** | `getStreak`, `recordActivity`, `useFreeze`, `checkMilestones` | localStorage | — |
+| **AchievementService** | `getAchievements`, `getAllAchievementTypes`, `claimAchievement`, `checkEligible` | localStorage | — |
+| **ActivityService** | `getActivity`, `recordActivity` | localStorage | — |
+| **AuthService** | `getCurrentUser`, `updateProfile`, `linkWallet`, `deleteAccount`, `exportData` | Supabase | — |
+| **CourseContentService** | `getLessonContent`, `getSkillScores` | Sanity CMS + hardcoded | — |
+
+### Devnet Progress Flow
+
+```
+User clicks "Enroll"
+    │
+    ├─ Wallet connected?
+    │   ├─ No  → Open wallet modal
+    │   └─ Yes → DevnetProgressService.enroll()
+    │       │
+    │       ├─ Check course PDA on-chain (getAccountInfo)
+    │       │   ├─ Not found → fallback to LocalProgressService
+    │       │   └─ Found → build Anchor transaction
+    │       │       → program.methods.enroll(courseId)
+    │       │       → accountsPartial({ course, enrollment, learner, systemProgram })
+    │       │       → .rpc() (user signs)
+    │       │       → also persist locally for instant UI
+    │       │
+    │       └─ Return { txSignature }
+    │
+User completes lesson
+    │
+    └─ progressService.completeLesson()
+       → Local: update localStorage, return stub XP
+       → On-chain: POST /api/lessons/complete
+           → Backend validates → signs complete_lesson tx
+           → XP minted via Token-2022 CPI
 ```
 
 ## Data Flow
 
-### Enrollment Flow
-1. User connects wallet (Phantom/Solflare/Coinbase)
-2. AuthProvider creates user profile in localStorage
-3. User clicks "Enroll" on course detail page
-4. ProgressService creates enrollment record
-5. Analytics event fired (`courseEnrolled`)
-6. **On-chain swap**: `enroll` instruction creates Enrollment PDA
-
-### Lesson Completion Flow
-1. User writes code in Monaco Editor
-2. Auto-save to localStorage (1s debounce)
-3. User clicks "Run Tests" — tests execute client-side
-4. On pass, "Mark Complete" calls:
-   - `progressService.completeLesson()`
-   - `streakService.recordActivity()`
-   - `activityService.recordActivity()`
-   - `addXp(wallet, 25)`
-   - Analytics event (`lessonCompleted`)
-5. **On-chain swap**: POST `/api/lessons/complete` → backend signs `complete_lesson` instruction
-
-### Credential Issuance Flow
-1. User completes all lessons in a course
-2. `finalizeCourse` called with bonus XP
-3. POST `/api/credentials/issue` → backend signs Metaplex Core mint
-4. NFT appears on profile page
-5. **On-chain swap**: `issue_credential` instruction mints soulbound NFT
-
-## Account Structure (PDA Seeds)
-
-| Account | Seeds | Description |
-|---------|-------|-------------|
-| Config | `["config"]` | Platform configuration |
-| Course | `["course", slug]` | Course metadata |
-| Enrollment | `["enrollment", course, learner]` | Learner enrollment |
-| AchievementType | `["achievement_type", id]` | Achievement definition |
-| AchievementReceipt | `["achievement_receipt", achievement_type, recipient]` | Claimed achievement |
-| CredentialType | `["credential_type", course]` | Credential definition |
-
-## XP System
-
-- **Token Standard**: Token-2022 with NonTransferable + PermanentDelegate
-- **Mint Authority**: Config PDA (program-controlled)
-- **Level Formula**: `Level = floor(sqrt(xp / 100))`
-- **XP Sources**: Lesson completion (25 XP), course completion bonus (500 XP), achievement rewards (varies)
-
-## Service Layer Architecture
+### Course Content Pipeline
 
 ```
-┌─────────────────────────────────────┐
-│          Service Interfaces          │
-│  (src/services/interfaces.ts)       │
-├─────────────────────────────────────┤
-│  ProgressService                     │
-│  XpService                           │
-│  StreakService                        │
-│  CredentialService                   │
-│  LeaderboardService                  │
-│  AchievementService                  │
-│  ActivityService                     │
-└──────────┬──────────────────────────┘
-           │
-     ┌─────┴─────┐
-     ▼           ▼
-┌──────────┐ ┌──────────┐
-│ Local    │ │ On-Chain  │
-│ Storage  │ │ (Future)  │
-│ Stubs    │ │           │
-└──────────┘ └──────────┘
+Page Mount
+    │
+    ├─ Synchronous: getCourseBySlug(slug)     ← hardcoded data (instant)
+    │   → setCourse(data)                       → immediate render
+    │
+    └─ Async: getCourse(slug)                 ← Sanity CMS fetch
+        → if (data) setCourse(data)             → overlay CMS data
+        → if (!sanityClient) returns null       → keeps hardcoded data
+
+Lesson Content
+    │
+    ├─ getLesson(courseSlug, lessonId, locale) ← Sanity CMS
+    │   → GROQ query filters by _key
+    │   → mapLesson() normalizes to LessonContent
+    │
+    └─ Fallback: lesson-content.ts            ← hardcoded per locale
+        → lesson-content-pt-BR.ts
+        → lesson-content-es.ts
 ```
 
-Each service implementation is swappable. The localStorage stubs document exactly which Anchor instructions and PDA seeds are needed for the on-chain version.
+### Authentication Flow
 
-## Provider Stack
+```
+┌────────────────┐     ┌──────────────┐     ┌──────────────┐
+│ Wallet Adapter │     │   NextAuth   │     │   Supabase   │
+│ Phantom/       │     │ Google/      │     │  users table │
+│ Solflare/      │     │ GitHub       │     │              │
+│ Coinbase       │     │ (JWT)        │     │              │
+└───────┬────────┘     └──────┬───────┘     └──────┬───────┘
+        │                     │                     │
+        └─────────┬───────────┘                     │
+                  ▼                                 │
+           ┌──────────────┐                         │
+           │ AuthProvider  │── POST /api/auth/ ──────┘
+           │               │   upsert-user
+           │ Merges wallet │
+           │ + OAuth into  │
+           │ single profile│
+           └──────────────┘
 
-```tsx
-<ThemeProvider>
-  <WalletProvider>      // Solana Wallet Adapter
-    <AuthProvider>       // User profile management
-      <LocaleProvider>   // i18n (EN, PT-BR, ES)
-        <AnalyticsProvider>  // GA4 + PostHog + Sentry
-          {children}
-        </AnalyticsProvider>
-      </LocaleProvider>
-    </AuthProvider>
-  </WalletProvider>
-</ThemeProvider>
+Supabase users table columns:
+  wallet_address, email, google_id, github_id,
+  name, username, bio, initials, avatar_url,
+  locale, theme, is_public, social_links
 ```
 
 ## API Routes
 
-All API routes are stub endpoints that return mock responses. In production, they would:
-1. Verify the request signature
-2. Build the appropriate Solana transaction
-3. Sign with the backend signer keypair
-4. Return the serialized transaction for client submission
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/auth/[...nextauth]` | GET/POST | — | NextAuth OAuth handlers (Google, GitHub) |
+| `/api/auth/upsert-user` | POST | — | Upsert user profile in Supabase |
+| `/api/lessons/complete` | POST | Wallet | Mark lesson complete, award XP |
+| `/api/courses/finalize` | POST | Wallet | Finalize course, award bonus XP |
+| `/api/credentials/issue` | POST | Wallet | Issue Metaplex Core credential NFT |
+| `/api/credentials/upgrade` | POST | Wallet | Upgrade credential attributes |
+| `/api/achievements/claim` | POST | Wallet | Claim achievement badge |
+| `/api/leaderboard` | GET | — | Paginated leaderboard with time/course filters |
+| `/api/streaks` | GET/POST | Wallet | Get or update streak data |
+| `/api/users/by-username` | GET | — | Public profile lookup |
 
-### Security Model
-- Backend signer stored in `Config.backend_signer`
-- Rotatable via `update_config` instruction
-- API routes validate wallet ownership before signing
-- All transactions require user wallet co-signature
+Backend-signed endpoints (lessons/complete, courses/finalize, credentials/*, achievements/claim) will build Solana transactions signed by the backend signer keypair when the on-chain program is connected.
 
-## Analytics Integration
+## PDA Derivation
 
-| Service | Purpose | Events |
-|---------|---------|--------|
-| GA4 | Page views, user flows | Page views, custom events |
-| PostHog | Heatmaps, session replay | All custom events |
-| Sentry | Error monitoring | Unhandled exceptions |
+Frontend helpers in `lib/solana/constants.ts`:
 
-Custom events: `walletConnected`, `courseEnrolled`, `lessonCompleted`, `courseCompleted`, `codeSubmitted`, `testsPassed`, `achievementEarned`, `languageChanged`, `themeChanged`, `credentialViewed`
+| PDA | Seeds | Helper |
+|-----|-------|--------|
+| Config | `["config"]` | `deriveConfigPda()` |
+| Course | `["course", course_id]` | `deriveCoursePda(courseId)` |
+| Enrollment | `["enrollment", course_id, learner]` | `deriveEnrollmentPda(courseId, learner)` |
+| AchievementType | `["achievement", achievement_id]` | `deriveAchievementTypePda(achievementId)` |
+| AchievementReceipt | `["achievement_receipt", achievement_id, recipient]` | `deriveAchievementReceiptPda(achievementId, recipient)` |
 
-## Internationalization
+Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
+XP Mint: `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`
 
-- 3 locales: English (`en`), Portuguese (`pt-BR`), Spanish (`es`)
-- Custom provider with nested key lookup: `t("nav.courses")`
-- Parameter interpolation: `t("dashboard.welcomeBack", { name })`
-- Locale persisted to localStorage
-- No URL-based routing (single-page locale switching)
+## XP & Leveling System
+
+Defined in `types/index.ts`:
+
+```
+Level       = floor(sqrt(xp / 100))
+XP for L    = L^2 * 100
+
+Level  0:       0 XP
+Level  1:     100 XP
+Level  2:     400 XP
+Level  3:     900 XP
+Level  5:   2,500 XP
+Level 10:  10,000 XP
+```
+
+`xpProgress(xp)` returns `{ level, currentLevelXp, xpToNextLevel, progress }` — used by progress bars across dashboard, profile, and leaderboard.
+
+XP sources:
+- Lesson completion: 100 XP (stub)
+- Course completion bonus: 500 XP (stub)
+- Achievement rewards: varies by achievement type
+
+## Analytics
+
+Initialized in `AnalyticsProvider`, event helpers in `lib/analytics.ts`.
+
+| Service | Purpose | Initialization |
+|---------|---------|----------------|
+| GA4 | Page views, custom events | `initGA4()` — injects gtag script |
+| PostHog | Session recordings, heatmaps | `initPostHog()` — injects PostHog script |
+| Sentry | Error monitoring (0.1 sample rate) | `initSentry()` — dynamic import |
+
+### Custom Events
+
+| Event | Category | Triggered By |
+|-------|----------|-------------|
+| `wallet_connected` | auth | Wallet adapter connection |
+| `course_enrolled` | engagement | Course enrollment |
+| `lesson_completed` | engagement | Lesson completion |
+| `course_completed` | engagement | Course finalization |
+| `code_submitted` | engagement | Code challenge submission |
+| `tests_passed` | engagement | All test cases passing |
+| `achievement_earned` | gamification | Achievement claim |
+| `language_changed` | preferences | Locale switch |
+| `theme_changed` | preferences | Theme toggle |
+| `credential_viewed` | engagement | Certificate page visit |
+
+## Type System
+
+All types in `types/index.ts`:
+
+| Type | Key Fields |
+|------|-----------|
+| `CourseDetail` | slug, title, difficulty, topic, accent, xp, modules[], reviews[], instructor |
+| `Module` | id, title, lessons[] |
+| `Lesson` | id, title, duration, type (video/reading/challenge), completed |
+| `LessonContent` | markdown, starterCode, solutionCode, hints[], testCases[] |
+| `CourseProgress` | courseId, enrolledAt, completedAt, completedLessons[], credentialAsset |
+| `UserProfile` | walletAddress, email, googleId, githubId, name, username, locale, theme |
+| `StreakData` | currentStreak, longestStreak, freezesRemaining, todayCompleted, history |
+| `Achievement` | id, title, rarity (common/rare/epic/legendary), xpReward, mintAddress |
+| `Credential` | track, level, accent, mintAddress, coursesCompleted, totalXp |
+| `LeaderboardEntry` | rank, name, username, level, xp, streak |
+| `ActivityItem` | type, title, courseName, xp, timestamp |
+| `SkillScore` | name, value (0-100) |
