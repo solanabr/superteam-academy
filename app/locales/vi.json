@@ -1,0 +1,622 @@
+{
+	"Hero": {
+		"badge": "Đã Cấp Quyền Truy Cập Terminal",
+		"title": "KIẾN TẠO\nTƯƠNG LAI CỦA BẠN\nTRÊN SOLANA",
+		"description": "Nền tảng đào tạo kỹ thuật hàng đầu cho thế hệ kiến trúc sư Solana tiếp theo. Đi từ con số không đến sẵn sàng sản xuất với chương trình giảng dạy được tăng tốc phần cứng của chúng tôi.",
+		"explore": "Khám Phá Khóa Học",
+		"discord": "Tham Gia Discord"
+	},
+	"StatsStrip": {
+		"activeStudents": "Học Viên Hoạt Động",
+		"nodesValidated": "Các Node Đã Xác Thực",
+		"bountiesWon": "Bounty Đã Thắng",
+		"jobPlacements": "Bố Trí Việc Làm"
+	},
+	"Testimonials": {
+		"sectionLabel": "Báo Cáo Thông Minh Của Học Viên"
+	},
+	"Navbar": {
+		"brand": "HỌC VIỆN SUPERTEAM",
+		"links": {
+			"catalog": "Danh mục khóa học",
+			"leaderboard": "Bảng Xếp Hạng",
+			"community": "Cộng đồng"
+		},
+		"cta": {
+			"dashboard": "Bảng Điều Khiển",
+			"start": "Bắt Đầu Học",
+			"login": "Đăng Nhập / Đăng Ký"
+		}
+	},
+	"Footer": {
+		"brand": "HỌC VIỆN SUPERTEAM",
+		"description": "Đại học phi tập trung cho hệ sinh thái Solana. Thuộc sở hữu của học viên.",
+		"language": "Ngôn ngữ:",
+		"copyright": "© 2026 Học viện Superteam // Đã đăng ký bản quyền",
+		"headers": {
+			"platform": "Nền tảng",
+			"socials": "Mạng Xã Hội"
+		},
+		"links": {
+			"catalog": "Danh Mục",
+			"leaderboard": "Bảng Xếp Hạng",
+			"dashboard": "Bảng Điều Khiển",
+			"profile": "Hồ Sơ",
+			"terms": "Điều Khoản Dịch Vụ",
+			"privacy": "Chính Sách Bảo Mật"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "BẰNG CHỨNG ON-CHAIN",
+			"description": "Mỗi mô-đun bạn hoàn thành sẽ cấp một chứng chỉ không thể chuyển nhượng vào ví của bạn. Xây dựng một bản sơ yếu lý lịch có thể xác minh bằng mật mã trong khi bạn học."
+		},
+		"compiler": {
+			"title": "TRÌNH BIÊN DỊCH TRỰC TIẾP",
+			"description": "Không yêu cầu thiết lập môi trường. Viết, thử nghiệm và triển khai các chương trình Solana trực tiếp trong IDE dựa trên trình duyệt của chúng tôi với phản hồi theo thời gian thực."
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "Các Hoạt Động Khả Dụng",
+		"title": "LỘ TRÌNH HỌC TẬP",
+		"viewAll": "Xem tất cả lộ trình",
+		"tracks": {
+			"beginner": {
+				"path": "Lộ trình 01 // Người mới bắt đầu",
+				"title": "CƠ BẢN VỀ SOLANA",
+				"description": "Nắm vững lớp cơ sở. Tài khoản, giao dịch và Sealevel runtime.",
+				"meta": "12 MÔ-ĐUN // 40 XP"
+			},
+			"intermediate": {
+				"path": "Lộ trình 02 // Trung cấp",
+				"title": "FRAMEWORK ANCHOR",
+				"description": "Phát triển chương trình nhanh chóng bằng Rust DSL tiêu chuẩn ngành.",
+				"meta": "8 MÔ-ĐUN // 120 XP"
+			},
+			"advanced": {
+				"path": "Lộ trình 03 // Nâng cao",
+				"title": "BẢO MẬT GIAO THỨC",
+				"description": "Kỹ thuật kiểm toán, các vectơ tấn công phổ biến và kiểm thử bất biến.",
+				"meta": "15 MÔ-ĐUN // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "TỪ KHÓA TÌM KIẾM: SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "TẤT CẢ",
+			"dev": "DEV",
+			"defi": "DEFI",
+			"difficulty": "ĐỘ KHÓ",
+			"duration": "THỜI LƯỢNG",
+			"active": "BỘ LỌC HOẠT ĐỘNG"
+		},
+		"curatedPaths": {
+			"title": "LỘ TRÌNH ĐƯỢC CHỌN LỌC",
+			"subtitle": "TRÌNH TỰ ĐƯỢC ĐỀ XUẤT",
+			"tracks": {
+				"beginner": "LỘ TRÌNH CƠ BẢN",
+				"intermediate": "LỘ TRÌNH TRUNG CẤP",
+				"advanced": "CHUYÊN MÔN NÂNG CAO"
+			},
+			"modules": "KHÓA HỌC",
+			"complete": "HOÀN THÀNH",
+			"startPath": "BẮT ĐẦU LỘ TRÌNH"
+		},
+		"individualCourses": {
+			"title": "CÁC KHÓA HỌC LẺ",
+			"sort": "SẮP XẾP: ĐỘ PHỔ BIẾN"
+		},
+		"difficulty": {
+			"beginner": "CƠ BẢN",
+			"intermediate": "TRUNG CẤP",
+			"advanced": "NÂNG CAO",
+			"expert": "CHUYÊN GIA"
+		},
+		"locked": "ĐÃ KHÓA",
+		"stats": {
+			"title": "THỐNG KÊ PHIÊN",
+			"totalXP": "TỔNG XP",
+			"coursesActive": "KHÓA HỌC ĐANG HOẠT ĐỘNG",
+			"completionRate": "TỶ LỆ HOÀN THÀNH",
+			"certificates": "CHỨNG CHỈ"
+		},
+		"lastAccessed": {
+			"title": "TRUY CẬP LẦN CUỐI",
+			"resume": "TIẾP TỤC MÔ-ĐUN"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "Chi Tiết Khóa Học",
+			"instructor": "Giảng Viên"
+		},
+		"metadata": {
+			"instructor": "Giảng Viên",
+			"duration": "Thời Lượng",
+			"difficulty": "Độ Khó"
+		},
+		"xpBounty": "Tiền Thưởng XP",
+		"buttons": {
+			"enroll": "ĐĂNG KÝ NGAY",
+			"enrolling": "ĐANG ĐĂNG KÝ...",
+			"continue": "TIẾP TỤC KHÓA HỌC",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "Chương Trình Giảng Dạy",
+			"completion": "TIẾN ĐỘ"
+		},
+		"reviews": {
+			"title": "Phản Hồi Từ Học Viên",
+			"viewAll": "XEM TẤT CẢ ĐÁNH GIÁ"
+		},
+		"loading": "Đang tải dữ liệu giao thức...",
+		"errorLoading": "Lỗi khi tải dữ liệu khóa học.",
+		"solveChallenge": "GIẢI QUYẾT THỬ THÁCH",
+		"hint": "GỢI Ý"
+	},
+	"Lesson": {
+		"reference": "TÀI LIỆU THAM KHẢO",
+		"needHint": "CẦN GỢI Ý?",
+		"ago": "trước",
+		"autosaved": "ĐÃ TỰ ĐỘNG LƯU",
+		"solution": "GIẢI PHÁP",
+		"output": "KẾT QUẢ ĐẦU RA",
+		"runTests": "CHẠY THỬ NGHIỆM",
+		"module": "MÔ-ĐUN",
+		"previous": "TRƯỚC",
+		"nextLesson": "BÀI HỌC TIẾP THEO",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "GIẢI QUYẾT THỬ THÁCH",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "GỢI Ý"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "Hoạt Động Hiện Tại",
+			"title": "KHÓA HỌC ĐANG HOẠT ĐỘNG",
+			"progress": "TIẾN ĐỘ",
+			"resume": "Tiếp tục",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "Mục Tiêu Tiếp Theo",
+			"title": "LỘ TRÌNH ĐƯỢC ĐỀ XUẤT",
+			"enroll": "ĐĂNG KÝ",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "Lịch Sử Nhật Ký",
+			"title": "HOẠT ĐỘNG GẦN ĐÂY",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "HỒ SƠ NGƯỜI ĐIỀU HÀNH",
+			"xpBalance": "SỐ DƯ XP",
+			"globalRank": "XẾP HẠNG TOÀN CẦU",
+			"level": "CẤP ĐỘ",
+			"xpToLevel": "XP ĐỂ LÊN CẤP"
+		},
+		"streak": {
+			"title": "Chuỗi Hoạt Động",
+			"days": "N"
+		},
+		"achievements": {
+			"title": "Thành Tích Mới Nhất",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "ID_NGƯỜI_ĐIỀU_HÀNH",
+		"enrolledSince": "ĐÃ ĐĂNG KÝ TỪ",
+		"location": "VỊ TRÍ",
+		"skillRadar": {
+			"title": "RADAR_NĂNG_LỰC"
+		},
+		"achievements": {
+			"title": "THÀNH TÍCH // TRƯNG BÀY"
+		},
+		"credentials": {
+			"label": "BẰNG_CHỨNG_ON-CHAIN",
+			"title": "cNFT ĐANG TIẾN HÓA",
+			"verified": "ĐÃ XÁC MINH",
+			"viewOnSolscan": "XEM_TRÊN_SOLSCAN"
+		},
+		"quickStats": {
+			"title": "THỐNG_KÊ_NHANH",
+			"rank": "HẠNG",
+			"vouchers": "VOUCHER"
+		},
+		"courseLedger": {
+			"title": "SỔ_CÁI_KHÓA_HỌC"
+		},
+		"metadata": {
+			"title": "METADATA.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "Xếp Hạng Toàn Cầu",
+			"title": "BẢNG XẾP HẠNG NGƯỜI ĐIỀU HÀNH",
+			"updated": "Đã cập nhật"
+		},
+		"filters": {
+			"weekly": "Hàng Tuần",
+			"monthly": "Hàng Tháng",
+			"allTime": "Toàn Thời Gian",
+			"allTracks": "BỘ LỌC: TẤT CẢ LỘ TRÌNH",
+			"rust": "CƠ BẢN VỀ RUST",
+			"solana": "CƠ BẢN VỀ SOLANA",
+			"anchor": "FRAMEWORK ANCHOR",
+			"cycle": "Chu kỳ",
+			"stage": "Giai đoạn"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "CẤP",
+			"streak": "CHUỖI N",
+			"you": "BẠN"
+		},
+		"loadMore": "--[ XEM 50 NGƯỜI ĐIỀU HÀNH TIẾP THEO ] --",
+		"userStanding": {
+			"title": "VỊ TRÍ CỦA BẠN",
+			"globalRank": "XẾP HẠNG TOÀN CẦU",
+			"percentile": "PHÂN VỊ",
+			"xpToFirst": "XP ĐỂ ĐẠT TOP 1",
+			"rewards": "PHẦN THƯỞNG",
+			"eligible": "ĐỦ ĐIỀU KIỆN"
+		},
+		"seasonalPrizes": {
+			"title": "GIẢI THƯỞNG THEO MÙA",
+			"topFinishers": "Top 3 Người Đứng Đầu:"
+		},
+		"activityFeed": {
+			"title": "Nguồn Cấp Hoạt Động"
+		}
+	},
+	"Wallet": {
+		"title": "Kết Nối Ví",
+		"detected": "ĐÃ PHÁT HIỆN"
+	},
+	"Newsletter": {
+		"title": "Bản Tin",
+		"description": "Nhận các bản cập nhật kỹ thuật hàng tuần và cơ hội trong hệ sinh thái được gửi thẳng đến hộp thư đến của bạn.",
+		"placeholder": "OPERATOR@EMAIL.COM",
+		"button": "Đăng ký"
+	},
+	"Auth": {
+		"login": {
+			"title": "Chào Mừng Trở Lại",
+			"subtitle": "Truy cập bảng điều khiển người điều hành của bạn và tiếp tục tiến độ.",
+			"emailPlaceholder": "Địa chỉ Email",
+			"passwordPlaceholder": "Mật khẩu",
+			"button": "Đăng Nhập qua Email",
+			"authenticating": "Đang xác thực...",
+			"noAccount": "Chưa có tài khoản?",
+			"createLink": "Khởi Tạo Người Điều Hành"
+		},
+		"signup": {
+			"title": "Khởi Tạo Người Điều Hành",
+			"subtitle": "Bắt đầu hành trình của bạn với tư cách là một kiến trúc sư Solana xuất sắc.",
+			"emailPlaceholder": "Địa chỉ Email",
+			"passwordPlaceholder": "Mật khẩu",
+			"button": "Khởi Tạo qua Email",
+			"initializing": "ĐANG KHỞI TẠO...",
+			"web3Native": "Web3 Native",
+			"web3NativeDesc": "Mặc dù bạn có thể khởi tạo bằng danh tính mạng xã hội, nhưng sự tiến bộ thực sự đòi hỏi phải liên kết một ví Solana an toàn.",
+			"hasAccount": "Đã khởi tạo?",
+			"loginLink": "Truy Cập Bảng Điều Khiển"
+		},
+		"shared": {
+			"brandingBadgeLogin": "Lối Vào Giao Thức",
+			"brandingTitleLogin": "KIẾN TẠO\nTƯƠNG LAI CỦA BẠN\nTRÊN SOLANA",
+			"brandingDescLogin": "Nền tảng đào tạo kỹ thuật hàng đầu cho thế hệ kiến trúc sư Solana tiếp theo. Đi từ con số không đến sẵn sàng sản xuất với chương trình giảng dạy được tăng tốc phần cứng của chúng tôi.",
+			"brandingBadgeSignup": "Khởi Tạo Người Điều Hành Mới",
+			"brandingTitleSignup": "KIẾM CHỨNG CHỈ\nON-CHAIN CỦA BẠN",
+			"brandingDescSignup": "Mỗi mô-đun bạn hoàn thành sẽ cấp một chứng chỉ kỹ năng có thể xác minh bằng mật mã vào ví của bạn.",
+			"systemOnline": "HỆ THỐNG TRỰC TUYẾN // QUYỀN TRUY CẬP TERMINAL",
+			"orContinueWith": "HOẶC TIẾP TỤC VỚI",
+			"accessProtocol": "Truy Cập Giao Thức",
+			"accessProtocolDesc": "Nhập email của bạn để đăng nhập hoặc tạo tài khoản.",
+			"returningOperator": "// NGƯỜI ĐIỀU HÀNH CŨ — XÁC THỰC",
+			"newOperator": "// NGƯỜI ĐIỀU HÀNH MỚI — KHỞI TẠO TÀI KHOẢN",
+			"continue": "Tiếp tục"
+		},
+		"walletButton": {
+			"github": "Tiếp tục với GitHub",
+			"google": "Tiếp tục với Google",
+			"walletSignIn": "Đăng Nhập qua Ví",
+			"walletConnect": "Kết Nối Ví",
+			"authenticating": "Đang xác thực..."
+		}
+	},
+	"Onboarding": {
+		"badge": "INIT NGƯỜI ĐIỀU HÀNH",
+		"brandingTitle": "KHỞI TẠO\nNGƯỜI ĐIỀU HÀNH\nCỦA BẠN",
+		"brandingDesc": "Định cấu hình hồ sơ của bạn để tham gia mạng lưới các nhà xây dựng Solana. Mỗi bước mở khóa quyền truy cập vào toàn bộ giao thức Học viện.",
+		"systemOnline": "HỆ_THỐNG_TRỰC_TUYẾN — BƯỚC",
+		"of": "trên",
+		"steps": {
+			"identity": "Danh tính",
+			"signature": "Chữ ký",
+			"profile": "Hồ sơ",
+			"learningPath": "Lộ trình",
+			"wallet": "Ví"
+		},
+		"step1": {
+			"badge": "BƯỚC 1 / 5",
+			"title": "Danh Tính Của Bạn",
+			"subtitle": "Đặt tên hiển thị người điều hành của bạn. Đây là cách bạn sẽ xuất hiện trên bảng xếp hạng và hồ sơ.",
+			"namePlaceholder": "0xTenCuaBan",
+			"nameLabel": "Tên Hiển Thị",
+			"emailLabel": "Email (chỉ đọc)"
+		},
+		"step2": {
+			"badge": "BƯỚC 2 / 5",
+			"title": "Chữ Ký Thần Kinh",
+			"subtitle": "Danh tính kỹ thuật số của bạn được khởi tạo theo thủ tục. Bạn có thể tạo lại chữ ký duy nhất của mình cho đến khi nó đạt được sự cộng hưởng tối ưu.",
+			"reroll": "Tạo Lại Chữ Ký",
+			"description": "Chữ ký này đóng vai trò là ID người điều hành duy nhất của bạn trên toàn bộ giao thức Học viện."
+		},
+		"step3": {
+			"badge": "BƯỚC 3 / 5",
+			"title": "Hồ Sơ Của Bạn",
+			"subtitle": "Cho cộng đồng biết bạn là ai. Tất cả các trường là tùy chọn.",
+			"bioPlaceholder": "Kiến trúc sư Solana cấp cao. Đang xây dựng tương lai phi tập trung...",
+			"locationPlaceholder": "Vị trí (ví dụ: HANOI_VN)",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "Tên người dùng GitHub",
+			"websitePlaceholder": "Portfolio / URL trang web",
+			"skip": "Bỏ qua bước này"
+		},
+		"step4": {
+			"badge": "BƯỚC 4 / 5",
+			"title": "Lộ Trình Học Tập",
+			"subtitle": "Chọn các lộ trình bạn muốn thành thạo. Chọn ít nhất một.",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "Lập trình hệ thống & hiệu suất"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Framework hợp đồng thông minh Solana"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "Giao thức tài chính phi tập trung"
+				},
+				"security": {
+					"label": "Bảo mật",
+					"desc": "Kiểm toán & nghiên cứu lỗ hổng"
+				},
+				"frontend": {
+					"label": "Frontend",
+					"desc": "Phát triển Web3 dApp"
+				}
+			}
+		},
+		"step5": {
+			"badge": "BƯỚC 5 / 5",
+			"title": "Kết Nối Ví",
+			"subtitle": "Liên kết ví Solana để nhận chứng chỉ on-chain và XP. Bạn có thể bỏ qua và kết nối sau trong phần cài đặt.",
+			"externalLabel": "LIÊN KẾT TÀI KHOẢN BÊN NGOÀI",
+			"linkGithub": "Liên kết GitHub",
+			"linkGoogle": "Liên kết Google",
+			"requiredFor": "CẦN THIẾT CHO",
+			"requirements": [
+				"Token Soulbound XP on-chain",
+				"NFT chứng chỉ Metaplex Core",
+				"Bằng chứng hoàn thành khóa học"
+			],
+			"launch": "Khởi Chạy Bảng Điều Khiển →",
+			"launching": "Đang khởi tạo...",
+			"skip": "Bỏ qua ví lúc này"
+		},
+		"nav": {
+			"back": "Quay lại",
+			"next": "Tiếp theo",
+			"continue": "Tiếp tục"
+		}
+	},
+	"Settings": {
+		"tabs": {
+			"profile": "Hồ Sơ",
+			"account": "Tài Khoản",
+			"interface": "Giao Diện",
+			"privacy": "Quyền Riêng Tư"
+		},
+		"view": {
+			"badge": "Cấu Hình Người Dùng",
+			"title": "CÀI ĐẶT HỆ THỐNG"
+		},
+		"profile": {
+			"title": "Hồ Sơ Người Điều Hành",
+			"avatarHint": "Avatar được lấy từ nhà cung cấp OAuth được kết nối của bạn.",
+			"nameLabel": "Tên Hiển Thị",
+			"namePlaceholder": "0xTenCuaBan",
+			"bioLabel": "Tiểu sử / Lời Chào Terminal",
+			"bioPlaceholder": "Kiến trúc sư Solana cấp cao. Đang xây dựng tương lai phi tập trung...",
+			"locationLabel": "Vị trí",
+			"locationPlaceholder": "HANOI_VN",
+			"socialLabel": "Liên Kết Mạng Xã Hội",
+			"twitterPlaceholder": "X / Twitter @handle",
+			"githubPlaceholder": "Tên người dùng GitHub",
+			"websitePlaceholder": "Portfolio / URL Trang Web",
+			"save": "Lưu Hồ Sơ",
+			"saving": "Đang lưu...",
+			"saved": "Cập nhật hồ sơ thành công."
+		},
+		"account": {
+			"title": "Tài Khoản & Xác Thực",
+			"emailLabel": "Email Chính",
+			"emailHint": "Email được quản lý thông qua nhà cung cấp xác thực của bạn.",
+			"walletsLabel": "Ví Đã Kết Nối",
+			"oauthLabel": "Nhà Cung Cấp OAuth",
+			"active": "HOẠT ĐỘNG",
+			"linkWallet": "Liên Kết Ví",
+			"linking": "Đang liên kết...",
+			"unlinking": "Đang hủy liên kết...",
+			"unlink": "Hủy Liên Kết",
+			"link": "Liên Kết",
+			"walletLinked": "Đã liên kết ví thành công.",
+			"walletUnlinked": "Đã hủy liên kết ví thành công.",
+			"walletError": "Lỗi liên kết ví. Đảm bảo ví chưa được gắn vào tài khoản khác.",
+			"oauthError": "Không thể bắt đầu liên kết {provider}"
+		},
+		"interface": {
+			"title": "Tùy Chọn Giao Diện",
+			"languageLabel": "Ngôn Ngữ Hệ Thống",
+			"themeLabel": "Chủ Đề Terminal",
+			"themeDesc": "Chuyển đổi giữa chế độ Sáng và Tối",
+			"themeDark": "Chế độ Tối",
+			"themeLight": "Chế độ Sáng",
+			"notificationsLabel": "Thông Báo",
+			"newCourses": "Các Khóa Học Mới Phát Hành",
+			"leaderboardAlerts": "Cảnh Báo Xếp Hạng Bảng Xếp Hạng",
+			"directMessages": "Tin Nhắn Trực Tiếp",
+			"save": "Lưu Tùy Chọn",
+			"saving": "Đang lưu...",
+			"saved": "Đã lưu tùy chọn."
+		},
+		"privacy": {
+			"title": "Quyền Riêng Tư & Dữ Liệu",
+			"visibilityLabel": "Hiển Thị Công Khai",
+			"visibilityDesc": "Hiển thị hồ sơ trên bảng xếp hạng toàn cầu",
+			"dataArchiveLabel": "Lưu Trữ Dữ Liệu",
+			"exportBtn": "↓ Xuất Dữ Liệu Người Điều Hành (.JSON)",
+			"save": "Cam Kết Cài Đặt Quyền Riêng Tư",
+			"saving": "Đang lưu...",
+			"saved": "Đã lưu cài đặt quyền riêng tư.",
+			"exported": "Xuất dữ liệu thành công."
+		}
+	},
+	"Legal": {
+		"terms": {
+			"title": "ĐIỀU KHOẢN DỊCH VỤ",
+			"lastUpdated": "CẬP NHẬT LẦN CUỐI: NGÀY 04 THÁNG 03 NĂM 2026",
+			"sections": {
+				"01": {
+					"title": "01 // CHẤP NHẬN GIAO THỨC",
+					"content": "Bằng cách truy cập terminal Superteam Academy, bạn đồng ý tuân thủ các Điều khoản Dịch vụ này. Các điều khoản này tạo thành một thỏa thuận có tính ràng buộc pháp lý giữa bạn ('Nhà vận hành') và Superteam Academy liên quan đến việc bạn truy cập và sử dụng giao thức."
+				},
+				"02": {
+					"title": "02 // ĐIỀU KIỆN ĐỐI VỚI NHÀ VẬN HÀNH",
+					"content": "Việc truy cập vào terminal này bị giới hạn đối với các cá nhân có thể ký kết các hợp đồng có tính ràng buộc pháp lý theo luật pháp hiện hành. Bằng cách sử dụng giao thức, bạn cam đoan và đảm bảo rằng bạn đáp ứng tất cả các yêu cầu về điều kiện."
+				},
+				"03": {
+					"title": "03 // CHỮ KÝ THẦN KINH & BẢO MẬT",
+					"content": "Superteam Academy sử dụng chữ ký mật mã để quản lý phiên. Bạn hoàn toàn chịu trách nhiệm về việc duy trì tính bảo mật của các khóa riêng tư và ví đã kết nối của mình. Mọi hoạt động được thực hiện thông qua chữ ký của bạn sẽ được coi là do bạn ủy quyền."
+				},
+				"04": {
+					"title": "04 // SỞ HỮU TRÍ TUỆ",
+					"content": "Tất cả chương trình giảng dạy, mẫu mã và các giao thức độc quyền trong Học viện đều được bảo vệ bởi luật sở hữu trí tuệ. Người dùng được cấp một giấy phép hạn chế, không độc quyền để sử dụng các tài liệu này chỉ cho mục đích giáo dục."
+				},
+				"05": {
+					"title": "05 // CÁC HOẠT ĐỘNG BỊ CẤM",
+					"content": "Nghiêm cấm việc khai thác độc hại giao thức, trích xuất dữ liệu tự động hoặc bất kỳ nỗ lực nào nhằm vượt qua các biện pháp bảo vệ trò chơi hóa. Việc vi phạm các quy tắc này có thể dẫn đến việc hủy bỏ vĩnh viễn ID Nhà vận hành của bạn."
+				},
+				"06": {
+					"title": "06 // TÍNH CUỐI CÙNG TRÊN CHUỖI",
+					"content": "Các hoạt động liên quan đến blockchain Solana phải tuân theo tính cuối cùng dưới một giây. Superteam Academy không thể hoàn tác các giao dịch trên chuỗi, phí gas (SOL) hoặc việc cấp các chứng chỉ vĩnh viễn."
+				},
+				"07": {
+					"title": "07 // GIỚI HẠN TRÁCH NHIỆM",
+					"content": "Superteam Academy được cung cấp trên cơ sở 'nguyên trạng' mà không có bất kỳ sự đảm bảo nào. Chúng tôi không chịu trách nhiệm cho bất kỳ tổn thất nào phát sinh từ các lỗi phần mềm, tắc nghẽn mạng hoặc cấu hình ví sai."
+				},
+				"08": {
+					"title": "08 // CHẤM DỨT TRUY CẬP",
+					"content": "Chúng tôi có quyền tạm dừng hoặc chấm dứt quyền truy cập vào terminal theo quyết định riêng của mình mà không cần thông báo trước đối với các hành vi mà chúng tôi tin rằng vi phạm các Điều khoản này hoặc gây hại cho các Nhà vận hành khác."
+				}
+			}
+		},
+		"privacy": {
+			"title": "CHÍNH SÁCH BẢO MẬT",
+			"lastUpdated": "CẬP NHẬT LẦN CUỐI: NGÀY 04 THÁNG 03 NĂM 2026",
+			"sections": {
+				"01": {
+					"title": "01 // PHÂN LOẠI DỮ LIỆU",
+					"content": "Chúng tôi thu thập hai danh mục dữ liệu: (A) Dữ liệu công khai trên chuỗi liên quan đến địa chỉ ví của bạn và (B) siêu dữ liệu hoạt động bao gồm nhật ký phiên và tiến trình cấp độ để hỗ trợ công cụ trò chơi hóa."
+				},
+				"02": {
+					"title": "02 // GIAO THỨC SỬ DỤNG",
+					"content": "Dữ liệu được thu thập được xử lý để tạo bảng xếp hạng toàn cầu của bạn, theo dõi tiến độ học tập và cấp các chứng chỉ đã được xác minh. Chúng tôi không bán dữ liệu của Nhà vận hành cho bên thứ ba."
+				},
+				"03": {
+					"title": "03 // LƯU TRỮ MẬT MÃ",
+					"content": "Dữ liệu hồ sơ nhạy cảm được lưu trữ bằng cách sử dụng mã hóa tiêu chuẩn ngành. Việc xác thực được quản lý thông qua Better Auth, đảm bảo chữ ký thần kinh của bạn luôn an toàn và phi tập trung."
+				},
+				"04": {
+					"title": "04 // PHÂN TÍCH & GIÁM SÁT",
+					"content": "Để cải thiện trải nghiệm người dùng (UX), chúng tôi sử dụng PostHog để theo dõi sự kiện và Sentry để ghi lại lỗi. Các dịch vụ này thu thập dữ liệu hoạt động ẩn danh để giúp chúng tôi tối ưu hóa môi trường terminal."
+				},
+				"05": {
+					"title": "05 // QUYỀN CỦA NHÀ VẬN HÀNH",
+					"content": "Bạn giữ quyền xuất gói dữ liệu Nhà vận hành của mình (.json) bất kỳ lúc nào thông qua cài đặt hệ thống. Bạn cũng có thể yêu cầu xóa siêu dữ liệu hồ sơ ngoài chuỗi của mình."
+				},
+				"06": {
+					"title": "06 // SỰ TIẾN HÓA CỦA CHÍNH SÁCH",
+					"content": "Khi giao thức mở rộng, Chính sách Bảo mật này có thể thay đổi. Các thay đổi quan trọng sẽ được thông báo qua hệ thống phát thanh toàn cầu của terminal."
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "THỬ THÁCH",
+		"subtitle": "Thử thách lập trình độc lập để nâng cao kỹ năng Solana của bạn.",
+		"badge": "ĐẤU TRƯỜNG THỬ THÁCH",
+		"hero": {
+			"liveLabel": "THỬ THÁCH TRỰC TIẾP",
+			"startBtn": "BẮT ĐẦU THỬ THÁCH →",
+			"completed": "✓ ĐÃ HOÀN THÀNH",
+			"unknownDifficulty": "KHÔNG XÁC ĐỊNH"
+		},
+		"sections": {
+			"updatingMissions": "CẬP NHẬT NHIỆM VỤ",
+			"allMissions": "TẤT CẢ NHIỆM VỤ"
+		},
+		"card": {
+			"startBtn": "BẮT ĐẦU THỬ THÁCH →",
+			"completed": "✓ ĐÃ HOÀN THÀNH",
+			"releases": "PHÁT HÀNH:"
+		},
+		"filters": {
+			"all": "Tất cả",
+			"fundamentals": "Cơ bản",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "Frontend",
+			"security": "Bảo mật",
+			"tokenExtensions": "Tiện ích mở rộng Token",
+			"beginner": "NGƯỜI BẮT ĐẦU",
+			"intermediate": "TRUNG CẤP",
+			"advanced": "CAO CẤP"
+		},
+		"emptyState": "Không tìm thấy nhiệm vụ nào với bộ lọc hiện tại."
+	}
+}

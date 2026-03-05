@@ -1,0 +1,619 @@
+{
+	"Hero": {
+		"badge": "ターミナルアクセス許可",
+		"title": "SOLANAで\n未来を築く",
+		"description": "次世代のSolanaアーキテクトのための最高の技術トレーニンググラウンド。ハードウェアアクセラレーションカリキュラムで、ゼロから本番環境へ。",
+		"explore": "コースを探す",
+		"discord": "Discordに参加"
+	},
+	"Navbar": {
+		"brand": "SUPERTEAM ACADEMY",
+		"links": {
+			"catalog": "コースカタログ",
+			"leaderboard": "リーダーボード",
+			"community": "コミュニティ"
+		},
+		"cta": {
+			"dashboard": "ダッシュボード",
+			"start": "学習を開始",
+			"login": "ログイン"
+		}
+	},
+	"Footer": {
+		"brand": "SUPERTEAM ACADEMY",
+		"description": "Solanaエコシステムのための分散型大学。学生が所有。",
+		"language": "言語:",
+		"copyright": "© 2026 Superteam Academy // 無断複写・転載を禁じます",
+		"headers": {
+			"platform": "プラットフォーム",
+			"socials": "ソーシャル"
+		},
+		"links": {
+			"catalog": "カタログ",
+			"leaderboard": "リーダーボード",
+			"dashboard": "ダッシュボード",
+			"profile": "プロフィール",
+			"terms": "利用規約",
+			"privacy": "プライバシーポリシー"
+		}
+	},
+	"Features": {
+		"proofs": {
+			"title": "オンチェーン証明",
+			"description": "完了したすべてのモジュールは、ウォレットに譲渡不可能な認証情報を発行します。学習しながら暗号的に検証可能な履歴書を作成します。"
+		},
+		"compiler": {
+			"title": "ライブコンパイラ",
+			"description": "環境設定は不要です。リアルタイムのフィードバックを備えたブラウザベースのIDEで、Solanaプログラムを直接作成、テスト、デプロイします。"
+		}
+	},
+	"LearningPaths": {
+		"subtitle": "利用可能な操作",
+		"title": "学習パス",
+		"viewAll": "すべてのトラックを表示",
+		"tracks": {
+			"beginner": {
+				"path": "パス 01 // 初級",
+				"title": "SOLANAの基礎",
+				"description": "ベースレイヤーをマスターします。アカウント、トランザクション、Sealevelランタイム。",
+				"meta": "12 モジュール // 40 XP"
+			},
+			"intermediate": {
+				"path": "パス 02 // 中級",
+				"title": "ANCHORフレームワーク",
+				"description": "業界標準のRust DSLを使用した迅速なプログラム開発。",
+				"meta": "8 モジュール // 120 XP"
+			},
+			"advanced": {
+				"path": "パス 03 // 上級",
+				"title": "プロトコルセキュリティ",
+				"description": "監査手法、一般的な攻撃ベクトル、および不変条件テスト。",
+				"meta": "15 モジュール // 300 XP"
+			}
+		}
+	},
+	"Courses": {
+		"search": {
+			"placeholder": "検索キーワード: SOLANA, RUST, ANCHOR..."
+		},
+		"filters": {
+			"all": "すべて",
+			"dev": "開発",
+			"defi": "DEFI",
+			"difficulty": "難易度",
+			"duration": "時間",
+			"active": "アクティブなフィルタ"
+		},
+		"curatedPaths": {
+			"title": "厳選されたパス",
+			"subtitle": "推奨シーケンス",
+			"tracks": {
+				"beginner": "初級トラック",
+				"intermediate": "中級トラック",
+				"advanced": "上級専門分野"
+			},
+			"modules": "コース",
+			"complete": "完了",
+			"startPath": "パスを開始"
+		},
+		"individualCourses": {
+			"title": "個別コース",
+			"sort": "並べ替え: 人気順"
+		},
+		"difficulty": {
+			"beginner": "初級",
+			"intermediate": "中級",
+			"advanced": "上級",
+			"expert": "エキスパート"
+		},
+		"locked": "ロック中",
+		"stats": {
+			"title": "セッション統計",
+			"totalXP": "合計XP",
+			"coursesActive": "アクティブなコース",
+			"completionRate": "完了率",
+			"certificates": "証明書"
+		},
+		"lastAccessed": {
+			"title": "最終アクセス",
+			"resume": "モジュールを再開"
+		}
+	},
+	"CourseDetail": {
+		"header": {
+			"label": "コース詳細",
+			"instructor": "インストラクター"
+		},
+		"metadata": {
+			"instructor": "インストラクター",
+			"duration": "期間",
+			"difficulty": "難易度"
+		},
+		"xpBounty": "XPバウンティ",
+		"buttons": {
+			"enroll": "今すぐ登録",
+			"enrolling": "登録中...",
+			"continue": "コースを続ける",
+			"claimCertificate": "CLAIM CERTIFICATE",
+			"viewCredential": "VIEW CREDENTIAL",
+			"issuing": "ISSUING..."
+		},
+		"curriculum": {
+			"title": "カリキュラム",
+			"completion": "完了"
+		},
+		"reviews": {
+			"title": "学生のフィードバック",
+			"viewAll": "すべてのレビューを表示"
+		},
+		"loading": "プロトコルデータを読み込み中...",
+		"errorLoading": "コースデータの読み込みエラー。",
+		"solveChallenge": "チャレンジを解く",
+		"hint": "ヒント"
+	},
+	"Lesson": {
+		"reference": "リファレンス",
+		"needHint": "ヒントが必要ですか？",
+		"ago": "前",
+		"autosaved": "自動保存済み",
+		"solution": "解決策",
+		"output": "出力",
+		"runTests": "テストを実行",
+		"module": "モジュール",
+		"previous": "前へ",
+		"nextLesson": "次のレッスン",
+		"startChallenge": "START CHALLENGE",
+		"savingProgress": "SAVING PROGRESS...",
+		"markCourseComplete": "MARK COURSE COMPLETE",
+		"loadingProtocol": "SYNCING NEURAL LINK...",
+		"errorNotFound": "PROTOCOL ERROR: COURSE OR LESSON NOT FOUND",
+		"tests": "TESTS",
+		"viewContentOnly": "VIEW CONTENT ONLY",
+		"solveChallenge": "チャレンジを解く",
+		"openSandbox": "OPEN SANDBOX",
+		"hint": "ヒント"
+	},
+	"Dashboard": {
+		"activeCourses": {
+			"label": "現在の操作",
+			"title": "アクティブなコース",
+			"progress": "進捗",
+			"resume": "再開",
+			"lesson": "LESSON",
+			"completed": "COMPLETED",
+			"review": "REVIEW COURSE"
+		},
+		"recommendedTracks": {
+			"label": "次のターゲット",
+			"title": "推奨トラック",
+			"enroll": "登録",
+			"initialize": "INITIALIZE SEQUENCE"
+		},
+		"recentActivity": {
+			"label": "ログ履歴",
+			"title": "最近のアクティビティ",
+			"viewAllLogs": "VIEW ALL LOGS"
+		},
+		"userHUD": {
+			"title": "オペレータープロフィール",
+			"xpBalance": "XP残高",
+			"globalRank": "グローバルランク",
+			"level": "レベル",
+			"xpToLevel": "レベルアップまで"
+		},
+		"streak": {
+			"title": "アクティブストリーク",
+			"days": "日"
+		},
+		"achievements": {
+			"title": "最新の実績",
+			"missionMilestones": "MISSION MILESTONES",
+			"locked": "Locked Milestone"
+		},
+		"logs": {
+			"button": "OPEN LOGS [F1]",
+			"title": "ACTIVITY_LOG.EXE",
+			"version": "SUPERTEAM OS v1.0.0",
+			"tabs": {
+				"all": "ALL",
+				"lessons": "LESSONS",
+				"achievements": "ACHIEVEMENTS"
+			},
+			"emptyState": "No items found matching filter."
+		}
+	},
+	"Profile": {
+		"operatorId": "オペレーターID",
+		"enrolledSince": "登録日",
+		"location": "場所",
+		"skillRadar": {
+			"title": "適性レーダー"
+		},
+		"achievements": {
+			"title": "実績 // ショーケース"
+		},
+		"credentials": {
+			"label": "オンチェーン証明",
+			"title": "進化するcNFT",
+			"verified": "検証済み",
+			"viewOnSolscan": "SOLSCANで表示"
+		},
+		"quickStats": {
+			"title": "クイック統計",
+			"rank": "ランク",
+			"vouchers": "バウチャー"
+		},
+		"courseLedger": {
+			"title": "コース台帳"
+		},
+		"metadata": {
+			"title": "METADATA.JSON"
+		}
+	},
+	"Leaderboard": {
+		"header": {
+			"label": "グローバルランキング",
+			"title": "オペレーターリーダーボード",
+			"updated": "更新済み"
+		},
+		"filters": {
+			"weekly": "週間",
+			"monthly": "月間",
+			"allTime": "全期間",
+			"allTracks": "フィルタ: すべてのトラック",
+			"rust": "RUSTの基礎",
+			"solana": "SOLANAの基礎",
+			"anchor": "ANCHORフレームワーク",
+			"cycle": "サイクル",
+			"stage": "ステージ"
+		},
+		"table": {
+			"xp": "XP",
+			"level": "LVL",
+			"streak": "日ストリーク",
+			"you": "あなた"
+		},
+		"loadMore": "-- [ 次の50人のオペレーターを表示 ] --",
+		"userStanding": {
+			"title": "あなたの順位",
+			"globalRank": "グローバルランク",
+			"percentile": "パーセンタイル",
+			"xpToFirst": "1位までのXP",
+			"rewards": "報酬",
+			"eligible": "対象"
+		},
+		"seasonalPrizes": {
+			"title": "季節の賞品",
+			"topFinishers": "上位3名:"
+		},
+		"activityFeed": {
+			"title": "アクティビティフィード"
+		}
+	},
+	"Wallet": {
+		"title": "ウォレット接続",
+		"detected": "検出済み"
+	},
+	"Newsletter": {
+		"title": "ニュースレター",
+		"description": "毎週の技術アップデートとエコシステムの機会を直接受信トレイにお届けします。",
+		"placeholder": "OPERADOR@EMAIL.COM",
+		"button": "購読する"
+	},
+	"Auth": {
+		"login": {
+			"title": "おかえりなさい",
+			"subtitle": "オペレーターダッシュボードにアクセスして進捗を継続してください。",
+			"emailPlaceholder": "メールアドレス",
+			"passwordPlaceholder": "パスワード",
+			"button": "メールでログイン",
+			"authenticating": "認証中...",
+			"noAccount": "アカウントをお持ちでないですか？",
+			"createLink": "オペレーターを初期化"
+		},
+		"signup": {
+			"title": "オペレーターを初期化",
+			"subtitle": "著名なSolanaアーキテクトとしての旅を始めましょう。",
+			"emailPlaceholder": "メールアドレス",
+			"passwordPlaceholder": "パスワード",
+			"button": "メールで初期化",
+			"initializing": "初期化中...",
+			"web3Native": "Web3ネイティブ",
+			"web3NativeDesc": "ソーシャルアイデンティティで初期化することもできますが、真の進行には安全なSolanaウォレットオペレーターの連携が必要です。",
+			"hasAccount": "既に初期化済みですか？",
+			"loginLink": "ダッシュボードにアクセス"
+		},
+		"shared": {
+			"brandingBadgeLogin": "プロトコルエントランス",
+			"brandingTitleLogin": "SOLANAで\n未来を築く",
+			"brandingDescLogin": "次世代のSolanaアーキテクトのための最高の技術訓練場。ハードウェアアクセラレーションされたカリキュラムで、ゼロからプロダクション対応へ。",
+			"brandingBadgeSignup": "新規オペレーター初期化",
+			"brandingTitleSignup": "オンチェーン\n資格を獲得",
+			"brandingDescSignup": "完了した各モジュールは、暗号学的に検証可能なスキル証明をウォレットに発行します。学びながら疑いの余地のないレジュメを構築しましょう。",
+			"systemOnline": "システムオンライン // ターミナルアクセス",
+			"orContinueWith": "または次で継続",
+			"accessProtocol": "アクセスプロトコル",
+			"accessProtocolDesc": "メールアドレスを入力してサインインするか、アカウントを作成してください。",
+			"returningOperator": "// 既存のオペレーター — 認証",
+			"newOperator": "// 新規オペレーター — アカウント初期化中",
+			"continue": "続行"
+		},
+		"walletButton": {
+			"github": "GitHubで継続",
+			"google": "Googleで継続",
+			"walletSignIn": "ウォレットでサインイン",
+			"walletConnect": "ウォレットを接続",
+			"authenticating": "認証中..."
+		}
+	},
+	"Onboarding": {
+		"badge": "オペレーター初期化",
+		"brandingTitle": "オペレーターを\n初期化して\nください",
+		"brandingDesc": "Solanaビルダーネットワークに参加するためのプロフィールを設定してください。各ステップでAcademyプロトコルへの完全アクセスが解放されます。",
+		"systemOnline": "システム_オンライン — ステップ",
+		"of": "/",
+		"steps": {
+			"identity": "アイデンティティ",
+			"signature": "ニューラル署名",
+			"profile": "プロフィール",
+			"learningPath": "学習パス",
+			"wallet": "ウォレット"
+		},
+		"step1": {
+			"badge": "ステップ 1 / 5",
+			"title": "あなたのアイデンティティ",
+			"subtitle": "オペレーター表示名を設定してください。これがリーダーボードとプロフィールでの表示名になります。",
+			"namePlaceholder": "0xあなたのエイリアス",
+			"nameLabel": "表示名",
+			"emailLabel": "メール（読み取り専用）"
+		},
+		"step2": {
+			"badge": "ステップ 2 / 5",
+			"title": "ニューラル署名",
+			"subtitle": "あなたのデジタルアイデンティティは手続き的に初期化されます。最適な共鳴に達するまで、一意の署名を再ロールできます。",
+			"reroll": "署名を再生成",
+			"description": "この署名は、アカデミープロトコル全体であなたの一意のオペレーターIDとして機能します。"
+		},
+		"step3": {
+			"badge": "ステップ 3 / 5",
+			"title": "あなたのプロフィール",
+			"subtitle": "コミュニティにあなたについて教えてください。すべてのフィールドは任意です。",
+			"bioPlaceholder": "シニアSolanaアーキテクト。分散型の未来を構築しています...",
+			"locationPlaceholder": "場所（例: TOKYO_JP）",
+			"twitterPlaceholder": "X / Twitter @ハンドル",
+			"githubPlaceholder": "GitHubユーザー名",
+			"websitePlaceholder": "ポートフォリオ / ウェブサイトURL",
+			"skip": "このステップをスキップ"
+		},
+		"step4": {
+			"badge": "ステップ 4 / 5",
+			"title": "学習パス",
+			"subtitle": "習得したいトラックを選択してください。少なくとも1つ選んでください。",
+			"tracks": {
+				"rust": {
+					"label": "Rust",
+					"desc": "システムプログラミングとパフォーマンス"
+				},
+				"anchor": {
+					"label": "Anchor",
+					"desc": "Solanaスマートコントラクトフレームワーク"
+				},
+				"defi": {
+					"label": "DeFi",
+					"desc": "分散型金融プロトコル"
+				},
+				"security": {
+					"label": "セキュリティ",
+					"desc": "監査と脆弱性研究"
+				},
+				"frontend": {
+					"label": "フロントエンド",
+					"desc": "Web3 dApp開発"
+				}
+			}
+		},
+		"step5": {
+			"badge": "ステップ 5 / 5",
+			"title": "ウォレットを接続",
+			"subtitle": "オンチェーン認証情報とXPを受け取るためにSolanaウォレットをリンクしてください。後で設定から接続することもできます。",
+			"externalLabel": "外部アカウントを連携",
+			"linkGithub": "GitHubを連携",
+			"linkGoogle": "Googleを連携",
+			"requiredFor": "必要なもの",
+			"requirements": [
+				"オンチェーンXP soulboundトークン",
+				"Metaplex Core NFT",
+				"コース修了の証明"
+			],
+			"launch": "ダッシュボードを開く →",
+			"launching": "初期化中...",
+			"skip": "今はウォレットをスキップ"
+		},
+		"nav": {
+			"back": "戻る",
+			"next": "次へ",
+			"continue": "続行"
+		}
+	},
+	"Settings": {
+		"profile": {
+			"title": "オペレータープロフィール",
+			"avatarHint": "アバターは接続されたOAuthプロバイダー（Google / GitHub）から取得されます。",
+			"nameLabel": "表示名",
+			"namePlaceholder": "0xYourHandle",
+			"bioLabel": "自己紹介 / ターミナルグリーティング",
+			"bioPlaceholder": "シニアSolanaアーキテクト。分散型の未来を構築中...",
+			"locationLabel": "場所",
+			"locationPlaceholder": "TOKYO_JP",
+			"socialLabel": "ソーシャルリンク",
+			"twitterPlaceholder": "X / Twitter @ハンドル",
+			"githubPlaceholder": "GitHubユーザー名",
+			"websitePlaceholder": "ポートフォリオ / ウェブサイトURL",
+			"save": "プロフィールを保存",
+			"saving": "保存中...",
+			"saved": "プロフィールが正常に更新されました。"
+		},
+		"account": {
+			"title": "アカウントと認証",
+			"emailLabel": "メインメール",
+			"emailHint": "メールは認証プロバイダーによって管理されています。",
+			"walletsLabel": "接続済みウォレット",
+			"oauthLabel": "OAuthプロバイダー",
+			"active": "アクティブ",
+			"linkWallet": "ウォレットを連携",
+			"linking": "連携中...",
+			"link": "連携",
+			"walletLinked": "ウォレットが正常に連携されました。",
+			"walletError": "ウォレットの連携エラー。別のアカウントに紐づいていないか確認してください。",
+			"oauthError": "{provider}リンクの開始に失敗しました"
+		},
+		"tabs": {
+			"profile": "プロフィール",
+			"account": "アカウント",
+			"interface": "インターフェース",
+			"privacy": "プライバシー"
+		},
+		"view": {
+			"badge": "ユーザー設定",
+			"title": "システム設定"
+		},
+		"interface": {
+			"title": "インターフェース設定",
+			"languageLabel": "システム言語",
+			"themeLabel": "ターミナルテーマ",
+			"themeDesc": "ライトとダークのコアを切り替え",
+			"themeDark": "ダークモード",
+			"themeLight": "ライトモード",
+			"notificationsLabel": "通知",
+			"newCourses": "新しいコースのリリース",
+			"leaderboardAlerts": "リーダーボードランクアラート",
+			"directMessages": "ダイレクトメッセージ",
+			"save": "設定を保存",
+			"saving": "保存中...",
+			"saved": "設定が保存されました。"
+		},
+		"privacy": {
+			"title": "プライバシー & データ",
+			"visibilityLabel": "公開表示",
+			"visibilityDesc": "グローバルリーダーボードにプロフィールを表示",
+			"dataArchiveLabel": "データアーカイブ",
+			"exportBtn": "↓ オペレーターデータをエクスポート (.JSON)",
+			"save": "プライバシー設定を確定",
+			"saving": "保存中...",
+			"saved": "プライバシー設定が保存されました。",
+			"exported": "データが正常にエクスポートされました。"
+		}
+	},
+	"StatsStrip": {
+		"activeStudents": "Active Students",
+		"nodesValidated": "Nodes Validated",
+		"bountiesWon": "Bounties Won",
+		"jobPlacements": "Job Placements"
+	},
+	"Testimonials": {
+		"sectionLabel": "Student Intelligence Report"
+	},
+	"Legal": {
+		"terms": {
+			"title": "利用規約",
+			"lastUpdated": "最終更新日: 2026年3月4日",
+			"sections": {
+				"01": {
+					"title": "01 // プロトコルへの同意",
+					"content": "Superteam Academyターミナルにアクセスすることにより、利用規約に同意したことになります。これらの規約は、お客様（「オペレーター」）とSuperteam Academyとの間のプロトコル利用に関する法的合意です。"
+				},
+				"02": {
+					"title": "02 // オペレーターの適格性",
+					"content": "このターミナルへのアクセスは、適用法の下で法的拘束力のある契約を結ぶことができる個人に限られます。本プロトコルを利用することで、お客様はすべての資格要件を満たしていることを表明および保証するものとします。"
+				},
+				"03": {
+					"title": "03 // ニューラル署名とセキュリティ",
+					"content": "Superteam Academyはセッション管理に暗号化署名を使用しています。お客様は、自身の秘密鍵および接続されたウォレットの機密性とセキュリティを維持する責任を負います。署名を介して実行された操作は、すべてお客様によって許可されたものとみなされます。"
+				},
+				"04": {
+					"title": "04 // 知的財産権",
+					"content": "アカデミー内のすべてのカリキュラム、コードテンプレート、および独自のプロトコルは、知的財産法によって保護されています。ユーザーには、教育目的でのみこれらの資料を使用するための、限定的かつ非独占的なライセンスが付与されます。"
+				},
+				"05": {
+					"title": "05 // 禁止事項",
+					"content": "プロトコルの悪意のある利用、自動スクレイピング、またはゲーム化の保護を回避する試みは厳格に禁止されています。これらの規則に違反した場合、オペレーターIDが永久に停止される可能性があります。"
+				},
+				"06": {
+					"title": "06 // オンチェーンの確定性",
+					"content": "Solanaブロックチェーンが関わる操作は、1秒未満の確定性が適用されます。Superteam Academyは、オンチェーンのトランザクション、ガス代（SOL）、または永久的な証明書の発行を取り消すことはできません。"
+				},
+				"07": {
+					"title": "07 // 責任の制限",
+					"content": "Superteam Academyは「現状有姿」で提供されます。ソフトウェアの不具合、ネットワークの混雑、ウォレットの誤設定によるいかなる損失についても、当方は責任を負いません。"
+				},
+				"08": {
+					"title": "08 // アクセスの終了",
+					"content": "当方は、独自の裁量により、規約に違反していると判断した場合や、他のオペレーターに害を及ぼす可能性がある場合、予告なくターミナルへのアクセスを一時停止または終了する権利を留保します。"
+				}
+			}
+		},
+		"privacy": {
+			"title": "プライバシーポリシー",
+			"lastUpdated": "最終更新日: 2026年3月4日",
+			"sections": {
+				"01": {
+					"title": "01 // データの分類",
+					"content": "当方は2つのカテゴリのデータを収集します：(A) ウォレットアドレスに関連付けられた公開オンチェーンデータ、および (B) ゲーム化エンジンをサポートするためのセッションログと進捗状況を含む運用メタデータ。"
+				},
+				"02": {
+					"title": "02 // 使用プロトコル",
+					"content": "収集されたデータは、グローバルランキングの生成、学習進捗の追跡、および検証済みの資格証明の発行のために処理されます。当方は、オペレーターのデータを第三者に販売することはありません。"
+				},
+				"03": {
+					"title": "03 // 暗号化ストレージ",
+					"content": "重要性の高いプロフィールデータは、業界標準の暗号化を使用して保存されます。認証はBetter Authを介して処理され、ニューラル署名の安全性と分散性が確保されています。"
+				},
+				"04": {
+					"title": "04 // 分析とモニタリング",
+					"content": "UXの改善を目的として、イベント追跡にPostHogを使用し、エラーログにSentryを使用しています。これらのサービスは、ターミナル環境の最適化を支援するために匿名化された運用データを収集します。"
+				},
+				"05": {
+					"title": "05 // オペレーターの権利",
+					"content": "お客様は、システム設定を通じていつでもオペレーターデータパッケージ（.json）をエクスポートする権利を保持します。また、オフチェーンのプロフィールメタデータの削除をリクエストすることもできます。"
+				},
+				"06": {
+					"title": "06 // ポリシーの進化",
+					"content": "プロトコルの拡張に伴い、このプライバシーポリシーは更新される可能性があります。重要な変更はターミナルのグローバル放送システムを通じて通知されます。"
+				}
+			}
+		}
+	},
+	"Challenges": {
+		"title": "チャレンジ",
+		"subtitle": "Solanaスキルを磨くための独立したコーディングチャレンジ。",
+		"badge": "チャレンジアリーナ",
+		"hero": {
+			"liveLabel": "ライブチャレンジ",
+			"startBtn": "チャレンジを開始 →",
+			"completed": "✓ 完了",
+			"unknownDifficulty": "不明"
+		},
+		"sections": {
+			"updatingMissions": "ミッション更新中",
+			"allMissions": "すべてのミッション"
+		},
+		"card": {
+			"startBtn": "チャレンジを開始 →",
+			"completed": "✓ 完了",
+			"releases": "リリース:"
+		},
+		"filters": {
+			"all": "すべて",
+			"fundamentals": "基礎",
+			"rustAnchor": "Rust/Anchor",
+			"defi": "DeFi",
+			"frontend": "フロントエンド",
+			"security": "セキュリティ",
+			"tokenExtensions": "トークン拡張",
+			"beginner": "初級",
+			"intermediate": "中級",
+			"advanced": "上級"
+		},
+		"emptyState": "現在のフィルターに一致するミッションは見つかりませんでした。"
+	}
+}
