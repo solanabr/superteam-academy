@@ -336,6 +336,7 @@ async function getLesson(courseId: string, lessonId: string) {
 				title: lesson.title,
 				duration: lesson.duration ?? "10 min",
 				content: lesson.content,
+				videoUrl: lesson.videoUrl,
 			}))
 		) ?? [];
 
@@ -344,7 +345,7 @@ async function getLesson(courseId: string, lessonId: string) {
 
 	const links = extractLinksFromBlocks(lesson.content ?? []);
 	const videoUrl =
-		links.find((link) => isVideoUrl(link.href))?.href ??
+		(lesson.videoUrl || links.find((link) => isVideoUrl(link.href))?.href) ??
 		links.find((link) => link.href.endsWith(".mp4"))?.href ??
 		null;
 	const resources = links

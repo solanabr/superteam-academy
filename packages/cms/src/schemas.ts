@@ -78,6 +78,7 @@ export type Lesson = SanityDocument & {
 	title: string;
 	slug: SanitySlug;
 	content?: SanityBlock[];
+	videoUrl?: string;
 	order: number;
 	module?: { _ref: string };
 	xpReward: number;

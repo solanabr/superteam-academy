@@ -59,7 +59,7 @@ export function createCourseService(context: CMSContext) {
 				"modules": *[_type == "module" && references(^._id)] | order(order asc) {
 					_id,_type,title,slug,description,order,"lessonCount": count(lessons),
 					"lessons": *[_type == "lesson" && references(^._id)] | order(order asc) {
-						_id,_type,title,slug,content,order,xpReward,duration
+						_id,_type,title,slug,content,videoUrl,order,xpReward,duration
 					}
 				}
 			}`,

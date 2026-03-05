@@ -13,6 +13,7 @@ interface CourseLessonRef {
 	_id: string;
 	title: string;
 	slug?: { current: string };
+	videoUrl?: string;
 }
 
 interface CourseModuleRef {
@@ -38,6 +39,7 @@ export interface AdminLessonContent {
 	lesson: CourseLessonRef;
 	challenge: LessonChallenge | null;
 	quiz: LessonQuiz | null;
+	videoUrl: string;
 }
 
 export async function getCourseRefByIdOrSlug(courseIdOrSlug: string): Promise<CourseRef | null> {
@@ -53,7 +55,8 @@ export async function getCourseRefByIdOrSlug(courseIdOrSlug: string): Promise<Co
 				"lessons": *[_type == "lesson" && references(^._id)] | order(order asc) {
 					_id,
 					title,
-					slug
+					slug,
+					videoUrl
 				}
 			}
 		}`,
@@ -199,7 +202,7 @@ export async function getAdminLessonContent(
 		{ lessonId, courseId: course._id }
 	);
 
-	return { lesson, challenge, quiz };
+	return { lesson, challenge, quiz, videoUrl: lesson.videoUrl ?? "" };
 }
 
 export function createChallengeDraft(params: {

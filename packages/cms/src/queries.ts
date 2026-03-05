@@ -49,6 +49,7 @@ export const lessonFields = /* groq */ `
   title,
   slug,
   content,
+  videoUrl,
   order,
   xpReward,
   duration

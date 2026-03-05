@@ -12,6 +12,7 @@ import {
 	Code2,
 	CircleHelp,
 	ListChecks,
+	Video,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +92,7 @@ type LessonContentResponse = {
 	content: {
 		challenge: (ChallengeDraft & { _id: string }) | null;
 		quiz: (QuizDraft & { _id: string }) | null;
+		videoUrl: string;
 	};
 };
 
@@ -134,6 +136,7 @@ export default function CourseLessonContentPage() {
 	const [challenge, setChallenge] = useState<ChallengeDraft>(defaultChallenge("Lesson"));
 	const [quizEnabled, setQuizEnabled] = useState(false);
 	const [quiz, setQuiz] = useState<QuizDraft>(defaultQuiz("Lesson"));
+	const [videoUrl, setVideoUrl] = useState("");
 	const [error, setError] = useState<string>("");
 
 	const lessons = useMemo<LessonRef[]>(() => {
@@ -183,6 +186,7 @@ export default function CourseLessonContentPage() {
 					setChallenge(defaultChallenge(lessonTitle));
 					setQuizEnabled(false);
 					setQuiz(defaultQuiz(lessonTitle));
+					setVideoUrl("");
 					return;
 				}
 				const data = (await res.json()) as LessonContentResponse;
@@ -190,6 +194,7 @@ export default function CourseLessonContentPage() {
 				setChallenge(data.content.challenge ?? defaultChallenge(lessonTitle));
 				setQuizEnabled(Boolean(data.content.quiz));
 				setQuiz(data.content.quiz ?? defaultQuiz(lessonTitle));
+				setVideoUrl(data.content.videoUrl ?? "");
 			} finally {
 				setLoadingContent(false);
 			}
@@ -296,6 +301,26 @@ export default function CourseLessonContentPage() {
 					<div className="h-72 bg-muted animate-pulse rounded-xl" />
 				) : (
 					<>
+						<Card>
+							<CardHeader>
+								<CardTitle className="flex items-center gap-2">
+									<Video className="h-5 w-5" /> Video
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-2">
+								<Label htmlFor="videoUrl">YouTube / Video URL</Label>
+								<Input
+									id="videoUrl"
+									placeholder="https://www.youtube.com/watch?v=..."
+									value={videoUrl}
+									onChange={(e) => setVideoUrl(e.target.value)}
+								/>
+								<p className="text-xs text-muted-foreground">
+									Supports YouTube, Vimeo, or direct .mp4 links
+								</p>
+							</CardContent>
+						</Card>
+
 						<Card>
 							<CardHeader>
 								<CardTitle className="flex items-center gap-2">

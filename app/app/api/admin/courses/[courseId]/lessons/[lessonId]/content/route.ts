@@ -49,11 +49,19 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const body = (await request.json()) as {
 		challenge?: unknown;
 		quiz?: unknown;
+		videoUrl?: string;
 	};
 
 	const existing = await getAdminLessonContent(course._id, lessonId);
 	if (!existing) {
 		return NextResponse.json({ error: "Lesson content not available" }, { status: 404 });
+	}
+
+	if ("videoUrl" in body) {
+		await writeClient
+			.patch(lessonId)
+			.set({ videoUrl: body.videoUrl ?? "" })
+			.commit();
 	}
 
 	if ("challenge" in body) {
