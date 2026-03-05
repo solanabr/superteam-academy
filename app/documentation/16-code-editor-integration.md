@@ -17,18 +17,18 @@
 
 ```mermaid
 graph TB
-    subgraph Frontend["Frontend (Client-Side)"]
-        EDITOR["CodeEditor Component<br/>CodeMirror 6 wrapper"]
-        HOOK["useCodeExecution Hook<br/>State management + API calls"]
-        LESSON_UI["Lesson View<br/>Split layout: content + editor"]
+    subgraph Frontend["Frontend - Client-Side"]
+        EDITOR["CodeEditor Component - CodeMirror 6 wrapper"]
+        HOOK["useCodeExecution Hook - State management + API calls"]
+        LESSON_UI["Lesson View - Split layout: content + editor"]
     end
 
-    subgraph Backend["Backend (API Route)"]
-        API_ROUTE["POST /api/code/execute<br/>Auth + rate limit + validation"]
+    subgraph Backend["Backend - API Route"]
+        API_ROUTE["POST /api/code/execute - Auth + rate limit + validation"]
     end
 
-    subgraph Judge0["Judge0 CE (Self-Hosted VPS)"]
-        SANDBOX["Sandboxed Execution<br/>POST /submissions?wait=true"]
+    subgraph Judge0["Judge0 CE - Self-Hosted VPS"]
+        SANDBOX["Sandboxed Execution - POST /submissions"]
     end
 
     LESSON_UI --> EDITOR
@@ -78,9 +78,9 @@ The editor exposes `resetCode()` and `getCode()` methods via a DOM reference for
 
 ```mermaid
 graph LR
-    PARENT["Lesson Page"] -->|ref.__editorApi| EDITOR["CodeEditor"]
-    EDITOR -->|resetCode()| RESET["Restore to starterCode"]
-    EDITOR -->|getCode()| GET["Return current content"]
+    PARENT["Lesson Page"] -->|"ref.__editorApi"| EDITOR["CodeEditor"]
+    EDITOR -->|"resetCode"| RESET["Restore to starterCode"]
+    EDITOR -->|"getCode"| GET["Return current content"]
 ```
 
 ---
@@ -270,14 +270,14 @@ graph LR
     end
 
     subgraph VPS["Self-Hosted VPS"]
-        J0["Judge0 CE<br/>Docker containers"]
-        WORKERS["Worker Processes<br/>Sandboxed execution"]
+        J0["Judge0 CE - Docker containers"]
+        WORKERS["Worker Processes - Sandboxed execution"]
     end
 
-    API -->|HTTPS + Auth Token| J0
+    API -->|"HTTPS + Auth Token"| J0
     J0 --> WORKERS
-    WORKERS -->|Isolated containers| J0
-    J0 -->|Base64 results| API
+    WORKERS -->|"Isolated containers"| J0
+    J0 -->|"Base64 results"| API
 ```
 
 ---

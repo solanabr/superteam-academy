@@ -24,16 +24,16 @@ graph TB
     end
 
     subgraph Rewards["Reward Distribution"]
-        subgraph OnChain["On-Chain (Permanent)"]
-            XP_MINT["XP Token Mint<br/>SPL Token-2022<br/>(deployment-specific address)"]
-            CRED_NFT["Credential NFTs<br/>Metaplex Core"]
-            ACH_NFT["Achievement NFTs<br/>Metaplex Core"]
+        subgraph OnChain["On-Chain - Permanent"]
+            XP_MINT["XP Token Mint - SPL Token-2022"]
+            CRED_NFT["Credential NFTs - Metaplex Core"]
+            ACH_NFT["Achievement NFTs - Metaplex Core"]
         end
 
-        subgraph OffChain["Off-Chain (Database)"]
-            STREAK_DB["Streak Records<br/>daily_login_streaks"]
-            ACTIVITY_DB["Activity Log<br/>streak_activity"]
-            OFFCHAIN_XP["Off-Chain XP<br/>profiles.offchain_xp"]
+        subgraph OffChain["Off-Chain - Database"]
+            STREAK_DB["Streak Records - daily_login_streaks"]
+            ACTIVITY_DB["Activity Log - streak_activity"]
+            OFFCHAIN_XP["Off-Chain XP - profiles.offchain_xp"]
         end
     end
 
@@ -60,8 +60,8 @@ graph TB
     ACH_NFT --> ACH_UI
 
     subgraph Feedback["User Feedback"]
-        TOAST["goeyToast<br/>Success/error notifications"]
-        CLAIM_POPUP["ClaimXpPopup<br/>Daily streak celebration"]
+        TOAST["goeyToast - Success/error notifications"]
+        CLAIM_POPUP["ClaimXpPopup - Daily streak celebration"]
     end
 
     LOGIN --> CLAIM_POPUP
@@ -89,11 +89,11 @@ graph TB
 ```mermaid
 graph LR
     subgraph Calculations["XP Calculation Module"]
-        BONUS["calculateCompletionBonus<br/>floor(xpPerLesson * lessonCount / 2)"]
-        TOTAL["calculateCourseTotalXp<br/>lessonXp + bonus"]
-        CREATOR["calculateCreatorReward<br/>reward if completions >= threshold"]
-        LEVEL_CALC["calculateLevel<br/>XP to level (1-10)"]
-        PROGRESS["getLevelProgress<br/>% within current level"]
+        BONUS["calculateCompletionBonus: floor xpPerLesson * lessonCount / 2"]
+        TOTAL["calculateCourseTotalXp: lessonXp + bonus"]
+        CREATOR["calculateCreatorReward: reward if completions meet threshold"]
+        LEVEL_CALC["calculateLevel: XP to level 1-10"]
+        PROGRESS["getLevelProgress: percent within current level"]
     end
 ```
 
@@ -134,16 +134,16 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    L1["Level 1<br/>0 XP"]
-    L2["Level 2<br/>1,000 XP"]
-    L3["Level 3<br/>2,500 XP"]
-    L4["Level 4<br/>5,000 XP"]
-    L5["Level 5<br/>10,000 XP"]
-    L6["Level 6<br/>20,000 XP"]
-    L7["Level 7<br/>35,000 XP"]
-    L8["Level 8<br/>55,000 XP"]
-    L9["Level 9<br/>80,000 XP"]
-    L10["Level 10<br/>120,000 XP"]
+    L1["Level 1: 0 XP"]
+    L2["Level 2: 1,000 XP"]
+    L3["Level 3: 2,500 XP"]
+    L4["Level 4: 5,000 XP"]
+    L5["Level 5: 10,000 XP"]
+    L6["Level 6: 20,000 XP"]
+    L7["Level 7: 35,000 XP"]
+    L8["Level 8: 55,000 XP"]
+    L9["Level 9: 80,000 XP"]
+    L10["Level 10: 120,000 XP"]
 
     L1 --> L2 --> L3 --> L4 --> L5
     L5 --> L6 --> L7 --> L8 --> L9 --> L10
@@ -178,17 +178,17 @@ graph LR
 ```mermaid
 graph TB
     subgraph DailyLogin["Daily Login Streaks"]
-        DLS["daily_login_streaks<br/>One record per user"]
-        DLS_FIELDS["current_streak: int<br/>longest_streak: int<br/>last_login_date: date<br/>total_login_xp: int<br/>streak_broken: bool"]
+        DLS["daily_login_streaks - One record per user"]
+        DLS_FIELDS["current_streak: int, longest_streak: int, last_login_date: date, total_login_xp: int, streak_broken: bool"]
     end
 
     subgraph ActivityStreaks["Activity Streaks"]
-        AS["streaks<br/>One record per user"]
-        AS_FIELDS["current_streak: int<br/>longest_streak: int<br/>last_activity_date: date<br/>freeze_count: int (max 3)<br/>max_freezes: int"]
+        AS["streaks - One record per user"]
+        AS_FIELDS["current_streak: int, longest_streak: int, last_activity_date: date, freeze_count: int max 3, max_freezes: int"]
     end
 
-    subgraph Activity["streak_activity<br/>One record per user per day"]
-        SA_FIELDS["activity_date<br/>xp_earned<br/>lessons_completed<br/>courses_completed"]
+    subgraph Activity["streak_activity - One record per user per day"]
+        SA_FIELDS["activity_date, xp_earned, lessons_completed, courses_completed"]
     end
 
     DLS --> DLS_FIELDS
@@ -238,7 +238,7 @@ sequenceDiagram
     participant Client
     participant API as Streak API
     participant DB as PostgreSQL
-    participant Chain as Solana (for milestones)
+    participant Chain as Solana
 
     Client->>API: POST /api/streak/checkin
     API->>DB: Get daily_login_streaks for user
@@ -250,15 +250,15 @@ sequenceDiagram
         API->>DB: Update profiles.offchain_xp
 
         alt Milestone Reached
-            API->>DB: Check streak_milestones (not yet claimed)
-            API->>Chain: reward_xp(recipient, amount, memo)
+            API->>DB: Check streak_milestones not yet claimed
+            API->>Chain: reward_xp recipient, amount, memo
             API->>DB: Insert streak_milestones record with tx_signature
         end
     else Already Checked In Today
-        API-->>Client: { alreadyCheckedIn: true }
+        API-->>Client: alreadyCheckedIn true
     end
 
-    API-->>>Client: Streak data
+    API-->>Client: Streak data
 ```
 
 ### Frontend Feedback Components
@@ -279,28 +279,28 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph Progress["Progress Achievements"]
-        A1["First Steps<br/>First lesson: 50 XP"]
-        A2["Course Completer<br/>First course: 100 XP"]
-        A3["Knowledge Seeker<br/>5 courses: 500 XP"]
-        A4["Scholar<br/>10 courses: 1000 XP"]
+        A1["First Steps - First lesson: 50 XP"]
+        A2["Course Completer - First course: 100 XP"]
+        A3["Knowledge Seeker - 5 courses: 500 XP"]
+        A4["Scholar - 10 courses: 1000 XP"]
     end
 
     subgraph Streak_Ach["Streak Achievements"]
-        A5["Week Warrior<br/>7-day: 100 XP"]
-        A6["Monthly Master<br/>30-day: 500 XP"]
-        A7["Consistency King<br/>100-day: 2000 XP"]
+        A5["Week Warrior - 7-day: 100 XP"]
+        A6["Monthly Master - 30-day: 500 XP"]
+        A7["Consistency King - 100-day: 2000 XP"]
     end
 
     subgraph Skill["Skill Achievements"]
-        A8["Rust Rookie<br/>5 Rust lessons: 100 XP"]
-        A9["Anchor Novice<br/>Anchor basics: 100 XP"]
-        A10["Anchor Expert<br/>Anchor track: 500 XP"]
-        A11["Full Stack Solana<br/>All tracks: 1000 XP"]
+        A8["Rust Rookie - 5 Rust lessons: 100 XP"]
+        A9["Anchor Novice - Anchor basics: 100 XP"]
+        A10["Anchor Expert - Anchor track: 500 XP"]
+        A11["Full Stack Solana - All tracks: 1000 XP"]
     end
 
     subgraph Special_Ach["Special Achievements"]
-        A12["Early Adopter<br/>Beta join: 500 XP"]
-        A13["Speed Runner<br/>24h course: 300 XP"]
+        A12["Early Adopter - Beta join: 500 XP"]
+        A13["Speed Runner - 24h course: 300 XP"]
     end
 
     style Progress fill:#3498db,color:#fff
@@ -344,7 +344,7 @@ The challenge system provides daily goals to encourage consistent engagement:
 ```mermaid
 graph TB
     subgraph Generation["Challenge Generation"]
-        DAILY["Daily Reset<br/>New challenges each day"]
+        DAILY["Daily Reset - New challenges each day"]
     end
 
     subgraph Types["Challenge Types"]
@@ -380,13 +380,13 @@ graph TB
     end
 
     subgraph Credentials["Credential NFTs"]
-        C_ISSUE["Issue Credential<br/>On course finalization"]
-        C_UPGRADE["Upgrade Credential<br/>Subsequent courses"]
+        C_ISSUE["Issue Credential - On course finalization"]
+        C_UPGRADE["Upgrade Credential - Subsequent courses"]
     end
 
     subgraph Metadata["NFT Metadata"]
-        META["Metaplex Core NFT<br/>Soulbound (non-transferable)"]
-        ATTRS["Attributes:<br/>trackId, level,<br/>coursesCompleted, totalXp"]
+        META["Metaplex Core NFT - Soulbound, non-transferable"]
+        ATTRS["Attributes: trackId, level, coursesCompleted, totalXp"]
     end
 
     T1 --> C_ISSUE

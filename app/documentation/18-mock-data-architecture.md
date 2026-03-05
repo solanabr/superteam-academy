@@ -14,26 +14,26 @@ The system uses an "early-return" pattern in the API routes. If mock mode is ena
 
 ```mermaid
 graph TD
-    A[Environment Variable<br/>NEXT_PUBLIC_USE_MOCK_DATA=true] --> B{API Routes}
+    A["Environment Variable NEXT_PUBLIC_USE_MOCK_DATA=true"] --> B{"API Routes"}
     
-    B -->|courses/route.ts| C[Return mock On-chain Courses]
-    B -->|cms/courses/route.ts| D[Return mock CMS summaries]
-    B -->|cms/course/route.ts| E[Return full mock SanityCourse]
-    B -->|mock-execute/route.ts| F[Mock code execution API]
+    B -->|"courses/route.ts"| C["Return mock On-chain Courses"]
+    B -->|"cms/courses/route.ts"| D["Return mock CMS summaries"]
+    B -->|"cms/course/route.ts"| E["Return full mock SanityCourse"]
+    B -->|"mock-execute/route.ts"| F["Mock code execution API"]
 
-    C --> G[useActiveCourses hook<br/>(unchanged)]
+    C --> G["useActiveCourses hook - unchanged"]
     D --> G
     
-    G -.-> H[CourseList & CourseCard<br/>(UI unchanged)]
+    G -.-> H["CourseList and CourseCard - UI unchanged"]
     
-    E --> I[Course Detail & Lesson Page<br/>(enrollment bypassed)]
+    E --> I["Course Detail and Lesson Page - enrollment bypassed"]
     
-    I --> J[CodeEditor component<br/>(unchanged UI)]
-    I --> K[LessonContent<br/>(renders mock markdown)]
+    I --> J["CodeEditor component - unchanged UI"]
+    I --> K["LessonContent - renders mock markdown"]
 
-    F -.-> L[ChallengePanel<br/>(Mock execution logic)]
+    F -.-> L["ChallengePanel - Mock execution logic"]
     
-    L -- on all tests pass --> M[ClaimXpPopup<br/>(unchanged celebration)]
+    L -->|"on all tests pass"| M["ClaimXpPopup - unchanged celebration"]
     
     classDef env fill:#1a1a2e,stroke:#9945FF,stroke-width:2px,color:#fff
     classDef mock fill:#2a2a4a,stroke:#14F195,stroke-width:1px,color:#fff

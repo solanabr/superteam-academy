@@ -17,8 +17,8 @@
 ```mermaid
 graph TB
     subgraph Application["Application Layer"]
-        PRISMA["Prisma ORM v7.4<br/>Type-safe queries"]
-        SUPA_CLIENT["Supabase Client<br/>Auth + RLS"]
+        PRISMA["Prisma ORM v7.4 - Type-safe queries"]
+        SUPA_CLIENT["Supabase Client - Auth + RLS"]
     end
 
     subgraph Database["PostgreSQL (Supabase)"]
@@ -130,7 +130,7 @@ erDiagram
 
     daily_login_streaks {
         uuid id PK
-        uuid user_id FK_UK
+        uuid user_id FK
         int current_streak
         int longest_streak
         date last_login_date
@@ -142,7 +142,7 @@ erDiagram
 
     streaks {
         uuid id PK
-        uuid user_id FK_UK
+        uuid user_id FK
         int current_streak
         int longest_streak
         date last_activity_date
@@ -437,8 +437,8 @@ The application uses a dual-connection approach:
 ```mermaid
 graph LR
     subgraph App["Application"]
-        PRISMA["Prisma Client<br/>Complex queries"]
-        SUPA["Supabase Client<br/>Auth + RLS queries"]
+        PRISMA["Prisma Client - Complex queries"]
+        SUPA["Supabase Client - Auth + RLS queries"]
     end
 
     subgraph DB["PostgreSQL"]
@@ -446,7 +446,7 @@ graph LR
         RLS["Row Level Security"]
     end
 
-    PRISMA -->|Direct connection<br/>DATABASE_URL| TABLES
-    SUPA -->|Supabase JS SDK<br/>SUPABASE_URL + ANON_KEY| RLS
+    PRISMA -->|"Direct connection via DATABASE_URL"| TABLES
+    SUPA -->|"Supabase JS SDK via SUPABASE_URL + ANON_KEY"| RLS
     RLS --> TABLES
 ```
