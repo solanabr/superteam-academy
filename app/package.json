@@ -8,7 +8,9 @@
 		"start": "next start",
 		"type-check": "tsc --noEmit",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"audit-courses": "bun run scripts/audit-courses.ts",
+		"seed-courses": "bun run scripts/seed-courses.ts"
 	},
 	"dependencies": {
 		"@bprogress/next": "^3.2.12",

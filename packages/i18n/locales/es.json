@@ -3475,10 +3475,13 @@
 			"content": "Contenido",
 			"notes": "Notas",
 			"quiz": "Cuestionario",
+			"challenge": "Desafío",
 			"resources": "Recursos"
 		},
 		"quickActions": "Acciones rápidas",
 		"tryChallenge": "Intentar el desafío",
+		"challengeObjectives": "Objetivos",
+		"challengeTests": "pruebas",
 		"takeNotes": "Tomar notas",
 		"markComplete": "Marcar como completado",
 		"fullscreen": "Pantalla completa",

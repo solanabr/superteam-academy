@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code, ExternalLink } from "lucide-react";
-
+import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 import {
 	LessonVideoPlayerWrapper,
 	LessonQuizWrapper,
@@ -24,7 +22,7 @@ import { getCourseById } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
-import { getLessonQuizPageData } from "@/lib/challenge-content";
+import { getLessonQuizPageData, getChallengePageData } from "@/lib/challenge-content";
 import { PublicKey } from "@solana/web3.js";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 
@@ -65,18 +63,19 @@ export default async function LessonPage({ params }: LessonPageProps) {
 	const progress = await getLessonProgress(id, lessonId);
 	const t = await getTranslations("learn");
 
-	const allLessons = course.modules.flatMap((m) => m.lessons);
-	const currentLessonMeta = allLessons.find((l) => l.id === lessonId);
-	const isInteractive = currentLessonMeta?.type === "interactive";
+	const hasChallenge = Boolean(lesson.challenge);
 	const challengeHref = `/courses/${id}/challenges/${lessonId}`;
 
 	const lessonTabs = (
 		<Tabs defaultValue="content" className="h-full flex flex-col">
 			<div className="border-b px-4">
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className={`grid w-full ${hasChallenge ? "grid-cols-5" : "grid-cols-4"}`}>
 					<TabsTrigger value="content">{t("tabs.content")}</TabsTrigger>
 					<TabsTrigger value="notes">{t("tabs.notes")}</TabsTrigger>
 					<TabsTrigger value="quiz">{t("tabs.quiz")}</TabsTrigger>
+					{hasChallenge && (
+						<TabsTrigger value="challenge">{t("tabs.challenge")}</TabsTrigger>
+					)}
 					<TabsTrigger value="resources">{t("tabs.resources")}</TabsTrigger>
 				</TabsList>
 			</div>
@@ -113,6 +112,54 @@ export default async function LessonPage({ params }: LessonPageProps) {
 						</div>
 					</ScrollArea>
 				</TabsContent>
+
+				{hasChallenge && lesson.challenge && (
+					<TabsContent value="challenge" className="h-full m-0">
+						<ScrollArea className="h-full">
+							<div className="p-6 space-y-4">
+								<div className="flex items-center justify-between">
+									<div>
+										<h3 className="text-lg font-semibold">
+											{lesson.challenge.title}
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											{lesson.challenge.description}
+										</p>
+									</div>
+									<Badge variant="outline">{lesson.challenge.difficulty}</Badge>
+								</div>
+								<Separator />
+								{lesson.challenge.objectives.length > 0 && (
+									<div>
+										<h4 className="text-sm font-medium mb-2">
+											{t("challengeObjectives")}
+										</h4>
+										<ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+											{lesson.challenge.objectives.map((obj, i) => (
+												<li key={i}>{obj}</li>
+											))}
+										</ul>
+									</div>
+								)}
+								<div className="flex items-center gap-4 text-sm text-muted-foreground">
+									<span className="flex items-center gap-1">
+										<Clock className="h-3.5 w-3.5" />
+										{lesson.challenge.estimatedTime}
+									</span>
+									<span>
+										{lesson.challenge.tests} {t("challengeTests")}
+									</span>
+								</div>
+								<Button asChild={true} className="w-full gap-2">
+									<a href={challengeHref}>
+										<Code className="h-4 w-4" />
+										{t("tryChallenge")}
+									</a>
+								</Button>
+							</div>
+						</ScrollArea>
+					</TabsContent>
+				)}
 
 				<TabsContent value="resources" className="h-full m-0">
 					<ScrollArea className="h-full">
@@ -172,37 +219,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 						/>
 					</div>
 
-					<div className="flex-1 overflow-hidden">
-						{isInteractive ? (
-							<div className="h-full flex flex-col lg:flex-row">
-								<div className="h-full lg:flex-1 min-h-0">{lessonTabs}</div>
-								<div className="hidden lg:block w-px bg-border" />
-								<div className="h-112 lg:h-full lg:w-[42%] lg:min-w-90 lg:max-w-[70%] lg:shrink-0 lg:resize-x overflow-hidden border-t lg:border-t-0 lg:border-l bg-muted/20">
-									<div className="h-full flex flex-col">
-										<div className="border-b px-4 py-3 flex items-center justify-between">
-											<div className="text-sm font-medium flex items-center gap-2">
-												<Code className="h-4 w-4" />
-												{t("tryChallenge")}
-											</div>
-											<Button variant="outline" size="sm" asChild={true}>
-												<a href={challengeHref} className="gap-2">
-													<ExternalLink className="h-3.5 w-3.5" />
-													{t("tryChallenge")}
-												</a>
-											</Button>
-										</div>
-										<iframe
-											title={`${lesson.title} challenge`}
-											src={challengeHref}
-											className="h-full w-full border-0"
-										/>
-									</div>
-								</div>
-							</div>
-						) : (
-							lessonTabs
-						)}
-					</div>
+					<div className="flex-1 overflow-hidden">{lessonTabs}</div>
 				</div>
 
 				<div className="w-full lg:w-80 border-l bg-muted/30">
@@ -231,7 +248,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 								<CardTitle className="text-base">{t("quickActions")}</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-2">
-								{isInteractive && (
+								{hasChallenge && (
 									<Button
 										variant="default"
 										className="w-full justify-start gap-2"
@@ -340,15 +357,12 @@ async function getLesson(courseId: string, lessonId: string) {
 			tags: ["lesson"],
 		}));
 
-	const sections = (lesson.content ?? []).map((block, index) => ({
-		id: `${lesson.id}-section-${index + 1}`,
-		title: block.style === "h2" ? "Section" : `Part ${index + 1}`,
-		type: "text" as const,
-		content: (block.children ?? []).map((child) => child.text).join(" "),
-		order: index + 1,
-	}));
+	const sections = buildLessonSections(lesson.id, lesson.content ?? []);
 
-	const quizData = await getLessonQuizPageData(courseId, lesson.id);
+	const [quizData, challengeData] = await Promise.all([
+		getLessonQuizPageData(courseId, lesson.id),
+		getChallengePageData(courseId, lesson.id),
+	]);
 	const quiz = quizData
 		? {
 				id: quizData.quiz.slug.current,
@@ -369,6 +383,17 @@ async function getLesson(courseId: string, lessonId: string) {
 			}
 		: null;
 
+	const challenge = challengeData
+		? {
+				title: challengeData.challenge.title,
+				description: challengeData.challenge.description,
+				difficulty: challengeData.challenge.difficulty,
+				estimatedTime: challengeData.challenge.estimatedTime,
+				objectives: challengeData.challenge.objectives ?? [],
+				tests: challengeData.challenge.tests?.length ?? 0,
+			}
+		: null;
+
 	return {
 		id: lesson.id,
 		title: lesson.title,
@@ -377,6 +402,7 @@ async function getLesson(courseId: string, lessonId: string) {
 		videoUrl: videoUrl ?? "",
 		content: { sections },
 		quiz,
+		challenge,
 		resources,
 	};
 }
@@ -432,6 +458,59 @@ function inferResourceType(
 	if (/book|ebook|handbook/i.test(url)) return "book";
 	if (/github\.com|figma\.com|tool|app\./i.test(url)) return "tool";
 	return "link";
+}
+
+/**
+ * Groups Sanity content blocks into sections split on h2/h3 headings.
+ * Each section gets a meaningful title extracted from the heading text.
+ */
+function buildLessonSections(
+	lessonId: string,
+	blocks: Array<{
+		style?: string;
+		children?: Array<{ text?: string }>;
+	}>
+) {
+	const sections: Array<{
+		id: string;
+		title: string;
+		type: "text";
+		content: string;
+		order: number;
+	}> = [];
+
+	let currentTitle = "Introduction";
+	let currentContent: string[] = [];
+	let sectionIndex = 0;
+
+	const flush = () => {
+		if (currentContent.length > 0) {
+			sectionIndex += 1;
+			sections.push({
+				id: `${lessonId}-section-${sectionIndex}`,
+				title: currentTitle,
+				type: "text",
+				content: currentContent.join("\n"),
+				order: sectionIndex,
+			});
+			currentContent = [];
+		}
+	};
+
+	for (const block of blocks) {
+		const text = (block.children ?? []).map((child) => child.text ?? "").join(" ");
+		const isHeading = block.style === "h2" || block.style === "h3";
+
+		if (isHeading && text.trim()) {
+			flush();
+			currentTitle = text.trim();
+		} else {
+			currentContent.push(text);
+		}
+	}
+
+	flush();
+	return sections;
 }
 
 async function getLessonProgress(courseId: string, lessonId: string) {

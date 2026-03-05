@@ -3250,10 +3250,13 @@
 			"content": "Content",
 			"notes": "Notes",
 			"quiz": "Quiz",
+			"challenge": "Challenge",
 			"resources": "Resources"
 		},
 		"quickActions": "Quick Actions",
 		"tryChallenge": "Try the Challenge",
+		"challengeObjectives": "Objectives",
+		"challengeTests": "tests",
 		"takeNotes": "Take Notes",
 		"markComplete": "Mark as Complete",
 		"fullscreen": "Fullscreen",
