@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -57,13 +58,23 @@ export function Header() {
     <header className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200 ${scrolled ? "bg-background/80 backdrop-blur-md border-b border-border/50" : "bg-transparent"}`}>
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6 pt-2">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-primary">
-            <span className="text-xs font-bold text-primary-foreground">S</span>
-          </div>
-          <span className="text-sm font-semibold tracking-tight">
-            Superteam Academy
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/light-bg.png"
+            alt="Superteam Brasil"
+            width={130}
+            height={28}
+            className="block dark:hidden"
+            priority
+          />
+          <Image
+            src="/dark.png"
+            alt="Superteam Brasil"
+            width={130}
+            height={28}
+            className="hidden dark:block"
+            priority
+          />
         </Link>
 
         {/* Nav */}

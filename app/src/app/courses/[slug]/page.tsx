@@ -320,33 +320,32 @@ export default function CourseDetailPage() {
               </span>
             </div>
 
-            {/* Code preview */}
-            <div className="mt-8 relative h-36 overflow-hidden rounded-xl border border-border/50 bg-[#0c0c0e] px-5 pt-4">
-              <div
-                className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full blur-[60px] opacity-30"
-                style={{ background: course.accent }}
-              />
-              <div className="font-mono text-[11px] leading-[1.7] text-[#a1a1aa66]">
-                {course.codePreview.map((line, i) => (
-                  <div key={i} className="truncate">
-                    <span className="mr-3 inline-block w-3 text-right text-[10px] text-[#a1a1aa33]">
-                      {i + 1}
-                    </span>
-                    {line}
-                  </div>
+            {/* Curriculum */}
+            <div className="mt-10">
+              <h2 className="text-xl font-semibold tracking-tight">
+                {t("courses.curriculum")}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {totalModules} {t("common.modules")} · {course.lessons}{" "}
+                {t("common.lessons")} · {course.duration} {t("common.total")}
+              </p>
+
+              <div className="mt-6 space-y-3">
+                {course.modules.map((module, i) => (
+                  <ModuleSection
+                    key={module.id}
+                    module={module}
+                    index={i}
+                    accent={course.accent}
+                    courseSlug={course.slug}
+                    defaultOpen={i === 0}
+                    locked={
+                      enrollmentStatus === "not-enrolled" ||
+                      enrollmentStatus === "enrolling"
+                    }
+                  />
                 ))}
               </div>
-              <div
-                className="absolute bottom-3 left-5 flex size-10 items-center justify-center rounded-lg border font-mono text-xs font-bold"
-                style={{
-                  borderColor: `${course.accent}40`,
-                  color: course.accent,
-                  background: `${course.accent}10`,
-                }}
-              >
-                <course.icon className="size-5" />
-              </div>
-              <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#0c0c0e] to-transparent" />
             </div>
           </div>
 
@@ -491,34 +490,6 @@ export default function CourseDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-
-        {/* ── Curriculum ── */}
-        <div className="mt-14">
-          <h2 className="text-xl font-semibold tracking-tight">
-            {t("courses.curriculum")}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {totalModules} {t("common.modules")} · {course.lessons}{" "}
-            {t("common.lessons")} · {course.duration} {t("common.total")}
-          </p>
-
-          <div className="mt-6 space-y-3">
-            {course.modules.map((module, i) => (
-              <ModuleSection
-                key={module.id}
-                module={module}
-                index={i}
-                accent={course.accent}
-                courseSlug={course.slug}
-                defaultOpen={i === 0}
-                locked={
-                  enrollmentStatus === "not-enrolled" ||
-                  enrollmentStatus === "enrolling"
-                }
-              />
-            ))}
           </div>
         </div>
 
