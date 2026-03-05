@@ -10,8 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useWallet } from "@/hooks/use-wallet";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { UserIcon, Settings01Icon, Award01Icon, Logout01Icon } from "@hugeicons/core-free-icons";
+import { User, Settings, Award, LogOut } from "lucide-react";
 
 const navLinks = [
   { href: "/courses", key: "courses" },
@@ -91,26 +90,26 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link href={`/${locale}/profile`} className="flex items-center gap-2 w-full">
-                    <HugeiconsIcon icon={UserIcon} size={16} strokeWidth={2} />
+                    <User size={16} strokeWidth={2} />
                     {t("nav.profile")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link href={`/${locale}/settings`} className="flex items-center gap-2 w-full">
-                    <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={2} />
+                    <Settings size={16} strokeWidth={2} />
                     {t("nav.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link href={`/${locale}/certificates`} className="flex items-center gap-2 w-full">
-                    <HugeiconsIcon icon={Award01Icon} size={16} strokeWidth={2} />
+                    <Award size={16} strokeWidth={2} />
                     {t("certificates.heading")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <button onClick={handleLogout} className="flex w-full items-center gap-2 text-destructive">
-                    <HugeiconsIcon icon={Logout01Icon} size={16} strokeWidth={2} />
+                    <LogOut size={16} strokeWidth={2} />
                     {t("common.logout")}
                   </button>
                 </DropdownMenuItem>
