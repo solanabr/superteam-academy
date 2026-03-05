@@ -1,0 +1,28 @@
+export const mockCredentials = [
+    {
+        credentialId: "cred-solana-bootcamp-101",
+        title: "Solana Bootcamp Graduate",
+        track: "Solana Core Engineering",
+        level: 3,
+        coursesCompleted: 1,
+        totalXp: 750,
+        mintAddress: "BtCamp1111111111111111111111111111111111111",
+        metadataUri: "https://arweave.net/solana-bootcamp-credential-metadata-v1",
+        explorerUrl: "https://explorer.solana.com/address/BtCamp1111111111111111111111111111111111111?cluster=devnet",
+        verified: true,
+        source: "mock",
+    },
+    {
+        credentialId: "cred-anchor-core-patterns",
+        title: "Anchor Builder",
+        track: "Solana Core Engineering",
+        level: 5,
+        coursesCompleted: 2,
+        totalXp: 1550,
+        mintAddress: "AnchrB1111111111111111111111111111111111111",
+        metadataUri: "https://arweave.net/anchor-builder-credential-metadata-v1",
+        explorerUrl: "https://explorer.solana.com/address/AnchrB1111111111111111111111111111111111111?cluster=devnet",
+        verified: true,
+        source: "mock",
+    },
+];
