@@ -6,7 +6,7 @@ import type { LeaderboardEntry, TimeFilter } from "@/types";
 /**
  * GET /api/leaderboard?timeframe=weekly&page=1&pageSize=10
  *
- * When NEXT_PUBLIC_HELIUS_RPC_URL is configured → fetches XP token holders
+ * When HELIUS_RPC_URL is configured → fetches XP token holders
  * from Helius DAS and sorts by balance. Otherwise → mock data.
  *
  * Cached with 5-min TTL.
@@ -18,7 +18,7 @@ let cache: {
 } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-const HELIUS_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+const HELIUS_URL = process.env.HELIUS_RPC_URL;
 const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT;
 
 async function fetchEntries(

@@ -16,6 +16,7 @@ import {
 } from "next-auth/react";
 import type { UserProfile } from "@/types";
 import { isSupabaseConfigured, getSupabaseBrowserClient } from "@/lib/supabase";
+import { events as analyticsEvents } from "@/lib/analytics";
 
 const STORAGE_KEY = "academy_user";
 const ACTIVE_WALLET_KEY = "academy_active_wallet";
@@ -289,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (walletAddress) {
       setStoredWallet(walletAddress);
+      analyticsEvents.walletConnected(walletAddress);
     }
 
     async function resolve() {

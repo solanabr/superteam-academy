@@ -1,7 +1,7 @@
 /**
  * Service layer barrel export.
  *
- * When NEXT_PUBLIC_HELIUS_RPC_URL is configured → Devnet on-chain services.
+ * When HELIUS_RPC_URL is configured → Devnet on-chain services.
  * Otherwise → localStorage stubs (zero change from before).
  *
  * Usage:

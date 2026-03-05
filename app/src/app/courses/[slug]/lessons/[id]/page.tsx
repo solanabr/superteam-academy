@@ -223,6 +223,7 @@ function ChallengeEditor({
   accent,
   xpReward,
   onComplete,
+  courseSlug,
   t,
 }: {
   code: string;
@@ -232,6 +233,7 @@ function ChallengeEditor({
   accent: string;
   xpReward: number;
   onComplete: () => void;
+  courseSlug: string;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   const [running, setRunning] = useState(false);
@@ -251,6 +253,7 @@ function ChallengeEditor({
     setRunning(true);
     setOutput([t("lesson.compiling"), ""]);
     setActiveTab("tests");
+    analyticsEvents.codeSubmitted(courseSlug);
     setAllPassed(false);
     setShowCelebration(false);
 
@@ -282,6 +285,7 @@ function ChallengeEditor({
         if (allPass) {
           setAllPassed(true);
           setShowCelebration(true);
+          analyticsEvents.testsPassed(courseSlug);
           // Fire star confetti burst
           const defaults = {
             spread: 360,
@@ -771,6 +775,9 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
       });
 
       analyticsEvents.lessonCompleted(slug, lessonIdx);
+      if (lessonIdx === allLessonsLocal.length - 1) {
+        analyticsEvents.courseCompleted(slug);
+      }
     } catch {
       // Silently handle — lesson still marked complete in UI
     }
@@ -1058,6 +1065,7 @@ function LessonContent({ slug, id }: { slug: string; id: string }) {
                 accent={course.accent}
                 xpReward={xpPerLesson}
                 onComplete={handleComplete}
+                courseSlug={slug}
                 t={t}
               />
             </ResizablePanel>

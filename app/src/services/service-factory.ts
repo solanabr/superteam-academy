@@ -36,13 +36,13 @@ interface Services {
 /**
  * Creates service instances based on environment configuration.
  *
- * When `NEXT_PUBLIC_HELIUS_RPC_URL` is set → Devnet services for XP, credentials,
+ * When `HELIUS_RPC_URL` is set → Devnet services for XP, credentials,
  * progress, and leaderboard. Otherwise → all Local stubs.
  *
  * Streak, achievement, and activity always use Local (frontend-only per spec).
  */
 export function createServices(): Services {
-  const heliusUrl = process.env.NEXT_PUBLIC_HELIUS_RPC_URL;
+  const heliusUrl = process.env.HELIUS_RPC_URL;
   const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
   const xpMintStr = process.env.NEXT_PUBLIC_XP_MINT;
   const useOnchain =

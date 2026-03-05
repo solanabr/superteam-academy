@@ -15,6 +15,7 @@ import {
 import { useLocale } from "@/providers/locale-provider";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { useState, useRef, useEffect } from "react";
+import { events as analyticsEvents } from "@/lib/analytics";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -95,6 +96,7 @@ export function Header() {
                     key={loc}
                     onClick={() => {
                       setLocale(loc as Locale);
+                      analyticsEvents.languageChanged(loc);
                       setShowLangMenu(false);
                     }}
                     className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-colors ${
@@ -114,7 +116,11 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => {
+              const next = theme === "dark" ? "light" : "dark";
+              setTheme(next);
+              analyticsEvents.themeChanged(next);
+            }}
             aria-label="Toggle theme"
           >
             <Sun className="hidden size-4 dark:block" />

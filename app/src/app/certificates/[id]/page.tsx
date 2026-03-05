@@ -20,6 +20,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { credentialService } from "@/services";
 import { getAllCourses } from "@/lib/sanity-fetch";
 import type { Credential, CourseDetail } from "@/types";
+import { events as analyticsEvents } from "@/lib/analytics";
 
 /* -- Track -> Course slug mapping -- */
 const trackToCourse: Record<string, string> = {
@@ -366,6 +367,7 @@ export default function CertificatePage() {
       const byMint = await credentialService.getCredentialByMint(id);
       if (byMint) {
         setCredential(byMint);
+        analyticsEvents.credentialViewed(id);
       }
 
       // Also load all credentials for the connected wallet (for variant index)
