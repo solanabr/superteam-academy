@@ -23,6 +23,67 @@ async function getCredentialMetadata(mintAddress: string) {
   }
 }
 
+function DownloadButton({ mintAddress, credentialName, xpEarned, level, track }: { 
+  mintAddress: string; 
+  credentialName: string; 
+  xpEarned: number; 
+  level: number; 
+  track: string;
+}) {
+  return (
+    <Button variant="outline" onClick={async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d')!;
+      
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, 800, 600);
+      
+      const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+      gradient.addColorStop(0, '#1a1a2e');
+      gradient.addColorStop(1, '#0a0a0a');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 800, 600);
+      
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 20, 760, 560);
+      
+      ctx.font = '48px sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏆', 400, 100);
+      
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(credentialName, 400, 160);
+      
+      ctx.font = '18px sans-serif';
+      ctx.fillStyle = '#888888';
+      ctx.fillText('Verified On-Chain Credential', 400, 200);
+      
+      ctx.font = '20px sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`Track: ${track}`, 400, 280);
+      ctx.fillText(`XP Earned: ${xpEarned.toLocaleString()}`, 400, 320);
+      ctx.fillText(`Level Achieved: ${level}`, 400, 360);
+      
+      ctx.font = '14px monospace';
+      ctx.fillStyle = '#666666';
+      ctx.fillText(`Mint: ${mintAddress.slice(0, 8)}...${mintAddress.slice(-8)}`, 400, 450);
+      
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = '#a855f7';
+      ctx.fillText('Superteam Academy', 400, 520);
+      
+      const link = document.createElement('a');
+      link.download = `certificate-${mintAddress.slice(0, 8)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }}>Download</Button>
+  );
+}
+
 export default async function CertificatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const metadata = await getCredentialMetadata(id);
@@ -67,16 +128,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ id
             const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
             window.open(url, '_blank');
           }}>Share on X</Button>
-          <Button variant="outline" onClick={() => {
-            const canvas = document.createElement('canvas');
-            const certificate = document.getElementById('certificate');
-            if (!certificate) return;
-            // Simple download - in production use html2canvas
-            const link = document.createElement('a');
-            link.download = `certificate-${id.slice(0, 8)}.png`;
-            link.href = shareUrl;
-            link.click();
-          }}>Download</Button>
+          <DownloadButton mintAddress={id} credentialName={credentialName} xpEarned={Number(xpEarned)} level={Number(level)} track={track} />
         </div>
       </div>
     </div>

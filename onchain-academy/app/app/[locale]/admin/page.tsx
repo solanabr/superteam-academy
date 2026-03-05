@@ -9,11 +9,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'superteam2024';
-
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [pw, setPw] = useState('');
+  const [error, setError] = useState('');
   const [tab, setTab] = useState('overview');
   const [stats, setStats] = useState<Record<string, number>>({});
   const [users, setUsers] = useState<UserProfileRow[]>([]);
@@ -24,7 +24,31 @@ export default function AdminPage() {
   const [awardWallet, setAwardWallet] = useState('');
   const [awardAmount, setAwardAmount] = useState('');
   const [awardReason, setAwardReason] = useState('');
-  const [, setLoading] = useState(false);
+  const [, setPageLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/auth')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated) setAuthed(true);
+        setLoading(false);
+      });
+  }, []);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    const res = await fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    if (res.ok) {
+      setAuthed(true);
+    } else {
+      setError('Invalid password');
+    }
+  }
 
   async function loadAll() {
     setLoading(true);
@@ -70,18 +94,21 @@ export default function AdminPage() {
     loadAll();
   }
 
+  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><div className="text-gray-500">Loading...</div></div>;
+
   if (!authed) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-sm space-y-4">
+      <form onSubmit={handleLogin} className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-sm space-y-4">
         <h1 className="text-2xl font-bold text-white text-center">Admin Access</h1>
-        <input type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && pw === ADMIN_PASSWORD && setAuthed(true)}
+        <input type="password" value={pw} onChange={e => setPw(e.target.value)}
           className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"
           placeholder="Password" />
-        <button onClick={() => pw === ADMIN_PASSWORD && setAuthed(true)}
+        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        <button type="submit"
           className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl">
           Enter
         </button>
-      </div>
+      </form>
     </div>
   );
 
