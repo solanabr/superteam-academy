@@ -72,7 +72,7 @@ export function createServices(): Services {
     xpService: new LocalXpService(),
     credentialService: new DevnetCredentialService(heliusUrl),
     leaderboardService: new LocalLeaderboardService(),
-    progressService: new DevnetProgressService(connection),
+    progressService: new LocalProgressService(),
     streakService,
     achievementService,
     activityService,

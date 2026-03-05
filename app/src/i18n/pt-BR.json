@@ -324,6 +324,8 @@
   },
   "profile": {
     "title": "Perfil",
+    "connectToView": "Conecte sua Wallet para Ver o Perfil",
+    "connectToViewDesc": "Conecte sua carteira Solana para acessar seu perfil, credenciais e progresso de aprendizado.",
     "editProfile": "Editar Perfil",
     "skills": "Habilidades",
     "credentials": "Credenciais",

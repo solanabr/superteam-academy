@@ -14,6 +14,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useAuth } from "@/providers/auth-provider";
@@ -488,6 +489,26 @@ export default function ProfilePage() {
   const profileBio = user?.bio ?? "";
   const profileInitials = user?.initials ?? profileName.slice(0, 2).toUpperCase();
   const profileJoinDate = user?.joinDate ?? "";
+
+  if (!connected) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 bg-mesh animate-drift-2" />
+        <div className="relative z-10 text-center">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+            <Lock className="size-6 text-primary" />
+          </div>
+          <h1 className="mt-4 text-xl font-semibold">{t("profile.connectToView")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground max-w-xs mx-auto">
+            {t("profile.connectToViewDesc")}
+          </p>
+          <Button className="mt-6" onClick={() => setVisible(true)}>
+            {t("common.connectWallet")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">
