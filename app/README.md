@@ -2,13 +2,13 @@
 
 > "Caminho" means "path" in Portuguese — your path to mastering Solana development.
 
-Caminho is an open-source, gamified learning management system (LMS) for Solana development. Think Codecademy meets Cyfrin Updraft — interactive coding challenges, on-chain credentials as evolving cNFTs, XP-based leveling, and a community leaderboard, built for the global Solana ecosystem.
+Caminho is an open-source, gamified learning management system (LMS) for Solana development. Think Codecademy meets Cyfrin Updraft — interactive coding challenges, on-chain credentials as evolving soulbound credential NFTs, XP-based leveling, and a community leaderboard, built for the global Solana ecosystem.
 
 Built for the [Superteam Brazil Hackathon](https://earn.superteam.fun).
 
 ## Live Demo
 
-[https://caminho.vercel.app](https://caminho.vercel.app) <!-- replace with actual URL -->
+[https://caminho.vercel.app](https://caminho.vercel.app)
 
 ## Tech Stack
 
@@ -21,7 +21,7 @@ Built for the [Superteam Brazil Hackathon](https://earn.superteam.fun).
 | CMS | Sanity v3 |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth + Solana Wallet Adapter |
-| Blockchain | Solana Web3.js, Token-2022, Metaplex Bubblegum (cNFTs) |
+| Blockchain | Solana Web3.js, Token-2022, Metaplex Core (soulbound credentials) |
 | Code Editor | CodeMirror 6 |
 | Analytics | GA4 + PostHog + Sentry |
 | Animations | Framer Motion |
@@ -33,7 +33,7 @@ Built for the [Superteam Brazil Hackathon](https://earn.superteam.fun).
 - **Interactive Lessons** — Split-pane view with markdown content + embedded CodeMirror editor
 - **Code Challenges** — Rust/TypeScript/JSON challenges with pass/fail feedback
 - **Gamification** — XP, levels, streaks, 43 achievements
-- **On-Chain Credentials** — Evolving cNFTs (Metaplex Bubblegum) on Solana Devnet
+- **On-Chain Credentials** — Evolving soulbound credential NFTs (Metaplex Core) on Solana Devnet
 - **Leaderboard** — Global rankings indexed from XP token balances via Helius DAS API
 - **Multi-auth** — Email, Google, GitHub, Solana Wallet (Phantom, Solflare, Torus, Ledger)
 - **Internationalization** — EN, PT-BR, ES with language switcher
@@ -99,7 +99,7 @@ SENTRY_PROJECT=your-sentry-project                 # optional
 
 ### 3. Database Setup
 
-Run the SQL migrations in your Supabase dashboard (SQL Editor). Migration files are located in `/supabase/migrations/`. Apply them in order.
+Run the SQL setup in your Supabase dashboard (SQL Editor) using `scripts/supabase-migration.sql`.
 
 Key tables created:
 - `profiles` — user profile data
@@ -116,7 +116,7 @@ npm install
 npx sanity dev  # starts Sanity Studio at localhost:3333
 ```
 
-Import the sample course via the Sanity Studio interface. See [CMS_GUIDE.md](./CMS_GUIDE.md) for details.
+Import the sample course via the Sanity Studio interface. See [CMS_GUIDE.md](./docs/CMS_GUIDE.md) for details.
 
 ### 5. Run the App
 
@@ -177,7 +177,7 @@ npx sanity deploy
 The gamification logic lives on the Anchor program at [github.com/solanabr/superteam-academy](https://github.com/solanabr/superteam-academy).
 
 - **XP** — Soulbound Token-2022 (NonTransferable). Balance = XP. Level = `floor(sqrt(XP / 100))`.
-- **Credentials** — Evolving cNFTs (Metaplex Bubblegum). One per track, upgrades as learner progresses.
+- **Credentials** — Evolving soulbound credential NFTs (Metaplex Core). One per track, upgrades as learner progresses.
 - **Leaderboard** — Off-chain, indexed from XP token balances via Helius DAS API.
 
 The frontend reads from Devnet via `OnChainReadService` in `src/lib/services/onchain-read.ts`. Local Supabase projection remains active for UI consistency, while bridge writes now support backend-signed on-chain submissions for completion/finalization paths.
@@ -209,7 +209,7 @@ For those actions to succeed:
 
 ## Contributing
 
-This project is open-source (MIT). Contributions, forks, and extensions are welcome. See [ARCHITECTURE.md](./ARCHITECTURE.md) for system design details before contributing.
+This project is open-source (MIT). Contributions, forks, and extensions are welcome. See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for system design details before contributing.
 
 ## License
 
