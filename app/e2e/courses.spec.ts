@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Courses catalog — page structure", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("page loads with a visible h1", async ({ page }) => {
@@ -34,8 +36,9 @@ test.describe("Courses catalog — page structure", () => {
 
 test.describe("Courses catalog — search", () => {
   test("search input is visible if present", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const searchInput = page
       .locator("input[type='search']")
       .or(page.locator("input[placeholder*='search' i]"))
@@ -52,8 +55,9 @@ test.describe("Courses catalog — search", () => {
   });
 
   test("typing in search does not crash the page", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const searchInput = page
       .locator("input[type='search']")
       .or(page.locator("input[placeholder*='search' i]"))
@@ -71,8 +75,9 @@ test.describe("Courses catalog — search", () => {
   });
 
   test("clearing search input restores content", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const searchInput = page
       .locator("input[type='search']")
       .or(page.locator("input[placeholder*='search' i]"))
@@ -90,8 +95,9 @@ test.describe("Courses catalog — search", () => {
 
 test.describe("Courses catalog — filters", () => {
   test("difficulty filter buttons are interactive if present", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const filterBtn = page
       .getByRole("button", { name: /beginner|iniciante|básico/i })
       .first();
@@ -105,8 +111,9 @@ test.describe("Courses catalog — filters", () => {
   });
 
   test("intermediate filter works if present", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const filterBtn = page
       .getByRole("button", { name: /intermediate|intermediário/i })
       .first();
@@ -119,8 +126,9 @@ test.describe("Courses catalog — filters", () => {
   });
 
   test("all/reset filter shows all courses", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const allBtn = page
       .getByRole("button", { name: /^all$|^all courses$|^todos$/i })
       .first();
@@ -135,15 +143,16 @@ test.describe("Courses catalog — filters", () => {
 
 test.describe("Courses catalog — course cards", () => {
   test("clicking a course card navigates to course detail", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const courseLink = page.locator("a[href*='/courses/']").first();
     const count = await courseLink.count();
     if (count > 0) {
       const href = await courseLink.getAttribute("href");
       await courseLink.click();
-      await page.waitForLoadState("domcontentloaded");
       if (href) {
+        await page.waitForURL(`**${href}**`, { timeout: 10000 });
         expect(page.url()).toContain("/courses/");
       }
     } else {
@@ -153,8 +162,9 @@ test.describe("Courses catalog — course cards", () => {
   });
 
   test("course cards render without crashing", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     // Either cards, empty state, or loading skeleton — all acceptable
     const hasCards = (await page.locator("[class*='card' i]").count()) > 0;
     const hasEmpty = (await page.locator("[class*='empty' i]").count()) > 0;
@@ -167,7 +177,7 @@ test.describe("Courses catalog — responsiveness", () => {
   test("courses page renders at tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
     await expect(page.locator("header")).toBeVisible();
   });
@@ -175,14 +185,14 @@ test.describe("Courses catalog — responsiveness", () => {
   test("courses page renders at mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("courses page renders at wide desktop viewport", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
     await expect(page.locator("footer")).toBeVisible();
   });
@@ -193,32 +203,32 @@ test.describe("Course detail page", () => {
 
   test("course detail page loads with h1", async ({ page }) => {
     await page.goto(`/en/courses/${slug}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
   test("course detail main content area is visible", async ({ page }) => {
     await page.goto(`/en/courses/${slug}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("course detail renders without unhandled error", async ({ page }) => {
     await page.goto(`/en/courses/${slug}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
 
   test("course detail renders at mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(`/en/courses/${slug}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
   });
 
   test("enroll button or lesson link is visible when course has content", async ({ page }) => {
     await page.goto(`/en/courses/${slug}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const enrollBtn = page
       .getByRole("button", { name: /enroll|start|matricular|começar/i })
       .or(page.getByRole("link", { name: /enroll|start|lesson/i }))
@@ -232,7 +242,7 @@ test.describe("Course detail page", () => {
 
   test("invalid course slug renders without crash", async ({ page }) => {
     await page.goto("/en/courses/nonexistent-xyz-9999");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
@@ -241,19 +251,19 @@ test.describe("Course detail page", () => {
 test.describe("Lesson page", () => {
   test("lesson page loads for known slug", async ({ page }) => {
     await page.goto("/en/courses/introduction-to-solana/lessons/what-is-solana");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("lesson page renders without unhandled error", async ({ page }) => {
     await page.goto("/en/courses/introduction-to-solana/lessons/what-is-solana");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
 
   test("invalid lesson slug renders gracefully", async ({ page }) => {
     await page.goto("/en/courses/introduction-to-solana/lessons/nonexistent-lesson");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
   });
 });

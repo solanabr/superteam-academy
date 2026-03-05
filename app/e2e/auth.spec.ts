@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Sign-in page — structure", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/en/auth/signin");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("sign-in page loads without error redirect", async ({ page }) => {
@@ -66,8 +67,9 @@ test.describe("Sign-in page — auth methods", () => {
 
 test.describe("Sign-in modal — triggered from header", () => {
   test("sign-in button is visible in header when unauthenticated", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const signInBtn = page
       .locator("header")
       .getByRole("button", { name: /sign in|login|connect|entrar/i })
@@ -79,8 +81,9 @@ test.describe("Sign-in modal — triggered from header", () => {
   });
 
   test("clicking sign-in button opens a modal or navigates to auth", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const signInBtn = page
       .locator("header")
       .getByRole("button", { name: /sign in|login|connect|entrar/i })
@@ -99,7 +102,7 @@ test.describe("Sign-in modal — triggered from header", () => {
 test.describe("Protected routes — unauthenticated redirects", () => {
   test("dashboard shows sign-in content or redirects when unauthenticated", async ({ page }) => {
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const isAuthPage = page.url().includes("/auth") || page.url().includes("/signin");
     const hasSignInText = await page.getByText(/sign in|connect|login|entrar/i).isVisible().catch(() => false);
     const hasMainContent = await page.locator("main").isVisible().catch(() => false);
@@ -108,13 +111,13 @@ test.describe("Protected routes — unauthenticated redirects", () => {
 
   test("profile page loads without crashing when unauthenticated", async ({ page }) => {
     await page.goto("/en/profile");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("admin page redirects or shows access-denied when unauthenticated", async ({ page }) => {
     await page.goto("/en/admin");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const url = page.url();
     const isAuthRedirect = url.includes("/auth") || url.includes("/signin") || url.includes("/login");
     const hasAccessDenied = await page.getByText(/sign in|connect|login|access denied|unauthorized/i).isVisible().catch(() => false);
@@ -124,7 +127,7 @@ test.describe("Protected routes — unauthenticated redirects", () => {
 
   test("settings page is accessible without auth (public settings)", async ({ page }) => {
     await page.goto("/en/settings");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 });
@@ -132,14 +135,14 @@ test.describe("Protected routes — unauthenticated redirects", () => {
 test.describe("Auth page locale variants", () => {
   test("pt-BR auth page loads", async ({ page }) => {
     await page.goto("/pt-BR/auth/signin");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
 
   test("es auth page loads", async ({ page }) => {
     await page.goto("/es/auth/signin");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
   });
 });

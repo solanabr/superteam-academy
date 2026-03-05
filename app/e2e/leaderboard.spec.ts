@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Leaderboard — page structure", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/leaderboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("page loads without error URL", async ({ page }) => {
@@ -30,6 +32,7 @@ test.describe("Leaderboard — page structure", () => {
 
 test.describe("Leaderboard — time filter tabs", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/leaderboard");
     await page.waitForLoadState("networkidle");
   });
@@ -67,6 +70,7 @@ test.describe("Leaderboard — time filter tabs", () => {
 
 test.describe("Leaderboard — content", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/leaderboard");
     await page.waitForLoadState("networkidle");
   });
@@ -93,14 +97,14 @@ test.describe("Leaderboard — content", () => {
   test("leaderboard renders at mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/en/leaderboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("leaderboard renders at tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/en/leaderboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 });

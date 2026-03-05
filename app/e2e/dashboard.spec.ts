@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Dashboard — unauthenticated access", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("dashboard page loads without crashing", async ({ page }) => {
@@ -27,7 +27,7 @@ test.describe("Dashboard — unauthenticated access", () => {
 test.describe("Dashboard — page structure when accessible", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("header is visible on dashboard", async ({ page }) => {
@@ -55,7 +55,7 @@ test.describe("Dashboard — page structure when accessible", () => {
 test.describe("Dashboard — connect wallet prompt", () => {
   test("wallet connect button is visible when not connected", async ({ page }) => {
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     // Dashboard shows connect wallet CTA when unauthenticated
     const walletBtn = page
       .getByRole("button", { name: /connect wallet|wallet|solana/i })
@@ -72,7 +72,7 @@ test.describe("Dashboard — responsiveness", () => {
   test("dashboard renders at mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
@@ -80,7 +80,7 @@ test.describe("Dashboard — responsiveness", () => {
   test("dashboard renders at tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/en/dashboard");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
   });
 });

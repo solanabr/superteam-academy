@@ -88,7 +88,7 @@ test.describe("Accessibility — image alt text", () => {
 test.describe("Accessibility — keyboard focus management", () => {
   test("header links are focusable via Tab", async ({ page }) => {
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     // Tab once and verify focus moves to a focusable element
     await page.keyboard.press("Tab");
     const activeEl = await page.evaluate(() => document.activeElement?.tagName);
@@ -99,7 +99,7 @@ test.describe("Accessibility — keyboard focus management", () => {
 
   test("interactive buttons are keyboard-focusable on sign-in page", async ({ page }) => {
     await page.goto("/en/auth/signin");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await page.keyboard.press("Tab");
     const activeEl = await page.evaluate(() => document.activeElement?.tagName);
     expect(activeEl).toBeTruthy();
@@ -141,21 +141,21 @@ test.describe("Accessibility — page titles", () => {
 test.describe("Accessibility — html lang attribute", () => {
   test("English page sets lang to en", async ({ page }) => {
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const lang = await page.locator("html").getAttribute("lang");
     expect(lang).toMatch(/en/i);
   });
 
   test("Portuguese page sets lang to pt", async ({ page }) => {
     await page.goto("/pt-BR");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const lang = await page.locator("html").getAttribute("lang");
     expect(lang).toMatch(/pt/i);
   });
 
   test("Spanish page sets lang to es", async ({ page }) => {
     await page.goto("/es");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const lang = await page.locator("html").getAttribute("lang");
     expect(lang).toMatch(/es/i);
   });

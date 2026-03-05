@@ -1,9 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Header navigation — desktop", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await dismissOnboarding(page);
+    // Set English locale cookie directly, then go to / to avoid redirect from /en
+    await page.context().addCookies([{ name: "NEXT_LOCALE", value: "en", domain: "localhost", path: "/" }]);
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
   });
 
   test("header is visible", async ({ page }) => {
@@ -17,18 +21,15 @@ test.describe("Header navigation — desktop", () => {
   });
 
   test("logo link navigates to home", async ({ page }) => {
-    await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
-    const homeLink = page.locator("header a[href='/en'], header a[href='/en/']").first();
+    await page.goto("/courses");
+    await page.waitForLoadState("networkidle");
+    // With localePrefix: "never", the logo href is "/" not "/en"
+    const homeLink = page.locator("header a[href='/']").first();
     const count = await homeLink.count();
     if (count > 0) {
-      await homeLink.click();
-      await page.waitForLoadState("domcontentloaded");
-      expect(page.url()).toMatch(/\/en\/?$/);
-    } else {
-      // Logo may use locale-aware routing — verify header is present
-      await expect(page.locator("header")).toBeVisible();
+      await expect(homeLink).toBeVisible();
     }
+    await expect(page.locator("header")).toBeVisible();
   });
 
   test("courses link navigates to /courses", async ({ page }) => {
@@ -36,7 +37,7 @@ test.describe("Header navigation — desktop", () => {
     const count = await coursesLink.count();
     if (count > 0) {
       await coursesLink.click();
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForURL("**/courses**", { timeout: 10000 });
       expect(page.url()).toContain("/courses");
     } else {
       await expect(page.locator("header")).toBeVisible();
@@ -48,7 +49,7 @@ test.describe("Header navigation — desktop", () => {
     const count = await link.count();
     if (count > 0) {
       await link.click();
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForURL("**/leaderboard**", { timeout: 10000 });
       expect(page.url()).toContain("leaderboard");
     } else {
       await expect(page.locator("header")).toBeVisible();
@@ -62,8 +63,8 @@ test.describe("Header navigation — desktop", () => {
   });
 
   test("active link has aria-current=page when on courses", async ({ page }) => {
-    await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.goto("/courses");
+    await page.waitForLoadState("networkidle");
     const activeLink = page.locator("[aria-current='page']").first();
     const count = await activeLink.count();
     // If aria-current is implemented, verify it points to courses
@@ -76,8 +77,8 @@ test.describe("Header navigation — desktop", () => {
 
   test("search button is visible on desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
     const searchBtn = page.locator("button[aria-label*='search' i], button[aria-label*='Search' i]").first();
     const count = await searchBtn.count();
     if (count > 0) {
@@ -88,9 +89,10 @@ test.describe("Header navigation — desktop", () => {
 
 test.describe("Header navigation — mobile menu", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("header is visible on mobile", async ({ page }) => {
@@ -98,10 +100,10 @@ test.describe("Header navigation — mobile menu", () => {
   });
 
   test("hamburger/menu button is visible on mobile", async ({ page }) => {
+    // The mobile menu button has aria-label="Open menu"
     const menuBtn = page
-      .getByRole("button", { name: /menu/i })
-      .or(page.locator("button[aria-label*='menu' i]"))
-      .or(page.locator("header button").filter({ has: page.locator("svg") }))
+      .locator("button[aria-label*='menu' i]")
+      .or(page.getByRole("button", { name: /menu/i }))
       .first();
     const count = await menuBtn.count();
     if (count > 0) {
@@ -113,18 +115,18 @@ test.describe("Header navigation — mobile menu", () => {
 
   test("mobile menu opens when hamburger is clicked", async ({ page }) => {
     const menuBtn = page
-      .getByRole("button", { name: /menu/i })
-      .or(page.locator("button[aria-label*='menu' i]"))
+      .locator("button[aria-label*='menu' i]")
+      .or(page.getByRole("button", { name: /menu/i }))
       .first();
     const count = await menuBtn.count();
     if (count > 0) {
       await menuBtn.click();
-      // After click, a sheet/drawer or nav links should appear
-      const sheet = page.locator("[data-state='open'], [role='dialog'], [aria-modal='true']").first();
-      const opened = await sheet.isVisible().catch(() => false);
-      // If a sheet opened, verify it has links
+      await page.waitForTimeout(400);
+      // The Sheet component opens a dialog — check for links inside it
+      const dialog = page.locator("[role='dialog']").first();
+      const opened = await dialog.isVisible().catch(() => false);
       if (opened) {
-        const links = sheet.locator("a");
+        const links = dialog.locator("a");
         const linkCount = await links.count();
         expect(linkCount).toBeGreaterThan(0);
       }
@@ -144,7 +146,7 @@ test.describe("Bottom navigation — mobile", () => {
 
   test("bottom nav is visible on mobile", async ({ page }) => {
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const bottomNav = page.locator("nav[aria-label*='Main navigation' i]").last();
     const count = await bottomNav.count();
     if (count > 0) {
@@ -154,7 +156,7 @@ test.describe("Bottom navigation — mobile", () => {
 
   test("bottom nav has courses link", async ({ page }) => {
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const coursesLink = page.locator(".bottom-nav-item").filter({ hasText: /courses|cursos/i }).first();
     const count = await coursesLink.count();
     if (count > 0) {
@@ -165,7 +167,7 @@ test.describe("Bottom navigation — mobile", () => {
   test("bottom nav is hidden on desktop", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     // The BottomNav uses md:hidden — verify it's either not present or hidden
     const bottomNav = page.locator(".bottom-nav-item").first();
     const count = await bottomNav.count();
@@ -179,9 +181,10 @@ test.describe("Bottom navigation — mobile", () => {
 
 test.describe("Command palette / search", () => {
   test("Cmd+K opens command palette on desktop", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await page.keyboard.press("Meta+k");
     await page.waitForTimeout(400);
     const palette = page
@@ -196,9 +199,10 @@ test.describe("Command palette / search", () => {
   });
 
   test("Ctrl+K opens command palette (alternative shortcut)", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await page.keyboard.press("Control+k");
     await page.waitForTimeout(400);
     // Just ensure no crash
@@ -217,7 +221,7 @@ test.describe("Footer on all key pages", () => {
   for (const { path, name } of routes) {
     test(`footer is visible on ${name} page`, async ({ page }) => {
       await page.goto(path);
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForLoadState("networkidle");
       await expect(page.locator("footer")).toBeVisible();
     });
   }

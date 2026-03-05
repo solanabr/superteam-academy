@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Community page — structure", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/community");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("community page loads without error redirect", async ({ page }) => {
@@ -102,7 +104,7 @@ test.describe("Community page — responsiveness", () => {
   test("community page renders at mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/en/community");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
@@ -110,7 +112,7 @@ test.describe("Community page — responsiveness", () => {
   test("community page renders at tablet viewport", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/en/community");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
   });
 });
@@ -118,7 +120,7 @@ test.describe("Community page — responsiveness", () => {
 test.describe("Community page — locale variants", () => {
   test("community page loads in pt-BR", async ({ page }) => {
     await page.goto("/pt-BR/community");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/error|404/);
     await expect(page.locator("main")).toBeVisible();
   });

@@ -24,7 +24,7 @@ test.describe("Smoke — critical routes render without crash", () => {
   for (const { path, name } of criticalRoutes) {
     test(`${name} (${path}) loads`, async ({ page }) => {
       await page.goto(path);
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForLoadState("networkidle");
       // Must render a body without an unhandled JS error overlay
       await expect(page.locator("body")).toBeVisible();
       const errorOverlay = page.getByText(/unhandled runtime error/i);
@@ -46,7 +46,7 @@ test.describe("Smoke — page titles", () => {
 test.describe("Smoke — lesson page", () => {
   test("known lesson slug loads main content", async ({ page }) => {
     await page.goto("/en/courses/introduction-to-solana/lessons/what-is-solana");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
@@ -55,14 +55,14 @@ test.describe("Smoke — lesson page", () => {
 test.describe("Smoke — certificate routes", () => {
   test("certificates list page renders", async ({ page }) => {
     await page.goto("/en/certificates");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });
 
   test("invalid certificate ID renders gracefully", async ({ page }) => {
     await page.goto("/en/certificates/invalid-cert-id-000");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).toBeVisible();
     await expect(page.getByText(/unhandled runtime error/i)).toHaveCount(0);
   });

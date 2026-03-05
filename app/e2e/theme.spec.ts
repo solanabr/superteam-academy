@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Theme — default dark mode", () => {
   test("landing page has dark class or data-theme on html element", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
     await page.waitForLoadState("networkidle");
     const html = page.locator("html");
@@ -12,6 +14,7 @@ test.describe("Theme — default dark mode", () => {
   });
 
   test("dark background color is applied to html or body", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
     await page.waitForLoadState("networkidle");
     // The design uses #08080C background — check the computed background is dark
@@ -26,6 +29,7 @@ test.describe("Theme — default dark mode", () => {
 
 test.describe("Theme — toggle control", () => {
   test("theme toggle button is visible on landing page", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
     await page.waitForLoadState("networkidle");
     const toggle = page
@@ -41,6 +45,7 @@ test.describe("Theme — toggle control", () => {
   });
 
   test("settings page has Dark / Light / System theme options", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en/settings");
     await page.waitForLoadState("networkidle");
     const themeBtn = page
@@ -50,13 +55,15 @@ test.describe("Theme — toggle control", () => {
     if (count > 0) {
       await expect(themeBtn).toBeVisible();
     }
-    // Settings main always visible
+    // Settings main always visible (may redirect to signin)
     await expect(page.locator("main")).toBeVisible();
   });
 
   test("clicking theme toggle does not crash the page", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
     await page.waitForLoadState("networkidle");
+    // Theme toggle has aria-label like "Switch to light theme" or "Switch to dark theme"
     const toggle = page
       .locator("button[aria-label*='theme' i]")
       .or(page.locator("button[aria-label*='dark' i]"))
@@ -72,11 +79,12 @@ test.describe("Theme — toggle control", () => {
   });
 
   test("theme persists between navigation — html class remains dark after nav", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
     await page.waitForLoadState("networkidle");
     // Note: dark is the default and is hardcoded — navigate to courses
     await page.goto("/en/courses");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     const html = page.locator("html");
     const className = (await html.getAttribute("class")) ?? "";
     const dataTheme = (await html.getAttribute("data-theme")) ?? "";

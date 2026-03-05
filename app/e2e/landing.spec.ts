@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { dismissOnboarding } from "./helpers";
 
 test.describe("Landing page — hero", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("page title contains Superteam Academy", async ({ page }) => {
@@ -18,9 +20,10 @@ test.describe("Landing page — hero", () => {
   });
 
   test("primary CTA button is visible and enabled", async ({ page }) => {
+    // The hero CTA is a StartLearningButton that shows "Sign Up" (en), "Cadastre-se" (pt-BR), "Regístrate" (es)
     const cta = page
-      .getByRole("button", { name: /start learning|start now|get started|começar|começe/i })
-      .or(page.getByRole("link", { name: /start learning|start now|get started|começar|começe/i }))
+      .getByRole("button", { name: /sign up|cadastre-se|regístrate|start learning|start now|get started|começar/i })
+      .or(page.getByRole("link", { name: /sign up|cadastre-se|regístrate|start learning|start now|get started|começar/i }))
       .first();
     await expect(cta).toBeVisible();
     await expect(cta).toBeEnabled();
@@ -48,8 +51,9 @@ test.describe("Landing page — hero", () => {
 
 test.describe("Landing page — sections", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("stats section contains at least one number", async ({ page }) => {
@@ -86,22 +90,25 @@ test.describe("Landing page — sections", () => {
 
 test.describe("Landing page — pt-BR locale", () => {
   test("pt-BR landing page loads with correct title", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/pt-BR");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page).toHaveTitle(/Superteam Academy/i);
   });
 
   test("pt-BR landing page has h1", async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/pt-BR");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
     await expect(page.locator("h1").first()).toBeVisible();
   });
 });
 
 test.describe("Landing page — footer links", () => {
   test.beforeEach(async ({ page }) => {
+    await dismissOnboarding(page);
     await page.goto("/en");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
   });
 
   test("footer has at least one link", async ({ page }) => {
