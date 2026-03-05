@@ -13,8 +13,8 @@ import { PublicKey, SystemProgram } from '@solana/web3.js'
 import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import IDL from '../../../target/idl/onchain_academy.json'
-import type { OnchainAcademy } from '../../../target/types/onchain_academy'
+import IDL from '../idl/onchain_academy.json'
+import type { OnchainAcademy } from '../interfaces/onchain_academy'
 
 const PROGRAM_ID = new PublicKey(IDL.address)
 
