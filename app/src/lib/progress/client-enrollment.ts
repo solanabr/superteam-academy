@@ -6,7 +6,11 @@ import {
   Transaction,
   type SendOptions,
 } from "@solana/web3.js";
-import { buildEnrollInstruction } from "@/lib/progress/onchain-enrollment";
+import {
+  buildEnrollInstruction,
+  deriveEnrollmentPda,
+  SUPERTEAM_ACADEMY_PROGRAM_ID,
+} from "@/lib/progress/onchain-enrollment";
 
 function normalizeErrorText(error: unknown): string {
   if (!error) return "";
@@ -56,10 +60,41 @@ export interface EnrollOnchainInput {
   ) => Promise<string>;
 }
 
+async function syncExistingEnrollment(input: {
+  courseId: string;
+  courseSlug: string;
+  learner: PublicKey;
+}): Promise<boolean> {
+  const response = await fetch("/api/progress/enroll-existing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      courseSlug: input.courseSlug,
+      courseId: input.courseId,
+      walletAddress: input.learner.toBase58(),
+    }),
+  });
+
+  return response.ok;
+}
+
 export async function enrollWithOnchainTransaction(
   input: EnrollOnchainInput
 ): Promise<string> {
   const { courseId, courseSlug, connection, learner, sendTransaction } = input;
+  try {
+    const existingEnrollmentPda = deriveEnrollmentPda(courseId, learner);
+    const existingAccount = await connection.getAccountInfo(existingEnrollmentPda, "confirmed");
+    if (existingAccount && existingAccount.owner.equals(SUPERTEAM_ACADEMY_PROGRAM_ID)) {
+      const synced = await syncExistingEnrollment({ courseId, courseSlug, learner });
+      if (synced) {
+        return `existing:${existingEnrollmentPda.toBase58()}`;
+      }
+    }
+  } catch {
+    // best-effort pre-check
+  }
+
   const instruction = buildEnrollInstruction({
     courseId,
     learner,
@@ -71,9 +106,26 @@ export async function enrollWithOnchainTransaction(
     lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
   }).add(instruction);
 
-  const transactionSignature = await sendTransaction(transaction, connection, {
-    preflightCommitment: "confirmed",
-  });
+  let transactionSignature: string;
+  try {
+    transactionSignature = await sendTransaction(transaction, connection, {
+      preflightCommitment: "confirmed",
+    });
+  } catch (error) {
+    try {
+      const existingEnrollmentPda = deriveEnrollmentPda(courseId, learner);
+      const existingAccount = await connection.getAccountInfo(existingEnrollmentPda, "confirmed");
+      if (existingAccount && existingAccount.owner.equals(SUPERTEAM_ACADEMY_PROGRAM_ID)) {
+        const synced = await syncExistingEnrollment({ courseId, courseSlug, learner });
+        if (synced) {
+          return `existing:${existingEnrollmentPda.toBase58()}`;
+        }
+      }
+    } catch {
+      // keep original send error
+    }
+    throw error;
+  }
 
   const confirmation = await connection.confirmTransaction(
     {

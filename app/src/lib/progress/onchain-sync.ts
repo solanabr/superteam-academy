@@ -19,6 +19,11 @@ export interface EnrollmentTransactionVerificationResult {
   error?: string;
 }
 
+export interface EnrollmentAccountVerificationInput {
+  courseId: string;
+  walletAddress: string;
+}
+
 export async function verifyEnrollmentTransaction(
   input: EnrollmentTransactionVerificationInput
 ): Promise<EnrollmentTransactionVerificationResult> {
@@ -67,6 +72,42 @@ export async function verifyEnrollmentTransaction(
     return {
       ok: false,
       error: "Unable to verify enrollment transaction on devnet",
+    };
+  }
+}
+
+export async function verifyEnrollmentAccountExists(
+  input: EnrollmentAccountVerificationInput
+): Promise<EnrollmentTransactionVerificationResult> {
+  try {
+    const learner = new PublicKey(input.walletAddress);
+    const expectedInstruction = buildEnrollInstruction({
+      courseId: input.courseId,
+      learner,
+    });
+    const enrollmentPda = expectedInstruction.keys[1]?.pubkey;
+
+    if (!enrollmentPda) {
+      return { ok: false, error: "Unable to derive enrollment account" };
+    }
+
+    const account = await enrollmentSyncConnection.getAccountInfo(enrollmentPda, "confirmed");
+    if (!account) {
+      return { ok: false, error: "Enrollment account does not exist on devnet" };
+    }
+
+    if (!account.owner.equals(SUPERTEAM_ACADEMY_PROGRAM_ID)) {
+      return {
+        ok: false,
+        error: "Enrollment account owner does not match academy program",
+      };
+    }
+
+    return { ok: true };
+  } catch {
+    return {
+      ok: false,
+      error: "Unable to verify on-chain enrollment account on devnet",
     };
   }
 }
