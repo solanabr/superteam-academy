@@ -1,4 +1,4 @@
-import * as monaco from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import { detectLanguage } from "./languages";
 
 export interface MonacoEditorConfig {
@@ -18,20 +18,20 @@ export interface MonacoEditorConfig {
 }
 
 export interface MonacoEditorInstance {
-	editor: monaco.editor.IStandaloneCodeEditor;
+	editor: Monaco.editor.IStandaloneCodeEditor;
 	container: HTMLElement;
 	dispose: () => void;
 	getValue: () => string;
 	setValue: (value: string) => void;
 	focus: () => void;
 	layout: (dimension?: { width: number; height: number }) => void;
-	onChange: (callback: (value: string) => void) => monaco.IDisposable;
-	onSave: (callback: () => void) => monaco.IDisposable;
+	onChange: (callback: (value: string) => void) => Monaco.IDisposable;
+	onSave: (callback: () => void) => Monaco.IDisposable;
 }
 
 class MonacoEditorAdapter {
 	private static instance: MonacoEditorAdapter;
-	private monaco: typeof monaco | null = null;
+	private monaco: typeof Monaco | null = null;
 
 	static getInstance(): MonacoEditorAdapter {
 		if (!MonacoEditorAdapter.instance) {
@@ -43,7 +43,7 @@ class MonacoEditorAdapter {
 	async initialize(): Promise<void> {
 		if (this.monaco) return;
 
-		this.monaco = monaco;
+		this.monaco = await import("monaco-editor");
 
 		this.monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
 			target: this.monaco.languages.typescript.ScriptTarget.ES2020,
@@ -109,7 +109,7 @@ class MonacoEditorAdapter {
 			throw new Error("Monaco Editor not initialized. Call initialize() first.");
 		}
 
-		const editorConfig: monaco.editor.IStandaloneEditorConstructionOptions = {
+		const editorConfig: Monaco.editor.IStandaloneEditorConstructionOptions = {
 			value: initialValue,
 			language: config.language,
 			theme: config.theme || "superteam-dark",
@@ -170,7 +170,10 @@ class MonacoEditorAdapter {
 				});
 			},
 			onSave: (callback) => {
-				editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, callback);
+				editor.addCommand(
+					(this.monaco?.KeyMod.CtrlCmd || 0) | (this.monaco?.KeyCode.KeyS || 0),
+					callback
+				);
 				return {
 					dispose: () => {
 						/* commands cannot be individually removed */

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Lightbulb, Eye, EyeOff, Coins } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
@@ -42,99 +40,73 @@ export function ChallengeHints({
 		.reduce((sum, hint) => sum + hint.cost, 0);
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Lightbulb className="h-5 w-5" />
-					{t("hints.title")}
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-4">
-				<div className="flex items-center justify-between text-sm">
-					<span>
-						{t("hints.available")}: {revealedCount} / {totalHints}
-					</span>
-					<div className="flex items-center gap-2">
-						<Coins className="h-4 w-4 text-yellow-500" />
-						<span>
-							{t("hints.totalCost")}: {totalCost} XP
-						</span>
-					</div>
-				</div>
+		<div className="space-y-3">
+			<div className="flex items-center justify-between text-xs text-muted-foreground">
+				<span>
+					{revealedCount}/{totalHints} {t("hints.available")}
+				</span>
+				<span>
+					{totalCost} XP {t("hints.totalCost")}
+				</span>
+			</div>
 
-				<div className="space-y-3">
-					{hints.map((hint, index) => {
-						const isRevealed = revealedHints.has(index);
-						const canAfford = userXP >= hint.cost;
+			<div className="space-y-2">
+				{hints.map((hint, index) => {
+					const isRevealed = revealedHints.has(index);
+					const canAfford = userXP >= hint.cost;
 
-						return (
-							<div
-								key={index}
-								className={`border rounded-lg p-4 ${
-									isRevealed
-										? "bg-muted/50 border-muted"
-										: "border-dashed border-muted-foreground/30"
-								}`}
-							>
-								<div className="flex items-center justify-between mb-2">
-									<div className="flex items-center gap-2">
-										<Badge variant="outline" className="text-xs">
-											{t("hints.hint")} {index + 1}
-										</Badge>
-										<div className="flex items-center gap-1 text-xs text-muted-foreground">
-											<Coins className="h-3 w-3" />
-											{hint.cost} XP
-										</div>
-									</div>
-
-									{!isRevealed && (
-										<Button
-											size="sm"
-											variant="outline"
-											onClick={() => handleUseHint(index)}
-											disabled={!canAfford}
-											className="gap-2"
-										>
-											{canAfford ? (
-												<>
-													<Eye className="h-3 w-3" />
-													{t("hints.reveal")}
-												</>
-											) : (
-												<>
-													<EyeOff className="h-3 w-3" />
-													{t("hints.insufficientXP")}
-												</>
-											)}
-										</Button>
-									)}
+					return (
+						<div
+							key={index}
+							className={`border rounded-md px-3 py-2 ${
+								isRevealed
+									? "bg-muted/50 border-muted"
+									: "border-dashed border-muted-foreground/30"
+							}`}
+						>
+							<div className="flex items-center justify-between mb-1">
+								<div className="flex items-center gap-2">
+									<Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+										{t("hints.hint")} {index + 1}
+									</Badge>
+									<span className="text-[10px] text-muted-foreground">
+										{hint.cost} XP
+									</span>
 								</div>
 
-								{isRevealed ? (
-									<p className="text-sm leading-relaxed">{hint.content}</p>
-								) : (
-									<div className="flex items-center gap-2 text-muted-foreground">
-										<EyeOff className="h-4 w-4" />
-										<p className="text-sm">{t("hints.clickToReveal")}</p>
-									</div>
+								{!isRevealed && (
+									<Button
+										size="sm"
+										variant="ghost"
+										onClick={() => handleUseHint(index)}
+										disabled={!canAfford}
+										className="h-6 text-[10px] px-2"
+									>
+										{canAfford ? t("hints.reveal") : t("hints.insufficientXP")}
+									</Button>
 								)}
 							</div>
-						);
-					})}
-				</div>
 
-				<div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-					<h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-						<Lightbulb className="h-4 w-4 text-blue-500" />
-						{t("hints.strategy")}
-					</h4>
-					<div className="space-y-1 text-xs text-muted-foreground">
-						<p>• {t("hints.strategy1")}</p>
-						<p>• {t("hints.strategy2")}</p>
-						<p>• {t("hints.strategy3")}</p>
-					</div>
+							{isRevealed ? (
+								<p className="text-xs leading-relaxed">{hint.content}</p>
+							) : (
+								<p className="text-xs text-muted-foreground">
+									{t("hints.clickToReveal")}
+								</p>
+							)}
+						</div>
+					);
+				})}
+			</div>
+
+			<div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+				<h4 className="text-xs font-medium mb-1">{t("hints.strategy")}</h4>
+				<div className="space-y-0.5 text-[11px] text-muted-foreground">
+					<p>&bull; {t("hints.strategy1")}</p>
+					<p>&bull; {t("hints.strategy2")}</p>
+					<p>&bull; {t("hints.strategy3")}</p>
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

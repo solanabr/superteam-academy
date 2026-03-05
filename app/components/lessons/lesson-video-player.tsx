@@ -1,16 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import {
-	Play,
-	Pause,
-	Volume2,
-	VolumeX,
-	Maximize,
-	Settings,
-	SkipBack,
-	SkipForward,
-} from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -23,12 +14,67 @@ interface LessonVideoPlayerProps {
 	onComplete?: () => void;
 }
 
+/**
+ * Extract an embeddable URL from YouTube or Vimeo links.
+ * Returns null for direct video files (.mp4, .webm, etc.).
+ */
+function getEmbedUrl(url: string): string | null {
+	if (!url) return null;
+
+	// YouTube: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+	const ytMatch = url.match(
+		/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+	);
+	if (ytMatch) {
+		return `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+	}
+
+	// Vimeo: vimeo.com/ID or vimeo.com/video/ID
+	const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+	if (vimeoMatch) {
+		return `https://player.vimeo.com/video/${vimeoMatch[1]}?dnt=1&transparent=0`;
+	}
+
+	return null;
+}
+
 export function LessonVideoPlayer({
 	videoUrl,
 	title,
 	onProgress,
 	onComplete,
 }: LessonVideoPlayerProps) {
+	const embedUrl = useMemo(() => getEmbedUrl(videoUrl), [videoUrl]);
+
+	// Embedded player (YouTube / Vimeo)
+	if (embedUrl) {
+		return (
+			<div className="relative bg-black rounded-b-lg overflow-hidden">
+				<iframe
+					src={embedUrl}
+					title={title}
+					className="w-full aspect-video border-0"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					allowFullScreen
+					referrerPolicy="strict-origin-when-cross-origin"
+					loading="lazy"
+				/>
+			</div>
+		);
+	}
+
+	// Direct video file — use native <video> with custom controls
+	return (
+		<NativeVideoPlayer
+			videoUrl={videoUrl}
+			title={title}
+			onProgress={onProgress}
+			onComplete={onComplete}
+		/>
+	);
+}
+
+function NativeVideoPlayer({ videoUrl, title, onProgress, onComplete }: LessonVideoPlayerProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -219,9 +265,6 @@ export function LessonVideoPlayer({
 						</div>
 
 						<div className="flex items-center gap-2">
-							<Button variant="ghost" size="sm">
-								<Settings className="h-4 w-4" />
-							</Button>
 							<Button variant="ghost" size="sm" onClick={toggleFullscreen}>
 								<Maximize className="h-4 w-4" />
 							</Button>

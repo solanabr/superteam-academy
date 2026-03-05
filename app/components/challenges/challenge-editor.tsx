@@ -116,8 +116,8 @@ export function ChallengeEditor({
 	};
 
 	return (
-		<div className="h-full flex flex-col">
-			<div className="border-b p-4 flex items-center justify-between">
+		<div className="h-full flex flex-col overflow-hidden">
+			<div className="border-b p-4 flex items-center justify-between shrink-0">
 				<div className="flex items-center gap-4">
 					<Badge variant="outline" className="font-mono">
 						{challenge.language}
@@ -162,9 +162,9 @@ export function ChallengeEditor({
 				</div>
 			</div>
 
-			<div className="flex-1 relative" ref={containerRef} />
+			<div className="flex-1 relative min-h-0 overflow-hidden" ref={containerRef} />
 
-			<div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
+			<div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground shrink-0">
 				<div className="flex items-center gap-4">
 					<span>Lines: {code.split("\n").length}</span>
 					<span>Characters: {code.length}</span>

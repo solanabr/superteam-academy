@@ -80,7 +80,10 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 							<div>
 								<p className="text-sm text-muted-foreground">{t("course")}</p>
 								{cert.courseSlug ? (
-									<Link href={`/courses/${cert.courseSlug}`} className="font-medium hover:underline text-primary">
+									<Link
+										href={`/courses/${cert.courseSlug}`}
+										className="font-medium hover:underline text-primary"
+									>
 										{cert.courseName}
 									</Link>
 								) : (
@@ -91,7 +94,12 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 								<p className="text-sm text-muted-foreground">{t("track")}</p>
 								{cert.courseSlug ? (
 									<Link href={`/courses/${cert.courseSlug}`}>
-										<Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">{cert.track}</Badge>
+										<Badge
+											variant="secondary"
+											className="hover:bg-secondary/80 cursor-pointer"
+										>
+											{cert.track}
+										</Badge>
 									</Link>
 								) : (
 									<Badge variant="secondary">{cert.track}</Badge>
@@ -205,8 +213,9 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 	let courseSlug: string | null = courseIdAttr?.value ?? null;
 	if (!courseSlug && cmsCourses.length > 0) {
 		const match = cmsCourses.find(
-			(c) => c?.title?.toLowerCase() === courseName.toLowerCase() ||
-				c?.slug?.current === courseName,
+			(c) =>
+				c?.title?.toLowerCase() === courseName.toLowerCase() ||
+				c?.slug?.current === courseName
 		);
 		if (match?.slug?.current) courseSlug = match.slug.current;
 	}

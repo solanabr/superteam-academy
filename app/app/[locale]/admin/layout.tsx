@@ -38,36 +38,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 	return (
 		<AuthGuard>
-		<div className="flex min-h-[calc(100vh-4rem)]">
-			<aside className="hidden lg:flex w-64 flex-col border-r border-border bg-muted/30 p-4 gap-1">
-				<div className="flex items-center gap-2 px-3 py-2 mb-4">
-					<Shield className="h-5 w-5 text-primary" />
-					<span className="font-semibold text-sm">Admin Panel</span>
-				</div>
-				{ADMIN_NAV.map((item) => {
-					const Icon = item.icon;
-					const active =
-						pathname === item.href ||
-						(item.href !== "/admin" && pathname.startsWith(item.href));
-					return (
-						<Link
-							key={item.href}
-							href={item.href}
-							className={cn(
-								"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-								active
-									? "bg-primary/10 text-primary"
-									: "text-muted-foreground hover:bg-muted hover:text-foreground"
-							)}
-						>
-							<Icon className="h-4 w-4" />
-							{item.label}
-						</Link>
-					);
-				})}
-			</aside>
-			<div className="flex-1 overflow-auto">{children}</div>
-		</div>
+			<div className="flex min-h-[calc(100vh-4rem)]">
+				<aside className="hidden lg:flex w-64 flex-col border-r border-border bg-muted/30 p-4 gap-1">
+					<div className="flex items-center gap-2 px-3 py-2 mb-4">
+						<Shield className="h-5 w-5 text-primary" />
+						<span className="font-semibold text-sm">Admin Panel</span>
+					</div>
+					{ADMIN_NAV.map((item) => {
+						const Icon = item.icon;
+						const active =
+							pathname === item.href ||
+							(item.href !== "/admin" && pathname.startsWith(item.href));
+						return (
+							<Link
+								key={item.href}
+								href={item.href}
+								className={cn(
+									"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+									active
+										? "bg-primary/10 text-primary"
+										: "text-muted-foreground hover:bg-muted hover:text-foreground"
+								)}
+							>
+								<Icon className="h-4 w-4" />
+								{item.label}
+							</Link>
+						);
+					})}
+				</aside>
+				<div className="flex-1 overflow-auto">{children}</div>
+			</div>
 		</AuthGuard>
 	);
 }

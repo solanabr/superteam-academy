@@ -1,7 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle, RotateCcw, Trophy, Award, Target } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, XCircle, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "next-intl";
@@ -32,171 +31,136 @@ export function ChallengeResults({ results, onRetry }: ChallengeResultsProps) {
 
 	if (!results) {
 		return (
-			<Card>
-				<CardContent className="flex flex-col items-center justify-center py-12">
-					<Target className="h-12 w-12 text-muted-foreground mb-4" />
-					<h3 className="text-lg font-medium mb-2">{t("results.noResults")}</h3>
-					<p className="text-muted-foreground text-center">{t("results.submitToSee")}</p>
-				</CardContent>
-			</Card>
+			<div className="flex flex-col items-center justify-center py-8 text-center">
+				<p className="text-sm font-medium mb-1">{t("results.noResults")}</p>
+				<p className="text-xs text-muted-foreground">{t("results.submitToSee")}</p>
+			</div>
 		);
 	}
 
 	const scorePercentage = (results.score / results.maxScore) * 100;
-	const testsPercentage = (results.testsPassed / results.totalTests) * 100;
+	// const testsPercentage = (results.testsPassed / results.totalTests) * 100;
 
 	return (
-		<div className="space-y-6">
-			<Card
-				className={
+		<div className="space-y-4">
+			<div
+				className={`border rounded-md p-3 ${
 					results.passed
 						? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20"
 						: "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20"
-				}
+				}`}
 			>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-3">
-						{results.passed ? (
-							<CheckCircle className="h-6 w-6 text-green-500" />
-						) : (
-							<XCircle className="h-6 w-6 text-red-500" />
-						)}
+				<div className="flex items-center gap-2 mb-3">
+					{results.passed ? (
+						<CheckCircle className="h-4 w-4 text-green-500" />
+					) : (
+						<XCircle className="h-4 w-4 text-red-500" />
+					)}
+					<span className="text-sm font-medium">
 						{results.passed ? t("results.passed") : t("results.failed")}
-					</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-						<div className="text-center">
-							<div className="text-2xl font-bold">{results.score}</div>
-							<div className="text-xs text-muted-foreground">
-								{t("results.score")}
-							</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl font-bold">{results.testsPassed}</div>
-							<div className="text-xs text-muted-foreground">
-								{t("results.testsPassed")}
-							</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl font-bold">{results.executionTime}ms</div>
-							<div className="text-xs text-muted-foreground">
-								{t("results.executionTime")}
-							</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl font-bold text-green-600">
-								+{results.xpEarned}
-							</div>
-							<div className="text-xs text-muted-foreground">
-								{t("results.xpEarned")}
-							</div>
-						</div>
-					</div>
+					</span>
+				</div>
 
-					<div className="space-y-2">
-						<div className="flex justify-between text-sm">
-							<span>{t("results.overallScore")}</span>
-							<span>{Math.round(scorePercentage)}%</span>
+				<div className="grid grid-cols-4 gap-3 text-center mb-3">
+					<div>
+						<div className="text-base font-bold">{results.score}</div>
+						<div className="text-[10px] text-muted-foreground">
+							{t("results.score")}
 						</div>
-						<Progress value={scorePercentage} className="h-2" />
 					</div>
+					<div>
+						<div className="text-base font-bold">{results.testsPassed}</div>
+						<div className="text-[10px] text-muted-foreground">
+							{t("results.testsPassed")}
+						</div>
+					</div>
+					<div>
+						<div className="text-base font-bold">{results.executionTime}ms</div>
+						<div className="text-[10px] text-muted-foreground">
+							{t("results.executionTime")}
+						</div>
+					</div>
+					<div>
+						<div className="text-base font-bold text-green-600">
+							+{results.xpEarned}
+						</div>
+						<div className="text-[10px] text-muted-foreground">
+							{t("results.xpEarned")}
+						</div>
+					</div>
+				</div>
 
-					<div className="space-y-2">
-						<div className="flex justify-between text-sm">
-							<span>{t("results.testsPassed")}</span>
-							<span>{Math.round(testsPercentage)}%</span>
-						</div>
-						<Progress value={testsPercentage} className="h-2" />
+				<div className="space-y-2">
+					<div className="flex justify-between text-xs">
+						<span>{t("results.overallScore")}</span>
+						<span>{Math.round(scorePercentage)}%</span>
 					</div>
-				</CardContent>
-			</Card>
+					<Progress value={scorePercentage} className="h-1.5" />
+				</div>
+			</div>
 
 			{results.feedback.length > 0 && (
-				<Card>
-					<CardHeader>
-						<CardTitle>{t("results.feedback")}</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="space-y-3">
-							{results.feedback.map((item, index) => (
-								<div key={index} className="flex items-start gap-3">
-									<div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
-									<p className="text-sm">{item}</p>
-								</div>
-							))}
+				<div className="space-y-1.5">
+					<h4 className="text-xs font-medium">{t("results.feedback")}</h4>
+					{results.feedback.map((item, index) => (
+						<div key={index} className="flex items-start gap-2">
+							<div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+							<p className="text-xs text-muted-foreground">{item}</p>
 						</div>
-					</CardContent>
-				</Card>
+					))}
+				</div>
 			)}
 
 			{results.achievements && results.achievements.length > 0 && (
-				<Card>
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<Trophy className="h-5 w-5 text-yellow-500" />
-							{t("results.achievements")}
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="space-y-2">
-							{results.achievements.map((achievement, index) => (
-								<div key={index} className="flex items-center gap-3">
-									<Award className="h-4 w-4 text-yellow-500" />
-									<span className="text-sm font-medium">{achievement}</span>
-								</div>
-							))}
+				<div className="space-y-1.5">
+					<h4 className="text-xs font-medium">{t("results.achievements")}</h4>
+					{results.achievements.map((achievement, index) => (
+						<div key={index} className="flex items-center gap-2">
+							<Trophy className="h-3 w-3 text-yellow-500" />
+							<span className="text-xs">{achievement}</span>
 						</div>
-					</CardContent>
-				</Card>
+					))}
+				</div>
 			)}
 
-			<Card>
-				<CardHeader>
-					<CardTitle>{t("results.nextSteps")}</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{results.nextChallenge ? (
-						<div className="space-y-3">
-							<p className="text-sm text-muted-foreground">
-								{t("results.greatJob")} {t("results.tryNext")}
-							</p>
-							<div className="flex items-center justify-between p-3 border rounded-lg">
-								<div>
-									<h4 className="font-medium">{results.nextChallenge.title}</h4>
-									<p className="text-sm text-muted-foreground">
-										{t("results.nextChallenge")}
-									</p>
-								</div>
-								<Button asChild={true}>
-									<a href={`/courses/challenge/${results.nextChallenge.id}`}>
-										{t("results.continue")}
-									</a>
-								</Button>
-							</div>
-						</div>
-					) : (
-						<div className="text-center py-4">
-							<Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-							<p className="text-sm text-muted-foreground">
-								{t("results.completedAll")}
+			<div className="space-y-3">
+				{results.nextChallenge ? (
+					<div className="flex items-center justify-between p-2 border rounded-md">
+						<div>
+							<h4 className="text-xs font-medium">{results.nextChallenge.title}</h4>
+							<p className="text-[10px] text-muted-foreground">
+								{t("results.nextChallenge")}
 							</p>
 						</div>
-					)}
+						<Button size="sm" variant="outline" className="h-7 text-xs" asChild={true}>
+							<a href={`/courses/challenge/${results.nextChallenge.id}`}>
+								{t("results.continue")}
+							</a>
+						</Button>
+					</div>
+				) : (
+					<p className="text-xs text-muted-foreground text-center py-2">
+						{t("results.completedAll")}
+					</p>
+				)}
 
-					{!results.passed && (
-						<div className="flex gap-2">
-							<Button onClick={onRetry} className="flex-1 gap-2">
-								<RotateCcw className="h-4 w-4" />
-								{t("results.tryAgain")}
-							</Button>
-							<Button variant="outline" asChild={true} className="flex-1">
-								<a href="/help">{t("results.getHelp")}</a>
-							</Button>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+				{!results.passed && (
+					<div className="flex gap-2">
+						<Button size="sm" onClick={onRetry} className="flex-1 gap-1.5 h-7 text-xs">
+							<RotateCcw className="h-3 w-3" />
+							{t("results.tryAgain")}
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							asChild={true}
+							className="flex-1 h-7 text-xs"
+						>
+							<a href="/help">{t("results.getHelp")}</a>
+						</Button>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

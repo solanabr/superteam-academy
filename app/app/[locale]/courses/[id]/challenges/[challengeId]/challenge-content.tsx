@@ -1,17 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ArrowLeft, RotateCcw, CheckCircle, Clock, Target, Code, TestTube } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, Target, Code, TestTube } from "lucide-react";
 import { useTranslations } from "next-intl";
-
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ChallengeEditor } from "@/components/challenges/challenge-editor";
 import { ChallengeInstructions } from "@/components/challenges/challenge-instructions";
 import { ChallengeTests } from "@/components/challenges/challenge-tests";
@@ -90,7 +88,7 @@ export function ChallengeContent({
 	const [testResults, setTestResults] = useState<TestResult[]>([]);
 	const [submissionResults, setSubmissionResults] = useState<SubmissionResult | null>(null);
 	const [isRunning, setIsRunning] = useState(false);
-	const [completed, setCompleted] = useState(false);
+	const [, setCompleted] = useState(false);
 	const [usedHints, setUsedHints] = useState<number[]>([]);
 	const [liveValidation, setLiveValidation] = useState<{
 		status: "idle" | "checking" | "valid" | "invalid";
@@ -216,197 +214,209 @@ export function ChallengeContent({
 		setUsedHints((prev) => [...prev, hintIndex]);
 	}, []);
 
-	const handleReset = useCallback(() => {
-		setCode(challenge.starterCode);
-		setTestResults([]);
-		setSubmissionResults(null);
-		setLiveValidation({ status: "idle", message: "" });
-	}, [challenge.starterCode]);
+	const [activeTab, setActiveTab] = useState("tests");
 
 	return (
-		<div className="flex flex-col lg:flex-row min-h-screen">
-			<div className="flex-1 flex flex-col">
-				<div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
-					<div className="container mx-auto px-4 py-4">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-4">
-								<Button variant="ghost" asChild={true} className="gap-2">
-									<a href={`/courses/${courseId}`}>
-										<ArrowLeft className="h-4 w-4" />
-										{t("editor.back")}
-									</a>
-								</Button>
+		<div className="flex flex-col h-screen">
+			{/* Header bar */}
+			<div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40 shrink-0">
+				<div className="px-4 py-3">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<Button variant="ghost" size="sm" asChild={true} className="gap-2">
+								<a href={`/courses/${courseId}/lessons/${challengeId}`}>
+									<ArrowLeft className="h-4 w-4" />
+									{t("editor.back")}
+								</a>
+							</Button>
 
-								<Separator orientation="vertical" className="h-6" />
+							<Separator orientation="vertical" className="h-5" />
 
-								<div>
-									<h1 className="font-semibold text-lg">{course.title}</h1>
-									<p className="text-sm text-muted-foreground">
-										{challenge.title}
-									</p>
-								</div>
+							<div>
+								<h1 className="font-semibold text-sm">{course.title}</h1>
+								<p className="text-xs text-muted-foreground">{challenge.title}</p>
 							</div>
+						</div>
 
-							<div className="flex items-center gap-2">
-								<Badge variant="outline" className="gap-1">
-									<Target className="h-3 w-3" />
-									{challenge.difficulty}
-								</Badge>
-								<Badge variant="outline" className="gap-1">
-									<Clock className="h-3 w-3" />
-									{challenge.estimatedTime}
-								</Badge>
-								<Badge variant="outline" className="gap-1">
-									<Code className="h-3 w-3" />
-									{challenge.xpReward} XP
-								</Badge>
-							</div>
+						<div className="flex items-center gap-2">
+							<Badge variant="outline" className="gap-1 text-xs">
+								<Target className="h-3 w-3" />
+								{challenge.difficulty}
+							</Badge>
+							<Badge variant="outline" className="gap-1 text-xs">
+								<Clock className="h-3 w-3" />
+								{challenge.estimatedTime}
+							</Badge>
+							<Badge variant="outline" className="gap-1 text-xs">
+								<Code className="h-3 w-3" />
+								{challenge.xpReward} XP
+							</Badge>
 						</div>
 					</div>
 				</div>
-
-				<div className="flex-1 overflow-hidden">
-					<Tabs defaultValue="instructions" className="h-full flex flex-col">
-						<div className="border-b px-4">
-							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="instructions">
-									{t("tabs.instructions")}
-								</TabsTrigger>
-								<TabsTrigger value="editor">{t("tabs.editor")}</TabsTrigger>
-								<TabsTrigger value="tests">{t("tabs.tests")}</TabsTrigger>
-								<TabsTrigger value="results">{t("tabs.results")}</TabsTrigger>
-							</TabsList>
-						</div>
-
-						<div className="flex-1 overflow-hidden">
-							<TabsContent value="instructions" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<ChallengeInstructions challenge={challenge} />
-									</div>
-								</ScrollArea>
-							</TabsContent>
-
-							<TabsContent value="editor" className="h-full m-0">
-								<div className="h-full flex flex-col">
-									<ChallengeEditor
-										challenge={challenge}
-										initialCode={code}
-										liveValidation={liveValidation}
-										onCodeChange={handleCodeChange}
-										onRunTests={handleRunTests}
-										onSubmit={handleSubmit}
-									/>
-								</div>
-							</TabsContent>
-
-							<TabsContent value="tests" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<ChallengeTests
-											tests={challenge.tests}
-											results={testResults}
-											onRunTests={handleRunTests}
-											isRunning={isRunning}
-										/>
-									</div>
-								</ScrollArea>
-							</TabsContent>
-
-							<TabsContent value="results" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<ChallengeResults
-											results={submissionResults}
-											onRetry={handleRetry}
-										/>
-									</div>
-								</ScrollArea>
-							</TabsContent>
-						</div>
-					</Tabs>
-				</div>
 			</div>
+			<ResizablePanelGroup
+				orientation="horizontal"
+				className="flex-1 min-h-0 overflow-hidden"
+			>
+				<ResizablePanel defaultSize={50} minSize={25} maxSize={65}>
+					<ScrollArea className="h-full">
+						<div className="p-5">
+							<ChallengeInstructions challenge={challenge} />
+						</div>
+					</ScrollArea>
+				</ResizablePanel>
 
-			<div className="w-full lg:w-80 border-l bg-muted/30">
-				<div className="p-4 space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base flex items-center gap-2">
-								<Target className="h-4 w-4" />
-								{t("progress.title")}
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div>
-								<div className="flex justify-between text-sm mb-2">
-									<span>{t("progress.testsPassed")}</span>
-									<span>
-										{testsPassed} / {challenge.tests.length}
-									</span>
-								</div>
-								<Progress
-									value={
-										challenge.tests.length > 0
-											? (testsPassed / challenge.tests.length) * 100
-											: 0
-									}
-									className="h-2"
+				<ResizableHandle withHandle />
+				<ResizablePanel defaultSize={30} maxSize={60}>
+					<div className="h-full">
+						<div className="h-full">
+							<div className="h-full overflow-auto">
+								<ChallengeEditor
+									challenge={challenge}
+									initialCode={code}
+									liveValidation={liveValidation}
+									onCodeChange={handleCodeChange}
+									onRunTests={handleRunTests}
+									onSubmit={handleSubmit}
 								/>
 							</div>
+							<div className="h-full overflow-hidden flex flex-col">
+								<Tabs
+									value={activeTab}
+									onValueChange={setActiveTab}
+									className="flex-1 flex flex-col min-h-0"
+								>
+									<div className="border-b shrink-0">
+										<TabsList className="w-full justify-start rounded-none bg-transparent h-9 px-2">
+											<TabsTrigger
+												value="tests"
+												className="gap-1.5 text-xs data-[state=active]:bg-muted rounded-sm px-3 py-1.5"
+											>
+												<TestTube className="h-3.5 w-3.5" />
+												{t("tabs.tests")}
+												{testResults.length > 0 && (
+													<Badge
+														variant={
+															testsPassed === challenge.tests.length
+																? "default"
+																: "secondary"
+														}
+														className="text-[10px] px-1 py-0 h-4 ml-1"
+													>
+														{testsPassed}/{challenge.tests.length}
+													</Badge>
+												)}
+											</TabsTrigger>
+											<TabsTrigger
+												value="results"
+												className="gap-1.5 text-xs data-[state=active]:bg-muted rounded-sm px-3 py-1.5"
+											>
+												<CheckCircle className="h-3.5 w-3.5" />
+												{t("tabs.results")}
+												{submissionResults && (
+													<Badge
+														variant={
+															submissionResults.passed
+																? "default"
+																: "destructive"
+														}
+														className="text-[10px] px-1 py-0 h-4 ml-1"
+													>
+														{submissionResults.score}/
+														{submissionResults.maxScore}
+													</Badge>
+												)}
+											</TabsTrigger>
+											{challenge.hints.length > 0 && (
+												<TabsTrigger
+													value="hints"
+													className="gap-1.5 text-xs data-[state=active]:bg-muted rounded-sm px-3 py-1.5"
+												>
+													<Target className="h-3.5 w-3.5" />
+													{t("hints.title")}
+													<Badge
+														variant="outline"
+														className="text-[10px] px-1 py-0 h-4 ml-1"
+													>
+														{usedHints.length}/{challenge.hints.length}
+													</Badge>
+												</TabsTrigger>
+											)}
+										</TabsList>
+									</div>
 
-							<div className="flex items-center gap-2">
-								{completed ? (
-									<CheckCircle className="h-5 w-5 text-green-500" />
-								) : (
-									<div className="h-5 w-5 rounded-full border-2 border-muted-foreground" />
-								)}
-								<span className="text-sm">
-									{completed ? t("progress.completed") : t("progress.inProgress")}
-								</span>
+									<TabsContent
+										value="tests"
+										className="flex-1 mt-0 min-h-0 data-[state=inactive]:hidden"
+									>
+										<ScrollArea className="h-full">
+											<div className="p-4">
+												<ChallengeTests
+													tests={challenge.tests}
+													results={testResults}
+													onRunTests={handleRunTests}
+													isRunning={isRunning}
+												/>
+												{challenge.tests.length > 0 && (
+													<div className="mt-4">
+														<div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+															<span>{t("progress.testsPassed")}</span>
+															<span>
+																{testsPassed} /{" "}
+																{challenge.tests.length}
+															</span>
+														</div>
+														<Progress
+															value={
+																(testsPassed /
+																	challenge.tests.length) *
+																100
+															}
+															className="h-1.5"
+														/>
+													</div>
+												)}
+											</div>
+										</ScrollArea>
+									</TabsContent>
+
+									<TabsContent
+										value="results"
+										className="flex-1 mt-0 min-h-0 data-[state=inactive]:hidden"
+									>
+										<ScrollArea className="h-full">
+											<div className="p-4">
+												<ChallengeResults
+													results={submissionResults}
+													onRetry={handleRetry}
+												/>
+											</div>
+										</ScrollArea>
+									</TabsContent>
+
+									{challenge.hints.length > 0 && (
+										<TabsContent
+											value="hints"
+											className="flex-1 mt-0 min-h-0 data-[state=inactive]:hidden"
+										>
+											<ScrollArea className="h-full">
+												<div className="p-4">
+													<ChallengeHints
+														hints={challenge.hints}
+														usedHints={usedHints}
+														onUseHint={handleUseHint}
+													/>
+												</div>
+											</ScrollArea>
+										</TabsContent>
+									)}
+								</Tabs>
 							</div>
-						</CardContent>
-					</Card>
-
-					<ChallengeHints
-						hints={challenge.hints}
-						usedHints={usedHints}
-						onUseHint={handleUseHint}
-					/>
-
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base">{t("quickActions.title")}</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-2">
-							<Button
-								className="w-full justify-start gap-2"
-								onClick={handleRunTests}
-								disabled={!code || isRunning}
-							>
-								<TestTube className="h-4 w-4" />
-								{t("quickActions.runTests")}
-							</Button>
-							<Button
-								className="w-full justify-start gap-2"
-								onClick={handleSubmit}
-								disabled={!code || completed}
-							>
-								<CheckCircle className="h-4 w-4" />
-								{t("quickActions.submit")}
-							</Button>
-							<Button
-								variant="outline"
-								className="w-full justify-start gap-2"
-								onClick={handleReset}
-							>
-								<RotateCcw className="h-4 w-4" />
-								{t("quickActions.reset")}
-							</Button>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
+						</div>
+					</div>
+				</ResizablePanel>
+			</ResizablePanelGroup>
 		</div>
 	);
 }

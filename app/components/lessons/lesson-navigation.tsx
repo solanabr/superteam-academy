@@ -3,7 +3,6 @@
 import { ChevronLeft, ChevronRight, CheckCircle, Circle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslations } from "next-intl";
 import { formatDuration } from "@/lib/utils";
@@ -35,100 +34,78 @@ export function LessonNavigation({
 	hasNext,
 }: LessonNavigationProps) {
 	const t = useTranslations("lessonNavigation");
-	const currentIndex = lessons.findIndex((lesson) => lesson.id === currentLessonId);
-	const currentLesson = lessons[currentIndex];
 
 	return (
-		<div className="space-y-4">
-			<div className="flex gap-2">
+		<div className="space-y-2">
+			<div className="flex gap-1.5">
 				<Button
 					variant="outline"
+					size="sm"
 					onClick={onPrevious}
 					disabled={!hasPrevious}
-					className="flex-1"
+					className="flex-1 h-7 text-xs"
 				>
-					<ChevronLeft className="h-4 w-4 mr-2" />
+					<ChevronLeft className="h-3 w-3 mr-1" />
 					{t("previousLesson")}
 				</Button>
-				<Button variant="outline" onClick={onNext} disabled={!hasNext} className="flex-1">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={onNext}
+					disabled={!hasNext}
+					className="flex-1 h-7 text-xs"
+				>
 					{t("nextLesson")}
-					<ChevronRight className="h-4 w-4 ml-2" />
+					<ChevronRight className="h-3 w-3 ml-1" />
 				</Button>
 			</div>
 
-			{currentLesson && (
-				<Card>
-					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium">{t("currentLesson")}</CardTitle>
-					</CardHeader>
-					<CardContent className="pt-0">
-						<div className="flex items-center gap-3">
-							{currentLesson.completed ? (
-								<CheckCircle className="h-5 w-5 text-green-500" />
-							) : (
-								<Circle className="h-5 w-5 text-muted-foreground" />
-							)}
-							<div className="flex-1 min-w-0">
-								<p className="font-medium truncate">{currentLesson.title}</p>
-								<p className="text-sm text-muted-foreground">
-									{formatDuration(currentLesson.duration)}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-			)}
-
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">{t("courseContent")}</CardTitle>
-				</CardHeader>
-				<CardContent className="pt-0">
-					<ScrollArea className="h-96">
-						<div className="space-y-2">
-							{lessons.map((lesson, index) => (
-								<button
-									key={lesson.id}
-									type="button"
-									onClick={() => onLessonSelect(lesson.id)}
-									className={`w-full text-left p-3 rounded-lg transition-colors hover:bg-muted ${
-										lesson.id === currentLessonId
-											? "bg-primary/10 border border-primary/20"
-											: ""
-									}`}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex items-center gap-2">
-											{lesson.completed ? (
-												<CheckCircle className="h-4 w-4 text-green-500" />
-											) : (
-												<Circle className="h-4 w-4 text-muted-foreground" />
-											)}
-											<span className="text-sm font-mono text-muted-foreground w-6">
-												{index + 1}
-											</span>
-										</div>
-										<div className="flex-1 min-w-0">
-											<p
-												className={`text-sm truncate ${
-													lesson.id === currentLessonId
-														? "font-medium text-primary"
-														: ""
-												}`}
-											>
-												{lesson.title}
-											</p>
-											<p className="text-xs text-muted-foreground">
-												{formatDuration(lesson.duration)}
-											</p>
-										</div>
+			<div>
+				<h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+					{t("courseContent")}
+				</h4>
+				<ScrollArea className="h-[calc(100vh-280px)]">
+					<div className="space-y-0.5">
+						{lessons.map((lesson, index) => (
+							<button
+								key={lesson.id}
+								type="button"
+								onClick={() => onLessonSelect(lesson.id)}
+								className={`w-full text-left px-2 py-1.5 rounded-md transition-colors hover:bg-muted ${
+									lesson.id === currentLessonId
+										? "bg-primary/10 border border-primary/20"
+										: ""
+								}`}
+							>
+								<div className="flex items-center gap-2">
+									{lesson.completed ? (
+										<CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+									) : (
+										<Circle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+									)}
+									<span className="text-[10px] font-mono text-muted-foreground w-4 shrink-0">
+										{index + 1}
+									</span>
+									<div className="flex-1 min-w-0">
+										<p
+											className={`text-xs truncate ${
+												lesson.id === currentLessonId
+													? "font-medium text-primary"
+													: ""
+											}`}
+										>
+											{lesson.title}
+										</p>
 									</div>
-								</button>
-							))}
-						</div>
-					</ScrollArea>
-				</CardContent>
-			</Card>
+									<span className="text-[10px] text-muted-foreground shrink-0">
+										{formatDuration(lesson.duration)}
+									</span>
+								</div>
+							</button>
+						))}
+					</div>
+				</ScrollArea>
+			</div>
 		</div>
 	);
 }

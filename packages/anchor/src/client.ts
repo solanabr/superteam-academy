@@ -1,20 +1,20 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
 import { createHash } from "node:crypto";
 import {
-    PROGRAM_ID,
-    ACCOUNT_SIZES,
-    type ConfigAccount,
-    type CourseAccount,
-    type EnrollmentAccount,
-    type MinterRoleAccount,
-    type AchievementTypeAccount,
-    type AchievementReceiptAccount,
+	PROGRAM_ID,
+	ACCOUNT_SIZES,
+	type ConfigAccount,
+	type CourseAccount,
+	type EnrollmentAccount,
+	type MinterRoleAccount,
+	type AchievementTypeAccount,
+	type AchievementReceiptAccount,
 } from "./idl";
 import {
-    findConfigPDA,
-    findMinterRolePDA,
-    findAchievementTypePDA,
-    findAchievementReceiptPDA,
+	findConfigPDA,
+	findMinterRolePDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;
@@ -183,7 +183,7 @@ export class AcademyClient {
 		learner: PublicKey,
 		courses?: Array<{ pubkey: PublicKey; account: CourseAccount }>
 	): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
-		const allCourses = courses ?? await this.fetchAllCourses();
+		const allCourses = courses ?? (await this.fetchAllCourses());
 		if (allCourses.length === 0) return [];
 
 		const pdas = allCourses.map((c) => {

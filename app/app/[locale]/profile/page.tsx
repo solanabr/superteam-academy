@@ -20,7 +20,11 @@ import {
 	getSolanaConnection,
 	getProgramId,
 } from "@/lib/academy";
-import type { Course as CMSCourse, CourseAuthor, UserPrivacySettings } from "@superteam-academy/cms";
+import type {
+	Course as CMSCourse,
+	CourseAuthor,
+	UserPrivacySettings,
+} from "@superteam-academy/cms";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { getLinkedWallet, serverAuth } from "@/lib/auth";
 import { levelFromXP } from "@superteam-academy/gamification";
@@ -290,7 +294,7 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 
 async function fetchOnChainProfile(
 	learner: PublicKey,
-	resolvedUser: Awaited<ReturnType<typeof getUserByWallet>>,
+	resolvedUser: Awaited<ReturnType<typeof getUserByWallet>>
 ) {
 	const academyClient = getAcademyClient();
 	const connection = getSolanaConnection();
@@ -299,33 +303,27 @@ async function fetchOnChainProfile(
 	const achievementService = new AchievementService(connection, programId);
 
 	// On-chain first: fetch courses, then derive enrollment PDAs directly
-	const [
-		config,
-		allCourses,
-		indexedActivity,
-		rawCredentials,
-		onChainAchievements,
-		cmsCourses,
-	] = await Promise.all([
-		academyClient.fetchConfig().catch((err) => {
-			console.error("[profile] fetchConfig failed:", err);
-			return null;
-		}),
-		academyClient.fetchAllCourses().catch((err) => {
-			console.error("[profile] fetchAllCourses failed:", err);
-			return [] as Awaited<ReturnType<typeof academyClient.fetchAllCourses>>;
-		}),
-		fetchIndexedLearnerActivity(learner, 10).catch(() => []),
-		credentialService.getCredentialsByOwner(learner).catch((err) => {
-			console.error("[profile] getCredentialsByOwner failed:", err);
-			return [] as Awaited<ReturnType<typeof credentialService.getCredentialsByOwner>>;
-		}),
-		achievementService.getLearnerAchievements(learner).catch((err) => {
-			console.error("[profile] getLearnerAchievements failed:", err);
-			return [] as Awaited<ReturnType<typeof achievementService.getLearnerAchievements>>;
-		}),
-		getCoursesCMS().catch(() => []),
-	]);
+	const [config, allCourses, indexedActivity, rawCredentials, onChainAchievements, cmsCourses] =
+		await Promise.all([
+			academyClient.fetchConfig().catch((err) => {
+				console.error("[profile] fetchConfig failed:", err);
+				return null;
+			}),
+			academyClient.fetchAllCourses().catch((err) => {
+				console.error("[profile] fetchAllCourses failed:", err);
+				return [] as Awaited<ReturnType<typeof academyClient.fetchAllCourses>>;
+			}),
+			fetchIndexedLearnerActivity(learner, 10).catch(() => []),
+			credentialService.getCredentialsByOwner(learner).catch((err) => {
+				console.error("[profile] getCredentialsByOwner failed:", err);
+				return [] as Awaited<ReturnType<typeof credentialService.getCredentialsByOwner>>;
+			}),
+			achievementService.getLearnerAchievements(learner).catch((err) => {
+				console.error("[profile] getLearnerAchievements failed:", err);
+				return [] as Awaited<ReturnType<typeof achievementService.getLearnerAchievements>>;
+			}),
+			getCoursesCMS().catch(() => []),
+		]);
 
 	// Derive enrollment PDAs from known courses and batch-fetch them
 	const enrollments = await academyClient
@@ -340,7 +338,7 @@ async function fetchOnChainProfile(
 		`courses=${allCourses.length}`,
 		`enrollments=${enrollments.length}`,
 		`credentials=${rawCredentials.length}`,
-		`achievements=${onChainAchievements.length}`,
+		`achievements=${onChainAchievements.length}`
 	);
 
 	const [credentials, xpBalance] = await Promise.all([
@@ -375,8 +373,10 @@ async function fetchOnChainProfile(
 	// Build CMS course lookup by slug for title enrichment and fallback
 	const cmsCourseBySlug = new Map(
 		(cmsCourses ?? [])
-			.filter((c): c is CMSCourse & { slug: { current: string }; title: string } =>
-				!!c?.slug?.current && !!c?.title)
+			.filter(
+				(c): c is CMSCourse & { slug: { current: string }; title: string } =>
+					!!c?.slug?.current && !!c?.title
+			)
 			.map((c) => [c.slug.current, c])
 	);
 
@@ -388,9 +388,10 @@ async function fetchOnChainProfile(
 		const completedLessons = countCompletedLessons(entry.account.lessonFlags);
 		const totalLessons = course?.lessonCount ?? 0;
 		const cmsCourse = cmsCourseBySlug.get(courseId);
-		const cmsAuthor = cmsCourse?.author && "name" in cmsCourse.author
-			? (cmsCourse.author as CourseAuthor)
-			: null;
+		const cmsAuthor =
+			cmsCourse?.author && "name" in cmsCourse.author
+				? (cmsCourse.author as CourseAuthor)
+				: null;
 		return {
 			id: courseId,
 			title: cmsCourse?.title ?? formatCourseId(courseId),
@@ -432,12 +433,7 @@ async function fetchOnChainProfile(
 	const currentLevelXP = level * level * 100;
 	const nextLevelXP = (level + 1) * (level + 1) * 100;
 	const xpIntoLevel = currentXP - currentLevelXP;
-	type ProfileAchievementCategory =
-		| "learning"
-		| "streak"
-		| "completion"
-		| "social"
-		| "special";
+	type ProfileAchievementCategory = "learning" | "streak" | "completion" | "social" | "special";
 	type ProfileAchievement = {
 		id: string;
 		title: string;
@@ -620,7 +616,5 @@ function emptyStats() {
 
 /** Convert a slug-style courseId like "intro-to-solana" to "Intro To Solana" */
 function formatCourseId(courseId: string): string {
-	return courseId
-		.replace(/[-_]/g, " ")
-		.replace(/\b\w/g, (c) => c.toUpperCase());
+	return courseId.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }

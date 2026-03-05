@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code } from "lucide-react";
+import { ArrowLeft, Clock, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +13,6 @@ import {
 	LessonMarkCompleteWrapper,
 } from "@/components/lessons/lesson-interactive";
 import { LessonContent } from "@/components/lessons/lesson-content";
-import { LessonProgress } from "@/components/lessons/lesson-progress";
 import { LessonNotes } from "@/components/lessons/lesson-notes";
 import { LessonResources } from "@/components/lessons/lesson-resources";
 import { getTranslations } from "next-intl/server";
@@ -68,22 +66,47 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 	const lessonTabs = (
 		<Tabs defaultValue="content" className="h-full flex flex-col">
-			<div className="border-b px-4">
-				<TabsList className={`grid w-full ${hasChallenge ? "grid-cols-5" : "grid-cols-4"}`}>
-					<TabsTrigger value="content">{t("tabs.content")}</TabsTrigger>
-					<TabsTrigger value="notes">{t("tabs.notes")}</TabsTrigger>
-					<TabsTrigger value="quiz">{t("tabs.quiz")}</TabsTrigger>
+			<div className="border-b">
+				<TabsList className="h-9 bg-transparent rounded-none px-4 gap-1">
+					<TabsTrigger
+						value="content"
+						className="text-xs rounded-sm px-3 py-1.5 data-[state=active]:bg-muted"
+					>
+						{t("tabs.content")}
+					</TabsTrigger>
+					<TabsTrigger
+						value="notes"
+						className="text-xs rounded-sm px-3 py-1.5 data-[state=active]:bg-muted"
+					>
+						{t("tabs.notes")}
+					</TabsTrigger>
+					<TabsTrigger
+						value="quiz"
+						className="text-xs rounded-sm px-3 py-1.5 data-[state=active]:bg-muted"
+					>
+						{t("tabs.quiz")}
+					</TabsTrigger>
 					{hasChallenge && (
-						<TabsTrigger value="challenge">{t("tabs.challenge")}</TabsTrigger>
+						<TabsTrigger
+							value="challenge"
+							className="text-xs rounded-sm px-3 py-1.5 data-[state=active]:bg-muted"
+						>
+							{t("tabs.challenge")}
+						</TabsTrigger>
 					)}
-					<TabsTrigger value="resources">{t("tabs.resources")}</TabsTrigger>
+					<TabsTrigger
+						value="resources"
+						className="text-xs rounded-sm px-3 py-1.5 data-[state=active]:bg-muted"
+					>
+						{t("tabs.resources")}
+					</TabsTrigger>
 				</TabsList>
 			</div>
 
 			<div className="flex-1 overflow-hidden">
 				<TabsContent value="content" className="h-full m-0">
 					<ScrollArea className="h-full">
-						<div className="p-6">
+						<div className="p-5">
 							<LessonContent content={lesson.content} />
 						</div>
 					</ScrollArea>
@@ -91,7 +114,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 				<TabsContent value="notes" className="h-full m-0">
 					<ScrollArea className="h-full">
-						<div className="p-6">
+						<div className="p-5">
 							<LessonNotes lessonId={lessonId} currentTime={0} />
 						</div>
 					</ScrollArea>
@@ -99,7 +122,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 				<TabsContent value="quiz" className="h-full m-0">
 					<ScrollArea className="h-full">
-						<div className="p-6">
+						<div className="p-5">
 							{lesson.quiz ? (
 								<LessonQuizWrapper
 									courseId={id}
@@ -116,43 +139,44 @@ export default async function LessonPage({ params }: LessonPageProps) {
 				{hasChallenge && lesson.challenge && (
 					<TabsContent value="challenge" className="h-full m-0">
 						<ScrollArea className="h-full">
-							<div className="p-6 space-y-4">
-								<div className="flex items-center justify-between">
-									<div>
-										<h3 className="text-lg font-semibold">
+							<div className="p-5 space-y-3">
+								<div>
+									<div className="flex items-center gap-2 mb-1">
+										<h3 className="text-sm font-semibold">
 											{lesson.challenge.title}
 										</h3>
-										<p className="text-sm text-muted-foreground">
-											{lesson.challenge.description}
-										</p>
+										<Badge
+											variant="outline"
+											className="text-[10px] px-1.5 py-0 h-4"
+										>
+											{lesson.challenge.difficulty}
+										</Badge>
 									</div>
-									<Badge variant="outline">{lesson.challenge.difficulty}</Badge>
+									<p className="text-xs text-muted-foreground">
+										{lesson.challenge.description}
+									</p>
 								</div>
-								<Separator />
 								{lesson.challenge.objectives.length > 0 && (
 									<div>
-										<h4 className="text-sm font-medium mb-2">
+										<h4 className="text-xs font-medium mb-1">
 											{t("challengeObjectives")}
 										</h4>
-										<ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+										<ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5">
 											{lesson.challenge.objectives.map((obj, i) => (
 												<li key={i}>{obj}</li>
 											))}
 										</ul>
 									</div>
 								)}
-								<div className="flex items-center gap-4 text-sm text-muted-foreground">
-									<span className="flex items-center gap-1">
-										<Clock className="h-3.5 w-3.5" />
-										{lesson.challenge.estimatedTime}
-									</span>
+								<div className="flex items-center gap-3 text-xs text-muted-foreground">
+									<span>{lesson.challenge.estimatedTime}</span>
 									<span>
 										{lesson.challenge.tests} {t("challengeTests")}
 									</span>
 								</div>
-								<Button asChild={true} className="w-full gap-2">
+								<Button size="sm" asChild={true} className="w-full gap-1.5">
 									<a href={challengeHref}>
-										<Code className="h-4 w-4" />
+										<Code className="h-3.5 w-3.5" />
 										{t("tryChallenge")}
 									</a>
 								</Button>
@@ -163,7 +187,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 				<TabsContent value="resources" className="h-full m-0">
 					<ScrollArea className="h-full">
-						<div className="p-6">
+						<div className="p-5">
 							<LessonResources resources={lesson.resources} />
 						</div>
 					</ScrollArea>
@@ -177,35 +201,35 @@ export default async function LessonPage({ params }: LessonPageProps) {
 			<div className="flex flex-col lg:flex-row min-h-screen">
 				<div className="flex-1 flex flex-col">
 					<div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
-						<div className="container mx-auto px-4 py-4">
+						<div className="px-4 py-3">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-4">
-									<Button variant="ghost" asChild={true} className="gap-2">
+									<Button
+										variant="ghost"
+										size="sm"
+										asChild={true}
+										className="gap-2"
+									>
 										<a href={`/courses/${id}`}>
 											<ArrowLeft className="h-4 w-4" />
 											{t("backToCourse")}
 										</a>
 									</Button>
 
-									<Separator orientation="vertical" className="h-6" />
+									<Separator orientation="vertical" className="h-5" />
 
 									<div>
-										<h1 className="font-semibold text-lg">{course.title}</h1>
-										<p className="text-sm text-muted-foreground">
+										<h1 className="font-semibold text-sm">{course.title}</h1>
+										<p className="text-xs text-muted-foreground">
 											{lesson.title}
 										</p>
 									</div>
 								</div>
 
-								<div className="flex items-center gap-2">
-									<Badge variant="outline" className="gap-1">
-										<Clock className="h-3 w-3" />
-										{lesson.duration}
-									</Badge>
-									<Button variant="outline" size="sm">
-										<Settings className="h-4 w-4" />
-									</Button>
-								</div>
+								<Badge variant="outline" className="gap-1 text-xs">
+									<Clock className="h-3 w-3" />
+									{lesson.duration}
+								</Badge>
 							</div>
 						</div>
 					</div>
@@ -222,16 +246,26 @@ export default async function LessonPage({ params }: LessonPageProps) {
 					<div className="flex-1 overflow-hidden">{lessonTabs}</div>
 				</div>
 
-				<div className="w-full lg:w-80 border-l bg-muted/30">
-					<div className="p-4 space-y-6">
-						<LessonProgress
-							progress={progress}
-							currentLesson={{
-								id: lessonId,
-								title: lesson.title,
-								progress: 0,
-							}}
+				<div className="w-full lg:w-72 border-l bg-muted/20">
+					<div className="p-3 space-y-3">
+						<LessonMarkCompleteWrapper
+							courseId={id}
+							lessonIndex={progress.lessonIndex}
+							label={t("markComplete")}
 						/>
+						{hasChallenge && (
+							<Button
+								size="sm"
+								variant="outline"
+								className="w-full justify-start gap-1.5 text-xs"
+								asChild={true}
+							>
+								<a href={challengeHref}>
+									<Code className="h-3.5 w-3.5" />
+									{t("tryChallenge")}
+								</a>
+							</Button>
+						)}
 
 						<LessonNavigationWrapper
 							courseId={id}
@@ -242,39 +276,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
 							hasPrevious={false}
 							hasNext={true}
 						/>
-
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-base">{t("quickActions")}</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-2">
-								{hasChallenge && (
-									<Button
-										variant="default"
-										className="w-full justify-start gap-2"
-										asChild={true}
-									>
-										<a href={challengeHref}>
-											<Code className="h-4 w-4" />
-											{t("tryChallenge")}
-										</a>
-									</Button>
-								)}
-								<Button variant="outline" className="w-full justify-start gap-2">
-									<BookOpen className="h-4 w-4" />
-									{t("takeNotes")}
-								</Button>
-								<LessonMarkCompleteWrapper
-									courseId={id}
-									lessonIndex={progress.lessonIndex}
-									label={t("markComplete")}
-								/>
-								<Button variant="outline" className="w-full justify-start gap-2">
-									<Maximize className="h-4 w-4" />
-									{t("fullscreen")}
-								</Button>
-							</CardContent>
-						</Card>
 					</div>
 				</div>
 			</div>

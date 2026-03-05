@@ -75,8 +75,10 @@ export function CertificateActions({
 		ctx.strokeStyle = "#00b464";
 		ctx.lineWidth = 2;
 		for (const [cx, cy, dx, dy] of [
-			[30, 30, 1, 1], [1170, 30, -1, 1],
-			[30, 600, 1, -1], [1170, 600, -1, -1],
+			[30, 30, 1, 1],
+			[1170, 30, -1, 1],
+			[30, 600, 1, -1],
+			[1170, 600, -1, -1],
 		] as [number, number, number, number][]) {
 			ctx.beginPath();
 			ctx.moveTo(cx + cornerSize * dx, cy);

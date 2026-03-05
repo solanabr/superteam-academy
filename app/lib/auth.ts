@@ -97,8 +97,9 @@ export async function getLinkedWallet() {
 		}
 	}
 
-	const linkedWallet = sanityUser?.linkedAccounts?.find((entry) => entry.provider === "wallet")
-		?.identifier;
+	const linkedWallet = sanityUser?.linkedAccounts?.find(
+		(entry) => entry.provider === "wallet"
+	)?.identifier;
 	if (linkedWallet) {
 		try {
 			return new PublicKey(linkedWallet).toBase58();

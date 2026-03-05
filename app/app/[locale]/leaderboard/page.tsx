@@ -382,7 +382,10 @@ async function getCourseLeaderboards(includeActivity: boolean) {
 
 			const learnerEntries = await Promise.all(
 				learnerWallets.map(async (wallet) => {
-					const enrollment = await academyClient.fetchEnrollment(courseId, new PublicKey(wallet));
+					const enrollment = await academyClient.fetchEnrollment(
+						courseId,
+						new PublicKey(wallet)
+					);
 					const completed = enrollment
 						? countCompletedLessons(enrollment.lessonFlags)
 						: (historyStats.get(wallet)?.completedLessons ?? 0);
@@ -474,7 +477,10 @@ async function getCourseHistoryStats({
 		if (!hasEnrollLog && !hasCompleteLessonLog && !hasFinalizeCourseLog) continue;
 
 		for (const instruction of tx.transaction.message.instructions) {
-			if (!("programId" in instruction) || !instruction.programId.equals(academyClient.programId)) {
+			if (
+				!("programId" in instruction) ||
+				!instruction.programId.equals(academyClient.programId)
+			) {
 				continue;
 			}
 			if (!("accounts" in instruction)) {
@@ -572,9 +578,7 @@ async function resolveEnrollmentLearnerWallet({
 				if (expectedPda.equals(enrollmentPda)) {
 					return learner;
 				}
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 	}
 

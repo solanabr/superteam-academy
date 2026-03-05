@@ -5,30 +5,30 @@ import dynamic from "next/dynamic";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { usePathname, useRouter } from "next/navigation";
 import {
-    Trophy,
-    Search,
-    Menu,
-    X,
-    Layers,
-    Users,
-    Compass,
-    Sun,
-    Moon,
-    User,
-    Settings,
-    LogOut,
-    ShieldCheck,
+	Trophy,
+	Search,
+	Menu,
+	X,
+	Layers,
+	Users,
+	Compass,
+	Sun,
+	Moon,
+	User,
+	Settings,
+	LogOut,
+	ShieldCheck,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { cn, truncateAddress } from "@/lib/utils";
