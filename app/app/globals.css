@@ -1,0 +1,551 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-heading);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Solana/Brazil mapped accent colors */
+  --color-solana-purple: var(--solana-purple);
+  --color-solana-green: var(--solana-green);
+  --color-solana-blue: var(--solana-blue);
+}
+
+/* ========================================
+   BASE VARIABLES (Applies to all themes)
+   ======================================== */
+:root {
+  --radius: 0.625rem;
+}
+
+/* ========================================
+   LIGHT MODE — DEFAULT & SUPERTEAM BRAZIL
+   ======================================== */
+:root:not([data-brand="solana"]),
+:root[data-brand="brazil"] {
+  /* Superteam Brazil Colors */
+  --background: #f7eacb;
+  --foreground: #1b231d;
+  --card: #ffffff;
+  --card-foreground: #1b231d;
+  --popover: #ffffff;
+  --popover-foreground: #1b231d;
+  --primary: #008c4c;
+  --primary-foreground: #ffffff;
+  --secondary: #2f6b3f;
+  --secondary-foreground: #ffffff;
+  --muted: #e6d3a8;
+  /* slightly darker beige */
+  --muted-foreground: #5a7d65;
+  --accent: #ffd23f;
+  --accent-foreground: #1b231d;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e6d3a8;
+  --input: #e6d3a8;
+  --ring: #008c4c;
+  --chart-1: #008c4c;
+  --chart-2: #ffd23f;
+  --chart-3: #2f6b3f;
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Map solana colors to Brazil colors so existing classes work */
+  --solana-purple: #ffd23f;
+  /* Yellow */
+  --solana-green: #008c4c;
+  /* Bright Green */
+  --solana-blue: #2f6b3f;
+  /* Olive Green */
+
+  --sidebar: #f7eacb;
+  --sidebar-foreground: #1b231d;
+  --sidebar-primary: #008c4c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6d3a8;
+  --sidebar-accent-foreground: #1b231d;
+  --sidebar-border: #e6d3a8;
+  --sidebar-ring: #008c4c;
+}
+
+/* ========================================
+   DARK MODE — DEFAULT & SUPERTEAM BRAZIL 
+   ======================================== */
+.dark:not([data-brand="solana"]),
+.dark[data-brand="brazil"] {
+  --background: #1b231d;
+  --foreground: #f7eacb;
+  --card: #253329;
+  --card-foreground: #f7eacb;
+  --popover: #253329;
+  --popover-foreground: #f7eacb;
+  --primary: #ffd23f;
+  --primary-foreground: #1b231d;
+  --secondary: #2f6b3f;
+  --secondary-foreground: #ffffff;
+  --muted: #2f4233;
+  --muted-foreground: #a6b5a9;
+  --accent: #008c4c;
+  --accent-foreground: #ffffff;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #2f4233;
+  --input: #2f4233;
+  --ring: #ffd23f;
+  --chart-1: #ffd23f;
+  --chart-2: #008c4c;
+  --chart-3: #2f6b3f;
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  --solana-purple: #ffd23f;
+  /* Yellow */
+  --solana-green: #008c4c;
+  /* Bright Green */
+  --solana-blue: #2f6b3f;
+  /* Olive Green */
+
+  --sidebar: #1b231d;
+  --sidebar-foreground: #f7eacb;
+  --sidebar-primary: #ffd23f;
+  --sidebar-primary-foreground: #1b231d;
+  --sidebar-accent: #253329;
+  --sidebar-accent-foreground: #f7eacb;
+  --sidebar-border: #2f4233;
+  --sidebar-ring: #ffd23f;
+}
+
+/* ========================================
+   LIGHT MODE — SOLANA NATIVE
+   ======================================== */
+:root[data-brand="solana"] {
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.145 0.015 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.015 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.015 260);
+  --primary: oklch(0.488 0.212 275);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.955 0.008 270);
+  --secondary-foreground: oklch(0.205 0.015 260);
+  --muted: oklch(0.955 0.008 270);
+  --muted-foreground: oklch(0.525 0.02 265);
+  --accent: oklch(0.955 0.008 270);
+  --accent-foreground: oklch(0.205 0.015 260);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.905 0.01 270);
+  --input: oklch(0.905 0.01 270);
+  --ring: oklch(0.488 0.212 275);
+  --chart-1: oklch(0.488 0.212 275);
+  --chart-2: oklch(0.723 0.219 155);
+  --chart-3: oklch(0.398 0.07 260);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --solana-purple: oklch(0.488 0.212 275);
+  --solana-green: oklch(0.723 0.219 155);
+  --solana-blue: oklch(0.55 0.18 255);
+
+  --sidebar: oklch(0.975 0.005 270);
+  --sidebar-foreground: oklch(0.145 0.015 260);
+  --sidebar-primary: oklch(0.488 0.212 275);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.955 0.008 270);
+  --sidebar-accent-foreground: oklch(0.205 0.015 260);
+  --sidebar-border: oklch(0.905 0.01 270);
+  --sidebar-ring: oklch(0.488 0.212 275);
+}
+
+/* ========================================
+   DARK MODE — SOLANA NATIVE
+   ======================================== */
+.dark[data-brand="solana"] {
+  --background: oklch(0.13 0.015 270);
+  --foreground: oklch(0.94 0.005 270);
+  --card: oklch(0.17 0.015 270);
+  --card-foreground: oklch(0.94 0.005 270);
+  --popover: oklch(0.17 0.015 270);
+  --popover-foreground: oklch(0.94 0.005 270);
+  --primary: oklch(0.62 0.22 275);
+  --primary-foreground: oklch(0.13 0.015 270);
+  --secondary: oklch(0.22 0.015 270);
+  --secondary-foreground: oklch(0.94 0.005 270);
+  --muted: oklch(0.22 0.015 270);
+  --muted-foreground: oklch(0.62 0.02 270);
+  --accent: oklch(0.22 0.015 270);
+  --accent-foreground: oklch(0.94 0.005 270);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.62 0.22 275);
+  --chart-1: oklch(0.62 0.22 275);
+  --chart-2: oklch(0.723 0.219 155);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  --solana-purple: oklch(0.62 0.22 275);
+  --solana-green: oklch(0.75 0.22 155);
+  --solana-blue: oklch(0.6 0.2 255);
+
+  --sidebar: oklch(0.15 0.015 270);
+  --sidebar-foreground: oklch(0.94 0.005 270);
+  --sidebar-primary: oklch(0.62 0.22 275);
+  --sidebar-primary-foreground: oklch(0.94 0.005 270);
+  --sidebar-accent: oklch(0.22 0.015 270);
+  --sidebar-accent-foreground: oklch(0.94 0.005 270);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.62 0.22 275);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* ========================================
+   NOISE TEXTURE OVERLAY
+   ======================================== */
+.noise-bg {
+  position: relative;
+}
+
+.noise-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+.dark .noise-bg::before {
+  opacity: 0.08;
+  mix-blend-mode: screen;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+@layer utilities {
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Pattern backgrounds with noise + dot grid ─── */
+  .pattern-bg {
+    position: relative;
+    background-color: var(--background);
+  }
+
+  /* Dots */
+  .pattern-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle,
+        color-mix(in srgb, var(--foreground) 10%, transparent) 1px,
+        transparent 1px);
+    background-size: 24px 24px;
+    z-index: 0;
+  }
+
+  /* Noise */
+  .pattern-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.15;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    z-index: 0;
+  }
+
+  .dark .pattern-bg::after {
+    opacity: 0.08;
+    mix-blend-mode: screen;
+  }
+
+  /* ─── Alternate background ─── */
+  .gradient-bg-subtle {
+    position: relative;
+    background: linear-gradient(180deg,
+        var(--background) 0%,
+        color-mix(in srgb, var(--primary) 3%, var(--background) 97%) 50%,
+        var(--background) 100%);
+  }
+
+  .gradient-bg-subtle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle,
+        color-mix(in srgb, var(--foreground) 10%, transparent) 1px,
+        transparent 1px);
+    background-size: 24px 24px;
+    z-index: 0;
+  }
+
+  .gradient-bg-subtle::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.15;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    z-index: 0;
+  }
+
+  .dark .gradient-bg-subtle::after {
+    opacity: 0.08;
+    mix-blend-mode: screen;
+  }
+
+  /* ─── Ambient glow orbs ─── */
+  .glow-purple {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--solana-purple) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(120px);
+    pointer-events: none;
+  }
+
+  .dark .glow-purple {
+    opacity: 0.15;
+  }
+
+  .glow-green {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--solana-green) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(100px);
+    pointer-events: none;
+  }
+
+  .dark .glow-green {
+    opacity: 0.15;
+  }
+
+  .glow-blue {
+    position: absolute;
+    width: 450px;
+    height: 450px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--solana-blue) 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(90px);
+    pointer-events: none;
+  }
+
+  .dark .glow-blue {
+    opacity: 0.15;
+  }
+
+  /* ─── Glassmorphic card ─── */
+  .glass-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    background: color-mix(in srgb, var(--card) 85%, transparent);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.15;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    border-radius: inherit;
+  }
+
+  .dark .glass-card::before {
+    opacity: 0.08;
+    mix-blend-mode: screen;
+  }
+
+  .glass-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    box-shadow:
+      0 8px 32px color-mix(in srgb, var(--primary) 10%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .dark .glass-card:hover {
+    box-shadow:
+      0 8px 32px color-mix(in srgb, var(--primary) 20%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+
+  /* ─── Glow card ─── */
+  .glow-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    background: var(--card);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glow-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--primary) 8%, transparent),
+        color-mix(in srgb, var(--secondary) 6%, transparent));
+    transition: opacity 0.4s ease;
+  }
+
+  .glow-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.15;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    border-radius: inherit;
+  }
+
+  .dark .glow-card::after {
+    opacity: 0.08;
+    mix-blend-mode: screen;
+  }
+
+  .glow-card:hover::before {
+    opacity: 1;
+  }
+
+  .glow-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    box-shadow:
+      0 4px 24px color-mix(in srgb, var(--primary) 12%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--foreground) 10%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .dark .glow-card:hover {
+    box-shadow:
+      0 4px 24px color-mix(in srgb, var(--primary) 20%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+
+  /* ─── Gradient border ─── */
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* ─── Utilities ─── */
+  .section-padding {
+    @apply py-20 md:py-28 lg:py-32;
+  }
+
+  .content-container {
+    @apply mx-auto w-full lg:max-w-[80%] px-6 md:px-0;
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle,
+        color-mix(in srgb, var(--foreground) 10%, transparent) 1px,
+        transparent 1px);
+    background-size: 24px 24px;
+  }
+}
