@@ -1,50 +1,66 @@
-// app/src/components/main-nav.tsx
-import { Link, usePathname } from "@/i18n/navigation";
-import { LayoutDashboard, GraduationCap, Trophy, Settings, MessageSquare, PenTool } from "lucide-react";
-import { cn } from "@/lib/utils";
+"use client";
 
-const items = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Courses", href: "/courses", icon: GraduationCap },
-  { title: "Forum", href: "/forum", icon: MessageSquare },
-  { title: "Leaderboard", href: "/leaderboard", icon: Trophy },
-  { title: "Settings", href: "/settings", icon: Settings },
-];
+import { Link, usePathname } from "@/i18n/navigation";
+import { LayoutDashboard, GraduationCap, Trophy, Settings, MessageSquare, PenTool, Home } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 export function MainNav({ className }: { className?: string }) {
   const pathname = usePathname();
+  const t = useTranslations("MainNav");
+
+  const items = [
+    { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { key: "courses", href: "/courses", icon: GraduationCap },
+    { key: "forum", href: "/forum", icon: MessageSquare },
+    { key: "leaderboard", href: "/leaderboard", icon: Trophy },
+    { key: "settings", href: "/settings", icon: Settings },
+  ];
 
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-        <nav className="flex flex-col space-y-2 flex-1">
-          {items.map((item) => (
+    <div className={cn("flex h-full flex-col rounded-2xl border border-border/60 bg-card/60 p-3 backdrop-blur-md", className)}>
+      <nav className="flex flex-1 flex-col space-y-2">
+        {items.map((item) => {
+          const active = pathname === item.href;
+          return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                pathname === item.href ? "bg-accent text-accent-foreground" : "text-foreground/70"
+                "group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition-all duration-200",
+                active
+                  ? "border-primary/30 bg-primary/15 text-foreground shadow-[0_0_20px_rgba(59,130,246,0.25)]"
+                  : "text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
-              {item.title}
+              <item.icon className={cn("h-4 w-4", active ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
+              {t(item.key)}
             </Link>
-          ))}
-        </nav>
+          );
+        })}
 
-        {/* Отдельная кнопка Creator Studio внизу */}
-        <div className="mt-auto pt-4 border-t">
-             <Link
-              href="/creator"
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-bold transition-all bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border border-purple-500/20",
-                pathname.startsWith("/creator") ? "bg-purple-500 text-white" : ""
-              )}
-            >
-              <PenTool className="h-4 w-4" />
-              Creator Studio
-            </Link>
+        <div className="pt-2">
+          <Link
+            href="/creator"
+            className={cn(
+              "flex items-center gap-3 rounded-xl border px-3 py-2 text-sm font-semibold transition-all",
+              pathname.startsWith("/creator")
+                ? "border-primary bg-primary text-primary-foreground shadow-lg"
+                : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+            )}
+          >
+            <PenTool className="h-4 w-4" />
+            {t("creatorStudio")}
+          </Link>
         </div>
+      </nav>
+
+      <div className="border-t border-border/60 pt-3">
+        <Link href="/" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <Home className="h-3.5 w-3.5" />
+          {t("backHome")}
+        </Link>
+      </div>
     </div>
   );
 }

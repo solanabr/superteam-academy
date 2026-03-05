@@ -1,92 +1,82 @@
-// app/src/components/landing/hero-section.tsx
 "use client";
 
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Terminal, Zap, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export function HeroSection() {
+  const t = useTranslations("Landing");
+
   return (
-    <section className="relative pt-24 pb-32 overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-[100px]" />
-        <div className="absolute top-40 right-10 w-96 h-96 bg-pink-500/20 rounded-full blur-[100px]" />
-      </div>
+    <section className="relative overflow-hidden pb-32 pt-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.22),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(236,72,153,0.2),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(6,182,212,0.16),transparent_35%)]" />
+      <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:44px_44px]" />
 
-      <div className="container px-4 md:px-6 relative z-10 text-center">
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-6 max-w-4xl mx-auto"
+      <div className="container relative z-10 px-4 text-center md:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-5xl space-y-7"
         >
-          <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-            <span className="flex h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-            Live on Solana Devnet
+          <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200 backdrop-blur">
+            <span className="mr-2 flex h-2 w-2 rounded-full bg-emerald-400" />
+            {t("devnetLive")}
           </div>
-          
-          <h1 className="text-4xl font-extrabold tracking-tight lg:text-6xl bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent pb-2">
-            Build the Future of Web3 <br/> on Solana
-          </h1>
-          
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            The ultimate interactive learning platform for developers. 
-            Learn Rust, Anchor, and DeFi by building real dApps. Earn on-chain XP and verifiable credentials.
-          </p>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+          <h1 className="bg-gradient-to-r from-purple-300 via-fuchsia-400 to-cyan-300 bg-clip-text pb-2 text-5xl font-extrabold tracking-tight text-transparent md:text-7xl">
+            {t("title")}
+          </h1>
+
+          <p className="mx-auto max-w-3xl text-lg text-zinc-300 md:text-xl">{t("subtitle")}</p>
+
+          <div className="flex flex-col justify-center gap-4 pt-2 sm:flex-row">
             <Link href="/courses">
-                <Button size="lg" className="w-full sm:w-auto h-12 text-lg px-8 gap-2">
-                    Start Learning <ArrowRight className="h-5 w-5" />
-                </Button>
+              <Button size="lg" className="h-12 w-full gap-2 border border-fuchsia-400/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 px-8 text-lg shadow-[0_0_35px_rgba(192,132,252,0.5)] transition-transform hover:scale-[1.02] sm:w-auto">
+                {t("start")} <ArrowRight className="h-5 w-5" />
+              </Button>
             </Link>
             <Link href="#features">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 text-lg px-8">
-                    Explore Features
-                </Button>
+              <Button size="lg" variant="outline" className="h-12 w-full border-cyan-300/40 bg-zinc-900/60 px-8 text-lg text-cyan-100 backdrop-blur hover:bg-zinc-800 sm:w-auto">
+                {t("features_explore")}
+              </Button>
             </Link>
           </div>
         </motion.div>
 
-        {/* Code Snippet Visual */}
-        <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-16 mx-auto max-w-4xl rounded-xl border bg-card/50 backdrop-blur shadow-2xl overflow-hidden"
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="mx-auto mt-16 max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-[0_0_70px_rgba(139,92,246,0.25)] backdrop-blur-xl"
         >
-            <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/50">
-                <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                </div>
-                <span className="text-xs text-muted-foreground font-mono ml-2">lib.rs</span>
+          <div className="flex items-center gap-2 border-b border-white/10 bg-zinc-900/70 px-4 py-3">
+            <div className="flex gap-1.5">
+              <div className="h-3 w-3 rounded-full bg-rose-500/90" />
+              <div className="h-3 w-3 rounded-full bg-amber-400/90" />
+              <div className="h-3 w-3 rounded-full bg-emerald-400/90" />
             </div>
-            <div className="p-6 text-left font-mono text-sm overflow-x-auto text-blue-100">
-                <pre>
-{`#[program]
-pub mod superteam_academy {
-    use super::*;
+            <span className="ml-2 font-mono text-xs text-zinc-400">onchain-academy/programs/onchain-academy/src/instructions/reward_xp.rs</span>
+          </div>
+          <div className="overflow-x-auto p-6 text-left font-mono text-sm text-cyan-100">
+            <pre>
+{`pub fn reward_xp(ctx: Context<RewardXp>, amount: u64) -> Result<()> {
+    let learner = &mut ctx.accounts.learner;
+    learner.total_xp = learner.total_xp.checked_add(amount)
+        .ok_or(AcademyError::MathOverflow)?;
 
-    pub fn complete_lesson(ctx: Context<CompleteLesson>, lesson_id: u8) -> Result<()> {
-        let learner = &mut ctx.accounts.learner;
-        // Mint XP to learner
-        token::mint_to(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                token::MintTo { ... },
-                signer_seeds
-            ),
-            50 // +50 XP
-        )?;
-        Ok(())
-    }
+    emit!(XpRewarded {
+        learner: learner.user,
+        amount,
+        new_total: learner.total_xp,
+    });
+
+    Ok(())
 }`}
-                </pre>
-            </div>
+            </pre>
+          </div>
         </motion.div>
       </div>
     </section>

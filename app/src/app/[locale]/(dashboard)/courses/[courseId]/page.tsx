@@ -168,47 +168,26 @@ export default function CourseDetailsPage() {
             </Card>
 
             {/* Instructor Card */}
-            <div className="border rounded-lg p-6 bg-card/30">
-                <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Instructor</h3>
-                {courseContent.author ? (
-                    // РЕАЛЬНЫЙ АВТОР (ЮЗЕР)
-                    <>
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12 border-2 border-background">
-                                <AvatarImage src={courseContent.author.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${courseContent.author.walletAddress}`} />
-                                <AvatarFallback>U</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-bold text-base">{courseContent.author.username || courseContent.author.name}</p>
-                                <p className="text-xs text-muted-foreground">Community Creator</p>
-                            </div>
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                            <Link href={`/profile/${courseContent.author.username || courseContent.author.walletAddress}`} className="w-full">
-                                <Button variant="outline" size="sm" className="w-full h-8 text-xs">View Profile</Button>
-                            </Link>
-                        </div>
-                    </>
-                ) : (
-                    // ДЕФОЛТНЫЙ АВТОР (Superteam) - Для официальных курсов без привязки к id
-                    <>
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12 border-2 border-background">
-                                <AvatarImage src="https://github.com/shadcn.png" />
-                                <AvatarFallback>ST</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-bold text-base">Superteam Brazil</p>
-                                <p className="text-xs text-muted-foreground">Core Contributors</p>
-                            </div>
-                        </div>
-                    </>
-                )}
-                <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm" className="w-full h-8 text-xs">View Profile</Button>
-                    <Button variant="outline" size="sm" className="w-full h-8 text-xs"><Share2 className="h-3 w-3 mr-1"/> Share</Button>
+            <Card className="border-border/60 bg-card/50 p-6 shadow-sm">
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Instructor</h3>
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 border-2 border-background">
+                        <AvatarImage src={courseContent.author?.image || (courseContent.author ? `https://api.dicebear.com/7.x/identicon/svg?seed=${courseContent.author.walletAddress}` : "https://github.com/shadcn.png")} />
+                        <AvatarFallback>{courseContent.author ? "U" : "ST"}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                        <p className="truncate text-base font-bold">{courseContent.author?.username || courseContent.author?.name || "Superteam Brazil"}</p>
+                        <p className="text-xs text-muted-foreground">{courseContent.author ? "Community Creator" : "Core Contributors"}</p>
+                    </div>
                 </div>
-            </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                    <Link href={courseContent.author ? `/profile/${courseContent.author.username || courseContent.author.walletAddress}` : "/profile"} className="w-full">
+                        <Button variant="outline" size="sm" className="h-8 w-full text-xs">View Profile</Button>
+                    </Link>
+                    <Button variant="outline" size="sm" className="h-8 w-full text-xs"><Share2 className="mr-1 h-3 w-3"/> Share</Button>
+                </div>
+            </Card>
         </div>
 
       </div>

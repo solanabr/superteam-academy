@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Twitter, Github, Calendar, ExternalLink, Share2, Award, BookOpen, Lock } from "lucide-react";
 import { XpStatCard } from "@/components/xp-stat-card";
@@ -16,6 +15,7 @@ import { useCredentials, CredentialNFT } from "@/hooks/useCredentials"; // Им�
 import dynamic from "next/dynamic";
 import Image from "next/image"
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 // Тип для пропсов, чтобы обеспечить строгую типизацию
 // В будущем его можно вынести в @/types/index.ts
@@ -65,11 +65,11 @@ const SkillChart = dynamic(
   }
 );
 
-export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
+export function ProfileView({ user, isPublic: _isPublic = false }: ProfileViewProps) {
   const { credentials, loading: nftLoading } = useCredentials(user.walletAddress || undefined);
   const [allAchievements, setAllAchievements] = useState<AchievementType[]>([]);
-  
-  
+  const t = useTranslations("Profile");
+
   const joinDateObj = user.createdAt ? new Date(user.createdAt) : (user.lastLogin ? new Date(user.lastLogin) : new Date());
 
   const joinDate = joinDateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -89,19 +89,19 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
 
   const handleShare = async () => {
       const shareUrl = `${window.location.origin}/profile/${user.username || user.walletAddress}`;
-      const shareText = `Check out my Web3 developer profile on Superteam Academy! I'm Level ${Math.floor(Math.sqrt(user.xp / 100))} with ${user.xp} XP.`;
+      const shareText = t("shareText", { level: Math.floor(Math.sqrt(user.xp / 100)), xp: user.xp });
 
       // Пытаемся использовать нативный Web Share API (работает на мобилках и Mac)
       if (navigator.share) {
           try {
               await navigator.share({ title: 'Superteam Academy Profile', text: shareText, url: shareUrl });
           } catch (e) {
-              console.log("Share canceled");
+              
           }
       } else {
           // Fallback: копируем в буфер обмена
           navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-          toast.success("Profile link copied to clipboard!");
+          toast.success(t("copied"));
       }
   };
 
@@ -167,7 +167,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                 )}
                 {/* ИСПРАВЛЯЕМ КНОПКУ SHARE */}
                 <Button size="sm" className="gap-2 ml-auto md:ml-0" onClick={handleShare}>
-                    <Share2 className="h-4 w-4" /> Share Profile
+                    <Share2 className="h-4 w-4" /> {t("shareProfile")}
                 </Button>
             </div>
         </div>
@@ -179,21 +179,21 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
       {/* 3. Main Content Tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="courses">Courses</TabsTrigger>
-            <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
+            <TabsTrigger value="courses">{t("courses")}</TabsTrigger>
+            <TabsTrigger value="credentials">{t("credentials")}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-8 mt-6">
             <div className="grid md:grid-cols-2 gap-8">
                 <Card>
-                    <CardHeader><CardTitle>Skill Radar</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t("skillRadar")}</CardTitle></CardHeader>
                     <CardContent>
                         <SkillChart xp={user.xp} />
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader><CardTitle>Achievements</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>{t("achievements")}</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         {Object.entries(categories).map(([category, items]) => (
                             items.length > 0 && (
@@ -204,7 +204,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                                             const unlocked = isUnlocked(ach.id);
                                             return (
                                                 <div key={ach.id} className="flex flex-col items-center gap-2 text-center group relative cursor-help">
-                                                    <div className={`h-14 w-14 rounded-full overflow-hidden border-2 flex items-center justify-center transition-all ${unlocked ? 'border-yellow-500 shadow-lg bg-yellow-500/10' : 'border-muted bg-muted opacity-50 grayscale'}`}>
+                                                    <div className={`relative h-14 w-14 rounded-full overflow-hidden border-2 flex items-center justify-center transition-all ${unlocked ? 'border-yellow-500 shadow-lg bg-yellow-500/10' : 'border-muted bg-muted opacity-50 grayscale'}`}>
                                                         <Image src={ach.image} alt={ach.name} fill className="h-full w-full object-cover" />
                                                         {!unlocked && <Lock className="absolute h-5 w-5 text-muted-foreground/50" />}
                                                     </div>
@@ -228,10 +228,10 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
 
         <TabsContent value="courses" className="mt-6">
             <Card>
-                <CardHeader><CardTitle>Enrolled Courses</CardTitle></CardHeader>
+                <CardHeader><CardTitle>{t("enrolledCourses")}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                    {user.enrollments.length > 0 ? user.enrollments.map((enrollment, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    {user.enrollments.length > 0 ? user.enrollments.map((enrollment) => (
+                        <div key={`${enrollment.courseId}-${enrollment.enrolledAt}`} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 bg-purple-500/20 rounded flex items-center justify-center text-purple-500"><BookOpen className="h-5 w-5" /></div>
                                 <div>
@@ -239,9 +239,9 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                                     <p className="text-xs text-muted-foreground">Enrolled on {new Date(enrollment.enrolledAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
-                            <Link href={`/courses/${enrollment.courseId}`}><Button variant="ghost" size="sm">Continue</Button></Link>
+                            <Link href={`/courses/${enrollment.courseId}`}><Button variant="ghost" size="sm">{t("continue")}</Button></Link>
                         </div>
-                    )) : (<p className="text-muted-foreground">No active courses.</p>)}
+                    )) : (<p className="text-muted-foreground">{t("noActiveCourses")}</p>)}
                 </CardContent>
             </Card>
         </TabsContent>
@@ -252,32 +252,31 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
             <div>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-purple-500" />
-                    Course Credentials
+                    {t("courseCredentials")}
                 </h3>
                 <div className="flex flex-wrap gap-8 justify-center sm:justify-start">
                     {nftLoading ? (
                         <Skeleton className="h-[400px] w-full rounded-xl" />
                     ) : certificates.length > 0 ? (
                         certificates.map((nft) => (
-                            // УБРАЛИ onClick ОТСЮДА
-                            <div key={nft.id} style={{ width: "280px", height: "380px", position: "relative" }}>
-                            <a 
-                                href={`/certificates/${nft.id}`} 
+                            <a
+                                key={nft.id}
+                                href={`/certificates/${nft.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="absolute inset-0 z-50 block"
                                 aria-label={`View certificate ${nft.name}`}
-                            />
-                                <CredentialCard 
+                                className="block h-[380px] w-[280px]"
+                            >
+                                <CredentialCard
                                     name={nft.name}
                                     imageUrl={nft.image}
                                     level={parseInt(nft.attributes.find(a => a.trait_type === "Level" || a.trait_type === "level")?.value || "1")}
                                 />
-                            </div>
+                            </a>
                         ))
                     ) : (
                         <div className="col-span-full py-12 text-center border rounded-lg border-dashed bg-muted/10">
-                            <p className="text-muted-foreground">No course credentials yet. Complete a track to earn one!</p>
+                            <p className="text-muted-foreground">{t("noCourseCredentials")}</p>
                         </div>
                     )}
                 </div>
@@ -287,7 +286,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
             <div>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <Award className="h-5 w-5 text-yellow-500" />
-                    Special Badges
+                    {t("specialBadges")}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                     {nftLoading ? (
@@ -295,7 +294,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                     ) : badgeNFTs.length > 0 ? (
                         badgeNFTs.map((nft) => (
                             <div key={nft.id} className="flex flex-col items-center text-center p-4 border rounded-xl bg-card hover:border-primary/50 transition-colors cursor-pointer" onClick={() => window.open(`https://core.metaplex.com/explorer/${nft.id}?env=devnet`, '_blank')}>
-                                <div className="h-20 w-20 mb-3 rounded-full overflow-hidden border-2 border-yellow-500 shadow-lg">
+                                <div className="relative mb-3 h-20 w-20 rounded-full overflow-hidden border-2 border-yellow-500 shadow-lg">
                                     <Image src={nft.image} alt={nft.name} fill className="w-full h-full object-cover" />
                                 </div>
                                 <span className="font-semibold text-sm line-clamp-2">{nft.name}</span>
@@ -303,7 +302,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                         ))
                     ) : (
                         <div className="col-span-full py-12 text-center border rounded-lg border-dashed bg-muted/10">
-                            <p className="text-muted-foreground">No special badges earned yet.</p>
+                            <p className="text-muted-foreground">{t("noSpecialBadges")}</p>
                         </div>
                     )}
                 </div>
