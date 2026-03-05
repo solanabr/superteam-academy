@@ -54,6 +54,20 @@ export function MainNav({ className }: { className?: string }) {
           </Link>
         </div>
       </nav>
+      </nav>
+
+      <div className="my-3 rounded-xl border border-primary/30 bg-primary/10 p-2">
+        <Link
+          href="/creator"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all",
+            pathname.startsWith("/creator") ? "bg-primary text-primary-foreground shadow-lg" : "text-primary hover:bg-primary/20"
+          )}
+        >
+          <PenTool className="h-4 w-4" />
+          {t("creatorStudio")}
+        </Link>
+      </div>
 
       <div className="border-t border-border/60 pt-3">
         <Link href="/" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
