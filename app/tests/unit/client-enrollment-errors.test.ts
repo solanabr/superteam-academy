@@ -13,4 +13,11 @@ describe("getEnrollmentErrorDescription", () => {
     const error = new Error("WalletSendTransactionError: Unexpected error");
     expect(getEnrollmentErrorDescription(error)).toContain("Solana Devnet");
   });
+
+  it("maps missing on-chain course account to course-id guidance", () => {
+    const error = new Error(
+      'On-chain course account not found for courseId "solana-fundamentals" on devnet. Configure a valid slug -> courseId override in settings.'
+    );
+    expect(getEnrollmentErrorDescription(error)).toContain("course ID");
+  });
 });

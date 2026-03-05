@@ -8,6 +8,7 @@ import {
 } from "@solana/web3.js";
 import {
   buildEnrollInstruction,
+  deriveCoursePda,
   deriveEnrollmentPda,
   SUPERTEAM_ACADEMY_PROGRAM_ID,
 } from "@/lib/progress/onchain-enrollment";
@@ -43,6 +44,10 @@ export function getEnrollmentErrorDescription(error: unknown): string {
 
   if (message.includes("unexpected error") || message.includes("walletsendtransactionerror")) {
     return "Wallet could not send the enrollment transaction. Ensure wallet network is Solana Devnet and retry.";
+  }
+
+  if (message.includes("on-chain course account not found for courseid")) {
+    return "Course ID does not exist on-chain for devnet. Set a valid slug -> course ID override in Settings and retry.";
   }
 
   return "Approve the devnet enrollment transaction in your wallet.";
@@ -93,6 +98,14 @@ export async function enrollWithOnchainTransaction(
     }
   } catch {
     // best-effort pre-check
+  }
+
+  const coursePda = deriveCoursePda(courseId);
+  const courseAccount = await connection.getAccountInfo(coursePda, "confirmed");
+  if (!courseAccount || !courseAccount.owner.equals(SUPERTEAM_ACADEMY_PROGRAM_ID)) {
+    throw new Error(
+      `On-chain course account not found for courseId "${courseId}" on devnet. Configure a valid slug -> courseId override in settings.`
+    );
   }
 
   const instruction = buildEnrollInstruction({
