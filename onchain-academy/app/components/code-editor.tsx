@@ -1,8 +1,13 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import Editor, { OnMount } from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-muted animate-pulse" />,
+});
 
 interface CodeEditorProps {
   value: string;
@@ -15,11 +20,11 @@ interface CodeEditorProps {
 
 export function CodeEditor({ value, onChange, language = "rust", readOnly = false, height = "100%", minimap = false }: CodeEditorProps) {
   const { resolvedTheme } = useTheme();
-  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [editorHeight, setEditorHeight] = useState(height);
 
-  const handleMount: OnMount = (editor) => {
+  const handleMount = (editor: any) => {
     editorRef.current = editor;
   };
 
