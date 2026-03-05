@@ -46,10 +46,7 @@ export default async function DashboardPage() {
 
 	// Sync on-chain data to DB before fetching dashboard data
 	try {
-		await Promise.all([
-			syncUserXp(userId),
-			syncUserEnrollments(userId),
-		]);
+		await Promise.all([syncUserXp(userId), syncUserEnrollments(userId)]);
 	} catch (e) {
 		console.error("Dashboard sync failed:", e);
 	}

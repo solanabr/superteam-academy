@@ -197,10 +197,13 @@ export function CourseHeader({
 						<Button
 							className={cn(
 								"bg-ink-primary text-bg-base hover:bg-ink-primary/90 font-bold uppercase tracking-widest h-12 px-8",
-								onChainStatus !== "published" && "opacity-50 cursor-not-allowed",
+								onChainStatus !== "published" &&
+									"opacity-50 cursor-not-allowed",
 							)}
 							onClick={handleEnroll}
-							disabled={enrollMutation.isPending || onChainStatus !== "published"}
+							disabled={
+								enrollMutation.isPending || onChainStatus !== "published"
+							}
 						>
 							{enrollMutation.isPending
 								? t("buttons.enrolling")

@@ -30,12 +30,16 @@ export default async function CertificatePage({
 	// Determine ownership: check session wallet + all wallets linked in DB
 	let isOwner = false;
 	if (session?.user) {
-		const sessionWallet = (session.user as { walletAddress?: string }).walletAddress;
+		const sessionWallet = (session.user as { walletAddress?: string })
+			.walletAddress;
 		const certOwner = certificate.onChain.owner;
 		const certWallet = certificate.walletAddress;
 
 		// Direct session wallet match
-		if (sessionWallet && (sessionWallet === certOwner || sessionWallet === certWallet)) {
+		if (
+			sessionWallet &&
+			(sessionWallet === certOwner || sessionWallet === certWallet)
+		) {
 			isOwner = true;
 		}
 
@@ -50,7 +54,11 @@ export default async function CertificatePage({
 				const dbUser = await db.query.user.findFirst({
 					where: eq(user.id, session.user.id),
 				});
-				if (dbUser?.walletAddress && (dbUser.walletAddress === certOwner || dbUser.walletAddress === certWallet)) {
+				if (
+					dbUser?.walletAddress &&
+					(dbUser.walletAddress === certOwner ||
+						dbUser.walletAddress === certWallet)
+				) {
 					isOwner = true;
 				}
 

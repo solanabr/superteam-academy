@@ -12,7 +12,6 @@ import {
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { getBackendSigner } from "@/lib/utils/backend-signer";
 import { v4 as uuidv4 } from "uuid";
 import {
 	CLUSTER_URL,
@@ -34,6 +33,7 @@ import {
 	userActivity,
 } from "@/lib/db/schema";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { getBackendSigner } from "@/lib/utils/backend-signer";
 
 const connection = new Connection(CLUSTER_URL, "confirmed");
 

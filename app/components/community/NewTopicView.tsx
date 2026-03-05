@@ -8,14 +8,12 @@ import {
 } from "@phosphor-icons/react";
 import posthog from "posthog-js";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { CommunitySidebar } from "@/components/community/CommunitySidebar";
 import { NavRail } from "@/components/layout/NavRail";
 import { TopBar } from "@/components/layout/TopBar";
 import { DotGrid } from "@/components/shared/DotGrid";
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/routing";
-import { createThread } from "@/lib/actions/community";
-import { toast } from "sonner";
 import {
 	Select,
 	SelectContent,
@@ -23,6 +21,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Link, useRouter } from "@/i18n/routing";
+import { createThread } from "@/lib/actions/community";
 
 export function NewTopicView() {
 	const [title, setTitle] = useState("");

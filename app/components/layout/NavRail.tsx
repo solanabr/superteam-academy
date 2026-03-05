@@ -4,7 +4,6 @@
  */
 "use client";
 
-import { useState } from "react";
 import {
 	BookIcon,
 	CaretLeft,
@@ -18,6 +17,7 @@ import {
 	UserIcon,
 	UsersIcon,
 } from "@phosphor-icons/react";
+import { useState } from "react";
 import { Link, usePathname } from "@/i18n/routing";
 import { useSession } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";

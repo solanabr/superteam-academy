@@ -23,17 +23,17 @@ import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { NavRail } from "@/components/layout/NavRail";
-import { StatCard } from "@/components/shared/StatCard";
 import { TopBar } from "@/components/layout/TopBar";
 import { DotGrid } from "@/components/shared/DotGrid";
+import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
+import { getAdminDashboardStats, getSystemLogs } from "@/lib/actions/admin";
 import {
 	connection,
 	getConfigPda,
 	getProgram,
 	XP_MINT,
 } from "@/lib/anchor/client";
-import { getAdminDashboardStats, getSystemLogs } from "@/lib/actions/admin";
 import { mockMinters } from "@/lib/data/admin";
 import { cn } from "@/lib/utils";
 import { client, PENDING_REVIEW_COURSES_QUERY } from "@/sanity/client";

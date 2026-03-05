@@ -6,7 +6,6 @@
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { NextResponse } from "next/server";
-import { getBackendSigner } from "@/lib/utils/backend-signer";
 import { v4 as uuidv4 } from "uuid";
 import {
 	CLUSTER_URL,
@@ -21,6 +20,7 @@ import { TRACK_COLLECTIONS, TrackId } from "@/lib/constants/leaderboard";
 import { db } from "@/lib/db";
 import { userActivity } from "@/lib/db/schema";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { getBackendSigner } from "@/lib/utils/backend-signer";
 
 const connection = new Connection(CLUSTER_URL, "confirmed");
 

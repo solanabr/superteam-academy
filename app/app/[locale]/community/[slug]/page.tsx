@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import { TopicView } from "@/components/community/TopicView";
 import { getThreadBySlug } from "@/lib/actions/community";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 

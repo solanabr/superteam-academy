@@ -1,11 +1,11 @@
 "use server";
 
+import { desc, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { thread, threadComment, user } from "@/lib/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 
 export async function getThreads(category?: string) {
 	const query = db

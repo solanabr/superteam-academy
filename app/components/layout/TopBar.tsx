@@ -4,8 +4,8 @@
  */
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useQuery } from "@tanstack/react-query";
 import { LanguageDropdown } from "@/components/LanguageDropdown";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { UserMenu } from "@/components/layout/UserMenu";

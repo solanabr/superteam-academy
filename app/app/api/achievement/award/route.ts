@@ -6,7 +6,6 @@ import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { NextResponse } from "next/server";
-import { getBackendSigner } from "@/lib/utils/backend-signer";
 import { v4 as uuidv4 } from "uuid";
 import {
 	CLUSTER_URL,
@@ -22,6 +21,7 @@ import IDL from "@/lib/anchor/idl/onchain_academy.json";
 import { db } from "@/lib/db";
 import { userActivity } from "@/lib/db/schema";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { getBackendSigner } from "@/lib/utils/backend-signer";
 
 const connection = new Connection(CLUSTER_URL, "confirmed");
 

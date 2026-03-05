@@ -8,15 +8,15 @@ import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "next-sanity";
-import { getBackendSigner } from "@/lib/utils/backend-signer";
+import { v4 as uuidv4 } from "uuid";
 import { CLUSTER_URL, getConfigPda, getCoursePda } from "@/lib/anchor/client";
 import type { OnchainAcademy } from "@/lib/anchor/idl/onchain_academy";
 import IDL from "@/lib/anchor/idl/onchain_academy.json";
 import { getSessionServer } from "@/lib/auth/server";
-import { client } from "@/sanity/client";
 import { db } from "@/lib/db";
 import { userActivity } from "@/lib/db/schema";
-import { v4 as uuidv4 } from "uuid";
+import { getBackendSigner } from "@/lib/utils/backend-signer";
+import { client } from "@/sanity/client";
 
 // Write-enabled client
 const writeClient = createClient({

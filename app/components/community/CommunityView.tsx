@@ -1,19 +1,19 @@
 "use client";
 
+import {
+	ArrowRightIcon,
+	ChatCircleTextIcon,
+	DiscordLogoIcon,
+	PlusIcon,
+	UsersThreeIcon,
+} from "@phosphor-icons/react";
+import { formatDistanceToNow } from "date-fns";
+import { CommunitySidebar } from "@/components/community/CommunitySidebar";
 import { NavRail } from "@/components/layout/NavRail";
 import { TopBar } from "@/components/layout/TopBar";
 import { DotGrid } from "@/components/shared/DotGrid";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/routing";
-import {
-	UsersThreeIcon,
-	DiscordLogoIcon,
-	ChatCircleTextIcon,
-	ArrowRightIcon,
-	PlusIcon,
-} from "@phosphor-icons/react";
-import { CommunitySidebar } from "@/components/community/CommunitySidebar";
-import { formatDistanceToNow } from "date-fns";
 import { getThreads } from "@/lib/actions/community";
 
 export function CommunityView({

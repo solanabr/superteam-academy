@@ -1,27 +1,27 @@
 "use client";
 
+import {
+	ArrowBendDownRightIcon,
+	ArrowLeftIcon,
+	ChatCircleTextIcon,
+	PaperPlaneRightIcon,
+	ThumbsUpIcon,
+} from "@phosphor-icons/react";
+import { formatDistanceToNow } from "date-fns";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { CommunitySidebar } from "@/components/community/CommunitySidebar";
 import { NavRail } from "@/components/layout/NavRail";
 import { TopBar } from "@/components/layout/TopBar";
 import { DotGrid } from "@/components/shared/DotGrid";
 import { Button } from "@/components/ui/button";
-import {
-	ArrowLeftIcon,
-	ArrowBendDownRightIcon,
-	ChatCircleTextIcon,
-	ThumbsUpIcon,
-	PaperPlaneRightIcon,
-} from "@phosphor-icons/react";
 import { Link } from "@/i18n/routing";
-import { CommunitySidebar } from "@/components/community/CommunitySidebar";
 import {
-	getThreadBySlug,
 	createComment,
-	likeThread,
+	getThreadBySlug,
 	likeComment,
+	likeThread,
 } from "@/lib/actions/community";
-import { useState, useTransition } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
 
 type ThreadType = NonNullable<Awaited<ReturnType<typeof getThreadBySlug>>>;
 

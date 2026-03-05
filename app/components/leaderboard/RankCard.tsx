@@ -1,7 +1,7 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
 import { CustomAvatar } from "@/components/shared/CustomAvatar";
+import { Link } from "@/i18n/routing";
 import { LeaderboardEntry } from "@/lib/constants/leaderboard";
 
 interface RankCardProps {

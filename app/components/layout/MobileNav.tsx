@@ -15,6 +15,7 @@ import {
 	UsersIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LanguageDropdown } from "@/components/LanguageDropdown";
 import { CustomAvatar } from "@/components/shared/CustomAvatar";
@@ -30,7 +31,6 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import { useSession } from "@/lib/auth/client";
 import { cn } from "@/lib/utils";

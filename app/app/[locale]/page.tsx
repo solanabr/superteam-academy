@@ -4,11 +4,11 @@
  * Below-the-fold sections use dynamic imports to reduce initial JS bundle.
  */
 import dynamic from "next/dynamic";
-import { Navbar } from "@/components/layout/Navbar";
 import { Hero } from "@/components/landing/Hero";
-import { StatsStrip } from "@/components/landing/StatsStrip";
 import { Partners } from "@/components/landing/Partners";
+import { StatsStrip } from "@/components/landing/StatsStrip";
 import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
 
 // Dynamic imports for below-the-fold sections to reduce initial JS bundle
 const LearningPaths = dynamic(
