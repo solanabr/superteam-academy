@@ -1,5 +1,6 @@
 const defaultCourseOnChainIds: Record<string, string> = {
-  "solana-fundamentals": "solana-fundamentals",
+  // Devnet currently has `solana-mock-test` provisioned; keep fundamentals enrollable by default.
+  "solana-fundamentals": "solana-mock-test",
   "anchor-development": "anchor-development",
   "solana-frontend": "solana-frontend",
   "defi-on-solana": "defi-on-solana",

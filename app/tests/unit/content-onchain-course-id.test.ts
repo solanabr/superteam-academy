@@ -8,7 +8,7 @@ describe("ContentLocalService on-chain course ids", () => {
     const course = await service.getCourse("solana-fundamentals");
 
     expect(course).not.toBeNull();
-    expect(course?.onChainCourseId).toBe("solana-fundamentals");
+    expect(course?.onChainCourseId).toBe("solana-mock-test");
   }, 15000);
 
   it("allows env overrides for upstream on-chain ids", async () => {
