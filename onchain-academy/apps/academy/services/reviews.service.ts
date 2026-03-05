@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/libs/payload'
+import { Review } from '@/payload-types'
 
 export async function getApprovedReviewsByCourse(courseId: string, limit = 20) {
   const payload = await getPayloadClient()
@@ -16,12 +17,7 @@ export async function getApprovedReviewsByCourse(courseId: string, limit = 20) {
   })
 }
 
-export async function createReview(data: {
-  course: string
-  user: string
-  rating: number
-  text: string
-}) {
+export async function createReview(data: Review) {
   const payload = await getPayloadClient()
   return payload.create({
     collection: 'reviews',

@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/libs/payload'
+import { Course } from '@/payload-types'
 
 export async function getPublishedCourses(limit = 50) {
   const payload = await getPayloadClient()
@@ -37,9 +38,13 @@ export async function getCourseById(id: string) {
   return payload.findByID({ collection: 'courses', id, depth: 1 })
 }
 
-export async function createCourse(data: Record<string, unknown>) {
+export async function createCourse(data: Course) {
   const payload = await getPayloadClient()
-  return payload.create({ collection: 'courses', data })
+  return payload.create({
+    collection: 'courses',
+    data,
+    draft: false,
+  })
 }
 
 export async function updateCourse(id: string, data: Record<string, unknown>) {

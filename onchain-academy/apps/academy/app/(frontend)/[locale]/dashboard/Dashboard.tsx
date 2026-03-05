@@ -9,6 +9,7 @@ import {
   recommended,
   user,
 } from '@/libs/constants/dashboard.constants'
+import { Streak, User } from '@/payload-types'
 import { BookOpen, Flame, Play, Trophy, Zap } from 'lucide-react'
 import { H2 } from './H2'
 import { KPI } from './KPI'
@@ -32,15 +33,12 @@ import { KPI } from './KPI'
 
 // ─── Props ────────────────────────────────────────────────────
 interface DashboardProps {
-  dbUser?: {
-    displayName?: string
-    username?: string
-    level?: number
-  } | null
-  dbStreak?: {
-    currentStreak?: number
-    history?: { active?: boolean; date?: string | number | Date }[]
-  } | null
+  dbUser?: User
+  dbStreak?: Streak
+  // {
+  //   currentStreak?: number
+  //   history?: { active?: boolean; date?: string | number | Date }[]
+  // } | null
 }
 
 // ─── Page ────────────────────────────────────────────────────
@@ -53,7 +51,7 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
       (dbUser?.displayName as string) ||
       (dbUser?.username as string) ||
       staticUser.name,
-    level: (dbUser?.level as number) || staticUser.level,
+    level: (0 as number) || staticUser.level,
     streak: (dbStreak?.currentStreak as number) ?? staticUser.streak,
   }
 
@@ -80,7 +78,7 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
   // Streak data mapping
   const streakDates = new Set<number>()
   if (dbStreak?.history && Array.isArray(dbStreak.history)) {
-    dbStreak.history.forEach(
+    ;(dbStreak.history as { date: string; active: boolean }[]).forEach(
       (h: { active?: boolean; date?: string | number | Date }) => {
         if (h.active && h.date) {
           const d = new Date(h.date)

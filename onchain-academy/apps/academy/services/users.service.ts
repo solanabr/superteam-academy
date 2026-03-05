@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/libs/payload'
+import { User } from '@/payload-types'
 
 export async function getUserByWallet(walletAddress: string) {
   const payload = await getPayloadClient()
@@ -25,16 +26,13 @@ export async function getUserById(id: string) {
   return payload.findByID({ collection: 'users', id })
 }
 
-export async function createUser(data: {
-  email?: string
-  walletAddress?: string
-  authMethod: 'wallet' | 'google' | 'github'
-  displayName?: string
-  username?: string
-  password?: string
-}) {
+export async function createUser(data: User) {
   const payload = await getPayloadClient()
-  return payload.create({ collection: 'users', data })
+  return payload.create({
+    collection: 'users',
+    data,
+    draft: false,
+  })
 }
 
 export async function updateUser(id: string, data: Record<string, unknown>) {

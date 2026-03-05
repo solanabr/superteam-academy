@@ -7,6 +7,7 @@ import { lessonContents } from '@/libs/constants/lesson.constants'
 import { courses } from '@/libs/constants/mockData'
 import { getPayloadClient } from '@/libs/payload'
 
+import { Course } from '@/payload-types'
 import * as anchor from '@coral-xyz/anchor'
 import { PublicKey, SystemProgram } from '@solana/web3.js'
 import { execSync } from 'child_process'
@@ -44,7 +45,7 @@ async function seed() {
   const payload = await getPayloadClient()
 
   // ── Find admin user for instructor relationship ──────────────
-  let instructorId: number | undefined
+  let instructorId: number = 0
   try {
     const users = await payload.find({
       collection: 'users',
@@ -212,7 +213,31 @@ async function seed() {
 
       // Build richText longDescription from plain string
       // Payload's default Lexical richText accepts a Lexical JSON structure
-      const longDescriptionLexical = extra?.longDescription
+      const longDescriptionLexical:
+        | {
+            root: {
+              type: string
+              children: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                type: any
+                version: number
+                [k: string]: unknown
+              }[]
+              direction: ('ltr' | 'rtl') | null
+              format:
+                | 'left'
+                | 'start'
+                | 'center'
+                | 'right'
+                | 'end'
+                | 'justify'
+                | ''
+              indent: number
+              version: number
+            }
+            [k: string]: unknown
+          }
+        | undefined = extra?.longDescription
         ? {
             root: {
               type: 'root',
@@ -233,7 +258,7 @@ async function seed() {
           }
         : undefined
 
-      const courseData = {
+      const courseData: Partial<Course> = {
         title: course.title,
         slug,
         description: course.description,
@@ -246,11 +271,13 @@ async function seed() {
         trackLevel: 1,
         onChainCourseId: slug,
         totalLessons: totalLessonsComputed,
-        ...(instructorId ? { instructor: instructorId } : {}),
+        // ...(instructorId ? { instructor: instructorId } : {}),
         // ─ New fields ─
-        ...(longDescriptionLexical
-          ? { longDescription: longDescriptionLexical }
-          : {}),
+        // ...(longDescriptionLexical
+        //   ? { longDescription: longDescriptionLexical }
+        //   : {}),
+        longDescription: longDescriptionLexical || undefined,
+        instructor: instructorId,
         learningOutcomes: (extra?.learningOutcomes ?? []).map((o) => ({
           outcome: o,
         })),
@@ -264,6 +291,8 @@ async function seed() {
         language: extra?.language ?? 'English',
         certificate: extra?.certificate ?? false,
         onChainCredential: extra?.onChainCredential ?? false,
+        // instructor: instructorId,
+        // longDescription: ''
       }
 
       if (existing.docs.length > 0) {
@@ -278,7 +307,7 @@ async function seed() {
         console.log(`   ⏳ Creating Payload course…`)
         const created = await payload.create({
           collection: 'courses',
-          data: courseData,
+          data: courseData as Course,
         })
         payloadCourseId = created.id
         console.log(`   ✅ Payload course created: ${payloadCourseId}`)

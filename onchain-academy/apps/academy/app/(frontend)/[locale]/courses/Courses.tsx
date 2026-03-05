@@ -244,7 +244,7 @@ const Courses = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.05 }}
                 >
-                  <CourseCard course={course} />
+                  <CourseCard course={course as any} />
                 </motion.div>
               ))}
             </div>

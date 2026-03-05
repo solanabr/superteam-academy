@@ -10,6 +10,7 @@ import {
   rarityColors,
   skillRadarData,
 } from '@/libs/constants/profile.constants'
+import { User } from '@/payload-types'
 import { motion } from 'framer-motion'
 import {
   Award,
@@ -209,18 +210,19 @@ function EvolutionBar({ stage }: { stage: number }) {
 
 interface ProfileProps {
   username: string
-  dbUser?: {
-    displayName?: string
-    username?: string
-    bio?: string
-    avatar?: string | { url?: string }
-    createdAt?: string | Date
-    socialLinks?: {
-      github?: string
-      twitter?: string
-      website?: string
-    }
-  } | null
+  dbUser?: User
+  // dbUser?: {
+  //   displayName?: string
+  //   username?: string
+  //   bio?: string
+  //   avatar?: string | { url?: string }
+  //   createdAt?: string | Date
+  //   socialLinks?: {
+  //     github?: string
+  //     twitter?: string
+  //     website?: string
+  //   }
+  // } | null
 }
 
 export const Profile = ({ username, dbUser }: ProfileProps) => {
@@ -237,7 +239,7 @@ export const Profile = ({ username, dbUser }: ProfileProps) => {
     name: dbUser?.displayName || dbUser?.username || staticU.name,
     handle: dbUser?.username || staticU.handle,
     bio: dbUser?.bio || staticU.bio,
-    avatar: dbUser?.avatar || dbUser?.avatar || staticU.avatar,
+    avatar: dbUser?.avatar?.toString() || dbUser?.avatar || staticU.avatar,
     joinDate: joinDate,
     socials: {
       github: dbUser?.socialLinks?.github || staticU.socials.github,
@@ -284,7 +286,8 @@ export const Profile = ({ username, dbUser }: ProfileProps) => {
               }}
             >
               <img
-                src={u.avatar}
+                // src={u.avatar}
+                src={u.avatar?.toString()}
                 alt={u.name}
                 className='w-full h-full object-cover'
               />

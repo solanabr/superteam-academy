@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/libs/payload'
+import { LessonContent } from '@/payload-types'
 
 export async function getContentByLesson(lessonId: string) {
   const payload = await getPayloadClient()
@@ -11,9 +12,13 @@ export async function getContentByLesson(lessonId: string) {
   return docs[0] ?? null
 }
 
-export async function createLessonContent(data: Record<string, unknown>) {
+export async function createLessonContent(data: LessonContent) {
   const payload = await getPayloadClient()
-  return payload.create({ collection: 'lesson-contents', data })
+  return payload.create({
+    collection: 'lesson-contents',
+    data,
+    draft: false,
+  })
 }
 
 export async function updateLessonContent(

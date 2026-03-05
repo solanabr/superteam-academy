@@ -6,7 +6,7 @@ import { getPayloadClient } from '@/libs/payload'
  * The service checks the last activity date and increments/resets the streak.
  */
 
-export async function getOrCreateStreak(userId: string) {
+export async function getOrCreateStreak(userId: number) {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({
     collection: 'streaks',
@@ -28,7 +28,7 @@ export async function getOrCreateStreak(userId: string) {
   })
 }
 
-export async function recordActivity(userId: string) {
+export async function recordActivity(userId: number) {
   const streak = await getOrCreateStreak(userId)
   const today = new Date().toISOString().split('T')[0]
   const lastDate = streak.lastActivityDate

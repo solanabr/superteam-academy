@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/libs/payload'
+import { Module } from '@/payload-types'
 
 export async function getModulesByCourse(courseId: string) {
   const payload = await getPayloadClient()
@@ -15,9 +16,13 @@ export async function getModuleById(id: string) {
   return payload.findByID({ collection: 'modules', id })
 }
 
-export async function createModule(data: Record<string, unknown>) {
+export async function createModule(data: Module) {
   const payload = await getPayloadClient()
-  return payload.create({ collection: 'modules', data })
+  return payload.create({
+    collection: 'modules',
+    data,
+    draft: false,
+  })
 }
 
 export async function updateModule(id: string, data: Record<string, unknown>) {
