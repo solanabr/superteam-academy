@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
+import { PwaRegistration } from '@/components/pwa-registration';
 
 export function ClientProviders({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -15,6 +16,7 @@ export function ClientProviders({ children }: { children: ReactNode }) {
 
   return (
     <DynamicProviders>
+      <PwaRegistration />
       {children}
     </DynamicProviders>
   );

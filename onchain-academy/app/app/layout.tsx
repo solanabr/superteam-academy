@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { NextIntlClientProvider } from "next-intl";
@@ -13,15 +13,37 @@ const inter = Inter({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#a855f7',
+};
+
 export const metadata: Metadata = {
-  title: "Superteam Academy",
-  description: "Solana-native learning platform for builders. Learn to build on Solana with interactive courses, earn XP tokens and credential NFTs.",
-  keywords: ["Solana", "Web3", "Blockchain", "Development", "Courses", "Learning"],
+  title: "Superteam Academy - Learn Solana Development",
+  description: "Learn to build on Solana. Earn on-chain XP and credential NFTs. Interactive courses, coding challenges, and verified credentials.",
+  keywords: ["Solana", "Web3", "Blockchain", "Development", "Courses", "Learning", "Anchor", "Rust"],
   authors: [{ name: "Superteam Brazil" }],
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-192.png",
+  },
   openGraph: {
-    title: "Superteam Academy",
-    description: "Learn to build on Solana. Earn on-chain proof.",
+    title: "Superteam Academy - Learn Solana Development",
+    description: "Learn to build on Solana. Earn on-chain XP and credential NFTs.",
     type: "website",
+    locale: "en_US",
+    siteName: "Superteam Academy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Superteam Academy",
+    description: "Learn to build on Solana. Earn on-chain XP and credential NFTs.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
