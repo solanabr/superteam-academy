@@ -1,5 +1,5 @@
 {
-  "regions": ["gru1", "iad1"],
+  "regions": ["iad1"],
   "headers": [
     {
       "source": "/(.*)",
