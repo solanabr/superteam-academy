@@ -3,12 +3,6 @@
 import { StandardLayout } from '@/components/layout/StandardLayout'
 import CourseSlugSkeleton from '@/components/skeletons/CourseSlugSkeleton'
 import { coursesAPI, modulesAPI } from '@/libs/api'
-import {
-  courseDetailExtras,
-  extendedModules,
-  extendedReviews,
-} from '@/libs/constants/courseDetail.constants'
-import { courses } from '@/libs/constants/mockData'
 import type { UIModule } from '@/libs/types/course.types'
 import { toCourseCard, toUIModule } from '@/libs/types/course.types'
 import { useAuthStore } from '@/stores/authStore'
@@ -31,6 +25,7 @@ import {
   Video,
   Zap,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useMemo, useState } from 'react'
@@ -349,8 +344,21 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
   )
 
   // ── Fallback to mock data if DB not ready ─────────────────
-  const course = dbCourseUI ?? courses.find((c) => c.slug === slug) ?? null
-  const extra = course ? (courseDetailExtras[course.slug] ?? null) : null
+  const course = dbCourseUI ?? null
+  const extra = dbCourse
+    ? {
+        longDescription:
+          dbCourse.longDescription &&
+          typeof dbCourse.longDescription === 'string'
+            ? dbCourse.longDescription
+            : dbCourse.description,
+        rating: dbCourse.rating ?? 0,
+        ratingCount: dbCourse.ratingCount ?? 0,
+        enrolledCount: dbCourse.enrollmentCount ?? 0,
+        language: dbCourse.language ?? 'English',
+        lastUpdated: dbCourse.lastUpdated ?? 'Recently',
+      }
+    : null
 
   // ── Merge modules: prefer DB, fall back to mock ───────────
   const modules: UIModule[] = useMemo(() => {
@@ -361,16 +369,17 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
         return toUIModule(m, lessonsData)
       })
     }
-    if (!course) return []
-    const ext = extendedModules[course.slug]
-    return course.modules.length > 0 ? course.modules : (ext ?? [])
-  }, [modulesData, course, lessonResults])
+    return []
+  }, [modulesData, lessonResults])
 
   const reviews = useMemo(() => {
-    if (!course) return []
-    const ext = extendedReviews[course.slug]
-    return course.reviews.length > 0 ? course.reviews : (ext ?? [])
-  }, [course])
+    return [] as Array<{
+      name: string
+      date: string
+      rating: number
+      text: string
+    }>
+  }, [])
 
   const isLoading = isCourseLoading || (!!dbCourse && isModulesLoading)
   const { isAuthenticated } = useAuthStore()
@@ -438,7 +447,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
   return (
     <StandardLayout>
       {/* ─── HERO ──────────────────────────────────────────── */}
-      <div className='relative overflow-hidden bg-green-secondary'>
+      <div className='relative overflow-hidden bg-green-secondary px-7 lg:px-0'>
         <div className='absolute inset-0 pattern-diagonal' />
         <div
           className='absolute -top-24 right-8 w-80 h-80 rounded-full pointer-events-none'
@@ -465,12 +474,12 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
           >
             {/* Breadcrumb */}
             <div className='flex items-center gap-2 mb-4'>
-              <a
+              <Link
                 href='/en/courses'
                 className='font-ui text-[0.68rem] text-cream/40 hover:text-cream/70 transition-colors'
               >
                 Courses
-              </a>
+              </Link>
               <span className='font-ui text-[0.68rem] text-cream/25'>/</span>
               <span className='font-ui text-[0.68rem] text-cream/55'>
                 {course.title}
@@ -613,7 +622,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                           </span>
                         </div>
                       </div>
-                      <a
+                      <Link
                         href={`/en/courses/${slug}/lesson/${nextLesson?.id || 'l1'}`}
                         className='block w-full font-ui text-[0.85rem] font-semibold px-4 py-3 rounded-xl bg-green-primary text-cream text-center hover:bg-green-dark transition-all duration-200 shadow-[0_2px_14px_rgba(0,140,76,0.38)] hover:shadow-[0_6px_22px_rgba(0,140,76,0.48)] hover:-translate-y-0.5 cursor-pointer'
                         onClick={() =>
@@ -625,7 +634,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                         }
                       >
                         Continue Learning →
-                      </a>
+                      </Link>
                     </>
                   ) : (
                     <>
@@ -651,13 +660,13 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
 
                   {/* Credential badges */}
                   <div className='flex items-center gap-2 mt-4 pt-4 border-t border-cream/10'>
-                    {extra.certificate && (
+                    {course.certificate && (
                       <span className='flex items-center gap-1 font-ui text-[0.58rem] text-cream/45'>
                         <Award size={11} strokeWidth={1.5} />
                         Certificate
                       </span>
                     )}
-                    {extra.onChainCredential && (
+                    {course.onChainCredential && (
                       <span className='flex items-center gap-1 font-ui text-[0.58rem] text-cream/45'>
                         <Shield size={11} strokeWidth={1.5} />
                         On-chain cNFT
@@ -692,7 +701,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                 What You&rsquo;ll Learn
               </h2>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-2.5'>
-                {extra.learningOutcomes.map((outcome, i) => (
+                {course.learningOutcomes.map((outcome, i) => (
                   <div
                     key={i}
                     className='flex items-start gap-2.5 p-3 rounded-lg'
@@ -902,9 +911,9 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                 />
                 Prerequisites
               </h3>
-              {extra.prerequisites.length > 0 ? (
+              {course.prerequisites.length > 0 ? (
                 <ul className='flex flex-col gap-2'>
-                  {extra.prerequisites.map((p, i) => (
+                  {course.prerequisites.map((p, i) => (
                     <li
                       key={i}
                       className='flex items-start gap-2 font-ui text-[0.76rem] text-text-secondary'
@@ -948,7 +957,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                     </div>
                   </div>
                 </div>
-                {extra.certificate && (
+                {course.certificate && (
                   <div className='flex items-center gap-3 p-3 rounded-xl bg-amber/5 border border-amber/15'>
                     <Award
                       size={18}
@@ -965,7 +974,7 @@ export const CourseSlug = ({ slug }: CourseSlugProps) => {
                     </div>
                   </div>
                 )}
-                {extra.onChainCredential && (
+                {course.onChainCredential && (
                   <div className='flex items-center gap-3 p-3 rounded-xl bg-green-mint/5 border border-green-mint/15'>
                     <Shield
                       size={18}

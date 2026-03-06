@@ -6,14 +6,14 @@ import { StandardLayout } from '@/components/layout/StandardLayout'
 import CourseCardSkeleton from '@/components/skeletons/CourseCardSkeleton'
 import { coursesAPI } from '@/libs/api'
 import { PATHS } from '@/libs/constants/home.constants'
-import { courses } from '@/libs/constants/mockData'
+
 import { toCourseCard } from '@/libs/types/course.types'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced']
 const topics = [
@@ -39,23 +39,22 @@ const Courses = () => {
   }>
 
   // ── Fetch real courses from DB ──────────────────────────────
-  const {
-    data: coursesData,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: coursesData, isLoading } = useQuery({
     queryKey: ['courses', 'published'],
     queryFn: () => coursesAPI.findPublished(),
     staleTime: 1000 * 60 * 5, // 5 min cache
   })
 
-  // Use real DB data if available, otherwise fall back to mock data
+  useEffect(() => {
+    console.log('coursesData', coursesData)
+  }, [coursesData])
+
   const allCourses = useMemo(() => {
-    if (isLoading || isError || !coursesData?.docs?.length) {
-      return courses
+    if (!coursesData?.docs?.length) {
+      return []
     }
     return coursesData.docs.map(toCourseCard)
-  }, [coursesData, isLoading, isError])
+  }, [coursesData])
 
   const filtered = useMemo(
     () =>
@@ -75,7 +74,7 @@ const Courses = () => {
       {/* Hero */}
       <section>
         <div
-          className='py-16 pattern-diagonal'
+          className='py-16 px-7 lg:px-0 pattern-diagonal'
           style={{ background: 'hsl(var(--green-secondary))' }}
         >
           <div className='max-w-[1200px] mx-auto'>

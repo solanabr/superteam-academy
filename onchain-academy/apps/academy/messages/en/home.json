@@ -24,10 +24,20 @@
     "xpEarned": "Just earned",
     "streak": "14-day streak",
     "streakSub": "Keep it up!",
-    "modules": ["AMM Math & Invariants", "Pool State Accounts", "Swap Instruction", "Fee Calculations"],
+    "modules": [
+      "AMM Math & Invariants",
+      "Pool State Accounts",
+      "Swap Instruction",
+      "Fee Calculations"
+    ],
     "activeLabel": "Active"
   },
-  "stats": ["Builders Enrolled", "Courses & Modules", "Completion Rate", "Countries Represented"],
+  "stats": [
+    "Builders Enrolled",
+    "Courses & Modules",
+    "Completion Rate",
+    "Countries Represented"
+  ],
   "partners": "Trusted by teams at",
   "paths": {
     "sectionLabel": "Learning Paths",
@@ -47,19 +57,37 @@
         "tag": "Beginner",
         "title": "Solana Foundations",
         "desc": "Master the core architecture — accounts, programs, PDAs, and the Sealevel runtime. The base everything else is built on.",
-        "modules": ["Blockchain Basics", "Solana Architecture", "Wallets & Keypairs", "Accounts Model", "Your First Transaction"]
+        "modules": [
+          "Blockchain Basics",
+          "Solana Architecture",
+          "Wallets & Keypairs",
+          "Accounts Model",
+          "Your First Transaction"
+        ]
       },
       {
         "tag": "Intermediate",
         "title": "Build On-chain Programs",
         "desc": "Write, deploy, and test Rust-based Solana programs using the Anchor framework. Go from local validator to mainnet.",
-        "modules": ["Rust for Solana", "Anchor Framework", "State Management", "CPIs & Composability", "Testing & Deployment"]
+        "modules": [
+          "Rust for Solana",
+          "Anchor Framework",
+          "State Management",
+          "CPIs & Composability",
+          "Testing & Deployment"
+        ]
       },
       {
         "tag": "Advanced",
         "title": "DeFi & Token Programs",
         "desc": "Create SPL tokens, liquidity pools, and integrate with major Solana DeFi protocols. Build the infrastructure others build on.",
-        "modules": ["SPL Token Standard", "Token Metadata", "AMM Mechanics", "Protocol Integration", "Security Auditing"]
+        "modules": [
+          "SPL Token Standard",
+          "Token Metadata",
+          "AMM Mechanics",
+          "Protocol Integration",
+          "Security Auditing"
+        ]
       }
     ]
   },
@@ -68,12 +96,36 @@
     "sectionTitle": "Built for builders,\nby builders",
     "sectionSub": "Every feature is designed around one question: what actually gets people shipping on Solana?",
     "items": [
-      { "title": "Structured Learning Paths", "desc": "Curated sequences that take you from zero to deploying on mainnet. No guesswork, no rabbit holes — a clear road from concept to shipped code.", "meta": "120+ modules" },
-      { "title": "On-chain Credentials", "desc": "Earn verifiable certificates minted as Solana NFTs. Your achievements live permanently on-chain — not in a PDF someone can fake.", "meta": "Verified on Solana" },
-      { "title": "Live Coding Challenges", "desc": "Weekly challenges tied to real ecosystem problems. Ship working code, get reviewed by top contributors, and build a public track record.", "meta": "New challenge weekly" },
-      { "title": "Superteam Community", "desc": "Direct access to 8,000+ Solana builders, founders, and contributors across 35+ countries. Find collaborators, get feedback, get hired.", "meta": "35+ countries" },
-      { "title": "Expert-Led Workshops", "desc": "Live sessions with core Solana contributors, protocol engineers, and founders who've shipped. Real war stories, not polished slide decks.", "meta": "Live every week" },
-      { "title": "Progress Analytics", "desc": "A personal dashboard tracks your XP, streak, skill graph, and course velocity — so you always know where you stand and what to tackle next.", "meta": "Full skill graph" }
+      {
+        "title": "Structured Learning Paths",
+        "desc": "Curated sequences that take you from zero to deploying on mainnet. No guesswork, no rabbit holes — a clear road from concept to shipped code.",
+        "meta": "120+ modules"
+      },
+      {
+        "title": "On-chain Credentials",
+        "desc": "Earn verifiable certificates minted as Solana NFTs. Your achievements live permanently on-chain — not in a PDF someone can fake.",
+        "meta": "Verified on Solana"
+      },
+      {
+        "title": "Live Coding Challenges",
+        "desc": "Weekly challenges tied to real ecosystem problems. Ship working code, get reviewed by top contributors, and build a public track record.",
+        "meta": "New challenge weekly"
+      },
+      {
+        "title": "Superteam Community",
+        "desc": "Direct access to 8,000+ Solana builders, founders, and contributors across 35+ countries. Find collaborators, get feedback, get hired.",
+        "meta": "35+ countries"
+      },
+      {
+        "title": "Expert-Led Workshops",
+        "desc": "Live sessions with core Solana contributors, protocol engineers, and founders who've shipped. Real war stories, not polished slide decks.",
+        "meta": "Live every week"
+      },
+      {
+        "title": "Progress Analytics",
+        "desc": "A personal dashboard tracks your XP, streak, skill graph, and course velocity — so you always know where you stand and what to tackle next.",
+        "meta": "Full skill graph"
+      }
     ]
   },
   "testimonials": {
@@ -81,9 +133,15 @@
     "sectionTitle": "Builders who shipped\nafter Superteam Academy",
     "ratingBase": "Based on 2,841 reviews",
     "items": [
-      { "quote": "Six months ago I had zero blockchain experience. After completing the Foundations path I landed a full-time role at a Solana-native startup. The quality here is unmatched." },
-      { "quote": "The Anchor course is the most thorough resource I've found anywhere — better than the official docs. The live challenges pushed me to actually ship, not just watch." },
-      { "quote": "Superteam Academy connected me to the exact people who became my co-founders. The community alone is worth 10x the course cost." }
+      {
+        "quote": "Six months ago I had zero blockchain experience. After completing the Foundations path I landed a full-time role at a Solana-native startup. The quality here is unmatched."
+      },
+      {
+        "quote": "The Anchor course is the most thorough resource I've found anywhere — better than the official docs. The live challenges pushed me to actually ship, not just watch."
+      },
+      {
+        "quote": "Superteam Academy connected me to the exact people who became my co-founders. The community alone is worth 10x the course cost."
+      }
     ]
   },
   "cta": {
@@ -108,8 +166,20 @@
       "Support": "Support"
     },
     "links": {
-      "Learn": ["All Courses", "Learning Paths", "Challenges", "Workshops", "Certifications"],
-      "Community": ["Discord", "Forum", "Leaderboard", "Superteam DAO", "Events"],
+      "Learn": [
+        "All Courses",
+        "Learning Paths",
+        "Challenges",
+        "Workshops",
+        "Certifications"
+      ],
+      "Community": [
+        "Discord",
+        "Forum",
+        "Leaderboard",
+        "Superteam DAO",
+        "Events"
+      ],
       "Company": ["About", "Blog", "Careers", "Press Kit", "Brand Assets"],
       "Support": ["Help Center", "FAQs", "Contact", "Privacy Policy", "Terms"]
     }

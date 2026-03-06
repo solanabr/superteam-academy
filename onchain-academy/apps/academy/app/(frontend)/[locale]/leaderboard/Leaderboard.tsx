@@ -32,7 +32,8 @@ export default function Leaderboard() {
   return (
     <StandardLayout>
       {/* BANNER */}
-      <div className='relative overflow-hidden p-7 lg:p-8 animate-[fade-up_0.4s_ease_forwards] opacity-0 bg-green-secondary'>
+      <div className='relative overflow-hidden p-7 lg:p-8 bg-green-secondary'>
+        {/* <div className='relative overflow-hidden p-7 lg:p-8 animate-[fade-up_0.4s_ease_forwards] opacity-0 bg-green-secondary'> */}
         <div className='max-w-[1200px] mx-auto'>
           <div className='absolute inset-0 pattern-dot-grid opacity-40 pointer-events-none' />
           <div

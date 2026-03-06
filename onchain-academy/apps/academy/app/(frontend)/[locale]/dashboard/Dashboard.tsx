@@ -119,7 +119,8 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
   return (
     <StandardLayout>
       {/* BANNER */}
-      <div className='relative overflow-hidden p-7 lg:p-8 animate-[fade-up_0.4s_ease_forwards] opacity-0 bg-green-secondary'>
+      <div className='relative overflow-hidden p-7 lg:p-8 bg-green-secondary'>
+        {/* animate-[fade-up_0.4s_ease_forwards] opacity-0 */}
         <div className='max-w-[1200px] mx-auto'>
           <div className='absolute inset-0 pattern-dot-grid opacity-40 pointer-events-none' />
           <div
@@ -176,8 +177,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
           </div>
         </div>
       </div>
+      {/* end of banner */}
 
-      <div className='max-w-[1200px] mx-auto flex flex-col gap-5 py-12'>
+      <div className='max-w-[1200px] mx-auto flex flex-col gap-5 py-12 px-7 lg:px-0'>
         {/* KPI ROW */}
         <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
           <KPI

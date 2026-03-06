@@ -8,7 +8,6 @@ import {
   Check,
   ChevronDown,
   LayoutGrid,
-  Search,
   Settings,
   Trophy,
 } from 'lucide-react'
@@ -58,6 +57,8 @@ export const Navbar = () => {
         className='font-display text-[22px] text-cream no-underline font-bold'
       >
         Superteam <span className='text-accent'>Academy</span>
+        {/* <Image src='/logo-yellow.png' alt='logo' width={180} height={100} /> */}
+        {/* <Image src='/logo-off-white.png' alt='logo' width={180} height={100} /> */}
       </Link>
 
       <div className='hidden md:flex items-center gap-9'>
@@ -153,12 +154,12 @@ export const Navbar = () => {
         {/* only show if logged in */}
         {session?.user && (
           <div className='flex items-center gap-3'>
-            <button
+            {/* <button
               className='w-[38px] h-[38px] rounded-lg flex items-center justify-center transition-colors'
               style={{ color: 'hsla(40,82%,88%,0.65)' }}
             >
               <Search size={18} strokeWidth={1.5} />
-            </button>
+            </button> */}
             <Link
               href='/settings'
               className='w-[38px] h-[38px] rounded-lg flex items-center justify-center transition-colors'
@@ -195,13 +196,13 @@ export const Navbar = () => {
           aria-expanded={mobileOpen}
         >
           <span
-            className={`w-5 h-0.5 bg-current rounded transition-transform ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`}
+            className={`w-5 h-0.5 bg-[rgba(247,234,203,0.2)] rounded transition-transform ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`}
           />
           <span
-            className={`w-5 h-0.5 bg-current rounded transition-opacity ${mobileOpen ? 'opacity-0' : ''}`}
+            className={`w-5 h-0.5 bg-[rgba(247,234,203,0.2)] rounded transition-opacity ${mobileOpen ? 'opacity-0' : ''}`}
           />
           <span
-            className={`w-5 h-0.5 bg-current rounded transition-transform ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`}
+            className={`w-5 h-0.5 bg-[rgba(247,234,203,0.2)] rounded transition-transform ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`}
           />
         </button>
       </div>
@@ -211,7 +212,7 @@ export const Navbar = () => {
           <ul className='flex flex-col py-4 px-4 list-none gap-0'>
             <li>
               <Link
-                href='/#paths'
+                href='/courses'
                 onClick={closeMobile}
                 className='block py-3 text-[rgba(247,234,203,0.85)] no-underline text-base font-medium hover:text-[var(--cream)] font-[inherit]'
               >
@@ -220,7 +221,7 @@ export const Navbar = () => {
             </li>
             <li>
               <Link
-                href='/#paths'
+                href='/paths'
                 onClick={closeMobile}
                 className='block py-3 text-[rgba(247,234,203,0.85)] no-underline text-base font-medium hover:text-[var(--cream)] font-[inherit]'
               >
@@ -229,11 +230,11 @@ export const Navbar = () => {
             </li>
             <li>
               <Link
-                href='/#features'
+                href='/leaderboard'
                 onClick={closeMobile}
                 className='block py-3 text-[rgba(247,234,203,0.85)] no-underline text-base font-medium hover:text-[var(--cream)] font-[inherit]'
               >
-                {t('nav.challenges')}
+                {t('nav.leaderboard')}
               </Link>
             </li>
           </ul>

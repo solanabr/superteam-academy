@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { lessonsAPI, modulesAPI } from '@/libs/api'
 import type {
   CodeChallenge,
@@ -7,17 +9,12 @@ import type {
   LessonContent,
   Quiz,
   QuizQuestion,
-} from '@/libs/constants/lesson.constants'
-import {
-  getLessonNav,
-  lessonContents,
-  lessonOrder,
-} from '@/libs/constants/lesson.constants'
-import { useQuery } from '@tanstack/react-query'
+} from '@/libs/types/course.types'
+import { useCourseStore } from '@/stores/courseStore'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
@@ -972,8 +969,7 @@ const Lesson = ({ id, slug }: LessonProps) => {
   })
 
   // ── Fetch lesson content from DB ──────────────────────────
-  // Stored for future use when DB lesson content is rendered
-  useQuery({
+  const { data: dbContentType, isLoading: isContentLoading } = useQuery({
     queryKey: ['lesson-content', id],
     queryFn: () => lessonsAPI.getContent(id),
     staleTime: 1000 * 60 * 5,
@@ -981,63 +977,206 @@ const Lesson = ({ id, slug }: LessonProps) => {
     throwOnError: false,
   })
 
-  // ── Resolve lesson from DB or fall back to mock constants ─
-  // Always keep mock fallback — constants stay intact
-  const lesson = lessonContents[id] as LessonContent | undefined
-
-  // ── Build nav ─────────────────────────────────────────────
-  // nav derived from mock constants (covers all seeded lessons)
-  const nav = getLessonNav(id)
-
-  // ── Sidebar — prefer DB modules/lessons, fall back to constants ─
-  // Fetch course modules for sidebar nav (course ID via dbLessonData)
+  // ── Sidebar — prefer DB modules/lessons ─
   const moduleRelation = dbLessonData?.module
   const courseId =
     moduleRelation &&
     typeof moduleRelation === 'object' &&
     'course' in moduleRelation
-      ? (moduleRelation.course as { id?: string | number })?.id
+      ? typeof moduleRelation.course === 'object' &&
+        moduleRelation.course !== null
+        ? (moduleRelation.course as { id?: string | number })?.id
+        : moduleRelation.course
       : undefined
 
-  const { data: dbModulesData } = useQuery({
+  const { data: dbModulesData, isLoading: isModulesLoading } = useQuery({
     queryKey: ['modules-for-lesson', courseId],
     queryFn: () => modulesAPI.findByCourse(String(courseId)),
     enabled: !!courseId,
     staleTime: 1000 * 60 * 5,
   })
 
+  useEffect(() => {
+    console.log('dbLessonData', dbLessonData)
+    console.log('dbContentType', dbContentType)
+    console.log('dbModulesData', courseId, dbModulesData)
+  }, [dbLessonData, dbContentType, courseId, dbModulesData])
+
+  const moduleIds = useMemo(
+    () => (dbModulesData?.docs ?? []).map((m) => String(m.id)),
+    [dbModulesData],
+  )
+
+  const lessonResults = useQueries({
+    queries: moduleIds.map((moduleId) => ({
+      queryKey: ['lessons', moduleId],
+      queryFn: () => modulesAPI.findLessonsByModule(moduleId),
+      staleTime: 1000 * 60 * 5,
+    })),
+  })
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [completed, setCompleted] = useState(lesson?.completed ?? false)
+  const [completed, setCompleted] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
 
-  // Sidebar modules map — prefer DB data when available
-  // Returns tuples [moduleId, { moduleTitle, lessons }] to match sidebar JSX
-  const modulesMap = useMemo((): [
-    string,
-    { moduleTitle: string; lessons: LessonContent[] },
-  ][] => {
-    // If we have DB modules use them (lessons array will be empty, sidebar shows module headings only)
-    if (dbModulesData?.docs?.length) {
-      return dbModulesData.docs.map((m) => [
+  // ── Adapt DB data to UI shape ─────────────────────────────
+  const lesson = useMemo(() => {
+    const lessonNode = dbLessonData
+    const contentNode = dbContentType?.docs?.[0]
+    if (!lessonNode || !contentNode) return undefined
+
+    const mod =
+      typeof lessonNode.module === 'object' && lessonNode.module
+        ? lessonNode.module
+        : null
+
+    const rawBlocks = (contentNode.blocks || []) as Record<string, unknown>[]
+    const blocks = rawBlocks.map((b) => ({
+      ...b,
+      type: b.blockType,
+      title: b.videoTitle,
+      variant: b.calloutVariant,
+      content: b.content,
+      url: b.url,
+    }))
+
+    const rawChallenge = contentNode.challenge as
+      | Record<string, unknown>
+      | undefined
+    const challenge = rawChallenge
+      ? {
+          ...rawChallenge,
+          objectives: (
+            (rawChallenge.objectives as Record<string, unknown>[]) || []
+          ).map((o) => o.objective),
+          testCases: (
+            (rawChallenge.testCases as Record<string, unknown>[]) || []
+          ).map((t) => ({
+            ...t,
+            passed: false,
+          })),
+        }
+      : undefined
+
+    const rawQuiz = contentNode.quiz as Record<string, unknown> | undefined
+    const quiz = rawQuiz
+      ? {
+          ...rawQuiz,
+          questions: (
+            (rawQuiz.questions as Record<string, unknown>[]) || []
+          ).map((q) => ({
+            ...q,
+            type: q.questionType,
+            options: ((q.options as Record<string, unknown>[]) || []).map(
+              (opt) => opt.option,
+            ),
+          })),
+        }
+      : undefined
+
+    return {
+      id: String(lessonNode.id),
+      courseSlug: slug,
+      moduleId: mod ? String(mod.id) : '',
+      moduleTitle: mod && 'title' in mod ? String(mod.title) : 'Module',
+      title: lessonNode.title,
+      type: lessonNode.type,
+      xpReward: lessonNode.xpReward,
+      completed: false,
+      duration: lessonNode.duration || '—',
+      blocks,
+      challenge,
+      quiz,
+      hints: ((contentNode.hints as unknown[]) || []).map(
+        (h: unknown) => (h as { hint: string }).hint,
+      ),
+      solution: contentNode.solution || undefined,
+    } as unknown as LessonContent
+  }, [dbLessonData, dbContentType, slug])
+
+  const { courseModules, setCourseModules } = useCourseStore()
+
+  // Use cached modules if they exist for this course, else construct from DB
+  const modulesMap = useMemo(() => {
+    if (courseModules[slug]?.length) {
+      return courseModules[slug].map((mod, index) => [
+        String(index + 1), // Approximate ID for mapping, since object keys are IDs
+        mod,
+      ]) as [string, { moduleTitle: string; lessons: LessonContent[] }][]
+    }
+
+    if (!dbModulesData?.docs?.length) return []
+    const constructed = dbModulesData.docs.map((m, index) => {
+      const lessonsData = lessonResults[index]?.data?.docs || []
+      return [
         String(m.id),
-        { moduleTitle: m.title, lessons: [] as LessonContent[] },
-      ])
-    }
-    // Fall back to mock constants
-    const map = new Map<
-      string,
-      { moduleTitle: string; lessons: LessonContent[] }
-    >()
-    for (const lid of lessonOrder) {
-      const l = lessonContents[lid]
-      if (!l) continue
-      if (!map.has(l.moduleId)) {
-        map.set(l.moduleId, { moduleTitle: l.moduleTitle, lessons: [] })
+        {
+          moduleTitle: m.title,
+          lessons: lessonsData.map((l) => ({
+            id: String(l.id),
+            courseSlug: slug,
+            moduleId: String(m.id),
+            moduleTitle: m.title,
+            title: l.title,
+            type: l.type,
+            xpReward: l.xpReward,
+            completed: false,
+            duration: l.duration || '—',
+          })) as unknown as LessonContent[],
+        },
+      ]
+    }) as [string, { moduleTitle: string; lessons: LessonContent[] }][]
+
+    return constructed
+  }, [courseModules, dbModulesData, lessonResults, slug])
+
+  // Save to store once fully loaded
+  useEffect(() => {
+    // Only set if we have real DB data and we aren't already cached
+    if (!courseModules[slug]?.length && dbModulesData?.docs?.length) {
+      // Ensure all lesson results are finished loading before caching
+      const allLessonsLoaded = lessonResults.every(
+        (r) => !r.isLoading && r.data,
+      )
+      if (allLessonsLoaded) {
+        const modulesToCache = modulesMap.map(([, mod]) => mod)
+        setCourseModules(slug, modulesToCache)
       }
-      map.get(l.moduleId)!.lessons.push(l)
     }
-    return Array.from(map.entries())
-  }, [dbModulesData])
+  }, [
+    courseModules,
+    slug,
+    dbModulesData,
+    lessonResults,
+    modulesMap,
+    setCourseModules,
+  ])
+
+  const nav = useMemo(() => {
+    const flatLessons = modulesMap.flatMap(([, mod]) => mod.lessons)
+    const idx = flatLessons.findIndex((l) => String(l.id) === String(id))
+
+    if (idx === -1) {
+      return {
+        current: 0,
+        total: 0,
+        prev: null,
+        next: null,
+        prevTitle: null,
+        nextTitle: null,
+      }
+    }
+
+    return {
+      current: idx + 1,
+      total: flatLessons.length,
+      prev: idx > 0 ? flatLessons[idx - 1].id : null,
+      next: idx < flatLessons.length - 1 ? flatLessons[idx + 1].id : null,
+      prevTitle: idx > 0 ? flatLessons[idx - 1].title : null,
+      nextTitle:
+        idx < flatLessons.length - 1 ? flatLessons[idx + 1].title : null,
+    }
+  }, [modulesMap, id])
 
   useEffect(() => {
     if (!lesson) return
@@ -1048,7 +1187,7 @@ const Lesson = ({ id, slug }: LessonProps) => {
       course_slug: slug,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [lesson?.id, slug])
 
   const handleComplete = useCallback(() => {
     if (completed || !lesson) return
@@ -1066,12 +1205,21 @@ const Lesson = ({ id, slug }: LessonProps) => {
   const hasCodeEditor = lesson?.type === 'code_challenge' || !!lesson?.challenge
   const hasQuiz = lesson?.type === 'quiz' || !!lesson?.quiz
 
-  // Show skeleton while lesson is being fetched from DB and not yet in mock constants
-  if (isLessonLoading && !lesson) {
+  const isLessonsLoading = lessonResults.some((r) => r.isLoading)
+
+  // A "hard load" means we have no cached layout data, so we must show the full skeleton
+  const isHardLoading =
+    !courseModules[slug]?.length && (isModulesLoading || isLessonsLoading)
+  // A "soft load" means we only need to wait for the specific lesson, sidebar remains visible
+  const isSoftLoading = isLessonLoading || isContentLoading
+
+  // Show full-page skeleton only on initial visit when cache is empty
+  if (isHardLoading) {
     return <LessonSkeleton />
   }
 
-  if (!lesson) {
+  // Handle lesson not found (only check after soft loading completes against DB)
+  if (!isSoftLoading && !lesson) {
     return (
       <StandardLayout>
         <div className='min-h-screen flex items-center justify-center'>
@@ -1080,6 +1228,19 @@ const Lesson = ({ id, slug }: LessonProps) => {
           </p>
         </div>
       </StandardLayout>
+    )
+  }
+
+  // Soft fallback while loading just the lesson content (skeleton is gone, sidebar stays)
+  // At this point, `lesson` won't be fully ready yet, so we return a placeholder main-body to satisfy TS
+  if (!lesson) {
+    return (
+      <div className='flex items-center justify-center p-20 w-full h-full'>
+        <Loader2
+          size={32}
+          className='animate-spin text-green-primary opacity-50'
+        />
+      </div>
     )
   }
 
@@ -1171,7 +1332,7 @@ const Lesson = ({ id, slug }: LessonProps) => {
                 </p>
                 <div className='flex flex-col gap-0.5'>
                   {mod.lessons.map((l) => (
-                    <a
+                    <Link
                       key={l.id}
                       href={`/en/courses/${slug}/lesson/${l.id}`}
                       className='flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-colors'
@@ -1219,7 +1380,7 @@ const Lesson = ({ id, slug }: LessonProps) => {
                       <span className='text-text-tertiary'>
                         {lessonTypeIcon(l.type)}
                       </span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -1256,148 +1417,162 @@ const Lesson = ({ id, slug }: LessonProps) => {
             )}
 
             {/* Lesson title bar */}
-            <div className='px-6 lg:px-8 pt-6 pb-4'>
-              <div className='flex items-center gap-2 mb-2'>
-                <span
-                  className='font-ui text-[0.58rem] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full'
-                  style={{
-                    background:
-                      lesson.type === 'code_challenge'
-                        ? 'hsl(var(--amber) / 0.12)'
-                        : lesson.type === 'quiz'
-                          ? 'hsl(var(--green-mint) / 0.1)'
-                          : lesson.type === 'video'
-                            ? 'hsl(var(--green-primary) / 0.1)'
-                            : 'rgba(139,109,56,0.08)',
-                    color:
-                      lesson.type === 'code_challenge'
-                        ? 'hsl(var(--amber-dark))'
-                        : lesson.type === 'quiz'
-                          ? 'hsl(var(--green-primary))'
-                          : lesson.type === 'video'
-                            ? 'hsl(var(--green-primary))'
-                            : 'hsl(var(--text-secondary))',
-                  }}
-                >
-                  {lesson.type.replace('_', ' ')}
-                </span>
-                <span className='font-ui text-[0.6rem] text-text-tertiary'>
-                  {lesson.duration}
-                </span>
+            {isSoftLoading ? (
+              <div className='flex items-center justify-center p-20'>
+                <Loader2
+                  size={32}
+                  className='animate-spin text-green-primary opacity-50'
+                />
               </div>
-              <h1 className='font-display text-[1.5rem] lg:text-[1.75rem] font-black tracking-tight text-charcoal'>
-                {lesson.title}
-              </h1>
-            </div>
-
-            {/* Content blocks */}
-            <div className='px-6 lg:px-8 pb-6 lesson-content'>
-              <style
-                dangerouslySetInnerHTML={{
-                  __html: `
-                .lesson-content .md-h1 { font-family: var(--font-playfair), serif; font-size: 1.4rem; font-weight: 800; color: hsl(var(--charcoal)); margin: 1.5rem 0 0.75rem; }
-                .lesson-content .md-h2 { font-family: var(--font-playfair), serif; font-size: 1.15rem; font-weight: 700; color: hsl(var(--charcoal)); margin: 1.5rem 0 0.5rem; }
-                .lesson-content .md-h3 { font-family: var(--font-playfair), serif; font-size: 0.95rem; font-weight: 700; color: hsl(var(--charcoal)); margin: 1.25rem 0 0.4rem; }
-                .lesson-content .md-p { font-family: var(--font-dm-sans), sans-serif; font-size: 0.86rem; line-height: 1.75; color: hsl(var(--text-secondary)); margin: 0.5rem 0; }
-                .lesson-content .md-li { font-family: var(--font-dm-sans), sans-serif; font-size: 0.84rem; line-height: 1.6; color: hsl(var(--text-secondary)); margin: 0.25rem 0 0.25rem 1.25rem; list-style: disc; }
-                .lesson-content .md-ol { list-style: decimal; }
-                .lesson-content .md-bq { border-left: 3px solid hsl(var(--green-primary) / 0.3); padding: 0.5rem 1rem; margin: 0.75rem 0; background: hsl(var(--green-primary) / 0.04); border-radius: 0 0.5rem 0.5rem 0; font-size: 0.84rem; color: hsl(var(--text-secondary)); }
-                .lesson-content .md-link { color: hsl(var(--green-primary)); text-decoration: underline; text-underline-offset: 2px; }
-                .lesson-content .md-link:hover { color: hsl(var(--green-dark)); }
-                .lesson-content .inline-code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8em; background: rgba(139,109,56,0.08); padding: 0.15em 0.4em; border-radius: 4px; color: hsl(var(--green-dark)); }
-                .lesson-content .code-block { background: hsl(137 41% 9%); color: #abb2bf; padding: 1rem 1.25rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.75rem 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.65; border: 1px solid rgba(82,221,160,0.1); }
-                .lesson-content .code-block code, .lesson-content .code-block * { color: #abb2bf !important; background: transparent !important; }
-                .lesson-content .md-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-family: var(--font-dm-sans), sans-serif; font-size: 0.8rem; }
-                .lesson-content .md-table th { text-align: left; padding: 0.6rem 1rem; background: rgba(139,109,56,0.06); border: 1px solid hsl(var(--border-warm)); font-weight: 600; color: hsl(var(--charcoal)); }
-                .lesson-content .md-table td { padding: 0.5rem 1rem; border: 1px solid hsl(var(--border-warm)); color: hsl(var(--text-secondary)); }
-                .lesson-content strong { color: hsl(var(--charcoal)); }
-              `,
-                }}
-              />
-
-              {lesson.blocks.map((block, i) => (
-                <BlockRenderer key={i} block={block} />
-              ))}
-
-              {/* Quiz (rendered inline if quiz type) */}
-              {hasQuiz && lesson.quiz && (
-                <div className='mt-6'>
-                  <h2 className='font-display text-[1.1rem] font-bold text-charcoal mb-4 flex items-center gap-2'>
-                    <Trophy
-                      size={18}
-                      strokeWidth={1.5}
-                      className='text-amber'
-                    />
-                    Knowledge Check
-                  </h2>
-                  <QuizPanel quiz={lesson.quiz} onComplete={handleComplete} />
-                </div>
-              )}
-
-              {/* Challenge prompt (for code challenges, shown with objectives) */}
-              {hasCodeEditor && lesson.challenge && (
-                <div className='mt-6'>
-                  <div
-                    className='p-5 rounded-xl'
-                    style={{
-                      background: 'hsl(var(--amber) / 0.06)',
-                      border: '1px solid hsl(var(--amber) / 0.2)',
-                    }}
-                  >
-                    <h3 className='font-display text-[0.95rem] font-bold text-charcoal mb-2 flex items-center gap-2'>
-                      <Code
-                        size={16}
-                        strokeWidth={1.5}
-                        className='text-amber-dark'
-                      />
-                      Challenge
-                    </h3>
-                    <p className='font-ui text-[0.82rem] text-text-secondary mb-3'>
-                      {lesson.challenge.prompt}
-                    </p>
-                    <div className='flex flex-col gap-1.5'>
-                      {lesson.challenge.objectives.map((obj, i) => (
-                        <div
-                          key={i}
-                          className='flex items-start gap-2 font-ui text-[0.76rem] text-text-secondary'
-                        >
-                          <span className='w-4 h-4 rounded-full bg-amber/12 text-amber-dark flex items-center justify-center flex-shrink-0 mt-0.5 font-ui text-[0.55rem] font-bold'>
-                            {i + 1}
-                          </span>
-                          {obj}
-                        </div>
-                      ))}
-                    </div>
+            ) : (
+              <>
+                <div className='px-6 lg:px-8 pt-6 pb-4'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <span
+                      className='font-ui text-[0.58rem] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full'
+                      style={{
+                        background:
+                          lesson.type === 'code_challenge'
+                            ? 'hsl(var(--amber) / 0.12)'
+                            : lesson.type === 'quiz'
+                              ? 'hsl(var(--green-mint) / 0.1)'
+                              : lesson.type === 'video'
+                                ? 'hsl(var(--green-primary) / 0.1)'
+                                : 'rgba(139,109,56,0.08)',
+                        color:
+                          lesson.type === 'code_challenge'
+                            ? 'hsl(var(--amber-dark))'
+                            : lesson.type === 'quiz'
+                              ? 'hsl(var(--green-primary))'
+                              : lesson.type === 'video'
+                                ? 'hsl(var(--green-primary))'
+                                : 'hsl(var(--text-secondary))',
+                      }}
+                    >
+                      {lesson.type.replace('_', ' ')}
+                    </span>
+                    <span className='font-ui text-[0.6rem] text-text-tertiary'>
+                      {lesson.duration}
+                    </span>
                   </div>
+                  <h1 className='font-display text-[1.5rem] lg:text-[1.75rem] font-black tracking-tight text-charcoal'>
+                    {lesson.title}
+                  </h1>
                 </div>
-              )}
 
-              {/* Hints & Solution */}
-              {lesson.hints && lesson.hints.length > 0 && (
-                <div className='mt-6'>
-                  <HintDrawer hints={lesson.hints} />
-                </div>
-              )}
+                {/* Content blocks */}
+                <div className='px-6 lg:px-8 pb-6 lesson-content'>
+                  <style
+                    dangerouslySetInnerHTML={{
+                      __html: `
+                    .lesson-content .md-h1 { font-family: var(--font-playfair), serif; font-size: 1.4rem; font-weight: 800; color: hsl(var(--charcoal)); margin: 1.5rem 0 0.75rem; }
+                    .lesson-content .md-h2 { font-family: var(--font-playfair), serif; font-size: 1.15rem; font-weight: 700; color: hsl(var(--charcoal)); margin: 1.5rem 0 0.5rem; }
+                    .lesson-content .md-h3 { font-family: var(--font-playfair), serif; font-size: 0.95rem; font-weight: 700; color: hsl(var(--charcoal)); margin: 1.25rem 0 0.4rem; }
+                    .lesson-content .md-p { font-family: var(--font-dm-sans), sans-serif; font-size: 0.86rem; line-height: 1.75; color: hsl(var(--text-secondary)); margin: 0.5rem 0; }
+                    .lesson-content .md-li { font-family: var(--font-dm-sans), sans-serif; font-size: 0.84rem; line-height: 1.6; color: hsl(var(--text-secondary)); margin: 0.25rem 0 0.25rem 1.25rem; list-style: disc; }
+                    .lesson-content .md-ol { list-style: decimal; }
+                    .lesson-content .md-bq { border-left: 3px solid hsl(var(--green-primary) / 0.3); padding: 0.5rem 1rem; margin: 0.75rem 0; background: hsl(var(--green-primary) / 0.04); border-radius: 0 0.5rem 0.5rem 0; font-size: 0.84rem; color: hsl(var(--text-secondary)); }
+                    .lesson-content .md-link { color: hsl(var(--green-primary)); text-decoration: underline; text-underline-offset: 2px; }
+                    .lesson-content .md-link:hover { color: hsl(var(--green-dark)); }
+                    .lesson-content .inline-code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8em; background: rgba(139,109,56,0.08); padding: 0.15em 0.4em; border-radius: 4px; color: hsl(var(--green-dark)); }
+                    .lesson-content .code-block { background: hsl(137 41% 9%); color: #abb2bf; padding: 1rem 1.25rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.75rem 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.65; border: 1px solid rgba(82,221,160,0.1); }
+                    .lesson-content .code-block code, .lesson-content .code-block * { color: #abb2bf !important; background: transparent !important; }
+                    .lesson-content .md-table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-family: var(--font-dm-sans), sans-serif; font-size: 0.8rem; }
+                    .lesson-content .md-table th { text-align: left; padding: 0.6rem 1rem; background: rgba(139,109,56,0.06); border: 1px solid hsl(var(--border-warm)); font-weight: 600; color: hsl(var(--charcoal)); }
+                    .lesson-content .md-table td { padding: 0.5rem 1rem; border: 1px solid hsl(var(--border-warm)); color: hsl(var(--text-secondary)); }
+                    .lesson-content strong { color: hsl(var(--charcoal)); }
+                  `,
+                    }}
+                  />
 
-              {lesson.solution && (
-                <div className='mt-4'>
-                  <SolutionToggle solution={lesson.solution} />
-                </div>
-              )}
+                  {lesson.blocks.map((block, i) => (
+                    <BlockRenderer key={i} block={block} />
+                  ))}
 
-              {/* Mark Complete (for non-challenge, non-quiz lessons) */}
-              {!hasCodeEditor && !hasQuiz && !completed && (
-                <div className='mt-8 flex justify-center'>
-                  <button
-                    onClick={handleComplete}
-                    className='flex items-center gap-2 font-ui text-[0.85rem] font-semibold px-6 py-3 rounded-xl bg-green-primary text-cream hover:bg-green-dark transition-all shadow-[0_2px_14px_rgba(0,140,76,0.38)] hover:shadow-[0_6px_22px_rgba(0,140,76,0.48)] hover:-translate-y-0.5 cursor-pointer'
-                  >
-                    <Sparkles size={16} strokeWidth={1.5} />
-                    Mark as Complete · +{lesson.xpReward} XP
-                  </button>
+                  {/* Quiz (rendered inline if quiz type) */}
+                  {hasQuiz && lesson.quiz && (
+                    <div className='mt-6'>
+                      <h2 className='font-display text-[1.1rem] font-bold text-charcoal mb-4 flex items-center gap-2'>
+                        <Trophy
+                          size={18}
+                          strokeWidth={1.5}
+                          className='text-amber'
+                        />
+                        Knowledge Check
+                      </h2>
+                      <QuizPanel
+                        quiz={lesson.quiz}
+                        onComplete={handleComplete}
+                      />
+                    </div>
+                  )}
+
+                  {/* Challenge prompt (for code challenges, shown with objectives) */}
+                  {hasCodeEditor && lesson.challenge && (
+                    <div className='mt-6'>
+                      <div
+                        className='p-5 rounded-xl'
+                        style={{
+                          background: 'hsl(var(--amber) / 0.06)',
+                          border: '1px solid hsl(var(--amber) / 0.2)',
+                        }}
+                      >
+                        <h3 className='font-display text-[0.95rem] font-bold text-charcoal mb-2 flex items-center gap-2'>
+                          <Code
+                            size={16}
+                            strokeWidth={1.5}
+                            className='text-amber-dark'
+                          />
+                          Challenge
+                        </h3>
+                        <p className='font-ui text-[0.82rem] text-text-secondary mb-3'>
+                          {lesson.challenge.prompt}
+                        </p>
+                        <div className='flex flex-col gap-1.5'>
+                          {lesson.challenge.objectives.map((obj, i) => (
+                            <div
+                              key={i}
+                              className='flex items-start gap-2 font-ui text-[0.76rem] text-text-secondary'
+                            >
+                              <span className='w-4 h-4 rounded-full bg-amber/12 text-amber-dark flex items-center justify-center flex-shrink-0 mt-0.5 font-ui text-[0.55rem] font-bold'>
+                                {i + 1}
+                              </span>
+                              {obj}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hints & Solution */}
+                  {lesson.hints && lesson.hints.length > 0 && (
+                    <div className='mt-6'>
+                      <HintDrawer hints={lesson.hints} />
+                    </div>
+                  )}
+
+                  {lesson.solution && (
+                    <div className='mt-4'>
+                      <SolutionToggle solution={lesson.solution} />
+                    </div>
+                  )}
+
+                  {/* Mark Complete (for non-challenge, non-quiz lessons) */}
+                  {!hasCodeEditor && !hasQuiz && !completed && (
+                    <div className='mt-8 flex justify-center'>
+                      <button
+                        onClick={handleComplete}
+                        className='flex items-center gap-2 font-ui text-[0.85rem] font-semibold px-6 py-3 rounded-xl bg-green-primary text-cream hover:bg-green-dark transition-all shadow-[0_2px_14px_rgba(0,140,76,0.38)] hover:shadow-[0_6px_22px_rgba(0,140,76,0.48)] hover:-translate-y-0.5 cursor-pointer'
+                      >
+                        <Sparkles size={16} strokeWidth={1.5} />
+                        Mark as Complete · +{lesson.xpReward} XP
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
             {/* BOTTOM NAV */}
             <div
@@ -1409,36 +1584,40 @@ const Lesson = ({ id, slug }: LessonProps) => {
               }}
             >
               {nav.prev ? (
-                <a
-                  href={`/en/courses/${slug}/lesson/${nav.prev}`}
-                  className='flex items-center gap-3 flex-1 px-4 py-3 rounded-xl border border-border-warm hover:border-green-primary/40 hover:bg-green-primary/4 transition-all group cursor-pointer'
-                  style={{ background: 'hsl(var(--card-warm))' }}
-                >
-                  <div
-                    className='w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-green-primary/12 transition-colors'
-                    style={{ background: 'rgba(139,109,56,0.06)' }}
+                <div className='flex items-center gap-3'>
+                  <Link
+                    href={`/en/courses/${slug}/lesson/${nav.prev}`}
+                    className='w-9 h-9 flex items-center justify-center rounded-lg bg-green-primary/10 text-green-primary hover:bg-green-primary/20 transition-colors'
                   >
-                    <ArrowLeft
-                      size={16}
-                      strokeWidth={2}
-                      className='text-text-secondary group-hover:text-green-primary group-hover:-translate-x-0.5 transition-all'
-                    />
-                  </div>
-                  <div className='text-left min-w-0'>
-                    <span className='block font-ui text-[0.6rem] font-semibold uppercase tracking-wider text-text-tertiary'>
+                    <ChevronLeft size={16} strokeWidth={2} />
+                  </Link>
+                  <div className='hidden sm:block'>
+                    <p className='font-ui text-[0.65rem] text-text-tertiary mb-0.5 leading-none'>
                       Previous
-                    </span>
-                    <span className='block font-ui text-[0.78rem] font-semibold text-charcoal truncate group-hover:text-green-primary transition-colors'>
+                    </p>
+                    <p className='font-ui text-[0.8rem] font-bold text-charcoal truncate max-w-[150px] leading-none'>
                       {nav.prevTitle}
-                    </span>
+                    </p>
                   </div>
-                </a>
+                </div>
               ) : (
-                <div className='flex-1' />
+                <div className='flex items-center gap-3 opacity-50 pointer-events-none grayscale'>
+                  <div className='w-9 h-9 flex items-center justify-center rounded-lg bg-charcoal/5 text-charcoal/50'>
+                    <ChevronLeft size={16} strokeWidth={2} />
+                  </div>
+                  <div className='hidden sm:block'>
+                    <p className='font-ui text-[0.65rem] text-charcoal/50 mb-0.5 leading-none'>
+                      Previous
+                    </p>
+                    <p className='font-ui text-[0.8rem] font-bold text-charcoal/60 truncate max-w-[150px] leading-none'>
+                      —
+                    </p>
+                  </div>
+                </div>
               )}
 
               {nav.next ? (
-                <a
+                <Link
                   href={`/en/courses/${slug}/lesson/${nav.next}`}
                   className='flex items-center gap-3 flex-1 px-4 py-3 rounded-xl border border-green-primary/25 hover:border-green-primary/50 transition-all group cursor-pointer justify-end'
                   style={{ background: 'hsl(var(--green-primary) / 0.04)' }}
@@ -1458,15 +1637,15 @@ const Lesson = ({ id, slug }: LessonProps) => {
                       className='text-green-primary group-hover:translate-x-0.5 transition-transform'
                     />
                   </div>
-                </a>
+                </Link>
               ) : (
-                <a
+                <Link
                   href={`/en/courses/${slug}`}
                   className='flex items-center gap-2.5 flex-1 justify-end px-5 py-3 rounded-xl bg-green-primary text-cream font-ui text-[0.82rem] font-semibold hover:bg-green-dark transition-colors shadow-[0_2px_12px_rgba(0,140,76,0.3)]'
                 >
                   <Trophy size={15} strokeWidth={1.5} />
                   Back to Course
-                </a>
+                </Link>
               )}
             </div>
           </div>

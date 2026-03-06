@@ -12,6 +12,12 @@ export interface PayloadCourse {
   totalLessons?: number
   xpReward: number
   topic?: string
+  longDescription?: unknown
+  rating?: number
+  ratingCount?: number
+  enrollmentCount?: number
+  language?: string
+  lastUpdated?: string
   status: 'draft' | 'published'
   certificate?: boolean
   onChainCredential?: boolean
@@ -63,7 +69,9 @@ export interface PayloadLessonContent {
   lesson: string | number | { id: string | number }
   blocks?: unknown[]
   quiz?: unknown
-  codeChallenge?: unknown
+  challenge?: unknown
+  hints?: unknown[]
+  solution?: string
 }
 
 // ─── Payload API response wrapper ──────────────────────────────
@@ -121,6 +129,56 @@ export interface UILesson {
   completed: boolean
   active?: boolean
   locked?: boolean
+}
+
+// ─── Lesson Content UI Blocks ──────────────────────────────────
+
+export type ContentBlock =
+  | { type: 'markdown'; content: string }
+  | { type: 'video'; url: string; title?: string }
+  | { type: 'callout'; variant: 'info' | 'warning' | 'tip'; content: string }
+
+export interface CodeChallenge {
+  prompt: string
+  objectives: string[]
+  starterCode: string
+  language: 'rust' | 'typescript' | 'json'
+  testCases: { name: string; expected: string; passed: boolean }[]
+  expectedOutput: string
+  solutionCode: string
+}
+
+export interface QuizQuestion {
+  id: string
+  type: 'radio' | 'checkbox' | 'code'
+  prompt: string
+  options?: string[]
+  correctIndex?: number
+  correctIndices?: number[]
+  starterCode?: string
+  language?: string
+  expected?: string
+}
+
+export interface Quiz {
+  questions: QuizQuestion[]
+}
+
+export interface LessonContent {
+  id: string
+  courseSlug: string
+  moduleId: string
+  moduleTitle: string
+  title: string
+  type: 'video' | 'reading' | 'code_challenge' | 'quiz' | 'hybrid'
+  xpReward: number
+  completed: boolean
+  duration: string
+  blocks: ContentBlock[]
+  challenge?: CodeChallenge
+  quiz?: Quiz
+  hints?: string[]
+  solution?: string
 }
 
 // ─── Adapters ──────────────────────────────────────────────────

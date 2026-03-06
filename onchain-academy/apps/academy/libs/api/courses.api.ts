@@ -16,6 +16,6 @@ export const coursesAPI = {
 
   findPublished: () =>
     fetchAPI<PayloadResponse<PayloadCourse>>(
-      `/courses?where[status][equals]=published&sort=-createdAt&limit=100&depth=1`,
+      `/courses?where[status][equals]=published&sort=createdAt&limit=100&depth=1`,
     ),
 }
