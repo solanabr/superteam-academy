@@ -35,7 +35,12 @@ export const XpRecords: CollectionConfig = {
       type: 'number',
       required: true,
       min: 0,
-      validate: (val) => {
+      validate: (val: number | number[] | null | undefined) => {
+        if (val == null) return true
+        if (Array.isArray(val)) {
+          const invalid = val.some((v) => typeof v === 'number' && v < 0)
+          return invalid ? 'Amount must be non-negative' : true
+        }
         if (val < 0) return 'Amount must be non-negative'
         return true
       },

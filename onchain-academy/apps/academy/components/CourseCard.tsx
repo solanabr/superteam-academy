@@ -1,4 +1,5 @@
 import type { Course } from '@/libs/constants/mockData'
+import { UICourse } from '@/libs/types/course.types'
 import { BookOpen, Clock, Zap } from 'lucide-react'
 import Link from 'next/link'
 
@@ -45,7 +46,7 @@ const difficultyOnLight: Record<string, BadgeStyle> = {
   },
 }
 
-const CourseCard = ({ course }: { course: Course }) => {
+const CourseCard = ({ course }: { course: UICourse }) => {
   const diffDark =
     difficultyOnDark[course.difficulty] ?? difficultyOnDark.Beginner
   const diffLight =

@@ -7,12 +7,12 @@ import CourseCardSkeleton from '@/components/skeletons/CourseCardSkeleton'
 import { coursesAPI } from '@/libs/api'
 import { PATHS } from '@/libs/constants/home.constants'
 
-import { toCourseCard } from '@/libs/types/course.types'
+import { Link } from '@/i18n/navigation'
+import { toCourseCard, UICourse } from '@/libs/types/course.types'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
 const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced']
@@ -254,7 +254,7 @@ const Courses = () => {
             </div>
           ) : filtered.length > 0 ? (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {filtered.map((course: any, i) => (
+              {filtered.map((course: UICourse, i) => (
                 <motion.div
                   key={course.id}
                   initial={{ opacity: 0, y: 24 }}
