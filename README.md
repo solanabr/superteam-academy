@@ -1,5 +1,7 @@
 # Superteam Academy 🎓
 
+https://superteam-academy-lms-steel.vercel.app/
+
 > A Solana-native learning management system with on-chain progress tracking, NFT credentials, advanced gamification, community forum, and a full admin CMS — all dark-mode first.
 
 [![Solana](https://img.shields.io/badge/Solana-Devnet-14f195?logo=solana)](https://explorer.solana.com/?cluster=devnet)
