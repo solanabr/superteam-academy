@@ -12,6 +12,7 @@ import {
   Reviews,
   Streaks,
   Users,
+  XpRecords,
 } from './collections'
 
 const filename = fileURLToPath(import.meta.url)
@@ -31,6 +32,7 @@ export default buildConfig({
     LessonContents,
     Reviews,
     Streaks,
+    XpRecords,
     Media,
   ],
   editor: lexicalEditor(),

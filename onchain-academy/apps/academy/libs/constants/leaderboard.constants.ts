@@ -121,7 +121,7 @@ export const courses = [
 ]
 
 export const timeFilters = [
-  { label: 'All Time', value: 'all-time' },
-  { label: 'Monthly', value: 'monthly' },
   { label: 'Weekly', value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'All Time', value: 'all-time' },
 ]

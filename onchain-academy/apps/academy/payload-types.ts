@@ -74,6 +74,7 @@ export interface Config {
     'lesson-contents': LessonContent;
     reviews: Review;
     streaks: Streak;
+    'xp-records': XpRecord;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -89,6 +90,7 @@ export interface Config {
     'lesson-contents': LessonContentsSelect<false> | LessonContentsSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     streaks: StreaksSelect<false> | StreaksSelect<true>;
+    'xp-records': XpRecordsSelect<false> | XpRecordsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -498,6 +500,22 @@ export interface Streak {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-records".
+ */
+export interface XpRecord {
+  id: number;
+  user: number | User;
+  amount: number;
+  timestamp: string;
+  /**
+   * Activity that earned XP (e.g., "lesson-complete", "quiz-passed")
+   */
+  source?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -547,6 +565,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'streaks';
         value: number | Streak;
+      } | null)
+    | ({
+        relationTo: 'xp-records';
+        value: number | XpRecord;
       } | null)
     | ({
         relationTo: 'media';
@@ -797,6 +819,18 @@ export interface StreaksSelect<T extends boolean = true> {
   longestStreak?: T;
   lastActivityDate?: T;
   history?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-records_select".
+ */
+export interface XpRecordsSelect<T extends boolean = true> {
+  user?: T;
+  amount?: T;
+  timestamp?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }
