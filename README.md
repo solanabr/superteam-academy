@@ -1,5 +1,7 @@
 # Superteam Academy
 
+Check the website: https://superteam-academy-lms-steel.vercel.app/
+
 Decentralized learning platform on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. Platform governed by multisig authority.
 
 ## Monorepo Structure
