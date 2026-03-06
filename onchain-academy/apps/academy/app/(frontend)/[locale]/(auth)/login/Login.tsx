@@ -17,6 +17,7 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
@@ -101,6 +102,8 @@ function AuthStep({
   onSelect: (method: AuthMethod) => void
   onWalletAuth: () => void
 }) {
+  const t = useTranslations('login')
+  const locale = useLocale()
   const [loading, setLoading] = useState<AuthMethod>(null)
   const [error, setError] = useState<string | null>(null)
   const { connected, publicKey, signMessage, disconnect } = useWallet()
@@ -166,17 +169,17 @@ function AuthStep({
       } catch (err: unknown) {
         console.error('Wallet auth error:', err)
         if (err instanceof Error && err.message.includes('User rejected')) {
-          setError('Signature request was cancelled')
+          setError(t('auth.errorSignatureCancelled'))
           await disconnect()
         } else {
-          setError(err instanceof Error ? err.message : 'Authentication failed')
+          setError(err instanceof Error ? err.message : t('auth.errorAuthFailed'))
         }
         setLoading(null)
       }
     }
 
     authenticateWallet()
-  }, [connected, publicKey, signMessage, loading])
+  }, [connected, publicKey, signMessage, loading, t, onWalletAuth, disconnect])
 
   const handleWalletClick = () => {
     setLoading('wallet')
@@ -195,10 +198,10 @@ function AuthStep({
       posthog.capture('user_signed_in', { auth_method: 'google' })
       await signIn.social({
         provider: 'google',
-        callbackURL: '/en/login?callback=google',
+        callbackURL: `/${locale}/login?callback=google`,
       })
     } catch {
-      setError('Google sign-in failed')
+      setError(t('auth.errorGoogleFailed'))
       setLoading(null)
     }
   }
@@ -210,10 +213,10 @@ function AuthStep({
       posthog.capture('user_signed_in', { auth_method: 'github' })
       await signIn.social({
         provider: 'github',
-        callbackURL: '/en/login?callback=github',
+        callbackURL: `/${locale}/login?callback=github`,
       })
     } catch {
-      setError('GitHub sign-in failed')
+      setError(t('auth.errorGithubFailed'))
       setLoading(null)
     }
   }
@@ -237,10 +240,10 @@ function AuthStep({
           🎓
         </div>
         <h1 className='font-display text-[1.5rem] font-black text-cream tracking-tight'>
-          Welcome back
+          {t('auth.welcome')}
         </h1>
         <p className='font-ui text-[0.78rem] text-cream/45 mt-1.5'>
-          Sign in to continue your Solana journey
+          {t('auth.subtitle')}
         </p>
       </div>
 
@@ -279,7 +282,7 @@ function AuthStep({
           ) : (
             <Wallet size={18} strokeWidth={1.5} />
           )}
-          <span>Connect Wallet</span>
+          <span>{t('auth.connectWallet')}</span>
           <div className='ml-auto flex items-center gap-1.5'>
             <ChevronRight size={14} strokeWidth={1.5} />
           </div>
@@ -291,7 +294,7 @@ function AuthStep({
             style={{ background: 'hsl(var(--cream) / 0.08)' }}
           />
           <span className='font-ui text-[0.64rem] text-cream/30 uppercase tracking-wider'>
-            or continue with
+            {t('auth.orContinueWith')}
           </span>
           <div
             className='flex-1 h-px'
@@ -320,7 +323,7 @@ function AuthStep({
               G
             </span>
           )}
-          Continue with Google
+          {t('auth.continueGoogle')}
           <ChevronRight
             size={14}
             strokeWidth={1.5}
@@ -344,7 +347,7 @@ function AuthStep({
           ) : (
             <Github size={17} strokeWidth={1.5} />
           )}
-          Continue with GitHub
+          {t('auth.continueGithub')}
           <ChevronRight
             size={14}
             strokeWidth={1.5}
@@ -354,19 +357,19 @@ function AuthStep({
       </div>
 
       <p className='font-ui text-[0.6rem] text-cream/25 text-center mt-6 leading-relaxed'>
-        By signing in you agree to our{' '}
+        {t('auth.termsText')}{' '}
         <a
           href='#'
           className='underline underline-offset-2 hover:text-cream/50 transition-colors'
         >
-          Terms of Service
+          {t('auth.termsLink')}
         </a>{' '}
         and{' '}
         <a
           href='#'
           className='underline underline-offset-2 hover:text-cream/50 transition-colors'
         >
-          Privacy Policy
+          {t('auth.privacyLink')}
         </a>
       </p>
     </motion.div>
@@ -384,6 +387,7 @@ function OnboardingStep({
   onComplete: () => void
   user?: User
 }) {
+  const t = useTranslations('login')
   const [name, setName] = useState(user?.name || '')
   const [username, setUsername] = useState(user?.username || '')
   const [usernameError, setUsernameError] = useState<string | null>(null)
@@ -402,14 +406,13 @@ function OnboardingStep({
 
   /** Twitter-style validation: starts with letter, lowercase letters/numbers/underscores, 3-30 chars */
   const validateUsername = (val: string): string | null => {
-    if (!val) return null // empty = not yet typed
-    if (val.length < 3) return 'Must be at least 3 characters'
-    if (val.length > 30) return 'Must be 30 characters or less'
-    if (/^\d/.test(val)) return 'Cannot start with a number'
-    if (/\s/.test(val)) return 'Cannot contain spaces'
-    if (/-/.test(val)) return 'Use underscores instead of dashes'
-    if (!/^[a-z][a-z0-9_]{2,29}$/.test(val))
-      return 'Only lowercase letters, numbers, and underscores'
+    if (!val) return null
+    if (val.length < 3) return t('validation.minLength')
+    if (val.length > 30) return t('validation.maxLength')
+    if (/^\d/.test(val)) return t('validation.noNumberStart')
+    if (/\s/.test(val)) return t('validation.noSpaces')
+    if (/-/.test(val)) return t('validation.useUnderscores')
+    if (!/^[a-z][a-z0-9_]{2,29}$/.test(val)) return t('validation.invalidChars')
     return null
   }
 
@@ -417,7 +420,6 @@ function OnboardingStep({
     const cleaned = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
     setUsername(cleaned)
     setUsernameError(validateUsername(cleaned))
-    console.log('cleaned', cleaned)
   }
 
   const canSubmit =
@@ -492,10 +494,10 @@ function OnboardingStep({
 
       <div className='text-center mb-6'>
         <h2 className='font-display text-[1.35rem] font-black text-cream tracking-tight'>
-          Set up your profile
+          {t('onboarding.title')}
         </h2>
         <p className='font-ui text-[0.74rem] text-cream/40 mt-1'>
-          Tell the community who you are
+          {t('onboarding.subtitle')}
         </p>
       </div>
 
@@ -543,13 +545,15 @@ function OnboardingStep({
                 }}
               >
                 {walletConnected
-                  ? 'Wallet connected!'
-                  : 'Connect a wallet to earn XP'}
+                  ? t('onboarding.walletConnected')
+                  : t('onboarding.connectWallet')}
               </p>
               <p className='font-ui text-[0.62rem] text-cream/40 mt-0.5'>
                 {walletConnected
-                  ? `${truncateAddress(publicKey!.toBase58())} · You can earn on-chain credentials`
-                  : 'Required to receive XP, achievements, and on-chain certificates'}
+                  ? t('onboarding.walletSubConnected', {
+                      address: truncateAddress(publicKey!.toBase58()),
+                    })
+                  : t('onboarding.walletSubDisconnected')}
               </p>
             </div>
           </div>
@@ -564,7 +568,7 @@ function OnboardingStep({
               }}
             >
               <Wallet size={12} strokeWidth={1.5} />
-              Connect
+              {t('onboarding.connect')}
             </button>
           ) : (
             <button
@@ -576,7 +580,7 @@ function OnboardingStep({
                 color: 'hsl(var(--green-mint))',
               }}
             >
-              Disconnect
+              {t('onboarding.disconnect')}
             </button>
           )}
         </motion.div>
@@ -606,13 +610,13 @@ function OnboardingStep({
         <div className='grid grid-cols-2 gap-3'>
           <div className='flex flex-col gap-1.5'>
             <label className='font-ui text-[0.7rem] font-semibold text-cream/60'>
-              Display Name <span className='text-amber'>*</span>
+              {t('onboarding.displayName')} <span className='text-amber'>*</span>
             </label>
             <input
               type='text'
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder='Alex Rivera'
+              placeholder={t('onboarding.placeholderName')}
               className='w-full px-3 py-2.5 rounded-xl font-ui text-[0.8rem] text-cream focus:outline-none transition-colors placeholder:text-cream/25'
               style={{
                 background: 'hsl(var(--green-hero) / 0.5)',
@@ -622,13 +626,13 @@ function OnboardingStep({
           </div>
           <div className='flex flex-col gap-1.5'>
             <label className='font-ui text-[0.7rem] font-semibold text-cream/60'>
-              Username <span className='text-amber'>*</span>
+              {t('onboarding.username')} <span className='text-amber'>*</span>
             </label>
             <input
               type='text'
               value={username}
               onChange={(e) => handleUsernameChange(e.target.value)}
-              placeholder='alex_dev'
+              placeholder={t('onboarding.placeholderUsername')}
               maxLength={30}
               className='w-full px-3 py-2.5 rounded-xl font-ui text-[0.8rem] text-cream focus:outline-none transition-colors placeholder:text-cream/25'
               style={{
@@ -652,12 +656,12 @@ function OnboardingStep({
         {/* Bio */}
         <div className='flex flex-col gap-1.5'>
           <label className='font-ui text-[0.7rem] font-semibold text-cream/60'>
-            Bio
+            {t('onboarding.bio')}
           </label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder='Building on Solana · Rust enthusiast · LatAm native...'
+            placeholder={t('onboarding.placeholderBio')}
             rows={2}
             className='w-full px-3 py-2.5 rounded-xl font-ui text-[0.8rem] text-cream focus:outline-none resize-none transition-colors placeholder:text-cream/25'
             style={{
@@ -670,8 +674,10 @@ function OnboardingStep({
         {/* Social links */}
         <div>
           <p className='font-ui text-[0.7rem] font-semibold text-cream/60 mb-2'>
-            Social Links{' '}
-            <span className='font-normal text-cream/30'>(optional)</span>
+            {t('onboarding.socialLinks')}{' '}
+            <span className='font-normal text-cream/30'>
+              {t('onboarding.optional')}
+            </span>
           </p>
           <div className='flex flex-col gap-2'>
             <SocialInput
@@ -725,7 +731,7 @@ function OnboardingStep({
           <Loader2 size={17} className='animate-spin' />
         ) : (
           <>
-            Complete setup
+            {t('onboarding.completeSetup')}
             <ArrowRight size={16} strokeWidth={2} />
           </>
         )}
@@ -733,7 +739,7 @@ function OnboardingStep({
 
       {needsWallet && !walletConnected && (
         <p className='font-ui text-[0.6rem] text-amber/60 text-center mt-2'>
-          ⚠ Connect a wallet to enable XP earning before completing setup
+          {t('onboarding.walletWarning')}
         </p>
       )}
     </motion.div>
@@ -743,6 +749,8 @@ function OnboardingStep({
 // ─── Step 2: Success ─────────────────────────────────────────────
 
 function SuccessStep() {
+  const t = useTranslations('login')
+  const locale = useLocale()
   const router = useRouter()
   const { refetch } = useSession()
 
@@ -796,10 +804,10 @@ function SuccessStep() {
         transition={{ delay: 0.25 }}
       >
         <h2 className='font-display text-[1.5rem] font-black text-cream tracking-tight mb-2'>
-          You&apos;re all set! 🚀
+          {t('success.title')}
         </h2>
         <p className='font-ui text-[0.76rem] text-cream/45 mb-6'>
-          Welcome to Superteam Academy. Your learning journey starts now.
+          {t('success.subtitle')}
         </p>
 
         {/* XP earned */}
@@ -812,15 +820,14 @@ function SuccessStep() {
         >
           <Zap size={14} strokeWidth={1.5} className='text-amber' />
           <span className='font-ui text-[0.78rem] font-semibold text-amber'>
-            +50 XP earned for completing your profile!
+            {t('success.xpEarned')}
           </span>
         </div>
 
         <button
           onClick={async () => {
-            // Refetch session before navigating so AuthProvider sees fresh state
             await refetch()
-            router.push('/en/dashboard')
+            router.push(`/${locale}/dashboard`)
           }}
           className='flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl font-ui text-[0.88rem] font-semibold transition-all hover:-translate-y-0.5 cursor-pointer'
           style={{
@@ -829,7 +836,7 @@ function SuccessStep() {
             boxShadow: '0 4px 20px hsl(var(--green-primary) / 0.4)',
           }}
         >
-          Go to Dashboard
+          {t('success.goToDashboard')}
           <ArrowRight size={16} strokeWidth={2} />
         </button>
       </motion.div>
@@ -840,19 +847,19 @@ function SuccessStep() {
 // ─── Main Login Component ────────────────────────────────────────
 
 const Login = () => {
+  const t = useTranslations('login')
+  const locale = useLocale()
   const [step, setStep] = useState<Step>('auth')
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null)
-  // const [githubUsername, setGithubUsername] = useState('')
   const router = useRouter()
   const { data: session, isPending, refetch } = useSession()
 
-  // If already authenticated and onboarded, redirect to dashboard
   useEffect(() => {
     if (isPending) return
     if (session?.user) {
       const user = session.user
       if (user.onboardingComplete) {
-        router.replace('/en/dashboard')
+        router.replace(`/${locale}/dashboard`)
       } else {
         // Auto-populate GitHub username if available
         // if (user.username && typeof user.username === 'string') {
@@ -861,9 +868,8 @@ const Login = () => {
         setStep('onboarding')
       }
     }
-  }, [session, isPending, router])
+  }, [session, isPending, router, locale])
 
-  // Handle OAuth callback (Google/GitHub redirect back)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const callback = params.get('callback')
@@ -871,7 +877,7 @@ const Login = () => {
       const user = session.user as Record<string, unknown>
       setAuthMethod(callback as AuthMethod)
       if (user.onboardingComplete) {
-        router.replace('/en/dashboard')
+        router.replace(`/${locale}/dashboard`)
       } else {
         // if (callback === 'github' && user.username) {
         //   setGithubUsername(user.username as string)
@@ -879,7 +885,7 @@ const Login = () => {
         setStep('onboarding')
       }
     }
-  }, [session])
+  }, [session, locale, router])
 
   const handleAuthSelect = (method: AuthMethod) => {
     setAuthMethod(method)
@@ -953,10 +959,9 @@ const Login = () => {
           </AnimatePresence>
         </div>
 
-        {/* Bottom link */}
         {step === 'auth' && (
           <p className='text-center font-ui text-[0.65rem] text-cream/20 mt-4'>
-            Superteam Academy · Powered by Solana
+            {t('footer.branding')}
           </p>
         )}
       </div>

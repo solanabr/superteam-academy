@@ -1,0 +1,31 @@
+{
+  "banner": {
+    "title": "Rankings Globales",
+    "subtitle": "Compite con aprendices de todo el mundo. Sube en el ranking ganando XP."
+  },
+  "filters": {
+    "timePeriod": "Período",
+    "course": "Curso",
+    "time": {
+      "all-time": "Todo el tiempo",
+      "monthly": "Mensual",
+      "weekly": "Semanal"
+    },
+    "courses": {
+      "All Courses": "Todos los Cursos",
+      "Solana Fundamentals": "Fundamentos de Solana",
+      "Anchor Framework": "Framework Anchor",
+      "DeFi on Solana": "DeFi en Solana",
+      "NFT Development": "Desarrollo NFT",
+      "Cross-Program Invocations": "Invocaciones entre Programas"
+    }
+  },
+  "section": {
+    "topLearners": "Mejores Aprendices",
+    "userCount": "{count} usuarios",
+    "you": "Tú",
+    "level": "Nivel",
+    "streak": "Racha",
+    "xp": "XP"
+  }
+}

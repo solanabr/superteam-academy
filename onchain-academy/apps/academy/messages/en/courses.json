@@ -1,0 +1,43 @@
+{
+  "hero": {
+    "badge": "Course Catalog",
+    "titlePrefix": "Learn to Build on ",
+    "titleHighlight": "Solana",
+    "subtitle": "From zero to deploying production-ready dApps. Interactive courses, hands-on challenges, and on-chain credentials."
+  },
+  "paths": {
+    "sectionTitle": "Learning Paths",
+    "exploreAll": "Explore All"
+  },
+  "courses": {
+    "sectionTitle": "All Courses",
+    "loading": "—",
+    "count": "{count} courses"
+  },
+  "search": {
+    "placeholder": "Search courses..."
+  },
+  "filters": {
+    "difficulty": {
+      "All": "All",
+      "Beginner": "Beginner",
+      "Intermediate": "Intermediate",
+      "Advanced": "Advanced"
+    },
+    "topic": {
+      "All": "All",
+      "Core": "Core",
+      "Smart Contracts": "Smart Contracts",
+      "DeFi": "DeFi",
+      "Frontend": "Frontend",
+      "Security": "Security",
+      "NFTs": "NFTs"
+    }
+  },
+  "empty": {
+    "title": "No courses match your filters",
+    "subtitle": "Try adjusting the difficulty or topic filters",
+    "clearFilters": "Clear all filters"
+  }
+}
+

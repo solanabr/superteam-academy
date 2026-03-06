@@ -53,15 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
-        walletAddress: (session.user as any).walletAddress,
-        role: (session.user as any).role || 'learner',
-        onboardingComplete: (session.user as any).onboardingComplete ?? false,
-        username: (session.user as any).username,
-        bio: (session.user as any).bio,
-        twitter: (session.user as any).twitter,
-        github: (session.user as any).github,
-        linkedin: (session.user as any).linkedin,
-        telegram: (session.user as any).telegram,
+        walletAddress: session.user.walletAddress,
+        role: session.user.role || 'learner',
+        onboardingComplete: session.user.onboardingComplete ?? false,
+        username: session.user.username,
+        bio: session.user.bio,
+        twitter: session.user.twitter,
+        github: session.user.github,
+        linkedin: session.user.linkedin,
+        telegram: session.user.telegram,
       }
       setUser(user)
     } else {
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Authenticated but needs onboarding (except if already on set-up page)
     if (
       session?.user &&
-      !(session.user as any).onboardingComplete &&
+      !session.user.onboardingComplete &&
       !pathname.includes('/profile/set-up') &&
       !pathname.includes('/login') &&
       !isPublic
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (
       session?.user &&
       isAdminRoute(pathname) &&
-      (session.user as any).role !== 'admin'
+      session.user.role !== 'admin'
     ) {
       const locale = pathname.match(/^\/([a-z]{2}(-[a-z]{2})?)/i)?.[1] || 'en'
       router.replace(`/${locale}/dashboard`)

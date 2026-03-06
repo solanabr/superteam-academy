@@ -1,0 +1,54 @@
+{
+  "auth": {
+    "errorSignatureCancelled": "Solicitação de assinatura cancelada",
+    "errorGoogleFailed": "Falha ao entrar com Google",
+    "errorGithubFailed": "Falha ao entrar com GitHub",
+    "errorAuthFailed": "Falha na autenticação",
+    "welcome": "Bem-vindo de volta",
+    "subtitle": "Entre para continuar sua jornada na Solana",
+    "connectWallet": "Conectar Carteira",
+    "orContinueWith": "ou continuar com",
+    "continueGoogle": "Continuar com Google",
+    "continueGithub": "Continuar com GitHub",
+    "termsText": "Ao entrar você concorda com nossos",
+    "termsLink": "Termos de Serviço",
+    "privacyLink": "Política de Privacidade"
+  },
+  "onboarding": {
+    "title": "Configure seu perfil",
+    "subtitle": "Conte à comunidade quem você é",
+    "walletConnected": "Carteira conectada!",
+    "connectWallet": "Conecte uma carteira para ganhar XP",
+    "walletSubConnected": "{address} · Você pode ganhar credenciais on-chain",
+    "walletSubDisconnected": "Necessário para receber XP, conquistas e certificados on-chain",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "displayName": "Nome de exibição",
+    "username": "Usuário",
+    "bio": "Biografia",
+    "socialLinks": "Links sociais",
+    "optional": "(opcional)",
+    "placeholderName": "Alex Rivera",
+    "placeholderUsername": "alex_dev",
+    "placeholderBio": "Construindo na Solana · Entusiasta de Rust · Nativo da LatAm...",
+    "completeSetup": "Completar configuração",
+    "walletWarning": "⚠ Conecte uma carteira para habilitar ganho de XP antes de completar"
+  },
+  "success": {
+    "title": "Tudo pronto! 🚀",
+    "subtitle": "Bem-vindo à Superteam Academy. Sua jornada de aprendizado começa agora.",
+    "xpEarned": "+50 XP ganhos por completar seu perfil!",
+    "goToDashboard": "Ir ao Painel"
+  },
+  "footer": {
+    "branding": "Superteam Academy · Impulsionado pela Solana"
+  },
+  "validation": {
+    "minLength": "Deve ter pelo menos 3 caracteres",
+    "maxLength": "Deve ter 30 caracteres ou menos",
+    "noNumberStart": "Não pode começar com número",
+    "noSpaces": "Não pode conter espaços",
+    "useUnderscores": "Use underscores em vez de hífens",
+    "invalidChars": "Apenas letras minúsculas, números e underscores"
+  }
+}

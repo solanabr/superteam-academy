@@ -1,0 +1,31 @@
+{
+  "banner": {
+    "title": "Global Rankings",
+    "subtitle": "Compete with learners worldwide. Climb the ranks by earning XP."
+  },
+  "filters": {
+    "timePeriod": "Time Period",
+    "course": "Course",
+    "time": {
+      "all-time": "All Time",
+      "monthly": "Monthly",
+      "weekly": "Weekly"
+    },
+    "courses": {
+      "All Courses": "All Courses",
+      "Solana Fundamentals": "Solana Fundamentals",
+      "Anchor Framework": "Anchor Framework",
+      "DeFi on Solana": "DeFi on Solana",
+      "NFT Development": "NFT Development",
+      "Cross-Program Invocations": "Cross-Program Invocations"
+    }
+  },
+  "section": {
+    "topLearners": "Top Learners",
+    "userCount": "{count} users",
+    "you": "You",
+    "level": "Level",
+    "streak": "Streak",
+    "xp": "XP"
+  }
+}

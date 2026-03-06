@@ -1,0 +1,58 @@
+{
+  "banner": {
+    "streakBadge": "{count}-Day Streak",
+    "levelBadge": "Level {level} · {tier}",
+    "welcome": "Welcome back, {name} 👋",
+    "rankSubtitle": "#{rank} globally · Keep building on Solana",
+    "levelLabel": "Level {level}",
+    "xpProgress": "{current} / {total} XP",
+    "xpToNext": "{pct}% to Level {level}",
+    "xpLeft": "{amount} XP left"
+  },
+  "kpi": {
+    "totalXp": "Total XP",
+    "totalXpDelta": "+350 today",
+    "globalRank": "Global Rank",
+    "globalRankDelta": "↑ 8 spots",
+    "streak": "Streak",
+    "streakDelta": "Personal best!",
+    "lessonsDone": "Lessons Done",
+    "lessonsDelta": "+3 this week"
+  },
+  "sections": {
+    "activeCourses": "Active Courses",
+    "viewAll": "View all",
+    "next": "Next:",
+    "recommended": "Recommended for You",
+    "exploreAll": "Explore all",
+    "lessons": "lessons",
+    "match": "{pct}% match",
+    "enroll": "Enroll →",
+    "streakTracker": "Streak Tracker",
+    "dayStreak": "day",
+    "streak": "streak",
+    "achievements": "Achievements",
+    "progressOf": "{earned} of {total}",
+    "recentActivity": "Recent Activity"
+  },
+  "calendar": {
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "completed": "Completed",
+    "today": "Today",
+    "missed": "Missed"
+  }
+}

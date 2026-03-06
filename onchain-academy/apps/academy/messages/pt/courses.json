@@ -1,0 +1,43 @@
+{
+  "hero": {
+    "badge": "Catálogo de Cursos",
+    "titlePrefix": "Aprenda a construir na ",
+    "titleHighlight": "Solana",
+    "subtitle": "Do zero até implantar dApps prontas para produção. Cursos interativos, desafios práticos e credenciais on-chain."
+  },
+  "paths": {
+    "sectionTitle": "Trilhas de Aprendizado",
+    "exploreAll": "Explorar Tudo"
+  },
+  "courses": {
+    "sectionTitle": "Todos os Cursos",
+    "loading": "—",
+    "count": "{count} cursos"
+  },
+  "search": {
+    "placeholder": "Buscar cursos..."
+  },
+  "filters": {
+    "difficulty": {
+      "All": "Todas",
+      "Beginner": "Iniciante",
+      "Intermediate": "Intermediário",
+      "Advanced": "Avançado"
+    },
+    "topic": {
+      "All": "Todos",
+      "Core": "Core",
+      "Smart Contracts": "Smart Contracts",
+      "DeFi": "DeFi",
+      "Frontend": "Frontend",
+      "Security": "Segurança",
+      "NFTs": "NFTs"
+    }
+  },
+  "empty": {
+    "title": "Nenhum curso corresponde aos seus filtros",
+    "subtitle": "Tente ajustar a dificuldade ou os temas",
+    "clearFilters": "Limpar todos os filtros"
+  }
+}
+

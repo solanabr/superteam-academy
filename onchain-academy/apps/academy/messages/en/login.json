@@ -1,0 +1,54 @@
+{
+  "auth": {
+    "errorSignatureCancelled": "Signature request was cancelled",
+    "errorGoogleFailed": "Google sign-in failed",
+    "errorGithubFailed": "GitHub sign-in failed",
+    "errorAuthFailed": "Authentication failed",
+    "welcome": "Welcome back",
+    "subtitle": "Sign in to continue your Solana journey",
+    "connectWallet": "Connect Wallet",
+    "orContinueWith": "or continue with",
+    "continueGoogle": "Continue with Google",
+    "continueGithub": "Continue with GitHub",
+    "termsText": "By signing in you agree to our",
+    "termsLink": "Terms of Service",
+    "privacyLink": "Privacy Policy"
+  },
+  "onboarding": {
+    "title": "Set up your profile",
+    "subtitle": "Tell the community who you are",
+    "walletConnected": "Wallet connected!",
+    "connectWallet": "Connect a wallet to earn XP",
+    "walletSubConnected": "{address} · You can earn on-chain credentials",
+    "walletSubDisconnected": "Required to receive XP, achievements, and on-chain certificates",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "displayName": "Display Name",
+    "username": "Username",
+    "bio": "Bio",
+    "socialLinks": "Social Links",
+    "optional": "(optional)",
+    "placeholderName": "Alex Rivera",
+    "placeholderUsername": "alex_dev",
+    "placeholderBio": "Building on Solana · Rust enthusiast · LatAm native...",
+    "completeSetup": "Complete setup",
+    "walletWarning": "⚠ Connect a wallet to enable XP earning before completing setup"
+  },
+  "success": {
+    "title": "You're all set! 🚀",
+    "subtitle": "Welcome to Superteam Academy. Your learning journey starts now.",
+    "xpEarned": "+50 XP earned for completing your profile!",
+    "goToDashboard": "Go to Dashboard"
+  },
+  "footer": {
+    "branding": "Superteam Academy · Powered by Solana"
+  },
+  "validation": {
+    "minLength": "Must be at least 3 characters",
+    "maxLength": "Must be 30 characters or less",
+    "noNumberStart": "Cannot start with a number",
+    "noSpaces": "Cannot contain spaces",
+    "useUnderscores": "Use underscores instead of dashes",
+    "invalidChars": "Only lowercase letters, numbers, and underscores"
+  }
+}

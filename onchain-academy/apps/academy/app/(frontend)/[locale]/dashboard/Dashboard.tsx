@@ -11,6 +11,7 @@ import {
 } from '@/libs/constants/dashboard.constants'
 import { Streak, User } from '@/payload-types'
 import { BookOpen, Flame, Play, Trophy, Zap } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { H2 } from './H2'
 import { KPI } from './KPI'
 
@@ -44,6 +45,7 @@ interface DashboardProps {
 // ─── Page ────────────────────────────────────────────────────
 
 export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
+  const t = useTranslations('dashboard')
   const staticUser = user
   const u = {
     ...staticUser,
@@ -100,20 +102,7 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
   }
   const todayDate = today.getDate()
 
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
+  const monthNames = t.raw('calendar.months') as string[]
   const monthName = monthNames[currentMonth]
 
   return (
@@ -136,27 +125,36 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
             <div>
               <div className='flex items-center gap-2 mb-2'>
                 <span className='font-ui text-[0.58rem] font-bold tracking-[0.1em] uppercase px-2.5 py-1 rounded-full bg-amber/20 text-amber border border-amber/35'>
-                  🔥 {u.streak}-Day Streak
+                  {/* Banner: streak badge */}
+                  🔥 {t('banner.streakBadge', { count: u.streak })}
                 </span>
                 <span className='font-ui text-[0.58rem] font-bold tracking-[0.1em] uppercase px-2.5 py-1 rounded-full bg-green-mint/15 text-green-mint border border-green-mint/30'>
-                  Level {u.level} · {u.tier}
+                  {/* Banner: level badge */}
+                  {t('banner.levelBadge', { level: u.level, tier: u.tier })}
                 </span>
               </div>
               <h1 className='font-display text-[1.75rem] lg:text-[2.1rem] font-black tracking-[-0.025em] leading-tight text-cream'>
-                Welcome back, {u.name.split(' ')[0]} 👋
+                {/* Banner: welcome message */}
+                {t('banner.welcome', { name: u.name.split(' ')[0] })}
               </h1>
               <p className='font-ui text-[0.86rem] mt-1.5 text-cream/58'>
-                #{u.rank} globally · Keep building on Solana
+                {/* Banner: rank subtitle */}
+                {t('banner.rankSubtitle', { rank: u.rank })}
               </p>
             </div>
 
             <div className='sm:min-w-[220px]'>
               <div className='flex justify-between mb-1.5'>
                 <span className='font-ui text-[0.65rem] uppercase tracking-wider text-cream/45'>
-                  Level {u.level}
+                  {/* Banner: level label */}
+                  {t('banner.levelLabel', { level: u.level })}
                 </span>
                 <span className='font-ui text-[0.65rem] font-bold text-amber'>
-                  {u.xp.toLocaleString()} / {u.xpToNext.toLocaleString()} XP
+                  {/* Banner: XP progress */}
+                  {t('banner.xpProgress', {
+                    current: u.xp.toLocaleString(),
+                    total: u.xpToNext.toLocaleString(),
+                  })}
                 </span>
               </div>
               <div className='h-[7px] rounded-full overflow-hidden bg-cream/10'>
@@ -167,10 +165,17 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
               </div>
               <div className='flex justify-between mt-1.5'>
                 <span className='font-ui text-[0.6rem] text-cream/35'>
-                  {xpPct}% to Level {u.level + 1}
+                  {/* Banner: XP to next level */}
+                  {t('banner.xpToNext', {
+                    pct: xpPct,
+                    level: u.level + 1,
+                  })}
                 </span>
                 <span className='font-ui text-[0.6rem] text-cream/35'>
-                  {(u.xpToNext - u.xp).toLocaleString()} XP left
+                  {/* Banner: XP left */}
+                  {t('banner.xpLeft', {
+                    amount: (u.xpToNext - u.xp).toLocaleString(),
+                  })}
                 </span>
               </div>
             </div>
@@ -181,12 +186,13 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
 
       <div className='max-w-[1200px] mx-auto flex flex-col gap-5 py-12 px-7 lg:px-0'>
         {/* KPI ROW */}
+        {/* KPI row: Total XP, Global Rank, Streak, Lessons Done */}
         <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
           <KPI
             icon={<Zap size={18} strokeWidth={1.5} />}
             value={u.xp.toLocaleString()}
-            label='Total XP'
-            delta='+350 today'
+            label={t('kpi.totalXp')}
+            delta={t('kpi.totalXpDelta')}
             ibgClass='bg-amber/15'
             icClass='text-amber-dark'
             delay={60}
@@ -194,8 +200,8 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
           <KPI
             icon={<Trophy size={18} strokeWidth={1.5} />}
             value={`#${u.rank}`}
-            label='Global Rank'
-            delta='↑ 8 spots'
+            label={t('kpi.globalRank')}
+            delta={t('kpi.globalRankDelta')}
             ibgClass='bg-green-primary/14'
             icClass='text-green-dark'
             delay={110}
@@ -203,8 +209,8 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
           <KPI
             icon={<Flame size={18} strokeWidth={1.5} />}
             value={`${u.streak}d`}
-            label='Streak'
-            delta='Personal best!'
+            label={t('kpi.streak')}
+            delta={t('kpi.streakDelta')}
             ibgClass='bg-amber/15'
             icClass='text-amber-dark'
             delay={160}
@@ -212,8 +218,8 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
           <KPI
             icon={<BookOpen size={18} strokeWidth={1.5} />}
             value='0'
-            label='Lessons Done'
-            delta='+3 this week'
+            label={t('kpi.lessonsDone')}
+            delta={t('kpi.lessonsDelta')}
             ibgClass='bg-green-primary/11'
             icClass='text-green-primary'
             delay={210}
@@ -224,9 +230,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-5'>
           {/* LEFT — 2/3 */}
           <div className='lg:col-span-2 flex flex-col gap-5'>
-            {/* Active courses */}
+            {/* Active courses section */}
             <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.08s_ease_forwards] opacity-0'>
-              <H2 action='View all'>Active Courses</H2>
+              <H2 action={t('sections.viewAll')}>{t('sections.activeCourses')}</H2>
               <div className='flex flex-col gap-2.5'>
                 {courses.map((c) => {
                   const d = diffStyle[c.diff]
@@ -279,7 +285,8 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
                       <div className='flex items-center justify-between'>
                         <span className='font-ui text-[0.7rem] flex items-center gap-1 text-text-tertiary'>
                           <Play size={9} strokeWidth={2} />
-                          Next:{' '}
+                          {/* Active courses: next lesson label */}
+                          {t('sections.next')}{' '}
                           <span className='text-text-secondary font-medium'>
                             {c.nextLesson}
                           </span>
@@ -294,9 +301,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
               </div>
             </div>
 
-            {/* Recommended */}
+            {/* Recommended section */}
             <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.16s_ease_forwards] opacity-0'>
-              <H2 action='Explore all'>Recommended for You</H2>
+              <H2 action={t('sections.exploreAll')}>{t('sections.recommended')}</H2>
               <div className='flex flex-col gap-2'>
                 {recommended.map((r) => (
                   <div
@@ -326,7 +333,7 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
                       <div className='flex items-center gap-3 mt-0.5'>
                         <span className='font-ui text-[0.65rem] flex items-center gap-1 text-text-tertiary'>
                           <BookOpen size={9} strokeWidth={1.5} /> {r.lessons}{' '}
-                          lessons
+                          {t('sections.lessons')}
                         </span>
                         <span className='font-ui text-[0.65rem] flex items-center gap-1 text-text-tertiary'>
                           <Zap size={9} strokeWidth={1.5} /> {r.xp} XP
@@ -336,10 +343,10 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
 
                     <div className='flex-shrink-0 flex flex-col items-end gap-1.5'>
                       <span className='font-ui text-[0.58rem] font-bold px-2 py-0.5 rounded-full bg-green-primary/10 text-green-primary'>
-                        {r.match}% match
+                        {t('sections.match', { pct: r.match })}
                       </span>
                       <span className='font-ui text-[0.68rem] font-semibold px-3 py-1 rounded-lg bg-green-primary text-cream'>
-                        Enroll →
+                        {t('sections.enroll')}
                       </span>
                     </div>
                   </div>
@@ -350,9 +357,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
 
           {/* RIGHT — 1/3 */}
           <div className='flex flex-col gap-5'>
-            {/* Streak */}
+            {/* Streak tracker section */}
             <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.12s_ease_forwards] opacity-0'>
-              <H2>Streak Tracker</H2>
+              <H2>{t('sections.streakTracker')}</H2>
 
               <div className='flex items-center gap-2.5 mb-4'>
                 <Flame size={22} strokeWidth={1.5} className='text-amber' />
@@ -360,9 +367,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
                   {u.streak}
                 </span>
                 <span className='font-ui text-[0.72rem] leading-tight text-text-tertiary'>
-                  day
+                  {t('sections.dayStreak')}
                   <br />
-                  streak
+                  {t('sections.streak')}
                 </span>
               </div>
 
@@ -372,16 +379,14 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
                 </h3>
 
                 <div className='grid grid-cols-7 gap-1 mb-2'>
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                    (d) => (
-                      <div
-                        key={d}
-                        className='text-center font-ui text-[0.5rem] font-semibold text-text-tertiary'
-                      >
-                        {d}
-                      </div>
-                    ),
-                  )}
+                  {(t.raw('calendar.weekdays') as string[]).map((d) => (
+                    <div
+                      key={d}
+                      className='text-center font-ui text-[0.5rem] font-semibold text-text-tertiary'
+                    >
+                      {d}
+                    </div>
+                  ))}
                 </div>
 
                 <div className='grid grid-cols-7 gap-1'>
@@ -417,29 +422,29 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
 
               <div className='flex items-center gap-3 pt-3 border-t border-border-warm'>
                 {[
-                  { bgClass: 'bg-green-primary', label: 'Completed' },
+                  { bgClass: 'bg-green-primary', labelKey: 'calendar.completed' },
                   {
                     bgClass: 'bg-green-primary/10',
-                    label: 'Today',
+                    labelKey: 'calendar.today',
                     borderClass: 'border-green-primary/100',
                   },
-                  { bgClass: 'bg-border-warm', label: 'Missed' },
+                  { bgClass: 'bg-border-warm', labelKey: 'calendar.missed' },
                 ].map((it) => (
-                  <div key={it.label} className='flex items-center gap-1.5'>
+                  <div key={it.labelKey} className='flex items-center gap-1.5'>
                     <div
                       className={`w-2.5 h-2.5 rounded-[3px] ${it.bgClass} ${it.borderClass ? `border ${it.borderClass}` : ''}`}
                     />
                     <span className='font-ui text-[0.6rem] text-text-tertiary'>
-                      {it.label}
+                      {t(it.labelKey)}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Achievements */}
+            {/* Achievements section */}
             <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.18s_ease_forwards] opacity-0'>
-              <H2 action='View all'>Achievements</H2>
+              <H2 action={t('sections.viewAll')}>{t('sections.achievements')}</H2>
 
               <div className='grid grid-cols-3 gap-2'>
                 {badges.map((b) => (
@@ -477,7 +482,7 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
 
               <div className='flex items-center gap-2 mt-3 pt-3 border-t border-border-warm'>
                 <span className='font-ui text-[0.65rem] text-text-tertiary'>
-                  0 of 6
+                  {t('sections.progressOf', { earned: 0, total: 6 })}
                 </span>
                 <div className='flex-1 h-1.5 rounded-full overflow-hidden bg-border-warm'>
                   <div
@@ -495,9 +500,9 @@ export default function Dashboard({ dbUser, dbStreak }: DashboardProps) {
               </div>
             </div>
 
-            {/* Activity */}
+            {/* Recent activity section */}
             <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.24s_ease_forwards] opacity-0'>
-              <H2>Recent Activity</H2>
+              <H2>{t('sections.recentActivity')}</H2>
 
               <div className='flex flex-col'>
                 {feed.map((item, i) => (

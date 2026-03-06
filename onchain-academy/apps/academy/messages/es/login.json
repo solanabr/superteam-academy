@@ -1,0 +1,54 @@
+{
+  "auth": {
+    "errorSignatureCancelled": "Solicitud de firma cancelada",
+    "errorGoogleFailed": "Error al iniciar sesión con Google",
+    "errorGithubFailed": "Error al iniciar sesión con GitHub",
+    "errorAuthFailed": "Error de autenticación",
+    "welcome": "Bienvenido de nuevo",
+    "subtitle": "Inicia sesión para continuar tu camino en Solana",
+    "connectWallet": "Conectar Billetera",
+    "orContinueWith": "o continuar con",
+    "continueGoogle": "Continuar con Google",
+    "continueGithub": "Continuar con GitHub",
+    "termsText": "Al iniciar sesión aceptas nuestros",
+    "termsLink": "Términos de Servicio",
+    "privacyLink": "Política de Privacidad"
+  },
+  "onboarding": {
+    "title": "Configura tu perfil",
+    "subtitle": "Cuéntale a la comunidad quién eres",
+    "walletConnected": "¡Billetera conectada!",
+    "connectWallet": "Conecta una billetera para ganar XP",
+    "walletSubConnected": "{address} · Puedes ganar credenciales on-chain",
+    "walletSubDisconnected": "Requerido para recibir XP, logros y certificados on-chain",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "displayName": "Nombre para mostrar",
+    "username": "Usuario",
+    "bio": "Biografía",
+    "socialLinks": "Enlaces sociales",
+    "optional": "(opcional)",
+    "placeholderName": "Alex Rivera",
+    "placeholderUsername": "alex_dev",
+    "placeholderBio": "Construyendo en Solana · Entusiasta de Rust · Nativo de LatAm...",
+    "completeSetup": "Completar configuración",
+    "walletWarning": "⚠ Conecta una billetera para habilitar la ganancia de XP antes de completar"
+  },
+  "success": {
+    "title": "¡Todo listo! 🚀",
+    "subtitle": "Bienvenido a Superteam Academy. Tu viaje de aprendizaje comienza ahora.",
+    "xpEarned": "¡+50 XP ganados por completar tu perfil!",
+    "goToDashboard": "Ir al Panel"
+  },
+  "footer": {
+    "branding": "Superteam Academy · Impulsado por Solana"
+  },
+  "validation": {
+    "minLength": "Debe tener al menos 3 caracteres",
+    "maxLength": "Debe tener 30 caracteres o menos",
+    "noNumberStart": "No puede comenzar con un número",
+    "noSpaces": "No puede contener espacios",
+    "useUnderscores": "Usa guiones bajos en lugar de guiones",
+    "invalidChars": "Solo letras minúsculas, números y guiones bajos"
+  }
+}

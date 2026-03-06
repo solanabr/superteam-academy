@@ -8,9 +8,11 @@ import {
 } from '@/libs/constants/leaderboard.constants'
 import { useAuthStore } from '@/stores'
 import { Flame, Trophy, Zap } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
 export default function Leaderboard() {
+  const t = useTranslations('leaderboard')
   const { user } = useAuthStore()
   const [selectedTimeFilter, setSelectedTimeFilter] = useState('all-time')
   const [selectedCourse, setSelectedCourse] = useState('All Courses')
@@ -49,11 +51,13 @@ export default function Leaderboard() {
             <div className='flex items-center gap-3 mb-3'>
               <Trophy size={28} strokeWidth={1.5} className='text-amber' />
               <h1 className='font-display text-[2.1rem] font-black tracking-[-0.025em] leading-tight text-cream'>
-                Global Rankings
+                {/* Banner: page title */}
+                {t('banner.title')}
               </h1>
             </div>
             <p className='font-ui text-[0.86rem] text-cream/58'>
-              Compete with learners worldwide. Climb the ranks by earning XP.
+              {/* Banner: subtitle */}
+              {t('banner.subtitle')}
             </p>
           </div>
         </div>
@@ -62,10 +66,10 @@ export default function Leaderboard() {
       <div className='max-w-[1200px] mx-auto flex flex-col gap-6 py-12'>
         {/* FILTERS */}
         <div className='flex flex-col gap-4'>
-          {/* Time Filter */}
+          {/* Time filter */}
           <div className='flex flex-col gap-2'>
             <span className='font-ui text-[0.75rem] font-semibold text-charcoal uppercase tracking-wider'>
-              Time Period
+              {t('filters.timePeriod')}
             </span>
             <div className='flex gap-2 flex-wrap'>
               {timeFilters.map((filter) => (
@@ -78,16 +82,16 @@ export default function Leaderboard() {
                       : 'bg-card-warm border border-border-warm text-charcoal hover:border-green-primary'
                   }`}
                 >
-                  {filter.label}
+                  {t(`filters.time.${filter.value}`)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Course Filter */}
+          {/* Course filter */}
           <div className='flex flex-col gap-2'>
             <span className='font-ui text-[0.75rem] font-semibold text-charcoal uppercase tracking-wider'>
-              Course
+              {t('filters.course')}
             </span>
             <div className='flex gap-2 flex-wrap'>
               {courses.map((course) => (
@@ -100,7 +104,7 @@ export default function Leaderboard() {
                       : 'bg-card-warm border border-border-warm text-charcoal hover:border-green-primary'
                   }`}
                 >
-                  {course}
+                  {t(`filters.courses.${course}`)}
                 </button>
               ))}
             </div>
@@ -111,10 +115,10 @@ export default function Leaderboard() {
         <div className='card-warm rounded-2xl p-6 animate-[fade-up_0.5s_0.08s_ease_forwards] opacity-0'>
           <div className='flex items-center justify-between mb-4'>
             <h2 className='font-display text-[1.05rem] font-bold tracking-[-0.01em] text-charcoal'>
-              Top Learners
+              {t('section.topLearners')}
             </h2>
             <span className='font-ui text-[0.65rem] text-text-tertiary'>
-              {filteredUsers.length} users
+              {t('section.userCount', { count: filteredUsers.length })}
             </span>
           </div>
 
@@ -157,7 +161,7 @@ export default function Leaderboard() {
                       {user.name}
                       {user.isCurrentUser && (
                         <span className='font-ui text-[0.6rem] font-semibold ml-2 px-2 py-0.5 rounded-full bg-green-primary/10 text-green-primary'>
-                          You
+                          {t('section.you')}
                         </span>
                       )}
                     </div>
@@ -169,17 +173,17 @@ export default function Leaderboard() {
 
                 {/* Stats */}
                 <div className='flex items-center gap-4 flex-shrink-0'>
-                  {/* Level */}
+                  {/* Level stat */}
                   <div className='flex flex-col items-center gap-0.5'>
                     <span className='font-display text-[0.9rem] font-black text-charcoal'>
                       {user.level}
                     </span>
                     <span className='font-ui text-[0.55rem] text-text-tertiary'>
-                      Level
+                      {t('section.level')}
                     </span>
                   </div>
 
-                  {/* Streak */}
+                  {/* Streak stat */}
                   <div className='flex flex-col items-center gap-0.5'>
                     <div className='flex items-center gap-1'>
                       <Flame size={12} strokeWidth={2} className='text-amber' />
@@ -188,11 +192,11 @@ export default function Leaderboard() {
                       </span>
                     </div>
                     <span className='font-ui text-[0.55rem] text-text-tertiary'>
-                      Streak
+                      {t('section.streak')}
                     </span>
                   </div>
 
-                  {/* XP */}
+                  {/* XP stat */}
                   <div className='flex flex-col items-center gap-0.5'>
                     <div className='flex items-center gap-1'>
                       <Zap size={12} strokeWidth={2} className='text-amber' />
@@ -201,7 +205,7 @@ export default function Leaderboard() {
                       </span>
                     </div>
                     <span className='font-ui text-[0.55rem] text-text-tertiary'>
-                      XP
+                      {t('section.xp')}
                     </span>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
 const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced']
@@ -30,8 +30,9 @@ const Courses = () => {
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState('All')
   const [topic, setTopic] = useState('All')
-  const t = useTranslations('home')
-  const cards = t.raw('paths.cards') as Array<{
+  const tHome = useTranslations('home')
+  const tCourses = useTranslations('courses')
+  const cards = tHome.raw('paths.cards') as Array<{
     tag: string
     title: string
     desc: string
@@ -83,25 +84,29 @@ const Courses = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
+              {/* Hero badge: small label above main title */}
               <p
                 className='font-ui text-[0.6875rem] font-bold tracking-widest uppercase mb-3'
                 style={{ color: 'hsla(40,82%,88%,0.3)' }}
               >
-                Course Catalog
+                {tCourses('hero.badge')}
               </p>
               <h1
                 className='font-display text-4xl md:text-5xl font-black mb-4 text-cream tracking-[-0.02em]'
                 // style={{ color: 'hsl(var(--cream))', letterSpacing: '-0.02em' }}
               >
-                Learn to Build on{' '}
-                <span style={{ color: 'hsl(var(--green-mint))' }}>Solana</span>
+                {/* Hero title: main heading text */}
+                {tCourses('hero.titlePrefix')}
+                <span style={{ color: 'hsl(var(--green-mint))' }}>
+                  {tCourses('hero.titleHighlight')}
+                </span>
               </h1>
               <p
                 className='font-ui text-lg max-w-xl'
                 style={{ color: 'hsla(40,82%,88%,0.65)' }}
               >
-                From zero to deploying production-ready dApps. Interactive
-                courses, hands-on challenges, and on-chain credentials.
+                {/* Hero subtitle: supporting description under title */}
+                {tCourses('hero.subtitle')}
               </p>
             </motion.div>
           </div>
@@ -115,14 +120,16 @@ const Courses = () => {
       >
         <div className='max-w-[1200px] mx-auto'>
           <div className='flex items-center justify-between mb-8'>
+            {/* Learning Paths heading: section title */}
             <h2 className='font-display text-2xl font-black text-foreground'>
-              Learning Paths
+              {tCourses('paths.sectionTitle')}
             </h2>
             <Link
-              href='/en/paths'
+              href='/paths'
               className='font-ui text-sm font-semibold px-4 py-2 rounded-lg border transition-colors btn-primary flex items-center justify-center'
             >
-              Explore All
+              {/* Learning Paths CTA: explore all paths button */}
+              {tCourses('paths.exploreAll')}
             </Link>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -155,11 +162,15 @@ const Courses = () => {
       <section className='px-[5%] py-16 bg-background'>
         <div className='max-w-[1200px] mx-auto'>
           <div className='flex items-center justify-between mb-8'>
+            {/* Courses heading: section title for course catalog */}
             <h2 className='font-display text-2xl font-black text-foreground'>
-              All Courses
+              {tCourses('courses.sectionTitle')}
             </h2>
             <span className='font-ui text-sm text-muted-foreground'>
-              {isLoading ? '—' : `${filtered.length} courses`}
+              {/* Courses count: shows number of courses or loading placeholder */}
+              {isLoading
+                ? tCourses('courses.loading')
+                : tCourses('courses.count', { count: filtered.length })}
             </span>
           </div>
 
@@ -173,7 +184,8 @@ const Courses = () => {
               />
               <input
                 type='text'
-                placeholder='Search courses...'
+                // Search input placeholder: prompt to search courses
+                placeholder={tCourses('search.placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className='w-full h-11 pl-10 pr-4 rounded-lg font-ui text-sm bg-card border outline-hidden transition-all focus:border-primary focus:shadow-[0_0_0_3px_rgba(0,140,76,0.35)]'
@@ -200,28 +212,34 @@ const Courses = () => {
                         : 'rgba(27,35,29,0.2)',
                   }}
                 >
-                  {d}
+                  {/* Difficulty filter label */}
+                  {tCourses(`filters.difficulty.${d}`)}
                 </button>
               ))}
             </div>
             <div className='flex gap-2 flex-wrap'>
-              {topics.map((t) => (
+              {topics.map((topicItem) => (
                 <button
-                  key={t}
-                  onClick={() => setTopic(t)}
+                  key={topicItem}
+                  onClick={() => setTopic(topicItem)}
                   className='font-ui text-xs font-semibold px-3 py-2 rounded-lg border transition-all'
                   style={{
                     background:
-                      topic === t ? 'rgba(0,140,76,0.1)' : 'transparent',
+                      topic === topicItem
+                        ? 'rgba(0,140,76,0.1)'
+                        : 'transparent',
                     color:
-                      topic === t
+                      topic === topicItem
                         ? 'hsl(var(--green-primary))'
                         : 'hsl(var(--foreground))',
                     borderColor:
-                      topic === t ? 'rgba(0,140,76,0.2)' : 'rgba(27,35,29,0.2)',
+                      topic === topicItem
+                        ? 'rgba(0,140,76,0.2)'
+                        : 'rgba(27,35,29,0.2)',
                   }}
                 >
-                  {t}
+                  {/* Topic filter label */}
+                  {tCourses(`filters.topic.${topicItem}`)}
                 </button>
               ))}
             </div>
@@ -236,14 +254,14 @@ const Courses = () => {
             </div>
           ) : filtered.length > 0 ? (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {filtered.map((course, i) => (
+              {filtered.map((course: any, i) => (
                 <motion.div
                   key={course.id}
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.05 }}
                 >
-                  <CourseCard course={course as any} />
+                  <CourseCard course={course} />
                 </motion.div>
               ))}
             </div>
@@ -259,13 +277,15 @@ const Courses = () => {
                 className='font-display text-xl font-bold'
                 style={{ color: 'rgba(27,35,29,0.5)' }}
               >
-                No courses match your filters
+                {/* Empty state title: no courses found */}
+                {tCourses('empty.title')}
               </h3>
               <p
                 className='font-ui text-sm mt-2'
                 style={{ color: 'rgba(27,35,29,0.35)' }}
               >
-                Try adjusting the difficulty or topic filters
+                {/* Empty state subtitle: suggestion to adjust filters */}
+                {tCourses('empty.subtitle')}
               </p>
               <button
                 onClick={() => {
@@ -276,7 +296,8 @@ const Courses = () => {
                 className='mt-4 font-ui text-sm font-semibold px-4 py-2 rounded-lg border transition-colors'
                 style={{ borderColor: 'rgba(27,35,29,0.2)' }}
               >
-                Clear all filters
+                {/* Empty state action: clear all filters button */}
+                {tCourses('empty.clearFilters')}
               </button>
             </div>
           )}
