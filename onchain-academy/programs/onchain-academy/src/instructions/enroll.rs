@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use mpl_core::accounts::BaseAssetV1;
+use mpl_core::types::UpdateAuthority;
 
 use crate::errors::AcademyError;
 use crate::events::Enrolled;
@@ -16,54 +18,42 @@ pub fn handler<'info>(
 
     // Prerequisite check via remaining accounts:
     //   remaining_accounts[0] = prerequisite Course PDA
-    //   remaining_accounts[1] = prerequisite Enrollment PDA (must belong to this learner)
+    //   remaining_accounts[1] = credential NFT (Metaplex Core asset proving completion)
     if let Some(prerequisite_course) = course.prerequisite {
         let remaining = ctx.remaining_accounts;
         require!(remaining.len() >= 2, AcademyError::PrerequisiteNotMet);
 
         let prereq_course_info = &remaining[0];
-        let prereq_enrollment_info = &remaining[1];
+        let credential_info = &remaining[1];
 
         require!(
             prereq_course_info.owner == ctx.program_id,
             AcademyError::PrerequisiteNotMet
         );
         require!(
-            prereq_enrollment_info.owner == ctx.program_id,
-            AcademyError::PrerequisiteNotMet
-        );
-
-        // Verify the prerequisite course account matches
-        require!(
             prereq_course_info.key() == prerequisite_course,
             AcademyError::PrerequisiteNotMet
         );
+
         let prereq_course = Account::<Course>::try_from(prereq_course_info)
             .map_err(|_| AcademyError::PrerequisiteNotMet)?;
 
-        let prereq_enrollment = Account::<Enrollment>::try_from(prereq_enrollment_info)
-            .map_err(|_| AcademyError::PrerequisiteNotMet)?;
-
+        // Verify credential is a Metaplex Core asset
         require!(
-            prereq_enrollment.course == prerequisite_course,
-            AcademyError::PrerequisiteNotMet
-        );
-        require!(
-            prereq_enrollment.completed_at.is_some(),
+            credential_info.owner == &mpl_core::ID,
             AcademyError::PrerequisiteNotMet
         );
 
-        // Verify the enrollment PDA belongs to this learner via seed derivation
-        let (expected_pda, _) = Pubkey::find_program_address(
-            &[
-                b"enrollment",
-                prereq_course.course_id.as_bytes(),
-                ctx.accounts.learner.key().as_ref(),
-            ],
-            ctx.program_id,
+        // Deserialize credential and verify ownership + collection
+        let asset =
+            BaseAssetV1::try_from(credential_info).map_err(|_| AcademyError::PrerequisiteNotMet)?;
+
+        require!(
+            asset.owner == ctx.accounts.learner.key(),
+            AcademyError::PrerequisiteNotMet
         );
         require!(
-            prereq_enrollment_info.key() == expected_pda,
+            asset.update_authority == UpdateAuthority::Collection(prereq_course.track_collection),
             AcademyError::PrerequisiteNotMet
         );
     }

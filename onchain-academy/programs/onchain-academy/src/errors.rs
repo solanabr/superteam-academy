@@ -56,4 +56,8 @@ pub enum AcademyError {
     InvalidAmount,
     #[msg("XP reward must be greater than zero")]
     InvalidXpReward,
+    #[msg("Credential is not owned by the learner")]
+    InvalidCredentialOwner,
+    #[msg("Credential does not belong to the track collection")]
+    TrackCollectionMismatch,
 }

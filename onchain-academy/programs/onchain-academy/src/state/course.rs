@@ -14,6 +14,7 @@ pub struct Course {
     pub xp_per_lesson: u32,
     pub track_id: u16,
     pub track_level: u8,
+    pub track_collection: Pubkey,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
     pub min_completions_for_reward: u16,
@@ -37,6 +38,7 @@ impl Course {
     // + 4 (xp_per_lesson)
     // + 2 (track_id)
     // + 1 (track_level)
+    // + 32 (track_collection)
     // + (1 + 32) (prerequisite)
     // + 4 (creator_reward_xp)
     // + 2 (min_completions_for_reward)
@@ -57,6 +59,7 @@ impl Course {
         + 4
         + 2
         + 1
+        + 32
         + (1 + 32)
         + 4
         + 2
@@ -66,5 +69,5 @@ impl Course {
         + 8
         + 8
         + 8
-        + 1; // 192
+        + 1; // 224
 }

@@ -7,11 +7,12 @@ use onchain_academy::state::{Course, MAX_COURSE_ID_LEN};
 fn course_size_constant_is_correct() {
     // 8 (discriminator) + (4 + 32) (course_id String) + 32 (creator)
     // + 32 (content_tx_id) + 2 (version) + 1 (lesson_count) + 1 (difficulty)
-    // + 4 (xp_per_lesson) + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
+    // + 4 (xp_per_lesson) + 2 (track_id) + 1 (track_level) + 32 (track_collection)
+    // + (1 + 32) (prerequisite Option<Pubkey>)
     // + 4 (creator_reward_xp) + 2 (min_completions_for_reward)
     // + 4 (total_completions) + 4 (total_enrollments) + 1 (is_active)
     // + 8 (created_at) + 8 (updated_at) + 8 (_reserved) + 1 (bump)
-    assert_eq!(Course::SIZE, 192);
+    assert_eq!(Course::SIZE, 224);
 }
 
 #[test]
@@ -31,6 +32,7 @@ fn course_serialization_roundtrip() {
         xp_per_lesson: 100,
         track_id: 5,
         track_level: 2,
+        track_collection: Pubkey::new_unique(),
         prerequisite: None,
         creator_reward_xp: 50,
         min_completions_for_reward: 10,
@@ -57,6 +59,7 @@ fn course_serialization_roundtrip() {
     assert_eq!(deserialized.xp_per_lesson, 100);
     assert_eq!(deserialized.track_id, 5);
     assert_eq!(deserialized.track_level, 2);
+    assert_eq!(deserialized.track_collection, course.track_collection);
     assert_eq!(deserialized.prerequisite, None);
     assert_eq!(deserialized.creator_reward_xp, 50);
     assert_eq!(deserialized.min_completions_for_reward, 10);
@@ -82,6 +85,7 @@ fn course_with_prerequisite_roundtrip() {
         xp_per_lesson: 200,
         track_id: 1,
         track_level: 2,
+        track_collection: Pubkey::new_unique(),
         prerequisite: Some(prereq),
         creator_reward_xp: 20,
         min_completions_for_reward: 5,
@@ -148,6 +152,7 @@ fn course_serialized_size_with_max_id_and_all_options() {
         xp_per_lesson: 0,
         track_id: 0,
         track_level: 0,
+        track_collection: Pubkey::new_unique(),
         prerequisite: Some(Pubkey::new_unique()),
         creator_reward_xp: 0,
         min_completions_for_reward: 0,
@@ -179,6 +184,7 @@ fn course_serialized_size_shorter_id_fits_within_allocation() {
         xp_per_lesson: 0,
         track_id: 0,
         track_level: 0,
+        track_collection: Pubkey::new_unique(),
         prerequisite: None,
         creator_reward_xp: 0,
         min_completions_for_reward: 0,

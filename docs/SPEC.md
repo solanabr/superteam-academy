@@ -17,7 +17,7 @@ Superteam Academy is a decentralized learning platform on Solana that issues ver
 | Account | Seeds | Size | Closeable | Purpose |
 |---------|-------|------|-----------|---------|
 | Config | `["config"]` | 113 B | No | Singleton: platform authority, backend signer, XP mint |
-| Course | `["course", course_id.as_bytes()]` | 192 B | No | Course metadata, creator, XP amounts, lesson count, prerequisite |
+| Course | `["course", course_id.as_bytes()]` | 224 B | No | Course metadata, creator, XP amounts, lesson count, track collection, prerequisite |
 | Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | 127 B | Yes | Per-learner progress: lesson bitmap, timestamps, credential ref |
 | MinterRole | `["minter", minter.key()]` | 110 B | Yes (via revoke_minter) | Registered XP minter: label, per-call cap, active flag |
 | AchievementType | `["achievement", achievement_id.as_bytes()]` | 338 B | No | Achievement definition: name, metadata URI, collection, supply cap |
@@ -46,7 +46,7 @@ Superteam Academy is a decentralized learning platform on Solana that issues ver
 
 | Instruction | Who Signs | Description |
 |-------------|-----------|-------------|
-| `enroll` | learner | Create Enrollment PDA; checks course is active and prerequisite completed |
+| `enroll` | learner | Create Enrollment PDA; checks course is active and prerequisite completed (via credential NFT in remaining_accounts) |
 | `complete_lesson` | backend_signer | Set lesson bit in bitmap, mint `xp_per_lesson` to learner |
 | `finalize_course` | backend_signer | Verify full bitmap, mint completion bonus to learner, mint creator reward (if threshold met), set `completed_at` |
 | `issue_credential` | backend_signer | Create Metaplex Core credential NFT for the learner's track. Params: `credential_name`, `metadata_uri`, `courses_completed: u32`, `total_xp: u64` |
@@ -75,11 +75,11 @@ Superteam Academy is a decentralized learning platform on Solana that issues ver
 
 ### Learner Journey
 
-- Learner calls `enroll` — Enrollment PDA created, prerequisite checked on-chain
+- Learner calls `enroll` — Enrollment PDA created, prerequisite verified via credential NFT (if set)
 - Backend validates quiz or content progress, then signs and submits `complete_lesson` for each lesson — XP minted per lesson
 - Backend verifies full bitmap and submits `finalize_course` — completion bonus and creator reward minted
-- Backend submits `issue_credential` — Metaplex Core NFT created (first track course) or upgraded (subsequent track courses); asset pubkey stored in Enrollment
-- Learner optionally calls `close_enrollment` to reclaim rent; credential NFT remains in wallet permanently
+- Backend submits `issue_credential` — Metaplex Core NFT created (first track course) or `upgrade_credential` (subsequent track courses); asset pubkey stored in Enrollment
+- Learner optionally calls `close_enrollment` to reclaim rent; credential NFT remains in wallet permanently and serves as prerequisite proof for dependent courses
 - Learner can unenroll from an incomplete course after 24 hours by calling `close_enrollment`
 
 ### Admin Management
@@ -127,7 +127,13 @@ The completion bonus is computed as `floor((xp_per_lesson * lesson_count) / 2)` 
 
 Credentials are Metaplex Core NFTs — soulbound via PermanentFreezeDelegate plugin, universally visible in Phantom, Backpack, and Solflare. One credential NFT exists per learner per track (e.g., one for the Anchor track, one for the DeFi track). The credential upgrades in place as the learner completes higher-level courses in the same track — the NFT address never changes.
 
-Config PDA is the update authority for all track collection NFTs. This means only the program (signing as Config PDA) can create or upgrade credentials via Metaplex Core CPI. The Enrollment account stores the `credential_asset` pubkey once issued — this field is the on-chain source of truth for create-vs-upgrade decisions, eliminating any DAS API dependency for writes.
+Each Course PDA stores a `track_collection: Pubkey` linking it to its track's Metaplex Core collection. Config PDA is the update authority for all track collection NFTs. This means only the program (signing as Config PDA) can create or upgrade credentials via Metaplex Core CPI.
+
+**Create vs. upgrade decision:** `issue_credential` creates a new credential NFT (guarded by `enrollment.credential_asset.is_none()`). `upgrade_credential` updates an existing credential NFT, verified on-chain via `BaseAssetV1` deserialization — checking `asset.owner == learner` and `asset.update_authority == Collection(course.track_collection)`. The backend determines which to call by querying the learner's existing credentials via Helius DAS API.
+
+**Level protection:** `upgrade_credential` reads the current credential level from the Attributes plugin and applies `max(current_level, course.track_level)`, preventing downgrades when courses are completed out of order.
+
+**Prerequisite verification:** `enroll` verifies prerequisites by checking the learner's credential NFT (passed via `remaining_accounts`), not the enrollment PDA. This allows learners to reclaim enrollment rent while retaining prerequisite eligibility — the credential NFT in their wallet is permanent proof of track completion.
 
 Achievement NFTs are distinct from track credentials — each is a separate Metaplex Core asset in its own collection, awarded once per recipient per achievement type.
 
@@ -153,7 +159,7 @@ Achievement NFTs are distinct from track credentials — each is a separate Meta
 - Creator reward gating — `min_completions_for_reward` blocks alt-account farming
 - AchievementReceipt PDA init — account collision prevents double-awarding
 - MinterRole cap — `max_xp_per_call` (0 = unlimited) limits per-call damage from a compromised minter
-- Prerequisite enforcement — Enrollment checks completed_at on prerequisite Enrollment PDA at enroll time
+- Prerequisite enforcement — `enroll` verifies learner's credential NFT (ownership + track collection membership) via `remaining_accounts`
 
 ---
 
@@ -178,6 +184,8 @@ Achievement NFTs are distinct from track credentials — each is a separate Meta
 | `InvalidDifficulty` | Difficulty must be 1, 2, or 3 |
 | `CredentialAssetMismatch` | Credential asset does not match enrollment record |
 | `CredentialAlreadyIssued` | Credential already issued for this enrollment |
+| `InvalidCredentialOwner` | Credential is not owned by the learner |
+| `TrackCollectionMismatch` | Credential does not belong to the track collection |
 | `MinterNotActive` | Minter role is not active |
 | `MinterAmountExceeded` | Amount exceeds minter's per-call limit |
 | `LabelTooLong` | Minter label exceeds max length |
@@ -220,7 +228,7 @@ Achievement NFTs are distinct from track credentials — each is a separate Meta
 | Account | Size | Rent | Closeable |
 |---------|------|------|-----------|
 | Config | 113 B | ~0.001 SOL | No |
-| Course | 192 B | ~0.002 SOL | No |
+| Course | 224 B | ~0.003 SOL | No |
 | Enrollment | 127 B | ~0.001 SOL | Yes — reclaimed on close |
 | MinterRole | 110 B | ~0.001 SOL | Yes (via revoke_minter) |
 | AchievementType | 338 B | ~0.003 SOL | No |

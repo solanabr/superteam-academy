@@ -89,7 +89,7 @@ const [receiptPda] = PublicKey.findProgramAddressSync(
 
 #### enroll
 
-Enrolls the connected wallet in a course. If the course has a prerequisite, pass the prerequisite Course PDA and the learner's completed Enrollment PDA as remaining accounts.
+Enrolls the connected wallet in a course. If the course has a prerequisite, pass the prerequisite Course PDA and the learner's credential NFT (from the prerequisite track) as remaining accounts. The credential NFT is verified on-chain: account owner must be `mpl_core::ID`, `asset.owner == learner`, and `asset.update_authority == Collection(prereq_course.track_collection)`.
 
 ```typescript
 await program.methods
@@ -103,10 +103,12 @@ await program.methods
   // If course has prerequisite:
   .remainingAccounts([
     { pubkey: prereqCoursePda, isWritable: false, isSigner: false },
-    { pubkey: prereqEnrollmentPda, isWritable: false, isSigner: false },
+    { pubkey: credentialNftPubkey, isWritable: false, isSigner: false },
   ])
   .rpc();
 ```
+
+> **Note:** The prerequisite check uses the learner's credential NFT, not an enrollment PDA. This means learners can safely close their enrollment (reclaim rent) after collecting their credential — the credential serves as permanent proof of track completion.
 
 #### close_enrollment
 
@@ -275,6 +277,7 @@ await program.methods
     xpPerLesson: 100,
     trackId: 1,
     trackLevel: 1,
+    trackCollection: trackCollectionPubkey,
     prerequisite: null,
     creatorRewardXp: 50,
     minCompletionsForReward: 3,
@@ -592,7 +595,9 @@ Common error codes:
 | `CourseNotCompleted` | Finalize before all lessons done |
 | `CourseAlreadyFinalized` | Double finalize |
 | `CourseNotFinalized` | Credential before finalize |
-| `PrerequisiteNotMet` | Missing prerequisite course |
+| `PrerequisiteNotMet` | Missing or invalid prerequisite credential |
+| `InvalidCredentialOwner` | Credential NFT not owned by learner |
+| `TrackCollectionMismatch` | Credential from wrong track collection |
 | `UnenrollCooldown` | Close too early (24h cooldown) |
 | `MinterNotActive` | Revoked minter |
 | `MinterAmountExceeded` | Over per-call XP cap |

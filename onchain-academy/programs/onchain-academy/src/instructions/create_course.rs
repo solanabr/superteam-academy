@@ -14,6 +14,7 @@ pub struct CreateCourseParams {
     pub xp_per_lesson: u32,
     pub track_id: u16,
     pub track_level: u8,
+    pub track_collection: Pubkey,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
     pub min_completions_for_reward: u16,
@@ -43,6 +44,7 @@ pub fn handler(ctx: Context<CreateCourse>, params: CreateCourseParams) -> Result
     course.xp_per_lesson = params.xp_per_lesson;
     course.track_id = params.track_id;
     course.track_level = params.track_level;
+    course.track_collection = params.track_collection;
     course.prerequisite = params.prerequisite;
     course.creator_reward_xp = params.creator_reward_xp;
     course.min_completions_for_reward = params.min_completions_for_reward;

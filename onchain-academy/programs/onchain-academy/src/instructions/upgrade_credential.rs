@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 use mpl_core::{
+    accounts::BaseAssetV1,
+    fetch_asset_plugin,
     instructions::{UpdatePluginV1CpiBuilder, UpdateV1CpiBuilder},
-    types::{Attribute, Attributes, Plugin},
+    types::{Attribute, Attributes, Plugin, PluginType, UpdateAuthority},
 };
 
 use crate::errors::AcademyError;
@@ -24,14 +26,33 @@ pub fn handler(
         AcademyError::CourseNotFinalized
     );
 
-    let existing_asset = enrollment
-        .credential_asset
-        .ok_or(AcademyError::CourseNotFinalized)?;
+    // Bug 2 fix: verify credential on-chain instead of via enrollment.credential_asset
+    let asset = BaseAssetV1::try_from(&ctx.accounts.credential_asset)
+        .map_err(|_| AcademyError::CredentialAssetMismatch)?;
 
     require!(
-        ctx.accounts.credential_asset.key() == existing_asset,
-        AcademyError::CredentialAssetMismatch
+        asset.owner == ctx.accounts.learner.key(),
+        AcademyError::InvalidCredentialOwner
     );
+    require!(
+        asset.update_authority == UpdateAuthority::Collection(ctx.accounts.track_collection.key()),
+        AcademyError::TrackCollectionMismatch
+    );
+
+    // Bug 3 fix: read current credential level, only allow upgrades (never downgrade)
+    let current_level: u8 =
+        fetch_asset_plugin::<Attributes>(&ctx.accounts.credential_asset, PluginType::Attributes)
+            .ok()
+            .and_then(|(_, attrs, _)| {
+                attrs
+                    .attribute_list
+                    .iter()
+                    .find(|a| a.key == "level")
+                    .and_then(|a| a.value.parse::<u8>().ok())
+            })
+            .unwrap_or(0);
+
+    let effective_level = std::cmp::max(current_level, course.track_level);
 
     let config_bump = config.bump;
     let config_seeds: &[&[u8]] = &[b"config", &[config_bump]];
@@ -61,7 +82,7 @@ pub fn handler(
                 },
                 Attribute {
                     key: "level".into(),
-                    value: course.track_level.to_string(),
+                    value: effective_level.to_string(),
                 },
                 Attribute {
                     key: "courses_completed".into(),
@@ -75,11 +96,15 @@ pub fn handler(
         }))
         .invoke_signed(signer_seeds)?;
 
+    // Propagate credential_asset to this enrollment
+    let enrollment_mut = &mut ctx.accounts.enrollment;
+    enrollment_mut.credential_asset = Some(ctx.accounts.credential_asset.key());
+
     emit!(CredentialUpgraded {
         learner: ctx.accounts.learner.key(),
         track_id: course.track_id,
         credential_asset: ctx.accounts.credential_asset.key(),
-        current_level: course.track_level,
+        current_level: effective_level,
         timestamp: Clock::get()?.unix_timestamp,
     });
 
@@ -101,6 +126,7 @@ pub struct UpgradeCredential<'info> {
     pub course: Account<'info, Course>,
 
     #[account(
+        mut,
         seeds = [b"enrollment", course.course_id.as_bytes(), learner.key().as_ref()],
         bump = enrollment.bump,
         constraint = enrollment.course == course.key() @ AcademyError::EnrollmentCourseMismatch,
@@ -110,13 +136,16 @@ pub struct UpgradeCredential<'info> {
     /// CHECK: Tied to enrollment PDA via seeds constraint.
     pub learner: AccountInfo<'info>,
 
-    /// Existing credential NFT asset — not a signer, validated against enrollment record.
-    /// CHECK: Validated against enrollment.credential_asset.
+    /// Existing credential NFT asset — validated on-chain via BaseAssetV1 deserialization.
+    /// CHECK: Validated against learner ownership and track collection membership.
     #[account(mut)]
     pub credential_asset: AccountInfo<'info>,
 
-    /// CHECK: Metaplex Core collection for this track. Validated by Metaplex Core CPI.
-    #[account(mut)]
+    /// CHECK: Metaplex Core collection for this track.
+    #[account(
+        mut,
+        constraint = track_collection.key() == course.track_collection @ AcademyError::TrackCollectionMismatch,
+    )]
     pub track_collection: AccountInfo<'info>,
 
     #[account(mut)]

@@ -65,7 +65,7 @@ Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
 
 Config is the singleton root. It holds `xp_mint` (Token-2022 mint), `backend_signer`, and `authority`. Config PDA is also the update authority for all Metaplex Core track collection NFTs.
 
-Each Course is independent. Enrollment PDAs are children of a Course × learner pair. An Enrollment stores the lesson bitmap, `completed_at` timestamp, and the `credential_asset` pubkey once issued. That pubkey is the on-chain source of truth for create-vs-upgrade decisions in `issue_credential`.
+Each Course is independent and stores a `track_collection: Pubkey` linking it to its track's Metaplex Core collection. Enrollment PDAs are children of a Course × learner pair. An Enrollment stores the lesson bitmap, `completed_at` timestamp, and the `credential_asset` pubkey once issued. The backend uses Helius DAS API to determine create-vs-upgrade; `upgrade_credential` verifies the credential on-chain via `BaseAssetV1` deserialization (ownership + collection membership).
 
 MinterRole PDAs are independent of Course. Any registered minter (including the backend signer, auto-registered at initialize) can call `reward_xp` and `award_achievement`.
 
@@ -81,7 +81,7 @@ Credential NFTs are Metaplex Core assets. One exists per learner per track. It b
 1. ENROLL
    Learner ──sign──► enroll(course_id)
    - Check: course.is_active
-   - Check: prerequisite Enrollment.completed_at.is_some() (if set)
+   - Check: prerequisite credential NFT via remaining_accounts (if set)
    - Init: Enrollment PDA (lesson_flags = 0, completed_at = None)
    - Emit: Enrolled
 
@@ -104,16 +104,26 @@ Credential NFTs are Metaplex Core assets. One exists per learner per track. It b
    - Increment: course.total_completions
    - Emit: CourseFinalized
 
-4. ISSUE CREDENTIAL
+4a. ISSUE CREDENTIAL  (first course in track)
    Backend ──sign──► issue_credential(credential_name, metadata_uri, courses_completed, total_xp)
    - Check: enrollment.completed_at.is_some()
-   - If enrollment.credential_asset == None:
-       - Metaplex Core createV2 CPI (PermanentFreezeDelegate + Attributes plugins)
-       - Set: enrollment.credential_asset = new asset pubkey
-       - Emit: CredentialIssued (credential_created = true)
-   - If enrollment.credential_asset == Some(pubkey):
-       - Metaplex Core updateV1 + updatePluginV1 CPI
-       - Emit: CredentialIssued (credential_upgraded = true)
+   - Check: enrollment.credential_asset.is_none() (guard against double-issue)
+   - Check: track_collection.key() == course.track_collection
+   - Metaplex Core createV2 CPI (PermanentFreezeDelegate + Attributes plugins)
+   - Set: enrollment.credential_asset = new asset pubkey
+   - Emit: CredentialIssued
+   (Config PDA signs as collection update authority)
+
+4b. UPGRADE CREDENTIAL  (subsequent courses in same track)
+   Backend ──sign──► upgrade_credential(credential_name, metadata_uri, courses_completed, total_xp)
+   - Check: enrollment.completed_at.is_some()
+   - Verify: BaseAssetV1 deserialization → asset.owner == learner, asset.update_authority == Collection(track_collection)
+   - Read: current credential level from Attributes plugin
+   - Compute: effective_level = max(current_level, course.track_level) (prevent downgrade)
+   - Check: track_collection.key() == course.track_collection
+   - Metaplex Core updateV1 + updatePluginV1 CPI
+   - Propagate: enrollment.credential_asset = credential pubkey
+   - Emit: CredentialUpgraded
    (Config PDA signs as collection update authority)
 
 5. CLOSE ENROLLMENT  (optional — reclaims rent)
@@ -193,7 +203,7 @@ R = read, W = write, I = init, C = close
 | complete_lesson | R | R | W | | | | R | W (learner) | |
 | finalize_course | R | W | W | | | | R | W (learner + creator) | |
 | issue_credential | R | R | W | | | | | | W |
-| upgrade_credential | R | R | R | | | | | | W |
+| upgrade_credential | R | R | W | | | | | | W |
 | close_enrollment | | | C | | | | | | |
 | register_minter | R | | | W/I | | | | | |
 | revoke_minter | R | | | C | | | | | |
@@ -209,7 +219,7 @@ R = read, W = write, I = init, C = close
 | Account | Discriminator | Data | Reserved | Total | Rent |
 |---------|---------------|------|----------|-------|------|
 | Config | 8 B | 97 B | 8 B | 113 B | ~0.001 SOL |
-| Course | 8 B | ~176 B | 8 B | 192 B | ~0.002 SOL |
+| Course | 8 B | ~208 B | 8 B | 224 B | ~0.003 SOL |
 | Enrollment | 8 B | ~115 B | 4 B | 127 B | ~0.001 SOL |
 | MinterRole | 8 B | ~94 B | 8 B | 110 B | ~0.001 SOL |
 | AchievementType | 8 B | ~322 B | 8 B | 338 B | ~0.003 SOL |
@@ -226,7 +236,7 @@ R = read, W = write, I = init, C = close
 | update_config | ~5K | Field updates |
 | create_course | ~15K | Course PDA init |
 | update_course | ~10K | Field updates |
-| enroll | ~15K | Enrollment PDA init + prerequisite check |
+| enroll | ~17K | Enrollment PDA init + prerequisite check (credential NFT deserialization if prerequisite set) |
 | complete_lesson | ~30K | Bitmap write + Token-2022 mint CPI |
 | finalize_course | ~50K | Bitmap verify + 2× Token-2022 mint CPI |
 | issue_credential | ~50–100K | Metaplex Core createV2 or updateV1 CPI |

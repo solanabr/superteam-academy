@@ -277,6 +277,7 @@ describe("onchain-academy", () => {
           xpPerLesson: XP_PER_LESSON,
           trackId: 1,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: CREATOR_REWARD_XP,
           minCompletionsForReward: MIN_COMPLETIONS_FOR_REWARD,
@@ -331,6 +332,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 1,
             trackLevel: 1,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -371,6 +373,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 1,
             trackLevel: 1,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -411,6 +414,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 1,
             trackLevel: 1,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -450,6 +454,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 1,
             trackLevel: 1,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -489,6 +494,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 1,
             trackLevel: 1,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -527,6 +533,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 1,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -562,6 +569,7 @@ describe("onchain-academy", () => {
             xpPerLesson: 10,
             trackId: 10,
             trackLevel: difficulty,
+            trackCollection: Keypair.generate().publicKey,
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
@@ -1115,6 +1123,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 2,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
@@ -1236,6 +1245,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 3,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -1487,6 +1497,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 5,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -1616,6 +1627,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 50,
           trackId: 7,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 100,
           minCompletionsForReward: 10,
@@ -1750,24 +1762,78 @@ describe("onchain-academy", () => {
   // 12. Prerequisite enforcement
   // ===========================================================================
   describe("12. Prerequisite enforcement", () => {
+    const MPL_CORE_PROGRAM_ID = new PublicKey(
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+    );
+
+    const prereqCourseId = "prereq-base";
+    let prereqCoursePda: PublicKey;
     const advancedId = "advanced-course";
     let advancedCoursePda: PublicKey;
     const prereqLearner = Keypair.generate();
     let prereqLearnerTokenAccount: PublicKey;
+    let prereqCollectionAddress: PublicKey;
+    let prereqCredentialKeypair: Keypair;
 
     before(async () => {
       const sig = await provider.connection.requestAirdrop(
         prereqLearner.publicKey,
-        5 * LAMPORTS_PER_SOL
+        10 * LAMPORTS_PER_SOL
       );
       await provider.connection.confirmTransaction(sig, "confirmed");
 
+      // Create a real Metaplex Core collection for the prerequisite track
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+
+      const collectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: collectionSigner,
+        name: "Prereq Track Credentials",
+        uri: "https://arweave.net/prereq-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+
+      prereqCollectionAddress = toWeb3JsPublicKey(collectionSigner.publicKey);
+
+      // Create prerequisite base course with real collection
+      [prereqCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(prereqCourseId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: prereqCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 100,
+          trackId: 10,
+          trackLevel: 1,
+          trackCollection: prereqCollectionAddress,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: prereqCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Create advanced course that requires prereq-base
       [advancedCoursePda] = PublicKey.findProgramAddressSync(
         [Buffer.from("course"), Buffer.from(advancedId)],
         program.programId
       );
 
-      // Create advanced course that requires solana-101 completion
       await program.methods
         .createCourse({
           courseId: advancedId,
@@ -1776,9 +1842,10 @@ describe("onchain-academy", () => {
           lessonCount: 1,
           difficulty: 3,
           xpPerLesson: 200,
-          trackId: 1,
+          trackId: 10,
           trackLevel: 2,
-          prerequisite: coursePda, // requires solana-101
+          trackCollection: prereqCollectionAddress,
+          prerequisite: prereqCoursePda,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
         })
@@ -1810,7 +1877,7 @@ describe("onchain-academy", () => {
       await provider.sendAndConfirm(tx);
     });
 
-    it("enroll in prerequisite course fails without completed enrollment", async () => {
+    it("enroll fails without remaining accounts for prerequisite", async () => {
       const [advEnrollPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("enrollment"),
@@ -1820,7 +1887,6 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      // Try to enroll without providing any remaining accounts
       try {
         await program.methods
           .enroll(advancedId)
@@ -1842,28 +1908,7 @@ describe("onchain-academy", () => {
       }
     });
 
-    it("enroll with incomplete prerequisite enrollment fails", async () => {
-      // Enroll prereqLearner in solana-101 but do NOT complete it
-      const [prereqEnrollPda] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("enrollment"),
-          Buffer.from(courseId),
-          prereqLearner.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
-
-      await program.methods
-        .enroll(courseId)
-        .accountsPartial({
-          course: coursePda,
-          enrollment: prereqEnrollPda,
-          learner: prereqLearner.publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([prereqLearner])
-        .rpc();
-
+    it("enroll fails with non-Metaplex-Core account as credential", async () => {
       const [advEnrollPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("enrollment"),
@@ -1873,7 +1918,28 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      // Pass the incomplete enrollment as remaining account
+      // Pass a program-owned enrollment PDA (not a Metaplex Core asset)
+      const [fakeEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(prereqCourseId),
+          prereqLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      // First enroll in prereq course so the enrollment exists
+      await program.methods
+        .enroll(prereqCourseId)
+        .accountsPartial({
+          course: prereqCoursePda,
+          enrollment: fakeEnrollPda,
+          learner: prereqLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([prereqLearner])
+        .rpc();
+
       try {
         await program.methods
           .enroll(advancedId)
@@ -1885,12 +1951,12 @@ describe("onchain-academy", () => {
           })
           .remainingAccounts([
             {
-              pubkey: coursePda,
+              pubkey: prereqCoursePda,
               isWritable: false,
               isSigner: false,
             },
             {
-              pubkey: prereqEnrollPda,
+              pubkey: fakeEnrollPda,
               isWritable: false,
               isSigner: false,
             },
@@ -1907,38 +1973,38 @@ describe("onchain-academy", () => {
       }
     });
 
-    it("enroll with completed prerequisite succeeds", async () => {
-      // Complete all lessons + finalize for prereqLearner on solana-101
+    it("enroll with credential NFT succeeds", async () => {
+      // Complete the prereq course + finalize + issue credential
       const [prereqEnrollPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("enrollment"),
-          Buffer.from(courseId),
+          Buffer.from(prereqCourseId),
           prereqLearner.publicKey.toBuffer(),
         ],
         program.programId
       );
 
-      for (let i = 0; i < LESSON_COUNT; i++) {
-        await program.methods
-          .completeLesson(i)
-          .accountsPartial({
-            config: configPda,
-            course: coursePda,
-            enrollment: prereqEnrollPda,
-            learner: prereqLearner.publicKey,
-            learnerTokenAccount: prereqLearnerTokenAccount,
-            xpMint: xpMintKeypair.publicKey,
-            backendSigner: authority.publicKey,
-            tokenProgram: TOKEN_2022_PROGRAM_ID,
-          })
-          .rpc();
-      }
+      // Complete the single lesson
+      await program.methods
+        .completeLesson(0)
+        .accountsPartial({
+          config: configPda,
+          course: prereqCoursePda,
+          enrollment: prereqEnrollPda,
+          learner: prereqLearner.publicKey,
+          learnerTokenAccount: prereqLearnerTokenAccount,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
 
+      // Finalize
       await program.methods
         .finalizeCourse()
         .accountsPartial({
           config: configPda,
-          course: coursePda,
+          course: prereqCoursePda,
           enrollment: prereqEnrollPda,
           learner: prereqLearner.publicKey,
           learnerTokenAccount: prereqLearnerTokenAccount,
@@ -1950,7 +2016,26 @@ describe("onchain-academy", () => {
         })
         .rpc();
 
-      // Now enroll in advanced course with completed prereq
+      // Issue credential NFT
+      prereqCredentialKeypair = Keypair.generate();
+      await program.methods
+        .issueCredential("Prereq Track - Level 1", "https://arweave.net/prereq-cred", 1, new anchor.BN(100))
+        .accountsPartial({
+          config: configPda,
+          course: prereqCoursePda,
+          enrollment: prereqEnrollPda,
+          learner: prereqLearner.publicKey,
+          credentialAsset: prereqCredentialKeypair.publicKey,
+          trackCollection: prereqCollectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([prereqCredentialKeypair])
+        .rpc();
+
+      // Now enroll in advanced course with credential NFT as proof
       const [advEnrollPda] = PublicKey.findProgramAddressSync(
         [
           Buffer.from("enrollment"),
@@ -1970,12 +2055,12 @@ describe("onchain-academy", () => {
         })
         .remainingAccounts([
           {
-            pubkey: coursePda,
+            pubkey: prereqCoursePda,
             isWritable: false,
             isSigner: false,
           },
           {
-            pubkey: prereqEnrollPda,
+            pubkey: prereqCredentialKeypair.publicKey,
             isWritable: false,
             isSigner: false,
           },
@@ -1987,6 +2072,287 @@ describe("onchain-academy", () => {
       expect(enrollment.course.toBase58()).to.equal(
         advancedCoursePda.toBase58()
       );
+    });
+
+    it("prerequisite succeeds after close_enrollment (rent reclaim)", async () => {
+      // Close the prereq enrollment — reclaim rent (completed enrollments skip cooldown)
+      const [prereqEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(prereqCourseId),
+          prereqLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .closeEnrollment()
+        .accountsPartial({
+          course: prereqCoursePda,
+          enrollment: prereqEnrollPda,
+          learner: prereqLearner.publicKey,
+        })
+        .signers([prereqLearner])
+        .rpc();
+
+      // Verify prereq enrollment is gone
+      const closedAccount = await provider.connection.getAccountInfo(prereqEnrollPda);
+      expect(closedAccount).to.be.null;
+
+      // Create a second advanced course that also requires prereq-base
+      const advancedId2 = "advanced-course-2";
+      const [advancedCourse2Pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(advancedId2)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: advancedId2,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 3,
+          xpPerLesson: 200,
+          trackId: 10,
+          trackLevel: 3,
+          trackCollection: prereqCollectionAddress,
+          prerequisite: prereqCoursePda,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: advancedCourse2Pda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Enroll in advanced-course-2 — prereq enrollment is deleted but credential NFT still exists
+      const [advEnroll2Pda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(advancedId2),
+          prereqLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(advancedId2)
+        .accountsPartial({
+          course: advancedCourse2Pda,
+          enrollment: advEnroll2Pda,
+          learner: prereqLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts([
+          {
+            pubkey: prereqCoursePda,
+            isWritable: false,
+            isSigner: false,
+          },
+          {
+            pubkey: prereqCredentialKeypair.publicKey,
+            isWritable: false,
+            isSigner: false,
+          },
+        ])
+        .signers([prereqLearner])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(advEnroll2Pda);
+      expect(enrollment.course.toBase58()).to.equal(
+        advancedCourse2Pda.toBase58()
+      );
+    });
+
+    it("prerequisite fails with credential from wrong track", async () => {
+      // Create a different track collection
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+
+      const wrongCollectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: wrongCollectionSigner,
+        name: "Wrong Track",
+        uri: "https://arweave.net/wrong-track",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+
+      const wrongTrackCollection = toWeb3JsPublicKey(wrongCollectionSigner.publicKey);
+
+      // Create a course in the wrong track and complete it
+      const wrongTrackCourseId = "wrong-track-course";
+      const [wrongTrackCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(wrongTrackCourseId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: wrongTrackCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 99,
+          trackLevel: 1,
+          trackCollection: wrongTrackCollection,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: wrongTrackCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const wrongLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        wrongLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      // Create ATA for wrong learner
+      const wrongLearnerTokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        wrongLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      const createAtaIx2 = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        wrongLearnerTokenAccount,
+        wrongLearner.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createAtaIx2));
+
+      // Enroll, complete, finalize in wrong track
+      const [wrongEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(wrongTrackCourseId),
+          wrongLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(wrongTrackCourseId)
+        .accountsPartial({
+          course: wrongTrackCoursePda,
+          enrollment: wrongEnrollPda,
+          learner: wrongLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([wrongLearner])
+        .rpc();
+
+      await program.methods
+        .completeLesson(0)
+        .accountsPartial({
+          config: configPda,
+          course: wrongTrackCoursePda,
+          enrollment: wrongEnrollPda,
+          learner: wrongLearner.publicKey,
+          learnerTokenAccount: wrongLearnerTokenAccount,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: wrongTrackCoursePda,
+          enrollment: wrongEnrollPda,
+          learner: wrongLearner.publicKey,
+          learnerTokenAccount: wrongLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      // Issue credential in wrong track
+      const wrongCredKeypair = Keypair.generate();
+      await program.methods
+        .issueCredential("Wrong Track Cred", "https://arweave.net/wrong-cred", 1, new anchor.BN(10))
+        .accountsPartial({
+          config: configPda,
+          course: wrongTrackCoursePda,
+          enrollment: wrongEnrollPda,
+          learner: wrongLearner.publicKey,
+          credentialAsset: wrongCredKeypair.publicKey,
+          trackCollection: wrongTrackCollection,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([wrongCredKeypair])
+        .rpc();
+
+      // Now try to enroll this learner in advanced course (requires prereq track 10)
+      // but pass the wrong-track credential (track 99)
+      const [advEnrollPda2] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(advancedId),
+          wrongLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      try {
+        await program.methods
+          .enroll(advancedId)
+          .accountsPartial({
+            course: advancedCoursePda,
+            enrollment: advEnrollPda2,
+            learner: wrongLearner.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .remainingAccounts([
+            {
+              pubkey: prereqCoursePda,
+              isWritable: false,
+              isSigner: false,
+            },
+            {
+              pubkey: wrongCredKeypair.publicKey,
+              isWritable: false,
+              isSigner: false,
+            },
+          ])
+          .signers([wrongLearner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("PrerequisiteNotMet");
+        } else {
+          expect(err.toString()).to.contain("PrerequisiteNotMet");
+        }
+      }
     });
   });
 
@@ -2048,6 +2414,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 50,
           trackId: 1,
           trackLevel: 1,
+          trackCollection: collectionAddress,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -2354,6 +2721,248 @@ describe("onchain-academy", () => {
         }
       }
     });
+
+    it("upgrade_credential succeeds from second course in same track (Bug 2 regression)", async () => {
+      // Create a second course in the same track
+      const credCourse2Id = "cred-test-course-2";
+      const [credCourse2Pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(credCourse2Id)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: credCourse2Id,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 2,
+          xpPerLesson: 100,
+          trackId: 1,
+          trackLevel: 2,
+          trackCollection: collectionAddress,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: credCourse2Pda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Enroll credLearner in course 2
+      const [credEnroll2Pda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(credCourse2Id),
+          credLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(credCourse2Id)
+        .accountsPartial({
+          course: credCourse2Pda,
+          enrollment: credEnroll2Pda,
+          learner: credLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([credLearner])
+        .rpc();
+
+      // Complete + finalize course 2
+      await program.methods
+        .completeLesson(0)
+        .accountsPartial({
+          config: configPda,
+          course: credCourse2Pda,
+          enrollment: credEnroll2Pda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerTokenAccount,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: credCourse2Pda,
+          enrollment: credEnroll2Pda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      // Upgrade credential via course 2 enrollment — course 2's enrollment has credential_asset = None
+      // Before the fix this would fail with CourseNotFinalized
+      const enrollment2Before = await program.account.enrollment.fetch(credEnroll2Pda);
+      expect(enrollment2Before.credentialAsset).to.be.null;
+
+      const sig = await program.methods
+        .upgradeCredential("Track 1 - Level 2", "https://arweave.net/cred-v3", 3, new anchor.BN(1500))
+        .accountsPartial({
+          config: configPda,
+          course: credCourse2Pda,
+          enrollment: credEnroll2Pda,
+          learner: credLearner.publicKey,
+          credentialAsset: credentialKeypair.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Verify credential was updated
+      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const asset = await fetchAssetV1(
+        umi,
+        fromWeb3JsPublicKey(credentialKeypair.publicKey)
+      );
+      expect(asset.name).to.equal("Track 1 - Level 2");
+
+      // Verify level was upgraded to 2
+      const levelAttr = asset.attributes.attributeList.find((a) => a.key === "level");
+      expect(levelAttr.value).to.equal("2");
+
+      // Verify credential_asset was propagated to course 2's enrollment
+      const enrollment2After = await program.account.enrollment.fetch(credEnroll2Pda);
+      expect(enrollment2After.credentialAsset).to.not.be.null;
+      expect(enrollment2After.credentialAsset.toBase58()).to.equal(
+        credentialKeypair.publicKey.toBase58()
+      );
+    });
+
+    it("credential level never downgrades (Bug 3 regression)", async () => {
+      // Credential is currently at level 2 (from previous test)
+      // Create a level-1 course in the same track
+      const lowLevelCourseId = "cred-low-level";
+      const [lowLevelCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(lowLevelCourseId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: lowLevelCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 1,
+          trackLevel: 1, // Lower than current credential level (2)
+          trackCollection: collectionAddress,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: lowLevelCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Enroll, complete, finalize
+      const [lowEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(lowLevelCourseId),
+          credLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(lowLevelCourseId)
+        .accountsPartial({
+          course: lowLevelCoursePda,
+          enrollment: lowEnrollPda,
+          learner: credLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([credLearner])
+        .rpc();
+
+      await program.methods
+        .completeLesson(0)
+        .accountsPartial({
+          config: configPda,
+          course: lowLevelCoursePda,
+          enrollment: lowEnrollPda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerTokenAccount,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: lowLevelCoursePda,
+          enrollment: lowEnrollPda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      // Upgrade credential with level-1 course — level should stay at 2
+      const sig = await program.methods
+        .upgradeCredential("Track 1 - Still Level 2", "https://arweave.net/cred-v4", 4, new anchor.BN(2000))
+        .accountsPartial({
+          config: configPda,
+          course: lowLevelCoursePda,
+          enrollment: lowEnrollPda,
+          learner: credLearner.publicKey,
+          credentialAsset: credentialKeypair.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Verify level is still 2, NOT downgraded to 1
+      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const asset = await fetchAssetV1(
+        umi,
+        fromWeb3JsPublicKey(credentialKeypair.publicKey)
+      );
+
+      const levelAttr = asset.attributes.attributeList.find((a) => a.key === "level");
+      expect(levelAttr.value).to.equal("2"); // max(2, 1) = 2, not downgraded
+
+      // Verify other attributes were updated
+      expect(asset.name).to.equal("Track 1 - Still Level 2");
+      const coursesAttr = asset.attributes.attributeList.find((a) => a.key === "courses_completed");
+      expect(coursesAttr.value).to.equal("4");
+    });
   });
 
   // ===========================================================================
@@ -2392,6 +3001,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 20,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -2548,6 +3158,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 75,
           trackId: 30,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -2672,6 +3283,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 200,
           trackId: 31,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
@@ -3505,6 +4117,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 40,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
@@ -3641,6 +4254,7 @@ describe("onchain-academy", () => {
           xpPerLesson: 10,
           trackId: 41,
           trackLevel: 1,
+          trackCollection: Keypair.generate().publicKey,
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,

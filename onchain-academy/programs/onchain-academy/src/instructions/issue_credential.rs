@@ -119,8 +119,11 @@ pub struct IssueCredential<'info> {
     #[account(mut)]
     pub credential_asset: Signer<'info>,
 
-    /// CHECK: Metaplex Core collection for this track. Validated by Metaplex Core CPI.
-    #[account(mut)]
+    /// CHECK: Metaplex Core collection for this track.
+    #[account(
+        mut,
+        constraint = track_collection.key() == course.track_collection @ AcademyError::TrackCollectionMismatch,
+    )]
     pub track_collection: AccountInfo<'info>,
 
     #[account(mut)]
