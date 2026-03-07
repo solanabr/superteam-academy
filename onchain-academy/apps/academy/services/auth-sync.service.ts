@@ -31,7 +31,7 @@ export async function syncUserToPayload(betterAuthUser: {
     limit: 1,
   })
 
-  const isWallet = betterAuthUser.email?.endsWith('@superteam.academy')
+  const isWallet = betterAuthUser.email?.endsWith('@wallet.superteam.academy')
   const authMethod = isWallet ? 'wallet' : 'google'
 
   // For wallet users, derive a short valid email for Payload

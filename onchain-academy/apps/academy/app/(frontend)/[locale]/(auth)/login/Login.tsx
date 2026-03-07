@@ -21,7 +21,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
-import { awardSignupXP } from './actions'
+import { awardSignupXP } from '../../actions'
 
 // ─── Types ──────────────────────────────────────────────────────
 
