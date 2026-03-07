@@ -1,5 +1,7 @@
 "use client";
 
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -20,8 +22,10 @@ import { AccountExplorer } from "@/components/courses/explorers/AccountExplorer"
 import { PDADerivationExplorer } from "@/components/courses/explorers/PDADerivationExplorer";
 import { useProgress } from "@/lib/hooks/use-progress";
 import {
-  enrollWithoutWallet,
+  enrollWithOnchainTransaction,
+  getEnrollmentErrorDescription,
 } from "@/lib/progress/client-enrollment";
+import { resolveClientCourseId } from "@/lib/progress/client-course-id-overrides";
 import {
   clearSolanaFundamentalsState,
   createDefaultSolanaFundamentalsState,
@@ -195,6 +199,9 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
   const tc = useTranslations("common");
   const router = useRouter();
   const { data: session } = useSession();
+  const { connection } = useConnection();
+  const { connected, publicKey, sendTransaction } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
   const isAuthenticated = !!session?.user;
   const userScope = session?.user?.email ?? session?.user?.name ?? "guest";
 
@@ -203,15 +210,16 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
   const [completionResult, setCompletionResult] = useState<CompletionResult | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [hasAttemptedAutoEnroll, setHasAttemptedAutoEnroll] = useState(false);
   const [showCourseComplete, setShowCourseComplete] = useState(false);
   const [localState, setLocalState] = useState<SolanaFundamentalsLocalState>(
     createDefaultSolanaFundamentalsState
   );
 
-  const { progress, refresh: refreshProgress } = useProgress(slug);
+  const { progress, refresh: refreshProgress, isLoading: isProgressLoading } = useProgress(slug);
   const { lesson, courseSlug, courseOnChainId, courseTitle, modules } = lessonData;
   const isSolanaFundamentals = courseSlug === "solana-fundamentals";
+  const lessonHref = `/courses/${courseSlug}/lessons/${lessonData.lesson.id}`;
+  const signInHref = `/auth/signin?callbackUrl=${encodeURIComponent(lessonHref)}`;
 
   const allLessons = useMemo(
     () =>
@@ -298,43 +306,55 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
     [isSolanaFundamentals, localState, persistLocalState]
   );
 
-  const ensureWalletEnrollment = useCallback(async () => {
+  const handleWalletEnrollment = useCallback(async () => {
     if (!isAuthenticated) {
-      return false;
+      router.push(signInHref);
+      return;
     }
 
-    await enrollWithoutWallet(slug);
+    if (!connected || !publicKey) {
+      setWalletModalVisible(true);
+      return;
+    }
 
-    await refreshProgress();
-    return true;
+    const courseId = resolveClientCourseId(courseSlug, courseOnChainId ?? courseSlug);
+    if (!courseId) {
+      toast.error("Course enrollment unavailable", {
+        description: "This course is not provisioned for devnet enrollment yet.",
+      });
+      return;
+    }
+
+    setIsEnrolling(true);
+    try {
+      await enrollWithOnchainTransaction({
+        courseId,
+        courseSlug,
+        connection,
+        learner: publicKey,
+        sendTransaction,
+      });
+      refreshProgress();
+    } catch (error) {
+      console.error(error);
+      toast.error("Course enrollment failed", {
+        description: getEnrollmentErrorDescription(error),
+      });
+    } finally {
+      setIsEnrolling(false);
+    }
   }, [
+    connected,
+    connection,
+    courseOnChainId,
+    courseSlug,
     isAuthenticated,
+    publicKey,
     refreshProgress,
-    slug,
-  ]);
-
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      !progress &&
-      !isEnrolling &&
-      !hasAttemptedAutoEnroll
-    ) {
-      setHasAttemptedAutoEnroll(true);
-      setIsEnrolling(true);
-      ensureWalletEnrollment()
-        .catch((error) => {
-          console.error(error);
-          toast.error("Course enrollment failed");
-        })
-        .finally(() => setIsEnrolling(false));
-    }
-  }, [
-    ensureWalletEnrollment,
-    hasAttemptedAutoEnroll,
-    isAuthenticated,
-    isEnrolling,
-    progress,
+    router,
+    sendTransaction,
+    signInHref,
+    setWalletModalVisible,
   ]);
 
   useEffect(() => {
@@ -489,6 +509,14 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
     );
   }
 
+  const connectWalletToEnroll = tc("connectWallet");
+  const signEnrollmentTransaction = "Sign enrollment transaction";
+  const walletRequiredToStart = isAuthenticated
+    ? "Connect a wallet and sign enrollment before starting this course."
+    : "Sign in, connect a wallet, and sign enrollment before starting this course.";
+  const showEnrollmentGate = !isProgressLoading && !progress;
+  const showLessonContent = !isProgressLoading && !!progress;
+
   return (
     <PageShell
       className="min-h-[calc(100vh-5rem)]"
@@ -517,7 +545,7 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
             <div className="flex flex-wrap items-center gap-2">
               {!isAuthenticated ? (
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/auth/signin">{t("signInToTrack")}</Link>
+                  <Link href={signInHref}>{t("signInToTrack")}</Link>
                 </Button>
               ) : null}
               <Button asChild variant="outline" size="sm">
@@ -568,9 +596,47 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
         completedLessons={completedLessons}
       />
 
+      {isProgressLoading ? (
+        <SectionCard className="rounded-[1.5rem]" contentClassName="flex items-center gap-3 p-6 md:p-7">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Checking wallet enrollment status...</p>
+        </SectionCard>
+      ) : null}
+
+      {showEnrollmentGate ? (
+        <SectionCard className="rounded-[1.5rem]" contentClassName="space-y-4 p-6 md:p-7">
+          <div className="space-y-2">
+            <p className="text-base font-semibold text-foreground">{signEnrollmentTransaction}</p>
+            <p className="text-sm text-muted-foreground">{walletRequiredToStart}</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {!isAuthenticated ? (
+              <Button asChild>
+                <Link href={signInHref}>{t("signInToTrack")}</Link>
+              </Button>
+            ) : null}
+            <Button onClick={handleWalletEnrollment} disabled={isEnrolling} className="gap-2">
+              {isEnrolling ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {signEnrollmentTransaction}
+                </>
+              ) : !connected ? (
+                connectWalletToEnroll
+              ) : (
+                signEnrollmentTransaction
+              )}
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/courses/${courseSlug}`}>{t("backToCourse")}</Link>
+            </Button>
+          </div>
+        </SectionCard>
+      ) : null}
+
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4">
-          {isChallenge ? (
+          {showLessonContent && isChallenge ? (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
               <SectionCard className="rounded-[1.5rem]" contentClassName="space-y-6 p-6 md:p-7">
                 <div className="lesson-prose">
@@ -590,7 +656,7 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
                 />
               </div>
             </div>
-          ) : (
+          ) : showLessonContent ? (
             <SectionCard className="rounded-[1.5rem]" contentClassName="space-y-8 p-6 md:p-8">
               <div className="lesson-prose mx-auto max-w-3xl">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.content}</ReactMarkdown>
@@ -620,7 +686,7 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
                 <div className="flex flex-wrap items-center gap-2">
                   {!isAuthenticated ? (
                     <Button asChild variant="outline" size="sm">
-                      <Link href="/auth/signin">{t("signInToTrack")}</Link>
+                      <Link href={signInHref}>{t("signInToTrack")}</Link>
                     </Button>
                   ) : null}
                   <Badge variant="outline" className="border-border/70 bg-muted/25 text-muted-foreground">
@@ -629,7 +695,7 @@ export function LessonPageClient({ slug, initialData }: LessonPageClientProps) {
                 </div>
               </div>
             </SectionCard>
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-4 xl:sticky xl:top-24 xl:self-start">

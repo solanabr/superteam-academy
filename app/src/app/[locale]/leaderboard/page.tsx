@@ -13,7 +13,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageShell } from "@/components/ui/page-shell";
 import { PremiumEmptyState } from "@/components/ui/premium-empty-state";
 import { SegmentedFilter } from "@/components/ui/segmented-filter";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { courses } from "@/lib/data/courses";
 import { useLeaderboard } from "@/lib/hooks/use-leaderboard";
 import { cn } from "@/lib/utils";
 import {
@@ -67,10 +75,15 @@ export default function LeaderboardPage() {
     error,
     timeframe,
     setTimeframe,
+    courseSlug,
+    setCourseSlug,
     onChainAvailable,
     showOnChain,
     setShowOnChain,
   } = useLeaderboard(50);
+  const selectedCourse = courseSlug ?? "all";
+  const selectedCourseMeta = courses.find((course) => course.slug === courseSlug);
+  const effectiveShowOnChain = !courseSlug && showOnChain;
 
   const timeframes: Array<{ value: LeaderboardTimeframe; label: string }> = [
     { value: "alltime", label: t("allTime") },
@@ -119,6 +132,31 @@ export default function LeaderboardPage() {
               </CardContent>
             </MarketplaceCard>
 
+            <MarketplaceCard accent>
+              <CardContent className="space-y-3 p-5">
+                <div className="text-sm font-medium text-foreground">Course</div>
+                <Select
+                  value={selectedCourse}
+                  onValueChange={(value) => setCourseSlug(value === "all" ? null : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All courses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All courses</SelectItem>
+                    {courses.map((course) => (
+                      <SelectItem key={course.slug} value={course.slug}>
+                        {course.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Filter rankings by learner XP earned inside a specific course.
+                </p>
+              </CardContent>
+            </MarketplaceCard>
+
             {userRank !== null && userRank > 0 ? (
               <MarketplaceCard>
                 <CardContent className="flex items-center gap-3 p-5">
@@ -148,13 +186,19 @@ export default function LeaderboardPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowOnChain(!showOnChain)}
-                  disabled={!onChainAvailable}
+                  disabled={!onChainAvailable || !!courseSlug}
                   className="w-full justify-center gap-2 rounded-xl"
                 >
-                  {showOnChain ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  {showOnChain ? t("on") : t("off")}
+                  {effectiveShowOnChain ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {effectiveShowOnChain ? t("on") : t("off")}
                 </Button>
-                {showOnChain && !onChainAvailable ? (
+                {courseSlug ? (
+                  <div className="flex items-start gap-2 rounded-2xl border border-border/70 bg-muted/40 p-3 text-sm text-muted-foreground">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>On-chain balances stay global, so course filters show local per-course XP only.</span>
+                  </div>
+                ) : null}
+                {!courseSlug && showOnChain && !onChainAvailable ? (
                   <div className="flex items-start gap-2 rounded-2xl border border-border/70 bg-muted/40 p-3 text-sm text-muted-foreground">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span>{t("onChainUnavailable")}</span>
@@ -169,9 +213,16 @@ export default function LeaderboardPage() {
             sticky
             resultsSlot={t("learnerCount", { count: entries.length })}
             actionsSlot={
-              <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
-                {showOnChain && onChainAvailable ? t("onChainLabel") : tc("xp")}
-              </Badge>
+              <>
+                {selectedCourseMeta ? (
+                  <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
+                    {selectedCourseMeta.title}
+                  </Badge>
+                ) : null}
+                <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
+                  {effectiveShowOnChain && onChainAvailable ? t("onChainLabel") : tc("xp")}
+                </Badge>
+              </>
             }
           />
         }
@@ -248,7 +299,7 @@ export default function LeaderboardPage() {
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
-                        {showOnChain && onChainAvailable ? (
+                        {effectiveShowOnChain && onChainAvailable ? (
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Database className="h-4 w-4" />
                             {entry.onChainXP?.toLocaleString() ?? "—"}

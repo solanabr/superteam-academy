@@ -99,7 +99,7 @@ export function InterestModal({
         <DialogHeader>
           <DialogTitle>Express Interest</DialogTitle>
           <DialogDescription>
-            Tell the founder about yourself and how you can contribute to &quot;{ideaTitle}&quot;
+            Tell the idea owner about yourself and how you can contribute to &quot;{ideaTitle}&quot;
           </DialogDescription>
         </DialogHeader>
 
@@ -108,7 +108,7 @@ export function InterestModal({
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold">Interest Submitted!</h3>
             <p className="text-muted-foreground mt-2">
-              The founder will be notified and can reach out to you.
+              The idea owner will be notified and can reach out to you.
             </p>
           </div>
         ) : (

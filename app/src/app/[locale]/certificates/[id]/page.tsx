@@ -14,6 +14,7 @@ import { trackEvent } from "@/components/analytics/GoogleAnalytics";
 import {
   ExternalLink,
   Share2,
+  Download,
   Loader2,
   Award,
   CheckCircle2,
@@ -35,6 +36,15 @@ interface VerificationResult {
   heliusAvailable: boolean;
 }
 
+function escapeSvgText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export default function CertificatePage() {
   const { data: session } = useSession();
   const locale = useLocale();
@@ -45,6 +55,7 @@ export default function CertificatePage() {
   const [verification, setVerification] = useState<{ valid: boolean; owner: string | null } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const certRef = useRef<HTMLDivElement>(null);
 
   // On-chain credential state
@@ -200,6 +211,83 @@ export default function CertificatePage() {
     }
   }, [credential, certificate?.recipientWallet]);
 
+  const handleDownload = useCallback(async () => {
+    if (!certificate) return;
+
+    setIsDownloading(true);
+
+    try {
+      const completedOn = new Date(certificate.completedAt).toLocaleDateString(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const verificationLabel =
+        verification?.valid || credential
+          ? t("verifiedOnSolana")
+          : t("pendingOnChainVerification");
+      const mintAddress = credential?.mintAddress ?? certificate.credentialMint ?? "Pending mint";
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f8fafc" />
+              <stop offset="100%" stop-color="#ecfeff" />
+            </linearGradient>
+            <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#14f195" />
+              <stop offset="100%" stop-color="#9945ff" />
+            </linearGradient>
+          </defs>
+          <rect width="1400" height="900" fill="url(#bg)" rx="32" />
+          <rect x="40" y="40" width="1320" height="820" rx="28" fill="none" stroke="#dbe4ee" stroke-width="2" />
+          <rect x="120" y="116" width="160" height="10" rx="5" fill="url(#accent)" />
+          <text x="120" y="190" font-family="ui-sans-serif, system-ui, sans-serif" font-size="42" font-weight="700" fill="#0f172a">
+            ${escapeSvgText(t("title"))}
+          </text>
+          <text x="120" y="240" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" fill="#475569">
+            ${escapeSvgText(t("earnedBy"))}
+          </text>
+          <text x="120" y="320" font-family="ui-sans-serif, system-ui, sans-serif" font-size="64" font-weight="700" fill="#020617">
+            ${escapeSvgText(certificate.recipientName)}
+          </text>
+          <text x="120" y="430" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24" fill="#475569">
+            ${escapeSvgText(certificate.courseName)}
+          </text>
+          <text x="120" y="500" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" fill="#475569">
+            ${escapeSvgText(t("completedOn", { date: completedOn }))}
+          </text>
+          <text x="120" y="550" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" fill="#475569">
+            ${escapeSvgText(`${t("xpEarned")}: ${certificate.xpEarned.toLocaleString()} XP`)}
+          </text>
+          <text x="120" y="600" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" fill="#0f766e">
+            ${escapeSvgText(verificationLabel)}
+          </text>
+          <text x="120" y="700" font-family="ui-monospace, SFMono-Regular, monospace" font-size="18" fill="#475569">
+            ${escapeSvgText(`${t("mintAddress")}: ${mintAddress}`)}
+          </text>
+          <text x="120" y="748" font-family="ui-monospace, SFMono-Regular, monospace" font-size="16" fill="#64748b">
+            ${escapeSvgText(window.location.href)}
+          </text>
+        </svg>
+      `.trim();
+
+      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${certificate.courseName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-certificate.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      trackEvent("download_certificate", "certificates", certificateId);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [certificate, certificateId, credential, locale, t, verification]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -305,6 +393,10 @@ export default function CertificatePage() {
         <Button onClick={handleShare} variant="outline" className="gap-2">
           {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           {t("share")}
+        </Button>
+        <Button onClick={handleDownload} variant="outline" className="gap-2" disabled={isDownloading}>
+          {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {t("download")}
         </Button>
         {certificate.verificationUrl && (
           <a href={certificate.verificationUrl} target="_blank" rel="noopener noreferrer">

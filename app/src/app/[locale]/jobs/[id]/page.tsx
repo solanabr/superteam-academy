@@ -38,8 +38,8 @@ interface Job {
   experience: "entry" | "mid" | "senior" | "lead";
   postedAt: string;
   description: string;
-  requirements: string[];
-  responsibilities: string[];
+  requirements?: string[];
+  responsibilities?: string[];
   benefits?: string[];
 }
 
@@ -70,17 +70,11 @@ function mapJob(job: ApiJob): Job {
     senior: "senior",
     lead: "lead",
   };
-  const requirementSeed = [
-    "Strong communication across product and engineering teams",
-    "Ability to own delivery in a fast-moving shipping environment",
-  ];
 
   return {
     id: job.id,
     title: job.title,
     company: job.company,
-    companyDescription:
-      "Builder profile sourced from the Superteam Academy job marketplace. Company details expand as more metadata is added.",
     location: job.location,
     type,
     ...salary,
@@ -88,24 +82,8 @@ function mapJob(job: ApiJob): Job {
     experience: experienceMap[job.experience] ?? "mid",
     postedAt: formatRelativeDate(job.createdAt),
     description: job.description,
-    requirements:
-      job.skills.length > 0
-        ? job.skills.map((skill) => `Hands-on experience with ${skill}`)
-        : requirementSeed,
-    responsibilities: [
-      "Ship production-ready product increments",
-      "Collaborate in public with the ecosystem and internal team",
-      "Maintain code quality, reliability, and delivery velocity",
-    ],
-    benefits: [
-      "High-signal role in the Solana ecosystem",
-      "Remote-friendly collaboration",
-      "Direct access to builders and operators",
-    ],
   };
 }
-
-const mockUserSkills = ["Rust", "Anchor", "TypeScript", "React"];
 
 const experienceLabels: Record<string, string> = {
   entry: "Entry Level",
@@ -229,7 +207,6 @@ export default function JobDetailPage() {
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <Badge variant="outline">{typeLabels[job.type]}</Badge>
                 <Badge variant="secondary">{experienceLabels[job.experience]}</Badge>
-                <SkillMatchBadge jobSkills={job.skills} userSkills={mockUserSkills} />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
               <div className="flex items-center gap-2 mt-2 text-lg text-muted-foreground">
@@ -261,25 +238,29 @@ export default function JobDetailPage() {
             <CardContent className="space-y-6">
               <p className="text-muted-foreground">{job.description}</p>
 
-              <div>
-                <h3 className="font-semibold mb-3">Requirements</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  {job.requirements.map((req, i) => (
-                    <li key={i}>{req}</li>
-                  ))}
-                </ul>
-              </div>
+              {job.requirements?.length ? (
+                <div>
+                  <h3 className="font-semibold mb-3">Requirements</h3>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    {job.requirements.map((req, i) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
-              <div>
-                <h3 className="font-semibold mb-3">Responsibilities</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  {job.responsibilities.map((resp, i) => (
-                    <li key={i}>{resp}</li>
-                  ))}
-                </ul>
-              </div>
+              {job.responsibilities?.length ? (
+                <div>
+                  <h3 className="font-semibold mb-3">Responsibilities</h3>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    {job.responsibilities.map((resp, i) => (
+                      <li key={i}>{resp}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
-              {job.benefits && (
+              {job.benefits?.length ? (
                 <div>
                   <h3 className="font-semibold mb-3">Benefits</h3>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -288,7 +269,7 @@ export default function JobDetailPage() {
                     ))}
                   </ul>
                 </div>
-              )}
+              ) : null}
 
               <div>
                 <h3 className="font-semibold mb-3">Required Skills</h3>
@@ -354,34 +335,41 @@ export default function JobDetailPage() {
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </Button>
-                <Button variant="outline" className="flex-1" size="sm">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Website
-                </Button>
+                {job.companyWebsite ? (
+                  <Button asChild variant="outline" className="flex-1" size="sm">
+                    <a href={job.companyWebsite} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Website
+                    </a>
+                  </Button>
+                ) : null}
               </div>
             </div>
           </GlassCard>
 
-          {/* Company Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">About {job.company}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">{job.companyDescription}</p>
-              {job.companyWebsite && (
-                <a
-                  href={job.companyWebsite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Visit website
-                </a>
-              )}
-            </CardContent>
-          </Card>
+          {job.companyDescription || job.companyWebsite ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">About {job.company}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {job.companyDescription ? (
+                  <p className="text-sm text-muted-foreground">{job.companyDescription}</p>
+                ) : null}
+                {job.companyWebsite ? (
+                  <a
+                    href={job.companyWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Visit website
+                  </a>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Job Overview */}
           <Card>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Link } from "@/lib/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
@@ -16,15 +15,14 @@ export interface Hackathon {
   startDate: Date;
   endDate: Date;
   location: "virtual" | string;
-  prizes: string;
+  prizes?: string;
   prizePool?: number;
   currency?: string;
-  registeredCount: number;
+  registeredCount?: number;
   maxParticipants?: number;
   image?: string;
   tags: string[];
   status: "upcoming" | "live" | "ended";
-  registrationOpen: boolean;
 }
 
 interface HackathonCardProps {
@@ -34,8 +32,8 @@ interface HackathonCardProps {
 
 export function HackathonCard({ hackathon, onRegister }: HackathonCardProps) {
   const tHackathons = useTranslations("hackathons");
-  const tCommon = useTranslations("common");
   const isVirtual = hackathon.location === "virtual";
+  const hasParticipants = typeof hackathon.registeredCount === "number";
   const statusLabel =
     hackathon.status === "live"
       ? tHackathons("live")
@@ -69,14 +67,18 @@ export function HackathonCard({ hackathon, onRegister }: HackathonCardProps) {
         ) : null}
 
         <div className="marketplace-meta-row">
-          <Badge variant="outline" className="marketplace-pill">
-            <Trophy className="h-3.5 w-3.5" />
-            {hackathon.prizes}
-          </Badge>
-          <Badge variant="outline" className="marketplace-pill">
-            <Users className="h-3.5 w-3.5" />
-            {hackathon.registeredCount}
-          </Badge>
+          {hackathon.prizes ? (
+            <Badge variant="outline" className="marketplace-pill">
+              <Trophy className="h-3.5 w-3.5" />
+              {hackathon.prizes}
+            </Badge>
+          ) : null}
+          {hasParticipants ? (
+            <Badge variant="outline" className="marketplace-pill">
+              <Users className="h-3.5 w-3.5" />
+              {hackathon.registeredCount}
+            </Badge>
+          ) : null}
           <Badge variant="outline" className="marketplace-pill">
             <MapPin className="h-3.5 w-3.5" />
             {isVirtual ? tHackathons("virtual") : hackathon.location}
@@ -99,20 +101,25 @@ export function HackathonCard({ hackathon, onRegister }: HackathonCardProps) {
       </CardContent>
       <CardFooter className="flex items-center justify-between gap-3 px-5 pb-5 pt-0">
         <div className="text-xs text-muted-foreground">
-          {tHackathons("participants")}
-          {hackathon.maxParticipants ? ` ${hackathon.registeredCount}/${hackathon.maxParticipants}` : ` ${hackathon.registeredCount}`}
+          {hasParticipants ? (
+            <>
+              {tHackathons("participants")}
+              {hackathon.maxParticipants
+                ? ` ${hackathon.registeredCount}/${hackathon.maxParticipants}`
+                : ` ${hackathon.registeredCount}`}
+            </>
+          ) : (
+            <>{statusLabel}</>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="outline" className="rounded-xl">
-            <Link href={`/hackathons/${hackathon.id}`}>{tHackathons("viewDetails")}</Link>
-          </Button>
-          {hackathon.registrationOpen ? (
+          {onRegister && hackathon.status !== "ended" ? (
             <Button size="sm" className="rounded-xl" onClick={() => onRegister?.(hackathon.id)}>
               {tHackathons("register")}
             </Button>
           ) : (
             <Badge variant="outline" className="marketplace-pill">
-              {tCommon("inactive")}
+              {statusLabel}
             </Badge>
           )}
         </div>

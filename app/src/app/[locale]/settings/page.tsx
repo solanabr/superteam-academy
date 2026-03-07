@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSession, signIn } from "next-auth/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -49,11 +49,20 @@ interface SettingsData {
   preferredLocale: string;
   theme: string;
   isPublic: boolean;
+  socialLinks: {
+    twitter: string | null;
+    github: string | null;
+    discord: string | null;
+    website: string | null;
+  };
 }
+
+const NOTIFICATION_SETTINGS_STORAGE_KEY = "superteam.settings.notifications";
 
 function SettingsContent() {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const { data: session } = useSession();
   const { publicKey, signMessage, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
@@ -73,6 +82,14 @@ function SettingsContent() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [twitterHandle, setTwitterHandle] = useState("");
+  const [githubHandle, setGithubHandle] = useState("");
+  const [discordHandle, setDiscordHandle] = useState("");
+  const [website, setWebsite] = useState("");
+  const [preferredLocale, setPreferredLocale] = useState<Locale>(locale as Locale);
+  const [selectedTheme, setSelectedTheme] = useState("system");
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [productNotifications, setProductNotifications] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [courseIdOverridesText, setCourseIdOverridesText] = useState("{}");
 
@@ -86,6 +103,12 @@ function SettingsContent() {
           setUsername(data.username ?? "");
           setDisplayName(data.displayName ?? "");
           setBio(data.bio ?? "");
+          setTwitterHandle(data.socialLinks?.twitter ?? "");
+          setGithubHandle(data.socialLinks?.github ?? "");
+          setDiscordHandle(data.socialLinks?.discord ?? "");
+          setWebsite(data.socialLinks?.website ?? "");
+          setPreferredLocale((data.preferredLocale as Locale) ?? (locale as Locale));
+          setSelectedTheme(data.theme ?? "system");
           setIsPublic(data.isPublic ?? true);
         }
       } catch {
@@ -98,7 +121,21 @@ function SettingsContent() {
 
     const localOverrides = readLocalCourseIdOverrides();
     setCourseIdOverridesText(JSON.stringify(localOverrides, null, 2));
-  }, []);
+
+    try {
+      const savedNotifications = window.localStorage.getItem(NOTIFICATION_SETTINGS_STORAGE_KEY);
+      if (savedNotifications) {
+        const parsed = JSON.parse(savedNotifications) as {
+          emailNotifications?: boolean;
+          productNotifications?: boolean;
+        };
+        setEmailNotifications(parsed.emailNotifications ?? true);
+        setProductNotifications(parsed.productNotifications ?? true);
+      }
+    } catch {
+      // ignore local preference parse failures
+    }
+  }, [locale]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -109,13 +146,29 @@ function SettingsContent() {
       const response = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, displayName, bio, isPublic }),
+        body: JSON.stringify({
+          username,
+          displayName,
+          bio,
+          isPublic,
+          twitterHandle,
+          githubHandle,
+          discordHandle,
+          websiteUrl: website,
+          preferredLocale,
+          theme: selectedTheme || currentTheme || "system",
+        }),
       });
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
         throw new Error(data.error ?? "Failed to save");
       }
+
+      window.localStorage.setItem(
+        NOTIFICATION_SETTINGS_STORAGE_KEY,
+        JSON.stringify({ emailNotifications, productNotifications })
+      );
 
       setSaveMessage(t("saved"));
       toast.success(t("saved"));
@@ -127,7 +180,22 @@ function SettingsContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [username, displayName, bio, isPublic, t]);
+  }, [
+    username,
+    displayName,
+    bio,
+    isPublic,
+    twitterHandle,
+    githubHandle,
+    discordHandle,
+    website,
+    preferredLocale,
+    selectedTheme,
+    currentTheme,
+    emailNotifications,
+    productNotifications,
+    t,
+  ]);
 
   const handleLinkWallet = useCallback(async () => {
     if (!connected || !publicKey || !signMessage) return;
@@ -299,6 +367,7 @@ function SettingsContent() {
     (locale: Locale) => {
       // Track language switch
       trackEvent("language_switch", "i18n", locale);
+      setPreferredLocale(locale);
       router.replace(pathname, { locale });
     },
     [pathname, router]
@@ -516,9 +585,12 @@ function SettingsContent() {
                     key={th.value}
                     variant="ghost"
                     size="sm"
-                    onClick={() => setTheme(th.value)}
+                    onClick={() => {
+                      setTheme(th.value);
+                      setSelectedTheme(th.value);
+                    }}
                     className={
-                      currentTheme === th.value
+                      (selectedTheme || currentTheme) === th.value
                         ? "gap-1 border border-primary bg-primary/10 text-primary"
                         : "gap-1"
                     }
@@ -528,6 +600,33 @@ function SettingsContent() {
                   </Button>
                 ))}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Globe className="h-4 w-4" />
+              {t("socialLinks")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">Twitter / X</label>
+              <Input value={twitterHandle} onChange={(e) => setTwitterHandle(e.target.value)} placeholder="@superteambr" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">GitHub</label>
+              <Input value={githubHandle} onChange={(e) => setGithubHandle(e.target.value)} placeholder="solanabr" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">Discord</label>
+              <Input value={discordHandle} onChange={(e) => setDiscordHandle(e.target.value)} placeholder="superteambrasil" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">Website</label>
+              <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://superteam.fun" />
             </div>
           </CardContent>
         </Card>
@@ -567,6 +666,50 @@ function SettingsContent() {
               <Button variant="ghost" size="sm" onClick={handleExportData} className="gap-1">
                 <Download className="h-3.5 w-3.5" />
                 {t("exportData")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertCircle className="h-4 w-4" />
+              {t("notifications")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">{t("emailNotifications")}</p>
+                <p className="text-xs text-muted-foreground">
+                  Receive course completions, credential updates, and cohort announcements by email.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant={emailNotifications ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEmailNotifications((value) => !value)}
+              >
+                {emailNotifications ? t("on") : t("off")}
+              </Button>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Product notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  Keep in-app release notes and leaderboard/streak reminders enabled on this device.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant={productNotifications ? "default" : "outline"}
+                size="sm"
+                onClick={() => setProductNotifications((value) => !value)}
+              >
+                {productNotifications ? t("on") : t("off")}
               </Button>
             </div>
           </CardContent>

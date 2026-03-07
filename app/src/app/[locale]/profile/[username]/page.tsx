@@ -3,10 +3,20 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ExternalLink, Loader2, Calendar, UserX } from "lucide-react";
+import {
+  Shield,
+  ExternalLink,
+  Loader2,
+  Calendar,
+  UserX,
+  Github,
+  Globe,
+  MessageCircle,
+  Twitter,
+} from "lucide-react";
 import { deriveLevel } from "@/types";
 import type { Achievement, Credential } from "@/types";
 
@@ -16,6 +26,12 @@ interface PublicProfile {
   bio: string | null;
   avatarUrl: string | null;
   joinedAt: string;
+  socialLinks: {
+    twitter: string | null;
+    github: string | null;
+    discord: string | null;
+    website: string | null;
+  };
   xp: number;
   achievements: Achievement[];
   credentials: Credential[];
@@ -74,12 +90,47 @@ export default function PublicProfilePage() {
   const name = profile.displayName ?? profile.username;
   const level = deriveLevel(profile.xp);
   const unlockedAchievements = profile.achievements.filter((a) => a.unlockedAt !== null);
+  const socialLinks = [
+    profile.socialLinks.twitter
+      ? {
+          href: `https://x.com/${profile.socialLinks.twitter.replace(/^@/, "")}`,
+          label: "X / Twitter",
+          icon: Twitter,
+          value: profile.socialLinks.twitter,
+        }
+      : null,
+    profile.socialLinks.github
+      ? {
+          href: `https://github.com/${profile.socialLinks.github.replace(/^@/, "")}`,
+          label: "GitHub",
+          icon: Github,
+          value: profile.socialLinks.github,
+        }
+      : null,
+    profile.socialLinks.discord
+      ? {
+          href: `https://discord.com/users/${profile.socialLinks.discord}`,
+          label: "Discord",
+          icon: MessageCircle,
+          value: profile.socialLinks.discord,
+        }
+      : null,
+    profile.socialLinks.website
+      ? {
+          href: profile.socialLinks.website,
+          label: "Website",
+          icon: Globe,
+          value: profile.socialLinks.website,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <div className="container py-8 md:py-12">
       {/* Header */}
       <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         <Avatar className="h-20 w-20">
+          <AvatarImage src={profile.avatarUrl ?? undefined} alt={name} />
           <AvatarFallback className="text-xl">{name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-center sm:text-left">
@@ -92,6 +143,22 @@ export default function PublicProfilePage() {
             <Calendar className="h-3.5 w-3.5" />
             {t("joined", { date: new Date(profile.joinedAt).toLocaleDateString() })}
           </p>
+          {socialLinks.length > 0 ? (
+            <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <link.icon className="h-3.5 w-3.5" />
+                  <span>{link.value}</span>
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -18,6 +18,7 @@ export const dynamic = "force-dynamic";
 const leaderboardQuerySchema = z.object({
   timeframe: Schemas.timeframe,
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+  course: z.string().trim().min(1).optional(),
 });
 
 interface EnrichedEntry extends LeaderboardEntry {
@@ -40,11 +41,11 @@ export async function GET(request: Request): Promise<Response> {
   try {
     // Parse query params
     const { searchParams } = new URL(request.url);
-    const { timeframe, limit } = validateQuery(leaderboardQuerySchema, searchParams);
+    const { timeframe, limit, course } = validateQuery(leaderboardQuerySchema, searchParams);
 
     // Get local leaderboard (always available)
     const progressService = getProgressService();
-    const localEntries = await progressService.getLeaderboard(timeframe, limit);
+    const localEntries = await progressService.getLeaderboard(timeframe, limit, course);
 
     // Fetch on-chain leaderboard (bonus layer)
     const onChainEntries = await getOnChainLeaderboard();
@@ -82,7 +83,7 @@ export async function GET(request: Request): Promise<Response> {
     let userRank: number | null = null;
     const session = await getServerSession(authOptions);
     if (session?.user?.id) {
-      userRank = await progressService.getUserRank(session.user.id, timeframe);
+      userRank = await progressService.getUserRank(session.user.id, timeframe, course);
     }
 
     const response: LeaderboardResponse = {

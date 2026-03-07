@@ -20,6 +20,14 @@ import { useAllProgress } from "@/lib/hooks/use-progress";
 import { useLeaderboard } from "@/lib/hooks/use-leaderboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from "recharts";
+import {
   Trophy,
   Shield,
   ExternalLink,
@@ -30,6 +38,10 @@ import {
   Flame,
   Star,
   Wallet,
+  Github,
+  Globe,
+  MessageCircle,
+  Twitter,
 } from "lucide-react";
 import type { AchievementWithStatus } from "@/types/achievements";
 
@@ -67,6 +79,12 @@ interface ProfileData {
   avatarUrl: string | null;
   joinedAt: string;
   isPublic: boolean;
+  socialLinks: {
+    twitter: string | null;
+    github: string | null;
+    discord: string | null;
+    website: string | null;
+  };
   achievements: AchievementWithStatus[];
   primaryWallet: string | null;
 }
@@ -172,6 +190,48 @@ function ProfileContent() {
     profileData?.username ??
     session?.user?.name ??
     t("defaultName");
+  const socialLinks = [
+    profileData?.socialLinks?.twitter
+      ? {
+          href: `https://x.com/${profileData.socialLinks.twitter.replace(/^@/, "")}`,
+          label: "X / Twitter",
+          icon: Twitter,
+          value: profileData.socialLinks.twitter,
+        }
+      : null,
+    profileData?.socialLinks?.github
+      ? {
+          href: `https://github.com/${profileData.socialLinks.github.replace(/^@/, "")}`,
+          label: "GitHub",
+          icon: Github,
+          value: profileData.socialLinks.github,
+        }
+      : null,
+    profileData?.socialLinks?.discord
+      ? {
+          href: `https://discord.com/users/${profileData.socialLinks.discord}`,
+          label: "Discord",
+          icon: MessageCircle,
+          value: profileData.socialLinks.discord,
+        }
+      : null,
+    profileData?.socialLinks?.website
+      ? {
+          href: profileData.socialLinks.website,
+          label: "Website",
+          icon: Globe,
+          value: profileData.socialLinks.website,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
+  const skillRadarData = [
+    { skill: t("skillsFundamentals"), value: skillData.fundamentals },
+    { skill: t("skillsRust"), value: skillData.rust },
+    { skill: t("skillsFrontend"), value: skillData.frontend },
+    { skill: t("skillsDeFi"), value: skillData.defi },
+    { skill: t("skillsSecurity"), value: skillData.security },
+    { skill: t("skillsTesting"), value: skillData.testing },
+  ];
 
   return (
     <div className="academy-fade-up container py-8 md:py-10">
@@ -218,6 +278,22 @@ function ProfileContent() {
               </a>
             )}
           </div>
+          {socialLinks.length > 0 ? (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <link.icon className="h-3.5 w-3.5" />
+                  <span>{link.value}</span>
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
         <Link href="/settings">
           <Button
@@ -328,13 +404,34 @@ function ProfileContent() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SkillBar label={t("skillsFundamentals")} value={skillData.fundamentals} />
-            <SkillBar label={t("skillsRust")} value={skillData.rust} />
-            <SkillBar label={t("skillsFrontend")} value={skillData.frontend} />
-            <SkillBar label={t("skillsDeFi")} value={skillData.defi} />
-            <SkillBar label={t("skillsSecurity")} value={skillData.security} />
-            <SkillBar label={t("skillsTesting")} value={skillData.testing} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+            <div className="h-[20rem] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={skillRadarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis
+                    dataKey="skill"
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis
+                    angle={30}
+                    domain={[0, 100]}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  />
+                  <Radar
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.2}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {skillRadarData.map((item) => (
+                <SkillBar key={item.skill} label={item.skill} value={item.value} />
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

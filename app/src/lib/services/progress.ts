@@ -28,6 +28,14 @@ export interface LearningProgressService {
   unlockAchievement(userId: string, achievementId: string): Promise<void>;
 
   // Leaderboard
-  getLeaderboard(timeframe: "weekly" | "monthly" | "alltime", limit?: number): Promise<LeaderboardEntry[]>;
-  getUserRank(userId: string, timeframe: "weekly" | "monthly" | "alltime"): Promise<number>;
+  getLeaderboard(
+    timeframe: "weekly" | "monthly" | "alltime",
+    limit?: number,
+    courseSlug?: string | null
+  ): Promise<LeaderboardEntry[]>;
+  getUserRank(
+    userId: string,
+    timeframe: "weekly" | "monthly" | "alltime",
+    courseSlug?: string | null
+  ): Promise<number>;
 }

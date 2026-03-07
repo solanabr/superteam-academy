@@ -9,14 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GlassCard, LuxuryBadge } from "@/components/luxury/primitives";
 import { IdeaStageBadge } from "@/components/ideas/IdeaStageBadge";
-import { TeamMatchBadge } from "@/components/ideas/TeamMatchBadge";
 import { InterestModal } from "@/components/ideas/InterestModal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatRelativeDate } from "@/lib/feature-ui";
 import {
-  Lightbulb,
   Users,
-  MessageSquare,
   ArrowLeft,
   Share2,
   Target,
@@ -40,6 +37,7 @@ type ApiIdea = {
   lookingFor: string[];
   createdAt: string;
   owner?: {
+    id?: string | null;
     displayName?: string | null;
     username?: string | null;
   };
@@ -47,6 +45,7 @@ type ApiIdea = {
     id: string;
     role: string;
     user?: {
+      id?: string | null;
       displayName?: string | null;
       username?: string | null;
     };
@@ -60,10 +59,17 @@ function prettifyRole(value: string): string {
     .join(" ");
 }
 
+function formatIdentity(value?: string | null): string | undefined {
+  return value ? `${value.slice(0, 8)}...` : undefined;
+}
+
 function mapIdea(idea: ApiIdea): PageIdea {
   const stage = ["idea", "mvp", "launched"].includes(idea.stage)
     ? (idea.stage as Idea["stage"])
     : "idea";
+  const authorName =
+    idea.owner?.displayName || idea.owner?.username || formatIdentity(idea.owner?.id);
+
   return {
     id: idea.id,
     title: idea.title,
@@ -74,22 +80,30 @@ function mapIdea(idea: ApiIdea): PageIdea {
     stage,
     lookingFor: idea.lookingFor.map(prettifyRole),
     skillsNeeded: idea.lookingFor.map(prettifyRole),
-    author: { name: idea.owner?.displayName || idea.owner?.username || "Founder" },
-    likes: idea.interested?.length ?? 0,
-    comments: 0,
+    author: authorName ? { name: authorName } : undefined,
+    interestedCount: idea.interested?.length ?? 0,
     createdAt: formatRelativeDate(idea.createdAt),
-    teamMembers: (idea.interested ?? []).slice(0, 4).map((entry) => ({
-      name: entry.user?.displayName || entry.user?.username || "Interested builder",
-      role: prettifyRole(entry.role),
-    })),
+    teamMembers: (idea.interested ?? [])
+      .slice(0, 4)
+      .map((entry) => {
+        const name =
+          entry.user?.displayName ||
+          entry.user?.username ||
+          formatIdentity(entry.user?.id);
+
+        return name
+          ? {
+              name,
+              role: prettifyRole(entry.role),
+            }
+          : null;
+      })
+      .filter((member): member is PageIdea["teamMembers"][number] => member !== null),
   };
 }
 
-const mockUserSkills = ["React", "TypeScript", "Rust", "Anchor"];
-
 export default function IdeaDetailPage() {
   const t = useTranslations("common");
-  const tIdeas = useTranslations("ideas");
   const { id } = useParams();
   const [idea, setIdea] = useState<PageIdea | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -162,20 +176,20 @@ export default function IdeaDetailPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <IdeaStageBadge stage={idea.stage} />
-                <TeamMatchBadge
-                  skillsNeeded={idea.skillsNeeded}
-                  userSkills={mockUserSkills}
-                />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">{idea.title}</h1>
-              <div className="flex items-center gap-2 mt-4">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{idea.author.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <span className="text-muted-foreground">by {idea.author.name}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{idea.createdAt}</span>
-              </div>
+              {idea.author ? (
+                <div className="flex items-center gap-2 mt-4">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{idea.author.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-muted-foreground">by {idea.author.name}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">{idea.createdAt}</span>
+                </div>
+              ) : (
+                <div className="mt-4 text-sm text-muted-foreground">{idea.createdAt}</div>
+              )}
             </div>
           </GlassCard>
 
@@ -294,20 +308,9 @@ export default function IdeaDetailPage() {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {idea.skillsNeeded.map((skill) => (
-                  <Badge
-                    key={skill}
-                    variant={mockUserSkills.includes(skill) ? "default" : "outline"}
-                  >
-                    {skill}
-                    {mockUserSkills.includes(skill) && " ✓"}
-                  </Badge>
+                  <Badge key={skill} variant="outline">{skill}</Badge>
                 ))}
               </div>
-              {idea.skillsNeeded.some((s) => mockUserSkills.includes(s)) && (
-                <p className="text-sm text-green-600 mt-3">
-                  You have matching skills for this project!
-                </p>
-              )}
             </CardContent>
           </Card>
 
@@ -319,17 +322,10 @@ export default function IdeaDetailPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4" />
-                  Likes
+                  <Users className="h-4 w-4" />
+                  Interested
                 </span>
-                <span className="font-medium">{idea.likes}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Comments
-                </span>
-                <span className="font-medium">{idea.comments}</span>
+                <span className="font-medium">{idea.interestedCount}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-2">

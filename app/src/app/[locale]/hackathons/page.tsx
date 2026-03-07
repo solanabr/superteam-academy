@@ -47,11 +47,9 @@ function mapHackathon(event: ApiHackathon): Hackathon {
     startDate,
     endDate,
     location: event.location,
-    prizes: event.prizes || "TBA",
+    prizes: event.prizes || undefined,
     tags: event.tags,
-    registeredCount: 0,
     status,
-    registrationOpen: status !== "ended",
   };
 }
 
@@ -94,11 +92,6 @@ export default function HackathonsPage() {
   const upcomingHackathons = filteredHackathons.filter((h) => h.status === "upcoming");
   const liveHackathons = filteredHackathons.filter((h) => h.status === "live");
   const pastHackathons = filteredHackathons.filter((h) => h.status === "ended");
-
-  const handleRegister = (hackathonId: string) => {
-    console.log("Register for hackathon:", hackathonId);
-    // Would navigate to registration or open modal
-  };
 
   if (isLoading) {
     return (
@@ -216,7 +209,6 @@ export default function HackathonsPage() {
             <MarketplaceCard accent>
               <EventsCalendar
                 hackathons={filteredHackathons}
-                onSelectHackathon={(hackathon) => console.log("Selected:", hackathon)}
               />
             </MarketplaceCard>
           ) : (
@@ -256,7 +248,6 @@ export default function HackathonsPage() {
                         <HackathonCard
                           key={hackathon.id}
                           hackathon={hackathon}
-                          onRegister={handleRegister}
                         />
                       ))}
                     </div>
@@ -277,7 +268,6 @@ export default function HackathonsPage() {
                         <HackathonCard
                           key={hackathon.id}
                           hackathon={hackathon}
-                          onRegister={handleRegister}
                         />
                       ))}
                     </div>
@@ -298,7 +288,6 @@ export default function HackathonsPage() {
                         <HackathonCard
                           key={hackathon.id}
                           hackathon={hackathon}
-                          onRegister={handleRegister}
                         />
                       ))}
                     </div>

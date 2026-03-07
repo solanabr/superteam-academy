@@ -47,6 +47,11 @@ coverage/
 lcov.info
 *.profraw
 *.profdata
+app/playwright-report/
+app/test-results/
+
+# Local git worktrees
+.worktrees/
 
 # Fuzz corpus (can be large)
 onchain-academy/trident-tests/fuzz/corpus/

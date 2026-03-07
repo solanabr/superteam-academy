@@ -31,7 +31,8 @@ The app implements the LMS surface and integrations requested in the bounty:
 - Wallet auth + multi-wallet adapter
 - XP, level, streak, achievements, dashboard, leaderboard UX
 - Devnet on-chain reads for XP and credentials
-- Wallet-signed enrollment verification flow
+- Wallet-signed Devnet enrollment with explicit course and lesson gates
+- Course-filtered leaderboard, profile radar/social links, downloadable certificate image
 - i18n with PT-BR, ES, EN (plus extra locales)
 - Light/dark theming and responsive UI
 

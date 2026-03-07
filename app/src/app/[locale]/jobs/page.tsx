@@ -55,8 +55,6 @@ function mapJob(job: ApiJob): Job {
   };
 }
 
-const mockUserSkills = ["Rust", "Anchor", "TypeScript", "React"];
-
 export default function JobsPage() {
   const t = useTranslations("common");
   const tJobs = useTranslations("jobs");
@@ -283,7 +281,7 @@ export default function JobsPage() {
           <>
             <div className="grid gap-4" data-testid="jobs-layout">
               {paginatedJobs.map((job) => (
-                <JobCard key={job.id} job={job} userSkills={mockUserSkills} />
+                <JobCard key={job.id} job={job} />
               ))}
             </div>
             {totalPages > 1 ? (

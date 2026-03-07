@@ -26,6 +26,10 @@ export async function GET(
         bio: true,
         avatarUrl: true,
         createdAt: true,
+        twitterHandle: true,
+        githubHandle: true,
+        discordHandle: true,
+        websiteUrl: true,
       },
     });
 
@@ -55,6 +59,12 @@ export async function GET(
       bio: user.bio,
       avatarUrl: user.avatarUrl,
       joinedAt: user.createdAt.toISOString(),
+      socialLinks: {
+        twitter: user.twitterHandle,
+        github: user.githubHandle,
+        discord: user.discordHandle,
+        website: user.websiteUrl,
+      },
       xp: xpRecord?.totalXP ?? 0,
       achievements: achievements.map((achievement) => ({
         id: achievement.id,

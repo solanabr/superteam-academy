@@ -11,7 +11,7 @@ export function Footer() {
         </p>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <a
-            href="https://github.com"
+            href="https://github.com/solanabr/superteam-academy"
             target="_blank"
             rel="noreferrer"
             className="hover:text-foreground"
@@ -19,12 +19,20 @@ export function Footer() {
             {t("github")}
           </a>
           <a
-            href="https://twitter.com"
+            href="https://x.com/SuperteamBR"
             target="_blank"
             rel="noreferrer"
             className="hover:text-foreground"
           >
             {t("twitter")}
+          </a>
+          <a
+            href="https://discord.gg/superteambrasil"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-foreground"
+          >
+            {t("discord")}
           </a>
         </div>
       </div>

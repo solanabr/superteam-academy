@@ -22,6 +22,8 @@ interface UseLeaderboardReturn {
   error: Error | null;
   timeframe: LeaderboardTimeframe;
   setTimeframe: (tf: LeaderboardTimeframe) => void;
+  courseSlug: string | null;
+  setCourseSlug: (courseSlug: string | null) => void;
   limit: number;
   setLimit: (limit: number) => void;
   refresh: () => void;
@@ -39,6 +41,7 @@ export function useLeaderboard(initialLimit = 50): UseLeaderboardReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [timeframe, setTimeframe] = useState<LeaderboardTimeframe>("alltime");
+  const [courseSlug, setCourseSlug] = useState<string | null>(null);
   const [limit, setLimit] = useState(initialLimit);
   const [refreshKey, setRefreshKey] = useState(0);
   const [onChainAvailable, setOnChainAvailable] = useState(false);
@@ -60,6 +63,9 @@ export function useLeaderboard(initialLimit = 50): UseLeaderboardReturn {
           timeframe,
           limit: limit.toString(),
         });
+        if (courseSlug) {
+          params.set("course", courseSlug);
+        }
 
         const response = await fetch(`/api/leaderboard?${params.toString()}`);
 
@@ -94,7 +100,7 @@ export function useLeaderboard(initialLimit = 50): UseLeaderboardReturn {
     return () => {
       cancelled = true;
     };
-  }, [timeframe, limit, refreshKey]);
+  }, [courseSlug, timeframe, limit, refreshKey]);
 
   return {
     entries,
@@ -103,6 +109,8 @@ export function useLeaderboard(initialLimit = 50): UseLeaderboardReturn {
     error,
     timeframe,
     setTimeframe,
+    courseSlug,
+    setCourseSlug,
     limit,
     setLimit,
     refresh,

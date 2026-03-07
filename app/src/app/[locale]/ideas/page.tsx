@@ -29,6 +29,7 @@ type ApiIdea = {
   lookingFor: string[];
   createdAt: string;
   owner?: {
+    id?: string | null;
     displayName?: string | null;
     username?: string | null;
     avatarUrl?: string | null;
@@ -38,10 +39,29 @@ type ApiIdea = {
   };
 };
 
+const interestRoleMap: Record<
+  string,
+  "developer" | "designer" | "advisor" | "marketer" | "investor"
+> = {
+  developer: "developer",
+  designer: "designer",
+  "product-manager": "advisor",
+  marketing: "marketer",
+  "business-development": "advisor",
+  investor: "investor",
+  other: "advisor",
+};
+
+function formatIdentity(value?: string | null): string | undefined {
+  return value ? `${value.slice(0, 8)}...` : undefined;
+}
+
 function mapIdea(idea: ApiIdea): Idea {
   const stage = ["idea", "mvp", "launched"].includes(idea.stage)
     ? (idea.stage as Idea["stage"])
     : "idea";
+  const authorName =
+    idea.owner?.displayName || idea.owner?.username || formatIdentity(idea.owner?.id);
 
   return {
     id: idea.id,
@@ -51,17 +71,16 @@ function mapIdea(idea: ApiIdea): Idea {
     stage,
     lookingFor: idea.lookingFor,
     skillsNeeded: idea.lookingFor,
-    author: {
-      name: idea.owner?.displayName || idea.owner?.username || "Founder",
-      avatar: idea.owner?.avatarUrl || undefined,
-    },
-    likes: idea._count?.interested ?? 0,
-    comments: 0,
+    author: authorName
+      ? {
+          name: authorName,
+          avatar: idea.owner?.avatarUrl || undefined,
+        }
+      : undefined,
+    interestedCount: idea._count?.interested ?? 0,
     createdAt: formatRelativeDate(idea.createdAt),
   };
 }
-
-const mockUserSkills = ["React", "TypeScript", "Rust", "Anchor"];
 
 export default function IdeasPage() {
   const t = useTranslations("common");
@@ -287,7 +306,6 @@ export default function IdeasPage() {
               <IdeaCard
                 key={idea.id}
                 idea={idea}
-                userSkills={mockUserSkills}
                 onExpressInterest={handleExpressInterest}
               />
             ))}
@@ -303,8 +321,24 @@ export default function IdeasPage() {
           isOpen={!!interestIdea}
           onClose={() => setInterestIdea(null)}
           onSubmit={async (data) => {
-            console.log("Interest submitted:", data);
-            // await fetch(`/api/ideas/${data.ideaId}/interest`, { method: "POST", body: JSON.stringify(data) });
+            const res = await fetch(`/api/ideas/${data.ideaId}/interest`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                role: interestRoleMap[data.role] ?? "developer",
+                message: data.message,
+              }),
+            });
+            if (!res.ok) {
+              throw new Error(`Failed to submit interest (${res.status})`);
+            }
+            setIdeas((prev) =>
+              prev.map((idea) =>
+                idea.id === data.ideaId
+                  ? { ...idea, interestedCount: idea.interestedCount + 1 }
+                  : idea
+              )
+            );
           }}
         />
       )}

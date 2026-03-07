@@ -28,14 +28,19 @@ type ApiSession = {
   status: string;
   topic: string;
   rating?: number | null;
-  mentor?: {
-    user?: {
-      displayName?: string | null;
-      username?: string | null;
-      avatarUrl?: string | null;
+    mentor?: {
+      user?: {
+        id?: string | null;
+        displayName?: string | null;
+        username?: string | null;
+        avatarUrl?: string | null;
+      };
     };
-  };
 };
+
+function formatIdentity(value?: string | null): string | undefined {
+  return value ? `${value.slice(0, 8)}...` : undefined;
+}
 
 function mapSession(session: ApiSession): Session {
   const statusMap: Record<string, Session["status"]> = {
@@ -50,7 +55,7 @@ function mapSession(session: ApiSession): Session {
     mentorName:
       session.mentor?.user?.displayName ||
       session.mentor?.user?.username ||
-      "Mentor",
+      formatIdentity(session.mentor?.user?.id),
     mentorAvatar: session.mentor?.user?.avatarUrl || undefined,
     date: formatSessionDate(session.scheduledAt),
     duration: session.duration,
@@ -115,10 +120,14 @@ export default function SessionsPage() {
 
     setIsSubmittingRating(true);
     try {
-      // await fetch(`/api/sessions/${ratingSession.id}/rate`, {
-      //   method: "POST",
-      //   body: JSON.stringify({ rating, comment: ratingComment }),
-      // });
+      const res = await fetch(`/api/sessions/${ratingSession.id}/rate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, feedback: ratingComment || undefined }),
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to submit rating (${res.status})`);
+      }
       setPastSessions((prev) =>
         prev.map((s) =>
           s.id === ratingSession.id ? { ...s, hasRating: true } : s

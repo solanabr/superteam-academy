@@ -26,19 +26,20 @@ This codebase now lives inside the target `superteam-academy` repo structure for
 ### Implemented Now
 
 - Wallet authentication and wallet linking
+- Wallet-signed Devnet enrollment from explicit course and lesson CTAs
 - Devnet XP balance reads via Token-2022 account lookups
 - Credential discovery and verification via Helius DAS
 - Leaderboard enrichment with on-chain XP balances
+- Course-filtered leaderboard views, profile social links, and downloadable certificate exports
 
 ### Local/Stubbed Today
 
-- Enrollment verification is wallet-signed and validated against the target program; enrollment persistence remains app/DB-backed
+- Enrollment transactions are wallet-signed and validated against the target program; enrollment persistence remains app/DB-backed
 - Lesson completion, XP awarding, finalization, and achievement writes are currently backed by local database logic
 - Course content can run from local TypeScript data or Sanity (`CONTENT_SOURCE=sanity`)
 
 ### Planned Alignment
 
-- Replace local enrollment with wallet-signed enrollment against the target program
 - Move lesson completion/finalization/achievement writes behind explicit on-chain-ready service interfaces
 - Promote CMS from tooling/import support to an active runtime content source
 
@@ -334,11 +335,12 @@ Source: `app/prisma/schema.prisma`
 | `GET` | `/api/courses` | No | Lists all courses from the content service. |
 | `GET` | `/api/courses/[slug]` | No | Returns one course by slug. |
 | `GET` | `/api/courses/[slug]/lessons/[id]` | No | Returns one lesson/challenge payload. |
-| `GET` | `/api/leaderboard` | No | Returns leaderboard entries with timeframe/limit filters. |
+| `GET` | `/api/leaderboard` | No | Returns leaderboard entries with timeframe/limit and optional `course` filters. |
+| `POST` | `/api/newsletter` | No | Stores landing-page newsletter signups. |
 | `GET` | `/api/onchain/xp` | No | Reads on-chain XP SPL balance for a wallet. |
 | `GET` | `/api/onchain/credentials` | No | Fetches cNFT credentials for a wallet via Helius DAS. |
 | `GET` | `/api/onchain/verify` | No | Verifies credential ownership against current asset owner. |
-| `GET`, `PATCH` | `/api/profile` | Yes | Reads/updates authenticated user profile settings. |
+| `GET`, `PATCH` | `/api/profile` | Yes | Reads/updates authenticated user profile settings, social links, locale, and theme. |
 | `GET` | `/api/progress` | Yes | Returns all progress records for current user. |
 | `GET` | `/api/progress/[courseSlug]` | Yes | Returns progress snapshot for one course. |
 | `POST` | `/api/progress/enroll` | Yes | Enrolls user in a course. |

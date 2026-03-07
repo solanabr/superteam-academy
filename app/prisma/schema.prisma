@@ -497,3 +497,11 @@ model HackathonEvent {
   @@index([startDate])
   @@index([source])
 }
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("landing")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

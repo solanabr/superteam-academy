@@ -63,6 +63,15 @@ export class PrismaProjectService implements ProjectService {
     return prisma.project.findUnique({
       where: { id },
       include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        },
         feedback: {
           include: {
             author: {

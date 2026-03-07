@@ -9,7 +9,7 @@ import { Video, Star, Calendar, Clock } from "lucide-react";
 
 export interface Session {
   id: string;
-  mentorName: string;
+  mentorName?: string;
   mentorAvatar?: string;
   date: string;
   duration: number;
@@ -57,19 +57,24 @@ export function SessionList({
         <Card key={session.id} className="group transition-all hover:border-primary/50 hover:shadow-md">
           <CardContent className="p-4">
             <div className="flex items-start gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-primary/10">
-                  {session.mentorName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-primary/10">
+                    {(session.mentorName || session.topic || session.id)
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="font-medium text-base group-hover:text-primary transition-colors">{session.mentorName}</h4>
+                    {session.mentorName ? (
+                      <h4 className="font-medium text-base group-hover:text-primary transition-colors">
+                        {session.mentorName}
+                      </h4>
+                    ) : null}
                     {session.topic && (
                       <p className="text-sm text-muted-foreground">{session.topic}</p>
                     )}

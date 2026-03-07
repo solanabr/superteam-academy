@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { MarketplaceCard } from "@/components/ui/marketplace-card";
-import { Clock3, DollarSign, Star, Users } from "lucide-react";
+import { DollarSign, Star, Users } from "lucide-react";
 
 export interface Mentor {
   id: string;
@@ -15,10 +15,9 @@ export interface Mentor {
   avatar?: string;
   bio: string;
   expertise: string[];
-  hourlyRate: number;
+  hourlyRate?: number | null;
   currency: string;
   rating: number;
-  reviewCount: number;
   totalSessions: number;
   availability: "available" | "limited" | "unavailable";
   nextAvailable?: string;
@@ -29,7 +28,6 @@ interface MentorCardProps {
 }
 
 export function MentorCard({ mentor }: MentorCardProps) {
-  const tCommon = useTranslations("common");
   const tMentors = useTranslations("mentors");
 
   const availabilityLabel =
@@ -38,6 +36,7 @@ export function MentorCard({ mentor }: MentorCardProps) {
       : mentor.availability === "limited"
         ? tMentors("limited")
         : tMentors("unavailable");
+  const hasRate = mentor.hourlyRate != null;
 
   return (
     <MarketplaceCard interactive className="marketplace-card-shell h-full">
@@ -61,7 +60,6 @@ export function MentorCard({ mentor }: MentorCardProps) {
                   <Star className="h-4 w-4" />
                   {mentor.rating.toFixed(1)}
                 </span>
-                <span>({mentor.reviewCount} {tMentors("reviews").toLowerCase()})</span>
               </div>
             </div>
           </div>
@@ -71,17 +69,20 @@ export function MentorCard({ mentor }: MentorCardProps) {
         </div>
 
         <div className="marketplace-meta-row">
-          <Badge variant="outline" className="marketplace-pill">
-            <DollarSign className="h-3.5 w-3.5" />
-            {mentor.hourlyRate} {mentor.currency}
-          </Badge>
+          {hasRate ? (
+            <Badge variant="outline" className="marketplace-pill">
+              <DollarSign className="h-3.5 w-3.5" />
+              {mentor.hourlyRate} {mentor.currency}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="marketplace-pill">
+              <DollarSign className="h-3.5 w-3.5" />
+              {tMentors("unavailable")}
+            </Badge>
+          )}
           <Badge variant="outline" className="marketplace-pill">
             <Users className="h-3.5 w-3.5" />
-            {mentor.totalSessions} {tCommon("active")}
-          </Badge>
-          <Badge variant="outline" className="marketplace-pill">
-            <Clock3 className="h-3.5 w-3.5" />
-            {tMentors("hourlyRate")}
+            {mentor.totalSessions} sessions
           </Badge>
         </div>
 

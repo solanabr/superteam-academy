@@ -8,7 +8,7 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { MarketplaceCard } from "@/components/ui/marketplace-card";
 import { IdeaStageBadge } from "./IdeaStageBadge";
 import { TeamMatchBadge } from "./TeamMatchBadge";
-import { Lightbulb, MessageSquare, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 export interface Idea {
   id: string;
@@ -18,12 +18,11 @@ export interface Idea {
   stage: "idea" | "mvp" | "launched";
   lookingFor: string[];
   skillsNeeded: string[];
-  author: {
+  author?: {
     name: string;
     avatar?: string;
   };
-  likes: number;
-  comments: number;
+  interestedCount: number;
   createdAt: string;
 }
 
@@ -44,7 +43,7 @@ export function IdeaCard({ idea, userSkills = [], onExpressInterest }: IdeaCardP
           <div className="min-w-0 flex-1 space-y-2">
             <h3 className="line-clamp-2 text-lg font-semibold text-foreground">{idea.title}</h3>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>{idea.author.name}</span>
+              {idea.author ? <span>{idea.author.name}</span> : null}
               <TeamMatchBadge skillsNeeded={idea.skillsNeeded} userSkills={userSkills} />
             </div>
           </div>
@@ -74,12 +73,8 @@ export function IdeaCard({ idea, userSkills = [], onExpressInterest }: IdeaCardP
       <CardFooter className="flex items-center justify-between gap-3 px-5 pb-5 pt-0">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <Lightbulb className="h-4 w-4" />
-            {idea.likes}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <MessageSquare className="h-4 w-4" />
-            {idea.comments}
+            <Users className="h-4 w-4" />
+            {idea.interestedCount}
           </span>
         </div>
         <div className="flex items-center gap-2">

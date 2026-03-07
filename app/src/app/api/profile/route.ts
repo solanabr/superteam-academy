@@ -18,6 +18,14 @@ export interface ProfileResponse {
   primaryWallet: string | null;
   linkedWallets: string[];
   linkedProviders: string[];
+  socialLinks: {
+    twitter: string | null;
+    github: string | null;
+    discord: string | null;
+    website: string | null;
+  };
+  preferredLocale: string;
+  theme: string;
   achievements: AchievementWithStatus[];
   credentials: CredentialData[];
 }
@@ -35,6 +43,12 @@ const UpdateProfileSchema = z.object({
   displayName: z.string().trim().min(1).max(80).optional(),
   bio: z.string().trim().max(280).optional(),
   isPublic: z.boolean().optional(),
+  twitterHandle: z.string().trim().max(50).optional(),
+  githubHandle: z.string().trim().max(50).optional(),
+  discordHandle: z.string().trim().max(50).optional(),
+  websiteUrl: z.string().trim().max(200).optional(),
+  preferredLocale: z.string().trim().min(2).max(12).optional(),
+  theme: z.string().trim().min(4).max(12).optional(),
 });
 
 function normalizeNullableText(value: string | undefined): string | null | undefined {
@@ -63,6 +77,12 @@ export async function GET(): Promise<NextResponse> {
           avatarUrl: true,
           createdAt: true,
           isPublic: true,
+          twitterHandle: true,
+          githubHandle: true,
+          discordHandle: true,
+          websiteUrl: true,
+          preferredLocale: true,
+          theme: true,
         },
       }),
       prisma.userWallet.findMany({
@@ -104,6 +124,14 @@ export async function GET(): Promise<NextResponse> {
       primaryWallet,
       linkedWallets: walletAddresses,
       linkedProviders,
+      socialLinks: {
+        twitter: user.twitterHandle,
+        github: user.githubHandle,
+        discord: user.discordHandle,
+        website: user.websiteUrl,
+      },
+      preferredLocale: user.preferredLocale,
+      theme: user.theme,
       achievements,
       credentials,
     };
@@ -128,6 +156,12 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       displayName: z.string().optional(),
       bio: z.string().optional(),
       isPublic: z.boolean().optional(),
+      twitterHandle: z.string().optional(),
+      githubHandle: z.string().optional(),
+      discordHandle: z.string().optional(),
+      websiteUrl: z.string().optional(),
+      preferredLocale: z.string().optional(),
+      theme: z.string().optional(),
     });
 
     const raw = preprocess.parse(body);
@@ -137,23 +171,47 @@ export async function PATCH(request: Request): Promise<NextResponse> {
       username: raw.username?.trim() === "" ? undefined : raw.username,
       displayName: raw.displayName?.trim() === "" ? undefined : raw.displayName,
       bio: raw.bio?.trim() === "" ? undefined : raw.bio,
+      twitterHandle: raw.twitterHandle?.trim() === "" ? undefined : raw.twitterHandle,
+      githubHandle: raw.githubHandle?.trim() === "" ? undefined : raw.githubHandle,
+      discordHandle: raw.discordHandle?.trim() === "" ? undefined : raw.discordHandle,
+      websiteUrl: raw.websiteUrl?.trim() === "" ? undefined : raw.websiteUrl,
+      preferredLocale: raw.preferredLocale?.trim() === "" ? undefined : raw.preferredLocale,
+      theme: raw.theme?.trim() === "" ? undefined : raw.theme,
     });
 
     const username = normalizeNullableText(parsed.username);
     const displayName = normalizeNullableText(parsed.displayName);
     const bio = normalizeNullableText(parsed.bio);
+    const twitterHandle = normalizeNullableText(parsed.twitterHandle);
+    const githubHandle = normalizeNullableText(parsed.githubHandle);
+    const discordHandle = normalizeNullableText(parsed.discordHandle);
+    const websiteUrl = normalizeNullableText(parsed.websiteUrl);
+    const preferredLocale = normalizeNullableText(parsed.preferredLocale);
+    const theme = normalizeNullableText(parsed.theme);
 
     const data: {
       username?: string | null;
       displayName?: string | null;
       bio?: string | null;
       isPublic?: boolean;
+      twitterHandle?: string | null;
+      githubHandle?: string | null;
+      discordHandle?: string | null;
+      websiteUrl?: string | null;
+      preferredLocale?: string;
+      theme?: string;
     } = {};
 
     if (raw.username !== undefined) data.username = username ?? null;
     if (raw.displayName !== undefined) data.displayName = displayName ?? null;
     if (raw.bio !== undefined) data.bio = bio ?? null;
     if (parsed.isPublic !== undefined) data.isPublic = parsed.isPublic;
+    if (raw.twitterHandle !== undefined) data.twitterHandle = twitterHandle ?? null;
+    if (raw.githubHandle !== undefined) data.githubHandle = githubHandle ?? null;
+    if (raw.discordHandle !== undefined) data.discordHandle = discordHandle ?? null;
+    if (raw.websiteUrl !== undefined) data.websiteUrl = websiteUrl ?? null;
+    if (raw.preferredLocale !== undefined && preferredLocale) data.preferredLocale = preferredLocale;
+    if (raw.theme !== undefined && theme) data.theme = theme;
 
     await prisma.user.update({
       where: { id: session.user.id },

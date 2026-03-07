@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useLocale, useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,8 +12,10 @@ import { LessonRow } from "@/components/courses/LessonRow";
 import { Link } from "@/lib/i18n/navigation";
 import { useProgress } from "@/lib/hooks/use-progress";
 import {
-  enrollWithoutWallet,
+  enrollWithOnchainTransaction,
+  getEnrollmentErrorDescription,
 } from "@/lib/progress/client-enrollment";
+import { resolveClientCourseId } from "@/lib/progress/client-course-id-overrides";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -46,6 +50,9 @@ export default function CourseDetailPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const { data: session } = useSession();
+  const { connection } = useConnection();
+  const { connected, publicKey, sendTransaction } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
   const isAuthenticated = !!session?.user;
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -54,9 +61,16 @@ export default function CourseDetailPage() {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [isEnrolling, setIsEnrolling] = useState(false);
 
-  const { progress, refresh: refreshProgress } = useProgress(params.slug);
+  const { progress, refresh: refreshProgress, isLoading: isProgressLoading } = useProgress(params.slug);
   const isEnrolled = !!progress;
   const completionPercent = progress?.completionPercent ?? 0;
+  const coursePath = `/courses/${params.slug}`;
+  const signInHref = `/auth/signin?callbackUrl=${encodeURIComponent(coursePath)}`;
+  const instructorName = "Superteam Brazil Curriculum Team";
+  const walletEnrollmentGuidance = connected
+    ? "Enrollment is signed in your connected wallet on Solana devnet after you press Enroll Now."
+    : "Connect a Solana wallet on devnet, then press Enroll Now to sign the enrollment transaction.";
+  const reviewsStatus = "Public learner reviews will appear after verified cohort feedback is available.";
 
   useEffect(() => {
     async function fetchCourse() {
@@ -106,10 +120,33 @@ export default function CourseDetailPage() {
       return;
     }
 
+    if (!connected || !publicKey) {
+      setWalletModalVisible(true);
+      return;
+    }
+
+    const courseId = resolveClientCourseId(
+      params.slug,
+      course?.onChainCourseId ?? params.slug
+    );
+
+    if (!courseId) {
+      toast.error("Course enrollment unavailable", {
+        description: "This course is not provisioned for devnet enrollment yet.",
+      });
+      return;
+    }
+
     setIsEnrolling(true);
 
     try {
-      await enrollWithoutWallet(params.slug);
+      await enrollWithOnchainTransaction({
+        courseId,
+        courseSlug: params.slug,
+        connection,
+        learner: publicKey,
+        sendTransaction,
+      });
 
       trackEvent("enroll_course", "courses", params.slug);
       refreshProgress();
@@ -119,17 +156,24 @@ export default function CourseDetailPage() {
       }
     } catch (err) {
       console.error("Failed to enroll:", err);
-      toast.error("Course enrollment failed");
+      toast.error("Course enrollment failed", {
+        description: getEnrollmentErrorDescription(err),
+      });
     } finally {
       setIsEnrolling(false);
     }
   }, [
+    connected,
+    connection,
     course,
     isAuthenticated,
     locale,
     params.slug,
+    publicKey,
     refreshProgress,
     router,
+    sendTransaction,
+    setWalletModalVisible,
   ]);
 
   const handleContinue = useCallback(() => {
@@ -235,10 +279,15 @@ export default function CourseDetailPage() {
 
   const primaryAction = !isAuthenticated ? (
     <Button asChild variant="outline" size="lg" className="w-full">
-      <Link href="/auth/signin" className="gap-2">
+      <Link href={signInHref} className="gap-2">
         <LogIn className="h-4 w-4" />
         {t("signInToTrack")}
       </Link>
+    </Button>
+  ) : isProgressLoading ? (
+    <Button size="lg" className="w-full gap-2" disabled>
+      <Loader2 className="h-4 w-4 animate-spin" />
+      {tc("loading")}
     </Button>
   ) : isEnrolled ? (
     <Button className="w-full" size="lg" onClick={handleContinue}>
@@ -250,7 +299,12 @@ export default function CourseDetailPage() {
       {isEnrolling ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          {t("enrolled")}
+          {t("enrollCTA")}
+        </>
+      ) : !connected ? (
+        <>
+          <Sparkles className="h-4 w-4" />
+          {tc("connectWallet")}
         </>
       ) : (
         <>
@@ -309,6 +363,18 @@ export default function CourseDetailPage() {
               ))}
             </SectionCard>
           ) : null}
+
+          <SectionCard
+            title={t("reviews")}
+            description={t("aboutCourse")}
+            className="rounded-[1.75rem]"
+            contentClassName="space-y-3"
+          >
+            <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4">
+              <p className="text-sm font-medium text-foreground">No public learner reviews yet</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{reviewsStatus}</p>
+            </div>
+          </SectionCard>
 
           {course.modules.length === 0 ? (
             <PremiumEmptyState icon={BookOpen} title={tc("noResults")} description={t("courseContent")} />
@@ -402,7 +468,7 @@ export default function CourseDetailPage() {
               </div>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3 text-sm">
                 <span className="text-muted-foreground">{t("instructor")}</span>
-                <span className="font-medium text-foreground">{tc("appName")}</span>
+                <span className="font-medium text-foreground">{instructorName}</span>
               </div>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/20 px-4 py-3 text-sm">
                 <span className="text-muted-foreground">{t("duration", { minutes: course.duration })}</span>
@@ -425,6 +491,11 @@ export default function CourseDetailPage() {
             </div>
 
             {primaryAction}
+
+            <div className="rounded-[1.5rem] border border-border/70 bg-muted/20 p-4">
+              <p className="text-sm font-medium text-foreground">Wallet enrollment</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{walletEnrollmentGuidance}</p>
+            </div>
 
             <p className="text-center text-xs text-muted-foreground">{tc("free")}</p>
           </SectionCard>

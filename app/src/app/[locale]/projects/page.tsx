@@ -36,7 +36,7 @@ type ApiProject = {
 };
 
 function mapProject(project: ApiProject): Project {
-  const shortOwner = project.ownerId ? `${project.ownerId.slice(0, 6)}...` : "Builder";
+  const shortOwner = `${project.ownerId.slice(0, 6)}...`;
 
   return {
     id: project.id,
@@ -139,13 +139,30 @@ export default function ProjectsPage() {
     return result;
   }, [projects, search, selectedTag, sortBy]);
 
-  const handleLike = (projectId: string) => {
-    setLikedProjects((prev) =>
-      prev.includes(projectId)
-        ? prev.filter((id) => id !== projectId)
-        : [...prev, projectId]
-    );
-    // API call would go here
+  const handleLike = async (projectId: string) => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/like`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to toggle like (${res.status})`);
+      }
+      const data = (await res.json()) as { liked?: boolean };
+      const liked = Boolean(data.liked);
+
+      setLikedProjects((prev) =>
+        liked ? Array.from(new Set([...prev, projectId])) : prev.filter((id) => id !== projectId)
+      );
+      setProjects((prev) =>
+        prev.map((project) =>
+          project.id === projectId
+            ? { ...project, likes: Math.max(0, project.likes + (liked ? 1 : -1)) }
+            : project
+        )
+      );
+    } catch (error) {
+      console.error("Failed to toggle project like:", error);
+    }
   };
 
   if (isLoading) {

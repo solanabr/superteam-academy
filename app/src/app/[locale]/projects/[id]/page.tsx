@@ -11,7 +11,6 @@ import { GlassCard, LuxuryBadge } from "@/components/luxury/primitives";
 import { FeedbackSection, type Feedback } from "@/components/projects/FeedbackSection";
 import { BadgeDisplay, type Badge as ProjectBadge } from "@/components/projects/BadgeDisplay";
 import { Heart, Eye, ExternalLink, Github, ArrowLeft, Share2, Loader2 } from "lucide-react";
-import Image from "next/image";
 import { formatRelativeDate } from "@/lib/feature-ui";
 
 interface Project {
@@ -24,7 +23,7 @@ interface Project {
   tags: string[];
   likes: number;
   views: number;
-  author: {
+  author?: {
     name: string;
     avatar?: string;
     bio?: string;
@@ -46,9 +45,11 @@ type ApiProject = {
   githubUrl?: string | null;
   createdAt: string;
   owner?: {
+    id?: string;
     displayName?: string | null;
     username?: string | null;
     bio?: string | null;
+    avatarUrl?: string | null;
   };
   feedback?: Array<{
     id: string;
@@ -56,6 +57,7 @@ type ApiProject = {
     content: string;
     createdAt: string;
     author?: {
+      id?: string | null;
       displayName?: string | null;
       username?: string | null;
       avatarUrl?: string | null;
@@ -68,7 +70,14 @@ type ApiProject = {
   }>;
 };
 
+function formatIdentity(value?: string | null): string | undefined {
+  return value ? `${value.slice(0, 8)}...` : undefined;
+}
+
 function mapProject(project: ApiProject): Project {
+  const authorName =
+    project.owner?.displayName || project.owner?.username || formatIdentity(project.owner?.id);
+
   return {
     id: project.id,
     title: project.title,
@@ -78,10 +87,13 @@ function mapProject(project: ApiProject): Project {
     tags: project.tags,
     likes: project.likes,
     views: project.views,
-    author: {
-      name: project.owner?.displayName || project.owner?.username || "Builder",
-      bio: project.owner?.bio || undefined,
-    },
+    author: authorName
+      ? {
+          name: authorName,
+          avatar: project.owner?.avatarUrl || undefined,
+          bio: project.owner?.bio || undefined,
+        }
+      : undefined,
     demoUrl: project.demoUrl || undefined,
     repoUrl: project.githubUrl || undefined,
     createdAt: formatRelativeDate(project.createdAt),
@@ -97,42 +109,75 @@ function mapProject(project: ApiProject): Project {
 }
 
 function mapFeedback(project: ApiProject): Feedback[] {
-  return (project.feedback ?? []).map((feedback) => ({
-    id: feedback.id,
-    author: {
-      name: feedback.author?.displayName || feedback.author?.username || "Reviewer",
-      avatar: feedback.author?.avatarUrl || undefined,
-    },
-    rating: feedback.rating,
-    comment: feedback.content,
-    createdAt: formatRelativeDate(feedback.createdAt),
-  }));
+  return (project.feedback ?? []).flatMap((feedback) => {
+    const authorName =
+      feedback.author?.displayName ||
+      feedback.author?.username ||
+      formatIdentity(feedback.author?.id);
+
+    if (!authorName) {
+      return [];
+    }
+
+    return [
+      {
+        id: feedback.id,
+        author: {
+          name: authorName,
+          avatar: feedback.author?.avatarUrl || undefined,
+        },
+        rating: feedback.rating,
+        comment: feedback.content,
+        createdAt: formatRelativeDate(feedback.createdAt),
+      },
+    ];
+  });
+}
+
+async function fetchProjectPayload(projectId: string): Promise<{
+  project: Project | null;
+  feedbacks: Feedback[];
+}> {
+  const res = await fetch(`/api/projects/${projectId}`, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to load project (${res.status})`);
+  }
+
+  const data = (await res.json()) as { project?: ApiProject };
+  if (!data.project) {
+    return { project: null, feedbacks: [] };
+  }
+
+  return {
+    project: mapProject(data.project),
+    feedbacks: mapFeedback(data.project),
+  };
 }
 
 export default function ProjectDetailPage() {
   const t = useTranslations("common");
-  const tProjects = useTranslations("projects");
   const { id } = useParams();
+  const projectId =
+    typeof id === "string" ? id : Array.isArray(id) ? id[0] : undefined;
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
   useEffect(() => {
+    if (!projectId) {
+      setProject(null);
+      setFeedbacks([]);
+      setIsLoading(false);
+      return;
+    }
+    const resolvedProjectId = projectId;
+
     async function fetchProject() {
       try {
-        const res = await fetch(`/api/projects/${id}`, { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error(`Failed to load project (${res.status})`);
-        }
-        const data = (await res.json()) as { project?: ApiProject };
-        if (data.project) {
-          setProject(mapProject(data.project));
-          setFeedbacks(mapFeedback(data.project));
-        } else {
-          setProject(null);
-          setFeedbacks([]);
-        }
+        const data = await fetchProjectPayload(resolvedProjectId);
+        setProject(data.project);
+        setFeedbacks(data.feedbacks);
       } catch (error) {
         console.error("Failed to fetch project:", error);
         setProject(null);
@@ -142,14 +187,41 @@ export default function ProjectDetailPage() {
       }
     }
     fetchProject();
-  }, [id]);
+  }, [projectId]);
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    // API call would go here
+    if (!project) return;
+    void (async () => {
+      const wasLiked = isLiked;
+      try {
+        const res = await fetch(`/api/projects/${project.id}/like`, {
+          method: "POST",
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to toggle like (${res.status})`);
+        }
+        const data = (await res.json()) as { liked?: boolean };
+        const liked = Boolean(data.liked);
+        setIsLiked(liked);
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                likes: Math.max(0, prev.likes + (liked === wasLiked ? 0 : liked ? 1 : -1)),
+              }
+            : prev
+        );
+      } catch (error) {
+        console.error("Failed to toggle project like:", error);
+      }
+    })();
   };
 
   const handleSubmitFeedback = async (feedback: { rating: number; comment: string }) => {
+    if (!projectId) {
+      throw new Error("Missing project id");
+    }
+
     const res = await fetch(`/api/projects/${project?.id}/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,14 +233,10 @@ export default function ProjectDetailPage() {
     if (!res.ok) {
       throw new Error(`Failed to submit feedback (${res.status})`);
     }
-    const newFeedback: Feedback = {
-      id: Date.now().toString(),
-      author: { name: "You" },
-      rating: feedback.rating,
-      comment: feedback.comment,
-      createdAt: "Just now",
-    };
-    setFeedbacks((prev) => [newFeedback, ...prev]);
+
+    const data = await fetchProjectPayload(projectId);
+    setProject(data.project);
+    setFeedbacks(data.feedbacks);
   };
 
   if (isLoading) {
@@ -288,7 +356,7 @@ export default function ProjectDetailPage() {
                   onClick={handleLike}
                 >
                   <Heart className={`h-4 w-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
-                  {project.likes + (isLiked ? 1 : 0)}
+                  {project.likes}
                 </Button>
                 <Button size="lg" variant="outline">
                   <Share2 className="h-4 w-4 mr-2" />
@@ -327,25 +395,27 @@ export default function ProjectDetailPage() {
           </GlassCard>
 
           {/* Author */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Creator</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-medium">
-                  {project.author.name.charAt(0).toUpperCase()}
+          {project.author ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Creator</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-medium">
+                    {project.author.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium">{project.author.name}</p>
+                    <p className="text-sm text-muted-foreground">Project Creator</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{project.author.name}</p>
-                  <p className="text-sm text-muted-foreground">Project Creator</p>
-                </div>
-              </div>
-              {project.author.bio && (
-                <p className="text-sm text-muted-foreground">{project.author.bio}</p>
-              )}
-            </CardContent>
-          </Card>
+                {project.author.bio ? (
+                  <p className="text-sm text-muted-foreground">{project.author.bio}</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Badges */}
           {project.badges && project.badges.length > 0 && (

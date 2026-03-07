@@ -27,26 +27,35 @@ type ApiMentor = {
   totalSessions: number;
   isVerified?: boolean;
   user?: {
+    id?: string | null;
     displayName?: string | null;
     username?: string | null;
     avatarUrl?: string | null;
   };
 };
 
+function formatIdentity(value?: string | null): string | undefined {
+  return value ? `${value.slice(0, 8)}...` : undefined;
+}
+
 function mapMentor(mentor: ApiMentor): Mentor {
   const availability: Mentor["availability"] =
     mentor.hourlyRate == null ? "unavailable" : mentor.isVerified ? "available" : "limited";
+  const displayName =
+    mentor.user?.displayName ||
+    mentor.user?.username ||
+    formatIdentity(mentor.user?.id ?? mentor.id) ||
+    mentor.id;
 
   return {
     id: mentor.id,
-    name: mentor.user?.displayName || mentor.user?.username || "Mentor",
+    name: displayName,
     avatar: mentor.user?.avatarUrl || undefined,
     bio: mentor.bio,
     expertise: mentor.expertise,
-    hourlyRate: mentor.hourlyRate ?? 0,
+    hourlyRate: mentor.hourlyRate ?? undefined,
     currency: "USDC",
     rating: mentor.rating || 0,
-    reviewCount: mentor.totalSessions,
     totalSessions: mentor.totalSessions,
     availability,
   };
@@ -107,7 +116,11 @@ export default function MentorsPage() {
       }
 
       if (priceRange) {
-        if (mentor.hourlyRate < priceRange[0] || mentor.hourlyRate > priceRange[1]) {
+        if (
+          mentor.hourlyRate == null ||
+          mentor.hourlyRate < priceRange[0] ||
+          mentor.hourlyRate > priceRange[1]
+        ) {
           return false;
         }
       }

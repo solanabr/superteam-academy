@@ -34,11 +34,13 @@ describe("UI V4 lesson surfaces", () => {
     expect(lessonClientSource).toContain("lesson-code-panel");
   });
 
-  it("prevents repeated auto-enrollment retries after a failure", () => {
+  it("uses an explicit wallet enrollment gate instead of auto-enrolling on load", () => {
     const lessonClientSource = readFileSync(resolve("src/components/lessons/LessonPageClient.tsx"), "utf8");
 
-    expect(lessonClientSource).toContain("hasAttemptedAutoEnroll");
-    expect(lessonClientSource).toContain("setHasAttemptedAutoEnroll(true)");
+    expect(lessonClientSource).not.toContain("hasAttemptedAutoEnroll");
+    expect(lessonClientSource).not.toContain("enrollWithoutWallet");
+    expect(lessonClientSource).toContain("handleWalletEnrollment");
+    expect(lessonClientSource).toContain("showEnrollmentGate");
   });
 
   it("shows a user-facing error when lesson completion request fails", () => {

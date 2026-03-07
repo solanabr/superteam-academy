@@ -35,6 +35,24 @@ function isNextDay(date1: Date, date2: Date): boolean {
   return isSameDay(nextDay, date2);
 }
 
+function getTimeframeStart(timeframe: "weekly" | "monthly" | "alltime"): Date | null {
+  const now = new Date();
+
+  if (timeframe === "weekly") {
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+    return weekStart;
+  }
+
+  if (timeframe === "monthly") {
+    const monthStart = new Date(now);
+    monthStart.setDate(now.getDate() - 30);
+    return monthStart;
+  }
+
+  return null;
+}
+
 /**
  * Prisma implementation of LearningProgressService
  */
@@ -594,9 +612,64 @@ export class PrismaLearningProgressService implements LearningProgressService {
    */
   async getLeaderboard(
     timeframe: "weekly" | "monthly" | "alltime",
-    limit = 50
+    limit = 50,
+    courseSlug?: string | null
   ): Promise<LeaderboardEntry[]> {
     try {
+      if (courseSlug) {
+        const timeframeStart = getTimeframeStart(timeframe);
+        const filteredRows = await prisma.lessonCompletion.groupBy({
+          by: ["userId"],
+          where: {
+            courseSlug,
+            ...(timeframeStart ? { completedAt: { gte: timeframeStart } } : {}),
+          },
+          _sum: { xpAwarded: true },
+          orderBy: { _sum: { xpAwarded: "desc" } },
+          take: limit,
+        });
+
+        const userIds = filteredRows.map((row) => row.userId);
+        if (userIds.length === 0) {
+          return [];
+        }
+
+        const [users, streaks, userXPs] = await Promise.all([
+          prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, username: true, displayName: true, avatarUrl: true },
+          }),
+          prisma.userStreak.findMany({
+            where: { userId: { in: userIds } },
+            select: { userId: true, currentStreak: true },
+          }),
+          prisma.userXP.findMany({
+            where: { userId: { in: userIds } },
+            select: { userId: true, totalXP: true },
+          }),
+        ]);
+
+        const userMap = new Map(users.map((user) => [user.id, user]));
+        const streakMap = new Map(streaks.map((streak) => [streak.userId, streak.currentStreak]));
+        const xpMap = new Map(userXPs.map((xp) => [xp.userId, xp.totalXP]));
+
+        return filteredRows
+          .filter((row) => (row._sum.xpAwarded ?? 0) > 0)
+          .map((row, index) => {
+            const user = userMap.get(row.userId);
+
+            return {
+              rank: index + 1,
+              userId: row.userId,
+              username: user?.displayName ?? user?.username ?? "Anonymous",
+              avatarUrl: user?.avatarUrl ?? null,
+              totalXP: row._sum.xpAwarded ?? 0,
+              level: calculateLevel(xpMap.get(row.userId) ?? 0),
+              currentStreak: streakMap.get(row.userId) ?? 0,
+            };
+          });
+      }
+
       const orderByField =
         timeframe === "weekly" ? "weeklyXP" : timeframe === "monthly" ? "monthlyXP" : "totalXP";
 
@@ -643,9 +716,26 @@ export class PrismaLearningProgressService implements LearningProgressService {
    */
   async getUserRank(
     userId: string,
-    timeframe: "weekly" | "monthly" | "alltime"
+    timeframe: "weekly" | "monthly" | "alltime",
+    courseSlug?: string | null
   ): Promise<number> {
     try {
+      if (courseSlug) {
+        const timeframeStart = getTimeframeStart(timeframe);
+        const rows = await prisma.lessonCompletion.groupBy({
+          by: ["userId"],
+          where: {
+            courseSlug,
+            ...(timeframeStart ? { completedAt: { gte: timeframeStart } } : {}),
+          },
+          _sum: { xpAwarded: true },
+          orderBy: { _sum: { xpAwarded: "desc" } },
+        });
+
+        const rank = rows.findIndex((row) => row.userId === userId);
+        return rank >= 0 ? rank + 1 : 0;
+      }
+
       const orderByField =
         timeframe === "weekly" ? "weeklyXP" : timeframe === "monthly" ? "monthlyXP" : "totalXP";
 
