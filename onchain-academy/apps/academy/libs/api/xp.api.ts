@@ -11,6 +11,13 @@ export interface LeaderboardParams {
   offset?: number
 }
 
+export interface AwardXPParams {
+  user: string
+  amount: number
+  source: string
+  timestamp?: string
+}
+
 export const xpAPI = {
   /**
    * Fetches leaderboard data with optional filtering and pagination
@@ -27,6 +34,18 @@ export const xpAPI = {
     })
     return fetchAPI<LeaderboardResult>(`/leaderboard?${query}`)
   },
+
+  /**
+   * Awards XP by creating an XP record via Payload REST API
+   *
+   * @param data - XP record data (user, amount, source, timestamp)
+   * @returns Created XP record
+   */
+  awardXP: (data: AwardXPParams) =>
+    fetchAPI<unknown>('/api/xp-records', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 }
 
 export type { LeaderboardEntry, LeaderboardResult, TimePeriod }

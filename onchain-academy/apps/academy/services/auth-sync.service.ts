@@ -31,13 +31,13 @@ export async function syncUserToPayload(betterAuthUser: {
     limit: 1,
   })
 
-  const isWallet = betterAuthUser.email?.endsWith('@wallet.superteam.local')
+  const isWallet = betterAuthUser.email?.endsWith('@wallet.superteam')
   const authMethod = isWallet ? 'wallet' : 'google'
 
   // For wallet users, derive a short valid email for Payload
   // Payload's auth: true validates email format — long pubkeys fail
   const payloadEmail = isWallet
-    ? `w-${crypto.createHash('sha256').update(betterAuthUser.email).digest('hex').slice(0, 12)}@superteam.local`
+    ? `w-${crypto.createHash('sha256').update(betterAuthUser.email).digest('hex').slice(0, 12)}@superteam`
     : betterAuthUser.email
 
   const socialLinks = {

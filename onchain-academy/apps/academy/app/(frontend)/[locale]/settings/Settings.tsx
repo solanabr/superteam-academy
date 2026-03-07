@@ -1,6 +1,7 @@
 'use client'
 
 import { StandardLayout } from '@/components/layout/StandardLayout'
+import { signOut } from '@/libs/auth-client'
 import {
   LANGUAGE_OPTIONS,
   MOCK_USER_SETTINGS,
@@ -12,7 +13,6 @@ import {
 import { truncateAddress } from '@/libs/string'
 import { useAuthStore } from '@/stores'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
   Bell,
@@ -32,6 +32,8 @@ import {
   User,
   Wallet,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useState } from 'react'
 
@@ -279,7 +281,10 @@ function ProfileTab() {
               placeholder={t('profile.placeholderName')}
             />
           </FormField>
-          <FormField label={t('profile.username')} hint={t('profile.usernameHint')}>
+          <FormField
+            label={t('profile.username')}
+            hint={t('profile.usernameHint')}
+          >
             <Input
               value={username}
               onChange={setUsername}
@@ -784,7 +789,9 @@ function PrivacyTab() {
             >
               <div className='flex items-center justify-between mb-1.5'>
                 <p className='font-ui text-[0.82rem] font-semibold text-charcoal capitalize'>
-                  {opt === 'public' ? t('privacy.public') : t('privacy.private')}
+                  {opt === 'public'
+                    ? t('privacy.public')
+                    : t('privacy.private')}
                 </p>
                 {visibility === opt && (
                   <div
@@ -845,7 +852,18 @@ function PrivacyTab() {
 
 const Settings = () => {
   const t = useTranslations('settings')
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>('profile')
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      posthog.capture('user_signed_out', { source: 'settings_page' })
+      router.push('/courses')
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
+  }
 
   const tabContent = {
     profile: <ProfileTab />,
@@ -904,7 +922,10 @@ const Settings = () => {
 
             {/* Sign out */}
             <div className='mt-6 pt-6 border-t border-border-warm hidden lg:block'>
-              <button className='flex items-center gap-2 w-full px-3.5 py-2.5 rounded-xl font-ui text-[0.78rem] text-text-secondary hover:text-red-500 hover:bg-red-500/5 transition-all cursor-pointer'>
+              <button
+                onClick={handleSignOut}
+                className='flex items-center gap-2 w-full px-3.5 py-2.5 rounded-xl font-ui text-[0.78rem] text-text-secondary hover:text-red-500 hover:bg-red-500/5 transition-all cursor-pointer'
+              >
                 <LogOut size={15} strokeWidth={1.5} />
                 {t('tabs.signOut')}
               </button>

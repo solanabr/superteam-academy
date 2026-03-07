@@ -3,6 +3,7 @@
 import { StandardLayout } from '@/components/layout/StandardLayout'
 import { xpAPI } from '@/libs/api'
 import { courses, timeFilters } from '@/libs/constants/leaderboard.constants'
+import { formatNumber } from '@/libs/string'
 import { useAuthStore } from '@/stores'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Flame, Trophy, Zap } from 'lucide-react'
@@ -297,7 +298,8 @@ export default function Leaderboard() {
                       <div className='flex items-center gap-1'>
                         <Zap size={12} strokeWidth={2} className='text-amber' />
                         <span className='font-display text-[0.9rem] font-black text-charcoal'>
-                          {(user.xp / 1000).toFixed(1)}k
+                          {/* {(user.xp / 1000).toFixed(1)}k */}
+                          {formatNumber(user?.xp)}
                         </span>
                       </div>
                       <span className='font-ui text-[0.55rem] text-text-tertiary'>

@@ -14,3 +14,16 @@ export const truncateAddress = (
   if (str.length <= startChars + endChars) return str
   return `${str.slice(0, startChars)}...${str.slice(-endChars)}`
 }
+
+export const formatNumber = (num: number): string => {
+  if (Math.abs(num) >= 1_000_000_000) {
+    return `${(num / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}b`
+  }
+  if (Math.abs(num) >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1).replace(/\.0$/, '')}m`
+  }
+  if (Math.abs(num) >= 1_000) {
+    return `${(num / 1_000).toFixed(1).replace(/\.0$/, '')}k`
+  }
+  return num.toString()
+}

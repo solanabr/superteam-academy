@@ -1,5 +1,6 @@
 'use client'
 
+import { xpAPI } from '@/libs/api'
 import { User } from '@/libs/auth'
 import { signIn, useSession } from '@/libs/auth-client'
 import { truncateAddress } from '@/libs/string'
@@ -172,7 +173,9 @@ function AuthStep({
           setError(t('auth.errorSignatureCancelled'))
           await disconnect()
         } else {
-          setError(err instanceof Error ? err.message : t('auth.errorAuthFailed'))
+          setError(
+            err instanceof Error ? err.message : t('auth.errorAuthFailed'),
+          )
         }
         setLoading(null)
       }
@@ -470,6 +473,22 @@ function OnboardingStep({
         auth_method: authMethod,
         has_wallet: !!publicKey,
       })
+
+      // Award 100 XP for completing account setup
+      try {
+        if (user?.id) {
+          await xpAPI.awardXP({
+            user: user.id,
+            amount: 100,
+            source: 'account-setup',
+            timestamp: new Date().toISOString(),
+          })
+        }
+      } catch (err) {
+        console.error('Failed to award signup XP:', err)
+        // Don't block onboarding if XP award fails
+      }
+
       onComplete()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save profile'
@@ -610,7 +629,8 @@ function OnboardingStep({
         <div className='grid grid-cols-2 gap-3'>
           <div className='flex flex-col gap-1.5'>
             <label className='font-ui text-[0.7rem] font-semibold text-cream/60'>
-              {t('onboarding.displayName')} <span className='text-amber'>*</span>
+              {t('onboarding.displayName')}{' '}
+              <span className='text-amber'>*</span>
             </label>
             <input
               type='text'
@@ -853,6 +873,16 @@ const Login = () => {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null)
   const router = useRouter()
   const { data: session, isPending, refetch } = useSession()
+  const { connected, disconnect } = useWallet()
+
+  // Disconnect wallet on page load to allow wallet selection
+  useEffect(() => {
+    if (connected && step === 'auth') {
+      disconnect().catch((err) => {
+        console.error('Failed to disconnect wallet on login page load:', err)
+      })
+    }
+  }, []) // Run only once on mount
 
   useEffect(() => {
     if (isPending) return
