@@ -2,6 +2,7 @@
 node_modules/
 
 .cursor/
+.kiro/
 
 # Rust / Anchor build artifacts
 target/

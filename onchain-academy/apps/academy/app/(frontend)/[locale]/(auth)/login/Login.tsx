@@ -1,6 +1,5 @@
 'use client'
 
-import { xpAPI } from '@/libs/api'
 import { User } from '@/libs/auth'
 import { signIn, useSession } from '@/libs/auth-client'
 import { truncateAddress } from '@/libs/string'
@@ -22,6 +21,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
+import { awardSignupXP } from './actions'
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -477,12 +477,7 @@ function OnboardingStep({
       // Award 100 XP for completing account setup
       try {
         if (user?.id) {
-          await xpAPI.awardXP({
-            user: user.id,
-            amount: 100,
-            source: 'account-setup',
-            timestamp: new Date().toISOString(),
-          })
+          await awardSignupXP(user.id)
         }
       } catch (err) {
         console.error('Failed to award signup XP:', err)

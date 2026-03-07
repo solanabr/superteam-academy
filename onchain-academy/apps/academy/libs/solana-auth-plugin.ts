@@ -92,7 +92,7 @@ export const solanaAuth = () => ({
           let user = null
 
           // Check if user exists by email
-          const walletEmail = `${walletAddress.slice(0, 8)}@wallet.superteam`
+          const walletEmail = `${walletAddress.slice(0, 8)}@superteam.academy`
           const existingUser = await ctx.context.internalAdapter
             .findUserByEmail(walletEmail)
             .catch(() => null)

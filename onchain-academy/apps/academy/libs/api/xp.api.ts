@@ -42,7 +42,7 @@ export const xpAPI = {
    * @returns Created XP record
    */
   awardXP: (data: AwardXPParams) =>
-    fetchAPI<unknown>('/api/xp-records', {
+    fetchAPI<unknown>('/xp-records', {
       method: 'POST',
       body: JSON.stringify(data),
     }),

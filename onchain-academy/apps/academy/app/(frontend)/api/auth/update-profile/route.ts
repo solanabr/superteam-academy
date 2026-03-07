@@ -14,7 +14,7 @@ function validateUsername(
 
   const cleaned = username.trim().toLowerCase()
 
-  console.log('update profdile received', username)
+  console.log('update profile received', username)
 
   if (cleaned.length < 3)
     return { valid: false, error: 'Username must be at least 3 characters' }

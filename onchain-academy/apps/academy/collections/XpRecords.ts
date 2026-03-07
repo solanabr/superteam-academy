@@ -1,15 +1,16 @@
 import { isAdmin } from '@/access/isAdmin'
-import type { Access, CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
-const canCreateOwnXP: Access = ({ req: { user } }) => {
-  if (!user) return false
+// const canCreateOwnXP: Access = ({ req: { user } }) => {
+//   console.log('canCreateOwnXP', user)
+//   if (!user) return false
 
-  return {
-    user: {
-      equals: user.id,
-    },
-  }
-}
+//   return {
+//     user: {
+//       equals: user.id,
+//     },
+//   }
+// }
 
 export const XpRecords: CollectionConfig = {
   slug: 'xp-records',
@@ -18,7 +19,7 @@ export const XpRecords: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: canCreateOwnXP,
+    create: () => true,
     update: isAdmin,
     delete: isAdmin,
   },

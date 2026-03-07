@@ -26,6 +26,16 @@ export async function getUserById(id: string) {
   return payload.findByID({ collection: 'users', id })
 }
 
+export async function getUserByBetterAuthId(betterAuthId: string) {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'users',
+    where: { betterAuthId: { equals: betterAuthId } },
+    limit: 1,
+  })
+  return docs[0] ?? null
+}
+
 export async function createUser(data: User) {
   const payload = await getPayloadClient()
   return payload.create({
