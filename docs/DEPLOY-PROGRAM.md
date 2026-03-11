@@ -1,20 +1,22 @@
+> Last synced: 2026-03-02
+
 # Deploying Onchain Academy to Devnet
 
 Each bounty applicant deploys their own program instance on devnet. This gives you full authority over the program — no shared keys, no waiting on others, and a clean environment to test your frontend against.
 
-Full instruction reference: [INTEGRATION.md](./INTEGRATION.md) | Program specification: [SPEC.md](./SPEC.md)
+Architecture reference: [ARCHITECTURE.md](./ARCHITECTURE.md) | Program specification: [audit/SPEC.md](../audit/SPEC.md)
 
 ---
 
 ## Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Rust | 1.82+ |
-| Solana CLI | 1.18+ |
-| Anchor CLI | 0.31+ |
-| Node.js | 18+ |
-| yarn | any |
+| Tool       | Version |
+| ---------- | ------- |
+| Rust       | 1.82+   |
+| Solana CLI | 1.18+   |
+| Anchor CLI | 0.31+   |
+| Node.js    | 18+     |
+| pnpm       | any     |
 
 Verify:
 
@@ -32,7 +34,7 @@ node --version
 ```bash
 git clone https://github.com/solanabr/superteam-academy
 cd superteam-academy/onchain-academy
-yarn install
+pnpm install
 ```
 
 ---
@@ -117,6 +119,7 @@ anchor build
 ```
 
 After a successful build, the IDL is at:
+
 - `target/types/onchain_academy.ts` — TypeScript types for your client
 - `target/idl/onchain_academy.json` — raw JSON IDL
 
@@ -194,6 +197,7 @@ Deploy success
 ## 8. Initialize the Program
 
 This is a one-time operation that:
+
 - Creates the `Config` PDA
 - Creates the XP mint (Token-2022, NonTransferable + PermanentDelegate, 0 decimals)
 - Auto-registers the authority as a `MinterRole` (label: "backend", unlimited cap)
@@ -256,15 +260,22 @@ Add these to your `.env.local`:
 ```env
 # Public (safe to expose)
 NEXT_PUBLIC_PROGRAM_ID=<YOUR_PROGRAM_ID>
-NEXT_PUBLIC_XP_MINT=<YOUR_XP_MINT_ADDRESS>
+NEXT_PUBLIC_XP_MINT_ADDRESS=<YOUR_XP_MINT_ADDRESS>
 NEXT_PUBLIC_BACKEND_SIGNER=<YOUR_AUTHORITY_PUBKEY>
-NEXT_PUBLIC_CLUSTER=devnet
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
 # Server-side only (never expose to client)
-BACKEND_SIGNER_KEYPAIR=../wallets/signer.json
+BACKEND_SIGNER_SECRET=<BASE58_PRIVATE_KEY>
+PROGRAM_AUTHORITY_SECRET=<BASE58_PRIVATE_KEY>
 ```
 
-For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public key. In production these are separate keys.
+For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public key. `BACKEND_SIGNER_SECRET` and `PROGRAM_AUTHORITY_SECRET` can be the same keypair (as base58). In production these are separate keys.
+
+To extract the base58 private key from a Solana keypair JSON file:
+
+```bash
+node -e "const k=require('./wallets/signer.json'); const bs58=require('bs58'); console.log(bs58.encode(Buffer.from(k)))"
+```
 
 ---
 
