@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useTranslations } from 'next-intl';
-import { useSession, signIn } from 'next-auth/react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Link } from '@/i18n/routing';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { useSession, signIn } from "next-auth/react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Link } from "@/i18n/routing";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   BookOpen,
@@ -14,44 +15,135 @@ import {
   Zap,
   Wallet,
   Terminal,
-} from 'lucide-react';
+} from "lucide-react";
 
 const STATS = [
-  { icon: BookOpen, value: '40+', label: 'Courses' },
-  { icon: Users, value: '2,500+', label: 'Learners' },
-  { icon: Zap, value: '1.2M', label: 'XP Awarded' },
+  { icon: BookOpen, value: "40+", label: "Courses" },
+  { icon: Users, value: "2,500+", label: "Learners" },
+  { icon: Zap, value: "1.2M", label: "XP Awarded" },
 ] as const;
 
 const CODE_LINES = [
-  { indent: 0, tokens: [{ text: 'use ', color: 'text-purple-400' }, { text: 'anchor_lang', color: 'text-green-400' }, { text: '::prelude::*;', color: 'text-foreground/70' }] },
+  {
+    indent: 0,
+    tokens: [
+      { text: "use ", color: "text-purple-400" },
+      { text: "anchor_lang", color: "text-green-400" },
+      { text: "::prelude::*;", color: "text-foreground/70" },
+    ],
+  },
   { indent: 0, tokens: [] },
-  { indent: 0, tokens: [{ text: '#[program]', color: 'text-yellow-400' }] },
-  { indent: 0, tokens: [{ text: 'pub mod ', color: 'text-purple-400' }, { text: 'superteam_academy ', color: 'text-green-400' }, { text: '{', color: 'text-foreground/70' }] },
-  { indent: 1, tokens: [{ text: 'pub fn ', color: 'text-purple-400' }, { text: 'complete_lesson', color: 'text-blue-400' }, { text: '(', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'ctx: ', color: 'text-foreground/70' }, { text: 'Context', color: 'text-yellow-400' }, { text: '<CompleteLessonCtx>,', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'xp_reward: ', color: 'text-foreground/70' }, { text: 'u64', color: 'text-yellow-400' }] },
-  { indent: 1, tokens: [{ text: ') -> ', color: 'text-foreground/70' }, { text: 'Result', color: 'text-yellow-400' }, { text: '<()> {', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'let learner = &', color: 'text-foreground/70' }, { text: 'mut ', color: 'text-purple-400' }, { text: 'ctx.accounts.learner;', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'learner.xp += xp_reward;', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'emit!', color: 'text-purple-400' }, { text: '(LessonCompleted {', color: 'text-foreground/70' }] },
-  { indent: 3, tokens: [{ text: 'learner: ', color: 'text-foreground/70' }, { text: 'learner.key()', color: 'text-blue-400' }, { text: ',', color: 'text-foreground/70' }] },
-  { indent: 3, tokens: [{ text: 'xp_earned: xp_reward', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: '});', color: 'text-foreground/70' }] },
-  { indent: 2, tokens: [{ text: 'Ok', color: 'text-green-400' }, { text: '(())', color: 'text-foreground/70' }] },
-  { indent: 1, tokens: [{ text: '}', color: 'text-foreground/70' }] },
-  { indent: 0, tokens: [{ text: '}', color: 'text-foreground/70' }] },
+  { indent: 0, tokens: [{ text: "#[program]", color: "text-yellow-400" }] },
+  {
+    indent: 0,
+    tokens: [
+      { text: "pub mod ", color: "text-purple-400" },
+      { text: "superteam_academy ", color: "text-green-400" },
+      { text: "{", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 1,
+    tokens: [
+      { text: "pub fn ", color: "text-purple-400" },
+      { text: "complete_lesson", color: "text-blue-400" },
+      { text: "(", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 2,
+    tokens: [
+      { text: "ctx: ", color: "text-foreground/70" },
+      { text: "Context", color: "text-yellow-400" },
+      { text: "<CompleteLessonCtx>,", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 2,
+    tokens: [
+      { text: "xp_reward: ", color: "text-foreground/70" },
+      { text: "u64", color: "text-yellow-400" },
+    ],
+  },
+  {
+    indent: 1,
+    tokens: [
+      { text: ") -> ", color: "text-foreground/70" },
+      { text: "Result", color: "text-yellow-400" },
+      { text: "<()> {", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 2,
+    tokens: [
+      { text: "let learner = &", color: "text-foreground/70" },
+      { text: "mut ", color: "text-purple-400" },
+      { text: "ctx.accounts.learner;", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 2,
+    tokens: [{ text: "learner.xp += xp_reward;", color: "text-foreground/70" }],
+  },
+  {
+    indent: 2,
+    tokens: [
+      { text: "emit!", color: "text-purple-400" },
+      { text: "(LessonCompleted {", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 3,
+    tokens: [
+      { text: "learner: ", color: "text-foreground/70" },
+      { text: "learner.key()", color: "text-blue-400" },
+      { text: ",", color: "text-foreground/70" },
+    ],
+  },
+  {
+    indent: 3,
+    tokens: [{ text: "xp_earned: xp_reward", color: "text-foreground/70" }],
+  },
+  { indent: 2, tokens: [{ text: "});", color: "text-foreground/70" }] },
+  {
+    indent: 2,
+    tokens: [
+      { text: "Ok", color: "text-green-400" },
+      { text: "(())", color: "text-foreground/70" },
+    ],
+  },
+  { indent: 1, tokens: [{ text: "}", color: "text-foreground/70" }] },
+  { indent: 0, tokens: [{ text: "}", color: "text-foreground/70" }] },
 ];
 
 export function HeroSection() {
-  const t = useTranslations('landing');
-  const tCommon = useTranslations('common');
+  const t = useTranslations("landing");
+  const tCommon = useTranslations("common");
   const { status: authStatus } = useSession();
-  const { connected, select, wallets } = useWallet();
+  const { connected, select, connect, wallet, wallets } = useWallet();
 
-  function handleConnectWallet() {
-    const firstWallet = wallets[0];
-    if (!connected && firstWallet) {
-      select(firstWallet.adapter.name);
+  const detectedWallets = useMemo(
+    () => wallets.filter((w) => w.readyState === "Installed"),
+    [wallets],
+  );
+
+  async function handleConnectWallet() {
+    if (connected) return;
+
+    const firstDetected = detectedWallets[0];
+    if (!firstDetected) {
+      window.location.href = "https://phantom.app";
+      return;
+    }
+
+    if (wallet?.adapter.name === firstDetected.adapter.name) {
+      try {
+        await connect();
+      } catch {
+        // User rejected or wallet unavailable
+      }
+    } else {
+      select(firstDetected.adapter.name);
     }
   }
 
@@ -65,8 +157,8 @@ export function HeroSection() {
         className="absolute inset-0 -z-10 opacity-[0.03] dark:opacity-[0.06]"
         style={{
           backgroundImage:
-            'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
+            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
         }}
       />
 
@@ -88,23 +180,23 @@ export function HeroSection() {
               className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl"
             >
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {t('hero_title')}
+                {t("hero_title")}
               </span>
             </h1>
 
             <p className="max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              {t('hero_subtitle')}
+              {t("hero_subtitle")}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button size="lg" className="gap-2" asChild>
                 <Link href="/courses">
-                  {t('hero_cta')}
+                  {t("hero_cta")}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
 
-              {authStatus !== 'authenticated' && (
+              {authStatus !== "authenticated" && (
                 <Button
                   variant="outline"
                   size="lg"
@@ -112,7 +204,7 @@ export function HeroSection() {
                   onClick={() => signIn()}
                 >
                   <UserPlus className="h-4 w-4" />
-                  {t('hero_signup')}
+                  {t("hero_signup")}
                 </Button>
               )}
 
@@ -124,7 +216,7 @@ export function HeroSection() {
                   onClick={handleConnectWallet}
                 >
                   <Wallet className="h-4 w-4" />
-                  {tCommon('connect_wallet')}
+                  {tCommon("connect_wallet")}
                 </Button>
               )}
             </div>
@@ -137,8 +229,12 @@ export function HeroSection() {
                     <stat.icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold leading-none">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    <p className="text-lg font-bold leading-none">
+                      {stat.value}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -167,13 +263,13 @@ export function HeroSection() {
                   <code>
                     {CODE_LINES.map((line, lineIdx) => (
                       <div key={lineIdx} className="whitespace-pre">
-                        {'  '.repeat(line.indent)}
+                        {"  ".repeat(line.indent)}
                         {line.tokens.map((token, tokenIdx) => (
                           <span key={tokenIdx} className={token.color}>
                             {token.text}
                           </span>
                         ))}
-                        {line.tokens.length === 0 && '\u00A0'}
+                        {line.tokens.length === 0 && "\u00A0"}
                       </div>
                     ))}
                   </code>
@@ -189,7 +285,9 @@ export function HeroSection() {
                 </div>
                 <div>
                   <p className="text-xs font-medium">+250 XP</p>
-                  <p className="text-[10px] text-muted-foreground">Lesson Complete</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Lesson Complete
+                  </p>
                 </div>
               </div>
             </div>

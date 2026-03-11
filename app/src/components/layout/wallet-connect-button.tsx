@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { useCallback, useMemo } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +12,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Copy,
-  ExternalLink,
-  LogOut,
-  Wallet,
-} from 'lucide-react';
-import { CLUSTER } from '@/lib/solana/constants';
+} from "@/components/ui/dropdown-menu";
+import { Copy, ExternalLink, LogOut, Wallet } from "lucide-react";
+import { CLUSTER } from "@/lib/solana/constants";
 
 function truncateAddress(address: string): string {
   if (address.length <= 8) return address;
@@ -31,32 +26,54 @@ interface WalletConnectButtonProps {
   fullWidth?: boolean;
 }
 
-export function WalletConnectButton({ className, fullWidth }: WalletConnectButtonProps) {
-  const t = useTranslations('common');
-  const { publicKey, connected, connecting, disconnect, select, wallets, wallet } = useWallet();
+export function WalletConnectButton({
+  className,
+  fullWidth,
+}: WalletConnectButtonProps) {
+  const t = useTranslations("common");
+  const {
+    publicKey,
+    connected,
+    connecting,
+    disconnect,
+    select,
+    connect,
+    wallets,
+    wallet,
+  } = useWallet();
 
-  const walletAddress = publicKey?.toBase58() ?? '';
+  const walletAddress = publicKey?.toBase58() ?? "";
 
   const detectedWallets = useMemo(
-    () => wallets.filter((w) => w.readyState === 'Installed'),
+    () => wallets.filter((w) => w.readyState === "Installed"),
     [wallets],
   );
 
-  const handleSelect = useCallback(
-    (walletName: string) => {
+  const handleConnect = useCallback(
+    async (walletName: string) => {
       const found = wallets.find((w) => w.adapter.name === walletName);
-      if (found) {
+      if (!found) return;
+
+      if (wallet?.adapter.name === walletName) {
+        // Same wallet already selected — call connect() directly
+        try {
+          await connect();
+        } catch {
+          // User rejected or wallet unavailable
+        }
+      } else {
+        // Different wallet — select triggers autoConnect
         select(found.adapter.name);
       }
     },
-    [wallets, select],
+    [wallets, wallet, select, connect],
   );
 
   const handleCopy = useCallback(async () => {
     if (!walletAddress) return;
     try {
       await navigator.clipboard.writeText(walletAddress);
-      toast.success('Address copied');
+      toast.success("Address copied");
     } catch {
       /* clipboard not available */
     }
@@ -65,7 +82,7 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
   const handleDisconnect = useCallback(async () => {
     try {
       await disconnect();
-      toast.success('Wallet disconnected');
+      toast.success("Wallet disconnected");
     } catch {
       /* ignore */
     }
@@ -81,7 +98,7 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
           <Button
             variant="outline"
             size="sm"
-            className={`gap-2 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
+            className={`gap-2 ${fullWidth ? "w-full" : ""} ${className ?? ""}`}
           >
             <Wallet className="h-4 w-4" />
             {truncateAddress(walletAddress)}
@@ -89,7 +106,7 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuLabel className="flex items-center gap-2 text-xs">
-            {wallet?.adapter.name ?? 'Wallet'}
+            {wallet?.adapter.name ?? "Wallet"}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleCopy} className="gap-2">
@@ -103,7 +120,10 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
             </a>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDisconnect} className="gap-2 text-destructive">
+          <DropdownMenuItem
+            onClick={handleDisconnect}
+            className="gap-2 text-destructive"
+          >
             <LogOut className="h-3.5 w-3.5" />
             Disconnect
           </DropdownMenuItem>
@@ -112,16 +132,18 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
     );
   }
 
-  // No wallets detected — prompt to install
+  // No wallets detected — link to install Phantom
   if (detectedWallets.length === 0) {
     return (
       <Button
         size="sm"
-        className={`gap-2 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
-        onClick={() => window.open('https://phantom.app', '_blank')}
+        className={`gap-2 ${fullWidth ? "w-full" : ""} ${className ?? ""}`}
+        asChild
       >
-        <Wallet className="h-4 w-4" />
-        {t('connect_wallet')}
+        <a href="https://phantom.app" target="_blank" rel="noopener noreferrer">
+          <Wallet className="h-4 w-4" />
+          {t("connect_wallet")}
+        </a>
       </Button>
     );
   }
@@ -131,12 +153,12 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
     return (
       <Button
         size="sm"
-        className={`gap-2 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
+        className={`gap-2 ${fullWidth ? "w-full" : ""} ${className ?? ""}`}
         disabled={connecting}
-        onClick={() => handleSelect(detectedWallets[0]!.adapter.name)}
+        onClick={() => handleConnect(detectedWallets[0]!.adapter.name)}
       >
         <Wallet className="h-4 w-4" />
-        {connecting ? 'Connecting...' : t('connect_wallet')}
+        {connecting ? "Connecting..." : t("connect_wallet")}
       </Button>
     );
   }
@@ -147,22 +169,20 @@ export function WalletConnectButton({ className, fullWidth }: WalletConnectButto
       <DropdownMenuTrigger asChild>
         <Button
           size="sm"
-          className={`gap-2 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}
+          className={`gap-2 ${fullWidth ? "w-full" : ""} ${className ?? ""}`}
           disabled={connecting}
         >
           <Wallet className="h-4 w-4" />
-          {connecting ? 'Connecting...' : t('connect_wallet')}
+          {connecting ? "Connecting..." : t("connect_wallet")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel className="text-xs">
-          Select Wallet
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">Select Wallet</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {detectedWallets.map((w) => (
           <DropdownMenuItem
             key={w.adapter.name}
-            onClick={() => handleSelect(w.adapter.name)}
+            onClick={() => handleConnect(w.adapter.name)}
             className="gap-2"
           >
             {w.adapter.name}
