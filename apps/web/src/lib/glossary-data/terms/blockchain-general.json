@@ -1,0 +1,665 @@
+[
+  {
+    "id": "blockchain",
+    "term": "Blockchain",
+    "definition": "A distributed, append-only ledger that records transactions in cryptographically linked blocks. Each block contains a hash of the previous block, forming an immutable chain. Nodes in the network maintain copies of the ledger and reach agreement through consensus mechanisms. Blockchains enable trustless, decentralized record-keeping without a central authority.",
+    "category": "blockchain-general",
+    "related": ["consensus", "distributed-ledger", "block"]
+  },
+  {
+    "id": "consensus",
+    "term": "Consensus Mechanism",
+    "definition": "The protocol by which nodes in a distributed network agree on the current state of the ledger. Common mechanisms include Proof of Work (Bitcoin), Proof of Stake (Ethereum, Solana), and BFT variants. Consensus ensures all honest nodes converge on the same transaction history despite potential network delays or malicious actors.",
+    "category": "blockchain-general",
+    "aliases": ["Consensus Algorithm"],
+    "related": ["proof-of-stake", "proof-of-work", "byzantine-fault-tolerance"]
+  },
+  {
+    "id": "proof-of-stake",
+    "term": "Proof of Stake (PoS)",
+    "definition": "A consensus mechanism where validators are selected to produce blocks based on the amount of cryptocurrency they have staked (locked) as collateral. PoS is energy-efficient compared to Proof of Work. Misbehaving validators risk losing their stake (slashing). Solana, Ethereum (post-Merge), Cosmos, and Cardano use PoS variants.",
+    "category": "blockchain-general",
+    "aliases": ["PoS"],
+    "related": ["consensus", "staking-general", "slashing-general"]
+  },
+  {
+    "id": "proof-of-work",
+    "term": "Proof of Work (PoW)",
+    "definition": "A consensus mechanism where miners compete to solve computationally expensive puzzles to produce blocks and earn rewards. PoW provides strong security (51% attack resistance) but is energy-intensive. Bitcoin and pre-Merge Ethereum use PoW. The difficulty adjusts to maintain target block times regardless of total network hash power.",
+    "category": "blockchain-general",
+    "aliases": ["PoW", "Mining"],
+    "related": ["consensus", "hash-function"]
+  },
+  {
+    "id": "distributed-ledger",
+    "term": "Distributed Ledger",
+    "definition": "A database replicated and synchronized across multiple nodes in a network without central administration. All participants maintain identical copies of the ledger. Changes are propagated through consensus. Blockchains are the most common type of distributed ledger, but not all distributed ledgers use a chain-of-blocks structure.",
+    "category": "blockchain-general",
+    "aliases": ["DLT"],
+    "related": ["blockchain", "consensus"]
+  },
+  {
+    "id": "hash-function",
+    "term": "Hash Function (Cryptographic)",
+    "definition": "A one-way mathematical function that maps arbitrary-length input to a fixed-size output (digest). Properties: deterministic, fast to compute, infeasible to reverse, collision-resistant. SHA-256 (used in Bitcoin, Solana PoH) produces 256-bit hashes. Keccak-256 is used in Ethereum. Hashes are used for block linking, Merkle trees, and data integrity.",
+    "category": "blockchain-general",
+    "aliases": ["Hash", "SHA-256", "Keccak"],
+    "related": ["merkle-tree-general", "proof-of-work"]
+  },
+  {
+    "id": "merkle-tree-general",
+    "term": "Merkle Tree",
+    "definition": "A binary tree where each leaf node is a hash of data and each internal node is the hash of its two children. The root hash (Merkle root) uniquely represents all underlying data. Merkle trees enable efficient proof of inclusion\u2014proving a specific element exists requires only O(log n) hashes. Used in blockchains for transaction verification and state storage.",
+    "category": "blockchain-general",
+    "aliases": ["Hash Tree"],
+    "related": ["hash-function", "merkle-proof"]
+  },
+  {
+    "id": "smart-contract-general",
+    "term": "Smart Contract",
+    "definition": "Self-executing code deployed on a blockchain that automatically enforces the terms of an agreement when conditions are met. Smart contracts are immutable once deployed (unless upgradeable), transparent, and trustless. On Solana they're called 'programs'; on Ethereum they're written in Solidity and run on the EVM. They enable DeFi, NFTs, DAOs, and other decentralized applications.",
+    "category": "blockchain-general",
+    "aliases": ["Contract"],
+    "related": ["program", "evm", "solidity"]
+  },
+  {
+    "id": "gas",
+    "term": "Gas",
+    "definition": "A unit measuring the computational effort required to execute operations on a blockchain. On Ethereum, gas is priced in gwei (10^-9 ETH) and varies with network demand. Users set gas limits and gas prices; unused gas is refunded. Solana uses 'compute units' as its equivalent, with much lower costs (~$0.00025 per transaction vs. $1-100+ on Ethereum).",
+    "category": "blockchain-general",
+    "related": ["compute-units", "transaction-fee-general"]
+  },
+  {
+    "id": "transaction-fee-general",
+    "term": "Transaction Fee",
+    "definition": "The cost paid by the sender to have a transaction processed and included in a block. Fees compensate validators/miners for computation and prevent spam. Fee models vary: Ethereum uses dynamic gas pricing (EIP-1559 base fee + tip), Solana uses base fee (5,000 lamports) + optional priority fee, Bitcoin uses fee-per-byte.",
+    "category": "blockchain-general",
+    "related": ["gas", "priority-fee"]
+  },
+  {
+    "id": "block-time",
+    "term": "Block Time",
+    "definition": "The average time between consecutive blocks being produced. Bitcoin: ~10 minutes, Ethereum: ~12 seconds, Solana: ~400ms. Shorter block times enable faster transaction confirmation but increase orphan rates and storage requirements. Block time is a fundamental trade-off between speed and network overhead.",
+    "category": "blockchain-general",
+    "related": ["slot", "finality"]
+  },
+  {
+    "id": "throughput-tps",
+    "term": "Throughput (TPS)",
+    "definition": "The number of transactions a blockchain can process per second. Theoretical TPS is often much higher than sustained real-world performance. Bitcoin: ~7 TPS, Ethereum: ~15-30 TPS, Solana: ~2,000-5,000 non-vote TPS sustained (65,000 theoretical). Throughput depends on block size, block time, transaction size, and execution parallelism.",
+    "category": "blockchain-general",
+    "aliases": ["TPS", "Transactions Per Second"],
+    "related": ["block-time", "scalability"]
+  },
+  {
+    "id": "scalability",
+    "term": "Scalability",
+    "definition": "A blockchain's ability to handle increasing transaction volume without degrading performance or decentralization. The scalability trilemma posits that blockchains can optimize at most two of: decentralization, security, and scalability. Solutions include Layer 2 rollups, sharding, parallel execution (Solana's Sealevel), and modular architectures.",
+    "category": "blockchain-general",
+    "related": ["throughput-tps", "layer-2", "rollup"]
+  },
+  {
+    "id": "layer-1",
+    "term": "Layer 1 (L1)",
+    "definition": "The base blockchain network that provides consensus, data availability, and execution. Bitcoin, Ethereum, and Solana are Layer 1 blockchains. L1s define the core protocol rules, security model, and native token. Scalability limitations on L1 have driven the development of Layer 2 solutions that inherit L1 security.",
+    "category": "blockchain-general",
+    "aliases": ["L1"],
+    "related": ["layer-2", "blockchain"]
+  },
+  {
+    "id": "layer-2",
+    "term": "Layer 2 (L2)",
+    "definition": "A scaling solution built on top of a Layer 1 blockchain that processes transactions off-chain while inheriting the security of the base layer. L2 types include optimistic rollups (Arbitrum, Optimism), ZK rollups (zkSync, StarkNet), state channels, and sidechains. L2s post transaction data or proofs back to L1 for finality.",
+    "category": "blockchain-general",
+    "aliases": ["L2"],
+    "related": ["layer-1", "rollup"]
+  },
+  {
+    "id": "rollup",
+    "term": "Rollup",
+    "definition": "A Layer 2 scaling technique that executes transactions off-chain, bundles them, and posts compressed data back to L1. Optimistic rollups assume transactions are valid and use fraud proofs for disputes (7-day challenge period). ZK rollups generate cryptographic validity proofs for every batch. Rollups inherit L1 security while providing 10-100x throughput improvement.",
+    "category": "blockchain-general",
+    "related": ["layer-2", "zk-proofs"]
+  },
+  {
+    "id": "byzantine-fault-tolerance",
+    "term": "Byzantine Fault Tolerance (BFT)",
+    "definition": "The ability of a distributed system to reach consensus despite some nodes behaving arbitrarily (maliciously or failing). BFT algorithms tolerate up to f faulty nodes in a network of 3f+1 total nodes (1/3 threshold). Solana's Tower BFT, Tendermint, and PBFT are BFT consensus variants. BFT is essential for permissionless blockchains.",
+    "category": "blockchain-general",
+    "aliases": ["BFT"],
+    "related": ["consensus", "tower-bft"]
+  },
+  {
+    "id": "finality-general",
+    "term": "Finality (Blockchain)",
+    "definition": "The guarantee that a confirmed transaction is irreversible and cannot be altered. Probabilistic finality (Bitcoin) means reversal becomes exponentially unlikely over time. Deterministic finality (Solana finalized, Tendermint) provides absolute guarantees after a protocol-defined threshold. Finality time ranges from seconds (Solana) to ~60 minutes (Bitcoin, 6 confirmations).",
+    "category": "blockchain-general",
+    "related": ["finality", "consensus"]
+  },
+  {
+    "id": "staking-general",
+    "term": "Staking",
+    "definition": "The process of locking cryptocurrency as collateral to participate in network consensus (validation) or to earn rewards. Stakers either run validators directly or delegate to existing validators. Staking provides economic security\u2014validators risk losing staked tokens (slashing) for misbehavior. Annual staking yields typically range from 3-15% depending on the network.",
+    "category": "blockchain-general",
+    "related": ["proof-of-stake", "delegator", "slashing-general"]
+  },
+  {
+    "id": "slashing-general",
+    "term": "Slashing",
+    "definition": "A penalty mechanism in Proof of Stake systems where validators lose a portion of their staked tokens for provable misbehavior (double-signing, extended downtime, invalid attestations). Slashing provides economic disincentive against attacks. Ethereum slashes a minimum of 1/32 of stake; Solana's slashing is planned but not yet enforced on mainnet as of 2025.",
+    "category": "blockchain-general",
+    "related": ["staking-general", "proof-of-stake"]
+  },
+  {
+    "id": "bridge",
+    "term": "Bridge (Cross-Chain)",
+    "definition": "A protocol that enables transferring assets or data between different blockchains. Bridges use mechanisms like lock-and-mint (lock on source, mint wrapped on destination), liquidity pools, or relay networks. Bridges are high-value attack targets\u2014Wormhole ($320M, 2022), Ronin ($625M, 2022). Wormhole is Solana's primary bridge to Ethereum and other chains.",
+    "category": "blockchain-general",
+    "aliases": ["Cross-Chain Bridge"],
+    "related": ["wormhole"]
+  },
+  {
+    "id": "evm",
+    "term": "EVM (Ethereum Virtual Machine)",
+    "definition": "The stack-based virtual machine that executes smart contracts on Ethereum and EVM-compatible chains (Polygon, Avalanche, BSC, Arbitrum). Programs are compiled to EVM bytecode from Solidity or Vyper. The EVM is single-threaded\u2014all transactions execute sequentially. In contrast, Solana's SVM supports parallel execution and uses a register-based design.",
+    "category": "blockchain-general",
+    "aliases": ["EVM"],
+    "related": ["svm", "solidity"]
+  },
+  {
+    "id": "solidity",
+    "term": "Solidity",
+    "definition": "The primary programming language for Ethereum smart contracts. Solidity is statically typed, supports inheritance, and compiles to EVM bytecode. Unlike Solana's Rust-based development, Solidity uses a contract-oriented paradigm where code and state are co-located. Neon EVM enables running Solidity contracts on Solana by emulating the EVM.",
+    "category": "blockchain-general",
+    "related": ["evm", "smart-contract-general"]
+  },
+  {
+    "id": "node",
+    "term": "Node",
+    "definition": "A computer running blockchain client software that maintains a copy of the ledger and participates in the network. Node types: full node (validates all transactions, stores full state), archive node (stores complete history), light node (verifies headers only). On Solana, validator nodes require high-end hardware (256+ GB RAM for RPC nodes).",
+    "category": "blockchain-general",
+    "related": ["validator", "rpc"]
+  },
+  {
+    "id": "immutability",
+    "term": "Immutability",
+    "definition": "The property that once data is written to a blockchain, it cannot be altered or deleted. Immutability is enforced by cryptographic hash chaining\u2014modifying any historical block changes its hash, breaking the chain. This provides tamper-proof audit trails. Note: smart contract state can be updated by authorized programs; immutability applies to the historical ledger.",
+    "category": "blockchain-general",
+    "related": ["blockchain", "hash-function"]
+  },
+  {
+    "id": "block-explorer",
+    "term": "Block Explorer",
+    "definition": "A web application that indexes and displays blockchain data in a human-readable format. Explorers show transaction details, account balances, program interactions, and network statistics. Solana explorers include Solana Explorer (explorer.solana.com), Solscan, SolanaFM, and XRAY. Ethereum uses Etherscan. Essential tools for debugging and verification.",
+    "category": "blockchain-general",
+    "related": ["transaction", "rpc"]
+  },
+  {
+    "id": "testnet-devnet",
+    "term": "Testnet / Devnet",
+    "definition": "Non-production blockchain networks used for development and testing. Tokens on these networks have no monetary value and can be obtained via faucets (airdrops). Solana operates devnet (development, frequently reset) and testnet (stress testing, closer to mainnet specs). Ethereum has Sepolia and Holesky testnets. Always test on devnet before deploying to mainnet.",
+    "category": "blockchain-general",
+    "related": ["cluster", "local-development", "faucet"]
+  },
+  {
+    "id": "mainnet",
+    "term": "Mainnet",
+    "definition": "The production blockchain network where real-value transactions occur. Solana's production network is 'mainnet-beta'. Deploying to mainnet requires thorough testing on devnet/testnet, security audits for significant programs, and careful consideration of upgrade authority management. Mainnet state is permanent and transactions involve real financial value.",
+    "category": "blockchain-general",
+    "related": ["testnet-devnet", "cluster"]
+  },
+  {
+    "id": "dao",
+    "term": "DAO (Decentralized Autonomous Organization)",
+    "definition": "An organization governed by smart contracts and token-holder voting rather than traditional management structures. Members propose and vote on decisions (treasury spending, protocol upgrades, parameter changes). On Solana, Realms (SPL Governance) and Jupiter DAO are major governance platforms. DAOs enable transparent, permissionless collective decision-making.",
+    "category": "blockchain-general",
+    "aliases": ["DAO"],
+    "related": ["governance-token"]
+  },
+  {
+    "id": "governance-token",
+    "term": "Governance Token",
+    "definition": "A token that grants holders voting power over protocol decisions. Governance tokens enable decentralized control of DeFi protocols, DAOs, and blockchain parameters. Examples on Solana: JUP (Jupiter), MNDE (Marinade), RAY (Raydium). Voting power is typically proportional to token holdings, though some systems use quadratic voting or delegation.",
+    "category": "blockchain-general",
+    "related": ["dao"]
+  },
+  {
+    "id": "airdrop-crypto",
+    "term": "Airdrop",
+    "definition": "A distribution of tokens to wallet addresses, typically as a reward for early usage, community participation, or ecosystem contribution. Notable Solana airdrops include JUP (Jupiter, Jan 2024), BONK, and W (Wormhole). Airdrop eligibility often involves on-chain activity criteria (transaction count, protocol interaction, holding duration). Sybil resistance is a key challenge.",
+    "category": "blockchain-general",
+    "related": ["governance-token"]
+  },
+  {
+    "id": "interoperability",
+    "term": "Interoperability",
+    "definition": "The ability of different blockchains to communicate and share data or assets. Achieved through bridges (Wormhole), messaging protocols (LayerZero, Axelar), and shared standards. Cross-chain interoperability enables multi-chain DeFi, unified liquidity, and chain-agnostic applications. Solana connects to other chains primarily through Wormhole and Circle's CCTP.",
+    "category": "blockchain-general",
+    "related": ["bridge"]
+  },
+  {
+    "id": "sybil-resistance",
+    "term": "Sybil Resistance",
+    "definition": "A system's ability to prevent one entity from creating multiple fake identities to gain disproportionate influence. In blockchains, PoW achieves sybil resistance through computational cost, PoS through staked capital. In airdrops and governance, sybil resistance uses on-chain behavior analysis, identity verification, or social graph analysis to detect multi-wallet farming.",
+    "category": "blockchain-general",
+    "related": ["proof-of-stake", "proof-of-work"]
+  },
+  {
+    "id": "modular-blockchain",
+    "term": "Modular Blockchain",
+    "definition": "A blockchain architecture that separates core functions (execution, consensus, data availability, settlement) into specialized layers rather than handling all functions on a single monolithic chain. Modular designs allow each layer to be optimized independently, dramatically improving throughput and reducing costs. Celestia, EigenDA, and Avail serve as dedicated data availability layers, while rollups handle execution.",
+    "category": "blockchain-general",
+    "aliases": ["Modular Architecture"],
+    "related": ["data-availability", "rollup", "layer-1", "layer-2"]
+  },
+  {
+    "id": "data-availability",
+    "term": "Data Availability (DA)",
+    "definition": "The guarantee that a block's transaction data has been published and can be downloaded by any network participant. In modular blockchains and rollups, DA layers ensure off-chain execution data remains visible, complete, and verifiable. Data availability sampling (DAS) allows light nodes to probabilistically verify availability by checking random chunks without downloading entire blocks.",
+    "category": "blockchain-general",
+    "aliases": ["DA", "DA Layer"],
+    "related": ["modular-blockchain", "rollup", "celestia"]
+  },
+  {
+    "id": "celestia",
+    "term": "Celestia",
+    "definition": "The first modular data availability network, launched in October 2023, that separates data availability and consensus from execution. Celestia uses data availability sampling (DAS) and namespaced Merkle trees so light nodes can verify data availability without downloading full blocks. Over 56 rollups use Celestia for DA, with support from Arbitrum Orbit, OP Stack, and Polygon CDK.",
+    "category": "blockchain-general",
+    "related": ["data-availability", "modular-blockchain", "rollup"]
+  },
+  {
+    "id": "account-abstraction",
+    "term": "Account Abstraction",
+    "definition": "A design pattern that replaces the rigid externally-owned account (EOA) model with programmable smart contract wallets capable of custom authentication, gas sponsorship, and batched transactions. ERC-4337 implements this on Ethereum via UserOperations, bundlers, an EntryPoint contract, and paymasters. EIP-7702 (Pectra upgrade, May 2025) extends this by allowing EOAs to delegate to smart contract logic.",
+    "category": "blockchain-general",
+    "aliases": ["AA", "ERC-4337", "Smart Account"],
+    "related": ["passkey-wallet", "gas"]
+  },
+  {
+    "id": "blob-transaction",
+    "term": "Blob Transaction (EIP-4844)",
+    "definition": "An Ethereum transaction type introduced in the Dencun upgrade (March 2024) that carries binary large objects (blobs) of temporary off-chain data. Each blob is 128 KB, committed via KZG polynomial commitments, and stored for ~18 days before pruning. Blob transactions created a separate fee market and reduced Layer 2 rollup fees by 10-100x by providing cheap, temporary data availability.",
+    "category": "blockchain-general",
+    "aliases": ["Blob", "EIP-4844"],
+    "related": ["proto-danksharding", "rollup", "data-availability"]
+  },
+  {
+    "id": "proto-danksharding",
+    "term": "Proto-Danksharding",
+    "definition": "An intermediate Ethereum scaling upgrade (EIP-4844) that introduces blob-carrying transactions as a stepping stone toward full danksharding. Proto-danksharding implements the transaction format and KZG commitment scheme planned for full sharding but without actual data sharding\u2014blobs are fully downloaded by all consensus nodes. It targets ~0.375 MB of blob data per block.",
+    "category": "blockchain-general",
+    "aliases": ["Dencun"],
+    "related": ["blob-transaction", "data-availability", "rollup"]
+  },
+  {
+    "id": "based-rollup",
+    "term": "Based Rollup",
+    "definition": "A rollup whose transaction sequencing is driven by the Layer 1 base chain's proposers rather than a dedicated centralized sequencer. L1 proposers permissionlessly include rollup blocks as part of L1 blocks, inheriting Ethereum's censorship resistance, liveness, and decentralization. The trade-off is higher latency (constrained by L1 block times), addressed through preconfirmation mechanisms.",
+    "category": "blockchain-general",
+    "aliases": ["L1-Sequenced Rollup"],
+    "related": ["rollup", "sequencer", "preconfirmation"]
+  },
+  {
+    "id": "sequencer",
+    "term": "Sequencer",
+    "definition": "The entity responsible for ordering, batching, and submitting transactions in a Layer 2 rollup. Most rollups currently use a single centralized sequencer operated by the rollup team. Decentralized and shared sequencer designs (Espresso, Astria) distribute this power across a network of operators, enabling cross-rollup atomic composability and reducing single points of failure.",
+    "category": "blockchain-general",
+    "aliases": ["Rollup Sequencer"],
+    "related": ["rollup", "shared-sequencing", "based-rollup"]
+  },
+  {
+    "id": "shared-sequencing",
+    "term": "Shared Sequencing",
+    "definition": "An infrastructure layer that replaces individual rollup sequencers with a decentralized network providing ordering-as-a-service for multiple rollups simultaneously. Shared sequencers like Espresso and Astria enable cross-rollup atomic transactions, fair MEV distribution, and reduced centralization risk by coordinating transaction ordering across rollups.",
+    "category": "blockchain-general",
+    "aliases": ["Shared Sequencer Network"],
+    "related": ["sequencer", "based-rollup", "rollup"]
+  },
+  {
+    "id": "preconfirmation",
+    "term": "Preconfirmation",
+    "definition": "A credible, collateral-backed promise from a block proposer or sequencer that a transaction will be included in a future block, providing near-instant soft confirmation before on-chain finality. Preconfirmations address latency in based rollups where Ethereum's 12-second block time is too slow for UX. Implementations achieve sub-10ms guarantees, secured by restaked ETH with slashing for broken commitments.",
+    "category": "blockchain-general",
+    "aliases": ["Preconf"],
+    "related": ["based-rollup", "sequencer", "finality-general"]
+  },
+  {
+    "id": "passkey-wallet",
+    "term": "Passkey / WebAuthn Wallet",
+    "definition": "A blockchain wallet that uses the WebAuthn/FIDO2 standard for authentication via biometrics (fingerprint, face) or hardware security keys instead of seed phrases. Passkey wallets require smart contract accounts that verify P256 (secp256r1) signatures, as WebAuthn uses a different curve than Ethereum's native secp256k1. Coinbase Smart Wallet and Solana's native secp256r1 precompile are major implementations.",
+    "category": "blockchain-general",
+    "aliases": ["Passkey", "WebAuthn Wallet"],
+    "related": ["account-abstraction", "wallet-general"]
+  },
+  {
+    "id": "erc-6551",
+    "term": "ERC-6551 (Token-Bound Accounts)",
+    "definition": "An Ethereum standard that assigns a smart contract account (wallet) to every ERC-721 NFT, enabling NFTs to own other tokens, NFTs, and interact with protocols directly. Token-bound accounts (TBAs) are created through a permissionless registry using CREATE2 for deterministic addresses. Use cases include gaming inventories, bundled DeFi positions tradable as single NFTs, and identity-linked portfolios.",
+    "category": "blockchain-general",
+    "aliases": ["TBA", "Token-Bound Account"],
+    "related": ["account-abstraction", "nft-general"]
+  },
+  {
+    "id": "bitcoin",
+    "term": "Bitcoin",
+    "definition": "The first decentralized cryptocurrency network, launched in 2009 by the pseudonymous Satoshi Nakamoto, using a Proof-of-Work consensus mechanism and a UTXO-based transaction model. Bitcoin's protocol enforces a fixed supply cap of 21 million BTC, with new coins issued through mining block rewards that halve approximately every four years. It serves as both a peer-to-peer electronic cash system and a store of value, with its scripting language enabling basic programmability such as multisig and timelocks.",
+    "category": "blockchain-general",
+    "aliases": ["BTC"],
+    "related": [
+      "proof-of-work",
+      "utxo-model",
+      "bitcoin-halving",
+      "lightning-network"
+    ]
+  },
+  {
+    "id": "utxo-model",
+    "term": "UTXO Model",
+    "definition": "The accounting model used by Bitcoin (and derived chains like Litecoin and Zcash) where balances are represented as a set of unspent transaction outputs rather than account balances. Each transaction consumes one or more UTXOs as inputs and creates new UTXOs as outputs; the difference between input and output values constitutes the transaction fee. The UTXO model enables natural parallelism and simple verification but makes stateful smart contracts more complex compared to account-based models like Ethereum or Solana.",
+    "category": "blockchain-general",
+    "aliases": ["Unspent Transaction Output", "UTXO"],
+    "related": ["bitcoin", "bitcoin-script"]
+  },
+  {
+    "id": "bitcoin-script",
+    "term": "Bitcoin Script",
+    "definition": "Bitcoin's stack-based, intentionally non-Turing-complete scripting language used to define spending conditions for transaction outputs. Scripts are composed of opcodes that manipulate a stack to evaluate whether a transaction is authorized, supporting operations like signature verification (OP_CHECKSIG), multisig (OP_CHECKMULTISIG), timelocks (OP_CHECKLOCKTIMEVERIFY), and hash preimage checks. Its deliberate limitations (no loops, bounded execution) minimize attack surface.",
+    "category": "blockchain-general",
+    "aliases": ["Script"],
+    "related": ["bitcoin", "utxo-model", "op-cat", "taproot"]
+  },
+  {
+    "id": "segwit",
+    "term": "SegWit (Segregated Witness)",
+    "definition": "A Bitcoin soft fork activated in August 2017 (BIP 141) that separates transaction signature data (witness) from the transaction body, fixing transaction malleability and increasing effective block capacity from 1 MB to approximately 4 MB via a weight unit system. SegWit introduced a versioned witness program structure that enabled future upgrades like Taproot without additional soft forks. It was a prerequisite for the Lightning Network's secure operation.",
+    "category": "blockchain-general",
+    "aliases": ["Segregated Witness", "BIP 141"],
+    "related": ["bitcoin", "taproot", "lightning-network"]
+  },
+  {
+    "id": "taproot",
+    "term": "Taproot",
+    "definition": "A Bitcoin soft fork activated in November 2021 (BIPs 340-342) introducing Schnorr signatures for efficient key/signature aggregation, MAST (Merkelized Abstract Syntax Trees) for committing complex spending conditions where only the exercised branch is revealed on-chain, and Tapscript extending Bitcoin Script with new opcodes. Taproot makes complex transactions (multisig, timelocks, conditional spending) indistinguishable from simple single-key transactions, improving privacy and efficiency.",
+    "category": "blockchain-general",
+    "aliases": ["BIP 340", "Schnorr", "MAST", "Tapscript"],
+    "related": ["bitcoin", "segwit", "bitcoin-script", "bitcoin-ordinals"]
+  },
+  {
+    "id": "lightning-network",
+    "term": "Lightning Network",
+    "definition": "A Layer 2 payment channel network built on Bitcoin that enables near-instant, low-cost transactions by conducting most activity off-chain. Two parties open a channel by locking BTC in a multisig transaction, then exchange signed commitment transactions off-chain; only the opening and closing transactions are broadcast on-chain. Payments can be routed across multiple channels using Hash Time-Locked Contracts (HTLCs), enabling trustless multi-hop transfers.",
+    "category": "blockchain-general",
+    "aliases": ["Lightning", "LN"],
+    "related": ["bitcoin", "bitcoin-layer-2", "segwit", "layer-2"]
+  },
+  {
+    "id": "bitcoin-ordinals",
+    "term": "Bitcoin Ordinals",
+    "definition": "A protocol created by Casey Rodarmor in January 2023 that assigns a unique serial number (ordinal) to each individual satoshi based on mining order, enabling satoshis to carry arbitrary data (inscriptions) stored in Taproot witness data. Inscriptions can contain images, text, HTML, or other media up to the ~4 MB block weight limit, creating non-fungible digital artifacts natively on Bitcoin. Over 63 million inscriptions were created by early 2024.",
+    "category": "blockchain-general",
+    "aliases": ["Ordinals", "Inscriptions"],
+    "related": [
+      "bitcoin",
+      "taproot",
+      "satoshi-unit",
+      "brc-20",
+      "runes-protocol"
+    ]
+  },
+  {
+    "id": "brc-20",
+    "term": "BRC-20",
+    "definition": "An experimental fungible token standard on Bitcoin using Ordinals inscriptions in JSON format to deploy, mint, and transfer tokens. BRC-20 tokens store state in inscription data and require off-chain indexers to track balances, as Bitcoin has no native token state concept. The standard gained significant adoption in 2023-2024 but creates excessive junk UTXOs, leading to the development of the UTXO-native Runes protocol as an alternative.",
+    "category": "blockchain-general",
+    "aliases": ["BRC20"],
+    "related": ["bitcoin-ordinals", "runes-protocol", "utxo-model"]
+  },
+  {
+    "id": "runes-protocol",
+    "term": "Runes",
+    "definition": "A Bitcoin fungible token protocol created by Casey Rodarmor that launched at block 840,000 on April 20, 2024, coinciding with the fourth Bitcoin halving. Unlike BRC-20, Runes is UTXO-native, using OP_RETURN to store token data directly in transaction outputs without creating junk UTXOs. The protocol allows multiple token transfers in a single transaction and briefly accounted for over 80% of Bitcoin transactions in its first days.",
+    "category": "blockchain-general",
+    "aliases": ["Bitcoin Runes", "Runes Protocol"],
+    "related": [
+      "bitcoin",
+      "utxo-model",
+      "brc-20",
+      "bitcoin-ordinals",
+      "bitcoin-halving"
+    ]
+  },
+  {
+    "id": "bitcoin-halving",
+    "term": "Bitcoin Halving",
+    "definition": "A programmatic event occurring every 210,000 blocks (~4 years) that reduces the Bitcoin block reward by 50%, enforcing a disinflationary monetary policy converging on the 21 million BTC supply cap. The most recent halving occurred on April 20, 2024 (block 840,000), reducing the reward from 6.25 to 3.125 BTC per block. Halvings shift miner revenue composition toward transaction fees and have historically correlated with bull market cycles.",
+    "category": "blockchain-general",
+    "aliases": ["Halvening"],
+    "related": ["bitcoin", "proof-of-work-mining", "satoshi-unit"]
+  },
+  {
+    "id": "proof-of-work-mining",
+    "term": "Proof-of-Work Mining",
+    "definition": "The process by which miners expend computational resources to find a nonce producing a block header hash below the current difficulty target, earning the right to append a new block and collect the block reward plus fees. Bitcoin mining uses SHA-256d (double SHA-256) and adjusts difficulty every 2,016 blocks (~2 weeks) to maintain ~10-minute block times. Mining has evolved from CPUs to GPUs to ASICs, with industrial-scale operations dominating the network's hash rate.",
+    "category": "blockchain-general",
+    "aliases": ["Mining", "Bitcoin Mining", "PoW Mining"],
+    "related": ["proof-of-work", "bitcoin", "bitcoin-halving", "mempool"]
+  },
+  {
+    "id": "mempool",
+    "term": "Mempool",
+    "definition": "The memory pool maintained by each blockchain node containing unconfirmed transactions that have been validated but not yet included in a block. Miners/validators select transactions from the mempool typically prioritizing those with the highest fee rate. Each node's mempool is independent and may differ based on propagation delays; during high-demand periods, the mempool can grow significantly, causing fee spikes as users compete for limited block space.",
+    "category": "blockchain-general",
+    "aliases": ["Memory Pool", "Transaction Pool"],
+    "related": ["bitcoin", "proof-of-work-mining", "transaction-fee-general"]
+  },
+  {
+    "id": "satoshi-unit",
+    "term": "Satoshi",
+    "definition": "The smallest indivisible unit of Bitcoin, equal to 0.00000001 BTC (one hundred-millionth of a bitcoin), named after Bitcoin's pseudonymous creator Satoshi Nakamoto. All Bitcoin amounts are internally represented as integer counts of satoshis, avoiding floating-point precision issues. The Ordinals protocol assigns unique serial numbers to individual satoshis, enabling them to carry inscribed data.",
+    "category": "blockchain-general",
+    "aliases": ["sat", "sats"],
+    "related": ["bitcoin", "bitcoin-ordinals"]
+  },
+  {
+    "id": "bitcoin-layer-2",
+    "term": "Bitcoin Layer 2",
+    "definition": "Scaling and programmability solutions built on top of Bitcoin's base layer that extend its functionality while inheriting some degree of Bitcoin's security. Major approaches include the Lightning Network (payment channels), Stacks (smart contracts via Proof of Transfer), Liquid Network (Blockstream's federated sidechain), and ZK-rollups like Citrea (using BitVM for settlement). These solutions address Bitcoin's limited throughput (~7 TPS) and restricted scripting.",
+    "category": "blockchain-general",
+    "aliases": ["Bitcoin L2"],
+    "related": ["bitcoin", "lightning-network", "bitvm", "layer-2"]
+  },
+  {
+    "id": "bitvm",
+    "term": "BitVM",
+    "definition": "A computing paradigm proposed by Robin Linus in October 2023 that enables verification of arbitrary computations on Bitcoin without consensus rule changes, using an optimistic model similar to optimistic rollups. A prover claims a computation result, and any verifier can execute a fraud proof on-chain to penalize false claims. BitVM2 (2024) reduced dispute resolution to three on-chain transactions and enabled permissionless verification.",
+    "category": "blockchain-general",
+    "aliases": ["Bitcoin Virtual Machine"],
+    "related": ["bitcoin", "bitcoin-layer-2", "rollup"]
+  },
+  {
+    "id": "op-cat",
+    "term": "OP_CAT",
+    "definition": "A proposed Bitcoin opcode (BIP 347) that would reintroduce byte-string concatenation to Tapscript, originally disabled by Satoshi Nakamoto in 2010 due to DoS concerns now mitigated by Tapscript's 520-byte stack element limit. OP_CAT would enable covenants (spending conditions constraining future transactions), Merkle proof verification, and more expressive smart contracts on Bitcoin. The proposal was assigned BIP 347 in April 2024 and is live on Signet for testing.",
+    "category": "blockchain-general",
+    "aliases": ["BIP 347"],
+    "related": ["bitcoin", "bitcoin-script", "taproot"]
+  },
+  {
+    "id": "zcash",
+    "term": "Zcash",
+    "definition": "A privacy-focused cryptocurrency launched in October 2016 that pioneered the use of zk-SNARKs to enable fully shielded transactions where sender, receiver, and amount are cryptographically hidden on a public blockchain. Zcash uses a UTXO model derived from Bitcoin and maintains multiple value pools (transparent, Sapling, Orchard) with a turnstile mechanism ensuring supply integrity. Major upgrades include Sapling (2018) for efficient proofs and NU5/Orchard (2022) introducing Halo 2 to eliminate trusted setup.",
+    "category": "blockchain-general",
+    "aliases": ["ZEC"],
+    "related": ["shielded-transaction", "zcash-sapling", "utxo-model"]
+  },
+  {
+    "id": "shielded-transaction",
+    "term": "Shielded Transaction",
+    "definition": "A Zcash transaction where sender address, receiver address, and amount are encrypted using zk-SNARKs, providing cryptographic privacy while allowing network nodes to verify validity without learning private details. Shielded transactions operate within dedicated value pools (Sapling or Orchard), each with independent circuit designs. Users can selectively disclose transaction details to third parties using viewing keys without compromising spending authority.",
+    "category": "blockchain-general",
+    "aliases": ["Private Transaction (Zcash)"],
+    "related": ["zcash", "viewing-key", "zcash-sapling"]
+  },
+  {
+    "id": "viewing-key",
+    "term": "Viewing Key",
+    "definition": "A cryptographic key in Zcash enabling selective disclosure of shielded transaction information without granting spending authority. The key hierarchy includes Incoming Viewing Key (IVK) for detecting received payments, Outgoing Viewing Key (OVK) for viewing sent transactions, and Full Viewing Key (FVK) combining both. Viewing keys enable regulatory compliance and auditing by allowing designated third parties to monitor shielded account activity.",
+    "category": "blockchain-general",
+    "aliases": ["Full Viewing Key", "FVK", "IVK"],
+    "related": ["zcash", "shielded-transaction", "unified-address"]
+  },
+  {
+    "id": "unified-address",
+    "term": "Unified Address",
+    "definition": "A Zcash address format (ZIP 316) that bundles multiple receiver types (transparent, Sapling, Orchard) into a single 'u1'-prefixed address, allowing the sender's wallet to automatically select the most private payment method. Unified Addresses eliminate the complexity of managing separate transparent and shielded addresses, and support diversified addresses for unlinkable payment reception from a single spending key.",
+    "category": "blockchain-general",
+    "aliases": ["UA", "ZIP 316"],
+    "related": ["zcash", "viewing-key", "shielded-transaction"]
+  },
+  {
+    "id": "zcash-sapling",
+    "term": "Zcash Sapling",
+    "definition": "A major Zcash protocol upgrade activated in October 2018 that reduced proof generation from ~40 seconds to ~2 seconds and memory from 3 GB to ~40 MB, making shielded transactions practical on mobile devices. Sapling introduced new shielded addresses, full viewing keys, diversified addresses, and decoupled proof construction from transaction signing. Its cryptographic libraries (bellman, librustzcash) became foundational for the broader ZK ecosystem.",
+    "category": "blockchain-general",
+    "aliases": ["Sapling"],
+    "related": [
+      "zcash",
+      "shielded-transaction",
+      "viewing-key",
+      "turnstile-mechanism"
+    ]
+  },
+  {
+    "id": "turnstile-mechanism",
+    "term": "Turnstile Mechanism",
+    "definition": "A Zcash consensus-level auditing mechanism that maintains supply integrity across shielded value pools by publicly tracking the net flow of ZEC entering and exiting each pool. Since shielded pool balances are encrypted and cannot be directly audited, the turnstile enforces (ZIP 209) that any block causing a pool balance to go negative is rejected. Transfers between shielded pools must pass through a transparent intermediate step for public verification.",
+    "category": "blockchain-general",
+    "aliases": ["Turnstile"],
+    "related": ["zcash", "shielded-transaction", "zcash-sapling"]
+  },
+  {
+    "id": "native-token",
+    "term": "Native Token",
+    "definition": "The base cryptocurrency of a blockchain network that is used to pay transaction fees, participate in consensus (staking), and compensate validators for securing the network. Native tokens are protocol-level assets — not created by smart contracts — and their issuance is governed by the blockchain's monetary policy. Examples: SOL (Solana), ETH (Ethereum), BTC (Bitcoin).",
+    "category": "blockchain-general",
+    "related": ["sol", "gas", "transaction-fee-general"]
+  },
+  {
+    "id": "point",
+    "term": "Point (Validator Rewards)",
+    "definition": "A weighted credit unit used in Solana's validator reward calculation regime. Points represent the product of a validator's vote credits and its active stake, determining its proportional share of the epoch's inflation rewards. Validators with more stake and more vote credits accumulate more points, translating to higher absolute rewards distributed at epoch boundaries.",
+    "category": "blockchain-general",
+    "related": ["vote-credit", "staking-rewards", "validator"]
+  },
+  {
+    "id": "client-diversity",
+    "term": "Client Diversity",
+    "definition": "The practice of maintaining multiple independent validator client implementations for a blockchain network to reduce the risk of a single software bug causing network-wide failures. On Solana, client diversity is achieved through Agave (Rust, maintained by Anza) and Firedancer (C, maintained by Jump Crypto), with Frankendancer as a hybrid. Ethereum similarly encourages diversity across Geth, Nethermind, Besu, and Erigon to prevent correlated failures.",
+    "category": "blockchain-general",
+    "related": ["validator", "agave", "firedancer"]
+  },
+  {
+    "id": "deterministic-execution",
+    "term": "Deterministic Execution",
+    "definition": "The property that given identical inputs and initial state, a program will always produce the exact same output and state transitions regardless of which machine executes it. Deterministic execution is foundational to blockchain consensus because every validator must independently arrive at the same result when processing transactions. Sources of non-determinism (floating point, random numbers, system time) must be eliminated or controlled in blockchain runtimes.",
+    "category": "blockchain-general",
+    "related": ["consensus", "runtime", "svm"]
+  },
+  {
+    "id": "economic-finality",
+    "term": "Economic Finality",
+    "definition": "A practical finality guarantee where reversing a confirmed transaction would require an attacker to forfeit or spend more economic value (staked tokens, mining hardware) than the value of the transaction itself. Unlike absolute cryptographic finality, economic finality is probabilistic and depends on the cost of attack relative to the value at stake. In Proof of Stake systems, economic finality is achieved when enough staked capital backs the confirmed state that slashing penalties make reversal economically irrational.",
+    "category": "blockchain-general",
+    "related": ["finality-general", "proof-of-stake", "slashing-general"]
+  },
+  {
+    "id": "bls-signature",
+    "term": "BLS Signature",
+    "definition": "A digital signature scheme (Boneh-Lynn-Shacham) based on bilinear pairings over elliptic curves that uniquely enables signature aggregation: multiple signatures on the same or different messages can be combined into a single compact signature verifiable in one operation. BLS signatures are used in Ethereum 2.0 for aggregating validator attestations and are planned for Solana (SIMD-0134) to reduce vote transaction overhead. The aggregation property dramatically reduces bandwidth and storage costs for consensus.",
+    "category": "blockchain-general",
+    "aliases": ["Boneh-Lynn-Shacham"],
+    "related": ["consensus", "validator", "simd"]
+  },
+  {
+    "id": "on-curve-off-curve",
+    "term": "On-Curve / Off-Curve",
+    "definition": "In elliptic curve cryptography, a point is 'on-curve' if it satisfies the curve equation (e.g., Ed25519) and can serve as a valid public key with a corresponding private key. An 'off-curve' point does not lie on the curve and has no associated private key. Solana Program Derived Addresses (PDAs) are deliberately generated as off-curve points by appending a bump seed, guaranteeing that no private key exists and only the owning program can sign for the address.",
+    "category": "blockchain-general",
+    "related": ["hash-function", "signer"]
+  },
+  {
+    "id": "clearing-settlement",
+    "term": "Clearing and Settlement",
+    "definition": "Two phases of completing a financial transaction. Clearing: reconciling orders and calculating net obligations. Settlement: actual exchange of securities and cash. Traditional markets: T+1/T+2. Blockchain enables atomic settlement — simultaneous instant exchange eliminating counterparty risk.",
+    "category": "blockchain-general",
+    "aliases": ["Clearing and Settlement"],
+    "related": ["atomic-settlement", "finality-general", "dvp"]
+  },
+  {
+    "id": "dvp",
+    "term": "DvP (Delivery vs Payment)",
+    "definition": "Settlement mechanism ensuring security delivery occurs simultaneously and conditionally with payment. Blockchain's atomic transactions naturally implement DvP — a single transaction transfers tokenized security and USDC atomically.",
+    "category": "blockchain-general",
+    "aliases": ["Delivery vs Payment", "DvP"],
+    "related": ["clearing-settlement", "atomic-settlement", "finality-general"]
+  },
+  {
+    "id": "csd",
+    "term": "CSD (Central Securities Depository)",
+    "definition": "Institution holding securities in electronic form as central ownership registry. Examples: DTCC (US), Euroclear (Europe). On blockchain, the token program serves as a permissionless alternative — the ledger itself maintains the ownership registry.",
+    "category": "blockchain-general",
+    "aliases": ["Central Securities Depository", "CSD"],
+    "related": ["clearing-settlement", "blockchain", "spl-token"]
+  },
+  {
+    "id": "post-trade-processing",
+    "term": "Post-Trade Processing",
+    "definition": "All activities after trade execution: confirmation, clearing, settlement, custody, reconciliation. Traditional post-trade involves multiple intermediaries over days. Smart contracts automate these functions, reducing intermediary costs estimated at $20-30B annually for US equities.",
+    "category": "blockchain-general",
+    "related": ["clearing-settlement", "smart-contract-general", "dvp"]
+  },
+  {
+    "id": "omnibus-account",
+    "term": "Omnibus Account",
+    "definition": "Account pooling multiple clients' assets under one custodian name, with internal records tracking individual shares. Exposes clients to comingling risk if custodian fails. Blockchain wallets are inherently segregated — each address holds only its own tokens with no comingling.",
+    "category": "blockchain-general",
+    "aliases": ["Omnibus vs Segregated"],
+    "related": ["blockchain", "token-account"]
+  },
+  {
+    "id": "blockchain-trilemma",
+    "term": "Blockchain Trilemma",
+    "definition": "Concept articulated by Vitalik Buterin that blockchains can optimize for only two of three properties: decentralization, security, and scalability. Solana prioritizes scalability and security with specialized hardware requirements, while Ethereum L2s sacrifice some sovereignty for throughput. No chain has definitively solved the trilemma.",
+    "category": "blockchain-general",
+    "related": ["scalability", "consensus", "layer-1"]
+  },
+  {
+    "id": "liveness-safety",
+    "term": "Liveness and Safety",
+    "definition": "Two fundamental guarantees in distributed systems. Safety means the system never produces incorrect results (no double-spends, no conflicting blocks). Liveness means the system continues making progress (transactions eventually confirm). BFT systems like Solana's Tower BFT prioritize safety — the network halts rather than producing conflicting state.",
+    "category": "blockchain-general",
+    "aliases": ["Liveness", "Safety"],
+    "related": ["byzantine-fault-tolerance", "consensus", "finality-general"]
+  },
+  {
+    "id": "sharding",
+    "term": "Sharding",
+    "definition": "Scaling technique that partitions blockchain state and processing across multiple parallel chains (shards), each handling a subset of transactions. Used by Ethereum's roadmap (danksharding) and Near Protocol. Solana takes a different approach, using parallel execution on a single shard (via Sealevel) rather than splitting into multiple chains.",
+    "category": "blockchain-general",
+    "related": ["scalability", "parallel-execution", "layer-1"]
+  },
+  {
+    "id": "state-channel",
+    "term": "State Channel",
+    "definition": "Layer-2 scaling technique where participants open a channel, conduct many off-chain transactions between themselves, then settle the final state on-chain. Reduces fees and latency for repeated interactions between the same parties. Lightning Network (Bitcoin) is the most prominent example. Less common on Solana due to its already-low fees.",
+    "category": "blockchain-general",
+    "related": ["layer-2", "lightning-network", "scalability"]
+  },
+  {
+    "id": "validator-economics",
+    "term": "Validator Economics",
+    "definition": "The financial model governing validator profitability including staking rewards (inflation), transaction fee revenue, MEV tips, and operational costs (hardware, bandwidth, data center). On Solana, validators earn ~6-7% APY from inflation plus priority fees and Jito MEV tips, offset by costs of running high-spec hardware.",
+    "category": "blockchain-general",
+    "related": ["validator", "staking-rewards", "inflation"]
+  }
+]

@@ -1,13 +1,7 @@
 import { createClient, type QueryParams } from "next-sanity";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
-
-if (!projectId || !dataset) {
-  throw new Error(
-    "Missing Sanity environment variables. Set NEXT_PUBLIC_SANITY_PROJECT_ID and NEXT_PUBLIC_SANITY_DATASET."
-  );
-}
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "dummy00000";
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 
 export const client = createClient({
   projectId,

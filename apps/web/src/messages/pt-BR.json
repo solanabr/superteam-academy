@@ -40,7 +40,8 @@
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL baixo.",
     "getDevnetSol": "Obter SOL devnet ->",
-    "dismissBanner": "Fechar"
+    "dismissBanner": "Fechar",
+    "arcade": "Arcade"
   },
   "auth": {
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
@@ -147,7 +148,10 @@
     "ofXp": "de {total} XP",
     "coursesCount": "{count} de {total} concluídos",
     "discussions": "Discussões do Curso",
-    "startDiscussion": "Iniciar uma Discussão"
+    "startDiscussion": "Iniciar uma Discussão",
+    "tab": {
+      "dictionary": "Glossário da Solana"
+    }
   },
   "lesson": {
     "content": "Conteúdo",
@@ -705,5 +709,69 @@
       "course": "Nenhuma discussão sobre este curso ainda.",
       "lesson": "Nenhuma pergunta sobre esta aula ainda. Faça uma!"
     }
+  },
+  "arcade": {
+    "title": "Solana Arcade",
+    "subtitle": "Cinco jogos mecânicos baseados no Glossário oficial da Solana. Jogue, treine seu cérebro e ganhe XP.",
+    "reward": "Recompensa",
+    "howToPlay": "Como Jogar",
+    "conexo": {
+      "desc": "Encontre 4 grupos de 4 conceitos relacionados. Um verdadeiro teste de conhecimento do ecossistema.",
+      "rules": {
+        "1": "Encontre grupos de 4 itens de uma mesma categoria oficial da Solana.",
+        "2": "Selecione 4 itens e clique em 'Enviar'.",
+        "3": "Cuidado: Você só pode errar 4 vezes!"
+      }
+    },
+    "termo": {
+      "desc": "Adivinhe a palavra secreta da Solana em 6 tentativas. O clássico sucesso, agora on-chain.",
+      "rules": {
+        "1": "Adivinhe o termo em 6 tentativas.",
+        "2": "Letras em verde estão na posição correta.",
+        "3": "Letras em amarelo existem mas em locais errados."
+      }
+    },
+    "expresso": {
+      "desc": "Leia a definição oficial do glossário e adivinhe o termo oculto de forma rápida e precisa.",
+      "rules": {
+        "1": "A definição oficial será exibida. Digite o termo oculto.",
+        "2": "Seja rápido! Sua agilidade define o sucesso."
+      },
+      "definition": "Definição:",
+      "placeholder": "Digite o termo..."
+    },
+    "contexto": {
+      "desc": "Encontre o termo secreto adivinhando palavras similares. O algoritmo te guiará pela proximidade.",
+      "rules": {
+        "1": "Digite palavras para encontrar a secreta.",
+        "2": "O número de distância indica quão perto você está.",
+        "3": "1 é a palavra alvo. 1000+ é muito longe."
+      },
+      "placeholder": "Digite uma palavra...",
+      "distance": "Distância",
+      "rank": "Ranking"
+    },
+    "win": "Parabéns! Você resolveu o desafio de hoje. XP adicionado ao seu perfil.",
+    "lose": "Fim de jogo! Tente novamente amanhã.",
+    "mistakesRemaining": "Erros restantes:",
+    "shuffle": "Embaralhar",
+    "submit": "Enviar"
+  },
+  "dictionary": {
+    "title": "Glossário da Solana",
+    "subtitle": "Explore 1000+ termos oficiais e conceitos do ecossistema.",
+    "searchPlaceholder": "Buscar termo ou conceito...",
+    "tab": {
+      "all": "Todos",
+      "protocol": "Protocolo",
+      "tokens": "Tokens",
+      "defi": "DeFi",
+      "tools": "Ferramentas"
+    },
+    "synonyms": "Sinônimos:",
+    "related": "Relacionados:",
+    "empty": "Nenhum termo encontrado para sua busca.",
+    "showing": "Exibindo os primeiros 50 resultados de",
+    "refine": "Refine sua busca para ver mais."
   }
 }

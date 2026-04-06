@@ -1,6 +1,6 @@
-import { LeaderboardClient } from "./leaderboard-client";
 import { createClient } from "@/lib/supabase/server";
 import { getProgressService } from "@/lib/services";
+import { LeaderboardClient } from "./leaderboard-client";
 
 export default async function LeaderboardPage() {
   const supabase = await createClient();

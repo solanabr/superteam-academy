@@ -1,0 +1,423 @@
+[
+  {
+    "id": "llm",
+    "term": "LLM (Large Language Model)",
+    "definition": "A neural network trained on vast text corpora to understand and generate human language. LLMs (GPT-4, Claude, Llama, Gemini) use transformer architectures with billions of parameters. They power chatbots, code generation, summarization, and reasoning tasks. In blockchain development, LLMs assist with smart contract writing, audit review, documentation, and code explanation.",
+    "category": "ai-ml",
+    "aliases": ["LLM", "Large Language Model"],
+    "related": ["transformer", "foundation-model"]
+  },
+  {
+    "id": "transformer",
+    "term": "Transformer",
+    "definition": "The neural network architecture underlying modern LLMs, introduced in 'Attention Is All You Need' (2017). Transformers use self-attention mechanisms to process input sequences in parallel (unlike recurrent networks). Key components: multi-head attention, positional encoding, feedforward layers, and layer normalization. Variants include encoder-only (BERT), decoder-only (GPT), and encoder-decoder (T5).",
+    "category": "ai-ml",
+    "related": ["llm", "attention-mechanism"]
+  },
+  {
+    "id": "attention-mechanism",
+    "term": "Attention Mechanism",
+    "definition": "A neural network component that allows models to weigh the relevance of different parts of the input when producing output. Self-attention computes query-key-value dot products across all positions, enabling each token to 'attend' to every other token. Multi-head attention runs multiple attention functions in parallel. Attention is O(n\u00b2) in sequence length, driving context window research.",
+    "category": "ai-ml",
+    "related": ["transformer", "context-window"]
+  },
+  {
+    "id": "foundation-model",
+    "term": "Foundation Model",
+    "definition": "A large AI model trained on broad data that can be adapted for many downstream tasks. Foundation models (GPT-4, Claude, Llama 3, Gemini) are pre-trained on internet-scale text/code and can be fine-tuned, prompted, or used via APIs for specific applications. The term emphasizes that one base model serves as the foundation for diverse use cases rather than training task-specific models.",
+    "category": "ai-ml",
+    "related": ["llm", "fine-tuning"]
+  },
+  {
+    "id": "prompt-engineering",
+    "term": "Prompt Engineering",
+    "definition": "The practice of crafting input text (prompts) to guide LLM behavior and output quality. Techniques include: zero-shot (direct instruction), few-shot (providing examples), chain-of-thought (step-by-step reasoning), system prompts (setting context/persona), and structured output formatting. Effective prompts are specific, provide context, and include constraints. Critical for AI-assisted blockchain development.",
+    "category": "ai-ml",
+    "related": ["llm", "context-window"]
+  },
+  {
+    "id": "context-window",
+    "term": "Context Window",
+    "definition": "The maximum amount of text (measured in tokens) an LLM can process in a single interaction. Larger windows enable processing more code/documentation at once. Sizes vary: GPT-4 (128K tokens), Claude (200K tokens), Gemini (1M+ tokens). One token \u2248 4 characters in English. Context window limits affect how much codebase an AI can analyze in a single request.",
+    "category": "ai-ml",
+    "related": ["llm", "token-ai"]
+  },
+  {
+    "id": "token-ai",
+    "term": "Token (AI/NLP)",
+    "definition": "The basic unit of text processed by language models\u2014typically a word, subword, or character. Tokenizers (BPE, SentencePiece) split text into tokens for model input. 'Solana blockchain' might tokenize as ['Sol', 'ana', ' block', 'chain']. Token count determines context window usage and API billing. Not to be confused with blockchain tokens (cryptocurrency assets).",
+    "category": "ai-ml",
+    "aliases": ["AI Token"],
+    "related": ["llm", "context-window"]
+  },
+  {
+    "id": "fine-tuning",
+    "term": "Fine-Tuning",
+    "definition": "The process of further training a pre-trained model on a specialized dataset to improve performance on specific tasks. Fine-tuning adapts a foundation model's weights using domain-specific data (e.g., Solana documentation, smart contract code). Techniques include full fine-tuning, LoRA (Low-Rank Adaptation), and QLoRA. Fine-tuned models can outperform general models on narrow tasks.",
+    "category": "ai-ml",
+    "aliases": ["PEFT", "LoRA"],
+    "related": ["foundation-model", "llm"]
+  },
+  {
+    "id": "rag",
+    "term": "RAG (Retrieval-Augmented Generation)",
+    "definition": "An AI architecture that combines LLMs with external knowledge retrieval. Instead of relying solely on training data, RAG systems retrieve relevant documents from a knowledge base (using embeddings and vector search), then provide them as context to the LLM. RAG reduces hallucinations and enables up-to-date responses. Useful for blockchain documentation bots and developer assistants.",
+    "category": "ai-ml",
+    "aliases": ["RAG"],
+    "related": ["embedding", "vector-database"]
+  },
+  {
+    "id": "embedding",
+    "term": "Embedding",
+    "definition": "A dense vector representation of text (or other data) in a continuous high-dimensional space where semantically similar items are closer together. Embedding models (OpenAI ada-002, Cohere, sentence-transformers) convert text to vectors of 256-3072 dimensions. Used in RAG for semantic search, in recommendation systems, and for clustering. Stored and queried via vector databases.",
+    "category": "ai-ml",
+    "aliases": ["Vector Embedding"],
+    "related": ["rag", "vector-database"]
+  },
+  {
+    "id": "vector-database",
+    "term": "Vector Database",
+    "definition": "A database optimized for storing and querying high-dimensional vector embeddings using similarity search (cosine distance, dot product, Euclidean distance). Examples: Pinecone, Weaviate, Qdrant, ChromaDB, pgvector. Vector databases power RAG systems by quickly finding the most relevant documents for a given query embedding. Essential for AI-powered developer tools and documentation search.",
+    "category": "ai-ml",
+    "related": ["embedding", "rag"]
+  },
+  {
+    "id": "agent-ai",
+    "term": "AI Agent",
+    "definition": "An autonomous AI system that can plan, use tools, and take actions to accomplish goals. Agents use LLMs as the reasoning core and have access to tools (APIs, code execution, web browsing, database queries). In blockchain: agents can analyze smart contracts, execute transactions, monitor DeFi positions, and automate trading strategies. Frameworks: LangChain, CrewAI, Claude Agent SDK.",
+    "category": "ai-ml",
+    "aliases": ["Autonomous Agent", "Agentic AI"],
+    "related": ["llm", "tool-use"]
+  },
+  {
+    "id": "tool-use",
+    "term": "Tool Use (Function Calling)",
+    "definition": "An LLM capability where the model generates structured calls to external tools/functions rather than just text. The model decides which tool to invoke and with what parameters. Examples: calling an API, executing code, querying a database, or reading a file. Tool use enables agents to interact with the real world. Claude, GPT-4, and Gemini support native tool use.",
+    "category": "ai-ml",
+    "aliases": ["Function Calling"],
+    "related": ["agent-ai", "llm"]
+  },
+  {
+    "id": "hallucination",
+    "term": "Hallucination",
+    "definition": "When an AI model generates plausible-sounding but factually incorrect information. LLMs hallucinate because they predict likely token sequences, not verified facts. In blockchain development, hallucinations can be dangerous\u2014incorrect API usage, nonexistent functions, or wrong program addresses. Mitigation: RAG for grounding, code verification, testing, and using models with lower hallucination rates.",
+    "category": "ai-ml",
+    "related": ["llm", "rag"]
+  },
+  {
+    "id": "inference",
+    "term": "Inference",
+    "definition": "The process of running a trained model on new inputs to generate predictions or outputs. Inference is the 'using' phase (vs. training). Inference cost depends on model size, input/output token count, and hardware (GPUs/TPUs). API providers (Anthropic, OpenAI) charge per token for inference. On-device inference (llama.cpp, GGUF) runs locally without API calls.",
+    "category": "ai-ml",
+    "related": ["llm", "token-ai"]
+  },
+  {
+    "id": "training",
+    "term": "Training (ML)",
+    "definition": "The process of optimizing a model's parameters by exposing it to data and adjusting weights to minimize a loss function. Pre-training on large datasets creates foundation models. Training LLMs requires massive compute (thousands of GPUs, weeks/months). Training data quality, diversity, and size directly impact model capabilities. Distinguished from fine-tuning (smaller scale, specific domain).",
+    "category": "ai-ml",
+    "related": ["fine-tuning", "foundation-model"]
+  },
+  {
+    "id": "rlhf",
+    "term": "RLHF (Reinforcement Learning from Human Feedback)",
+    "definition": "A training technique that aligns LLM outputs with human preferences. Process: (1) train a reward model from human comparisons of outputs, (2) use reinforcement learning (PPO) to optimize the LLM against the reward model. RLHF makes models more helpful, harmless, and honest. Used by Claude, ChatGPT, and other assistants. Alternatives include DPO (Direct Preference Optimization) and Constitutional AI.",
+    "category": "ai-ml",
+    "aliases": ["RLHF"],
+    "related": ["llm", "training"]
+  },
+  {
+    "id": "open-source-ai",
+    "term": "Open-Source AI Models",
+    "definition": "AI models with publicly released weights that can be downloaded, modified, and self-hosted. Notable open models: Llama 3 (Meta), Mistral, Falcon, Gemma (Google), Phi (Microsoft). Open models enable privacy (data stays local), customization (fine-tuning), and cost control. Trade-off: generally less capable than frontier proprietary models but rapidly improving.",
+    "category": "ai-ml",
+    "aliases": ["Open-Weight Models"],
+    "related": ["foundation-model", "inference"]
+  },
+  {
+    "id": "multimodal",
+    "term": "Multimodal AI",
+    "definition": "AI models that can process and generate multiple data types: text, images, audio, video, and code. Modern multimodal models (GPT-4V, Claude, Gemini) can analyze screenshots of dApp UIs, read code from images, generate diagrams, and understand charts. In blockchain development, multimodal capabilities help analyze transaction visualizations, audit UI screenshots, and process documentation with images.",
+    "category": "ai-ml",
+    "related": ["llm", "foundation-model"]
+  },
+  {
+    "id": "ai-coding-assistant",
+    "term": "AI Coding Assistant",
+    "definition": "An AI tool that helps developers write, debug, review, and explain code. Examples: GitHub Copilot (inline suggestions), Claude Code (agentic CLI), Cursor (AI-native editor), Cody (Sourcegraph). These tools use LLMs to understand codebases, generate implementations, fix bugs, and write tests. Particularly valuable for Solana development where boilerplate is significant.",
+    "category": "ai-ml",
+    "related": ["llm", "agent-ai"]
+  },
+  {
+    "id": "depin",
+    "term": "DePIN (Decentralized Physical Infrastructure Networks)",
+    "definition": "Blockchain protocols that coordinate and incentivize physical infrastructure through token rewards. DePIN projects on Solana include: Helium (wireless networks), Render (GPU rendering), Hivemapper (mapping), and io.net (distributed GPU compute for AI). Contributors provide physical resources (hardware, bandwidth) and earn tokens. DePIN bridges blockchain economics with real-world infrastructure.",
+    "category": "ai-ml",
+    "aliases": ["DePIN"],
+    "related": ["gpu-compute", "blockchain"]
+  },
+  {
+    "id": "gpu-compute",
+    "term": "GPU Compute (Decentralized)",
+    "definition": "Blockchain-coordinated networks that aggregate GPU resources for AI training and inference. Projects like Render Network and io.net on Solana allow GPU owners to rent out compute to AI researchers and developers. This democratizes access to expensive GPU hardware needed for AI workloads. Token incentives align supply (GPU providers) with demand (AI developers).",
+    "category": "ai-ml",
+    "related": ["depin", "training", "inference"]
+  },
+  {
+    "id": "ai-blockchain-integration",
+    "term": "AI \u00d7 Blockchain Integration",
+    "definition": "The convergence of AI and blockchain technologies. Key patterns: AI agents executing on-chain transactions autonomously, blockchain providing verifiable compute receipts for AI inference, decentralized GPU networks for AI training, on-chain governance of AI model parameters, NFTs for AI-generated content provenance, and LLMs as smart contract development assistants.",
+    "category": "ai-ml",
+    "related": ["agent-ai", "depin", "gpu-compute"]
+  },
+  {
+    "id": "on-chain-ai",
+    "term": "On-Chain AI / ML",
+    "definition": "Running AI/ML inference directly within blockchain smart contracts or verified through on-chain proofs. Current limitations: compute budgets on blockchains are tiny compared to AI needs. Approaches include: off-chain inference with on-chain verification (ZK proofs of inference), optimistic verification, and simplified models (decision trees, linear models) that fit within compute limits.",
+    "category": "ai-ml",
+    "related": ["zk-proofs", "ai-blockchain-integration"]
+  },
+  {
+    "id": "tokenomics",
+    "term": "Tokenomics",
+    "definition": "The economic design of a cryptocurrency token: supply schedule, distribution, utility, incentive mechanisms, and value accrual. Key parameters: total/circulating supply, inflation/deflation, vesting schedules, staking rewards, fee burning, and governance rights. Good tokenomics aligns incentives between users, developers, and token holders. AI tools increasingly help analyze tokenomics models.",
+    "category": "ai-ml",
+    "related": ["governance-token", "staking-general"]
+  },
+  {
+    "id": "reasoning-model",
+    "term": "Reasoning Model",
+    "definition": "A class of LLMs trained with reinforcement learning to generate step-by-step internal chain-of-thought before producing a final answer, enabling stronger performance on complex math, coding, and logic tasks. Pioneered by OpenAI's o1 (September 2024) and followed by o3, DeepSeek-R1, and Claude's extended thinking mode. Unlike standard LLMs that answer directly, reasoning models produce a variable-length internal CoT, allowing controllable compute at inference time.",
+    "category": "ai-ml",
+    "aliases": ["Thinking Model", "o1", "o3"],
+    "related": ["chain-of-thought", "llm", "inference"]
+  },
+  {
+    "id": "chain-of-thought",
+    "term": "Chain-of-Thought (CoT)",
+    "definition": "A prompting technique or model-native capability where the LLM produces intermediate reasoning steps before arriving at a final answer, improving accuracy on multi-step problems. Originally a prompting strategy ('think step by step'), CoT is now built directly into reasoning models like o1 and DeepSeek-R1 as an internal process. When combining CoT with structured output, developers should place reasoning fields before answer fields to avoid bypassing the reasoning process.",
+    "category": "ai-ml",
+    "aliases": ["CoT", "Extended Thinking"],
+    "related": ["reasoning-model", "prompt-engineering", "structured-output"]
+  },
+  {
+    "id": "system-prompt",
+    "term": "System Prompt",
+    "definition": "A persistent, developer-controlled instruction set provided to an LLM that defines its role, behavior, tone, constraints, and capabilities for a given application. Unlike user prompts that change per interaction, the system prompt remains constant and is sent via a separate 'system' role parameter in the API. System prompts establish application-wide behavior including brand voice, output formatting, safety constraints, and tool-use rules.",
+    "category": "ai-ml",
+    "aliases": ["System Message"],
+    "related": ["prompt-engineering", "llm"]
+  },
+  {
+    "id": "structured-output",
+    "term": "Structured Output",
+    "definition": "An LLM capability that constrains model output to conform to a predefined schema, typically JSON or XML, enabling reliable programmatic consumption of responses. Supported natively by OpenAI, Anthropic, and others via API parameters that enforce valid JSON matching a JSON Schema. Research shows strict format constraints can degrade reasoning quality, so a best practice is to include a 'reasoning' field before answer fields in the schema.",
+    "category": "ai-ml",
+    "aliases": ["JSON Mode", "Constrained Decoding"],
+    "related": ["tool-use", "llm", "chain-of-thought"]
+  },
+  {
+    "id": "claude-code",
+    "term": "Claude Code",
+    "definition": "Anthropic's terminal-based agentic coding tool launched in early 2025 alongside Claude 3.7 Sonnet. It accepts natural-language commands in the shell and autonomously performs multi-step coding tasks including file editing, git operations, test execution, and large-scale refactoring using a 200K token context window. Claude Code can be extended with hooks, MCP servers, and custom slash commands for project-specific workflows.",
+    "category": "ai-ml",
+    "aliases": ["Anthropic CLI"],
+    "related": ["ai-coding-assistant", "agent-ai", "mcp"]
+  },
+  {
+    "id": "cursor-ide",
+    "term": "Cursor",
+    "definition": "An AI-native code editor (VS Code fork) with integrated LLM capabilities including multi-file editing, Composer mode for autonomous agent workflows, and natural-language commands. With 360K+ paying users by 2025, Cursor popularized the concept of an 'agentic IDE' where AI can reason across an entire codebase, propose and apply multi-file changes, and run iterative coding loops.",
+    "category": "ai-ml",
+    "aliases": ["Cursor IDE", "Cursor AI"],
+    "related": ["ai-coding-assistant", "windsurf", "agent-ai"]
+  },
+  {
+    "id": "windsurf",
+    "term": "Windsurf",
+    "definition": "An AI-powered code editor (VS Code fork) originally created by Codeium and later acquired by Cognition. Launched in November 2024 as a competitor to Cursor, it features the Cascade agent that indexes entire codebases for context-aware assistance. Positions itself as a 'next-generation agentic IDE' with full-codebase understanding, inline editing, and autonomous multi-step task execution.",
+    "category": "ai-ml",
+    "aliases": ["Codeium Windsurf"],
+    "related": ["ai-coding-assistant", "cursor-ide", "agent-ai"]
+  },
+  {
+    "id": "mcp",
+    "term": "Model Context Protocol (MCP)",
+    "definition": "An open standard introduced by Anthropic in November 2024 for connecting AI applications to external data sources, tools, and workflows via a unified protocol. Often described as 'USB-C for AI,' MCP eliminates the need for custom integrations per data source. Adopted by OpenAI in March 2025 and donated to the Linux Foundation's Agentic AI Foundation. MCP handles standardized tool/data connections while agent frameworks handle orchestration.",
+    "category": "ai-ml",
+    "aliases": ["MCP"],
+    "related": ["agent-ai", "tool-use", "langchain"]
+  },
+  {
+    "id": "langchain",
+    "term": "LangChain / LangGraph",
+    "definition": "LangChain is a popular open-source framework for building LLM-powered applications, providing abstractions for chains, tools, memory, and retrieval. LangGraph extends it with a graph-based runtime for building stateful, multi-step agent workflows with precise control over execution flow, state persistence, and error recovery. LangGraph is the production-grade choice for complex agentic applications requiring fine-grained state management.",
+    "category": "ai-ml",
+    "aliases": ["LangChain", "LangGraph"],
+    "related": ["agent-ai", "mcp", "crewai"]
+  },
+  {
+    "id": "crewai",
+    "term": "CrewAI",
+    "definition": "An open-source multi-agent orchestration framework that uses a role-based paradigm where developers define AI 'crews' of agents, each with specific roles, goals, and tools. CrewAI simplifies building collaborative agent teams\u2014agents can delegate tasks to each other and coordinate toward shared objectives. It integrates with MCP for tool connections and LangChain tools.",
+    "category": "ai-ml",
+    "aliases": ["Crew AI"],
+    "related": ["agent-ai", "langchain", "mcp"]
+  },
+  {
+    "id": "agent-loop",
+    "term": "Agent Loop",
+    "definition": "The core iterative execution cycle of an agentic AI system: Perceive, Reason, Act, Observe, Repeat. At each iteration, the agent assembles context, invokes an LLM to reason and select an action, executes via tools, observes the result, and feeds it back into the next iteration\u2014continuing until the task is complete. The agent loop is the architectural pattern that distinguishes AI agents from simple chatbots.",
+    "category": "ai-ml",
+    "aliases": ["Agentic Loop", "ReAct Loop"],
+    "related": ["agent-ai", "tool-use", "reasoning-model"]
+  },
+  {
+    "id": "dpo",
+    "term": "DPO (Direct Preference Optimization)",
+    "definition": "A simplified alternative to RLHF that aligns LLM outputs with human preferences without training a separate reward model or using reinforcement learning. DPO directly optimizes a policy using pairs of preferred and dispreferred outputs, making it computationally cheaper and more stable than RLHF's multi-stage pipeline. Widely adopted in 2024-2025 for fine-tuning open-source models.",
+    "category": "ai-ml",
+    "aliases": ["Direct Preference Optimization"],
+    "related": ["rlhf", "fine-tuning", "training"]
+  },
+  {
+    "id": "synthetic-data",
+    "term": "Synthetic Data (AI Training)",
+    "definition": "Artificially generated training data produced by LLMs or other AI models, used to augment or replace human-annotated datasets. Techniques include prompt-based generation, retrieval-augmented pipelines, and iterative self-refinement. Synthetic data slashes costs from $5-20 per human preference point to under $0.01 per sample and became central to post-training pipelines in 2024-2025.",
+    "category": "ai-ml",
+    "aliases": ["AI-Generated Training Data"],
+    "related": ["distillation", "dpo", "fine-tuning"]
+  },
+  {
+    "id": "distillation",
+    "term": "Knowledge Distillation",
+    "definition": "A technique for transferring capabilities from a large 'teacher' model to a smaller 'student' model, typically by having the teacher generate a synthetic dataset that the student is fine-tuned on. Distilled models can match or exceed teacher performance on specific tasks while being much cheaper to deploy. Common in 2024-2025 for creating efficient specialized models.",
+    "category": "ai-ml",
+    "aliases": ["Model Distillation"],
+    "related": ["synthetic-data", "fine-tuning", "quantization"]
+  },
+  {
+    "id": "quantization",
+    "term": "Quantization (AI)",
+    "definition": "A model compression technique that reduces weight precision (e.g., from 16-bit to 4-bit) to decrease model size and inference cost while preserving most quality. Three dominant formats in 2024-2025: GGUF (flexible CPU/GPU format for llama.cpp), GPTQ (GPU-optimized post-training quantization), and AWQ (activation-aware weight quantization). All keep quality within ~6% of full-precision at 4-bit.",
+    "category": "ai-ml",
+    "aliases": ["GGUF", "GPTQ", "AWQ"],
+    "related": ["inference", "open-source-ai", "distillation"]
+  },
+  {
+    "id": "diffusion-model",
+    "term": "Diffusion Model",
+    "definition": "A generative AI architecture that creates images, video, or audio by learning to reverse a noise-adding process\u2014starting from pure noise and iteratively denoising to produce coherent output. Diffusion models power leading image generators (Stable Diffusion, DALL-E 3, Midjourney) and video generators (Sora). Key variants include latent diffusion (operating in compressed space) and diffusion transformers (DiT).",
+    "category": "ai-ml",
+    "aliases": ["Latent Diffusion", "DiT"],
+    "related": ["multimodal", "stable-diffusion"]
+  },
+  {
+    "id": "stable-diffusion",
+    "term": "Stable Diffusion",
+    "definition": "An open-source image generation model by Stability AI that runs locally on consumer hardware, enabling privacy and customization without API costs. SD 3.5 (2024) ships in multiple variants for different hardware. Its open nature enables a vast ecosystem of community fine-tunes (LoRAs), control methods (ControlNet), and custom workflows (ComfyUI). Competitors include FLUX (Black Forest Labs) and Google Imagen.",
+    "category": "ai-ml",
+    "aliases": ["SD", "SDXL"],
+    "related": ["diffusion-model", "open-source-ai"]
+  },
+  {
+    "id": "ai-alignment",
+    "term": "AI Alignment",
+    "definition": "The practice of ensuring AI systems behave according to human intentions and values\u2014being helpful, harmless, and honest. Alignment encompasses training-time techniques (RLHF, Constitutional AI, DPO), inference-time guardrails, and evaluation through red teaming. As models become more capable, alignment becomes critical to prevent harmful content generation or manipulation by bad actors.",
+    "category": "ai-ml",
+    "aliases": ["AI Safety"],
+    "related": ["rlhf", "constitutional-ai", "dpo"]
+  },
+  {
+    "id": "constitutional-ai",
+    "term": "Constitutional AI",
+    "definition": "An alignment technique developed by Anthropic where an AI model is guided by a 'constitution'\u2014a set of explicit principles defining allowed and disallowed behavior\u2014rather than relying solely on human feedback. The model critiques and revises its own outputs against these principles. Constitutional Classifiers extend this by training input/output classifiers that detect policy violations at low compute cost.",
+    "category": "ai-ml",
+    "aliases": ["CAI"],
+    "related": ["ai-alignment", "rlhf"]
+  },
+  {
+    "id": "mixture-of-experts",
+    "term": "Mixture of Experts (MoE)",
+    "definition": "A neural network architecture that routes each input to a subset of specialized 'expert' sub-networks rather than activating all parameters, dramatically improving efficiency. Only a fraction of total parameters are active per token (e.g., DeepSeek-V3 has 671B total but ~37B active). MoE enables training much larger models at manageable compute costs. Used in production models like Mixtral, Jamba, and DeepSeek-V3.",
+    "category": "ai-ml",
+    "aliases": ["MoE", "Sparse MoE"],
+    "related": ["transformer", "state-space-model", "llm"]
+  },
+  {
+    "id": "state-space-model",
+    "term": "State Space Model (Mamba)",
+    "definition": "An alternative to the Transformer architecture that processes sequences with linear O(n) complexity instead of quadratic O(n^2) attention, enabling efficient handling of very long sequences. Mamba introduced selective state spaces where the model dynamically filters information based on content. Hybrid architectures like Jamba combine SSM efficiency with attention's retrieval strength.",
+    "category": "ai-ml",
+    "aliases": ["SSM", "Mamba"],
+    "related": ["transformer", "mixture-of-experts", "attention-mechanism"]
+  },
+  {
+    "id": "bittensor",
+    "term": "Bittensor (TAO)",
+    "definition": "A blockchain protocol that decentralizes AI by creating an open marketplace for machine intelligence. Built on Substrate with a Yuma consensus mechanism, Bittensor rewards contributors with TAO tokens based on the quality of their AI outputs. The network hosts 100+ specialized subnets for different AI tasks. TAO supply is capped at 21M with Bitcoin-style halvings.",
+    "category": "ai-ml",
+    "aliases": ["TAO"],
+    "related": ["depin", "gpu-compute", "decentralized-inference"]
+  },
+  {
+    "id": "decentralized-inference",
+    "term": "Decentralized Inference",
+    "definition": "Running AI model inference across distributed networks of GPU providers rather than centralized cloud infrastructure, using blockchain for coordination, payment, and verification. Key verification approaches include ZKML (zero-knowledge proofs of correct inference) and trusted execution environments (TEEs). Projects include Bittensor, Render Network, and io.net on Solana.",
+    "category": "ai-ml",
+    "aliases": ["Proof of Inference", "ZKML"],
+    "related": ["bittensor", "gpu-compute", "on-chain-ai"]
+  },
+  {
+    "id": "deepseek",
+    "term": "DeepSeek",
+    "definition": "A Chinese AI lab that released DeepSeek-R1 in January 2025, a 671B-parameter open-weight reasoning model achieving performance comparable to OpenAI's o1 at significantly lower cost. DeepSeek-R1 generates visible chain-of-thought reasoning using GRPO training and demonstrated that pure RL with verifiable rewards can produce emergent reasoning. DeepSeek-V3 uses a MoE architecture with ~37B active parameters.",
+    "category": "ai-ml",
+    "aliases": ["DeepSeek-R1", "DeepSeek-V3"],
+    "related": ["reasoning-model", "mixture-of-experts", "open-source-ai"]
+  },
+  {
+    "id": "github-copilot",
+    "term": "GitHub Copilot",
+    "definition": "The most widely deployed AI coding assistant with 15M+ developers, providing inline code suggestions, chat-based assistance, and agent capabilities across VS Code, JetBrains, and Neovim. At $10/month, Copilot offers mature enterprise features including SOC 2 compliance and IP indemnification. Pioneered the AI pair-programming paradigm in 2022.",
+    "category": "ai-ml",
+    "aliases": ["Copilot"],
+    "related": ["ai-coding-assistant", "cursor-ide", "claude-code"]
+  },
+  {
+    "id": "nosana",
+    "term": "Nosana",
+    "definition": "A decentralized GPU compute marketplace built on Solana that connects GPU providers with users needing compute for AI inference workloads. Node operators supply idle GPU capacity and earn NOS tokens for completed jobs. Nosana focuses on cost-effective AI inference rather than training, using Solana for job coordination, payment settlement, and reputation tracking. It supports containerized workloads across consumer and enterprise GPUs.",
+    "category": "ai-ml",
+    "related": ["gpu-compute", "decentralized-inference", "depin"]
+  },
+  {
+    "id": "solana-agent-kit",
+    "term": "Solana Agent Kit",
+    "definition": "An open-source toolkit developed by SendAI (formerly Sendai) that enables AI agents to interact with Solana protocols programmatically. The kit provides pre-built tools for token transfers, swaps, staking, NFT operations, and DeFi interactions that can be integrated into agent frameworks like LangChain and CrewAI. It abstracts Solana transaction building and signing, allowing LLM-powered agents to execute on-chain actions through natural language commands.",
+    "category": "ai-ml",
+    "related": ["agent-ai", "tool-use", "langchain"]
+  },
+  {
+    "id": "io-net",
+    "term": "io.net",
+    "definition": "A decentralized GPU network built on Solana that aggregates underutilized GPU resources from data centers, crypto miners, and individual contributors into clusters for AI and machine learning workloads. io.net uses the IO token for payments and staking, and enables users to deploy GPU clusters on demand at costs significantly below centralized cloud providers. The network supports training, inference, and fine-tuning workflows.",
+    "category": "ai-ml",
+    "aliases": ["IO"],
+    "related": ["gpu-compute", "depin", "decentralized-inference"]
+  },
+  {
+    "id": "grass-depin",
+    "term": "Grass",
+    "definition": "A DePIN protocol on Solana where users share unused internet bandwidth through a browser extension, contributing to a decentralized data pipeline for AI training datasets. Participants earn GRASS tokens for bandwidth contributions, which are used to scrape and structure publicly available web data. Grass addresses the growing demand for high-quality training data by creating an incentivized, distributed web crawling network.",
+    "category": "ai-ml",
+    "related": ["depin", "training", "sol"]
+  },
+  {
+    "id": "autonomous-on-chain-agent",
+    "term": "Autonomous On-Chain Agent",
+    "definition": "An AI agent that holds its own blockchain wallet, autonomously signs transactions, and manages on-chain positions (DeFi yields, token trades, NFT operations) without human approval for each action. These agents combine LLM reasoning with blockchain tool use to monitor market conditions, execute strategies, and adapt to changing on-chain state. Key challenges include wallet security, transaction simulation, and defining behavioral guardrails to prevent loss of funds.",
+    "category": "ai-ml",
+    "related": ["agent-ai", "solana-agent-kit", "ai-blockchain-integration"]
+  }
+]

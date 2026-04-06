@@ -2,14 +2,16 @@ import { BorshEventCoder, Idl } from "@coral-xyz/anchor";
 import type { DecodedEvent, HeliusRawTransaction } from "./types";
 import IDL from "@/lib/solana/idl/superteam_academy.json";
 
-const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
-if (!PROGRAM_ID) {
-  throw new Error(
-    "[event-decoder] NEXT_PUBLIC_PROGRAM_ID environment variable is required"
-  );
+const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID ?? "";
+
+let _eventCoder: BorshEventCoder | null = null;
+function getEventCoder(): BorshEventCoder {
+  if (!_eventCoder) {
+    // Double cast: JSON import lacks Anchor's Idl type shape at compile time
+    _eventCoder = new BorshEventCoder(IDL as unknown as Idl);
+  }
+  return _eventCoder;
 }
-// Double cast: JSON import lacks Anchor's Idl type shape at compile time
-const eventCoder = new BorshEventCoder(IDL as unknown as Idl);
 
 /**
  * Extract and decode all Anchor events from a raw Helius transaction.
@@ -52,7 +54,7 @@ export function decodeEventsFromTransaction(tx: HeliusRawTransaction): {
     if (insideOurProgram && log.startsWith("Program data: ")) {
       const base64Data = log.slice("Program data: ".length);
       try {
-        const decoded = eventCoder.decode(base64Data);
+        const decoded = getEventCoder().decode(base64Data);
         if (decoded) {
           events.push({
             name: decoded.name,

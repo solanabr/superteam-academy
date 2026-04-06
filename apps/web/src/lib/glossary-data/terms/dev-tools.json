@@ -1,0 +1,474 @@
+[
+  {
+    "id": "anchor",
+    "term": "Anchor Framework",
+    "definition": "The most popular framework for building Solana programs in Rust. Anchor provides macros (#[program], #[account], #[derive(Accounts)]) that auto-generate boilerplate for account validation, serialization, discriminators, and error handling. It includes a CLI (anchor init/build/test/deploy), IDL generation, and TypeScript client generation. Reduces program code by ~80% compared to native development.",
+    "category": "dev-tools",
+    "related": ["program", "idl", "discriminator"]
+  },
+  {
+    "id": "anchor-account-macro",
+    "term": "#[account] Macro (Anchor)",
+    "definition": "The Anchor macro applied to structs to define on-chain account data layouts. `#[account]` auto-derives Borsh serialization, adds an 8-byte discriminator prefix (SHA-256 of 'account:<Name>'), and implements space calculation. Optional attributes: `#[account(zero_copy)]` for zero-copy deserialization of large accounts.",
+    "category": "dev-tools",
+    "related": ["anchor", "discriminator", "borsh"]
+  },
+  {
+    "id": "anchor-derive-accounts",
+    "term": "#[derive(Accounts)] (Anchor)",
+    "definition": "The Anchor macro that defines the accounts struct for an instruction. Each field specifies an account with validation constraints. Account types include: `Account<'info, T>` (deserialized), `Signer<'info>` (must sign), `Program<'info, T>` (program reference), `SystemAccount<'info>`, and `UncheckedAccount<'info>` (no validation, use carefully).",
+    "category": "dev-tools",
+    "related": ["anchor", "anchor-constraints"]
+  },
+  {
+    "id": "anchor-constraints",
+    "term": "Anchor Constraints",
+    "definition": "Declarative validation rules on Anchor account fields. Key constraints: `#[account(mut)]` (writable), `#[account(init, payer=x, space=n)]` (create), `#[account(seeds=[...], bump)]` (PDA validation), `#[account(has_one=field)]` (field equality), `#[account(constraint = expr)]` (custom boolean), `#[account(close=target)]` (close and reclaim rent).",
+    "category": "dev-tools",
+    "aliases": ["has_one", "constraint", "seeds"],
+    "related": ["anchor", "anchor-derive-accounts"]
+  },
+  {
+    "id": "anchor-error",
+    "term": "Anchor Error Codes",
+    "definition": "Anchor's error handling system. `#[error_code]` defines an enum of custom errors (auto-numbered from 6000). `require!(condition, ErrorCode)` and `require_keys_eq!()` macros provide concise validation. Errors include the program name and error name in logs. Custom errors return in the transaction metadata and can be parsed by clients via the IDL.",
+    "category": "dev-tools",
+    "aliases": ["error_code", "require!"],
+    "related": ["anchor"]
+  },
+  {
+    "id": "anchor-context",
+    "term": "Context<T> (Anchor)",
+    "definition": "The `Context<T>` struct passed to every Anchor instruction handler, where T is the accounts struct. Fields: `ctx.accounts` (validated accounts), `ctx.program_id` (current program), `ctx.remaining_accounts` (extra accounts not in struct), and `ctx.bumps` (map of PDA bumps found during validation).",
+    "category": "dev-tools",
+    "related": ["anchor", "instruction"]
+  },
+  {
+    "id": "anchor-init",
+    "term": "anchor init / anchor build / anchor test",
+    "definition": "Anchor CLI commands for project lifecycle. `anchor init <name>` scaffolds a new project (program, tests, Anchor.toml). `anchor build` compiles to SBF and generates the IDL. `anchor test` builds, starts a local validator, deploys, and runs Mocha/Jest tests. `anchor deploy` deploys to the configured cluster. `anchor verify` checks deployed bytecode.",
+    "category": "dev-tools",
+    "related": ["anchor", "solana-cli"]
+  },
+  {
+    "id": "anchor-events",
+    "term": "Anchor Events (emit!)",
+    "definition": "Anchor's event system using the `emit!()` macro. Events are defined with `#[event]` on structs and emitted as base64-encoded data in program logs (prefixed with a discriminator). Clients subscribe via `program.addEventListener('EventName', callback)`. Events cost compute units for logging and are limited by the 10KB log size.",
+    "category": "dev-tools",
+    "related": ["anchor", "log"]
+  },
+  {
+    "id": "seahorse",
+    "term": "Seahorse (Python \u2192 Anchor)",
+    "definition": "A Python-to-Anchor transpiler that lets developers write Solana programs in Python syntax and compiles them to Rust/Anchor code. Seahorse supports a subset of Python with Solana-specific decorators. It lowers the barrier to entry for Python developers but may lag behind Anchor features. Suitable for learning and prototyping.",
+    "category": "dev-tools",
+    "related": ["anchor", "program"]
+  },
+  {
+    "id": "solana-cli",
+    "term": "Solana CLI",
+    "definition": "The official command-line tool for interacting with Solana clusters. Key commands: `solana balance`, `solana transfer`, `solana program deploy`, `solana config set --url`, `solana airdrop` (devnet). Configuration in `~/.config/solana/cli/config.yml` sets the default cluster URL and keypair path.",
+    "category": "dev-tools",
+    "aliases": ["solana-cli", "solana"],
+    "related": ["solana-keygen", "solana-test-validator"]
+  },
+  {
+    "id": "solana-keygen",
+    "term": "solana-keygen",
+    "definition": "A CLI tool for generating and managing Solana keypairs. `solana-keygen new` creates a keypair file at `~/.config/solana/id.json`. `solana-keygen grind` generates vanity addresses. `solana-keygen pubkey` displays the public key. `solana-keygen verify` confirms a pubkey matches a keypair. Keypairs are stored as 64-byte JSON arrays.",
+    "category": "dev-tools",
+    "related": ["keypair", "solana-cli"]
+  },
+  {
+    "id": "solana-test-validator",
+    "term": "solana-test-validator",
+    "definition": "A lightweight local Solana validator for development. Runs a single-node cluster on localhost:8899 (RPC) and localhost:8900 (WebSocket). Supports `--clone` to copy mainnet accounts, `--bpf-program` to load programs, and `--reset` to clear state. Processes transactions instantly without PoH delays. Useful for rapid iteration but doesn't simulate network conditions.",
+    "category": "dev-tools",
+    "related": ["solana-cli", "local-development"]
+  },
+  {
+    "id": "local-development",
+    "term": "Local Development (Localnet)",
+    "definition": "The practice of developing and testing Solana programs against a local validator (solana-test-validator) or in-process test harness (Bankrun, LiteSVM). Local development allows instant transaction confirmation, free airdrops, account cloning from mainnet, and rapid debugging. Programs are deployed locally before moving to devnet for integration testing.",
+    "category": "dev-tools",
+    "aliases": ["Localnet"],
+    "related": ["solana-test-validator", "bankrun"]
+  },
+  {
+    "id": "bankrun",
+    "term": "Bankrun (solana-bankrun)",
+    "definition": "A fast Solana testing framework (solana-bankrun for TypeScript, bankrun for Rust) that runs tests against an in-process Bank without starting a full validator. Bankrun processes transactions ~100x faster than solana-test-validator, supports time warping (advance slots/time), and can load accounts from fixtures or mainnet snapshots.",
+    "category": "dev-tools",
+    "related": ["testing", "local-development", "litesvm"]
+  },
+  {
+    "id": "litesvm",
+    "term": "LiteSVM",
+    "definition": "A lightweight Solana VM for testing Rust programs. LiteSVM provides a minimal SVM environment that executes transactions without the overhead of a full validator. It supports account setup, program deployment, and transaction execution. Faster than solana-program-test and suitable for unit testing individual program instructions.",
+    "category": "dev-tools",
+    "related": ["testing", "bankrun"]
+  },
+  {
+    "id": "testing",
+    "term": "Testing (Solana Programs)",
+    "definition": "The process of validating Solana programs through unit tests, integration tests, and fuzz testing. Common approaches: Rust tests with solana-program-test or LiteSVM (fast, in-process), TypeScript tests with Bankrun or solana-test-validator (end-to-end), and fuzz testing with Trident. Best practice is testing both happy paths and attack vectors (missing signers, wrong owners).",
+    "category": "dev-tools",
+    "related": ["bankrun", "litesvm", "anchor-init"]
+  },
+  {
+    "id": "solana-web3js",
+    "term": "Solana Web3.js",
+    "definition": "The official JavaScript/TypeScript SDK (@solana/web3.js v1) for building Solana clients. Provides classes: Connection (RPC), PublicKey, Keypair, Transaction, SystemProgram, and more. Used for sending transactions, querying accounts, and subscribing to events. v1 uses a class-based API; v2 (@solana/kit) uses a functional, tree-shakeable design.",
+    "category": "dev-tools",
+    "aliases": ["@solana/web3.js"],
+    "related": ["rpc", "transaction"]
+  },
+  {
+    "id": "solana-web3js-v2",
+    "term": "Web3.js v2 (@solana/kit)",
+    "definition": "The next-generation Solana TypeScript SDK (@solana/kit, formerly @solana/web3.js v2) featuring a modular, functional API. Unlike v1's monolithic classes, v2 uses composable functions and tree-shaking for smaller bundles. Key changes: pipe-based transaction building, codec-based serialization, and native support for versioned transactions. Significantly smaller bundle size than v1.",
+    "category": "dev-tools",
+    "aliases": ["@solana/kit", "Solana Kit"],
+    "related": ["solana-web3js"]
+  },
+  {
+    "id": "solana-rust-sdk",
+    "term": "Solana Rust SDK (solana-sdk)",
+    "definition": "The Rust crate (solana-sdk) providing types and utilities for building Solana clients and programs. For on-chain programs, use `solana-program` (no-std compatible subset). For off-chain clients, use `solana-sdk` (full features including keypair generation, transaction signing). The SDK includes types like Pubkey, Instruction, Transaction, and Account.",
+    "category": "dev-tools",
+    "aliases": ["solana-sdk", "solana-program"],
+    "related": ["program", "anchor"]
+  },
+  {
+    "id": "solana-program-crate",
+    "term": "solana-program Crate",
+    "definition": "The Rust crate (solana-program) providing the core types and syscalls for on-chain program development. It includes: entrypoint!, msg!, AccountInfo, Pubkey, ProgramResult, invoke/invoke_signed, and system instruction builders. This crate compiles to SBF and must be used instead of solana-sdk for on-chain code.",
+    "category": "dev-tools",
+    "related": ["solana-rust-sdk", "program"]
+  },
+  {
+    "id": "spl-crates",
+    "term": "SPL Crates (spl-token, spl-associated-token-account)",
+    "definition": "Rust crates providing client-side and on-chain interfaces for SPL programs. Key crates: `spl-token` (token instructions and state), `spl-associated-token-account` (ATA creation), `spl-memo` (memo instruction), `spl-token-2022` (Token Extensions). These crates provide instruction builders and state deserialization for interacting with SPL programs.",
+    "category": "dev-tools",
+    "related": ["spl-token", "associated-token-account"]
+  },
+  {
+    "id": "metaplex-sdks",
+    "term": "Metaplex SDKs (Umi, JS SDK)",
+    "definition": "Client libraries for interacting with Metaplex programs. Umi is the current framework-agnostic TypeScript SDK with plugins for each Metaplex program (Token Metadata, Bubblegum, Core). The older @metaplex-foundation/js SDK is deprecated in favor of Umi. Umi provides a unified interface for serialization, signing, and RPC across all Metaplex operations.",
+    "category": "dev-tools",
+    "aliases": ["Umi"],
+    "related": ["metaplex-metadata", "nft"]
+  },
+  {
+    "id": "solana-playground",
+    "term": "Solana Playground (SolPG)",
+    "definition": "A browser-based IDE (beta.solpg.io) for writing, building, testing, and deploying Solana programs without local toolchain setup. SolPG supports Anchor and native Rust programs, includes a built-in wallet, and connects to devnet/mainnet. Features include: code editor with syntax highlighting, one-click build/deploy, and a transaction explorer.",
+    "category": "dev-tools",
+    "aliases": ["SolPG"],
+    "related": ["anchor", "local-development"]
+  },
+  {
+    "id": "cargo-build-sbf",
+    "term": "cargo-build-sbf",
+    "definition": "The Cargo subcommand that compiles Rust programs to Solana Bytecode Format (SBF). It invokes the Solana-specific LLVM toolchain (platform-tools) to produce an ELF binary deployable on-chain. Replaces the older `cargo build-bpf`. Typically invoked via `anchor build` which calls it internally. Output goes to `target/deploy/<name>.so`.",
+    "category": "dev-tools",
+    "aliases": ["cargo build-sbf", "cargo build-bpf"],
+    "related": ["sbf", "program"]
+  },
+  {
+    "id": "solana-verify",
+    "term": "Solana Verify (solana-verifiable-build)",
+    "definition": "A tool and standard for verifying that deployed on-chain program bytecode matches public source code. `solana-verify build` produces a deterministic build using Docker, and `solana-verify verify-from-repo` checks the deployed binary against a Git repo. Verified programs are listed on the Solana Explorer and OtterSec's verify registry, increasing user trust.",
+    "category": "dev-tools",
+    "related": ["program", "audit"]
+  },
+  {
+    "id": "amman",
+    "term": "Amman",
+    "definition": "A testing toolkit by Metaplex that wraps solana-test-validator with additional features: account snapshots and restoration, labeled accounts for debugging, transaction history explorer, and a relay for live-reloading. Amman is particularly useful for testing Metaplex programs and complex multi-instruction workflows.",
+    "category": "dev-tools",
+    "related": ["testing", "local-development"]
+  },
+  {
+    "id": "trident",
+    "term": "Trident (Fuzzer)",
+    "definition": "A fuzz testing framework for Solana programs built on Honggfuzz. Trident generates random instruction sequences and account states to discover edge cases and vulnerabilities. It integrates with Anchor programs and can detect common bugs like integer overflows, unauthorized access, and invalid state transitions. Developed by Ackee Blockchain Security.",
+    "category": "dev-tools",
+    "related": ["fuzzing", "anchor", "testing"]
+  },
+  {
+    "id": "solana-program-test",
+    "term": "solana-program-test",
+    "definition": "A Rust testing framework in the solana-sdk that provides a BanksClient for in-process program testing. Programs are loaded directly into a test Bank without a network. Supports adding accounts, advancing clock, and processing transactions. Slower than LiteSVM/Bankrun but provides the most accurate runtime behavior for Rust-only test suites.",
+    "category": "dev-tools",
+    "related": ["testing", "bankrun"]
+  },
+  {
+    "id": "squads",
+    "term": "Squads (Multisig)",
+    "definition": "A multisig protocol on Solana (Squads v3/v4) enabling M-of-N approval for transactions. Used to manage program upgrade authorities, treasury wallets, and DAO operations. Squads creates a multisig PDA that acts as the authority; members propose transactions that execute once the threshold is reached. Critical for production program security.",
+    "category": "dev-tools",
+    "related": ["multisig", "authority", "upgrade-authority"]
+  },
+  {
+    "id": "multisig",
+    "term": "Multisig",
+    "definition": "An account controlled by multiple parties requiring M-of-N signatures to authorize actions. On Solana, multisig is implemented by programs like Squads rather than at the protocol level. Use cases: program upgrade authority (require 3-of-5 team members), treasury management, and DAO governance execution.",
+    "category": "dev-tools",
+    "related": ["squads", "authority"]
+  },
+  {
+    "id": "magicblock",
+    "term": "MagicBlock (Ephemeral Rollups)",
+    "definition": "A framework for building on-chain games on Solana using Ephemeral Rollups. MagicBlock allows game state to temporarily move to a dedicated SVM instance for high-frequency updates (sub-second ticks), then settle back to Solana mainnet. This enables real-time multiplayer games while maintaining Solana's composability and security.",
+    "category": "dev-tools",
+    "related": ["svm", "gaming"]
+  },
+  {
+    "id": "bolt",
+    "term": "Bolt (ECS Framework)",
+    "definition": "An Entity Component System (ECS) framework by MagicBlock for building on-chain games on Solana. Bolt separates game data (Components stored in accounts) from logic (Systems as programs). This modular architecture enables composable, upgradeable game logic where different programs can operate on shared game state.",
+    "category": "dev-tools",
+    "aliases": ["BOLT ECS"],
+    "related": ["magicblock", "gaming"]
+  },
+  {
+    "id": "gaming",
+    "term": "Gaming on Solana",
+    "definition": "The ecosystem of on-chain games and gaming infrastructure on Solana. Key technologies: MagicBlock (ephemeral rollups for real-time games), Bolt (ECS framework), Solana Unity SDK (Unity integration), and session keys (for gasless UX). Solana's low fees and fast finality make it suitable for gaming where frequent state updates are needed.",
+    "category": "dev-tools",
+    "related": ["magicblock", "bolt", "unity-sdk"]
+  },
+  {
+    "id": "unity-sdk",
+    "term": "Solana Unity SDK",
+    "definition": "A C# SDK integrating the Unity game engine with Solana, enabling game developers to interact with on-chain programs, manage wallets, and sign transactions from within Unity. Supports WebGL, mobile, and desktop builds. Features include: wallet adapter, transaction building, account deserialization, and NFT display.",
+    "category": "dev-tools",
+    "related": ["gaming", "solana-mobile"]
+  },
+  {
+    "id": "pinocchio",
+    "term": "Pinocchio",
+    "definition": "A zero-dependency Rust framework for writing Solana programs that prioritizes performance and precise control over convenience. Pinocchio uses zero-copy patterns for accessing program inputs and has no standard library dependency, significantly reducing compute unit usage compared to solana-program or Anchor. It does not generate IDLs automatically, requiring tools like Shank or Codama for client generation.",
+    "category": "dev-tools",
+    "related": ["anchor", "steel", "codama"]
+  },
+  {
+    "id": "steel",
+    "term": "Steel",
+    "definition": "An opinionated Rust framework for writing Solana programs built on top of solana-program, exposing macros, functions, and patterns for safe and expressive on-chain code. Steel provides granular access to Solana program primitives while maintaining readability. Unlike Anchor's all-or-none approach, developers can selectively use only the Steel components they need.",
+    "category": "dev-tools",
+    "related": ["pinocchio", "anchor", "solana-program-crate"]
+  },
+  {
+    "id": "codama",
+    "term": "Codama",
+    "definition": "A code generation toolchain that takes a Solana program's IDL and generates fully-typed client SDKs in multiple languages. Codama processes IDLs produced by Shank or Anchor and emits TypeScript clients. It is the successor of the Kinobi project and is commonly used in the Pinocchio + Shank + Codama workflow for native Solana program development.",
+    "category": "dev-tools",
+    "aliases": ["Codama SDK Generator"],
+    "related": ["kinobi", "shank", "idl", "pinocchio"]
+  },
+  {
+    "id": "kinobi",
+    "term": "Kinobi",
+    "definition": "A superset of the Solana IDL specification that enables automatic generation of program clients with full serialization and deserialization of instructions, accounts, and types. Kinobi reduces runtime errors from misaligned client-program logic by generating strongly-typed SDKs. The underlying libraries have been reorganized under the Codama project.",
+    "category": "dev-tools",
+    "related": ["codama", "idl"]
+  },
+  {
+    "id": "shank",
+    "term": "Shank",
+    "definition": "A Rust macro-based tool for generating IDL files from native Solana programs that do not use Anchor. Shank provides attribute macros like #[derive(ShankAccount)] and #[derive(ShankInstruction)] that annotate program code to produce IDL output compatible with Codama/Kinobi for client generation. A key component of the Pinocchio + Shank + Codama workflow.",
+    "category": "dev-tools",
+    "related": ["codama", "pinocchio", "idl"]
+  },
+  {
+    "id": "anchor-v031",
+    "term": "Anchor v0.31",
+    "definition": "A major release (March 2025) of the Anchor framework introducing custom discriminators (overriding the default 8-byte discriminator to save transaction space), LazyAccount for on-demand deserialization to reduce compute costs, and stack memory optimizations for init constraints. Positioned as a major milestone on the roadmap toward v1.0.",
+    "category": "dev-tools",
+    "aliases": ["Anchor 0.31.0"],
+    "related": ["anchor", "discriminator"]
+  },
+  {
+    "id": "solana-mobile-stack",
+    "term": "Solana Mobile Stack (SMS)",
+    "definition": "A comprehensive mobile development toolkit for building Solana-native Android dApps, including an SDK for wallet integration, a Seed Vault for secure key management, and the Solana dApp Store for distribution outside traditional app stores. SMS enables mobile-first interaction with Solana programs, token management, and transaction signing from Android devices.",
+    "category": "dev-tools",
+    "aliases": ["SMS", "Solana Mobile"],
+    "related": ["seeker", "gaming", "wallet-adapter"]
+  },
+  {
+    "id": "seeker",
+    "term": "Seeker (Solana Phone)",
+    "definition": "The second-generation Solana mobile device with a native Seed Vault wallet, dApp Store 2.0, and a soulbound Seeker Genesis Token for exclusive ecosystem rewards. Priced at $450-$500, it surpassed 1 million pre-orders across 57 countries. Saga's BONK airdrops briefly pushed secondary market prices above $2,000, validating token-incentive distribution via hardware.",
+    "category": "dev-tools",
+    "aliases": ["Chapter 2", "Solana Seeker"],
+    "related": ["solana-mobile-stack", "wallet-general"]
+  },
+  {
+    "id": "formal-verification",
+    "term": "Formal Verification",
+    "definition": "The use of mathematical proofs to verify that a smart contract's behavior matches its specification for all possible inputs, providing stronger guarantees than testing alone. Techniques include model checking, deductive verification, SAT/SMT solving, and interactive theorem proving. Tools like Halmos (a16z), Kontrol, and Certora Prover enable proving properties like 'total supply never exceeds max.'",
+    "category": "dev-tools",
+    "aliases": ["FV"],
+    "related": ["invariant-testing", "symbolic-execution", "audit"]
+  },
+  {
+    "id": "invariant-testing",
+    "term": "Invariant Testing",
+    "definition": "A property-based testing approach where developers define invariants (properties that must always hold true) and a fuzzer generates random sequences of function calls attempting to violate them. Unlike unit tests that check specific scenarios, invariant tests explore the state space stochastically. Tools like Foundry invariant testing, Echidna, and Medusa support this approach.",
+    "category": "dev-tools",
+    "aliases": ["Property-Based Testing"],
+    "related": ["formal-verification", "symbolic-execution", "fuzzing"]
+  },
+  {
+    "id": "symbolic-execution",
+    "term": "Symbolic Execution",
+    "definition": "A program analysis technique that explores execution paths using symbolic variables instead of concrete inputs, building mathematical constraints for each branch to identify inputs that trigger specific behaviors. More systematic than fuzzing but computationally expensive due to path explosion. Tools like Halmos, Manticore, and Mythril apply symbolic execution to EVM bytecode.",
+    "category": "dev-tools",
+    "aliases": ["Symbolic Analysis"],
+    "related": ["formal-verification", "invariant-testing"]
+  },
+  {
+    "id": "avm",
+    "term": "AVM (Anchor Version Manager)",
+    "definition": "A command-line tool for installing and managing multiple versions of the Anchor framework on a single machine. AVM allows developers to switch between Anchor versions per-project, similar to nvm for Node.js or rustup for Rust. Commands include avm install (install a version), avm use (switch active version), and avm list (show installed versions). Essential for working across projects that target different Anchor releases.",
+    "category": "dev-tools",
+    "aliases": ["Anchor Version Manager"],
+    "related": ["anchor", "anchor-init"]
+  },
+  {
+    "id": "anchor-toml",
+    "term": "Anchor.toml",
+    "definition": "The configuration file at the root of every Anchor project that defines program IDs, cluster endpoints, wallet paths, test scripts, and deployment settings. Key sections include [programs] (mapping program names to pubkeys per cluster), [provider] (default cluster and wallet), [scripts] (custom test commands), and [test] (test framework configuration). Anchor CLI commands read this file to determine build and deployment targets.",
+    "category": "dev-tools",
+    "related": ["anchor", "anchor-init", "solana-cli"]
+  },
+  {
+    "id": "zero-copy-attribute",
+    "term": "#[account(zero_copy)] (Anchor)",
+    "definition": "An Anchor attribute applied to account structs to enable zero-copy deserialization, where account data is accessed directly from the underlying byte buffer using repr(C) memory layout rather than Borsh deserialization. Zero-copy accounts use AccountLoader instead of Account and are accessed via load() or load_mut(). Best for large accounts where full deserialization would consume excessive compute units. Fields must be fixed-size types (no Vec, String, or Option).",
+    "category": "dev-tools",
+    "related": [
+      "anchor-account-macro",
+      "zero-copy-deserialization",
+      "account-loader"
+    ]
+  },
+  {
+    "id": "init-if-needed",
+    "term": "init_if_needed (Anchor Constraint)",
+    "definition": "An Anchor account constraint that creates and initializes an account only if it does not already exist, skipping initialization if the account is already present. Useful for idempotent operations like associated token account creation. Requires the init-if-needed feature flag in Cargo.toml. Must be used carefully — without a proper discriminator check, it can mask reinitialization vulnerabilities if the account exists but contains unexpected data.",
+    "category": "dev-tools",
+    "related": ["anchor-constraints", "reinitialization", "idempotency"]
+  },
+  {
+    "id": "has-one-constraint",
+    "term": "has_one Constraint (Anchor)",
+    "definition": "An Anchor validation constraint that asserts a field stored in one account matches the pubkey of another account in the instruction's accounts struct. For example, #[account(has_one = authority)] on a vault account verifies that vault.authority equals the authority account's key. Failing the check returns an Anchor error. has_one prevents unauthorized callers from passing arbitrary accounts for privileged roles.",
+    "category": "dev-tools",
+    "related": ["anchor-constraints", "insufficient-constraints", "authority"]
+  },
+  {
+    "id": "unchecked-account",
+    "term": "UncheckedAccount (Anchor)",
+    "definition": "An Anchor account type (UncheckedAccount<'info>) that performs no automatic validation — no owner check, no discriminator check, no deserialization. It is an alias for AccountInfo and should only be used when the program manually validates the account or when the account belongs to an external program. Requires a /// CHECK: doc comment explaining why it is safe. Misuse is a common audit finding.",
+    "category": "dev-tools",
+    "aliases": ["AccountInfo wrapper"],
+    "related": ["anchor-derive-accounts", "missing-owner-check", "account-info"]
+  },
+  {
+    "id": "interface-account",
+    "term": "InterfaceAccount (Anchor)",
+    "definition": "An Anchor account type for CPI interactions with programs that implement a defined interface, allowing a single account type to work with multiple program implementations. For example, InterfaceAccount<'info, TokenAccount> accepts accounts from both the SPL Token Program and Token-2022, since both implement the token interface. This enables programs to be compatible with multiple token standards without separate code paths.",
+    "category": "dev-tools",
+    "related": ["anchor", "cpi", "spl-token", "token-2022"]
+  },
+  {
+    "id": "mollusk",
+    "term": "Mollusk",
+    "definition": "A lightweight SVM testing harness that executes Solana program instructions directly without spinning up a validator or simulated runtime. Mollusk loads a program's compiled SBF binary and processes individual instructions against a minimal account set, providing fast unit-test-level feedback. It supports both native and BPF programs, making it ideal for rapid iteration on instruction logic without the overhead of solana-test-validator or full Bankrun setup.",
+    "category": "dev-tools",
+    "related": ["testing", "litesvm", "solana-program-test"]
+  },
+  {
+    "id": "surfpool",
+    "term": "Surfpool",
+    "definition": "A local Solana development environment that serves as an alternative to solana-test-validator, featuring hot reload capability that automatically redeploys programs when source code changes. Surfpool provides faster iteration cycles by eliminating manual rebuild-redeploy steps and offers a streamlined developer experience for building and testing Solana programs locally.",
+    "category": "dev-tools",
+    "related": ["local-development", "solana-test-validator", "testing"]
+  },
+  {
+    "id": "web3js-v2-kit",
+    "term": "Web3.js v2 Kit (@solana/kit utilities)",
+    "definition": "A collection of utility functions and helpers built on top of @solana/kit (Web3.js v2) that simplify common Solana development patterns such as airdropping, creating accounts, sending and confirming transactions, and working with token accounts. The kit provides higher-level abstractions over the modular v2 API, reducing boilerplate for frequent operations while maintaining the tree-shakeable, functional design of the underlying SDK.",
+    "category": "dev-tools",
+    "related": ["solana-web3js-v2", "solana-web3js"]
+  },
+  {
+    "id": "poseidon-transpiler",
+    "term": "Poseidon (TypeScript-to-Anchor Transpiler)",
+    "definition": "A transpiler that allows developers to write Solana programs in TypeScript and compiles them to Rust/Anchor code. Poseidon maps TypeScript classes and decorators to Anchor's program structure, account definitions, and constraints, lowering the barrier to entry for TypeScript developers. The generated Rust code can be further customized before compilation to SBF. Suitable for prototyping and learning Solana program development.",
+    "category": "dev-tools",
+    "related": ["anchor", "seahorse", "typescript"]
+  },
+  {
+    "id": "solana-program-deploy",
+    "term": "solana program deploy",
+    "definition": "The Solana CLI command for deploying programs to the network, replacing the older solana deploy command. Usage: solana program deploy target/deploy/program.so. The command creates a buffer account, uploads the ELF binary in chunks, and finalizes deployment via the Upgradeable BPF Loader. Supports --program-id to specify the program keypair and --upgrade-authority for setting the upgrade authority. Also used for program upgrades by deploying new bytecode to an existing program ID.",
+    "category": "dev-tools",
+    "related": ["solana-cli", "upgradeable-loader", "buffer-account"]
+  },
+  {
+    "id": "solana-explorer-tool",
+    "term": "Solana Explorer",
+    "definition": "The official Solana Foundation block explorer at explorer.solana.com providing transaction details, account inspection, program views, validator info, and network statistics. Supports mainnet, devnet, testnet, and custom RPC endpoints. The default tool for inspecting on-chain activity.",
+    "category": "dev-tools",
+    "related": ["explorer", "rpc", "solana-cli"]
+  },
+  {
+    "id": "anchor-workspace",
+    "term": "Anchor Workspace",
+    "definition": "The project structure and configuration defined by Anchor.toml that organizes Solana program development. Includes program source directories, test configurations, provider settings, and deployment targets. The workspace pattern enables multi-program monorepos with shared test suites and coordinated builds.",
+    "category": "dev-tools",
+    "related": ["anchor", "anchor-toml", "monorepo"]
+  },
+  {
+    "id": "program-test-framework",
+    "term": "Program Test Framework (solana-program-test)",
+    "definition": "Solana's built-in testing framework that spins up a lightweight BanksClient runtime to execute programs in an isolated environment without a full validator. Supports adding programs, setting account state, advancing slots/time, and processing transactions. The foundation for most Solana program integration tests.",
+    "category": "dev-tools",
+    "related": ["solana-program-test", "bankrun", "litesvm"]
+  },
+  {
+    "id": "idl-generation",
+    "term": "IDL Generation",
+    "definition": "Process of producing an Interface Definition Language file from a Solana program's source code. Anchor auto-generates IDLs from Rust program definitions. Shank and Codama provide IDL generation for non-Anchor programs. IDLs enable automatic TypeScript/Python client generation and human-readable instruction decoding.",
+    "category": "dev-tools",
+    "related": ["idl", "anchor", "codama", "shank"]
+  },
+  {
+    "id": "account-deserializer",
+    "term": "Account Deserializer",
+    "definition": "Tool or library that converts raw on-chain account bytes into structured data using program-specific schemas. Anchor provides automatic deserialization via its IDL. For non-Anchor programs, developers use Borsh, custom byte parsing, or tools like Codama-generated clients to interpret account data.",
+    "category": "dev-tools",
+    "related": ["borsh", "serialization", "idl", "account-data"]
+  },
+  {
+    "id": "quasar",
+    "term": "Quasar",
+    "definition": "A Rust framework for building Solana programs that combines Anchor-like developer ergonomics with lower-level performance control. Quasar provides procedural macros for account validation and instruction dispatching while generating smaller binaries and consuming fewer compute units than Anchor by avoiding some of its heavier abstractions. Positioned between Anchor's full-featured convenience and Pinocchio's bare-metal approach.",
+    "category": "dev-tools",
+    "related": ["anchor", "pinocchio", "steel"]
+  },
+  {
+    "id": "golana",
+    "term": "Golana",
+    "definition": "An experimental toolchain that enables writing Solana programs in Go by compiling Go source code to SBF bytecode via a TinyGo-based compiler pipeline. Golana targets Go developers who want to build on Solana without learning Rust, providing Go-idiomatic abstractions for accounts, instructions, and program entrypoints. It remains experimental with limited production adoption compared to Rust-based frameworks.",
+    "category": "dev-tools",
+    "related": ["program", "seahorse", "poseidon-transpiler"]
+  }
+]

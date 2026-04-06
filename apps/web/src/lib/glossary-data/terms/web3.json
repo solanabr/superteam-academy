@@ -1,0 +1,594 @@
+[
+  {
+    "id": "web3",
+    "term": "Web3",
+    "definition": "The vision of a decentralized internet built on blockchain technology, where users own their data, identity, and digital assets. Web1 was read-only (static pages), Web2 is read-write (platforms like social media), Web3 is read-write-own (permissionless, user-sovereign). Web3 applications use wallets instead of logins and smart contracts instead of centralized servers.",
+    "category": "web3",
+    "related": ["dapp", "wallet-general"]
+  },
+  {
+    "id": "dapp",
+    "term": "dApp (Decentralized Application)",
+    "definition": "An application with its backend logic running on a blockchain as smart contracts rather than centralized servers. dApps typically have a traditional web frontend that interacts with on-chain programs via RPC. Users authenticate with wallets instead of username/password. Examples: Uniswap (Ethereum DEX), Jupiter (Solana DEX), Magic Eden (NFT marketplace).",
+    "category": "web3",
+    "aliases": ["dApp", "Decentralized App"],
+    "related": ["web3", "smart-contract-general"]
+  },
+  {
+    "id": "wallet-general",
+    "term": "Wallet",
+    "definition": "Software or hardware that manages cryptographic keys and enables users to sign transactions, view balances, and interact with dApps. Hot wallets (Phantom, Solflare, Backpack) are internet-connected for convenience. Cold wallets (Ledger, Trezor) store keys offline for security. Wallets don't actually 'hold' tokens\u2014they hold the private keys that control on-chain accounts.",
+    "category": "web3",
+    "aliases": ["Crypto Wallet"],
+    "related": ["keypair", "wallet-adapter"]
+  },
+  {
+    "id": "seed-phrase",
+    "term": "Seed Phrase (Mnemonic)",
+    "definition": "A 12 or 24-word human-readable backup of a wallet's master private key, generated using BIP-39 standard. The seed phrase can deterministically regenerate all derived keypairs (BIP-44 derivation paths). Losing the seed phrase means permanently losing access to all associated accounts. Never share, photograph, or store seed phrases digitally in plain text.",
+    "category": "web3",
+    "aliases": ["Mnemonic", "Recovery Phrase", "Secret Phrase"],
+    "related": ["keypair", "wallet-general"]
+  },
+  {
+    "id": "defi-general",
+    "term": "DeFi (Decentralized Finance)",
+    "definition": "Financial services built on blockchain smart contracts that operate without traditional intermediaries (banks, brokers). DeFi includes lending, borrowing, trading, insurance, and derivatives. Key properties: permissionless (anyone can participate), composable (protocols can be combined), transparent (open-source, auditable). Solana DeFi TVL has exceeded $5B, led by Jupiter, Raydium, Marinade, and Kamino.",
+    "category": "web3",
+    "aliases": ["DeFi"],
+    "related": ["amm", "lending", "dex"]
+  },
+  {
+    "id": "tvl",
+    "term": "TVL (Total Value Locked)",
+    "definition": "The total value of cryptocurrency deposited in a DeFi protocol's smart contracts, measured in USD. TVL indicates a protocol's scale and user trust. Calculated by summing all tokens in the protocol's accounts at current market prices. TVL can be inflated by recursive deposits (depositing receipt tokens) and double-counting across protocols.",
+    "category": "web3",
+    "aliases": ["TVL"],
+    "related": ["defi-general", "liquidity-pool"]
+  },
+  {
+    "id": "nft-general",
+    "term": "NFT (General Concept)",
+    "definition": "A unique, non-interchangeable digital token representing ownership of a specific asset\u2014artwork, collectibles, music, game items, domain names, or real-world assets. NFTs are verified on-chain and can be traded on marketplaces. Unlike fungible tokens (where each unit is identical), each NFT has distinct properties. Major Solana NFT marketplaces: Magic Eden, Tensor.",
+    "category": "web3",
+    "aliases": ["Non-Fungible Token"],
+    "related": ["nft", "metaplex-metadata"]
+  },
+  {
+    "id": "on-chain-off-chain",
+    "term": "On-Chain vs Off-Chain",
+    "definition": "On-chain: data or logic stored and executed directly on the blockchain, providing maximum transparency and immutability but at higher cost. Off-chain: data stored externally (IPFS, Arweave, databases) with only a reference (hash or URI) stored on-chain. The choice depends on cost, size, and trust requirements. NFT images are off-chain; token balances are on-chain.",
+    "category": "web3",
+    "related": ["off-chain-metadata", "account-data"]
+  },
+  {
+    "id": "self-custody",
+    "term": "Self-Custody",
+    "definition": "The practice of personally controlling your cryptographic private keys rather than entrusting them to a third party (exchange, custodian). Self-custody follows the principle 'not your keys, not your coins.' Hardware wallets and properly secured seed phrases enable self-custody. Risks include key loss (no recovery) and social engineering attacks.",
+    "category": "web3",
+    "related": ["wallet-general", "seed-phrase"]
+  },
+  {
+    "id": "dex-general",
+    "term": "DEX (General Concept)",
+    "definition": "A decentralized exchange allowing peer-to-peer token trading without a centralized order book or custodian. Users trade directly from their wallets. DEXs use automated market makers (AMMs) or on-chain order books. Advantages: no KYC, self-custody, censorship-resistant. Disadvantages: potential for higher slippage, smart contract risk, and MEV extraction.",
+    "category": "web3",
+    "related": ["dex", "amm", "cex"]
+  },
+  {
+    "id": "cex",
+    "term": "CEX (Centralized Exchange)",
+    "definition": "A traditional cryptocurrency exchange operated by a company that custodies user funds and matches orders on internal systems. Examples: Coinbase, Binance, Kraken. CEXs offer fiat on/off ramps, high liquidity, and familiar UX but require KYC and trust in the operator. Users deposit crypto and trade against the exchange's internal ledger, not directly on-chain.",
+    "category": "web3",
+    "aliases": ["CEX"],
+    "related": ["dex-general"]
+  },
+  {
+    "id": "mev-general",
+    "term": "MEV (Maximal Extractable Value)",
+    "definition": "The profit validators/block producers can extract by reordering, inserting, or censoring transactions within a block. MEV includes frontrunning (trading before a large order), sandwich attacks (surrounding a swap with buy/sell), and arbitrage. On Solana, Jito's block engine provides an MEV auction system where searchers submit bundles with tips.",
+    "category": "web3",
+    "aliases": ["MEV"],
+    "related": ["mev", "sandwich-attack", "arbitrage"]
+  },
+  {
+    "id": "token-standard",
+    "term": "Token Standard",
+    "definition": "A specification defining how tokens are created and managed on a blockchain. Ethereum: ERC-20 (fungible), ERC-721 (NFT), ERC-1155 (multi-token). Solana: SPL Token (fungible/NFT), Token-2022 (extended features), Metaplex standards (NFT metadata). Standards ensure wallet/marketplace interoperability and composability across the ecosystem.",
+    "category": "web3",
+    "related": ["spl-token", "token-2022", "nft"]
+  },
+  {
+    "id": "composability",
+    "term": "Composability",
+    "definition": "The ability of blockchain protocols to interact with and build upon each other like building blocks ('money legos'). A lending protocol can accept LP tokens as collateral, which were minted by a DEX, which uses an oracle for pricing\u2014all in a single transaction. Solana's CPI mechanism and shared account model make composability a core design principle.",
+    "category": "web3",
+    "related": ["cpi", "defi-general"]
+  },
+  {
+    "id": "permissionless",
+    "term": "Permissionless",
+    "definition": "A system that anyone can participate in without requiring approval from a central authority. Permissionless blockchains allow anyone to run a node, submit transactions, deploy programs, or build applications. This property enables censorship resistance and open innovation but also means malicious actors can participate, requiring protocol-level security mechanisms.",
+    "category": "web3",
+    "related": ["web3", "blockchain"]
+  },
+  {
+    "id": "trustless",
+    "term": "Trustless",
+    "definition": "A system where participants don't need to trust each other or a central authority because rules are enforced by code and cryptographic proofs. Smart contracts execute deterministically\u2014the outcome is guaranteed by the protocol, not by any party's goodwill. 'Trust-minimized' is often more accurate, as users still trust the code, validators, and protocol design.",
+    "category": "web3",
+    "related": ["smart-contract-general", "consensus"]
+  },
+  {
+    "id": "rpc-general",
+    "term": "RPC (Remote Procedure Call)",
+    "definition": "The API interface for interacting with a blockchain node. Clients send JSON-RPC requests to read account state, submit transactions, and subscribe to events. Solana RPC methods include getAccountInfo, getBalance, sendTransaction, and simulateTransaction. Public RPCs have rate limits; production dApps use dedicated providers (Helius, Triton, QuickNode).",
+    "category": "web3",
+    "related": ["rpc", "node"]
+  },
+  {
+    "id": "gas-optimization",
+    "term": "Gas / CU Optimization",
+    "definition": "The practice of minimizing computational costs in smart contracts to reduce transaction fees and fit within resource limits. On Solana: reduce account reads, use zero-copy deserialization for large accounts, minimize logging, pre-compute PDAs. On Ethereum: use packed storage slots, avoid dynamic arrays, use events instead of storage for read-only data.",
+    "category": "web3",
+    "related": ["compute-units", "gas"]
+  },
+  {
+    "id": "rug-pull",
+    "term": "Rug Pull",
+    "definition": "A crypto scam where project creators abandon a project after accumulating user funds, typically by draining liquidity pools, selling pre-minted tokens, or exploiting admin keys. Red flags: anonymous teams, unaudited contracts, concentrated token supply, locked liquidity absent, and excessive hype. Always verify program source, check authorities, and review audits before depositing.",
+    "category": "web3",
+    "related": ["audit", "defi-general"]
+  },
+  {
+    "id": "faucet",
+    "term": "Faucet",
+    "definition": "A service that distributes free tokens on test networks (devnet/testnet) for development and testing. Solana's CLI includes `solana airdrop` which requests SOL from the devnet faucet (up to 2 SOL per request with rate limits). Web-based faucets also exist. Faucet tokens have no real value\u2014they exist solely for testing purposes.",
+    "category": "web3",
+    "related": ["testnet-devnet", "local-development"]
+  },
+  {
+    "id": "wormhole",
+    "term": "Wormhole",
+    "definition": "The primary cross-chain messaging and bridge protocol for Solana, enabling asset transfers between Solana, Ethereum, and 20+ other chains. Wormhole uses a network of 19 Guardian nodes that observe and attest to cross-chain messages. The protocol was exploited for $320M in Feb 2022 (patched). It supports token transfers, NFT bridging, and arbitrary message passing.",
+    "category": "web3",
+    "related": ["bridge", "interoperability"]
+  },
+  {
+    "id": "decentralized-identity",
+    "term": "Decentralized Identity (DID)",
+    "definition": "A W3C standard for self-sovereign digital identifiers created, owned, and controlled by the individual rather than a centralized authority. DIDs use public-key cryptography for verification without traditional identity providers. In blockchain contexts, DIDs map to on-chain addresses and enable verifiable authentication across protocols.",
+    "category": "web3",
+    "aliases": ["DID", "Self-Sovereign Identity"],
+    "related": ["verifiable-credentials", "socialfi"]
+  },
+  {
+    "id": "verifiable-credentials",
+    "term": "Verifiable Credentials",
+    "definition": "Cryptographically signed digital attestations representing identity claims (age, KYC status, certification) that can be selectively disclosed and independently verified without contacting the issuer. VCs follow W3C standards and enable privacy-preserving compliance workflows in DeFi. Combined with zero-knowledge proofs, they enable proving credential properties without revealing the credential itself.",
+    "category": "web3",
+    "aliases": ["VC", "Digital Credentials"],
+    "related": ["decentralized-identity", "zk-proofs"]
+  },
+  {
+    "id": "socialfi",
+    "term": "SocialFi",
+    "definition": "The intersection of social media and decentralized finance, where social interactions, content creation, and community engagement are tokenized and governed by blockchain protocols. SocialFi platforms give users ownership of their social graph, content, and reputation as portable digital assets. Led by Farcaster (social graph on Optimism) and Lens Protocol (social data as NFTs on zkSync).",
+    "category": "web3",
+    "aliases": ["Social Finance", "DeSoc"],
+    "related": ["farcaster", "decentralized-identity"]
+  },
+  {
+    "id": "farcaster",
+    "term": "Farcaster",
+    "definition": "A decentralized social media protocol where core identity (Farcaster IDs) is registered on-chain via smart contracts on Optimism, while social content is stored on a distributed network of hubs. Farcaster supports composable Frames for embedded applications within posts. The protocol raised $150 million at a $1B+ valuation in May 2024.",
+    "category": "web3",
+    "related": ["socialfi", "decentralized-identity"]
+  },
+  {
+    "id": "apy",
+    "term": "APY (Annual Percentage Yield)",
+    "definition": "The real rate of return earned on a deposit or investment over one year, including the effect of compounding interest. Unlike APR, APY accounts for interest being reinvested and earning additional interest over time. In DeFi, APY figures are often projected from short-term returns and can fluctuate significantly. A 10% APY means a deposit grows by 10% over a year if rates remain constant and rewards are continuously compounded.",
+    "category": "web3",
+    "aliases": ["APY"],
+    "related": ["apr", "yield-farming", "defi-general"]
+  },
+  {
+    "id": "apr",
+    "term": "APR (Annual Percentage Rate)",
+    "definition": "The simple annual interest rate earned on a deposit or paid on a loan, without accounting for compounding. APR represents the base rate before reinvestment of earnings. In DeFi lending protocols, APR is the straightforward percentage you earn or owe per year. APR is always lower than or equal to APY for the same rate, because APY includes the compounding effect. A 10% APR on 1000 SOL means you earn exactly 100 SOL over a year.",
+    "category": "web3",
+    "aliases": ["APR"],
+    "related": ["apy", "lending", "defi-general"]
+  },
+  {
+    "id": "yield-return",
+    "term": "Yield / Return",
+    "definition": "The profit earned from participating in DeFi activities such as providing liquidity, lending tokens, staking, or farming rewards. Yield is typically expressed as an annualized percentage (APY or APR) and can come from multiple sources: trading fees shared with liquidity providers, token emissions from protocols, interest paid by borrowers, or staking rewards from validators. Returns vary widely by risk level and market conditions.",
+    "category": "web3",
+    "aliases": ["Yield", "Return"],
+    "related": ["apy", "apr", "yield-farming"]
+  },
+  {
+    "id": "dyor",
+    "term": "DYOR (Do Your Own Research)",
+    "definition": "A widely used crypto community phrase encouraging individuals to independently investigate projects, tokens, and protocols before investing or participating. DYOR means reading documentation, checking audit reports, verifying team backgrounds, reviewing on-chain data, and understanding tokenomics rather than relying solely on social media hype or influencer recommendations. The phrase serves as both advice and a disclaimer in crypto discussions.",
+    "category": "web3",
+    "aliases": ["DYOR"],
+    "related": ["rug-pull", "audit"]
+  },
+  {
+    "id": "whale",
+    "term": "Whale",
+    "definition": "An individual or entity holding a very large amount of a particular cryptocurrency or token, enough to potentially influence market prices through their trading activity. On Solana, whale movements can be tracked on-chain by monitoring large token transfers or wallet balances via explorers and analytics tools. Whale activity is closely watched because large buys or sells can cause significant price swings, especially in tokens with lower liquidity.",
+    "category": "web3",
+    "related": ["explorer", "liquidity-pool"]
+  },
+  {
+    "id": "on-ramp-off-ramp",
+    "term": "On-Ramp / Off-Ramp",
+    "definition": "Services that allow users to convert between traditional fiat currency (USD, EUR, etc.) and cryptocurrency, and vice versa. On-ramps let you buy crypto with a bank transfer, credit card, or other fiat payment method. Off-ramps let you sell crypto back to fiat and withdraw to a bank account. Centralized exchanges, payment processors like MoonPay and Transak, and some wallets provide on-ramp and off-ramp services, often requiring KYC verification.",
+    "category": "web3",
+    "aliases": ["Fiat On-Ramp", "Fiat Off-Ramp"],
+    "related": ["cex", "kyc"]
+  },
+  {
+    "id": "kyc",
+    "term": "KYC (Know Your Customer)",
+    "definition": "Identity verification procedures required by financial regulations that involve confirming a user's real-world identity through government-issued documents, proof of address, and sometimes biometric checks. Centralized exchanges and fiat on-ramp services typically require KYC before allowing trading or withdrawals. Most DeFi protocols on Solana are permissionless and do not require KYC, which is both a feature (accessibility) and a regulatory concern.",
+    "category": "web3",
+    "aliases": ["KYC", "Know Your Customer"],
+    "related": ["cex", "on-ramp-off-ramp", "permissionless"]
+  },
+  {
+    "id": "smart-contract-risk",
+    "term": "Smart Contract Risk",
+    "definition": "The risk that bugs, logic errors, or exploitable vulnerabilities in on-chain program code could lead to loss of user funds. Smart contract risk is inherent to all DeFi participation because programs are immutable once deployed (unless upgradeable) and handle real value. Mitigations include professional security audits, formal verification, bug bounties, timelocks on upgrades, and starting with small amounts. Even audited programs can contain undiscovered vulnerabilities.",
+    "category": "web3",
+    "related": ["audit", "rug-pull", "defi-general"]
+  },
+  {
+    "id": "counterparty-risk",
+    "term": "Counterparty Risk",
+    "definition": "The risk that the other party in a financial arrangement fails to meet their obligations, resulting in a loss. In crypto, counterparty risk exists when you trust a centralized entity with your funds, such as a centralized exchange, custodian, or lending platform. DeFi protocols aim to reduce counterparty risk by replacing trusted intermediaries with transparent smart contracts, though they introduce smart contract risk instead. The collapse of FTX in 2022 was a major counterparty risk event.",
+    "category": "web3",
+    "related": ["cex", "self-custody", "smart-contract-risk"]
+  },
+  {
+    "id": "portfolio-tracker",
+    "term": "Portfolio Tracker",
+    "definition": "A tool or application that monitors and displays the value of your cryptocurrency holdings across multiple wallets, chains, and DeFi positions in one place. Portfolio trackers pull on-chain data via RPC and indexer APIs to show token balances, NFT collections, LP positions, staking rewards, and transaction history. Popular Solana portfolio trackers include Step Finance, Sonar Watch, and AssetDash. Most work by simply connecting a public wallet address.",
+    "category": "web3",
+    "related": ["indexer", "wallet-general", "defi-general"]
+  },
+  {
+    "id": "revoke-approval",
+    "term": "Revoke Approval",
+    "definition": "The act of removing a previously granted token spending permission from a program or delegate, preventing it from transferring your tokens in the future. Revoking approvals is an important security practice after interacting with DeFi protocols, especially unfamiliar ones, because outstanding approvals could be exploited if the approved program is compromised. On Solana, tools like Revoke.cash and wallet-built-in features allow users to view and revoke active token approvals.",
+    "category": "web3",
+    "related": ["token-approval", "self-custody", "smart-contract-risk"]
+  },
+  {
+    "id": "token-approval",
+    "term": "Token Approval",
+    "definition": "The permission granted to a program or delegate address to spend a specified amount of tokens from your account on your behalf. Token approvals are necessary for DeFi interactions like swapping or depositing into liquidity pools. On Solana, the SPL Token program's approve instruction sets a delegate and approved amount on a token account. Approvals should be set to the minimum needed and revoked when no longer required to limit exposure to potential exploits.",
+    "category": "web3",
+    "related": ["revoke-approval", "spl-token", "authority"]
+  },
+  {
+    "id": "cold-storage",
+    "term": "Cold Storage",
+    "definition": "The practice of keeping cryptocurrency private keys completely offline, disconnected from the internet, to protect them from hacking, malware, and remote attacks. Cold storage methods include hardware wallets (Ledger, Trezor), air-gapped computers, and paper wallets. Cold storage is considered the most secure way to hold crypto long-term but is less convenient for frequent transactions since signing requires physically connecting or transferring data to the offline device.",
+    "category": "web3",
+    "aliases": ["Cold Wallet"],
+    "related": ["self-custody", "hot-wallet", "wallet-general"]
+  },
+  {
+    "id": "hot-wallet",
+    "term": "Hot Wallet",
+    "definition": "A cryptocurrency wallet that is connected to the internet, enabling quick and convenient access for sending, receiving, and interacting with dApps. Browser extension wallets (Phantom, Backpack, Solflare) and mobile wallets are hot wallets. They offer the best user experience for daily transactions and DeFi activity but are more vulnerable to phishing, malware, and remote attacks compared to cold storage. Best practice is to keep only actively used funds in a hot wallet.",
+    "category": "web3",
+    "related": ["cold-storage", "wallet-general", "self-custody"]
+  },
+  {
+    "id": "hodl",
+    "term": "HODL",
+    "definition": "A crypto slang term originating from a 2013 Bitcoin forum typo of 'hold,' now a backronym for 'Hold On for Dear Life.' It describes the strategy of buying and holding cryptocurrency long-term regardless of price volatility, rather than actively trading. HODLing reflects conviction that long-term price appreciation will outweigh short-term losses. The term has become a core part of crypto culture and community identity.",
+    "category": "web3",
+    "related": ["dyor", "fomo"]
+  },
+  {
+    "id": "degen",
+    "term": "Degen",
+    "definition": "Short for 'degenerate,' a self-adopted label in crypto culture for someone who pursues high-risk, high-reward strategies such as aping into unaudited protocols, trading leveraged perpetuals, farming new token launches, or minting speculative NFTs. Degen behavior often involves minimal research, high leverage, and concentration in volatile assets. On Solana, the term is associated with memecoin trading, new token launches on platforms like Pump.fun, and aggressive yield farming.",
+    "category": "web3",
+    "related": ["fomo", "rug-pull", "defi-general"]
+  },
+  {
+    "id": "fomo",
+    "term": "FOMO (Fear Of Missing Out)",
+    "definition": "The anxiety-driven urge to buy a token or enter a position because its price is rising rapidly and others appear to be profiting. FOMO often leads to impulsive decisions such as buying at market peaks without proper research, chasing pumps, or over-allocating to a single asset. Recognizing FOMO as an emotional bias rather than a rational signal is a key skill for managing risk in crypto markets.",
+    "category": "web3",
+    "aliases": ["FOMO"],
+    "related": ["fud", "dyor", "degen"]
+  },
+  {
+    "id": "fud",
+    "term": "FUD (Fear, Uncertainty, and Doubt)",
+    "definition": "Negative or misleading information spread about a cryptocurrency, protocol, or the broader market, whether intentionally to manipulate prices or organically from genuine concerns. FUD can range from legitimate security warnings to baseless rumors designed to cause panic selling. Evaluating whether negative information is FUD or a real concern requires critical thinking and independent research, reinforcing the importance of DYOR.",
+    "category": "web3",
+    "aliases": ["FUD"],
+    "related": ["fomo", "dyor"]
+  },
+  {
+    "id": "protocol-defi",
+    "term": "Protocol (DeFi)",
+    "definition": "A set of smart contracts deployed on-chain that together provide a specific decentralized financial service such as lending, trading, or liquid staking. Each DeFi protocol defines its own rules for deposits, withdrawals, fees, and governance through immutable or upgradeable program logic. Examples on Solana include Marinade (liquid staking), Raydium (AMM), Drift (perpetuals), and Kamino (automated vaults). Users interact with protocols by sending transactions to their program addresses.",
+    "category": "web3",
+    "aliases": ["DeFi Protocol"],
+    "related": ["defi-general", "smart-contract-general", "composability"]
+  },
+  {
+    "id": "gm",
+    "term": "GM",
+    "definition": "Short for 'Good morning.' A universal crypto greeting used across Twitter and Discord regardless of actual time of day. Saying 'gm' signals community membership and positive sentiment. Replying 'gm' is a ritual acknowledging shared participation in the crypto space. The greeting became so widespread it spawned NFT collections and token names.",
+    "category": "web3",
+    "related": ["ct", "wagmi"]
+  },
+  {
+    "id": "ser",
+    "term": "Ser",
+    "definition": "An ironic phonetic spelling of 'sir' used sarcastically or affectionately in crypto discussions. Often appears in phrases like 'ser this is a Wendy's' to deflect absurd claims or requests. The term derives from early DeFi Discord culture and has become a standard form of address in Crypto Twitter conversations, conveying both humor and camaraderie.",
+    "category": "web3",
+    "related": ["ct", "gm"]
+  },
+  {
+    "id": "rekt",
+    "term": "Rekt",
+    "definition": "Derived from 'wrecked.' Describes suffering a large financial loss from a liquidated leveraged trade, rug pull, exploit, or holding through a severe price decline. Used both seriously to describe genuine devastating losses and humorously as self-deprecating commentary. 'Getting rekt' is considered an almost inevitable rite of passage in crypto trading.",
+    "category": "web3",
+    "related": ["rug-pull", "degen"]
+  },
+  {
+    "id": "ngmi",
+    "term": "NGMI",
+    "definition": "Acronym for 'Not Gonna Make It.' Used to mock someone for a bad decision, weak conviction, or selling at the wrong time. Carries social pressure to hold through volatility and stay committed to the crypto space. Can be directed at others or used self-deprecatingly. The counterpart to WAGMI, NGMI implies the target has disqualified themselves from future gains.",
+    "category": "web3",
+    "aliases": ["NGMI"],
+    "related": ["wagmi", "fud", "paper-hands"]
+  },
+  {
+    "id": "wagmi",
+    "term": "WAGMI",
+    "definition": "Acronym for 'We're All Gonna Make It.' An expression of collective optimism and community solidarity used during bull markets, protocol milestones, and positive announcements. WAGMI reinforces group cohesion and shared belief in long-term success. The counterpart to NGMI, it originated from bodybuilding culture and was adopted by crypto communities during the 2021 bull cycle.",
+    "category": "web3",
+    "aliases": ["WAGMI"],
+    "related": ["ngmi", "fomo", "hodl"]
+  },
+  {
+    "id": "probably-nothing",
+    "term": "Probably Nothing",
+    "definition": "A heavily ironic phrase meaning the exact opposite — that something is very significant. Used when sharing a bullish signal, major partnership announcement, or notable on-chain activity that the speaker believes is underappreciated by the broader market. The sarcastic framing invites engagement and implies the audience should pay close attention.",
+    "category": "web3",
+    "related": ["alpha-info", "ct"]
+  },
+  {
+    "id": "aping-in",
+    "term": "Aping In",
+    "definition": "Buying a token or entering a DeFi position quickly with little or no research, driven by FOMO, social pressure, or excitement about a new launch. The term references acting impulsively like an ape rather than analytically. Can be used admiringly when the bet pays off or critically when it results in losses. Common on Pump.fun launches and new token migrations.",
+    "category": "web3",
+    "aliases": ["Ape In"],
+    "related": ["fomo", "degen", "dyor"]
+  },
+  {
+    "id": "bagholder",
+    "term": "Bagholder",
+    "definition": "Someone stuck holding a depreciating asset, either refusing to sell at a loss or having missed their exit opportunity. A 'bag' is a position in a specific token, especially one that has declined significantly from the purchase price. Bagholders often rationalize holding by citing long-term potential, but the term is generally pejorative and implies the position is unlikely to recover.",
+    "category": "web3",
+    "related": ["rekt", "diamond-hands", "exit-liquidity"]
+  },
+  {
+    "id": "diamond-hands",
+    "term": "Diamond Hands",
+    "definition": "Holding a position through extreme price volatility without selling, implying conviction and psychological resilience. The diamond emoji became shorthand during the 2021 bull cycle across crypto and meme stock communities. Diamond hands is celebrated when the asset eventually recovers or appreciates, but can also lead to significant losses if conviction is misplaced. Counterpart to paper hands.",
+    "category": "web3",
+    "related": ["paper-hands", "hodl", "wagmi"]
+  },
+  {
+    "id": "paper-hands",
+    "term": "Paper Hands",
+    "definition": "Selling a position too early, especially during a temporary price dip, out of fear or impatience. A pejorative counterpart to diamond hands, implying weakness and lack of conviction. In NFT contexts, paper hands means listing or selling during a floor price dip rather than holding through the downturn. The term carries social stigma in communities that value long-term holding.",
+    "category": "web3",
+    "related": ["diamond-hands", "jeet", "ngmi"]
+  },
+  {
+    "id": "ct",
+    "term": "CT (Crypto Twitter)",
+    "definition": "Short for Crypto Twitter — the community of traders, developers, influencers, and enthusiasts on Twitter/X discussing crypto markets, protocol developments, and culture. CT has its own norms, prominent voices, and meta-narratives that can drive market sentiment and token prices. Being 'active on CT' often means participating in these discussions to stay informed and build reputation.",
+    "category": "web3",
+    "aliases": ["Crypto Twitter"],
+    "related": ["alpha-info", "fomo"]
+  },
+  {
+    "id": "alpha-info",
+    "term": "Alpha",
+    "definition": "Exclusive, actionable, or early information that others do not yet have. 'Dropping alpha' means sharing a token tip, trade setup, or insider insight before it becomes widely known. The term borrows from traditional finance where alpha represents excess returns above a benchmark. In crypto, alpha can refer to early knowledge of token launches, protocol updates, or whale movements.",
+    "category": "web3",
+    "related": ["ct", "dyor"]
+  },
+  {
+    "id": "flipping",
+    "term": "Flipping",
+    "definition": "Buying an asset with the intent to sell it quickly at a higher price rather than holding long-term. Common in NFT launches where flippers mint at launch price and immediately list above mint price, and in token trading where the goal is to buy at launch and sell during the initial pump. Flipping requires speed and market timing rather than fundamental analysis.",
+    "category": "web3",
+    "related": ["minting", "floor-price", "degen"]
+  },
+  {
+    "id": "mooning",
+    "term": "Mooning",
+    "definition": "Describes a token's price increasing dramatically and rapidly. 'When moon?' is the canonical impatient question asked by holders waiting for significant price appreciation. The term derives from 'to the moon,' a phrase popularized by Dogecoin and broader crypto communities expressing hope for extreme upward price movement. Often used hyperbolically for any notable price increase.",
+    "category": "web3",
+    "related": ["fomo", "wagmi", "diamond-hands"]
+  },
+  {
+    "id": "exit-liquidity",
+    "term": "Exit Liquidity",
+    "definition": "Describes retail buyers who purchase a token while insiders or early holders sell, unknowingly providing the liquidity for those early holders to exit their positions profitably. 'You are the exit liquidity' is a cynical observation about memecoin and NFT dynamics where latecomers absorb losses so early participants can take profits. Understanding this concept is critical for evaluating token launches.",
+    "category": "web3",
+    "related": ["rug-pull", "bagholder", "pump-fun"]
+  },
+  {
+    "id": "sol-maxi",
+    "term": "SOL Maxi",
+    "definition": "Someone exclusively bullish on Solana and dismissive of other blockchains, believing Solana will dominate the smart contract platform market. Maxi (short for maximalist) is a label applied across crypto tribalism — Bitcoin maxis, ETH maxis, SOL maxis. Used both as proud self-description and as mild criticism implying closed-mindedness to other ecosystems.",
+    "category": "web3",
+    "aliases": ["Solana Maxi"],
+    "related": ["opos", "solana-summer"]
+  },
+  {
+    "id": "solana-summer",
+    "term": "Solana Summer",
+    "definition": "Reference to mid-to-late 2021 when Solana experienced explosive growth in TVL, NFT launches, developer adoption, and SOL price appreciation. Invoked both nostalgically to recall that period of rapid ecosystem expansion and prospectively when anticipating the next major Solana bull cycle. The phrase echoes 'DeFi Summer' (Ethereum's 2020 growth period).",
+    "category": "web3",
+    "related": ["sol-maxi", "opos", "tvl"]
+  },
+  {
+    "id": "opos",
+    "term": "OPOS",
+    "definition": "Acronym for 'Only Possible on Solana.' A community phrase highlighting features or applications that cannot be replicated on other chains due to their technical limitations. Used to describe high-frequency DeFi applications, massive concurrent NFT drops, sub-second settlement, and other use cases that leverage Solana's unique throughput and low fees.",
+    "category": "web3",
+    "aliases": ["Only Possible on Solana", "OPOS"],
+    "related": ["sol-maxi", "solana-summer"]
+  },
+  {
+    "id": "lfg",
+    "term": "LFG",
+    "definition": "Acronym for 'Let's F***ing Go.' An expression of intense excitement about a launch, price movement, milestone, or announcement. Widely used across crypto communities to rally enthusiasm. The term is so embedded in Solana culture that the Colosseum hackathon platform previously used LFG as a name, reflecting the community's high-energy ethos.",
+    "category": "web3",
+    "aliases": ["LFG"],
+    "related": ["wagmi", "fomo"]
+  },
+  {
+    "id": "lfb",
+    "term": "LFB",
+    "definition": "Acronym for 'Let's F***ing Build.' A builder-culture rallying cry emphasizing shipping code and creating products over speculation and trading. LFB signals commitment to development and construction rather than price-watching, distinguishing builders from traders within the Solana community. Often used during hackathons, developer meetups, and shipping announcements.",
+    "category": "web3",
+    "aliases": ["LFB"],
+    "related": ["lfg", "wagmi", "opos"]
+  },
+  {
+    "id": "supercycle",
+    "term": "Supercycle",
+    "definition": "The thesis that the current or upcoming crypto bull market will be unusually large and prolonged, breaking historical four-year cycle patterns tied to Bitcoin halvings. Supercycle believers argue that institutional adoption, ETF inflows, and mainstream awareness will drive sustained growth beyond previous peaks. The thesis is used as justification for aggressive positioning and not taking profits at typical cycle tops.",
+    "category": "web3",
+    "related": ["fomo", "diamond-hands", "hodl"]
+  },
+  {
+    "id": "jeet",
+    "term": "Jeet",
+    "definition": "Someone who sells their position too early, often immediately after launch or at the first sign of a price pump. 'Don't jeet' is community pressure to hold and let gains accumulate. On Pump.fun, early jeets are visible on-chain and tracked by analytics tools, creating social accountability. The term is more specific and aggressive than paper hands.",
+    "category": "web3",
+    "related": ["paper-hands", "pump-fun", "diamond-hands"]
+  },
+  {
+    "id": "sniping",
+    "term": "Sniping",
+    "definition": "Buying a token immediately at launch using automated bots that detect pool creation events and execute buy transactions in the same block. Snipers monitor new Raydium liquidity pools and Pump.fun graduation migrations to buy before other traders can react. Anti-snipe mechanics such as delayed trading windows and launch taxes are designed to mitigate this practice.",
+    "category": "web3",
+    "aliases": ["Snipe"],
+    "related": ["trading-bot", "mev", "front-running"]
+  },
+  {
+    "id": "trading-bot",
+    "term": "Trading Bot",
+    "definition": "An automated program that executes cryptocurrency trades without manual intervention. Bots range from simple snipers that buy new token launches to sophisticated MEV searchers that extract value from transaction ordering. On Solana, trading bots compete via priority fees and Jito bundles for execution speed. Popular Solana trading bots include BONKbot, Trojan, and BullX.",
+    "category": "web3",
+    "aliases": ["Bot"],
+    "related": ["sniping", "mev", "searcher"]
+  },
+  {
+    "id": "sweep-floor",
+    "term": "Sweep the Floor",
+    "definition": "Buying all available NFTs listed at or near the floor price of a collection in a single coordinated purchasing spree. Floor sweeps are typically done by whales to signal confidence in a collection, reduce available supply, and push the floor price higher. Solana NFT tools like Tensor and Magic Eden support bulk buying functionality that enables efficient floor sweeping.",
+    "category": "web3",
+    "related": ["floor-price", "whale", "nft"]
+  },
+  {
+    "id": "delist-nft",
+    "term": "Delist (NFT)",
+    "definition": "Removing an NFT from sale on a marketplace by canceling its listing. Mass delistings during bull markets signal that holders expect prices to rise further and are unwilling to sell at current levels. Coordinated delistings reduce available supply on marketplaces and can push floor prices higher. Delist rates are tracked as a sentiment indicator for NFT collections.",
+    "category": "web3",
+    "related": ["floor-price", "nft", "diamond-hands"]
+  },
+  {
+    "id": "wash-trading",
+    "term": "Wash Trading",
+    "definition": "Practice of simultaneously buying and selling the same asset to artificially inflate trading volume. Common in NFT markets where traders trade between their own wallets to fabricate activity metrics, manipulate collection rankings, or farm airdrop eligibility. Solana's low fees make wash trading cheaper than on other chains.",
+    "category": "web3",
+    "related": ["nft-general", "dex-general"]
+  },
+  {
+    "id": "pump-and-dump",
+    "term": "Pump and Dump",
+    "definition": "Market manipulation scheme where promoters accumulate a low-cap token, artificially inflate its price through coordinated hype (social media shilling, fake partnerships), then sell their holdings at the peak, crashing the price. Especially prevalent with memecoins on Solana due to low launch costs on platforms like pump.fun.",
+    "category": "web3",
+    "related": ["rug-pull", "dyor"]
+  },
+  {
+    "id": "shilling",
+    "term": "Shilling",
+    "definition": "Aggressively promoting a cryptocurrency or NFT project, often with undisclosed financial interest. Shillers may be paid promoters, project insiders, or holders trying to inflate prices. Common on Crypto Twitter (CT) and Discord, often paired with pump-and-dump schemes. The term carries negative connotations in crypto culture.",
+    "category": "web3",
+    "related": ["ct", "dyor", "fud"]
+  },
+  {
+    "id": "memecoin",
+    "term": "Memecoin",
+    "definition": "A cryptocurrency created around internet memes, jokes, or cultural themes rather than technical utility. On Solana, memecoins like BONK and WIF have generated significant trading volume. Platforms like pump.fun enable anyone to launch memecoins in minutes, making Solana the leading chain for memecoin activity since late 2023.",
+    "category": "web3",
+    "related": ["degen", "pump-fun", "bonk"]
+  },
+  {
+    "id": "gas-wars",
+    "term": "Gas Wars",
+    "definition": "Situation where users compete by bidding up transaction fees to get their transactions included first, typically during high-demand events like token launches or NFT mints. On Solana, gas wars manifest as priority fee bidding rather than Ethereum-style base fee spikes, with users paying higher compute unit prices for preferential inclusion.",
+    "category": "web3",
+    "related": ["priority-fee", "transaction-fee", "mev-general"]
+  },
+  {
+    "id": "custodial-vs-noncustodial",
+    "term": "Custodial vs Non-Custodial",
+    "definition": "Distinction between services that hold users' private keys (custodial — exchanges like Coinbase) versus tools where users retain sole control of their keys (non-custodial — wallets like Phantom). Non-custodial means only the user can authorize transactions; custodial means trusting a third party with asset security.",
+    "category": "web3",
+    "aliases": ["Custodial", "Non-Custodial"],
+    "related": ["self-custody", "wallet-general", "cex"]
+  },
+  {
+    "id": "multisig-wallet",
+    "term": "Multisig Wallet",
+    "definition": "A wallet requiring multiple private key signatures (e.g., 2-of-3, 3-of-5) to authorize transactions, used by teams and DAOs for shared treasury management. On Solana, Squads Protocol is the leading multisig solution, enabling threshold signing for program upgrades, token transfers, and governance actions.",
+    "category": "web3",
+    "related": ["squads", "multisig", "dao"]
+  },
+  {
+    "id": "hardware-wallet",
+    "term": "Hardware Wallet",
+    "definition": "A physical device (Ledger, Trezor) that stores private keys offline in a secure element chip, signing transactions without exposing keys to internet-connected computers. Hardware wallets protect against malware, phishing, and remote hacks. Solana hardware wallet support is available through Phantom, Solflare, and other wallet adapters.",
+    "category": "web3",
+    "related": ["wallet-general", "cold-storage", "self-custody"]
+  },
+  {
+    "id": "copy-trading",
+    "term": "Copy Trading",
+    "definition": "Strategy where users automatically replicate the on-chain trades of other wallets in real time. On Solana, copy trading bots monitor successful trader wallets and mirror their swaps, often using Jupiter or Raydium. While popular, it carries risks including front-running by the copied wallet and delayed execution.",
+    "category": "web3",
+    "related": ["trading-bot", "dex-general", "jupiter"]
+  },
+  {
+    "id": "impersonation-scam",
+    "term": "Impersonation Scam",
+    "definition": "Fraud where attackers pose as known projects, influencers, or support staff to steal funds. Common vectors include fake airdrop sites mimicking Solana projects, Discord DMs from fake moderators requesting seed phrases, and phishing sites with lookalike domains. Solana's growing user base makes it a frequent target for these social engineering attacks.",
+    "category": "web3",
+    "related": ["rug-pull", "seed-phrase", "dyor"]
+  }
+]

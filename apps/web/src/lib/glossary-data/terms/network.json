@@ -1,0 +1,416 @@
+[
+  {
+    "id": "mainnet-beta",
+    "term": "Mainnet Beta",
+    "definition": "Solana's primary production cluster where real SOL and real economic activity occur; the \"beta\" designation reflects the network's ongoing protocol development despite being fully live since March 2020. It uses the same architecture as other clusters but with real validator stakes, live staking rewards, and permanent on-chain state. All production dApps, tokens, and NFTs exist on Mainnet Beta.",
+    "category": "network",
+    "related": ["cluster", "devnet", "testnet"]
+  },
+  {
+    "id": "devnet",
+    "term": "Devnet",
+    "definition": "A persistent public Solana cluster intended for application development and testing, running the same software version as Mainnet Beta but with no real economic value. Devnet SOL can be freely airdropped via the CLI or faucet APIs, and the ledger may be reset periodically by Solana Labs. Developers use Devnet to test programs and integrations before deploying to Mainnet Beta.",
+    "category": "network",
+    "related": ["cluster", "mainnet-beta", "testnet"]
+  },
+  {
+    "id": "testnet",
+    "term": "Testnet",
+    "definition": "A public Solana cluster used primarily by the Solana core team and validators to test new software releases, performance benchmarks, and network upgrades under real network conditions before they reach Mainnet Beta. Testnet SOL has no monetary value, and the ledger is reset more frequently than Devnet; it is less suitable for application development and more suited for validator operators validating their infrastructure.",
+    "category": "network",
+    "related": ["cluster", "mainnet-beta", "devnet"]
+  },
+  {
+    "id": "tps",
+    "term": "TPS (Transactions Per Second)",
+    "definition": "The rate at which a Solana cluster processes and commits transactions; Solana's theoretical maximum exceeds 65,000 TPS due to its parallel execution model, though real-world sustained throughput on Mainnet Beta typically ranges from 2,000\u20135,000 non-vote TPS under normal load. Vote transactions (used for consensus) make up a significant portion of all on-chain activity and are counted separately. High TPS is enabled by Proof of History timestamps, Sealevel parallel execution, and Gulf Stream mempool-less forwarding.",
+    "category": "network",
+    "aliases": ["TPS"],
+    "related": ["transaction", "parallel-execution"]
+  },
+  {
+    "id": "parallel-execution",
+    "term": "Parallel Transaction Execution",
+    "definition": "Solana's ability to process multiple transactions simultaneously by analyzing their account access lists and executing non-conflicting transactions in parallel across CPU cores via the Sealevel runtime. Two transactions can run in parallel only if they do not share any writable accounts; transactions sharing a writable account are serialized. This design allows Solana to fully exploit modern multi-core hardware and is a primary contributor to its high throughput.",
+    "category": "network",
+    "related": ["sealevel", "tps", "account-locking"]
+  },
+  {
+    "id": "account-locking",
+    "term": "Account Locking (Read/Write)",
+    "definition": "The mechanism by which Solana's scheduler reserves access to accounts for the duration of a transaction's execution, granting either shared read locks (multiple transactions can hold simultaneously) or exclusive write locks (only one transaction at a time). Before execution, the runtime inspects every transaction's declared account list and grants or denies locks accordingly, preventing data races without requiring a global mutex. Transactions that cannot acquire all required locks are queued or dropped, making correct account declaration in transaction instructions critical for both correctness and landing probability.",
+    "category": "network",
+    "related": ["parallel-execution", "writable"]
+  },
+  {
+    "id": "base-fee",
+    "term": "Base Fee",
+    "definition": "The fixed, non-negotiable minimum fee charged per transaction signature on Solana, currently set at 5,000 lamports (0.000005 SOL) per signature. A transaction with N signatures pays N \u00d7 5,000 lamports as a base fee regardless of compute usage or network load. Fifty percent of the base fee is burned and fifty percent is paid to the current slot leader, making Solana mildly deflationary with usage.",
+    "category": "network",
+    "related": ["priority-fee", "transaction-fee", "compute-units"]
+  },
+  {
+    "id": "priority-fee",
+    "term": "Priority Fee",
+    "definition": "An optional additional fee paid on top of the base fee to increase the likelihood that a transaction is processed quickly by the current leader, expressed as a price in micro-lamports per compute unit (CU). The total priority fee equals (compute unit price \u00d7 compute unit limit) / 1,000,000 lamports. Leaders sort transactions in their queue by fee-per-CU, so setting a competitive priority fee is the primary mechanism for ensuring reliable transaction landing during congestion.",
+    "category": "network",
+    "aliases": ["Compute Unit Price"],
+    "related": ["compute-units", "base-fee", "transaction-fee"]
+  },
+  {
+    "id": "transaction-fee",
+    "term": "Transaction Fee",
+    "definition": "The total SOL cost to submit a transaction on Solana, composed of the base fee (5,000 lamports per signature) plus any optional priority fee (compute unit price \u00d7 compute units consumed). Unlike Ethereum, Solana fees are not purely dynamic gas auctions \u2014 the base fee is fixed and priority fees are additive. Fees are deducted from the fee-payer account before execution; if the account lacks sufficient SOL, the transaction fails.",
+    "category": "network",
+    "related": ["base-fee", "priority-fee", "lamport"]
+  },
+  {
+    "id": "fee-market",
+    "term": "Fee Market (Local/Global)",
+    "definition": "Solana operates a local fee market rather than a global one: priority fee competition is scoped to transactions that contend for the same writable accounts, so congestion on one hot account (e.g., a popular AMM pool) does not raise fees for unrelated transactions. This account-centric model means that a highly contested token mint or DEX pool can require very high priority fees to land while other transactions proceed cheaply in parallel. The local fee market is enforced by the scheduler's per-account fee-priority ordering.",
+    "category": "network",
+    "related": ["priority-fee", "account-locking"]
+  },
+  {
+    "id": "stake-weighted-qos",
+    "term": "Stake-Weighted QoS (SWQoS)",
+    "definition": "A Quality of Service system introduced in Solana that allocates TPU packet bandwidth to staked validators proportionally to their stake weight, preventing unstaked or lightly staked nodes from flooding leaders with transactions at the expense of stake-backed traffic. Validators that have delegated stake can forward transactions and receive preferential access to leader bandwidth, making it economically meaningful to route transactions through staked RPC or validator nodes. SWQoS is a key defense against spam and denial-of-service attacks that plagued Solana during high-traffic periods.",
+    "category": "network",
+    "aliases": ["SWQoS"],
+    "related": ["stake", "validator", "tpu"]
+  },
+  {
+    "id": "quic",
+    "term": "QUIC Protocol",
+    "definition": "The UDP-based transport protocol adopted by Solana as its primary transaction submission protocol, replacing raw UDP to provide congestion control, multiplexed streams, and connection-level flow control without TCP's head-of-line blocking. Solana's TPU (Transaction Processing Unit) accepts client transactions over QUIC, allowing the leader to apply back-pressure and drop connections from misbehaving senders. QUIC integration with SWQoS allows leaders to enforce stake-weighted bandwidth limits at the transport layer.",
+    "category": "network",
+    "aliases": ["QUIC"],
+    "related": ["tpu", "stake-weighted-qos"]
+  },
+  {
+    "id": "mev",
+    "term": "MEV (Maximal Extractable Value)",
+    "definition": "The profit a block producer (leader) or sophisticated trader can extract by controlling the ordering, inclusion, or exclusion of transactions within a block \u2014 including strategies like front-running, back-running, sandwich attacks, and arbitrage. On Solana, MEV dynamics differ from Ethereum because there is no public mempool; transactions are forwarded directly to the current leader, making latency and validator relationships central to MEV capture. The Jito infrastructure provides the dominant MEV marketplace on Solana through bundles and tips.",
+    "category": "network",
+    "aliases": ["MEV"],
+    "related": ["jito", "front-running", "sandwich-attack"]
+  },
+  {
+    "id": "jito",
+    "term": "Jito (MEV Infrastructure)",
+    "definition": "A Solana MEV infrastructure project by Jito Labs that operates a modified validator client (jito-solana), a Block Engine for bundle simulation and routing, and a tip distribution program that collects and distributes MEV tips to staked validators. Jito's client is run by a supermajority of Solana's stake-weighted validators, making its bundle and tip market the de-facto MEV layer for the network. Jito also operates a restaking and liquid staking protocol (JitoSOL) using proceeds from MEV tip redistribution.",
+    "category": "network",
+    "aliases": ["Jito Labs"],
+    "related": ["mev", "bundle", "tip"]
+  },
+  {
+    "id": "bundle",
+    "term": "Bundle (Jito)",
+    "definition": "An atomic group of up to five transactions submitted together through Jito's Block Engine, where either all transactions land in sequence or none do, enabling MEV strategies that depend on guaranteed transaction ordering without risk of partial execution. Bundles are submitted with a tip to incentivize the leader to include them; the Block Engine simulates bundles, selects the most profitable ones, and forwards them to the Jito-enabled leader. Bundles land at the top of a block before standard transactions, giving searchers execution priority.",
+    "category": "network",
+    "related": ["jito", "mev", "tip"]
+  },
+  {
+    "id": "tip",
+    "term": "Tip (Jito)",
+    "definition": "A SOL payment made by a searcher to a Jito tip account as part of a bundle submission, used to compensate the leader validator for including the bundle at a preferred position in the block. Tips flow to Jito's on-chain tip distribution program, which redistributes a portion to staked validators (including delegators) proportional to their stake weight, aligning validator incentives with MEV facilitation. Tips are separate from and in addition to standard transaction priority fees.",
+    "category": "network",
+    "related": ["jito", "bundle", "mev"]
+  },
+  {
+    "id": "block-engine",
+    "term": "Block Engine (Jito)",
+    "definition": "Jito's off-chain infrastructure component that receives bundles from MEV searchers, simulates them against the current chain state to verify profitability and validity, and forwards the highest-value bundles to the current Jito-enabled leader just before block production. The Block Engine operates as a low-latency relay that continuously tracks the leader schedule and streams winning bundles in real time, acting as a private transaction ordering marketplace sitting between searchers and validators.",
+    "category": "network",
+    "related": ["jito", "mev", "bundle"]
+  },
+  {
+    "id": "scheduler",
+    "term": "Scheduler",
+    "definition": "The component within Solana's TPU pipeline responsible for ordering transactions from the banking stage's queues, acquiring account read/write locks, and dispatching transactions to worker threads for execution. The scheduler enforces account conflict serialization (ensuring write-locked accounts are processed by only one thread at a time) while maximizing parallelism across non-conflicting transactions. Solana has iterated on scheduler designs (including the central scheduler introduced in 2024) to improve throughput and reduce lock contention under load.",
+    "category": "network",
+    "related": ["tpu", "parallel-execution"]
+  },
+  {
+    "id": "banking-stage",
+    "term": "Banking Stage",
+    "definition": "The critical TPU pipeline stage in which Solana validators execute transactions, update account state, and produce entries that will be packed into a block. Banking stage receives forwarded transactions from the fetch and sigverify stages, acquires account locks via the scheduler, runs transactions through the SVM, and writes results to the accounts database. It is the computational heart of block production and is where compute unit limits, priority fee ordering, and parallel execution all converge.",
+    "category": "network",
+    "related": ["tpu", "scheduler", "transaction"]
+  },
+  {
+    "id": "transaction-landing",
+    "term": "Transaction Landing",
+    "definition": "The outcome of a transaction being successfully included and confirmed in a Solana block, as opposed to being dropped, expiring, or failing simulation. Landing probability is influenced by priority fee competitiveness, blockhash freshness (must be within ~150 slots of creation), submission routing (direct to leader vs. RPC rebroadcast), and network congestion on the accounts involved. Developers optimize landing rates by using current-leader TPU endpoints, setting appropriate priority fees, and preflight-checking transactions before submission.",
+    "category": "network",
+    "related": ["transaction", "priority-fee", "stake-weighted-qos"]
+  },
+  {
+    "id": "transaction-retry",
+    "term": "Transaction Retry / Rebroadcast",
+    "definition": "The practice of resubmitting a transaction multiple times until it lands or its blockhash expires, necessary because Solana does not guarantee delivery of any single submission and drops can occur at any pipeline stage. By default, Solana RPC nodes rebroadcast submitted transactions periodically, but this is unreliable; production applications implement client-side retry loops that resubmit the same signed transaction (with unchanged signature) at short intervals until confirmation is received or the blockhash expires (roughly 60\u201390 seconds after creation).",
+    "category": "network",
+    "related": ["transaction-landing", "rpc"]
+  },
+  {
+    "id": "blockhash",
+    "term": "Blockhash (Recent)",
+    "definition": "A 32-byte hash derived from the bank's state at a given slot, included in every Solana transaction to prove the transaction was created recently and to prevent replay attacks. A blockhash remains valid for approximately 150 slots (~60\u201390 seconds at normal slot times); transactions submitted with an expired blockhash are rejected outright. Clients must fetch a fresh blockhash before signing and ideally reuse it for as short a window as possible to maximize landing probability.",
+    "category": "network",
+    "related": ["transaction", "durable-nonce"]
+  },
+  {
+    "id": "durable-nonce",
+    "term": "Durable Nonce",
+    "definition": "A mechanism that replaces the short-lived recent blockhash in a transaction with a nonce value stored in a dedicated on-chain nonce account, allowing the transaction to remain valid indefinitely until it is used or the nonce is advanced. The nonce account stores the current nonce hash and an authority; the first instruction of any durable-nonce transaction must be AdvanceNonceAccount, which updates the nonce and invalidates the old one. Durable nonces are essential for workflows requiring offline signing, hardware security modules, or multi-party approval over extended time periods.",
+    "category": "network",
+    "related": ["blockhash", "transaction", "offline-signing"]
+  },
+  {
+    "id": "offline-signing",
+    "term": "Offline Signing",
+    "definition": "The practice of signing a Solana transaction on an air-gapped or disconnected device and then broadcasting the signed transaction bytes from an online machine, used to protect private keys from network-exposed environments. Because standard Solana transactions embed a recent blockhash that expires in ~90 seconds, offline signing in practice requires durable nonces to give signers an unlimited preparation window. Offline signing is common in institutional custody, hardware wallet workflows, and high-security treasury management.",
+    "category": "network",
+    "related": ["durable-nonce", "transaction"]
+  },
+  {
+    "id": "airdrop",
+    "term": "Airdrop (Devnet/Testnet)",
+    "definition": "The process of receiving free, valueless SOL on Devnet or Testnet via the Solana CLI (`solana airdrop`) or public faucet endpoints, used to fund accounts for testing without spending real SOL. Airdrops are rate-limited per IP and per address (typically 1\u20132 SOL per request, a few requests per hour) to prevent abuse. The term is also used colloquially for token distribution events on Mainnet Beta, but in a network/infrastructure context it specifically refers to the test-cluster faucet mechanism.",
+    "category": "network",
+    "related": ["devnet", "sol"]
+  },
+  {
+    "id": "inflation",
+    "term": "Inflation",
+    "definition": "Solana's protocol-level mechanism for issuing new SOL to reward validators and stakers, starting at an initial annual inflation rate of 8% at genesis (Q1 2021) and decreasing by 15% of the current rate each year until reaching a long-term fixed rate of 1.5% per year. New SOL is minted each epoch proportionally to each validator's active stake and distributed as staking rewards; 50% of transaction base fees are burned, creating partial deflationary pressure. The net effective inflation rate depends on the proportion of SOL actively staked.",
+    "category": "network",
+    "related": ["staking-rewards", "validator"]
+  },
+  {
+    "id": "staking-rewards",
+    "term": "Staking Rewards",
+    "definition": "SOL earned by validators and their delegators each epoch as compensation for participating in consensus and securing the network, funded by protocol inflation rather than solely transaction fees. Rewards are proportional to a validator's active stake and are credited at the end of each epoch to stake accounts automatically; the effective APY depends on the current inflation rate, the percentage of total SOL staked, and the validator's commission rate. Validators set a commission (0\u2013100%) representing the fraction of rewards they keep before passing the remainder to delegators.",
+    "category": "network",
+    "related": ["inflation", "stake", "epoch"]
+  },
+  {
+    "id": "slashing",
+    "term": "Slashing",
+    "definition": "The punitive reduction of a validator's stake as a penalty for provable misbehavior such as double-signing or equivocation \u2014 confirming two conflicting blocks at the same slot. As of 2025, Solana does not yet enforce automatic on-chain slashing (unlike Ethereum), though it is a planned addition to the protocol; the primary deterrents currently are social consensus, stake withdrawal by delegators, and future slashing implementation. The lack of slashing means Solana validators face lower direct financial risk from bugs but also reduced cryptographic accountability compared to slashing-enabled networks.",
+    "category": "network",
+    "related": ["validator", "stake"]
+  },
+  {
+    "id": "network-congestion",
+    "term": "Network Congestion",
+    "definition": "A state in which the volume of transaction submissions to Solana leaders exceeds available block space or processing capacity, causing elevated transaction drop rates, increased time-to-confirmation, and rising priority fee requirements to land. Congestion is typically account-local (concentrated around hot accounts like popular DEX pools or NFT mints) rather than global, reflecting Solana's local fee market design. Mitigation strategies include increasing priority fees, submitting directly to the leader's TPU, routing through staked RPC nodes (SWQoS), and using Jito bundles.",
+    "category": "network",
+    "related": ["tps", "priority-fee", "transaction-landing"]
+  },
+  {
+    "id": "vote-transaction",
+    "term": "Vote Transaction",
+    "definition": "A special-purpose transaction submitted by each validator every slot to record its vote on the current fork of the blockchain, serving as the on-chain mechanism for Solana's Tower BFT consensus. Vote transactions are exempt from compute unit limits and priority fee requirements, are processed by a dedicated vote transaction path separate from user transactions, and account for the majority of raw TPS on the network (typically 70\u201380% of all transactions). Validators pay vote transaction fees from their vote account, which is one reason validator economics require sufficient stake to cover ongoing operating costs.",
+    "category": "network",
+    "related": ["vote-account", "validator", "transaction-fee"]
+  },
+  {
+    "id": "skip-rate",
+    "term": "Skip Rate",
+    "definition": "The percentage of assigned leader slots in which a validator fails to produce a block, either due to being offline, misconfigured, behind on the fork, or unable to process transactions fast enough. A high skip rate indicates validator unreliability; it reduces staking rewards for both the validator and its delegators because skipped slots produce no block rewards. Solana publishes per-validator skip rates via the `getVoteAccounts` RPC method, and delegators use skip rate as a key signal when selecting validators.",
+    "category": "network",
+    "related": ["validator", "leader-schedule", "slot"]
+  },
+  {
+    "id": "solana-runtime-v2",
+    "term": "Solana Runtime v2",
+    "definition": "The next-generation execution environment under development by Solana Labs to replace the original runtime with a more modular, formally specified, and performant architecture that cleanly separates the Solana Virtual Machine (SVM) from the core validator client. Runtime v2 is designed to enable the SVM to be embedded in non-validator contexts (e.g., rollups, SVM-compatible chains), improve program execution performance, and provide cleaner abstractions for program loaders. It underpins the broader SVM ecosystem strategy and the Agave validator client.",
+    "category": "network",
+    "related": ["svm", "runtime"]
+  },
+  {
+    "id": "token-extensions-network",
+    "term": "Token Extensions (Network Impact)",
+    "definition": "The aggregate effect on Solana network resources \u2014 primarily compute units and account space \u2014 introduced by Token Extensions (Token-2022), which adds on-chain extension data and additional CPI calls compared to the original SPL Token program. Tokens with multiple extensions (e.g., transfer fees + confidential transfers + interest-bearing) require significantly more compute budget per instruction, affecting transaction size, CPI depth, and priority fee calculations. Developers must account for the higher CU consumption of Token-2022 instructions when setting compute unit limits and priority fees to ensure reliable transaction landing.",
+    "category": "network",
+    "related": ["token-2022", "compute-units"]
+  },
+  {
+    "id": "session-keys",
+    "term": "Session Keys",
+    "definition": "Ephemeral keypairs with scoped permissions and time limits that allow users to delegate transaction signing to a temporary key, eliminating repeated wallet approval prompts during interactive sessions. On Solana, the session-keys crate provides Anchor macros for defining and validating session tokens. The Swig smart wallet SDK extends this with programmable wallets offering delegated permissions and gasless UX.",
+    "category": "network",
+    "aliases": ["Ephemeral Keys"],
+    "related": ["gaming", "wallet-general"]
+  },
+  {
+    "id": "confirmation-time",
+    "term": "Confirmation Time",
+    "definition": "The wallclock duration between a transaction being submitted and achieving a desired commitment level. On Solana, processed confirmation takes ~400ms (leader executes), confirmed (optimistic) takes ~400ms-1s (supermajority votes), and finalized (rooted) typically takes 26-32 slots (~10-13 seconds). Actual confirmation time varies with network congestion, leader distance, and transaction priority fee.",
+    "category": "network",
+    "related": ["commitment-levels", "finality", "transaction-landing"]
+  },
+  {
+    "id": "cooldown-period",
+    "term": "Cooldown Period",
+    "definition": "The number of epochs after stake deactivation during which the staked SOL remains locked and cannot be withdrawn. During cooldown, the stake progressively becomes available for withdrawal over one or more epoch boundaries. The cooldown mechanism prevents rapid unstaking that could destabilize consensus by suddenly reducing the validator's stake weight.",
+    "category": "network",
+    "related": ["stake", "epoch", "warmup-period"]
+  },
+  {
+    "id": "light-client",
+    "term": "Light Client",
+    "definition": "A blockchain client that verifies a moderate amount of cluster data to confirm transaction validity without replaying the full ledger or maintaining complete account state. Light clients download block headers and use Merkle proofs or validator attestations to verify specific transactions or account states, trading full trustlessness for dramatically reduced resource requirements.",
+    "category": "network",
+    "related": ["thin-client", "validator", "node"]
+  },
+  {
+    "id": "nakamoto-coefficient",
+    "term": "Nakamoto Coefficient",
+    "definition": "The minimum number of independent entities (validators, mining pools, or staking providers) that would need to collude to compromise or halt a blockchain network, typically by controlling 33%+ of stake or hash power. A higher Nakamoto coefficient indicates greater decentralization. Solana's Nakamoto coefficient fluctuates around 19-31 depending on stake distribution among validators.",
+    "category": "network",
+    "related": ["validator", "stake", "supermajority"]
+  },
+  {
+    "id": "node-count",
+    "term": "Node Count",
+    "definition": "The total number of validators participating in a Solana cluster at a given time. Node count is a measure of network decentralization and resilience — more validators mean greater geographic distribution and fault tolerance. Solana mainnet-beta typically operates with 1,500-3,000+ validators. Node count is queryable via the getClusterNodes RPC method.",
+    "category": "network",
+    "related": ["validator", "cluster", "nakamoto-coefficient"]
+  },
+  {
+    "id": "skipped-slot",
+    "term": "Skipped Slot",
+    "definition": "A slot in which the assigned leader validator fails to produce a block, resulting in no entries being added to the ledger for that slot. Slots are skipped when the leader is offline, too slow to produce a block within the time window, or unable to reach other validators. Skipped slots do not increment block height and contribute to a validator's skip rate metric.",
+    "category": "network",
+    "related": ["slot", "skip-rate", "leader-schedule"]
+  },
+  {
+    "id": "thin-client",
+    "term": "Thin Client",
+    "definition": "A blockchain client that trusts the cluster's communication without independently verifying transaction validity, relying on RPC responses from validators for all state queries. Thin clients are the simplest integration method — most dApp frontends and wallet interfaces operate as thin clients by trusting their configured RPC provider to return accurate data.",
+    "category": "network",
+    "related": ["light-client", "rpc", "rpc-node"]
+  },
+  {
+    "id": "vote-credit",
+    "term": "Vote Credit",
+    "definition": "A reward tally credited to a validator's vote account each time one of its votes reaches the root (becomes finalized). Vote credits accumulate throughout an epoch and are used at epoch boundaries to calculate staking rewards — validators with more credits earn proportionally more rewards for themselves and their delegators. Credits incentivize consistent, timely voting.",
+    "category": "network",
+    "related": ["vote-account", "staking-rewards", "root"]
+  },
+  {
+    "id": "warmup-period",
+    "term": "Warmup Period",
+    "definition": "The number of epochs after stake delegation during which the delegated SOL progressively becomes active and eligible for earning rewards. During warmup, the stake gradually increases its effective weight over one or more epoch boundaries rather than activating instantly, preventing sudden large stake shifts that could destabilize the leader schedule and consensus.",
+    "category": "network",
+    "related": ["stake", "epoch", "cooldown-period"]
+  },
+  {
+    "id": "tpu-client",
+    "term": "TPU Client",
+    "definition": "A client library that sends transactions directly to the current leader validator's Transaction Processing Unit (TPU) port over QUIC, bypassing the standard RPC sendTransaction relay for lower latency and higher landing probability. The Solana SDK's TpuClient resolves the current leader from the leader schedule, establishes a QUIC connection, and forwards signed transactions directly. This approach is used by MEV searchers, high-frequency traders, and latency-sensitive applications that need the fastest possible path to block inclusion.",
+    "category": "network",
+    "aliases": ["TpuClient"],
+    "related": ["tpu", "quic", "transaction-landing"]
+  },
+  {
+    "id": "tpu-forwarding",
+    "term": "TPU Forwarding",
+    "definition": "The mechanism by which non-leader validators forward incoming transactions to the current slot leader's TPU port so they can be included in the next block. When a validator receives transactions during slots it is not leading, it relays them to the upcoming leader(s) based on the leader schedule. This forwarding behavior, combined with Gulf Stream's look-ahead, means transactions can reach the leader before its slot begins, reducing confirmation latency.",
+    "category": "network",
+    "related": ["tpu", "leader-schedule", "validator"]
+  },
+  {
+    "id": "epoch-schedule",
+    "term": "Epoch Schedule",
+    "definition": "The configuration that defines the length of an epoch in slots and governs how epoch boundaries are calculated on a Solana cluster. On mainnet-beta, each epoch is 432,000 slots (approximately 2-3 days at 400ms per slot). The epoch schedule determines when staking rewards are distributed, when stake activations and deactivations take effect, and when the leader schedule is recalculated. It is set at genesis and queryable via the getEpochSchedule RPC method.",
+    "category": "network",
+    "related": ["epoch", "slot", "genesis-config"]
+  },
+  {
+    "id": "local-fee-market",
+    "term": "Local Fee Market",
+    "definition": "Solana's per-account fee pricing model where priority fee competition is scoped to transactions contending for the same writable accounts, rather than applying a single global fee to all transactions. Congestion on a popular DEX pool or NFT mint drives up priority fees only for transactions touching those specific accounts, while unrelated transactions can land cheaply in parallel. This design is a direct consequence of Solana's parallel execution model and account-level locking.",
+    "category": "network",
+    "related": ["fee-market", "priority-fee", "account-locking"]
+  },
+  {
+    "id": "validator-commission",
+    "term": "Validator Commission",
+    "definition": "The percentage of staking rewards that a validator retains before distributing the remainder to its delegators, configurable from 0% to 100%. A validator with 5% commission keeps 5% of all inflation rewards earned by its stake and passes 95% to delegators. Commission rates are set by the validator operator and can be changed at any time, though significant increases may cause delegators to redelegate. Delegators should monitor commission changes as part of validator selection.",
+    "category": "network",
+    "related": ["staking-rewards", "validator", "delegator"]
+  },
+  {
+    "id": "inflation-rate",
+    "term": "Inflation Rate",
+    "definition": "The annualized rate at which new SOL tokens are minted by the protocol to fund staking rewards. Solana launched with an initial inflation rate of 8% per year, which decreases by 15% of the current rate each epoch year (the 'disinflation rate'), gradually approaching the terminal inflation rate of 1.5%. As of 2025, the effective inflation rate is approximately 5.0%. The actual rate of SOL supply dilution depends on the percentage of total SOL that is actively staked.",
+    "category": "network",
+    "related": ["inflation", "terminal-inflation-rate", "staking-rewards"]
+  },
+  {
+    "id": "terminal-inflation-rate",
+    "term": "Terminal Inflation Rate",
+    "definition": "The long-term floor for Solana's annual SOL issuance rate, set at 1.5% per year. Once the decreasing inflation schedule reaches this target, the protocol will mint new SOL at a fixed 1.5% annual rate indefinitely to continue funding staking rewards. This terminal rate was chosen to balance validator incentives with SOL holders' desire to limit dilution. Transaction fee burns provide partial deflationary pressure against this base issuance.",
+    "category": "network",
+    "related": ["inflation-rate", "inflation", "sol"]
+  },
+  {
+    "id": "stake-activation",
+    "term": "Stake Activation",
+    "definition": "The process by which newly delegated stake becomes active and begins earning staking rewards. After a user delegates SOL to a validator, the stake enters a warmup phase and becomes fully active at the next epoch boundary (within one epoch, approximately 2-3 days). During activation, the stake does not contribute to the validator's voting weight or earn rewards. This delay prevents rapid stake shifts that could destabilize consensus.",
+    "category": "network",
+    "related": ["stake", "warmup-period", "epoch"]
+  },
+  {
+    "id": "stake-deactivation",
+    "term": "Stake Deactivation",
+    "definition": "The process of unstaking SOL from a validator, which requires a cooldown period of one epoch before the SOL can be withdrawn. After initiating deactivation, the stake stops earning rewards at the next epoch boundary and enters a cooling-down state. Once the cooldown epoch completes, the SOL becomes available for withdrawal back to the stake authority's wallet. This delay mirrors stake activation and prevents sudden large stake removals from disrupting network stability.",
+    "category": "network",
+    "related": ["stake", "cooldown-period", "epoch"]
+  },
+  {
+    "id": "searcher",
+    "term": "Searcher (MEV)",
+    "definition": "An MEV actor that monitors on-chain state and pending transactions to identify profitable opportunities such as arbitrage, liquidations, or backruns, and submits transaction bundles through Jito's Block Engine to capture that value. Searchers compete on speed and strategy, paying tips to validators for bundle inclusion priority. Searcher operations range from beneficial (keeping markets efficient through arbitrage) to extractive (sandwich attacks that harm regular users).",
+    "category": "network",
+    "related": ["mev", "bundle", "jito"]
+  },
+  {
+    "id": "backrunning",
+    "term": "Backrunning",
+    "definition": "An MEV strategy where a searcher places their transaction immediately after a target transaction in the same block to profit from the state change it creates. For example, after a large swap moves a pool's price away from other markets, a backrunner submits an arbitrage trade to capture the price difference. Backrunning is generally considered less harmful than frontrunning or sandwich attacks because it does not worsen execution for the original transaction.",
+    "category": "network",
+    "related": ["mev", "searcher", "arbitrage"]
+  },
+  {
+    "id": "block-space-auction",
+    "term": "Block Space Auction",
+    "definition": "The competitive process by which transactions and bundles bid for inclusion in a block through priority fees and Jito tips. Validators acting as leaders select transactions that maximize their revenue, creating a market for block space. During periods of high demand, block space auctions drive up priority fees for contested accounts. Jito's Block Engine formalizes this auction by simulating bundles and selecting the most profitable set for each block.",
+    "category": "network",
+    "related": ["mev", "priority-fee", "block-engine"]
+  },
+  {
+    "id": "mev-protection",
+    "term": "MEV Protection",
+    "definition": "Mechanisms and tools designed to shield users from harmful MEV extraction such as sandwich attacks and frontrunning. On Solana, MEV protection strategies include using private transaction submission (bypassing public RPCs), setting tight slippage tolerances, routing through MEV-aware aggregators like Jupiter that optimize execution, and submitting transactions via Jito bundles with ordering guarantees. Some wallets and dApps integrate MEV protection by default to improve user outcomes.",
+    "category": "network",
+    "related": ["mev", "private-transaction", "slippage"]
+  },
+  {
+    "id": "private-transaction",
+    "term": "Private Transaction",
+    "definition": "A transaction sent directly to the current block producer or through a private relay rather than being broadcast through public RPC nodes, reducing the window for MEV searchers to observe and exploit it before inclusion. On Solana, private transactions can be routed through Jito's Block Engine or via staked connections with direct TPU access. While no transaction is truly private on a public blockchain once confirmed, private submission minimizes the pre-inclusion observation window.",
+    "category": "network",
+    "related": ["mev-protection", "tpu-client", "block-engine"]
+  },
+  {
+    "id": "bundle-simulation",
+    "term": "Bundle Simulation",
+    "definition": "The process of executing a Jito bundle against the current chain state in a sandboxed environment to verify that all transactions in the bundle succeed and produce the expected outcome before committing real tips and submitting to the Block Engine. Simulation catches issues like stale state, insufficient balances, or failed arbitrage conditions, preventing searchers from paying tips for bundles that would fail on-chain. Jito provides simulateBundle API endpoints for this purpose.",
+    "category": "network",
+    "related": ["bundle", "block-engine", "jito"]
+  }
+]

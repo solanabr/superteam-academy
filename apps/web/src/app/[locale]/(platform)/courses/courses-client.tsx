@@ -8,12 +8,13 @@ import {
   LearningPathSection,
   type PathCourseProgress,
 } from "@/components/course/learning-path-section";
+import { DictionaryTab } from "@/components/dictionary/DictionaryTab";
 import { createClient } from "@/lib/supabase/client";
 import type { Course, LearningPath } from "@/lib/sanity/types";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 type CourseStatus = "enrolled" | "completed";
-type ActiveTab = "all" | "paths";
+type ActiveTab = "all" | "paths" | "dictionary";
 
 interface CourseCatalogClientProps {
   courses: Course[];
@@ -195,6 +196,12 @@ export function CourseCatalogClient({
         >
           {t("learningPaths")}
         </button>
+        <button
+          className={`catalog-tab ${activeTab === "dictionary" ? "active" : ""}`}
+          onClick={() => setActiveTab("dictionary")}
+        >
+          {t("tab.dictionary")}
+        </button>
       </div>
 
       {/* ════════ TAB 1: ALL COURSES ════════ */}
@@ -336,6 +343,13 @@ export function CourseCatalogClient({
               />
             );
           })}
+        </div>
+      )}
+
+      {/* ════════ TAB 3: DICTIONARY ════════ */}
+      {activeTab === "dictionary" && (
+        <div className="space-y-8">
+          <DictionaryTab />
         </div>
       )}
     </div>
