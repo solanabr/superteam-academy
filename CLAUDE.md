@@ -151,7 +151,7 @@ pnpm lint              # ESLint
 
 | Var | Required | Notes |
 |-----|----------|-------|
-| `HELIUS_RPC_URL` | For leaderboard | Real on-chain data |
+| `SUPERTEAM_ACADEMY_HELIUS_API_KEY` | For leaderboard | Real on-chain data |
 | `NEXT_PUBLIC_CLUSTER` | Yes | `devnet` |
 | `NEXTAUTH_SECRET` | For auth | Session encryption |
 | `NEXT_PUBLIC_SANITY_*` | No | Falls back to mock-client |

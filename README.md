@@ -253,8 +253,8 @@ NEXTAUTH_URL=http://localhost:3000
 
 ```env
 # RPC — enables real on-chain data (leaderboard, credentials, XP)
-NEXT_PUBLIC_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=<key>
-HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=<key>
+NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY=<your-helius-api-key>
+SUPERTEAM_ACADEMY_HELIUS_API_KEY=<your-helius-api-key>
 
 # CMS — switches from mock data to live Sanity
 NEXT_PUBLIC_SANITY_PROJECT_ID=<project-id>

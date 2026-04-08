@@ -515,7 +515,7 @@ const ix = createAssociatedTokenAccountInstruction(
 Credential NFTs are Metaplex Core assets. Query via Helius DAS:
 
 ```typescript
-const response = await fetch(HELIUS_RPC_URL, {
+const response = await fetch(HELIUS_RPC, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({

@@ -116,7 +116,7 @@ public/          # Static assets (images, icons, manifest)
 | `NEXT_PUBLIC_XP_MINT` | No | XP token mint address (default provided) |
 | `NEXT_PUBLIC_AUTHORITY` | No | Program authority address (default provided) |
 | `NEXT_PUBLIC_CLUSTER` | No | Solana cluster -- `devnet` or `mainnet-beta` |
-| `NEXT_PUBLIC_HELIUS_RPC_URL` | No | Helius RPC endpoint for reliable Solana access |
+| `NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY` | No | Helius API key for reliable Solana RPC access |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | No | Sanity project ID (mock data used if absent) |
 | `NEXT_PUBLIC_SANITY_DATASET` | No | Sanity dataset name (defaults to `production`) |
 | `BACKEND_SIGNER_KEYPAIR` | No | Server-side keypair for anti-cheat signing |

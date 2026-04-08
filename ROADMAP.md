@@ -335,7 +335,9 @@ import { PublicKey } from '@solana/web3.js';
 export const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
 export const XP_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT!);
 export const CLUSTER = process.env.NEXT_PUBLIC_CLUSTER || 'devnet';
-export const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC_URL!;
+export const HELIUS_RPC = process.env.NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY
+  ? `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY}`
+  : 'https://api.devnet.solana.com';
 export const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
 ```
 
@@ -374,7 +376,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 NEXT_PUBLIC_PROGRAM_ID=ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf
 NEXT_PUBLIC_XP_MINT=xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3
 NEXT_PUBLIC_CLUSTER=devnet
-NEXT_PUBLIC_HELIUS_RPC_URL=
+NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY=
 NEXT_PUBLIC_SANITY_PROJECT_ID=
 NEXT_PUBLIC_SANITY_DATASET=production
 BACKEND_SIGNER_KEYPAIR=

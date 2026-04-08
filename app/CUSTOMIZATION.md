@@ -371,7 +371,7 @@ Copy `.env.example` to `.env.local` and fill in the values:
 | `NEXT_PUBLIC_XP_MINT` | No | XP token mint address |
 | `NEXT_PUBLIC_AUTHORITY` | No | Program authority public key |
 | `NEXT_PUBLIC_CLUSTER` | No | Solana cluster: `devnet`, `testnet`, or `mainnet-beta` |
-| `NEXT_PUBLIC_HELIUS_RPC_URL` | No | Custom RPC URL (uses public devnet endpoint if unset) |
+| `NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY` | No | Helius API key (uses public devnet endpoint if unset) |
 | `NEXT_PUBLIC_BASE_URL` | No | Site URL for SEO meta tags (defaults to `academy.superteam.fun`) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | Google Analytics measurement ID |
 | `SENTRY_DSN` | No | Sentry error tracking DSN |

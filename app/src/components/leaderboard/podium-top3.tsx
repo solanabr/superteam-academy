@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { Trophy, Crown, Medal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Link } from '@/i18n/routing';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getLevelTitle } from '@/lib/solana/xp';
-import type { LeaderboardEntry } from '@/lib/hooks/use-leaderboard';
+import { useMemo } from "react";
+import { Trophy, Crown, Medal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Link } from "@/i18n/routing";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getLevelTitle } from "@/lib/solana/xp";
+import type { LeaderboardEntry } from "@/lib/hooks/use-leaderboard";
 
 interface PodiumTop3Props {
   entries: LeaderboardEntry[];
@@ -38,46 +38,46 @@ function truncateWallet(wallet: string): string {
 
 const PODIUM_CONFIG = {
   1: {
-    height: 'h-28 sm:h-32',
-    avatarSize: 'size-16 sm:size-20',
-    avatarText: 'text-xl sm:text-2xl',
-    ringColor: 'ring-yellow-400',
-    bgGradient: 'from-yellow-400/20 via-amber-300/10 to-transparent',
-    borderColor: 'border-yellow-400/40',
+    height: "h-28 sm:h-32",
+    avatarSize: "size-16 sm:size-20",
+    avatarText: "text-xl sm:text-2xl",
+    ringColor: "ring-yellow-400",
+    bgGradient: "from-yellow-400/20 via-amber-300/10 to-transparent",
+    borderColor: "border-yellow-400/40",
     icon: Crown,
-    iconColor: 'text-yellow-400',
-    iconSize: 'size-6',
-    label: '1st',
-    labelColor: 'text-yellow-500 dark:text-yellow-400',
-    orderClass: 'order-1 sm:order-2',
+    iconColor: "text-yellow-400",
+    iconSize: "size-6",
+    label: "1st",
+    labelColor: "text-yellow-500 dark:text-yellow-400",
+    orderClass: "order-1 sm:order-2",
   },
   2: {
-    height: 'h-20 sm:h-24',
-    avatarSize: 'size-12 sm:size-16',
-    avatarText: 'text-base sm:text-lg',
-    ringColor: 'ring-zinc-400',
-    bgGradient: 'from-zinc-400/15 via-zinc-300/5 to-transparent',
-    borderColor: 'border-zinc-400/30',
+    height: "h-20 sm:h-24",
+    avatarSize: "size-12 sm:size-16",
+    avatarText: "text-base sm:text-lg",
+    ringColor: "ring-zinc-400",
+    bgGradient: "from-zinc-400/15 via-zinc-300/5 to-transparent",
+    borderColor: "border-zinc-400/30",
     icon: Medal,
-    iconColor: 'text-zinc-400',
-    iconSize: 'size-5',
-    label: '2nd',
-    labelColor: 'text-zinc-500 dark:text-zinc-400',
-    orderClass: 'order-2 sm:order-1',
+    iconColor: "text-zinc-400",
+    iconSize: "size-5",
+    label: "2nd",
+    labelColor: "text-zinc-500 dark:text-zinc-400",
+    orderClass: "order-2 sm:order-1",
   },
   3: {
-    height: 'h-16 sm:h-20',
-    avatarSize: 'size-12 sm:size-16',
-    avatarText: 'text-base sm:text-lg',
-    ringColor: 'ring-amber-700 dark:ring-amber-600',
-    bgGradient: 'from-amber-700/15 via-amber-600/5 to-transparent',
-    borderColor: 'border-amber-700/30 dark:border-amber-600/30',
+    height: "h-16 sm:h-20",
+    avatarSize: "size-12 sm:size-16",
+    avatarText: "text-base sm:text-lg",
+    ringColor: "ring-amber-700 dark:ring-amber-600",
+    bgGradient: "from-amber-700/15 via-amber-600/5 to-transparent",
+    borderColor: "border-amber-700/30 dark:border-amber-600/30",
     icon: Medal,
-    iconColor: 'text-amber-700 dark:text-amber-600',
-    iconSize: 'size-5',
-    label: '3rd',
-    labelColor: 'text-amber-700 dark:text-amber-600',
-    orderClass: 'order-3 sm:order-3',
+    iconColor: "text-amber-700 dark:text-amber-600",
+    iconSize: "size-5",
+    label: "3rd",
+    labelColor: "text-amber-700 dark:text-amber-600",
+    orderClass: "order-3 sm:order-3",
   },
 } as const;
 
@@ -89,13 +89,16 @@ interface PodiumCardProps {
 function PodiumCard({ entry, rank }: PodiumCardProps) {
   const config = PODIUM_CONFIG[rank];
   const Icon = config.icon;
-  const gradient = useMemo(() => walletToGradient(entry.wallet), [entry.wallet]);
+  const gradient = useMemo(
+    () => walletToGradient(entry.wallet),
+    [entry.wallet],
+  );
   const levelTitle = useMemo(() => getLevelTitle(entry.level), [entry.level]);
 
   return (
     <div
       className={cn(
-        'flex flex-1 flex-col items-center gap-3',
+        "flex flex-1 flex-col items-center gap-3",
         config.orderClass,
       )}
     >
@@ -106,13 +109,10 @@ function PodiumCard({ entry, rank }: PodiumCardProps) {
       />
 
       {/* Avatar */}
-      <Link
-        href={`/profile/${entry.wallet}`}
-        className="group relative"
-      >
+      <Link href={`/profile/${entry.wallet}`} className="group relative">
         <div
           className={cn(
-            'flex items-center justify-center rounded-full font-bold text-white ring-4 transition-transform group-hover:scale-105',
+            "flex items-center justify-center rounded-full font-bold text-white ring-4 transition-transform group-hover:scale-105",
             config.avatarSize,
             config.avatarText,
             config.ringColor,
@@ -139,7 +139,7 @@ function PodiumCard({ entry, rank }: PodiumCardProps) {
             {levelTitle}
           </span>
         </div>
-        <p className={cn('text-lg font-bold tabular-nums', config.labelColor)}>
+        <p className={cn("text-lg font-bold tabular-nums", config.labelColor)}>
           {entry.xpBalance.toLocaleString()}
           <span className="ml-0.5 text-xs font-normal text-muted-foreground">
             XP
@@ -150,7 +150,7 @@ function PodiumCard({ entry, rank }: PodiumCardProps) {
       {/* Podium block */}
       <div
         className={cn(
-          'w-full rounded-t-xl border-x border-t bg-gradient-to-t',
+          "w-full rounded-t-xl border-x border-t bg-gradient-to-t",
           config.height,
           config.bgGradient,
           config.borderColor,
@@ -191,19 +191,29 @@ function PodiumSkeleton() {
   );
 }
 
-export function PodiumTop3({ entries, isLoading = false, dasUnavailable = false, className }: PodiumTop3Props) {
+export function PodiumTop3({
+  entries,
+  isLoading = false,
+  dasUnavailable = false,
+  className,
+}: PodiumTop3Props) {
   if (isLoading) {
     return <PodiumSkeleton />;
   }
 
   if (entries.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12 text-center', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12 text-center",
+          className,
+        )}
+      >
         <Trophy className="size-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           {dasUnavailable
-            ? 'Leaderboard requires a Helius RPC endpoint. Set NEXT_PUBLIC_HELIUS_RPC_URL in your environment.'
-            : 'No rankings yet. Be the first to earn XP!'}
+            ? "Leaderboard requires a Helius API key. Set NEXT_PUBLIC_SUPERTEAM_ACADEMY_HELIUS_API_KEY in your environment."
+            : "No rankings yet. Be the first to earn XP!"}
         </p>
       </div>
     );
@@ -216,7 +226,12 @@ export function PodiumTop3({ entries, isLoading = false, dasUnavailable = false,
   const third = entries[2];
 
   return (
-    <div className={cn('flex flex-col items-center gap-2 sm:flex-row sm:items-end sm:justify-center sm:gap-4 px-4', className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-2 sm:flex-row sm:items-end sm:justify-center sm:gap-4 px-4",
+        className,
+      )}
+    >
       {first && <PodiumCard entry={first} rank={1} />}
       {second && <PodiumCard entry={second} rank={2} />}
       {third && <PodiumCard entry={third} rank={3} />}
