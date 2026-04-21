@@ -1,0 +1,353 @@
+[
+  {
+    "id": "rust-lang",
+    "term": "Rust",
+    "definition": "A systems programming language emphasizing memory safety, zero-cost abstractions, and concurrency without a garbage collector. Rust uses an ownership model with borrow checking at compile time to prevent data races and null pointer bugs. It is the primary language for Solana program development (via Anchor or native solana-program crate) and the Agave validator client.",
+    "category": "programming-fundamentals",
+    "related": ["anchor", "solana-rust-sdk"]
+  },
+  {
+    "id": "typescript",
+    "term": "TypeScript",
+    "definition": "A statically typed superset of JavaScript that compiles to plain JavaScript. TypeScript adds type annotations, interfaces, generics, and enums to catch errors at compile time. It is the standard language for Solana client-side development—wallet adapters, dApp frontends, test suites, and SDK interactions (web3.js, Anchor client) are typically written in TypeScript.",
+    "category": "programming-fundamentals",
+    "related": ["solana-web3js", "javascript"]
+  },
+  {
+    "id": "javascript",
+    "term": "JavaScript",
+    "definition": "The ubiquitous scripting language for web development, running in browsers and Node.js. JavaScript is dynamically typed and event-driven. Most Solana dApp frontends and scripts use JavaScript/TypeScript with libraries like @solana/web3.js. Node.js enables server-side JS for backend services, indexers, and bot development.",
+    "category": "programming-fundamentals",
+    "related": ["typescript", "nodejs"]
+  },
+  {
+    "id": "nodejs",
+    "term": "Node.js",
+    "definition": "A JavaScript runtime built on Chrome's V8 engine that enables server-side JavaScript execution. Node.js uses an event-driven, non-blocking I/O model. In the Solana ecosystem, Node.js is used for: running Anchor tests (Mocha/Jest), backend services, transaction bots, indexers, and CLI tools. npm/yarn/pnpm manage JavaScript package dependencies.",
+    "category": "programming-fundamentals",
+    "related": ["javascript", "typescript"]
+  },
+  {
+    "id": "api-general",
+    "term": "API (Application Programming Interface)",
+    "definition": "A defined interface through which software components communicate. REST APIs use HTTP methods (GET, POST) with JSON payloads. Solana uses JSON-RPC APIs where clients send method calls (getAccountInfo, sendTransaction) to validator nodes. GraphQL APIs (used by some indexers) allow clients to request exactly the data they need in a single query.",
+    "category": "programming-fundamentals",
+    "aliases": ["API"],
+    "related": ["rpc-general", "json-rpc"]
+  },
+  {
+    "id": "json-rpc",
+    "term": "JSON-RPC",
+    "definition": "A stateless, lightweight remote procedure call protocol using JSON encoding. Clients send a JSON object with method name, params, and id; servers respond with result or error. Solana and Ethereum both expose JSON-RPC APIs for blockchain interaction. Example: {method: 'getBalance', params: ['pubkey...'], id: 1}. WebSocket variants support pub/sub for real-time updates.",
+    "category": "programming-fundamentals",
+    "related": ["api-general", "rpc-general"]
+  },
+  {
+    "id": "sdk",
+    "term": "SDK (Software Development Kit)",
+    "definition": "A collection of libraries, tools, and documentation for building applications on a specific platform. Solana SDKs include: @solana/web3.js (TypeScript client), solana-sdk/solana-program (Rust), Anchor (Rust framework + TS client), and Umi (Metaplex). SDKs abstract low-level details like serialization, signing, and RPC communication.",
+    "category": "programming-fundamentals",
+    "aliases": ["SDK"],
+    "related": ["solana-web3js", "solana-rust-sdk"]
+  },
+  {
+    "id": "cli-general",
+    "term": "CLI (Command-Line Interface)",
+    "definition": "A text-based interface for interacting with software through terminal commands. Solana provides the `solana` CLI for account management, transfers, and deployments, plus `anchor` CLI for framework operations. CLIs are scriptable and essential for automation, CI/CD pipelines, and advanced operations not available in GUIs.",
+    "category": "programming-fundamentals",
+    "aliases": ["CLI"],
+    "related": ["solana-cli", "anchor-init"]
+  },
+  {
+    "id": "base58",
+    "term": "Base58 / Base58Check",
+    "definition": "A binary-to-text encoding scheme used by Solana (and Bitcoin) for representing public keys and signatures as human-readable strings. Base58 uses alphanumeric characters excluding visually ambiguous ones (0, O, I, l). A Solana pubkey is 32 bytes encoded as a ~44-character Base58 string. Base64 is used for transaction serialization and account data display.",
+    "category": "programming-fundamentals",
+    "aliases": ["Base58", "Base64"],
+    "related": ["pubkey"]
+  },
+  {
+    "id": "idempotency",
+    "term": "Idempotency",
+    "definition": "The property where performing an operation multiple times produces the same result as performing it once. Critical in blockchain development because transactions can be submitted multiple times (e.g., during retries). Solana mitigates duplicate execution via recent blockhash expiry (~60-90 seconds) and transaction deduplication. Designing idempotent instructions prevents double-spending.",
+    "category": "programming-fundamentals",
+    "related": ["transaction", "nonce-account"]
+  },
+  {
+    "id": "concurrency",
+    "term": "Concurrency / Parallelism",
+    "definition": "Concurrency: structuring a program to handle multiple tasks that may overlap in time. Parallelism: executing multiple tasks simultaneously on multiple CPU cores. Solana's Sealevel engine achieves parallelism by analyzing transaction account dependencies—transactions touching different writable accounts execute in parallel. Understanding concurrency is essential for optimizing Solana program design.",
+    "category": "programming-fundamentals",
+    "related": ["sealevel", "parallel-execution"]
+  },
+  {
+    "id": "ci-cd",
+    "term": "CI/CD (Continuous Integration / Deployment)",
+    "definition": "Automated pipelines that build, test, and deploy code when changes are pushed. For Solana programs: CI runs `anchor build`, `anchor test`, linting, and security checks. CD automates deployment to devnet/mainnet with multisig approval. GitHub Actions, GitLab CI, and Vercel are common tools. CI/CD catches bugs early and ensures reproducible builds.",
+    "category": "programming-fundamentals",
+    "aliases": ["CI/CD"],
+    "related": ["testing", "solana-verify"]
+  },
+  {
+    "id": "open-source",
+    "term": "Open Source",
+    "definition": "Software with publicly available source code that anyone can inspect, modify, and distribute. Most Solana infrastructure is open-source: the Agave validator (Rust, Apache 2.0), Anchor framework, SPL programs, and major DeFi protocols. Open-source enables community auditing, composability, and trust verification. Licenses (MIT, Apache 2.0, GPL) define usage terms.",
+    "category": "programming-fundamentals",
+    "related": ["solana-verify", "audit"]
+  },
+  {
+    "id": "git",
+    "term": "Git",
+    "definition": "A distributed version control system for tracking code changes across development teams. Essential for Solana development workflows: feature branches for program changes, pull requests for code review, tags for release versions. Solana Verify uses git repos to verify on-chain programs match public source. GitHub hosts most Solana ecosystem repositories.",
+    "category": "programming-fundamentals",
+    "related": ["open-source", "ci-cd"]
+  },
+  {
+    "id": "docker",
+    "term": "Docker",
+    "definition": "A platform for packaging applications into lightweight, portable containers that include all dependencies. In Solana development, Docker is used for: deterministic program builds (solana-verify), running local validators, reproducible test environments, and CI/CD pipelines. Docker ensures 'works on my machine' consistency across development, testing, and deployment.",
+    "category": "programming-fundamentals",
+    "related": ["ci-cd", "solana-verify"]
+  },
+  {
+    "id": "encryption",
+    "term": "Encryption",
+    "definition": "The process of converting plaintext data into ciphertext that can only be read with the correct decryption key. Symmetric encryption (AES) uses one key for both operations. Asymmetric encryption (RSA, ECIES) uses public/private key pairs. On Solana, encryption is used in confidential transfers (Twisted ElGamal), off-chain communication, and wallet security.",
+    "category": "programming-fundamentals",
+    "related": ["ed25519", "confidential-transfers"]
+  },
+  {
+    "id": "public-key-cryptography",
+    "term": "Public Key Cryptography",
+    "definition": "A cryptographic system using mathematically linked key pairs: a public key (shared freely) and a private key (kept secret). Used for digital signatures (sender signs with private key, anyone verifies with public key) and encryption (encrypt with public key, decrypt with private key). Solana uses Ed25519 for signatures and Curve25519/Ristretto255 for encryption.",
+    "category": "programming-fundamentals",
+    "aliases": ["Asymmetric Cryptography"],
+    "related": ["ed25519", "keypair"]
+  },
+  {
+    "id": "event-driven",
+    "term": "Event-Driven Architecture",
+    "definition": "A software design pattern where the flow of the program is determined by events (state changes, messages, user actions). In Solana dApps: WebSocket subscriptions trigger callbacks on account changes, Anchor events (emit!) notify clients of on-chain state transitions, and transaction logs are parsed for event data. Enables reactive, real-time user interfaces.",
+    "category": "programming-fundamentals",
+    "related": ["websocket", "anchor-events"]
+  },
+  {
+    "id": "account-model-vs-utxo",
+    "term": "Account Model vs UTXO Model",
+    "definition": "Two models for tracking blockchain state. Account model (Solana, Ethereum): each account has a balance and state that is updated in place. UTXO model (Bitcoin, Cardano): transactions consume unspent transaction outputs and create new ones. Account models are more intuitive for smart contracts; UTXO models offer better privacy and parallelism for simple transfers.",
+    "category": "programming-fundamentals",
+    "aliases": ["UTXO"],
+    "related": ["account", "nullifier"]
+  },
+  {
+    "id": "cron",
+    "term": "Cron (Time-Based Scheduling)",
+    "definition": "A time-based job scheduling concept originating from Unix systems, where tasks are defined to run at specific intervals using cron expressions (e.g., '0 */6 * * *' for every 6 hours). In blockchain contexts, cron-like scheduling is used to trigger on-chain operations such as reward distributions, oracle updates, and automated rebalancing at regular intervals, typically implemented through off-chain keeper services or on-chain automation protocols.",
+    "category": "programming-fundamentals",
+    "aliases": ["Cron Job", "Cron Expression"],
+    "related": ["program-automation", "clockwork"]
+  },
+  {
+    "id": "zero-copy",
+    "term": "Zero-Copy",
+    "definition": "A memory access pattern where data is read or manipulated directly from its original buffer location without allocating new memory or copying bytes. In Solana program development, zero-copy is used to access account data in-place from the runtime's memory-mapped byte slice, avoiding expensive heap allocations and Borsh deserialization overhead. Frameworks like Anchor (#[account(zero_copy)]) and Pinocchio use this pattern extensively to minimize compute unit consumption for large accounts.",
+    "category": "programming-fundamentals",
+    "related": ["zero-copy-deserialization", "borsh", "account-data"]
+  },
+  {
+    "id": "little-endian",
+    "term": "Little-Endian",
+    "definition": "A byte ordering convention where the least significant byte is stored at the lowest memory address. Solana uses little-endian byte order for all on-chain data serialization (Borsh defaults to little-endian), matching the native byte order of x86/ARM CPUs that run validators. When manually reading or writing multi-byte integers from account data, developers must use little-endian functions (e.g., u64::from_le_bytes in Rust, readUInt32LE in Node.js).",
+    "category": "programming-fundamentals",
+    "related": ["borsh", "serialization", "account-data"]
+  },
+  {
+    "id": "elf-binary",
+    "term": "ELF Binary",
+    "definition": "Executable and Linkable Format — the binary format used for deployed Solana programs. Rust source code is compiled via cargo-build-sbf into an SBF-targeted ELF binary (.so file) that the Solana runtime loads and executes. The ELF format contains the program's compiled bytecode, symbol tables, and relocation information. ELF binaries are uploaded to buffer accounts during deployment and then written to the program data account.",
+    "category": "programming-fundamentals",
+    "aliases": ["ELF", "Shared Object"],
+    "related": ["sbf", "cargo-build-sbf", "program-data"]
+  },
+  {
+    "id": "fixed-point-arithmetic",
+    "term": "Fixed-Point Arithmetic",
+    "definition": "A method of representing fractional numbers using integers with an implicit decimal point at a fixed position, avoiding floating-point imprecision. On Solana, all token amounts use fixed-point: SPL tokens have a configurable decimals field (e.g., USDC uses 6 decimals, so 1 USDC = 1,000,000 smallest units). DeFi protocols use basis points (1/10,000), scaled integers, or WAD/RAY notation (10^18/10^27) for precise rate calculations without floating-point types.",
+    "category": "programming-fundamentals",
+    "related": ["precision-loss", "checked-math", "spl-token"]
+  },
+  {
+    "id": "wasm",
+    "term": "WebAssembly (WASM)",
+    "definition": "A portable binary instruction format designed as a compilation target for high-level languages, enabling near-native execution speed in web browsers and other environments. While Solana uses SBF (not WASM) for on-chain program execution, WASM is relevant to the ecosystem: some blockchain VMs (Polkadot, NEAR) use WASM, and Solana client-side tools may compile to WASM for browser-based dApps. Anchor IDL clients can run in WASM environments via @solana/web3.js.",
+    "category": "programming-fundamentals",
+    "aliases": ["WASM"],
+    "related": ["sbf", "svm"]
+  },
+  {
+    "id": "monorepo",
+    "term": "Monorepo",
+    "definition": "A software development strategy where multiple related packages, programs, or applications are stored in a single version-controlled repository. In Solana development, monorepos commonly contain multiple on-chain programs, their test suites, client SDKs, and frontend applications in one repository. Tools like Cargo workspaces (Rust), npm/pnpm workspaces (TypeScript), and Anchor's workspace configuration support monorepo patterns, enabling shared dependencies and atomic cross-package changes.",
+    "category": "programming-fundamentals",
+    "related": ["anchor-toml", "ci-cd", "git"]
+  },
+  {
+    "id": "deterministic-address-derivation",
+    "term": "Deterministic Address Derivation",
+    "definition": "The process of computing an account address from known inputs without randomness, ensuring the same inputs always produce the same address. On Solana, this includes PDAs (derived from program ID + seeds + bump), Associated Token Accounts (derived from wallet + mint + token program), and keypairs derived from seed phrases. Deterministic derivation enables clients to compute account addresses off-chain without querying the network, simplifying account discovery and transaction construction.",
+    "category": "programming-fundamentals",
+    "related": ["pda", "find-program-address", "seeds"]
+  },
+  {
+    "id": "pipelining",
+    "term": "Pipelining",
+    "definition": "Processing technique where multiple stages of a task execute in overlapping fashion, like an assembly line. Solana's validator pipeline processes transactions through fetch, SigVerify, banking, and broadcast stages simultaneously, achieving higher throughput than sequential processing. Essential to Solana's 400ms slot production.",
+    "category": "programming-fundamentals",
+    "related": ["tpu", "tvu", "parallel-execution"]
+  },
+  {
+    "id": "cap-theorem",
+    "term": "CAP Theorem",
+    "definition": "Brewer's CAP theorem: a distributed system can provide at most two of three guarantees — Consistency, Availability, and Partition tolerance. Solana prioritizes availability and partition tolerance, choosing to continue producing blocks during network partitions and using commitment levels (processed, confirmed, finalized) to offer tunable consistency.",
+    "category": "programming-fundamentals",
+    "aliases": ["CAP Theorem", "Brewer's Theorem"],
+    "related": ["commitment-levels", "consensus", "finality"]
+  },
+  {
+    "id": "lamport-timestamp",
+    "term": "Lamport Timestamp",
+    "definition": "Logical clock mechanism proposed by Leslie Lamport (1978) for ordering events in distributed systems without synchronized physical clocks. Solana's Proof of History extends this concept by using a SHA-256 hash chain as a verifiable, cryptographic logical clock, creating a global ordering of events without requiring validators to communicate timestamps.",
+    "category": "programming-fundamentals",
+    "aliases": ["Logical Clock"],
+    "related": ["proof-of-history", "sha256-hash-chain", "consensus"]
+  },
+  {
+    "id": "state-machine-replication",
+    "term": "State Machine Replication",
+    "definition": "Distributed computing pattern where identical copies of a state machine are maintained across multiple nodes. Each node processes the same sequence of inputs deterministically, producing identical outputs. Solana validators are state machines: given the same ledger of transactions, every validator produces the same account state.",
+    "category": "programming-fundamentals",
+    "aliases": ["SMR"],
+    "related": ["validator", "deterministic-execution", "replay-stage"]
+  },
+  {
+    "id": "pbft",
+    "term": "PBFT",
+    "definition": "Practical Byzantine Fault Tolerance. Classical BFT consensus algorithm (Castro & Liskov, 1999) tolerating up to f faulty nodes in 3f+1 total, requiring O(n^2) message complexity per round. Solana's Tower BFT reduces this to O(n) by using Proof of History as a clock, replacing round-based message exchanges with time-based vote lockouts.",
+    "category": "programming-fundamentals",
+    "aliases": ["Practical Byzantine Fault Tolerance", "PBFT"],
+    "related": ["tower-bft", "byzantine-fault-tolerance", "consensus"]
+  },
+  {
+    "id": "amdahls-law",
+    "term": "Amdahl's Law",
+    "definition": "Theoretical limit on parallel speedup: if P% of a task is parallelizable, maximum speedup is 1/(1-P + P/N) for N processors. Limits Sealevel's gains — transactions touching the same account must serialize. Solana mitigates this through account-level locking (maximizing P) and local fee markets (pricing serial contention).",
+    "category": "programming-fundamentals",
+    "aliases": ["Amdahl's Law"],
+    "related": ["parallel-execution", "sealevel", "account-locking"]
+  },
+  {
+    "id": "memory-mapped-io",
+    "term": "Memory-Mapped I/O",
+    "definition": "Technique where files are mapped directly into process virtual memory, allowing the OS to handle reads/writes through page faults. Solana's AccountsDB uses memory-mapped files (AppendVec) to store account data, enabling efficient random access to gigabytes of account state without loading everything into heap memory.",
+    "category": "programming-fundamentals",
+    "aliases": ["mmap"],
+    "related": ["accounts-db", "append-vec", "heap-memory"]
+  },
+  {
+    "id": "copy-on-write",
+    "term": "Copy-on-Write",
+    "definition": "Memory optimization where data is shared between readers until a writer modifies it, at which point only the modified portion is copied. Solana's AccountsDB uses copy-on-write semantics — accounts are written to new AppendVec entries rather than modifying in place, enabling snapshot creation without pausing transaction processing.",
+    "category": "programming-fundamentals",
+    "aliases": ["CoW"],
+    "related": ["accounts-db", "append-vec"]
+  },
+  {
+    "id": "bloom-filter",
+    "term": "Bloom Filter",
+    "definition": "Probabilistic data structure that tests set membership with no false negatives and configurable false positive rate, using minimal memory. Solana validators use bloom filters to deduplicate transactions — quickly checking if a transaction signature has been seen recently without storing all signatures in memory. Space-efficient alternative to hash sets.",
+    "category": "programming-fundamentals",
+    "related": ["validator", "tpu"]
+  },
+  {
+    "id": "kernel-bypass",
+    "term": "Kernel Bypass",
+    "definition": "Technique where applications access network hardware directly, bypassing the OS kernel's networking stack to eliminate syscall overhead and achieve microsecond-level latency. Firedancer uses kernel bypass (via XDP/AF_XDP or DPDK-style techniques) for its networking layer, enabling significantly higher packet throughput than Agave's userspace networking.",
+    "category": "programming-fundamentals",
+    "aliases": ["DPDK", "XDP"],
+    "related": ["firedancer", "validator", "client-diversity"]
+  },
+  {
+    "id": "lock-free-data-structure",
+    "term": "Lock-Free Data Structure",
+    "definition": "Concurrent data structure where threads make progress without mutual exclusion locks, using atomic operations (CAS, fetch-and-add) instead. Eliminates lock contention and deadlocks. Firedancer uses lock-free data structures extensively to achieve high-throughput parallel transaction processing across CPU cores.",
+    "category": "programming-fundamentals",
+    "aliases": ["Wait-Free"],
+    "related": ["firedancer", "parallel-execution"]
+  },
+  {
+    "id": "pedersen-commitment",
+    "term": "Pedersen Commitment",
+    "definition": "Cryptographic commitment scheme that hides a value while allowing later verification. Computed as C = vG + rH where v is the value, r is a random blinding factor, and G/H are generator points. Used in Solana's confidential transfers (Token-2022) to hide transfer amounts while enabling balance verification through homomorphic addition.",
+    "category": "programming-fundamentals",
+    "related": ["elgamal-encryption", "zk-proofs"]
+  },
+  {
+    "id": "curve25519",
+    "term": "Curve25519",
+    "definition": "An elliptic curve designed by Daniel Bernstein for efficient Diffie-Hellman key exchange. It operates on a Montgomery curve over a 255-bit prime field, offering 128-bit security. Solana uses the related Edwards form (Ed25519) for transaction signatures. Curve25519 is favored for its speed, constant-time implementation, and resistance to timing attacks.",
+    "category": "programming-fundamentals",
+    "related": ["ed25519", "public-key-cryptography", "encryption"]
+  },
+  {
+    "id": "aes-gcm-siv",
+    "term": "AES-GCM-SIV",
+    "definition": "Authenticated encryption scheme combining AES block cipher with Galois/Counter Mode and Synthetic Initialization Vector for nonce-misuse resistance. Used in Solana's Token-2022 confidential transfers to encrypt token amounts on-chain while preserving the ability to prove balance validity through zero-knowledge proofs.",
+    "category": "programming-fundamentals",
+    "aliases": ["AES-GCM"],
+    "related": ["confidential-transfers", "encryption", "zk-proofs"]
+  },
+  {
+    "id": "ecdh",
+    "term": "ECDH (Elliptic Curve Diffie-Hellman)",
+    "definition": "Key agreement protocol where two parties derive a shared secret using their private keys and each other's public keys on an elliptic curve. Used in Solana's confidential transfers to establish encryption keys between sender and recipient without exchanging secrets, enabling encrypted on-chain token amounts.",
+    "category": "programming-fundamentals",
+    "aliases": ["Elliptic Curve Diffie-Hellman"],
+    "related": ["curve25519", "encryption", "public-key-cryptography"]
+  },
+  {
+    "id": "optimistic-concurrency",
+    "term": "Optimistic Concurrency",
+    "definition": "Concurrency control strategy where transactions execute without acquiring locks, then validate at commit time that no conflicts occurred. If conflicts are detected, the transaction is retried. Solana's runtime uses optimistic concurrency for parallel transaction execution — it schedules non-conflicting transactions simultaneously and retries those that touch overlapping accounts.",
+    "category": "programming-fundamentals",
+    "related": ["concurrency", "parallel-execution", "account-locking"]
+  },
+  {
+    "id": "eventual-consistency",
+    "term": "Eventual Consistency",
+    "definition": "Distributed systems model where replicas may temporarily diverge but converge to the same state given sufficient time without new updates. Contrasts with strong consistency where reads always return the latest write. Solana RPC nodes may exhibit eventual consistency — different nodes may return different slot data briefly before converging.",
+    "category": "programming-fundamentals",
+    "related": ["cap-theorem", "concurrency", "rpc"]
+  },
+  {
+    "id": "io-uring",
+    "term": "io_uring",
+    "definition": "Linux kernel interface for asynchronous I/O operations that eliminates system call overhead through shared memory ring buffers between user and kernel space. Used in high-performance Solana validator implementations (notably Firedancer) to achieve maximum disk and network throughput with minimal CPU overhead for I/O-bound operations.",
+    "category": "programming-fundamentals",
+    "related": ["kernel-bypass", "firedancer", "pipelining"]
+  },
+  {
+    "id": "avx-512-simd",
+    "term": "AVX-512 (SIMD Instructions)",
+    "definition": "Intel's 512-bit Advanced Vector Extensions enabling single-instruction-multiple-data parallel processing. Firedancer leverages AVX-512 for high-throughput signature verification, hashing, and data processing, executing operations on 16 32-bit values simultaneously. This hardware-level parallelism is key to achieving millions of signature verifications per second.",
+    "category": "programming-fundamentals",
+    "aliases": ["AVX-512"],
+    "related": ["firedancer", "pipelining", "ed25519"]
+  },
+  {
+    "id": "crash-fault-vs-byzantine",
+    "term": "Crash Fault vs Byzantine Fault",
+    "definition": "Two failure models in distributed systems. Crash faults assume nodes either work correctly or stop entirely (fail-stop). Byzantine faults assume nodes can behave arbitrarily — sending conflicting messages, lying, or acting maliciously. Blockchains must tolerate Byzantine faults, requiring BFT consensus (like Solana's Tower BFT) that works even with up to 1/3 malicious validators.",
+    "category": "programming-fundamentals",
+    "related": ["byzantine-fault-tolerance", "consensus", "tower-bft"]
+  }
+]

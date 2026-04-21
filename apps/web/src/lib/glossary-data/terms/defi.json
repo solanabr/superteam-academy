@@ -1,0 +1,1036 @@
+[
+  {
+    "id": "amm",
+    "term": "AMM (Automated Market Maker)",
+    "definition": "A protocol that enables token swaps using algorithmic pricing against pooled liquidity instead of matching individual buyers and sellers. AMMs use mathematical formulas (typically constant product x*y=k) to determine prices based on the ratio of tokens in a liquidity pool. On Solana, major AMMs include Raydium, Orca, and Meteora.",
+    "category": "defi",
+    "aliases": ["AMM"],
+    "related": ["liquidity-pool", "swap", "constant-product"]
+  },
+  {
+    "id": "clmm",
+    "term": "CLMM (Concentrated Liquidity Market Maker)",
+    "definition": "An AMM design where liquidity providers concentrate their capital within specific price ranges instead of across the full 0-to-infinity range. CLMMs dramatically improve capital efficiency\u2014LPs earn more fees per dollar deposited within their active range. If the price moves outside the range, the position becomes inactive. Orca Whirlpools and Raydium CLMM are leading implementations on Solana.",
+    "category": "defi",
+    "aliases": ["CLMM", "Concentrated Liquidity"],
+    "related": ["amm", "tick", "liquidity-pool"]
+  },
+  {
+    "id": "liquidity-pool",
+    "term": "Liquidity Pool",
+    "definition": "A smart-contract-held reserve of two or more tokens that enables trading via an AMM. Users deposit token pairs in specified ratios to become liquidity providers and earn trading fees. Pools are identified by their token pair and fee tier. Pool depth (total value locked) determines price impact for trades.",
+    "category": "defi",
+    "aliases": ["LP", "Pool"],
+    "related": ["amm", "lp-token", "impermanent-loss"]
+  },
+  {
+    "id": "lp-token",
+    "term": "LP Token",
+    "definition": "A token issued to liquidity providers representing their proportional share of a pool's reserves and accrued fees. LP tokens can be burned to withdraw the underlying assets. The value of LP tokens changes as the pool's token ratios shift and fees accumulate. LP tokens are often stakeable in yield farming programs for additional rewards.",
+    "category": "defi",
+    "related": ["liquidity-pool", "amm"]
+  },
+  {
+    "id": "swap",
+    "term": "Swap",
+    "definition": "The exchange of one token for another through a DEX, either via an AMM pool or an order book. The user specifies an input token/amount and receives output tokens at the current market rate minus slippage and fees. On Solana, swaps settle in a single transaction (~400ms) with fees typically 0.01-0.3% per trade.",
+    "category": "defi",
+    "related": ["amm", "slippage", "dex"]
+  },
+  {
+    "id": "dex",
+    "term": "DEX (Decentralized Exchange)",
+    "definition": "A protocol for trading tokens directly on-chain without a centralized intermediary. Solana DEXs use either AMM pools (Raydium, Orca, Meteora) or on-chain order books (Phoenix, OpenBook). DEXs are composable\u2014aggregators like Jupiter route through multiple DEXs for optimal pricing.",
+    "category": "defi",
+    "aliases": ["DEX"],
+    "related": ["amm", "order-book", "swap"]
+  },
+  {
+    "id": "order-book",
+    "term": "Order Book (On-Chain)",
+    "definition": "A trading system that matches buy and sell orders at specified prices, implemented fully on-chain. Unlike AMMs, order books enable limit orders and don't require liquidity pools. Solana's high throughput makes on-chain order books viable. Phoenix uses a FIFO matching engine; OpenBook (Serum v4) uses a crank-based model.",
+    "category": "defi",
+    "aliases": ["CLOB"],
+    "related": ["dex", "openbook", "phoenix"]
+  },
+  {
+    "id": "openbook",
+    "term": "OpenBook",
+    "definition": "A community-maintained on-chain order book DEX forked from Project Serum after its collapse. OpenBook v2 features a fully on-chain central limit order book (CLOB) with maker/taker fees. It supports limit orders, IOC (immediate-or-cancel), and post-only orders. Many Solana DEXs use OpenBook markets as a liquidity source.",
+    "category": "defi",
+    "aliases": ["Serum v4"],
+    "related": ["order-book", "dex"]
+  },
+  {
+    "id": "phoenix",
+    "term": "Phoenix",
+    "definition": "A high-performance on-chain order book DEX on Solana with a fully on-chain FIFO matching engine. Phoenix is designed for low-latency trading without cranks\u2014orders are matched atomically within the same transaction. It supports limit orders, market orders, and provides a maker rebate structure to incentivize liquidity.",
+    "category": "defi",
+    "related": ["order-book", "dex"]
+  },
+  {
+    "id": "raydium",
+    "term": "Raydium",
+    "definition": "One of the largest DEXs on Solana, offering both constant-product AMM pools and concentrated liquidity (CLMM). Raydium's standard AMM integrates with OpenBook order books for shared liquidity. It also provides AcceleRaytor (launchpad) and farming incentives. Key pools include SOL/USDC and major token pairs.",
+    "category": "defi",
+    "related": ["amm", "clmm", "dex"]
+  },
+  {
+    "id": "orca",
+    "term": "Orca",
+    "definition": "A leading Solana DEX focused on concentrated liquidity through its Whirlpool AMM. Orca emphasizes user experience and capital efficiency. Whirlpools allow LPs to set custom price ranges. Orca is a major liquidity source for Jupiter aggregation. It uses a tick-based CLMM similar to Uniswap v3 adapted for Solana's architecture.",
+    "category": "defi",
+    "related": ["clmm", "whirlpool", "dex"]
+  },
+  {
+    "id": "whirlpool",
+    "term": "Whirlpool",
+    "definition": "Orca's concentrated liquidity AMM program on Solana. Whirlpools divide the price space into discrete ticks (configurable spacing: 1, 8, 64, 128), and LPs provide liquidity within specific tick ranges. Active tick positions earn fees proportional to their share of in-range liquidity. The program is open-source and widely integrated by aggregators.",
+    "category": "defi",
+    "related": ["orca", "clmm"]
+  },
+  {
+    "id": "jupiter",
+    "term": "Jupiter",
+    "definition": "The dominant DEX aggregator on Solana, routing trades across 20+ DEX protocols to find optimal pricing. Jupiter splits orders across multiple routes and pools to minimize price impact. It also offers limit orders, DCA, perpetuals (via Jupiter Perps), and a token launchpad (LFG). The JUP governance token was airdropped in January 2024.",
+    "category": "defi",
+    "aliases": ["Jup"],
+    "related": ["dex-aggregator", "swap", "limit-order"]
+  },
+  {
+    "id": "dex-aggregator",
+    "term": "DEX Aggregator",
+    "definition": "A protocol that splits and routes token swaps across multiple DEXs to find the best execution price. The aggregator's routing algorithm considers pool depths, fees, and multi-hop paths (e.g., SOL\u2192USDC\u2192TARGET). Jupiter is the primary aggregator on Solana; others include Prism and DFlow. Aggregators are critical for large trades to minimize price impact.",
+    "category": "defi",
+    "related": ["jupiter", "swap", "routing"]
+  },
+  {
+    "id": "routing",
+    "term": "Routing (Swap)",
+    "definition": "The process of finding the optimal path for a swap across multiple DEX pools and intermediate tokens. A router may split a single swap into multiple routes (e.g., 60% through Orca, 40% through Raydium) or use multi-hop paths (e.g., SOL\u2192USDC\u2192mSOL) to achieve better pricing. Jupiter's Metis algorithm computes routes in real-time.",
+    "category": "defi",
+    "related": ["dex-aggregator", "jupiter"]
+  },
+  {
+    "id": "slippage",
+    "term": "Slippage",
+    "definition": "The difference between the expected price of a swap and the actual execution price due to pool ratio changes between submission and execution. Users set slippage tolerance (e.g., 0.5-1%) as a maximum acceptable deviation; the transaction reverts if exceeded. High slippage occurs in thin pools or large trades relative to pool depth.",
+    "category": "defi",
+    "related": ["swap", "amm", "price-impact"]
+  },
+  {
+    "id": "price-impact",
+    "term": "Price Impact",
+    "definition": "The percentage change in a token's price caused by executing a trade against a liquidity pool. Larger trades relative to pool depth cause greater price impact. For example, a $10K trade in a $1M pool causes minimal impact, while the same trade in a $50K pool would move the price significantly. Aggregators minimize price impact by splitting across pools.",
+    "category": "defi",
+    "related": ["slippage", "liquidity-pool"]
+  },
+  {
+    "id": "impermanent-loss",
+    "term": "Impermanent Loss",
+    "definition": "The unrealized loss an LP experiences when the price ratio of pooled tokens diverges from the ratio at deposit. If one token appreciates significantly, the LP holds less of that token than if they had simply held it. The loss is 'impermanent' because it reverses if prices return to the original ratio. For a 2x price change, IL is ~5.7%.",
+    "category": "defi",
+    "aliases": ["IL"],
+    "related": ["liquidity-pool", "amm"]
+  },
+  {
+    "id": "constant-product",
+    "term": "Constant Product Formula (x*y=k)",
+    "definition": "The AMM pricing formula x * y = k, where x and y are the reserve quantities of two tokens and k is a constant. As one token is bought, its reserve decreases and price increases, following a hyperbolic curve. This ensures the pool never runs out of either token but causes increasing slippage for larger trades.",
+    "category": "defi",
+    "related": ["amm", "liquidity-pool"]
+  },
+  {
+    "id": "oracle",
+    "term": "Oracle",
+    "definition": "A service that provides external data (prices, randomness) to on-chain programs. DeFi protocols rely on oracles for accurate price feeds to calculate collateral ratios, liquidation thresholds, and swap rates. Solana's primary oracles are Pyth (high-frequency price feeds) and Switchboard (general-purpose data feeds and VRF).",
+    "category": "defi",
+    "related": ["pyth", "switchboard", "price-feed"]
+  },
+  {
+    "id": "pyth",
+    "term": "Pyth Network",
+    "definition": "A high-frequency oracle network publishing price feeds for crypto, equities, commodities, and FX. Pyth aggregates data from 90+ first-party publishers (market makers, exchanges) and updates prices every 400ms on Solana. Each price feed includes a price, confidence interval, and exponential moving average. Pyth uses a pull model with Hermes for cross-chain delivery.",
+    "category": "defi",
+    "related": ["oracle", "price-feed"]
+  },
+  {
+    "id": "switchboard",
+    "term": "Switchboard",
+    "definition": "A decentralized oracle network on Solana providing custom data feeds, verifiable random functions (VRF), and serverless compute (Functions). Unlike Pyth's publisher model, Switchboard uses a permissionless oracle queue where operators run jobs defined by feed creators. Supports any data source via its off-chain oracle job framework.",
+    "category": "defi",
+    "related": ["oracle", "vrf"]
+  },
+  {
+    "id": "price-feed",
+    "term": "Price Feed",
+    "definition": "An on-chain account maintained by an oracle (Pyth or Switchboard) containing the current price, confidence interval, and timestamp for an asset pair (e.g., SOL/USD). DeFi programs read price feeds to calculate collateral values, trigger liquidations, and determine swap rates. Feed staleness must be checked to prevent using outdated prices.",
+    "category": "defi",
+    "related": ["oracle", "pyth", "switchboard"]
+  },
+  {
+    "id": "vrf",
+    "term": "VRF (Verifiable Random Function)",
+    "definition": "Verifiable Random Function\u2014a cryptographic primitive that generates provably random outputs with a proof of correctness. On Solana, Switchboard VRF provides on-chain randomness for gaming, lotteries, and NFT reveals. The oracle computes a random value and proof off-chain; the program verifies the proof on-chain before using the result.",
+    "category": "defi",
+    "aliases": ["VRF"],
+    "related": ["switchboard", "oracle"]
+  },
+  {
+    "id": "lending",
+    "term": "Lending Protocol",
+    "definition": "A DeFi protocol that enables users to deposit tokens to earn yield and borrow tokens against collateral. Key Solana lending protocols include Solend, MarginFi, Kamino, and Save (formerly Solend v2). Lending rates float based on utilization (borrowed/deposited). Deposits receive interest-bearing receipt tokens representing their share.",
+    "category": "defi",
+    "related": ["borrowing", "collateral", "liquidation"]
+  },
+  {
+    "id": "borrowing",
+    "term": "Borrowing",
+    "definition": "The act of taking a loan against deposited collateral in a lending protocol. Borrowers pay a variable interest rate that increases with pool utilization. The borrowed amount must stay below the maximum loan-to-value (LTV) ratio or the position becomes eligible for liquidation. Flash loans allow uncollateralized borrowing within a single transaction.",
+    "category": "defi",
+    "related": ["lending", "collateral"]
+  },
+  {
+    "id": "collateral",
+    "term": "Collateral",
+    "definition": "Assets deposited into a lending protocol to secure a loan. Each asset has a collateral factor (e.g., SOL at 80% means $100 of SOL supports $80 in borrows). If the collateral value drops below the maintenance threshold, the position is liquidated. Volatile assets have lower collateral factors than stablecoins.",
+    "category": "defi",
+    "related": ["lending", "liquidation", "ltv"]
+  },
+  {
+    "id": "liquidation",
+    "term": "Liquidation",
+    "definition": "The process of repaying a borrower's debt by selling their collateral when their position's LTV exceeds the liquidation threshold. Liquidators (typically bots) repay a portion of the debt and receive the collateral at a discount (liquidation bonus, typically 5-10%). Liquidation keeps lending protocols solvent. On Solana, liquidation bots compete via Jito bundles.",
+    "category": "defi",
+    "related": ["lending", "collateral", "ltv"]
+  },
+  {
+    "id": "ltv",
+    "term": "LTV (Loan-to-Value)",
+    "definition": "Loan-to-Value ratio\u2014the percentage of collateral value that can be borrowed. Each lending protocol sets max LTV per asset (e.g., 75% for SOL means $100 SOL collateral = max $75 borrow). If debt/collateral exceeds the liquidation LTV (e.g., 85%), the position is liquidatable. Conservative LTV settings protect against rapid price drops.",
+    "category": "defi",
+    "aliases": ["LTV"],
+    "related": ["collateral", "liquidation"]
+  },
+  {
+    "id": "flash-loan",
+    "term": "Flash Loan",
+    "definition": "An uncollateralized loan that must be borrowed and repaid within the same transaction. If the loan isn't repaid by transaction end, the entire transaction reverts atomically. Flash loans enable arbitrage, collateral swaps, and self-liquidation with zero capital. On Solana, Solend and MarginFi offer flash loans; they're also used in sandwich attacks.",
+    "category": "defi",
+    "related": ["lending", "arbitrage"]
+  },
+  {
+    "id": "yield-farming",
+    "term": "Yield Farming",
+    "definition": "The practice of deploying tokens across DeFi protocols to maximize returns through trading fees, lending interest, and token incentive rewards. Farmers often move capital between protocols chasing the highest APY. On Solana, common strategies include LP provision on Orca/Raydium, lending on Kamino/MarginFi, and staking LP tokens in reward farms.",
+    "category": "defi",
+    "related": ["liquidity-pool", "staking-general"]
+  },
+  {
+    "id": "liquid-staking",
+    "term": "Liquid Staking",
+    "definition": "A mechanism where staked SOL is represented by a transferable token (LST) that accrues staking rewards while remaining usable in DeFi. Instead of locking SOL with a validator, users deposit into a liquid staking pool and receive tokens like mSOL (Marinade), jitoSOL (Jito), or bSOL (BlazeStake). LSTs typically appreciate against SOL at the staking APY.",
+    "category": "defi",
+    "aliases": ["LST"],
+    "related": ["stake", "marinade", "jito-sol"]
+  },
+  {
+    "id": "marinade",
+    "term": "Marinade Finance",
+    "definition": "The largest liquid staking protocol on Solana. Users deposit SOL and receive mSOL, a liquid staking token that appreciates as staking rewards accrue (~6-7% APY). Marinade delegates stake across 400+ validators using an automated scoring algorithm, promoting decentralization. It also offers Marinade Native for direct staking without an LST.",
+    "category": "defi",
+    "aliases": ["mSOL"],
+    "related": ["liquid-staking"]
+  },
+  {
+    "id": "jito-sol",
+    "term": "JitoSOL",
+    "definition": "The liquid staking token issued by Jito, representing staked SOL that earns both standard staking rewards and MEV tips. JitoSOL often offers higher APY (~7-8%) than other LSTs because Jito validators share MEV revenue with stakers. The underlying SOL is delegated to validators running the Jito client.",
+    "category": "defi",
+    "related": ["liquid-staking", "jito", "mev"]
+  },
+  {
+    "id": "limit-order",
+    "term": "Limit Order (On-Chain)",
+    "definition": "An on-chain order to buy or sell a token at a specific price or better, executed automatically when the market reaches the target price. Jupiter Limit Orders use a keeper network that monitors prices and executes orders. Unlike CEX limit orders, on-chain limits may have partial fills and rely on available DEX liquidity at the trigger price.",
+    "category": "defi",
+    "related": ["jupiter", "dex"]
+  },
+  {
+    "id": "dca",
+    "term": "DCA (Dollar Cost Averaging)",
+    "definition": "A strategy that automatically splits a large purchase into smaller periodic trades to reduce price impact and timing risk. Jupiter DCA allows users to set up recurring buys (e.g., buy $100 of SOL every day for 30 days). Orders execute via keeper bots. DCA reduces the risk of buying at a local peak.",
+    "category": "defi",
+    "aliases": ["DCA"],
+    "related": ["jupiter"]
+  },
+  {
+    "id": "perpetuals",
+    "term": "Perpetuals (Perps)",
+    "definition": "Derivatives contracts that track an asset's price without expiration, enabling leveraged long/short positions. On Solana, Drift Protocol and Jupiter Perps are the leading perps platforms. Traders deposit collateral and open positions at up to 10-100x leverage. Funding rates keep the contract price aligned with the spot price.",
+    "category": "defi",
+    "aliases": ["Perps"],
+    "related": ["drift", "leverage"]
+  },
+  {
+    "id": "drift",
+    "term": "Drift Protocol",
+    "definition": "A decentralized perpetuals and spot exchange on Solana featuring a hybrid order book + AMM model (DLOB). Drift offers up to 20x leverage on perpetual contracts, spot margin trading, and lending/borrowing. Its backstop AMM provides liquidity when the order book is thin. Drift also offers prediction markets and a BET token.",
+    "category": "defi",
+    "related": ["perpetuals", "order-book"]
+  },
+  {
+    "id": "leverage",
+    "term": "Leverage",
+    "definition": "Using borrowed funds to amplify trading exposure beyond deposited capital. In perps, 10x leverage means $100 collateral controls a $1,000 position. Gains and losses are multiplied proportionally. If losses approach the collateral amount, the position is liquidated. Higher leverage increases both potential returns and liquidation risk.",
+    "category": "defi",
+    "related": ["perpetuals", "margin", "liquidation"]
+  },
+  {
+    "id": "margin",
+    "term": "Margin",
+    "definition": "The collateral deposited to maintain a leveraged position. Initial margin is the minimum to open a position; maintenance margin is the minimum to keep it open. If the margin ratio drops below maintenance due to unrealized losses, the position faces liquidation. Margin can be cross (shared across positions) or isolated (per-position).",
+    "category": "defi",
+    "related": ["leverage", "collateral"]
+  },
+  {
+    "id": "arbitrage",
+    "term": "Arbitrage",
+    "definition": "The practice of profiting from price differences for the same asset across different markets. On Solana, arbitrage bots exploit price discrepancies between DEXs (e.g., SOL/USDC on Orca vs Raydium) or between spot and perpetual prices. Arbitrage is often executed via Jito bundles for guaranteed atomic execution and front-running protection.",
+    "category": "defi",
+    "related": ["mev", "flash-loan", "dex-aggregator"]
+  },
+  {
+    "id": "twap",
+    "term": "TWAP (Time-Weighted Average Price)",
+    "definition": "Time-Weighted Average Price\u2014an average price calculated over a specific time period, weighting each price equally by time. TWAP oracles reduce manipulation risk vs. spot prices. Some DEXs (e.g., Jupiter) offer TWAP execution that splits large orders over time. Pyth provides EMA (exponential moving average) prices as a similar anti-manipulation measure.",
+    "category": "defi",
+    "aliases": ["TWAP"],
+    "related": ["oracle", "price-feed"]
+  },
+  {
+    "id": "vault",
+    "term": "Vault",
+    "definition": "A smart contract that automates a DeFi yield strategy on behalf of depositors. Users deposit tokens, receive vault shares, and the vault auto-compounds or rebalances. On Solana, Kamino (CLMM auto-rebalancing), Meteora (dynamic vaults), and Tulip offer vault products. Vaults simplify complex strategies like managing concentrated liquidity positions.",
+    "category": "defi",
+    "related": ["yield-farming", "auto-compounding"]
+  },
+  {
+    "id": "stablecoin",
+    "term": "Stablecoin",
+    "definition": "A token pegged to a stable asset, typically the US dollar. Major stablecoins on Solana include USDC (Circle, natively minted), USDT (Tether), and UXD (algorithmic). Stablecoins are critical DeFi primitives used as trading pairs, lending collateral, and yield farming. USDC on Solana uses the SPL Token program with freeze authority retained by Circle.",
+    "category": "defi",
+    "aliases": ["USDC", "USDT"],
+    "related": ["defi-general", "token-swap"]
+  },
+  {
+    "id": "restaking",
+    "term": "Restaking",
+    "definition": "A mechanism where staked SOL or LSTs are used as economic security for additional protocols beyond Solana consensus. Restaking protocols (e.g., Solayer, Jito Restaking) allow stakers to opt-in to securing bridges, oracles, or rollups while earning additional yield. Slashing risk extends to these secondary protocols.",
+    "category": "defi",
+    "related": ["liquid-staking", "stake"]
+  },
+  {
+    "id": "meteora",
+    "term": "Meteora",
+    "definition": "A liquidity protocol on Solana (rebranded from Mercurial Finance) that introduced the Dynamic Liquidity Market Maker (DLMM) and Dynamic AMM, which automatically adjust fees and liquidity distribution based on real-time market activity. Meteora became a top-3 DEX by volume in 2025 driven by high-profile token launches using its concentrated liquidity pools.",
+    "category": "defi",
+    "aliases": ["Meteora DLMM"],
+    "related": ["clmm", "liquidity-pool", "dex"]
+  },
+  {
+    "id": "pump-fun",
+    "term": "Pump.fun",
+    "definition": "A memecoin launchpad on Solana that uses a bonding curve mechanism for token creation and initial price discovery, allowing anyone to launch a token with no code in seconds. Tokens that 'graduate' (reach a market cap threshold) migrate to a DEX for open trading. Pump.fun generated over $300M in fees within its first year and launched PumpSwap, its own DEX, in March 2025.",
+    "category": "defi",
+    "aliases": ["PumpFun"],
+    "related": ["dex", "liquidity-pool"]
+  },
+  {
+    "id": "kamino",
+    "term": "Kamino Finance",
+    "definition": "A DeFi protocol on Solana offering automated lending/borrowing, liquidity vaults, and an intents-based swap platform. Kamino reached over $2B TVL in 2024 and led Solana DeFi with 24% market share. Its Lend V2 introduced 'The Vault Layer' for aggregated liquidity and 'Scam Wick Protection' against unnecessary liquidations from price manipulation.",
+    "category": "defi",
+    "aliases": ["Kamino"],
+    "related": ["lending", "vault", "liquidity-pool"]
+  },
+  {
+    "id": "sanctum",
+    "term": "Sanctum",
+    "definition": "A protocol that unifies fragmented liquidity across Solana's liquid staking token (LST) ecosystem by enabling instant swaps between any LSTs and providing the INF token as a unified liquid staking position. Sanctum solves the cold-start liquidity problem for new LST providers and allows validators to launch their own LSTs.",
+    "category": "defi",
+    "aliases": ["Sanctum LST"],
+    "related": ["liquid-staking", "marinade", "jito-sol"]
+  },
+  {
+    "id": "tensor",
+    "term": "Tensor",
+    "definition": "A Solana NFT marketplace and trading protocol that launched the TNSR governance token in April 2024. Tensor provides advanced trading features including collection-level bidding, real-time price feeds, and lending against NFT collateral. It competes with Magic Eden as a primary NFT trading venue on Solana.",
+    "category": "defi",
+    "aliases": ["Tensor Trade", "TNSR"],
+    "related": ["nft", "compressed-nft"]
+  },
+  {
+    "id": "intents",
+    "term": "Intents",
+    "definition": "A transaction paradigm where users declare their desired outcome (e.g., 'swap 100 USDC for best SOL price') rather than specifying exact execution steps. Solvers compete to find the optimal execution path across protocols, chains, and liquidity sources. Intent-based architectures abstract away routing complexity, enable cross-chain execution, and shift MEV from adversarial extraction to competitive fulfillment.",
+    "category": "defi",
+    "aliases": ["Intent-Based Architecture"],
+    "related": ["chain-abstraction", "dex-aggregator"]
+  },
+  {
+    "id": "chain-abstraction",
+    "term": "Chain Abstraction",
+    "definition": "A UX design philosophy and infrastructure layer that hides blockchain-specific complexity from end users, allowing them to interact with dApps without knowing which chain they are on. Chain abstraction aggregates cross-chain routing, gas payments, bridging, and account management into a seamless experience. Projects like Particle Network and NEAR's chain signatures enable users to operate across multiple chains through a single interface.",
+    "category": "defi",
+    "aliases": ["Cross-Chain Abstraction"],
+    "related": ["intents", "interoperability", "bridge"]
+  },
+  {
+    "id": "eigenlayer",
+    "term": "EigenLayer",
+    "definition": "The dominant restaking protocol on Ethereum that allows stakers to opt in to securing additional services (Actively Validated Services or AVSs) by restaking their ETH or liquid staking tokens. EigenLayer creates a shared security marketplace where smaller protocols can bootstrap validator sets. With over $18 billion TVL and 85%+ market share by 2025, EigenLayer underpins critical infrastructure including EigenDA, oracle networks, and bridges.",
+    "category": "defi",
+    "related": ["restaking", "liquid-staking"]
+  },
+  {
+    "id": "liquid-restaking-token",
+    "term": "Liquid Restaking Token (LRT)",
+    "definition": "A tokenized receipt representing restaked assets in protocols like EigenLayer, allowing users to maintain DeFi liquidity while earning restaking yields. When users restake LSTs via protocols like EtherFi (eETH) or Renzo (ezETH), they receive LRTs that can be used as collateral, traded, or deployed in additional DeFi strategies. LRTs reached $14 billion combined market cap by 2025.",
+    "category": "defi",
+    "aliases": ["LRT", "Liquid Restaking"],
+    "related": ["restaking", "eigenlayer", "liquid-staking"]
+  },
+  {
+    "id": "rwa-tokenization",
+    "term": "Real-World Asset Tokenization (RWA)",
+    "definition": "The process of representing ownership of traditional financial assets (treasuries, private credit, real estate, equities) as tokens on a blockchain. Tokenized RWAs grew from ~$6 billion in 2022 to over $30 billion by 2025, led by BlackRock's BUIDL fund (tokenized treasuries) and Maple Finance (private credit). RWAs bridge traditional finance with DeFi composability.",
+    "category": "defi",
+    "aliases": ["RWA", "Real-World Assets", "Asset Tokenization"],
+    "related": ["defi-general", "stablecoin"]
+  },
+  {
+    "id": "points-seasons",
+    "term": "Points / Seasons",
+    "definition": "A gamified incentive mechanism where protocols award off-chain loyalty points for specific on-chain actions across time-limited campaign periods called 'seasons.' Points are typically converted to token allocations at a later token generation event (TGE). The off-chain and opaque nature of points tracking has drawn criticism for lack of transparency and sybil vulnerability.",
+    "category": "defi",
+    "aliases": ["Points Program", "Points Farming"],
+    "related": ["airdrop-crypto", "sybil-resistance"]
+  },
+  {
+    "id": "mev-supply-chain",
+    "term": "MEV Supply Chain",
+    "definition": "The multi-party pipeline through which maximal extractable value is captured: searchers identify profitable orderings, builders construct optimal blocks from bundles, relays facilitate trustless builder-proposer communication, and proposers select and finalize blocks. Over 90% of Ethereum L1 blocks flow through MEV-Boost. Proposer-builder separation (PBS) aims to formalize these roles at the protocol level.",
+    "category": "defi",
+    "aliases": ["MEV Pipeline", "PBS"],
+    "related": ["mev-general", "arbitrage", "sequencer"]
+  },
+  {
+    "id": "dlmm",
+    "term": "DLMM (Dynamic Liquidity Market Maker)",
+    "definition": "A concentrated liquidity AMM design pioneered by Meteora on Solana that organizes liquidity into discrete price bins rather than continuous tick ranges. Each bin holds liquidity at a single price, and trades move sequentially through bins. DLMM pools feature dynamic fees that adjust based on volatility, and LPs can choose from preset distribution shapes (spot, curve, bid-ask) to match their market outlook.",
+    "category": "defi",
+    "aliases": ["DLMM"],
+    "related": ["meteora", "clmm", "amm", "dynamic-fee"]
+  },
+  {
+    "id": "virtual-amm",
+    "term": "Virtual AMM (vAMM)",
+    "definition": "An AMM that uses virtual (synthetic) reserves to facilitate perpetual contract trading without requiring real token liquidity in a pool. Traders deposit collateral and trade against the virtual reserves, with the AMM formula determining entry and exit prices. Drift Protocol on Solana uses a virtual AMM as a backstop liquidity source alongside its decentralized limit order book.",
+    "category": "defi",
+    "aliases": ["vAMM"],
+    "related": ["amm", "perpetuals", "drift"]
+  },
+  {
+    "id": "cpmm",
+    "term": "CPMM (Constant Product Market Maker)",
+    "definition": "The simplest and most widely used AMM model, based on the formula x * y = k where x and y are token reserves and k is an invariant. Every swap changes the ratio of reserves while keeping the product constant, producing a hyperbolic price curve. CPMMs provide liquidity across the full price range (0 to infinity) but are less capital-efficient than concentrated liquidity designs. Raydium's standard pools use this model.",
+    "category": "defi",
+    "aliases": ["CPMM"],
+    "related": ["constant-product", "amm", "liquidity-pool"]
+  },
+  {
+    "id": "utilization-rate",
+    "term": "Utilization Rate",
+    "definition": "The percentage of total deposited assets currently borrowed in a lending protocol, calculated as total borrows divided by total deposits. Utilization rate is the primary input to interest rate models: higher utilization drives up borrow rates to incentivize repayment and attract new deposits. Most Solana lending protocols (Kamino, MarginFi) target an optimal utilization of 70-90%, with rates spiking sharply above this threshold.",
+    "category": "defi",
+    "related": ["lending", "interest-rate-model", "borrow-apy"]
+  },
+  {
+    "id": "borrow-apy",
+    "term": "Borrow APY",
+    "definition": "The annualized interest rate paid by borrowers in a lending protocol, expressed as annual percentage yield with compounding. Borrow APY is determined algorithmically by the interest rate model based on the pool's utilization rate. On Solana lending protocols like Kamino and MarginFi, borrow APY typically ranges from 2-15% for major assets but can spike above 100% during high utilization periods.",
+    "category": "defi",
+    "aliases": ["Borrow Rate"],
+    "related": ["lending", "utilization-rate", "supply-apy"]
+  },
+  {
+    "id": "supply-apy",
+    "term": "Supply APY",
+    "definition": "The annualized interest rate earned by depositors (lenders) in a lending protocol. Supply APY equals the borrow APY multiplied by the utilization rate, minus any protocol fees. For example, if borrow APY is 10% and utilization is 80% with a 10% protocol cut, supply APY is approximately 7.2%. Depositors earn yield passively as borrowers pay interest on their loans.",
+    "category": "defi",
+    "aliases": ["Lend APY", "Deposit APY"],
+    "related": ["lending", "utilization-rate", "borrow-apy"]
+  },
+  {
+    "id": "health-factor",
+    "term": "Health Factor",
+    "definition": "A ratio that measures the safety of a borrowing position in a lending protocol, calculated as the risk-adjusted collateral value divided by the total borrow value. A health factor above 1 means the position is safe; at or below 1, the position becomes eligible for liquidation. Users monitor health factor to avoid liquidation, and protocols display it prominently as the primary risk indicator.",
+    "category": "defi",
+    "related": ["lending", "liquidation", "collateral", "ltv"]
+  },
+  {
+    "id": "interest-rate-model",
+    "term": "Interest Rate Model",
+    "definition": "The algorithm a lending protocol uses to determine borrow and supply interest rates based on pool utilization. Most Solana lending protocols use a kinked (piecewise linear) model with a gentle slope below optimal utilization and a steep slope above it, creating urgency to repay when liquidity becomes scarce. Parameters include base rate, optimal utilization point, and slope values for each segment.",
+    "category": "defi",
+    "related": ["utilization-rate", "borrow-apy", "supply-apy", "lending"]
+  },
+  {
+    "id": "liquidation-bonus",
+    "term": "Liquidation Bonus",
+    "definition": "A discount on collateral that incentivizes liquidators to repay the debt of unhealthy positions in lending protocols. When a position's health factor drops below 1, liquidators can repay a portion of the debt and receive the equivalent collateral value plus a bonus (typically 5-15%). The bonus must be large enough to cover transaction costs and risk, but not so large that borrowers suffer excessive losses.",
+    "category": "defi",
+    "aliases": ["Liquidation Incentive", "Liquidation Penalty"],
+    "related": ["liquidation", "health-factor", "lending"]
+  },
+  {
+    "id": "bad-debt",
+    "term": "Bad Debt",
+    "definition": "Debt in a lending protocol where the collateral value has fallen below the outstanding borrow value, making the position impossible to liquidate profitably. Bad debt occurs during extreme market crashes when liquidators cannot act fast enough or when oracle prices become stale. The protocol or its insurance fund must absorb bad debt losses. Kamino's Scam Wick Protection aims to reduce bad debt from price manipulation.",
+    "category": "defi",
+    "related": ["liquidation", "lending", "oracle-staleness"]
+  },
+  {
+    "id": "isolated-pools",
+    "term": "Isolated Pools",
+    "definition": "Lending pools where risk is contained to specific asset pairs or groups, preventing a depeg or exploit in one asset from affecting the entire protocol. Each isolated pool has its own risk parameters, interest rates, and collateral factors. On Solana, MarginFi and Kamino use isolated pool architectures so that volatile or newer tokens can be listed without exposing core assets like SOL and USDC to additional risk.",
+    "category": "defi",
+    "related": ["lending", "collateral", "liquidation"]
+  },
+  {
+    "id": "cross-margin",
+    "term": "Cross Margin",
+    "definition": "A margin mode where the entire account balance serves as collateral across all open positions. Unrealized profits from one position can offset losses in another, reducing overall liquidation risk. Cross margin is more capital-efficient but means a single bad position can threaten the entire account. Drift Protocol on Solana uses cross-margin by default for its perpetuals and spot margin trading.",
+    "category": "defi",
+    "related": ["margin", "leverage", "perpetuals"]
+  },
+  {
+    "id": "isolated-margin",
+    "term": "Isolated Margin",
+    "definition": "A margin mode where collateral is dedicated to a single position, limiting the maximum loss to only the margin allocated to that trade. Other positions and the remaining account balance are unaffected if the isolated position is liquidated. Traders use isolated margin for higher-risk trades to cap downside exposure. Most Solana perps platforms offer both cross and isolated margin options.",
+    "category": "defi",
+    "related": ["margin", "leverage", "cross-margin"]
+  },
+  {
+    "id": "funding-rate",
+    "term": "Funding Rate",
+    "definition": "A periodic payment exchanged between holders of long and short perpetual contract positions to keep the perp price anchored to the spot price. When the perp trades above spot (positive funding), longs pay shorts; when below spot (negative funding), shorts pay longs. Funding is typically settled every hour on Solana perps platforms like Drift and Jupiter Perps. High funding rates create arbitrage opportunities.",
+    "category": "defi",
+    "related": ["perpetuals", "drift", "mark-price"]
+  },
+  {
+    "id": "open-interest",
+    "term": "Open Interest",
+    "definition": "The total value or number of outstanding derivative contracts (perpetuals, options) that have not been settled or closed. Open interest increases when new positions are opened and decreases when positions are closed. High open interest indicates active market participation and can signal strong conviction. Perps platforms use open interest caps to manage protocol risk exposure.",
+    "category": "defi",
+    "aliases": ["OI"],
+    "related": ["perpetuals", "funding-rate"]
+  },
+  {
+    "id": "mark-price",
+    "term": "Mark Price",
+    "definition": "The fair value price used by perpetual contract platforms to calculate unrealized PnL and trigger liquidations. Mark price is typically derived from a combination of the oracle index price and the order book or AMM mid-price, weighted to resist manipulation. Using mark price instead of last traded price prevents liquidation hunting through short-lived price spikes on thin markets.",
+    "category": "defi",
+    "related": ["perpetuals", "index-price", "liquidation"]
+  },
+  {
+    "id": "index-price",
+    "term": "Index Price",
+    "definition": "The reference spot price sourced from oracle feeds (Pyth, Switchboard) used as the benchmark in derivatives trading. Index price represents the aggregate market price across major exchanges and is used to calculate funding rates and as a component of mark price. Accurate index prices are critical for fair liquidation and funding rate calculations in perps protocols.",
+    "category": "defi",
+    "related": ["oracle", "mark-price", "funding-rate", "pyth"]
+  },
+  {
+    "id": "fee-tier",
+    "term": "Fee Tier",
+    "definition": "A predefined fee level applied to a liquidity pool or trading pair, typically expressed in basis points. Different fee tiers exist for different asset volatility profiles: stable pairs (e.g., USDC/USDT) use low fees (1-5 bps), major pairs (SOL/USDC) use moderate fees (5-30 bps), and volatile pairs use higher fees (30-100 bps). LPs select fee tiers based on expected trading volume and impermanent loss risk.",
+    "category": "defi",
+    "related": ["liquidity-pool", "amm", "clmm"]
+  },
+  {
+    "id": "auto-compounding",
+    "term": "Auto-Compounding",
+    "definition": "The automatic reinvestment of earned yields (trading fees, farming rewards, interest) back into a DeFi position to generate compound returns. Instead of manually claiming and restaking rewards, auto-compounding vaults or protocols handle this continuously. On Solana, Kamino vaults and Meteora dynamic vaults auto-compound concentrated liquidity fees and incentive rewards for their depositors.",
+    "category": "defi",
+    "related": ["vault", "yield-farming", "yield-aggregator"]
+  },
+  {
+    "id": "rebalancing",
+    "term": "Rebalancing",
+    "definition": "The process of adjusting a concentrated liquidity position's price range as the market price moves to keep the position active and earning fees. Manual rebalancing requires withdrawing liquidity and re-depositing at new tick ranges, incurring transaction costs and potential impermanent loss realization. Automated vault protocols like Kamino perform rebalancing algorithmically based on configurable triggers.",
+    "category": "defi",
+    "related": ["clmm", "vault", "impermanent-loss"]
+  },
+  {
+    "id": "dynamic-fee",
+    "term": "Dynamic Fee",
+    "definition": "A trading fee that automatically adjusts based on real-time market conditions such as volatility, volume, or liquidity depth. During high-volatility periods, dynamic fees increase to compensate LPs for greater impermanent loss risk; during calm markets, fees decrease to attract more trading volume. Meteora's DLMM pools pioneered dynamic fees on Solana, using a formula that factors in bin-crossing frequency.",
+    "category": "defi",
+    "related": ["dlmm", "meteora", "fee-tier"]
+  },
+  {
+    "id": "capital-efficiency",
+    "term": "Capital Efficiency",
+    "definition": "A measure of how much trading volume or yield a unit of deposited liquidity can support. Higher capital efficiency means LPs earn more fees per dollar locked. Concentrated liquidity (CLMM/DLMM) dramatically improves capital efficiency over constant product AMMs by focusing liquidity in active price ranges. Capital efficiency is often expressed as the ratio of trading volume to TVL.",
+    "category": "defi",
+    "related": ["clmm", "dlmm", "liquidity-pool", "amm"]
+  },
+  {
+    "id": "liquidity-depth",
+    "term": "Liquidity Depth",
+    "definition": "The total amount of liquidity available at various price levels in a market or pool, indicating how much can be traded before causing significant price impact. Deep liquidity means large trades execute with minimal slippage; thin liquidity means even small trades move the price. Liquidity depth charts visualize available buy and sell liquidity across price ranges and are critical for assessing trade execution quality.",
+    "category": "defi",
+    "related": ["liquidity-pool", "price-impact", "slippage"]
+  },
+  {
+    "id": "yield-aggregator",
+    "term": "Yield Aggregator",
+    "definition": "A protocol that automatically allocates user deposits across multiple DeFi strategies to optimize yield. Yield aggregators monitor rates across lending protocols, liquidity pools, and staking programs, rebalancing capital to the highest-returning opportunities. On Solana, Meteora dynamic vaults and Tulip Protocol serve as yield aggregators, abstracting strategy management and auto-compounding returns for depositors.",
+    "category": "defi",
+    "related": ["vault", "yield-farming", "auto-compounding"]
+  },
+  {
+    "id": "bonding-curve",
+    "term": "Bonding Curve",
+    "definition": "A mathematical formula that determines a token's price as a function of its supply. As more tokens are purchased, the price rises along the curve; selling decreases supply and lowers the price. Pump.fun popularized bonding curves on Solana for token launches, using them for initial price discovery before a token graduates to a DEX. The curve shape determines how quickly price accelerates with demand.",
+    "category": "defi",
+    "related": ["pump-fun", "graduation", "amm"]
+  },
+  {
+    "id": "graduation",
+    "term": "Graduation",
+    "definition": "The process by which a token launched on a bonding curve platform like Pump.fun migrates to a standard DEX liquidity pool after reaching a predefined market cap threshold (typically ~$69K on Pump.fun). At graduation, the bonding curve liquidity is deposited into a Raydium or PumpSwap pool, enabling open market trading. Graduation signals initial market validation of a token launch.",
+    "category": "defi",
+    "related": ["bonding-curve", "pump-fun", "liquidity-pool"]
+  },
+  {
+    "id": "vesting",
+    "term": "Vesting",
+    "definition": "A token distribution mechanism that gradually unlocks tokens to recipients over a predefined schedule rather than all at once. Vesting aligns long-term incentives for team members, investors, and advisors by preventing immediate selling. Typical vesting schedules on Solana range from 1-4 years. On-chain vesting programs (e.g., Streamflow, Bonfida) lock tokens in escrow accounts and release them according to the schedule.",
+    "category": "defi",
+    "related": ["cliff-vesting", "tge", "tokenomics"]
+  },
+  {
+    "id": "cliff-vesting",
+    "term": "Cliff Vesting",
+    "definition": "A vesting structure with an initial lockup period (the cliff) during which no tokens are released, followed by gradual unlocking. For example, a 4-year vest with a 1-year cliff means zero tokens unlock for the first year, then remaining tokens vest linearly over the next 3 years. The cliff ensures minimum commitment before any tokens become available and is standard for team and investor allocations.",
+    "category": "defi",
+    "related": ["vesting", "tge", "tokenomics"]
+  },
+  {
+    "id": "tge",
+    "term": "TGE (Token Generation Event)",
+    "definition": "Token Generation Event\u2014the moment when a project's token is first created and distributed on-chain. TGE typically involves deploying the token mint, distributing initial allocations (community, team, investors, treasury), and listing on DEXs. On Solana, TGE often coincides with an airdrop or launchpad sale. Vesting schedules begin at TGE for locked allocations.",
+    "category": "defi",
+    "aliases": ["TGE", "Token Launch"],
+    "related": ["vesting", "airdrop-crypto", "launchpad"]
+  },
+  {
+    "id": "max-supply",
+    "term": "Max Supply",
+    "definition": "The absolute maximum number of tokens that can ever exist for a given token. Max supply is either enforced programmatically (by revoking mint authority after initial minting) or defined as a cap in the tokenomics design. For example, SOL has no hard max supply due to ongoing inflation, while many project tokens have a fixed max supply set at TGE. Max supply is used to calculate fully diluted valuation.",
+    "category": "defi",
+    "related": ["circulating-supply", "fdv", "tokenomics"]
+  },
+  {
+    "id": "circulating-supply",
+    "term": "Circulating Supply",
+    "definition": "The number of tokens currently available and tradeable in the open market, excluding locked, vesting, or otherwise restricted tokens. Circulating supply is used to calculate market capitalization (price times circulating supply). It increases as vesting schedules unlock tokens and decreases as tokens are burned. The gap between circulating and max supply indicates future dilution potential.",
+    "category": "defi",
+    "related": ["max-supply", "market-cap", "fdv"]
+  },
+  {
+    "id": "fdv",
+    "term": "FDV (Fully Diluted Valuation)",
+    "definition": "Fully Diluted Valuation\u2014the theoretical market capitalization if all tokens (including locked, vesting, and unminted) were in circulation, calculated as current token price multiplied by maximum supply. FDV provides a forward-looking valuation metric. A large gap between market cap and FDV indicates significant future token emissions that could create sell pressure as locked tokens unlock.",
+    "category": "defi",
+    "aliases": ["FDV"],
+    "related": ["market-cap", "max-supply", "circulating-supply"]
+  },
+  {
+    "id": "market-cap",
+    "term": "Market Cap (Crypto)",
+    "definition": "The total value of a token's circulating supply, calculated as the current price multiplied by circulating supply. Market cap is the most common metric for comparing the relative size of different tokens. It differs from FDV, which uses max supply instead. Market cap rankings (e.g., SOL as a top-5 token) reflect both price appreciation and supply dynamics.",
+    "category": "defi",
+    "related": ["circulating-supply", "fdv"]
+  },
+  {
+    "id": "token-burn",
+    "term": "Token Burn",
+    "definition": "The permanent removal of tokens from circulation by sending them to a burn address or invoking the SPL Token Burn instruction, which reduces the mint's supply counter. Burns create deflationary pressure and are used for fee redistribution (burning a portion of transaction fees), buyback-and-burn mechanisms, and reducing supply post-TGE. On Solana, burned tokens are verifiable via the decreased supply on the mint account.",
+    "category": "defi",
+    "related": ["mint", "circulating-supply", "tokenomics"]
+  },
+  {
+    "id": "emission-schedule",
+    "term": "Emission Schedule",
+    "definition": "The planned rate at which new tokens are minted and distributed over time, typically defined in a project's tokenomics documentation. Emission schedules cover staking rewards, ecosystem incentives, and team/investor unlocks. SOL's emission schedule started at 8% annual inflation, decreasing 15% per year toward a long-term rate of 1.5%. High emissions relative to demand create sell pressure.",
+    "category": "defi",
+    "related": ["tokenomics", "max-supply", "vesting"]
+  },
+  {
+    "id": "launchpad",
+    "term": "Launchpad",
+    "definition": "A platform that facilitates new token launches by providing infrastructure for initial token sales, price discovery, and liquidity bootstrapping. On Solana, launchpads include Jupiter LFG (community-voted launches), Raydium AcceleRaytor, and Pump.fun (bonding curve model). Launchpads typically handle token distribution, initial DEX liquidity provision, and anti-bot measures for fair participation.",
+    "category": "defi",
+    "related": ["tge", "bonding-curve", "pump-fun"]
+  },
+  {
+    "id": "fair-launch",
+    "term": "Fair Launch",
+    "definition": "A token distribution method where there is no pre-mine, private sale, or insider allocation\u2014all participants have equal opportunity to acquire tokens from the start. Fair launches aim to prevent concentrated ownership and VC dumping on retail buyers. On Solana, Pump.fun's bonding curve model approximates a fair launch, though early buyers still have a price advantage.",
+    "category": "defi",
+    "related": ["launchpad", "bonding-curve", "tge"]
+  },
+  {
+    "id": "usdc-native",
+    "term": "USDC (Native Solana)",
+    "definition": "Circle-issued USDC minted directly on Solana through the SPL Token program, as opposed to bridged USDC from other chains. Native USDC (mint: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) is the most widely used stablecoin on Solana with deep DeFi integration. Circle maintains freeze authority over the mint for regulatory compliance and supports CCTP for native cross-chain transfers.",
+    "category": "defi",
+    "aliases": ["USDC"],
+    "related": ["stablecoin", "cctp", "spl-token"]
+  },
+  {
+    "id": "pyusd",
+    "term": "PYUSD (PayPal USD on Solana)",
+    "definition": "PayPal's USD-backed stablecoin deployed natively on Solana, fully backed by US dollar deposits, US Treasuries, and similar cash equivalents. PYUSD on Solana launched in May 2024 and uses the SPL Token program. It aims to bridge traditional payment rails with DeFi, leveraging Solana's low fees and fast settlement. PYUSD integrates with major Solana DEXs and lending protocols.",
+    "category": "defi",
+    "aliases": ["PYUSD", "PayPal USD"],
+    "related": ["stablecoin", "spl-token"]
+  },
+  {
+    "id": "algorithmic-stablecoin",
+    "term": "Algorithmic Stablecoin",
+    "definition": "A stablecoin that maintains its peg through algorithmic mechanisms (mint/burn arbitrage, elastic supply) rather than being fully backed by reserves. Algorithmic stablecoins use smart contracts to expand or contract supply based on demand. The category carries significant risk after the UST/Luna collapse in 2022. On Solana, UXD Protocol attempted a delta-neutral algorithmic design.",
+    "category": "defi",
+    "related": ["stablecoin", "depeg"]
+  },
+  {
+    "id": "depeg",
+    "term": "Depeg",
+    "definition": "An event where a stablecoin's market price deviates significantly from its intended peg (typically $1.00). Depegs can result from loss of confidence in reserves, algorithmic failure, liquidity crises, or smart contract exploits. Even temporary depegs cause cascading liquidations across DeFi as collateral values drop. Notable depegs include UST (total collapse), USDC (briefly during SVB crisis), and various algorithmic stablecoins.",
+    "category": "defi",
+    "related": ["stablecoin", "algorithmic-stablecoin", "liquidation"]
+  },
+  {
+    "id": "cctp",
+    "term": "CCTP (Cross-Chain Transfer Protocol)",
+    "definition": "Circle's Cross-Chain Transfer Protocol that enables native USDC transfers between blockchains by burning USDC on the source chain and minting an equivalent amount on the destination chain. Unlike bridges that use wrapped tokens, CCTP transfers are native USDC on each chain, eliminating bridge risk and fragmented liquidity. CCTP supports Solana, Ethereum, and other major chains.",
+    "category": "defi",
+    "aliases": ["CCTP"],
+    "related": ["usdc-native", "bridge", "interoperability"]
+  },
+  {
+    "id": "pull-oracle-model",
+    "term": "Pull Oracle Model",
+    "definition": "An oracle design where price updates are fetched on-demand by the consuming protocol rather than pushed to on-chain accounts at fixed intervals. Pyth pioneered the pull model on Solana: prices are published to an off-chain service (Hermes) and only written on-chain when a transaction needs them. This reduces costs since unused price updates are never posted, but requires transactions to include price update instructions.",
+    "category": "defi",
+    "related": ["oracle", "pyth", "pyth-hermes"]
+  },
+  {
+    "id": "pyth-hermes",
+    "term": "Pyth Hermes",
+    "definition": "Pyth Network's off-chain price delivery web service that provides real-time price updates for the pull oracle model. Hermes aggregates publisher price submissions and serves them via REST and WebSocket APIs. When a Solana transaction needs a price, it fetches the latest update from Hermes and includes it as an instruction in the transaction, where the Pyth on-chain program verifies its authenticity.",
+    "category": "defi",
+    "related": ["pyth", "pull-oracle-model", "oracle"]
+  },
+  {
+    "id": "confidence-interval",
+    "term": "Confidence Interval (Oracle)",
+    "definition": "A measure of uncertainty published alongside each Pyth price feed, representing the range within which the true price likely falls. If SOL/USD is $150 with a confidence interval of $0.10, the price is between $149.90 and $150.10 with high probability. DeFi protocols should use confidence intervals to widen spreads or pause operations during periods of high uncertainty to avoid acting on imprecise prices.",
+    "category": "defi",
+    "related": ["pyth", "price-feed", "oracle"]
+  },
+  {
+    "id": "ema-price",
+    "term": "EMA Price (Oracle)",
+    "definition": "The exponential moving average price published by Pyth alongside the spot price for each feed. EMA price smooths out short-term price spikes and is more resistant to manipulation than the instantaneous price. Lending protocols often use EMA prices for liquidation calculations to prevent unnecessary liquidations from brief price wicks. The EMA window is typically configured for several minutes of price history.",
+    "category": "defi",
+    "aliases": ["Exponential Moving Average Price"],
+    "related": ["pyth", "price-feed", "twap"]
+  },
+  {
+    "id": "switchboard-functions",
+    "term": "Switchboard Functions",
+    "definition": "A serverless compute feature of the Switchboard oracle network that allows developers to run custom off-chain code (written in Rust or TypeScript) inside secure enclaves (SGX/TDX) and post verified results on-chain. Functions enable arbitrary data feeds beyond standard price oracles\u2014sports scores, weather data, complex computations\u2014while providing cryptographic attestation that the code executed correctly in a trusted environment.",
+    "category": "defi",
+    "related": ["switchboard", "oracle"]
+  },
+  {
+    "id": "oracle-staleness",
+    "term": "Oracle Staleness",
+    "definition": "The condition where an oracle price feed has not been updated within an acceptable time window, making the price data potentially unreliable. Stale prices can lead to incorrect liquidations, mispriced trades, or exploitable arbitrage. Solana DeFi protocols must check the timestamp of oracle updates and reject or pause operations when prices exceed a staleness threshold (e.g., 30 seconds for Pyth feeds).",
+    "category": "defi",
+    "related": ["oracle", "price-feed", "bad-debt"]
+  },
+  {
+    "id": "security-token",
+    "term": "Security Token",
+    "definition": "Blockchain token representing a regulated financial security (equity, debt, fund share) subject to securities law. Requires KYC/AML, transfer restrictions, and regulatory reporting. On Solana, implemented with Token-2022's transfer hook and default account state extensions.",
+    "category": "defi",
+    "related": [
+      "rwa-tokenization",
+      "token-2022",
+      "transfer-hook",
+      "default-account-state",
+      "kyc"
+    ]
+  },
+  {
+    "id": "asset-tokenization",
+    "term": "Asset Tokenization",
+    "definition": "Process of issuing a blockchain token representing a claim on an off-chain asset. Involves legal structure (SPV/trust), custodian appointment, and minting redeemable tokens. Token-2022 extensions provide the programmable compliance layer institutional tokenization requires.",
+    "category": "defi",
+    "related": ["rwa-tokenization", "token-2022", "spv"]
+  },
+  {
+    "id": "fractional-ownership",
+    "term": "Fractional Ownership",
+    "definition": "Division of a high-value asset into smaller token units, each representing proportional ownership. Enables investment in real estate, art, private equity without full asset purchase. Standard SPL token mechanics naturally support fractional representation.",
+    "category": "defi",
+    "related": ["rwa-tokenization", "asset-tokenization", "spl-token"]
+  },
+  {
+    "id": "asset-backed-token",
+    "term": "Asset-Backed Token",
+    "definition": "Token whose value is collateralized by a specific underlying asset held in reserve. Differs from algorithmic stablecoins in having a 1:1 real-world claim. USDC (fiat-backed), PAXG (gold-backed), and Ondo's USDY (treasury-backed) are examples.",
+    "category": "defi",
+    "related": ["stablecoin", "collateral", "rwa-tokenization", "usdc-native"]
+  },
+  {
+    "id": "tokenized-treasury",
+    "term": "Tokenized Treasury",
+    "definition": "Blockchain tokens representing ownership of US Treasury bills or money market funds invested in government debt. Fastest-growing RWA category ($5B+ by 2025). On Solana, Ondo Finance offers USDY backed by short-term US treasuries.",
+    "category": "defi",
+    "aliases": ["Tokenized T-Bills"],
+    "related": [
+      "rwa-tokenization",
+      "t-bill",
+      "fixed-income",
+      "asset-backed-token"
+    ]
+  },
+  {
+    "id": "private-credit",
+    "term": "Private Credit",
+    "definition": "Debt financing provided directly by non-bank lenders to borrowers, bypassing public markets. On-chain protocols originate loans using DeFi capital pools. On Solana, Maple Finance provides institutional lending and Credix finances fintech in emerging markets.",
+    "category": "defi",
+    "related": ["rwa-tokenization", "lending", "fixed-income", "credit-rating"]
+  },
+  {
+    "id": "nav",
+    "term": "NAV (Net Asset Value)",
+    "definition": "Per-share/per-token value calculated as (total assets - liabilities) / outstanding tokens. Published daily by fund administrators, used to price mints and redemptions of tokenized fund shares. Discrepancies vs market price create arbitrage.",
+    "category": "defi",
+    "aliases": ["Net Asset Value", "NAV"],
+    "related": ["tokenized-treasury", "aum", "redemption-mechanism"]
+  },
+  {
+    "id": "redemption-mechanism",
+    "term": "Redemption Mechanism",
+    "definition": "Process by which tokenized RWA holders exchange tokens for underlying asset or cash equivalent. Defines redemption windows, settlement time, minimums, and lock-ups. Burns the token and triggers off-chain asset liquidation. Some protocols support on-chain redemption to USDC.",
+    "category": "defi",
+    "related": ["rwa-tokenization", "nav", "usdc-native", "asset-backed-token"]
+  },
+  {
+    "id": "spv",
+    "term": "SPV (Special Purpose Vehicle)",
+    "definition": "Legally separate entity (LLC/trust) created to hold assets, isolating risk from parent organization. In RWA tokenization, SPV holds the actual asset while investors hold tokens representing SPV shares. Provides bankruptcy remoteness.",
+    "category": "defi",
+    "aliases": ["Special Purpose Vehicle", "SPV"],
+    "related": ["rwa-tokenization", "asset-tokenization", "custodian"]
+  },
+  {
+    "id": "fixed-income",
+    "term": "Fixed Income",
+    "definition": "Asset class comprising debt instruments paying regular, predetermined interest and returning principal at maturity. Includes government bonds, corporate bonds, T-bills, and money market instruments. Solana's RWA ecosystem is primarily fixed-income-focused.",
+    "category": "defi",
+    "related": ["t-bill", "tokenized-treasury", "coupon-rate", "maturity-date"]
+  },
+  {
+    "id": "t-bill",
+    "term": "T-Bill (US Treasury Bill)",
+    "definition": "Short-term US government debt (4-52 week maturity) sold at discount, redeemed at par. Considered safest short-term investment. Most popular RWA category on-chain — Ondo's USDY and BlackRock's BUIDL hold T-bills.",
+    "category": "defi",
+    "aliases": ["Treasury Bill", "T-Bill"],
+    "related": ["tokenized-treasury", "fixed-income", "money-market-fund"]
+  },
+  {
+    "id": "money-market-fund",
+    "term": "Money Market Fund",
+    "definition": "Highly liquid fund holding short-term, high-quality debt (T-bills, commercial paper, repos). Targets stable $1/share NAV. BlackRock's BUIDL ($500M+ AUM) tokenizes money market fund shares as blockchain tokens.",
+    "category": "defi",
+    "aliases": ["MMF"],
+    "related": ["t-bill", "nav", "aum", "tokenized-treasury"]
+  },
+  {
+    "id": "basis-points",
+    "term": "Basis Points",
+    "definition": "Unit of measurement equal to 0.01% (one hundredth of a percentage point). 100 bps = 1%. Used across DeFi for swap fees, protocol fees, and yield spreads. Token-2022's transfer fee extension configures fees in basis points.",
+    "category": "defi",
+    "aliases": ["bps"],
+    "related": ["transfer-fee", "apy", "apr", "seller-fee-basis-points"]
+  },
+  {
+    "id": "aum",
+    "term": "AUM (Assets Under Management)",
+    "definition": "Total market value of assets managed by an institution or protocol. In DeFi, often synonymous with TVL though AUM more precisely refers to managed funds. BlackRock's BUIDL: $500M+ AUM; Ondo Finance: $600M+.",
+    "category": "defi",
+    "aliases": ["AUM", "Assets Under Management"],
+    "related": ["tvl", "nav", "money-market-fund"]
+  },
+  {
+    "id": "yield-curve",
+    "term": "Yield Curve",
+    "definition": "Graph showing interest rates across different maturities for comparable debt. Normal curve slopes upward (longer = higher yield). When inverted (short > long), short-duration tokenized T-bills offer higher yields, explaining their dominance in Solana RWA.",
+    "category": "defi",
+    "related": ["fixed-income", "t-bill", "apy"]
+  },
+  {
+    "id": "coupon-rate",
+    "term": "Coupon Rate",
+    "definition": "Annual interest rate paid by a bond issuer as percentage of face value. A 5% coupon on $1,000 bond pays $50/year. In tokenized bonds, coupon payments are automated as on-chain distributions. T-bills are zero-coupon (purchased at discount, redeemed at par).",
+    "category": "defi",
+    "related": ["fixed-income", "t-bill", "basis-points"]
+  },
+  {
+    "id": "maturity-date",
+    "term": "Maturity Date",
+    "definition": "Date when a debt instrument expires and principal must be repaid. Ranges from overnight (repos) to 30 years (T-bonds). Short-maturity instruments dominate Solana RWA due to lower duration risk. On-chain protocols encode maturity in smart contract logic.",
+    "category": "defi",
+    "related": ["fixed-income", "bond-duration", "t-bill"]
+  },
+  {
+    "id": "bond-duration",
+    "term": "Bond Duration",
+    "definition": "Measure of a bond's price sensitivity to interest rate changes, in years. A 5-year duration bond falls ~5% per 1% rate rise. Short-duration instruments (T-bills, MMFs) have minimal duration risk, explaining their dominance in on-chain RWA adoption.",
+    "category": "defi",
+    "related": ["fixed-income", "maturity-date", "yield-curve"]
+  },
+  {
+    "id": "credit-rating",
+    "term": "Credit Rating",
+    "definition": "Assessment of creditworthiness by agencies (Moody's, S&P, Fitch). Ranges from AAA (near risk-free) to junk (BB+ and below). US Treasuries are AAA-rated. Private credit DeFi protocols must evaluate risk without formal ratings, a key risk factor.",
+    "category": "defi",
+    "related": ["fixed-income", "private-credit", "t-bill"]
+  },
+  {
+    "id": "accredited-investor",
+    "term": "Accredited Investor",
+    "definition": "SEC regulatory category: individuals with $1M+ net worth or $200K+ annual income permitted to participate in private securities offerings. Most tokenized security offerings on Solana restrict participation to accredited investors, requiring KYC and wallet whitelisting.",
+    "category": "defi",
+    "related": ["kyc", "security-token", "reg-d", "compliance-whitelist"]
+  },
+  {
+    "id": "reg-d",
+    "term": "Regulation D (Reg D)",
+    "definition": "SEC safe harbor exempting private securities offerings from full registration. Rule 506(c) allows unlimited accredited investors with verification. Commonly used for Solana security token issuances with on-chain transfer restrictions via Token-2022.",
+    "category": "defi",
+    "aliases": ["Regulation D"],
+    "related": [
+      "security-token",
+      "accredited-investor",
+      "reg-s",
+      "transfer-restrictions"
+    ]
+  },
+  {
+    "id": "reg-s",
+    "term": "Regulation S (Reg S)",
+    "definition": "SEC safe harbor exempting securities offered entirely outside the US to non-US persons. Ondo's USDY available globally under Reg S with on-chain transfer restrictions preventing US transfers. Combined with Reg D to cover domestic + international.",
+    "category": "defi",
+    "aliases": ["Regulation S"],
+    "related": ["security-token", "reg-d", "transfer-restrictions"]
+  },
+  {
+    "id": "transfer-restrictions",
+    "term": "Transfer Restrictions",
+    "definition": "Legal and technical constraints limiting who can hold a regulated token, enforced on every transfer. Prohibit transfers to non-KYC'd, sanctioned, or non-eligible addresses. On Solana, implemented via Token-2022's transfer hook executing compliance checks per transfer.",
+    "category": "defi",
+    "related": [
+      "transfer-hook",
+      "compliance-whitelist",
+      "compliance-blacklist",
+      "kyc",
+      "token-2022"
+    ]
+  },
+  {
+    "id": "compliance-whitelist",
+    "term": "Compliance Whitelist",
+    "definition": "List of wallet addresses that have completed KYC/AML verification and are permitted to hold a security token. Maintained by issuer or transfer agent, checked on every transfer via Token-2022 transfer hook. Required for all regulated tokenized assets.",
+    "category": "defi",
+    "related": [
+      "kyc",
+      "transfer-restrictions",
+      "transfer-hook",
+      "security-token"
+    ]
+  },
+  {
+    "id": "compliance-blacklist",
+    "term": "Compliance Blacklist",
+    "definition": "List of wallet addresses prohibited from holding or transacting a token due to OFAC sanctions, suspicious activity, or court orders. USDC (Circle) maintains a blacklist using SPL Token's freeze_authority. Token-2022's permanent delegate enables recovery from blacklisted accounts.",
+    "category": "defi",
+    "related": [
+      "ofac-compliance",
+      "freeze-authority",
+      "permanent-delegate",
+      "compliance-whitelist"
+    ]
+  },
+  {
+    "id": "ofac-compliance",
+    "term": "OFAC Compliance",
+    "definition": "Compliance with US Treasury OFAC sanctions prohibiting transactions with designated individuals/entities. Circle blacklists sanctioned USDC addresses on-chain. Solana RWA protocols must screen wallets against the SDN list before whitelisting.",
+    "category": "defi",
+    "aliases": ["OFAC"],
+    "related": ["compliance-blacklist", "compliance-whitelist", "kyc"]
+  },
+  {
+    "id": "transfer-agent",
+    "term": "Transfer Agent",
+    "definition": "Firm maintaining official ownership ledger for securities, processing transfers and ensuring compliance. Securitize acts as transfer agent for BlackRock's BUIDL. Token-2022's transfer hook maps directly to programmable transfer agent logic on-chain.",
+    "category": "defi",
+    "related": [
+      "security-token",
+      "transfer-restrictions",
+      "securitize",
+      "transfer-hook"
+    ]
+  },
+  {
+    "id": "custodian",
+    "term": "Custodian",
+    "definition": "Institution holding and safeguarding assets on behalf of clients. In RWA tokenization, custodian holds off-chain assets (bonds, gold) while on-chain tokens represent claims. Qualified custodians include Anchorage Digital, BNY Mellon (for BUIDL).",
+    "category": "defi",
+    "aliases": ["Qualified Custodian"],
+    "related": ["rwa-tokenization", "spv", "asset-backed-token"]
+  },
+  {
+    "id": "atomic-settlement",
+    "term": "Atomic Settlement",
+    "definition": "Simultaneous, all-or-nothing completion of both legs of a trade (asset + cash) in a single transaction. Eliminates settlement risk. A Solana transaction either fully executes all instructions or reverts completely, making partial settlement impossible by construction.",
+    "category": "defi",
+    "related": ["finality-general", "dvp", "clearing-settlement"]
+  },
+  {
+    "id": "t-plus-settlement",
+    "term": "T+Settlement",
+    "definition": "Settlement date convention: T+1 means trade settles one business day later. US equities moved to T+1 in 2024. Blockchain is effectively T+0 — Solana transactions finalize in under 1 second with no counterparty exposure after confirmation.",
+    "category": "defi",
+    "aliases": ["T+1", "T+2", "T+0"],
+    "related": ["atomic-settlement", "clearing-settlement", "finality-general"]
+  }
+]

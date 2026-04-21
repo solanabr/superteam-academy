@@ -262,4 +262,55 @@ export class HybridProgressService implements LearningProgressService {
       })
     );
   }
+
+  // -------------------------------------------------------------------------
+  // arcade
+  // -------------------------------------------------------------------------
+
+  async completeArcadeGame(params: {
+    userId: string;
+    gameId: string;
+    xp: number;
+    score?: number;
+  }): Promise<void> {
+    if (typeof window === "undefined") return;
+
+    const today = new Date().toISOString().split("T")[0]!;
+    const key = `sa_arcade_${params.userId}_${params.gameId}_${today}`;
+
+    // Check if already won today to prevent farming
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          completedAt: new Date().toISOString(),
+          xpEarned: params.xp,
+          score: params.score,
+        })
+      );
+
+      // Record locally for immediate UI feedback
+      const progressKey = `sa_progress_${params.userId}_arcade_${params.gameId}`;
+      const existingRaw = localStorage.getItem(progressKey);
+      const existing = existingRaw
+        ? JSON.parse(existingRaw)
+        : {
+            courseId: `arcade_${params.gameId}`,
+            xpEarned: 0,
+            lastActivityAt: null,
+          };
+
+      existing.xpEarned += params.xp;
+      existing.lastActivityAt = new Date().toISOString();
+
+      localStorage.setItem(progressKey, JSON.stringify(existing));
+
+      // Dispatch event for UI updates (handled by Sidebar and AchievementPopup)
+      window.dispatchEvent(
+        new CustomEvent("xp-gain", {
+          detail: { amount: params.xp, reason: `arcade:${params.gameId}` },
+        })
+      );
+    }
+  }
 }

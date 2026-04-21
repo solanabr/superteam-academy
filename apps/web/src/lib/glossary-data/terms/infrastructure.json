@@ -1,0 +1,322 @@
+[
+  {
+    "id": "rpc",
+    "term": "RPC (Remote Procedure Call)",
+    "definition": "The JSON-RPC 2.0 protocol interface through which clients communicate with Solana nodes to query chain state, submit transactions, and subscribe to events. Solana exposes a rich set of HTTP and WebSocket endpoints (e.g., getAccountInfo, sendTransaction) that abstract direct peer-to-peer network participation, making RPC the primary integration point for wallets, dApps, and indexers.",
+    "category": "infrastructure",
+    "aliases": ["RPC", "JSON-RPC"],
+    "related": ["rpc-node", "rpc-methods"]
+  },
+  {
+    "id": "rpc-node",
+    "term": "RPC Node",
+    "definition": "A Solana full node that stores ledger state and serves JSON-RPC and WebSocket requests from clients without participating in consensus or voting. RPC nodes must replay every transaction to maintain an accurate account state database, and high-throughput deployments typically run dedicated RPC nodes with large SSDs, high RAM (256 GB+), and high-bandwidth network connections to handle concurrent client load without impacting validator performance.",
+    "category": "infrastructure",
+    "related": ["rpc", "validator"]
+  },
+  {
+    "id": "rpc-methods",
+    "term": "RPC Methods",
+    "definition": "The enumerated JSON-RPC endpoints exposed by Solana nodes, covering account queries (getAccountInfo, getMultipleAccounts, getProgramAccounts), block and transaction retrieval (getBlock, getTransaction), cluster metadata (getEpochInfo, getSlot, getVersion), and transaction submission (sendTransaction, simulateTransaction). Methods accept a Commitment parameter (processed, confirmed, finalized) to control the recency-vs-safety tradeoff of returned data.",
+    "category": "infrastructure",
+    "related": ["rpc", "get-account-info", "get-transaction"]
+  },
+  {
+    "id": "get-account-info",
+    "term": "getAccountInfo",
+    "definition": "An RPC method that returns the complete on-chain state of a single account identified by its base-58 public key, including its lamport balance, owner program, executable flag, rent epoch, and raw data payload encoded as base64 or base58. It is the most fundamental read primitive in Solana development and is called at the specified commitment level, with the data field being null if the account does not exist.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "account"]
+  },
+  {
+    "id": "get-program-accounts",
+    "term": "getProgramAccounts (GPA)",
+    "definition": "An RPC method that scans all accounts owned by a given program and returns those matching optional memcmp (memory compare) and dataSize filters, making it the standard way to discover all state accounts for a protocol (e.g., all open order books, all user positions). GPA is resource-intensive because it performs a full account-store scan on the RPC node; many public endpoints rate-limit or disable it, which is why purpose-built indexers and services like Helius are used in production to serve GPA-equivalent queries at scale.",
+    "category": "infrastructure",
+    "aliases": ["GPA"],
+    "related": ["rpc-methods", "program", "account-filter"]
+  },
+  {
+    "id": "account-filter",
+    "term": "Account Filter (memcmp / dataSize)",
+    "definition": "Optional filter objects passed to getProgramAccounts that narrow results by comparing raw bytes in account data. A memcmp filter specifies a byte offset and an expected bytes value (base58 or base64 encoded), enabling field-level matching such as filtering all token accounts by a specific mint address; a dataSize filter restricts results to accounts whose data length equals an exact byte count. Combining both filters is the standard pattern for efficiently querying discriminated Anchor accounts or specific SPL token account sets.",
+    "category": "infrastructure",
+    "related": ["get-program-accounts", "rpc-methods"]
+  },
+  {
+    "id": "get-transaction",
+    "term": "getTransaction",
+    "definition": "An RPC method that retrieves a confirmed or finalized transaction by its base-58 signature, returning the full message (account keys, instructions, address lookup tables), pre- and post-balances, inner instructions, log messages, and compute units consumed. The maxSupportedTransactionVersion parameter must be set to 0 to decode versioned transactions that use address lookup tables; the method returns null if the transaction has been purged from the node's transaction status cache (default retention is around 2 days on most RPC providers).",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "transaction"]
+  },
+  {
+    "id": "get-signatures-for-address",
+    "term": "getSignaturesForAddress",
+    "definition": "An RPC method that returns a paginated, reverse-chronological list of transaction signatures that reference a given account address, along with each transaction's slot, block time, memo, and confirmation status. It is the standard way to walk the transaction history of a wallet or program account and accepts before and until signature parameters for cursor-based pagination through up to 1,000 signatures per call.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "transaction", "signature"]
+  },
+  {
+    "id": "websocket",
+    "term": "WebSocket Subscriptions",
+    "definition": "A persistent bidirectional connection to a Solana RPC node's WebSocket endpoint (typically on port 8900) that allows clients to receive real-time push notifications when on-chain state changes, rather than polling via HTTP. The subscription model supports account changes, program account changes, slot updates, root changes, signature confirmations, and log emission, each returning a subscription ID used to later unsubscribe.",
+    "category": "infrastructure",
+    "related": ["rpc", "account-subscribe", "logs-subscribe"]
+  },
+  {
+    "id": "account-subscribe",
+    "term": "accountSubscribe",
+    "definition": "A WebSocket subscription method that pushes a notification to the client every time the data or lamport balance of a specified account changes, delivering the updated AccountInfo payload at the configured commitment level. It is commonly used by UIs to reactively update token balances, NFT ownership, or program state without polling, and each subscription is referenced by a numeric subscription ID returned upon successful registration.",
+    "category": "infrastructure",
+    "related": ["websocket", "account"]
+  },
+  {
+    "id": "logs-subscribe",
+    "term": "logsSubscribe",
+    "definition": "A WebSocket subscription method that streams transaction log messages in real time as transactions are processed by the cluster, filterable by 'all' (every transaction), 'allWithVotes' (including vote transactions), or a specific program public key. It is the lowest-latency way for bots and monitoring systems to react to on-chain events emitted via Solana's msg! macro or Anchor's emit! macro without running a full validator or Geyser plugin.",
+    "category": "infrastructure",
+    "related": ["websocket", "log"]
+  },
+  {
+    "id": "geyser",
+    "term": "Geyser Plugin",
+    "definition": "A Solana validator plugin interface (defined in solana-geyser-plugin-interface) that allows external processes to receive a real-time stream of every account update, transaction, slot status change, and block notification directly from the validator's internal processing pipeline via shared-memory callbacks, bypassing the RPC layer entirely. Geyser is the foundation for high-performance indexers, custom databases, and streaming infrastructure like Yellowstone gRPC, because it delivers data at validator speed with zero polling overhead.",
+    "category": "infrastructure",
+    "related": ["validator", "yellowstone", "indexer"]
+  },
+  {
+    "id": "yellowstone",
+    "term": "Yellowstone gRPC",
+    "definition": "An open-source Geyser plugin implementation by Triton One that re-exposes the validator's internal event stream over a gRPC/Protobuf interface, enabling clients to subscribe to filtered streams of account updates, transactions, and slot notifications with sub-millisecond latency from the validator. It has become the de facto streaming standard for Solana MEV bots, high-frequency trading systems, and indexers that require lower latency and richer filtering than WebSocket subscriptions provide.",
+    "category": "infrastructure",
+    "aliases": ["Yellowstone Dragon's Mouth"],
+    "related": ["geyser", "grpc"]
+  },
+  {
+    "id": "grpc",
+    "term": "gRPC",
+    "definition": "A high-performance, open-source remote procedure call framework from Google that uses HTTP/2 for transport and Protocol Buffers (Protobuf) for binary serialization, offering lower latency, smaller message sizes, and bidirectional streaming compared to JSON-RPC over HTTP/1.1. In Solana infrastructure, gRPC is most prominent as the transport layer for Yellowstone, allowing clients to open long-lived streaming subscriptions with server-side filtering while consuming far less bandwidth than equivalent WebSocket subscriptions.",
+    "category": "infrastructure",
+    "related": ["yellowstone", "geyser"]
+  },
+  {
+    "id": "das",
+    "term": "DAS (Digital Asset Standard) API",
+    "definition": "A unified RPC API specification, originated by Metaplex and adopted by major RPC providers, that provides indexed, queryable access to Solana digital assets including regular NFTs, compressed NFTs (cNFTs), and fungible tokens through methods like getAsset, getAssetsByOwner, getAssetsByGroup, and searchAssets. DAS abstracts away the complexity of reading raw Metaplex account data and reconstructing compressed NFT state from concurrent Merkle trees, making it the standard NFT data layer for wallets and marketplaces.",
+    "category": "infrastructure",
+    "aliases": ["DAS", "Digital Asset API"],
+    "related": ["compressed-nft", "indexer"]
+  },
+  {
+    "id": "indexer",
+    "term": "Indexer",
+    "definition": "A specialized off-chain service that continuously ingests on-chain data (typically via a Geyser plugin or RPC polling) and stores it in a queryable database optimized for complex lookups, aggregations, and historical queries that the RPC node's account-state store cannot efficiently serve. Indexers power DAS APIs, portfolio trackers, analytics dashboards, and DEX order-history features by transforming Solana's append-only ledger into relational or document-oriented schemas with fast secondary indexes.",
+    "category": "infrastructure",
+    "related": ["geyser", "das", "rpc"]
+  },
+  {
+    "id": "helius",
+    "term": "Helius",
+    "definition": "A Solana-focused infrastructure provider offering dedicated RPC nodes, DAS API access, Geyser-based webhooks, the LaserStream ultra-low-latency streaming product, and enhanced transaction parsing APIs that decode raw instruction data into human-readable event objects. Helius is widely used by developers for its generous free tier, Solana-specific tooling (NFT APIs, token metadata enrichment), and reliable globally distributed RPC endpoints.",
+    "category": "infrastructure",
+    "related": ["rpc-node", "das", "webhook"]
+  },
+  {
+    "id": "quicknode",
+    "term": "QuickNode",
+    "definition": "A multi-chain blockchain infrastructure provider that offers globally distributed Solana RPC and WebSocket endpoints, add-on marketplace integrations (including DAS, token APIs, and priority fee estimation), and performance-oriented features like endpoint analytics and dedicated node plans. QuickNode provides Solana developers with low-latency access to mainnet-beta, testnet, and devnet through a SLA-backed managed service model.",
+    "category": "infrastructure",
+    "related": ["rpc-node"]
+  },
+  {
+    "id": "triton",
+    "term": "Triton",
+    "definition": "A professional Solana infrastructure provider (operating as Triton One) specializing in high-performance dedicated RPC nodes, the Yellowstone gRPC Geyser plugin, and enterprise-grade validator infrastructure. Triton is notable for maintaining and open-sourcing the Yellowstone Dragon's Mouth gRPC streaming stack and for offering bare-metal RPC deployments tuned for MEV, HFT, and latency-sensitive workloads.",
+    "category": "infrastructure",
+    "aliases": ["Triton One"],
+    "related": ["rpc-node", "yellowstone"]
+  },
+  {
+    "id": "webhook",
+    "term": "Webhook",
+    "definition": "An HTTP callback mechanism used by Solana infrastructure providers like Helius to push real-time notifications to a developer-specified URL whenever a monitored address receives or sends a transaction, an account changes, or a specific program emits a log. Webhooks eliminate the need for client-side polling and are typically backed by Geyser-based indexers to ensure all on-chain events are delivered reliably with low latency.",
+    "category": "infrastructure",
+    "related": ["helius", "indexer"]
+  },
+  {
+    "id": "laserstream",
+    "term": "LaserStream",
+    "definition": "A Helius proprietary ultra-low-latency streaming product built on Geyser plugin infrastructure that delivers real-time transaction and account update notifications directly from validator nodes to subscribers, targeting sub-10ms delivery latency from transaction processing to client receipt. LaserStream is positioned for latency-critical applications such as liquidation bots, arbitrage systems, and real-time portfolio trackers that need faster and more reliable data delivery than standard WebSocket subscriptions.",
+    "category": "infrastructure",
+    "related": ["helius", "geyser"]
+  },
+  {
+    "id": "solana-pay",
+    "term": "Solana Pay",
+    "definition": "An open payment standard and SDK that defines URI schemes and protocol flows for requesting SOL or SPL token transfers and for constructing and returning partially-built transactions from merchant backends to user wallets. It comprises two sub-protocols \u2014 Transfer Requests (simple static payment URIs) and Transaction Requests (dynamic server-signed transaction fetching) \u2014 and enables point-of-sale payments, loyalty programs, and interactive commerce experiences using QR codes or deeplinks.",
+    "category": "infrastructure",
+    "related": ["transaction-request", "transfer-request"]
+  },
+  {
+    "id": "transaction-request",
+    "term": "Transaction Request (Solana Pay)",
+    "definition": "A Solana Pay protocol flow in which a QR code or link encodes an HTTPS URL; when scanned, the wallet performs a GET request to discover metadata (label, icon) and then a POST request with the user's public key, receiving a base64-encoded partially-signed transaction that the wallet can inspect, sign, and submit. This dynamic model enables programmable commerce flows such as NFT minting, coupon redemption, and multi-step checkout because the merchant server constructs the transaction at request time rather than encoding it statically.",
+    "category": "infrastructure",
+    "related": ["solana-pay", "actions"]
+  },
+  {
+    "id": "transfer-request",
+    "term": "Transfer Request (Solana Pay)",
+    "definition": "The simpler of the two Solana Pay sub-protocols, encoding a static SOL or SPL token payment request as a URI in the format solana:<recipient>?amount=<value>&spl-token=<mint>&label=<label>&memo=<memo>. Transfer Request URIs are fully self-contained and require no server interaction \u2014 wallets parse the URI and construct the system program transfer or SPL token transfer instruction locally, making them ideal for fixed-price invoices and tip links.",
+    "category": "infrastructure",
+    "related": ["solana-pay"]
+  },
+  {
+    "id": "actions",
+    "term": "Solana Actions",
+    "definition": "A protocol specification that standardizes how web servers expose signable Solana transactions and messages via HTTPS endpoints, enabling any URL to become an interactive blockchain entry point. Actions use a GET/POST handshake similar to Solana Pay Transaction Requests but are generalized beyond payments to support arbitrary on-chain operations (voting, staking, DeFi interactions), and serve as the server-side counterpart to Blinks, which render Actions as embeddable UI components.",
+    "category": "infrastructure",
+    "aliases": ["Actions"],
+    "related": ["blinks", "transaction-request"]
+  },
+  {
+    "id": "blinks",
+    "term": "Blinks (Blockchain Links)",
+    "definition": "Client-side renderers and URL wrappers that convert Solana Actions endpoints into interactive, embeddable UI components \u2014 such as buttons, input fields, and transaction previews \u2014 that can appear inside wallets, browser extensions, and social media platforms without requiring users to navigate to a dApp. A Blink is essentially a URL prefixed with https://dial.to/?action= that signals to compatible clients to fetch and render the corresponding Action metadata, enabling one-click on-chain transactions from any webpage or feed.",
+    "category": "infrastructure",
+    "aliases": ["Blinks"],
+    "related": ["actions"]
+  },
+  {
+    "id": "solana-mobile",
+    "term": "Solana Mobile",
+    "definition": "A hardware and software initiative by Solana Labs producing Android smartphones (Saga, Chapter 2) with a secure element-backed seed vault for private key storage, a curated dApp store for Solana applications, and the Mobile Wallet Adapter protocol for standardized wallet-dApp communication on mobile. The Solana Mobile Stack (SMS) enables native mobile dApps to interact with on-device wallets without browser extensions or QR code scanning, targeting the mobile-first crypto user base.",
+    "category": "infrastructure",
+    "aliases": ["SMS", "Saga"],
+    "related": ["mobile-wallet-adapter"]
+  },
+  {
+    "id": "mobile-wallet-adapter",
+    "term": "Mobile Wallet Adapter (MWA)",
+    "definition": "An open protocol and SDK that defines a local communication channel (via Android intents and a localhost WebSocket) between mobile dApps and Solana wallet apps installed on the same device, allowing dApps to request transaction signing and message signing without exposing private keys. MWA v2 supports authorization scoping, chain-agnostic signing, and session caching, and is the standard integration layer used by Phantom, Solflare, and other mobile Solana wallets.",
+    "category": "infrastructure",
+    "aliases": ["MWA"],
+    "related": ["solana-mobile", "wallet-adapter"]
+  },
+  {
+    "id": "wallet-adapter",
+    "term": "Wallet Adapter",
+    "definition": "A TypeScript/JavaScript library maintained by Solana Labs (now under the Anza umbrella) that provides a unified interface and React context for connecting to and interacting with browser extension wallets (Phantom, Backpack, Solflare, etc.) using the Wallet Standard. It abstracts wallet-specific APIs behind a common connect/disconnect/signTransaction/sendTransaction interface, allowing dApps to support all compliant wallets without custom per-wallet integration code.",
+    "category": "infrastructure",
+    "related": ["wallet-standard", "mobile-wallet-adapter"]
+  },
+  {
+    "id": "wallet-standard",
+    "term": "Wallet Standard",
+    "definition": "A chain-agnostic TypeScript interface specification (maintained at github.com/wallet-standard/wallet-standard) that defines how browser-based wallets register themselves, expose supported features, and implement signing operations via a globally discoverable window object. On Solana, wallets implement the Solana-specific feature set (solana:signTransaction, solana:signMessage, etc.), allowing any compliant dApp using Wallet Adapter to enumerate and use installed wallets without hard-coded wallet detection logic.",
+    "category": "infrastructure",
+    "related": ["wallet-adapter"]
+  },
+  {
+    "id": "explorer",
+    "term": "Solana Explorer",
+    "definition": "Web-based blockchain browsers that index and visualize Solana ledger data including transactions, accounts, blocks, validators, and token metadata in human-readable form. Explorer.solana.com is the official Solana Labs explorer; Solscan (solscan.io) is the most popular community explorer offering DeFi analytics and token holder data; SolanaFM (solana.fm) provides enhanced transaction decoding, program labeling, and cross-program invocation graphs \u2014 all connect to RPC nodes and indexers to serve their data.",
+    "category": "infrastructure",
+    "aliases": ["Solscan", "SolanaFM"],
+    "related": ["transaction", "rpc"]
+  },
+  {
+    "id": "arweave",
+    "term": "Arweave",
+    "definition": "A decentralized permanent storage protocol that uses a blockchain-like structure called the blockweave and a one-time upfront payment model (no recurring fees) to store data indefinitely, backed by an endowment mechanism. In the Solana ecosystem, Arweave is the dominant off-chain storage layer for NFT metadata JSON and media files, and is used by Metaplex's Bundlr/Irys integration to upload assets cheaply in bulk before minting, with URIs of the form ar://<txid> or https://arweave.net/<txid> stored in on-chain metadata accounts.",
+    "category": "infrastructure",
+    "related": ["off-chain-metadata", "ipfs"]
+  },
+  {
+    "id": "ipfs",
+    "term": "IPFS",
+    "definition": "A peer-to-peer hypermedia protocol that addresses content by cryptographic hash (CID) rather than location, so the same content always resolves to the same CID regardless of which node serves it. In Solana NFT contexts, IPFS is used as an alternative to Arweave for storing off-chain metadata and media, commonly accessed via pinning services like Pinata or NFT.Storage; however, content availability depends on active pinning, making it less permanent than Arweave's endowment model without a dedicated pinning arrangement.",
+    "category": "infrastructure",
+    "related": ["off-chain-metadata", "arweave"]
+  },
+  {
+    "id": "shadow-drive",
+    "term": "Shadow Drive",
+    "definition": "A decentralized, Solana-native storage network operated by GenesysGo that uses a proof-of-storage consensus among Shadow Operator nodes and the SHDW token for payment, offering mutable and immutable file storage with direct on-chain settlement. Unlike Arweave (permanent, one-time fee) or IPFS (requires pinning), Shadow Drive targets developers needing mutable off-chain storage for game assets, user-generated content, and dApp data with Solana-native tooling and SPL token payment.",
+    "category": "infrastructure",
+    "aliases": ["GenesysGo"],
+    "related": ["arweave", "ipfs"]
+  },
+  {
+    "id": "clockwork",
+    "term": "Clockwork",
+    "definition": "A deprecated Solana on-chain automation protocol (by Clockwork Labs, now sunset) that allowed developers to schedule and trigger smart contract instructions based on time (cron expressions) or on-chain conditions using a network of automation worker threads running alongside validators. Clockwork introduced the concept of Thread accounts that encoded trigger conditions and instruction targets directly on-chain, and while it has been discontinued, it pioneered the automation primitive model later explored by projects like Turbin3 and off-chain keeper bot architectures.",
+    "category": "infrastructure",
+    "related": ["program-automation", "cron"]
+  },
+  {
+    "id": "priority-fee-api",
+    "term": "Priority Fee API",
+    "definition": "An RPC API (primarily Helius's getPriorityFeeEstimate) that calculates optimal priority fee recommendations based on real-time network congestion and historical fee data. Priority fees are priced in microlamports per compute unit. The API returns tiered estimates (low, medium, high, very high) to help developers balance cost and confirmation speed.",
+    "category": "infrastructure",
+    "aliases": ["getPriorityFeeEstimate"],
+    "related": ["priority-fee", "compute-units", "helius"]
+  },
+  {
+    "id": "program-automation",
+    "term": "Program Automation",
+    "definition": "The pattern of scheduling and triggering on-chain program instructions based on time intervals, cron expressions, or conditional state changes without manual intervention. On Solana, automation was pioneered by Clockwork (now sunset) using on-chain Thread accounts and has evolved toward off-chain keeper bot architectures where backend services monitor chain state and submit transactions when trigger conditions are met.",
+    "category": "infrastructure",
+    "related": ["clockwork", "cron"]
+  },
+  {
+    "id": "enhanced-transactions",
+    "term": "Enhanced Transactions (Helius)",
+    "definition": "A Helius-specific API that returns enriched, human-readable transaction data by parsing raw Solana transaction instructions into structured event objects with descriptive labels, token transfer summaries, and program interaction breakdowns. Instead of manually decoding instruction data and cross-referencing IDLs, developers get pre-parsed fields like transaction type, token amounts, source/destination wallets, and fee details. Available via the Helius parseTransaction and enhanced transaction history endpoints.",
+    "category": "infrastructure",
+    "related": ["helius", "get-transaction", "indexer"]
+  },
+  {
+    "id": "get-multiple-accounts",
+    "term": "getMultipleAccounts",
+    "definition": "A Solana RPC method that fetches the account data for up to 100 public keys in a single request, returning an array of AccountInfo objects in the same order as the input keys. This batched approach is significantly more efficient than calling getAccountInfo repeatedly, reducing round trips and RPC load. It supports the same encoding and commitment parameters as getAccountInfo. Accounts that do not exist return null in the response array.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "get-account-info", "account"]
+  },
+  {
+    "id": "get-latest-blockhash",
+    "term": "getLatestBlockhash",
+    "definition": "A Solana RPC method that returns the most recent blockhash along with the last valid block height for that blockhash, providing the two values needed to build and submit a transaction. Every Solana transaction must include a recent blockhash to prevent replay attacks; this method is typically called immediately before signing. The returned lastValidBlockHeight indicates when the blockhash expires, after which unsigned transactions using it will be rejected.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "blockhash", "transaction"]
+  },
+  {
+    "id": "send-transaction-rpc",
+    "term": "sendTransaction (RPC)",
+    "definition": "The Solana RPC method that submits a fully signed, serialized transaction to the cluster for processing. The transaction is passed as a base64-encoded string. By default, the RPC node performs preflight checks (simulation) before forwarding to the leader; this can be disabled with skipPreflight for lower latency at the risk of submitting invalid transactions. The method returns the transaction signature immediately without waiting for confirmation. Clients must separately poll or subscribe for confirmation status.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "transaction", "transaction-landing"]
+  },
+  {
+    "id": "signature-subscribe",
+    "term": "signatureSubscribe",
+    "definition": "A Solana WebSocket subscription method that pushes a notification when a specific transaction signature reaches the requested commitment level (processed, confirmed, or finalized). It is the standard way to wait for transaction confirmation without polling, returning the signature status including any error information. The subscription automatically unsubscribes after delivering one notification. Commonly used in dApp frontends to show real-time transaction status updates to users.",
+    "category": "infrastructure",
+    "related": ["websocket", "signature", "commitment-levels"]
+  },
+  {
+    "id": "rpc-encoding",
+    "term": "RPC Encoding",
+    "definition": "The data serialization format used to represent account data in Solana RPC responses. Supported encodings include base58 (human-readable but slow for large data), base64 (efficient binary encoding, most common), base64+zstd (compressed base64 for large accounts), and jsonParsed (structured JSON for known programs like SPL Token and System Program). The encoding parameter is specified per-request and affects response size and parse complexity on the client side.",
+    "category": "infrastructure",
+    "related": ["rpc-methods", "account-data", "serialization"]
+  },
+  {
+    "id": "staked-connection",
+    "term": "Staked Connection",
+    "definition": "An RPC connection routed through a validator or RPC node that holds delegated stake, granting the connection higher priority under Solana's Stake-Weighted Quality of Service (SWQoS) system. Transactions submitted via staked connections receive preferential bandwidth allocation to the leader's TPU, significantly improving landing rates during periods of network congestion. RPC providers like Helius and Triton offer staked connections as a premium feature for production applications.",
+    "category": "infrastructure",
+    "related": ["stake-weighted-qos", "rpc-node", "transaction-landing"]
+  }
+]

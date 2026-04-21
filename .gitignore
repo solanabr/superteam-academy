@@ -99,3 +99,7 @@ audit/
 *.log
 *.tmp
 .cache/
+
+# Agent specific files
+.agents/
+skills-lock.json

@@ -1,0 +1,503 @@
+[
+  {
+    "id": "account",
+    "term": "Account",
+    "definition": "The fundamental data storage unit on Solana. Every piece of state is stored in an account identified by a 32-byte public key. Accounts hold a lamport balance, an owner program, a data byte array (up to 10MB), and an executable flag. Only the owning program can modify an account's data, but anyone can credit lamports to it.",
+    "category": "programming-model",
+    "related": ["pubkey", "lamport", "rent"]
+  },
+  {
+    "id": "program",
+    "term": "Program",
+    "definition": "Executable code deployed on-chain, equivalent to a smart contract on other blockchains. Programs are stateless\u2014they store no data themselves but read/write data in separate accounts they own. Programs are compiled to SBF bytecode and loaded via the BPF Loader. Every program has a unique Program ID (its account's public key).",
+    "category": "programming-model",
+    "aliases": ["Smart Contract"],
+    "related": ["account", "instruction", "bpf"]
+  },
+  {
+    "id": "instruction",
+    "term": "Instruction",
+    "definition": "A single operation within a transaction that invokes a program. An instruction specifies: (1) the program ID to call, (2) an array of account metas (pubkey, is_signer, is_writable), and (3) an opaque data byte array. Programs decode the instruction data to determine which operation to perform.",
+    "category": "programming-model",
+    "aliases": ["IX"],
+    "related": ["transaction", "program", "account"]
+  },
+  {
+    "id": "transaction",
+    "term": "Transaction",
+    "definition": "An atomic unit of execution containing one or more instructions, a recent blockhash, and one or more signatures. All instructions in a transaction execute sequentially and atomically\u2014if any instruction fails, the entire transaction reverts. Transactions have a 1,232-byte size limit (matching IPv6 MTU) and a default 200,000 CU budget.",
+    "category": "programming-model",
+    "aliases": ["TX"],
+    "related": ["instruction", "signature", "message"]
+  },
+  {
+    "id": "versioned-transaction",
+    "term": "Versioned Transaction",
+    "definition": "A transaction format introduced with v0 that supports address lookup tables. Legacy transactions include all pubkeys inline (limited to ~35 accounts); v0 transactions reference ALTs to include up to 256 accounts while staying within the 1,232-byte limit. The version byte (0) precedes the message.",
+    "category": "programming-model",
+    "aliases": ["v0 Transaction"],
+    "related": ["transaction", "address-lookup-table"]
+  },
+  {
+    "id": "message",
+    "term": "Message",
+    "definition": "The unsigned payload of a transaction containing: a header (signer/read-only counts), an array of account public keys, a recent blockhash, and compiled instructions. Signers sign the serialized message bytes. In v0 messages, an additional section references address lookup tables.",
+    "category": "programming-model",
+    "related": ["transaction", "instruction"]
+  },
+  {
+    "id": "signature",
+    "term": "Signature",
+    "definition": "A 64-byte Ed25519 digital signature over a transaction's message. Each signer in a transaction produces one signature. The first signature (from the fee payer) also serves as the unique transaction ID. Signature verification is parallelized in the TPU's sigverify stage using GPU acceleration.",
+    "category": "programming-model",
+    "related": ["transaction", "keypair", "ed25519"]
+  },
+  {
+    "id": "ed25519",
+    "term": "Ed25519",
+    "definition": "The elliptic curve digital signature algorithm used by Solana for all transaction signing. Ed25519 uses Curve25519 and produces 64-byte signatures with 32-byte public keys. Solana also provides an Ed25519 precompile program for on-chain signature verification within program logic.",
+    "category": "programming-model",
+    "related": ["signature", "keypair"]
+  },
+  {
+    "id": "keypair",
+    "term": "Keypair",
+    "definition": "A pair of a 32-byte Ed25519 private key and its corresponding 32-byte public key. Keypairs are used to sign transactions and derive account addresses. They are stored as 64-byte arrays (private + public concatenated) in JSON files by the Solana CLI. The private key should never be shared or exposed.",
+    "category": "programming-model",
+    "related": ["pubkey", "signature", "wallet-general"]
+  },
+  {
+    "id": "pubkey",
+    "term": "Public Key (Pubkey)",
+    "definition": "A 32-byte Ed25519 public key that serves as the unique address for accounts on Solana. Pubkeys are displayed as Base58-encoded strings (e.g., '11111111111111111111111111111111' for the System Program). Every account, program, and PDA is identified by its pubkey.",
+    "category": "programming-model",
+    "aliases": ["Pubkey", "Address"],
+    "related": ["keypair", "account"]
+  },
+  {
+    "id": "pda",
+    "term": "Program Derived Address (PDA)",
+    "definition": "An account address derived deterministically from a program ID and a set of seeds, with no corresponding private key. PDAs are created by finding a pubkey that does NOT lie on the Ed25519 curve (using a bump seed). Since there's no private key, only the deriving program can sign for the PDA via invoke_signed, making PDAs ideal for program-controlled state.",
+    "category": "programming-model",
+    "aliases": ["PDA"],
+    "related": ["seeds", "bump", "find-program-address"]
+  },
+  {
+    "id": "seeds",
+    "term": "Seeds",
+    "definition": "Byte arrays used as inputs to derive a Program Derived Address. Seeds can be any combination of static strings, user pubkeys, mint addresses, or other identifiers (each seed max 32 bytes, up to 16 seeds). For example, seeds=[b'vault', user.key()] derives a unique vault PDA for each user.",
+    "category": "programming-model",
+    "related": ["pda", "bump"]
+  },
+  {
+    "id": "bump",
+    "term": "Bump Seed",
+    "definition": "A single byte (255 down to 0) appended to PDA seeds to push the derived address off the Ed25519 curve. find_program_address tries bump=255 first and decrements until finding a valid PDA. The first valid bump found is the canonical bump. Always store and reuse the canonical bump to avoid security issues.",
+    "category": "programming-model",
+    "aliases": ["Canonical Bump"],
+    "related": ["pda", "seeds"]
+  },
+  {
+    "id": "find-program-address",
+    "term": "find_program_address",
+    "definition": "A function that derives a PDA by iterating bump seeds from 255 down to 0 until finding a pubkey not on the Ed25519 curve. It returns (pubkey, bump). In Anchor, the #[account(seeds=[...], bump)] constraint calls this automatically. The corresponding create_program_address skips iteration and takes an explicit bump.",
+    "category": "programming-model",
+    "related": ["pda", "seeds", "bump"]
+  },
+  {
+    "id": "cpi",
+    "term": "Cross-Program Invocation (CPI)",
+    "definition": "A mechanism for one program to call another program's instructions during execution. CPIs enable composability\u2014e.g., a DeFi program can call the Token Program to transfer tokens. CPI depth is limited to 4 levels. The caller passes accounts and instruction data, and the callee runs with the same transaction context.",
+    "category": "programming-model",
+    "aliases": ["CPI"],
+    "related": ["program", "instruction", "invoke", "invoke-signed"]
+  },
+  {
+    "id": "invoke",
+    "term": "invoke()",
+    "definition": "The Solana SDK function used to execute a CPI without PDA signing: `invoke(instruction, account_infos)`. All required signers must have already signed the outer transaction. Use invoke when calling programs that only need signatures from user wallets, not from PDAs.",
+    "category": "programming-model",
+    "related": ["cpi", "invoke-signed"]
+  },
+  {
+    "id": "invoke-signed",
+    "term": "invoke_signed()",
+    "definition": "The Solana SDK function for CPIs where a PDA must sign: `invoke_signed(instruction, account_infos, signer_seeds)`. The runtime verifies that the seeds + bump produce the expected PDA pubkey and grants signer privileges for that account. This is how programs authorize actions on behalf of PDAs they own.",
+    "category": "programming-model",
+    "related": ["cpi", "invoke", "pda"]
+  },
+  {
+    "id": "system-program",
+    "term": "System Program",
+    "definition": "The built-in native program (address: 11111111111111111111111111111111) responsible for creating new accounts, transferring SOL between accounts, allocating account data space, and assigning account ownership to programs. It is the only program that can create new accounts and is invoked in nearly every transaction.",
+    "category": "programming-model",
+    "related": ["program", "create-account", "transaction"]
+  },
+  {
+    "id": "create-account",
+    "term": "Create Account",
+    "definition": "A System Program instruction that creates a new account with specified space and owner, funding it with enough lamports for rent exemption. Parameters: from (fee payer), to (new account keypair), lamports, space (bytes), and owner (program ID). The new account's data is zero-initialized.",
+    "category": "programming-model",
+    "related": ["system-program", "rent", "lamport"]
+  },
+  {
+    "id": "lamport",
+    "term": "Lamport",
+    "definition": "The smallest unit of SOL, named after Leslie Lamport. 1 SOL = 1,000,000,000 (10^9) lamports. All balances and transfers on Solana are denominated in lamports internally. The minimum balance for an account to be rent-exempt is calculated in lamports based on the account's data size.",
+    "category": "programming-model",
+    "related": ["sol", "rent"]
+  },
+  {
+    "id": "sol",
+    "term": "SOL",
+    "definition": "The native token of the Solana blockchain, used for paying transaction fees, staking, and rent. 1 SOL equals 1 billion lamports. SOL has an inflationary supply schedule starting at 8% annually, decreasing by 15% per year, with a long-term floor of 1.5%. Transaction base fees (5,000 lamports) are partially burned.",
+    "category": "programming-model",
+    "related": ["lamport", "native-token"]
+  },
+  {
+    "id": "rent",
+    "term": "Rent",
+    "definition": "A fee mechanism that charges accounts for storing data on-chain. Accounts must maintain a minimum lamport balance proportional to their data size (~6.96 SOL per MB) to be rent-exempt. Since 2022, all new accounts must be rent-exempt at creation. Accounts falling below the threshold are removed during rent collection.",
+    "category": "programming-model",
+    "related": ["rent-exemption", "account", "lamport"]
+  },
+  {
+    "id": "rent-exemption",
+    "term": "Rent Exemption",
+    "definition": "The state where an account holds enough lamports to cover two years of rent, making it effectively permanent. The minimum balance is approximately 0.00089088 SOL per byte of data. Since Solana requires all new accounts to be rent-exempt, this is the minimum funding required when creating accounts.",
+    "category": "programming-model",
+    "related": ["rent", "account"]
+  },
+  {
+    "id": "owner",
+    "term": "Owner (Account)",
+    "definition": "The program that has exclusive write access to an account's data and can debit its lamport balance. Every account has an owner field (a program pubkey). The System Program owns all new/wallet accounts. When a program creates a derived account, it typically assigns itself as owner to manage that account's state.",
+    "category": "programming-model",
+    "related": ["program", "account", "authority"]
+  },
+  {
+    "id": "authority",
+    "term": "Authority",
+    "definition": "A pubkey with administrative privileges over a resource\u2014such as the mint authority (can mint tokens), freeze authority (can freeze accounts), upgrade authority (can upgrade a program), or the signer authorized to perform operations on a PDA-controlled account. Authority is a convention, not a runtime concept.",
+    "category": "programming-model",
+    "related": ["owner", "signer", "multisig"]
+  },
+  {
+    "id": "signer",
+    "term": "Signer",
+    "definition": "An account that has provided a valid Ed25519 signature in the current transaction. The runtime enforces the is_signer flag on instruction account metas\u2014if an instruction declares an account as a signer, the transaction must include its signature. Missing signer checks are a common vulnerability in Solana programs.",
+    "category": "programming-model",
+    "related": ["authority", "keypair", "transaction"]
+  },
+  {
+    "id": "writable",
+    "term": "Writable Account",
+    "definition": "An account marked as writable in an instruction's account metas, allowing the program to modify its data or lamport balance. Non-writable accounts are read-only. The runtime enforces that programs can only modify writable accounts. Writable accounts also affect scheduling\u2014transactions sharing writable accounts cannot run in parallel.",
+    "category": "programming-model",
+    "related": ["account", "transaction"]
+  },
+  {
+    "id": "executable",
+    "term": "Executable Account",
+    "definition": "An account flag indicating the account contains deployed program bytecode. Once marked executable, an account cannot be modified except through the upgrade mechanism. The data field contains the SBF ELF binary (or for upgradeable programs, a pointer to the program data account).",
+    "category": "programming-model",
+    "related": ["program", "bpf-loader", "upgradeable-loader"]
+  },
+  {
+    "id": "bpf-loader",
+    "term": "BPF Loader",
+    "definition": "A built-in program that loads and executes SBF programs. Solana has multiple loader versions: the deprecated BPF Loader (immutable programs), BPF Loader 2 (deprecated), and the current Upgradeable BPF Loader (BPFLoaderUpgradeable) that supports program upgrades. The loader verifies bytecode, manages deployment, and sets the executable flag.",
+    "category": "programming-model",
+    "related": ["program", "executable", "upgradeable-loader"]
+  },
+  {
+    "id": "upgradeable-loader",
+    "term": "Upgradeable BPF Loader",
+    "definition": "The current BPF Loader (BPFLoaderUpgradeab1e111...) that supports deploying and upgrading programs. It creates three accounts: the program account (thin proxy with executable flag), the program data account (holds the actual ELF bytecode), and records the upgrade authority. Programs can be made immutable by setting the authority to None.",
+    "category": "programming-model",
+    "aliases": ["BPFLoaderUpgradeable"],
+    "related": ["bpf-loader", "program-data", "upgrade-authority"]
+  },
+  {
+    "id": "program-data",
+    "term": "Program Data Account",
+    "definition": "The account that stores the actual SBF ELF bytecode for an upgradeable program. It is separate from the program's main account (which just points to the program data). This separation allows the bytecode to be swapped during upgrades while the program ID stays the same. The program data account also stores the upgrade authority pubkey.",
+    "category": "programming-model",
+    "related": ["upgradeable-loader", "program"]
+  },
+  {
+    "id": "upgrade-authority",
+    "term": "Upgrade Authority",
+    "definition": "The pubkey authorized to upgrade a program's bytecode via the Upgradeable BPF Loader. Only the upgrade authority can deploy new bytecode to the program data account. Setting the upgrade authority to None makes the program immutable. Multisig (e.g., Squads) is commonly used to manage upgrade authority for production programs.",
+    "category": "programming-model",
+    "related": ["upgradeable-loader", "program"]
+  },
+  {
+    "id": "native-program",
+    "term": "Native Program",
+    "definition": "A program compiled directly into the validator binary rather than deployed as SBF bytecode. Native programs include the System Program, Vote Program, Stake Program, BPF Loader, and others. They have hardcoded addresses and cannot be upgraded through the normal program upgrade mechanism\u2014they change only with validator software updates.",
+    "category": "programming-model",
+    "related": ["system-program", "spl", "runtime"]
+  },
+  {
+    "id": "sysvar",
+    "term": "Sysvar",
+    "definition": "Special read-only accounts maintained by the runtime that expose cluster state to programs. Key sysvars include Clock (slot, timestamp), Rent (lamports-per-byte), EpochSchedule (epoch parameters), RecentBlockhashes, StakeHistory, and Fees. Programs access sysvars by including the sysvar account in the instruction or via the sol_get_sysvar syscall.",
+    "category": "programming-model",
+    "related": ["clock", "rent-exemption", "epoch-schedule"]
+  },
+  {
+    "id": "clock",
+    "term": "Clock Sysvar",
+    "definition": "A sysvar (address: SysvarC1ock11111111111111111111111111111111) that provides the current slot, epoch, unix_timestamp, and leader_schedule_epoch. Programs use Clock to implement time-based logic like lockups or vesting schedules. In Anchor, accessed via `Clock::get()` or as a sysvar account in the accounts struct.",
+    "category": "programming-model",
+    "related": ["sysvar", "slot", "epoch"]
+  },
+  {
+    "id": "account-data",
+    "term": "Account Data",
+    "definition": "The byte array stored in an account that holds program-specific state. Data is typically serialized using Borsh and must be explicitly allocated at account creation. The maximum data size is 10MB. Programs are responsible for defining and managing their own data layout, including discriminators for type identification.",
+    "category": "programming-model",
+    "related": ["account", "serialization", "borsh"]
+  },
+  {
+    "id": "borsh",
+    "term": "Borsh",
+    "definition": "Binary Object Representation Serializer for Hashing\u2014the standard serialization format for Solana program data. Borsh produces deterministic, compact binary encodings with a fixed schema. It's used by Anchor for all account and instruction data serialization/deserialization. Borsh supports structs, enums, vectors, and other Rust types.",
+    "category": "programming-model",
+    "aliases": ["Binary Object Representation Serializer for Hashing"],
+    "related": ["serialization", "account-data"]
+  },
+  {
+    "id": "serialization",
+    "term": "Serialization / Deserialization",
+    "definition": "The process of converting in-memory data structures to bytes (serialization) and back (deserialization) for on-chain storage. Solana programs primarily use Borsh, though some use bincode or custom formats. Anchor's #[account] macro auto-derives Borsh serialization. Incorrect deserialization (e.g., missing length checks) is a common vulnerability class.",
+    "category": "programming-model",
+    "aliases": ["Serde"],
+    "related": ["borsh", "account-data"]
+  },
+  {
+    "id": "address-lookup-table",
+    "term": "Address Lookup Table (ALT)",
+    "definition": "An on-chain account that stores up to 256 pubkeys, enabling v0 transactions to reference accounts by 1-byte index instead of full 32-byte pubkeys. ALTs dramatically reduce transaction size when interacting with many accounts (e.g., DEX routing). ALTs must be created and populated in advance; entries become active after a slot delay.",
+    "category": "programming-model",
+    "aliases": ["ALT", "LUT"],
+    "related": ["versioned-transaction", "transaction-size"]
+  },
+  {
+    "id": "transaction-size",
+    "term": "Transaction Size Limit",
+    "definition": "The maximum serialized size of a Solana transaction: 1,232 bytes, matching the IPv6 minimum MTU to ensure single-packet transmission. This limit constrains the number of accounts, instructions, and data per transaction. Address lookup tables (v0 transactions) help fit more accounts within this limit.",
+    "category": "programming-model",
+    "related": ["transaction", "address-lookup-table", "versioned-transaction"]
+  },
+  {
+    "id": "compute-budget",
+    "term": "Compute Budget",
+    "definition": "The maximum compute units a transaction can consume. Default is 200,000 CU per instruction (max 1.4M CU per transaction). Programs can request specific limits via the ComputeBudgetProgram's SetComputeUnitLimit instruction. Under-requesting CU risks transaction failure; over-requesting wastes priority fee budget.",
+    "category": "programming-model",
+    "aliases": ["CU Budget"],
+    "related": ["compute-units", "priority-fee"]
+  },
+  {
+    "id": "compute-units",
+    "term": "Compute Units (CU)",
+    "definition": "A measure of computational resources consumed by transaction execution, analogous to gas on Ethereum. Each BPF instruction costs CU; syscalls have predefined CU costs (e.g., SHA-256: 85 CU base + per-byte). Default per-instruction limit is 200,000 CU; max per-transaction is 1,400,000 CU. Priority fee cost = CU price \u00d7 CU consumed.",
+    "category": "programming-model",
+    "aliases": ["CU"],
+    "related": ["compute-budget", "priority-fee"]
+  },
+  {
+    "id": "log",
+    "term": "Program Log (msg! / sol_log)",
+    "definition": "Diagnostic output from programs using `msg!()` (Anchor) or `sol_log()` (native). Logs appear in transaction metadata and explorer UIs. Each log call costs compute units (~100 CU base + data length). Logs are limited to 10KB per transaction. Anchor events also emit as base64-encoded log messages.",
+    "category": "programming-model",
+    "related": ["compute-units", "program"]
+  },
+  {
+    "id": "return-data",
+    "term": "Return Data (set_return_data)",
+    "definition": "A mechanism for programs to return data to the caller after CPI, introduced in v1.10. Programs call `set_return_data(data)` (max 1,024 bytes), and the caller retrieves it with `get_return_data()`. This enables CPI callers to receive structured results without parsing logs or modifying shared accounts.",
+    "category": "programming-model",
+    "related": ["cpi", "program"]
+  },
+  {
+    "id": "account-info",
+    "term": "AccountInfo",
+    "definition": "The runtime struct passed to programs for each account in an instruction: `AccountInfo { key, is_signer, is_writable, lamports, data, owner, executable, rent_epoch }`. In native programs, the entrypoint receives a slice of AccountInfos. Anchor abstracts this with typed account structs but AccountInfo is available via `to_account_info()`.",
+    "category": "programming-model",
+    "related": ["account", "program"]
+  },
+  {
+    "id": "program-id",
+    "term": "Program ID",
+    "definition": "The public key that uniquely identifies a deployed program. It's the address of the program's executable account. When invoking a program, the instruction specifies the program_id. Anchor's `declare_id!()` macro hardcodes the expected program ID. PDAs are derived relative to a program's ID, tying state to the specific program.",
+    "category": "programming-model",
+    "related": ["program", "pubkey"]
+  },
+  {
+    "id": "entrypoint",
+    "term": "Entrypoint",
+    "definition": "The function that the Solana runtime calls when a program is invoked. Native programs use the `entrypoint!()` macro which exposes a function with signature `fn(program_id, accounts, instruction_data) -> ProgramResult`. Anchor generates the entrypoint automatically and routes to the correct handler based on the instruction discriminator.",
+    "category": "programming-model",
+    "related": ["program", "instruction"]
+  },
+  {
+    "id": "discriminator",
+    "term": "Discriminator",
+    "definition": "An 8-byte identifier prepended to account data and instruction data to distinguish types. Anchor computes it as the first 8 bytes of `sha256('account:<AccountName>')` for accounts and `sha256('global:<function_name>')` for instructions. Discriminators prevent type cosplay attacks by ensuring data is deserialized as the correct type.",
+    "category": "programming-model",
+    "related": ["anchor", "instruction", "account-data"]
+  },
+  {
+    "id": "idl",
+    "term": "IDL (Interface Definition Language)",
+    "definition": "Interface Definition Language\u2014a JSON specification that describes a program's instructions, accounts, types, and error codes. Anchor auto-generates the IDL from the program source code. Client libraries (TypeScript, Python) use the IDL to serialize/deserialize instruction data and accounts, enabling type-safe interaction without manual encoding.",
+    "category": "programming-model",
+    "aliases": ["IDL"],
+    "related": ["anchor", "program"]
+  },
+  {
+    "id": "close-account",
+    "term": "Close Account",
+    "definition": "The process of reclaiming an account's lamports and marking it for deletion. To close an account: transfer all lamports to a recipient, zero out the data, and (in Anchor) set the discriminator to a closed sentinel. The runtime garbage-collects zero-lamport accounts. Failing to zero data enables revival attacks.",
+    "category": "programming-model",
+    "related": ["rent", "lamport", "account"]
+  },
+  {
+    "id": "fee-account",
+    "term": "Fee Account",
+    "definition": "The account designated to pay the transaction fee, always the first signer listed in the transaction's account keys array. The fee account must hold enough SOL to cover the base fee (5,000 lamports per signature) plus any priority fee. If the fee account's balance is insufficient, the transaction is rejected before execution.",
+    "category": "programming-model",
+    "related": ["transaction", "base-fee", "lamport"]
+  },
+  {
+    "id": "inner-instruction",
+    "term": "Inner Instruction",
+    "definition": "An instruction generated during cross-program invocation (CPI) that appears in a transaction's metadata as a nested instruction under its parent. Inner instructions are not declared in the original transaction message but are produced at runtime when a program calls another program via invoke or invoke_signed. They are visible in explorers and via the getTransaction RPC method's innerInstructions field.",
+    "category": "programming-model",
+    "aliases": ["CPI Instruction"],
+    "related": ["cpi", "instruction", "invoke"]
+  },
+  {
+    "id": "instruction-handler",
+    "term": "Instruction Handler",
+    "definition": "The specific function within a program that processes a particular instruction variant. In native Solana programs, the entrypoint dispatches to different handler functions based on instruction data. In Anchor, each pub fn in the #[program] module is an instruction handler that is automatically routed to via the 8-byte discriminator prefix in the instruction data.",
+    "category": "programming-model",
+    "related": ["instruction", "entrypoint", "discriminator"]
+  },
+  {
+    "id": "loader",
+    "term": "Loader",
+    "definition": "A built-in program responsible for deploying, loading, and executing on-chain programs by interpreting their binary encoding. Solana has multiple loaders: the original BPF Loader (deprecated, immutable programs), BPF Loader 2 (deprecated), and the current Upgradeable BPF Loader that supports program upgrades and manages the program/program-data account split.",
+    "category": "programming-model",
+    "related": ["bpf-loader", "upgradeable-loader", "program"]
+  },
+  {
+    "id": "private-key",
+    "term": "Private Key",
+    "definition": "The secret 32-byte component of an Ed25519 keypair used to produce digital signatures. The private key must be kept confidential — anyone with access to it can sign transactions and transfer assets from the corresponding account. Private keys are typically stored in JSON files (as 64-byte arrays including the public key) by the Solana CLI or encrypted within wallet software.",
+    "category": "programming-model",
+    "related": ["keypair", "pubkey", "ed25519"]
+  },
+  {
+    "id": "transaction-id",
+    "term": "Transaction ID",
+    "definition": "The first signature in a transaction, which uniquely identifies it on the network. Since each transaction has a unique combination of signers and a recent blockhash, the first signer's Ed25519 signature over the transaction message serves as a globally unique identifier. Transaction IDs are displayed as Base58-encoded 64-byte strings and used for lookups via getTransaction and getSignatureStatuses.",
+    "category": "programming-model",
+    "aliases": ["TXID"],
+    "related": ["transaction", "signature"]
+  },
+  {
+    "id": "realloc",
+    "term": "Realloc (Account Resize)",
+    "definition": "The process of resizing an on-chain account's data allocation after creation. Realloc can increase or decrease the data field size, but each instruction can increase by at most 10,240 bytes (10KB). The account owner program must sign the realloc, and if the account grows, additional lamports must be provided to maintain rent exemption. In Anchor, the realloc constraint on #[account(mut, realloc = new_size, realloc::payer = payer, realloc::zero = false)] handles this automatically.",
+    "category": "programming-model",
+    "related": ["account", "rent-exemption", "account-data"]
+  },
+  {
+    "id": "micro-lamport",
+    "term": "Micro-Lamport",
+    "definition": "The unit used to express compute unit pricing for priority fees on Solana. One lamport equals 1,000,000 micro-lamports. When setting a compute unit price via the Compute Budget Program, the price is specified in micro-lamports per compute unit. The total priority fee is calculated as (compute unit price in micro-lamports * compute units consumed) / 1,000,000, rounded down to lamports.",
+    "category": "programming-model",
+    "related": ["lamport", "compute-unit-price", "priority-fee"]
+  },
+  {
+    "id": "compute-unit-price",
+    "term": "Compute Unit Price",
+    "definition": "The price per compute unit in micro-lamports that a transaction is willing to pay as a priority fee. Set via the Compute Budget Program's SetComputeUnitPrice instruction. Higher prices increase the likelihood of a transaction being included by the leader during congestion. The effective priority fee equals the compute unit price multiplied by the compute units consumed, converted from micro-lamports to lamports.",
+    "category": "programming-model",
+    "related": ["micro-lamport", "compute-units", "priority-fee"]
+  },
+  {
+    "id": "compute-budget-program",
+    "term": "Compute Budget Program",
+    "definition": "A native Solana program (address: ComputeBudget111111111111111111111111111111) that allows transactions to configure their compute resource limits. It provides two key instructions: SetComputeUnitLimit (set the max CU a transaction can consume, up to 1.4M) and SetComputeUnitPrice (set the micro-lamport price per CU for priority fees). These instructions must appear before any program instructions in the transaction.",
+    "category": "programming-model",
+    "related": ["compute-budget", "compute-units", "priority-fee"]
+  },
+  {
+    "id": "max-cu-per-transaction",
+    "term": "Max Compute Units per Transaction",
+    "definition": "The hard upper limit of 1,400,000 compute units that a single Solana transaction can consume. This cap applies regardless of the SetComputeUnitLimit instruction value — no transaction can request more than 1.4M CU. The default per-instruction budget is 200,000 CU, but multi-instruction transactions share the overall 1.4M cap. Transactions exceeding their CU limit fail with a ComputeBudgetExceeded error.",
+    "category": "programming-model",
+    "related": ["compute-units", "compute-budget", "compute-budget-program"]
+  },
+  {
+    "id": "syscall",
+    "term": "Syscall (System Call)",
+    "definition": "The interface through which SBF programs request services from the Solana runtime, analogous to OS system calls. Syscalls provide access to operations that cannot be implemented in userspace BPF code: cryptographic functions (SHA-256, Keccak, Poseidon, secp256k1 recovery), logging (sol_log), account data access, CPI (invoke/invoke_signed), program return data, and sysvar reads. Each syscall has a defined compute unit cost.",
+    "category": "programming-model",
+    "aliases": ["System Call"],
+    "related": ["svm", "sbf", "compute-units"]
+  },
+  {
+    "id": "zero-copy-deserialization",
+    "term": "Zero-Copy Deserialization",
+    "definition": "A technique for accessing on-chain account data directly from the underlying byte buffer without copying it into a new Rust struct, avoiding heap allocation and reducing compute unit usage. In Anchor, zero-copy is enabled via #[account(zero_copy)] on the account struct, which uses repr(C) layout and the AccountLoader type. Ideal for large accounts (>1KB) where Borsh deserialization would be expensive.",
+    "category": "programming-model",
+    "related": ["account-data", "borsh", "account-loader"]
+  },
+  {
+    "id": "account-loader",
+    "term": "AccountLoader (Anchor)",
+    "definition": "An Anchor account type that provides zero-copy access to large account data without deserializing the entire account upfront. AccountLoader wraps the raw account data and provides load() and load_mut() methods to access the data as a typed reference. It is used with #[account(zero_copy)] structs and is preferred over Account<T> when accounts exceed ~1KB, as it significantly reduces compute unit consumption.",
+    "category": "programming-model",
+    "related": ["zero-copy-deserialization", "anchor", "account-data"]
+  },
+  {
+    "id": "buffer-account",
+    "term": "Buffer Account",
+    "definition": "A temporary account used during Solana program deployment to hold the program's ELF binary before it is written to the program data account. The deployer creates a buffer account, uploads the compiled SBF binary in chunks via the Upgradeable BPF Loader's Write instruction, and then issues a Deploy or Upgrade instruction that copies the buffer contents to the final program data account. Buffer accounts can be closed after deployment to reclaim rent.",
+    "category": "programming-model",
+    "related": ["upgradeable-loader", "program-data", "elf-binary"]
+  },
+  {
+    "id": "nonce-account",
+    "term": "Nonce Account",
+    "definition": "A special account managed by the System Program that stores a durable nonce value, enabling transactions with extended or indefinite lifetimes. Normally, transactions reference a recent blockhash and expire after ~60-90 seconds. Nonce accounts replace the blockhash with a stored nonce that remains valid until explicitly advanced, enabling offline signing workflows, scheduled transactions, and custodial operations where signing and submission happen at different times.",
+    "category": "programming-model",
+    "related": ["durable-nonce", "system-program", "blockhash"]
+  },
+  {
+    "id": "preflight-check",
+    "term": "Preflight Check",
+    "definition": "An RPC-level simulation that runs a transaction against the current bank state before forwarding it to the leader for actual execution. Preflight checks catch common errors (insufficient funds, invalid blockhash, CU overrun, program errors) before the transaction is submitted to the cluster. Preflight can be skipped via the skipPreflight option in sendTransaction, which is sometimes used when the simulation state lags behind the leader's state.",
+    "category": "programming-model",
+    "related": ["simulate-transaction", "rpc", "transaction"]
+  },
+  {
+    "id": "simulate-transaction",
+    "term": "Simulate Transaction",
+    "definition": "The simulateTransaction RPC method that dry-runs a transaction against a specified bank state without submitting it to the network or consuming fees. Simulation returns the execution result including logs, compute units consumed, return data, and any error. Developers use simulation to estimate CU usage, debug program errors, and verify transaction correctness before sending. Simulation does not require valid signatures.",
+    "category": "programming-model",
+    "related": ["preflight-check", "rpc", "compute-units"]
+  },
+  {
+    "id": "transaction-mortality",
+    "term": "Transaction Mortality",
+    "definition": "The limited lifespan of a Solana transaction determined by its referenced blockhash. A transaction's blockhash must correspond to a block within the last 150 slots (~60-90 seconds) or the transaction is rejected as expired. This mechanism prevents replay attacks and bounds the time validators must track transaction deduplication. Durable nonces bypass mortality for use cases requiring long-lived transactions.",
+    "category": "programming-model",
+    "related": ["blockhash", "durable-nonce", "transaction"]
+  }
+]

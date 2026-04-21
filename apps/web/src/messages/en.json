@@ -40,7 +40,8 @@
     "certificates": "Certificates",
     "lowSolBalance": "Low SOL balance.",
     "getDevnetSol": "Get devnet SOL ->",
-    "dismissBanner": "Dismiss"
+    "dismissBanner": "Dismiss",
+    "arcade": "Arcade"
   },
   "auth": {
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
@@ -705,5 +706,52 @@
       "course": "No discussions about this course yet.",
       "lesson": "No questions about this lesson yet. Ask one!"
     }
+  },
+  "arcade": {
+    "title": "Solana Arcade",
+    "subtitle": "Test your Solana knowledge with daily mechanical mini-games based on the official Glossary. Play, train your brain, and earn XP.",
+    "reward": "Reward",
+    "howToPlay": "How to Play",
+    "conexo": {
+      "desc": "Find 4 groups of 4 related concepts. A true test of ecosystem knowledge.",
+      "rules": {
+        "1": "Find groups of 4 items that share the same official Solana category.",
+        "2": "Select 4 items and click 'Submit'.",
+        "3": "Careful: You only have 4 mistakes allowed!"
+      }
+    },
+    "termo": {
+      "desc": "Guess the secret Solana word in 6 tries. The classic hit, now on-chain.",
+      "rules": {
+        "1": "Guess the Solana term in 6 tries.",
+        "2": "Letters in green are in the correct spot.",
+        "3": "Letters in yellow exist but in wrong spots."
+      }
+    },
+    "expresso": {
+      "desc": "Read the official glossary definition and guess the hidden term quickly and accurately.",
+      "rules": {
+        "1": "The definition is displayed. Type the hidden term.",
+        "2": "Be fast! Your speed determines the accuracy."
+      },
+      "definition": "Definition:",
+      "placeholder": "Type the term..."
+    },
+    "contexto": {
+      "desc": "Find the secret term by guessing similar words. The algorithm will guide you by proximity.",
+      "rules": {
+        "1": "Type words to find the hidden one.",
+        "2": "The distance number indicates how close you are.",
+        "3": "1 is the target word. 1000+ is far."
+      },
+      "placeholder": "Type a word...",
+      "distance": "Distance",
+      "rank": "Rank"
+    },
+    "win": "Congratulations! You solved today's puzzle. XP added to your profile.",
+    "lose": "Game over! Better luck tomorrow.",
+    "mistakesRemaining": "Mistakes remaining:",
+    "shuffle": "Shuffle",
+    "submit": "Submit"
   }
 }

@@ -1,0 +1,1000 @@
+[
+  {
+    "id": "phantom",
+    "term": "Phantom",
+    "definition": "The most popular Solana wallet, available as a browser extension and mobile app with multi-chain support (Solana, Ethereum, Polygon, Bitcoin). Phantom provides token swaps, NFT management, staking, and a built-in dApp browser. Known for its clean UX and rapid feature adoption, it has become the default entry point for most Solana users and consistently ranks among the top crypto wallets by active users.",
+    "category": "solana-ecosystem",
+    "related": ["wallet-general", "solflare", "wallet-adapter"]
+  },
+  {
+    "id": "solflare",
+    "term": "Solflare",
+    "definition": "A Solana-native wallet offering browser extension, mobile, and web interfaces with deep staking integration, hardware wallet support (Ledger), and a built-in dApp browser. Solflare was one of the first Solana wallets and provides advanced features like stake account management, token metadata display, and priority fee controls. It supports the Solana Wallet Standard for seamless dApp connectivity.",
+    "category": "solana-ecosystem",
+    "related": ["wallet-general", "phantom", "wallet-adapter"]
+  },
+  {
+    "id": "backpack-wallet",
+    "term": "Backpack Wallet",
+    "definition": "A multi-chain wallet developed by Coral (the team behind xNFT protocol) that combines MPC and self-custody models. Backpack pioneered executable NFTs (xNFTs) that embed full applications inside NFTs, enabling a decentralized app store experience within the wallet. It supports Solana, Ethereum, and other chains with a focus on developer extensibility and programmable wallet experiences.",
+    "category": "solana-ecosystem",
+    "related": ["wallet-general", "phantom", "mad-lads"]
+  },
+  {
+    "id": "backpack-exchange",
+    "term": "Backpack Exchange",
+    "definition": "A regulated cryptocurrency exchange built by the same team behind Backpack Wallet (Coral). Licensed in multiple jurisdictions, it offers spot and perpetual futures trading with a focus on the Solana ecosystem. Backpack Exchange integrates tightly with the Backpack Wallet for seamless fund transfers and aims to bridge the gap between centralized exchange liquidity and self-custodial wallet experiences.",
+    "category": "solana-ecosystem",
+    "related": ["backpack-wallet", "cex", "dex"]
+  },
+  {
+    "id": "helium",
+    "term": "Helium",
+    "definition": "A decentralized wireless infrastructure network that migrated from its own L1 blockchain to Solana in April 2023 for improved scalability and composability. Helium incentivizes individuals to deploy hotspots providing LoRaWAN (IoT) and 5G cellular coverage, earning HNT, MOBILE, and IOT tokens. With over 900,000 hotspots deployed globally, Helium is one of the largest DePIN projects on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["depin", "sol", "compressed-nft"]
+  },
+  {
+    "id": "render-network",
+    "term": "Render Network",
+    "definition": "A decentralized GPU rendering network that migrated to Solana in November 2023 from Ethereum for lower fees and higher throughput. Render connects artists and studios needing GPU power for 3D rendering, motion graphics, and AI workloads with node operators who supply idle GPUs. Contributors earn RENDER tokens for completed jobs. The migration leveraged Solana's state compression for efficient job tracking.",
+    "category": "solana-ecosystem",
+    "related": ["depin", "gpu-compute", "sol"]
+  },
+  {
+    "id": "hivemapper",
+    "term": "Hivemapper",
+    "definition": "A decentralized mapping network on Solana where contributors install dashcams to collect street-level imagery while driving, building an up-to-date global map. Contributors earn HONEY tokens for mapping coverage, with rewards weighted by map freshness and geographic demand. Hivemapper has mapped millions of kilometers of roads and sells map data to enterprises as an alternative to Google Maps.",
+    "category": "solana-ecosystem",
+    "related": ["depin", "sol", "helium"]
+  },
+  {
+    "id": "bonk",
+    "term": "BONK",
+    "definition": "Solana's first community-created dog-themed memecoin, launched in December 2022 during the post-FTX bear market to revitalize ecosystem morale. BONK was airdropped to Solana developers, NFT communities, and DeFi users. It grew into one of the largest memecoins by market cap and became a cultural symbol of Solana's community resilience, with integrations across major Solana DEXes and lending protocols.",
+    "category": "solana-ecosystem",
+    "related": ["airdrop-crypto", "sol", "dex"]
+  },
+  {
+    "id": "moonshot",
+    "term": "Moonshot",
+    "definition": "A mobile-first token launch platform on Solana that simplifies purchasing newly launched tokens using credit cards, Apple Pay, or other fiat payment methods. Moonshot lowers the barrier to entry for retail users who may not be familiar with DEX interfaces or wallet management, enabling direct participation in Solana token launches from a smartphone app.",
+    "category": "solana-ecosystem",
+    "related": ["pump-fun", "dex", "sol"]
+  },
+  {
+    "id": "colosseum",
+    "term": "Colosseum",
+    "definition": "The organization behind Solana's major hackathons and accelerator programs. Colosseum runs online hackathons attracting thousands of developers building on Solana, with prize pools and follow-on funding for winning projects. Its accelerator provides mentorship, funding, and ecosystem connections to promising teams. Many successful Solana projects originated from Colosseum hackathons.",
+    "category": "solana-ecosystem",
+    "related": ["solana-foundation", "superteam", "solana-breakpoint"]
+  },
+  {
+    "id": "superteam",
+    "term": "Superteam",
+    "definition": "A community-driven DAO supporting the Solana ecosystem through regional chapters across 15+ countries. Superteam members earn reputation and rewards by completing bounties, creating content, organizing events, and onboarding developers to Solana. It serves as a decentralized talent and community network that connects builders, creators, and business developers with ecosystem opportunities.",
+    "category": "solana-ecosystem",
+    "related": ["solana-foundation", "dao", "colosseum"]
+  },
+  {
+    "id": "solana-foundation",
+    "term": "Solana Foundation",
+    "definition": "A non-profit organization based in Zug, Switzerland, dedicated to the growth, security, and decentralization of the Solana network. The Foundation provides grants to developers, funds validator operations, organizes Breakpoint conferences, supports ecosystem tooling, and manages delegation programs that distribute stake to performant validators. It operates independently from Solana Labs and Anza.",
+    "category": "solana-ecosystem",
+    "related": ["sol", "validator", "solana-breakpoint"]
+  },
+  {
+    "id": "neon-evm",
+    "term": "Neon EVM",
+    "definition": "An Ethereum Virtual Machine compatibility layer that runs on Solana, enabling developers to deploy and execute Solidity smart contracts on Solana without code changes. Neon EVM translates Ethereum transactions into Solana transactions, giving Solidity developers access to Solana's speed and low costs while maintaining EVM tooling compatibility (Hardhat, MetaMask, Ethers.js).",
+    "category": "solana-ecosystem",
+    "related": ["evm", "solidity", "svm"]
+  },
+  {
+    "id": "debridge",
+    "term": "deBridge",
+    "definition": "A cross-chain interoperability protocol supporting high-performance bridging between Solana, Ethereum, and other major chains. deBridge uses a network of independent validators to verify cross-chain messages and enables asset transfers, cross-chain swaps, and arbitrary message passing. Its DLN (Decentralized Liquidity Network) facilitates zero-slippage cross-chain trades through a maker-taker model.",
+    "category": "solana-ecosystem",
+    "related": ["bridge", "interoperability", "wormhole"]
+  },
+  {
+    "id": "allbridge",
+    "term": "Allbridge",
+    "definition": "A multi-chain bridge protocol supporting asset transfers between Solana, Ethereum, BNB Chain, and other networks. Allbridge Core uses a liquidity pool model where users swap assets through chain-specific pools connected by a messaging layer, reducing the need for wrapped tokens. It supports both native stablecoin bridging and general token transfers across supported chains.",
+    "category": "solana-ecosystem",
+    "related": ["bridge", "interoperability", "wormhole"]
+  },
+  {
+    "id": "realms",
+    "term": "Realms",
+    "definition": "The primary governance platform on Solana, built on the SPL Governance program. Realms enables DAOs, protocol teams, and communities to create governance structures with token-weighted voting, proposal creation, treasury management, and council-based decision making. Major Solana protocols including Marinade, Mango, and MonkeDAO use Realms for on-chain governance and treasury operations.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "governance-token", "spl"]
+  },
+  {
+    "id": "solana-breakpoint",
+    "term": "Solana Breakpoint",
+    "definition": "Solana's flagship annual conference organized by the Solana Foundation, bringing together developers, founders, validators, and community members for keynotes, workshops, and networking. Breakpoint has been held in Lisbon (2022), Amsterdam (2023), and Singapore (2024), featuring major ecosystem announcements, product launches, and technical deep dives. It serves as the primary gathering for the global Solana community.",
+    "category": "solana-ecosystem",
+    "related": ["solana-foundation", "colosseum", "hacker-house"]
+  },
+  {
+    "id": "hacker-house",
+    "term": "Hacker House",
+    "definition": "Developer-focused co-working and event spaces organized by the Solana Foundation, ecosystem teams, and community groups where builders collaborate on Solana projects in an intensive, in-person setting. Hacker Houses are typically held during crypto conferences or as standalone multi-day events, providing workspace, mentorship, and networking opportunities for Solana developers worldwide.",
+    "category": "solana-ecosystem",
+    "related": ["solana-breakpoint", "colosseum", "solana-foundation"]
+  },
+  {
+    "id": "star-atlas",
+    "term": "Star Atlas",
+    "definition": "A AAA-quality space exploration and strategy game built on Solana using Unreal Engine 5. Star Atlas features a player-driven economy with NFT ships, crew, and land, a decentralized marketplace, and a governance model through DACs (Decentralized Autonomous Corporations). It showcases Solana's capacity for high-performance gaming with real-time on-chain asset ownership and trading.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "sol", "dapp"]
+  },
+  {
+    "id": "degods",
+    "term": "DeGods",
+    "definition": "A blue-chip NFT collection that launched on Solana in October 2021 and became one of the ecosystem's most culturally significant projects. Created by Frank (Rohun Vora), DeGods features 10,000 generative art pieces with a deflationary mechanism. The collection briefly migrated to Ethereum and Bitcoin before returning to Solana, reflecting broader multi-chain NFT trends.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "magic-eden", "sol"]
+  },
+  {
+    "id": "mad-lads",
+    "term": "Mad Lads",
+    "definition": "An NFT collection of 10,000 generative characters created by the Backpack/Coral team, launched in April 2023 as the first major xNFT collection. Mad Lads are executable NFTs that can embed applications directly within the token, pioneering a new paradigm for NFT utility beyond static media. The mint was one of the most anticipated Solana NFT launches and sold out rapidly.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "backpack-wallet", "magic-eden"]
+  },
+  {
+    "id": "claynosaurz",
+    "term": "Claynosaurz",
+    "definition": "A popular Solana NFT collection featuring animated claymation-style dinosaur characters. Known for high-quality 3D art and strong community engagement, Claynosaurz has expanded into gaming, merchandise, and brand collaborations. The collection demonstrated that Solana NFT projects could build lasting brands and IP beyond profile pictures, with a focus on entertainment and content creation.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "magic-eden", "sol"]
+  },
+  {
+    "id": "metaplex-aura",
+    "term": "Metaplex Aura",
+    "definition": "A decentralized indexing and data availability network by Metaplex designed to index compressed digital assets (cNFTs, tokens) on Solana. Aura replaces centralized RPC providers for reading compressed asset data by distributing the indexing workload across a network of operators. This improves reliability and decentralization of the compressed NFT infrastructure that underpins millions of on-chain assets.",
+    "category": "solana-ecosystem",
+    "related": ["compressed-nft", "zk-compression", "helius"]
+  },
+  {
+    "id": "step-finance",
+    "term": "Step Finance",
+    "definition": "A portfolio dashboard and DeFi aggregator on Solana that provides users with a unified view of their token balances, LP positions, staking rewards, and DeFi activity across Solana protocols. Step Finance aggregates data from multiple DEXes, lending platforms, and yield farms into a single interface, enabling portfolio tracking and one-click position management.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "sol", "jupiter"]
+  },
+  {
+    "id": "dialect",
+    "term": "Dialect",
+    "definition": "A messaging and notifications protocol built on Solana that enables wallet-to-wallet communication and smart messaging within dApps. Dialect powers on-chain notifications for DeFi events (liquidation warnings, governance votes, trade fills), token-gated group chats, and protocol announcements. It integrates with Solana wallets to deliver context-aware messages tied to on-chain activity.",
+    "category": "solana-ecosystem",
+    "related": ["dapp", "wallet-general", "sol"]
+  },
+  {
+    "id": "magic-eden",
+    "term": "Magic Eden",
+    "definition": "The leading NFT marketplace that launched on Solana in September 2021 and expanded to support Ethereum, Bitcoin Ordinals, Polygon, and other chains. Magic Eden pioneered features like collection launchpads, rarity tools, and cross-chain NFT trading. It processes the majority of Solana NFT volume and played a central role in the growth of the Solana NFT ecosystem.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "tensor", "sol"]
+  },
+  {
+    "id": "marginfi",
+    "term": "marginfi",
+    "definition": "A decentralized lending and borrowing protocol on Solana that enables users to supply assets to earn yield or borrow against collateral. marginfi features a risk engine that evaluates asset correlations and concentration risk, isolated lending pools for higher-risk assets, and integration with Solana DeFi composability. It became one of the largest lending protocols on Solana by TVL during 2023-2024.",
+    "category": "solana-ecosystem",
+    "related": ["lending", "borrowing", "tvl"]
+  },
+  {
+    "id": "solend-save",
+    "term": "Solend / Save",
+    "definition": "One of the earliest lending and borrowing protocols on Solana, originally launched as Solend in 2021 and later rebranded to Save. The protocol enables users to deposit assets to earn interest and borrow against collateral with algorithmic interest rates. It supports isolated lending pools, permissionless pool creation, and has processed billions in cumulative lending volume on Solana.",
+    "category": "solana-ecosystem",
+    "aliases": ["Solend", "Save"],
+    "related": ["lending", "borrowing", "marginfi"]
+  },
+  {
+    "id": "lifinity",
+    "term": "Lifinity",
+    "definition": "A proactive market-making DEX on Solana that uses oracle-driven pricing (via Pyth) instead of relying solely on arbitrageurs to maintain accurate prices. By referencing external oracle prices, Lifinity reduces impermanent loss for liquidity providers and captures value that would otherwise go to arbitrage traders. It operates concentrated liquidity positions that automatically rebalance around the oracle price.",
+    "category": "solana-ecosystem",
+    "related": ["dex", "oracle", "pyth"]
+  },
+  {
+    "id": "solana-accelerate",
+    "term": "Solana Accelerate",
+    "definition": "Solana Foundation's product-focused conference series. The inaugural event was held in May 2025 in New York City with over 3,000 attendees, later expanding to a global format in 2026 with editions in APAC and Miami. Positioned around product showcases and founder talks, Solana Accelerate complements Breakpoint's developer focus by highlighting real-world applications and go-to-market strategies.",
+    "category": "solana-ecosystem",
+    "related": ["solana-breakpoint", "solana-foundation"]
+  },
+  {
+    "id": "catstanbul",
+    "term": "Catstanbul",
+    "definition": "Jupiter Exchange's annual community conference, first held in January 2025 in Istanbul. Catstanbul features live transparency audits, JUP token burning ceremonies, ecosystem strategy discussions, and community showcases. Named after Jupiter's cat mascot branding, the event serves as Jupiter's primary gathering for announcing roadmap updates and celebrating community milestones.",
+    "category": "solana-ecosystem",
+    "related": ["jupiter", "governance-token"]
+  },
+  {
+    "id": "met-dhabi",
+    "term": "Met-Dhabi",
+    "definition": "Meteora's inaugural community event held in December 2025 in Abu Dhabi, one day before Solana Breakpoint 2025. Met-Dhabi featured main stage presentations, interactive booths, and a community gathering tied to Meteora's MET token generation event. The conference highlighted Meteora's DLMM technology and growing role in Solana's liquidity infrastructure.",
+    "category": "solana-ecosystem",
+    "related": ["meteora", "solana-breakpoint"]
+  },
+  {
+    "id": "solana-crossroads",
+    "term": "Solana Crossroads",
+    "definition": "A community-organized annual Solana conference in Istanbul, led by the Step Finance team rather than the Solana Foundation. Crossroads attracted over 2,500 attendees in 2024, making it one of the largest independently run Solana events. It is one of the few major Solana conferences entirely organized by ecosystem contributors, featuring talks, panels, and side events.",
+    "category": "solana-ecosystem",
+    "related": ["step-finance", "solana-breakpoint", "solana-foundation"]
+  },
+  {
+    "id": "mtndao",
+    "term": "mtnDAO",
+    "definition": "A month-long Solana developer retreat held annually in Salt Lake City, Utah, described as Solana's most notorious hacker house. Developers rent shared coworking space and build together for a full month in an intensive, community-run, sponsor-backed environment. mtnDAO fosters deep collaboration and has produced notable projects and lasting professional relationships within the Solana ecosystem.",
+    "category": "solana-ecosystem",
+    "related": ["hacker-house", "colosseum"]
+  },
+  {
+    "id": "colosseum-hackathon",
+    "term": "Colosseum Hackathon",
+    "definition": "Colosseum's global online hackathon series, formerly run by the Solana Foundation. Two major hackathons are held per year, plus Colosseum Eternal, a perpetual rolling format. Notable past hackathons include Grizzlython, Hyperdrive, Renaissance, Radar, Breakout, and Cypherpunk, which drew over 9,000 participants and 1,576 project submissions. Many successful Solana protocols originated from these events.",
+    "category": "solana-ecosystem",
+    "related": ["colosseum", "solana-foundation", "hacker-house"]
+  },
+  {
+    "id": "solana-allstars",
+    "term": "Solana Allstars",
+    "definition": "A global grassroots ambassador program launched by Step Finance in 2023. Solana Allstars is a network of local country managers who host recurring small-scale IRL meetups of 50 to 100 people to onboard new Solana community members worldwide. The program focuses on education, community building, and expanding Solana's reach into underrepresented regions.",
+    "category": "solana-ecosystem",
+    "related": ["step-finance", "superteam", "solana-foundation"]
+  },
+  {
+    "id": "solana-summit",
+    "term": "Solana Summit",
+    "definition": "A free, community-funded annual conference focused on APAC and emerging markets. The 2025 editions were held in Da Nang, Vietnam and Abuja, Nigeria. Organized by Superteam chapters and ecosystem partners, Solana Summit brings together local developers, founders, and community members in regions outside major crypto hubs to foster growth and adoption.",
+    "category": "solana-ecosystem",
+    "related": ["superteam", "solana-foundation", "solana-breakpoint"]
+  },
+  {
+    "id": "ondo-finance",
+    "term": "Ondo Finance",
+    "definition": "A leading real-world asset (RWA) protocol tokenizing US government securities on Solana. Flagship products include USDY, a US Dollar Yield token backed by US treasuries available to non-US persons, and OUSG, a tokenized BlackRock short-term treasury ETF. Ondo deployed to Solana in 2024 using Token-2022 compliance extensions for transfer restrictions and identity verification.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "staking-general"]
+  },
+  {
+    "id": "maple-finance",
+    "term": "Maple Finance",
+    "definition": "An institutional lending protocol connecting capital providers with vetted institutional borrowers through on-chain credit pools. Pool delegates underwrite loans and manage risk on behalf of depositors. Maple offers Solana pools for US Treasury yield and direct institutional lending, bridging traditional credit markets with DeFi infrastructure for higher-quality borrowers.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "marginfi"]
+  },
+  {
+    "id": "credix",
+    "term": "Credix",
+    "definition": "A private credit DeFi protocol on Solana providing financing to fintech lenders in Latin America and Africa. Credix structures on-chain credit facilities backed by real-world receivables, connecting global DeFi liquidity to underserved emerging markets. The protocol enables institutional and accredited investors to earn yield from real economic activity in regions with limited access to traditional capital markets.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "ondo-finance"]
+  },
+  {
+    "id": "parcl",
+    "term": "Parcl",
+    "definition": "A Solana-native DeFi protocol providing exposure to real estate price indices through perpetual-style markets. Parcl tracks price-per-square-foot in major US cities, allowing users to take long or short positions on residential real estate price movements without owning physical property. The protocol brings real estate market speculation on-chain with Solana's low fees and fast settlement.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "drift"]
+  },
+  {
+    "id": "zeta-markets",
+    "term": "Zeta Markets",
+    "definition": "An options and perpetual futures DEX on Solana using a fully on-chain order book and risk engine. Zeta Markets enables undercollateralized trading with cross-margining, allowing traders to take leveraged positions on SOL and other assets. The protocol combines the capital efficiency of centralized exchanges with the transparency and self-custody of decentralized trading.",
+    "category": "solana-ecosystem",
+    "related": ["dex", "perpetuals", "drift"]
+  },
+  {
+    "id": "flash-trade",
+    "term": "Flash Trade",
+    "definition": "A perpetual trading protocol on Solana offering synthetic asset trading with a pool-based liquidity model (FLP). Flash Trade uses oracle-based pricing from Pyth to enable zero-slippage trades against a shared liquidity pool, where liquidity providers earn fees from trader activity. The protocol supports leveraged perpetual positions on crypto assets with fast execution on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["perpetuals", "pyth", "drift"]
+  },
+  {
+    "id": "goosefx",
+    "term": "GooseFX",
+    "definition": "A DeFi suite on Solana offering a perpetual futures DEX, single-sided liquidity staking, and an NFT marketplace in one integrated platform. GooseFX's perpetual DEX uses an order book model while its single-sided staking allows users to provide liquidity with a single asset rather than token pairs, reducing impermanent loss exposure for liquidity providers.",
+    "category": "solana-ecosystem",
+    "aliases": ["GOFX"],
+    "related": ["dex", "perpetuals", "nft"]
+  },
+  {
+    "id": "mango-markets",
+    "term": "Mango Markets",
+    "definition": "A cross-margin trading protocol on Solana exploited in October 2022 for $114M by Avraham Eisenberg via oracle price manipulation. The exploit involved artificially inflating the MNGO token price to borrow against inflated collateral. The incident led to industry-wide improvements in oracle design, risk parameters, and protocol governance. Mango Markets was discontinued following the exploit and subsequent legal proceedings.",
+    "category": "solana-ecosystem",
+    "aliases": ["Mango"],
+    "related": ["dex", "oracle", "defi-general"]
+  },
+  {
+    "id": "hubble-protocol",
+    "term": "Hubble Protocol",
+    "definition": "A DeFi protocol on Solana for minting USDH stablecoin against multi-asset collateral including SOL, BTC, ETH, and liquid staking tokens. Hubble pioneered the multi-collateral CDP (Collateralized Debt Position) model on Solana, allowing users to deposit diverse assets into a single vault to borrow USDH at low interest rates while maintaining exposure to their collateral.",
+    "category": "solana-ecosystem",
+    "aliases": ["Hubble", "USDH"],
+    "related": ["stablecoin", "defi-general", "liquid-staking"]
+  },
+  {
+    "id": "tulip-protocol",
+    "term": "Tulip Protocol",
+    "definition": "The first yield aggregator on Solana, automating auto-compounding strategies for Raydium, Orca, and Saber LP positions. Launched in 2021, Tulip simplified yield farming by automatically reinvesting earned fees and rewards back into liquidity positions. The protocol operated during Solana's DeFi Summer period and wound down operations around 2023 as the yield farming landscape evolved.",
+    "category": "solana-ecosystem",
+    "aliases": ["Tulip"],
+    "related": ["yield-farming", "raydium", "orca"]
+  },
+  {
+    "id": "port-finance",
+    "term": "Port Finance",
+    "definition": "An early Solana lending protocol supporting variable and fixed rate lending markets. Port Finance operated from 2021 to 2023, offering users the ability to supply assets for yield or borrow against collateral with algorithmic interest rates. It was among the first wave of lending protocols on Solana before the ecosystem consolidated around larger platforms like marginfi and Kamino.",
+    "category": "solana-ecosystem",
+    "related": ["lending", "borrowing", "marginfi"]
+  },
+  {
+    "id": "friktion",
+    "term": "Friktion",
+    "definition": "A DeFi Options Vault (DOV) protocol on Solana that pioneered structured products including covered call vaults, cash-secured put vaults, and principal-protected strategies. Friktion enabled passive yield generation through automated options selling and was the leading structured products platform on Solana. The protocol shut down in mid-2023 after operating through the bear market.",
+    "category": "solana-ecosystem",
+    "aliases": ["Friktion Labs"],
+    "related": ["defi-general", "yield-farming", "sol"]
+  },
+  {
+    "id": "hxro-network",
+    "term": "Hxro Network",
+    "definition": "A derivatives infrastructure layer on Solana providing a shared on-chain risk engine and order book for parimutuel and perpetual futures markets. Hxro enables other protocols to build derivatives products on top of its infrastructure rather than creating their own matching and risk systems. The network supports prediction markets, perpetuals, and structured products through composable smart contracts.",
+    "category": "solana-ecosystem",
+    "aliases": ["Hxro", "HXRO"],
+    "related": ["perpetuals", "dex", "defi-general"]
+  },
+  {
+    "id": "blazestake",
+    "term": "BlazeStake",
+    "definition": "A liquid staking protocol on Solana distributing stake across 200+ validators to promote network decentralization. BlazeStake issues bSOL as its liquid staking token, which accrues staking rewards while remaining composable across Solana DeFi. The protocol uses an algorithmic stake distribution strategy that prioritizes smaller validators to reduce stake concentration among top operators.",
+    "category": "solana-ecosystem",
+    "aliases": ["bSOL"],
+    "related": ["liquid-staking", "validator", "sanctum"]
+  },
+  {
+    "id": "solblaze",
+    "term": "SolBlaze",
+    "definition": "The team behind BlazeStake liquid staking, also building custom liquid staking solutions and the SolBlaze Stake Pool SDK for Solana validators and protocols. SolBlaze provides infrastructure for projects to create their own branded liquid staking tokens and manage stake pool operations, contributing to the diversification of Solana's liquid staking ecosystem beyond single-provider solutions.",
+    "category": "solana-ecosystem",
+    "related": ["blazestake", "liquid-staking", "validator"]
+  },
+  {
+    "id": "jpool",
+    "term": "JPool",
+    "definition": "A liquid staking protocol on Solana focusing on decentralized stake distribution across validators. JPool issues JSOL as its liquid staking token, which represents staked SOL plus accumulated rewards. The protocol emphasizes validator diversity and uses performance-based algorithms to distribute stake among qualifying validators, contributing to Solana's network decentralization goals.",
+    "category": "solana-ecosystem",
+    "aliases": ["JSOL"],
+    "related": ["liquid-staking", "validator", "sanctum"]
+  },
+  {
+    "id": "lulo",
+    "term": "Lulo",
+    "definition": "A yield optimization protocol on Solana that automatically routes user deposits across multiple lending protocols including marginfi, Kamino, Drift, and Save to find the best available interest rates. Lulo continuously monitors lending rates and rebalances positions to maximize yield, abstracting away the complexity of manually comparing and switching between lending platforms for depositors.",
+    "category": "solana-ecosystem",
+    "related": ["lending", "marginfi", "kamino"]
+  },
+  {
+    "id": "saber",
+    "term": "Saber",
+    "definition": "The first major stableswap AMM on Solana, using a Curve-style invariant for efficient swaps between same-peg assets such as stablecoins and wrapped token variants. Saber reached peak TVL of over $4B in 2021, becoming the largest protocol on Solana by TVL at that time. The protocol pioneered the stableswap model on Solana but declined significantly by 2023 as liquidity migrated to newer platforms.",
+    "category": "solana-ecosystem",
+    "aliases": ["SBR"],
+    "related": ["amm", "stablecoin", "liquidity-pool"]
+  },
+  {
+    "id": "jupiter-lfg",
+    "term": "Jupiter LFG Launchpad",
+    "definition": "Jupiter's decentralized token launch platform using dynamic bonding curves and community voting to curate new token launches on Solana. LFG replaces traditional IDO and ICO models by allowing JUP holders to vote on which projects get featured, combined with a bonding curve mechanism for fair price discovery. Launched projects receive deep liquidity integration across Jupiter's swap infrastructure.",
+    "category": "solana-ecosystem",
+    "aliases": ["LFG Launchpad"],
+    "related": ["jupiter", "bonding-curve", "dex"]
+  },
+  {
+    "id": "hawksight",
+    "term": "Hawksight",
+    "definition": "An automated DeFi strategy vault on Solana that manages concentrated liquidity positions across Orca, Raydium, and Meteora pools with auto-rebalancing. Hawksight optimizes LP positions by dynamically adjusting price ranges based on market conditions, compounding fees, and rebalancing when prices move outside the active range, reducing the active management burden for liquidity providers.",
+    "category": "solana-ecosystem",
+    "related": ["liquidity-pool", "orca", "raydium"]
+  },
+  {
+    "id": "armada",
+    "term": "Armada",
+    "definition": "Token launch infrastructure on Solana providing customizable launch pools, vesting schedules, and staking programs for new projects. Armada offers a suite of composable smart contracts that handle token distribution mechanics including cliff vesting, linear unlock schedules, and staking rewards, enabling projects to manage their token economics without building custom launch infrastructure.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "sol", "dapp"]
+  },
+  {
+    "id": "access-protocol",
+    "term": "Access Protocol",
+    "definition": "A content monetization protocol on Solana where creators stake ACS tokens and subscribers lock tokens to access premium content, replacing traditional paywalls with a staking-based model. Subscribers maintain access as long as their tokens remain locked, earning staking yields while supporting creators. The protocol enables a non-extractive relationship between content producers and their audience.",
+    "category": "solana-ecosystem",
+    "aliases": ["ACS"],
+    "related": ["dapp", "sol", "web3"]
+  },
+  {
+    "id": "mean-finance",
+    "term": "Mean Finance",
+    "definition": "A DeFi protocol on Solana offering dollar-cost averaging (DCA) and money streaming services. Mean Finance's MeanFi app enables users to set up automated recurring token purchases and stream payments over time, combining CeFi-style scheduled transactions with DeFi self-custody. The protocol supports customizable DCA intervals and real-time payment streaming for payroll and subscriptions.",
+    "category": "solana-ecosystem",
+    "aliases": ["MeanFi"],
+    "related": ["defi-general", "jupiter", "sol"]
+  },
+  {
+    "id": "symmetry",
+    "term": "Symmetry",
+    "definition": "An on-chain asset management protocol on Solana enabling creation of token baskets, indices, and actively managed funds using automated rebalancing. Symmetry allows anyone to create and manage diversified crypto portfolios as on-chain funds that others can invest in, with transparent rebalancing rules and fee structures enforced by smart contracts rather than centralized fund managers.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "dex", "sol"]
+  },
+  {
+    "id": "rain-fi",
+    "term": "Rain.fi",
+    "definition": "An NFT lending protocol on Solana offering instant loans against NFT collateral with floor-price-based loan-to-value ratios. Rain.fi enables NFT holders to access liquidity without selling their assets by borrowing against collection floor prices. The protocol provides automated liquidation mechanisms and supports major Solana NFT collections as collateral for peer-to-pool lending.",
+    "category": "solana-ecosystem",
+    "aliases": ["Rain"],
+    "related": ["nft", "lending", "defi-general"]
+  },
+  {
+    "id": "banx",
+    "term": "Banx",
+    "definition": "A peer-to-peer NFT lending platform on Solana enabling holders to borrow against NFTs using customizable loan terms and perpetual loan structures. Unlike pool-based lending, Banx connects individual lenders and borrowers directly, allowing negotiation of interest rates, durations, and LTV ratios. The platform supports perpetual loans that auto-renew until either party exits the position.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "lending", "defi-general"]
+  },
+  {
+    "id": "socean",
+    "term": "Socean",
+    "definition": "An early Solana liquid staking protocol that used algorithmic stake distribution to promote validator decentralization. Socean issued scnSOL as its liquid staking token and pioneered automated delegation strategies on Solana. The protocol merged into the Sanctum ecosystem in 2024, with its liquid staking functionality absorbed into Sanctum's unified LST infrastructure.",
+    "category": "solana-ecosystem",
+    "aliases": ["scnSOL"],
+    "related": ["liquid-staking", "sanctum", "validator"]
+  },
+  {
+    "id": "cogent-staking",
+    "term": "Cogent Crypto",
+    "definition": "A high-performance Solana validator operator known for low commission rates, reliable infrastructure, and active community engagement. Cogent Crypto operates validator nodes and RPC infrastructure, contributing to Solana network security and decentralization. The team provides staking services for delegators seeking consistently performing validators with transparent operations and strong uptime records.",
+    "category": "solana-ecosystem",
+    "related": ["validator", "stake", "sol"]
+  },
+  {
+    "id": "laine-validator",
+    "term": "Laine",
+    "definition": "A prominent Solana validator operator and staking service provider known for building the StakeWiz analytics platform, participating in community governance, and advocating for validator ecosystem improvements. Laine operates high-performance validator infrastructure and actively contributes to Solana governance discussions around stake distribution, commission policies, and network decentralization.",
+    "category": "solana-ecosystem",
+    "related": ["validator", "stakewiz", "stake"]
+  },
+  {
+    "id": "stakewiz",
+    "term": "StakeWiz",
+    "definition": "A Solana validator analytics platform built by Laine providing performance metrics, commission tracking, APY comparisons, and stake distribution data. StakeWiz helps delegators evaluate and choose validators based on historical performance, skip rates, voting records, and commission changes, serving as one of the primary tools for informed staking decisions on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["validator", "laine-validator", "stake"]
+  },
+  {
+    "id": "aurory",
+    "term": "Aurory",
+    "definition": "A play-to-earn RPG game on Solana featuring Aurorians NFT characters in tactical turn-based combat. Aurory combines on-chain asset ownership with gameplay through an NFT marketplace and token economy. Players can earn AURY tokens through gameplay, trade NFT characters and items, and participate in a player-driven economy built on Solana's low-fee infrastructure.",
+    "category": "solana-ecosystem",
+    "aliases": ["AURY"],
+    "related": ["gaming", "nft", "sol"]
+  },
+  {
+    "id": "genopets",
+    "term": "Genopets",
+    "definition": "A move-to-earn RPG on Solana combining physical activity tracking with game progression. Players evolve their Genopet NFTs by walking in the real world, with step data from mobile devices translated into in-game experience points and evolution stages. The game merges fitness incentives with blockchain gaming through habitat NFTs, crafting systems, and a dual-token economy on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["gaming", "nft", "sol"]
+  },
+  {
+    "id": "stepn",
+    "term": "STEPN",
+    "definition": "A move-to-earn fitness app originally launched on Solana where users purchase NFT sneakers and earn GST and GMT tokens by walking or running. STEPN reached peak activity in mid-2022 with millions of users, becoming one of the most visible Solana consumer applications. The project later expanded to multi-chain support but remains closely associated with the Solana ecosystem's mainstream adoption push.",
+    "category": "solana-ecosystem",
+    "aliases": ["GMT", "GST"],
+    "related": ["gaming", "nft", "sol"]
+  },
+  {
+    "id": "nyan-heroes",
+    "term": "Nyan Heroes",
+    "definition": "A free-to-play hero shooter game built on Solana featuring cat characters piloting mechs in competitive multiplayer combat. Nyan Heroes integrates NFT-based cosmetics, in-game items, and a token economy while maintaining a free-to-play model that does not require crypto ownership to play. The game targets mainstream gamers with blockchain elements as optional enhancements rather than requirements.",
+    "category": "solana-ecosystem",
+    "related": ["gaming", "nft", "sol"]
+  },
+  {
+    "id": "photo-finish",
+    "term": "Photo Finish LIVE",
+    "definition": "A horse racing game on Solana where players breed, train, and race NFT horses with real prize pools funded by entry fees. Photo Finish features genetic breeding mechanics that produce offspring with inherited traits, a functioning race economy, and player-owned stables. The game launched with a working game loop and demonstrates sustainable blockchain gaming economics on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["gaming", "nft", "sol"]
+  },
+  {
+    "id": "drip-haus",
+    "term": "DRiP",
+    "definition": "A free digital art distribution platform on Solana delivering weekly compressed NFT drops from artists to collectors at no cost. DRiP uses Solana's state compression technology to mint and distribute millions of NFTs for fractions of a cent each, making it economically viable to give away art at scale. The platform has become a major onboarding tool, introducing hundreds of thousands of users to Solana wallets and NFTs.",
+    "category": "solana-ecosystem",
+    "aliases": ["DRiP Haus"],
+    "related": ["compressed-nft", "nft", "sol"]
+  },
+  {
+    "id": "okay-bears",
+    "term": "Okay Bears",
+    "definition": "A blue-chip Solana NFT collection of 10,000 bear PFPs that briefly became the top NFT collection across all blockchains by trading volume in April 2022. Known for its clean, minimalist art style, Okay Bears demonstrated that Solana NFT projects could compete with Ethereum collections at the highest level. The collection helped establish Solana as a viable chain for premium NFT launches.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "magic-eden", "degods"]
+  },
+  {
+    "id": "solana-monkey-business",
+    "term": "Solana Monkey Business",
+    "definition": "One of the earliest Solana NFT collections, launched in June 2021 featuring 5,000 pixel art monkeys. Solana Monkey Business (SMB) pioneered the Solana NFT ecosystem and gave rise to MonkeDAO, the first NFT-holder DAO on Solana. The collection holds historical significance as a foundational project that proved the viability of NFTs on Solana before the ecosystem's rapid growth.",
+    "category": "solana-ecosystem",
+    "aliases": ["SMB"],
+    "related": ["nft", "monkedao", "magic-eden"]
+  },
+  {
+    "id": "teleport",
+    "term": "Teleport",
+    "definition": "A decentralized rideshare protocol on Solana aiming to create a driver-owned alternative to centralized ride-hailing services like Uber and Lyft. Teleport uses token incentives to bootstrap a network of drivers and riders, with smart contracts handling payments and reputation. The protocol represents a DePIN approach to transportation, removing platform intermediary fees through decentralized coordination.",
+    "category": "solana-ecosystem",
+    "related": ["depin", "sol", "dapp"]
+  },
+  {
+    "id": "roam",
+    "term": "Roam",
+    "definition": "A decentralized global WiFi roaming network on Solana where users share WiFi access points and earn tokens for providing connectivity. Roam creates a community-owned wireless layer by incentivizing individuals and businesses to open their WiFi networks to roaming users, building a decentralized alternative to traditional roaming agreements between telecom providers.",
+    "category": "solana-ecosystem",
+    "related": ["depin", "helium", "sol"]
+  },
+  {
+    "id": "genesysgo",
+    "term": "GenesysGo",
+    "definition": "The infrastructure company behind Shadow Drive (decentralized storage) and Shadow RPC services on Solana. GenesysGo pivoted from validator operations to building decentralized infrastructure, with Shadow Drive providing an on-chain storage solution where files are stored across a distributed network of operators. The platform offers S3-compatible storage APIs with on-chain proof of storage verification.",
+    "category": "solana-ecosystem",
+    "aliases": ["Shadow Drive", "Shadow RPC"],
+    "related": ["rpc", "depin", "sol"]
+  },
+  {
+    "id": "bonfida",
+    "term": "Bonfida",
+    "definition": "The team behind Solana Name Service (SNS), enabling human-readable .sol domain names that map to wallet addresses on Solana. Bonfida also built early Serum DEX GUIs and trading bots during Solana's initial DeFi wave. The .sol domain system supports subdomains, records for social profiles and websites, and has registered hundreds of thousands of domains since launch.",
+    "category": "solana-ecosystem",
+    "aliases": ["SNS", "Solana Name Service"],
+    "related": ["dapp", "sol", "web3"]
+  },
+  {
+    "id": "solana-name-service",
+    "term": "Solana Name Service",
+    "definition": "A domain name system on Solana enabling .sol domains that map human-readable names to wallet addresses, built and maintained by Bonfida. SNS supports subdomains, custom records for social profiles, websites, and other metadata. Users can register, transfer, and trade .sol domains on secondary markets, providing a decentralized identity layer for the Solana ecosystem.",
+    "category": "solana-ecosystem",
+    "aliases": ["SNS", ".sol domains"],
+    "related": ["bonfida", "dapp", "web3"]
+  },
+  {
+    "id": "tiplink",
+    "term": "TipLink",
+    "definition": "A Solana payment link service that lets anyone send crypto via URL without requiring the recipient to have an existing wallet. Senders create a link containing tokens, and recipients claim them through a simple web interface that generates a wallet automatically. TipLink dramatically lowers the onboarding barrier for new crypto users by removing the need to install wallet software before receiving funds.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "sol", "wallet-general"]
+  },
+  {
+    "id": "sphere-pay",
+    "term": "Sphere",
+    "definition": "Payment infrastructure on Solana enabling merchants to accept crypto payments with fiat settlement, recurring billing, and customizable payment links. Sphere targets e-commerce and SaaS businesses with Stripe-like APIs for Solana payments, handling the complexity of on-chain transactions while providing merchants with familiar payment processing workflows and automatic currency conversion.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "sol", "dapp"]
+  },
+  {
+    "id": "helio-pay",
+    "term": "Helio",
+    "definition": "A Solana payment gateway used by e-commerce platforms, creators, and businesses for accepting crypto payments. Helio offers a Shopify plugin, pay links, subscription billing, and NFT-gated payment flows. The platform simplifies merchant onboarding to Solana payments with embeddable checkout widgets and supports multiple tokens including SOL, USDC, and other SPL tokens.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "sol", "spl-token"]
+  },
+  {
+    "id": "code-app",
+    "term": "Code",
+    "definition": "A mobile payments app built on Solana using a privacy-preserving protocol with time-locked accounts for instant, fee-free payments. Code abstracts blockchain complexity behind a simple cash-like UX where users send and receive payments by scanning codes, without needing to understand wallets, gas fees, or transaction signing. The app targets mainstream consumers who want simple peer-to-peer payments.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "sol", "wallet-general"]
+  },
+  {
+    "id": "grape-protocol",
+    "term": "Grape Protocol",
+    "definition": "A community management and identity verification tool on Solana enabling token-gated access, reputation scoring, and community analytics for DAOs and projects. Grape allows communities to set membership requirements based on token holdings, NFT ownership, or on-chain activity, creating verified community spaces with tiered access levels and contributor reputation tracking.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "web3", "dapp"]
+  },
+  {
+    "id": "monkedao",
+    "term": "MonkeDAO",
+    "definition": "The first NFT-holder DAO on Solana, created by Solana Monkey Business (SMB) NFT holders. MonkeDAO operates validator nodes generating staking revenue, organizes community events, and makes venture investments on behalf of its members. The DAO demonstrated that NFT communities could evolve beyond collectibles into functioning organizations with real economic activity and governance on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "solana-monkey-business", "validator"]
+  },
+  {
+    "id": "jupiter-dao",
+    "term": "Jupiter DAO",
+    "definition": "The decentralized governance body for Jupiter Exchange using JUP tokens for voting on protocol decisions. Jupiter DAO conducts votes on protocol fees, ecosystem grants, token buybacks and burns, and strategic initiatives through an active governance process. The DAO represents one of the largest and most active governance communities on Solana with regular proposal cycles and high voter participation.",
+    "category": "solana-ecosystem",
+    "aliases": ["JUP DAO"],
+    "related": ["jupiter", "dao", "governance-token"]
+  },
+  {
+    "id": "metaplex-foundation",
+    "term": "Metaplex Foundation",
+    "definition": "The organization stewarding the Metaplex protocol, which provides the core NFT standard infrastructure on Solana. The foundation manages development and governance of Token Metadata, Candy Machine (NFT minting), Bubblegum (compressed NFTs), and Core (next-gen asset standard). Metaplex standards underpin virtually all NFT activity on Solana and the foundation oversees the MPLX governance token.",
+    "category": "solana-ecosystem",
+    "aliases": ["Metaplex"],
+    "related": ["nft", "compressed-nft", "metaplex-aura"]
+  },
+  {
+    "id": "birdeye",
+    "term": "Birdeye",
+    "definition": "A leading Solana token analytics platform providing real-time price charts, trading volume, holder distribution data, and wallet activity tracking across all Solana DEXes. Birdeye aggregates on-chain data to offer comprehensive market intelligence including new token discovery, trending pairs, and portfolio tracking. It serves as a primary research tool for Solana traders and investors.",
+    "category": "solana-ecosystem",
+    "related": ["dex", "sol", "jupiter"]
+  },
+  {
+    "id": "solscan",
+    "term": "Solscan",
+    "definition": "A popular Solana block explorer offering detailed transaction views, token analytics, account inspection, DeFi activity tracking, and developer API access. Solscan provides human-readable transaction parsing, labeled accounts for known protocols, and comprehensive token holder data. It is one of the most widely used tools for exploring Solana on-chain activity alongside the official Solana Explorer.",
+    "category": "solana-ecosystem",
+    "related": ["rpc", "sol", "spl-token"]
+  },
+  {
+    "id": "solanafm",
+    "term": "SolanaFM",
+    "definition": "A Solana block explorer and indexer providing human-readable transaction parsing, account labeling, and developer APIs for on-chain data access. SolanaFM differentiates itself with an IDL-aware transaction decoder that can parse program-specific instructions into readable formats, making complex DeFi transactions understandable for users and developers investigating on-chain activity.",
+    "category": "solana-ecosystem",
+    "related": ["rpc", "sol", "indexer"]
+  },
+  {
+    "id": "xray-explorer",
+    "term": "XRAY",
+    "definition": "An open-source Solana transaction explorer built by Helius providing clean visualization of complex transactions with human-readable descriptions and labeled accounts. XRAY breaks down multi-instruction transactions into understandable steps, showing token transfers, program interactions, and account changes in an intuitive interface. Its open-source codebase allows community contributions and self-hosting.",
+    "category": "solana-ecosystem",
+    "related": ["helius", "rpc", "sol"]
+  },
+  {
+    "id": "dexscreener",
+    "term": "DEX Screener",
+    "definition": "A multi-chain DEX analytics platform widely used on Solana for tracking new token launches, price charts, liquidity data, and trading activity in real time. DEX Screener provides instant visibility into new trading pairs as they appear on Solana DEXes, making it an essential tool for traders monitoring token launches on platforms like Raydium, Orca, and Pump.fun.",
+    "category": "solana-ecosystem",
+    "related": ["dex", "raydium", "pump-fun"]
+  },
+  {
+    "id": "rugcheck",
+    "term": "Rugcheck",
+    "definition": "A Solana token safety analysis tool that scans token contracts for red flags including concentrated holdings, unlocked liquidity, retained mint authority, frozen accounts, and other rug pull indicators. Rugcheck provides a risk score for any SPL token, helping traders evaluate token safety before investing. It became an essential due diligence tool during the 2024 memecoin trading surge on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["spl-token", "dex", "pump-fun"]
+  },
+  {
+    "id": "defined-fi",
+    "term": "Defined.fi",
+    "definition": "A real-time DEX data and analytics API provider covering Solana and other chains. Defined.fi offers token price feeds, wallet analytics, trading pair data, and historical market data through developer-friendly APIs. The platform serves as infrastructure for trading bots, portfolio trackers, and analytics dashboards that need reliable, low-latency on-chain market data across multiple blockchains.",
+    "category": "solana-ecosystem",
+    "related": ["dex", "rpc", "indexer"]
+  },
+  {
+    "id": "bubblemaps",
+    "term": "Bubblemaps",
+    "definition": "A visual token holder analysis tool that displays wallet clusters and concentration patterns as interactive bubble diagrams. On Solana, Bubblemaps is used to identify insider wallets, connected accounts, and supply distribution by mapping relationships between holders. Traders use it to detect potential manipulation by visualizing whether large portions of supply are controlled by related wallet clusters.",
+    "category": "solana-ecosystem",
+    "related": ["spl-token", "dex", "sol"]
+  },
+  {
+    "id": "mayan-finance",
+    "term": "Mayan Finance",
+    "definition": "A cross-chain swap protocol built on Wormhole enabling token transfers between Solana, Ethereum, and other chains with competitive rates through auction-based pricing. Mayan uses a relay system where solvers compete to fulfill cross-chain swaps at the best rates, combining Wormhole's messaging security with market-driven pricing to offer efficient cross-chain asset transfers.",
+    "category": "solana-ecosystem",
+    "related": ["bridge", "wormhole", "interoperability"]
+  },
+  {
+    "id": "portal-bridge",
+    "term": "Portal Bridge",
+    "definition": "Wormhole's user-facing bridge interface for transferring tokens and NFTs between Solana and 20+ blockchains. Portal Bridge uses Wormhole's guardian network of 19 validators to verify cross-chain messages and secure asset transfers. It was one of the earliest production cross-chain bridges for Solana and remains a primary interface for moving assets between Solana and other ecosystems.",
+    "category": "solana-ecosystem",
+    "aliases": ["Portal"],
+    "related": ["bridge", "wormhole", "interoperability"]
+  },
+  {
+    "id": "hashflow",
+    "term": "Hashflow",
+    "definition": "A cross-chain DEX aggregator offering zero-slippage RFQ (Request for Quote) based trading across Solana and EVM chains. Hashflow uses professional market makers to provide guaranteed quotes rather than AMM-based pricing, eliminating slippage and MEV exposure for traders. The protocol enables cross-chain swaps without requiring traditional bridge transfers through its market maker network.",
+    "category": "solana-ecosystem",
+    "aliases": ["HFT"],
+    "related": ["dex", "bridge", "interoperability"]
+  },
+  {
+    "id": "solana-labs",
+    "term": "Solana Labs",
+    "definition": "The original development company that created the Solana blockchain, co-founded by Anatoly Yakovenko and Raj Gokal in 2018. Solana Labs developed the initial validator client, designed Proof of History, and launched the network in March 2020. In 2024, the company spun off validator client development to Anza, shifting focus to ecosystem growth, incubation, and strategic initiatives.",
+    "category": "solana-ecosystem",
+    "related": ["sol", "agave", "anza"]
+  },
+  {
+    "id": "jump-crypto",
+    "term": "Jump Crypto",
+    "definition": "The cryptocurrency division of Jump Trading, a major quantitative trading firm. Jump Crypto built the Firedancer validator client for Solana, representing a massive infrastructure investment in the network. The team also contributed to Wormhole's development and has been one of the most significant engineering and capital contributors to the Solana ecosystem since its early stages.",
+    "category": "solana-ecosystem",
+    "related": ["firedancer", "wormhole", "validator"]
+  },
+  {
+    "id": "multicoin-capital",
+    "term": "Multicoin Capital",
+    "definition": "A crypto-native venture fund and one of the earliest institutional Solana investors and advocates. Multicoin Capital led early funding rounds for Solana Labs and has backed numerous Solana ecosystem projects across DeFi, infrastructure, and consumer applications. The fund's public thesis on Solana's technical architecture helped attract developer and investor attention to the ecosystem during its growth phase.",
+    "category": "solana-ecosystem",
+    "related": ["solana-labs", "sol", "solana-foundation"]
+  },
+  {
+    "id": "solana-ventures",
+    "term": "Solana Ventures",
+    "definition": "An investment arm focused on funding Solana ecosystem projects across DeFi, NFTs, gaming, and infrastructure. Solana Ventures co-launched the $100M Solana Gaming Fund and participated in numerous ecosystem investments to accelerate adoption. The fund operated as a strategic capital deployment vehicle to bootstrap critical ecosystem verticals during Solana's early growth period.",
+    "category": "solana-ecosystem",
+    "related": ["solana-labs", "solana-foundation", "gaming"]
+  },
+  {
+    "id": "glow-wallet",
+    "term": "Glow Wallet",
+    "definition": "A Solana wallet emphasizing speed and developer experience with a clean interface, built-in token swap functionality, and experimental features for power users. Glow Wallet focuses on fast transaction signing, minimal UI friction, and support for advanced Solana features, positioning itself as an alternative to Phantom for users who prioritize performance and developer-oriented tooling.",
+    "category": "solana-ecosystem",
+    "related": ["wallet-general", "phantom", "solflare"]
+  },
+  {
+    "id": "stripe-solana",
+    "term": "Stripe Solana Integration",
+    "definition": "Payment processor Stripe's support for USDC on Solana, enabling businesses to accept and settle crypto payments through Stripe's existing merchant infrastructure. The integration allows millions of Stripe merchants to receive USDC payments on Solana with automatic fiat conversion, representing a major milestone for Solana's adoption in mainstream commerce and payment processing.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "stablecoin", "sol"]
+  },
+  {
+    "id": "shopify-solana",
+    "term": "Shopify Solana",
+    "definition": "Solana blockchain integration for Shopify stores enabling NFT-gated commerce, token-gated discounts, and crypto payments through Solana Pay and partner applications. The integration allows Shopify merchants to verify NFT ownership for exclusive product access, accept SOL and SPL token payments, and create blockchain-enhanced shopping experiences for their customers.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "nft", "sol"]
+  },
+  {
+    "id": "dogwifhat",
+    "term": "dogwifhat",
+    "definition": "A major Solana memecoin (ticker: WIF) featuring a Shiba Inu dog wearing a pink knitted hat. Dogwifhat rose to become a top-5 memecoin by market cap in early 2024, symbolizing the resurgence of memecoin culture on Solana. The token became a cultural icon of Solana's vibrant trading community and helped establish Solana as the primary chain for memecoin activity.",
+    "category": "solana-ecosystem",
+    "aliases": ["WIF", "$WIF"],
+    "related": ["bonk", "pump-fun", "sol"]
+  },
+  {
+    "id": "samo",
+    "term": "SAMO",
+    "definition": "Solana's self-styled ambassador dog memecoin, launched in April 2021 as one of the earliest memecoins on the network. The SAMO community positions the project as an ecosystem education and adoption vehicle, hosting events, producing content, and onboarding new users to Solana. SAMO maintains one of the longest-running memecoin communities on Solana with a focus on positive ecosystem contribution.",
+    "category": "solana-ecosystem",
+    "aliases": ["Samoyed Coin"],
+    "related": ["bonk", "sol", "web3"]
+  },
+  {
+    "id": "wormhole-queries",
+    "term": "Wormhole Queries",
+    "definition": "A feature of the Wormhole protocol enabling cross-chain data reads from Solana without requiring full bridge transfers. Wormhole Queries allows smart contracts on other chains to verify Solana on-chain state including account data, token balances, and program state by requesting attestations from Wormhole's guardian network, enabling lightweight cross-chain composability without moving assets.",
+    "category": "solana-ecosystem",
+    "related": ["wormhole", "interoperability", "bridge"]
+  },
+  {
+    "id": "jupiter-perpetuals",
+    "term": "Jupiter Perpetuals",
+    "definition": "Jupiter's perpetual futures trading platform using a pool-based model (JLP) where liquidity providers deposit assets to earn trading fees while traders access up to 100x leverage on SOL, ETH, and BTC. JLP holders earn real yield from trading fees and liquidations, making it one of the highest-yield opportunities on Solana. The platform integrates directly with Jupiter's swap infrastructure.",
+    "category": "solana-ecosystem",
+    "aliases": ["JLP"],
+    "related": ["jupiter", "perpetuals", "defi-general"]
+  },
+  {
+    "id": "sanctum-infinity",
+    "term": "Sanctum Infinity",
+    "definition": "Sanctum's multi-LST liquidity pool that accepts all Solana liquid staking tokens into a single unified pool, solving the liquidity fragmentation problem across dozens of LST providers. Sanctum Infinity issues the INF token representing a diversified basket of staked SOL across multiple validators and staking protocols, providing deep liquidity and instant swaps between any Solana LST.",
+    "category": "solana-ecosystem",
+    "aliases": ["INF"],
+    "related": ["sanctum", "liquid-staking", "liquidity-pool"]
+  },
+  {
+    "id": "famous-fox-federation",
+    "term": "Famous Fox Federation",
+    "definition": "A Solana NFT collection and ecosystem tools builder featuring fox-themed digital collectibles. The team created utility tools including token staking platforms, holder verification systems, and the Transdimensional Fox Federation collection. Famous Fox Federation contributed tooling infrastructure used by other Solana NFT projects and built one of the more engaged NFT communities on the network.",
+    "category": "solana-ecosystem",
+    "aliases": ["FFF"],
+    "related": ["nft", "magic-eden", "sol"]
+  },
+  {
+    "id": "streamflow",
+    "term": "Streamflow",
+    "definition": "A token vesting and payroll streaming protocol on Solana enabling time-locked token distribution, cliff vesting, and real-time payment streams for teams and DAOs. Streamflow handles token unlock schedules for project launches, employee compensation with linear or custom vesting curves, and continuous payment streaming where recipients can withdraw accumulated tokens at any time.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "sol", "spl-token"]
+  },
+  {
+    "id": "dual-finance",
+    "term": "Dual Finance",
+    "definition": "A DeFi options protocol on Solana enabling projects to distribute tokens through option-based incentive programs called Staking Options rather than direct airdrops. Dual Finance allows protocols to offer staking rewards as options contracts, giving recipients the right to purchase tokens at a discount. This model aligns incentives by rewarding committed stakeholders over passive airdrop recipients.",
+    "category": "solana-ecosystem",
+    "related": ["defi-general", "yield-farming", "airdrop-crypto"]
+  },
+  {
+    "id": "jito-foundation",
+    "term": "Jito Foundation",
+    "definition": "The organization governing the Jito protocol ecosystem including JitoSOL liquid staking, MEV rewards distribution, and the JTO governance token. The Jito Foundation oversees protocol upgrades, manages the treasury, and conducts governance votes on fee structures and ecosystem grants. JitoSOL distinguishes itself by passing MEV rewards to stakers in addition to standard staking yield.",
+    "category": "solana-ecosystem",
+    "aliases": ["Jito", "JTO"],
+    "related": ["jito-sol", "liquid-staking", "validator"]
+  },
+  {
+    "id": "chorusone",
+    "term": "Chorus One",
+    "definition": "A major institutional staking provider running Solana validators alongside 50+ other proof-of-stake networks. Chorus One is known for MEV research and development on Solana, operating the OPUS staking platform for institutional clients. The team contributes to Solana validator ecosystem improvements and provides enterprise-grade staking infrastructure for funds, exchanges, and custodians.",
+    "category": "solana-ecosystem",
+    "related": ["validator", "stake", "sol"]
+  },
+  {
+    "id": "everstake",
+    "term": "Everstake",
+    "definition": "One of the largest staking providers by number of networks supported, operating Solana validators with enterprise-grade infrastructure serving both institutional and retail delegators. Everstake manages billions in staked assets across multiple proof-of-stake networks and provides Solana users with reliable validator operations, staking analytics, and portfolio management tools for their delegated SOL.",
+    "category": "solana-ecosystem",
+    "related": ["validator", "stake", "sol"]
+  },
+  {
+    "id": "pyth-data-association",
+    "term": "Pyth Data Association",
+    "definition": "A Swiss-based entity governing the Pyth oracle network, managing the PYTH governance token, publisher onboarding, and protocol governance decisions. The association coordinates between data publishers (financial institutions, exchanges, trading firms) and consuming protocols to ensure oracle data quality, uptime, and accuracy across the Pyth network's multi-chain oracle infrastructure originating from Solana.",
+    "category": "solana-ecosystem",
+    "related": ["pyth", "oracle", "governance-token"]
+  },
+  {
+    "id": "squads-labs",
+    "term": "Squads Labs",
+    "definition": "The company behind Squads Protocol (multisig smart accounts) and Fuse wallet on Solana. Squads Labs builds smart account infrastructure enabling teams to manage on-chain treasuries, program upgrades, and protocol governance through multi-signature authorization. The Fuse wallet extends this technology to individual users with social recovery and programmable account security features.",
+    "category": "solana-ecosystem",
+    "related": ["squads", "multisig", "wallet-general"]
+  },
+  {
+    "id": "helius-labs",
+    "term": "Helius Labs",
+    "definition": "A Solana infrastructure company providing RPC nodes, webhooks, DAS API (Digital Asset Standard), and developer tools. Helius is one of the most widely used Solana RPC and indexing providers, offering enhanced APIs for compressed NFTs, transaction parsing, and real-time event streaming. The team also built the XRAY explorer and contributes to Solana developer tooling and documentation.",
+    "category": "solana-ecosystem",
+    "related": ["helius", "rpc", "indexer"]
+  },
+  {
+    "id": "crossmint",
+    "term": "Crossmint",
+    "definition": "An NFT infrastructure-as-a-service platform on Solana and other chains providing APIs for minting, custodial wallets, and credit card NFT purchases. Crossmint enables enterprises and developers to integrate NFT functionality into applications without requiring users to hold crypto or manage wallets. The platform abstracts blockchain complexity for brands, games, and loyalty programs adopting digital collectibles.",
+    "category": "solana-ecosystem",
+    "related": ["nft", "compressed-nft", "wallet-general"]
+  },
+  {
+    "id": "underdog-protocol",
+    "term": "Underdog Protocol",
+    "definition": "An NFT API platform on Solana enabling developers to create and manage compressed NFTs at scale through simple REST APIs without requiring blockchain development expertise. Underdog abstracts the complexity of Solana's state compression technology into familiar API calls for minting, transferring, and querying NFTs, making it accessible for web2 developers building NFT-powered applications.",
+    "category": "solana-ecosystem",
+    "related": ["compressed-nft", "nft", "dapp"]
+  },
+  {
+    "id": "metadao",
+    "term": "MetaDAO",
+    "definition": "A governance experimentation project on Solana implementing futarchy, a decision-making model where conditional token markets determine policy outcomes instead of traditional voting. In MetaDAO's system, proposals are evaluated by market participants trading conditional tokens that represent outcomes if the proposal passes or fails. The market price signals which outcome the market expects to create more value.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "governance-token", "defi-general"]
+  },
+  {
+    "id": "cubik",
+    "term": "Cubik",
+    "definition": "A quadratic funding platform on Solana connecting open-source projects with community funding through matching pools, inspired by Gitcoin's model but built natively on Solana. Cubik uses quadratic funding mathematics where many small contributions receive larger matching amounts than fewer large donations, democratically amplifying community preferences for which public goods receive the most funding.",
+    "category": "solana-ecosystem",
+    "related": ["dao", "solana-foundation", "sol"]
+  },
+  {
+    "id": "ore",
+    "term": "Ore",
+    "definition": "A proof-of-work mining token on Solana where miners compete to find valid hashes using a smart contract that implements Bitcoin-style mining mechanics on a proof-of-stake chain. Ore mining involves submitting hash solutions to an on-chain program, with difficulty adjusting based on participation. The project attracted significant attention and briefly caused Solana network congestion due to high mining transaction volume.",
+    "category": "solana-ecosystem",
+    "related": ["sol", "svm", "dapp"]
+  },
+  {
+    "id": "send-token",
+    "term": "Send",
+    "definition": "A Solana-native messaging and payments token enabling wallet-to-wallet transfers through a simplified mobile interface focused on consumer accessibility. Send aims to make crypto payments as intuitive as messaging apps by combining a social graph with payment functionality, targeting mainstream users who want to send and receive tokens without navigating complex DeFi interfaces.",
+    "category": "solana-ecosystem",
+    "related": ["solana-pay", "sol", "wallet-general"]
+  },
+  {
+    "id": "tensor-foundation",
+    "term": "Tensor Foundation",
+    "definition": "The organization governing the Tensor NFT marketplace and its TNSR governance token. Tensor Foundation oversees protocol development, community grants, and ecosystem initiatives for the leading Solana NFT trading platform. The foundation manages TNSR token distribution and governance processes that guide Tensor's product roadmap and fee structures.",
+    "category": "solana-ecosystem",
+    "related": ["tensor", "nft", "governance-token"]
+  },
+  {
+    "id": "backpack-exchange-eu",
+    "term": "Backpack MiFID License",
+    "definition": "Backpack Exchange's EU regulatory milestone, obtaining a MiFID II license through its acquisition of FTX EU in 2024. This made Backpack one of the few crypto-native exchanges with European regulated securities trading capabilities, enabling it to offer tokenized securities and regulated crypto products to EU customers alongside its Solana-focused spot and perpetual markets.",
+    "category": "solana-ecosystem",
+    "related": ["backpack-exchange", "backpack-wallet", "cex"]
+  },
+  {
+    "id": "solayer",
+    "term": "Solayer",
+    "definition": "A restaking protocol on Solana enabling users to restake their SOL or liquid staking tokens to secure additional services and earn extra yield. Solayer extends Solana's economic security model by allowing staked assets to simultaneously secure multiple protocols and infrastructure services, similar to EigenLayer on Ethereum but natively built for the Solana ecosystem.",
+    "category": "solana-ecosystem",
+    "related": ["restaking", "liquid-staking", "sol"]
+  },
+  {
+    "id": "jito-restaking",
+    "term": "Jito Restaking",
+    "definition": "Jito's restaking infrastructure on Solana enabling staked SOL and JitoSOL to secure additional networks and services beyond Solana consensus. Jito Restaking creates a shared security marketplace where node consensus networks (NCNs) can leverage Solana's existing validator set and staked capital for their own security needs, paying rewards to restakers.",
+    "category": "solana-ecosystem",
+    "related": ["jito-foundation", "jito-sol", "restaking"]
+  },
+  {
+    "id": "phoenix-wallet",
+    "term": "Phoenix Wallet",
+    "definition": "A Solana wallet focused on DeFi power users with built-in limit orders, DCA strategies, and advanced transaction simulation. Phoenix Wallet integrates directly with Jupiter's routing for optimal swap execution and provides real-time portfolio analytics alongside standard wallet functionality for daily Solana users.",
+    "category": "solana-ecosystem",
+    "related": ["wallet-general", "jupiter", "dex"]
+  },
+  {
+    "id": "switchboard-on-demand",
+    "term": "Switchboard On-Demand",
+    "definition": "Switchboard's pull-based oracle model on Solana where data feeds are updated on-demand when requested by consuming protocols rather than pushed on a fixed schedule. This reduces costs for infrequently-used feeds while ensuring fresh data at the moment of consumption, complementing Switchboard's traditional push-based oracle feeds.",
+    "category": "solana-ecosystem",
+    "related": ["switchboard", "oracle", "pyth"]
+  },
+  {
+    "id": "marinade-native-staking",
+    "term": "Marinade Native",
+    "definition": "Marinade Finance's non-custodial native staking product that distributes SOL across hundreds of validators without issuing a liquid staking token. Unlike mSOL (Marinade's liquid staking token), Marinade Native keeps stake in standard stake accounts owned by the user, providing decentralization benefits and MEV rewards while maintaining full custody without smart contract risk.",
+    "category": "solana-ecosystem",
+    "related": ["marinade", "stake", "validator"]
+  },
+  {
+    "id": "solana-actions-blinks",
+    "term": "Solana Actions & Blinks",
+    "definition": "The combination of Solana Actions (API endpoints returning signable transactions) and Blockchain Links (blinks — URLs that unfurl into interactive transaction interfaces). Together they enable any website, social media post, or QR code to embed Solana transaction capabilities. Users can swap tokens, mint NFTs, or make payments directly from Twitter posts, Discord messages, or any web surface.",
+    "category": "solana-ecosystem",
+    "related": ["actions", "blinks", "solana-pay"]
+  },
+  {
+    "id": "dune-analytics",
+    "term": "Dune Analytics (Solana)",
+    "definition": "A blockchain analytics platform that added Solana data support, enabling analysts to write SQL queries against indexed Solana transaction, account, and program data. Dune dashboards provide community-created visualizations of Solana DeFi metrics, protocol TVL, user activity, and network statistics used by researchers, protocols, and investors for on-chain analysis.",
+    "category": "solana-ecosystem",
+    "related": ["indexer", "birdeye", "solscan"]
+  },
+  {
+    "id": "flipside",
+    "term": "Flipside Crypto",
+    "definition": "A blockchain analytics platform providing Solana on-chain data through SQL-queryable datasets and pre-built dashboards. Flipside incentivizes community analysts through bounty programs to create Solana ecosystem analytics covering DEX volumes, protocol metrics, wallet behavior, and network health indicators available to protocols and researchers.",
+    "category": "solana-ecosystem",
+    "related": ["indexer", "birdeye", "dune-analytics"]
+  },
+  {
+    "id": "phantom-mobile",
+    "term": "Phantom Mobile",
+    "definition": "Phantom's mobile wallet application for iOS and Android providing full Solana wallet functionality including token swaps via Jupiter, NFT management, staking, and a built-in dApp browser. Phantom Mobile uses biometric authentication and integrates with Mobile Wallet Adapter for seamless interaction with Solana mobile dApps.",
+    "category": "solana-ecosystem",
+    "related": ["phantom", "mobile-wallet-adapter", "wallet-general"]
+  },
+  {
+    "id": "helium-mobile",
+    "term": "Helium Mobile",
+    "definition": "A mobile carrier service built on the Helium network on Solana, offering cellular coverage through a combination of decentralized 5G hotspots and traditional carrier partnerships (T-Mobile). Subscribers earn MOBILE tokens for contributing to network coverage. Helium Mobile demonstrates a real consumer product powered by DePIN infrastructure on Solana.",
+    "category": "solana-ecosystem",
+    "related": ["helium", "depin", "sol"]
+  }
+]

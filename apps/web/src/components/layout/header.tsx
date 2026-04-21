@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { House, Book, Trophy, ChatCircle } from "@phosphor-icons/react";
+import {
+  House,
+  Book,
+  Trophy,
+  ChatCircle,
+  GameController,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -22,12 +28,14 @@ const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
+  { key: "arcade", icon: GameController, href: "/games" },
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
 const publicNavItems = [
   { key: "courses", icon: Book, href: "/courses" },
   { key: "community", icon: ChatCircle, href: "/community" },
+  { key: "arcade", icon: GameController, href: "/games" },
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 

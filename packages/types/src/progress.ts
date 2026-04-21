@@ -79,4 +79,11 @@ export interface LearningProgressService {
     courseId: string,
     lessonIndex: number
   ): Promise<{ xpEarned: number; newAchievements: string[] }>;
+
+  completeArcadeGame(params: {
+    userId: string;
+    gameId: string;
+    xp: number;
+    score?: number;
+  }): Promise<void>;
 }

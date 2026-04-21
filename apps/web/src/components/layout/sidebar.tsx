@@ -12,6 +12,7 @@ import {
   Certificate,
   CaretLeft,
   CaretRight,
+  GameController,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ import { useXpBalance } from "@/lib/solana/hooks";
 const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
+  { key: "arcade", icon: GameController, href: "/games" },
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
   { key: "certificates", icon: Certificate, href: "/certificates" },
   { key: "profile", icon: UserCircle, href: "/profile" },

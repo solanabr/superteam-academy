@@ -40,7 +40,8 @@
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL bajo.",
     "getDevnetSol": "Obtener SOL devnet ->",
-    "dismissBanner": "Cerrar"
+    "dismissBanner": "Cerrar",
+    "arcade": "Arcade"
   },
   "auth": {
     "authFailed": "La autenticación de la billetera falló. Inténtalo de nuevo o usa otro método de inicio de sesión.",
@@ -705,5 +706,52 @@
       "course": "No hay discusiones sobre este curso aún.",
       "lesson": "No hay preguntas sobre esta lección aún. ¡Haz una!"
     }
+  },
+  "arcade": {
+    "title": "Solana Arcade",
+    "subtitle": "Cinco juegos mecánicos basados en el Glosario oficial de Solana. Juega, entrena tu cerebro y gana XP.",
+    "reward": "Recompensa",
+    "howToPlay": "Cómo Jugar",
+    "conexo": {
+      "desc": "Encuentra 4 grupos de 4 conceptos relacionados. Una verdadera prueba de conocimiento del ecosistema.",
+      "rules": {
+        "1": "Encuentra grupos de 4 ítems de una misma categoría oficial de Solana.",
+        "2": "Selecciona 4 ítems y haz clic en 'Enviar'.",
+        "3": "Cuidado: ¡Solo puedes equivocarte 4 veces!"
+      }
+    },
+    "termo": {
+      "desc": "Adivina la palabra secreta de Solana en 6 intentos. El clásico éxito, ahora en-cadena.",
+      "rules": {
+        "1": "Adivina el término en 6 intentos.",
+        "2": "Las letras en verde están en la posición correcta.",
+        "3": "Las letras en amarillo existen pero en posiciones incorrectas."
+      }
+    },
+    "expresso": {
+      "desc": "Lee la definición oficial del glosario y adivina el término oculto rápida y precisamente.",
+      "rules": {
+        "1": "Se mostrará la definición oficial. Escribe el término oculto.",
+        "2": "¡Sé rápido! Tu agilidad define el éxito."
+      },
+      "definition": "Definición:",
+      "placeholder": "Escribe el término..."
+    },
+    "contexto": {
+      "desc": "Encuentra el término secreto adivinando palabras similares. El algoritmo te guiará por proximidad.",
+      "rules": {
+        "1": "Escribe palabras para encontrar la secreta.",
+        "2": "El número de distancia indica qué tan cerca estás.",
+        "3": "1 es la palabra objetivo. 1000+ está muy lejos."
+      },
+      "placeholder": "Escribe una palabra...",
+      "distance": "Distancia",
+      "rank": "Ranking"
+    },
+    "win": "¡Felicidades! Has resuelto el desafío de hoy. XP añadida a tu perfil.",
+    "lose": "¡Fin del juego! Inténtalo de nuevo mañana.",
+    "mistakesRemaining": "Errores restantes:",
+    "shuffle": "Mezclar",
+    "submit": "Enviar"
   }
 }
