@@ -16,7 +16,7 @@ import {
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { isAllLessonsComplete } from "@/lib/solana/bitmap";
-import { checkNewAchievements } from "@/lib/gamification/achievements";
+import { buildAchievementUserState, checkNewAchievements } from "@/lib/gamification/achievements";
 import {
   getCourseById,
   getDeployedAchievements,
@@ -320,6 +320,9 @@ export async function handleCourseFinalized(
 
   // 4. Issue credential NFT
   await tryIssueCredential(userId, courseId, event.learner, connection);
+
+  // 5. Re-check achievements now that completed_at is set (speed-runner, etc.)
+  await checkAndAwardAchievements(userId, event.learner, supabase);
 }
 
 // ---------------------------------------------------------------------------
@@ -674,7 +677,7 @@ async function checkAndAwardAchievements(
         .eq("user_id", userId),
       supabase
         .from("enrollments")
-        .select("course_id, completed_at")
+        .select("course_id, enrolled_at, completed_at")
         .eq("user_id", userId),
     ]);
 
@@ -734,26 +737,16 @@ async function checkAndAwardAchievements(
 
     const newAchievements = checkNewAchievements(
       deployedAchievements,
-      {
-        completedLessons: progressRows?.length ?? 0,
-        completedCourses: completedCourseCount,
+      buildAchievementUserState({
+        progressRowCount: progressRows?.length ?? 0,
+        completedCourseCount,
+        completedCourseIds,
+        courseLessonCounts,
         currentStreak: xpData?.current_streak ?? 0,
-        hasCompletedRustLesson:
-          (courseLessonCounts.get("course-rust-for-solana") ?? 0) >= 1,
-        hasCompletedAnchorCourse: completedCourseIds.has(
-          "course-anchor-framework"
-        ),
-        hasCompletedAllTracks: SOLANA_DEV_PATH_COURSES.every((id) =>
-          completedCourseIds.has(id)
-        ),
-        courseCompletionTimeHours: null,
-        allTestsPassedFirstTry: false,
+        enrollmentRows: enrollmentRows ?? [],
         userNumber: userNumber ?? 999,
-        totalThreads: 0,
-        totalAnswers: 0,
-        acceptedAnswers: 0,
-        totalCommunityXp: 0,
-      },
+        solanaDevPathCourses: SOLANA_DEV_PATH_COURSES,
+      }),
       alreadyUnlocked
     );
 

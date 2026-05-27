@@ -29,6 +29,75 @@ export interface UserState {
   totalCommunityXp: number;
 }
 
+export interface EnrollmentTimingRow {
+  course_id: string;
+  enrolled_at: string | null;
+  completed_at: string | null;
+}
+
+/**
+ * Fastest course completion window in hours (enrolled_at → completed_at).
+ * Returns null when no completed enrollment has both timestamps.
+ */
+export function computeFastestCourseCompletionHours(
+  enrollments: EnrollmentTimingRow[]
+): number | null {
+  let fastest: number | null = null;
+
+  for (const row of enrollments) {
+    if (!row.completed_at || !row.enrolled_at) continue;
+    const enrolledMs = Date.parse(row.enrolled_at);
+    const completedMs = Date.parse(row.completed_at);
+    if (!Number.isFinite(enrolledMs) || !Number.isFinite(completedMs)) continue;
+    if (completedMs < enrolledMs) continue;
+
+    const hours = (completedMs - enrolledMs) / (1000 * 60 * 60);
+    if (fastest === null || hours < fastest) {
+      fastest = hours;
+    }
+  }
+
+  return fastest;
+}
+
+export interface BuildAchievementUserStateInput {
+  progressRowCount: number;
+  completedCourseCount: number;
+  completedCourseIds: Set<string>;
+  courseLessonCounts: Map<string, number>;
+  currentStreak: number;
+  enrollmentRows: EnrollmentTimingRow[];
+  userNumber: number;
+  solanaDevPathCourses: readonly string[];
+}
+
+export function buildAchievementUserState(
+  input: BuildAchievementUserStateInput
+): UserState {
+  return {
+    completedLessons: input.progressRowCount,
+    completedCourses: input.completedCourseCount,
+    currentStreak: input.currentStreak,
+    hasCompletedRustLesson:
+      (input.courseLessonCounts.get("course-rust-for-solana") ?? 0) >= 1,
+    hasCompletedAnchorCourse: input.completedCourseIds.has(
+      "course-anchor-framework"
+    ),
+    hasCompletedAllTracks: input.solanaDevPathCourses.every((id) =>
+      input.completedCourseIds.has(id)
+    ),
+    courseCompletionTimeHours: computeFastestCourseCompletionHours(
+      input.enrollmentRows
+    ),
+    allTestsPassedFirstTry: false,
+    userNumber: input.userNumber,
+    totalThreads: 0,
+    totalAnswers: 0,
+    acceptedAnswers: 0,
+    totalCommunityXp: 0,
+  };
+}
+
 /**
  * Programmatic unlock conditions keyed by achievement ID.
  * IDs must match the naming convention used in Sanity (Sanity _id minus the "achievement-" prefix).

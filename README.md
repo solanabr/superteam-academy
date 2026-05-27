@@ -304,7 +304,7 @@ For details, see [docs/ADMIN.md](docs/ADMIN.md).
 The on-chain program is feature-complete with 16 instructions covering the full learning lifecycle. The following items are scoped for future iterations:
 
 - **Track collection enforcement**: `track_collection` is validated server-side during credential issuance but is not yet enforced on-chain as an account constraint (future program upgrade).
-- **Cross-course achievements**: Three achievement types (Anchor Expert, Full Stack Solana, Rust Rookie) have partial frontend logic but lack proper cross-course tracking infrastructure. `full-stack-solana` is hardcoded to `false`; `anchor-expert` and `rust-rookie` use lesson ID pattern matching instead of course-level completion checks.
+- **Cross-course achievements**: `rust-rookie`, `anchor-expert`, and `full-stack-solana` are wired via webhook enrollment/progress checks. `speed-runner` uses enrollment timestamps (`enrolled_at` → `completed_at`) and is re-evaluated on course finalize. `perfect-score` still needs challenge attempt tracking (DB + API).
 - **Build server**: Compilation features (`buildable` Rust challenges + program deployment) require a separately deployed Rust/Axum build server on GCP Cloud Run. See the [Deployment](#deployment) section for setup details.
 
 ## Code Quality

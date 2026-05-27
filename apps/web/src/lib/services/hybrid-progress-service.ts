@@ -198,11 +198,25 @@ export class HybridProgressService implements LearningProgressService {
       .eq("user_id", userId)
       .single();
 
+    const oneYearAgo = new Date();
+    oneYearAgo.setDate(oneYearAgo.getDate() - 270);
+    const { data: activityRows } = await this.supabase
+      .from("xp_transactions")
+      .select("created_at")
+      .eq("user_id", userId)
+      .gte("created_at", oneYearAgo.toISOString());
+
+    const streakHistory: Record<string, number> = {};
+    for (const row of activityRows ?? []) {
+      const dateStr = (row.created_at ?? "").split("T")[0] as string;
+      streakHistory[dateStr] = (streakHistory[dateStr] ?? 0) + 1;
+    }
+
     return {
       currentStreak: data?.current_streak ?? 0,
       longestStreak: data?.longest_streak ?? 0,
       lastActivityDate: data?.last_activity_date ?? "",
-      streakHistory: {},
+      streakHistory,
     };
   }
 
