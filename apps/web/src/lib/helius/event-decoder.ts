@@ -3,11 +3,6 @@ import type { DecodedEvent, HeliusRawTransaction } from "./types";
 import IDL from "@/lib/solana/idl/superteam_academy.json";
 
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
-if (!PROGRAM_ID) {
-  throw new Error(
-    "[event-decoder] NEXT_PUBLIC_PROGRAM_ID environment variable is required"
-  );
-}
 // Double cast: JSON import lacks Anchor's Idl type shape at compile time
 const eventCoder = new BorshEventCoder(IDL as unknown as Idl);
 
@@ -26,6 +21,10 @@ export function decodeEventsFromTransaction(tx: HeliusRawTransaction): {
 } {
   const signature = tx.transaction.signatures[0] ?? "";
   const logs = tx.meta?.logMessages ?? [];
+
+  if (!PROGRAM_ID) {
+    return { events: [], signature };
+  }
 
   if (tx.meta?.err) {
     return { events: [], signature };

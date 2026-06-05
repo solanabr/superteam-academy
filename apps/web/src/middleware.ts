@@ -95,37 +95,41 @@ function isProtectedRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   // Create a response that we'll modify
   let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          // Set cookies on the REQUEST so downstream middleware/server components see them
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
-          // Recreate the response to forward modified request cookies
-          supabaseResponse = NextResponse.next({ request });
-          // Set cookies on the RESPONSE so they're sent back to the browser
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
+  const hasSupabaseConfig = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
+  let user = null;
 
-  // IMPORTANT: getUser() may trigger token refresh which calls setAll
-  // If Supabase env vars are missing, this will fail and user will be null
-  // which causes platform routes to redirect (fail-closed behavior)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (hasSupabaseConfig) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            // Set cookies on the REQUEST so downstream middleware/server components see them
+            cookiesToSet.forEach(({ name, value }) => {
+              request.cookies.set(name, value);
+            });
+            // Recreate the response to forward modified request cookies
+            supabaseResponse = NextResponse.next({ request });
+            // Set cookies on the RESPONSE so they're sent back to the browser
+            cookiesToSet.forEach(({ name, value, options }) => {
+              supabaseResponse.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    // IMPORTANT: getUser() may trigger token refresh which calls setAll.
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  }
 
   // Now run intl middleware (after Supabase may have modified request cookies)
   const intlResponse = intlMiddleware(request);

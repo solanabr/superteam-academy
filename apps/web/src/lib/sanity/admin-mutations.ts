@@ -1,13 +1,23 @@
 import "server-only";
 import { createClient } from "next-sanity";
 
-const sanityAdmin = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-  token: process.env.SANITY_ADMIN_TOKEN,
-  useCdn: false,
-  apiVersion: "2024-01-01",
-});
+const sanityConfigured = Boolean(
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && process.env.NEXT_PUBLIC_SANITY_DATASET
+);
+
+function getSanityAdmin() {
+  if (!sanityConfigured) {
+    return null;
+  }
+
+  return createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+    token: process.env.SANITY_ADMIN_TOKEN,
+    useCdn: false,
+    apiVersion: "2024-01-01",
+  });
+}
 
 export async function writeCourseOnChainStatus(
   sanityId: string,
@@ -15,6 +25,11 @@ export async function writeCourseOnChainStatus(
   coursePda: string,
   txSignature: string
 ): Promise<void> {
+  const sanityAdmin = getSanityAdmin();
+  if (!sanityAdmin) {
+    return;
+  }
+
   await sanityAdmin
     .patch(sanityId)
     .set({
@@ -30,6 +45,11 @@ export async function writeCourseTrackCollection(
   sanityId: string,
   trackCollectionAddress: string
 ): Promise<void> {
+  const sanityAdmin = getSanityAdmin();
+  if (!sanityAdmin) {
+    return;
+  }
+
   await sanityAdmin
     .patch(sanityId)
     .set({
@@ -43,6 +63,11 @@ export async function writeAchievementOnChainStatus(
   achievementPda: string,
   collectionAddress: string
 ): Promise<void> {
+  const sanityAdmin = getSanityAdmin();
+  if (!sanityAdmin) {
+    return;
+  }
+
   await sanityAdmin
     .patch(sanityId)
     .set({

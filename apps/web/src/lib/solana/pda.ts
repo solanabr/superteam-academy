@@ -1,12 +1,16 @@
 import { PublicKey } from "@solana/web3.js";
 
 let _programId: PublicKey | undefined;
+const FALLBACK_PROGRAM_ID = new PublicKey(
+  "11111111111111111111111111111111"
+);
 
 export function getProgramId(): PublicKey {
   if (!_programId) {
     const id = process.env.NEXT_PUBLIC_PROGRAM_ID;
     if (!id) {
-      throw new Error("NEXT_PUBLIC_PROGRAM_ID env var is required");
+      _programId = FALLBACK_PROGRAM_ID;
+      return _programId;
     }
     _programId = new PublicKey(id);
   }

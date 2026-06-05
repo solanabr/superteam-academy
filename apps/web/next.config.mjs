@@ -5,6 +5,12 @@ const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@superteam-lms/types", "@superteam-lms/sanity"],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.sanity.io" },

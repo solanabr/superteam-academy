@@ -1,6 +1,3 @@
-/* Superteam Academy Design System v9 — Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -119,9 +116,9 @@
     --sg-today: #f59e0b;
 
     /* ── Typography (fonts are theme-invariant) ── */
-    --font-d: "Nunito", sans-serif;
-    --font-b: "Plus Jakarta Sans", sans-serif;
-    --font-m: "JetBrains Mono", monospace;
+    --font-display: "Trebuchet MS", "Segoe UI", sans-serif;
+    --font-sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
 
     /* ── Radii (theme-invariant) ── */
     --r-xs: 4px;
@@ -158,6 +155,15 @@
     --bw: 1px;
     --prog-h: 4px;
     --ring: var(--primary);
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
   }
 
   /* ── Dark mode ──
