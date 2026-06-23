@@ -7,7 +7,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["**"] # every branch — gives fork branches CI before the upstream PR
   pull_request:
     branches: [main]
 
