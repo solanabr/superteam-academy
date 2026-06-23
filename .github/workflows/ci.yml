@@ -55,10 +55,9 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit tests
-        # RATCHET: report-only until P1-1 (red frontend test suite) lands.
-        # Flip continue-on-error to false when `pnpm --filter web test` is green.
-        continue-on-error: true
-        # Test env defaults so unit tests run without prod secrets (see P1-1 / P0-C2).
+        # P1-1 landed: the frontend suite is green and is now a hard gate.
+        # Env defaults below mirror apps/web/vitest.setup.ts so the suite also
+        # runs without prod secrets (see P1-1 / P0-C2).
         env:
           NEXT_PUBLIC_PROGRAM_ID: 7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V
           NEXT_PUBLIC_SOLANA_NETWORK: devnet
