@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write # post the review summary + inline comments on the PR
+      issues: write # PR conversation comments use the issues-comments API
       id-token: write
 
     steps:
