@@ -983,27 +983,33 @@ CREATE TRIGGER trg_prevent_self_flag
   BEFORE INSERT ON flags
   FOR EACH ROW EXECUTE FUNCTION prevent_self_flag();
 
--- Update denormalized vote_score on threads/answers
+-- Update denormalized vote_score on threads/answers.
+-- SECURITY DEFINER so the write to the protected vote_score column succeeds
+-- regardless of the voter's column-level privileges (authors are not granted
+-- UPDATE on vote_score).
 CREATE OR REPLACE FUNCTION update_vote_score()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     IF NEW.thread_id IS NOT NULL THEN
-      UPDATE threads SET vote_score = vote_score + NEW.value WHERE id = NEW.thread_id;
+      UPDATE public.threads SET vote_score = vote_score + NEW.value WHERE id = NEW.thread_id;
     ELSE
-      UPDATE answers SET vote_score = vote_score + NEW.value WHERE id = NEW.answer_id;
+      UPDATE public.answers SET vote_score = vote_score + NEW.value WHERE id = NEW.answer_id;
     END IF;
   ELSIF TG_OP = 'UPDATE' THEN
     IF NEW.thread_id IS NOT NULL THEN
-      UPDATE threads SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.thread_id;
+      UPDATE public.threads SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.thread_id;
     ELSE
-      UPDATE answers SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.answer_id;
+      UPDATE public.answers SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.answer_id;
     END IF;
   ELSIF TG_OP = 'DELETE' THEN
     IF OLD.thread_id IS NOT NULL THEN
-      UPDATE threads SET vote_score = vote_score - OLD.value WHERE id = OLD.thread_id;
+      UPDATE public.threads SET vote_score = vote_score - OLD.value WHERE id = OLD.thread_id;
     ELSE
-      UPDATE answers SET vote_score = vote_score - OLD.value WHERE id = OLD.answer_id;
+      UPDATE public.answers SET vote_score = vote_score - OLD.value WHERE id = OLD.answer_id;
     END IF;
   END IF;
 
@@ -1015,14 +1021,19 @@ CREATE TRIGGER trg_update_vote_score
   AFTER INSERT OR UPDATE OF value OR DELETE ON votes
   FOR EACH ROW EXECUTE FUNCTION update_vote_score();
 
--- Update answer_count on threads
+-- Update answer_count on threads.
+-- SECURITY DEFINER so posting an answer (authenticated client) can bump the
+-- protected answer_count column, which authors are not granted UPDATE on.
 CREATE OR REPLACE FUNCTION update_answer_count()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    UPDATE threads SET answer_count = answer_count + 1 WHERE id = NEW.thread_id;
+    UPDATE public.threads SET answer_count = answer_count + 1 WHERE id = NEW.thread_id;
   ELSIF TG_OP = 'DELETE' THEN
-    UPDATE threads SET answer_count = answer_count - 1 WHERE id = OLD.thread_id;
+    UPDATE public.threads SET answer_count = answer_count - 1 WHERE id = OLD.thread_id;
   END IF;
 
   IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
@@ -1033,11 +1044,16 @@ CREATE TRIGGER trg_update_answer_count
   AFTER INSERT OR DELETE ON answers
   FOR EACH ROW EXECUTE FUNCTION update_answer_count();
 
--- Update last_activity_at on new answers only (not edits, to prevent gaming thread sort order)
+-- Update last_activity_at on new answers only (not edits, to prevent gaming thread sort order).
+-- SECURITY DEFINER so posting an answer (authenticated client) can bump the
+-- protected last_activity_at column, which authors are not granted UPDATE on.
 CREATE OR REPLACE FUNCTION update_last_activity()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
-  UPDATE threads SET last_activity_at = now() WHERE id = NEW.thread_id;
+  UPDATE public.threads SET last_activity_at = now() WHERE id = NEW.thread_id;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -1296,11 +1312,21 @@ CREATE POLICY "Authenticated users can create threads"
   TO authenticated
   WITH CHECK (author_id = auth.uid());
 
+-- Authors may update only their own threads (row restriction). Column-level
+-- privileges below (GRANT UPDATE on specific columns) restrict WHICH columns an
+-- author may write; RLS UPDATE policies cannot constrain columns on their own.
+-- Moderation/denormalized columns (vote_score, answer_count, view_count,
+-- is_solved, accepted_answer_id, is_pinned, is_locked, last_activity_at, slug,
+-- deleted_at) are written only by triggers, SECURITY DEFINER RPCs, or service_role.
 CREATE POLICY "Authors can update own threads"
   ON threads FOR UPDATE
   TO authenticated
   USING (author_id = auth.uid())
   WITH CHECK (author_id = auth.uid());
+
+REVOKE UPDATE ON threads FROM authenticated;
+GRANT UPDATE (title, body, type, category_id, course_id, lesson_id, updated_at)
+  ON threads TO authenticated;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_thread() SECURITY DEFINER function.
 
@@ -1312,11 +1338,18 @@ CREATE POLICY "Authenticated users can create answers"
   TO authenticated
   WITH CHECK (author_id = auth.uid());
 
+-- Authors may update only their own answers (row restriction). Column-level
+-- privileges below restrict authors to editing the body; is_accepted and
+-- vote_score are written only by the accept route (service_role) and the
+-- vote-score trigger respectively.
 CREATE POLICY "Authors can update own answers"
   ON answers FOR UPDATE
   TO authenticated
   USING (author_id = auth.uid())
   WITH CHECK (author_id = auth.uid());
+
+REVOKE UPDATE ON answers FROM authenticated;
+GRANT UPDATE (body, updated_at) ON answers TO authenticated;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_answer() SECURITY DEFINER function.
 
