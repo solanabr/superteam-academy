@@ -1348,7 +1348,11 @@ CREATE POLICY "Authenticated users can create flags"
 -- Community Stats View
 -- ============================================================
 
-CREATE VIEW community_stats AS
+-- security_invoker = true makes the view run with the querying role's
+-- privileges, so RLS on the underlying tables is enforced. Without it the
+-- view runs as its owner and bypasses RLS, leaking aggregates for private
+-- profiles (profiles SELECT is gated to is_public = true) to anon.
+CREATE VIEW community_stats WITH (security_invoker = true) AS
 SELECT
   p.id AS user_id,
   COUNT(DISTINCT t.id) AS total_threads,
@@ -1360,3 +1364,8 @@ LEFT JOIN threads t ON t.author_id = p.id
 LEFT JOIN answers a ON a.author_id = p.id
 LEFT JOIN xp_transactions xt ON xt.user_id = p.id
 GROUP BY p.id;
+
+-- Explicit grants: the view stays publicly queryable, but security_invoker
+-- ensures each caller only sees rows their own RLS permits.
+REVOKE ALL ON community_stats FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON community_stats TO anon, authenticated;
