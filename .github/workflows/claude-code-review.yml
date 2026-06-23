@@ -2,13 +2,10 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    # Cost: review on open / ready / reopen — NOT on every `synchronize` (every push),
+    # which re-reviews a PR on each commit and burns the OAuth-token budget. Re-trigger a
+    # fresh review by commenting `@claude review` (claude.yml) or reopening.
+    types: [opened, ready_for_review, reopened]
 
 jobs:
   claude-review:
@@ -38,7 +35,31 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          # Academy bar: this is an on-chain education platform where correctness and
+          # security are financial-trust-grade (on-chain XP mints, soulbound credentials,
+          # RLS-protected user data). Hold a high bar; correctness/security over style.
+          prompt: |
+            Run /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            with these Superteam Academy priorities layered on top.
+
+            First read CLAUDE.md and docs/TASK-CODES.md for conventions and the task-code system.
+            If the PR body says "Closes #N", verify the diff actually meets that issue's "Done when".
+
+            Scrutinize these hardest — the project's NEVER-ship-broken areas:
+            - RLS / supabase/schema.sql: no policy that lets a user write rows the platform later
+              trusts (user_progress, enrollments, user_xp, achievements). Trusted writes are
+              service-role-only. Flag any forgeable progress/XP path.
+            - On-chain (onchain-academy/**): checked arithmetic only (no raw +,-,*), no
+              unwrap()/expect()/panic!, stored canonical PDA bumps, validated account
+              owner/signer/PDA, pinned CPI target program IDs.
+            - Secrets: nothing server-only (ADMIN_SECRET, service-role key, RPC/Helius keys)
+              reaching a client bundle or a NEXT_PUBLIC_ var.
+            - Trust boundaries: server is authoritative — no client-trusted validation
+              (challenge "passed", XP amounts, completion flags) and no solutions/hidden tests
+              shipped in a client payload.
+
+            Output: lead with BLOCKING findings (correctness / security / does-not-meet-Done-when),
+            then non-blocking suggestions. Be decisive, cite file:line, don't pad with nits.
+            This review is ADVISORY — CI is the hard gate, and a human signs off on anything
+            touching RLS, on-chain, secrets, or mainnet (it must never imply a self-merge of those).
 
