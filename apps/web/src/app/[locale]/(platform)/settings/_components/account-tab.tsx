@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleLogo } from "@/components/icons/google-logo";
 import { SolanaLogo } from "@/components/icons/solana-logo";
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/lib/supabase/types";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { createSIWSMessage, formatSIWSMessage } from "@/lib/solana/wallet-auth";
 
@@ -83,7 +84,7 @@ export function AccountTab({
           | undefined;
 
         if (googleId) {
-          const updatePayload: Record<string, string | null> = {
+          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] = {
             google_id: googleId,
           };
           if (!avatarUrl && googleAvatar) {
@@ -146,7 +147,7 @@ export function AccountTab({
           | undefined;
 
         if (githubId) {
-          const updatePayload: Record<string, string | null> = {
+          const updatePayload: Database["public"]["Tables"]["profiles"]["Update"] = {
             github_id: githubId,
           };
           if (!avatarUrl && ghAvatar) {

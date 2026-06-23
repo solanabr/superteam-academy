@@ -52,7 +52,9 @@ impl BuildCache {
         }
 
         if entry.success {
-            let so_path = Path::new(builds_dir).join(&entry.uuid).join("academy_program.so");
+            let so_path = Path::new(builds_dir)
+                .join(&entry.uuid)
+                .join("academy_program.so");
             if !so_path.exists() {
                 return None;
             }
