@@ -143,6 +143,21 @@ ALTER TABLE user_xp
 ALTER TABLE xp_transactions
   ADD CONSTRAINT chk_xp_transactions_amount_positive CHECK (amount > 0);
 
+-- A course can only be completed at or after it was enrolled. Closes the
+-- forged sub-24h enrolled->completed window that fakes Speed Runner. NULL
+-- completed_at (not yet finished) passes. No FK on course_id: courses live in
+-- Sanity, not Postgres.
+ALTER TABLE enrollments
+  ADD CONSTRAINT chk_enrollments_completed_after_enrolled
+  CHECK (completed_at IS NULL OR completed_at >= enrolled_at);
+
+-- A completion timestamp may only exist on a completed row. Legit writers
+-- (Helius webhook + admin resync) always set completed = true alongside
+-- completed_at, so this rejects no valid row.
+ALTER TABLE user_progress
+  ADD CONSTRAINT chk_user_progress_completed_at_requires_completed
+  CHECK (completed_at IS NULL OR completed = true);
+
 -- ─────────────────────────────────────────────
 -- 2. INDEXES
 -- ─────────────────────────────────────────────
@@ -190,11 +205,14 @@ CREATE POLICY "Users can update their own profile"
 CREATE POLICY "Users can view their own enrollments"
   ON enrollments FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can enroll themselves"
-  ON enrollments FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own enrollments"
-  ON enrollments FOR DELETE USING (auth.uid() = user_id);
+-- No authenticated INSERT/DELETE/UPDATE: enrollment rows are written only by
+-- service_role (the Helius enroll/unenroll/finalize webhook in
+-- lib/helius/event-handlers.ts, its retry queue in lib/solana/onchain-queue.ts,
+-- and the admin resync route). The client only submits the on-chain tx and lets
+-- the webhook sync the row. A direct client INSERT/DELETE would let a user
+-- delete + re-insert their own enrollment to forge a fresh enrolled_at, faking a
+-- sub-24h enrolled->completed window and minting the Speed Runner achievement.
+-- SELECT policies (own + public-profile) are intentionally left in place.
 
 CREATE POLICY "Public profile enrollments are viewable"
   ON enrollments FOR SELECT USING (
