@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   // Per-user rate limit (10 requests/min — heavier generation than chat).
   if (
-    isRateLimited("ai:suggest", user.id, {
+    await isRateLimited("ai:suggest", user.id, {
       maxTokens: 10,
       refillIntervalMs: 60_000,
     })

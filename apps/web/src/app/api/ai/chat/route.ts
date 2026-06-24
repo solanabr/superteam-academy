@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
   // Per-user rate limit (20 requests/min).
   if (
-    isRateLimited("ai:chat", user.id, {
+    await isRateLimited("ai:chat", user.id, {
       maxTokens: 20,
       refillIntervalMs: 60_000,
     })

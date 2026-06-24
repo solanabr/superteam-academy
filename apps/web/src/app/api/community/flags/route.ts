@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limit: 20 flags per hour per user
     if (
-      isRateLimited("community:flags", user.id, {
+      await isRateLimited("community:flags", user.id, {
         maxTokens: 20,
         refillIntervalMs: 3_600_000,
       })

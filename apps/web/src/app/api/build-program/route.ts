@@ -6,51 +6,11 @@ import {
   setCachedBinary,
   evictExpiredBinaries,
 } from "@/lib/build-server/binary-cache";
+import { isRateLimited } from "@/lib/rate-limit";
 
-// --- Rate Limiter (token-bucket, same pattern as /api/rust/execute) ----------
-
-interface TokenBucket {
-  tokens: number;
-  lastRefill: number;
-}
-
-const rateLimitStore = new Map<string, TokenBucket>();
+// Rate limit: 5 builds/min per user (shared cross-instance store — see P1-7).
 const MAX_TOKENS = 5;
 const REFILL_INTERVAL_MS = 60_000;
-const CLEANUP_INTERVAL_MS = 5 * 60_000;
-let lastCleanup = Date.now();
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
-    for (const [k, bucket] of rateLimitStore) {
-      if (now - bucket.lastRefill > CLEANUP_INTERVAL_MS) {
-        rateLimitStore.delete(k);
-      }
-    }
-    lastCleanup = now;
-  }
-  const bucket = rateLimitStore.get(key);
-
-  if (!bucket) {
-    rateLimitStore.set(key, { tokens: MAX_TOKENS - 1, lastRefill: now });
-    return false;
-  }
-
-  const elapsed = now - bucket.lastRefill;
-  const refills = Math.floor(elapsed / REFILL_INTERVAL_MS);
-  if (refills > 0) {
-    bucket.tokens = Math.min(MAX_TOKENS, bucket.tokens + refills * MAX_TOKENS);
-    bucket.lastRefill = now;
-  }
-
-  if (bucket.tokens <= 0) {
-    return true;
-  }
-
-  bucket.tokens--;
-  return false;
-}
 
 // --- Types -------------------------------------------------------------------
 
@@ -121,7 +81,12 @@ export async function POST(
     }
 
     // 2. Rate limit (5 builds/min per user)
-    if (isRateLimited(`user:${user.id}`)) {
+    if (
+      await isRateLimited("build-program", user.id, {
+        maxTokens: MAX_TOKENS,
+        refillIntervalMs: REFILL_INTERVAL_MS,
+      })
+    ) {
       return NextResponse.json(
         {
           success: false,

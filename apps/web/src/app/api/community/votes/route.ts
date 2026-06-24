@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limit: 60 votes per hour per user
     if (
-      isRateLimited("community:votes", user.id, {
+      await isRateLimited("community:votes", user.id, {
         maxTokens: 60,
         refillIntervalMs: 3_600_000,
       })
