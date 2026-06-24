@@ -22,6 +22,9 @@ pub struct Course {
     pub is_active: bool,
     pub created_at: i64,
     pub updated_at: i64,
+    /// Metaplex Core collection this course's credentials are minted into.
+    /// `Pubkey::default()` until set via `create_course`/`update_course`.
+    pub collection: Pubkey,
     pub _reserved: [u8; 8],
     pub bump: u8,
 }
@@ -45,6 +48,7 @@ impl Course {
     // + 1 (is_active)
     // + 8 (created_at)
     // + 8 (updated_at)
+    // + 32 (collection)
     // + 8 (_reserved)
     // + 1 (bump)
     pub const SIZE: usize = 8
@@ -65,6 +69,7 @@ impl Course {
         + 1
         + 8
         + 8
+        + 32
         + 8
-        + 1; // 192
+        + 1; // 224
 }

@@ -14,6 +14,7 @@ import {
   deployCoursePda,
   updateCoursePda,
   deployCourseTrackCollection,
+  setCourseCollectionPda,
 } from "@/lib/solana/admin-signer";
 import {
   difficultyToNumber,
@@ -134,6 +135,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (collectionResult.success && collectionResult.collectionAddress) {
         trackCollectionAddress = collectionResult.collectionAddress;
         await writeCourseTrackCollection(courseId, trackCollectionAddress);
+        // Bind the collection on-chain so credential mint can validate it.
+        const bindResult = await setCourseCollectionPda(
+          courseId,
+          trackCollectionAddress
+        );
+        if (!bindResult.success) {
+          console.error(
+            "[admin/courses/sync] Binding collection on-chain failed:",
+            bindResult.error
+          );
+        }
       } else {
         console.error(
           "[admin/courses/sync] Collection creation failed:",
@@ -184,6 +196,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (collectionResult.success && collectionResult.collectionAddress) {
         trackCollectionAddress = collectionResult.collectionAddress;
         await writeCourseTrackCollection(courseId, trackCollectionAddress);
+        const bindResult = await setCourseCollectionPda(
+          courseId,
+          trackCollectionAddress
+        );
+        if (!bindResult.success) {
+          console.error(
+            "[admin/courses/sync] Binding collection on-chain failed:",
+            bindResult.error
+          );
+        }
       } else {
         console.error(
           "[admin/courses/sync] Collection retry failed:",
