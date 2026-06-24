@@ -178,6 +178,15 @@ pub struct AwardAchievement<'info> {
 
     pub minter: Signer<'info>,
 
+    /// Rotatable backend signer that authorizes the award. Eligibility is
+    /// proven off-chain (achievement criteria have no on-chain qualifying
+    /// receipt to validate against), so this co-signature is the authorization
+    /// boundary: an active minter alone cannot mint arbitrary achievements.
+    #[account(
+        constraint = backend_signer.key() == config.backend_signer @ AcademyError::Unauthorized,
+    )]
+    pub backend_signer: Signer<'info>,
+
     /// CHECK: Metaplex Core program.
     #[account(address = mpl_core::ID)]
     pub mpl_core_program: AccountInfo<'info>,

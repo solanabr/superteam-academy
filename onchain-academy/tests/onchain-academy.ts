@@ -3145,6 +3145,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           payer: authority.publicKey,
           minter: authority.publicKey,
+          backendSigner: authority.publicKey,
           mplCoreProgram: MPL_CORE_PROGRAM_ID,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -3201,6 +3202,90 @@ describe("onchain-academy", () => {
       expect(achievement.currentSupply).to.equal(1);
     });
 
+    it("award_achievement rejects wrong backend_signer (active minter alone cannot mint)", async () => {
+      // Adversarial case for P0-A2: the minter is the legitimately-registered
+      // active backend minter, but the backend_signer co-signer is an attacker
+      // key that does not match config.backend_signer. The award must be
+      // rejected — an active minter alone can no longer mint arbitrary
+      // achievements/XP to arbitrary recipients.
+      const wrongBackendSigner = Keypair.generate();
+      const freshRecipient = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        freshRecipient.publicKey,
+        2 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      const freshRecipientAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        freshRecipient.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            authority.publicKey,
+            freshRecipientAta,
+            freshRecipient.publicKey,
+            xpMintKeypair.publicKey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        )
+      );
+
+      const [freshReceiptPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("achievement_receipt"),
+          Buffer.from(achievementId),
+          freshRecipient.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const [backendMinterRole] = PublicKey.findProgramAddressSync(
+        [Buffer.from("minter"), authority.publicKey.toBuffer()],
+        program.programId
+      );
+
+      const freshAsset = Keypair.generate();
+
+      try {
+        await program.methods
+          .awardAchievement()
+          .accountsPartial({
+            config: configPda,
+            achievementType: achievementTypePda,
+            achievementReceipt: freshReceiptPda,
+            minterRole: backendMinterRole,
+            asset: freshAsset.publicKey,
+            collection: achievementCollectionKeypair.publicKey,
+            recipient: freshRecipient.publicKey,
+            recipientTokenAccount: freshRecipientAta,
+            xpMint: xpMintKeypair.publicKey,
+            payer: authority.publicKey,
+            minter: authority.publicKey,
+            backendSigner: wrongBackendSigner.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([freshAsset, wrongBackendSigner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+
+      // Receipt must not exist — nothing was minted.
+      const receiptInfo =
+        await provider.connection.getAccountInfo(freshReceiptPda);
+      expect(receiptInfo).to.equal(null);
+    });
+
     it("award_achievement double-award fails", async () => {
       const secondAssetKeypair = Keypair.generate();
       const [backendMinterRole] = PublicKey.findProgramAddressSync(
@@ -3223,6 +3308,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
@@ -3309,6 +3395,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
@@ -3407,6 +3494,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           payer: authority.publicKey,
           minter: authority.publicKey,
+          backendSigner: authority.publicKey,
           mplCoreProgram: MPL_CORE_PROGRAM_ID,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -3471,6 +3559,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
