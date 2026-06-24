@@ -47,10 +47,11 @@ BEGIN
       FROM public.user_xp ux
       JOIN public.profiles p ON p.id = ux.user_id
       WHERE ux.total_xp > 0
+        AND p.is_public = true
         AND p.username IS NOT NULL
         AND p.username <> ''
       ORDER BY ux.total_xp DESC
-      LIMIT p_limit;
+      LIMIT LEAST(p_limit, 100);
   ELSE
     RETURN QUERY
       SELECT
@@ -68,7 +69,8 @@ BEGIN
           SUM(xt.amount)::BIGINT AS total_xp
         FROM public.xp_transactions xt
         JOIN public.profiles p ON p.id = xt.user_id
-        WHERE p.username IS NOT NULL
+        WHERE p.is_public = true
+          AND p.username IS NOT NULL
           AND p.username <> ''
           AND xt.created_at >= CASE
             WHEN p_timeframe = 'weekly'  THEN NOW() - INTERVAL '7 days'
@@ -78,7 +80,7 @@ BEGIN
       ) sub
       LEFT JOIN public.user_xp ux ON ux.user_id = sub.user_id
       ORDER BY sub.total_xp DESC
-      LIMIT p_limit;
+      LIMIT LEAST(p_limit, 100);
   END IF;
 END;
 $$;
@@ -90,6 +92,9 @@ DROP POLICY IF EXISTS "Leaderboard: anyone can view XP rankings" ON user_xp;
 DROP POLICY IF EXISTS "Anyone can view XP transactions for leaderboard" ON xp_transactions;
 
 -- 3. Non-sensitive public view: per-user total_xp / level for public profiles.
+--    INVARIANT: the is_public filter is the SOLE access guard — this is an
+--    owner-privilege view that bypasses RLS on user_xp, so removing the filter
+--    would make every user's XP publicly readable. Do not remove it.
 CREATE OR REPLACE VIEW public_user_xp AS
   SELECT ux.user_id, ux.total_xp, ux.level
   FROM user_xp ux
@@ -99,8 +104,13 @@ CREATE OR REPLACE VIEW public_user_xp AS
 REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_user_xp TO anon, authenticated;
 
--- 4. community_stats: owner-privilege view + explicit privacy guard so the
---    community-XP aggregate works without xp_transactions being client-readable.
+-- 4. community_stats: owner-privilege view + explicit privacy guard.
+--    NOTE: this intentionally reverts P0-B1's security_invoker = true. With
+--    security_invoker the view runs as the caller, who can no longer read other
+--    users' xp_transactions (P1-6 locks that down), so total_community_xp would
+--    be zeroed for every row except the caller's own. Running as owner restores
+--    the aggregate; the explicit (is_public OR own) guard below preserves
+--    P0-B1's guarantee that anon cannot see private-profile aggregates.
 DROP VIEW IF EXISTS community_stats;
 CREATE VIEW community_stats AS
 SELECT
