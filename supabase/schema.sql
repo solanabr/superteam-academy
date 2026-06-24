@@ -291,7 +291,11 @@ CREATE OR REPLACE FUNCTION award_xp(
   p_reason TEXT,
   p_idempotency_key TEXT DEFAULT NULL,
   p_tx_signature TEXT DEFAULT NULL
-) RETURNS void AS $$
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   v_last_activity DATE;
   v_current_streak INTEGER;
@@ -300,7 +304,7 @@ DECLARE
   v_new_longest INTEGER;
 BEGIN
   IF p_idempotency_key IS NOT NULL THEN
-    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key, tx_signature)
+    INSERT INTO public.xp_transactions (user_id, amount, reason, idempotency_key, tx_signature)
     VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
 
@@ -309,14 +313,14 @@ BEGIN
       RETURN;
     END IF;
   ELSE
-    INSERT INTO xp_transactions (user_id, amount, reason, tx_signature)
+    INSERT INTO public.xp_transactions (user_id, amount, reason, tx_signature)
     VALUES (p_user_id, p_amount, p_reason, p_tx_signature);
   END IF;
 
   -- Get current streak state before updating
   SELECT last_activity_date, current_streak, longest_streak
   INTO v_last_activity, v_current_streak, v_longest_streak
-  FROM user_xp
+  FROM public.user_xp
   WHERE user_id = p_user_id;
 
   -- Calculate new streak
@@ -336,7 +340,7 @@ BEGIN
 
   v_new_longest := GREATEST(COALESCE(v_longest_streak, 0), v_new_streak);
 
-  INSERT INTO user_xp (user_id, total_xp, level, last_activity_date, current_streak, longest_streak)
+  INSERT INTO public.user_xp (user_id, total_xp, level, last_activity_date, current_streak, longest_streak)
   VALUES (
     p_user_id,
     p_amount,
@@ -352,7 +356,7 @@ BEGIN
     current_streak = v_new_streak,
     longest_streak = v_new_longest;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Unlock achievement (called from API routes with service_role key only)
 CREATE OR REPLACE FUNCTION unlock_achievement(
@@ -360,15 +364,19 @@ CREATE OR REPLACE FUNCTION unlock_achievement(
   p_achievement_id TEXT,
   p_tx_signature TEXT DEFAULT NULL,
   p_asset_address TEXT DEFAULT NULL
-) RETURNS void AS $$
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
-  INSERT INTO user_achievements (user_id, achievement_id, tx_signature, asset_address)
+  INSERT INTO public.user_achievements (user_id, achievement_id, tx_signature, asset_address)
   VALUES (p_user_id, p_achievement_id, p_tx_signature, p_asset_address)
   ON CONFLICT (user_id, achievement_id) DO UPDATE
     SET tx_signature = COALESCE(EXCLUDED.tx_signature, user_achievements.tx_signature),
         asset_address = COALESCE(EXCLUDED.asset_address, user_achievements.asset_address);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- ─────────────────────────────────────────────
 -- 5. AUTO-CREATE PROFILE ON SIGNUP
@@ -596,7 +604,11 @@ CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_quest_definitions JSONB,
   p_challenge_ids     TEXT[],
   p_module_lesson_map JSONB
-) RETURNS JSONB AS $$
+) RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   v_quest        JSONB;
   v_quest_id     TEXT;
@@ -627,14 +639,14 @@ BEGIN
     -- ── Calculate current_value per quest type ──
     IF v_type = 'lesson' OR v_type = 'lesson_batch' THEN
       SELECT COUNT(*)::INTEGER INTO v_current
-      FROM user_progress
+      FROM public.user_progress
       WHERE user_id = p_user_id
         AND completed = true
         AND completed_at::date = CURRENT_DATE;
 
     ELSIF v_type = 'challenge' THEN
       SELECT COUNT(*)::INTEGER INTO v_current
-      FROM user_progress
+      FROM public.user_progress
       WHERE user_id = p_user_id
         AND completed = true
         AND completed_at::date = CURRENT_DATE
@@ -644,7 +656,7 @@ BEGIN
       -- Dashboard load = login signal.
       -- Find the most recent active (non-completed) streak row for this quest.
       SELECT * INTO v_existing
-      FROM user_daily_quests
+      FROM public.user_daily_quests
       WHERE user_id = p_user_id
         AND quest_id = v_quest_id
         AND completed = false
@@ -686,7 +698,7 @@ BEGIN
       END IF;
 
       -- Upsert the streak row and skip the generic upsert below
-      INSERT INTO user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+      INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
       VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
       ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
         current_value = EXCLUDED.current_value,
@@ -695,7 +707,7 @@ BEGIN
 
       -- Mark xp_granted on first completion (API route mints on-chain)
       IF v_current >= v_target THEN
-        UPDATE user_daily_quests
+        UPDATE public.user_daily_quests
         SET xp_granted = true
         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
@@ -725,7 +737,7 @@ BEGIN
 
         -- Check all lessons completed
         SELECT COUNT(*) = array_length(v_mod_lessons, 1) INTO v_all_done
-        FROM user_progress
+        FROM public.user_progress
         WHERE user_id = p_user_id
           AND completed = true
           AND lesson_id = ANY(v_mod_lessons);
@@ -733,7 +745,7 @@ BEGIN
         IF v_all_done THEN
           -- Check if the most recent completion in this module was today
           SELECT MAX(completed_at::date) INTO v_max_date
-          FROM user_progress
+          FROM public.user_progress
           WHERE user_id = p_user_id
             AND completed = true
             AND lesson_id = ANY(v_mod_lessons);
@@ -749,7 +761,7 @@ BEGIN
     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
     v_period := CURRENT_DATE;
 
-    INSERT INTO user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
+    INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
     VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
     ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
       current_value = EXCLUDED.current_value,
@@ -758,7 +770,7 @@ BEGIN
 
     -- Mark xp_granted on first completion (API route mints on-chain)
     IF v_current >= v_target THEN
-      UPDATE user_daily_quests
+      UPDATE public.user_daily_quests
       SET xp_granted = true
       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
@@ -778,7 +790,7 @@ BEGIN
 
   RETURN v_results;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 REVOKE EXECUTE ON FUNCTION get_daily_quest_state FROM authenticated, anon, public;
 GRANT EXECUTE ON FUNCTION get_daily_quest_state TO service_role;
@@ -939,14 +951,17 @@ INSERT INTO forum_categories (name, slug, description, sort_order) VALUES
 
 -- Prevent self-voting
 CREATE OR REPLACE FUNCTION prevent_self_vote()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   content_author_id UUID;
 BEGIN
   IF NEW.thread_id IS NOT NULL THEN
-    SELECT author_id INTO content_author_id FROM threads WHERE id = NEW.thread_id;
+    SELECT author_id INTO content_author_id FROM public.threads WHERE id = NEW.thread_id;
   ELSE
-    SELECT author_id INTO content_author_id FROM answers WHERE id = NEW.answer_id;
+    SELECT author_id INTO content_author_id FROM public.answers WHERE id = NEW.answer_id;
   END IF;
 
   IF content_author_id = NEW.user_id THEN
@@ -955,7 +970,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_prevent_self_vote
   BEFORE INSERT ON votes
@@ -963,21 +978,24 @@ CREATE TRIGGER trg_prevent_self_vote
 
 -- Prevent self-flagging (users cannot flag their own content)
 CREATE OR REPLACE FUNCTION prevent_self_flag()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   IF NEW.thread_id IS NOT NULL THEN
-    IF EXISTS (SELECT 1 FROM threads WHERE id = NEW.thread_id AND author_id = NEW.reporter_id) THEN
+    IF EXISTS (SELECT 1 FROM public.threads WHERE id = NEW.thread_id AND author_id = NEW.reporter_id) THEN
       RAISE EXCEPTION 'Cannot flag your own content';
     END IF;
   END IF;
   IF NEW.answer_id IS NOT NULL THEN
-    IF EXISTS (SELECT 1 FROM answers WHERE id = NEW.answer_id AND author_id = NEW.reporter_id) THEN
+    IF EXISTS (SELECT 1 FROM public.answers WHERE id = NEW.answer_id AND author_id = NEW.reporter_id) THEN
       RAISE EXCEPTION 'Cannot flag your own content';
     END IF;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER trg_prevent_self_flag
   BEFORE INSERT ON flags
@@ -1082,21 +1100,22 @@ CREATE OR REPLACE FUNCTION increment_view_count(p_thread_id UUID, p_user_id UUID
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 BEGIN
   IF p_user_id IS NULL THEN
-    UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+    UPDATE public.threads SET view_count = view_count + 1 WHERE id = p_thread_id;
     RETURN;
   END IF;
 
-  INSERT INTO thread_views (user_id, thread_id, viewed_at)
+  INSERT INTO public.thread_views (user_id, thread_id, viewed_at)
   VALUES (p_user_id, p_thread_id, NOW())
   ON CONFLICT (user_id, thread_id) DO UPDATE
     SET viewed_at = NOW()
     WHERE thread_views.viewed_at < NOW() - INTERVAL '15 minutes';
 
   IF FOUND THEN
-    UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+    UPDATE public.threads SET view_count = view_count + 1 WHERE id = p_thread_id;
   END IF;
 END;
 $$;
@@ -1110,6 +1129,7 @@ CREATE OR REPLACE FUNCTION award_community_xp(
 ) RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   v_daily_total INTEGER;
@@ -1119,7 +1139,7 @@ BEGIN
   IF p_amount <= 0 THEN RETURN FALSE; END IF;
 
   SELECT COALESCE(SUM(amount), 0) INTO v_daily_total
-  FROM xp_transactions
+  FROM public.xp_transactions
   WHERE user_id = p_user_id
     AND reason LIKE 'community:%'
     AND created_at >= (CURRENT_DATE)::timestamptz;
@@ -1129,7 +1149,7 @@ BEGIN
   v_is_vote_xp := p_reason LIKE 'community:upvote%';
   IF v_is_vote_xp THEN
     SELECT COALESCE(SUM(amount), 0) INTO v_daily_vote_total
-    FROM xp_transactions
+    FROM public.xp_transactions
     WHERE user_id = p_user_id
       AND reason LIKE 'community:upvote%'
       AND created_at >= (CURRENT_DATE)::timestamptz;
@@ -1148,18 +1168,18 @@ BEGIN
   IF p_amount <= 0 THEN RETURN FALSE; END IF;
 
   IF p_idempotency_key IS NOT NULL THEN
-    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key)
+    INSERT INTO public.xp_transactions (user_id, amount, reason, idempotency_key)
     VALUES (p_user_id, p_amount, p_reason, p_idempotency_key)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL
     DO NOTHING;
 
     IF NOT FOUND THEN RETURN FALSE; END IF;
   ELSE
-    INSERT INTO xp_transactions (user_id, amount, reason)
+    INSERT INTO public.xp_transactions (user_id, amount, reason)
     VALUES (p_user_id, p_amount, p_reason);
   END IF;
 
-  INSERT INTO user_xp (id, user_id, total_xp, level, current_streak, longest_streak, last_activity_date)
+  INSERT INTO public.user_xp (id, user_id, total_xp, level, current_streak, longest_streak, last_activity_date)
   VALUES (
     gen_random_uuid(), p_user_id, p_amount,
     floor(sqrt(p_amount / 100.0))::int,
@@ -1195,16 +1215,17 @@ CREATE OR REPLACE FUNCTION revoke_community_xp(
 ) RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   v_amount INTEGER;
 BEGIN
-  DELETE FROM xp_transactions
+  DELETE FROM public.xp_transactions
   WHERE user_id = p_user_id AND idempotency_key = p_idempotency_key
   RETURNING amount INTO v_amount;
 
   IF v_amount IS NOT NULL THEN
-    UPDATE user_xp SET
+    UPDATE public.user_xp SET
       total_xp = GREATEST(0, total_xp - v_amount),
       level = floor(sqrt(GREATEST(0, total_xp - v_amount) / 100.0))::int
     WHERE user_id = p_user_id;
@@ -1217,18 +1238,18 @@ CREATE OR REPLACE FUNCTION create_thread(
   p_author_id UUID, p_title TEXT, p_body TEXT, p_type TEXT,
   p_category_id UUID, p_course_id TEXT, p_lesson_id TEXT, p_slug_base TEXT
 ) RETURNS TABLE(id UUID, short_id TEXT, slug TEXT)
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
   v_id UUID;
   v_short_id TEXT;
   v_slug TEXT;
 BEGIN
-  INSERT INTO threads (author_id, title, slug, body, type, category_id, course_id, lesson_id)
+  INSERT INTO public.threads (author_id, title, slug, body, type, category_id, course_id, lesson_id)
   VALUES (p_author_id, p_title, p_slug_base, p_body, p_type, p_category_id, p_course_id, p_lesson_id)
   RETURNING threads.id, threads.short_id INTO v_id, v_short_id;
 
   v_slug := p_slug_base || '-' || v_short_id;
-  UPDATE threads SET slug = v_slug WHERE threads.id = v_id;
+  UPDATE public.threads SET slug = v_slug WHERE threads.id = v_id;
 
   RETURN QUERY SELECT v_id, v_short_id, v_slug;
 END;
@@ -1249,39 +1270,39 @@ GRANT EXECUTE ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT
 -- Soft-delete a thread and cascade to its answers
 CREATE OR REPLACE FUNCTION soft_delete_thread(p_thread_id UUID, p_user_id UUID)
 RETURNS VOID
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM threads WHERE id = p_thread_id AND author_id = p_user_id AND deleted_at IS NULL
+    SELECT 1 FROM public.threads WHERE id = p_thread_id AND author_id = p_user_id AND deleted_at IS NULL
   ) THEN
     RAISE EXCEPTION 'Thread not found or not owned by user';
   END IF;
-  UPDATE threads SET deleted_at = NOW() WHERE id = p_thread_id;
-  UPDATE answers SET deleted_at = NOW() WHERE thread_id = p_thread_id AND deleted_at IS NULL;
+  UPDATE public.threads SET deleted_at = NOW() WHERE id = p_thread_id;
+  UPDATE public.answers SET deleted_at = NOW() WHERE thread_id = p_thread_id AND deleted_at IS NULL;
 END;
 $$;
 
 -- Soft-delete a single answer (decrements count, unmarks solved if was accepted)
 CREATE OR REPLACE FUNCTION soft_delete_answer(p_answer_id UUID, p_user_id UUID)
 RETURNS VOID
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
   v_thread_id UUID;
   v_was_accepted BOOLEAN;
 BEGIN
   SELECT thread_id, is_accepted INTO v_thread_id, v_was_accepted
-  FROM answers
+  FROM public.answers
   WHERE id = p_answer_id AND author_id = p_user_id AND deleted_at IS NULL;
 
   IF v_thread_id IS NULL THEN
     RAISE EXCEPTION 'Answer not found or not owned by user';
   END IF;
 
-  UPDATE answers SET deleted_at = NOW() WHERE id = p_answer_id;
-  UPDATE threads SET answer_count = GREATEST(answer_count - 1, 0) WHERE id = v_thread_id;
+  UPDATE public.answers SET deleted_at = NOW() WHERE id = p_answer_id;
+  UPDATE public.threads SET answer_count = GREATEST(answer_count - 1, 0) WHERE id = v_thread_id;
 
   IF v_was_accepted THEN
-    UPDATE threads SET is_solved = FALSE, accepted_answer_id = NULL WHERE id = v_thread_id;
+    UPDATE public.threads SET is_solved = FALSE, accepted_answer_id = NULL WHERE id = v_thread_id;
   END IF;
 END;
 $$;
