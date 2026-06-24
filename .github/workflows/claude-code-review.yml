@@ -33,6 +33,11 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Without this, agent mode runs the review but never publishes it
+          # (permission_denials_count + "No buffered inline comments"). Forcing tag
+          # mode posts the review as a tracking comment — the same mechanism the
+          # @claude path uses. Supported on pull_request opened/ready_for_review/reopened.
+          track_progress: true
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           # Academy bar: this is an on-chain education platform where correctness and
