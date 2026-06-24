@@ -201,7 +201,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // fetchCourse uses the raw-IDL BorshCoder → snake_case `collection`, returned
   // as a base58 string or raw bytes. Normalize before comparing to default.
-  const onChainCourse = await fetchCourse(courseId, connection, getProgramId());
+  // A pre-migration 192-byte Course account fails to decode against the current
+  // 224-byte layout — surface that as a clear 400 rather than an opaque 500.
+  let onChainCourse: Awaited<ReturnType<typeof fetchCourse>>;
+  try {
+    onChainCourse = await fetchCourse(courseId, connection, getProgramId());
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Course on-chain account is stale (pre-migration 192-byte layout). Re-create it via create_course before re-syncing.",
+      },
+      { status: 400 }
+    );
+  }
   const onChainCollection = onChainCourse?.collection as
     | string
     | Uint8Array
