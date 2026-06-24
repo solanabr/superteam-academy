@@ -6,9 +6,11 @@ import { isValidAdminSession } from "@/lib/admin/auth";
 export default async function AdminPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
-  const adminSecret = process.env.ADMIN_SECRET;
 
-  if (!adminSecret || !isValidAdminSession(session?.value)) {
+  // Gate on the signed admin_session cookie only. The secret is never read
+  // here, so it cannot be serialized into the client payload (P0-B6).
+  // isValidAdminSession returns false when ADMIN_SECRET is unset.
+  if (!isValidAdminSession(session?.value)) {
     return <AdminLoginForm />;
   }
 
@@ -23,7 +25,7 @@ export default async function AdminPage() {
             Superteam Academy — Sanity to On-Chain Sync
           </p>
         </div>
-        <AdminClient adminToken={adminSecret} />
+        <AdminClient />
       </div>
     </div>
   );

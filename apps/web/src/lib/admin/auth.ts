@@ -8,21 +8,30 @@ export class AdminAuthError extends Error {
   }
 }
 
+const ADMIN_SESSION_COOKIE = "admin_session";
+
+function readAdminSessionCookie(req: Request): string | undefined {
+  const header = req.headers.get("cookie");
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq === -1) continue;
+    if (part.slice(0, eq).trim() === ADMIN_SESSION_COOKIE) {
+      return decodeURIComponent(part.slice(eq + 1).trim());
+    }
+  }
+  return undefined;
+}
+
 /**
- * Validates the Authorization: Bearer {ADMIN_SECRET} header.
- * Throws AdminAuthError if the token is missing or doesn't match ADMIN_SECRET.
+ * Authorizes an admin API request via the signed `admin_session` cookie.
+ * The cookie is minted by POST /api/admin/auth once the secret is entered,
+ * and sent automatically on same-origin fetches. The secret itself is never
+ * held by the client, so it cannot leak into the page payload or be stolen
+ * via XSS. Throws AdminAuthError if the cookie is missing/invalid/expired.
  */
 export function requireAdminAuth(req: Request): void {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "").trim();
-  const expected = process.env.ADMIN_SECRET;
-
-  const tokenBuf = Buffer.from(token ?? "");
-  const expectedBuf = Buffer.from(expected ?? "");
-  if (
-    !expected ||
-    tokenBuf.length !== expectedBuf.length ||
-    !crypto.timingSafeEqual(tokenBuf, expectedBuf)
-  ) {
+  if (!isValidAdminSession(readAdminSessionCookie(req))) {
     throw new AdminAuthError();
   }
 }

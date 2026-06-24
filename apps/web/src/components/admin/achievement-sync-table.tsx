@@ -14,13 +14,11 @@ interface AchievementStatus {
 
 interface AchievementSyncTableProps {
   achievements: AchievementStatus[];
-  adminToken: string;
   onRefresh: () => void;
 }
 
 export function AchievementSyncTable({
   achievements,
-  adminToken,
   onRefresh,
 }: AchievementSyncTableProps) {
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -33,10 +31,7 @@ export function AchievementSyncTable({
     try {
       const res = await fetch("/api/admin/achievements/sync", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ achievementId }),
       });
       if (!res.ok) {
@@ -66,10 +61,7 @@ export function AchievementSyncTable({
       try {
         const res = await fetch("/api/admin/achievements/sync", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ achievementId: ach.sanityId }),
         });
         if (!res.ok) {

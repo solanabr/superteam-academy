@@ -55,11 +55,7 @@ interface AdminStatus {
   achievements: AchievementStatus[];
 }
 
-interface AdminClientProps {
-  adminToken: string;
-}
-
-export function AdminClient({ adminToken }: AdminClientProps) {
+export function AdminClient() {
   const [status, setStatus] = useState<AdminStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,9 +64,8 @@ export function AdminClient({ adminToken }: AdminClientProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/status", {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      });
+      // Authorized via the httpOnly admin_session cookie (sent automatically).
+      const res = await fetch("/api/admin/status");
       if (!res.ok) {
         setError("Failed to fetch status");
         return;
@@ -82,7 +77,7 @@ export function AdminClient({ adminToken }: AdminClientProps) {
     } finally {
       setLoading(false);
     }
-  }, [adminToken]);
+  }, []);
 
   useEffect(() => {
     void fetchStatus();
@@ -158,7 +153,6 @@ export function AdminClient({ adminToken }: AdminClientProps) {
           ) : (
             <CourseSyncTable
               courses={courses}
-              adminToken={adminToken}
               onRefresh={() => void fetchStatus()}
             />
           )}
@@ -178,7 +172,6 @@ export function AdminClient({ adminToken }: AdminClientProps) {
           ) : (
             <AchievementSyncTable
               achievements={achievements}
-              adminToken={adminToken}
               onRefresh={() => void fetchStatus()}
             />
           )}
@@ -191,7 +184,7 @@ export function AdminClient({ adminToken }: AdminClientProps) {
           Data Resync
         </h2>
         <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-          <DataResyncPanel adminToken={adminToken} />
+          <DataResyncPanel />
         </div>
       </section>
     </div>
