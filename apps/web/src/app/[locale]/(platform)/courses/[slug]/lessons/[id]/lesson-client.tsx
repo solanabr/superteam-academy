@@ -320,7 +320,9 @@ export function LessonPageClient({
 
   // Challenge lessons: split panel — content + test cases left, editor right
   if (isChallenge) {
-    const visibleTests = lesson.tests?.filter((tc) => !tc.hidden) ?? [];
+    // Hidden tests are already excluded server-side (GROQ projection, P0-C4),
+    // so every test in the payload is safe to display.
+    const visibleTests = lesson.tests ?? [];
 
     return (
       <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
@@ -490,7 +492,7 @@ export function LessonPageClient({
 
           {/* Right pane: code editor + output only */}
           <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-1/2">
-            {lesson.code && lesson.tests && lesson.solution ? (
+            {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}
                 description=""
@@ -506,7 +508,6 @@ export function LessonPageClient({
                 }
                 tests={lesson.tests}
                 hints={lesson.hints ?? []}
-                solution={lesson.solution}
                 xpReward={courseXpPerLesson}
                 earnedXp={earnedXp}
                 isAlreadyCompleted={isCompleted}

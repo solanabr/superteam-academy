@@ -74,7 +74,12 @@ export interface ChallengeInterfaceProps {
   isDeployable?: boolean;
   tests: TestCase[];
   hints: string[];
-  solution: string;
+  /**
+   * Reference solution. Optional and omitted in normal lesson delivery — the
+   * solution is the answer key and is no longer shipped to the client (P0-C4).
+   * When undefined, the "Show solution" affordance is hidden.
+   */
+  solution?: string;
   xpReward: number;
   earnedXp?: number | null;
   isAlreadyCompleted?: boolean;

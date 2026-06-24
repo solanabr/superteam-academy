@@ -7,11 +7,24 @@ export interface Instructor {
   socialLinks?: { twitter?: string; github?: string };
 }
 
+/**
+ * Client-facing test case. Never includes the `hidden` flag: hidden tests are
+ * stripped server-side by the GROQ projection and must never reach the browser
+ * (they are part of the challenge answer key). See {@link AdminTestCase} for the
+ * full CMS shape used by server-side validation.
+ */
 export interface TestCase {
   id: string;
   description: string;
   input: string;
   expectedOutput: string;
+}
+
+/**
+ * Full test case as authored in Sanity, including hidden tests.
+ * SERVER-ONLY — must never be projected into a client payload.
+ */
+export interface AdminTestCase extends TestCase {
   hidden?: boolean;
 }
 
@@ -34,6 +47,11 @@ export interface ContentLesson extends LessonBase {
 
 export type BuildType = "standard" | "buildable";
 
+/**
+ * Challenge lesson as delivered to the client. Excludes `solution` and hidden
+ * tests — those are the answer key and are held server-side only (see
+ * {@link AdminChallengeLesson}). `tests` here contains only visible test cases.
+ */
 export interface ChallengeLesson extends LessonBase {
   type: "challenge";
   content: string;
@@ -43,6 +61,15 @@ export interface ChallengeLesson extends LessonBase {
   code: string;
   tests: TestCase[];
   hints: string[];
+}
+
+/**
+ * Challenge lesson with the full answer key (solution + hidden tests).
+ * SERVER-ONLY — used by server-side challenge validation. Never serialize this
+ * into a response sent to the browser.
+ */
+export interface AdminChallengeLesson extends Omit<ChallengeLesson, "tests"> {
+  tests: AdminTestCase[];
   solution: string;
 }
 
