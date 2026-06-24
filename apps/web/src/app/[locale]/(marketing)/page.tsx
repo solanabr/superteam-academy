@@ -20,7 +20,7 @@ export default async function LandingPage() {
   try {
     const supabase = await createClient();
     const [xpResult, enrollResult, certResult] = await Promise.all([
-      supabase.from("user_xp").select("total_xp"),
+      supabase.from("public_user_xp").select("total_xp"),
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase
         .from("certificates")

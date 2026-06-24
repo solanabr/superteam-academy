@@ -155,7 +155,7 @@ export default function PublicProfilePage() {
           enrollmentResult,
         ] = await Promise.all([
           supabase
-            .from("user_xp")
+            .from("public_user_xp")
             .select("total_xp, level")
             .eq("user_id", userId)
             .single(),

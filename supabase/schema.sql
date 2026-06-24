@@ -222,19 +222,15 @@ CREATE POLICY "Public profile progress is viewable"
 -- (Helius webhook + admin resync). Direct client writes would let users forge
 -- completed=true rows and mint on-chain XP via the daily-quest path.
 
--- user_xp (SELECT only — mutations via SECURITY DEFINER functions)
+-- user_xp (SELECT own only — public total_xp/level served via public_user_xp view;
+-- leaderboard served via get_leaderboard(); mutations via SECURITY DEFINER functions)
 CREATE POLICY "Users can view their own XP"
   ON user_xp FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Leaderboard: anyone can view XP rankings"
-  ON user_xp FOR SELECT USING (true);
-
--- xp_transactions (SELECT only — inserts via award_xp function)
+-- xp_transactions (SELECT own only — raw rows never exposed to anon; aggregates
+-- served via get_leaderboard()/community_stats; inserts via award_xp function)
 CREATE POLICY "Users can view their own XP transactions"
   ON xp_transactions FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Anyone can view XP transactions for leaderboard"
-  ON xp_transactions FOR SELECT USING (true);
 
 -- user_achievements (SELECT only — inserts via unlock_achievement function)
 CREATE POLICY "Users can view their own achievements"
@@ -421,7 +417,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 STABLE
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
@@ -474,6 +470,20 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_leaderboard(TEXT, INT) TO authenticated, anon;
+
+-- Non-sensitive public XP view: exposes only (user_id, total_xp, level) for
+-- public profiles. Owner-privilege view (bypasses RLS on user_xp), so the
+-- is_public filter is the access control. Used for public reads (marketing
+-- stats, public profiles, community author level badges) now that user_xp is
+-- own-row-only.
+CREATE OR REPLACE VIEW public_user_xp AS
+  SELECT ux.user_id, ux.total_xp, ux.level
+  FROM user_xp ux
+  JOIN profiles p ON p.id = ux.user_id
+  WHERE p.is_public = true;
+
+REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public_user_xp TO anon, authenticated;
 
 -- ─────────────────────────────────────────────
 -- 6. RESTRICT SECURITY DEFINER FUNCTIONS
@@ -1402,11 +1412,11 @@ CREATE POLICY "Authenticated users can create flags"
 -- Community Stats View
 -- ============================================================
 
--- security_invoker = true makes the view run with the querying role's
--- privileges, so RLS on the underlying tables is enforced. Without it the
--- view runs as its owner and bypasses RLS, leaking aggregates for private
--- profiles (profiles SELECT is gated to is_public = true) to anon.
-CREATE VIEW community_stats WITH (security_invoker = true) AS
+-- Owner-privilege view (bypasses RLS) so it can aggregate community XP from
+-- xp_transactions, which is no longer client-readable (P1-6). The explicit
+-- "is_public OR own" guard preserves the P0-B1 guarantee that anon cannot see
+-- aggregates for private profiles (and authenticated users still see their own).
+CREATE VIEW community_stats AS
 SELECT
   p.id AS user_id,
   COUNT(DISTINCT t.id) AS total_threads,
@@ -1417,9 +1427,10 @@ FROM profiles p
 LEFT JOIN threads t ON t.author_id = p.id
 LEFT JOIN answers a ON a.author_id = p.id
 LEFT JOIN xp_transactions xt ON xt.user_id = p.id
+WHERE p.is_public = true OR p.id = auth.uid()
 GROUP BY p.id;
 
--- Explicit grants: the view stays publicly queryable, but security_invoker
--- ensures each caller only sees rows their own RLS permits.
+-- Explicit grants: publicly queryable, but the WHERE guard limits each caller
+-- to public profiles plus their own row.
 REVOKE ALL ON community_stats FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON community_stats TO anon, authenticated;

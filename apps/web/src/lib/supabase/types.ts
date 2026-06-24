@@ -848,6 +848,14 @@ export type Database = {
         };
         Relationships: [];
       };
+      public_user_xp: {
+        Row: {
+          level: number | null;
+          total_xp: number | null;
+          user_id: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       award_community_xp: {

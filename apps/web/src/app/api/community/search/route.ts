@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     let authorLevels: Record<string, number> = {};
     if (authorIds.length > 0) {
       const { data: xpData } = await supabase
-        .from("user_xp")
+        .from("public_user_xp")
         .select("user_id, level")
         .in("user_id", authorIds);
       if (xpData) {

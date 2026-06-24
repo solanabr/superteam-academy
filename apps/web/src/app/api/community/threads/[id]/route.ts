@@ -58,7 +58,7 @@ export async function GET(
     ];
     const uniqueAuthorIds = [...new Set(allAuthorIds)];
     const { data: xpData } = await supabase
-      .from("user_xp")
+      .from("public_user_xp")
       .select("user_id, level")
       .in("user_id", uniqueAuthorIds);
     const authorLevels: Record<string, number> = Object.fromEntries(
