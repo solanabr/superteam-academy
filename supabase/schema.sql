@@ -218,11 +218,9 @@ CREATE POLICY "Public profile progress is viewable"
     )
   );
 
-CREATE POLICY "Users can insert their own progress"
-  ON user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own progress"
-  ON user_progress FOR UPDATE USING (auth.uid() = user_id);
+-- No authenticated INSERT/UPDATE: progress is written only by service_role
+-- (Helius webhook + admin resync). Direct client writes would let users forge
+-- completed=true rows and mint on-chain XP via the daily-quest path.
 
 -- user_xp (SELECT only — mutations via SECURITY DEFINER functions)
 CREATE POLICY "Users can view their own XP"
