@@ -59,7 +59,7 @@ describe("P0-C4: client lesson queries do not leak answers", () => {
       /"tests": tests\[hidden != true\]\{ id, description, input, expectedOutput \}/
     );
     // Raw `tests,` (unfiltered, includes hidden) must not be projected.
-    expect(query).not.toMatch(/(^|[\s,]){0}\btests,\s/);
+    expect(query).not.toMatch(/\btests,/);
   });
 
   it("getCourseBySlug (course-detail payload) also strips solution + hidden tests", async () => {

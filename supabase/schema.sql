@@ -329,13 +329,19 @@ BEGIN
     p_amount := c_max_award_xp;
   END IF;
 
+  -- Serialize concurrent awards for the same user so the read-then-insert daily
+  -- cap below is atomic: without this lock, two parallel awards can both read a
+  -- sub-cap total and both insert, blowing past the daily ceiling.
+  PERFORM pg_advisory_xact_lock(hashtext('award_xp:' || p_user_id::text)::bigint);
+
   -- Enforce the per-user daily ceiling. Sum today's learning-path awards
   -- (excluding community XP, which is capped separately) and clamp the credit
-  -- so the daily total can never exceed the ceiling.
+  -- so the daily total can never exceed the ceiling. The window boundary is
+  -- pinned to UTC midnight so it is independent of the DB session timezone.
   SELECT COALESCE(SUM(amount), 0) INTO v_daily_total
   FROM public.xp_transactions
   WHERE user_id = p_user_id
-    AND created_at >= (CURRENT_DATE)::timestamptz
+    AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
     AND reason NOT LIKE 'community:%';
 
   IF v_daily_total >= c_max_daily_award_xp THEN
