@@ -1,5 +1,7 @@
-/* Superteam Academy Design System v9 — Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+/* Superteam Academy Design System v9 */
+/* Fonts (Nunito, Plus Jakarta Sans, JetBrains Mono) are self-hosted via
+   next/font/google in src/app/layout.tsx — no runtime Google Fonts request,
+   so no fonts.googleapis.com/@import is needed (and CSP need not allow it). */
 
 @tailwind base;
 @tailwind components;

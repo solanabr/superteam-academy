@@ -21,14 +21,21 @@ const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
  * - Server-only externals (Gemini, Rust Playground, build server) are NOT
  *   listed: the browser only ever talks to same-origin `/api/*` routes that
  *   proxy them.
+ *
+ * KNOWN DEFERRED LIMITATION: `'unsafe-inline'` + `'unsafe-eval'` keep the
+ * script CSP weak — together they neutralise CSP's XSS protection for inline
+ * and eval'd scripts. Closing this requires a nonce- (or hash-) based script
+ * CSP wired through Next.js's inline bootstrap; that is intentionally NOT
+ * attempted here. Tracked by the `TODO tighten` marker below.
  */
 const cspDirectives = [
   "default-src 'self'",
 
   // Scripts: self + GA4 tag loader + PostHog. 'unsafe-eval' for the code
   // sandbox / Monaco; 'unsafe-inline' for the Next.js bootstrap + analytics
-  // snippets; blob: for Monaco/worker bootstrap.
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://www.googletagmanager.com https://*.posthog.com",
+  // snippets; blob: for Monaco/worker bootstrap; jsdelivr for the Monaco
+  // editor loader (@monaco-editor/react fetches loader.js + vs/* from the CDN).
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com",
 
   // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline CSS.
   "style-src 'self' 'unsafe-inline' https://cdn.sanity.io",
@@ -36,9 +43,10 @@ const cspDirectives = [
   // Fonts: self-hosted via next/font. gstatic kept as a harmless fallback.
   "font-src 'self' data: https://fonts.gstatic.com",
 
-  // Images: avatars (Google), NFT art (Arweave), Supabase storage, Sanity CDN.
-  // data:/blob: cover inline SVGs, canvas-confetti, and wallet QR codes.
-  "img-src 'self' data: blob: https://cdn.sanity.io https://lh3.googleusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co",
+  // Images: avatars (Google), NFT art (Arweave), Supabase storage, Sanity CDN +
+  // Studio media library, GA4 measurement pixel (doubleclick). data:/blob:
+  // cover inline SVGs, canvas-confetti, and wallet QR codes.
+  "img-src 'self' data: blob: https://cdn.sanity.io https://media.sanity.io https://lh3.googleusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
 
   // Network: Supabase (REST + realtime wss), Sanity (CDN/API + listen wss),
   // Solana/Helius RPC, Google OAuth/identity, and analytics (GA4, PostHog,
@@ -48,18 +56,19 @@ const cspDirectives = [
   [
     "connect-src 'self'",
     "https://*.supabase.co wss://*.supabase.co",
-    "https://cdn.sanity.io https://apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io",
+    "https://api.sanity.io https://cdn.sanity.io https://apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
     "https://*.helius-rpc.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com",
     "https://accounts.google.com https://*.googleapis.com",
-    "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
+    "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
   ].join(" "),
 
   // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames.
   "frame-src 'self' https://accounts.google.com",
 
-  // Workers: code sandbox + Monaco spawn workers from blob: URLs.
-  "worker-src 'self' blob:",
+  // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
+  // loads its language workers (ts/json/css/html) directly from the jsdelivr CDN.
+  "worker-src 'self' blob: https://cdn.jsdelivr.net",
 
   // Forms may post to self and the Google OAuth endpoint.
   "form-action 'self' https://accounts.google.com",
