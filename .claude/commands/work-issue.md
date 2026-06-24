@@ -28,6 +28,10 @@ context degrades as it fills, and a `/goal` run spans many turns.
     auto-review does NOT re-run on push), and **wait for the NEW `claude[bot]` comment** next turn
     before judging.
   - **BOTH gates pass** (CI green AND latest verdict = approve / no blocking) → **MERGE STEP:**
+    - **First, triage the review's NON-BLOCKING findings — never merge-and-forget.** For each
+      one: **fix** the cheap, real, in-scope ones and push (then re-verify); **file** the rest as
+      deduped issues; **decline** genuine over-engineering with a one-line reason in the PR. A
+      "non-blocking" note left neither fixed nor tracked is lost work — not allowed. Only then:
     - **SENSITIVE** — any changed path under `supabase/schema.sql`, `onchain-academy/**`,
       real env/secret files (`.env`, `.env.local`, `.env.*` — but NOT public `*.example`
       templates), `.github/workflows/**`, or `.claude/**`; OR issue label ∈
