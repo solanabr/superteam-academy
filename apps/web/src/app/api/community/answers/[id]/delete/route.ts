@@ -30,7 +30,7 @@ export async function POST(
     }
 
     if (
-      isRateLimited("community:delete", user.id, {
+      await isRateLimited("community:delete", user.id, {
         maxTokens: 20,
         refillIntervalMs: 3_600_000,
       })
