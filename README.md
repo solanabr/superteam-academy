@@ -126,7 +126,10 @@ pnpm install
 
 # 2. Configure environment
 cp .env.example apps/web/.env.local
-# Fill in required values (see Environment Variables below)
+# Replace every placeholder with a real value — .env.example holds illustrative
+# defaults, not working credentials. Minimum to boot (see Environment Variables):
+# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
+# NEXT_PUBLIC_SANITY_PROJECT_ID, NEXT_PUBLIC_SANITY_DATASET.
 
 # 3. Set up the database
 # Create a Supabase project, then run supabase/schema.sql in the SQL Editor.
@@ -217,12 +220,13 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ### Admin / Signing (Required for admin panel and on-chain operations)
 
-| Variable                   | Scope  | Description                                                                                |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `PROGRAM_AUTHORITY_SECRET` | Server | JSON array of authority keypair bytes (64 elements). The keypair that signed `initialize`. |
-| `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`. |
-| `ADMIN_SECRET`             | Server | Admin panel password (min 32 chars, random string)                                         |
-| `SANITY_ADMIN_TOKEN`       | Server | Write-enabled Sanity API token for course sync in admin panel                              |
+| Variable                   | Scope  | Description                                                                                      |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| `PROGRAM_AUTHORITY_SECRET` | Server | JSON array of authority keypair bytes (64 elements). The keypair that signed `initialize`.       |
+| `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`.       |
+| `XP_MINT_AUTHORITY_SECRET` | Server | JSON array of XP mint authority keypair bytes. Signs XP token mints; omit to disable XP minting. |
+| `ADMIN_SECRET`             | Server | Admin panel password (min 32 chars, random string)                                               |
+| `SANITY_ADMIN_TOKEN`       | Server | Write-enabled Sanity API token for course sync in admin panel                                    |
 
 ### Auth (Optional)
 
@@ -236,6 +240,12 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 | ---------------------- | ------ | ----------------------------------------------------------------------- |
 | `BUILD_SERVER_URL`     | Server | Cloud Run service URL                                                   |
 | `BUILD_SERVER_API_KEY` | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run) |
+
+### AI Lesson Assistant (Optional)
+
+| Variable         | Scope  | Description                                                    |
+| ---------------- | ------ | -------------------------------------------------------------- |
+| `GEMINI_API_KEY` | Server | Google Gemini API key for the in-lesson AI chat/suggest routes |
 
 ### Analytics (Optional -- platform works without these)
 
