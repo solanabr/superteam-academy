@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// Input caps (defense against oversized prompts / cost abuse).
+const MAX_BODY_CHARS = 200_000;
+const MAX_MESSAGE_CHARS = 4_000;
+const MAX_LESSON_CONTENT_CHARS = 60_000;
+const MAX_LESSON_TITLE_CHARS = 300;
+const MAX_HISTORY_MESSAGES = 20;
+const MAX_HISTORY_CHARS = 4_000;
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
@@ -39,9 +49,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Require an authenticated user.
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Per-user rate limit (20 requests/min).
+  if (
+    isRateLimited("ai:chat", user.id, {
+      maxTokens: 20,
+      refillIntervalMs: 60_000,
+    })
+  ) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before trying again." },
+      { status: 429 }
+    );
+  }
+
+  // Cap the raw body before parsing to reject oversized payloads.
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_CHARS) {
+    return NextResponse.json(
+      { error: "Request body too large" },
+      { status: 413 }
+    );
+  }
+
   let body: ChatRequestBody;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
@@ -49,12 +91,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { message, history, lessonContent, lessonTitle } = body;
+  const { message, lessonContent, lessonTitle } = body;
+  const history = Array.isArray(body.history) ? body.history : [];
 
-  if (!message || !lessonContent) {
+  if (
+    typeof message !== "string" ||
+    typeof lessonContent !== "string" ||
+    !message ||
+    !lessonContent
+  ) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
+    );
+  }
+
+  // Enforce per-field input caps.
+  if (
+    message.length > MAX_MESSAGE_CHARS ||
+    lessonContent.length > MAX_LESSON_CONTENT_CHARS ||
+    (lessonTitle?.length ?? 0) > MAX_LESSON_TITLE_CHARS ||
+    history.length > MAX_HISTORY_MESSAGES ||
+    history.some((m) => (m?.text?.length ?? 0) > MAX_HISTORY_CHARS)
+  ) {
+    return NextResponse.json(
+      { error: "Input exceeds maximum allowed size" },
+      { status: 413 }
     );
   }
 

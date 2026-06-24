@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// Input caps (defense against oversized prompts / cost abuse).
+const MAX_BODY_CHARS = 120_000;
+const MAX_CODE_CHARS = 20_000;
+const MAX_DESCRIPTION_CHARS = 5_000;
+const MAX_CONSOLE_CHARS = 10_000;
+const MAX_TEST_ITEMS = 50;
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
@@ -38,9 +47,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Require an authenticated user.
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Per-user rate limit (10 requests/min — heavier generation than chat).
+  if (
+    isRateLimited("ai:suggest", user.id, {
+      maxTokens: 10,
+      refillIntervalMs: 60_000,
+    })
+  ) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please wait before trying again." },
+      { status: 429 }
+    );
+  }
+
+  // Cap the raw body before parsing to reject oversized payloads.
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_CHARS) {
+    return NextResponse.json(
+      { error: "Request body too large" },
+      { status: 413 }
+    );
+  }
+
   let body: SuggestRequestBody;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
@@ -51,10 +92,29 @@ export async function POST(request: NextRequest) {
   const { code, tests, testResults, consoleOutput, description, language } =
     body;
 
-  if (!code || !language) {
+  if (
+    typeof code !== "string" ||
+    typeof language !== "string" ||
+    !code ||
+    !language
+  ) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
+    );
+  }
+
+  // Enforce per-field input caps.
+  if (
+    code.length > MAX_CODE_CHARS ||
+    (description?.length ?? 0) > MAX_DESCRIPTION_CHARS ||
+    (consoleOutput?.length ?? 0) > MAX_CONSOLE_CHARS ||
+    (tests?.length ?? 0) > MAX_TEST_ITEMS ||
+    (testResults?.length ?? 0) > MAX_TEST_ITEMS
+  ) {
+    return NextResponse.json(
+      { error: "Input exceeds maximum allowed size" },
+      { status: 413 }
     );
   }
 
