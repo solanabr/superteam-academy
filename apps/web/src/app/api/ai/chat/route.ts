@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   ) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Please wait before trying again." },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
 
@@ -154,10 +154,12 @@ export async function POST(request: NextRequest) {
         },
       ],
     },
-    // Append chat history
+    // Append chat history. Sanitize role (only "user"/"model" are valid for
+    // Gemini) and coerce text to a string so a malformed client payload can't
+    // break the API call or inject an unexpected role.
     ...history.map((msg) => ({
-      role: msg.role,
-      parts: [{ text: msg.text }],
+      role: msg.role === "model" ? "model" : "user",
+      parts: [{ text: typeof msg.text === "string" ? msg.text : "" }],
     })),
     // Current message
     {

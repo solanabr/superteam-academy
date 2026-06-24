@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
   ) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Please wait before trying again." },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
 
