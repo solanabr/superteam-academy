@@ -66,7 +66,8 @@
     "sucrase": "^3.35.1",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
