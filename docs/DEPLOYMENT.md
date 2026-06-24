@@ -97,12 +97,20 @@ Subsequent pushes to `main` trigger automatic deployments. Pull requests get pre
 
 ## Supabase Setup
 
-### 1. Create Project & Apply Schema
+### 1. Create Project & Apply Migrations
 
 1. Create a new project at [supabase.com/dashboard](https://supabase.com/dashboard)
-2. Open **SQL Editor**
-3. Paste the entire contents of `supabase/schema.sql`
-4. Run — this creates all 17 tables, RLS policies, indexes, SECURITY DEFINER functions, and views
+2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and link the project:
+   ```bash
+   supabase link --project-ref <your-project-ref>
+   ```
+3. Apply all migrations:
+   ```bash
+   supabase db push
+   ```
+   This runs every file in `supabase/migrations/` in order, creating all 17 tables, RLS policies, indexes, SECURITY DEFINER functions, and views.
+
+> **Migrations are the source of truth.** `supabase/schema.sql` is a generated snapshot (via `supabase db dump`) kept for reference and diffing — do **not** run or hand-edit it. Ship schema changes as new migrations: `supabase migration new <name>`, then `supabase db push`.
 
 The schema includes:
 
@@ -151,13 +159,13 @@ From **Settings** → **API**, copy:
 
 1. Go to **Table Editor** → select any table
 2. Click the shield icon — it should show "RLS enabled"
-3. All tables must have RLS enabled (set up by `schema.sql`)
+3. All tables must have RLS enabled (set up by the migrations)
 
 ### 6. Database Backups
 
 Supabase automatically creates daily backups on paid plans. On the free tier:
 
-- The `supabase/schema.sql` file in the repo serves as the source of truth
+- The `supabase/migrations/` directory is the schema source of truth (re-applies the full schema on a fresh project via `supabase db push`)
 - Use the Supabase CLI to dump data if needed: `supabase db dump --data-only`
 
 ---

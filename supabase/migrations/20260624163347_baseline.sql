@@ -1,8 +1,7 @@
 -- ============================================
--- Superteam LMS — Database schema snapshot (GENERATED)
--- Do NOT edit by hand and do NOT run this directly to make changes.
--- Source of truth is supabase/migrations/. Regenerate with:
---   supabase db dump --local -f supabase/schema.sql
+-- Superteam LMS — Baseline migration
+-- Initial schema: tables, indexes, RLS, SECURITY DEFINER functions, views.
+-- All later schema changes ship as new migrations in this directory.
 -- ============================================
 
 -- ─────────────────────────────────────────────

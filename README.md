@@ -131,9 +131,11 @@ cp .env.example apps/web/.env.local
 # NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
 # NEXT_PUBLIC_SANITY_PROJECT_ID, NEXT_PUBLIC_SANITY_DATASET.
 
-# 3. Set up the database
-# Create a Supabase project, then run supabase/schema.sql in the SQL Editor.
-# Then apply migrations from supabase/migrations/ in order.
+# 3. Set up the database (migrations are the source of truth)
+# Create a Supabase project, install the Supabase CLI, then link and push:
+#   supabase link --project-ref <your-project-ref>
+#   supabase db push        # applies supabase/migrations/ in order
+# supabase/schema.sql is a generated snapshot for reference — do not run it directly.
 
 # 4. Import seed content into Sanity
 cd sanity && SANITY_API_TOKEN=<your-token> node seed/import.mjs && cd ..
