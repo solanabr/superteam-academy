@@ -12,9 +12,14 @@
 CREATE TABLE IF NOT EXISTS rate_limits (
   key          TEXT        NOT NULL,
   window_start TIMESTAMPTZ NOT NULL,
-  count        INT         NOT NULL DEFAULT 0,
+  -- First row for a (key, window) represents the first request, so DEFAULT 1.
+  count        INT         NOT NULL DEFAULT 1,
   PRIMARY KEY (key, window_start)
 );
+
+-- Supports the global cleanup sweep below (range scan on window_start).
+CREATE INDEX IF NOT EXISTS idx_rate_limits_window_start
+  ON rate_limits (window_start);
 
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 -- No policies: only service_role (which bypasses RLS) may touch this table.
@@ -49,6 +54,15 @@ BEGIN
   ON CONFLICT (key, window_start)
   DO UPDATE SET count = public.rate_limits.count + 1
   RETURNING count INTO v_count;
+
+  -- Per-key pruning above only covers keys that come back. Sweep abandoned rows
+  -- from keys that never return on a small fraction of calls, so the table
+  -- stays bounded without depending on pg_cron being enabled. (If pg_cron is
+  -- available, a scheduled DELETE is an equally valid replacement.)
+  IF random() < 0.01 THEN
+    DELETE FROM public.rate_limits
+    WHERE window_start < now() - INTERVAL '1 hour';
+  END IF;
 
   RETURN v_count > p_max_tokens;
 END;

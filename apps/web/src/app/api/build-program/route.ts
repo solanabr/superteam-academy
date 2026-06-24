@@ -94,7 +94,7 @@ export async function POST(
           uuid: null,
           error: "Rate limit exceeded. Please wait before building again.",
         },
-        { status: 429 }
+        { status: 429, headers: { "Retry-After": "60" } }
       );
     }
 
