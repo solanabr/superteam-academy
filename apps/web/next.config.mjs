@@ -155,11 +155,10 @@ const sentryBuildOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   // Silence the build-time logger unless CI explicitly opts in.
   silent: !process.env.CI,
-  webpack: {
-    treeshake: {
-      // Strip Sentry SDK debug-logging statements from production bundles.
-      removeDebugLogging: true,
-    },
+  // Tree-shake the Sentry SDK's internal debug/logger statements out of
+  // production bundles (depends on the bundler's tree-shaking being enabled).
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
   },
 };
 
