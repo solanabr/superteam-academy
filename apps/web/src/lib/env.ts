@@ -39,6 +39,10 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().min(1),
   NEXT_PUBLIC_SANITY_DATASET: z.string().min(1).default("production"),
+  // Public, rate-limited browser RPC endpoint. MUST NOT carry a privileged
+  // Helius API key — it is inlined into the client bundle. The Helius-keyed
+  // endpoint lives server-side as SOLANA_RPC_URL in env.server.ts.
+  NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
 });
 
 const parsed = publicEnvSchema.safeParse({
@@ -46,6 +50,7 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET,
+  NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
 });
 
 if (!parsed.success) {

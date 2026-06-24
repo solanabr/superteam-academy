@@ -13,7 +13,7 @@ import "server-only";
  * This module must ONLY be imported from API routes (server-side).
  */
 
-import { Connection, Keypair, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   burn,
   getAccount,
@@ -22,6 +22,7 @@ import {
   mintTo,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
+import { serverEnv } from "@/lib/env.server";
 
 // ---------------------------------------------------------------------------
 // Lazy-loaded singletons (initialized on first call)
@@ -38,9 +39,7 @@ function initialize(): { ready: boolean } {
   }
   _initialized = true;
 
-  const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
-  _connection = new Connection(rpcUrl, "confirmed");
+  _connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
   const mintAddress = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS;
   if (!mintAddress) {

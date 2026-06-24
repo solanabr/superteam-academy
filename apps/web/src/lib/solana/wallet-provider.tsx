@@ -7,7 +7,7 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl } from "@solana/web3.js";
+import { env } from "@/lib/env";
 import { WalletAuthHandler } from "@/components/auth/wallet-auth-handler";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -17,10 +17,7 @@ interface SolanaWalletProviderProps {
 }
 
 export function SolanaWalletProvider({ children }: SolanaWalletProviderProps) {
-  const endpoint = useMemo(
-    () => process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet"),
-    []
-  );
+  const endpoint = useMemo(() => env.NEXT_PUBLIC_SOLANA_RPC_URL, []);
 
   // Wallet Standard auto-discovers installed wallets (Phantom, Solflare,
   // Backpack, MetaMask Snap, etc.)

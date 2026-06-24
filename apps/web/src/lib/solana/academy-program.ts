@@ -6,7 +6,6 @@ import {
   SystemProgram,
   PublicKey,
   TransactionInstruction,
-  clusterApiUrl,
 } from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import {
@@ -28,6 +27,7 @@ import {
   findMinterRolePDA,
   getProgramId,
 } from "./pda";
+import { serverEnv } from "@/lib/env.server";
 
 export { getProgramId } from "./pda";
 
@@ -81,9 +81,7 @@ let _connection: Connection | null = null;
 
 export function getConnection(): Connection {
   if (_connection) return _connection;
-  const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
-  _connection = new Connection(rpcUrl, "confirmed");
+  _connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
   return _connection;
 }
 

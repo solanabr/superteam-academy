@@ -8,6 +8,7 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
+import { serverEnv } from "@/lib/env.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   fetchEnrollment,
@@ -38,9 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
   const xpMintAddress = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS;
-  if (!rpcUrl || !xpMintAddress) {
+  if (!xpMintAddress) {
     return NextResponse.json(
       { error: "Server misconfigured" },
       { status: 500 }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createAdminClient();
-  const connection = new Connection(rpcUrl);
+  const connection = new Connection(serverEnv.SOLANA_RPC_URL);
   const wallet = new PublicKey(walletAddress);
   const XP_MINT = new PublicKey(xpMintAddress);
 
