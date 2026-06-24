@@ -1,48 +1,84 @@
 ---
-description: Work one unit of the launch backlog — babysit an open PR or advance the next issue, verified by both gates (CI + Claude review). Use with /loop or /goal.
+description: Work one unit of the launch backlog — babysit+merge an open loop PR, or advance the next issue via a specialist subagent. Verified by both gates (CI + Claude review). Drive with /goal.
 ---
 
 You are driving Superteam Academy's mainnet-launch backlog. **The GitHub issues are the source of
 truth.** Each run, do **one** useful unit of work, then stop. Optional lane filter via `$ARGUMENTS`
 (e.g. `area:onchain`, or `area:db,area:frontend`). If empty, take any open issue.
 
+**Keep this session lean.** Do the heavy lifting in a subagent and keep only its summary (step 2) —
+context degrades as it fills, and a `/goal` run spans many turns.
+
 ## Each run, in priority order
 
-**1. Babysit open loop PRs first (finish before starting new work).**
+**1. Babysit the open loop PR first (finish in-flight work before starting new work).**
 
-- List open PRs that were opened by this loop (branch prefix `loop/`). For each, check
-  `gh pr checks <n>` and the latest **Claude review** comment.
-- CI red → fix the failure. Claude review has **blocking** findings (security / correctness /
-  "does not meet Done when") → address them. Push the fix. **CI re-runs automatically, but the
-  Claude review does NOT re-run on push** — comment `@claude re-review` on the PR to trigger a fresh
-  review, then wait for the NEW review before judging DONE.
-- A PR is **DONE only when BOTH gates pass**: CI green **AND** the Claude review has no blocking
-  findings. CI proves the mechanical (tests/types/lint); the review proves the semantic (actually
-  implemented, correct, meets the issue's "Done when"). Neither alone is enough.
+- Find loop PRs: `gh pr list --state open --json number,headRefName --jq '[.[]|select(.headRefName|startswith("loop/"))]'`.
+- For each, read **both gates**:
+  - **CI**: `gh pr checks <n>`.
+  - **Review verdict**: the latest `claude[bot]` issue-comment —
+    `gh api repos/{owner}/{repo}/issues/<n>/comments --jq '[.[]|select(.user.login=="claude[bot]")]|last|.body'`.
+    It leads with `Verdict: Approve ✓` or blocking findings. **The `claude-review` CHECK turning
+    green only means the action ran — it is NOT the verdict. Read the comment.**
+- Act on state:
+  - **CI still pending** (checks not all complete) → **cheap no-op turn**: print `PR #<n>: CI pending`
+    and stop. Do not spin; do not start a second issue.
+  - **CI red** → fix the failure (delegate to the step-2 specialist subagent if non-trivial), push.
+  - **Review has blocking findings** → address them, push, comment `@claude re-review` (the
+    auto-review does NOT re-run on push), and **wait for the NEW `claude[bot]` comment** next turn
+    before judging.
+  - **BOTH gates pass** (CI green AND latest verdict = approve / no blocking) → **MERGE STEP:**
+    - **SENSITIVE** — any changed path under `supabase/schema.sql`, `onchain-academy/**`,
+      real env/secret files (`.env`, `.env.local`, `.env.*` — but NOT public `*.example`
+      templates), `.github/workflows/**`, or `.claude/**`; OR issue label ∈
+      {`area:security`, `area:onchain`, `area:db`, `area:ci`}: run an adversarial **Workflow**
+      (maker → verify → re-exploit → fixer), then **leave the PR open**, add label
+      `needs-human-review`, comment `needs human review`, and **stop babysitting it**. NEVER
+      self-merge these — a human signs off.
+    - **SAFE** — everything else (`area:frontend`/`docs`/`testing`/`ops`):
+      `gh pr merge <n> --squash --delete-branch`. The issue auto-closes via `Closes #<n>`.
 
-**2. If no PR needs babysitting, advance the next issue.**
+**2. If no loop PR needs babysitting, advance the next issue.**
 
 - `gh issue list --state open --label priority:P0` (fall back to P1, then P2). Pick the
-  highest-priority issue that is **unblocked** (`blocked:*` clear), **unclaimed** (no `loop:wip`
-  label), and whose `area:` matches `$ARGUMENTS` (if set).
-- Claim it (create the label once if missing): `gh label create loop:wip -c 5319E7 2>/dev/null || true`
-  then `gh issue edit <n> --add-label loop:wip`. Read the body; implement to its
-  **checklist + "Done when"**, following `CLAUDE.md` and `docs/TASK-CODES.md`.
-- Branch per CLAUDE.md: `loop/<type>-<task-code>-<DD-MM-YYYY>`. One issue per PR. Open the PR with
-  `Closes #<n>`. The two gates fire automatically; next run babysits it (step 1).
+  highest-priority issue that is **unblocked** (`blocked:*` clear), **unclaimed** (no `loop:wip`),
+  and whose `area:` matches `$ARGUMENTS` (if set).
+- Claim it: `gh label create loop:wip -c 5319E7 2>/dev/null || true` then
+  `gh issue edit <n> --add-label loop:wip`. Branch per CLAUDE.md: `loop/<type>-<task-code>-<DD-MM-YYYY>`.
+- **First, verify "Done when" isn't ALREADY met** — stale-but-open issues are common here. Run the
+  check (`pnpm typecheck`, the relevant tests) or confirm the referenced fix is already in `main`
+  (`git log --oneline -- <path>`). If already satisfied → **do NOT reimplement**: comment citing the
+  resolving commit, `gh issue close <n>`, remove `loop:wip`. That closed issue IS the unit's progress.
+- **Implement via ONE specialist subagent**, routed by the issue's `area:` (keeps this session lean,
+  applies domain expertise):
+  - `area:onchain` → `anchor-engineer` · `area:testing` → `solana-qa-engineer` ·
+    everything else → `general-purpose`.
+  - Hand the subagent: the issue number + body, its **checklist + "Done when"**, the branch name,
+    and `CLAUDE.md` + `docs/TASK-CODES.md` conventions. It implements, **runs the relevant
+    tests/build locally to verify** (the most important step — agent-runnable verification), commits,
+    pushes, and opens **one** PR with `Closes #<n>`. It returns a **short summary** (PR #, what
+    changed, verification result). Keep only that summary.
+- The two gates fire automatically on PR open; next run babysits it (step 1).
+
+## End every turn
+
+Print one status line so the `/goal` evaluator can judge completion from the transcript:
+`OPEN P0=<n> P1=<n> | main CI=<green|red> | this turn: <merged #X | opened #Y | babysat #Z | no-op>`
 
 ## Hard rules
 
-- **NEVER self-merge** anything touching RLS / `supabase/schema.sql` / `onchain-academy` / secrets /
-  mainnet. Run an adversarial **Workflow** (maker → verify → re-exploit → fixer), then leave the PR
-  open and comment `needs human review` — a human signs off on those.
+- **NEVER self-merge** SENSITIVE PRs (step 1). A human signs off on RLS / schema / on-chain /
+  secrets / mainnet / CI-workflow / `.claude` changes.
 - **New finding** (from CI, the review, or your own work) → **dedup first**:
   `gh issue list --state open --search "<1-2 distinctive keywords: a table/function name or task code>"`
   (run 2-3 narrow searches — multi-word queries AND-fail and miss matches). Only if none match →
-  `gh issue create` with `priority:` + `area:` + `severity:` labels (severity ∈ {critical, high,
-  medium} — there is no `severity:low`). Self-growing until clean; don't fix out-of-scope inline.
-- Auto mode + the repo allowlist handle permissions. Real blocker → comment on the issue and stop;
-  don't thrash.
+  `gh issue create` with `priority:` + `area:` + `severity:` (severity ∈ {critical, high, medium} —
+  there is no `severity:low`). Self-growing until clean; don't fix out-of-scope inline.
+- **Labeling a PR: use the REST API**, not `gh pr edit --add-label` — the latter errors on this repo
+  via the deprecated projects-classic GraphQL path:
+  `echo '{"labels":["<label>"]}' | gh api repos/{owner}/{repo}/issues/<n>/labels --method POST --input -`.
+  (Issue labels via `gh issue edit <n> --add-label` work fine.)
+- Run under **auto mode** for permissions. Real blocker → comment on the issue and stop; don't thrash.
 
 ## Stop condition (the goal)
 

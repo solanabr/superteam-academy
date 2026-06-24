@@ -337,8 +337,8 @@ ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-sig
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
-XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (base58)
-PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (base58)
+XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (JSON array of 64 keypair bytes)
+PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64 keypair bytes)
 
 # Optional — Analytics (platform works without these)
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
