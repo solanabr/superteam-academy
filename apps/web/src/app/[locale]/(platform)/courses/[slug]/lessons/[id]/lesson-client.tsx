@@ -556,8 +556,8 @@ export function LessonPageClient({
           open={isAiChatOpen}
           onClose={() => setIsAiChatOpen(false)}
           lessonId={lesson._id}
-          lessonTitle={lesson.title}
-          lessonContent={lesson.content}
+          courseSlug={courseSlug}
+          lessonSlug={lesson.slug}
         />
       </div>
     );
@@ -802,8 +802,8 @@ export function LessonPageClient({
         open={isAiChatOpen}
         onClose={() => setIsAiChatOpen(false)}
         lessonId={lesson._id}
-        lessonTitle={lesson.title}
-        lessonContent={lesson.content}
+        courseSlug={courseSlug}
+        lessonSlug={lesson.slug}
       />
     </div>
   );

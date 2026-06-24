@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
+import { getLessonBySlug } from "@/lib/sanity/queries";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Input caps (defense against oversized prompts / cost abuse).
-const MAX_BODY_CHARS = 200_000;
+// Lesson content/title are fetched server-side from Sanity (not client-supplied),
+// so only the user-authored fields are capped here.
+const MAX_BODY_CHARS = 50_000;
 const MAX_MESSAGE_CHARS = 4_000;
-const MAX_LESSON_CONTENT_CHARS = 60_000;
-const MAX_LESSON_TITLE_CHARS = 300;
+const MAX_SLUG_CHARS = 256;
 const MAX_HISTORY_MESSAGES = 20;
 const MAX_HISTORY_CHARS = 4_000;
 const GEMINI_URL =
@@ -37,8 +39,8 @@ interface ChatMessage {
 interface ChatRequestBody {
   message: string;
   history: ChatMessage[];
-  lessonContent: string;
-  lessonTitle: string;
+  courseSlug: string;
+  lessonSlug: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -91,14 +93,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { message, lessonContent, lessonTitle } = body;
+  const { message, courseSlug, lessonSlug } = body;
   const history = Array.isArray(body.history) ? body.history : [];
 
   if (
     typeof message !== "string" ||
-    typeof lessonContent !== "string" ||
+    typeof courseSlug !== "string" ||
+    typeof lessonSlug !== "string" ||
     !message ||
-    !lessonContent
+    !courseSlug ||
+    !lessonSlug
   ) {
     return NextResponse.json(
       { error: "Missing required fields" },
@@ -106,11 +110,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Enforce per-field input caps.
+  // Enforce per-field input caps on the user-authored fields.
   if (
     message.length > MAX_MESSAGE_CHARS ||
-    lessonContent.length > MAX_LESSON_CONTENT_CHARS ||
-    (lessonTitle?.length ?? 0) > MAX_LESSON_TITLE_CHARS ||
+    courseSlug.length > MAX_SLUG_CHARS ||
+    lessonSlug.length > MAX_SLUG_CHARS ||
     history.length > MAX_HISTORY_MESSAGES ||
     history.some((m) => (m?.text?.length ?? 0) > MAX_HISTORY_CHARS)
   ) {
@@ -119,6 +123,17 @@ export async function POST(request: NextRequest) {
       { status: 413 }
     );
   }
+
+  // Resolve lesson content server-side from Sanity. Never trust client-supplied
+  // lesson text — interpolating it into the system prompt is a prompt-injection
+  // surface (a caller could send a fake "--- END LESSON ---" to escape the guard).
+  const lesson = await getLessonBySlug(courseSlug, lessonSlug);
+  if (!lesson) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+  const lessonTitle = lesson.title;
+  const lessonContent =
+    typeof lesson.content === "string" ? lesson.content : "";
 
   // Build conversation history for Gemini
   const contents = [

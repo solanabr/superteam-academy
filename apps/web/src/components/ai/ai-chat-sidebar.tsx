@@ -25,16 +25,16 @@ interface AiChatSidebarProps {
   open: boolean;
   onClose: () => void;
   lessonId: string;
-  lessonTitle: string;
-  lessonContent: string;
+  courseSlug: string;
+  lessonSlug: string;
 }
 
 export function AiChatSidebar({
   open,
   onClose,
   lessonId,
-  lessonTitle,
-  lessonContent,
+  courseSlug,
+  lessonSlug,
 }: AiChatSidebarProps) {
   const t = useTranslations("lesson");
 
@@ -87,8 +87,8 @@ export function AiChatSidebar({
         body: JSON.stringify({
           message: trimmed,
           history: messages,
-          lessonContent,
-          lessonTitle,
+          courseSlug,
+          lessonSlug,
         }),
       });
 
@@ -109,7 +109,7 @@ export function AiChatSidebar({
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, limitReached, messages, lessonContent, lessonTitle, t]);
+  }, [input, isLoading, limitReached, messages, courseSlug, lessonSlug, t]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
