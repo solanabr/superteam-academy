@@ -13,11 +13,7 @@ interface ResyncResult {
   certificates: number;
 }
 
-interface DataResyncPanelProps {
-  adminToken: string;
-}
-
-export function DataResyncPanel({ adminToken }: DataResyncPanelProps) {
+export function DataResyncPanel() {
   const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResyncResult | null>(null);
@@ -34,10 +30,7 @@ export function DataResyncPanel({ adminToken }: DataResyncPanelProps) {
     try {
       const res = await fetch("/api/admin/resync", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress: trimmed }),
       });
 

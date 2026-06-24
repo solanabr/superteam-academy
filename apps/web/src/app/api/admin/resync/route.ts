@@ -1,6 +1,5 @@
 import "server-only";
 
-import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import {
@@ -11,6 +10,11 @@ import {
 import { serverEnv } from "@/lib/env.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  requireAdminAuth,
+  adminUnauthorizedResponse,
+  AdminAuthError,
+} from "@/lib/admin/auth";
+import {
   fetchEnrollment,
   fetchAchievementReceiptData,
 } from "@/lib/solana/academy-reads";
@@ -18,25 +22,17 @@ import { decodeLessonBitmap } from "@/lib/solana/bitmap";
 import { getAllCourses, getAllAchievements } from "@/lib/sanity/queries";
 import { calculateLevel } from "@/lib/gamification/xp";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET;
-
-function verifyAdminToken(header: string | null): boolean {
-  if (!ADMIN_SECRET || !header?.startsWith("Bearer ")) return false;
-  const token = header.slice(7);
-  const tokenBuf = Buffer.from(token);
-  const secretBuf = Buffer.from(ADMIN_SECRET);
-  if (tokenBuf.length !== secretBuf.length) return false;
-  return crypto.timingSafeEqual(tokenBuf, secretBuf);
-}
-
 function isValidBase58(value: string): boolean {
   return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
 }
 
 export async function POST(req: NextRequest) {
-  // Admin auth (timing-safe comparison)
-  if (!verifyAdminToken(req.headers.get("authorization"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Admin auth via signed admin_session cookie
+  try {
+    requireAdminAuth(req);
+  } catch (e) {
+    if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
+    throw e;
   }
 
   const xpMintAddress = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS;

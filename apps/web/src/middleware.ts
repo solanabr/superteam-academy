@@ -3,8 +3,11 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { env } from "@/lib/env";
 import { locales, defaultLocale } from "@/lib/i18n/config";
+import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
 
-const ADMIN_SESSION_MAX_AGE_MS = 86400 * 1000;
+// NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
+// with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
+// The shared cookie format + max-age live in `lib/admin/session-format.ts`.
 
 function hexEncode(buf: ArrayBuffer): string {
   return Array.from(new Uint8Array(buf))

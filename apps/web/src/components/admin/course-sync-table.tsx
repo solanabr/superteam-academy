@@ -32,15 +32,10 @@ interface CourseStatus {
 
 interface CourseSyncTableProps {
   courses: CourseStatus[];
-  adminToken: string;
   onRefresh: () => void;
 }
 
-export function CourseSyncTable({
-  courses,
-  adminToken,
-  onRefresh,
-}: CourseSyncTableProps) {
+export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +46,7 @@ export function CourseSyncTable({
     try {
       const res = await fetch("/api/admin/courses/sync", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId }),
       });
       if (!res.ok) {
@@ -82,10 +74,7 @@ export function CourseSyncTable({
     try {
       const res = await fetch("/api/admin/courses/deactivate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId }),
       });
       if (!res.ok) {
@@ -115,10 +104,7 @@ export function CourseSyncTable({
       try {
         const res = await fetch("/api/admin/courses/sync", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId: course.sanityId }),
         });
         if (!res.ok) {

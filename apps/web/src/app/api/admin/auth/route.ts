@@ -36,7 +36,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     response.cookies.set("admin_session", cookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      // Strict: the admin console has no cross-site entry flow, so the cookie
+      // never needs to ride a cross-site navigation. This blocks the cookie
+      // from being attached to attacker-initiated cross-site requests (CSRF),
+      // which matter here because admin POSTs trigger authority-signed on-chain writes.
+      sameSite: "strict",
       maxAge: 86400, // 24h
       path: "/",
     });
