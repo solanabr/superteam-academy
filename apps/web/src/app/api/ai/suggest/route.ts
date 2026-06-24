@@ -10,6 +10,8 @@ const MAX_CODE_CHARS = 20_000;
 const MAX_DESCRIPTION_CHARS = 5_000;
 const MAX_CONSOLE_CHARS = 10_000;
 const MAX_TEST_ITEMS = 50;
+const MAX_TEST_DESCRIPTION_CHARS = 500;
+const MAX_TEST_IO_CHARS = 2_000;
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
@@ -104,13 +106,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Enforce per-field input caps.
+  // Enforce per-field input caps, including per-item caps on test arrays —
+  // each item's strings are interpolated into the prompt, so array length
+  // alone isn't enough to bound attacker-controlled text.
   if (
     code.length > MAX_CODE_CHARS ||
     (description?.length ?? 0) > MAX_DESCRIPTION_CHARS ||
     (consoleOutput?.length ?? 0) > MAX_CONSOLE_CHARS ||
     (tests?.length ?? 0) > MAX_TEST_ITEMS ||
-    (testResults?.length ?? 0) > MAX_TEST_ITEMS
+    (testResults?.length ?? 0) > MAX_TEST_ITEMS ||
+    tests?.some(
+      (t) =>
+        (t?.description?.length ?? 0) > MAX_TEST_DESCRIPTION_CHARS ||
+        (t?.input?.length ?? 0) > MAX_TEST_IO_CHARS ||
+        (t?.expectedOutput?.length ?? 0) > MAX_TEST_IO_CHARS
+    ) ||
+    testResults?.some(
+      (r) =>
+        (r?.description?.length ?? 0) > MAX_TEST_DESCRIPTION_CHARS ||
+        (r?.actual?.length ?? 0) > MAX_TEST_IO_CHARS
+    )
   ) {
     return NextResponse.json(
       { error: "Input exceeds maximum allowed size" },
