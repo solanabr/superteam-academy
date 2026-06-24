@@ -281,6 +281,18 @@ CREATE POLICY "Anyone can read nft metadata"
 -- yesterday, resets to 1 if gap > 1 day, and updates longest_streak.
 -- p_idempotency_key: when provided, uses ON CONFLICT DO NOTHING to prevent
 -- double-award from concurrent retries (race-safe deduplication).
+--
+-- SECURITY (P0-C4) — interim XP-integrity caps. Challenge "passed" is currently
+-- browser-trusted, so a forged completion could otherwise mint XP for unsolved
+-- work. These server-side caps bound the blast radius regardless of what the
+-- client (or a misconfigured on-chain xp_per_lesson) claims:
+--   * MAX_AWARD_XP       — hard ceiling on any single award (clamped, not rejected).
+--   * MAX_DAILY_AWARD_XP — per-user/day ceiling across the learning XP path
+--     (community XP is excluded — it has its own 50/day cap in award_community_xp).
+-- Clamping (vs. rejecting) keeps legitimate large one-time awards — e.g. course
+-- completion bonuses up to 2000 — working while capping farmable repetition.
+-- NOTE: this is defense-in-depth, NOT a substitute for true server-side
+-- challenge validation (tracked as a follow-up).
 CREATE OR REPLACE FUNCTION award_xp(
   p_user_id UUID,
   p_amount INTEGER,
@@ -298,7 +310,52 @@ DECLARE
   v_longest_streak INTEGER;
   v_new_streak INTEGER;
   v_new_longest INTEGER;
+  v_daily_total INTEGER;
+  -- Hard per-award ceiling. Matches the documented "max 2000 XP per award"
+  -- (the largest legitimate single award is a course-completion bonus).
+  c_max_award_xp CONSTANT INTEGER := 2000;
+  -- Per-user daily ceiling across the learning XP path (lessons, challenges,
+  -- bonuses, achievements). Generous enough for normal multi-course days,
+  -- low enough to cap a forged-"passed" farming loop.
+  c_max_daily_award_xp CONSTANT INTEGER := 5000;
 BEGIN
+  -- Reject non-positive awards outright (defensive — callers pass positives).
+  IF p_amount IS NULL OR p_amount <= 0 THEN
+    RETURN;
+  END IF;
+
+  -- Clamp any single award to the hard ceiling.
+  IF p_amount > c_max_award_xp THEN
+    p_amount := c_max_award_xp;
+  END IF;
+
+  -- Serialize concurrent awards for the same user so the read-then-insert daily
+  -- cap below is atomic: without this lock, two parallel awards can both read a
+  -- sub-cap total and both insert, blowing past the daily ceiling.
+  PERFORM pg_advisory_xact_lock(hashtext('award_xp:' || p_user_id::text)::bigint);
+
+  -- Enforce the per-user daily ceiling. Sum today's learning-path awards
+  -- (excluding community XP, which is capped separately) and clamp the credit
+  -- so the daily total can never exceed the ceiling. The window boundary is
+  -- pinned to UTC midnight so it is independent of the DB session timezone.
+  SELECT COALESCE(SUM(amount), 0) INTO v_daily_total
+  FROM public.xp_transactions
+  WHERE user_id = p_user_id
+    AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+    AND reason NOT LIKE 'community:%';
+
+  IF v_daily_total >= c_max_daily_award_xp THEN
+    RETURN;
+  END IF;
+
+  IF v_daily_total + p_amount > c_max_daily_award_xp THEN
+    p_amount := c_max_daily_award_xp - v_daily_total;
+  END IF;
+
+  IF p_amount <= 0 THEN
+    RETURN;
+  END IF;
+
   IF p_idempotency_key IS NOT NULL THEN
     INSERT INTO public.xp_transactions (user_id, amount, reason, idempotency_key, tx_signature)
     VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)

@@ -1,3 +1,4 @@
+import type { AdminTestCase } from "@superteam-lms/types";
 import { sanityFetch } from "./client";
 import type { Course, Lesson, LearningPath } from "./types";
 
@@ -23,6 +24,11 @@ const courseFields = `
   trackLevel
 `;
 
+// SECURITY (P0-C4): `solution` and hidden tests are the challenge answer key and
+// must never reach the client. This projection (shared by getCourseBySlug, which
+// feeds the course-detail client page) sends only visible tests with the `hidden`
+// flag stripped. `tests[hidden != true]` matches false/undefined and excludes
+// only true.
 const moduleWithLessonsFields = `
   _id,
   title,
@@ -41,9 +47,8 @@ const moduleWithLessonsFields = `
     videoUrl,
     content,
     code,
-    tests,
+    "tests": tests[hidden != true]{ id, description, input, expectedOutput },
     hints,
-    solution,
     order
   } | order(order asc)
 `;
@@ -87,6 +92,11 @@ export async function getLessonBySlug(
   courseSlug: string,
   lessonSlug: string
 ): Promise<Lesson | null> {
+  // SECURITY (P0-C4): never project `solution` or hidden tests — they are the
+  // challenge answer key. `tests[hidden != true]` keeps only visible tests
+  // (GROQ: `hidden != true` matches false/undefined and excludes only true) and
+  // re-projects each to drop the `hidden` flag itself. Hidden-test/solution
+  // checking lives server-side in /api/lessons/validate-challenge.
   return sanityFetch<Lesson | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
       "allLessons": modules[]->lessons[]->{
@@ -102,13 +112,55 @@ export async function getLessonBySlug(
         videoUrl,
         content,
         code,
-        tests,
+        "tests": tests[hidden != true]{ id, description, input, expectedOutput },
         hints,
-        solution,
         order
       }
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug }
+  );
+}
+
+/**
+ * Challenge answer key — the FULL test set (including hidden tests) plus the
+ * reference solution for a single lesson.
+ *
+ * SERVER-ONLY. This is the data deliberately withheld from {@link getLessonBySlug}
+ * (P0-C4). Call it exclusively from server code (API routes) and never serialize
+ * its result into a client response. Used by /api/lessons/validate-challenge to
+ * check submissions against hidden tests without shipping them to the browser.
+ */
+export async function getChallengeAnswerKey(
+  courseSlug: string,
+  lessonSlug: string
+): Promise<{
+  _id: string;
+  type: string;
+  language: string | null;
+  tests: AdminTestCase[];
+  solution: string | null;
+} | null> {
+  // revalidate=0: always read fresh, never via the public Sanity CDN, so the
+  // answer key is not cached on any edge.
+  return sanityFetch<{
+    _id: string;
+    type: string;
+    language: string | null;
+    tests: AdminTestCase[];
+    solution: string | null;
+  } | null>(
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
+      "allLessons": modules[]->lessons[]->{
+        _id,
+        "slug": slug.current,
+        type,
+        language,
+        "tests": tests[]{ id, description, input, expectedOutput, hidden },
+        solution
+      }
+    }.allLessons[slug == $lessonSlug][0]`,
+    { courseSlug, lessonSlug },
+    0
   );
 }
 
