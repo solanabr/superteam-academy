@@ -28,7 +28,14 @@ export function formatEnvError(scope: string, error: z.ZodError): string {
 }
 
 const publicEnvSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url(),
+  // Require https in production; allow http (e.g. localhost) in dev/test.
+  NEXT_PUBLIC_SUPABASE_URL: z
+    .url()
+    .refine(
+      (value) =>
+        process.env.NODE_ENV !== "production" || value.startsWith("https://"),
+      { error: "must use https:// in production" }
+    ),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().min(1),
   NEXT_PUBLIC_SANITY_DATASET: z.string().min(1).default("production"),
