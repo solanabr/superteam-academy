@@ -1,11 +1,12 @@
 import "server-only";
 import { createClient } from "next-sanity";
 import { env } from "@/lib/env";
+import { serverEnv } from "@/lib/env.server";
 
 const sanityAdmin = createClient({
   projectId: env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: env.NEXT_PUBLIC_SANITY_DATASET,
-  token: process.env.SANITY_ADMIN_TOKEN,
+  token: serverEnv.SANITY_ADMIN_TOKEN,
   useCdn: false,
   apiVersion: "2024-01-01",
 });
