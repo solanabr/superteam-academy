@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
+import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
   adminUnauthorizedResponse,
@@ -34,9 +35,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     throw e;
   }
 
-  const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
-  const connection = new Connection(rpcUrl, "confirmed");
+  const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
   const [courses, achievements, authorityCheck] = await Promise.all([
     getAllCoursesAdmin(),

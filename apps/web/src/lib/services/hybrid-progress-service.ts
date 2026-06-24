@@ -6,12 +6,13 @@ import type {
   Credential,
 } from "@superteam-lms/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {
   getAccount,
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
+import { env } from "@/lib/env";
 import type { Database } from "@/lib/supabase/types";
 
 // ---------------------------------------------------------------------------
@@ -30,9 +31,10 @@ export class HybridProgressService implements LearningProgressService {
   private readonly xpMint: PublicKey | null;
 
   constructor(private readonly supabase: SupabaseClient<Database>) {
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
-    this.connection = new Connection(rpcUrl);
+    // This service runs in the browser (dashboard/profile client pages), so it
+    // uses the public, rate-limited RPC endpoint. XP balance reads are
+    // non-privileged and do not need the server-only Helius-keyed endpoint.
+    this.connection = new Connection(env.NEXT_PUBLIC_SOLANA_RPC_URL);
 
     const mintAddress = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS;
     this.xpMint = mintAddress ? new PublicKey(mintAddress) : null;

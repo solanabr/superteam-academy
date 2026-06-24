@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
+import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
   adminUnauthorizedResponse,
@@ -77,9 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
-  const connection = new Connection(rpcUrl, "confirmed");
+  const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
   const [coursePda] = findCoursePDA(courseId, getProgramId());
   const accountInfo = await connection.getAccountInfo(coursePda);
 

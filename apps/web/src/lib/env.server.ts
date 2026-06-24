@@ -8,6 +8,11 @@ import { formatEnvError } from "./env";
  */
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // Server-only Solana RPC endpoint. This is the one that may carry a
+  // privileged Helius API key — it is never inlined into the client bundle
+  // (`server-only` enforces that). Required so a misconfigured deployment
+  // fails loudly here instead of silently falling back to public devnet.
+  SOLANA_RPC_URL: z.url(),
   // Optional: only needed for admin Sanity writes. Validated as non-empty when
   // present so a blank token surfaces here rather than as a silent
   // unauthenticated client at the Sanity API call.
@@ -16,6 +21,7 @@ const serverEnvSchema = z.object({
 
 const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
   SANITY_ADMIN_TOKEN: process.env.SANITY_ADMIN_TOKEN,
 });
 

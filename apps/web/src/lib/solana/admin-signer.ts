@@ -11,13 +11,7 @@
  */
 import "server-only";
 
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  clusterApiUrl,
-} from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
@@ -36,6 +30,7 @@ import {
   findAchievementTypePDA,
   getProgramId,
 } from "./pda";
+import { serverEnv } from "@/lib/env.server";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -161,9 +156,7 @@ function initialize(): { ready: boolean } {
   }
   _initialized = true;
 
-  const rpcUrl =
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
-  _connection = new Connection(rpcUrl, "confirmed");
+  _connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
   const authoritySecret = process.env.PROGRAM_AUTHORITY_SECRET;
   if (!authoritySecret) {
@@ -429,11 +422,9 @@ export async function deployCourseTrackCollection(params: {
   }
 
   try {
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
     const [configPDA] = findConfigPDA(getProgramId());
 
-    const umi = createUmi(rpcUrl)
+    const umi = createUmi(serverEnv.SOLANA_RPC_URL)
       .use(mplCore())
       .use(keypairIdentity(fromWeb3JsKeypair(_authority)));
 
