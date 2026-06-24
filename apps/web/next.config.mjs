@@ -1,4 +1,5 @@
 import createNextIntlPlugin from "next-intl/plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
 
@@ -133,4 +134,33 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+/**
+ * Sentry build-time options.
+ *
+ * `withSentryConfig` only augments build/upload behaviour (source-map upload +
+ * the client/server/edge instrumentation injection) — it returns the wrapped
+ * config otherwise untouched, so the `headers()`/CSP block above is preserved
+ * verbatim. Source-map upload is gated on `SENTRY_AUTH_TOKEN`, so local/CI
+ * builds without it still succeed.
+ *
+ * Client→Sentry ingest goes directly to the DSN host. The CSP `connect-src`
+ * above already allows `https://*.sentry.io` + `https://*.ingest.sentry.io`,
+ * which covers standard `*.ingest.sentry.io` (and region `*.ingest.<region>`
+ * is a subdomain of `sentry.io`). A self-hosted/custom ingest host would need
+ * its own `connect-src` entry — do not assume the default.
+ */
+const sentryBuildOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Silence the build-time logger unless CI explicitly opts in.
+  silent: !process.env.CI,
+  webpack: {
+    treeshake: {
+      // Strip Sentry SDK debug-logging statements from production bundles.
+      removeDebugLogging: true,
+    },
+  },
+};
+
+export default withSentryConfig(withNextIntl(nextConfig), sentryBuildOptions);
