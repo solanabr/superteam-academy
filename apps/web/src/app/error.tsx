@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 
 export default function Error({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -11,6 +14,10 @@ export default function Error({
 }) {
   const pathname = usePathname();
   const locale = pathname?.split("/")[1] || "en";
+
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
 
   // Simple inline translations since we can't use next-intl outside [locale] layout
   const translations: Record<

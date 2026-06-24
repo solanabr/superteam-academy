@@ -73,13 +73,13 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Optional Variables
 
-| Variable                         | Type            | Notes                                           |
-| -------------------------------- | --------------- | ----------------------------------------------- |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`   | Public          | Google OAuth (see [setup](#google-oauth-setup)) |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                              |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                             |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                            |
-| `SENTRY_DSN`                     | **Server-only** | Sentry error tracking                           |
+| Variable                         | Type   | Notes                                           |
+| -------------------------------- | ------ | ----------------------------------------------- |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`   | Public | Google OAuth (see [setup](#google-oauth-setup)) |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public | Google Analytics 4                              |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | Public | PostHog project key                             |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | Public | PostHog instance URL                            |
+| `NEXT_PUBLIC_SENTRY_DSN`         | Public | Sentry error tracking (DSN is safe to expose)   |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
 
@@ -419,7 +419,14 @@ Sign up at [posthog.com](https://posthog.com).
 ### Sentry
 
 ```bash
-SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+# Public DSN — bundled client-side; safe to expose. Drives client + server + edge
+# error reporting via the @sentry/nextjs instrumentation files.
+NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+
+# Optional — source-map upload at build time (CI/Vercel only). Server-only.
+SENTRY_ORG=your-org
+SENTRY_PROJECT=your-project
+SENTRY_AUTH_TOKEN=your-auth-token
 ```
 
 Sign up at [sentry.io](https://sentry.io).

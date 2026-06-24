@@ -344,7 +344,7 @@ PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
-SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DSN=            # Public DSN (safe to expose); drives client+server+edge Sentry
 
 # Optional — App URL (for sitemap, OG tags)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
