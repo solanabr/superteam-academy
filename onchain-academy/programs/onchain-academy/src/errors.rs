@@ -40,6 +40,8 @@ pub enum AcademyError {
     MinterNotActive,
     #[msg("Amount exceeds minter's per-call limit")]
     MinterAmountExceeded,
+    #[msg("Cumulative minted XP would exceed minter's total cap")]
+    MinterCapExceeded,
     #[msg("Minter label exceeds max length")]
     LabelTooLong,
     #[msg("Achievement type is not active")]

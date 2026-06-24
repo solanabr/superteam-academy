@@ -115,41 +115,46 @@ const ERROR_MAP: Record<number, ProgramErrorEntry> = {
     fallback: "Amount exceeds minter limit.",
   },
   6019: {
+    name: "MinterCapExceeded",
+    i18nKey: "minterCapExceeded",
+    fallback: "This would exceed the minter's cumulative XP cap.",
+  },
+  6020: {
     name: "LabelTooLong",
     i18nKey: "labelTooLong",
     fallback: "Label exceeds maximum length.",
   },
-  6020: {
+  6021: {
     name: "AchievementNotActive",
     i18nKey: "achievementNotActive",
     fallback: "This achievement is not currently active.",
   },
-  6021: {
+  6022: {
     name: "AchievementSupplyExhausted",
     i18nKey: "achievementSupplyExhausted",
     fallback: "This achievement has reached its maximum supply.",
   },
-  6022: {
+  6023: {
     name: "AchievementIdTooLong",
     i18nKey: "achievementIdTooLong",
     fallback: "Achievement ID exceeds maximum length.",
   },
-  6023: {
+  6024: {
     name: "AchievementNameTooLong",
     i18nKey: "achievementNameTooLong",
     fallback: "Achievement name exceeds maximum length.",
   },
-  6024: {
+  6025: {
     name: "AchievementUriTooLong",
     i18nKey: "achievementUriTooLong",
     fallback: "Achievement URI exceeds maximum length.",
   },
-  6025: {
+  6026: {
     name: "InvalidAmount",
     i18nKey: "invalidAmount",
     fallback: "Amount must be greater than zero.",
   },
-  6026: {
+  6027: {
     name: "InvalidXpReward",
     i18nKey: "invalidXpReward",
     fallback: "XP reward must be greater than zero.",

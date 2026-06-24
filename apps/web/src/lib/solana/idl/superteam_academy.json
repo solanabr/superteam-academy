@@ -856,6 +856,10 @@
           "signer": true
         },
         {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
           "name": "token_program",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
         }
@@ -1242,41 +1246,46 @@
     },
     {
       "code": 6019,
+      "name": "MinterCapExceeded",
+      "msg": "Cumulative minted XP would exceed minter's total cap"
+    },
+    {
+      "code": 6020,
       "name": "LabelTooLong",
       "msg": "Minter label exceeds max length"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "AchievementNotActive",
       "msg": "Achievement type is not active"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "AchievementSupplyExhausted",
       "msg": "Achievement max supply reached"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "AchievementIdTooLong",
       "msg": "Achievement ID exceeds max length"
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "AchievementNameTooLong",
       "msg": "Achievement name exceeds max length"
     },
     {
-      "code": 6024,
+      "code": 6025,
       "name": "AchievementUriTooLong",
       "msg": "Achievement URI exceeds max length"
     },
     {
-      "code": 6025,
+      "code": 6026,
       "name": "InvalidAmount",
       "msg": "Amount must be greater than zero"
     },
     {
-      "code": 6026,
+      "code": 6027,
       "name": "InvalidXpReward",
       "msg": "XP reward must be greater than zero"
     }
@@ -1973,6 +1982,10 @@
             "type": "u64"
           },
           {
+            "name": "max_total_xp",
+            "type": "u64"
+          },
+          {
             "name": "timestamp",
             "type": "i64"
           }
@@ -2035,10 +2048,14 @@
             "type": "i64"
           },
           {
-            "name": "_reserved",
-            "type": {
-              "array": ["u8", 8]
-            }
+            "name": "max_total_xp",
+            "docs": [
+              "Cumulative XP ceiling for this role. 0 = unlimited.",
+              "Occupies the 8 bytes formerly reserved, so the account size is",
+              "unchanged and pre-existing roles deserialize with this field = 0",
+              "(unlimited), preserving prior behavior until an admin sets a cap."
+            ],
+            "type": "u64"
           },
           {
             "name": "bump",
@@ -2062,6 +2079,11 @@
           },
           {
             "name": "max_xp_per_call",
+            "type": "u64"
+          },
+          {
+            "name": "max_total_xp",
+            "docs": ["Cumulative XP ceiling for this role. 0 = unlimited."],
             "type": "u64"
           }
         ]

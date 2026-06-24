@@ -454,6 +454,7 @@ export async function rewardXp(
       xpMint: xpMint,
       recipientTokenAccount: recipientTokenAccount,
       minter: signer.publicKey,
+      backendSigner: signer.publicKey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
     .rpc();

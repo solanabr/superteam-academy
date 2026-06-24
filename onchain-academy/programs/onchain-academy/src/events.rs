@@ -83,6 +83,7 @@ pub struct MinterRegistered {
     pub minter: Pubkey,
     pub label: String,
     pub max_xp_per_call: u64,
+    pub max_total_xp: u64,
     pub timestamp: i64,
 }
 

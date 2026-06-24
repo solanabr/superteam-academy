@@ -586,6 +586,7 @@
     "credentialAssetMismatch": "Credential asset does not match enrollment record.",
     "minterNotActive": "Minter role is not active.",
     "minterAmountExceeded": "Amount exceeds minter limit.",
+    "minterCapExceeded": "This would exceed the minter's cumulative XP cap.",
     "labelTooLong": "Label exceeds maximum length.",
     "achievementIdTooLong": "Achievement ID exceeds maximum length.",
     "achievementNameTooLong": "Achievement name exceeds maximum length.",

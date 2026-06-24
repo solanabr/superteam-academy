@@ -2849,12 +2849,17 @@ describe("onchain-academy", () => {
       await provider.sendAndConfirm(tx);
     });
 
+    // Per-call cap 1000, cumulative cap 1200 — lets us exercise both ceilings.
+    const MINTER_MAX_PER_CALL = 1000;
+    const MINTER_MAX_TOTAL = 1200;
+
     it("register_minter", async () => {
       await program.methods
         .registerMinter({
           minter: testMinter.publicKey,
           label: "test-minter",
-          maxXpPerCall: new BN(1000),
+          maxXpPerCall: new BN(MINTER_MAX_PER_CALL),
+          maxTotalXp: new BN(MINTER_MAX_TOTAL),
         })
         .accountsPartial({
           config: configPda,
@@ -2868,7 +2873,8 @@ describe("onchain-academy", () => {
       const role = await program.account.minterRole.fetch(testMinterRolePda);
       expect(role.minter.toBase58()).to.equal(testMinter.publicKey.toBase58());
       expect(role.label).to.equal("test-minter");
-      expect(role.maxXpPerCall.toNumber()).to.equal(1000);
+      expect(role.maxXpPerCall.toNumber()).to.equal(MINTER_MAX_PER_CALL);
+      expect(role.maxTotalXp.toNumber()).to.equal(MINTER_MAX_TOTAL);
       expect(role.totalXpMinted.toNumber()).to.equal(0);
       expect(role.isActive).to.equal(true);
     });
@@ -2882,6 +2888,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           recipientTokenAccount: minterRecipientTokenAccount,
           minter: testMinter.publicKey,
+          backendSigner: authority.publicKey,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .signers([testMinter])
@@ -2900,6 +2907,63 @@ describe("onchain-academy", () => {
       expect(role.totalXpMinted.toNumber()).to.equal(500);
     });
 
+    it("reward_xp fails without backend_signer (active minter alone is insufficient)", async () => {
+      try {
+        await program.methods
+          .rewardXp(new BN(100), "no backend signer")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            // backend_signer set to the minter itself, which is NOT
+            // config.backend_signer — the constraint must reject it.
+            backendSigner: testMinter.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+    });
+
+    it("reward_xp fails with wrong backend_signer", async () => {
+      const wrongSigner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        wrongSigner.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      try {
+        await program.methods
+          .rewardXp(new BN(100), "wrong backend signer")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: wrongSigner.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter, wrongSigner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+
+      // State must be untouched: still 500 from the one successful reward.
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(500);
+    });
+
     it("reward_xp fails when exceeding max", async () => {
       try {
         await program.methods
@@ -2910,6 +2974,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
@@ -2931,6 +2996,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
@@ -2939,6 +3005,78 @@ describe("onchain-academy", () => {
       } catch (err) {
         const anchorErr = err as AnchorError;
         expect(anchorErr.error.errorCode.code).to.equal("InvalidAmount");
+      }
+    });
+
+    it("reward_xp fails when cumulative cap would be exceeded", async () => {
+      // total_xp_minted is 500; per-call cap (1000) allows 800, but
+      // 500 + 800 = 1300 > 1200 cumulative cap, so it must be rejected.
+      try {
+        await program.methods
+          .rewardXp(new BN(800), "over cumulative cap")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
+      }
+
+      // Rejected mint must not have moved any state.
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(500);
+    });
+
+    it("reward_xp succeeds up to exactly the cumulative cap", async () => {
+      // 500 + 700 = 1200 == cap, which is allowed (<=).
+      const sig = await program.methods
+        .rewardXp(new BN(700), "reach cap")
+        .accountsPartial({
+          config: configPda,
+          minterRole: testMinterRolePda,
+          xpMint: xpMintKeypair.publicKey,
+          recipientTokenAccount: minterRecipientTokenAccount,
+          minter: testMinter.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([testMinter])
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(MINTER_MAX_TOTAL);
+    });
+
+    it("reward_xp fails once the cumulative cap is reached", async () => {
+      // total is now 1200 == cap; even +1 must be rejected.
+      try {
+        await program.methods
+          .rewardXp(new BN(1), "past cap")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
       }
     });
 
@@ -2975,6 +3113,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
