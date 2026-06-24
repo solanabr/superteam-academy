@@ -685,6 +685,107 @@ describe("onchain-academy", () => {
       expect(course.version).to.equal(2);
     });
 
+    it("backfills collection once, then rejects overwriting it with a different value", async () => {
+      const overwriteId = "collection-guard";
+      const [guardPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(overwriteId)],
+        program.programId
+      );
+
+      // Fresh course with no collection (defaults to Pubkey::default()).
+      await program.methods
+        .createCourse({
+          courseId: overwriteId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const firstCollection = Keypair.generate().publicKey;
+      const secondCollection = Keypair.generate().publicKey;
+
+      // Backfill from default — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      let course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
+
+      // Re-pointing to a different collection — rejected (would orphan holders).
+      try {
+        await program.methods
+          .updateCourse({
+            newContentTxId: null,
+            newIsActive: null,
+            newXpPerLesson: null,
+            newCreatorRewardXp: null,
+            newMinCompletionsForReward: null,
+            newCollection: secondCollection,
+          })
+          .accountsPartial({
+            course: guardPda,
+            config: configPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+
+      // Setting the same collection again is idempotent — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
+    });
+
     it("fails with wrong authority", async () => {
       const imposter = Keypair.generate();
       const airdropSig = await provider.connection.requestAirdrop(
@@ -2555,9 +2656,8 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(okSig, "confirmed");
 
-      const enrollment = await program.account.enrollment.fetch(
-        mismatchEnrollPda
-      );
+      const enrollment =
+        await program.account.enrollment.fetch(mismatchEnrollPda);
       expect(enrollment.credentialAsset.toBase58()).to.equal(
         goodAsset.publicKey.toBase58()
       );

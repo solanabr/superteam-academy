@@ -45,6 +45,13 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
     }
 
     if let Some(collection) = params.new_collection {
+        // Only allow setting the collection while it is unset (backfill / self-heal).
+        // Re-pointing a live collection would orphan existing credential holders;
+        // a deliberate re-bind must go through a separate explicit instruction.
+        require!(
+            course.collection == Pubkey::default() || course.collection == collection,
+            AcademyError::CollectionMismatch
+        );
         course.collection = collection;
     }
 

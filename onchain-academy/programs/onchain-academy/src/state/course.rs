@@ -30,6 +30,12 @@ pub struct Course {
 }
 
 impl Course {
+    // SIZE grew 192 -> 224 when `collection` was added. Old 192-byte Course
+    // accounts no longer deserialize, so EVERY instruction that resolves
+    // `course: Account<Course>` (enroll, complete_lesson, finalize_course,
+    // issue_credential, ...) fails until the account is recreated. A full
+    // devnet re-sync (recreate via create_course) is required, not just for
+    // credentials.
     // 8 (discriminator)
     // + (4 + 32) (course_id)
     // + 32 (creator)

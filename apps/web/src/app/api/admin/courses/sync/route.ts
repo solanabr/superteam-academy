@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
@@ -9,6 +10,7 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { getAllCoursesAdmin } from "@/lib/sanity/queries";
+import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
   deployCoursePda,
@@ -125,6 +127,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Create the Metaplex Core collection for this course's credential NFTs.
     // Failure here does NOT roll back the Course PDA — the admin can retry.
     let trackCollectionAddress: string | undefined;
+    // Set when the collection exists but its on-chain binding did not land, so
+    // the admin sees the course needs a re-sync (credential mint reverts with
+    // CollectionMismatch until course.collection is bound).
+    let collectionWarning: string | undefined;
     try {
       const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
       const collectionResult = await deployCourseTrackCollection({
@@ -145,18 +151,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             "[admin/courses/sync] Binding collection on-chain failed:",
             bindResult.error
           );
+          collectionWarning = `Collection created but on-chain binding failed: ${bindResult.error ?? "unknown error"}. Re-sync to retry.`;
         }
       } else {
         console.error(
           "[admin/courses/sync] Collection creation failed:",
           collectionResult.error
         );
+        collectionWarning = `Collection creation failed: ${collectionResult.error ?? "unknown error"}. Re-sync to retry.`;
       }
     } catch (collectionErr) {
       console.error(
         "[admin/courses/sync] Collection creation threw:",
         collectionErr
       );
+      collectionWarning = `Collection creation threw: ${collectionErr instanceof Error ? collectionErr.message : String(collectionErr)}. Re-sync to retry.`;
     }
 
     try {
@@ -178,24 +187,60 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       txSignature: result.signature,
       coursePda: coursePda.toBase58(),
       trackCollectionAddress,
+      ...(collectionWarning ? { warning: collectionWarning } : {}),
     });
   }
 
-  // Course PDA exists — ensure Metaplex collection was created.
-  // If the initial sync succeeded for the PDA but failed for the collection,
-  // this retry path creates it so certificates can be minted.
+  // Course PDA exists — ensure the Metaplex collection was created AND bound
+  // on-chain. The bind can silently fail on a prior sync (collection created,
+  // course.collection left as Pubkey::default()), which makes credential mint
+  // revert with CollectionMismatch. Read the real on-chain binding rather than
+  // trusting the Sanity field so a partially-synced course can self-heal.
   let trackCollectionAddress = course.trackCollectionAddress;
-  if (!trackCollectionAddress) {
+  let collectionWarning: string | undefined;
+
+  // fetchCourse uses the raw-IDL BorshCoder → snake_case `collection`, returned
+  // as a base58 string or raw bytes. Normalize before comparing to default.
+  const onChainCourse = await fetchCourse(courseId, connection, getProgramId());
+  const onChainCollection = onChainCourse?.collection as
+    | string
+    | Uint8Array
+    | undefined;
+  const boundCollection =
+    onChainCollection == null
+      ? null
+      : typeof onChainCollection === "string"
+        ? onChainCollection
+        : new PublicKey(onChainCollection).toBase58();
+  const isUnbound =
+    boundCollection == null || boundCollection === PublicKey.default.toBase58();
+
+  if (!trackCollectionAddress || isUnbound) {
     try {
-      const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
-      const collectionResult = await deployCourseTrackCollection({
-        courseId,
-        courseName: course.title,
-        metadataUri,
-      });
-      if (collectionResult.success && collectionResult.collectionAddress) {
-        trackCollectionAddress = collectionResult.collectionAddress;
-        await writeCourseTrackCollection(courseId, trackCollectionAddress);
+      // Only create a new collection when none exists in Sanity — recreating
+      // one would orphan any credentials already minted into the old address.
+      if (!trackCollectionAddress) {
+        const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata/${courseId}`;
+        const collectionResult = await deployCourseTrackCollection({
+          courseId,
+          courseName: course.title,
+          metadataUri,
+        });
+        if (collectionResult.success && collectionResult.collectionAddress) {
+          trackCollectionAddress = collectionResult.collectionAddress;
+          await writeCourseTrackCollection(courseId, trackCollectionAddress);
+        } else {
+          console.error(
+            "[admin/courses/sync] Collection retry failed:",
+            collectionResult.error
+          );
+          collectionWarning = `Collection creation failed: ${collectionResult.error ?? "unknown error"}. Re-sync to retry.`;
+        }
+      }
+
+      // Bind on-chain whenever the collection exists but course.collection is
+      // still unset — this is the self-heal path for a previously-failed bind.
+      if (trackCollectionAddress && isUnbound) {
         const bindResult = await setCourseCollectionPda(
           courseId,
           trackCollectionAddress
@@ -205,18 +250,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             "[admin/courses/sync] Binding collection on-chain failed:",
             bindResult.error
           );
+          collectionWarning = `Collection created but on-chain binding failed: ${bindResult.error ?? "unknown error"}. Re-sync to retry.`;
         }
-      } else {
-        console.error(
-          "[admin/courses/sync] Collection retry failed:",
-          collectionResult.error
-        );
       }
     } catch (collectionErr) {
       console.error(
         "[admin/courses/sync] Collection retry threw:",
         collectionErr
       );
+      collectionWarning = `Collection sync threw: ${collectionErr instanceof Error ? collectionErr.message : String(collectionErr)}. Re-sync to retry.`;
     }
   }
 
@@ -265,6 +307,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       action: "noop",
       message: "Already synced",
       trackCollectionAddress: trackCollectionAddress ?? null,
+      ...(collectionWarning ? { warning: collectionWarning } : {}),
     });
   }
 
@@ -295,5 +338,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     action: "updated",
     txSignature: result.signature,
     fieldsUpdated: updatedFields,
+    ...(collectionWarning ? { warning: collectionWarning } : {}),
   });
 }
