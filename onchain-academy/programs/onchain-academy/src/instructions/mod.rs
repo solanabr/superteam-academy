@@ -1,4 +1,5 @@
 pub mod award_achievement;
+pub mod close_course;
 pub mod close_enrollment;
 pub mod complete_lesson;
 pub mod create_achievement_type;
@@ -16,6 +17,7 @@ pub mod update_course;
 pub mod upgrade_credential;
 
 pub use award_achievement::*;
+pub use close_course::*;
 pub use close_enrollment::*;
 pub use complete_lesson::*;
 pub use create_achievement_type::*;
