@@ -16,7 +16,10 @@ import {
 } from "../event-decoder";
 import type { HeliusRawTransaction } from "../types";
 
-const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID as string;
+// event-decoder.ts throws at import unless NEXT_PUBLIC_PROGRAM_ID is set;
+// vitest.setup.ts provides a fixed test value. Fall back so a dropped setup
+// surfaces as a clear assertion failure here, not an opaque module-init error.
+const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID ?? "";
 
 function tx(
   logMessages: string[],

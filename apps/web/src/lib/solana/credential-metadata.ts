@@ -11,7 +11,9 @@ export function capCredentialName(courseName: string): string {
   let name = `Superteam Academy: ${courseName}`;
   const encoder = new TextEncoder();
   while (encoder.encode(name).length > 32) {
-    name = name.slice(0, -1);
+    // Drop a whole code point, not a UTF-16 code unit — slicing a code unit
+    // would orphan a surrogate half and emit a U+FFFD replacement char.
+    name = Array.from(name).slice(0, -1).join("");
   }
   return name;
 }
