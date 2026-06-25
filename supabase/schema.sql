@@ -1188,6 +1188,49 @@ CREATE TRIGGER trg_update_last_activity
   AFTER INSERT ON answers
   FOR EACH ROW EXECUTE FUNCTION update_last_activity();
 
+-- Maintain updated_at on genuine content edits only (not on the denormalized
+-- counter updates above, which would otherwise make updated_at track activity
+-- rather than edits). updated_at is server-owned — the author GRANTs below do
+-- not include it, so it can't be forged.
+CREATE OR REPLACE FUNCTION set_thread_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.title IS DISTINCT FROM OLD.title
+     OR NEW.body IS DISTINCT FROM OLD.body
+     OR NEW.type IS DISTINCT FROM OLD.type
+     OR NEW.category_id IS DISTINCT FROM OLD.category_id
+     OR NEW.course_id IS DISTINCT FROM OLD.course_id
+     OR NEW.lesson_id IS DISTINCT FROM OLD.lesson_id THEN
+    NEW.updated_at = now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION set_answer_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.body IS DISTINCT FROM OLD.body THEN
+    NEW.updated_at = now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_threads_set_updated_at
+  BEFORE UPDATE ON threads
+  FOR EACH ROW EXECUTE FUNCTION set_thread_updated_at();
+
+CREATE OR REPLACE TRIGGER trg_answers_set_updated_at
+  BEFORE UPDATE ON answers
+  FOR EACH ROW EXECUTE FUNCTION set_answer_updated_at();
+
 -- ============================================================
 -- Community Forum: SECURITY DEFINER Functions
 -- ============================================================
@@ -1459,7 +1502,8 @@ CREATE POLICY "Authors can update own threads"
   WITH CHECK (author_id = auth.uid());
 
 REVOKE UPDATE ON threads FROM authenticated;
-GRANT UPDATE (title, body, type, category_id, course_id, lesson_id, updated_at)
+-- updated_at is omitted: it is maintained server-side by trg_threads_set_updated_at.
+GRANT UPDATE (title, body, type, category_id, course_id, lesson_id)
   ON threads TO authenticated;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_thread() SECURITY DEFINER function.
@@ -1483,7 +1527,8 @@ CREATE POLICY "Authors can update own answers"
   WITH CHECK (author_id = auth.uid());
 
 REVOKE UPDATE ON answers FROM authenticated;
-GRANT UPDATE (body, updated_at) ON answers TO authenticated;
+-- updated_at is omitted: it is maintained server-side by trg_answers_set_updated_at.
+GRANT UPDATE (body) ON answers TO authenticated;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_answer() SECURITY DEFINER function.
 
