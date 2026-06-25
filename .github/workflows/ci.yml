@@ -32,6 +32,9 @@ jobs:
   frontend:
     name: Frontend (lint · typecheck · test)
     runs-on: ubuntu-latest
+    # The `labeled` PR event only exists to trigger verifiable-build; skip the
+    # heavy jobs so adding a label doesn't re-run the whole matrix.
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -75,6 +78,7 @@ jobs:
   onchain-rust:
     name: On-chain (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -106,6 +110,7 @@ jobs:
   build-server:
     name: Build server (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -137,6 +142,7 @@ jobs:
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     # RATCHET: step-level continue-on-error keeps this check GREEN (with warnings)
     # while advisories are triaged. Job-level continue-on-error does NOT — the check
     # still reports red. Remove the per-step flags to make audit a hard gate (G-2).
@@ -249,7 +255,9 @@ jobs:
     env:
       SOLANA_VERSION: "2.0.25"
       ANCHOR_VERSION: "0.31.1"
-      PROGRAM_LIB: onchain_academy # [lib] name -> target/deploy/onchain_academy.so
+      # `anchor build --verifiable` copies the program to target/verifiable/<lib>.so
+      # on the host (NOT target/deploy/). The IDL still lands in target/idl/.
+      PROGRAM_LIB: onchain_academy # [lib] name -> target/verifiable/onchain_academy.so
     outputs:
       program_sha256: ${{ steps.hash.outputs.sha256 }}
     steps:
@@ -283,10 +291,10 @@ jobs:
         id: hash
         working-directory: onchain-academy
         run: |
-          SO_PATH="target/deploy/${PROGRAM_LIB}.so"
+          SO_PATH="target/verifiable/${PROGRAM_LIB}.so"
           if [ ! -f "$SO_PATH" ]; then
             echo "::error::Expected program artifact not found at $SO_PATH"
-            ls -la target/deploy || true
+            ls -la target/verifiable || true
             exit 1
           fi
           SHA="$(sha256sum "$SO_PATH" | awk '{print $1}')"
@@ -319,7 +327,7 @@ jobs:
         with:
           name: verifiable-build
           path: |
-            onchain-academy/target/deploy/${{ env.PROGRAM_LIB }}.so
+            onchain-academy/target/verifiable/${{ env.PROGRAM_LIB }}.so
             onchain-academy/target/idl/*.json
             onchain-academy/program-hash.txt
           if-no-files-found: error
