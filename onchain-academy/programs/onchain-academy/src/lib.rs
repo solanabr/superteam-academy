@@ -33,6 +33,10 @@ pub mod onchain_academy {
         instructions::update_course::handler(ctx, params)
     }
 
+    pub fn close_course(ctx: Context<CloseCourse>, course_id: String) -> Result<()> {
+        instructions::close_course::handler(ctx, course_id)
+    }
+
     pub fn enroll<'info>(
         ctx: Context<'_, '_, 'info, 'info, Enroll<'info>>,
         course_id: String,

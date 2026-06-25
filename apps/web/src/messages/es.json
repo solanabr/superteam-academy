@@ -595,6 +595,7 @@
     "invalidAmount": "La cantidad debe ser mayor que cero.",
     "invalidXpReward": "La recompensa de XP debe ser mayor que cero.",
     "enrollmentFinalized": "Esta inscripción está finalizada y ya no se puede cancelar ni cerrar.",
+    "invalidCourseAccount": "La cuenta no es un curso válido.",
     "unknown": "La transacción falló. Inténtalo de nuevo."
   },
   "community": {

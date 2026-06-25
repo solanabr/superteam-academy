@@ -135,6 +135,56 @@
       "args": []
     },
     {
+      "name": "close_course",
+      "discriminator": [157, 252, 239, 166, 213, 174, 160, 34],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "docs": [
+            "for `course_id`) and `owner = crate::ID` (program-owned). Loaded as",
+            "`UncheckedAccount` rather than `Account<Course>` so a stale, size-mismatched",
+            "(pre-resize, 192-byte) account can still be closed. The handler also",
+            "verifies the `Course` discriminator before draining/freeing it."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 117, 114, 115, 101]
+              },
+              {
+                "kind": "arg",
+                "path": "course_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "course_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "close_enrollment",
       "discriminator": [236, 137, 133, 253, 91, 138, 217, 91],
       "accounts": [
@@ -1114,6 +1164,10 @@
       "discriminator": [40, 241, 230, 122, 11, 19, 198, 194]
     },
     {
+      "name": "CourseClosed",
+      "discriminator": [35, 195, 37, 254, 25, 107, 100, 12]
+    },
+    {
       "name": "CourseCreated",
       "discriminator": [205, 144, 55, 47, 150, 170, 123, 214]
     },
@@ -1308,6 +1362,11 @@
       "code": 6029,
       "name": "EnrollmentFinalized",
       "msg": "Finalized or credentialed enrollment cannot be closed"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidCourseAccount",
+      "msg": "Account is not a valid Course PDA"
     }
   ],
   "types": [
@@ -1622,6 +1681,26 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CourseClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
