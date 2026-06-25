@@ -65,7 +65,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     ref
   ) {
     const { resolvedTheme } = useTheme();
-    const t = useTranslations("a11y");
+    const tA11y = useTranslations("a11y");
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
     useImperativeHandle(
@@ -163,7 +163,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           "relative h-full w-full overflow-hidden rounded-md border",
           className
         )}
-        aria-label={t("codeEditor")}
+        aria-label={tA11y("codeEditor")}
       >
         <Editor
           defaultValue={initialCode}
