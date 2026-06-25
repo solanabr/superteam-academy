@@ -1,4 +1,7 @@
 [toolchain]
+# Pin the Anchor CLI so `anchor build --verifiable` selects an explicit Docker
+# image tag (solanafoundation/anchor:<version>) instead of the avm-installed CLI version.
+anchor_version = "0.31.1"
 package_manager = "yarn"
 
 [features]

@@ -399,6 +399,7 @@ export async function awardAchievement(
       xpMint: xpMint,
       payer: signer.publicKey,
       minter: signer.publicKey,
+      backendSigner: signer.publicKey,
       mplCoreProgram: MPL_CORE_PROGRAM_ID,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       systemProgram: SystemProgram.programId,

@@ -10,6 +10,11 @@ on:
     branches: ["**"] # every branch — gives fork branches CI before the upstream PR
   pull_request:
     branches: [main]
+    # `labeled` lets the verifiable-build job (gated on the `verifiable-build`
+    # label) re-run when the label is added mid-PR. Other jobs ignore the label.
+    types: [opened, synchronize, reopened, labeled]
+  # Manual trigger for on-demand reproducible build + program-hash publishing.
+  workflow_dispatch:
 
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
@@ -27,6 +32,9 @@ jobs:
   frontend:
     name: Frontend (lint · typecheck · test)
     runs-on: ubuntu-latest
+    # The `labeled` PR event only exists to trigger verifiable-build; skip the
+    # heavy jobs so adding a label doesn't re-run the whole matrix.
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -70,6 +78,7 @@ jobs:
   onchain-rust:
     name: On-chain (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -101,6 +110,7 @@ jobs:
   build-server:
     name: Build server (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -132,6 +142,7 @@ jobs:
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
     # RATCHET: step-level continue-on-error keeps this check GREEN (with warnings)
     # while advisories are triaged. Job-level continue-on-error does NOT — the check
     # still reports red. Remove the per-step flags to make audit a hard gate (G-2).
@@ -221,3 +232,102 @@ jobs:
       - name: Anchor test
         run: anchor test
         working-directory: onchain-academy
+
+  # ── Verifiable build + program-hash publishing (P1-4, feeds G-3) ────────────
+  # Produces REPRODUCIBLE bytecode via `anchor build --verifiable` (deterministic
+  # Docker build in solanafoundation/anchor) and publishes the SHA-256 of the
+  # resulting `.so` so the deployed program can be independently verified:
+  #   solana program dump <PROGRAM_ID> onchain.so && sha256sum onchain.so
+  # must match the hash printed below. The verifiable build is the source of the
+  # guarantee; the hash is the comparable artifact.
+  #
+  # Heavy (pulls a Docker image + cold Rust build), so it is NOT run on every
+  # push. Triggers: push to main, manual dispatch, or a PR carrying the
+  # `verifiable-build` label.
+  verifiable-build:
+    name: Verifiable build (program hash)
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+        contains(github.event.pull_request.labels.*.name, 'verifiable-build'))
+    env:
+      SOLANA_VERSION: "2.0.25"
+      ANCHOR_VERSION: "0.31.1"
+      # `anchor build --verifiable` copies the program to target/verifiable/<lib>.so
+      # on the host (NOT target/deploy/). The IDL still lands in target/idl/.
+      PROGRAM_LIB: onchain_academy # [lib] name -> target/verifiable/onchain_academy.so
+    outputs:
+      program_sha256: ${{ steps.hash.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: onchain-academy
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor (avm)
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install "${ANCHOR_VERSION}"
+          avm use "${ANCHOR_VERSION}"
+
+      # Deterministic Docker build -> reproducible bytecode. ubuntu-latest ships
+      # with Docker preinstalled; `anchor build --verifiable` drives it.
+      - name: Verifiable build
+        run: anchor build --verifiable
+        working-directory: onchain-academy
+
+      - name: Compute program hash
+        id: hash
+        working-directory: onchain-academy
+        run: |
+          SO_PATH="target/verifiable/${PROGRAM_LIB}.so"
+          if [ ! -f "$SO_PATH" ]; then
+            echo "::error::Expected program artifact not found at $SO_PATH"
+            ls -la target/verifiable || true
+            exit 1
+          fi
+          SHA="$(sha256sum "$SO_PATH" | awk '{print $1}')"
+          SIZE="$(wc -c < "$SO_PATH" | tr -d ' ')"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          # Plain artifact for downstream comparison / scripting.
+          printf '%s  %s\n' "$SHA" "${PROGRAM_LIB}.so" > program-hash.txt
+          {
+            echo "## Verifiable build — program hash"
+            echo ""
+            echo "**Reproducible build** via \`anchor build --verifiable\` (deterministic Docker image)."
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Artifact | \`${PROGRAM_LIB}.so\` |"
+            echo "| Size (bytes) | \`$SIZE\` |"
+            echo "| SHA-256 | \`$SHA\` |"
+            echo "| Solana | \`$SOLANA_VERSION\` |"
+            echo "| Anchor | \`$ANCHOR_VERSION\` |"
+            echo ""
+            echo "Verify against the deployed program:"
+            echo '```bash'
+            echo "solana program dump <PROGRAM_ID> onchain.so"
+            echo "sha256sum onchain.so   # must equal the SHA-256 above"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: verifiable-build
+          path: |
+            onchain-academy/target/verifiable/${{ env.PROGRAM_LIB }}.so
+            onchain-academy/target/idl/*.json
+            onchain-academy/program-hash.txt
+          if-no-files-found: error

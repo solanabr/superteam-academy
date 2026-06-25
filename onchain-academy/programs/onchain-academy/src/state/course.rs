@@ -22,11 +22,20 @@ pub struct Course {
     pub is_active: bool,
     pub created_at: i64,
     pub updated_at: i64,
+    /// Metaplex Core collection this course's credentials are minted into.
+    /// `Pubkey::default()` until set via `create_course`/`update_course`.
+    pub collection: Pubkey,
     pub _reserved: [u8; 8],
     pub bump: u8,
 }
 
 impl Course {
+    // SIZE grew 192 -> 224 when `collection` was added. Old 192-byte Course
+    // accounts no longer deserialize, so EVERY instruction that resolves
+    // `course: Account<Course>` (enroll, complete_lesson, finalize_course,
+    // issue_credential, ...) fails until the account is recreated. A full
+    // devnet re-sync (recreate via create_course) is required, not just for
+    // credentials.
     // 8 (discriminator)
     // + (4 + 32) (course_id)
     // + 32 (creator)
@@ -45,6 +54,7 @@ impl Course {
     // + 1 (is_active)
     // + 8 (created_at)
     // + 8 (updated_at)
+    // + 32 (collection)
     // + 8 (_reserved)
     // + 1 (bump)
     pub const SIZE: usize = 8
@@ -65,6 +75,7 @@ impl Course {
         + 1
         + 8
         + 8
+        + 32
         + 8
-        + 1; // 192
+        + 1; // 224
 }

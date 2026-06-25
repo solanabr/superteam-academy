@@ -34,6 +34,8 @@ pub enum AcademyError {
     InvalidDifficulty,
     #[msg("Credential asset does not match enrollment record")]
     CredentialAssetMismatch,
+    #[msg("Collection does not match the course's credential collection")]
+    CollectionMismatch,
     #[msg("Credential already issued for this enrollment")]
     CredentialAlreadyIssued,
     #[msg("Minter role is not active")]
