@@ -97,9 +97,9 @@ jobs:
         run: cargo fmt --manifest-path onchain-academy/Cargo.toml --all --check
 
       - name: Clippy (program workspace)
-        # RATCHET: report-only until P2-7 (on-chain housekeeping) clears the
-        # cosmetic clippy warnings. Then flip continue-on-error to false. Owner: @thomgabriel.
-        continue-on-error: true
+        # Enforced: the program crate is clippy-clean under -D warnings as of
+        # P2-3 (added the unexpected_cfgs + ambiguous_glob_reexports allows).
+        # Kept in lockstep with the pre-commit hook (.husky/pre-commit).
         run: cargo clippy --manifest-path onchain-academy/Cargo.toml --all-targets -- -D warnings
 
       # tests/rust is a SEPARATE cargo workspace (own [workspace] table).
@@ -127,9 +127,8 @@ jobs:
         run: cargo fmt --manifest-path apps/build-server/Cargo.toml --all --check
 
       - name: Clippy
-        # RATCHET: report-only until build-server clippy warnings are cleared,
-        # then flip continue-on-error to false.
-        continue-on-error: true
+        # Enforced: build-server is clippy-clean under -D warnings. Kept in
+        # lockstep with the pre-commit hook (.husky/pre-commit).
         run: cargo clippy --manifest-path apps/build-server/Cargo.toml --all-targets -- -D warnings
 
       - name: Tests
