@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle } from "@phosphor-icons/react";
 import { useTranslations, useLocale } from "next-intl";
 
@@ -47,7 +48,7 @@ export function CourseCard({
     >
       {/* Thumbnail */}
       <div className="course-card-thumb" aria-hidden="true">
-        <img
+        <Image
           src={thumbnail || "/cover.png"}
           alt=""
           width={400}

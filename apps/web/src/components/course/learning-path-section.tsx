@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { CaretDown, Lock, CheckCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { LearningPath } from "@/lib/sanity/types";
@@ -160,7 +161,7 @@ export function LearningPathSection({
             <div className="path-step-inner">
               {/* Small thumbnail */}
               <div className="path-step-thumb" aria-hidden="true">
-                <img
+                <Image
                   src={course.thumbnail || "/cover.png"}
                   alt=""
                   width={80}

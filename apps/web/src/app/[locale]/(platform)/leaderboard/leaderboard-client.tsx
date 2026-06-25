@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { Trophy, Crown, Lightning, Medal } from "@phosphor-icons/react";
 import type { LeaderboardEntry } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
@@ -63,9 +64,12 @@ function PodiumCard({
         {/* Avatar */}
         <div className={cn("podium-avatar", rank === 1 && "gold")}>
           {entry.avatarUrl ? (
-            <img
+            <Image
               src={entry.avatarUrl}
               alt=""
+              width={64}
+              height={64}
+              unoptimized
               className="h-full w-full rounded-full object-cover"
             />
           ) : (
@@ -116,9 +120,12 @@ function RankedRow({
 
         <div className="lb-av" aria-hidden="true">
           {entry.avatarUrl ? (
-            <img
+            <Image
               src={entry.avatarUrl}
               alt=""
+              width={64}
+              height={64}
+              unoptimized
               className="h-full w-full rounded-full object-cover"
             />
           ) : (
