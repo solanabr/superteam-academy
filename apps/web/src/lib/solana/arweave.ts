@@ -8,8 +8,12 @@
  * URI at the immutable gateway URL removes that coupling.
  *
  * Uploads go through the UMI Irys uploader (already in the dependency tree via
- * `@metaplex-foundation/umi`). Irys settles the data on Arweave and returns a
- * permanent gateway URL.
+ * `@metaplex-foundation/umi`). `uploadJson` returns an **Irys gateway** URL of
+ * the form `https://gateway.irys.xyz/<id>` — NOT `https://arweave.net/<txid>`.
+ * That gateway URL is what gets pinned on-chain as the Metaplex Core asset URI.
+ * On mainnet the data settles on Arweave, so the same `<id>` is also reachable
+ * via `https://arweave.net/<id>` and `ar://<id>`; on devnet only the Irys
+ * gateway resolves (and uploads are pruned after ~60 days).
  *
  * Funding model: Irys here is funded with a **Solana keypair** (Irys's Solana
  * currency), NOT a raw Arweave JWK. The keypair is read from
@@ -76,13 +80,18 @@ function getUploaderKeypair(): Keypair | null {
 
 /**
  * Uploads credential metadata JSON to Arweave via Irys and returns the
- * permanent gateway URL (e.g. `https://arweave.net/<txid>`).
+ * permanent **Irys gateway** URL (`https://gateway.irys.xyz/<id>`). This is the
+ * exact string pinned on-chain as the Metaplex Core asset URI. On mainnet the
+ * data settles on Arweave, so the same `<id>` also resolves via
+ * `https://arweave.net/<id>` and `ar://<id>`; on devnet only the Irys gateway
+ * resolves.
  *
- * Returns `null` when `ARWEAVE_UPLOADER_SECRET` is unset or malformed, OR the
- * upload fails — signalling the caller to fall back to the app-served metadata
- * URL. NEVER throws: pinning is best-effort, so a misconfigured secret, a
- * transient Irys outage, or an unfunded wallet does not block minting (and does
- * not leave an orphaned `nft_metadata` row from a half-completed mint).
+ * Returns `null` when `ARWEAVE_UPLOADER_SECRET` is unset or malformed, the
+ * upload fails, OR the uploader hands back a missing/non-`https` URL —
+ * signalling the caller to fall back to the app-served metadata URL. NEVER
+ * throws: pinning is best-effort, so a misconfigured secret, a transient Irys
+ * outage, or an unfunded wallet does not block minting (and does not leave an
+ * orphaned `nft_metadata` row from a half-completed mint).
  */
 export async function uploadCertificateMetadata(
   metadata: Record<string, unknown>
@@ -114,8 +123,22 @@ export async function uploadCertificateMetadata(
       .use(irysUploader({ address: irysNode }));
 
     // uploadJson serializes the object, uploads it, and returns the permanent
-    // gateway URL for the resulting Arweave transaction.
+    // Irys gateway URL (`https://gateway.irys.xyz/<id>`) for the upload.
     const uri = await umi.uploader.uploadJson(metadata);
+
+    // Guard the URL before the caller pins it irreversibly on-chain. A
+    // missing or non-`https` value (uploader contract drift, a relative path,
+    // an `ar://`/`http://` scheme) must NOT be written to the asset URI — fall
+    // back to the app-served URL instead.
+    if (typeof uri !== "string" || !uri.startsWith("https://")) {
+      console.error(
+        "[arweave] Irys upload returned a missing or non-https URL — falling " +
+          "back to app-served metadata rather than pinning it on-chain.",
+        JSON.stringify(uri)
+      );
+      return null;
+    }
+
     return uri;
   } catch (err) {
     console.error(

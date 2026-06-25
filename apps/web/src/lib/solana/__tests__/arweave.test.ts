@@ -9,7 +9,7 @@ vi.mock("@/lib/env.server", () => ({
 }));
 // If a test ever reaches the uploader, fail loudly: the fallback paths must
 // return BEFORE constructing UMI / hitting Irys.
-const uploadJson = vi.fn(() => {
+const uploadJson = vi.fn((): string => {
   throw new Error("uploader should not be reached on the fallback path");
 });
 vi.mock("@metaplex-foundation/umi-bundle-defaults", () => ({
@@ -25,9 +25,15 @@ vi.mock("@metaplex-foundation/umi-uploader-irys", () => ({
   irysUploader: () => ({}),
 }));
 
+import { Keypair } from "@solana/web3.js";
 import { uploadCertificateMetadata } from "../arweave";
 
 const METADATA = { name: "Test Credential", symbol: "STACAD" };
+
+// A genuinely valid ed25519 secret key, so `getUploaderKeypair` accepts it and
+// execution reaches the upload path (the URL guard). The UMI adapter is mocked,
+// so this key is never used to sign anything.
+const VALID_SECRET = JSON.stringify(Array.from(Keypair.generate().secretKey));
 
 describe("uploadCertificateMetadata — graceful fallback", () => {
   const originalSecret = process.env.ARWEAVE_UPLOADER_SECRET;
@@ -41,7 +47,8 @@ describe("uploadCertificateMetadata — graceful fallback", () => {
   });
 
   afterEach(() => {
-    if (originalSecret === undefined) delete process.env.ARWEAVE_UPLOADER_SECRET;
+    if (originalSecret === undefined)
+      delete process.env.ARWEAVE_UPLOADER_SECRET;
     else process.env.ARWEAVE_UPLOADER_SECRET = originalSecret;
     errorSpy.mockRestore();
     warnSpy.mockRestore();
@@ -66,5 +73,23 @@ describe("uploadCertificateMetadata — graceful fallback", () => {
     await expect(uploadCertificateMetadata(METADATA)).resolves.toBeNull();
     expect(uploadJson).not.toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("returns null (not throw) when the uploader returns a non-https URL", async () => {
+    // Valid keypair → the upload path runs and reaches the URL guard.
+    process.env.ARWEAVE_UPLOADER_SECRET = VALID_SECRET;
+    // Malformed-but-non-throwing return must not be pinned on-chain.
+    uploadJson.mockReturnValueOnce("ar://deadbeef");
+    await expect(uploadCertificateMetadata(METADATA)).resolves.toBeNull();
+    expect(uploadJson).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("returns the gateway URL when the uploader returns a valid https URL", async () => {
+    process.env.ARWEAVE_UPLOADER_SECRET = VALID_SECRET;
+    const gatewayUrl = "https://gateway.irys.xyz/abc123";
+    uploadJson.mockReturnValueOnce(gatewayUrl);
+    await expect(uploadCertificateMetadata(METADATA)).resolves.toBe(gatewayUrl);
+    expect(uploadJson).toHaveBeenCalledTimes(1);
   });
 });

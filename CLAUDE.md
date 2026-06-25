@@ -342,9 +342,12 @@ PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64
 
 # Optional — Permanent credential storage (server-only)
 # Funds Irys uploads that pin credential metadata to Arweave at mint, so the
-# on-chain asset URI resolves independently of app uptime. SOLANA keypair (JSON
-# array of 64 bytes, like BACKEND_SIGNER_SECRET) — funded with SOL, NOT an
-# Arweave JWK. Unset → mint falls back to /api/certificates/metadata (warns).
+# on-chain asset URI resolves independently of app uptime. The uploader returns
+# an Irys GATEWAY URL (https://gateway.irys.xyz/<id>) — NOT arweave.net — and
+# that is what gets pinned on-chain; on mainnet the same <id> also resolves via
+# https://arweave.net/<id> and ar://<id>. SOLANA keypair (JSON array of 64
+# bytes, like BACKEND_SIGNER_SECRET) — funded with SOL, NOT an Arweave JWK.
+# Unset → mint falls back to /api/certificates/metadata (warns).
 # REQUIRED (funded on mainnet-beta via irys.xyz) for permanent mainnet creds.
 ARWEAVE_UPLOADER_SECRET=
 
