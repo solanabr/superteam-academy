@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Server-side authority signer for on-chain admin operations.
  *
@@ -9,8 +11,6 @@
  *
  * This module MUST ONLY be imported from API routes (server-side).
  */
-import "server-only";
-
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";

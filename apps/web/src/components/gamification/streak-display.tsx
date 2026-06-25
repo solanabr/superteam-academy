@@ -4,11 +4,16 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { Fire } from "@phosphor-icons/react";
 import type { StreakData } from "@superteam-lms/types";
+// Import directly from the source module, not the @/lib/gamification barrel.
+// The barrel re-exports `achievements.ts`, which is `server-only`; importing
+// these client-safe streak helpers straight from their source keeps that
+// server-only module out of this "use client" bundle's import graph entirely
+// (defense in depth beyond tree-shaking).
 import {
   isActiveToday,
   generateWeekCalendar,
   getStreakMilestones,
-} from "@/lib/gamification";
+} from "@/lib/gamification/streaks";
 import { cn, todayDateString } from "@/lib/utils";
 
 interface StreakDisplayProps {
