@@ -86,6 +86,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_certificates_tx_signature_unique
 CREATE INDEX IF NOT EXISTS idx_thread_views_thread_id
   ON public.thread_views (thread_id);
 
+-- threads.accepted_answer_id → answers (ON DELETE SET NULL): deleting an answer
+-- would otherwise seq-scan threads to null out the back-reference. Partial:
+-- only threads with an accepted answer need indexing.
+CREATE INDEX IF NOT EXISTS idx_threads_accepted_answer_id
+  ON public.threads (accepted_answer_id) WHERE accepted_answer_id IS NOT NULL;
+
 -- flags: the existing partial unique indexes lead with reporter_id, so they do
 -- not serve standalone thread_id / answer_id cascade lookups; resolved_by has
 -- no index at all.

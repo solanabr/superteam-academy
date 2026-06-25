@@ -1005,6 +1005,9 @@ CREATE INDEX idx_threads_lesson ON threads(lesson_id) WHERE lesson_id IS NOT NUL
 CREATE INDEX idx_threads_author ON threads(author_id);
 CREATE INDEX idx_threads_type_unsolved ON threads(type, is_solved) WHERE type = 'question' AND is_solved = false;
 CREATE INDEX idx_threads_short_id ON threads(short_id);
+-- FK index so answers.id deletes (ON DELETE SET NULL on threads.accepted_answer_id)
+-- do not seq-scan threads. Partial: only threads with an accepted answer.
+CREATE INDEX IF NOT EXISTS idx_threads_accepted_answer_id ON threads(accepted_answer_id) WHERE accepted_answer_id IS NOT NULL;
 
 CREATE INDEX idx_answers_thread ON answers(thread_id);
 CREATE INDEX idx_answers_author ON answers(author_id);
