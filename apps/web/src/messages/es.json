@@ -584,6 +584,7 @@
     "invalidLessonCount": "La cantidad de lecciones debe ser al menos 1.",
     "invalidDifficulty": "La dificultad debe ser principiante, intermedio o avanzado.",
     "credentialAssetMismatch": "El activo de la credencial no corresponde al registro de inscripción.",
+    "collectionMismatch": "La colección no coincide con la colección de credenciales del curso.",
     "minterNotActive": "El rol de minter no está activo.",
     "minterAmountExceeded": "La cantidad excede el límite del minter.",
     "labelTooLong": "La etiqueta excede la longitud máxima.",

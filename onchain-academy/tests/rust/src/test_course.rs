@@ -10,8 +10,8 @@ fn course_size_constant_is_correct() {
     // + 4 (xp_per_lesson) + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
     // + 4 (creator_reward_xp) + 2 (min_completions_for_reward)
     // + 4 (total_completions) + 4 (total_enrollments) + 1 (is_active)
-    // + 8 (created_at) + 8 (updated_at) + 8 (_reserved) + 1 (bump)
-    assert_eq!(Course::SIZE, 192);
+    // + 8 (created_at) + 8 (updated_at) + 32 (collection) + 8 (_reserved) + 1 (bump)
+    assert_eq!(Course::SIZE, 224);
 }
 
 #[test]
@@ -39,9 +39,11 @@ fn course_serialization_roundtrip() {
         is_active: true,
         created_at: 1700000000,
         updated_at: 1700001000,
+        collection: Pubkey::new_unique(),
         _reserved: [0u8; 8],
         bump: 253,
     };
+    let expected_collection = course.collection;
 
     let mut buf = Vec::new();
     course.serialize(&mut buf).unwrap();
@@ -65,6 +67,7 @@ fn course_serialization_roundtrip() {
     assert!(deserialized.is_active);
     assert_eq!(deserialized.created_at, 1700000000);
     assert_eq!(deserialized.updated_at, 1700001000);
+    assert_eq!(deserialized.collection, expected_collection);
     assert_eq!(deserialized._reserved, [0u8; 8]);
     assert_eq!(deserialized.bump, 253);
 }
@@ -90,6 +93,7 @@ fn course_with_prerequisite_roundtrip() {
         is_active: true,
         created_at: 0,
         updated_at: 0,
+        collection: Pubkey::new_unique(),
         _reserved: [0u8; 8],
         bump: 1,
     };
@@ -99,6 +103,48 @@ fn course_with_prerequisite_roundtrip() {
     let deserialized = Course::deserialize(&mut buf.as_slice()).unwrap();
 
     assert_eq!(deserialized.prerequisite, Some(prereq));
+}
+
+#[test]
+fn course_collection_roundtrip() {
+    let collection = Pubkey::new_unique();
+    let course = Course {
+        course_id: "with-collection".to_string(),
+        creator: Pubkey::new_unique(),
+        content_tx_id: [0u8; 32],
+        version: 1,
+        lesson_count: 3,
+        difficulty: 2,
+        xp_per_lesson: 50,
+        track_id: 1,
+        track_level: 1,
+        prerequisite: None,
+        creator_reward_xp: 0,
+        min_completions_for_reward: 0,
+        total_completions: 0,
+        total_enrollments: 0,
+        is_active: true,
+        created_at: 0,
+        updated_at: 0,
+        collection,
+        _reserved: [0u8; 8],
+        bump: 1,
+    };
+
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
+    let deserialized = Course::deserialize(&mut buf.as_slice()).unwrap();
+
+    assert_eq!(deserialized.collection, collection);
+
+    // A freshly-created course with no collection set must read as the default
+    // pubkey, which is what makes credential mint revert until backfilled.
+    let mut unset = course;
+    unset.collection = Pubkey::default();
+    let mut unset_buf = Vec::new();
+    unset.serialize(&mut unset_buf).unwrap();
+    let unset_de = Course::deserialize(&mut unset_buf.as_slice()).unwrap();
+    assert_eq!(unset_de.collection, Pubkey::default());
 }
 
 #[test]
@@ -156,6 +202,7 @@ fn course_serialized_size_with_max_id_and_all_options() {
         is_active: true,
         created_at: 0,
         updated_at: 0,
+        collection: Pubkey::new_unique(),
         _reserved: [0u8; 8],
         bump: 0,
     };
@@ -187,6 +234,7 @@ fn course_serialized_size_shorter_id_fits_within_allocation() {
         is_active: true,
         created_at: 0,
         updated_at: 0,
+        collection: Pubkey::new_unique(),
         _reserved: [0u8; 8],
         bump: 0,
     };

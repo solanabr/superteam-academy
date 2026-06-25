@@ -130,36 +130,56 @@ export async function getLessonBySlug(
  * its result into a client response. Used by /api/lessons/validate-challenge to
  * check submissions against hidden tests without shipping them to the browser.
  */
-export async function getChallengeAnswerKey(
-  courseSlug: string,
-  lessonSlug: string
-): Promise<{
+/** Shape of a challenge answer key (server-only). */
+export interface ChallengeAnswerKey {
   _id: string;
   type: string;
   language: string | null;
+  /** "buildable" challenges compile Rust via the build server, not the JS executor. */
+  buildType: string | null;
   tests: AdminTestCase[];
   solution: string | null;
-} | null> {
+}
+
+const answerKeyProjection = `{
+  _id,
+  "slug": slug.current,
+  type,
+  language,
+  buildType,
+  "tests": tests[]{ id, description, input, expectedOutput, hidden },
+  solution
+}`;
+
+export async function getChallengeAnswerKey(
+  courseSlug: string,
+  lessonSlug: string
+): Promise<ChallengeAnswerKey | null> {
   // revalidate=0: always read fresh, never via the public Sanity CDN, so the
   // answer key is not cached on any edge.
-  return sanityFetch<{
-    _id: string;
-    type: string;
-    language: string | null;
-    tests: AdminTestCase[];
-    solution: string | null;
-  } | null>(
+  return sanityFetch<ChallengeAnswerKey | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
-      "allLessons": modules[]->lessons[]->{
-        _id,
-        "slug": slug.current,
-        type,
-        language,
-        "tests": tests[]{ id, description, input, expectedOutput, hidden },
-        solution
-      }
+      "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug },
+    0
+  );
+}
+
+/**
+ * Same answer key as {@link getChallengeAnswerKey}, but looked up by the Sanity
+ * `_id` of the course and lesson (the identifiers `/api/lessons/complete` uses).
+ * SERVER-ONLY — never serialize into a client response.
+ */
+export async function getChallengeAnswerKeyById(
+  courseId: string,
+  lessonId: string
+): Promise<ChallengeAnswerKey | null> {
+  return sanityFetch<ChallengeAnswerKey | null>(
+    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced"][0] {
+      "allLessons": modules[]->lessons[]->${answerKeyProjection}
+    }.allLessons[_id == $lessonId][0]`,
+    { courseId, lessonId },
     0
   );
 }

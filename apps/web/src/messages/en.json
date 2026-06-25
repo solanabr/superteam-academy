@@ -584,6 +584,7 @@
     "invalidLessonCount": "Lesson count must be at least 1.",
     "invalidDifficulty": "Difficulty must be beginner, intermediate, or advanced.",
     "credentialAssetMismatch": "Credential asset does not match enrollment record.",
+    "collectionMismatch": "Collection does not match the course's credential collection.",
     "minterNotActive": "Minter role is not active.",
     "minterAmountExceeded": "Amount exceeds minter limit.",
     "labelTooLong": "Label exceeds maximum length.",

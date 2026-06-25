@@ -115,8 +115,11 @@ pub struct UpgradeCredential<'info> {
     #[account(mut)]
     pub credential_asset: AccountInfo<'info>,
 
-    /// CHECK: Metaplex Core collection for this track. Validated by Metaplex Core CPI.
-    #[account(mut)]
+    /// CHECK: Bound to the course's credential collection; further validated by the Metaplex Core CPI.
+    #[account(
+        mut,
+        constraint = track_collection.key() == course.collection @ AcademyError::CollectionMismatch,
+    )]
     pub track_collection: AccountInfo<'info>,
 
     #[account(mut)]

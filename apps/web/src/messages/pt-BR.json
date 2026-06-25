@@ -584,6 +584,7 @@
     "invalidLessonCount": "A contagem de aulas deve ser pelo menos 1.",
     "invalidDifficulty": "A dificuldade deve ser iniciante, intermediário ou avançado.",
     "credentialAssetMismatch": "O ativo da credencial não corresponde ao registro de matrícula.",
+    "collectionMismatch": "A coleção não corresponde à coleção de credenciais do curso.",
     "minterNotActive": "O papel de minter não está ativo.",
     "minterAmountExceeded": "A quantidade excede o limite do minter.",
     "labelTooLong": "O rótulo excede o comprimento máximo.",

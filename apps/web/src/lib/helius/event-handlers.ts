@@ -15,6 +15,7 @@ import {
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
+import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { isAllLessonsComplete } from "@/lib/solana/bitmap";
 import { checkNewAchievements } from "@/lib/gamification/achievements";
 import {
@@ -576,7 +577,16 @@ async function tryIssueCredential(
       throw new Error(metaError?.message ?? "Failed to store NFT metadata");
     }
 
-    const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+    const appMetadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+
+    // This is the PRIMARY (automatic) credential path, so it must pin metadata
+    // to Arweave too — otherwise most issued credentials would point at the
+    // app-served URL and defeat the decoupling from app uptime. Falls back to
+    // the app URL when ARWEAVE_UPLOADER_SECRET is unset/malformed or the upload
+    // fails; uploadCertificateMetadata never throws and logs any fallback. The
+    // Supabase row is kept regardless as the app-served fallback.
+    const arweaveUri = await uploadCertificateMetadata(metadataJson);
+    const metadataUri = arweaveUri ?? appMetadataUri;
 
     let mintSignature: string;
     let mintAddress: PublicKey;

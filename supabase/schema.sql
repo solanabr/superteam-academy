@@ -26,7 +26,7 @@ CREATE TABLE profiles (
 
 CREATE TABLE enrollments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   enrolled_at TIMESTAMPTZ DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
@@ -37,7 +37,7 @@ CREATE TABLE enrollments (
 
 CREATE TABLE user_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   lesson_id TEXT NOT NULL,
   completed BOOLEAN DEFAULT false,
@@ -49,7 +49,7 @@ CREATE TABLE user_progress (
 
 CREATE TABLE user_xp (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   total_xp INTEGER DEFAULT 0,
   level INTEGER DEFAULT 0,
   current_streak INTEGER DEFAULT 0,
@@ -59,7 +59,7 @@ CREATE TABLE user_xp (
 
 CREATE TABLE xp_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   amount INTEGER NOT NULL,
   reason TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -69,7 +69,7 @@ CREATE TABLE xp_transactions (
 
 CREATE TABLE user_achievements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   achievement_id TEXT NOT NULL,
   unlocked_at TIMESTAMPTZ DEFAULT NOW(),
   tx_signature TEXT,
@@ -79,7 +79,7 @@ CREATE TABLE user_achievements (
 
 CREATE TABLE certificates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   course_title TEXT NOT NULL,
   mint_address TEXT,
@@ -173,6 +173,10 @@ CREATE UNIQUE INDEX idx_xp_transactions_idempotency
   WHERE idempotency_key IS NOT NULL;
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_certificates_user_id ON certificates(user_id);
+-- One mint tx == one certificate row. Partial so NULL-signature rows
+-- (off-chain / resync) stay allowed while real mint signatures can't collide.
+CREATE UNIQUE INDEX idx_certificates_tx_signature_unique
+  ON certificates (tx_signature) WHERE tx_signature IS NOT NULL;
 CREATE INDEX idx_user_xp_total_xp ON user_xp(total_xp DESC);
 
 -- ─────────────────────────────────────────────
@@ -604,7 +608,7 @@ CREATE POLICY "Users can delete their own avatar"
 
 CREATE TABLE deployed_programs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   lesson_id TEXT NOT NULL,
   program_id TEXT NOT NULL,
@@ -635,7 +639,7 @@ CREATE POLICY "Users can update their own deployments"
 -- No INSERT/UPDATE RLS policies are needed because authenticated/anon roles never write directly.
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id        UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'enroll')),
   reference_id   TEXT NOT NULL,
   payload        JSONB NOT NULL,
@@ -664,7 +668,7 @@ CREATE POLICY "users_read_own_pending_actions"
 -- No INSERT/UPDATE RLS policies are needed because authenticated/anon roles never write directly.
 CREATE TABLE user_daily_quests (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   quest_id      TEXT NOT NULL,
   current_value INTEGER DEFAULT 0,
   completed     BOOLEAN DEFAULT false,
@@ -1001,6 +1005,9 @@ CREATE INDEX idx_threads_lesson ON threads(lesson_id) WHERE lesson_id IS NOT NUL
 CREATE INDEX idx_threads_author ON threads(author_id);
 CREATE INDEX idx_threads_type_unsolved ON threads(type, is_solved) WHERE type = 'question' AND is_solved = false;
 CREATE INDEX idx_threads_short_id ON threads(short_id);
+-- FK index so answers.id deletes (ON DELETE SET NULL on threads.accepted_answer_id)
+-- do not seq-scan threads. Partial: only threads with an accepted answer.
+CREATE INDEX IF NOT EXISTS idx_threads_accepted_answer_id ON threads(accepted_answer_id) WHERE accepted_answer_id IS NOT NULL;
 
 CREATE INDEX idx_answers_thread ON answers(thread_id);
 CREATE INDEX idx_answers_author ON answers(author_id);
@@ -1018,6 +1025,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_flags_unique_thread
   ON flags (reporter_id, thread_id) WHERE thread_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_flags_unique_answer
   ON flags (reporter_id, answer_id) WHERE answer_id IS NOT NULL;
+
+-- FK indexes so ON DELETE CASCADE / SET NULL paths and reverse lookups do not
+-- seq-scan. The unique indexes above lead with reporter_id, so they do not
+-- serve standalone thread_id / answer_id; resolved_by has no other index.
+CREATE INDEX IF NOT EXISTS idx_flags_thread_id
+  ON flags (thread_id) WHERE thread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_flags_answer_id
+  ON flags (answer_id) WHERE answer_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_flags_reporter_id
+  ON flags (reporter_id);
+CREATE INDEX IF NOT EXISTS idx_flags_resolved_by
+  ON flags (resolved_by) WHERE resolved_by IS NOT NULL;
 
 -- Full-text search on threads (weighted: title A, body B)
 ALTER TABLE threads ADD COLUMN search_vector tsvector
@@ -1181,6 +1200,11 @@ CREATE TABLE IF NOT EXISTS thread_views (
   viewed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, thread_id)
 );
+
+-- The PK leads with user_id, so deleting a thread (cascade on thread_id) would
+-- seq-scan without this.
+CREATE INDEX IF NOT EXISTS idx_thread_views_thread_id
+  ON thread_views (thread_id);
 
 ALTER TABLE thread_views ENABLE ROW LEVEL SECURITY;
 -- No RLS policies needed — all access via service_role through increment_view_count().
