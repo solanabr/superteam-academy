@@ -163,9 +163,20 @@ fn test_deploy_not_found() {
 
 #[test]
 #[ignore]
-fn test_metrics_endpoint() {
+fn test_metrics_requires_auth() {
     let resp = client()
         .get(format!("{}/metrics", base_url()))
+        .send()
+        .unwrap();
+    assert_eq!(resp.status(), 401);
+}
+
+#[test]
+#[ignore]
+fn test_metrics_endpoint_with_auth() {
+    let resp = client()
+        .get(format!("{}/metrics", base_url()))
+        .header("x-api-key", API_KEY)
         .send()
         .unwrap();
     assert_eq!(resp.status(), 200);
