@@ -18,9 +18,11 @@
  *   - devnet  → free, but data is NOT permanent (Irys devnet prunes after ~60d)
  *   - mainnet → permanent, paid in SOL from the uploader wallet's Irys balance
  *
- * If `ARWEAVE_UPLOADER_SECRET` is absent, `uploadCertificateMetadata` returns
- * `null` so the caller can fall back to the app-served metadata URL. Mint must
- * keep working before Arweave is provisioned — this never hard-crashes.
+ * If `ARWEAVE_UPLOADER_SECRET` is absent OR malformed,
+ * `uploadCertificateMetadata` returns `null` so the caller can fall back to the
+ * app-served metadata URL. Mint must keep working before Arweave is provisioned
+ * — this never hard-crashes (a misconfigured secret degrades gracefully, it
+ * does not 500 the mint or leave an orphaned `nft_metadata` row).
  *
  * This module MUST ONLY be imported from API routes (server-side).
  */
@@ -38,46 +40,66 @@ import { serverEnv } from "@/lib/env.server";
 const IRYS_MAINNET_NODE = "https://uploader.irys.xyz";
 const IRYS_DEVNET_NODE = "https://devnet.irys.xyz";
 
-let _uploaderMissingWarned = false;
-
 /**
- * Loads the Solana keypair that funds Irys uploads, or `null` if unset.
- * A malformed value throws (a misconfigured secret should fail loudly), but an
- * absent value is a supported state (pre-Arweave-setup fallback).
+ * Loads the Solana keypair that funds Irys uploads.
+ *
+ * Returns `null` for BOTH the absent and the malformed case, and NEVER throws.
+ * The only caller (`uploadCertificateMetadata`) treats `null` as "fall back to
+ * the app-served metadata URL", so neither state may escape as an exception:
+ *   - absent    → supported pre-Arweave-setup state
+ *   - malformed → a misconfiguration (not JSON, or not a 64-byte secret key).
+ *     We log it loudly (`console.error`) but still degrade gracefully rather
+ *     than letting the throw propagate to the mint route, which would 500 the
+ *     mint AND orphan the already-inserted `nft_metadata` row.
  */
 function getUploaderKeypair(): Keypair | null {
   const secret = process.env.ARWEAVE_UPLOADER_SECRET;
   if (!secret) return null;
 
-  const parsed: unknown = JSON.parse(secret);
-  if (!Array.isArray(parsed) || parsed.length !== 64) {
-    throw new Error("ARWEAVE_UPLOADER_SECRET must be a 64-element JSON array");
+  try {
+    const parsed: unknown = JSON.parse(secret);
+    if (!Array.isArray(parsed) || parsed.length !== 64) {
+      throw new Error("must be a 64-element JSON array of secret-key bytes");
+    }
+    return Keypair.fromSecretKey(Uint8Array.from(parsed as number[]));
+  } catch (err) {
+    console.error(
+      "[arweave] ARWEAVE_UPLOADER_SECRET is set but malformed — credential " +
+        "metadata will fall back to the app-served URL " +
+        "(/api/certificates/metadata) instead of Arweave. Fix the secret (a " +
+        "64-element JSON array of Solana secret-key bytes) before mainnet.",
+      err instanceof Error ? err.message : String(err)
+    );
+    return null;
   }
-  return Keypair.fromSecretKey(Uint8Array.from(parsed as number[]));
 }
 
 /**
  * Uploads credential metadata JSON to Arweave via Irys and returns the
  * permanent gateway URL (e.g. `https://arweave.net/<txid>`).
  *
- * Returns `null` when `ARWEAVE_UPLOADER_SECRET` is unset OR the upload fails,
- * signalling the caller to fall back to the app-served metadata URL. Never
- * throws on upload failure — pinning is best-effort so a transient Irys outage
- * (or an unfunded wallet) does not block minting.
+ * Returns `null` when `ARWEAVE_UPLOADER_SECRET` is unset or malformed, OR the
+ * upload fails — signalling the caller to fall back to the app-served metadata
+ * URL. NEVER throws: pinning is best-effort, so a misconfigured secret, a
+ * transient Irys outage, or an unfunded wallet does not block minting (and does
+ * not leave an orphaned `nft_metadata` row from a half-completed mint).
  */
 export async function uploadCertificateMetadata(
   metadata: Record<string, unknown>
 ): Promise<string | null> {
+  // `getUploaderKeypair` already logs the malformed case. A missing keypair
+  // here means either unset or malformed; in both cases the caller falls back
+  // to the app-served URL. (Serverless cold starts reset module state, so we do
+  // not deduplicate this warning — it is cheap and useful on each invocation.)
   const keypair = getUploaderKeypair();
   if (!keypair) {
-    if (!_uploaderMissingWarned) {
+    if (!process.env.ARWEAVE_UPLOADER_SECRET) {
       console.warn(
         "[arweave] ARWEAVE_UPLOADER_SECRET not set — credential metadata will " +
           "be served from the app (/api/certificates/metadata) instead of " +
           "Arweave. Issued credentials will NOT resolve if the app is offline. " +
           "Set ARWEAVE_UPLOADER_SECRET (a funded Irys/Solana keypair) before mainnet."
       );
-      _uploaderMissingWarned = true;
     }
     return null;
   }
