@@ -9,6 +9,7 @@ import { issueCredential, getConnection } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
+import { capCredentialName } from "@/lib/solana/credential-metadata";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -119,11 +120,7 @@ export async function POST(request: NextRequest) {
     const courseName = sanityCourse.title ?? courseId;
 
     // Truncate credential name to 32 UTF-8 bytes (on-chain limit)
-    let credentialName = `Superteam Academy: ${courseName}`;
-    const encoder = new TextEncoder();
-    while (encoder.encode(credentialName).length > 32) {
-      credentialName = credentialName.slice(0, -1);
-    }
+    const credentialName = capCredentialName(courseName);
 
     // Fetch on-chain course for XP calculation
     const onChainCourse = await fetchCourse(
