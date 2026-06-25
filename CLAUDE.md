@@ -340,6 +340,14 @@ HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (JSON array of 64 keypair bytes)
 PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64 keypair bytes)
 
+# Optional — Permanent credential storage (server-only)
+# Funds Irys uploads that pin credential metadata to Arweave at mint, so the
+# on-chain asset URI resolves independently of app uptime. SOLANA keypair (JSON
+# array of 64 bytes, like BACKEND_SIGNER_SECRET) — funded with SOL, NOT an
+# Arweave JWK. Unset → mint falls back to /api/certificates/metadata (warns).
+# REQUIRED (funded on mainnet-beta via irys.xyz) for permanent mainnet creds.
+ARWEAVE_UPLOADER_SECRET=
+
 # Optional — Analytics (platform works without these)
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
 NEXT_PUBLIC_POSTHOG_KEY=
