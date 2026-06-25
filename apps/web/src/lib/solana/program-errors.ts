@@ -154,6 +154,12 @@ const ERROR_MAP: Record<number, ProgramErrorEntry> = {
     i18nKey: "invalidXpReward",
     fallback: "XP reward must be greater than zero.",
   },
+  6027: {
+    name: "EnrollmentFinalized",
+    i18nKey: "enrollmentFinalized",
+    fallback:
+      "This enrollment is finalized and can no longer be unenrolled or closed.",
+  },
 };
 
 // Reverse lookup: error name → entry
