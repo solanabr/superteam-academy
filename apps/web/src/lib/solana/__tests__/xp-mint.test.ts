@@ -121,6 +121,18 @@ describe("mintXpToWallet", () => {
 });
 
 describe("burnXpFromWallet", () => {
+  it("reports not-configured when the authority secret is missing", async () => {
+    const { burnXpFromWallet } = await loadXpMint({
+      NEXT_PUBLIC_XP_MINT_ADDRESS: "MINT",
+      XP_MINT_AUTHORITY_SECRET: undefined,
+    });
+    const res = await burnXpFromWallet("WALLET");
+    expect(res.success).toBe(false);
+    expect(res.error).toMatch(/not configured/i);
+    expect(h.getAccount).not.toHaveBeenCalled();
+    expect(h.burn).not.toHaveBeenCalled();
+  });
+
   it("skips the burn when the balance is zero", async () => {
     h.getAccount.mockResolvedValue({ amount: 0n });
     const { burnXpFromWallet } = await loadXpMint({
