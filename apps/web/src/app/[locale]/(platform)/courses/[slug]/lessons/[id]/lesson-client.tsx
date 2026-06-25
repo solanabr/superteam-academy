@@ -163,12 +163,13 @@ interface CompletionResponse {
 
 async function completeLessonAPI(
   lessonId: string,
-  courseId: string
+  courseId: string,
+  submittedCode?: string
 ): Promise<CompletionResponse> {
   const res = await fetch("/api/lessons/complete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lessonId, courseId }),
+    body: JSON.stringify({ lessonId, courseId, submittedCode }),
   });
   if (!res.ok) {
     throw new Error("Failed to complete lesson");
@@ -241,44 +242,53 @@ export function LessonPageClient({
 
   const isChallenge = lesson.type === "challenge";
 
-  const handleComplete = useCallback(async () => {
-    if (isCompleted || isCompleting) return;
-    if (hasLinkedWallet === false) return;
-    setIsCompleting(true);
-    try {
-      const result = await completeLessonAPI(lesson._id, courseId);
-      setIsCompleting(false);
-      setIsCompleted(true);
-
-      if (!result.alreadyCompleted) {
-        setEarnedXp(courseXpPerLesson);
-        trackEvent("lesson_completed", {
-          lessonId: lesson._id,
+  const handleComplete = useCallback(
+    async (submittedCode?: string) => {
+      if (isCompleted || isCompleting) return;
+      if (hasLinkedWallet === false) return;
+      setIsCompleting(true);
+      try {
+        const result = await completeLessonAPI(
+          lesson._id,
           courseId,
-          signature: result.signature,
-        });
-        // XP, level-up, achievement, and certificate popups are now triggered
-        // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
+          submittedCode
+        );
+        setIsCompleting(false);
+        setIsCompleted(true);
+
+        if (!result.alreadyCompleted) {
+          setEarnedXp(courseXpPerLesson);
+          trackEvent("lesson_completed", {
+            lessonId: lesson._id,
+            courseId,
+            signature: result.signature,
+          });
+          // XP, level-up, achievement, and certificate popups are now triggered
+          // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
+        }
+      } catch {
+        // Allow retry on failure
+        setIsCompleting(false);
       }
-    } catch {
-      // Allow retry on failure
-      setIsCompleting(false);
-    }
-  }, [
-    lesson._id,
-    courseId,
-    courseXpPerLesson,
-    isCompleted,
-    isCompleting,
-    hasLinkedWallet,
-  ]);
+    },
+    [
+      lesson._id,
+      courseId,
+      courseXpPerLesson,
+      isCompleted,
+      isCompleting,
+      hasLinkedWallet,
+    ]
+  );
 
   // Listen for challenge completion events from ChallengeInterface
   useEffect(() => {
     const handleChallengeComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ lessonId: string }>).detail;
+      const detail = (
+        e as CustomEvent<{ lessonId: string; submittedCode?: string }>
+      ).detail;
       if (detail.lessonId === lesson._id) {
-        handleComplete();
+        handleComplete(detail.submittedCode);
       }
     };
 

@@ -18,6 +18,18 @@ pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> 
         );
     }
 
+    let new_total = role
+        .total_xp_minted
+        .checked_add(amount)
+        .ok_or(AcademyError::Overflow)?;
+
+    if role.max_total_xp > 0 {
+        require!(
+            new_total <= role.max_total_xp,
+            AcademyError::MinterCapExceeded
+        );
+    }
+
     let config = &ctx.accounts.config;
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
 
@@ -31,10 +43,7 @@ pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> 
     )?;
 
     let role_mut = &mut ctx.accounts.minter_role;
-    role_mut.total_xp_minted = role_mut
-        .total_xp_minted
-        .checked_add(amount)
-        .ok_or(AcademyError::Overflow)?;
+    role_mut.total_xp_minted = new_total;
 
     emit!(XpRewarded {
         minter: ctx.accounts.minter.key(),
@@ -77,6 +86,11 @@ pub struct RewardXp<'info> {
     pub recipient_token_account: AccountInfo<'info>,
 
     pub minter: Signer<'info>,
+
+    #[account(
+        constraint = backend_signer.key() == config.backend_signer @ AcademyError::Unauthorized,
+    )]
+    pub backend_signer: Signer<'info>,
 
     /// CHECK: Validated by address constraint.
     #[account(address = spl_token_2022::id())]

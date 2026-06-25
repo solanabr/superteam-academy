@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Server-side authority signer for on-chain admin operations.
  *
@@ -9,8 +11,6 @@
  *
  * This module MUST ONLY be imported from API routes (server-side).
  */
-import "server-only";
-
 import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
@@ -66,6 +66,7 @@ interface CreateCourseOnChainParams {
   prerequisite: PublicKey | null;
   creatorRewardXp: number;
   minCompletionsForReward: number;
+  collection: PublicKey | null;
 }
 
 interface UpdateCourseOnChainParams {
@@ -74,6 +75,7 @@ interface UpdateCourseOnChainParams {
   newXpPerLesson: number | null;
   newCreatorRewardXp: number | null;
   newMinCompletionsForReward: number | null;
+  newCollection: PublicKey | null;
 }
 
 interface CreateAchievementTypeOnChainParams {
@@ -123,6 +125,8 @@ export interface UpdateCourseAdminParams {
   newIsActive?: boolean;
   newCreatorRewardXp?: number;
   newMinCompletionsForReward?: number;
+  /** Base58 address of the Metaplex Core credential collection to set/backfill. */
+  newCollection?: string;
 }
 
 export interface CreateAchievementAdminParams {
@@ -242,6 +246,8 @@ export async function deployCoursePda(
       prerequisite,
       creatorRewardXp: params.creatorRewardXp,
       minCompletionsForReward: params.minCompletionsForReward,
+      // Collection is created after the PDA exists; backfilled via updateCoursePda.
+      collection: null,
     };
 
     const methods = _program.methods as unknown as AdminMethods;
@@ -293,6 +299,10 @@ export async function updateCoursePda(
       newXpPerLesson: params.newXpPerLesson ?? null,
       newCreatorRewardXp: params.newCreatorRewardXp ?? null,
       newMinCompletionsForReward: params.newMinCompletionsForReward ?? null,
+      newCollection:
+        params.newCollection != null
+          ? new PublicKey(params.newCollection)
+          : null,
     };
 
     const methods = _program.methods as unknown as AdminMethods;
@@ -326,6 +336,21 @@ export async function deactivateCoursePda(
   courseId: string
 ): Promise<AdminSignerResult> {
   return updateCoursePda({ courseId, newIsActive: false });
+}
+
+/**
+ * Set/backfill the Metaplex Core credential collection on a Course PDA.
+ *
+ * Required before issue_credential/upgrade_credential will succeed — the
+ * program binds the track_collection account to course.collection. The
+ * per-course collection is created after the PDA, so this runs as a second
+ * step in the sync flow.
+ */
+export async function setCourseCollectionPda(
+  courseId: string,
+  collectionAddress: string
+): Promise<AdminSignerResult> {
+  return updateCoursePda({ courseId, newCollection: collectionAddress });
 }
 
 /**

@@ -11,6 +11,8 @@ pub struct UpdateCourseParams {
     pub new_xp_per_lesson: Option<u32>,
     pub new_creator_reward_xp: Option<u32>,
     pub new_min_completions_for_reward: Option<u16>,
+    /// Set/backfill the Metaplex Core credential collection for this course.
+    pub new_collection: Option<Pubkey>,
 }
 
 pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result<()> {
@@ -42,11 +44,23 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
         course.min_completions_for_reward = min_completions;
     }
 
+    if let Some(collection) = params.new_collection {
+        // Only allow setting the collection while it is unset (backfill / self-heal).
+        // Re-pointing a live collection would orphan existing credential holders;
+        // a deliberate re-bind must go through a separate explicit instruction.
+        require!(
+            course.collection == Pubkey::default() || course.collection == collection,
+            AcademyError::CollectionMismatch
+        );
+        course.collection = collection;
+    }
+
     course.updated_at = now;
 
     emit!(CourseUpdated {
         course: course_key,
         version: course.version,
+        collection: course.collection,
         timestamp: now,
     });
 

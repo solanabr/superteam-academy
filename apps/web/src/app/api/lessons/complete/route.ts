@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById } from "@/lib/sanity/queries";
+import { getCourseById, getChallengeAnswerKeyById } from "@/lib/sanity/queries";
+import {
+  validateAgainstAnswerKey,
+  MAX_SUBMISSION_BYTES,
+} from "@/lib/challenge/validate";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -17,6 +21,8 @@ import { isLessonComplete } from "@/lib/solana/bitmap";
 interface LessonCompleteRequest {
   lessonId: string;
   courseId: string;
+  /** Required for challenge lessons: the learner's code, validated server-side. */
+  submittedCode?: string;
 }
 
 /**
@@ -64,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as LessonCompleteRequest;
-    const { lessonId, courseId } = body;
+    const { lessonId, courseId, submittedCode } = body;
 
     if (!lessonId || !courseId) {
       return NextResponse.json(
@@ -80,6 +86,65 @@ export async function POST(request: NextRequest) {
       courseId.length > 100
     ) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    // ── Server-authoritative challenge gate ───────────────────────────────
+    // For challenge lessons the SERVER must independently verify the
+    // submission passes ALL tests (visible + hidden) before any on-chain
+    // completion is recorded. A forged client "passed" is rejected here. This
+    // re-runs the same validation as /api/lessons/validate-challenge so the
+    // completion path never trusts the client. Non-challenge lessons are
+    // unaffected (answerKey is null -> gate is skipped).
+    const answerKey = await getChallengeAnswerKeyById(courseId, lessonId);
+    if (answerKey && answerKey.type === "challenge") {
+      if (
+        typeof submittedCode !== "string" ||
+        submittedCode.length === 0 ||
+        Buffer.byteLength(submittedCode, "utf8") > MAX_SUBMISSION_BYTES
+      ) {
+        return NextResponse.json(
+          { error: "Challenge submission required" },
+          { status: 400 }
+        );
+      }
+
+      const verdict = await validateAgainstAnswerKey(answerKey, submittedCode);
+
+      switch (verdict.kind) {
+        case "validated":
+          if (!verdict.passed) {
+            return NextResponse.json(
+              { error: "Challenge tests did not pass" },
+              { status: 403 }
+            );
+          }
+          break;
+        case "executor_unavailable":
+          // Degrade closed: never grant completion we could not verify.
+          return NextResponse.json(
+            { error: "Challenge validation is temporarily unavailable" },
+            { status: 503 }
+          );
+        case "non_js_challenge":
+          // FAIL CLOSED. Rust / buildable challenges must be graded by the Rust
+          // playground / build server (a separate trust boundary), but that
+          // validation handshake is NOT wired up yet. Until it is, the server
+          // cannot prove the submission is correct, so it MUST NOT submit the
+          // on-chain completeLesson — a bare fall-through here would grant a
+          // completion (and credential eligibility) for any unverified
+          // Rust/buildable submission. Deny exactly like executor_unavailable.
+          // TODO(#195 follow-up): wire a real Rust/build-server validation
+          // handshake, then gate this branch on its passing verdict.
+          return NextResponse.json(
+            {
+              error:
+                "Server-side validation for this challenge type is not yet available",
+            },
+            { status: 503 }
+          );
+        case "not_a_challenge":
+          break;
+      }
     }
 
     // Look up user's wallet — required for on-chain operations

@@ -13,6 +13,7 @@ pub struct CourseCreated {
     pub creator: Pubkey,
     pub track_id: u16,
     pub track_level: u8,
+    pub collection: Pubkey,
     pub timestamp: i64,
 }
 
@@ -20,6 +21,7 @@ pub struct CourseCreated {
 pub struct CourseUpdated {
     pub course: Pubkey,
     pub version: u16,
+    pub collection: Pubkey,
     pub timestamp: i64,
 }
 
@@ -83,6 +85,7 @@ pub struct MinterRegistered {
     pub minter: Pubkey,
     pub label: String,
     pub max_xp_per_call: u64,
+    pub max_total_xp: u64,
     pub timestamp: i64,
 }
 

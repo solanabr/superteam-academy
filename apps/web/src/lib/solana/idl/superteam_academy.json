@@ -110,6 +110,16 @@
           "signer": true
         },
         {
+          "name": "backend_signer",
+          "docs": [
+            "Rotatable backend signer that authorizes the award. Eligibility is",
+            "proven off-chain (achievement criteria have no on-chain qualifying",
+            "receipt to validate against), so this co-signature is the authorization",
+            "boundary: an active minter alone cannot mint arbitrary achievements."
+          ],
+          "signer": true
+        },
+        {
           "name": "mpl_core_program",
           "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
         },
@@ -856,6 +866,10 @@
           "signer": true
         },
         {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
           "name": "token_program",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
         }
@@ -1227,61 +1241,71 @@
     },
     {
       "code": 6016,
+      "name": "CollectionMismatch",
+      "msg": "Collection does not match the course's credential collection"
+    },
+    {
+      "code": 6017,
       "name": "CredentialAlreadyIssued",
       "msg": "Credential already issued for this enrollment"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "MinterNotActive",
       "msg": "Minter role is not active"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "MinterAmountExceeded",
       "msg": "Amount exceeds minter's per-call limit"
     },
     {
-      "code": 6019,
+      "code": 6020,
+      "name": "MinterCapExceeded",
+      "msg": "Cumulative minted XP would exceed minter's total cap"
+    },
+    {
+      "code": 6021,
       "name": "LabelTooLong",
       "msg": "Minter label exceeds max length"
     },
     {
-      "code": 6020,
+      "code": 6022,
       "name": "AchievementNotActive",
       "msg": "Achievement type is not active"
     },
     {
-      "code": 6021,
+      "code": 6023,
       "name": "AchievementSupplyExhausted",
       "msg": "Achievement max supply reached"
     },
     {
-      "code": 6022,
+      "code": 6024,
       "name": "AchievementIdTooLong",
       "msg": "Achievement ID exceeds max length"
     },
     {
-      "code": 6023,
+      "code": 6025,
       "name": "AchievementNameTooLong",
       "msg": "Achievement name exceeds max length"
     },
     {
-      "code": 6024,
+      "code": 6026,
       "name": "AchievementUriTooLong",
       "msg": "Achievement URI exceeds max length"
     },
     {
-      "code": 6025,
+      "code": 6027,
       "name": "InvalidAmount",
       "msg": "Amount must be greater than zero"
     },
     {
-      "code": 6026,
+      "code": 6028,
       "name": "InvalidXpReward",
       "msg": "XP reward must be greater than zero"
     },
     {
-      "code": 6027,
+      "code": 6029,
       "name": "EnrollmentFinalized",
       "msg": "Finalized or credentialed enrollment cannot be closed"
     }
@@ -1582,6 +1606,14 @@
             "type": "i64"
           },
           {
+            "name": "collection",
+            "docs": [
+              "Metaplex Core collection this course's credentials are minted into.",
+              "`Pubkey::default()` until set via `create_course`/`update_course`."
+            ],
+            "type": "pubkey"
+          },
+          {
             "name": "_reserved",
             "type": {
               "array": ["u8", 8]
@@ -1618,6 +1650,10 @@
           {
             "name": "track_level",
             "type": "u8"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
           },
           {
             "name": "timestamp",
@@ -1674,6 +1710,10 @@
           {
             "name": "version",
             "type": "u16"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
           },
           {
             "name": "timestamp",
@@ -1762,6 +1802,16 @@
           {
             "name": "min_completions_for_reward",
             "type": "u16"
+          },
+          {
+            "name": "collection",
+            "docs": [
+              "Metaplex Core collection for credential NFTs. `None` defers to a later",
+              "`update_course` (the per-course collection is created after the PDA)."
+            ],
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -1978,6 +2028,10 @@
             "type": "u64"
           },
           {
+            "name": "max_total_xp",
+            "type": "u64"
+          },
+          {
             "name": "timestamp",
             "type": "i64"
           }
@@ -2040,10 +2094,14 @@
             "type": "i64"
           },
           {
-            "name": "_reserved",
-            "type": {
-              "array": ["u8", 8]
-            }
+            "name": "max_total_xp",
+            "docs": [
+              "Cumulative XP ceiling for this role. 0 = unlimited.",
+              "Occupies the 8 bytes formerly reserved, so the account size is",
+              "unchanged and pre-existing roles deserialize with this field = 0",
+              "(unlimited), preserving prior behavior until an admin sets a cap."
+            ],
+            "type": "u64"
           },
           {
             "name": "bump",
@@ -2067,6 +2125,11 @@
           },
           {
             "name": "max_xp_per_call",
+            "type": "u64"
+          },
+          {
+            "name": "max_total_xp",
+            "docs": ["Cumulative XP ceiling for this role. 0 = unlimited."],
             "type": "u64"
           }
         ]
@@ -2121,6 +2184,15 @@
             "name": "new_min_completions_for_reward",
             "type": {
               "option": "u16"
+            }
+          },
+          {
+            "name": "new_collection",
+            "docs": [
+              "Set/backfill the Metaplex Core credential collection for this course."
+            ],
+            "type": {
+              "option": "pubkey"
             }
           }
         ]

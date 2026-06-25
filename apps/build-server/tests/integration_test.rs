@@ -24,6 +24,10 @@ fn test_health_no_auth() {
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().unwrap();
     assert_eq!(body["status"], "ok");
+    // Public /health must NOT leak build telemetry — those live on gated /metrics.
+    assert!(body.get("cache_entries").is_none());
+    assert!(body.get("active_builds").is_none());
+    assert!(body.get("total_builds").is_none());
 }
 
 #[test]
@@ -163,9 +167,20 @@ fn test_deploy_not_found() {
 
 #[test]
 #[ignore]
-fn test_metrics_endpoint() {
+fn test_metrics_requires_auth() {
     let resp = client()
         .get(format!("{}/metrics", base_url()))
+        .send()
+        .unwrap();
+    assert_eq!(resp.status(), 401);
+}
+
+#[test]
+#[ignore]
+fn test_metrics_endpoint_with_auth() {
+    let resp = client()
+        .get(format!("{}/metrics", base_url()))
+        .header("x-api-key", API_KEY)
         .send()
         .unwrap();
     assert_eq!(resp.status(), 200);
