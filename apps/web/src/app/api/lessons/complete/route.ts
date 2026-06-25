@@ -17,6 +17,7 @@ import {
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
+import { findLessonIndex } from "@/lib/courses/lesson-index";
 
 interface LessonCompleteRequest {
   lessonId: string;
@@ -35,10 +36,7 @@ async function deriveLessonIndex(
 ): Promise<number> {
   const course = await getCourseById(courseId);
   if (!course) throw new Error(`Course not found: ${courseId}`);
-  const allLessons = (course.modules ?? []).flatMap(
-    (m: { lessons?: { _id: string }[] }) => m.lessons ?? []
-  );
-  const index = allLessons.findIndex((l) => l._id === lessonId);
+  const index = findLessonIndex(course, lessonId);
   if (index === -1) throw new Error(`Lesson not found in course: ${lessonId}`);
   return index;
 }

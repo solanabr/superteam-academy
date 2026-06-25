@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/sanity/queries";
 import { rewardXp, isOnChainProgramLive } from "@/lib/solana/academy-program";
 import { queueFailedOnchainAction } from "@/lib/solana/onchain-queue";
+import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -37,7 +38,7 @@ export async function GET() {
     if (questData.quests.length === 0) {
       return NextResponse.json({
         quests: [],
-        nextResetTime: getNextMidnightUTC(),
+        nextResetTime: nextMidnightUtc(),
       });
     }
 
@@ -124,7 +125,7 @@ export async function GET() {
 
     return NextResponse.json({
       quests,
-      nextResetTime: getNextMidnightUTC(),
+      nextResetTime: nextMidnightUtc(),
     });
   } catch (err) {
     console.error("[api/quests/daily] Unexpected error:", err);
@@ -188,20 +189,4 @@ async function mintQuestXpOnChain(
       );
     }
   }
-}
-
-function getNextMidnightUTC(): string {
-  const now = new Date();
-  const next = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0,
-      0,
-      0,
-      0
-    )
-  );
-  return next.toISOString();
 }
