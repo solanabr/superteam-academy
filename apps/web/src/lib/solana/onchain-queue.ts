@@ -1,11 +1,7 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import {
-  fetchAchievementReceipt,
-  fetchEnrollment,
-  fetchCourse,
-} from "./academy-reads";
+import { getProgramId } from "./pda";
 import {
   getConnection,
   awardAchievement,
@@ -13,7 +9,11 @@ import {
   issueCredential,
   rewardXp,
 } from "./academy-program";
-import { getProgramId } from "./pda";
+import {
+  fetchAchievementReceipt,
+  fetchEnrollment,
+  fetchCourse,
+} from "./academy-reads";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";

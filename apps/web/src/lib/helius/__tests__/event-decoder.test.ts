@@ -1,3 +1,6 @@
+/* eslint-disable import/order -- vi.mock() must sit between the vitest import
+   and the module-under-test import (vitest hoists mocks), so imports can't be
+   contiguous as import/order wants. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the Anchor coder so we control decode() without crafting real Borsh bytes.

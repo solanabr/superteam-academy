@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 interface SaveDeployRequest {
@@ -8,16 +7,9 @@ interface SaveDeployRequest {
   programId: string;
 }
 
-// The deployed_programs table exists but isn't in the generated types yet.
-// Use a typed helper to avoid `never` inference.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(supabase: SupabaseClient<any>) {
-  return supabase;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const supabase = db(await createClient());
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -82,7 +74,7 @@ export async function POST(request: NextRequest) {
 //   - lessonId (optional) — narrow to a specific lesson
 export async function GET(request: NextRequest) {
   try {
-    const supabase = db(await createClient());
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ThreadCard } from "./thread-card";
 import { ThreadFilters } from "./thread-filters";
+import { ThreadCard } from "./thread-card";
 import { useThreads } from "@/hooks/use-threads";
 import { useVote } from "@/hooks/use-vote";
 import { Button } from "@/components/ui/button";

@@ -9,8 +9,8 @@ import { VoteButton } from "./vote-button";
 import { AcceptAnswerButton } from "./accept-answer-button";
 import { FlagButton } from "./flag-button";
 import { DeleteButton } from "./delete-button";
-import { cn } from "@/lib/utils";
 import { LevelBadge } from "@/components/gamification/level-badge";
+import { cn } from "@/lib/utils";
 
 interface Author {
   username: string | null;
