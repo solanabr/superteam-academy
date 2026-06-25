@@ -207,9 +207,35 @@ fn close_enrollment_cooldown_logic() {
 }
 
 #[test]
-fn close_enrollment_completed_skips_cooldown() {
-    // close_enrollment: `if enrollment.completed_at.is_none() { check cooldown }`
+fn close_enrollment_blocks_completed() {
+    // close_enrollment now rejects finalized enrollments (replay guard):
+    // `require!(completed_at.is_none() && credential_asset.is_none(), EnrollmentFinalized)`
     let completed_at: Option<i64> = Some(1700000000);
-    // When completed, cooldown check is skipped
-    assert!(completed_at.is_some());
+    let credential_asset: Option<[u8; 32]> = None;
+    let closable = completed_at.is_none() && credential_asset.is_none();
+    assert!(!closable);
+}
+
+#[test]
+fn close_enrollment_blocks_credentialed() {
+    // A credentialed enrollment cannot be closed even if completed_at were None,
+    // because closing it would orphan the credential linkage.
+    let completed_at: Option<i64> = None;
+    let credential_asset: Option<[u8; 32]> = Some([7u8; 32]);
+    let closable = completed_at.is_none() && credential_asset.is_none();
+    assert!(!closable);
+}
+
+#[test]
+fn close_enrollment_allows_incomplete_after_cooldown() {
+    // The legitimate incomplete-unenroll path: no completion, no credential,
+    // and past the 24h cooldown.
+    let completed_at: Option<i64> = None;
+    let credential_asset: Option<[u8; 32]> = None;
+    let enrolled_at: i64 = 1700000000;
+    let now: i64 = enrolled_at + 86401;
+
+    let not_finalized = completed_at.is_none() && credential_asset.is_none();
+    let cooldown_met = now.checked_sub(enrolled_at).unwrap() > 86400;
+    assert!(not_finalized && cooldown_met);
 }

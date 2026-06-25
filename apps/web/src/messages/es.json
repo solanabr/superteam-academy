@@ -594,6 +594,7 @@
     "achievementUriTooLong": "La URI del logro excede la longitud máxima.",
     "invalidAmount": "La cantidad debe ser mayor que cero.",
     "invalidXpReward": "La recompensa de XP debe ser mayor que cero.",
+    "enrollmentFinalized": "Esta inscripción está finalizada y ya no se puede cancelar ni cerrar.",
     "unknown": "La transacción falló. Inténtalo de nuevo."
   },
   "community": {

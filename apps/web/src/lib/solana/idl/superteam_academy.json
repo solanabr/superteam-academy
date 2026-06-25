@@ -1303,6 +1303,11 @@
       "code": 6028,
       "name": "InvalidXpReward",
       "msg": "XP reward must be greater than zero"
+    },
+    {
+      "code": 6029,
+      "name": "EnrollmentFinalized",
+      "msg": "Finalized or credentialed enrollment cannot be closed"
     }
   ],
   "types": [

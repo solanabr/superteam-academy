@@ -1306,29 +1306,33 @@ describe("onchain-academy", () => {
   // 8. Close Enrollment
   // ===========================================================================
   describe("8. Close Enrollment", () => {
-    it("closes completed enrollment immediately", async () => {
-      const balanceBefore = await provider.connection.getBalance(
-        learner.publicKey
-      );
+    it("closing a finalized enrollment is rejected (replay guard)", async () => {
+      // enrollmentPda is completed + finalized by earlier sections. Closing it
+      // would free the PDA seeds and let the learner re-enroll/re-complete/
+      // re-earn XP. The guard must reject with EnrollmentFinalized.
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learner.publicKey,
+          })
+          .signers([learner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: coursePda,
-          enrollment: enrollmentPda,
-          learner: learner.publicKey,
-        })
-        .signers([learner])
-        .rpc();
-
+      // PDA must still exist — nothing was closed.
       const enrollmentInfo =
         await provider.connection.getAccountInfo(enrollmentPda);
-      expect(enrollmentInfo).to.be.null;
-
-      const balanceAfter = await provider.connection.getBalance(
-        learner.publicKey
-      );
-      expect(balanceAfter).to.be.greaterThan(balanceBefore);
+      expect(enrollmentInfo).to.not.be.null;
     });
 
     it("close incomplete enrollment before 24h cooldown fails", async () => {
@@ -1530,19 +1534,28 @@ describe("onchain-academy", () => {
       expect(Number(creatorAta.amount)).to.equal(CREATOR_REWARD_XP * 2);
     });
 
-    it("second learner can close their completed enrollment", async () => {
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: coursePda,
-          enrollment: learner2EnrollPda,
-          learner: learner2.publicKey,
-        })
-        .signers([learner2])
-        .rpc();
+    it("second learner cannot close their finalized enrollment", async () => {
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: coursePda,
+            enrollment: learner2EnrollPda,
+            learner: learner2.publicKey,
+          })
+          .signers([learner2])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
       const info = await provider.connection.getAccountInfo(learner2EnrollPda);
-      expect(info).to.be.null;
+      expect(info).to.not.be.null;
     });
   });
 
@@ -4192,9 +4205,9 @@ describe("onchain-academy", () => {
   });
 
   // ===========================================================================
-  // 18. Re-enrollment after close
+  // 18. Finalized enrollment cannot be closed (replay guard)
   // ===========================================================================
-  describe("18. Re-enrollment after close", () => {
+  describe("18. Finalized enrollment cannot be closed (replay guard)", () => {
     const reEnrollCourseId = "re-enroll-course";
     let reEnrollCoursePda: PublicKey;
     const reEnrollLearner = Keypair.generate();
@@ -4265,7 +4278,8 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      // Enroll, complete, finalize, close
+      // Enroll, complete, finalize -- leaving a finalized enrollment that must
+      // NOT be closable (closing it would enable the re-enroll/re-earn replay).
       await program.methods
         .enroll(reEnrollCourseId)
         .accountsPartial({
@@ -4307,46 +4321,59 @@ describe("onchain-academy", () => {
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .rpc();
-
-      // Close completed enrollment
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: reEnrollCoursePda,
-          enrollment: reEnrollEnrollPda,
-          learner: reEnrollLearner.publicKey,
-        })
-        .signers([reEnrollLearner])
-        .rpc();
-
-      // Verify closed
-      const closedInfo =
-        await provider.connection.getAccountInfo(reEnrollEnrollPda);
-      expect(closedInfo).to.be.null;
     });
 
-    it("re-enrollment after close_enrollment succeeds", async () => {
-      await program.methods
-        .enroll(reEnrollCourseId)
-        .accountsPartial({
-          course: reEnrollCoursePda,
-          enrollment: reEnrollEnrollPda,
-          learner: reEnrollLearner.publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([reEnrollLearner])
-        .rpc();
+    it("closing the finalized enrollment is rejected", async () => {
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: reEnrollCoursePda,
+            enrollment: reEnrollEnrollPda,
+            learner: reEnrollLearner.publicKey,
+          })
+          .signers([reEnrollLearner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
+      // PDA survives — the replay guard holds.
+      const info = await provider.connection.getAccountInfo(reEnrollEnrollPda);
+      expect(info).to.not.be.null;
+    });
+
+    it("re-enrollment at the same seeds is impossible (replay closed)", async () => {
+      // Since the finalized enrollment cannot be closed, the PDA still exists,
+      // so `enroll` (init) at the same seeds fails — the learner cannot
+      // re-enroll, re-complete, and re-earn XP / re-mint a credential.
+      try {
+        await program.methods
+          .enroll(reEnrollCourseId)
+          .accountsPartial({
+            course: reEnrollCoursePda,
+            enrollment: reEnrollEnrollPda,
+            learner: reEnrollLearner.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([reEnrollLearner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        // Anchor `init` on an existing account surfaces a raw allocate failure
+        // (account already in use), not a named AcademyError.
+        expect(err).to.exist;
+      }
+
+      // Enrollment is still the original finalized record (completed, not reset).
       const enrollment =
         await program.account.enrollment.fetch(reEnrollEnrollPda);
-      expect(enrollment.course.toBase58()).to.equal(
-        reEnrollCoursePda.toBase58()
-      );
-      expect(enrollment.completedAt).to.be.null;
-      // Lesson flags should be reset to zero
-      for (const word of enrollment.lessonFlags) {
-        expect(word.toNumber()).to.equal(0);
-      }
+      expect(enrollment.completedAt).to.not.be.null;
     });
   });
 

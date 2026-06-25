@@ -60,4 +60,6 @@ pub enum AcademyError {
     InvalidAmount,
     #[msg("XP reward must be greater than zero")]
     InvalidXpReward,
+    #[msg("Finalized or credentialed enrollment cannot be closed")]
+    EnrollmentFinalized,
 }
