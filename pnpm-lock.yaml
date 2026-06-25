@@ -143,9 +143,6 @@ importers:
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
-      isolated-vm:
-        specifier: 6.1.2
-        version: 6.1.2
       isomorphic-dompurify:
         specifier: 2.36.0
         version: 2.36.0(@noble/hashes@1.8.0)
@@ -206,6 +203,10 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    optionalDependencies:
+      isolated-vm:
+        specifier: 6.1.2
+        version: 6.1.2
     devDependencies:
       '@tailwindcss/typography':
         specifier: ^0.5.19
@@ -16807,6 +16808,7 @@ snapshots:
   isolated-vm@6.1.2:
     dependencies:
       node-gyp-build: 4.8.4
+    optional: true
 
   isomorphic-dompurify@2.36.0(@noble/hashes@1.8.0):
     dependencies:
@@ -18037,7 +18039,8 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  node-gyp-build@4.8.4: {}
+  node-gyp-build@4.8.4:
+    optional: true
 
   node-html-parser@6.1.13:
     dependencies:
