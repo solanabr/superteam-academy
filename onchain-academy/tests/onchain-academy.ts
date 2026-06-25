@@ -278,6 +278,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: CREATOR_REWARD_XP,
           minCompletionsForReward: MIN_COMPLETIONS_FOR_REWARD,
+          collection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -330,6 +331,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: emptyPda,
@@ -370,6 +372,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: longPda,
@@ -410,6 +413,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -449,6 +453,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -488,6 +493,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -526,6 +532,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: maxPda,
@@ -561,6 +568,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: diffPda,
@@ -590,6 +598,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -611,6 +620,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -630,6 +640,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -657,6 +668,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: 200,
           newCreatorRewardXp: 50,
           newMinCompletionsForReward: 5,
+          newCollection: null,
         })
         .accountsPartial({
           course: diffPda,
@@ -671,6 +683,107 @@ describe("onchain-academy", () => {
       expect(course.minCompletionsForReward).to.equal(5);
       expect(Array.from(course.contentTxId)).to.deep.equal(newContent);
       expect(course.version).to.equal(2);
+    });
+
+    it("backfills collection once, then rejects overwriting it with a different value", async () => {
+      const overwriteId = "collection-guard";
+      const [guardPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(overwriteId)],
+        program.programId
+      );
+
+      // Fresh course with no collection (defaults to Pubkey::default()).
+      await program.methods
+        .createCourse({
+          courseId: overwriteId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const firstCollection = Keypair.generate().publicKey;
+      const secondCollection = Keypair.generate().publicKey;
+
+      // Backfill from default — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      let course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
+
+      // Re-pointing to a different collection — rejected (would orphan holders).
+      try {
+        await program.methods
+          .updateCourse({
+            newContentTxId: null,
+            newIsActive: null,
+            newXpPerLesson: null,
+            newCreatorRewardXp: null,
+            newMinCompletionsForReward: null,
+            newCollection: secondCollection,
+          })
+          .accountsPartial({
+            course: guardPda,
+            config: configPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+
+      // Setting the same collection again is idempotent — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
     });
 
     it("fails with wrong authority", async () => {
@@ -689,6 +802,7 @@ describe("onchain-academy", () => {
             newXpPerLesson: null,
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
+            newCollection: null,
           })
           .accountsPartial({
             course: coursePda,
@@ -793,6 +907,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -845,6 +960,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -1114,6 +1230,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
+          collection: null,
         })
         .accountsPartial({
           course: incompletePda,
@@ -1234,6 +1351,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: freshCoursePda,
@@ -1484,6 +1602,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: otherCoursePda,
@@ -1610,6 +1729,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 100,
           minCompletionsForReward: 10,
+          collection: null,
         })
         .accountsPartial({
           course: threshCoursePda,
@@ -1771,6 +1891,7 @@ describe("onchain-academy", () => {
           prerequisite: coursePda, // requires solana-101
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: advancedCoursePda,
@@ -2041,6 +2162,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: collectionAddress,
         })
         .accountsPartial({
           course: credCoursePda,
@@ -2377,6 +2499,217 @@ describe("onchain-academy", () => {
         }
       }
     });
+
+    it("rejects issue_credential with a collection that does not match the course", async () => {
+      // A second, unrelated Metaplex Core collection — NOT the course's collection.
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+      const wrongCollectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: wrongCollectionSigner,
+        name: "Wrong Collection",
+        uri: "https://arweave.net/wrong-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+      const wrongCollection = toWeb3JsPublicKey(
+        wrongCollectionSigner.publicKey
+      );
+
+      // Fresh learner, finalized but not yet credentialed, on the cred course.
+      const mismatchLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        mismatchLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      const mismatchAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        mismatchLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            authority.publicKey,
+            mismatchAta,
+            mismatchLearner.publicKey,
+            xpMintKeypair.publicKey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        )
+      );
+
+      const [mismatchEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(credCourseId),
+          mismatchLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(credCourseId)
+        .accountsPartial({
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mismatchLearner])
+        .rpc();
+
+      for (let i = 0; i < 2; i++) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: mismatchEnrollPda,
+            learner: mismatchLearner.publicKey,
+            learnerTokenAccount: mismatchAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          learnerTokenAccount: mismatchAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      // Wrong collection → CollectionMismatch.
+      const wrongAsset = Keypair.generate();
+      try {
+        await program.methods
+          .issueCredential(
+            "Mismatch",
+            "https://arweave.net/mismatch",
+            1,
+            new anchor.BN(500)
+          )
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: mismatchEnrollPda,
+            learner: mismatchLearner.publicKey,
+            credentialAsset: wrongAsset.publicKey,
+            trackCollection: wrongCollection,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([wrongAsset])
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+
+      // Correct collection → succeeds.
+      const goodAsset = Keypair.generate();
+      const okSig = await program.methods
+        .issueCredential(
+          "Match",
+          "https://arweave.net/match",
+          1,
+          new anchor.BN(500)
+        )
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          credentialAsset: goodAsset.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([goodAsset])
+        .rpc();
+      await provider.connection.confirmTransaction(okSig, "confirmed");
+
+      const enrollment =
+        await program.account.enrollment.fetch(mismatchEnrollPda);
+      expect(enrollment.credentialAsset.toBase58()).to.equal(
+        goodAsset.publicKey.toBase58()
+      );
+    });
+
+    it("rejects upgrade_credential with a collection that does not match the course", async () => {
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+      const wrongCollectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: wrongCollectionSigner,
+        name: "Wrong Upgrade Collection",
+        uri: "https://arweave.net/wrong-upgrade-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+      const wrongCollection = toWeb3JsPublicKey(
+        wrongCollectionSigner.publicKey
+      );
+
+      try {
+        await program.methods
+          .upgradeCredential(
+            "Mismatch Upgrade",
+            "https://arweave.net/mismatch-upgrade",
+            2,
+            new anchor.BN(1000)
+          )
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: credEnrollPda,
+            learner: credLearner.publicKey,
+            credentialAsset: credentialKeypair.publicKey,
+            trackCollection: wrongCollection,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+    });
   });
 
   // ===========================================================================
@@ -2418,6 +2751,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: secCoursePda,
@@ -2574,6 +2908,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: zeroCoursePda,
@@ -2700,6 +3035,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
+          collection: null,
         })
         .accountsPartial({
           course: singleCoursePda,
@@ -3523,6 +3859,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: bitmapCoursePda,
@@ -3661,6 +3998,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: reEnrollCoursePda,

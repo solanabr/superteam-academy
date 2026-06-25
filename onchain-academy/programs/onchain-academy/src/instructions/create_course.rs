@@ -17,6 +17,9 @@ pub struct CreateCourseParams {
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
     pub min_completions_for_reward: u16,
+    /// Metaplex Core collection for credential NFTs. `None` defers to a later
+    /// `update_course` (the per-course collection is created after the PDA).
+    pub collection: Option<Pubkey>,
 }
 
 pub fn handler(ctx: Context<CreateCourse>, params: CreateCourseParams) -> Result<()> {
@@ -51,15 +54,20 @@ pub fn handler(ctx: Context<CreateCourse>, params: CreateCourseParams) -> Result
     course.is_active = true;
     course.created_at = now;
     course.updated_at = now;
+    course.collection = params.collection.unwrap_or_default();
     course._reserved = [0u8; 8];
     course.bump = ctx.bumps.course;
 
+    let course_key = course.key();
+    let collection = course.collection;
+
     emit!(CourseCreated {
-        course: ctx.accounts.course.key(),
+        course: course_key,
         course_id: params.course_id,
         creator: params.creator,
         track_id: params.track_id,
         track_level: params.track_level,
+        collection,
         timestamp: now,
     });
 
