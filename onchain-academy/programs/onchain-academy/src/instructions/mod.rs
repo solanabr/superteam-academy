@@ -13,6 +13,7 @@ pub mod revoke_minter;
 pub mod reward_xp;
 pub mod update_config;
 pub mod update_course;
+pub mod update_minter;
 pub mod upgrade_credential;
 
 pub use award_achievement::*;
@@ -30,4 +31,5 @@ pub use revoke_minter::*;
 pub use reward_xp::*;
 pub use update_config::*;
 pub use update_course::*;
+pub use update_minter::*;
 pub use upgrade_credential::*;

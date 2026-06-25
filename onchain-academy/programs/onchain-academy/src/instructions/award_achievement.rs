@@ -26,6 +26,26 @@ pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
         );
     }
 
+    // Enforce the minter's cumulative XP ceiling before any CPI, mirroring
+    // reward_xp. award_achievement also mints XP through this role, so the cap
+    // must gate it too — otherwise a capped minter could be drained via
+    // achievements. Only relevant when xp_reward > 0 (else total stays put).
+    let new_total_xp_minted = if achievement.xp_reward > 0 {
+        let new_total = role
+            .total_xp_minted
+            .checked_add(achievement.xp_reward as u64)
+            .ok_or(AcademyError::Overflow)?;
+        if role.max_total_xp > 0 {
+            require!(
+                new_total <= role.max_total_xp,
+                AcademyError::MinterCapExceeded
+            );
+        }
+        new_total
+    } else {
+        role.total_xp_minted
+    };
+
     let config = &ctx.accounts.config;
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
     let signer_seeds = &[config_seeds];
@@ -86,14 +106,9 @@ pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
     let achievement_mut = &mut ctx.accounts.achievement_type;
     achievement_mut.current_supply = next_supply;
 
-    // Update minter stats
+    // Update minter stats (cap already enforced above)
     let role_mut = &mut ctx.accounts.minter_role;
-    if achievement_mut.xp_reward > 0 {
-        role_mut.total_xp_minted = role_mut
-            .total_xp_minted
-            .checked_add(achievement_mut.xp_reward as u64)
-            .ok_or(AcademyError::Overflow)?;
-    }
+    role_mut.total_xp_minted = new_total_xp_minted;
 
     // Initialize receipt
     let receipt = &mut ctx.accounts.achievement_receipt;

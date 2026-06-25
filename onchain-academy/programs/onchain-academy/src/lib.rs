@@ -95,6 +95,10 @@ pub mod onchain_academy {
         instructions::revoke_minter::handler(ctx)
     }
 
+    pub fn update_minter(ctx: Context<UpdateMinter>, params: UpdateMinterParams) -> Result<()> {
+        instructions::update_minter::handler(ctx, params)
+    }
+
     pub fn reward_xp(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> {
         instructions::reward_xp::handler(ctx, amount, memo)
     }

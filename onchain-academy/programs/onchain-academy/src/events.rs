@@ -97,6 +97,14 @@ pub struct MinterRevoked {
 }
 
 #[event]
+pub struct MinterUpdated {
+    pub minter: Pubkey,
+    pub max_xp_per_call: u64,
+    pub max_total_xp: u64,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct XpRewarded {
     pub minter: Pubkey,
     pub recipient: Pubkey,

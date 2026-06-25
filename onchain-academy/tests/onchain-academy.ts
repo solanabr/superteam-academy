@@ -4457,4 +4457,344 @@ describe("onchain-academy", () => {
       expect(roleFinal.isActive).to.equal(false);
     });
   });
+
+  // ===========================================================================
+  // 20. update_minter + cap enforcement (P0-A3 follow-up, #188)
+  // ===========================================================================
+  // #186 added max_total_xp to MinterRole and enforced it in reward_xp, but the
+  // cap was inert: the live minter was registered unlimited with no instruction
+  // to cap it, and award_achievement never checked it. This section proves
+  // update_minter can cap an already-registered role and that the cap then
+  // blocks BOTH mint paths (reward_xp and award_achievement).
+  describe("20. update_minter + cap enforcement", () => {
+    const MPL_CORE_PROGRAM_ID = new PublicKey(
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+    );
+
+    // Cap the role at 300 cumulative XP. We register unlimited (the exact
+    // mis-state this follow-up fixes), then update_minter down to 300.
+    const CAP = 300;
+    const ACH_XP_REWARD = 200;
+
+    const capMinter = Keypair.generate();
+    let capMinterRolePda: PublicKey;
+
+    const rewardRecipient = Keypair.generate();
+    let rewardRecipientAta: PublicKey;
+
+    const achId = "cap-test-ach";
+    let capAchTypePda: PublicKey;
+    let capAchCollection: Keypair;
+    const achRecipient = Keypair.generate();
+    let achRecipientAta: PublicKey;
+    let capAchReceiptPda: PublicKey;
+
+    before(async () => {
+      [capMinterRolePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("minter"), capMinter.publicKey.toBuffer()],
+        program.programId
+      );
+      [capAchTypePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("achievement"), Buffer.from(achId)],
+        program.programId
+      );
+      [capAchReceiptPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("achievement_receipt"),
+          Buffer.from(achId),
+          achRecipient.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      for (const wallet of [
+        capMinter.publicKey,
+        rewardRecipient.publicKey,
+        achRecipient.publicKey,
+      ]) {
+        const sig = await provider.connection.requestAirdrop(
+          wallet,
+          5 * LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sig, "confirmed");
+      }
+
+      rewardRecipientAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        rewardRecipient.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      achRecipientAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        achRecipient.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction()
+          .add(
+            createAssociatedTokenAccountInstruction(
+              authority.publicKey,
+              rewardRecipientAta,
+              rewardRecipient.publicKey,
+              xpMintKeypair.publicKey,
+              TOKEN_2022_PROGRAM_ID,
+              ASSOCIATED_TOKEN_PROGRAM_ID
+            )
+          )
+          .add(
+            createAssociatedTokenAccountInstruction(
+              authority.publicKey,
+              achRecipientAta,
+              achRecipient.publicKey,
+              xpMintKeypair.publicKey,
+              TOKEN_2022_PROGRAM_ID,
+              ASSOCIATED_TOKEN_PROGRAM_ID
+            )
+          )
+      );
+
+      // Register the minter UNLIMITED (max_total_xp = 0) — the inert-cap state.
+      await program.methods
+        .registerMinter({
+          minter: capMinter.publicKey,
+          label: "cap-test",
+          maxXpPerCall: new BN(0),
+          maxTotalXp: new BN(0),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: capMinterRolePda,
+          authority: authority.publicKey,
+          payer: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // A dedicated, active achievement type that mints XP through this minter.
+      capAchCollection = Keypair.generate();
+      await program.methods
+        .createAchievementType({
+          achievementId: achId,
+          name: "Cap Test Achievement",
+          metadataUri: "https://arweave.net/cap-test",
+          maxSupply: 0,
+          xpReward: ACH_XP_REWARD,
+        })
+        .accountsPartial({
+          config: configPda,
+          achievementType: capAchTypePda,
+          collection: capAchCollection.publicKey,
+          authority: authority.publicKey,
+          payer: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([capAchCollection])
+        .rpc();
+    });
+
+    it("update_minter rejects a non-authority signer", async () => {
+      const intruder = Keypair.generate();
+      const sig = await provider.connection.requestAirdrop(
+        intruder.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      try {
+        await program.methods
+          .updateMinter({
+            maxXpPerCall: new BN(CAP),
+            maxTotalXp: new BN(CAP),
+          })
+          .accountsPartial({
+            config: configPda,
+            minterRole: capMinterRolePda,
+            authority: intruder.publicKey,
+          })
+          .signers([intruder])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+
+      // Caps untouched (still unlimited).
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.maxTotalXp.toNumber()).to.equal(0);
+      expect(role.maxXpPerCall.toNumber()).to.equal(0);
+    });
+
+    it("update_minter caps an existing (unlimited) role", async () => {
+      await program.methods
+        .updateMinter({
+          maxXpPerCall: new BN(CAP),
+          maxTotalXp: new BN(CAP),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: capMinterRolePda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.maxTotalXp.toNumber()).to.equal(CAP);
+      expect(role.maxXpPerCall.toNumber()).to.equal(CAP);
+      // Untouched.
+      expect(role.totalXpMinted.toNumber()).to.equal(0);
+      expect(role.isActive).to.equal(true);
+    });
+
+    it("reward_xp mints up to exactly the new cap", async () => {
+      const sig = await program.methods
+        .rewardXp(new BN(CAP), "reach cap via update_minter")
+        .accountsPartial({
+          config: configPda,
+          minterRole: capMinterRolePda,
+          xpMint: xpMintKeypair.publicKey,
+          recipientTokenAccount: rewardRecipientAta,
+          minter: capMinter.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([capMinter])
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(CAP);
+    });
+
+    it("reward_xp is blocked once the cap (set via update_minter) is reached", async () => {
+      try {
+        await program.methods
+          .rewardXp(new BN(1), "past cap")
+          .accountsPartial({
+            config: configPda,
+            minterRole: capMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: rewardRecipientAta,
+            minter: capMinter.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([capMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
+      }
+
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(CAP);
+    });
+
+    it("award_achievement is ALSO blocked once the cap is reached (the inert-cap gap)", async () => {
+      // total_xp_minted == CAP; awarding mints ACH_XP_REWARD more XP through the
+      // same role, so CAP + ACH_XP_REWARD > CAP must be rejected with the same
+      // MinterCapExceeded — proving the cap now gates achievements too.
+      const asset = Keypair.generate();
+      try {
+        await program.methods
+          .awardAchievement()
+          .accountsPartial({
+            config: configPda,
+            achievementType: capAchTypePda,
+            achievementReceipt: capAchReceiptPda,
+            minterRole: capMinterRolePda,
+            asset: asset.publicKey,
+            collection: capAchCollection.publicKey,
+            recipient: achRecipient.publicKey,
+            recipientTokenAccount: achRecipientAta,
+            xpMint: xpMintKeypair.publicKey,
+            payer: authority.publicKey,
+            minter: capMinter.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([asset, capMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
+      }
+
+      // Nothing minted: no receipt, role total unchanged, recipient ATA empty.
+      const receiptInfo =
+        await provider.connection.getAccountInfo(capAchReceiptPda);
+      expect(receiptInfo).to.equal(null);
+
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(CAP);
+
+      const ata = await getAccount(
+        provider.connection,
+        achRecipientAta,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(ata.amount)).to.equal(0);
+    });
+
+    it("update_minter can lift the cap, unblocking award_achievement", async () => {
+      // Raising max_total_xp lets the previously-blocked award succeed,
+      // confirming the gate is the cap (not some unrelated rejection).
+      await program.methods
+        .updateMinter({
+          maxXpPerCall: new BN(0),
+          maxTotalXp: new BN(CAP + ACH_XP_REWARD),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: capMinterRolePda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      const asset = Keypair.generate();
+      const sig = await program.methods
+        .awardAchievement()
+        .accountsPartial({
+          config: configPda,
+          achievementType: capAchTypePda,
+          achievementReceipt: capAchReceiptPda,
+          minterRole: capMinterRolePda,
+          asset: asset.publicKey,
+          collection: capAchCollection.publicKey,
+          recipient: achRecipient.publicKey,
+          recipientTokenAccount: achRecipientAta,
+          xpMint: xpMintKeypair.publicKey,
+          payer: authority.publicKey,
+          minter: capMinter.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([asset, capMinter])
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      const role = await program.account.minterRole.fetch(capMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(CAP + ACH_XP_REWARD);
+
+      const ata = await getAccount(
+        provider.connection,
+        achRecipientAta,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(ata.amount)).to.equal(ACH_XP_REWARD);
+    });
+  });
 });

@@ -968,6 +968,54 @@
       ]
     },
     {
+      "name": "update_minter",
+      "discriminator": [164, 129, 164, 88, 75, 29, 91, 38],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 111, 110, 102, 105, 103]
+              }
+            ]
+          }
+        },
+        {
+          "name": "minter_role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [109, 105, 110, 116, 101, 114]
+              },
+              {
+                "kind": "account",
+                "path": "minter_role.minter",
+                "account": "MinterRole"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateMinterParams"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "upgrade_credential",
       "discriminator": [2, 121, 77, 255, 103, 187, 252, 169],
       "accounts": [
@@ -1152,6 +1200,10 @@
     {
       "name": "MinterRevoked",
       "discriminator": [138, 76, 227, 247, 141, 92, 77, 127]
+    },
+    {
+      "name": "MinterUpdated",
+      "discriminator": [8, 124, 66, 45, 176, 53, 49, 153]
     },
     {
       "name": "XpRewarded",
@@ -2111,6 +2163,30 @@
       }
     },
     {
+      "name": "MinterUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_xp_per_call",
+            "type": "u64"
+          },
+          {
+            "name": "max_total_xp",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "RegisterMinterParams",
       "type": {
         "kind": "struct",
@@ -2194,6 +2270,28 @@
             "type": {
               "option": "pubkey"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateMinterParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "max_xp_per_call",
+            "docs": ["New per-call XP cap. 0 = unlimited."],
+            "type": "u64"
+          },
+          {
+            "name": "max_total_xp",
+            "docs": [
+              "New cumulative XP ceiling. 0 = unlimited. Setting this at or below the",
+              "role's existing total_xp_minted freezes the role from further minting,",
+              "which is a valid way to retire a minter without closing its PDA."
+            ],
+            "type": "u64"
           }
         ]
       }
