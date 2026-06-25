@@ -9,7 +9,16 @@
   "instructions": [
     {
       "name": "award_achievement",
-      "discriminator": [75, 47, 156, 253, 124, 231, 84, 12],
+      "discriminator": [
+        75,
+        47,
+        156,
+        253,
+        124,
+        231,
+        84,
+        12
+      ],
       "accounts": [
         {
           "name": "config",
@@ -17,7 +26,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -29,7 +45,19 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [97, 99, 104, 105, 101, 118, 101, 109, 101, 110, 116]
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -47,8 +75,25 @@
               {
                 "kind": "const",
                 "value": [
-                  97, 99, 104, 105, 101, 118, 101, 109, 101, 110, 116, 95, 114,
-                  101, 99, 101, 105, 112, 116
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
                 ]
               },
               {
@@ -70,7 +115,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "account",
@@ -81,7 +133,9 @@
         },
         {
           "name": "asset",
-          "docs": ["New achievement NFT keypair"],
+          "docs": [
+            "New achievement NFT keypair"
+          ],
           "writable": true,
           "signer": true
         },
@@ -135,8 +189,92 @@
       "args": []
     },
     {
+      "name": "close_course",
+      "discriminator": [
+        157,
+        252,
+        239,
+        166,
+        213,
+        174,
+        160,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "docs": [
+            "for `course_id`) and `owner = crate::ID` (program-owned). Loaded as",
+            "`UncheckedAccount` rather than `Account<Course>` so a stale, size-mismatched",
+            "(pre-resize, 192-byte) account can still be closed. The handler also",
+            "verifies the `Course` discriminator before draining/freeing it."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "course_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "course_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "close_enrollment",
-      "discriminator": [236, 137, 133, 253, 91, 138, 217, 91],
+      "discriminator": [
+        236,
+        137,
+        133,
+        253,
+        91,
+        138,
+        217,
+        91
+      ],
       "accounts": [
         {
           "name": "course",
@@ -144,7 +282,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -161,7 +306,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -185,7 +341,16 @@
     },
     {
       "name": "complete_lesson",
-      "discriminator": [77, 217, 53, 132, 204, 150, 169, 58],
+      "discriminator": [
+        77,
+        217,
+        53,
+        132,
+        204,
+        150,
+        169,
+        58
+      ],
       "accounts": [
         {
           "name": "config",
@@ -193,7 +358,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -204,7 +376,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -221,7 +400,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -264,7 +454,16 @@
     },
     {
       "name": "create_achievement_type",
-      "discriminator": [231, 38, 39, 228, 103, 4, 229, 19],
+      "discriminator": [
+        231,
+        38,
+        39,
+        228,
+        103,
+        4,
+        229,
+        19
+      ],
       "accounts": [
         {
           "name": "config",
@@ -272,7 +471,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -284,7 +490,19 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [97, 99, 104, 105, 101, 118, 101, 109, 101, 110, 116]
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "arg",
@@ -295,7 +513,9 @@
         },
         {
           "name": "collection",
-          "docs": ["New Metaplex Core collection keypair"],
+          "docs": [
+            "New Metaplex Core collection keypair"
+          ],
           "writable": true,
           "signer": true
         },
@@ -330,7 +550,16 @@
     },
     {
       "name": "create_course",
-      "discriminator": [120, 121, 154, 164, 107, 180, 167, 241],
+      "discriminator": [
+        120,
+        121,
+        154,
+        164,
+        107,
+        180,
+        167,
+        241
+      ],
       "accounts": [
         {
           "name": "course",
@@ -339,7 +568,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "arg",
@@ -354,7 +590,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -363,7 +606,9 @@
           "name": "authority",
           "writable": true,
           "signer": true,
-          "relations": ["config"]
+          "relations": [
+            "config"
+          ]
         },
         {
           "name": "system_program",
@@ -383,7 +628,16 @@
     },
     {
       "name": "deactivate_achievement_type",
-      "discriminator": [185, 21, 222, 243, 192, 118, 71, 191],
+      "discriminator": [
+        185,
+        21,
+        222,
+        243,
+        192,
+        118,
+        71,
+        191
+      ],
       "accounts": [
         {
           "name": "config",
@@ -391,7 +645,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -403,7 +664,19 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [97, 99, 104, 105, 101, 118, 101, 109, 101, 110, 116]
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -422,7 +695,16 @@
     },
     {
       "name": "enroll",
-      "discriminator": [58, 12, 36, 3, 142, 28, 1, 43],
+      "discriminator": [
+        58,
+        12,
+        36,
+        3,
+        142,
+        28,
+        1,
+        43
+      ],
       "accounts": [
         {
           "name": "course",
@@ -431,7 +713,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "arg",
@@ -447,7 +736,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "arg",
@@ -479,7 +779,16 @@
     },
     {
       "name": "finalize_course",
-      "discriminator": [68, 189, 122, 239, 39, 121, 16, 218],
+      "discriminator": [
+        68,
+        189,
+        122,
+        239,
+        39,
+        121,
+        16,
+        218
+      ],
       "accounts": [
         {
           "name": "config",
@@ -487,7 +796,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -499,7 +815,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -516,7 +839,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -561,7 +895,16 @@
     },
     {
       "name": "initialize",
-      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
       "accounts": [
         {
           "name": "config",
@@ -570,7 +913,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -599,7 +949,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "account",
@@ -621,7 +978,16 @@
     },
     {
       "name": "issue_credential",
-      "discriminator": [255, 193, 171, 224, 68, 171, 194, 87],
+      "discriminator": [
+        255,
+        193,
+        171,
+        224,
+        68,
+        171,
+        194,
+        87
+      ],
       "accounts": [
         {
           "name": "config",
@@ -629,7 +995,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -640,7 +1013,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -657,7 +1037,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -725,7 +1116,16 @@
     },
     {
       "name": "register_minter",
-      "discriminator": [58, 224, 74, 142, 170, 95, 116, 191],
+      "discriminator": [
+        58,
+        224,
+        74,
+        142,
+        170,
+        95,
+        116,
+        191
+      ],
       "accounts": [
         {
           "name": "config",
@@ -733,7 +1133,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -745,7 +1152,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "arg",
@@ -782,7 +1196,16 @@
     },
     {
       "name": "revoke_minter",
-      "discriminator": [33, 91, 131, 167, 62, 37, 38, 105],
+      "discriminator": [
+        33,
+        91,
+        131,
+        167,
+        62,
+        37,
+        38,
+        105
+      ],
       "accounts": [
         {
           "name": "config",
@@ -790,7 +1213,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -802,7 +1232,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "account",
@@ -822,7 +1259,16 @@
     },
     {
       "name": "reward_xp",
-      "discriminator": [144, 187, 117, 238, 89, 118, 224, 145],
+      "discriminator": [
+        144,
+        187,
+        117,
+        238,
+        89,
+        118,
+        224,
+        145
+      ],
       "accounts": [
         {
           "name": "config",
@@ -830,7 +1276,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -842,7 +1295,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "account",
@@ -853,12 +1313,16 @@
         },
         {
           "name": "xp_mint",
-          "docs": ["Token-2022 XP mint"],
+          "docs": [
+            "Token-2022 XP mint"
+          ],
           "writable": true
         },
         {
           "name": "recipient_token_account",
-          "docs": ["Recipient's Token-2022 ATA for XP"],
+          "docs": [
+            "Recipient's Token-2022 ATA for XP"
+          ],
           "writable": true
         },
         {
@@ -887,7 +1351,16 @@
     },
     {
       "name": "update_config",
-      "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
       "accounts": [
         {
           "name": "config",
@@ -896,7 +1369,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -904,7 +1384,9 @@
         {
           "name": "authority",
           "signer": true,
-          "relations": ["config"]
+          "relations": [
+            "config"
+          ]
         }
       ],
       "args": [
@@ -920,7 +1402,16 @@
     },
     {
       "name": "update_course",
-      "discriminator": [81, 217, 18, 192, 129, 233, 129, 231],
+      "discriminator": [
+        81,
+        217,
+        18,
+        192,
+        129,
+        233,
+        129,
+        231
+      ],
       "accounts": [
         {
           "name": "config",
@@ -928,7 +1419,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -940,7 +1438,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -953,7 +1458,9 @@
         {
           "name": "authority",
           "signer": true,
-          "relations": ["config"]
+          "relations": [
+            "config"
+          ]
         }
       ],
       "args": [
@@ -969,7 +1476,16 @@
     },
     {
       "name": "update_minter",
-      "discriminator": [164, 129, 164, 88, 75, 29, 91, 38],
+      "discriminator": [
+        164,
+        129,
+        164,
+        88,
+        75,
+        29,
+        91,
+        38
+      ],
       "accounts": [
         {
           "name": "config",
@@ -977,7 +1493,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -989,7 +1512,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [109, 105, 110, 116, 101, 114]
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
               },
               {
                 "kind": "account",
@@ -1017,7 +1547,16 @@
     },
     {
       "name": "upgrade_credential",
-      "discriminator": [2, 121, 77, 255, 103, 187, 252, 169],
+      "discriminator": [
+        2,
+        121,
+        77,
+        255,
+        103,
+        187,
+        252,
+        169
+      ],
       "accounts": [
         {
           "name": "config",
@@ -1025,7 +1564,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 110, 102, 105, 103]
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
@@ -1036,7 +1582,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [99, 111, 117, 114, 115, 101]
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
               },
               {
                 "kind": "account",
@@ -1052,7 +1605,18 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
               },
               {
                 "kind": "account",
@@ -1121,93 +1685,304 @@
   "accounts": [
     {
       "name": "AchievementReceipt",
-      "discriminator": [149, 5, 79, 178, 116, 231, 43, 248]
+      "discriminator": [
+        149,
+        5,
+        79,
+        178,
+        116,
+        231,
+        43,
+        248
+      ]
     },
     {
       "name": "AchievementType",
-      "discriminator": [13, 187, 114, 66, 217, 154, 85, 137]
+      "discriminator": [
+        13,
+        187,
+        114,
+        66,
+        217,
+        154,
+        85,
+        137
+      ]
     },
     {
       "name": "Config",
-      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
     },
     {
       "name": "Course",
-      "discriminator": [206, 6, 78, 228, 163, 138, 241, 106]
+      "discriminator": [
+        206,
+        6,
+        78,
+        228,
+        163,
+        138,
+        241,
+        106
+      ]
     },
     {
       "name": "Enrollment",
-      "discriminator": [249, 210, 64, 145, 197, 241, 57, 51]
+      "discriminator": [
+        249,
+        210,
+        64,
+        145,
+        197,
+        241,
+        57,
+        51
+      ]
     },
     {
       "name": "MinterRole",
-      "discriminator": [21, 246, 6, 133, 142, 211, 33, 193]
+      "discriminator": [
+        21,
+        246,
+        6,
+        133,
+        142,
+        211,
+        33,
+        193
+      ]
     }
   ],
   "events": [
     {
       "name": "AchievementAwarded",
-      "discriminator": [127, 212, 93, 231, 175, 0, 69, 150]
+      "discriminator": [
+        127,
+        212,
+        93,
+        231,
+        175,
+        0,
+        69,
+        150
+      ]
     },
     {
       "name": "AchievementTypeCreated",
-      "discriminator": [189, 36, 173, 243, 25, 232, 198, 153]
+      "discriminator": [
+        189,
+        36,
+        173,
+        243,
+        25,
+        232,
+        198,
+        153
+      ]
     },
     {
       "name": "AchievementTypeDeactivated",
-      "discriminator": [133, 12, 218, 127, 151, 28, 1, 222]
+      "discriminator": [
+        133,
+        12,
+        218,
+        127,
+        151,
+        28,
+        1,
+        222
+      ]
     },
     {
       "name": "ConfigUpdated",
-      "discriminator": [40, 241, 230, 122, 11, 19, 198, 194]
+      "discriminator": [
+        40,
+        241,
+        230,
+        122,
+        11,
+        19,
+        198,
+        194
+      ]
+    },
+    {
+      "name": "CourseClosed",
+      "discriminator": [
+        35,
+        195,
+        37,
+        254,
+        25,
+        107,
+        100,
+        12
+      ]
     },
     {
       "name": "CourseCreated",
-      "discriminator": [205, 144, 55, 47, 150, 170, 123, 214]
+      "discriminator": [
+        205,
+        144,
+        55,
+        47,
+        150,
+        170,
+        123,
+        214
+      ]
     },
     {
       "name": "CourseFinalized",
-      "discriminator": [18, 195, 195, 25, 165, 189, 194, 56]
+      "discriminator": [
+        18,
+        195,
+        195,
+        25,
+        165,
+        189,
+        194,
+        56
+      ]
     },
     {
       "name": "CourseUpdated",
-      "discriminator": [124, 141, 110, 224, 149, 124, 26, 141]
+      "discriminator": [
+        124,
+        141,
+        110,
+        224,
+        149,
+        124,
+        26,
+        141
+      ]
     },
     {
       "name": "CredentialIssued",
-      "discriminator": [194, 216, 28, 159, 89, 29, 72, 177]
+      "discriminator": [
+        194,
+        216,
+        28,
+        159,
+        89,
+        29,
+        72,
+        177
+      ]
     },
     {
       "name": "CredentialUpgraded",
-      "discriminator": [198, 142, 252, 191, 210, 200, 253, 133]
+      "discriminator": [
+        198,
+        142,
+        252,
+        191,
+        210,
+        200,
+        253,
+        133
+      ]
     },
     {
       "name": "Enrolled",
-      "discriminator": [129, 156, 102, 214, 94, 196, 220, 127]
+      "discriminator": [
+        129,
+        156,
+        102,
+        214,
+        94,
+        196,
+        220,
+        127
+      ]
     },
     {
       "name": "EnrollmentClosed",
-      "discriminator": [197, 4, 145, 238, 217, 4, 175, 77]
+      "discriminator": [
+        197,
+        4,
+        145,
+        238,
+        217,
+        4,
+        175,
+        77
+      ]
     },
     {
       "name": "LessonCompleted",
-      "discriminator": [248, 174, 148, 235, 186, 49, 11, 163]
+      "discriminator": [
+        248,
+        174,
+        148,
+        235,
+        186,
+        49,
+        11,
+        163
+      ]
     },
     {
       "name": "MinterRegistered",
-      "discriminator": [104, 203, 87, 105, 23, 33, 231, 1]
+      "discriminator": [
+        104,
+        203,
+        87,
+        105,
+        23,
+        33,
+        231,
+        1
+      ]
     },
     {
       "name": "MinterRevoked",
-      "discriminator": [138, 76, 227, 247, 141, 92, 77, 127]
+      "discriminator": [
+        138,
+        76,
+        227,
+        247,
+        141,
+        92,
+        77,
+        127
+      ]
     },
     {
       "name": "MinterUpdated",
-      "discriminator": [8, 124, 66, 45, 176, 53, 49, 153]
+      "discriminator": [
+        8,
+        124,
+        66,
+        45,
+        176,
+        53,
+        49,
+        153
+      ]
     },
     {
       "name": "XpRewarded",
-      "discriminator": [140, 182, 232, 144, 16, 155, 237, 182]
+      "discriminator": [
+        140,
+        182,
+        232,
+        144,
+        16,
+        155,
+        237,
+        182
+      ]
     }
   ],
   "errors": [
@@ -1360,6 +2135,11 @@
       "code": 6029,
       "name": "EnrollmentFinalized",
       "msg": "Finalized or credentialed enrollment cannot be closed"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidCourseAccount",
+      "msg": "Account is not a valid Course PDA"
     }
   ],
   "types": [
@@ -1402,7 +2182,9 @@
         "fields": [
           {
             "name": "asset",
-            "docs": ["Metaplex Core NFT address"],
+            "docs": [
+              "Metaplex Core NFT address"
+            ],
             "type": "pubkey"
           },
           {
@@ -1431,12 +2213,16 @@
           },
           {
             "name": "metadata_uri",
-            "docs": ["Default metadata URI for minted NFTs"],
+            "docs": [
+              "Default metadata URI for minted NFTs"
+            ],
             "type": "string"
           },
           {
             "name": "collection",
-            "docs": ["Metaplex Core collection for this achievement"],
+            "docs": [
+              "Metaplex Core collection for this achievement"
+            ],
             "type": "pubkey"
           },
           {
@@ -1445,7 +2231,9 @@
           },
           {
             "name": "max_supply",
-            "docs": ["0 = unlimited supply"],
+            "docs": [
+              "0 = unlimited supply"
+            ],
             "type": "u32"
           },
           {
@@ -1454,7 +2242,9 @@
           },
           {
             "name": "xp_reward",
-            "docs": ["XP awarded alongside the NFT (0 = no XP)"],
+            "docs": [
+              "XP awarded alongside the NFT (0 = no XP)"
+            ],
             "type": "u32"
           },
           {
@@ -1468,7 +2258,10 @@
           {
             "name": "_reserved",
             "type": {
-              "array": ["u8", 8]
+              "array": [
+                "u8",
+                8
+              ]
             }
           },
           {
@@ -1533,29 +2326,42 @@
         "fields": [
           {
             "name": "authority",
-            "docs": ["Platform multisig (Squads)"],
+            "docs": [
+              "Platform multisig (Squads)"
+            ],
             "type": "pubkey"
           },
           {
             "name": "backend_signer",
-            "docs": ["Rotatable backend signer for completions"],
+            "docs": [
+              "Rotatable backend signer for completions"
+            ],
             "type": "pubkey"
           },
           {
             "name": "xp_mint",
-            "docs": ["Token-2022 mint for XP"],
+            "docs": [
+              "Token-2022 mint for XP"
+            ],
             "type": "pubkey"
           },
           {
             "name": "_reserved",
-            "docs": ["Reserved for future use"],
+            "docs": [
+              "Reserved for future use"
+            ],
             "type": {
-              "array": ["u8", 8]
+              "array": [
+                "u8",
+                8
+              ]
             }
           },
           {
             "name": "bump",
-            "docs": ["PDA bump"],
+            "docs": [
+              "PDA bump"
+            ],
             "type": "u8"
           }
         ]
@@ -1596,7 +2402,10 @@
           {
             "name": "content_tx_id",
             "type": {
-              "array": ["u8", 32]
+              "array": [
+                "u8",
+                32
+              ]
             }
           },
           {
@@ -1668,12 +2477,35 @@
           {
             "name": "_reserved",
             "type": {
-              "array": ["u8", 8]
+              "array": [
+                "u8",
+                8
+              ]
             }
           },
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CourseClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -1818,7 +2650,10 @@
           {
             "name": "content_tx_id",
             "type": {
-              "array": ["u8", 32]
+              "array": [
+                "u8",
+                32
+              ]
             }
           },
           {
@@ -1955,17 +2790,23 @@
         "fields": [
           {
             "name": "course",
-            "docs": ["The Course PDA this enrollment belongs to"],
+            "docs": [
+              "The Course PDA this enrollment belongs to"
+            ],
             "type": "pubkey"
           },
           {
             "name": "enrolled_at",
-            "docs": ["When learner enrolled"],
+            "docs": [
+              "When learner enrolled"
+            ],
             "type": "i64"
           },
           {
             "name": "completed_at",
-            "docs": ["When course was completed (None if in progress)"],
+            "docs": [
+              "When course was completed (None if in progress)"
+            ],
             "type": {
               "option": "i64"
             }
@@ -1977,7 +2818,10 @@
               "lesson_count is u8 (max 255), so all valid indices fit within this bitmap."
             ],
             "type": {
-              "array": ["u64", 4]
+              "array": [
+                "u64",
+                4
+              ]
             }
           },
           {
@@ -1995,12 +2839,17 @@
               "Reserved for future use (4 bytes — differs from 8 on other accounts; cannot resize without migration)"
             ],
             "type": {
-              "array": ["u8", 4]
+              "array": [
+                "u8",
+                4
+              ]
             }
           },
           {
             "name": "bump",
-            "docs": ["PDA bump"],
+            "docs": [
+              "PDA bump"
+            ],
             "type": "u8"
           }
         ]
@@ -2117,7 +2966,9 @@
         "fields": [
           {
             "name": "minter",
-            "docs": ["Wallet or program PDA authorized to mint XP"],
+            "docs": [
+              "Wallet or program PDA authorized to mint XP"
+            ],
             "type": "pubkey"
           },
           {
@@ -2129,12 +2980,16 @@
           },
           {
             "name": "max_xp_per_call",
-            "docs": ["Per-call XP cap. 0 = unlimited."],
+            "docs": [
+              "Per-call XP cap. 0 = unlimited."
+            ],
             "type": "u64"
           },
           {
             "name": "total_xp_minted",
-            "docs": ["Lifetime XP minted through this role"],
+            "docs": [
+              "Lifetime XP minted through this role"
+            ],
             "type": "u64"
           },
           {
@@ -2205,7 +3060,9 @@
           },
           {
             "name": "max_total_xp",
-            "docs": ["Cumulative XP ceiling for this role. 0 = unlimited."],
+            "docs": [
+              "Cumulative XP ceiling for this role. 0 = unlimited."
+            ],
             "type": "u64"
           }
         ]
@@ -2234,7 +3091,10 @@
             "name": "new_content_tx_id",
             "type": {
               "option": {
-                "array": ["u8", 32]
+                "array": [
+                  "u8",
+                  32
+                ]
               }
             }
           },
@@ -2281,7 +3141,9 @@
         "fields": [
           {
             "name": "max_xp_per_call",
-            "docs": ["New per-call XP cap. 0 = unlimited."],
+            "docs": [
+              "New per-call XP cap. 0 = unlimited."
+            ],
             "type": "u64"
           },
           {

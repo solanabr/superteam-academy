@@ -5,6 +5,8 @@ mod test_completion;
 #[cfg(test)]
 mod test_course;
 #[cfg(test)]
+mod test_close_course;
+#[cfg(test)]
 mod test_enrollment;
 #[cfg(test)]
 mod test_initialize;

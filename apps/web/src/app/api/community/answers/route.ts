@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limit: 30 answers per hour per user
     if (
-      isRateLimited("community:answers", user.id, {
+      await isRateLimited("community:answers", user.id, {
         maxTokens: 30,
         refillIntervalMs: 3_600_000,
       })

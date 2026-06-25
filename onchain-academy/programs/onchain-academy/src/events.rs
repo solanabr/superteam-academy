@@ -137,3 +137,10 @@ pub struct AchievementTypeDeactivated {
     pub achievement_id: String,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct CourseClosed {
+    pub course: Pubkey,
+    pub course_id: String,
+    pub timestamp: i64,
+}

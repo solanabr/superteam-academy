@@ -7,6 +7,11 @@ exclude = [
 ]
 resolver = "2"
 
+[workspace.dependencies]
+# indexmap ≥2.12 bumped MSRV to 1.82; Solana's bundled rustc is 1.79.
+# Pin to <2.12 so `cargo update` never regresses the CI/verifiable build.
+indexmap = "<2.12"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"

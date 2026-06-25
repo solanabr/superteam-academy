@@ -1,58 +1,50 @@
-// Per-user in-memory token bucket rate limiter.
-// Refills all tokens after each `refillIntervalMs` window elapses (fixed-window reset).
-// NOTE: Store is process-local. On Vercel serverless, each isolate maintains independent
-// state, so limits are per-instance, not globally enforced. For stronger guarantees,
-// replace with Redis-backed rate limiting (e.g., @upstash/ratelimit).
+import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-interface TokenBucket {
-  tokens: number;
-  lastRefill: number;
-}
+// Cross-instance rate limiter backed by Supabase (P1-7).
+//
+// Fixed-window counter: all tokens reset at the start of each
+// `refillIntervalMs` window. State lives in the `rate_limits` table via the
+// atomic `check_rate_limit` SECURITY DEFINER function, so limits hold across
+// all serverless instances (unlike the previous in-memory Map).
+//
+// Fails OPEN: if the store is unreachable we allow the request rather than
+// hard-blocking traffic on a transient DB issue (the limiter is abuse/cost
+// mitigation, not an auth gate). Failures are logged.
 
 interface RateLimiterOptions {
   maxTokens: number;
   refillIntervalMs: number;
 }
 
-const stores = new Map<string, Map<string, TokenBucket>>();
-
-function getStore(namespace: string): Map<string, TokenBucket> {
-  let store = stores.get(namespace);
-  if (!store) {
-    store = new Map();
-    stores.set(namespace, store);
-  }
-  return store;
-}
-
-export function isRateLimited(
+export async function isRateLimited(
   namespace: string,
   key: string,
   opts: RateLimiterOptions
-): boolean {
-  const store = getStore(namespace);
-  const now = Date.now();
-  const bucket = store.get(key);
+): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_key: `${namespace}:${key}`,
+      p_max_tokens: opts.maxTokens,
+      p_window_seconds: Math.max(1, Math.ceil(opts.refillIntervalMs / 1000)),
+    });
 
-  if (!bucket) {
-    store.set(key, { tokens: opts.maxTokens - 1, lastRefill: now });
+    if (error) {
+      console.warn(
+        `[rate-limit] check_rate_limit failed for ${namespace}, allowing:`,
+        error.message
+      );
+      return false;
+    }
+
+    return data === true;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `[rate-limit] limiter unavailable for ${namespace}, allowing:`,
+      message
+    );
     return false;
   }
-
-  const elapsed = now - bucket.lastRefill;
-  const refills = Math.floor(elapsed / opts.refillIntervalMs);
-  if (refills > 0) {
-    bucket.tokens = Math.min(
-      opts.maxTokens,
-      bucket.tokens + refills * opts.maxTokens
-    );
-    bucket.lastRefill += refills * opts.refillIntervalMs;
-  }
-
-  if (bucket.tokens <= 0) {
-    return true;
-  }
-
-  bucket.tokens--;
-  return false;
 }

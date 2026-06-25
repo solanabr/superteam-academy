@@ -62,4 +62,6 @@ pub enum AcademyError {
     InvalidXpReward,
     #[msg("Finalized or credentialed enrollment cannot be closed")]
     EnrollmentFinalized,
+    #[msg("Account is not a valid Course PDA")]
+    InvalidCourseAccount,
 }

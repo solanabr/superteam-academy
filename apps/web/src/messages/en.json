@@ -595,6 +595,7 @@
     "invalidAmount": "Amount must be greater than zero.",
     "invalidXpReward": "XP reward must be greater than zero.",
     "enrollmentFinalized": "This enrollment is finalized and can no longer be unenrolled or closed.",
+    "invalidCourseAccount": "Account is not a valid course.",
     "unknown": "Transaction failed. Please try again."
   },
   "community": {

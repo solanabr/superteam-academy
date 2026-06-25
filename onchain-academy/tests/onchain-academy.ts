@@ -4797,4 +4797,240 @@ describe("onchain-academy", () => {
       expect(Number(ata.amount)).to.equal(ACH_XP_REWARD);
     });
   });
+
+  // ===========================================================================
+  // 21. Close Course (Course-resize migration)
+  // ===========================================================================
+  describe("21. Close Course (migration)", () => {
+    // Isolated course id so we never touch the shared "solana-101" state.
+    const migCourseId = "close-course-mig";
+    let migCoursePda: PublicKey;
+    let migCourseBump: number;
+
+    const migLearner = Keypair.generate();
+    let migEnrollmentPda: PublicKey;
+
+    const migContentTxId = new Array(32).fill(7);
+
+    before(async () => {
+      [migCoursePda, migCourseBump] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(migCourseId)],
+        program.programId
+      );
+      [migEnrollmentPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(migCourseId),
+          migLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const sig = await provider.connection.requestAirdrop(
+        migLearner.publicKey,
+        2 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Create the course to be closed.
+      await program.methods
+        .createCourse({
+          courseId: migCourseId,
+          creator: creator.publicKey,
+          contentTxId: migContentTxId,
+          lessonCount: 2,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 9,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: migCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Enroll a learner so we can prove enrollments survive the close.
+      await program.methods
+        .enroll(migCourseId)
+        .accountsPartial({
+          course: migCoursePda,
+          enrollment: migEnrollmentPda,
+          learner: migLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([migLearner])
+        .rpc();
+
+      const enrollment =
+        await program.account.enrollment.fetch(migEnrollmentPda);
+      expect(enrollment.course.toBase58()).to.equal(migCoursePda.toBase58());
+    });
+
+    it("rejects a non-authority signer with Unauthorized", async () => {
+      const imposter = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        imposter.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      try {
+        await program.methods
+          .closeCourse(migCourseId)
+          .accountsPartial({
+            config: configPda,
+            course: migCoursePda,
+            authority: imposter.publicKey,
+          })
+          .signers([imposter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("Unauthorized");
+        } else {
+          expect(err.toString()).to.contain("Unauthorized");
+        }
+      }
+
+      // Course must still be intact after the failed attempt.
+      const stillThere = await program.account.course.fetch(migCoursePda);
+      expect(stillThere.courseId).to.equal(migCourseId);
+    });
+
+    it("rejects an account that is not the course PDA for the given id", async () => {
+      // Passing the config PDA as `course` while the course_id derives a
+      // different PDA → the seeds/bump constraint must reject it.
+      try {
+        await program.methods
+          .closeCourse(migCourseId)
+          .accountsPartial({
+            config: configPda,
+            course: configPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("ConstraintSeeds");
+        } else {
+          expect(err.toString()).to.contain("Error");
+        }
+      }
+
+      // Both the config and the course must be untouched.
+      const cfg = await program.account.config.fetch(configPda);
+      expect(cfg.bump).to.equal(configBump);
+      const stillThere = await program.account.course.fetch(migCoursePda);
+      expect(stillThere.courseId).to.equal(migCourseId);
+    });
+
+    it("rejects a course_id whose PDA is not an existing program account", async () => {
+      // A never-created course id derives a system-owned (non-program) PDA.
+      // The `owner = crate::ID` constraint must reject it.
+      const ghostId = "ghost-course-xyz";
+      const [ghostPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(ghostId)],
+        program.programId
+      );
+
+      try {
+        await program.methods
+          .closeCourse(ghostId)
+          .accountsPartial({
+            config: configPda,
+            course: ghostPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        // AccountOwnedByWrongProgram / ConstraintOwner depending on state.
+        expect(err.toString()).to.match(
+          /owner|Owner|not owned|AccountNotInitialized|InvalidCourseAccount/
+        );
+      }
+    });
+
+    it("authority closes the course → PDA is freed (0 lamports, gone)", async () => {
+      const authBefore = await provider.connection.getBalance(
+        authority.publicKey
+      );
+      const courseInfoBefore =
+        await provider.connection.getAccountInfo(migCoursePda);
+      expect(courseInfoBefore).to.not.be.null;
+      const courseRent = courseInfoBefore!.lamports;
+      expect(courseRent).to.be.greaterThan(0);
+
+      await program.methods
+        .closeCourse(migCourseId)
+        .accountsPartial({
+          config: configPda,
+          course: migCoursePda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      // The PDA is fully freed: no account at the address anymore.
+      const courseInfoAfter =
+        await provider.connection.getAccountInfo(migCoursePda);
+      expect(courseInfoAfter).to.be.null;
+
+      // Rent returned to the authority (minus tx fee, so just assert it grew
+      // by roughly the rent — allow for the 5000-lamport signature fee).
+      const authAfter = await provider.connection.getBalance(
+        authority.publicKey
+      );
+      expect(authAfter).to.be.greaterThan(authBefore + courseRent - 100_000);
+    });
+
+    it("enrollment for the closed course still exists", async () => {
+      const enrollment =
+        await program.account.enrollment.fetch(migEnrollmentPda);
+      expect(enrollment.course.toBase58()).to.equal(migCoursePda.toBase58());
+    });
+
+    it("create_course succeeds again at the same course_id after close", async () => {
+      await program.methods
+        .createCourse({
+          courseId: migCourseId,
+          creator: creator.publicKey,
+          contentTxId: migContentTxId,
+          lessonCount: 5,
+          difficulty: 3,
+          xpPerLesson: 25,
+          trackId: 9,
+          trackLevel: 2,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: migCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const recreated = await program.account.course.fetch(migCoursePda);
+      expect(recreated.courseId).to.equal(migCourseId);
+      // Fresh account: version resets to 1, new field values applied.
+      expect(recreated.version).to.equal(1);
+      expect(recreated.lessonCount).to.equal(5);
+      expect(recreated.difficulty).to.equal(3);
+      expect(recreated.trackLevel).to.equal(2);
+      expect(recreated.totalEnrollments).to.equal(0);
+      expect(recreated.bump).to.equal(migCourseBump);
+    });
+  });
 });

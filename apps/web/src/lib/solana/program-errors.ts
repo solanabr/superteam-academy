@@ -170,6 +170,11 @@ const ERROR_MAP: Record<number, ProgramErrorEntry> = {
     fallback:
       "This enrollment is finalized and can no longer be unenrolled or closed.",
   },
+  6030: {
+    name: "InvalidCourseAccount",
+    i18nKey: "invalidCourseAccount",
+    fallback: "Account is not a valid course.",
+  },
 };
 
 // Reverse lookup: error name → entry

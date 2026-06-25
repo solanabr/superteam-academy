@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limit: 10 threads per hour per user
     if (
-      isRateLimited("community:threads", user.id, {
+      await isRateLimited("community:threads", user.id, {
         maxTokens: 10,
         refillIntervalMs: 3_600_000,
       })
