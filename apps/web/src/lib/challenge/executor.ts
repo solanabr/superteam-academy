@@ -82,6 +82,13 @@ interface IvmContext {
     code: string,
     opts?: { timeout?: number; promise?: boolean }
   ): Promise<unknown>;
+  /**
+   * Free this context's realm — its `global` and everything reachable from it
+   * (including any taint a previous submission applied to `globalThis.Function`,
+   * `Object.prototype`, etc.) — without disposing the whole isolate. A fresh
+   * `createContext()` then yields a clean realm.
+   */
+  release(): void;
 }
 interface IvmIsolate {
   createContext(): Promise<IvmContext>;
@@ -167,6 +174,17 @@ export async function isExecutorAvailable(): Promise<boolean> {
  */
 const ISOLATE_RUNTIME_SOURCE = String.raw`
 "use strict";
+
+/* Capture pristine intrinsics the HARNESS relies on BEFORE any user code runs.
+ * User code shares this realm's globals and could reassign \`globalThis.Function\`
+ * or \`JSON.stringify\` to force a "pass" — the harness must build the test
+ * wrapper and serialise its verdict through these private references, never the
+ * (potentially poisoned) live globals. Fresh-context-per-test isolates one
+ * submission's taint from the next; these captures additionally keep a
+ * submission from corrupting its OWN test's harness readout. */
+var __Function__ = Function;
+var __jsonStringify__ = JSON.stringify;
+var __jsonParse__ = JSON.parse;
 
 var BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 function toBase58(bytes) {
@@ -382,7 +400,9 @@ function runCase(userCode, test) {
     '})();';
 
   try {
-    var fn = new Function("__mc__", "__modules__", body);
+    // Build the wrapper from the CAPTURED Function, so a submission that
+    // reassigned globalThis.Function cannot substitute its own wrapper factory.
+    var fn = new __Function__("__mc__", "__modules__", body);
     var p = fn(mc.mock, __modules__);
     return Promise.resolve(p).then(function (result) {
       var passed = result === "pass" || result === true;
@@ -395,12 +415,15 @@ function runCase(userCode, test) {
   }
 }
 
-/* Entry point invoked by the host. Returns a JSON STRING (copied out). */
+/* Entry point invoked by the host. Returns a JSON STRING (copied out). Uses the
+ * captured JSON intrinsics so a submission that reassigned JSON.parse /
+ * JSON.stringify can neither smuggle a forged input nor forge the verdict that
+ * crosses the boundary. */
 async function __runCase__(userCodeJson, testJson) {
-  var userCode = JSON.parse(userCodeJson);
-  var test = JSON.parse(testJson);
+  var userCode = __jsonParse__(userCodeJson);
+  var test = __jsonParse__(testJson);
   var r = await runCase(userCode, test);
-  return JSON.stringify(r);
+  return __jsonStringify__(r);
 }
 `;
 
@@ -468,7 +491,19 @@ function transformImports(code: string): string {
 /* ------------------------------------------------------------------------- */
 
 /**
- * Run a JS/TS submission against every supplied test inside a fresh isolate.
+ * Run a JS/TS submission against every supplied test.
+ *
+ * ISOLATION PER TEST CASE — each test runs in a FRESH context (realm) inside the
+ * isolate: a new context is created, the runtime/harness is installed into it,
+ * the submission + that single test run, the verdict is read out, and the
+ * context is released. A submission cannot carry state from one test into
+ * another, because the test wrapper is built in-isolate with `new Function(...)`
+ * (which resolves to that realm's `globalThis.Function`) — running user code in
+ * a shared global let test #1 reassign `globalThis.Function` (or pollute
+ * `Object.prototype` / `Array.prototype` / `JSON`) and force every later test —
+ * including hidden ones — to "pass". A clean realm per test, discarded after,
+ * closes that bypass. CPU timeout, host wall-clock kill, and memory limit are
+ * unchanged.
  *
  * Contract: returns `{ available: false }` when the secure executor cannot run
  * — callers MUST deny completion in that case. When available, `passed` is true
@@ -517,16 +552,11 @@ export async function runJsSubmission(
 
   const isolate = new ivm.Isolate({ memoryLimit: MEMORY_LIMIT_MB });
   try {
-    const context = await isolate.createContext();
-    // Install the in-isolate runtime once per submission.
-    await withHostGuard(
-      context.eval(ISOLATE_RUNTIME_SOURCE, { timeout: EXEC_TIMEOUT_MS })
-    );
-
     const userCodeJson = JSON.stringify(transpiled);
     const results: ServerTestResult[] = [];
-    // Once the host guard trips we dispose the isolate; remaining tests cannot
-    // run on a dead isolate, so they are recorded as failed.
+    // The host wall-clock guard can only trip once: it abandons the in-flight
+    // evaluation and we dispose the whole isolate, so any remaining tests cannot
+    // run and are recorded as failed.
     let aborted = false;
 
     for (const test of tests) {
@@ -544,17 +574,25 @@ export async function runJsSubmission(
         input: test.input ?? "",
         expectedOutput: test.expectedOutput ?? "",
       });
-      // Call the in-isolate entry point. Both arguments are JSON string
-      // literals embedded in the eval'd expression — no host references cross
-      // the boundary; the result is a JSON string copied out.
       const expr = `__runCase__(${JSON.stringify(userCodeJson)}, ${JSON.stringify(testJson)})`;
       let detail = "execution error";
       let passed = false;
+
+      // FRESH realm per test: create a new context, install the runtime into it,
+      // run [user code + this one test], read the verdict, then release it. Any
+      // taint the submission applied to this realm's `globalThis.Function`,
+      // prototypes, etc. dies with the context and cannot reach the next test.
+      let context: IvmContext | undefined;
       try {
+        context = await isolate.createContext();
+        await withHostGuard(
+          context.eval(ISOLATE_RUNTIME_SOURCE, { timeout: EXEC_TIMEOUT_MS })
+        );
         // promise:true resolves the async __runCase__ inside the isolate and
-        // copies the resolved JSON string out. The in-isolate timeout kills
-        // CPU-bound runaways; withHostGuard catches the rare quiescent
-        // never-settling promise.
+        // copies the resolved JSON string out. Both arguments are JSON string
+        // literals embedded in the eval'd expression — no host references cross
+        // the boundary. The in-isolate timeout kills CPU-bound runaways;
+        // withHostGuard catches the rare quiescent never-settling promise.
         const raw = (await withHostGuard(
           context.eval(expr, {
             timeout: EXEC_TIMEOUT_MS,
@@ -577,7 +615,20 @@ export async function runJsSubmission(
           );
         }
         passed = false;
+      } finally {
+        // Free this test's realm. Skipped when the host guard tripped: the
+        // isolate is about to be disposed wholesale and the context may be
+        // mid-eval, so releasing it here is both unnecessary and unsafe.
+        if (context && !aborted) {
+          try {
+            context.release();
+          } catch {
+            // A context that already died (e.g. in-isolate timeout/OOM) cannot
+            // be released; nothing to clean up.
+          }
+        }
       }
+
       results.push({
         id: test.id,
         hidden: test.hidden === true,

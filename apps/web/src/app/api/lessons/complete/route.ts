@@ -126,11 +126,22 @@ export async function POST(request: NextRequest) {
             { status: 503 }
           );
         case "non_js_challenge":
-          // Rust / buildable challenges are compiled+validated by the Rust
-          // playground / build server (a separate trust boundary). The JS
-          // isolate does not grade them; we require the submission to be
-          // present but defer correctness to those services.
-          break;
+          // FAIL CLOSED. Rust / buildable challenges must be graded by the Rust
+          // playground / build server (a separate trust boundary), but that
+          // validation handshake is NOT wired up yet. Until it is, the server
+          // cannot prove the submission is correct, so it MUST NOT submit the
+          // on-chain completeLesson — a bare fall-through here would grant a
+          // completion (and credential eligibility) for any unverified
+          // Rust/buildable submission. Deny exactly like executor_unavailable.
+          // TODO(#195 follow-up): wire a real Rust/build-server validation
+          // handshake, then gate this branch on its passing verdict.
+          return NextResponse.json(
+            {
+              error:
+                "Server-side validation for this challenge type is not yet available",
+            },
+            { status: 503 }
+          );
         case "not_a_challenge":
           break;
       }

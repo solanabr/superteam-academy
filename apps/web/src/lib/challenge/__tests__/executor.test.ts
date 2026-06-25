@@ -85,6 +85,63 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       expect(run.passed).toBe(false);
     });
 
+    // REGRESSION (#195 review HOLE-1): the validator reused ONE isolate context
+    // for every test, and the in-isolate harness builds each wrapper with
+    // `new Function(...)` (the shared realm's globalThis.Function) and serialises
+    // its verdict with `JSON.stringify`. A submission could poison those
+    // intrinsics in test #1 (or its own test) to force every later/hidden test
+    // to "pass". Fix: a FRESH context per test + the harness builds/serialises
+    // through CAPTURED intrinsics. These hidden tests demand a value the poison
+    // code does NOT compute (add(10,20)=30, asserted === 999), so a "pass" can
+    // ONLY come from taint — each MUST stay failed.
+    it.each([
+      [
+        "globalThis.Function",
+        'function add(a,b){ globalThis.Function = function(){ return function(){ return Promise.resolve("pass"); }; }; return a+b; }',
+      ],
+      [
+        "Object.prototype",
+        "function add(a,b){ Object.prototype.ok = true; return a+b; }",
+      ],
+      [
+        "Array.prototype",
+        "function add(a,b){ Array.prototype.push = function(){ return 0; }; return a+b; }",
+      ],
+      [
+        "JSON.stringify",
+        'function add(a,b){ JSON.stringify = function(){ return "{\\"ok\\":true}"; }; return a+b; }',
+      ],
+    ])(
+      "VALIDATOR-BYPASS BLOCKED: poisoning %s does not force-pass the hidden test",
+      async (_name, exploit) => {
+        const poisonTests: AdminTestCase[] = [
+          {
+            id: "visible-1",
+            description: "adds 2 and 3",
+            input: "2, 3",
+            expectedOutput: "result === 5",
+          },
+          {
+            id: "hidden-1",
+            description: "hidden, real answer is 30 — asserts 999",
+            input: "10, 20",
+            expectedOutput: "result === 999",
+            hidden: true,
+          },
+        ];
+        const run = await runJsSubmission(exploit, poisonTests);
+        expect(run.available).toBe(true);
+        if (!run.available) return;
+        // The submission's add() is correct arithmetic, so the VISIBLE test
+        // passes legitimately; the HIDDEN test must NOT be force-passed.
+        expect(run.results.find((r) => r.id === "hidden-1")?.passed).toBe(
+          false
+        );
+        expect(run.passed).toBe(false);
+      },
+      30_000
+    );
+
     it("kills CPU-bound runaway code via in-isolate timeout (does not hang)", async () => {
       const tests: AdminTestCase[] = [
         { id: "t", description: "loops", input: "", expectedOutput: "true" },
