@@ -28,13 +28,20 @@ context degrades as it fills, and a `/goal` run spans many turns.
     auto-review does NOT re-run on push), and **wait for the NEW `claude[bot]` comment** next turn
     before judging.
   - **BOTH gates pass** (CI green AND latest verdict = approve / no blocking) → **MERGE STEP:**
+    - **First, triage the review's NON-BLOCKING findings — never merge-and-forget.** For each
+      one: **fix** the cheap, real, in-scope ones and push (then re-verify); **file** the rest as
+      deduped issues; **decline** genuine over-engineering with a one-line reason in the PR. A
+      "non-blocking" note left neither fixed nor tracked is lost work — not allowed. Only then:
     - **SENSITIVE** — any changed path under `supabase/schema.sql`, `onchain-academy/**`,
       real env/secret files (`.env`, `.env.local`, `.env.*` — but NOT public `*.example`
       templates), `.github/workflows/**`, or `.claude/**`; OR issue label ∈
-      {`area:security`, `area:onchain`, `area:db`, `area:ci`}: run an adversarial **Workflow**
-      (maker → verify → re-exploit → fixer), then **leave the PR open**, add label
-      `needs-human-review`, comment `needs human review`, and **stop babysitting it**. NEVER
-      self-merge these — a human signs off.
+      {`area:security`, `area:onchain`, `area:db`, `area:ci`}: **MANDATORY, never skipped as
+      "redundant"** — dispatch an **independent adversarial reviewer** (a fresh, skeptical agent
+      told to BREAK the security claim, not confirm it). The single `claude[bot]` gate is NOT
+      sufficient: it has OK'd loop PRs that would have broken prod (a CSP that blocked the Monaco
+      CDN app-wide) and shipped a CSRF hole on on-chain-authority routes. **Fix everything it
+      finds and re-verify.** THEN **leave the PR open**, add label `needs-human-review`, comment
+      `needs human review`, and **stop babysitting it**. NEVER self-merge these — a human signs off.
     - **SAFE** — everything else (`area:frontend`/`docs`/`testing`/`ops`):
       `gh pr merge <n> --squash --delete-branch`. The issue auto-closes via `Closes #<n>`.
 

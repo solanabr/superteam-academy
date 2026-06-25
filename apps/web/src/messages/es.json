@@ -584,14 +584,17 @@
     "invalidLessonCount": "La cantidad de lecciones debe ser al menos 1.",
     "invalidDifficulty": "La dificultad debe ser principiante, intermedio o avanzado.",
     "credentialAssetMismatch": "El activo de la credencial no corresponde al registro de inscripción.",
+    "collectionMismatch": "La colección no coincide con la colección de credenciales del curso.",
     "minterNotActive": "El rol de minter no está activo.",
     "minterAmountExceeded": "La cantidad excede el límite del minter.",
+    "minterCapExceeded": "Esto excedería el límite acumulado de XP del minter.",
     "labelTooLong": "La etiqueta excede la longitud máxima.",
     "achievementIdTooLong": "El ID del logro excede la longitud máxima.",
     "achievementNameTooLong": "El nombre del logro excede la longitud máxima.",
     "achievementUriTooLong": "La URI del logro excede la longitud máxima.",
     "invalidAmount": "La cantidad debe ser mayor que cero.",
     "invalidXpReward": "La recompensa de XP debe ser mayor que cero.",
+    "enrollmentFinalized": "Esta inscripción está finalizada y ya no se puede cancelar ni cerrar.",
     "unknown": "La transacción falló. Inténtalo de nuevo."
   },
   "community": {

@@ -21,9 +21,10 @@ RUN apt-get update -qq && apt-get install -y -qq \
     curl build-essential pkg-config libssl-dev libudev-dev ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Non-root user
-RUN useradd -m -s /bin/bash academy
-USER academy
+# Non-root user with a fixed numeric UID so Cloud Run / Kubernetes
+# `runAsNonRoot` and `--no-allow-unauthenticated` policies can pin it.
+RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin academy
+USER 10001
 WORKDIR /home/academy
 
 # Install Rust toolchain (cargo is needed by cargo-build-sbf)
@@ -43,10 +44,26 @@ COPY --chown=academy:academy programs/ programs/
 RUN cargo-build-sbf --manifest-path programs/Cargo.toml
 
 # Copy server binary LAST (code changes don't bust toolchain cache)
-COPY --from=builder /build/target/release/academy-build-server .
+COPY --chown=academy:academy --from=builder /build/target/release/academy-build-server .
 
-# Create builds directory
+# Create builds directory.
+# NOTE: /tmp is the ONLY path the server writes to at runtime (BUILDS_DIR).
+# When the container runs with a read-only root filesystem (recommended — see
+# deploy/cloudbuild.yaml), /tmp must be mounted as a writable in-memory volume.
 RUN mkdir -p /tmp/academy-builds
+
+# Defense-in-depth: strip every setuid/setgid bit baked into the image so a
+# read-only root FS + no-new-privileges sandbox cannot be escalated through a
+# stray privileged binary. Runs as root via a transient stage, then drops back.
+USER root
+RUN find / -xdev -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+# Verify the strip actually worked: fail the image build if any setuid/setgid
+# binary remains, so a future base-image change that breaks the strip above
+# cannot pass unnoticed. Runs as root so the FS walk can traverse every dir.
+RUN test -z "$(find / -xdev -type f -perm /6000 2>/dev/null)" \
+    || (echo 'ERROR: setuid/setgid binaries remain after strip:' \
+        && find / -xdev -type f -perm /6000 2>/dev/null && exit 1)
+USER 10001
 
 EXPOSE 8080
 

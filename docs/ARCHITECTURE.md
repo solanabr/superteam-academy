@@ -831,7 +831,7 @@ The build server is a standalone Rust/Axum service deployed on GCP Cloud Run for
 | `/build`         | POST   | X-API-Key | 5 req/min  | Compile Solana program                  |
 | `/deploy/{uuid}` | GET    | X-API-Key | 20 req/min | Download compiled .so binary            |
 | `/health`        | GET    | None      | None       | Health check with cache stats           |
-| `/metrics`       | GET    | None      | None       | Build counts, durations, cache hit rate |
+| `/metrics`       | GET    | X-API-Key | None       | Build counts, durations, cache hit rate |
 
 ### Build Pipeline
 

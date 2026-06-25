@@ -256,7 +256,7 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Client | Google Analytics 4 measurement ID                          |
 | `NEXT_PUBLIC_POSTHOG_KEY`        | Client | PostHog project key                                        |
 | `NEXT_PUBLIC_POSTHOG_HOST`       | Client | PostHog instance URL (default: `https://us.i.posthog.com`) |
-| `SENTRY_DSN`                     | Server | Sentry error tracking DSN                                  |
+| `NEXT_PUBLIC_SENTRY_DSN`         | Client | Sentry error tracking DSN (public/safe to expose)          |
 
 ### App URL
 

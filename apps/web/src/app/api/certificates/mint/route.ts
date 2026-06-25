@@ -8,6 +8,7 @@ import { getCourseById } from "@/lib/sanity/queries";
 import { issueCredential, getConnection } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
+import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -158,7 +159,9 @@ export async function POST(request: NextRequest) {
       seller_fee_basis_points: 0,
     };
 
-    // Store metadata in Supabase
+    // Store metadata in Supabase. Kept as the app-served fallback so
+    // /api/certificates/metadata resolves for already-issued credentials and
+    // whenever Arweave pinning is unavailable.
     const { data: metadataRow, error: metaError } = await adminClient
       .from("nft_metadata")
       .insert({ data: metadataJson })
@@ -172,7 +175,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+    const appMetadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
+
+    // Pin metadata to Arweave so the on-chain asset URI is permanent and
+    // resolves independently of app uptime. Falls back to the app-served URL
+    // when ARWEAVE_UPLOADER_SECRET is unset or the upload fails (never blocks
+    // minting). uploadCertificateMetadata logs the reason for any fallback.
+    const arweaveUri = await uploadCertificateMetadata(metadataJson);
+    const metadataUri = arweaveUri ?? appMetadataUri;
 
     // Count how many certificates this user already has (the current one is not yet inserted)
     const { count: existingCertCount } = await adminClient

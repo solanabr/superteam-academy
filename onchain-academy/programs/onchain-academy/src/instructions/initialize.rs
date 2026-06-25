@@ -90,7 +90,7 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     minter_role.total_xp_minted = 0;
     minter_role.is_active = true;
     minter_role.created_at = Clock::get()?.unix_timestamp;
-    minter_role._reserved = [0u8; 8];
+    minter_role.max_total_xp = 0; // unlimited
     minter_role.bump = ctx.bumps.backend_minter_role;
 
     Ok(())

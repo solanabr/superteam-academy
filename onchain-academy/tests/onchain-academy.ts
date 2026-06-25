@@ -278,6 +278,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: CREATOR_REWARD_XP,
           minCompletionsForReward: MIN_COMPLETIONS_FOR_REWARD,
+          collection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -330,6 +331,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: emptyPda,
@@ -370,6 +372,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: longPda,
@@ -410,6 +413,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -449,6 +453,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -488,6 +493,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: badPda,
@@ -526,6 +532,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: maxPda,
@@ -561,6 +568,7 @@ describe("onchain-academy", () => {
             prerequisite: null,
             creatorRewardXp: 0,
             minCompletionsForReward: 0,
+            collection: null,
           })
           .accountsPartial({
             course: diffPda,
@@ -590,6 +598,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -611,6 +620,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -630,6 +640,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -657,6 +668,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: 200,
           newCreatorRewardXp: 50,
           newMinCompletionsForReward: 5,
+          newCollection: null,
         })
         .accountsPartial({
           course: diffPda,
@@ -671,6 +683,107 @@ describe("onchain-academy", () => {
       expect(course.minCompletionsForReward).to.equal(5);
       expect(Array.from(course.contentTxId)).to.deep.equal(newContent);
       expect(course.version).to.equal(2);
+    });
+
+    it("backfills collection once, then rejects overwriting it with a different value", async () => {
+      const overwriteId = "collection-guard";
+      const [guardPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(overwriteId)],
+        program.programId
+      );
+
+      // Fresh course with no collection (defaults to Pubkey::default()).
+      await program.methods
+        .createCourse({
+          courseId: overwriteId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const firstCollection = Keypair.generate().publicKey;
+      const secondCollection = Keypair.generate().publicKey;
+
+      // Backfill from default — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      let course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
+
+      // Re-pointing to a different collection — rejected (would orphan holders).
+      try {
+        await program.methods
+          .updateCourse({
+            newContentTxId: null,
+            newIsActive: null,
+            newXpPerLesson: null,
+            newCreatorRewardXp: null,
+            newMinCompletionsForReward: null,
+            newCollection: secondCollection,
+          })
+          .accountsPartial({
+            course: guardPda,
+            config: configPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+
+      // Setting the same collection again is idempotent — allowed.
+      await program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: firstCollection,
+        })
+        .accountsPartial({
+          course: guardPda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+      course = await program.account.course.fetch(guardPda);
+      expect(course.collection.toBase58()).to.equal(firstCollection.toBase58());
     });
 
     it("fails with wrong authority", async () => {
@@ -689,6 +802,7 @@ describe("onchain-academy", () => {
             newXpPerLesson: null,
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
+            newCollection: null,
           })
           .accountsPartial({
             course: coursePda,
@@ -793,6 +907,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -845,6 +960,7 @@ describe("onchain-academy", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
+          newCollection: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -1114,6 +1230,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
+          collection: null,
         })
         .accountsPartial({
           course: incompletePda,
@@ -1189,29 +1306,33 @@ describe("onchain-academy", () => {
   // 8. Close Enrollment
   // ===========================================================================
   describe("8. Close Enrollment", () => {
-    it("closes completed enrollment immediately", async () => {
-      const balanceBefore = await provider.connection.getBalance(
-        learner.publicKey
-      );
+    it("closing a finalized enrollment is rejected (replay guard)", async () => {
+      // enrollmentPda is completed + finalized by earlier sections. Closing it
+      // would free the PDA seeds and let the learner re-enroll/re-complete/
+      // re-earn XP. The guard must reject with EnrollmentFinalized.
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learner.publicKey,
+          })
+          .signers([learner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: coursePda,
-          enrollment: enrollmentPda,
-          learner: learner.publicKey,
-        })
-        .signers([learner])
-        .rpc();
-
+      // PDA must still exist — nothing was closed.
       const enrollmentInfo =
         await provider.connection.getAccountInfo(enrollmentPda);
-      expect(enrollmentInfo).to.be.null;
-
-      const balanceAfter = await provider.connection.getBalance(
-        learner.publicKey
-      );
-      expect(balanceAfter).to.be.greaterThan(balanceBefore);
+      expect(enrollmentInfo).to.not.be.null;
     });
 
     it("close incomplete enrollment before 24h cooldown fails", async () => {
@@ -1234,6 +1355,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: freshCoursePda,
@@ -1412,19 +1534,28 @@ describe("onchain-academy", () => {
       expect(Number(creatorAta.amount)).to.equal(CREATOR_REWARD_XP * 2);
     });
 
-    it("second learner can close their completed enrollment", async () => {
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: coursePda,
-          enrollment: learner2EnrollPda,
-          learner: learner2.publicKey,
-        })
-        .signers([learner2])
-        .rpc();
+    it("second learner cannot close their finalized enrollment", async () => {
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: coursePda,
+            enrollment: learner2EnrollPda,
+            learner: learner2.publicKey,
+          })
+          .signers([learner2])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
       const info = await provider.connection.getAccountInfo(learner2EnrollPda);
-      expect(info).to.be.null;
+      expect(info).to.not.be.null;
     });
   });
 
@@ -1484,6 +1615,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: otherCoursePda,
@@ -1610,6 +1742,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 100,
           minCompletionsForReward: 10,
+          collection: null,
         })
         .accountsPartial({
           course: threshCoursePda,
@@ -1771,6 +1904,7 @@ describe("onchain-academy", () => {
           prerequisite: coursePda, // requires solana-101
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: advancedCoursePda,
@@ -2041,6 +2175,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: collectionAddress,
         })
         .accountsPartial({
           course: credCoursePda,
@@ -2377,6 +2512,217 @@ describe("onchain-academy", () => {
         }
       }
     });
+
+    it("rejects issue_credential with a collection that does not match the course", async () => {
+      // A second, unrelated Metaplex Core collection — NOT the course's collection.
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+      const wrongCollectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: wrongCollectionSigner,
+        name: "Wrong Collection",
+        uri: "https://arweave.net/wrong-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+      const wrongCollection = toWeb3JsPublicKey(
+        wrongCollectionSigner.publicKey
+      );
+
+      // Fresh learner, finalized but not yet credentialed, on the cred course.
+      const mismatchLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        mismatchLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      const mismatchAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        mismatchLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            authority.publicKey,
+            mismatchAta,
+            mismatchLearner.publicKey,
+            xpMintKeypair.publicKey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        )
+      );
+
+      const [mismatchEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(credCourseId),
+          mismatchLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(credCourseId)
+        .accountsPartial({
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mismatchLearner])
+        .rpc();
+
+      for (let i = 0; i < 2; i++) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: mismatchEnrollPda,
+            learner: mismatchLearner.publicKey,
+            learnerTokenAccount: mismatchAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          learnerTokenAccount: mismatchAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      // Wrong collection → CollectionMismatch.
+      const wrongAsset = Keypair.generate();
+      try {
+        await program.methods
+          .issueCredential(
+            "Mismatch",
+            "https://arweave.net/mismatch",
+            1,
+            new anchor.BN(500)
+          )
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: mismatchEnrollPda,
+            learner: mismatchLearner.publicKey,
+            credentialAsset: wrongAsset.publicKey,
+            trackCollection: wrongCollection,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([wrongAsset])
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+
+      // Correct collection → succeeds.
+      const goodAsset = Keypair.generate();
+      const okSig = await program.methods
+        .issueCredential(
+          "Match",
+          "https://arweave.net/match",
+          1,
+          new anchor.BN(500)
+        )
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: mismatchEnrollPda,
+          learner: mismatchLearner.publicKey,
+          credentialAsset: goodAsset.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([goodAsset])
+        .rpc();
+      await provider.connection.confirmTransaction(okSig, "confirmed");
+
+      const enrollment =
+        await program.account.enrollment.fetch(mismatchEnrollPda);
+      expect(enrollment.credentialAsset.toBase58()).to.equal(
+        goodAsset.publicKey.toBase58()
+      );
+    });
+
+    it("rejects upgrade_credential with a collection that does not match the course", async () => {
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+      const wrongCollectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: wrongCollectionSigner,
+        name: "Wrong Upgrade Collection",
+        uri: "https://arweave.net/wrong-upgrade-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+      const wrongCollection = toWeb3JsPublicKey(
+        wrongCollectionSigner.publicKey
+      );
+
+      try {
+        await program.methods
+          .upgradeCredential(
+            "Mismatch Upgrade",
+            "https://arweave.net/mismatch-upgrade",
+            2,
+            new anchor.BN(1000)
+          )
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: credEnrollPda,
+            learner: credLearner.publicKey,
+            credentialAsset: credentialKeypair.publicKey,
+            trackCollection: wrongCollection,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+        expect.fail("Should have thrown CollectionMismatch");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CollectionMismatch");
+        } else {
+          expect(err.toString()).to.contain("CollectionMismatch");
+        }
+      }
+    });
   });
 
   // ===========================================================================
@@ -2418,6 +2764,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: secCoursePda,
@@ -2574,6 +2921,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: zeroCoursePda,
@@ -2700,6 +3048,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 10,
           minCompletionsForReward: 1,
+          collection: null,
         })
         .accountsPartial({
           course: singleCoursePda,
@@ -2849,12 +3198,17 @@ describe("onchain-academy", () => {
       await provider.sendAndConfirm(tx);
     });
 
+    // Per-call cap 1000, cumulative cap 1200 — lets us exercise both ceilings.
+    const MINTER_MAX_PER_CALL = 1000;
+    const MINTER_MAX_TOTAL = 1200;
+
     it("register_minter", async () => {
       await program.methods
         .registerMinter({
           minter: testMinter.publicKey,
           label: "test-minter",
-          maxXpPerCall: new BN(1000),
+          maxXpPerCall: new BN(MINTER_MAX_PER_CALL),
+          maxTotalXp: new BN(MINTER_MAX_TOTAL),
         })
         .accountsPartial({
           config: configPda,
@@ -2868,7 +3222,8 @@ describe("onchain-academy", () => {
       const role = await program.account.minterRole.fetch(testMinterRolePda);
       expect(role.minter.toBase58()).to.equal(testMinter.publicKey.toBase58());
       expect(role.label).to.equal("test-minter");
-      expect(role.maxXpPerCall.toNumber()).to.equal(1000);
+      expect(role.maxXpPerCall.toNumber()).to.equal(MINTER_MAX_PER_CALL);
+      expect(role.maxTotalXp.toNumber()).to.equal(MINTER_MAX_TOTAL);
       expect(role.totalXpMinted.toNumber()).to.equal(0);
       expect(role.isActive).to.equal(true);
     });
@@ -2882,6 +3237,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           recipientTokenAccount: minterRecipientTokenAccount,
           minter: testMinter.publicKey,
+          backendSigner: authority.publicKey,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .signers([testMinter])
@@ -2900,6 +3256,63 @@ describe("onchain-academy", () => {
       expect(role.totalXpMinted.toNumber()).to.equal(500);
     });
 
+    it("reward_xp fails without backend_signer (active minter alone is insufficient)", async () => {
+      try {
+        await program.methods
+          .rewardXp(new BN(100), "no backend signer")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            // backend_signer set to the minter itself, which is NOT
+            // config.backend_signer — the constraint must reject it.
+            backendSigner: testMinter.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+    });
+
+    it("reward_xp fails with wrong backend_signer", async () => {
+      const wrongSigner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        wrongSigner.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      try {
+        await program.methods
+          .rewardXp(new BN(100), "wrong backend signer")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: wrongSigner.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter, wrongSigner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+
+      // State must be untouched: still 500 from the one successful reward.
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(500);
+    });
+
     it("reward_xp fails when exceeding max", async () => {
       try {
         await program.methods
@@ -2910,6 +3323,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
@@ -2931,6 +3345,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
@@ -2939,6 +3354,78 @@ describe("onchain-academy", () => {
       } catch (err) {
         const anchorErr = err as AnchorError;
         expect(anchorErr.error.errorCode.code).to.equal("InvalidAmount");
+      }
+    });
+
+    it("reward_xp fails when cumulative cap would be exceeded", async () => {
+      // total_xp_minted is 500; per-call cap (1000) allows 800, but
+      // 500 + 800 = 1300 > 1200 cumulative cap, so it must be rejected.
+      try {
+        await program.methods
+          .rewardXp(new BN(800), "over cumulative cap")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
+      }
+
+      // Rejected mint must not have moved any state.
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(500);
+    });
+
+    it("reward_xp succeeds up to exactly the cumulative cap", async () => {
+      // 500 + 700 = 1200 == cap, which is allowed (<=).
+      const sig = await program.methods
+        .rewardXp(new BN(700), "reach cap")
+        .accountsPartial({
+          config: configPda,
+          minterRole: testMinterRolePda,
+          xpMint: xpMintKeypair.publicKey,
+          recipientTokenAccount: minterRecipientTokenAccount,
+          minter: testMinter.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([testMinter])
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      const role = await program.account.minterRole.fetch(testMinterRolePda);
+      expect(role.totalXpMinted.toNumber()).to.equal(MINTER_MAX_TOTAL);
+    });
+
+    it("reward_xp fails once the cumulative cap is reached", async () => {
+      // total is now 1200 == cap; even +1 must be rejected.
+      try {
+        await program.methods
+          .rewardXp(new BN(1), "past cap")
+          .accountsPartial({
+            config: configPda,
+            minterRole: testMinterRolePda,
+            xpMint: xpMintKeypair.publicKey,
+            recipientTokenAccount: minterRecipientTokenAccount,
+            minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([testMinter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("MinterCapExceeded");
       }
     });
 
@@ -2975,6 +3462,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             recipientTokenAccount: minterRecipientTokenAccount,
             minter: testMinter.publicKey,
+            backendSigner: authority.publicKey,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .signers([testMinter])
@@ -3145,6 +3633,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           payer: authority.publicKey,
           minter: authority.publicKey,
+          backendSigner: authority.publicKey,
           mplCoreProgram: MPL_CORE_PROGRAM_ID,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -3201,6 +3690,90 @@ describe("onchain-academy", () => {
       expect(achievement.currentSupply).to.equal(1);
     });
 
+    it("award_achievement rejects wrong backend_signer (active minter alone cannot mint)", async () => {
+      // Adversarial case for P0-A2: the minter is the legitimately-registered
+      // active backend minter, but the backend_signer co-signer is an attacker
+      // key that does not match config.backend_signer. The award must be
+      // rejected — an active minter alone can no longer mint arbitrary
+      // achievements/XP to arbitrary recipients.
+      const wrongBackendSigner = Keypair.generate();
+      const freshRecipient = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        freshRecipient.publicKey,
+        2 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      const freshRecipientAta = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        freshRecipient.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            authority.publicKey,
+            freshRecipientAta,
+            freshRecipient.publicKey,
+            xpMintKeypair.publicKey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        )
+      );
+
+      const [freshReceiptPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("achievement_receipt"),
+          Buffer.from(achievementId),
+          freshRecipient.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const [backendMinterRole] = PublicKey.findProgramAddressSync(
+        [Buffer.from("minter"), authority.publicKey.toBuffer()],
+        program.programId
+      );
+
+      const freshAsset = Keypair.generate();
+
+      try {
+        await program.methods
+          .awardAchievement()
+          .accountsPartial({
+            config: configPda,
+            achievementType: achievementTypePda,
+            achievementReceipt: freshReceiptPda,
+            minterRole: backendMinterRole,
+            asset: freshAsset.publicKey,
+            collection: achievementCollectionKeypair.publicKey,
+            recipient: freshRecipient.publicKey,
+            recipientTokenAccount: freshRecipientAta,
+            xpMint: xpMintKeypair.publicKey,
+            payer: authority.publicKey,
+            minter: authority.publicKey,
+            backendSigner: wrongBackendSigner.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([freshAsset, wrongBackendSigner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        const anchorErr = err as AnchorError;
+        expect(anchorErr.error.errorCode.code).to.equal("Unauthorized");
+      }
+
+      // Receipt must not exist — nothing was minted.
+      const receiptInfo =
+        await provider.connection.getAccountInfo(freshReceiptPda);
+      expect(receiptInfo).to.equal(null);
+    });
+
     it("award_achievement double-award fails", async () => {
       const secondAssetKeypair = Keypair.generate();
       const [backendMinterRole] = PublicKey.findProgramAddressSync(
@@ -3223,6 +3796,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
@@ -3309,6 +3883,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
@@ -3407,6 +3982,7 @@ describe("onchain-academy", () => {
           xpMint: xpMintKeypair.publicKey,
           payer: authority.publicKey,
           minter: authority.publicKey,
+          backendSigner: authority.publicKey,
           mplCoreProgram: MPL_CORE_PROGRAM_ID,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -3471,6 +4047,7 @@ describe("onchain-academy", () => {
             xpMint: xpMintKeypair.publicKey,
             payer: authority.publicKey,
             minter: authority.publicKey,
+            backendSigner: authority.publicKey,
             mplCoreProgram: MPL_CORE_PROGRAM_ID,
             tokenProgram: TOKEN_2022_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
@@ -3523,6 +4100,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: bitmapCoursePda,
@@ -3627,9 +4205,9 @@ describe("onchain-academy", () => {
   });
 
   // ===========================================================================
-  // 18. Re-enrollment after close
+  // 18. Finalized enrollment cannot be closed (replay guard)
   // ===========================================================================
-  describe("18. Re-enrollment after close", () => {
+  describe("18. Finalized enrollment cannot be closed (replay guard)", () => {
     const reEnrollCourseId = "re-enroll-course";
     let reEnrollCoursePda: PublicKey;
     const reEnrollLearner = Keypair.generate();
@@ -3661,6 +4239,7 @@ describe("onchain-academy", () => {
           prerequisite: null,
           creatorRewardXp: 0,
           minCompletionsForReward: 0,
+          collection: null,
         })
         .accountsPartial({
           course: reEnrollCoursePda,
@@ -3699,7 +4278,8 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      // Enroll, complete, finalize, close
+      // Enroll, complete, finalize -- leaving a finalized enrollment that must
+      // NOT be closable (closing it would enable the re-enroll/re-earn replay).
       await program.methods
         .enroll(reEnrollCourseId)
         .accountsPartial({
@@ -3741,46 +4321,59 @@ describe("onchain-academy", () => {
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .rpc();
-
-      // Close completed enrollment
-      await program.methods
-        .closeEnrollment()
-        .accountsPartial({
-          course: reEnrollCoursePda,
-          enrollment: reEnrollEnrollPda,
-          learner: reEnrollLearner.publicKey,
-        })
-        .signers([reEnrollLearner])
-        .rpc();
-
-      // Verify closed
-      const closedInfo =
-        await provider.connection.getAccountInfo(reEnrollEnrollPda);
-      expect(closedInfo).to.be.null;
     });
 
-    it("re-enrollment after close_enrollment succeeds", async () => {
-      await program.methods
-        .enroll(reEnrollCourseId)
-        .accountsPartial({
-          course: reEnrollCoursePda,
-          enrollment: reEnrollEnrollPda,
-          learner: reEnrollLearner.publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([reEnrollLearner])
-        .rpc();
+    it("closing the finalized enrollment is rejected", async () => {
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: reEnrollCoursePda,
+            enrollment: reEnrollEnrollPda,
+            learner: reEnrollLearner.publicKey,
+          })
+          .signers([reEnrollLearner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("EnrollmentFinalized");
+        } else {
+          expect(err.toString()).to.contain("EnrollmentFinalized");
+        }
+      }
 
+      // PDA survives — the replay guard holds.
+      const info = await provider.connection.getAccountInfo(reEnrollEnrollPda);
+      expect(info).to.not.be.null;
+    });
+
+    it("re-enrollment at the same seeds is impossible (replay closed)", async () => {
+      // Since the finalized enrollment cannot be closed, the PDA still exists,
+      // so `enroll` (init) at the same seeds fails — the learner cannot
+      // re-enroll, re-complete, and re-earn XP / re-mint a credential.
+      try {
+        await program.methods
+          .enroll(reEnrollCourseId)
+          .accountsPartial({
+            course: reEnrollCoursePda,
+            enrollment: reEnrollEnrollPda,
+            learner: reEnrollLearner.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([reEnrollLearner])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        // Anchor `init` on an existing account surfaces a raw allocate failure
+        // (account already in use), not a named AcademyError.
+        expect(err).to.exist;
+      }
+
+      // Enrollment is still the original finalized record (completed, not reset).
       const enrollment =
         await program.account.enrollment.fetch(reEnrollEnrollPda);
-      expect(enrollment.course.toBase58()).to.equal(
-        reEnrollCoursePda.toBase58()
-      );
-      expect(enrollment.completedAt).to.be.null;
-      // Lesson flags should be reset to zero
-      for (const word of enrollment.lessonFlags) {
-        expect(word.toNumber()).to.equal(0);
-      }
+      expect(enrollment.completedAt).to.not.be.null;
     });
   });
 

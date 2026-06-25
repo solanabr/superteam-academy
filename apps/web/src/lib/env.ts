@@ -43,6 +43,8 @@ const publicEnvSchema = z.object({
   // Helius API key — it is inlined into the client bundle. The Helius-keyed
   // endpoint lives server-side as SOLANA_RPC_URL in env.server.ts.
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
+  // Optional Sentry DSN (public/safe to expose). Unset disables Sentry.
+  NEXT_PUBLIC_SENTRY_DSN: z.url().optional().or(z.literal("")),
 });
 
 const parsed = publicEnvSchema.safeParse({
@@ -51,6 +53,7 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
 });
 
 if (!parsed.success) {

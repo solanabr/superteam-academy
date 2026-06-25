@@ -49,9 +49,47 @@ steps:
       - '1'
       - '--max-instances'
       - '3'
-      - '--no-invoker-iam-check'
+      # Egress hardening (P1-8): route ALL outbound traffic through a locked-down
+      # VPC so untrusted user-code compilation cannot reach the network. This must
+      # be paired with a VPC firewall rule that DENIES egress for the network tag
+      # below (see deploy/HARDENING.md). cargo-build-sbf already runs `--offline`,
+      # so a healthy build needs zero egress.
+      #
+      # These flags are appended dynamically by the step below ONLY when the VPC
+      # substitutions are set, so the pipeline still deploys before the VPC exists.
+      - '--no-invoker-iam-check' # ingress stays open: caller (Vercel) auths via X-API-Key, not GCP IAM. See HARDENING.md to move to IAM-gated ingress.
       - '--update-env-vars'
       - 'ACADEMY_API_KEY=${_ACADEMY_API_KEY},ALLOWED_ORIGIN=${_ALLOWED_ORIGIN},MAX_CONCURRENT_BUILDS=2,BUILD_TIMEOUT_SECS=300,CACHE_TTL_SECS=1800,LOG_FORMAT=json,RUST_LOG=info'
+
+  # Apply Direct VPC egress restriction when _VPC_NETWORK / _VPC_SUBNET are set.
+  # Kept as a separate `services update` so the deploy above never fails when the
+  # VPC has not been provisioned yet.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if [ -n "${_VPC_NETWORK}" ] && [ -n "${_VPC_SUBNET}" ]; then
+          # Fail the build if the egress tag is empty: an empty --network-tags
+          # attaches the VPC but matches NO deny-egress firewall rule, so egress
+          # would be silently UN-restricted while the deploy looks hardened.
+          if [ -z "${_VPC_EGRESS_TAG}" ]; then
+            echo "ERROR: _VPC_NETWORK/_VPC_SUBNET set but _VPC_EGRESS_TAG is empty."
+            echo "       An empty --network-tags leaves egress UNrestricted. Refusing"
+            echo "       to deploy. Set _VPC_EGRESS_TAG (see deploy/HARDENING.md)."
+            exit 1
+          fi
+          echo "Applying Direct VPC egress (all-traffic) on ${_SERVICE}"
+          gcloud run services update "${_SERVICE}" \
+            --region "${_REGION}" \
+            --network "${_VPC_NETWORK}" \
+            --subnet "${_VPC_SUBNET}" \
+            --network-tags "${_VPC_EGRESS_TAG}" \
+            --vpc-egress all-traffic
+        else
+          echo "WARNING: _VPC_NETWORK/_VPC_SUBNET not set — build-server egress is NOT restricted to a VPC."
+          echo "         Untrusted compilation can reach the network. See deploy/HARDENING.md."
+        fi
 
 substitutions:
   _REGION: 'southamerica-east1'
@@ -60,6 +98,10 @@ substitutions:
   _TAG: 'latest'
   _ACADEMY_API_KEY: ''
   _ALLOWED_ORIGIN: 'https://solarium.courses'
+  # Egress lockdown (leave empty to skip; see deploy/HARDENING.md to provision).
+  _VPC_NETWORK: ''
+  _VPC_SUBNET: ''
+  _VPC_EGRESS_TAG: 'build-server-no-egress'
 
 options:
   logging: CLOUD_LOGGING_ONLY

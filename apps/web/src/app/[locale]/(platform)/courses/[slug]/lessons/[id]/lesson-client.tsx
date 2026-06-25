@@ -163,12 +163,13 @@ interface CompletionResponse {
 
 async function completeLessonAPI(
   lessonId: string,
-  courseId: string
+  courseId: string,
+  submittedCode?: string
 ): Promise<CompletionResponse> {
   const res = await fetch("/api/lessons/complete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lessonId, courseId }),
+    body: JSON.stringify({ lessonId, courseId, submittedCode }),
   });
   if (!res.ok) {
     throw new Error("Failed to complete lesson");
@@ -241,44 +242,53 @@ export function LessonPageClient({
 
   const isChallenge = lesson.type === "challenge";
 
-  const handleComplete = useCallback(async () => {
-    if (isCompleted || isCompleting) return;
-    if (hasLinkedWallet === false) return;
-    setIsCompleting(true);
-    try {
-      const result = await completeLessonAPI(lesson._id, courseId);
-      setIsCompleting(false);
-      setIsCompleted(true);
-
-      if (!result.alreadyCompleted) {
-        setEarnedXp(courseXpPerLesson);
-        trackEvent("lesson_completed", {
-          lessonId: lesson._id,
+  const handleComplete = useCallback(
+    async (submittedCode?: string) => {
+      if (isCompleted || isCompleting) return;
+      if (hasLinkedWallet === false) return;
+      setIsCompleting(true);
+      try {
+        const result = await completeLessonAPI(
+          lesson._id,
           courseId,
-          signature: result.signature,
-        });
-        // XP, level-up, achievement, and certificate popups are now triggered
-        // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
+          submittedCode
+        );
+        setIsCompleting(false);
+        setIsCompleted(true);
+
+        if (!result.alreadyCompleted) {
+          setEarnedXp(courseXpPerLesson);
+          trackEvent("lesson_completed", {
+            lessonId: lesson._id,
+            courseId,
+            signature: result.signature,
+          });
+          // XP, level-up, achievement, and certificate popups are now triggered
+          // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
+        }
+      } catch {
+        // Allow retry on failure
+        setIsCompleting(false);
       }
-    } catch {
-      // Allow retry on failure
-      setIsCompleting(false);
-    }
-  }, [
-    lesson._id,
-    courseId,
-    courseXpPerLesson,
-    isCompleted,
-    isCompleting,
-    hasLinkedWallet,
-  ]);
+    },
+    [
+      lesson._id,
+      courseId,
+      courseXpPerLesson,
+      isCompleted,
+      isCompleting,
+      hasLinkedWallet,
+    ]
+  );
 
   // Listen for challenge completion events from ChallengeInterface
   useEffect(() => {
     const handleChallengeComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ lessonId: string }>).detail;
+      const detail = (
+        e as CustomEvent<{ lessonId: string; submittedCode?: string }>
+      ).detail;
       if (detail.lessonId === lesson._id) {
-        handleComplete();
+        handleComplete(detail.submittedCode);
       }
     };
 
@@ -320,7 +330,9 @@ export function LessonPageClient({
 
   // Challenge lessons: split panel — content + test cases left, editor right
   if (isChallenge) {
-    const visibleTests = lesson.tests?.filter((tc) => !tc.hidden) ?? [];
+    // Hidden tests are already excluded server-side (GROQ projection, P0-C4),
+    // so every test in the payload is safe to display.
+    const visibleTests = lesson.tests ?? [];
 
     return (
       <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
@@ -490,7 +502,7 @@ export function LessonPageClient({
 
           {/* Right pane: code editor + output only */}
           <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-1/2">
-            {lesson.code && lesson.tests && lesson.solution ? (
+            {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}
                 description=""
@@ -506,7 +518,6 @@ export function LessonPageClient({
                 }
                 tests={lesson.tests}
                 hints={lesson.hints ?? []}
-                solution={lesson.solution}
                 xpReward={courseXpPerLesson}
                 earnedXp={earnedXp}
                 isAlreadyCompleted={isCompleted}

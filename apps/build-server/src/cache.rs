@@ -74,8 +74,9 @@ impl BuildCache {
         before - inner.len()
     }
 
-    pub fn len(&self) -> usize {
-        self.inner.read().len()
+    #[cfg(test)]
+    pub fn is_empty(&self) -> bool {
+        self.inner.read().is_empty()
     }
 }
 
@@ -151,6 +152,6 @@ mod tests {
         );
         let evicted = cache.evict_expired();
         assert_eq!(evicted, 1);
-        assert_eq!(cache.len(), 0);
+        assert!(cache.is_empty());
     }
 }

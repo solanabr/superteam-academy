@@ -584,14 +584,17 @@
     "invalidLessonCount": "Lesson count must be at least 1.",
     "invalidDifficulty": "Difficulty must be beginner, intermediate, or advanced.",
     "credentialAssetMismatch": "Credential asset does not match enrollment record.",
+    "collectionMismatch": "Collection does not match the course's credential collection.",
     "minterNotActive": "Minter role is not active.",
     "minterAmountExceeded": "Amount exceeds minter limit.",
+    "minterCapExceeded": "This would exceed the minter's cumulative XP cap.",
     "labelTooLong": "Label exceeds maximum length.",
     "achievementIdTooLong": "Achievement ID exceeds maximum length.",
     "achievementNameTooLong": "Achievement name exceeds maximum length.",
     "achievementUriTooLong": "Achievement URI exceeds maximum length.",
     "invalidAmount": "Amount must be greater than zero.",
     "invalidXpReward": "XP reward must be greater than zero.",
+    "enrollmentFinalized": "This enrollment is finalized and can no longer be unenrolled or closed.",
     "unknown": "Transaction failed. Please try again."
   },
   "community": {

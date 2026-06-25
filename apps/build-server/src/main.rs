@@ -65,7 +65,6 @@ async fn main() {
         metrics.clone(),
     ));
     let health_state = Arc::new(HealthState {
-        cache: cache.clone(),
         metrics: metrics.clone(),
     });
 

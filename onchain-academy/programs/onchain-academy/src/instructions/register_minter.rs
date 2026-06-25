@@ -9,6 +9,8 @@ pub struct RegisterMinterParams {
     pub minter: Pubkey,
     pub label: String,
     pub max_xp_per_call: u64,
+    /// Cumulative XP ceiling for this role. 0 = unlimited.
+    pub max_total_xp: u64,
 }
 
 pub fn handler(ctx: Context<RegisterMinter>, params: RegisterMinterParams) -> Result<()> {
@@ -24,13 +26,14 @@ pub fn handler(ctx: Context<RegisterMinter>, params: RegisterMinterParams) -> Re
     role.total_xp_minted = 0;
     role.is_active = true;
     role.created_at = Clock::get()?.unix_timestamp;
-    role._reserved = [0u8; 8];
+    role.max_total_xp = params.max_total_xp;
     role.bump = ctx.bumps.minter_role;
 
     emit!(MinterRegistered {
         minter: params.minter,
         label: params.label,
         max_xp_per_call: params.max_xp_per_call,
+        max_total_xp: params.max_total_xp,
         timestamp: role.created_at,
     });
 

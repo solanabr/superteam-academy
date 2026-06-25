@@ -143,6 +143,7 @@ export function ChallengeInterface({
   }, [hints.length]);
 
   const handleShowSolution = useCallback(() => {
+    if (!solution) return;
     // Skip confirmation dialog if the XP penalty is already locked in
     if (challengeState.solutionRevealed) {
       setCode(solution);
@@ -152,6 +153,7 @@ export function ChallengeInterface({
   }, [challengeState.solutionRevealed, solution]);
 
   const handleConfirmSolution = useCallback(() => {
+    if (!solution) return;
     setShowSolutionDialog(false);
     setChallengeState((prev) => ({
       ...prev,
@@ -167,11 +169,13 @@ export function ChallengeInterface({
 
     // Emit custom event — lesson-client.tsx calls the API and sets
     // isAlreadyCompleted=true when done, which triggers the overlay + confetti.
+    // The submitted code travels with the event so the server can re-validate
+    // it authoritatively (the browser test pass is UX-only).
     const event = new CustomEvent(LESSON_COMPLETE_EVENT, {
-      detail: { lessonId },
+      detail: { lessonId, submittedCode: code },
     });
     window.dispatchEvent(event);
-  }, [lessonId, onComplete]);
+  }, [lessonId, onComplete, code]);
 
   const handleSubmit = useCallback(() => {
     if (!isEnrolled) {
@@ -379,31 +383,30 @@ export function ChallengeInterface({
               </div>
             )}
 
-            {/* Visible test cases */}
-            {tests.filter((tc) => !tc.hidden).length > 0 && (
+            {/* Visible test cases — hidden tests are already stripped
+                server-side (P0-C4), so every test here is safe to show. */}
+            {tests.length > 0 && (
               <div className="mt-3">
                 <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
                   {t("testCases")}
                 </h4>
                 <div className="space-y-1.5">
-                  {tests
-                    .filter((tc) => !tc.hidden)
-                    .map((tc) => (
-                      <div
-                        key={tc.id}
-                        className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                      >
-                        <span className="font-medium">{tc.description}</span>
-                        <div className="mt-1 flex gap-4 font-mono text-text-3">
-                          <span>
-                            {t("input")}: <code>{tc.input}</code>
-                          </span>
-                          <span>
-                            {t("expected")}: <code>{tc.expectedOutput}</code>
-                          </span>
-                        </div>
+                  {tests.map((tc) => (
+                    <div
+                      key={tc.id}
+                      className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
+                    >
+                      <span className="font-medium">{tc.description}</span>
+                      <div className="mt-1 flex gap-4 font-mono text-text-3">
+                        <span>
+                          {t("input")}: <code>{tc.input}</code>
+                        </span>
+                        <span>
+                          {t("expected")}: <code>{tc.expectedOutput}</code>
+                        </span>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

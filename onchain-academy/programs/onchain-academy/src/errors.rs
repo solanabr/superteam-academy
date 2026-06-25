@@ -34,12 +34,16 @@ pub enum AcademyError {
     InvalidDifficulty,
     #[msg("Credential asset does not match enrollment record")]
     CredentialAssetMismatch,
+    #[msg("Collection does not match the course's credential collection")]
+    CollectionMismatch,
     #[msg("Credential already issued for this enrollment")]
     CredentialAlreadyIssued,
     #[msg("Minter role is not active")]
     MinterNotActive,
     #[msg("Amount exceeds minter's per-call limit")]
     MinterAmountExceeded,
+    #[msg("Cumulative minted XP would exceed minter's total cap")]
+    MinterCapExceeded,
     #[msg("Minter label exceeds max length")]
     LabelTooLong,
     #[msg("Achievement type is not active")]
@@ -56,4 +60,6 @@ pub enum AcademyError {
     InvalidAmount,
     #[msg("XP reward must be greater than zero")]
     InvalidXpReward,
+    #[msg("Finalized or credentialed enrollment cannot be closed")]
+    EnrollmentFinalized,
 }
