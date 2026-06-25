@@ -5,7 +5,8 @@ use subtle::ConstantTimeEq;
 /// API key middleware. Checks X-API-Key header against the key stored in request extensions.
 ///
 /// Skips auth for `/health` only — it must stay public for Cloud Run / load-balancer
-/// liveness probes and exposes no sensitive data.
+/// liveness probes. Its body is limited to status/version/uptime and carries no
+/// build telemetry (see `routes/health.rs`).
 ///
 /// `/metrics` is intentionally NOT exempt: it leaks operational telemetry (build
 /// counts, durations, cache stats) and must require the API key like the build routes.

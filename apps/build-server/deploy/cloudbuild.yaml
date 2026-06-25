@@ -70,6 +70,15 @@ steps:
       - '-c'
       - |
         if [ -n "${_VPC_NETWORK}" ] && [ -n "${_VPC_SUBNET}" ]; then
+          # Fail the build if the egress tag is empty: an empty --network-tags
+          # attaches the VPC but matches NO deny-egress firewall rule, so egress
+          # would be silently UN-restricted while the deploy looks hardened.
+          if [ -z "${_VPC_EGRESS_TAG}" ]; then
+            echo "ERROR: _VPC_NETWORK/_VPC_SUBNET set but _VPC_EGRESS_TAG is empty."
+            echo "       An empty --network-tags leaves egress UNrestricted. Refusing"
+            echo "       to deploy. Set _VPC_EGRESS_TAG (see deploy/HARDENING.md)."
+            exit 1
+          fi
           echo "Applying Direct VPC egress (all-traffic) on ${_SERVICE}"
           gcloud run services update "${_SERVICE}" \
             --region "${_REGION}" \

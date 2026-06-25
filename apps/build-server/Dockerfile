@@ -57,6 +57,12 @@ RUN mkdir -p /tmp/academy-builds
 # stray privileged binary. Runs as root via a transient stage, then drops back.
 USER root
 RUN find / -xdev -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+# Verify the strip actually worked: fail the image build if any setuid/setgid
+# binary remains, so a future base-image change that breaks the strip above
+# cannot pass unnoticed. Runs as root so the FS walk can traverse every dir.
+RUN test -z "$(find / -xdev -type f -perm /6000 2>/dev/null)" \
+    || (echo 'ERROR: setuid/setgid binaries remain after strip:' \
+        && find / -xdev -type f -perm /6000 2>/dev/null && exit 1)
 USER 10001
 
 EXPOSE 8080

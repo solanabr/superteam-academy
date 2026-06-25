@@ -42,12 +42,23 @@ gcloud run deploy "${SERVICE_NAME}" \
 # firewall rule that DENIES egress for ${VPC_EGRESS_TAG:-build-server-no-egress}
 # (see deploy/HARDENING.md). cargo-build-sbf runs --offline, so builds need no egress.
 if [[ -n "${VPC_NETWORK:-}" && -n "${VPC_SUBNET:-}" ]]; then
+  # Fail loud if the egress tag is empty: passing --network-tags "" attaches the
+  # service to the VPC but matches NO deny-egress firewall rule, so egress would
+  # be silently UN-restricted while the deploy looks hardened. Never deploy that way.
+  EGRESS_TAG="${VPC_EGRESS_TAG:-build-server-no-egress}"
+  if [[ -z "${EGRESS_TAG}" ]]; then
+    echo "ERROR: VPC_NETWORK/VPC_SUBNET set but VPC_EGRESS_TAG is empty. An empty" >&2
+    echo "       --network-tags attaches the VPC without matching any deny-egress" >&2
+    echo "       firewall rule, leaving egress UNrestricted. Refusing to deploy." >&2
+    echo "       Set VPC_EGRESS_TAG (see deploy/HARDENING.md)." >&2
+    exit 1
+  fi
   echo "==> Restricting egress via Direct VPC (all-traffic) on ${VPC_NETWORK}/${VPC_SUBNET}"
   gcloud run services update "${SERVICE_NAME}" \
     --region "${REGION}" \
     --network "${VPC_NETWORK}" \
     --subnet "${VPC_SUBNET}" \
-    --network-tags "${VPC_EGRESS_TAG:-build-server-no-egress}" \
+    --network-tags "${EGRESS_TAG}" \
     --vpc-egress all-traffic
 else
   echo "WARNING: VPC_NETWORK/VPC_SUBNET unset — egress is NOT restricted. Untrusted"
