@@ -402,6 +402,9 @@
     "walletPermanent": "Permanent — cannot be changed"
   },
   "a11y": {
+    "dismiss": "Dismiss",
+    "close": "Close",
+    "codeEditor": "Code editor",
     "clearOutput": "Clear output",
     "resizeOutputPanel": "Resize output panel",
     "toggleTheme": "Toggle theme",

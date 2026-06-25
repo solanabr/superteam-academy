@@ -8,6 +8,7 @@ import {
   Info,
   X,
 } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 import { TOAST_STYLES } from "@/lib/styles/styleClasses";
 
 type ToastVariant = "success" | "error" | "warning" | "info";
@@ -48,6 +49,7 @@ export function dispatchToast(
 const pending: ToastItem[] = [];
 
 export function ToastContainer() {
+  const tA11y = useTranslations("a11y");
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -101,7 +103,7 @@ export function ToastContainer() {
             <button
               onClick={() => dismiss(t.uid)}
               className="ml-auto shrink-0 opacity-60 transition-opacity hover:opacity-100"
-              aria-label="Dismiss"
+              aria-label={tA11y("dismiss")}
             >
               <X size={12} weight="bold" />
             </button>

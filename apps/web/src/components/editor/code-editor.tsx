@@ -10,6 +10,7 @@ import {
 import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 import type {
   CodeEditorProps,
@@ -64,6 +65,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     ref
   ) {
     const { resolvedTheme } = useTheme();
+    const t = useTranslations("a11y");
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
     useImperativeHandle(
@@ -161,7 +163,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           "relative h-full w-full overflow-hidden rounded-md border",
           className
         )}
-        aria-label="Code editor"
+        aria-label={t("codeEditor")}
       >
         <Editor
           defaultValue={initialCode}

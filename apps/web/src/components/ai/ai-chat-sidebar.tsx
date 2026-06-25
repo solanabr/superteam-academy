@@ -37,6 +37,7 @@ export function AiChatSidebar({
   lessonSlug,
 }: AiChatSidebarProps) {
   const t = useTranslations("lesson");
+  const tA11y = useTranslations("a11y");
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -149,7 +150,7 @@ export function AiChatSidebar({
             type="button"
             onClick={onClose}
             className="rounded-md p-1.5 text-text-3 transition-colors hover:bg-border hover:text-text"
-            aria-label="Close"
+            aria-label={tA11y("close")}
           >
             <X size={16} weight="bold" />
           </button>
