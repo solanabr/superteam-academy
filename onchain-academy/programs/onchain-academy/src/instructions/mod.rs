@@ -1,3 +1,9 @@
+// Each instruction module defines a `handler` fn that is re-exported below and
+// always invoked qualified (e.g. `award_achievement::handler`). The glob
+// re-exports collide on the `handler` name, which is harmless here — allow the
+// lint so `clippy -D warnings` (CI + the pre-commit hook) stays green.
+#![allow(ambiguous_glob_reexports)]
+
 pub mod award_achievement;
 pub mod close_course;
 pub mod close_enrollment;
