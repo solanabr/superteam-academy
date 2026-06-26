@@ -261,7 +261,6 @@ Add these to your `.env.local`:
 # Public (safe to expose)
 NEXT_PUBLIC_PROGRAM_ID=<YOUR_PROGRAM_ID>
 NEXT_PUBLIC_XP_MINT_ADDRESS=<YOUR_XP_MINT_ADDRESS>
-NEXT_PUBLIC_BACKEND_SIGNER=<YOUR_AUTHORITY_PUBKEY>
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
 # Server-side only (never expose to client)
@@ -269,7 +268,7 @@ BACKEND_SIGNER_SECRET=<BASE58_PRIVATE_KEY>
 PROGRAM_AUTHORITY_SECRET=<BASE58_PRIVATE_KEY>
 ```
 
-For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public key. `BACKEND_SIGNER_SECRET` and `PROGRAM_AUTHORITY_SECRET` can be the same keypair (as base58). In production these are separate keys.
+For devnet, `BACKEND_SIGNER_SECRET` and `PROGRAM_AUTHORITY_SECRET` can be the same keypair (as base58). In production these are separate keys.
 
 To extract the base58 private key from a Solana keypair JSON file:
 

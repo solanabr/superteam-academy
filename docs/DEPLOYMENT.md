@@ -61,9 +61,9 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 | `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                                                                    |
 | `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                        |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                                                            |
-| `NEXT_PUBLIC_BACKEND_SIGNER`    | Public          | Authority pubkey (same as deployer on devnet)                                                                         |
 | `BUILD_SERVER_URL`              | **Server-only** | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                           |
 | `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                                                          |
+| `HELIUS_API_KEY`                | **Server-only** | Helius key for webhook management + DAS API (`lib/helius`)                                                            |
 | `PROGRAM_AUTHORITY_SECRET`      | **Server-only** | Base58 private key of the Config PDA authority — required for admin panel on-chain deployments                        |
 | `BACKEND_SIGNER_SECRET`         | **Server-only** | Base58 private key of the backend signer registered in `Config.backend_signer` — signs lesson completion transactions |
 | `ADMIN_SECRET`                  | **Server-only** | Admin panel password (min 32 chars). Required to access `/{locale}/admin`                                             |
@@ -73,13 +73,13 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Optional Variables
 
-| Variable                         | Type   | Notes                                           |
-| -------------------------------- | ------ | ----------------------------------------------- |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`   | Public | Google OAuth (see [setup](#google-oauth-setup)) |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public | Google Analytics 4                              |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Public | PostHog project key                             |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Public | PostHog instance URL                            |
-| `NEXT_PUBLIC_SENTRY_DSN`         | Public | Sentry error tracking (DSN is safe to expose)   |
+| Variable                         | Type            | Notes                                                      |
+| -------------------------------- | --------------- | ---------------------------------------------------------- |
+| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org) |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                         |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                        |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                       |
+| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)              |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
 
@@ -234,11 +234,9 @@ Google OAuth lets users sign in without a wallet. It requires configuration in b
 3. Paste the Client ID and Client Secret
 4. Copy the **Callback URL** Supabase shows — this must match what's in Google Cloud Console
 
-### 3. Set Environment Variable
+### 3. No App Env Var Needed
 
-```bash
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-client-id>.apps.googleusercontent.com
-```
+Google OAuth runs through Supabase Auth — enter the **Client ID** and **Client Secret** in the Supabase dashboard (**Authentication → Providers → Google**), not in the app's environment. The app has no `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
 
 > **Note**: The `profiles` table has a `github_id` column in the schema for future GitHub OAuth, but it is not currently implemented in the app.
 
@@ -259,7 +257,6 @@ After deployment, add these to your `.env.local`:
 ```bash
 NEXT_PUBLIC_PROGRAM_ID=<your-program-id>
 NEXT_PUBLIC_XP_MINT_ADDRESS=<xp-mint-pubkey-from-initialize-output>
-NEXT_PUBLIC_BACKEND_SIGNER=<your-authority-pubkey>
 ```
 
 On devnet, the deployer wallet serves as both `authority` and `backend_signer`.
