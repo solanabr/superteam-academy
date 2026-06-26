@@ -47,7 +47,7 @@ System architecture, component structure, data flow, and service interfaces for 
 | `packages/types/`    | Shared TypeScript interfaces (`Course`, `UserProfile`, `Progress`)                       |
 | `packages/config/`   | Shared ESLint, TypeScript, Tailwind configs                                              |
 | `sanity/`            | Sanity Studio schemas (`course`, `module`, `lesson`, `achievement`, `quest`) + seed data |
-| `supabase/`          | Complete Postgres schema (17 tables, indexes, RLS, functions, views)                     |
+| `supabase/`          | Complete Postgres schema (19 tables, indexes, RLS, functions, views)                     |
 
 ### Deployment Model
 
@@ -488,7 +488,7 @@ Mirror writes are non-fatal: if a Supabase write fails after an on-chain TX succ
 - **Generic errors**: No stack traces or internal details in API responses
 - **Env var guards**: API routes fail-fast with 500 if required vars are missing
 
-### RLS Model (17 tables, all with RLS enabled)
+### RLS Model (19 tables, all with RLS enabled)
 
 #### Core Tables
 

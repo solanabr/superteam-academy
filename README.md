@@ -148,7 +148,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 **Minimum variables for basic dev** (no on-chain features): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`.
 
-**Full on-chain features** require: `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`, `NEXT_PUBLIC_BACKEND_SIGNER`, `PROGRAM_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`. See [Program Deployment](docs/DEPLOY-PROGRAM.md) for the deploy and initialize workflow.
+**Full on-chain features** require: `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`, `PROGRAM_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`. See [Program Deployment](docs/DEPLOY-PROGRAM.md) for the deploy and initialize workflow.
 
 ### Development Commands
 
@@ -218,7 +218,6 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 | `NEXT_PUBLIC_SOLANA_NETWORK`  | Client | Network name (`devnet`)                                 |
 | `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `anchor deploy`                         |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS` | Client | XP mint pubkey from `initialize` output                 |
-| `NEXT_PUBLIC_BACKEND_SIGNER`  | Client | Authority pubkey (same as deployer on devnet)           |
 
 ### Admin / Signing (Required for admin panel and on-chain operations)
 
@@ -230,18 +229,13 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 | `ADMIN_SECRET`             | Server | Admin panel password (min 32 chars, random string)                                               |
 | `SANITY_ADMIN_TOKEN`       | Server | Write-enabled Sanity API token for course sync in admin panel                                    |
 
-### Auth (Optional)
-
-| Variable                       | Scope  | Description            |
-| ------------------------------ | ------ | ---------------------- |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Client | Google OAuth client ID |
-
 ### Build Server (Optional -- for code compilation features)
 
-| Variable               | Scope  | Description                                                             |
-| ---------------------- | ------ | ----------------------------------------------------------------------- |
-| `BUILD_SERVER_URL`     | Server | Cloud Run service URL                                                   |
-| `BUILD_SERVER_API_KEY` | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run) |
+| Variable               | Scope  | Description                                                                      |
+| ---------------------- | ------ | -------------------------------------------------------------------------------- |
+| `BUILD_SERVER_URL`     | Server | Cloud Run service URL                                                            |
+| `BUILD_SERVER_API_KEY` | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run)          |
+| `RUST_PLAYGROUND_URL`  | Server | Upstream for `/api/rust/execute` (default: `https://play.rust-lang.org/execute`) |
 
 ### AI Lesson Assistant (Optional)
 
