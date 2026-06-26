@@ -211,18 +211,18 @@ See `docs/ARCHITECTURE.md` for the program specification and frontend integratio
 
 ### Core Platform
 
-| Route                             | Method   | Auth     | Purpose                                                           |
-| --------------------------------- | -------- | -------- | ----------------------------------------------------------------- |
-| `/api/lessons/complete`           | POST     | Required | Mark lesson complete, award XP, auto-finalize, check achievements |
-| `/api/lessons/validate-challenge` | POST     | Required | Server-side challenge validation (gates lesson completion)        |
-| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly)                              |
-| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID                                   |
-| `/api/certificates/mint`          | POST     | Required | Manual credential mint with retry queue                           |
-| `/api/build-program`              | POST     | Required | Proxy Anchor build to build server                                |
-| `/api/deploy/save`                | POST     | Required | Save deployed program record                                      |
-| `/api/deploy/[uuid]`              | GET      | Required | Download compiled .so binary                                      |
-| `/api/rust/execute`               | POST     | Required | Proxy basic Rust execution to Rust Playground                     |
-| `/api/quests/daily`               | GET/POST | Required | Get daily quest state / award quest XP (on-chain minting)         |
+| Route                             | Method   | Auth     | Purpose                                                                                      |
+| --------------------------------- | -------- | -------- | -------------------------------------------------------------------------------------------- |
+| `/api/lessons/complete`           | POST     | Required | Mark lesson complete, award XP, auto-finalize, check achievements                            |
+| `/api/lessons/validate-challenge` | POST     | Required | Server-side challenge validation (UX pass/fail; completion gated in `/api/lessons/complete`) |
+| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly)                                                         |
+| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID                                                              |
+| `/api/certificates/mint`          | POST     | Required | Manual credential mint with retry queue                                                      |
+| `/api/build-program`              | POST     | Required | Proxy Anchor build to build server                                                           |
+| `/api/deploy/save`                | POST     | Required | Save deployed program record                                                                 |
+| `/api/deploy/[uuid]`              | GET      | Required | Download compiled .so binary                                                                 |
+| `/api/rust/execute`               | POST     | Required | Proxy basic Rust execution to Rust Playground                                                |
+| `/api/quests/daily`               | GET/POST | Required | Get daily quest state / award quest XP (on-chain minting)                                    |
 
 ### AI Lesson Assistant
 
