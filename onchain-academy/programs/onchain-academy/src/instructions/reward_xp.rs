@@ -6,6 +6,8 @@ use crate::state::{Config, MinterRole};
 use crate::utils::mint_xp;
 
 pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> {
+    require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
+
     let role = &ctx.accounts.minter_role;
 
     require!(role.is_active, AcademyError::MinterNotActive);

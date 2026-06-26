@@ -13,6 +13,8 @@ use crate::state::{AchievementReceipt, AchievementType, Config, MinterRole};
 use crate::utils::mint_xp;
 
 pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
+    require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
+
     let achievement = &ctx.accounts.achievement_type;
     let role = &ctx.accounts.minter_role;
 

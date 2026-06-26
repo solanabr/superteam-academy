@@ -5,8 +5,11 @@ use onchain_academy::state::Config;
 
 #[test]
 fn config_size_constant_is_correct() {
-    // discriminator(8) + authority(32) + backend_signer(32) + xp_mint(32) + _reserved(8) + bump(1)
-    assert_eq!(Config::SIZE, 8 + 32 + 32 + 32 + 8 + 1);
+    // discriminator(8) + authority(32) + backend_signer(32) + xp_mint(32)
+    // + paused(1) + _reserved(7) + bump(1).
+    // `paused` (1) + `_reserved` (7) together still span the original 8
+    // reserved bytes, so SIZE is unchanged at 113 — no account resize needed.
+    assert_eq!(Config::SIZE, 8 + 32 + 32 + 32 + 1 + 7 + 1);
     assert_eq!(Config::SIZE, 113);
 }
 
@@ -16,7 +19,8 @@ fn config_serialization_roundtrip() {
         authority: Pubkey::new_unique(),
         backend_signer: Pubkey::new_unique(),
         xp_mint: Pubkey::new_unique(),
-        _reserved: [0u8; 8],
+        paused: true,
+        _reserved: [0u8; 7],
         bump: 254,
     };
 
@@ -28,7 +32,8 @@ fn config_serialization_roundtrip() {
     assert_eq!(deserialized.authority, config.authority);
     assert_eq!(deserialized.backend_signer, config.backend_signer);
     assert_eq!(deserialized.xp_mint, config.xp_mint);
-    assert_eq!(deserialized._reserved, [0u8; 8]);
+    assert!(deserialized.paused);
+    assert_eq!(deserialized._reserved, [0u8; 7]);
     assert_eq!(deserialized.bump, 254);
 }
 
@@ -38,7 +43,8 @@ fn config_serialized_size_matches_constant() {
         authority: Pubkey::new_unique(),
         backend_signer: Pubkey::new_unique(),
         xp_mint: Pubkey::new_unique(),
-        _reserved: [0u8; 8],
+        paused: false,
+        _reserved: [0u8; 7],
         bump: 255,
     };
 
@@ -71,10 +77,63 @@ fn config_reserved_bytes_are_zeroed() {
         authority: Pubkey::new_unique(),
         backend_signer: Pubkey::new_unique(),
         xp_mint: Pubkey::new_unique(),
-        _reserved: [0u8; 8],
+        paused: false,
+        _reserved: [0u8; 7],
         bump: 1,
     };
 
-    assert_eq!(config._reserved, [0u8; 8]);
-    assert_eq!(config._reserved.len(), 8);
+    assert_eq!(config._reserved, [0u8; 7]);
+    assert_eq!(config._reserved.len(), 7);
+}
+
+/// A freshly initialized Config has `paused == false` — minting is open by
+/// default. Mirrors `initialize::handler`, which sets `config.paused = false`.
+#[test]
+fn freshly_initialized_config_is_not_paused() {
+    // Exactly the field values the initialize handler writes for the kill-switch
+    // (authority/backend_signer/xp_mint vary at runtime; the invariant is paused).
+    let config = Config {
+        authority: Pubkey::new_unique(),
+        backend_signer: Pubkey::new_unique(),
+        xp_mint: Pubkey::new_unique(),
+        paused: false,
+        _reserved: [0u8; 7],
+        bump: 1,
+    };
+
+    assert!(!config.paused);
+}
+
+/// `paused` occupies the FIRST former `_reserved` byte. A legacy Config written
+/// before this change has all 8 of those bytes zeroed, so the byte now read as
+/// `paused` is 0 → deserializes as `false`. This proves the no-resize migration:
+/// existing accounts come back un-paused without any data migration.
+#[test]
+fn legacy_zeroed_reserved_byte_deserializes_as_not_paused() {
+    // Reproduce a legacy account's raw bytes: the new layout is
+    // [disc(8)] authority(32) backend_signer(32) xp_mint(32) paused(1) reserved(7) bump(1).
+    // Before this change those final 8 bytes (paused + reserved) were one zeroed
+    // `[u8; 8]` reserved block. Build that exact byte image (sans discriminator,
+    // since Borsh struct (de)serialization here excludes it) and decode it.
+    let authority = Pubkey::new_unique();
+    let backend_signer = Pubkey::new_unique();
+    let xp_mint = Pubkey::new_unique();
+    let legacy_bump = 250u8;
+
+    let mut legacy = Vec::new();
+    legacy.extend_from_slice(authority.as_ref());
+    legacy.extend_from_slice(backend_signer.as_ref());
+    legacy.extend_from_slice(xp_mint.as_ref());
+    // The former `_reserved: [u8; 8]`, all zero — its first byte is now `paused`.
+    legacy.extend_from_slice(&[0u8; 8]);
+    legacy.push(legacy_bump);
+
+    let decoded = Config::deserialize(&mut legacy.as_slice()).unwrap();
+
+    assert_eq!(decoded.authority, authority);
+    assert_eq!(decoded.backend_signer, backend_signer);
+    assert_eq!(decoded.xp_mint, xp_mint);
+    assert!(!decoded.paused);
+    assert_eq!(decoded._reserved, [0u8; 7]);
+    assert_eq!(decoded.bump, legacy_bump);
 }

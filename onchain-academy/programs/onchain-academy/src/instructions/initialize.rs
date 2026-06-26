@@ -79,7 +79,8 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     config.authority = ctx.accounts.authority.key();
     config.backend_signer = ctx.accounts.authority.key();
     config.xp_mint = mint_key;
-    config._reserved = [0u8; 8];
+    config.paused = false;
+    config._reserved = [0u8; 7];
     config.bump = bump;
 
     // Auto-register authority as a minter (backend_signer defaults to authority)

@@ -64,4 +64,6 @@ pub enum AcademyError {
     EnrollmentFinalized,
     #[msg("Account is not a valid Course PDA")]
     InvalidCourseAccount,
+    #[msg("Minting is paused")]
+    MintingPaused,
 }

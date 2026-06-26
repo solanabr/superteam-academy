@@ -11,6 +11,8 @@ mod test_enrollment;
 #[cfg(test)]
 mod test_initialize;
 #[cfg(test)]
+mod test_kill_switch;
+#[cfg(test)]
 mod test_utils;
 #[cfg(test)]
 mod test_minter_role;

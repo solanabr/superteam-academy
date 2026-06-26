@@ -144,3 +144,9 @@ pub struct CourseClosed {
     pub course_id: String,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct MintingPauseSet {
+    pub paused: bool,
+    pub timestamp: i64,
+}

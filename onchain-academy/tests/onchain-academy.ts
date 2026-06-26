@@ -182,6 +182,7 @@ describe("onchain-academy", () => {
       await program.methods
         .updateConfig({
           newBackendSigner: newSigner.publicKey,
+          paused: null,
         })
         .accountsPartial({
           config: configPda,
@@ -198,6 +199,7 @@ describe("onchain-academy", () => {
       await program.methods
         .updateConfig({
           newBackendSigner: authority.publicKey,
+          paused: null,
         })
         .accountsPartial({
           config: configPda,
@@ -217,6 +219,7 @@ describe("onchain-academy", () => {
       await program.methods
         .updateConfig({
           newBackendSigner: null,
+          paused: null,
         })
         .accountsPartial({
           config: configPda,
@@ -242,6 +245,7 @@ describe("onchain-academy", () => {
         await program.methods
           .updateConfig({
             newBackendSigner: imposter.publicKey,
+            paused: null,
           })
           .accountsPartial({
             config: configPda,
@@ -257,6 +261,77 @@ describe("onchain-academy", () => {
           expect(err.toString()).to.contain("Error");
         }
       }
+    });
+
+    it("freshly initialized config is not paused", async () => {
+      const configAccount = await program.account.config.fetch(configPda);
+      expect(configAccount.paused).to.equal(false);
+    });
+
+    it("a non-authority signer cannot toggle the pause switch", async () => {
+      const imposter = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        imposter.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      try {
+        await program.methods
+          .updateConfig({
+            newBackendSigner: null,
+            paused: true,
+          })
+          .accountsPartial({
+            config: configPda,
+            authority: imposter.publicKey,
+          })
+          .signers([imposter])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("Unauthorized");
+        } else {
+          expect(err.toString()).to.contain("Error");
+        }
+      }
+
+      // The switch must remain off after the rejected attempt.
+      const configAccount = await program.account.config.fetch(configPda);
+      expect(configAccount.paused).to.equal(false);
+    });
+
+    it("the authority can pause and resume minting", async () => {
+      // Pause.
+      await program.methods
+        .updateConfig({
+          newBackendSigner: null,
+          paused: true,
+        })
+        .accountsPartial({
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+      expect((await program.account.config.fetch(configPda)).paused).to.equal(
+        true
+      );
+
+      // Resume — leave the config un-paused so later minting tests still pass.
+      await program.methods
+        .updateConfig({
+          newBackendSigner: null,
+          paused: false,
+        })
+        .accountsPartial({
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+      expect((await program.account.config.fetch(configPda)).paused).to.equal(
+        false
+      );
     });
   });
 
@@ -4410,6 +4485,7 @@ describe("onchain-academy", () => {
       await program.methods
         .updateConfig({
           newBackendSigner: newSigner.publicKey,
+          paused: null,
         })
         .accountsPartial({
           config: configPda,
@@ -4440,6 +4516,7 @@ describe("onchain-academy", () => {
       await program.methods
         .updateConfig({
           newBackendSigner: authority.publicKey,
+          paused: null,
         })
         .accountsPartial({
           config: configPda,

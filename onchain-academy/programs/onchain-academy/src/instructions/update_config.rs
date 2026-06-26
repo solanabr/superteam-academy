@@ -1,12 +1,15 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::AcademyError;
-use crate::events::ConfigUpdated;
+use crate::events::{ConfigUpdated, MintingPauseSet};
 use crate::state::{Config, MinterRole};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct UpdateConfigParams {
     pub new_backend_signer: Option<Pubkey>,
+    /// Minting kill-switch toggle. `Some(true)` pauses all minting,
+    /// `Some(false)` resumes, `None` leaves it unchanged.
+    pub paused: Option<bool>,
 }
 
 pub fn handler<'info>(
@@ -37,6 +40,14 @@ pub fn handler<'info>(
         config.backend_signer = signer;
         emit!(ConfigUpdated {
             field: "backend_signer".to_string(),
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+    }
+
+    if let Some(paused) = params.paused {
+        config.paused = paused;
+        emit!(MintingPauseSet {
+            paused,
             timestamp: Clock::get()?.unix_timestamp,
         });
     }
