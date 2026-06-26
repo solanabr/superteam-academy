@@ -2,10 +2,7 @@
   "name": "onchain-academy",
   "version": "0.1.0",
   "license": "MIT",
-  "scripts": {
-    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
-  },
+  "scripts": {},
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@metaplex-foundation/mpl-core": "^1.7.0",
