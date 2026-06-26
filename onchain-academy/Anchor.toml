@@ -24,6 +24,12 @@ url = "https://api.apr.dev"
 cluster = "devnet"
 wallet = "../wallets/signer.json"
 
+# CI runners are slow to bring the test validator up (esp. with the mpl_core
+# genesis program); the default 5s wait is too short -> "validator does not look
+# started". Give it generous headroom.
+[test]
+startup_wait = 60000
+
 [test.validator]
 bind_address = "127.0.0.1"
 

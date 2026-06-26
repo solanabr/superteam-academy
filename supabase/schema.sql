@@ -1188,6 +1188,15 @@ CREATE TRIGGER trg_update_last_activity
   AFTER INSERT ON answers
   FOR EACH ROW EXECUTE FUNCTION update_last_activity();
 
+-- update_vote_score / update_answer_count / update_last_activity are SECURITY
+-- DEFINER (they write protected denormalized columns regardless of the caller's
+-- column privileges). They run only in trigger context, which does not require
+-- EXECUTE, so drop the default PUBLIC execute grant — they must never be
+-- callable via PostgREST RPC.
+REVOKE EXECUTE ON FUNCTION update_vote_score()    FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION update_answer_count()  FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION update_last_activity() FROM PUBLIC, anon, authenticated;
+
 -- Maintain updated_at on genuine content edits only (not on the denormalized
 -- counter updates above, which would otherwise make updated_at track activity
 -- rather than edits). updated_at is server-owned — the author GRANTs below do
@@ -1505,6 +1514,9 @@ REVOKE UPDATE ON threads FROM authenticated;
 -- updated_at is omitted: it is maintained server-side by trg_threads_set_updated_at.
 GRANT UPDATE (title, body, type, category_id, course_id, lesson_id)
   ON threads TO authenticated;
+-- anon has no UPDATE RLS policy, so this grant is inert, but revoke it for
+-- defense-in-depth (Supabase default privileges may grant it on fresh deploys).
+REVOKE UPDATE ON threads FROM anon;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_thread() SECURITY DEFINER function.
 
@@ -1529,6 +1541,7 @@ CREATE POLICY "Authors can update own answers"
 REVOKE UPDATE ON answers FROM authenticated;
 -- updated_at is omitted: it is maintained server-side by trg_answers_set_updated_at.
 GRANT UPDATE (body) ON answers TO authenticated;
+REVOKE UPDATE ON answers FROM anon;
 
 -- No DELETE policy needed. Soft delete is handled via soft_delete_answer() SECURITY DEFINER function.
 
