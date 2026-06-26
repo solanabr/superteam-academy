@@ -8,9 +8,10 @@ pub struct Config {
     pub backend_signer: Pubkey,
     /// Token-2022 mint for XP
     pub xp_mint: Pubkey,
-    /// Global minting kill-switch. When true, reward_xp, award_achievement,
-    /// and issue_credential are blocked. Occupies the first former `_reserved`
-    /// byte; legacy accounts (reserved zeroed) deserialize as `false`.
+    /// Global minting kill-switch. When true, every XP-minting / credential
+    /// instruction is blocked: complete_lesson, finalize_course, reward_xp,
+    /// award_achievement, and issue_credential. Occupies the first former
+    /// `_reserved` byte; legacy accounts (reserved zeroed) deserialize as `false`.
     pub paused: bool,
     /// Reserved for future use
     pub _reserved: [u8; 7],

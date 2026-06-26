@@ -10,6 +10,8 @@ pub fn handler(ctx: Context<CompleteLesson>, lesson_index: u8) -> Result<()> {
     let enrollment = &mut ctx.accounts.enrollment;
     let config = &ctx.accounts.config;
 
+    require!(!config.paused, AcademyError::MintingPaused);
+
     require!(
         lesson_index < course.lesson_count,
         AcademyError::LessonOutOfBounds

@@ -9,6 +9,9 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
     let enrollment = &mut ctx.accounts.enrollment;
     let course = &mut ctx.accounts.course;
     let config = &ctx.accounts.config;
+
+    require!(!config.paused, AcademyError::MintingPaused);
+
     let now = Clock::get()?.unix_timestamp;
 
     require!(
