@@ -299,9 +299,15 @@ importers:
       '@types/mocha':
         specifier: ^9.0.0
         version: 9.1.1
+      anchor-litesvm:
+        specifier: ^0.2.1
+        version: 0.2.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       chai:
         specifier: ^4.3.4
         version: 4.5.0
+      litesvm:
+        specifier: 0.3.3
+        version: 0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       mocha:
         specifier: ^9.0.3
         version: 9.2.2
@@ -1703,6 +1709,9 @@ packages:
   '@humanwhocodes/object-schema@2.0.3':
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
+
+  '@iarna/toml@2.2.5':
+    resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
 
   '@inquirer/ansi@1.0.2':
     resolution: {integrity: sha512-S8qNSZiYzFd0wAcyG5AXCvUHC5Sr7xpZ9wZ2py9XR88jUz8wooStVx5M6dRzczbBWjic9NP7+rY0Xi7qqK/aMQ==}
@@ -4616,6 +4625,10 @@ packages:
     resolution: {integrity: sha512-9moZxdqeJ6GdE4N6fA/GlUP4LrbLZMYcYkt141J4Ss68OfEgH9qW0wBuZ3ZOKEx/xjc5bg7mLP2Gjg7nwrkmww==}
     engines: {node: '>=14.0.0'}
 
+  anchor-litesvm@0.2.1:
+    resolution: {integrity: sha512-WBFxuW982eXTZqxmoE0lewuPFpSipAd/MoyuRpPmYJ4bshU5eNM14XAsViQ2ARkIxeDP/W2BMoi9rRZlG/lzXw==}
+    engines: {node: '>= 20'}
+
   anser@1.4.10:
     resolution: {integrity: sha512-hCv9AqTQ8ycjpSd3upOJd7vFwW1JaoYQ7tpham03GJ1ca8/65rqn0RpaWpItOAd6ylW9wAw6luXYPJIyPFVOww==}
 
@@ -7123,6 +7136,40 @@ packages:
   listr2@8.3.3:
     resolution: {integrity: sha512-LWzX2KsqcB1wqQ4AHgYb4RsDXauQiqhjLk+6hjbaeHG4zpjjVAB6wC/gz6X0l+Du1cN3pUB5ZlrvTbhGSNnUQQ==}
     engines: {node: '>=18.0.0'}
+
+  litesvm-darwin-arm64@0.3.3:
+    resolution: {integrity: sha512-81YimsV3ezWjWLgoKixsXfVznaaecbURE3RtECgNb6Din6Za03pKGKGEN4gkyecHkv8uoPaEZv5cl6ARsgeN1Q==}
+    engines: {node: '>= 20'}
+    cpu: [arm64]
+    os: [darwin]
+
+  litesvm-darwin-x64@0.3.3:
+    resolution: {integrity: sha512-pYietuU165Bl+2eDnVp2Eidiedfjt+pljyyBAfJPbYriaFyG577mU364NiNcsfQ8ZZWbe+ygIEAVq4Ol247+1g==}
+    engines: {node: '>= 20'}
+    cpu: [x64]
+    os: [darwin]
+
+  litesvm-linux-arm64-musl@0.3.3:
+    resolution: {integrity: sha512-mkI15rWtNbaJxVFUfh+qnolqnDCZEqhwSZo/XZ48TZNsQ69vAqY00KhyFhTVJ+jeaYCAZTSNamuFIiRBxqVmNg==}
+    engines: {node: '>= 20'}
+    cpu: [arm64]
+    os: [linux]
+
+  litesvm-linux-x64-gnu@0.3.3:
+    resolution: {integrity: sha512-Qai2/E8Eq03w8VKnJDREyiWxwavjykW/H6onE179ayMnBjVVmkj5fN7XF50VV4z73kasx5bpDzBNK8fcaxMdzA==}
+    engines: {node: '>= 20'}
+    cpu: [x64]
+    os: [linux]
+
+  litesvm-linux-x64-musl@0.3.3:
+    resolution: {integrity: sha512-bpWZ2f506hbfu1y6bkmuZf+qqtnLDxggpOMTQbibjd+q6faEO3sETWwKGlIgHB99P8wyU+aXKwLSGQX2sJEw6Q==}
+    engines: {node: '>= 20'}
+    cpu: [x64]
+    os: [linux]
+
+  litesvm@0.3.3:
+    resolution: {integrity: sha512-QHXjAIXzvG0uAMOza6aJcYl19yTKz3guwq/z0Zml4KnQxyQvPhjaBpUFc5sf2ey/NxMVdqFhoXmL02CXOOomjw==}
+    engines: {node: '>= 20'}
 
   load-yaml-file@0.2.0:
     resolution: {integrity: sha512-OfCBkGEw4nN6JLtgRidPX6QxjBQGQf72q3si2uvqyFEMbycSFFHwAZeXx6cJgFM9wmLrf9zBwCP3Ivqa+LLZPw==}
@@ -11774,6 +11821,8 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.3': {}
 
+  '@iarna/toml@2.2.5': {}
+
   '@inquirer/ansi@1.0.2': {}
 
   '@inquirer/checkbox@4.3.2(@types/node@22.19.9)':
@@ -15683,6 +15732,18 @@ snapshots:
       - encoding
     optional: true
 
+  anchor-litesvm@0.2.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
+    dependencies:
+      '@coral-xyz/anchor': 0.31.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@iarna/toml': 2.2.5
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      litesvm: 0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
+
   anser@1.4.10: {}
 
   ansi-colors@4.1.1: {}
@@ -18616,6 +18677,38 @@ snapshots:
       log-update: 6.1.0
       rfdc: 1.4.1
       wrap-ansi: 9.0.2
+
+  litesvm-darwin-arm64@0.3.3:
+    optional: true
+
+  litesvm-darwin-x64@0.3.3:
+    optional: true
+
+  litesvm-linux-arm64-musl@0.3.3:
+    optional: true
+
+  litesvm-linux-x64-gnu@0.3.3:
+    optional: true
+
+  litesvm-linux-x64-musl@0.3.3:
+    optional: true
+
+  litesvm@0.3.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
+    dependencies:
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      bs58: 6.0.0
+      fastestsmallesttextencoderdecoder: 1.0.22
+    optionalDependencies:
+      litesvm-darwin-arm64: 0.3.3
+      litesvm-darwin-x64: 0.3.3
+      litesvm-linux-arm64-musl: 0.3.3
+      litesvm-linux-x64-gnu: 0.3.3
+      litesvm-linux-x64-musl: 0.3.3
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
 
   load-yaml-file@0.2.0:
     dependencies:
