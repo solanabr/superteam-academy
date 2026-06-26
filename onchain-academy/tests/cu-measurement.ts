@@ -21,6 +21,7 @@ import {
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import BN from "bn.js";
 import { readFileSync, writeFileSync } from "fs";
 import * as path from "path";
 
@@ -165,6 +166,104 @@ describe("CU measurement (#121)", () => {
         })
     );
 
+    // --- course lifecycle ---
+    await measure(
+      "update_course",
+      program.methods
+        .updateCourse({
+          newContentTxId: new Array(32).fill(2),
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: null,
+        })
+        .accountsPartial({
+          course: coursePda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+    );
+
+    // --- minter lifecycle ---
+    const minter1 = Keypair.generate();
+    const [minter1Role] = PublicKey.findProgramAddressSync(
+      [Buffer.from("minter"), minter1.publicKey.toBuffer()],
+      PROGRAM_ID
+    );
+    await measure(
+      "register_minter",
+      program.methods
+        .registerMinter({
+          minter: minter1.publicKey,
+          label: "cu-test",
+          maxXpPerCall: new BN(0),
+          maxTotalXp: new BN(0),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: minter1Role,
+          authority: authority.publicKey,
+          payer: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+    );
+    await measure(
+      "update_minter",
+      program.methods
+        .updateMinter({
+          maxXpPerCall: new BN(10),
+          maxTotalXp: new BN(100),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: minter1Role,
+          authority: authority.publicKey,
+        })
+    );
+    await measure(
+      "revoke_minter",
+      program.methods.revokeMinter().accountsPartial({
+        config: configPda,
+        minterRole: minter1Role,
+        authority: authority.publicKey,
+      })
+    );
+
+    // --- enrollment lifecycle ---
+    const learner1 = Keypair.generate();
+    svm.airdrop(learner1.publicKey, BigInt(10 * LAMPORTS_PER_SOL));
+    const [enroll1] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("enrollment"),
+        Buffer.from(courseId),
+        learner1.publicKey.toBuffer(),
+      ],
+      PROGRAM_ID
+    );
+    await measure(
+      "enroll",
+      program.methods.enroll(courseId).accountsPartial({
+        course: coursePda,
+        enrollment: enroll1,
+        learner: learner1.publicKey,
+        systemProgram: SystemProgram.programId,
+      }),
+      [learner1]
+    );
+    // (close_enrollment is deferred — it requires a finalized enrollment,
+    // which depends on the Token-2022 mint flow; see the deferred list below.)
+
+    // close_course last.
+    await measure(
+      "close_course",
+      program.methods.closeCourse(courseId).accountsPartial({
+        config: configPda,
+        course: coursePda,
+        authority: authority.publicKey,
+      })
+    );
+
     // Write the baseline table.
     const measured = rows.filter((r) => r.cu !== null);
     const lines = [
@@ -180,9 +279,17 @@ describe("CU measurement (#121)", () => {
           `| ${r.name} | ${r.cu !== null ? r.cu : "n/a — " + (r.note ?? "")} |`
       ),
       "",
-      `Measured ${measured.length}/${rows.length} attempted. Mint/Metaplex-Core`,
-      "instructions that need Token-2022 ATA / umi collection setup are added",
-      "incrementally; see the issue for the remaining coverage plan.",
+      `**Measured ${measured.length}/${rows.length}** of the no-CPI instructions.`,
+      "",
+      "## Deferred — need Token-2022 mint / Metaplex-Core setup",
+      "",
+      "These mint XP or CPI into mpl_core; add them with the same harness pattern",
+      "plus the extra setup noted:",
+      "",
+      "- `reward_xp`, `complete_lesson`, `finalize_course` — mint Token-2022 XP (need an XP mint + recipient ATA)",
+      "- `create_achievement_type`, `deactivate_achievement_type`, `award_achievement` — mpl_core collection (CPI)",
+      "- `issue_credential`, `upgrade_credential` — mpl_core asset (CPI)",
+      "- `close_enrollment` — needs a finalized enrollment (depends on the mint flow)",
       "",
     ];
     writeFileSync(path.join(ROOT, "tests/CU_BASELINE.md"), lines.join("\n"));
