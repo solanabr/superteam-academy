@@ -22,6 +22,7 @@ import {
 } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";
+import { expect } from "chai";
 import { readFileSync, writeFileSync } from "fs";
 import * as path from "path";
 
@@ -279,7 +280,7 @@ describe("CU measurement (#121)", () => {
           `| ${r.name} | ${r.cu !== null ? r.cu : "n/a — " + (r.note ?? "")} |`
       ),
       "",
-      `**Measured ${measured.length}/${rows.length}** of the no-CPI instructions.`,
+      `**Measured ${measured.length} transactions across 9 no-CPI instructions** (update_config is measured for both pause and resume).`,
       "",
       "## Deferred — need Token-2022 mint / Metaplex-Core setup",
       "",
@@ -297,5 +298,23 @@ describe("CU measurement (#121)", () => {
     console.log(
       `\nWrote tests/CU_BASELINE.md (${measured.length}/${rows.length} measured)`
     );
+
+    // Gate: every attempted instruction must have executed, and each CU must be
+    // positive and within a sane ceiling — so the test FAILS (rather than
+    // silently recording nulls) if an instruction breaks or CU regresses hard.
+    const failed = rows.filter((r) => r.cu === null);
+    expect(
+      failed,
+      `instructions failed to execute: ${failed
+        .map((f) => `${f.name} (${f.note})`)
+        .join("; ")}`
+    ).to.have.length(0);
+    for (const r of rows) {
+      expect(r.cu, `${r.name} CU should be positive`).to.be.greaterThan(0);
+      expect(
+        r.cu as number,
+        `${r.name} CU=${r.cu} exceeds the 100k ceiling — investigate a regression`
+      ).to.be.lessThan(100_000);
+    }
   });
 });

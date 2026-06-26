@@ -5,18 +5,18 @@ against a release SBF build. Deterministic; no validator required.
 
 | Instruction            |    CU |
 | ---------------------- | ----: |
-| initialize             | 32454 |
+| initialize             | 27954 |
 | update_config (pause)  |  3826 |
 | update_config (resume) |  3826 |
 | create_course          | 12449 |
 | update_course          |  7487 |
-| register_minter        | 11209 |
+| register_minter        | 12709 |
 | update_minter          |  6474 |
 | revoke_minter          |  6116 |
 | enroll                 | 12386 |
 | close_course           |  6160 |
 
-**Measured 10/10** of the no-CPI instructions.
+**Measured 10 transactions across 9 no-CPI instructions** (update_config is measured for both pause and resume).
 
 ## Deferred — need Token-2022 mint / Metaplex-Core setup
 
