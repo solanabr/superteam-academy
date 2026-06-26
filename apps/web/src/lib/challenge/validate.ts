@@ -4,8 +4,10 @@
  * Single source of truth used by BOTH `/api/lessons/validate-challenge` (UX
  * pre-check) and `/api/lessons/complete` (the authoritative completion gate).
  * Loads the answer key server-side (hidden tests + reference solution never
- * reach the browser) and runs the submission through the secure isolate
- * executor.
+ * reach the browser) and runs the submission through the appropriate secure
+ * executor: the in-process V8 isolate for JS/TS, or the Rust executor (Rust
+ * Playground, server-to-server) for rust function challenges. `buildable`
+ * (Anchor) challenges have no non-forgeable substrate and fail closed.
  */
 
 import type { ChallengeAnswerKey } from "@/lib/sanity/queries";
@@ -14,6 +16,10 @@ import {
   runJsSubmission,
   type ServerTestResult,
 } from "@/lib/challenge/executor";
+import {
+  isRustExecutorAvailable,
+  runRustSubmission,
+} from "@/lib/challenge/rust-executor";
 
 export type ChallengeVerdict =
   | {
@@ -26,9 +32,16 @@ export type ChallengeVerdict =
     }
   | {
       /**
-       * Lesson is a challenge, but its correctness is established elsewhere
-       * (Rust playground / build server) rather than by the JS executor. The
-       * completion gate must decide policy for these explicitly.
+       * Lesson is a challenge whose correctness CANNOT be established
+       * non-forgeably with the substrates we have. In practice this is the
+       * `buildType: "buildable"` (Anchor) path: the Cloud Run build server is
+       * compile-only — it can prove a submission compiles, but has no
+       * run-the-submission-against-hidden-tests capability, so grading "it
+       * compiled" as "passed" would be forgeable test validation. The
+       * completion gate MUST treat this as deny (fail closed) until a real
+       * grading substrate exists (a build-server test endpoint / #196-style
+       * microservice). Rust *function* challenges do NOT land here — they are
+       * graded by the Rust executor and return `validated`.
        */
       kind: "non_js_challenge";
       language: string | null;
@@ -63,21 +76,42 @@ function countTests(key: ChallengeAnswerKey): {
 }
 
 /**
- * A JS/TS code challenge is one we can execute and grade server-side. Rust
- * (`language: "rust"`) and buildable challenges are compiled by the Rust
- * playground / build server respectively and are out of scope for the JS
- * isolate executor.
+ * A `buildable` (Anchor) challenge is compiled by the Cloud Run build server,
+ * which is COMPILE-ONLY — it cannot run a submission against tests. We therefore
+ * cannot grade it non-forgeably and must fail closed (see the `non_js_challenge`
+ * verdict). This takes precedence over the language check: a buildable challenge
+ * is buildable even if `language === "rust"`.
  */
-function isJsExecutableChallenge(key: ChallengeAnswerKey): boolean {
-  if (key.type !== "challenge") return false;
-  if (key.buildType === "buildable") return false;
-  // Treat anything that isn't explicitly rust as JS/TS (matches the browser
-  // runner, which only routes language === "rust" away from the JS worker).
-  return key.language !== "rust";
+function isBuildableChallenge(key: ChallengeAnswerKey): boolean {
+  return key.type === "challenge" && key.buildType === "buildable";
+}
+
+/**
+ * A Rust *function* challenge: `language === "rust"` and NOT buildable. Graded
+ * server-side by compiling + running the submission via the Rust executor
+ * (Rust Playground), mirroring the browser runner's rust path. Everything that
+ * is neither buildable nor rust is treated as JS/TS and graded by the isolate
+ * executor (matches the browser runner, which only routes `language === "rust"`
+ * away from the JS worker).
+ */
+function isRustExecutableChallenge(key: ChallengeAnswerKey): boolean {
+  return (
+    key.type === "challenge" &&
+    key.buildType !== "buildable" &&
+    key.language === "rust"
+  );
 }
 
 /**
  * Validate a submission against the answer key. Pure logic — no auth, no HTTP.
+ *
+ * Routing:
+ *   - buildable (Anchor)  → `non_js_challenge` (deny; substrate is compile-only)
+ *   - rust function       → graded by the Rust executor (Rust Playground)
+ *   - everything else     → graded by the JS isolate executor
+ *
+ * Both executable paths degrade closed: an unavailable/erroring substrate yields
+ * `executor_unavailable` (a non-pass), never a silent pass.
  */
 export async function validateAgainstAnswerKey(
   key: ChallengeAnswerKey,
@@ -88,8 +122,15 @@ export async function validateAgainstAnswerKey(
   }
 
   const { hidden, visible } = countTests(key);
+  const unavailable: ChallengeVerdict = {
+    kind: "executor_unavailable",
+    hiddenTestCount: hidden,
+    visibleTestCount: visible,
+  };
 
-  if (!isJsExecutableChallenge(key)) {
+  // Buildable (Anchor) challenges have no non-forgeable grading substrate — the
+  // build server is compile-only. Fail closed (deny) until one exists.
+  if (isBuildableChallenge(key)) {
     return {
       kind: "non_js_challenge",
       language: key.language,
@@ -99,21 +140,23 @@ export async function validateAgainstAnswerKey(
     };
   }
 
-  if (!(await isExecutorAvailable())) {
-    return {
-      kind: "executor_unavailable",
-      hiddenTestCount: hidden,
-      visibleTestCount: visible,
-    };
+  // Pick the substrate. Rust function challenges compile+run via the Rust
+  // executor; all other challenges run in the JS isolate. Each runner shares the
+  // same availability/result contract (SubmissionRunResult).
+  const rust = isRustExecutableChallenge(key);
+
+  if (
+    rust ? !(await isRustExecutorAvailable()) : !(await isExecutorAvailable())
+  ) {
+    return unavailable;
   }
 
-  const run = await runJsSubmission(submittedCode, key.tests ?? []);
+  const run = rust
+    ? await runRustSubmission(submittedCode, key.tests ?? [])
+    : await runJsSubmission(submittedCode, key.tests ?? []);
+
   if (!run.available) {
-    return {
-      kind: "executor_unavailable",
-      hiddenTestCount: hidden,
-      visibleTestCount: visible,
-    };
+    return unavailable;
   }
 
   return {

@@ -256,18 +256,115 @@ describe("validateAgainstAnswerKey (classification, no isolate)", () => {
     expect(verdict.kind).toBe("not_a_challenge");
   });
 
-  it("classifies rust / buildable challenges as non_js_challenge", async () => {
-    const rust = await validateAgainstAnswerKey(
-      answerKey({ language: "rust" }),
-      "fn add() {}"
-    );
-    expect(rust.kind).toBe("non_js_challenge");
-
+  it("classifies BUILDABLE (Anchor) challenges as non_js_challenge (deny — compile-only substrate)", async () => {
     const buildable = await validateAgainstAnswerKey(
       answerKey({ buildType: "buildable" }),
       "// program"
     );
     expect(buildable.kind).toBe("non_js_challenge");
+
+    // Buildable wins even when language is rust — there is still no
+    // run-against-tests substrate for it.
+    const buildableRust = await validateAgainstAnswerKey(
+      answerKey({ language: "rust", buildType: "buildable" }),
+      "// program"
+    );
+    expect(buildableRust.kind).toBe("non_js_challenge");
+  });
+});
+
+// Rust function challenges are now graded by the Rust executor (Rust Playground).
+// The executor module is MOCKED so these are deterministic and never touch the
+// network — they prove validate.ts ROUTES rust away from the JS isolate, maps a
+// passing/failing run to validated, and degrades closed on substrate failure.
+describe("validateAgainstAnswerKey — rust routing (rust-executor mocked)", () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  async function importWithRust(
+    run: () => Promise<unknown>,
+    available = true
+  ): Promise<typeof import("../validate")> {
+    vi.resetModules();
+    vi.doMock("@/lib/challenge/rust-executor", () => ({
+      isRustExecutorAvailable: vi.fn().mockResolvedValue(available),
+      runRustSubmission: vi.fn(run),
+    }));
+    // The JS executor must NOT be consulted for a rust challenge — make it throw
+    // if it ever is, so a routing regression fails loudly.
+    vi.doMock("@/lib/challenge/executor", () => ({
+      isExecutorAvailable: vi.fn(async () => {
+        throw new Error("JS executor must not run for a rust challenge");
+      }),
+      runJsSubmission: vi.fn(async () => {
+        throw new Error("JS executor must not run for a rust challenge");
+      }),
+    }));
+    return import("../validate");
+  }
+
+  it("routes rust → runRustSubmission and returns validated+passed", async () => {
+    const { validateAgainstAnswerKey: validate } = await importWithRust(
+      async () => ({
+        available: true,
+        passed: true,
+        results: [
+          { id: "visible-1", hidden: false, passed: true, detail: "pass" },
+          { id: "hidden-1", hidden: true, passed: true, detail: "pass" },
+        ],
+      })
+    );
+    const verdict = await validate(
+      answerKey({ language: "rust" }),
+      "fn add(a:i32,b:i32)->i32{a+b}"
+    );
+    expect(verdict.kind).toBe("validated");
+    if (verdict.kind !== "validated") return;
+    expect(verdict.passed).toBe(true);
+    expect(verdict.hiddenTestCount).toBe(1);
+    expect(verdict.visibleTestCount).toBe(1);
+  });
+
+  it("returns validated+!passed when the rust run fails the hidden test (gate would 403)", async () => {
+    const { validateAgainstAnswerKey: validate } = await importWithRust(
+      async () => ({
+        available: true,
+        passed: false,
+        results: [
+          { id: "visible-1", hidden: false, passed: true, detail: "pass" },
+          { id: "hidden-1", hidden: true, passed: false, detail: "got 200" },
+        ],
+      })
+    );
+    const verdict = await validate(
+      answerKey({ language: "rust" }),
+      "fn add(){}"
+    );
+    expect(verdict.kind).toBe("validated");
+    if (verdict.kind !== "validated") return;
+    expect(verdict.passed).toBe(false);
+  });
+
+  it("degrades CLOSED: rust substrate unavailable ⇒ executor_unavailable, not a pass", async () => {
+    const { validateAgainstAnswerKey: validate } = await importWithRust(
+      async () => {
+        throw new Error("runRustSubmission must not run when unavailable");
+      },
+      false // isRustExecutorAvailable → false
+    );
+    const verdict = await validate(answerKey({ language: "rust" }), CORRECT);
+    expect(verdict.kind).toBe("executor_unavailable");
+    expect("passed" in verdict).toBe(false);
+  });
+
+  it("degrades CLOSED: rust run reports available:false ⇒ executor_unavailable", async () => {
+    const { validateAgainstAnswerKey: validate } = await importWithRust(
+      async () => ({ available: false, reason: "executor_unavailable" })
+    );
+    const verdict = await validate(answerKey({ language: "rust" }), CORRECT);
+    expect(verdict.kind).toBe("executor_unavailable");
   });
 });
 

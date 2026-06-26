@@ -124,15 +124,18 @@ export async function POST(request: NextRequest) {
             { status: 503 }
           );
         case "non_js_challenge":
-          // FAIL CLOSED. Rust / buildable challenges must be graded by the Rust
-          // playground / build server (a separate trust boundary), but that
-          // validation handshake is NOT wired up yet. Until it is, the server
-          // cannot prove the submission is correct, so it MUST NOT submit the
-          // on-chain completeLesson — a bare fall-through here would grant a
-          // completion (and credential eligibility) for any unverified
-          // Rust/buildable submission. Deny exactly like executor_unavailable.
-          // TODO(#195 follow-up): wire a real Rust/build-server validation
-          // handshake, then gate this branch on its passing verdict.
+          // FAIL CLOSED. Reaches here ONLY for `buildType: "buildable"` (Anchor)
+          // challenges: the Cloud Run build server is compile-only and cannot
+          // run a submission against the hidden tests, so there is no
+          // non-forgeable way to prove correctness (grading "it compiled" as
+          // "passed" would be forgeable). A bare fall-through would grant a
+          // completion (and credential eligibility) for any compiling Anchor
+          // submission. Deny exactly like executor_unavailable. Rust *function*
+          // challenges are now graded by the Rust executor (validate.ts) and
+          // return `validated`, so they no longer land here.
+          // TODO(#197 follow-up): a build-server "run tests against submission"
+          // endpoint (or #196-style microservice) would let buildable be graded
+          // non-forgeably; gate this branch on its passing verdict then.
           return NextResponse.json(
             {
               error:
