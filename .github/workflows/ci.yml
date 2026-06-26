@@ -237,8 +237,15 @@ jobs:
       - name: Anchor test (localnet)
         # Override the cluster to localnet so anchor test runs against the local
         # validator it spins up (the tests airdrop heavily, which only works on
-        # localnet) instead of Anchor.toml's devnet default.
-        run: anchor test --provider.cluster localnet
+        # localnet) instead of Anchor.toml's devnet default. On failure, dump the
+        # test-validator log so a validator crash (vs. slow startup) is visible.
+        run: |
+          anchor test --provider.cluster localnet || {
+            echo "::group::test-ledger-log.txt"
+            cat .anchor/test-ledger/test-ledger-log.txt 2>/dev/null || echo "(no test-ledger-log found)"
+            echo "::endgroup::"
+            exit 1
+          }
         working-directory: onchain-academy
 
   # ── Verifiable build + program-hash publishing (P1-4, feeds G-3) ────────────
