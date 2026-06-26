@@ -2,7 +2,10 @@
 # Pin the Anchor CLI so `anchor build --verifiable` selects an explicit Docker
 # image tag (solanafoundation/anchor:<version>) instead of the avm-installed CLI version.
 anchor_version = "0.31.1"
-package_manager = "yarn"
+# Match the monorepo (root packageManager = pnpm@9.15.0). Using yarn here while
+# the root pins pnpm makes Anchor emit a malformed packageManager and breaks
+# `anchor test` in CI (P1-13).
+package_manager = "pnpm"
 
 [features]
 resolution = true
@@ -29,4 +32,4 @@ address = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
 program = "tests/fixtures/mpl_core.so"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
