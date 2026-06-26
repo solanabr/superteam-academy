@@ -1,0 +1,61 @@
+name: Lighthouse
+
+# G-6 — frontend Lighthouse gate (Performance 90+, Accessibility 95+,
+# Best Practices 95+, SEO 90+). Thresholds are asserted in lighthouserc.json.
+#
+# REPORT-ONLY for now: the build + Lighthouse steps use continue-on-error so this
+# never blocks required checks while the setup is validated and the four scores
+# are brought to target. Once a run is green, remove the continue-on-error lines
+# to make G-6 a hard gate.
+#
+# NOTE: this builds + serves the app with placeholder env (P0-C2 validation
+# throws otherwise), so data-fetching pages degrade to empty/fallback states —
+# scores are indicative, not production-accurate. For true scores, point
+# Lighthouse at a real preview deployment (e.g. the Vercel preview URL) instead
+# of the locally-served build.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+env:
+  NODE_VERSION: "20"
+  # Placeholder env — NOT real credentials — so the app boots for measurement.
+  NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
+  SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key"
+  NEXT_PUBLIC_SANITY_PROJECT_ID: "placeholder"
+  NEXT_PUBLIC_SANITY_DATASET: "production"
+  NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com"
+  NEXT_PUBLIC_SOLANA_NETWORK: "devnet"
+  NEXT_PUBLIC_PROGRAM_ID: "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V"
+
+jobs:
+  lighthouse:
+    name: Lighthouse (report-only)
+    runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        # RATCHET: report-only (see header). Building with placeholder env may
+        # fail on statically-prerendered data fetches until env/preview is wired.
+        continue-on-error: true
+        run: pnpm --filter @superteam-lms/web build
+
+      - name: Lighthouse CI
+        # RATCHET: report-only — flip to a hard gate (remove continue-on-error)
+        # once all four thresholds pass.
+        continue-on-error: true
+        run: pnpm dlx @lhci/cli@0.14 autorun
