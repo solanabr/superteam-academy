@@ -14,7 +14,6 @@ Superteam Academy is a **decentralized learning platform on Solana**. Learners e
 - `docs/CUSTOMIZATION.md` — Theming, i18n, and extensibility
 - `docs/ADMIN.md` — Admin panel guide for Sanity-to-on-chain sync
 - `docs/DEPLOY-PROGRAM.md` — Devnet program deployment guide
-- `audit/SPEC.md` — Program specification v3.0 (archival copy)
 
 ## Communication Style
 
@@ -79,7 +78,7 @@ superteam-academy/
 │   │   │   │   │       ├── leaderboard/
 │   │   │   │   │       ├── certificates/ (list + [id])
 │   │   │   │   │       └── settings/
-│   │   │   │   ├── api/                    # See API Routes table below (29 routes)
+│   │   │   │   ├── api/                    # See API Routes table below (34 routes)
 │   │   │   │   ├── studio/[[...tool]]/     # Embedded Sanity Studio
 │   │   │   │   ├── error.tsx          # Global error (inline i18n)
 │   │   │   │   ├── not-found.tsx      # Global 404 (inline i18n)
@@ -150,7 +149,7 @@ superteam-academy/
 │   ├── seed/                      # Seed data JSON files + import.mjs script (includes quests.json)
 │   └── sanity.config.ts
 ├── supabase/
-│   └── schema.sql                 # Complete DB schema (17 tables, indexes, RLS, functions, views)
+│   └── schema.sql                 # Complete DB schema (19 tables, indexes, RLS, functions, views)
 ├── wallets/                       ← Keypairs (gitignored)
 ├── scripts/                       ← Helper scripts
 └── .claude/
@@ -187,7 +186,7 @@ superteam-academy/
 
 16 instructions, 6 PDA types, 27 error variants, 15 events.
 
-See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for frontend integration details.
+See `docs/ARCHITECTURE.md` for the program specification and frontend integration details (the on-chain program source is under `onchain-academy/programs/`).
 
 ### Key Design Decisions
 
@@ -198,7 +197,7 @@ See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for fro
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
 - **Reserved bytes** on all accounts for future-proofing
 
-## Frontend API Routes (29 routes)
+## Frontend API Routes (34 routes)
 
 ### Auth
 
@@ -212,17 +211,25 @@ See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for fro
 
 ### Core Platform
 
-| Route                        | Method   | Auth     | Purpose                                                           |
-| ---------------------------- | -------- | -------- | ----------------------------------------------------------------- |
-| `/api/lessons/complete`      | POST     | Required | Mark lesson complete, award XP, auto-finalize, check achievements |
-| `/api/leaderboard`           | GET      | None     | XP rankings (alltime/weekly/monthly)                              |
-| `/api/certificates/metadata` | GET      | None     | Serve NFT metadata JSON by UUID                                   |
-| `/api/certificates/mint`     | POST     | Required | Manual credential mint with retry queue                           |
-| `/api/build-program`         | POST     | Required | Proxy Anchor build to build server                                |
-| `/api/deploy/save`           | POST     | Required | Save deployed program record                                      |
-| `/api/deploy/[uuid]`         | GET      | Required | Download compiled .so binary                                      |
-| `/api/rust/execute`          | POST     | Required | Proxy basic Rust execution to Rust Playground                     |
-| `/api/quests/daily`          | GET/POST | Required | Get daily quest state / award quest XP (on-chain minting)         |
+| Route                             | Method   | Auth     | Purpose                                                           |
+| --------------------------------- | -------- | -------- | ----------------------------------------------------------------- |
+| `/api/lessons/complete`           | POST     | Required | Mark lesson complete, award XP, auto-finalize, check achievements |
+| `/api/lessons/validate-challenge` | POST     | Required | Server-side challenge validation (gates lesson completion)        |
+| `/api/leaderboard`                | GET      | None     | XP rankings (alltime/weekly/monthly)                              |
+| `/api/certificates/metadata`      | GET      | None     | Serve NFT metadata JSON by UUID                                   |
+| `/api/certificates/mint`          | POST     | Required | Manual credential mint with retry queue                           |
+| `/api/build-program`              | POST     | Required | Proxy Anchor build to build server                                |
+| `/api/deploy/save`                | POST     | Required | Save deployed program record                                      |
+| `/api/deploy/[uuid]`              | GET      | Required | Download compiled .so binary                                      |
+| `/api/rust/execute`               | POST     | Required | Proxy basic Rust execution to Rust Playground                     |
+| `/api/quests/daily`               | GET/POST | Required | Get daily quest state / award quest XP (on-chain minting)         |
+
+### AI Lesson Assistant
+
+| Route             | Method | Auth     | Purpose                                                         |
+| ----------------- | ------ | -------- | --------------------------------------------------------------- |
+| `/api/ai/chat`    | POST   | Required | Lesson tutor chat (Gemini); rate-limited + input-capped         |
+| `/api/ai/suggest` | POST   | Required | Challenge code suggestion (Gemini); rate-limited + input-capped |
 
 ### Community Forum
 
@@ -230,8 +237,10 @@ See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for fro
 | ------------------------------------ | -------- | -------- | ------------------------------------------------ |
 | `/api/community/threads`             | GET/POST | Varies   | List threads (cursor pagination) / create thread |
 | `/api/community/threads/[id]`        | GET      | None     | Thread detail with answers                       |
+| `/api/community/threads/[id]/delete` | POST     | Required | Soft-delete own thread (author only)             |
 | `/api/community/answers`             | POST     | Required | Post answer to a thread                          |
 | `/api/community/answers/[id]/accept` | POST     | Required | Accept an answer (thread author only)            |
+| `/api/community/answers/[id]/delete` | POST     | Required | Soft-delete own answer (author only)             |
 | `/api/community/votes`               | POST     | Required | Upvote/downvote thread or answer                 |
 | `/api/community/flags`               | POST     | Required | Flag content for moderation                      |
 | `/api/community/search`              | GET      | None     | Full-text search across threads                  |
@@ -277,13 +286,13 @@ See `audit/SPEC.md` for program specification and `docs/ARCHITECTURE.md` for fro
 
 ### Database (Supabase)
 
-- **RLS enabled** on all 17 tables
+- **RLS enabled** on all 19 tables
 - **Core tables** (10): profiles, enrollments, user_progress, user_xp, xp_transactions, user_achievements, certificates, nft_metadata, siws_nonces, deployed_programs
-- **Community tables** (5): forum_categories, threads, answers, votes, flags
-- **Queue/quest tables** (2): pending_onchain_actions, user_daily_quests
-- **View**: `community_stats` (aggregated thread/answer/accepted counts per user)
+- **Community tables** (6): forum_categories, threads, answers, votes, flags, thread_views
+- **Queue/quest/infra tables** (3): pending_onchain_actions, user_daily_quests, rate_limits
+- **Views**: `community_stats` (per-user thread/answer/accepted counts) and `public_user_xp` (non-sensitive user_id/total_xp/level for public profiles)
 - Users can only SELECT/INSERT/UPDATE their own rows (verified via `auth.uid()`)
-- Leaderboard data (user_xp, xp_transactions) has a public SELECT policy
+- Leaderboard data is served via the `get_leaderboard()` SECURITY DEFINER function + `public_user_xp` view; `user_xp`/`xp_transactions` are own-row SELECT only (no broad public policy)
 - Community data (forum_categories, threads, answers, votes) has public SELECT policies
 - `award_xp()`, `unlock_achievement()`, and `get_daily_quest_state()` are **SECURITY DEFINER** functions
 - **REVOKE**d from `authenticated`, `anon`, and `public` roles — **GRANT**ed only to `service_role`
@@ -336,9 +345,13 @@ NEXT_PUBLIC_PROGRAM_ID=            # Deployed program ID (used by webhook decode
 ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
+HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (JSON array of 64 keypair bytes)
 PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64 keypair bytes)
+
+# Optional — Rust playground proxy (server-only)
+RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
 
 # Optional — Permanent credential storage (server-only)
 # Funds Irys uploads that pin credential metadata to Arweave at mint, so the

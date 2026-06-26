@@ -4,7 +4,7 @@
 
 Each bounty applicant deploys their own program instance on devnet. This gives you full authority over the program — no shared keys, no waiting on others, and a clean environment to test your frontend against.
 
-Architecture reference: [ARCHITECTURE.md](./ARCHITECTURE.md) | Program specification: [audit/SPEC.md](../audit/SPEC.md)
+Architecture reference: [ARCHITECTURE.md](./ARCHITECTURE.md) (program specification + on-chain details)
 
 ---
 
