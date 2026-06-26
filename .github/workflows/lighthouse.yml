@@ -16,7 +16,9 @@ name: Lighthouse
 
 on:
   pull_request:
-    types: [opened, ready_for_review, reopened]
+    # Include synchronize so every pushed commit is retested — otherwise only the
+    # first commit is ever checked (critical once this becomes a hard gate).
+    types: [opened, synchronize, ready_for_review, reopened]
 
 env:
   NODE_VERSION: "20"
@@ -34,7 +36,6 @@ jobs:
   lighthouse:
     name: Lighthouse (report-only)
     runs-on: ubuntu-latest
-    if: github.event.action != 'labeled'
     steps:
       - uses: actions/checkout@v4
 
@@ -58,4 +59,4 @@ jobs:
         # RATCHET: report-only — flip to a hard gate (remove continue-on-error)
         # once all four thresholds pass.
         continue-on-error: true
-        run: pnpm dlx @lhci/cli@0.14 autorun
+        run: pnpm dlx @lhci/cli@0.14.0 autorun
