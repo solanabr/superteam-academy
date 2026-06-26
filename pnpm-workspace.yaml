@@ -2,3 +2,6 @@ packages:
   - "apps/*"
   - "packages/*"
   - "sanity"
+  # onchain test deps (ts-mocha/chai/anchor) so `pnpm install` provides them for
+  # `anchor test` — see Anchor.toml [scripts] test (P1-13).
+  - "onchain-academy"
