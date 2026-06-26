@@ -2,8 +2,10 @@ name: CI
 
 # P0-C3 — every PR runs build/test/lint/typecheck/audit and blocks on failure.
 # Required checks (make green before merge): frontend, onchain-rust, build-server.
-# The `anchor-localnet` job is opt-in until P1-10 parameterizes Anchor.toml to localnet
-# with a funded keypair — enable by setting the repo variable ENABLE_ANCHOR_TEST=true.
+# The `anchor-localnet` job runs `anchor test` against a local validator (P1-10).
+# It stays opt-in (skipped, never failed) until the repo variable
+# ENABLE_ANCHOR_TEST=true is set, so it can't break required checks before it's
+# proven green.
 
 on:
   push:
@@ -180,8 +182,10 @@ jobs:
         run: cargo audit --file apps/build-server/Cargo.lock
 
   # ── Anchor integration tests on localnet (opt-in until P1-10) ───────────────
-  # Requires P1-10: parameterize Anchor.toml cluster -> localnet + a funded CI
-  # keypair. Enable by setting repo variable ENABLE_ANCHOR_TEST=true.
+  # P1-10: run `anchor test` unattended against a local validator. The CI keypair
+  # is generated below; the test step overrides the cluster to localnet (Anchor.toml
+  # keeps cluster=devnet for real deploys). Enable by setting repo variable
+  # ENABLE_ANCHOR_TEST=true.
   anchor-localnet:
     name: Anchor test (localnet)
     runs-on: ubuntu-latest
@@ -223,13 +227,18 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate CI keypair
+        # Anchor.toml provider.wallet = "../wallets/signer.json" (repo-root/wallets);
+        # anchor test's local validator funds it before deploy.
         run: |
           mkdir -p wallets
           solana-keygen new --no-bip39-passphrase -s -o wallets/signer.json
           solana config set --keypair wallets/signer.json
 
-      - name: Anchor test
-        run: anchor test
+      - name: Anchor test (localnet)
+        # Override the cluster to localnet so anchor test runs against the local
+        # validator it spins up (the tests airdrop heavily, which only works on
+        # localnet) instead of Anchor.toml's devnet default.
+        run: anchor test --provider.cluster localnet
         working-directory: onchain-academy
 
   # ── Verifiable build + program-hash publishing (P1-4, feeds G-3) ────────────
