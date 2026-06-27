@@ -7,6 +7,9 @@ import { ERROR_IDS } from "@/constants/errorIds";
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_PENDING_PER_IP = 10;
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     if (

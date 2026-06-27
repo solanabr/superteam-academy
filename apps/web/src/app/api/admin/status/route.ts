@@ -27,6 +27,9 @@ import {
   getMissingAchievementFields,
 } from "@/lib/admin/sync-diff";
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     requireAdminAuth(req);

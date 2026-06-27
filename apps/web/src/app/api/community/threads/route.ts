@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkCommunityAchievements } from "@/lib/gamification/achievements";
 import { isRateLimited } from "@/lib/rate-limit";
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
