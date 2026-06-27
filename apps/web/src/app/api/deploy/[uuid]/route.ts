@@ -24,6 +24,9 @@ function serveBinary(binary: ArrayBuffer): NextResponse {
  * successful builds) to avoid Cloud Run instance routing misses.
  * Falls back to proxying directly to the build server if not cached.
  */
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ uuid: string }> }

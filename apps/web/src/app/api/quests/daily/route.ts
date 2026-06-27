@@ -10,6 +10,9 @@ import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     if (
