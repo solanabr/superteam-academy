@@ -17,6 +17,11 @@ export async function register() {
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {
+    // Validate public env vars in the edge runtime as well so a bad
+    // NEXT_PUBLIC_* var fails at startup rather than on every request
+    // (middleware imports env.ts at load time, so a bad var would 500
+    // every route otherwise).
+    await import("@/lib/env");
     await import("../sentry.edge.config");
   }
 }

@@ -10,6 +10,9 @@ const CACHE_HEADERS = {
  *
  * `?id=<uuid>` — reads metadata from the `nft_metadata` table
  */
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
 

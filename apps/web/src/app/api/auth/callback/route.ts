@@ -25,6 +25,9 @@ function sanitizeRedirect(raw: string, fallback: string): string {
   }
 }
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");

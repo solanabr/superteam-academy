@@ -4,6 +4,9 @@ import { getProgressService } from "@/lib/services";
 
 const VALID_TIMEFRAMES = new Set(["weekly", "monthly", "alltime"]);
 
+// Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const timeframe = request.nextUrl.searchParams.get("timeframe") ?? "weekly";
 
