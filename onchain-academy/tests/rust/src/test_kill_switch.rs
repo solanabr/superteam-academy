@@ -162,6 +162,9 @@ fn pause_errors_have_distinct_stable_codes() {
     assert_eq!(unauthorized_code, 6000);
     assert_ne!(unauthorized_code, minting_paused_code);
     assert!(minting_paused_code > unauthorized_code);
+    // Pin the absolute code (32nd/last variant, index 31 → 6031; cross-checked
+    // against the canonical IDL). A future error-list reorder fails CI instantly.
+    assert_eq!(minting_paused_code, 6031);
 }
 
 // --- Serialization: new params + event land in the IDL byte layout ---
