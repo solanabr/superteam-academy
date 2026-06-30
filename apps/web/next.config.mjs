@@ -39,9 +39,10 @@ const cspDirectives = [
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com",
 
   // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline CSS.
-  "style-src 'self' 'unsafe-inline' https://cdn.sanity.io",
+  // fonts.googleapis.com allows the Google Fonts stylesheet (DM Sans) link.
+  "style-src 'self' 'unsafe-inline' https://cdn.sanity.io https://fonts.googleapis.com",
 
-  // Fonts: self-hosted via next/font. gstatic kept as a harmless fallback.
+  // Fonts: self-hosted via next/font + Google Fonts (gstatic serves the files).
   "font-src 'self' data: https://fonts.gstatic.com",
 
   // Images: avatars (Google), NFT art (Arweave), Supabase storage, Sanity CDN +

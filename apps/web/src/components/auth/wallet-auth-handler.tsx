@@ -20,7 +20,7 @@ type AuthOverlayState =
 export function WalletAuthHandler() {
   const locale = useLocale();
   const t = useTranslations("auth");
-  const { publicKey, signMessage, connected } = useWallet();
+  const { publicKey, signMessage, signIn, connected } = useWallet();
   const hasTriedAuth = useRef(false);
   const isAuthenticating = useRef(false);
   const [overlayState, setOverlayState] = useState<AuthOverlayState>({
@@ -28,7 +28,8 @@ export function WalletAuthHandler() {
   });
 
   const authenticate = useCallback(async () => {
-    if (!publicKey || !signMessage || isAuthenticating.current) return;
+    if (!publicKey || (!signIn && !signMessage) || isAuthenticating.current)
+      return;
 
     // Check if already authenticated
     const supabase = createClient();
@@ -51,20 +52,46 @@ export function WalletAuthHandler() {
         domain: string;
       };
       const address = publicKey.toBase58();
+      const statement = "Sign this message to verify your wallet ownership";
 
-      const siwsMessage = createSIWSMessage({
-        domain,
-        address,
-        statement: "Sign this message to verify your wallet ownership",
-        nonce,
-      });
-
-      const messageText = formatSIWSMessage(siwsMessage);
-      const messageBytes = new TextEncoder().encode(messageText);
-
-      let signature: Uint8Array;
+      // Prefer the Wallet Standard signIn (SIWS): the wallet builds AND signs the
+      // message and returns the EXACT bytes it signed, which the server verifies
+      // directly. Raw signMessage + server-side message reconstruction breaks
+      // with wallets that re-serialize SIWS messages (e.g. Backpack) — the
+      // signature is over different bytes, yielding "Invalid signature". Fall
+      // back to signMessage for wallets without signIn.
+      let messageText: string;
+      let signatureArray: number[];
+      let signerAddress: string;
       try {
-        signature = await signMessage(messageBytes);
+        if (signIn) {
+          const now = new Date();
+          const output = await signIn({
+            domain,
+            statement,
+            nonce,
+            issuedAt: now.toISOString(),
+            expirationTime: new Date(
+              now.getTime() + 2 * 60 * 1000
+            ).toISOString(),
+          });
+          messageText = new TextDecoder().decode(output.signedMessage);
+          signatureArray = Array.from(output.signature);
+          signerAddress = output.account.address;
+        } else if (signMessage) {
+          const messageBytes = new TextEncoder().encode(
+            formatSIWSMessage(
+              createSIWSMessage({ domain, address, statement, nonce })
+            )
+          );
+          messageText = new TextDecoder().decode(messageBytes);
+          signatureArray = Array.from(await signMessage(messageBytes));
+          signerAddress = address;
+        } else {
+          setOverlayState({ status: "idle" });
+          isAuthenticating.current = false;
+          return;
+        }
       } catch {
         // User intentionally declined signing — dismiss silently
         setOverlayState({ status: "idle" });
@@ -77,8 +104,8 @@ export function WalletAuthHandler() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: messageText,
-          signature: Array.from(signature),
-          publicKey: address,
+          signature: signatureArray,
+          publicKey: signerAddress,
         }),
       });
 
@@ -117,7 +144,7 @@ export function WalletAuthHandler() {
       });
       isAuthenticating.current = false;
     }
-  }, [publicKey, signMessage, locale, t]);
+  }, [publicKey, signMessage, signIn, locale, t]);
 
   const handleRetry = useCallback(() => {
     hasTriedAuth.current = false;
@@ -135,11 +162,16 @@ export function WalletAuthHandler() {
 
   // Auto-trigger SIWS when wallet connects
   useEffect(() => {
-    if (connected && publicKey && signMessage && !hasTriedAuth.current) {
+    if (
+      connected &&
+      publicKey &&
+      (signIn || signMessage) &&
+      !hasTriedAuth.current
+    ) {
       hasTriedAuth.current = true;
       authenticate();
     }
-  }, [connected, publicKey, signMessage, authenticate]);
+  }, [connected, publicKey, signIn, signMessage, authenticate]);
 
   // Reset when wallet disconnects
   useEffect(() => {
