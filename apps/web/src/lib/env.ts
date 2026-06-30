@@ -38,7 +38,12 @@ const publicEnvSchema = z.object({
     ),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().min(1),
-  NEXT_PUBLIC_SANITY_DATASET: z.string().min(1).default("production"),
+  // Preprocess "" to undefined so a set-but-blank var takes the default
+  // instead of failing min(1) (z.default only activates on undefined, not "").
+  NEXT_PUBLIC_SANITY_DATASET: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(1).default("production")
+  ),
   // Public, rate-limited browser RPC endpoint. MUST NOT carry a privileged
   // Helius API key — it is inlined into the client bundle. The Helius-keyed
   // endpoint lives server-side as SOLANA_RPC_URL in env.server.ts.
