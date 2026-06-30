@@ -38,4 +38,10 @@ address = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
 program = "tests/fixtures/mpl_core.so"
 
 [scripts]
-test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+# The CU benchmark (cu-measurement.ts) runs LiteSVM in-process and is memory-heavy
+# (loads mpl_core.so + builds accounts for all 18 instructions). Running it in the
+# SAME ts-mocha process as the validator-based integration suite OOMs the CI runner
+# (std::bad_alloc / SIGABRT). Run it as a SEPARATE ts-mocha invocation so it gets its
+# own heap budget. NOTE: files are enumerated, not globbed — add new integration test
+# files to the first invocation.
+test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/onchain-academy.ts && pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/cu-measurement.ts"
