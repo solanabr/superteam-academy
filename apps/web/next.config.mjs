@@ -57,7 +57,7 @@ const cspDirectives = [
   [
     "connect-src 'self'",
     "https://*.supabase.co wss://*.supabase.co",
-    "https://api.sanity.io https://cdn.sanity.io https://apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
+    "https://api.sanity.io https://cdn.sanity.io https://*.apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
     "https://*.helius-rpc.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com",
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
