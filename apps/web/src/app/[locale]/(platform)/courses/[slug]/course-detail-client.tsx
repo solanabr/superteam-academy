@@ -12,7 +12,7 @@ import {
   Wallet,
   ChatCircleDots,
 } from "@phosphor-icons/react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
 import type { Course } from "@/lib/sanity/types";
@@ -32,6 +33,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
   const locale = useLocale();
+  const { connection } = useConnection();
   const { publicKey } = useWallet();
 
   const modules = course.modules ?? [];
@@ -59,7 +61,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     try {
       const supabase = createClient();
 
-      // Check enrollment status
+      // Check enrollment status — Supabase first, then on-chain fallback.
+      // The fallback catches the case where the Helius webhook missed the sync
+      // (enrollment PDA exists on-chain but Supabase has no record).
       const { data: enrollment } = await supabase
         .from("enrollments")
         .select("id")
@@ -67,7 +71,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         .eq("course_id", course._id)
         .maybeSingle();
 
-      setIsEnrolled(!!enrollment);
+      let enrolled = !!enrollment;
+
+      if (!enrolled && publicKey) {
+        try {
+          const [enrollmentPDA] = findEnrollmentPDA(course._id, publicKey);
+          const info = await connection.getAccountInfo(enrollmentPDA);
+          if (info && info.data.length > 0) enrolled = true;
+        } catch {
+          // ignore — fall through to show unenrolled state
+        }
+      }
+
+      setIsEnrolled(enrolled);
 
       // Fetch completed lessons for this course
       if (enrollment) {
@@ -85,7 +101,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [course._id, userId]);
+  }, [course._id, userId, publicKey, connection]);
 
   useEffect(() => {
     if (authLoading) return;

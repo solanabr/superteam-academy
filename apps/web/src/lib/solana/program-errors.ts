@@ -219,6 +219,9 @@ export function parseProgramError(err: unknown): ParsedProgramError {
         fallback: entry.fallback,
       };
     }
+    // Unknown code — preserve it for callers that branch on specific values
+    // (e.g. code 0 = SystemError::AccountAlreadyInUse).
+    return { code, name: null, i18nKey: null, fallback: raw };
   }
 
   // 2. Try decimal error code

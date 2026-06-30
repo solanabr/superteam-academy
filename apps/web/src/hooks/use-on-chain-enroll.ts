@@ -89,6 +89,17 @@ export function useOnChainEnroll({
         });
       } catch (err: unknown) {
         const parsed = parseProgramError(err);
+
+        // code 0 = SystemError::AccountAlreadyInUse: the enrollment PDA already
+        // exists on-chain (Helius webhook fell behind or a prior tx succeeded but
+        // timed out before confirmation). Treat as success so the user reaches
+        // the course rather than seeing a cryptic error.
+        if (parsed.code === 0) {
+          dispatchToast("Enrolled successfully!", "success");
+          onSuccess?.();
+          return;
+        }
+
         const msg = parsed.fallback;
         setEnrollError(msg);
         dispatchToast(msg, "warning");
