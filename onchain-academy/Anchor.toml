@@ -38,4 +38,11 @@ address = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
 program = "tests/fixtures/mpl_core.so"
 
 [scripts]
-test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+# `anchor test` runs ONLY the integration suite. The CU benchmark
+# (cu-measurement.ts) loads mpl_core.so + builds accounts for all 18 instructions in a
+# single in-process LiteSVM; even on its own it exceeds the CI runner's memory and
+# aborts with std::bad_alloc/SIGABRT. It is therefore intentionally NOT part of the CI
+# test run — it's a local/manual profiling tool. Regenerate the committed
+# CU_BASELINE.md with `anchor run cu` (needs more RAM than a CI runner has).
+test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/onchain-academy.ts"
+cu = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/cu-measurement.ts"
