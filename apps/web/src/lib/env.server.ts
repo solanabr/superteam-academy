@@ -2,13 +2,25 @@ import "server-only";
 import { z } from "zod";
 import { formatEnvError } from "./env";
 
+// z.optional() only skips validation for `undefined`, not "". A set-but-blank
+// env var passes the type check but fails min(1). Preprocess "" → undefined so
+// blank Vercel placeholder values are treated as unset rather than invalid.
+const optStr = z.preprocess(
+  (v) => (v === "" ? undefined : v),
+  z.string().min(1).optional()
+);
+const optUrl = z.preprocess(
+  (v) => (v === "" ? undefined : v),
+  z.url().optional()
+);
+
 /**
  * Server-only secrets. Never imported into client code (`server-only` enforces
  * this). Validated eagerly at boot via `instrumentation.ts`.
  *
  * Required vars must be non-empty or the app refuses to start. Optional vars
- * are validated for format/non-emptiness when present so a set-but-blank value
- * surfaces here rather than as a silent failure deep in a route handler.
+ * use optStr/optUrl which treat "" as unset so blank placeholders don't crash
+ * boot — only a set-to-garbage value does.
  */
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
@@ -18,17 +30,17 @@ const serverEnvSchema = z.object({
   // fails loudly here instead of silently falling back to public devnet.
   SOLANA_RPC_URL: z.url(),
   // Optional: only needed for admin Sanity writes.
-  SANITY_ADMIN_TOKEN: z.string().min(1).optional(),
+  SANITY_ADMIN_TOKEN: optStr,
   // Admin panel HMAC cookie signing key.
-  ADMIN_SECRET: z.string().min(1).optional(),
+  ADMIN_SECRET: optStr,
   // Helius webhook HMAC verification secret.
-  HELIUS_WEBHOOK_SECRET: z.string().min(1).optional(),
+  HELIUS_WEBHOOK_SECRET: optStr,
   // On-chain keypairs (JSON array of 64 bytes).
-  XP_MINT_AUTHORITY_SECRET: z.string().min(1).optional(),
-  PROGRAM_AUTHORITY_SECRET: z.string().min(1).optional(),
+  XP_MINT_AUTHORITY_SECRET: optStr,
+  PROGRAM_AUTHORITY_SECRET: optStr,
   // Anchor build-server proxy.
-  BUILD_SERVER_URL: z.url().optional(),
-  BUILD_SERVER_API_KEY: z.string().min(1).optional(),
+  BUILD_SERVER_URL: optUrl,
+  BUILD_SERVER_API_KEY: optStr,
 });
 
 const parsed = serverEnvSchema.safeParse({
