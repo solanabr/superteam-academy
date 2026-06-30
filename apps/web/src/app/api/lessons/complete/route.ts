@@ -200,6 +200,20 @@ export async function POST(request: NextRequest) {
     );
 
     if (alreadyOnChain) {
+      // Sync progress in case the Helius webhook missed this completion.
+      // ignoreDuplicates avoids overwriting an existing tx_signature with null.
+      await supabaseAdmin.from("user_progress").upsert(
+        {
+          user_id: user.id,
+          course_id: courseId,
+          lesson_id: lessonId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          tx_signature: null,
+          lesson_index: lessonIndex,
+        },
+        { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
+      );
       return NextResponse.json({
         success: true,
         alreadyCompleted: true,
@@ -207,12 +221,44 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Execute on-chain completeLesson — webhook handles all Supabase writes
+    // Execute on-chain completeLesson
     const signature = await onChainCompleteLesson(
       courseId,
       walletPubkey,
       lessonIndex
     );
+
+    // Write directly to Supabase so progress is visible on the dashboard
+    // immediately, without depending on Helius webhook delivery timing.
+    // The webhook will upsert the same row again (idempotent) when it arrives.
+    const { error: progressError } = await supabaseAdmin
+      .from("user_progress")
+      .upsert(
+        {
+          user_id: user.id,
+          course_id: courseId,
+          lesson_id: lessonId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          tx_signature: signature,
+          lesson_index: lessonIndex,
+        },
+        { onConflict: "user_id,lesson_id" }
+      );
+
+    if (progressError) {
+      logError({
+        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+        error: new Error(progressError.message),
+        context: {
+          route: "/api/lessons/complete",
+          step: "sync_progress",
+          userId: user.id,
+          courseId,
+          lessonId,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, signature });
   } catch (err: unknown) {
