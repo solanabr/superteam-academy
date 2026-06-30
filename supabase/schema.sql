@@ -1303,11 +1303,18 @@ DECLARE
 BEGIN
   IF p_amount <= 0 THEN RETURN FALSE; END IF;
 
+  -- Serialize concurrent community awards for the same user so the read-then-
+  -- insert daily cap below is atomic (mirrors the lock added to award_xp in
+  -- #179). A distinct key namespace avoids contending with award_xp's lock —
+  -- the two functions count disjoint xp_transactions rows (community:% vs NOT
+  -- community:%), so they need not serialize against each other.
+  PERFORM pg_advisory_xact_lock(hashtext('award_community_xp:' || p_user_id::text)::bigint);
+
   SELECT COALESCE(SUM(amount), 0) INTO v_daily_total
   FROM public.xp_transactions
   WHERE user_id = p_user_id
     AND reason LIKE 'community:%'
-    AND created_at >= (CURRENT_DATE)::timestamptz;
+    AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
   IF v_daily_total >= 50 THEN RETURN FALSE; END IF;
 
@@ -1317,7 +1324,7 @@ BEGIN
     FROM public.xp_transactions
     WHERE user_id = p_user_id
       AND reason LIKE 'community:upvote%'
-      AND created_at >= (CURRENT_DATE)::timestamptz;
+      AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
     IF v_daily_vote_total >= 10 THEN RETURN FALSE; END IF;
 
