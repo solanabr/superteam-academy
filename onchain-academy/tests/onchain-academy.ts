@@ -5110,4 +5110,477 @@ describe("onchain-academy", () => {
       expect(recreated.bump).to.equal(migCourseBump);
     });
   });
+
+  // ===========================================================================
+  // 22. Kill-switch: paused blocks every gated mint path (issue #220)
+  //
+  // Sections 2's pause/resume tests only verify the toggle state machine; they
+  // never call a mint instruction while paused == true. This section closes
+  // that gap end-to-end: with the config paused, each of the FIVE gated
+  // instructions — complete_lesson, finalize_course, reward_xp,
+  // award_achievement, issue_credential — must fail with MintingPaused (anchor
+  // code 6031). Every fixture is built UNPAUSED in `before()` and chosen so the
+  // instruction would SUCCEED if not paused, making the pause gate the only
+  // possible failure reason. The pause→assert→resume body is wrapped in
+  // try/finally so a failed assertion can't leave the chain paused for later
+  // suites.
+  // ===========================================================================
+  describe("22. Kill-switch blocks all gated mint paths", () => {
+    const MPL_CORE_PROGRAM_ID = new PublicKey(
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+    );
+
+    const KS_COURSE_ID = "killswitch-blocked";
+    const KS_LESSON_COUNT = 2;
+    const KS_XP_PER_LESSON = 10;
+    let ksCoursePda: PublicKey;
+    let ksCollection: PublicKey;
+
+    // complete_lesson target: lesson 0 left UNcompleted (would mint if unpaused).
+    const completeLearner = Keypair.generate();
+    let completeLearnerAta: PublicKey;
+    let completeEnrollPda: PublicKey;
+
+    // finalize_course target: all lessons done, NOT finalized (would mint if unpaused).
+    const finalizeLearner = Keypair.generate();
+    let finalizeLearnerAta: PublicKey;
+    let finalizeEnrollPda: PublicKey;
+
+    // issue_credential target: all lessons done AND finalized, no credential yet.
+    const credLearner = Keypair.generate();
+    let credLearnerAta: PublicKey;
+    let credEnrollPda: PublicKey;
+
+    // reward_xp target: a fresh active minter with full cap headroom.
+    const ksMinter = Keypair.generate();
+    let ksMinterRolePda: PublicKey;
+    const ksRewardRecipient = Keypair.generate();
+    let ksRewardRecipientAta: PublicKey;
+
+    // award_achievement target: a fresh achievement type with supply + recipient.
+    const KS_ACHIEVEMENT_ID = "killswitch-ach";
+    let ksAchievementTypePda: PublicKey;
+    let ksAchievementCollection: Keypair;
+    const ksAchRecipient = Keypair.generate();
+    let ksAchRecipientAta: PublicKey;
+    let ksAchReceiptPda: PublicKey;
+
+    // The backend minter role auto-registered at initialize (minter = authority).
+    let backendMinterRolePda: PublicKey;
+
+    const ksContentTxId = new Array(32).fill(22);
+
+    const createAtaFor = async (owner: PublicKey): Promise<PublicKey> => {
+      const ata = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        owner,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            authority.publicKey,
+            ata,
+            owner,
+            xpMintKeypair.publicKey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        )
+      );
+      return ata;
+    };
+
+    const enrollLearner = async (
+      learnerKp: Keypair,
+      enrollPda: PublicKey
+    ): Promise<void> => {
+      await program.methods
+        .enroll(KS_COURSE_ID)
+        .accountsPartial({
+          course: ksCoursePda,
+          enrollment: enrollPda,
+          learner: learnerKp.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerKp])
+        .rpc();
+    };
+
+    const completeLessonFor = async (
+      learnerKp: Keypair,
+      enrollPda: PublicKey,
+      ata: PublicKey,
+      index: number
+    ): Promise<void> => {
+      const sig = await program.methods
+        .completeLesson(index)
+        .accountsPartial({
+          config: configPda,
+          course: ksCoursePda,
+          enrollment: enrollPda,
+          learner: learnerKp.publicKey,
+          learnerTokenAccount: ata,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+    };
+
+    before(async () => {
+      // Fund every fresh wallet.
+      for (const wallet of [
+        completeLearner.publicKey,
+        finalizeLearner.publicKey,
+        credLearner.publicKey,
+        ksMinter.publicKey,
+        ksRewardRecipient.publicKey,
+        ksAchRecipient.publicKey,
+      ]) {
+        const sig = await provider.connection.requestAirdrop(
+          wallet,
+          5 * LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sig, "confirmed");
+      }
+
+      // A Metaplex Core collection (update authority = Config PDA) for credentials.
+      const umi = createUmi(provider.connection.rpcEndpoint, {
+        commitment: "confirmed",
+      }).use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+      const collectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: collectionSigner,
+        name: "Kill-switch Credentials",
+        uri: "https://arweave.net/ks-collection",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+      ksCollection = toWeb3JsPublicKey(collectionSigner.publicKey);
+
+      // Course for all three learner fixtures.
+      [ksCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(KS_COURSE_ID)],
+        program.programId
+      );
+      await program.methods
+        .createCourse({
+          courseId: KS_COURSE_ID,
+          creator: creator.publicKey,
+          contentTxId: ksContentTxId,
+          lessonCount: KS_LESSON_COUNT,
+          difficulty: 1,
+          xpPerLesson: KS_XP_PER_LESSON,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: ksCollection,
+        })
+        .accountsPartial({
+          course: ksCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // complete_lesson fixture: enrolled, lesson 0 left open.
+      [completeEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(KS_COURSE_ID),
+          completeLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      completeLearnerAta = await createAtaFor(completeLearner.publicKey);
+      await enrollLearner(completeLearner, completeEnrollPda);
+
+      // finalize_course fixture: enrolled, all lessons done, NOT finalized.
+      [finalizeEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(KS_COURSE_ID),
+          finalizeLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      finalizeLearnerAta = await createAtaFor(finalizeLearner.publicKey);
+      await enrollLearner(finalizeLearner, finalizeEnrollPda);
+      for (let i = 0; i < KS_LESSON_COUNT; i++) {
+        await completeLessonFor(
+          finalizeLearner,
+          finalizeEnrollPda,
+          finalizeLearnerAta,
+          i
+        );
+      }
+
+      // issue_credential fixture: enrolled, all lessons done, finalized, no cred.
+      [credEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(KS_COURSE_ID),
+          credLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      credLearnerAta = await createAtaFor(credLearner.publicKey);
+      await enrollLearner(credLearner, credEnrollPda);
+      for (let i = 0; i < KS_LESSON_COUNT; i++) {
+        await completeLessonFor(credLearner, credEnrollPda, credLearnerAta, i);
+      }
+      const fsig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: ksCoursePda,
+          enrollment: credEnrollPda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(fsig, "confirmed");
+
+      // reward_xp fixture: a fresh active minter with headroom.
+      [ksMinterRolePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("minter"), ksMinter.publicKey.toBuffer()],
+        program.programId
+      );
+      ksRewardRecipientAta = await createAtaFor(ksRewardRecipient.publicKey);
+      await program.methods
+        .registerMinter({
+          minter: ksMinter.publicKey,
+          label: "ks-minter",
+          maxXpPerCall: new BN(1000),
+          maxTotalXp: new BN(1000),
+        })
+        .accountsPartial({
+          config: configPda,
+          minterRole: ksMinterRolePda,
+          authority: authority.publicKey,
+          payer: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // award_achievement fixture: a fresh achievement type + recipient + receipt.
+      [ksAchievementTypePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("achievement"), Buffer.from(KS_ACHIEVEMENT_ID)],
+        program.programId
+      );
+      ksAchievementCollection = Keypair.generate();
+      await program.methods
+        .createAchievementType({
+          achievementId: KS_ACHIEVEMENT_ID,
+          name: "Kill-switch Achievement",
+          metadataUri: "https://arweave.net/ks-ach",
+          maxSupply: 100,
+          xpReward: 50,
+        })
+        .accountsPartial({
+          config: configPda,
+          achievementType: ksAchievementTypePda,
+          collection: ksAchievementCollection.publicKey,
+          authority: authority.publicKey,
+          payer: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([ksAchievementCollection])
+        .rpc();
+      ksAchRecipientAta = await createAtaFor(ksAchRecipient.publicKey);
+      [ksAchReceiptPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("achievement_receipt"),
+          Buffer.from(KS_ACHIEVEMENT_ID),
+          ksAchRecipient.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      [backendMinterRolePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("minter"), authority.publicKey.toBuffer()],
+        program.programId
+      );
+
+      // Sanity: start from a known-unpaused config.
+      expect((await program.account.config.fetch(configPda)).paused).to.equal(
+        false
+      );
+    });
+
+    const pause = async (): Promise<void> => {
+      await program.methods
+        .updateConfig({ newBackendSigner: null, paused: true })
+        .accountsPartial({ config: configPda, authority: authority.publicKey })
+        .rpc();
+    };
+
+    const resume = async (): Promise<void> => {
+      await program.methods
+        .updateConfig({ newBackendSigner: null, paused: false })
+        .accountsPartial({ config: configPda, authority: authority.publicKey })
+        .rpc();
+    };
+
+    const expectMintingPaused = (err: unknown): void => {
+      if (err instanceof AnchorError) {
+        expect(err.error.errorCode.code).to.equal("MintingPaused");
+        expect(err.error.errorCode.number).to.equal(6031);
+      } else {
+        expect(String(err)).to.contain("MintingPaused");
+      }
+    };
+
+    it("rejects all five gated mint instructions with MintingPaused while paused", async () => {
+      await pause();
+      expect((await program.account.config.fetch(configPda)).paused).to.equal(
+        true
+      );
+
+      try {
+        // 1. complete_lesson — fresh, not-yet-completed lesson 0.
+        try {
+          await program.methods
+            .completeLesson(0)
+            .accountsPartial({
+              config: configPda,
+              course: ksCoursePda,
+              enrollment: completeEnrollPda,
+              learner: completeLearner.publicKey,
+              learnerTokenAccount: completeLearnerAta,
+              xpMint: xpMintKeypair.publicKey,
+              backendSigner: authority.publicKey,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
+            })
+            .rpc();
+          expect.fail("complete_lesson should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+
+        // 2. finalize_course — all lessons done, not yet finalized.
+        try {
+          await program.methods
+            .finalizeCourse()
+            .accountsPartial({
+              config: configPda,
+              course: ksCoursePda,
+              enrollment: finalizeEnrollPda,
+              learner: finalizeLearner.publicKey,
+              learnerTokenAccount: finalizeLearnerAta,
+              creatorTokenAccount: creatorTokenAccount,
+              creator: creator.publicKey,
+              xpMint: xpMintKeypair.publicKey,
+              backendSigner: authority.publicKey,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
+            })
+            .rpc();
+          expect.fail("finalize_course should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+
+        // 3. reward_xp — active minter with headroom.
+        try {
+          await program.methods
+            .rewardXp(new BN(100), "blocked while paused")
+            .accountsPartial({
+              config: configPda,
+              minterRole: ksMinterRolePda,
+              xpMint: xpMintKeypair.publicKey,
+              recipientTokenAccount: ksRewardRecipientAta,
+              minter: ksMinter.publicKey,
+              backendSigner: authority.publicKey,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
+            })
+            .signers([ksMinter])
+            .rpc();
+          expect.fail("reward_xp should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+
+        // 4. award_achievement — fresh type/recipient/receipt + asset.
+        const ksAchAsset = Keypair.generate();
+        try {
+          await program.methods
+            .awardAchievement()
+            .accountsPartial({
+              config: configPda,
+              achievementType: ksAchievementTypePda,
+              achievementReceipt: ksAchReceiptPda,
+              minterRole: backendMinterRolePda,
+              asset: ksAchAsset.publicKey,
+              collection: ksAchievementCollection.publicKey,
+              recipient: ksAchRecipient.publicKey,
+              recipientTokenAccount: ksAchRecipientAta,
+              xpMint: xpMintKeypair.publicKey,
+              payer: authority.publicKey,
+              minter: authority.publicKey,
+              backendSigner: authority.publicKey,
+              mplCoreProgram: MPL_CORE_PROGRAM_ID,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .signers([ksAchAsset])
+            .rpc();
+          expect.fail("award_achievement should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+
+        // 5. issue_credential — finalized enrollment, no credential yet.
+        const ksCredAsset = Keypair.generate();
+        try {
+          await program.methods
+            .issueCredential(
+              "Kill-switch Credential",
+              "https://arweave.net/ks-cred",
+              1,
+              new BN(100)
+            )
+            .accountsPartial({
+              config: configPda,
+              course: ksCoursePda,
+              enrollment: credEnrollPda,
+              learner: credLearner.publicKey,
+              credentialAsset: ksCredAsset.publicKey,
+              trackCollection: ksCollection,
+              payer: authority.publicKey,
+              backendSigner: authority.publicKey,
+              mplCoreProgram: MPL_CORE_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .signers([ksCredAsset])
+            .rpc();
+          expect.fail("issue_credential should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+      } finally {
+        // Always resume so later suites (and reruns) see an unpaused config.
+        await resume();
+      }
+
+      expect((await program.account.config.fetch(configPda)).paused).to.equal(
+        false
+      );
+    });
+  });
 });
