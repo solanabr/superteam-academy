@@ -42,8 +42,9 @@ async function deriveLessonIndex(
 }
 
 /**
- * Mark a lesson as complete on-chain. Supabase writes (XP, progress,
- * achievements, credentials) are handled by the Helius webhook handler.
+ * Mark a lesson as complete on-chain. user_progress is written directly here
+ * for immediate dashboard visibility. XP, achievements, and credentials are
+ * handled by the Helius webhook handler.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -202,18 +203,34 @@ export async function POST(request: NextRequest) {
     if (alreadyOnChain) {
       // Sync progress in case the Helius webhook missed this completion.
       // ignoreDuplicates avoids overwriting an existing tx_signature with null.
-      await supabaseAdmin.from("user_progress").upsert(
-        {
-          user_id: user.id,
-          course_id: courseId,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          tx_signature: null,
-          lesson_index: lessonIndex,
-        },
-        { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
-      );
+      const { error: recoveryError } = await supabaseAdmin
+        .from("user_progress")
+        .upsert(
+          {
+            user_id: user.id,
+            course_id: courseId,
+            lesson_id: lessonId,
+            completed: true,
+            completed_at: new Date().toISOString(),
+            tx_signature: null,
+            lesson_index: lessonIndex,
+          },
+          { onConflict: "user_id,lesson_id", ignoreDuplicates: true }
+        );
+
+      if (recoveryError) {
+        logError({
+          errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+          error: new Error(recoveryError.message),
+          context: {
+            route: "/api/lessons/complete",
+            step: "recovery_sync",
+            userId: user.id,
+            courseId,
+            lessonId,
+          },
+        });
+      }
       return NextResponse.json({
         success: true,
         alreadyCompleted: true,
