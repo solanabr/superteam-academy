@@ -48,10 +48,57 @@ export function Header() {
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
   const xpGainTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const fetchXpTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  // Mirrors `displayedXp` so an interrupted count-up resumes from the value
+  // actually on screen, not the previous target. Without it, a second gain
+  // arriving mid-animation snaps the counter up to the old target before
+  // continuing — a visible jump.
+  const displayedXpRef = useRef(0);
 
   const { balance: onChainXp } = useXpBalance();
 
-  // XP fetching
+  // Single setter so the ref and the rendered state never drift apart.
+  const setDisplayed = useCallback((value: number) => {
+    displayedXpRef.current = value;
+    setDisplayedXp(value);
+  }, []);
+
+  // Animate the XP counter up to newXp (eased count-up + glow), starting from
+  // whatever is currently rendered so a mid-animation interruption is seamless.
+  const animateXpTo = useCallback(
+    (newXp: number) => {
+      const fromXp = displayedXpRef.current;
+      if (newXp > fromXp && fromXp > 0) {
+        setGlowing(true);
+        const diff = newXp - fromXp;
+        const duration = Math.min(800, Math.max(300, diff * 20));
+        const startTime = performance.now();
+
+        const animate = (now: number) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setDisplayed(Math.round(fromXp + diff * eased));
+
+          if (progress < 1) {
+            rafRef.current = requestAnimationFrame(animate);
+          } else {
+            setDisplayed(newXp);
+            setTimeout(() => setGlowing(false), 400);
+          }
+        };
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        setDisplayed(newXp);
+      }
+    },
+    [setDisplayed]
+  );
+
+  // XP fetching — reconciles the badge with the source of truth. The target is
+  // the max of (Supabase user_xp, on-chain balance, current target), so the
+  // counter only ever climbs and can't undo an optimistic gain.
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
     const {
@@ -68,38 +115,12 @@ export function Header() {
     if (data) {
       const supabaseXp = data.total_xp ?? 0;
       const newXp = Math.max(supabaseXp, targetXpRef.current);
-      const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
-      const newLevel = calculateLevel(newXp);
-      prevLevelRef.current = newLevel;
-      setLevel(newLevel);
-
-      if (newXp > prevXp && prevXp > 0) {
-        setGlowing(true);
-        const diff = newXp - prevXp;
-        const duration = Math.min(800, Math.max(300, diff * 20));
-        const startTime = performance.now();
-
-        const animate = (now: number) => {
-          const elapsed = now - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setDisplayedXp(Math.round(prevXp + diff * eased));
-
-          if (progress < 1) {
-            rafRef.current = requestAnimationFrame(animate);
-          } else {
-            setDisplayedXp(newXp);
-            setTimeout(() => setGlowing(false), 400);
-          }
-        };
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(animate);
-      } else {
-        setDisplayedXp(newXp);
-      }
+      prevLevelRef.current = calculateLevel(newXp);
+      setLevel(calculateLevel(newXp));
+      animateXpTo(newXp);
     }
-  }, []);
+  }, [animateXpTo]);
 
   useEffect(() => {
     if (user) fetchXp();
@@ -109,10 +130,10 @@ export function Header() {
   useEffect(() => {
     if (onChainXp > 0 && onChainXp > targetXpRef.current) {
       targetXpRef.current = onChainXp;
-      setDisplayedXp(onChainXp);
+      setDisplayed(onChainXp);
       setLevel(calculateLevel(onChainXp));
     }
-  }, [onChainXp]);
+  }, [onChainXp, setDisplayed]);
 
   useEffect(() => {
     const handleXpGain = (e: Event) => {
@@ -122,15 +143,29 @@ export function Header() {
         setXpGainAmount(amount);
         clearTimeout(xpGainTimerRef.current);
         xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2600);
+
+        // Optimistically count the badge up by the gained amount so it tracks
+        // the +XP popup immediately — instead of staying frozen while the stale
+        // on-chain balance (captured at mount) sits ahead of Supabase. fetchXp
+        // and the on-chain effect reconcile via Math.max, so this never
+        // double-counts (they can't exceed the optimistic target).
+        const prevXp = targetXpRef.current;
+        const optimisticXp = prevXp + amount;
+        targetXpRef.current = optimisticXp;
+        prevLevelRef.current = calculateLevel(optimisticXp);
+        setLevel(calculateLevel(optimisticXp));
+        animateXpTo(optimisticXp);
       }
-      setTimeout(fetchXp, 500);
+      clearTimeout(fetchXpTimerRef.current);
+      fetchXpTimerRef.current = setTimeout(fetchXp, 800);
     };
     window.addEventListener("xp-gain", handleXpGain);
     return () => {
       window.removeEventListener("xp-gain", handleXpGain);
       clearTimeout(xpGainTimerRef.current);
+      clearTimeout(fetchXpTimerRef.current);
     };
-  }, [fetchXp]);
+  }, [fetchXp, animateXpTo]);
 
   const isLoggedIn = !!user && !!profile;
   const { xpInCurrentLevel, xpRequiredForNext } = xpToNextLevel(displayedXp);
