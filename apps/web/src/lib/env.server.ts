@@ -36,6 +36,11 @@ const serverEnvSchema = z.object({
   // Helius webhook HMAC verification secret.
   HELIUS_WEBHOOK_SECRET: optStr,
   // On-chain keypairs (JSON array of 64 bytes).
+  // BACKEND_SIGNER_SECRET is the rotatable backend signer stored in the Config
+  // PDA. Required for all server-side on-chain instructions (completeLesson,
+  // finalizeCourse, issueCredential, awardAchievement, rewardXp). On devnet
+  // this is typically the same keypair as PROGRAM_AUTHORITY_SECRET.
+  BACKEND_SIGNER_SECRET: optStr,
   XP_MINT_AUTHORITY_SECRET: optStr,
   PROGRAM_AUTHORITY_SECRET: optStr,
   // Anchor build-server proxy.
@@ -49,6 +54,7 @@ const parsed = serverEnvSchema.safeParse({
   SANITY_ADMIN_TOKEN: process.env.SANITY_ADMIN_TOKEN,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,
+  BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,
   XP_MINT_AUTHORITY_SECRET: process.env.XP_MINT_AUTHORITY_SECRET,
   PROGRAM_AUTHORITY_SECRET: process.env.PROGRAM_AUTHORITY_SECRET,
   BUILD_SERVER_URL: process.env.BUILD_SERVER_URL,

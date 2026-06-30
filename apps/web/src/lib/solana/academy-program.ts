@@ -89,7 +89,7 @@ let _backendSigner: Keypair | null = null;
 
 export function getBackendSigner(): Keypair {
   if (_backendSigner) return _backendSigner;
-  const secret = process.env.BACKEND_SIGNER_SECRET;
+  const secret = serverEnv.BACKEND_SIGNER_SECRET;
   if (!secret) {
     throw new Error(
       "BACKEND_SIGNER_SECRET env var not set. Required for on-chain instructions."
