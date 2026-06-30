@@ -51,7 +51,37 @@ export function Header() {
 
   const { balance: onChainXp } = useXpBalance();
 
-  // XP fetching
+  // Animate the XP counter from prevXp up to newXp (eased count-up + glow).
+  const animateXpTo = useCallback((prevXp: number, newXp: number) => {
+    if (newXp > prevXp && prevXp > 0) {
+      setGlowing(true);
+      const diff = newXp - prevXp;
+      const duration = Math.min(800, Math.max(300, diff * 20));
+      const startTime = performance.now();
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayedXp(Math.round(prevXp + diff * eased));
+
+        if (progress < 1) {
+          rafRef.current = requestAnimationFrame(animate);
+        } else {
+          setDisplayedXp(newXp);
+          setTimeout(() => setGlowing(false), 400);
+        }
+      };
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(animate);
+    } else {
+      setDisplayedXp(newXp);
+    }
+  }, []);
+
+  // XP fetching — reconciles the badge with the source of truth. The target is
+  // the max of (Supabase user_xp, on-chain balance, current target), so the
+  // counter only ever climbs and can't undo an optimistic gain.
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
     const {
@@ -70,36 +100,11 @@ export function Header() {
       const newXp = Math.max(supabaseXp, targetXpRef.current);
       const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
-      const newLevel = calculateLevel(newXp);
-      prevLevelRef.current = newLevel;
-      setLevel(newLevel);
-
-      if (newXp > prevXp && prevXp > 0) {
-        setGlowing(true);
-        const diff = newXp - prevXp;
-        const duration = Math.min(800, Math.max(300, diff * 20));
-        const startTime = performance.now();
-
-        const animate = (now: number) => {
-          const elapsed = now - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setDisplayedXp(Math.round(prevXp + diff * eased));
-
-          if (progress < 1) {
-            rafRef.current = requestAnimationFrame(animate);
-          } else {
-            setDisplayedXp(newXp);
-            setTimeout(() => setGlowing(false), 400);
-          }
-        };
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(animate);
-      } else {
-        setDisplayedXp(newXp);
-      }
+      prevLevelRef.current = calculateLevel(newXp);
+      setLevel(calculateLevel(newXp));
+      animateXpTo(prevXp, newXp);
     }
-  }, []);
+  }, [animateXpTo]);
 
   useEffect(() => {
     if (user) fetchXp();
@@ -122,15 +127,27 @@ export function Header() {
         setXpGainAmount(amount);
         clearTimeout(xpGainTimerRef.current);
         xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2600);
+
+        // Optimistically count the badge up by the gained amount so it tracks
+        // the +XP popup immediately — instead of staying frozen while the stale
+        // on-chain balance (captured at mount) sits ahead of Supabase. fetchXp
+        // and the on-chain effect reconcile via Math.max, so this never
+        // double-counts (they can't exceed the optimistic target).
+        const prevXp = targetXpRef.current;
+        const optimisticXp = prevXp + amount;
+        targetXpRef.current = optimisticXp;
+        prevLevelRef.current = calculateLevel(optimisticXp);
+        setLevel(calculateLevel(optimisticXp));
+        animateXpTo(prevXp, optimisticXp);
       }
-      setTimeout(fetchXp, 500);
+      setTimeout(fetchXp, 800);
     };
     window.addEventListener("xp-gain", handleXpGain);
     return () => {
       window.removeEventListener("xp-gain", handleXpGain);
       clearTimeout(xpGainTimerRef.current);
     };
-  }, [fetchXp]);
+  }, [fetchXp, animateXpTo]);
 
   const isLoggedIn = !!user && !!profile;
   const { xpInCurrentLevel, xpRequiredForNext } = xpToNextLevel(displayedXp);
