@@ -5116,16 +5116,17 @@ describe("onchain-academy", () => {
   //
   // Sections 2's pause/resume tests only verify the toggle state machine; they
   // never call a mint instruction while paused == true. This section closes
-  // that gap end-to-end: with the config paused, each of the FIVE gated
+  // that gap end-to-end: with the config paused, each of the SIX gated
   // instructions — complete_lesson, finalize_course, reward_xp,
-  // award_achievement, issue_credential — must fail with MintingPaused (anchor
-  // code 6031). Every fixture is built UNPAUSED in `before()` and chosen so the
+  // award_achievement, issue_credential, upgrade_credential — must fail with
+  // MintingPaused (anchor code 6031). Every fixture is built UNPAUSED in
+  // `before()` and chosen so the
   // instruction would SUCCEED if not paused, making the pause gate the only
   // possible failure reason. The pause→assert→resume body is wrapped in
   // try/finally so a failed assertion can't leave the chain paused for later
   // suites.
   // ===========================================================================
-  describe("22. Kill-switch blocks all gated mint paths", () => {
+  describe("22. Kill-switch blocks all six gated mint paths", () => {
     const MPL_CORE_PROGRAM_ID = new PublicKey(
       "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
     );
@@ -5150,6 +5151,13 @@ describe("onchain-academy", () => {
     const credLearner = Keypair.generate();
     let credLearnerAta: PublicKey;
     let credEnrollPda: PublicKey;
+
+    // upgrade_credential target: finalized AND credential already issued, so an
+    // upgrade would succeed if unpaused.
+    const upgradeLearner = Keypair.generate();
+    let upgradeLearnerAta: PublicKey;
+    let upgradeEnrollPda: PublicKey;
+    const upgradeCredAsset = Keypair.generate();
 
     // reward_xp target: a fresh active minter with full cap headroom.
     const ksMinter = Keypair.generate();
@@ -5237,6 +5245,7 @@ describe("onchain-academy", () => {
         completeLearner.publicKey,
         finalizeLearner.publicKey,
         credLearner.publicKey,
+        upgradeLearner.publicKey,
         ksMinter.publicKey,
         ksRewardRecipient.publicKey,
         ksAchRecipient.publicKey,
@@ -5356,6 +5365,65 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(fsig, "confirmed");
 
+      // upgrade_credential fixture: enrolled, finalized, AND credential issued
+      // (unpaused) so an upgrade is valid while unpaused.
+      [upgradeEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(KS_COURSE_ID),
+          upgradeLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      upgradeLearnerAta = await createAtaFor(upgradeLearner.publicKey);
+      await enrollLearner(upgradeLearner, upgradeEnrollPda);
+      for (let i = 0; i < KS_LESSON_COUNT; i++) {
+        await completeLessonFor(
+          upgradeLearner,
+          upgradeEnrollPda,
+          upgradeLearnerAta,
+          i
+        );
+      }
+      const ufsig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: ksCoursePda,
+          enrollment: upgradeEnrollPda,
+          learner: upgradeLearner.publicKey,
+          learnerTokenAccount: upgradeLearnerAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(ufsig, "confirmed");
+      const uisig = await program.methods
+        .issueCredential(
+          "Kill-switch Upgrade Credential",
+          "https://arweave.net/ks-upgrade",
+          1,
+          new BN(100)
+        )
+        .accountsPartial({
+          config: configPda,
+          course: ksCoursePda,
+          enrollment: upgradeEnrollPda,
+          learner: upgradeLearner.publicKey,
+          credentialAsset: upgradeCredAsset.publicKey,
+          trackCollection: ksCollection,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([upgradeCredAsset])
+        .rpc();
+      await provider.connection.confirmTransaction(uisig, "confirmed");
+
       // reward_xp fixture: a fresh active minter with headroom.
       [ksMinterRolePda] = PublicKey.findProgramAddressSync(
         [Buffer.from("minter"), ksMinter.publicKey.toBuffer()],
@@ -5447,7 +5515,7 @@ describe("onchain-academy", () => {
       }
     };
 
-    it("rejects all five gated mint instructions with MintingPaused while paused", async () => {
+    it("rejects all six gated mint instructions with MintingPaused while paused", async () => {
       await pause();
       expect((await program.account.config.fetch(configPda)).paused).to.equal(
         true
@@ -5570,6 +5638,34 @@ describe("onchain-academy", () => {
             .signers([ksCredAsset])
             .rpc();
           expect.fail("issue_credential should be blocked while paused");
+        } catch (err) {
+          expectMintingPaused(err);
+        }
+
+        // 6. upgrade_credential — finalized enrollment with a credential already
+        // issued (would upgrade if unpaused).
+        try {
+          await program.methods
+            .upgradeCredential(
+              "Kill-switch Upgrade Credential (v2)",
+              "https://arweave.net/ks-upgrade-v2",
+              2,
+              new BN(200)
+            )
+            .accountsPartial({
+              config: configPda,
+              course: ksCoursePda,
+              enrollment: upgradeEnrollPda,
+              learner: upgradeLearner.publicKey,
+              credentialAsset: upgradeCredAsset.publicKey,
+              trackCollection: ksCollection,
+              payer: authority.publicKey,
+              backendSigner: authority.publicKey,
+              mplCoreProgram: MPL_CORE_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .rpc();
+          expect.fail("upgrade_credential should be blocked while paused");
         } catch (err) {
           expectMintingPaused(err);
         }

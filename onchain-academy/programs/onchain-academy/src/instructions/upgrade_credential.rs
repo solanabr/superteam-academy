@@ -19,6 +19,8 @@ pub fn handler(
     let course = &ctx.accounts.course;
     let config = &ctx.accounts.config;
 
+    require!(!config.paused, AcademyError::MintingPaused);
+
     require!(
         enrollment.completed_at.is_some(),
         AcademyError::CourseNotFinalized

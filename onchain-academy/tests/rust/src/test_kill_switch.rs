@@ -2,8 +2,9 @@
 //!
 //! `Config.paused` is a global switch that blocks every XP-minting / credential
 //! instruction: `complete_lesson`, `finalize_course`, `reward_xp`,
-//! `award_achievement`, and `issue_credential`. Each of those handlers opens
-//! with `require!(!config.paused, AcademyError::MintingPaused)`. The switch is
+//! `award_achievement`, `issue_credential`, and `upgrade_credential`. Each of
+//! those handlers opens with `require!(!config.paused, AcademyError::MintingPaused)`.
+//! The switch is
 //! toggled via `update_config` (`UpdateConfigParams.paused: Option<bool>`),
 //! which is authority-gated by the `has_one = authority` constraint on the
 //! `UpdateConfig` accounts.
@@ -19,8 +20,9 @@ use onchain_academy::state::Config;
 use solana_sdk::pubkey::Pubkey;
 
 /// The exact gate at the top of complete_lesson / finalize_course / reward_xp /
-/// award_achievement / issue_credential: `require!(!config.paused, MintingPaused)`
-/// — i.e. the instruction proceeds iff the config is not paused.
+/// award_achievement / issue_credential / upgrade_credential:
+/// `require!(!config.paused, MintingPaused)` — i.e. the instruction proceeds iff
+/// the config is not paused.
 fn mint_allowed(paused: bool) -> bool {
     !paused
 }
@@ -42,13 +44,13 @@ fn config_with_paused(paused: bool) -> Config {
     }
 }
 
-// --- Gate: paused blocks the three minting instructions ---
+// --- Gate: paused blocks the six minting / credential instructions ---
 
-/// When `paused == true`, each of the five minting instructions hits the guard
-/// and fails with MintingPaused. The guard is identical in all of them, so one
-/// boolean covers them.
+/// When `paused == true`, each of the six minting / credential instructions hits
+/// the guard and fails with MintingPaused. The guard is identical in all of them,
+/// so one boolean covers them.
 #[test]
-fn paused_blocks_all_five_minting_instructions() {
+fn paused_blocks_all_six_minting_instructions() {
     let config = config_with_paused(true);
 
     // complete_lesson guard
@@ -61,18 +63,20 @@ fn paused_blocks_all_five_minting_instructions() {
     assert!(!mint_allowed(config.paused));
     // issue_credential guard (same expression on the same field)
     assert!(!mint_allowed(config.paused));
+    // upgrade_credential guard (added in #245 — same expression on the same field)
+    assert!(!mint_allowed(config.paused));
 }
 
-/// When `paused == false`, the guard passes and all five instructions proceed
+/// When `paused == false`, the guard passes and all six instructions proceed
 /// to their normal logic. This is the resumed state after `update_config`
 /// flips the switch back off.
 #[test]
-fn not_paused_allows_all_five_minting_instructions() {
+fn not_paused_allows_all_six_minting_instructions() {
     let config = config_with_paused(false);
 
     // complete_lesson / finalize_course / reward_xp / award_achievement /
-    // issue_credential all read the same `!paused` gate.
-    for _ in 0..5 {
+    // issue_credential / upgrade_credential all read the same `!paused` gate.
+    for _ in 0..6 {
         assert!(mint_allowed(config.paused));
     }
 }

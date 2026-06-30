@@ -11,15 +11,13 @@
 //! That co-signature is the authorization boundary, NOT a proof of merit. The
 //! program verifies only on-chain structural invariants — the lesson bit is not
 //! already set, the course is finalized at most once, supply/minter caps hold,
-//! the kill-switch (`Config.paused`) is off for the five minting paths — it does
-//! NOT gate `upgrade_credential` (see issue #244) — and that every account
-//! matches its PDA. It does NOT verify that the learner actually completed the
-//! lesson or passed the challenge: that eligibility check happens off-chain, and the
-//! program TRUSTS the backend to have validated it before co-signing. A leaked
-//! `backend_signer` key can therefore mint XP and credentials at will (bounded
-//! by minter caps and the kill-switch — except `upgrade_credential`, which the
-//! kill-switch does not gate, see issue #244); rotate it via `update_config` if
-//! compromised.
+//! the kill-switch (`Config.paused`) is off across all six minting/credential
+//! paths, and that every account matches its PDA. It does NOT verify that the
+//! learner actually completed the lesson or passed the challenge: that eligibility
+//! check happens off-chain, and the program TRUSTS the backend to have validated
+//! it before co-signing. A leaked `backend_signer` key can therefore mint XP and
+//! credentials at will (bounded by minter caps and the kill-switch); rotate it
+//! via `update_config` if compromised.
 
 use anchor_lang::prelude::*;
 
