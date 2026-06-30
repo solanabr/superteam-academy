@@ -453,6 +453,12 @@ Three layers of idempotency prevent duplicate completions and wasteful transacti
 
 The backend signer is stored in Config PDA and is rotatable via `update_config`. On devnet, authority and backend signer are typically the same keypair.
 
+#### Trust assumption: the backend signer is trusted, not verified
+
+The backend signer is a **trusted off-chain authority**, and its co-signature is an _authorization_ boundary, not a _proof of merit_. Every XP-minting and credential instruction (`complete_lesson`, `finalize_course`, `reward_xp`, `award_achievement`, `issue_credential`, `upgrade_credential`) requires it as an additional signer, enforced on-chain by `constraint = backend_signer.key() == config.backend_signer`.
+
+What the program **does** verify is structural only: the lesson bit was not already set, the course is finalized at most once, supply and minter caps hold, the kill-switch (`Config.paused`) is off for the five minting paths (it does **not** gate `upgrade_credential` — see #244), and every account matches its PDA. The program **does not** verify that the learner actually completed the lesson or passed the challenge — that eligibility check is performed off-chain by the backend before it co-signs, and the program trusts it to have done so. Consequently a compromised backend-signer key can mint XP and credentials at will (bounded by minter caps and the kill-switch, except `upgrade_credential`, which the kill-switch does not gate — see #244); the mitigation is rotation via `update_config`. The same boundary is documented in the `//!` module header of `programs/onchain-academy/src/lib.rs`.
+
 ### Supabase Mirror Pattern
 
 On-chain state is the source of truth for XP balances (Token-2022 ATA), enrollment status (bitmap), and credentials (Metaplex Core NFTs). Supabase mirrors this data for:

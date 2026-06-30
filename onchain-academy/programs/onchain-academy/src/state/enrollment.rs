@@ -13,7 +13,17 @@ pub struct Enrollment {
     pub lesson_flags: [u64; 4],
     /// Credential NFT address for this track (set by issue_credential)
     pub credential_asset: Option<Pubkey>,
-    /// Reserved for future use (4 bytes — differs from 8 on other accounts; cannot resize without migration)
+    /// Forward-compat padding (4 bytes — differs from the 8 reserved on other
+    /// accounts). A future field is carved from this in place, the same way
+    /// `Config.paused` and `MinterRole.max_total_xp` were: replace some of these
+    /// bytes with a real field declared immediately before `bump` so the field's
+    /// Borsh offset is unchanged, and shrink `_reserved` by the field's width so
+    /// `SIZE` stays constant. Because Borsh lays fields out in declaration order
+    /// and these bytes are already zero on every existing account, legacy
+    /// enrollments deserialize the new field as all-zeros (`0` / `false` /
+    /// `None`) — pick a type whose zero value preserves prior behavior. Widening
+    /// past these 4 bytes (or reordering fields) changes the layout/account size
+    /// and is a migration (realloc + backfill), not an in-place change.
     pub _reserved: [u8; 4],
     /// PDA bump
     pub bump: u8,
