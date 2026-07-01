@@ -93,8 +93,10 @@ export function buildCsp(nonce: string): string {
 
     // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline
     // CSS — out of scope for nonce'ing. fonts.googleapis.com allows the Google
-    // Fonts stylesheet link.
-    "style-src 'self' 'unsafe-inline' https://cdn.sanity.io https://fonts.googleapis.com",
+    // Fonts stylesheet link; cdn.jsdelivr.net allows Monaco's editor.main.css —
+    // the challenge-runner editor loads its stylesheet from the CDN, so without
+    // this the editor renders unstyled/broken.
+    "style-src 'self' 'unsafe-inline' https://cdn.sanity.io https://cdn.jsdelivr.net https://fonts.googleapis.com",
 
     // Fonts: self-hosted via next/font + Google Fonts (gstatic serves the files).
     "font-src 'self' data: https://fonts.gstatic.com",
@@ -121,6 +123,8 @@ export function buildCsp(nonce: string): string {
       "connect-src 'self'",
       `${supabase.http} ${supabase.ws}`,
       "https://api.sanity.io https://cdn.sanity.io https://*.apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
+      // Monaco fetches its source maps (loader.js.map, vs/*.map) from jsdelivr.
+      "https://cdn.jsdelivr.net",
       ...solanaRpcSources(),
       "https://accounts.google.com https://*.googleapis.com",
       "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
