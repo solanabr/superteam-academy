@@ -14,6 +14,7 @@ import {
   runJsSubmission,
   type ServerTestResult,
 } from "@/lib/challenge/executor";
+import { runRustSubmission } from "@/lib/challenge/rust-executor";
 
 export type ChallengeVerdict =
   | {
@@ -26,9 +27,12 @@ export type ChallengeVerdict =
     }
   | {
       /**
-       * Lesson is a challenge, but its correctness is established elsewhere
-       * (Rust playground / build server) rather than by the JS executor. The
-       * completion gate must decide policy for these explicitly.
+       * Lesson is a challenge whose correctness cannot yet be established
+       * server-side: `buildType: "buildable"` challenges are compiled by the
+       * Anchor build server, and that grading handshake is not wired up. The
+       * completion gate must deny these (fail closed). Plain `language: "rust"`
+       * challenges are NOT here — they are graded by the Rust executor and
+       * resolve to `validated`.
        */
       kind: "non_js_challenge";
       language: string | null;
@@ -63,10 +67,10 @@ function countTests(key: ChallengeAnswerKey): {
 }
 
 /**
- * A JS/TS code challenge is one we can execute and grade server-side. Rust
- * (`language: "rust"`) and buildable challenges are compiled by the Rust
- * playground / build server respectively and are out of scope for the JS
- * isolate executor.
+ * A JS/TS code challenge is one the isolate executor can grade. Rust
+ * (`language: "rust"`) is graded by the Rust executor; `buildType: "buildable"`
+ * challenges are compiled by the Anchor build server (not yet wired up). Both
+ * are out of scope for the JS isolate executor.
  */
 function isJsExecutableChallenge(key: ChallengeAnswerKey): boolean {
   if (key.type !== "challenge") return false;
@@ -74,6 +78,19 @@ function isJsExecutableChallenge(key: ChallengeAnswerKey): boolean {
   // Treat anything that isn't explicitly rust as JS/TS (matches the browser
   // runner, which only routes language === "rust" away from the JS worker).
   return key.language !== "rust";
+}
+
+/**
+ * A plain Rust challenge the Rust executor can grade end-to-end via the Rust
+ * Playground. Excludes `buildType: "buildable"`, which needs the Anchor build
+ * server rather than the Playground.
+ */
+function isRustGradableChallenge(key: ChallengeAnswerKey): boolean {
+  return (
+    key.type === "challenge" &&
+    key.buildType !== "buildable" &&
+    key.language === "rust"
+  );
 }
 
 /**
@@ -89,6 +106,29 @@ export async function validateAgainstAnswerKey(
 
   const { hidden, visible } = countTests(key);
 
+  // Rust challenges: graded authoritatively via the Rust Playground (full test
+  // set, incl. hidden). A Playground outage degrades closed to
+  // executor_unavailable so completion is denied, never granted unverified.
+  if (isRustGradableChallenge(key)) {
+    const run = await runRustSubmission(submittedCode, key.tests ?? []);
+    if (!run.available) {
+      return {
+        kind: "executor_unavailable",
+        hiddenTestCount: hidden,
+        visibleTestCount: visible,
+      };
+    }
+    return {
+      kind: "validated",
+      passed: run.passed,
+      hiddenTestCount: hidden,
+      visibleTestCount: visible,
+      results: run.results,
+    };
+  }
+
+  // Remaining non-JS challenges (buildType: "buildable") have no server-side
+  // grader yet — fail closed.
   if (!isJsExecutableChallenge(key)) {
     return {
       kind: "non_js_challenge",
