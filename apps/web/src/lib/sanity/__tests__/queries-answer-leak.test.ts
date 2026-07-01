@@ -54,9 +54,10 @@ describe("P0-C4: client lesson queries do not leak answers", () => {
     // Tests are filtered to exclude hidden ones at the source.
     expect(query).toContain('"tests": tests[hidden != true]');
     // The projected test shape lists only client-safe fields — `hidden` is not
-    // among the projected keys.
+    // among the projected keys. `id` is projected as coalesce(id, _key) so each
+    // test carries a stable, unique key (Sanity items key on `_key`).
     expect(query).toMatch(
-      /"tests": tests\[hidden != true\]\{ id, description, input, expectedOutput \}/
+      /"tests": tests\[hidden != true\]\{ "id": coalesce\(id, _key\), description, input, expectedOutput \}/
     );
     // Raw `tests,` (unfiltered, includes hidden) must not be projected.
     expect(query).not.toMatch(/\btests,/);
