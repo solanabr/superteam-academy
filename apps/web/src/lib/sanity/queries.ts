@@ -47,7 +47,7 @@ const moduleWithLessonsFields = `
     videoUrl,
     content,
     code,
-    "tests": tests[hidden != true]{ id, description, input, expectedOutput },
+    "tests": tests[hidden != true]{ "id": coalesce(id, _key), description, input, expectedOutput },
     hints,
     order
   } | order(order asc)
@@ -112,7 +112,7 @@ export async function getLessonBySlug(
         videoUrl,
         content,
         code,
-        "tests": tests[hidden != true]{ id, description, input, expectedOutput },
+        "tests": tests[hidden != true]{ "id": coalesce(id, _key), description, input, expectedOutput },
         hints,
         order
       }
@@ -147,7 +147,7 @@ const answerKeyProjection = `{
   type,
   language,
   buildType,
-  "tests": tests[]{ id, description, input, expectedOutput, hidden },
+  "tests": tests[]{ "id": coalesce(id, _key), description, input, expectedOutput, hidden },
   solution
 }`;
 
