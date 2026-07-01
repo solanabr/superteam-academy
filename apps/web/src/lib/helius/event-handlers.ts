@@ -502,20 +502,9 @@ async function tryIssueCredential(
     if (!enrollment) return;
     if (enrollment.credential_asset) return;
 
-    // Fetch course data from Sanity for metadata
+    // Fetch course data from Sanity for the display name
     const sanityCourse = await getCourseById(courseId);
     if (!sanityCourse) return;
-
-    const trackCollectionAddress = sanityCourse.trackCollectionAddress as
-      | string
-      | undefined;
-    if (!trackCollectionAddress) {
-      throw new Error(
-        `Course "${courseId}" has no trackCollectionAddress in Sanity — re-sync the course from the admin console`
-      );
-    }
-
-    const trackCollectionPubkey = new PublicKey(trackCollectionAddress);
     const courseName = sanityCourse.title ?? courseId;
 
     // Truncate credential name to 32 UTF-8 bytes (on-chain limit)
@@ -525,16 +514,30 @@ async function tryIssueCredential(
       credentialName = credentialName.slice(0, -1);
     }
 
-    // Fetch on-chain course for XP calculation
+    // Fetch the on-chain course — the SOURCE OF TRUTH for both XP and the
+    // credential collection. The program enforces
+    // `track_collection == course.collection` (CollectionMismatch), so use the
+    // on-chain collection, never Sanity's trackCollectionAddress (which can
+    // drift out of sync and is what causes CollectionMismatch).
     const onChainCourse = await fetchCourse(
       courseId,
       connection,
       getProgramId()
     );
-    const totalXp = onChainCourse
-      ? Number(onChainCourse.xp_per_lesson) *
-        (Number(onChainCourse.lesson_count) || 1)
-      : 0;
+    if (!onChainCourse) {
+      throw new Error(
+        `Course "${courseId}" is not deployed on-chain — re-sync the course from the admin console`
+      );
+    }
+    const trackCollectionPubkey = new PublicKey(onChainCourse.collection);
+    if (trackCollectionPubkey.equals(PublicKey.default)) {
+      throw new Error(
+        `Course "${courseId}" has no on-chain credential collection — re-sync the course from the admin console`
+      );
+    }
+    const totalXp =
+      Number(onChainCourse.xp_per_lesson) *
+      (Number(onChainCourse.lesson_count) || 1);
 
     // Fetch user profile for metadata
     const supabase = createAdminClient();

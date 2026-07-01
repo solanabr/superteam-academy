@@ -101,41 +101,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get course data from Sanity
+    // Get course data from Sanity (for the display name only)
     const sanityCourse = await getCourseById(courseId);
     if (!sanityCourse) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
-
-    const trackCollectionAddress = sanityCourse.trackCollectionAddress as
-      | string
-      | undefined;
-    if (!trackCollectionAddress) {
-      return NextResponse.json(
-        {
-          error:
-            "Course is missing trackCollectionAddress — ask an admin to sync the course first",
-        },
-        { status: 400 }
-      );
-    }
-
-    const trackCollectionPubkey = new PublicKey(trackCollectionAddress);
     const courseName = sanityCourse.title ?? courseId;
 
     // Truncate credential name to 32 UTF-8 bytes (on-chain limit)
     const credentialName = capCredentialName(courseName);
 
-    // Fetch on-chain course for XP calculation
+    // Fetch the on-chain course — the SOURCE OF TRUTH for both XP and the
+    // credential collection. The program enforces
+    // `track_collection == course.collection` (CollectionMismatch), so the mint
+    // MUST use the on-chain collection, never Sanity's trackCollectionAddress
+    // (which can drift out of sync and is what caused CollectionMismatch here).
     const onChainCourse = await fetchCourse(
       courseId,
       connection,
       getProgramId()
     );
-    const totalXp = onChainCourse
-      ? Number(onChainCourse.xp_per_lesson) *
-        (Number(onChainCourse.lesson_count) || 1)
-      : 0;
+    if (!onChainCourse) {
+      return NextResponse.json(
+        {
+          error:
+            "Course is not deployed on-chain — ask an admin to sync the course first",
+        },
+        { status: 400 }
+      );
+    }
+
+    const trackCollectionPubkey = new PublicKey(onChainCourse.collection);
+    if (trackCollectionPubkey.equals(PublicKey.default)) {
+      return NextResponse.json(
+        {
+          error:
+            "Course has no on-chain credential collection — ask an admin to sync the course first",
+        },
+        { status: 400 }
+      );
+    }
+
+    const totalXp =
+      Number(onChainCourse.xp_per_lesson) *
+      (Number(onChainCourse.lesson_count) || 1);
 
     // Build metadata
     const metadataJson = {
