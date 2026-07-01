@@ -1,0 +1,138 @@
+name: Fuzz (Trident)
+
+# P2-1 — real program-level fuzzing of the on-chain `onchain_academy` crate with
+# Trident (https://ackee.xyz/trident). This is a SCHEDULED, non-blocking job: it
+# is intentionally NOT wired to `pull_request`, so it never gates PR merges. It
+# runs nightly (and on demand) for 10+ minutes against the REAL compiled program,
+# fails the job if the fuzzer finds a crash, and uploads any crash/debug
+# artifacts for triage.
+#
+# Trident 0.12.0 drives an in-process SVM loop under catch_unwind; with
+# TRIDENT_WITH_EXIT_CODE=1 the binary exits 99 on the first panic (a program
+# panic or a violated invariant assertion) and 0 otherwise. We bound wall-clock
+# with `timeout`, so a clean run is either exit 0 (all iterations done) or exit
+# 124 (timeout reached with no crash).
+
+on:
+  schedule:
+    # 03:17 UTC nightly (off the hour to avoid the cron stampede).
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: "Max fuzzing wall-clock seconds (>= 600 to honor the 10-min floor)"
+        required: false
+        default: "900"
+      iterations:
+        description: "Trident iteration count (upper bound; timeout usually hits first)"
+        required: false
+        default: "1000000"
+
+# Don't pile up nightly runs on top of each other.
+concurrency:
+  group: fuzz-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  trident-fuzz:
+    name: Trident fuzz (onchain_academy)
+    runs-on: ubuntu-latest
+    # Job ceiling above the fuzz window so build + the run both fit.
+    timeout-minutes: 40
+    env:
+      SOLANA_VERSION: "2.0.25"
+      ANCHOR_VERSION: "0.31.1"
+      # 600s floor enforced below regardless of the dispatch input.
+      FUZZ_DURATION: ${{ github.event.inputs.duration_seconds || '900' }}
+      FUZZ_ITERATIONS: ${{ github.event.inputs.iterations || '1000000' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Cache both the program workspace (for `anchor build`) and the fuzz
+          # workspace (trident-fuzz + trident-svm are a big cold build).
+          workspaces: |
+            onchain-academy
+            onchain-academy/trident-tests
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install Anchor (avm)
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install "${ANCHOR_VERSION}"
+          avm use "${ANCHOR_VERSION}"
+
+      # Trident.toml loads ../target/deploy/onchain_academy.so, so the program
+      # must be compiled to SBF first. (Token-2022 / ATA / system programs are
+      # bundled by trident-svm — no extra .so needed.)
+      - name: Build program (.so for the fuzz SVM)
+        run: anchor build
+        working-directory: onchain-academy
+
+      - name: Build fuzz target
+        run: cargo build --release --bin fuzz_0
+        working-directory: onchain-academy/trident-tests
+
+      - name: Run fuzzer (>= 10 min)
+        working-directory: onchain-academy/trident-tests
+        env:
+          # Make panics (program panic OR a violated invariant assertion) set a
+          # non-zero process exit code so the job fails on a real finding.
+          TRIDENT_WITH_EXIT_CODE: "1"
+          # Surface Trident's per-transaction JSON metrics.
+          FUZZING_METRICS: "1"
+        run: |
+          set +e
+          DURATION="${FUZZ_DURATION}"
+          # Enforce the 10-minute floor the issue requires.
+          if [ "${DURATION}" -lt 600 ]; then
+            echo "duration ${DURATION}s below the 600s floor; clamping to 600s"
+            DURATION=600
+          fi
+          echo "Fuzzing for up to ${DURATION}s (iteration ceiling ${FUZZ_ITERATIONS})..."
+          # SIGTERM at DURATION; SIGKILL 30s later if it ignores TERM.
+          timeout --signal=TERM --kill-after=30s "${DURATION}s" \
+            cargo run --release --bin fuzz_0 -- "${FUZZ_ITERATIONS}"
+          CODE=$?
+          echo "fuzzer exit code: ${CODE}"
+          case "${CODE}" in
+            0)
+              echo "Fuzzing completed all iterations with no crashes."
+              ;;
+            124|143)
+              # 124 = GNU timeout reached; 143 = 128+SIGTERM. Either means the
+              # full window elapsed without the fuzzer reporting a crash.
+              echo "Fuzzing ran the full ${DURATION}s window with no crashes."
+              ;;
+            99)
+              echo "::error::Trident reported a crash (exit 99). See logs + artifacts."
+              exit 1
+              ;;
+            *)
+              echo "::error::Fuzzer exited unexpectedly with code ${CODE}."
+              exit "${CODE}"
+              ;;
+          esac
+
+      - name: Upload fuzz artifacts (metrics + crash corpus)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trident-fuzz-artifacts
+          path: |
+            onchain-academy/trident-tests/*.json
+            onchain-academy/trident-tests/trident-genesis/**
+            onchain-academy/trident-tests/trident_debug.log
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,33 @@
+# Trident fuzz workspace — isolated from the program workspace (own [workspace]
+# table + listed in onchain-academy/Cargo.toml `exclude`), so it never affects
+# `anchor build`, `cargo build`, or the Rust unit-test workspace. The fuzz
+# binary is a plain Cargo target: `cargo run --release --bin fuzz_0` drives the
+# in-process Trident SVM loop (no honggfuzz toolchain required).
+[workspace]
+
+[package]
+name = "onchain-academy-fuzz"
+version = "0.1.0"
+description = "Trident fuzz tests for the onchain_academy program"
+edition = "2021"
+publish = false
+
+[dependencies]
+borsh = "1.5.3"
+
+# Trident 0.12.0 is the latest stable release; it targets Anchor 0.31.1 +
+# solana-sdk 2.3 (matches this repo's Anchor 0.31.1 / Agave 2.x program), and
+# bundles Token-2022 / ATA programs in its SVM (`features = ["all"]`).
+[dependencies.trident-fuzz]
+version = "0.12.0"
+features = ["all"]
+
+[[bin]]
+name = "fuzz_0"
+path = "fuzz_0/test_fuzz.rs"
+
+# Match the program workspace's release hardening for the SBF program under test
+# is irrelevant here (the .so is prebuilt); keep the fuzz binary optimized so
+# 10-minute CI runs cover more iterations.
+[profile.release]
+opt-level = 3

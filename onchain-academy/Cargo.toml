@@ -3,7 +3,10 @@ members = [
     "programs/*",
 ]
 exclude = [
-    "trident-tests/fuzz",
+    # Trident fuzz tests are their own workspace (own [workspace] table +
+    # crates.io trident-fuzz pinning a different solana-sdk). Keep them out of
+    # the program workspace so `anchor build` / `cargo build` never resolve them.
+    "trident-tests",
 ]
 resolver = "2"
 
