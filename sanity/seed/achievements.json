@@ -26,19 +26,6 @@
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-course-completer"
   },
   {
-    "_id": "achievement-speed-runner",
-    "_type": "achievement",
-    "name": "Speed Runner",
-    "description": "Complete a course in under 24 hours",
-    "icon": "zap",
-    "glyph": "\u00bb",
-    "solTier": false,
-    "category": "progress",
-    "xpReward": 150,
-    "maxSupply": 0,
-    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-speed-runner"
-  },
-  {
     "_id": "achievement-week-warrior",
     "_type": "achievement",
     "name": "Week Warrior",

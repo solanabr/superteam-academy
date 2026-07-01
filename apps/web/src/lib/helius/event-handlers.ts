@@ -756,7 +756,6 @@ async function checkAndAwardAchievements(
         hasCompletedAllTracks: SOLANA_DEV_PATH_COURSES.every((id) =>
           completedCourseIds.has(id)
         ),
-        courseCompletionTimeHours: null,
         allTestsPassedFirstTry: false,
         userNumber: userNumber ?? 999,
         totalThreads: 0,

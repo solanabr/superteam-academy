@@ -685,7 +685,6 @@ Achievement metadata (name, description, icon, category) lives in **Sanity CMS**
 | ------------------- | ------------------------------ |
 | `first-steps`       | 1+ lesson completed            |
 | `course-completer`  | 1+ course completed            |
-| `speed-runner`      | Course completed in < 24 hours |
 | `week-warrior`      | 7-day streak                   |
 | `monthly-master`    | 30-day streak                  |
 | `consistency-king`  | 100-day streak                 |

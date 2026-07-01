@@ -474,7 +474,7 @@ interface UserState {
 }
 ```
 
-**Deferred signals**: Three fields (`hasCompletedAllTracks`, `courseCompletionTimeHours`, `allTestsPassedFirstTry`) require cross-course tracking infrastructure that is not yet implemented. Achievements depending on these signals (`full-stack-solana`, `speed-runner`, `perfect-score`) are currently unearnable.
+**Deferred signals**: Two fields (`hasCompletedAllTracks`, `allTestsPassedFirstTry`) require cross-course tracking infrastructure that is not yet implemented. Achievements depending on these signals (`full-stack-solana`, `perfect-score`) are currently unearnable.
 
 Achievement IDs in `UNLOCK_CHECKS` must match the Sanity `_id` minus the `achievement-` prefix. For example, Sanity document `achievement-first-steps` maps to key `"first-steps"`.
 
@@ -484,13 +484,12 @@ Use the admin panel to deploy the achievement on-chain. This creates an Achievem
 
 #### Current Achievement Catalog
 
-The 15 built-in achievements and their unlock conditions:
+The 14 built-in achievements and their unlock conditions:
 
 | ID                  | Condition                                      |
 | ------------------- | ---------------------------------------------- |
 | `first-steps`       | Complete 1 lesson                              |
 | `course-completer`  | Complete 1 course                              |
-| `speed-runner`      | Complete a course in under 24 hours (deferred) |
 | `week-warrior`      | 7-day streak                                   |
 | `monthly-master`    | 30-day streak                                  |
 | `consistency-king`  | 100-day streak                                 |
