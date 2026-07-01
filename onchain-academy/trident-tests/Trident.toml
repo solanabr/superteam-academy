@@ -1,0 +1,21 @@
+# Trident manifest. Loads the REAL compiled program into the fuzz SVM.
+# Token-2022, the Associated-Token program, and the system program are provided
+# by trident-svm out of the box, so only our own program needs to be declared.
+# Docs: https://ackee.xyz/trident/docs/latest/features/trident-manifest/
+
+[fuzz]
+# Re-run the saved crash corpus (TRIDENT_FUZZ_SEED) before random fuzzing so a
+# fixed bug stays fixed.
+[fuzz.regression]
+enabled = true
+
+[fuzz.metrics]
+enabled = true
+json = true
+
+# The on-chain program under test. Path is relative to this manifest
+# (onchain-academy/trident-tests/Trident.toml). `anchor build` must have produced
+# the .so first.
+[[fuzz.programs]]
+address = "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V"
+program = "../target/deploy/onchain_academy.so"
