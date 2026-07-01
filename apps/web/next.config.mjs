@@ -4,38 +4,28 @@ import { withSentryConfig } from "@sentry/nextjs";
 const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
 
 /**
- * Content-Security-Policy.
+ * Static Content-Security-Policy FALLBACK for routes the middleware does not
+ * run on — namely `/studio/*` (Sanity Studio) and `/api/*`. The user-facing app
+ * gets a stricter, per-request nonce CSP built in `middleware.ts` + `lib/csp.ts`
+ * (no `'unsafe-inline'` for scripts); middleware response headers override these
+ * static ones where both apply, so the nonce policy wins for matched routes.
  *
- * This is an ENFORCING policy tuned to keep every legitimate integration
- * working. Where a directive can't be locked down without breaking runtime
- * behaviour it is left permissive on purpose (see inline `unsafe-*` notes and
- * `TODO tighten` markers). Tightening any of these requires runtime QA of the
- * affected feature first.
+ * Studio KEEPS `'unsafe-inline'` + `'unsafe-eval'` for scripts: it is a
+ * third-party SPA bundle that cannot be nonced and relies on eval. `/api/*`
+ * returns JSON/binary (no inline scripts), so the script policy is moot there.
+ * Keep the non-script directives here in rough sync with `lib/csp.ts`.
  *
  * Notable allowances:
- * - `'unsafe-eval'` in script-src — REQUIRED. The in-browser code-challenge
- *   sandbox (`components/editor/challenge-runner.tsx`) runs learner code via
- *   `new Function()`, and Monaco's tokenizer/worker bootstrap also relies on
- *   it. Removing it WILL break the editor and challenge runner.
- * - `'unsafe-inline'` in script-src/style-src — Next.js injects an inline
- *   bootstrap script and inline critical CSS; nonces are not wired up.
- * - Server-only externals (Gemini, Rust Playground, build server) are NOT
- *   listed: the browser only ever talks to same-origin `/api/*` routes that
- *   proxy them.
- *
- * KNOWN DEFERRED LIMITATION: `'unsafe-inline'` + `'unsafe-eval'` keep the
- * script CSP weak — together they neutralise CSP's XSS protection for inline
- * and eval'd scripts. Closing this requires a nonce- (or hash-) based script
- * CSP wired through Next.js's inline bootstrap; that is intentionally NOT
- * attempted here. Tracked by the `TODO tighten` marker below.
+ * - `'unsafe-eval'` in script-src — REQUIRED for Studio (and Monaco, on the
+ *   middleware path). - Server-only externals (Gemini, Rust Playground, build
+ *   server) are NOT listed: the browser only talks to same-origin `/api/*`.
  */
 const cspDirectives = [
   "default-src 'self'",
 
-  // Scripts: self + GA4 tag loader + PostHog. 'unsafe-eval' for the code
-  // sandbox / Monaco; 'unsafe-inline' for the Next.js bootstrap + analytics
-  // snippets; blob: for Monaco/worker bootstrap; jsdelivr for the Monaco
-  // editor loader (@monaco-editor/react fetches loader.js + vs/* from the CDN).
+  // Scripts (Studio/API fallback): 'unsafe-inline' is REQUIRED for the Sanity
+  // Studio bundle, which cannot be nonced. The user-facing app does NOT use
+  // this — its middleware CSP replaces 'unsafe-inline' with a per-request nonce.
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com",
 
   // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline CSS.
@@ -47,14 +37,16 @@ const cspDirectives = [
 
   // Images: avatars (Google), NFT art (Arweave), Supabase storage, Sanity CDN +
   // Studio media library, GA4 measurement pixel (doubleclick). data:/blob:
-  // cover inline SVGs, canvas-confetti, and wallet QR codes.
+  // cover inline SVGs, canvas-confetti, and wallet QR codes. Supabase stays a
+  // wildcard here (Studio/API fallback); the app's middleware CSP pins it.
   "img-src 'self' data: blob: https://cdn.sanity.io https://media.sanity.io https://lh3.googleusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
 
   // Network: Supabase (REST + realtime wss), Sanity (CDN/API + listen wss),
   // Solana/Helius RPC, Google OAuth/identity, and analytics (GA4, PostHog,
-  // Sentry). Wildcards because project subdomains differ per environment.
-  // TODO tighten — pin Supabase/Helius/Sanity to concrete project subdomains
-  // once the production hostnames are fixed.
+  // Sentry). Wildcards here because this fallback is build-time and serves
+  // Studio (admin-only); the app's middleware CSP pins Supabase + the Solana
+  // RPC to concrete hosts at request time. Sanity/PostHog/Sentry stay wildcards
+  // in both — regional/multi-subdomain ingest hosts, pinning risks breakage.
   [
     "connect-src 'self'",
     "https://*.supabase.co wss://*.supabase.co",
@@ -83,10 +75,6 @@ const cspDirectives = [
 
 const securityHeaders = [
   {
-    key: "Content-Security-Policy",
-    value: cspDirectives.join("; "),
-  },
-  {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
@@ -108,6 +96,14 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
   },
 ];
+
+// Static CSP header, applied ONLY to routes the middleware skips (`/studio/*`,
+// `/api/*`). Matched app routes get the per-request nonce CSP from middleware,
+// which overrides this where both apply.
+const staticCspHeader = {
+  key: "Content-Security-Policy",
+  value: cspDirectives.join("; "),
+};
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -134,8 +130,22 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Global hardening headers (HSTS, X-Frame-Options, etc.). No CSP here —
+        // the app's CSP comes from middleware; Studio/API CSP is added below.
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        // Sanity Studio is excluded from middleware, so apply the static CSP
+        // fallback (keeps 'unsafe-inline'/'unsafe-eval' for the Studio bundle).
+        source: "/studio/:path*",
+        headers: [staticCspHeader],
+      },
+      {
+        // API routes are excluded from middleware too. They serve JSON/binary,
+        // so the script policy is moot, but keep a CSP for defense-in-depth.
+        source: "/api/:path*",
+        headers: [staticCspHeader],
       },
     ];
   },
