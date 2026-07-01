@@ -22,7 +22,6 @@ export interface UserState {
   hasCompletedRustLesson: boolean;
   hasCompletedAnchorCourse: boolean;
   hasCompletedAllTracks: boolean;
-  courseCompletionTimeHours: number | null;
   allTestsPassedFirstTry: boolean;
   userNumber: number;
   totalThreads: number;
@@ -39,8 +38,6 @@ export interface UserState {
 const UNLOCK_CHECKS: Record<string, (state: UserState) => boolean> = {
   "achievement-first-steps": (s) => s.completedLessons >= 1,
   "achievement-course-completer": (s) => s.completedCourses >= 1,
-  "achievement-speed-runner": (s) =>
-    s.courseCompletionTimeHours !== null && s.courseCompletionTimeHours < 24,
   "achievement-week-warrior": (s) => s.currentStreak >= 7,
   "achievement-monthly-master": (s) => s.currentStreak >= 30,
   "achievement-consistency-king": (s) => s.currentStreak >= 100,
@@ -128,7 +125,6 @@ export async function checkCommunityAchievements(
     hasCompletedRustLesson: false,
     hasCompletedAnchorCourse: false,
     hasCompletedAllTracks: false,
-    courseCompletionTimeHours: null,
     allTestsPassedFirstTry: false,
     userNumber: 999,
     totalThreads: 0,

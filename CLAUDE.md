@@ -415,9 +415,9 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 **Level formula**: `Level = floor(sqrt(totalXP / 100))`
 **Server-side cap**: max 100 XP per lesson completion, max 2000 XP per generic award
 
-### Achievements (15 total)
+### Achievements (14 total)
 
-- **Progress**: First Steps, Course Completer, Speed Runner
+- **Progress**: First Steps, Course Completer
 - **Streaks**: Week Warrior (7d), Monthly Master (30d), Consistency King (100d)
 - **Skills**: Rust Rookie, Anchor Expert, Full Stack Solana
 - **Community**: Helper, First Comment, Top Contributor
