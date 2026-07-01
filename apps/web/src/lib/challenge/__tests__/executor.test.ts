@@ -4,13 +4,11 @@ import { isExecutorAvailable, runJsSubmission } from "../executor";
 import { validateAgainstAnswerKey } from "../validate";
 import type { ChallengeAnswerKey } from "@/lib/sanity/queries";
 
-// `isolated-vm` is an OPTIONAL native addon: it requires Node >= 22 and a
-// prebuilt/buildable binary, so it is ABSENT on the repo's Node 20 CI runner and
-// on Vercel serverless. The isolate-backed tests below therefore run ONLY when
-// the addon actually loaded in this environment (resolved once, here); otherwise
-// they are SKIPPED, not failed. The gate-logic and degrade-closed tests further
-// down do NOT need the isolate and always run — they are what proves the
-// server-authoritative behaviour in the addon-absent environment.
+// The executor runs on QuickJS compiled to WebAssembly (no native addon), so it
+// loads in every environment — CI, and Vercel serverless. EXECUTOR_AVAILABLE is
+// therefore expected to be true everywhere; the `skipIf` below is a defensive
+// guard so the suite degrades to skipped (not failed) in the unlikely event the
+// WASM module can't instantiate, rather than an expected code path.
 const EXECUTOR_AVAILABLE = await isExecutorAvailable();
 
 const sumTests: AdminTestCase[] = [
@@ -37,14 +35,13 @@ const PASSES_VISIBLE_ONLY =
 const WRONG = "function add(a, b) { return a * b; }";
 const EMPTY = "";
 
-// These tests exercise the REAL isolated-vm executor (no mocks). They prove the
+// These tests exercise the REAL QuickJS executor (no mocks). They prove the
 // server is authoritative: correctness is judged by running the submission
 // against the server-held tests, so a forged client "passed" cannot produce a
 // passing verdict. They also assert the sandbox isolation guarantees
-// (no host objects, timeout kills runaway code). SKIPPED when the addon is
-// absent (e.g. Node 20 / serverless) — see EXECUTOR_AVAILABLE above.
+// (no host objects, timeout kills runaway code). See EXECUTOR_AVAILABLE above.
 describe.skipIf(!EXECUTOR_AVAILABLE)(
-  "secure challenge executor (isolated-vm)",
+  "secure challenge executor (QuickJS WASM)",
   () => {
     it("reports available in this environment", async () => {
       expect(await isExecutorAvailable()).toBe(true);
@@ -142,7 +139,7 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       30_000
     );
 
-    it("kills CPU-bound runaway code via in-isolate timeout (does not hang)", async () => {
+    it("kills CPU-bound runaway code via the interrupt handler (does not hang)", async () => {
       const tests: AdminTestCase[] = [
         { id: "t", description: "loops", input: "", expectedOutput: "true" },
       ];
@@ -211,9 +208,9 @@ function answerKey(over: Partial<ChallengeAnswerKey> = {}): ChallengeAnswerKey {
   };
 }
 
-// Gate logic that DOES exercise the real isolate (judging real submissions).
-// Guarded so it is skipped when the addon is absent — the degrade-closed block
-// below covers the addon-absent path deterministically.
+// Gate logic that DOES exercise the real executor (judging real submissions).
+// Guarded by EXECUTOR_AVAILABLE for the same defensive reason as above; the
+// degrade-closed block below covers the executor-unavailable path deterministically.
 describe.skipIf(!EXECUTOR_AVAILABLE)(
   "validateAgainstAnswerKey (executor present)",
   () => {
@@ -245,9 +242,8 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
   }
 );
 
-// Classification logic that needs NO isolate — always runs, including on the
-// Node 20 / serverless CI where the addon is absent.
-describe("validateAgainstAnswerKey (classification, no isolate)", () => {
+// Classification logic that needs NO executor — always runs.
+describe("validateAgainstAnswerKey (classification, no executor)", () => {
   it("classifies non-challenge lessons as not_a_challenge (gate skipped)", async () => {
     const verdict = await validateAgainstAnswerKey(
       answerKey({ type: "content" }),
@@ -271,12 +267,11 @@ describe("validateAgainstAnswerKey (classification, no isolate)", () => {
   });
 });
 
-// DEGRADE-CLOSED — the contract that keeps the platform safe when the secure
-// executor cannot run (the exact Node 20 / Vercel situation). The executor
-// module is MOCKED unavailable so this is deterministic regardless of whether
-// isolated-vm happens to be built in the current environment. The verdict here
-// is what the routes turn into a 503 (POST /api/lessons/complete) — completion
-// is BLOCKED, never silently granted.
+// DEGRADE-CLOSED — the contract that keeps the platform safe if the secure
+// executor ever cannot run. The executor module is MOCKED unavailable so this is
+// deterministic regardless of the runtime. The verdict here is what the routes
+// turn into a 503 (POST /api/lessons/complete) — completion is BLOCKED, never
+// silently granted.
 describe("degrade-closed when executor is unavailable (mocked)", () => {
   afterEach(() => {
     vi.resetModules();

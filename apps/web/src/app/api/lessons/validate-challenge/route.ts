@@ -13,8 +13,8 @@ import { ERROR_IDS } from "@/constants/errorIds";
  *
  * Server-side, authoritative challenge validation. Loads the FULL answer key
  * (hidden tests + reference solution) server-side via getChallengeAnswerKey,
- * runs the submission through the secure isolate executor (`isolated-vm`)
- * against ALL tests (visible + hidden), and returns only pass/fail metadata.
+ * runs the submission through the secure QuickJS (WASM) executor against ALL
+ * tests (visible + hidden), and returns only pass/fail metadata.
  * The answer key, hidden tests, and reference solution are never serialised
  * into the response (P0-C4).
  *

@@ -111,12 +111,17 @@ const nextConfig = {
   // (validates env vars). Stable in Next 15; opt-in in Next 14.
   experimental: {
     instrumentationHook: true,
-    // `isolated-vm` is a native addon used by the server-side challenge
-    // executor (lib/challenge/executor.ts). Keep it external so webpack does
-    // not attempt to bundle/trace the .node binary; it is required at runtime
-    // on the Node.js server. The module loads lazily and degrades closed if the
-    // prebuilt binary is unavailable in the host environment.
-    serverComponentsExternalPackages: ["isolated-vm"],
+    // The server-side challenge executor (lib/challenge/executor.ts) runs learner
+    // code in QuickJS-on-WASM. Keep these packages EXTERNAL so webpack does not
+    // re-bundle the single-file variant — its WASM is embedded via octal escapes
+    // in a template literal, which Node's module loader rejects once webpack has
+    // re-emitted it. Left external, Node loads the package's own (valid) file and
+    // Next's output file tracing still includes it (the WASM travels inside the
+    // JS, so there is no separate .wasm artifact to trace).
+    serverComponentsExternalPackages: [
+      "quickjs-emscripten-core",
+      "@jitl/quickjs-singlefile-cjs-release-sync",
+    ],
   },
   transpilePackages: ["@superteam-lms/types", "@superteam-lms/sanity"],
   images: {

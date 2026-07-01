@@ -5,53 +5,65 @@
  * -----------------
  * Learner code is arbitrary and hostile by assumption. Node's `vm` module,
  * `eval`, and `new Function` share the host realm and are NOT isolation
- * boundaries. This module runs submissions inside a real V8 **isolate** via
- * `isolated-vm`, which is the standard primitive for sandboxing untrusted JS in
- * Node. The guarantees, all enforced by V8 itself (not by string filtering):
+ * boundaries. This module runs submissions inside a **QuickJS** interpreter
+ * compiled to WebAssembly (`quickjs-emscripten`). QuickJS is a separate JS
+ * engine executing in the WASM sandbox — it shares no realm, heap, or globals
+ * with the host. Because it is pure WASM (no native addon), it loads in any
+ * Node/serverless runtime, including Vercel. The guarantees:
  *
- *   - Separate heap with a hard MEMORY LIMIT (`MEMORY_LIMIT_MB`). A submission
- *     that allocates past the cap is terminated; it cannot exhaust host memory.
- *   - A wall-clock TIMEOUT per evaluation (`EXEC_TIMEOUT_MS`). Infinite loops and
- *     busy-waits are killed.
- *   - No ambient host objects. `process`, `require`, `module`, `globalThis`
- *     bindings to Node, the filesystem, and the network simply do not exist in
- *     the isolate — there is nothing to reference. We never bridge a host
- *     function or object into the isolate (no `Reference`, no `jsonOver`...).
+ *   - Separate heap with a hard MEMORY LIMIT (`MEMORY_LIMIT_MB`), enforced by
+ *     the QuickJS runtime. Allocation past the cap aborts execution.
+ *   - A wall-clock TIMEOUT per evaluation (`EXEC_TIMEOUT_MS`) via an interrupt
+ *     handler polled by the interpreter — infinite loops / busy-waits are killed.
+ *   - No ambient host objects. `process`, `require`, `module`, Node's
+ *     `globalThis` bindings, the filesystem, and the network do not exist inside
+ *     the QuickJS context. We never expose a host function or object into it.
  *   - Only two values cross the boundary: a STRING of code goes in; a
  *     JSON-serialisable STRING result comes out (copied, never shared).
  *
- * The mock Solana SDK and console live ENTIRELY inside the isolate, assembled
- * from source text, so the learner interacts only with isolate-local objects.
+ * The mock Solana SDK and console live ENTIRELY inside the sandbox, assembled
+ * from source text, so the learner interacts only with sandbox-local objects.
+ * A FRESH runtime + context is created per test case, so one submission cannot
+ * carry state (or prototype/global poisoning) into another test.
  *
  * DEGRADE-CLOSED
  * --------------
- * `isolated-vm` is a native addon. If it cannot be loaded in the host
- * environment (e.g. a serverless platform without the prebuilt binary), this
- * module reports `available: false` and runs NOTHING. Callers MUST treat an
- * unavailable executor as a validation FAILURE (deny completion), never as a
- * pass. See `runJsSubmission`'s return contract. The intended production
- * fallback is a dedicated sandboxed microservice (mirroring the existing Rust
- * build-server), not an insecure in-process `vm`/`Function` shim.
+ * If the WASM module cannot be instantiated (it always should, but as a hard
+ * invariant), this module reports `available: false` and runs NOTHING. Callers
+ * MUST treat an unavailable executor as a validation FAILURE (deny completion),
+ * never as a pass. See `runJsSubmission`'s return contract.
  */
 
 import type { AdminTestCase } from "@superteam-lms/types";
+import {
+  newQuickJSWASMModuleFromVariant,
+  type QuickJSWASMModule,
+  type QuickJSContext,
+  type QuickJSHandle,
+} from "quickjs-emscripten-core";
+// Single-file variant: the WASM is embedded (base64) in the JS module, so there
+// is no separate `.wasm` artifact to trace into the serverless bundle — it just
+// works on Vercel. "sync" = synchronous host↔VM calls (JS-level Promises inside
+// the VM are still driven via the job queue; see resolveToString).
+import releaseSyncVariant from "@jitl/quickjs-singlefile-cjs-release-sync";
 
-/** Hard heap cap for the isolate. Enough for SDK mocks + small programs. */
+/** Hard heap cap for the sandbox. Enough for SDK mocks + small programs. */
 const MEMORY_LIMIT_MB = 64;
 
 /**
- * Wall-clock budget per evaluation, enforced INSIDE the isolate (kills
- * CPU-bound runaways like `while(true){}`). Mirrors the browser worker's 5s.
+ * Wall-clock budget per evaluation, enforced INSIDE the sandbox via the QuickJS
+ * interrupt handler (kills CPU-bound runaways like `while(true){}`). Mirrors the
+ * browser worker's 5s.
  */
 const EXEC_TIMEOUT_MS = 5_000;
 
 /**
- * Host-side hard guard, slightly longer than EXEC_TIMEOUT_MS. The in-isolate
- * timeout cannot interrupt a quiescent pending promise (e.g.
- * `await new Promise(() => {})`) because there is no CPU activity to preempt —
- * there are no timers/event-loop primitives in the isolate, so such a promise
- * never settles. This guard abandons the evaluation and the isolate is disposed,
- * preventing a hung request. Defense-in-depth, not the primary boundary.
+ * Host-side hard guard, slightly longer than EXEC_TIMEOUT_MS. The in-sandbox
+ * interrupt cannot fire on a quiescent pending promise (e.g.
+ * `await new Promise(() => {})`) because there is no CPU activity to preempt and
+ * no timers/event-loop in the VM, so such a promise never settles. This guard
+ * abandons the evaluation (the runtime is then disposed), preventing a hung
+ * request. Defense-in-depth, not the primary boundary.
  */
 const HOST_GUARD_MS = EXEC_TIMEOUT_MS + 1_000;
 
@@ -72,55 +84,19 @@ function withHostGuard<T>(p: Promise<T>): Promise<T> {
 /** Upper bound on submission size we are willing to compile/run. */
 const MAX_CODE_BYTES = 100_000;
 
-/**
- * Minimal shape of the `isolated-vm` API we depend on. Declared locally so the
- * module type-checks even where `@types` for the native addon are unavailable,
- * and so the dependency is imported lazily (degrade-closed).
- */
-interface IvmContext {
-  eval(
-    code: string,
-    opts?: { timeout?: number; promise?: boolean }
-  ): Promise<unknown>;
-  /**
-   * Free this context's realm — its `global` and everything reachable from it
-   * (including any taint a previous submission applied to `globalThis.Function`,
-   * `Object.prototype`, etc.) — without disposing the whole isolate. A fresh
-   * `createContext()` then yields a clean realm.
-   */
-  release(): void;
-}
-interface IvmIsolate {
-  createContext(): Promise<IvmContext>;
-  dispose(): void;
-}
-interface IvmModule {
-  Isolate: new (opts: { memoryLimit: number }) => IvmIsolate;
-}
-
-let ivmModulePromise: Promise<IvmModule | null> | undefined;
+let quickJsPromise: Promise<QuickJSWASMModule | null> | undefined;
 
 /**
- * Load `isolated-vm` once, lazily. Returns null (never throws) when the native
- * addon is missing so the caller can degrade closed.
+ * Instantiate the QuickJS WASM module once, lazily. Returns null (never throws)
+ * if instantiation fails so the caller can degrade closed.
  */
-async function loadIvm(): Promise<IvmModule | null> {
-  if (ivmModulePromise === undefined) {
-    ivmModulePromise = (async () => {
-      try {
-        // Indirected through a variable so bundlers don't try to follow/trace
-        // the native addon at build time.
-        const specifier = "isolated-vm";
-        const mod = (await import(/* webpackIgnore: true */ specifier)) as
-          | IvmModule
-          | { default: IvmModule };
-        return "Isolate" in mod ? mod : mod.default;
-      } catch {
-        return null;
-      }
-    })();
+async function loadQuickJS(): Promise<QuickJSWASMModule | null> {
+  if (quickJsPromise === undefined) {
+    quickJsPromise = newQuickJSWASMModuleFromVariant(releaseSyncVariant).catch(
+      () => null
+    );
   }
-  return ivmModulePromise;
+  return quickJsPromise;
 }
 
 /** Result of running a single test case server-side. */
@@ -152,7 +128,7 @@ export type SubmissionRunResult =
 
 /** Whether the secure executor can run in this environment. */
 export async function isExecutorAvailable(): Promise<boolean> {
-  return (await loadIvm()) !== null;
+  return (await loadQuickJS()) !== null;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -491,42 +467,102 @@ function transformImports(code: string): string {
 /* ------------------------------------------------------------------------- */
 
 /**
+ * Settle the VM-side Promise returned by `__runCase__` and copy its string
+ * result out. QuickJS Promises advance only when their microtask queue is
+ * pumped (`executePendingJobs`); we drain it, then await the host-side promise
+ * `resolvePromise` bridges. A never-settling VM promise leaves the queue empty
+ * and the awaited promise pending — the caller's host guard abandons it.
+ */
+async function resolveToString(
+  ctx: QuickJSContext,
+  promiseHandle: QuickJSHandle
+): Promise<string> {
+  const settledPromise = ctx.resolvePromise(promiseHandle);
+  promiseHandle.dispose();
+  for (;;) {
+    const jobs = ctx.runtime.executePendingJobs();
+    if (jobs.error) {
+      jobs.error.dispose();
+      break;
+    }
+    if (jobs.value === 0) break; // nothing left to run
+  }
+  const settled = await settledPromise;
+  const valueHandle = ctx.unwrapResult(settled);
+  const out = ctx.getString(valueHandle);
+  valueHandle.dispose();
+  return out;
+}
+
+/**
+ * Run one test case in a FRESH QuickJS runtime + context. A new runtime per test
+ * means a submission cannot carry state — or `globalThis.Function` / prototype /
+ * `JSON` poisoning — from one test into another (including hidden ones); the
+ * whole engine instance is discarded after. Memory cap + interrupt-based timeout
+ * are set on the runtime; the host guard (caller) covers a quiescent hang.
+ */
+async function runOneCase(
+  quickjs: QuickJSWASMModule,
+  userCodeJson: string,
+  testJson: string
+): Promise<{ passed: boolean; detail: string }> {
+  const runtime = quickjs.newRuntime();
+  runtime.setMemoryLimit(MEMORY_LIMIT_MB * 1024 * 1024);
+  const deadline = Date.now() + EXEC_TIMEOUT_MS;
+  runtime.setInterruptHandler(() => Date.now() > deadline);
+  const ctx = runtime.newContext();
+  try {
+    // Install the harness + mock SDK into this context.
+    ctx.unwrapResult(ctx.evalCode(ISOLATE_RUNTIME_SOURCE)).dispose();
+    // Both args are JSON string literals embedded in the source — no host
+    // reference crosses the boundary.
+    const expr = `__runCase__(${JSON.stringify(userCodeJson)}, ${JSON.stringify(testJson)})`;
+    const promiseHandle = ctx.unwrapResult(ctx.evalCode(expr));
+    const raw = await withHostGuard(resolveToString(ctx, promiseHandle));
+    const parsed = JSON.parse(raw) as { ok: boolean; detail: string };
+    return { passed: parsed.ok === true, detail: parsed.detail };
+  } catch (err) {
+    if (err === HOST_GUARD)
+      return { passed: false, detail: "Execution timed out" };
+    // Interrupt (timeout) / OOM / syntax error / VM throw all land here.
+    return {
+      passed: false,
+      detail: (err instanceof Error ? err.message : String(err)).slice(0, 200),
+    };
+  } finally {
+    ctx.dispose();
+    runtime.dispose();
+  }
+}
+
+/**
  * Run a JS/TS submission against every supplied test.
- *
- * ISOLATION PER TEST CASE — each test runs in a FRESH context (realm) inside the
- * isolate: a new context is created, the runtime/harness is installed into it,
- * the submission + that single test run, the verdict is read out, and the
- * context is released. A submission cannot carry state from one test into
- * another, because the test wrapper is built in-isolate with `new Function(...)`
- * (which resolves to that realm's `globalThis.Function`) — running user code in
- * a shared global let test #1 reassign `globalThis.Function` (or pollute
- * `Object.prototype` / `Array.prototype` / `JSON`) and force every later test —
- * including hidden ones — to "pass". A clean realm per test, discarded after,
- * closes that bypass. CPU timeout, host wall-clock kill, and memory limit are
- * unchanged.
  *
  * Contract: returns `{ available: false }` when the secure executor cannot run
  * — callers MUST deny completion in that case. When available, `passed` is true
- * only if EVERY test passed.
+ * only if EVERY test passed. Each test runs in its own fresh QuickJS instance
+ * (see {@link runOneCase}), so one test cannot influence another.
  */
 export async function runJsSubmission(
   code: string,
   tests: AdminTestCase[]
 ): Promise<SubmissionRunResult> {
-  const ivm = await loadIvm();
-  if (!ivm) return { available: false, reason: "executor_unavailable" };
+  const quickjs = await loadQuickJS();
+  if (!quickjs) return { available: false, reason: "executor_unavailable" };
+
+  const failAll = (detail: string): SubmissionRunResult => ({
+    available: true,
+    passed: false,
+    results: tests.map((t) => ({
+      id: t.id,
+      hidden: t.hidden === true,
+      passed: false,
+      detail,
+    })),
+  });
 
   if (Buffer.byteLength(code, "utf8") > MAX_CODE_BYTES) {
-    return {
-      available: true,
-      passed: false,
-      results: tests.map((t) => ({
-        id: t.id,
-        hidden: t.hidden === true,
-        passed: false,
-        detail: "Submission too large",
-      })),
-    };
+    return failAll("Submission too large");
   }
 
   let transpiled: string;
@@ -534,115 +570,34 @@ export async function runJsSubmission(
     transpiled = transformImports(code);
   } catch (err) {
     // A submission that doesn't even parse fails every test.
-    const detail = (err instanceof Error ? err.message : String(err)).slice(
-      0,
-      200
+    return failAll(
+      (err instanceof Error ? err.message : String(err)).slice(0, 200)
     );
-    return {
-      available: true,
-      passed: false,
-      results: tests.map((t) => ({
-        id: t.id,
-        hidden: t.hidden === true,
-        passed: false,
-        detail,
-      })),
-    };
   }
 
-  const isolate = new ivm.Isolate({ memoryLimit: MEMORY_LIMIT_MB });
-  try {
-    const userCodeJson = JSON.stringify(transpiled);
-    const results: ServerTestResult[] = [];
-    // The host wall-clock guard can only trip once: it abandons the in-flight
-    // evaluation and we dispose the whole isolate, so any remaining tests cannot
-    // run and are recorded as failed.
-    let aborted = false;
-
-    for (const test of tests) {
-      if (aborted) {
-        results.push({
-          id: test.id,
-          hidden: test.hidden === true,
-          passed: false,
-          detail: "Execution aborted (timeout)",
-        });
-        continue;
-      }
-
-      const testJson = JSON.stringify({
-        input: test.input ?? "",
-        expectedOutput: test.expectedOutput ?? "",
-      });
-      const expr = `__runCase__(${JSON.stringify(userCodeJson)}, ${JSON.stringify(testJson)})`;
-      let detail = "execution error";
-      let passed = false;
-
-      // FRESH realm per test: create a new context, install the runtime into it,
-      // run [user code + this one test], read the verdict, then release it. Any
-      // taint the submission applied to this realm's `globalThis.Function`,
-      // prototypes, etc. dies with the context and cannot reach the next test.
-      let context: IvmContext | undefined;
-      try {
-        context = await isolate.createContext();
-        await withHostGuard(
-          context.eval(ISOLATE_RUNTIME_SOURCE, { timeout: EXEC_TIMEOUT_MS })
-        );
-        // promise:true resolves the async __runCase__ inside the isolate and
-        // copies the resolved JSON string out. Both arguments are JSON string
-        // literals embedded in the eval'd expression — no host references cross
-        // the boundary. The in-isolate timeout kills CPU-bound runaways;
-        // withHostGuard catches the rare quiescent never-settling promise.
-        const raw = (await withHostGuard(
-          context.eval(expr, {
-            timeout: EXEC_TIMEOUT_MS,
-            promise: true,
-          })
-        )) as string;
-        const parsed = JSON.parse(raw) as { ok: boolean; detail: string };
-        passed = parsed.ok === true;
-        detail = parsed.detail;
-      } catch (err) {
-        if (err === HOST_GUARD) {
-          // Abandon the hung evaluation: dispose the isolate and fail the rest.
-          aborted = true;
-          detail = "Execution timed out";
-        } else {
-          // In-isolate timeout / OOM / disposed all land here -> test fails.
-          detail = (err instanceof Error ? err.message : String(err)).slice(
-            0,
-            200
-          );
-        }
-        passed = false;
-      } finally {
-        // Free this test's realm. Skipped when the host guard tripped: the
-        // isolate is about to be disposed wholesale and the context may be
-        // mid-eval, so releasing it here is both unnecessary and unsafe.
-        if (context && !aborted) {
-          try {
-            context.release();
-          } catch {
-            // A context that already died (e.g. in-isolate timeout/OOM) cannot
-            // be released; nothing to clean up.
-          }
-        }
-      }
-
-      results.push({
-        id: test.id,
-        hidden: test.hidden === true,
-        passed,
-        detail,
-      });
-    }
-
-    return {
-      available: true,
-      passed: results.length > 0 && results.every((r) => r.passed),
-      results,
-    };
-  } finally {
-    isolate.dispose();
+  const userCodeJson = JSON.stringify(transpiled);
+  const results: ServerTestResult[] = [];
+  for (const test of tests) {
+    const testJson = JSON.stringify({
+      input: test.input ?? "",
+      expectedOutput: test.expectedOutput ?? "",
+    });
+    const { passed, detail } = await runOneCase(
+      quickjs,
+      userCodeJson,
+      testJson
+    );
+    results.push({
+      id: test.id,
+      hidden: test.hidden === true,
+      passed,
+      detail,
+    });
   }
+
+  return {
+    available: true,
+    passed: results.length > 0 && results.every((r) => r.passed),
+    results,
+  };
 }
