@@ -7,7 +7,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { BN } from "@coral-xyz/anchor";
+import { AnchorError, BN } from "@coral-xyz/anchor";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountIdempotentInstruction,
@@ -27,6 +27,7 @@ import {
   findMinterRolePDA,
   getProgramId,
 } from "./pda";
+import { extractCustomErrorCode, resolveIdlError } from "./parse-program-error";
 import { serverEnv } from "@/lib/env.server";
 
 export { getProgramId } from "./pda";
@@ -331,6 +332,45 @@ export async function issueCredential(
     .rpc();
 
   return { signature: sig, mintAddress: credentialAsset.publicKey };
+}
+
+/**
+ * Turn a thrown backend-signed transaction error into a concise, safe,
+ * human-readable reason. Resolves Anchor custom program codes against the IDL
+ * (e.g. `MintingPaused`, backend-signer constraint) and detects the common
+ * infra failures that otherwise look identical (unfunded payer, missing signer,
+ * expired blockhash). Falls back to the raw message. Safe to surface to the
+ * caller — it exposes program/operational state, never user data.
+ */
+export function describeProgramError(err: unknown): string {
+  // Anchor decodes its own program errors into AnchorError.
+  if (err instanceof AnchorError) {
+    const { errorCode, errorMessage } = err.error;
+    return `${errorCode.code} (${errorCode.number}): ${errorMessage}`;
+  }
+
+  const message = err instanceof Error ? err.message : String(err);
+  const logs = (err as { logs?: unknown })?.logs;
+  const logLines = Array.isArray(logs) ? (logs as string[]) : [];
+
+  // A raw custom-error code in the tx logs -> resolve against the IDL.
+  const code = extractCustomErrorCode(logLines);
+  if (code !== null) {
+    const resolved = resolveIdlError(code, IDL as unknown as Idl);
+    if (resolved) return `${resolved.name} (${resolved.code}): ${resolved.msg}`;
+  }
+
+  const haystack = [message, ...logLines].join("\n");
+  if (/insufficient lamports|insufficient funds|Attempt to debit/i.test(haystack)) {
+    return "Backend signer wallet has insufficient SOL to pay for the mint";
+  }
+  if (/BACKEND_SIGNER_SECRET/.test(message)) {
+    return "BACKEND_SIGNER_SECRET is not configured on the server";
+  }
+  if (/blockhash not found|block height exceeded/i.test(haystack)) {
+    return "Transaction expired (blockhash) — please retry";
+  }
+  return message.slice(0, 300);
 }
 
 export async function awardAchievement(

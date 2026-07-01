@@ -92,14 +92,15 @@ export function CourseCompletionMint({
         body: JSON.stringify({ courseId }),
       });
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
+        const data = (await res.json()) as { error?: string; reason?: string };
         if (res.status === 409) {
           setState({ status: "already_minted" });
           return;
         }
+        const base = data.error ?? "Minting failed";
         setState({
           status: "mint_error",
-          message: data.error ?? "Minting failed",
+          message: data.reason ? `${base}: ${data.reason}` : base,
         });
         return;
       }
