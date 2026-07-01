@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -25,12 +26,17 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
+  // CSP nonce set by middleware (lib/csp.ts). next-themes stamps it onto its
+  // inline theme-flash-prevention <script> so it satisfies the nonce policy.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <ThemeProvider
       attribute="data-theme"
       defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
+      nonce={nonce}
     >
       <NextIntlClientProvider messages={messages}>
         <SolanaWalletProvider>

@@ -4,6 +4,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { env } from "@/lib/env";
 import { locales, defaultLocale } from "@/lib/i18n/config";
 import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
+import { buildCsp, generateNonce } from "@/lib/csp";
 
 // NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
 // with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
@@ -97,6 +98,17 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // Per-request CSP nonce. Set on the REQUEST headers so (a) Next.js extracts
+  // the nonce from the Content-Security-Policy request header and stamps it onto
+  // its inline bootstrap scripts, and (b) server components can read x-nonce.
+  // next-intl copies request.headers when forwarding, and the Supabase
+  // NextResponse.next({ request }) calls below pick up the same mutated headers,
+  // so setting them here is enough to propagate the nonce to the renderer.
+  const nonce = generateNonce();
+  const csp = buildCsp(nonce);
+  request.headers.set("x-nonce", nonce);
+  request.headers.set("Content-Security-Policy", csp);
+
   // Create a response that we'll modify
   let supabaseResponse = NextResponse.next({ request });
 
@@ -131,8 +143,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Now run intl middleware (after Supabase may have modified request cookies)
+  // Now run intl middleware (after Supabase may have modified request cookies).
+  // next-intl forwards request.headers (incl. the nonce + CSP set above) to the
+  // renderer, so Next.js can apply the nonce to its inline bootstrap scripts.
   const intlResponse = intlMiddleware(request);
+
+  // Enforce the CSP in the browser by also setting it on the response.
+  intlResponse.headers.set("Content-Security-Policy", csp);
 
   // Copy Supabase cookies from supabaseResponse to intlResponse,
   // preserving all options (httpOnly, maxAge, sameSite, secure, path, etc.)
@@ -151,7 +168,11 @@ export async function middleware(request: NextRequest) {
         const locale =
           locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
           defaultLocale;
-        return NextResponse.redirect(new URL(`/${locale}/admin`, request.url));
+        const adminRedirect = NextResponse.redirect(
+          new URL(`/${locale}/admin`, request.url)
+        );
+        adminRedirect.headers.set("Content-Security-Policy", csp);
+        return adminRedirect;
       }
     }
     return intlResponse;
@@ -165,6 +186,7 @@ export async function middleware(request: NextRequest) {
         defaultLocale;
       const redirectUrl = new URL(`/${locale}`, request.url);
       const redirectResponse = NextResponse.redirect(redirectUrl);
+      redirectResponse.headers.set("Content-Security-Policy", csp);
       // Copy Supabase cookies even to redirect responses (preserve all options)
       supabaseResponse.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie);
