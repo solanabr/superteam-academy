@@ -69,9 +69,9 @@ describe("runRustSubmission", () => {
     const r = await runRustSubmission(CODE, tests);
     expect(r).toMatchObject({ available: true, passed: false });
     if (r.available) {
-      expect(r.results[0].passed).toBe(true);
-      expect(r.results[1].passed).toBe(false);
-      expect(r.results[1].hidden).toBe(true);
+      expect(r.results[0]?.passed).toBe(true);
+      expect(r.results[1]?.passed).toBe(false);
+      expect(r.results[1]?.hidden).toBe(true);
     }
   });
 
@@ -91,7 +91,7 @@ describe("runRustSubmission", () => {
     const r = await runRustSubmission(CODE, tests);
     expect(r).toMatchObject({ available: true, passed: false });
     if (r.available) {
-      expect(r.results[0].detail).toContain("error");
+      expect(r.results[0]?.detail).toContain("error");
     }
   });
 
