@@ -252,13 +252,10 @@ describe("validateAgainstAnswerKey (classification, no executor)", () => {
     expect(verdict.kind).toBe("not_a_challenge");
   });
 
-  it("classifies rust / buildable challenges as non_js_challenge", async () => {
-    const rust = await validateAgainstAnswerKey(
-      answerKey({ language: "rust" }),
-      "fn add() {}"
-    );
-    expect(rust.kind).toBe("non_js_challenge");
-
+  // Plain `language: "rust"` challenges are now graded by the Rust executor
+  // (see rust-executor.test.ts). Only `buildType: "buildable"` still fails
+  // closed here — its build-server grading handshake isn't wired up.
+  it("classifies buildable challenges as non_js_challenge", async () => {
     const buildable = await validateAgainstAnswerKey(
       answerKey({ buildType: "buildable" }),
       "// program"
