@@ -5,7 +5,11 @@ import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById } from "@/lib/sanity/queries";
-import { issueCredential, getConnection } from "@/lib/solana/academy-program";
+import {
+  issueCredential,
+  getConnection,
+  describeProgramError,
+} from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
@@ -204,13 +208,22 @@ export async function POST(request: NextRequest) {
     } catch (mintErr) {
       // Clean up orphaned metadata row
       await adminClient.from("nft_metadata").delete().eq("id", metadataRow.id);
+      // Surface the real cause: resolve Anchor program codes (e.g.
+      // MintingPaused, backend-signer constraint) and detect infra failures
+      // (unfunded payer, missing signer) instead of a single opaque message.
+      const reason = describeProgramError(mintErr);
       logError({
         errorId: ERROR_IDS.CERTIFICATE_INSERT_FAILED,
         error: mintErr instanceof Error ? mintErr : new Error(String(mintErr)),
-        context: { handler: "certificates/mint", userId: user.id, courseId },
+        context: {
+          handler: "certificates/mint",
+          userId: user.id,
+          courseId,
+          reason,
+        },
       });
       return NextResponse.json(
-        { error: "On-chain credential minting failed" },
+        { error: "On-chain credential minting failed", reason },
         { status: 500 }
       );
     }
