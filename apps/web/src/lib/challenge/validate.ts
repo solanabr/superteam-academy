@@ -15,6 +15,7 @@ import {
   type ServerTestResult,
 } from "@/lib/challenge/executor";
 import { runRustSubmission } from "@/lib/challenge/rust-executor";
+import { runBuildableSubmission } from "@/lib/challenge/buildable-executor";
 
 export type ChallengeVerdict =
   | {
@@ -27,12 +28,13 @@ export type ChallengeVerdict =
     }
   | {
       /**
-       * Lesson is a challenge whose correctness cannot yet be established
-       * server-side: `buildType: "buildable"` challenges are compiled by the
-       * Anchor build server, and that grading handshake is not wired up. The
-       * completion gate must deny these (fail closed). Plain `language: "rust"`
-       * challenges are NOT here — they are graded by the Rust executor and
-       * resolve to `validated`.
+       * Lesson is a challenge no server-side grader can currently judge — a
+       * true dead-end that the completion gate must deny (fail closed). With the
+       * buildable grader wired up this is now unreachable for the known
+       * challenge types (JS → isolate, `language: "rust"` → Rust executor,
+       * `buildType: "buildable"` → build server), but it is retained so any
+       * FUTURE unrecognised type also degrades closed instead of falling
+       * through to a granted completion.
        */
       kind: "non_js_challenge";
       language: string | null;
@@ -94,6 +96,14 @@ function isRustGradableChallenge(key: ChallengeAnswerKey): boolean {
 }
 
 /**
+ * A buildable challenge (`buildType: "buildable"`) — a full on-chain Anchor
+ * program graded by compiling it via the build server (`buildable-executor.ts`).
+ */
+function isBuildableChallenge(key: ChallengeAnswerKey): boolean {
+  return key.type === "challenge" && key.buildType === "buildable";
+}
+
+/**
  * Validate a submission against the answer key. Pure logic — no auth, no HTTP.
  */
 export async function validateAgainstAnswerKey(
@@ -127,8 +137,30 @@ export async function validateAgainstAnswerKey(
     };
   }
 
-  // Remaining non-JS challenges (buildType: "buildable") have no server-side
-  // grader yet — fail closed.
+  // Buildable challenges: graded authoritatively by compiling the submission on
+  // the Anchor build server. Pass == the program compiles (see
+  // buildable-executor.ts for the rubric). A build-server outage — or the build
+  // server simply not being configured (prod, pre-#193) — degrades closed to
+  // executor_unavailable so completion is denied, never granted unverified.
+  if (isBuildableChallenge(key)) {
+    const run = await runBuildableSubmission(submittedCode, key.tests ?? []);
+    if (!run.available) {
+      return {
+        kind: "executor_unavailable",
+        hiddenTestCount: hidden,
+        visibleTestCount: visible,
+      };
+    }
+    return {
+      kind: "validated",
+      passed: run.passed,
+      hiddenTestCount: hidden,
+      visibleTestCount: visible,
+      results: run.results,
+    };
+  }
+
+  // Any remaining challenge type has no server-side grader — fail closed.
   if (!isJsExecutableChallenge(key)) {
     return {
       kind: "non_js_challenge",

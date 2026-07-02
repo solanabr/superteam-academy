@@ -119,22 +119,20 @@ export async function POST(request: NextRequest) {
           }
           break;
         case "executor_unavailable":
-          // Degrade closed: never grant completion we could not verify.
+          // Degrade closed: never grant completion we could not verify. Also the
+          // buildable path when the build server is unreachable OR not configured
+          // (prod, pre-#193) — a buildable submission stays un-gradeable and is
+          // denied here, exactly as before this grader existed.
           return NextResponse.json(
             { error: "Challenge validation is temporarily unavailable" },
             { status: 503 }
           );
         case "non_js_challenge":
-          // FAIL CLOSED. Only `buildType: "buildable"` challenges reach here now
-          // (plain Rust is graded server-side via the Rust Playground and
-          // resolves to `validated`). Buildable challenges must be compiled +
-          // graded by the Anchor build server, and that handshake is NOT wired
-          // up yet — so the server cannot prove correctness and MUST NOT submit
-          // the on-chain completeLesson. A bare fall-through would grant a
-          // completion (and credential eligibility) for any unverified
-          // buildable submission. Deny exactly like executor_unavailable.
-          // TODO(#195 follow-up): wire the build-server validation handshake,
-          // then gate this branch on its passing verdict.
+          // FAIL CLOSED. Unreachable for the known challenge types now that JS
+          // (isolate), plain Rust (Playground), and buildable (build server) all
+          // resolve to `validated`/`executor_unavailable`. Retained so any future
+          // unrecognised type is denied rather than granted an unverified
+          // completion (and credential eligibility) via a bare fall-through.
           return NextResponse.json(
             {
               error:
