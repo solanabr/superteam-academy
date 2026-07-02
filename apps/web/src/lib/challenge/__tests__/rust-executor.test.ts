@@ -159,7 +159,11 @@ describe("validateAgainstAnswerKey — Rust routing", () => {
     expect(v.kind).toBe("executor_unavailable");
   });
 
-  it("still fails a buildable challenge closed as non_js_challenge", async () => {
+  it("routes a buildable challenge to the build server, NOT the Playground", async () => {
+    // With no build server configured (env unset here), the buildable grader
+    // fails closed to executor_unavailable — never the Rust Playground, and
+    // never a granted completion. (Grading against a live build server is
+    // covered in buildable-executor.test.ts.)
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
     const buildableKey: ChallengeAnswerKey = {
@@ -167,7 +171,7 @@ describe("validateAgainstAnswerKey — Rust routing", () => {
       buildType: "buildable",
     };
     const v = await validateAgainstAnswerKey(buildableKey, CODE);
-    expect(v.kind).toBe("non_js_challenge");
+    expect(v.kind).toBe("executor_unavailable");
     expect(spy).not.toHaveBeenCalled();
   });
 });

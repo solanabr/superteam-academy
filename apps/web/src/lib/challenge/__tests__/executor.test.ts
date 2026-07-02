@@ -252,15 +252,17 @@ describe("validateAgainstAnswerKey (classification, no executor)", () => {
     expect(verdict.kind).toBe("not_a_challenge");
   });
 
-  // Plain `language: "rust"` challenges are now graded by the Rust executor
-  // (see rust-executor.test.ts). Only `buildType: "buildable"` still fails
-  // closed here — its build-server grading handshake isn't wired up.
-  it("classifies buildable challenges as non_js_challenge", async () => {
+  // Plain `language: "rust"` challenges are graded by the Rust executor (see
+  // rust-executor.test.ts); `buildType: "buildable"` by the build server (see
+  // buildable-executor.test.ts). With no build server configured in this test
+  // env, buildable fails closed to executor_unavailable — completion denied,
+  // never a granted pass. (This is the pre-#193 prod posture too.)
+  it("fails a buildable challenge closed when the build server is unconfigured", async () => {
     const buildable = await validateAgainstAnswerKey(
       answerKey({ buildType: "buildable" }),
       "// program"
     );
-    expect(buildable.kind).toBe("non_js_challenge");
+    expect(buildable.kind).toBe("executor_unavailable");
   });
 });
 
