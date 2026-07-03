@@ -92,6 +92,42 @@ describe("planStructureMutations", () => {
     expect(deletes).not.toContain("les-1");
   });
 
+  it("never writes to a client _id absent from the current tree (no forged-_id IDOR)", () => {
+    const current: CurrentTree = { moduleIds: ["mod-1"], lessonIds: ["les-1"] };
+    const forgedModuleId = "victim-doc-id";
+    const forgedLessonId = "another-course-id";
+    const desired: DesiredModule[] = [
+      {
+        _id: forgedModuleId,
+        title: "M",
+        lessons: [{ _id: forgedLessonId, title: "L", type: "content" }],
+      },
+    ];
+    const muts = planStructureMutations("course-1", current, desired, makeGen());
+
+    // The forged ids must never be a write target (create/patch/delete).
+    const targets = muts.map((m) =>
+      m.op === "create" ? (m.doc._id as string) : m.id
+    );
+    expect(targets).not.toContain(forgedModuleId);
+    expect(targets).not.toContain(forgedLessonId);
+
+    // They are created as fresh docs instead...
+    const creates = muts.filter((m) => m.op === "create");
+    expect(
+      creates.some((m) => m.op === "create" && m.doc._type === "module")
+    ).toBe(true);
+    expect(
+      creates.some((m) => m.op === "create" && m.doc._type === "lesson")
+    ).toBe(true);
+
+    // ...and only the genuinely-current docs are deleted.
+    const deletes = muts.filter((m) => m.op === "delete").map((m) => m.id);
+    expect(deletes).toEqual(expect.arrayContaining(["mod-1", "les-1"]));
+    expect(deletes).not.toContain(forgedModuleId);
+    expect(deletes).not.toContain(forgedLessonId);
+  });
+
   it("writes order from array position", () => {
     const desired: DesiredModule[] = [
       { title: "A", lessons: [] },
