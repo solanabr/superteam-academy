@@ -1,0 +1,14 @@
+# Code owners — a PR touching a matched path auto-requests review from these
+# owners. With branch protection's "Require review from Code Owners" enabled,
+# this gates merges (readiness gate G7). Add teammates/teams as the team grows.
+
+# Default owner for everything
+*                             @thomgabriel
+
+# Highest-risk surfaces — always review
+/onchain-academy/             @thomgabriel
+/supabase/                    @thomgabriel
+/apps/web/src/lib/solana/     @thomgabriel
+/apps/web/src/middleware.ts   @thomgabriel
+/apps/web/src/lib/csp.ts      @thomgabriel
+/.github/                     @thomgabriel
