@@ -180,12 +180,16 @@ function useDashboardData(
           .select("id", { count: "exact", head: true })
           .eq("user_id", authUserId);
 
-        // Fetch all XP transactions for the activity feed
+        // Fetch recent XP transactions for the activity feed + recent-course
+        // resolution. Bounded: the feed shows a handful of recent items and this
+        // set only drives recent-activity lookups — an unbounded fetch grew with
+        // every lesson a user ever completed.
         const { data: transactions } = await supabase
           .from("xp_transactions")
           .select("amount, reason, created_at, tx_signature")
           .eq("user_id", authUserId)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(100);
 
         // Fetch activity dates for streak heatmap (last 270 days)
         const oneYearAgo = new Date();
