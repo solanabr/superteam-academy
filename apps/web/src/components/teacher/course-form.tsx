@@ -103,7 +103,7 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
         return;
       }
       if (which === "submit") {
-        router.push(`/${locale}/teach/courses`);
+        router.push(`/${locale}/teach/courses?submitted=1`);
         return;
       }
       if (mode === "create" && data._id) {
