@@ -73,7 +73,7 @@ stored outside the repo**.
 4. **Revoke** the old credential at the provider once the new one is confirmed live.
 5. **Verify:** `/api/auth/nonce` returns 200, a test enroll → webhook → DB sync works,
    an admin action authenticates, a challenge validates.
-6. **Record** the rotation date in the password-manager entry (not here).
+6. **Record** the rotation date + who rotated in a secure ops log (not here, not the repo).
 
 ## Cadence & triggers
 
@@ -85,9 +85,9 @@ stored outside the repo**.
 
 ## Definition of done
 
-- [ ] New prod Supabase (or ratified fallback) live; `service_role` isolated from dev.
+- [ ] New dedicated prod Supabase live; `service_role` isolated from dev.
 - [ ] Helius, Sanity, Gemini, `ADMIN_SECRET`, `BUILD_SERVER_API_KEY` all freshly minted for prod.
 - [ ] `backend_signer` rotated to a distinct hot key at mainnet init (**#118**).
 - [ ] Program / mint authority under Squads multisig (**#144**).
-- [ ] All master copies in the password manager; runtime values only in Vercel/Cloud Run; repo clean.
+- [ ] All prod secrets live only in the Vercel/Cloud Run encrypted env; on-chain keypairs in multisig/HW; repo clean.
 - [ ] `.env.local` retired as any prod source.
