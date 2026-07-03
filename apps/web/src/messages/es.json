@@ -30,12 +30,6 @@
     "viewOnSolanaExplorer": "Ver en Solana Explorer: {address}"
   },
   "teacher": {
-    "area": {
-      "title": "Área del Profesor",
-      "subtitle": "Crea y gestiona tus cursos.",
-      "comingSoonTitle": "Creación próximamente",
-      "comingSoonBody": "Las herramientas de creación de cursos están en camino: podrás crear borradores de cursos, añadir lecciones y enviarlos para revisión aquí."
-    },
     "courses": {
       "heading": "Tus cursos",
       "new": "Nuevo curso",

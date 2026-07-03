@@ -8,16 +8,20 @@ export const dynamic = "force-dynamic";
 
 export default async function TeacherCoursesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ submitted?: string }>;
 }) {
   const { locale } = await params;
+  const { submitted } = await searchParams;
 
   // The /teach layout already gates, but we need the caller id here.
   const auth = await authorizeTeacher();
   if (!auth.ok) redirect(`/${locale}`);
 
   const t = await getTranslations("teacher.courses");
+  const tForm = await getTranslations("teacher.form");
   const courses = await listTeacherCourses(auth.caller.userId);
 
   const statusLabel = (s: string | null): string =>
@@ -40,6 +44,12 @@ export default async function TeacherCoursesPage({
           {t("new")}
         </Link>
       </div>
+
+      {submitted === "1" && (
+        <div className="mb-4 rounded-md border border-success bg-success-light p-3 text-sm text-success">
+          {tForm("submitted")}
+        </div>
+      )}
 
       {courses.length === 0 ? (
         <p className="text-sm text-text-3">{t("empty")}</p>
