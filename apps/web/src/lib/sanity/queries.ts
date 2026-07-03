@@ -638,6 +638,42 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
 }
 
 /**
+ * A course awaiting admin review (issue #268). Minimal metadata for the admin
+ * review queue — the admin approves (→ on-chain sync) or rejects (→ draft +
+ * feedback) from this list.
+ */
+export interface PendingReviewCourse {
+  _id: string;
+  title: string;
+  slug: string | null;
+  difficulty: string | null;
+  author: string | null;
+  authoringStatus: string;
+}
+
+/**
+ * Fetch courses with `authoringStatus == "pending_review"` for the admin review
+ * queue. Excludes Sanity drafts. Server-side only (admin panel); reads fresh
+ * (revalidate=0) so a just-submitted course appears without CDN lag.
+ */
+export async function getPendingReviewCourses(): Promise<
+  PendingReviewCourse[]
+> {
+  return sanityFetch<PendingReviewCourse[]>(
+    `*[_type == "course" && authoringStatus == "pending_review" && !(_id in path("drafts.**"))] | order(title asc) {
+      _id,
+      title,
+      "slug": slug.current,
+      difficulty,
+      author,
+      authoringStatus
+    }`,
+    undefined,
+    0
+  );
+}
+
+/**
  * Fetch all achievements with on-chain sync fields for the admin dashboard.
  */
 export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
