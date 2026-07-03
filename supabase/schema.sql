@@ -1556,7 +1556,7 @@ CREATE POLICY "Anyone can view categories"
   ON forum_categories FOR SELECT USING (true);
 
 CREATE POLICY "Anyone can view threads"
-  ON threads FOR SELECT USING (true);
+  ON threads FOR SELECT USING (deleted_at IS NULL);
 
 CREATE POLICY "Authenticated users can create threads"
   ON threads FOR INSERT
@@ -1586,7 +1586,7 @@ REVOKE UPDATE ON threads FROM anon;
 -- No DELETE policy needed. Soft delete is handled via soft_delete_thread() SECURITY DEFINER function.
 
 CREATE POLICY "Anyone can view answers"
-  ON answers FOR SELECT USING (true);
+  ON answers FOR SELECT USING (deleted_at IS NULL);
 
 CREATE POLICY "Authenticated users can create answers"
   ON answers FOR INSERT
