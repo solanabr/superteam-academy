@@ -38,11 +38,3 @@ export async function buildProgram(
 
   return (await response.json()) as BuildProgramResponse;
 }
-
-/**
- * Get the download URL for a compiled program binary.
- * Routes through the API proxy to keep the build server URL server-only.
- */
-export function getBinaryDownloadUrl(uuid: string): string {
-  return `/api/deploy/${uuid}`;
-}

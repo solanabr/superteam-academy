@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import {
-  setCachedBinary,
-  evictExpiredBinaries,
-} from "@/lib/build-server/binary-cache";
 import { isRateLimited } from "@/lib/rate-limit";
 
 // Rate limit: 5 builds/min per user (shared cross-instance store — see P1-7).
@@ -181,19 +177,8 @@ export async function POST(
 
     const result = (await upstreamResponse.json()) as BuildServerResponse;
 
-    // The build server now returns the binary inline as binary_b64,
-    // eliminating Cloud Run multi-instance routing issues entirely.
-    // Also cache on the server side for the /api/deploy/[uuid] fallback route.
-    if (result.success && result.uuid && result.binary_b64) {
-      evictExpiredBinaries();
-      try {
-        const buf = Buffer.from(result.binary_b64, "base64");
-        setCachedBinary(result.uuid, buf.buffer as ArrayBuffer);
-      } catch {
-        // Non-critical — client-side cache is the primary path
-      }
-    }
-
+    // The build server returns the binary inline (binary_b64); the client caches
+    // it directly, so there is no server-side cache or /api/deploy/:uuid route.
     return NextResponse.json({
       success: result.success,
       stderr: result.stderr,
