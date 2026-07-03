@@ -576,6 +576,7 @@ export interface AdminCourse {
   title: string;
   slug: string;
   difficulty: string;
+  author: string | null;
   xpPerLesson: number | null;
   trackId: number | null;
   trackLevel: number | null;
@@ -628,6 +629,7 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
       },
       creatorRewardXp,
       minCompletionsForReward,
+      author,
       "lessonCount": count(modules[]->lessons[]),
       "trackCollectionAddress": onChainStatus.trackCollectionAddress,
       onChainStatus

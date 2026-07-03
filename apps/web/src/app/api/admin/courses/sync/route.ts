@@ -27,6 +27,13 @@ import {
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
 } from "@/lib/sanity/admin-mutations";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+// Default creator reward for TEACHER-authored courses (those with a real author
+// wallet) when the fields are unset. Platform/admin courses stay at 0. Starting
+// values — tunable per course by an admin (see #281).
+const DEFAULT_CREATOR_REWARD_XP = 500;
+const DEFAULT_MIN_COMPLETIONS_FOR_REWARD = 5;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -105,6 +112,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       prerequisitePda = prereqPda.toBase58();
     }
 
+    // Resolve the on-chain creator: the course author's linked wallet, so the
+    // creator reward (finalize_course) pays the real instructor. Falls back to
+    // the platform authority (deployCoursePda default) when there's no author or
+    // no linked wallet.
+    let creatorWallet: string | undefined;
+    if (course.author) {
+      const supabaseAdmin = createAdminClient();
+      const { data: authorProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("wallet_address")
+        .eq("id", course.author)
+        .maybeSingle();
+      creatorWallet = authorProfile?.wallet_address ?? undefined;
+    }
+    // Teacher-authored courses (real creator wallet) earn a default reward when
+    // unset; platform courses stay at 0. An explicit 0 is preserved.
+    const hasCreatorWallet = Boolean(creatorWallet);
+    const creatorRewardXp =
+      course.creatorRewardXp ??
+      (hasCreatorWallet ? DEFAULT_CREATOR_REWARD_XP : 0);
+    const minCompletionsForReward =
+      course.minCompletionsForReward ??
+      (hasCreatorWallet ? DEFAULT_MIN_COMPLETIONS_FOR_REWARD : 0);
+
     const result = await deployCoursePda({
       courseId,
       lessonCount: course.lessonCount,
@@ -113,8 +144,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       trackId: course.trackId ?? 0,
       trackLevel: course.trackLevel ?? 0,
       prerequisitePda,
-      creatorRewardXp: course.creatorRewardXp ?? 0,
-      minCompletionsForReward: course.minCompletionsForReward ?? 0,
+      creatorWallet,
+      creatorRewardXp,
+      minCompletionsForReward,
     });
 
     if (!result.success) {
