@@ -35,6 +35,39 @@
       "subtitle": "Create and manage your courses.",
       "comingSoonTitle": "Authoring coming soon",
       "comingSoonBody": "Course authoring tools are on the way — you'll be able to draft courses, add lessons, and submit them for review right here."
+    },
+    "courses": {
+      "heading": "Your courses",
+      "new": "New course",
+      "empty": "You haven't created any courses yet.",
+      "edit": "Edit",
+      "untitled": "Untitled course",
+      "statusDraft": "Draft",
+      "statusPendingReview": "Pending review",
+      "statusApproved": "Approved"
+    },
+    "form": {
+      "createHeading": "New course",
+      "editHeading": "Edit course",
+      "title": "Title",
+      "description": "Description",
+      "difficulty": "Difficulty",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "duration": "Duration (hours)",
+      "tags": "Tags",
+      "tagsHint": "Comma-separated",
+      "xpReward": "XP reward",
+      "xpPerLesson": "XP per lesson",
+      "saveDraft": "Save draft",
+      "saving": "Saving…",
+      "submitForReview": "Submit for review",
+      "submitting": "Submitting…",
+      "saved": "Saved",
+      "submitted": "Submitted for review",
+      "back": "Back to courses",
+      "titleRequired": "Title is required"
     }
   },
   "nav": {

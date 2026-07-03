@@ -1,26 +1,13 @@
-import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 
-export default async function TeachPage() {
-  const t = await getTranslations("teacher.area");
+export const dynamic = "force-dynamic";
 
-  return (
-    <section aria-labelledby="teach-heading" className="mx-auto max-w-3xl">
-      <h1
-        id="teach-heading"
-        className="font-display text-2xl font-bold text-[var(--text)]"
-      >
-        {t("title")}
-      </h1>
-      <p className="mt-2 text-sm text-[var(--text-3)]">{t("subtitle")}</p>
-
-      <div className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-card">
-        <h2 className="font-display text-lg font-bold text-[var(--text)]">
-          {t("comingSoonTitle")}
-        </h2>
-        <p className="mt-2 text-sm text-[var(--text-2)]">
-          {t("comingSoonBody")}
-        </p>
-      </div>
-    </section>
-  );
+/** Teacher area entry point — send authors straight to their course list. */
+export default async function TeachPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  redirect(`/${locale}/teach/courses`);
 }

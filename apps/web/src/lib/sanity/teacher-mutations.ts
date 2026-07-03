@@ -230,3 +230,34 @@ export async function patchTeacherCourse(
   if (Object.keys(patch).length === 0) return;
   await sanityAdmin.patch(courseId).set(patch).commit();
 }
+
+/** Full editable field set for the course builder (issue #266). */
+export interface TeacherCourseEditable {
+  _id: string;
+  author: string | null;
+  authoringStatus: string | null;
+  onChainStatus: string | null;
+  title: string | null;
+  description: string | null;
+  difficulty: string | null;
+  duration: number | null;
+  tags: string[] | null;
+  xpReward: number | null;
+  xpPerLesson: number | null;
+}
+
+/**
+ * Fetch a course's full editable fields for the builder, including the
+ * ownership fields the caller needs to authorize. Returns null if absent.
+ */
+export async function getTeacherCourseEditable(
+  courseId: string
+): Promise<TeacherCourseEditable | null> {
+  return sanityAdmin.fetch<TeacherCourseEditable | null>(
+    `*[_type == "course" && _id == $courseId][0] {
+      _id, author, authoringStatus, "onChainStatus": onChainStatus.status,
+      title, description, difficulty, duration, tags, xpReward, xpPerLesson
+    }`,
+    { courseId }
+  );
+}

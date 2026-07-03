@@ -35,6 +35,39 @@
       "subtitle": "Crea y gestiona tus cursos.",
       "comingSoonTitle": "Creación próximamente",
       "comingSoonBody": "Las herramientas de creación de cursos están en camino: podrás crear borradores de cursos, añadir lecciones y enviarlos para revisión aquí."
+    },
+    "courses": {
+      "heading": "Tus cursos",
+      "new": "Nuevo curso",
+      "empty": "Aún no has creado ningún curso.",
+      "edit": "Editar",
+      "untitled": "Curso sin título",
+      "statusDraft": "Borrador",
+      "statusPendingReview": "En revisión",
+      "statusApproved": "Aprobado"
+    },
+    "form": {
+      "createHeading": "Nuevo curso",
+      "editHeading": "Editar curso",
+      "title": "Título",
+      "description": "Descripción",
+      "difficulty": "Dificultad",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado",
+      "duration": "Duración (horas)",
+      "tags": "Etiquetas",
+      "tagsHint": "Separadas por comas",
+      "xpReward": "Recompensa XP",
+      "xpPerLesson": "XP por lección",
+      "saveDraft": "Guardar borrador",
+      "saving": "Guardando…",
+      "submitForReview": "Enviar para revisión",
+      "submitting": "Enviando…",
+      "saved": "Guardado",
+      "submitted": "Enviado para revisión",
+      "back": "Volver a los cursos",
+      "titleRequired": "El título es obligatorio"
     }
   },
   "nav": {
