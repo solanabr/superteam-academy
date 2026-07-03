@@ -117,6 +117,12 @@ export interface CreateCourseAdminParams {
   prerequisitePda?: string;
   creatorRewardXp: number;
   minCompletionsForReward: number;
+  /**
+   * Instructor's linked Solana wallet (base58). When set + parseable it becomes
+   * the on-chain `course.creator` (creator-reward recipient); otherwise the
+   * platform authority is used.
+   */
+  creatorWallet?: string;
 }
 
 export interface UpdateCourseAdminParams {
@@ -234,9 +240,23 @@ export async function deployCoursePda(
         ? new PublicKey(params.prerequisitePda)
         : null;
 
+    // Creator = the instructor's linked wallet when supplied + valid, so the
+    // on-chain creator reward (finalize_course) pays the real teacher. Falls back
+    // to the platform authority for admin/platform courses or an unparseable wallet.
+    let creator = _authority.publicKey;
+    if (params.creatorWallet) {
+      try {
+        creator = new PublicKey(params.creatorWallet);
+      } catch {
+        console.warn(
+          `[admin-signer] deployCoursePda(${params.courseId}): invalid creatorWallet "${params.creatorWallet}" — using platform authority as creator.`
+        );
+      }
+    }
+
     const onChainParams: CreateCourseOnChainParams = {
       courseId: params.courseId,
-      creator: _authority.publicKey,
+      creator,
       contentTxId: Array(32).fill(0) as number[],
       lessonCount: params.lessonCount,
       difficulty: params.difficulty,
