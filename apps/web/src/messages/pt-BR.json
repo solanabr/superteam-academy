@@ -35,6 +35,39 @@
       "subtitle": "Crie e gerencie seus cursos.",
       "comingSoonTitle": "Criação em breve",
       "comingSoonBody": "As ferramentas de criação de cursos estão a caminho — você poderá rascunhar cursos, adicionar lições e enviá-los para revisão aqui."
+    },
+    "courses": {
+      "heading": "Seus cursos",
+      "new": "Novo curso",
+      "empty": "Você ainda não criou nenhum curso.",
+      "edit": "Editar",
+      "untitled": "Curso sem título",
+      "statusDraft": "Rascunho",
+      "statusPendingReview": "Em revisão",
+      "statusApproved": "Aprovado"
+    },
+    "form": {
+      "createHeading": "Novo curso",
+      "editHeading": "Editar curso",
+      "title": "Título",
+      "description": "Descrição",
+      "difficulty": "Dificuldade",
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado",
+      "duration": "Duração (horas)",
+      "tags": "Tags",
+      "tagsHint": "Separadas por vírgula",
+      "xpReward": "Recompensa XP",
+      "xpPerLesson": "XP por aula",
+      "saveDraft": "Salvar rascunho",
+      "saving": "Salvando…",
+      "submitForReview": "Enviar para revisão",
+      "submitting": "Enviando…",
+      "saved": "Salvo",
+      "submitted": "Enviado para revisão",
+      "back": "Voltar aos cursos",
+      "titleRequired": "O título é obrigatório"
     }
   },
   "nav": {
