@@ -155,6 +155,17 @@ export const course = defineType({
       },
     }),
     defineField({
+      name: "reviewFeedback",
+      title: "Review Feedback",
+      type: "text",
+      rows: 3,
+      readOnly: true,
+      hidden: ({ currentUser }) =>
+        !currentUser?.roles?.some((r) => r.name === "administrator"),
+      description:
+        "Admin feedback shown to the teacher when a course is rejected.",
+    }),
+    defineField({
       name: "onChainStatus",
       title: "On-Chain Status",
       type: "object",

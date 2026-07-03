@@ -117,6 +117,11 @@ export interface Course {
   author?: string;
   /** Authoring workflow state (issue #263). Legacy docs may omit this. */
   authoringStatus?: AuthoringStatus;
+  /**
+   * Admin feedback shown to the teacher when a course is rejected (issue #268).
+   * Admin-managed; cleared on approval.
+   */
+  reviewFeedback?: string;
 }
 
 export interface LearningPath {
