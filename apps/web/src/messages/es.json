@@ -35,12 +35,18 @@
     "dashboard": "Panel",
     "leaderboard": "Clasificación",
     "community": "Comunidad",
+    "teach": "Enseñar",
     "profile": "Perfil",
     "settings": "Configuración",
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL bajo.",
     "getDevnetSol": "Obtener SOL devnet ->",
     "dismissBanner": "Cerrar"
+  },
+  "teach": {
+    "title": "Enseñar",
+    "subtitle": "Crea y gestiona tus propios cursos.",
+    "comingSoon": "La creación de cursos llegará pronto. Podrás crear borradores de cursos aquí y enviarlos para revisión."
   },
   "auth": {
     "authFailed": "La autenticación de la billetera falló. Inténtalo de nuevo o usa otro método de inicio de sesión.",

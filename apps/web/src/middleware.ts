@@ -78,7 +78,9 @@ function isAdminRoute(pathname: string): boolean {
 function isProtectedRoute(pathname: string): boolean {
   // Only routes that require authentication (personal data)
   // Public routes (/courses, /leaderboard, /certificates/[id]) are NOT listed here
-  const protectedPaths = ["/dashboard", "/settings"];
+  // /teach also enforces a teacher-role check in its layout; middleware just
+  // ensures the visitor is authenticated (redirect to landing otherwise).
+  const protectedPaths = ["/dashboard", "/settings", "/teach"];
 
   // Strip locale prefix to check the remaining path
   for (const locale of locales) {

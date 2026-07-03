@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { DataResyncPanel } from "@/components/admin/data-resync-panel";
+import { TeacherRolesPanel } from "@/components/admin/teacher-roles-panel";
 
 interface DiffEntry {
   field: string;
@@ -185,6 +186,16 @@ export function AdminClient() {
         </h2>
         <div className="rounded-lg border border-border bg-card p-4 shadow-card">
           <DataResyncPanel />
+        </div>
+      </section>
+
+      {/* Teacher Roles */}
+      <section>
+        <h2 className="mb-4 font-display text-lg font-bold text-text">
+          Teacher Roles
+        </h2>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <TeacherRolesPanel />
         </div>
       </section>
     </div>

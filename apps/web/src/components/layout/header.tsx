@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { House, Book, Trophy, ChatCircle } from "@phosphor-icons/react";
+import {
+  House,
+  Book,
+  Trophy,
+  ChatCircle,
+  Chalkboard,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -31,12 +37,19 @@ const publicNavItems = [
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
 ] as const;
 
+// Shown only to teachers/admins (course authors).
+const teachNavItem = { key: "teach", icon: Chalkboard, href: "/teach" } as const;
+
 export function Header() {
   const t = useTranslations("nav");
   const tA11y = useTranslations("a11y");
   const locale = useLocale();
   const pathname = usePathname();
   const { user, profile, isLoading: authLoading } = useAuth();
+
+  // Teachers/admins get an extra "Teach" nav entry into the authoring area.
+  const canAuthor = profile?.role === "teacher" || profile?.role === "admin";
+  const authedNavItems = canAuthor ? [...navItems, teachNavItem] : navItems;
 
   // XP state
   const [displayedXp, setDisplayedXp] = useState(0);
@@ -215,7 +228,7 @@ export function Header() {
               className="nav-bar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               aria-label={tA11y("platformNavigation")}
             >
-              {navItems.map((item) => {
+              {authedNavItems.map((item) => {
                 const fullHref = `/${locale}${item.href}`;
                 const isActive = pathname.startsWith(fullHref);
                 const Icon = item.icon;

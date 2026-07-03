@@ -17,6 +17,7 @@ export interface UserProfile {
   username: string;
   avatar_url: string | null;
   wallet_address: string | null;
+  role: string | null;
 }
 
 interface AuthContextValue {
@@ -29,7 +30,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PROFILE_COLUMNS = "username, avatar_url, wallet_address";
+const PROFILE_COLUMNS = "username, avatar_url, wallet_address, role";
 
 // Single state object — ensures ONE render per state transition.
 // Three separate useState calls would cause three render cycles,

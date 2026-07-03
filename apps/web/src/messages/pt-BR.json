@@ -35,12 +35,18 @@
     "dashboard": "Painel",
     "leaderboard": "Ranking",
     "community": "Comunidade",
+    "teach": "Ensinar",
     "profile": "Perfil",
     "settings": "Configurações",
     "certificates": "Certificados",
     "lowSolBalance": "Saldo SOL baixo.",
     "getDevnetSol": "Obter SOL devnet ->",
     "dismissBanner": "Fechar"
+  },
+  "teach": {
+    "title": "Ensinar",
+    "subtitle": "Crie e gerencie seus próprios cursos.",
+    "comingSoon": "A criação de cursos chegará em breve. Você poderá rascunhar cursos aqui e enviá-los para revisão."
   },
   "auth": {
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",

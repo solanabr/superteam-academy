@@ -35,12 +35,18 @@
     "dashboard": "Dashboard",
     "leaderboard": "Leaderboard",
     "community": "Community",
+    "teach": "Teach",
     "profile": "Profile",
     "settings": "Settings",
     "certificates": "Certificates",
     "lowSolBalance": "Low SOL balance.",
     "getDevnetSol": "Get devnet SOL ->",
     "dismissBanner": "Dismiss"
+  },
+  "teach": {
+    "title": "Teach",
+    "subtitle": "Create and manage your own courses.",
+    "comingSoon": "Course authoring is coming soon. You'll be able to draft courses here and submit them for review."
   },
   "auth": {
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
