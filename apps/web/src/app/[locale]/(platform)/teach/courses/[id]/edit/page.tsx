@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { authorizeTeacher } from "@/lib/teacher/authorize";
 import { getTeacherCourseEditable } from "@/lib/sanity/teacher-mutations";
 import { CourseForm } from "@/components/teacher/course-form";
+import { CourseStructureEditor } from "@/components/teacher/course-structure-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,10 @@ export default async function EditCoursePage({
         {t("editHeading")}
       </h1>
       <CourseForm mode="edit" courseId={course._id} initial={course} />
+
+      <hr className="my-8 border-border" />
+
+      <CourseStructureEditor courseId={course._id} />
     </div>
   );
 }
