@@ -21,6 +21,11 @@ CREATE TABLE profiles (
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
   wallet_xp_synced_at TIMESTAMPTZ,
+  -- Coarse account role. Writable ONLY by service_role (enforced by the
+  -- enforce_profile_role_write() trigger below) to block self-escalation via
+  -- the self-service profiles RLS policies. See migration
+  -- 20260703130652_add_profiles_role_and_lock_role_writes.sql.
+  role TEXT NOT NULL DEFAULT 'learner',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -128,6 +133,8 @@ ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_non_negative CHECK (name_rerolls_used >= 0);
 ALTER TABLE profiles
   ADD CONSTRAINT chk_profiles_name_rerolls_max CHECK (name_rerolls_used <= 3);
+ALTER TABLE profiles
+  ADD CONSTRAINT chk_profiles_role CHECK (role IN ('learner', 'teacher', 'admin'));
 
 ALTER TABLE user_xp
   ADD CONSTRAINT chk_user_xp_total_xp_non_negative CHECK (total_xp >= 0);
@@ -480,6 +487,57 @@ $$;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ─────────────────────────────────────────────
+-- 5a. LOCK profiles.role WRITES TO service_role
+-- ─────────────────────────────────────────────
+-- The self-service profiles RLS policies (auth.uid() = id for INSERT/UPDATE) do
+-- not constrain WHICH columns are written, so without this a user could escalate
+-- by writing role='teacher'/'admin' to their own row. This BEFORE trigger makes
+-- role writable only by service_role: non-privileged UPDATEs that change role
+-- error; non-privileged INSERTs are coerced back to 'learner'. SECURITY INVOKER
+-- so current_user reflects the actual caller. See migration
+-- 20260703130652_add_profiles_role_and_lock_role_writes.sql.
+CREATE OR REPLACE FUNCTION public.enforce_profile_role_write()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+DECLARE
+  jwt_role TEXT;
+  is_privileged BOOLEAN;
+BEGIN
+  jwt_role := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role';
+  is_privileged := COALESCE(current_user = 'service_role' OR jwt_role = 'service_role', false);
+
+  IF is_privileged THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION
+        'permission denied: role may only be changed by service_role'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  ELSIF TG_OP = 'INSERT' THEN
+    IF NEW.role IS DISTINCT FROM 'learner' THEN
+      NEW.role := 'learner';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_role_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_role_write
+  BEFORE INSERT OR UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_role_write();
+
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_role_write() FROM PUBLIC, anon, authenticated;
 
 -- ─────────────────────────────────────────────
 -- 5b. LEADERBOARD RPC
