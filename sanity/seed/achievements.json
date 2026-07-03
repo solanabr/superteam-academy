@@ -141,5 +141,57 @@
     "xpReward": 100,
     "maxSupply": 0,
     "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-perfect-score"
+  },
+  {
+    "_id": "achievement-first-comment",
+    "_type": "achievement",
+    "name": "First Comment",
+    "description": "Post your first thread or answer in the community",
+    "icon": "message-circle",
+    "glyph": "“”",
+    "solTier": false,
+    "category": "community",
+    "xpReward": 50,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-comment"
+  },
+  {
+    "_id": "achievement-curious-mind",
+    "_type": "achievement",
+    "name": "Curious Mind",
+    "description": "Start 10 discussions in the community",
+    "icon": "help-circle",
+    "glyph": "?",
+    "solTier": false,
+    "category": "community",
+    "xpReward": 100,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-curious-mind"
+  },
+  {
+    "_id": "achievement-helper",
+    "_type": "achievement",
+    "name": "Helper",
+    "description": "Have 5 of your community answers accepted",
+    "icon": "hand-helping",
+    "glyph": "✓",
+    "solTier": false,
+    "category": "community",
+    "xpReward": 150,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-helper"
+  },
+  {
+    "_id": "achievement-top-contributor",
+    "_type": "achievement",
+    "name": "Top Contributor",
+    "description": "Earn 500 community XP by helping others",
+    "icon": "award",
+    "glyph": "★",
+    "solTier": true,
+    "category": "community",
+    "xpReward": 250,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-top-contributor"
   }
 ]
