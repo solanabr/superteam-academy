@@ -25,6 +25,31 @@ function isAction(value: unknown): value is Action {
 }
 
 /**
+ * GET /api/admin/teachers — list current teachers (for the admin panel).
+ * Admin-only (signed `admin_session` cookie).
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  try {
+    requireAdminAuth(req);
+  } catch (e) {
+    if (e instanceof AdminAuthError) return adminUnauthorizedResponse();
+    throw e;
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, role")
+    .eq("role", "teacher")
+    .order("username");
+
+  if (error) {
+    return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
+  }
+  return NextResponse.json({ teachers: data ?? [] });
+}
+
+/**
  * POST /api/admin/teachers — grant or revoke the `teacher` role for a user,
  * looked up by username. Admin-only (signed `admin_session` cookie).
  *
@@ -77,7 +102,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { data: profile, error: lookupError } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, role")
     .eq("username", username)
     .maybeSingle();
 
@@ -86,6 +111,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   if (!profile) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  // This endpoint only toggles teacher <-> learner; never touch admin accounts.
+  if (profile.role === "admin") {
+    return NextResponse.json(
+      { error: "Refusing to change an admin account's role" },
+      { status: 409 }
+    );
   }
 
   const { error: updateError } = await supabase
