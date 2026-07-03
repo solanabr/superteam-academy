@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { House, Book, Trophy, ChatCircle } from "@phosphor-icons/react";
+import {
+  House,
+  Book,
+  Trophy,
+  ChatCircle,
+  Chalkboard,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -168,6 +174,12 @@ export function Header() {
   }, [fetchXp, animateXpTo]);
 
   const isLoggedIn = !!user && !!profile;
+  // Teacher authoring entry is UX-only; the real gate is the server-side
+  // /teach layout. Show it only to teacher/admin roles.
+  const canTeach = profile?.role === "teacher" || profile?.role === "admin";
+  const loggedInNavItems = canTeach
+    ? [...navItems, { key: "teach", icon: Chalkboard, href: "/teach" }]
+    : navItems;
   const { xpInCurrentLevel, xpRequiredForNext } = xpToNextLevel(displayedXp);
   const xpRemaining = xpRequiredForNext - xpInCurrentLevel;
 
@@ -215,7 +227,7 @@ export function Header() {
               className="nav-bar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               aria-label={tA11y("platformNavigation")}
             >
-              {navItems.map((item) => {
+              {loggedInNavItems.map((item) => {
                 const fullHref = `/${locale}${item.href}`;
                 const isActive = pathname.startsWith(fullHref);
                 const Icon = item.icon;
