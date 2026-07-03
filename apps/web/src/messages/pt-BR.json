@@ -29,8 +29,17 @@
     "all": "Todos",
     "viewOnSolanaExplorer": "Ver no Solana Explorer: {address}"
   },
+  "teacher": {
+    "area": {
+      "title": "Área do Professor",
+      "subtitle": "Crie e gerencie seus cursos.",
+      "comingSoonTitle": "Criação em breve",
+      "comingSoonBody": "As ferramentas de criação de cursos estão a caminho — você poderá rascunhar cursos, adicionar lições e enviá-los para revisão aqui."
+    }
+  },
   "nav": {
     "home": "Início",
+    "teach": "Ensinar",
     "courses": "Cursos",
     "dashboard": "Painel",
     "leaderboard": "Ranking",

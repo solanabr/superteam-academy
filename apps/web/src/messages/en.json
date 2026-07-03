@@ -29,8 +29,17 @@
     "all": "All",
     "viewOnSolanaExplorer": "View on Solana Explorer: {address}"
   },
+  "teacher": {
+    "area": {
+      "title": "Teacher Area",
+      "subtitle": "Create and manage your courses.",
+      "comingSoonTitle": "Authoring coming soon",
+      "comingSoonBody": "Course authoring tools are on the way — you'll be able to draft courses, add lessons, and submit them for review right here."
+    }
+  },
   "nav": {
     "home": "Home",
+    "teach": "Teach",
     "courses": "Courses",
     "dashboard": "Dashboard",
     "leaderboard": "Leaderboard",
