@@ -128,6 +128,33 @@ export const course = defineType({
         "Number of student completions required before creator reward is paid. 0 = never.",
     }),
     defineField({
+      name: "author",
+      title: "Author (Teacher User ID)",
+      type: "string",
+      readOnly: true,
+      hidden: ({ currentUser }) =>
+        !currentUser?.roles?.some((r) => r.name === "administrator"),
+      description:
+        "Supabase user id of the owning teacher. Managed by the app; do not edit manually.",
+    }),
+    defineField({
+      name: "authoringStatus",
+      title: "Authoring Status",
+      type: "string",
+      initialValue: "draft",
+      hidden: ({ currentUser }) =>
+        !currentUser?.roles?.some((r) => r.name === "administrator"),
+      description:
+        "Authoring workflow state. New courses start as draft; an admin approves before it goes public.",
+      options: {
+        list: [
+          { title: "Draft", value: "draft" },
+          { title: "Pending Review", value: "pending_review" },
+          { title: "Approved", value: "approved" },
+        ],
+      },
+    }),
+    defineField({
       name: "onChainStatus",
       title: "On-Chain Status",
       type: "object",

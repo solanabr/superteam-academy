@@ -1,3 +1,5 @@
+export type UserRole = "learner" | "teacher" | "admin";
+
 export interface UserProfile {
   id: string;
   walletAddress: string | null;
@@ -12,6 +14,8 @@ export interface UserProfile {
   };
   isPublic: boolean;
   nameRerollsUsed: number;
+  /** Coarse account role (issue #263). Defaults to "learner"; set by admin only. */
+  role?: UserRole;
   createdAt: Date;
 }
 

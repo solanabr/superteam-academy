@@ -404,6 +404,7 @@ export type Database = {
           id: string;
           is_public: boolean | null;
           name_rerolls_used: number | null;
+          role: "learner" | "teacher" | "admin";
           social_links: Json | null;
           username: string;
           wallet_address: string | null;
@@ -418,6 +419,7 @@ export type Database = {
           id: string;
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
+          role?: "learner" | "teacher" | "admin";
           social_links?: Json | null;
           username: string;
           wallet_address?: string | null;
@@ -432,6 +434,7 @@ export type Database = {
           id?: string;
           is_public?: boolean | null;
           name_rerolls_used?: number | null;
+          role?: "learner" | "teacher" | "admin";
           social_links?: Json | null;
           username?: string;
           wallet_address?: string | null;

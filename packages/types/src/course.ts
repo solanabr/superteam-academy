@@ -96,6 +96,8 @@ export interface Module {
   order: number;
 }
 
+export type AuthoringStatus = "draft" | "pending_review" | "approved";
+
 export interface Course {
   _id: string;
   title: string;
@@ -111,6 +113,10 @@ export interface Course {
   trackCollectionAddress?: string | null;
   trackId?: number;
   trackLevel?: number;
+  /** Supabase user id of the owning teacher (issue #263). Managed by the app. */
+  author?: string;
+  /** Authoring workflow state (issue #263). Legacy docs may omit this. */
+  authoringStatus?: AuthoringStatus;
 }
 
 export interface LearningPath {
