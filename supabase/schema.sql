@@ -21,6 +21,9 @@ CREATE TABLE profiles (
   is_public BOOLEAN DEFAULT true,
   name_rerolls_used INTEGER DEFAULT 0,
   wallet_xp_synced_at TIMESTAMPTZ,
+  -- Platform role. Granted/revoked only by the admin API (service_role); pinned
+  -- against self-escalation by the enforce_profile_role_immutable trigger below.
+  role TEXT NOT NULL DEFAULT 'learner' CHECK (role IN ('learner', 'teacher', 'admin')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -204,6 +207,29 @@ CREATE POLICY "Users can insert their own profile"
 
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE USING (auth.uid() = id);
+
+-- The UPDATE policy above has no column restriction, so pin `role` against
+-- self-escalation: only the service_role (admin API) may change it; any other
+-- caller's change is silently reverted to the old value.
+CREATE OR REPLACE FUNCTION public.enforce_profile_role_immutable()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role
+     AND coalesce(auth.role(), '') <> 'service_role' THEN
+    NEW.role := OLD.role;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS enforce_profile_role_immutable ON profiles;
+CREATE TRIGGER enforce_profile_role_immutable
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_profile_role_immutable();
 
 -- enrollments
 CREATE POLICY "Users can view their own enrollments"

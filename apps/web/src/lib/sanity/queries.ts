@@ -57,7 +57,7 @@ const moduleWithLessonsFields = `
 
 export async function getAllCourses(): Promise<Course[]> {
   return sanityFetch<Course[]>(
-    `*[_type == "course" && onChainStatus.status == "synced"] | order(title asc) {
+    `*[_type == "course" && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))] | order(title asc) {
       ${courseFields},
       "modules": modules[]->{
         _id,
@@ -78,7 +78,7 @@ export async function getAllCourses(): Promise<Course[]> {
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
   return sanityFetch<Course | null>(
-    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       ${courseFields},
       "modules": modules[]->{
         ${moduleWithLessonsFields}
@@ -98,7 +98,7 @@ export async function getLessonBySlug(
   // re-projects each to drop the `hidden` flag itself. Hidden-test/solution
   // checking lives server-side in /api/lessons/validate-challenge.
   return sanityFetch<Lesson | null>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       "allLessons": modules[]->lessons[]->{
         _id,
         title,
@@ -158,7 +158,7 @@ export async function getChallengeAnswerKey(
   // revalidate=0: always read fresh, never via the public Sanity CDN, so the
   // answer key is not cached on any edge.
   return sanityFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug },
@@ -176,7 +176,7 @@ export async function getChallengeAnswerKeyById(
   lessonId: string
 ): Promise<ChallengeAnswerKey | null> {
   return sanityFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[_id == $lessonId][0]`,
     { courseId, lessonId },
@@ -194,7 +194,7 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
       tag,
       order,
       difficulty,
-      "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced"] {
+      "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))] {
         ${courseFields},
         "modules": modules[]->{
           _id,
@@ -239,7 +239,7 @@ export async function getCourseIdBySlug(
   slug: string
 ): Promise<{ _id: string; xpPerLesson: number } | null> {
   return sanityFetch<{ _id: string; xpPerLesson: number } | null>(
-    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       _id,
       "xpPerLesson": coalesce(xpPerLesson, 0)
     }`,
@@ -254,7 +254,7 @@ export async function getCourseLessons(
   courseSlug: string
 ): Promise<Pick<Lesson, "_id" | "title" | "slug" | "type">[]> {
   return sanityFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))][0] {
       "lessons": modules[]->lessons[]-> {
         _id,
         title,
@@ -286,7 +286,7 @@ export interface CourseSummary {
 export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
   return sanityFetch<CourseSummary[]>(
-    `*[_type == "course" && _id in $ids && onChainStatus.status == "synced"] {
+    `*[_type == "course" && _id in $ids && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))] {
       _id,
       title,
       "slug": slug.current,
@@ -347,7 +347,7 @@ export async function getRecommendedCourses(
   excludeIds: string[]
 ): Promise<RecommendedCourse[]> {
   return sanityFetch<RecommendedCourse[]>(
-    `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced"] | order(title asc) {
+    `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))] | order(title asc) {
       _id,
       title,
       "slug": slug.current,
@@ -377,7 +377,7 @@ export async function getAllCourseTags(): Promise<
   return sanityFetch<
     { _id: string; title: string; tags: string[]; totalLessons: number }[]
   >(
-    `*[_type == "course" && onChainStatus.status == "synced" && defined(tags)] {
+    `*[_type == "course" && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus)) && defined(tags)] {
       _id,
       title,
       tags,
@@ -394,7 +394,7 @@ export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
   return sanityFetch<{ _id: string; totalLessons: number }[]>(
-    `*[_type == "course" && onChainStatus.status == "synced"] {
+    `*[_type == "course" && onChainStatus.status == "synced" && (authoringStatus == "approved" || !defined(authoringStatus))] {
       _id,
       "totalLessons": count(modules[]->lessons[])
     }`

@@ -157,6 +157,32 @@ export const course = defineType({
         }),
       ],
     }),
+    defineField({
+      name: "author",
+      title: "Author (owner)",
+      type: "string",
+      readOnly: true,
+      hidden: ({ currentUser }) =>
+        !currentUser?.roles?.some((r) => r.name === "administrator"),
+      description:
+        "Supabase user id of the teacher who owns this course. Set by the app; do not edit manually.",
+    }),
+    defineField({
+      name: "authoringStatus",
+      title: "Authoring Status",
+      type: "string",
+      initialValue: "approved",
+      options: {
+        list: [
+          { title: "Draft", value: "draft" },
+          { title: "Pending review", value: "pending_review" },
+          { title: "Approved", value: "approved" },
+        ],
+        layout: "radio",
+      },
+      description:
+        "Authoring workflow state, separate from on-chain sync. Only 'approved' courses appear in the public catalog. Teacher-authored courses start as 'draft'; an admin approves them.",
+    }),
   ],
   preview: {
     select: {
