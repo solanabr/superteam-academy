@@ -114,16 +114,30 @@ export function planStructureMutations(
   const courseModuleRefs: Record<string, unknown>[] = [];
 
   desired.forEach((mod, moduleOrder) => {
-    const moduleId = mod._id ?? gen.docId("module");
+    // SECURITY: only trust a client-supplied _id when it already belongs to
+    // THIS course's tree. Any other value (a foreign doc id, the course's own
+    // id, a made-up id) is ignored and a fresh id is minted, so a create can
+    // never overwrite an arbitrary document (createOrReplace IDOR).
+    const existingModuleId =
+      mod._id !== undefined && currentModuleIds.has(mod._id)
+        ? mod._id
+        : undefined;
+    const moduleExists = existingModuleId !== undefined;
+    const moduleId = existingModuleId ?? gen.docId("module");
     keptModuleIds.add(moduleId);
 
     const lessonRefs: Record<string, unknown>[] = [];
     mod.lessons.forEach((les, lessonOrder) => {
-      const lessonId = les._id ?? gen.docId("lesson");
+      const existingLessonId =
+        les._id !== undefined && currentLessonIds.has(les._id)
+          ? les._id
+          : undefined;
+      const lessonExists = existingLessonId !== undefined;
+      const lessonId = existingLessonId ?? gen.docId("lesson");
       keptLessonIds.add(lessonId);
 
       const fields = { ...lessonFields(les), order: lessonOrder };
-      if (les._id && currentLessonIds.has(les._id)) {
+      if (lessonExists) {
         mutations.push({ op: "patch", id: lessonId, set: fields });
       } else {
         mutations.push({
@@ -145,7 +159,7 @@ export function planStructureMutations(
       lessons: lessonRefs,
       order: moduleOrder,
     };
-    if (mod._id && currentModuleIds.has(mod._id)) {
+    if (moduleExists) {
       mutations.push({ op: "patch", id: moduleId, set: moduleSet });
     } else {
       mutations.push({
