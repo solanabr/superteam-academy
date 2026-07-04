@@ -66,4 +66,8 @@ pub enum AcademyError {
     InvalidCourseAccount,
     #[msg("Minting is paused")]
     MintingPaused,
+    #[msg("Recipient token account mint does not match Config.xp_mint")]
+    WrongXpMint,
+    #[msg("XP amount exceeds the per-mint ceiling")]
+    XpAmountExceedsMax,
 }

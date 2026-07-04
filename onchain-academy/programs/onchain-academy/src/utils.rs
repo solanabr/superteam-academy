@@ -1,6 +1,37 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 
+use crate::errors::AcademyError;
+
+/// Hard ceiling on the XP minted in a single instruction.
+///
+/// Deliberately generous versus the largest legitimate single mint (a
+/// course-completion bonus): a max-difficulty course with `xp_per_lesson = 50`
+/// and a full 50-lesson roster yields a `2500 * 0.5 = 1250` bonus, and creator
+/// rewards / achievement grants sit well below that. This is a tunable backstop,
+/// not a business rule — its job is to cap the blast radius of a bug or a leaked
+/// `backend_signer` to a bounded per-call amount. It matches the 5000 XP daily
+/// ceiling enforced in SQL, so the two limits stay in lockstep.
+pub const MAX_XP_PER_MINT: u64 = 5000;
+
+/// Asserts that `token_account` is a Token-2022 account whose base mint equals
+/// `expected_mint` (i.e. `Config.xp_mint`).
+///
+/// The `#[account(mut)]` + program-owner constraints on the recipient ATAs only
+/// prove the account is *some* Token-2022 account; without this the backend
+/// could point a mint instruction at an ATA of an unrelated Token-2022 mint. The
+/// `mint_to` CPI would still fail there (mint/account mismatch), but asserting up
+/// front turns that into a precise, named error instead of an opaque CPI failure.
+pub fn require_xp_mint(token_account: &AccountInfo, expected_mint: &Pubkey) -> Result<()> {
+    let data = token_account.try_borrow_data()?;
+    let state =
+        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
+            &data,
+        )?;
+    require_keys_eq!(state.base.mint, *expected_mint, AcademyError::WrongXpMint);
+    Ok(())
+}
+
 /// Mints XP tokens via Token-2022 CPI. The authority (Config PDA) signs
 /// using the provided seeds.
 pub fn mint_xp<'info>(

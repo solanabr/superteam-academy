@@ -1315,6 +1315,7 @@ dependencies = [
  "onchain-academy",
  "solana-program",
  "solana-sdk",
+ "spl-token-2022",
 ]
 
 [[package]]

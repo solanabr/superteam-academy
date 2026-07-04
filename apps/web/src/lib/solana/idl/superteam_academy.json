@@ -1428,6 +1428,16 @@
       "code": 6031,
       "name": "MintingPaused",
       "msg": "Minting is paused"
+    },
+    {
+      "code": 6032,
+      "name": "WrongXpMint",
+      "msg": "Recipient token account mint does not match Config.xp_mint"
+    },
+    {
+      "code": 6033,
+      "name": "XpAmountExceedsMax",
+      "msg": "XP amount exceeds the per-mint ceiling"
     }
   ],
   "types": [

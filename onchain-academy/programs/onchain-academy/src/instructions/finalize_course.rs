@@ -40,7 +40,13 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
         .ok_or(AcademyError::Overflow)?;
     let bonus_xp = total_lesson_xp / 2;
 
+    require!(
+        bonus_xp <= utils::MAX_XP_PER_MINT,
+        AcademyError::XpAmountExceedsMax
+    );
+
     if bonus_xp > 0 {
+        utils::require_xp_mint(&ctx.accounts.learner_token_account, &config.xp_mint)?;
         utils::mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.learner_token_account.to_account_info(),
@@ -56,6 +62,11 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
     if course.total_completions >= course.min_completions_for_reward as u32
         && course.creator_reward_xp > 0
     {
+        require!(
+            course.creator_reward_xp as u64 <= utils::MAX_XP_PER_MINT,
+            AcademyError::XpAmountExceedsMax
+        );
+        utils::require_xp_mint(&ctx.accounts.creator_token_account, &config.xp_mint)?;
         utils::mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.creator_token_account.to_account_info(),

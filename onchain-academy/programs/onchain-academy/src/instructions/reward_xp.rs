@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::errors::AcademyError;
 use crate::events::XpRewarded;
 use crate::state::{Config, MinterRole};
-use crate::utils::mint_xp;
+use crate::utils::{mint_xp, require_xp_mint};
 
 pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> {
     require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
@@ -34,6 +34,8 @@ pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> 
 
     let config = &ctx.accounts.config;
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
+
+    require_xp_mint(&ctx.accounts.recipient_token_account, &config.xp_mint)?;
 
     mint_xp(
         &ctx.accounts.xp_mint.to_account_info(),
