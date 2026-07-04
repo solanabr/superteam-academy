@@ -27,6 +27,13 @@ pub fn handler(ctx: Context<CompleteLesson>, lesson_index: u8) -> Result<()> {
     );
     enrollment.lesson_flags[word_index] |= mask;
 
+    require!(
+        course.xp_per_lesson as u64 <= utils::MAX_XP_PER_MINT,
+        AcademyError::XpAmountExceedsMax
+    );
+
+    utils::require_xp_mint(&ctx.accounts.learner_token_account, &config.xp_mint)?;
+
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
 
     utils::mint_xp(

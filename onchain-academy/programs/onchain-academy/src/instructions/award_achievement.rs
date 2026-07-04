@@ -10,7 +10,7 @@ use mpl_core::{
 use crate::errors::AcademyError;
 use crate::events::AchievementAwarded;
 use crate::state::{AchievementReceipt, AchievementType, Config, MinterRole};
-use crate::utils::mint_xp;
+use crate::utils::{mint_xp, require_xp_mint, MAX_XP_PER_MINT};
 
 pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
     require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
@@ -33,6 +33,10 @@ pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
     // must gate it too — otherwise a capped minter could be drained via
     // achievements. Only relevant when xp_reward > 0 (else total stays put).
     let new_total_xp_minted = if achievement.xp_reward > 0 {
+        require!(
+            achievement.xp_reward as u64 <= MAX_XP_PER_MINT,
+            AcademyError::XpAmountExceedsMax
+        );
         let new_total = role
             .total_xp_minted
             .checked_add(achievement.xp_reward as u64)
@@ -92,6 +96,7 @@ pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
 
     // Mint XP if xp_reward > 0
     if achievement.xp_reward > 0 {
+        require_xp_mint(&ctx.accounts.recipient_token_account, &config.xp_mint)?;
         mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.recipient_token_account.to_account_info(),

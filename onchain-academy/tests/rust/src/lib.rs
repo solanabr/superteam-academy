@@ -1,11 +1,13 @@
 #[cfg(test)]
 pub mod helpers;
 #[cfg(test)]
+mod test_achievement;
+#[cfg(test)]
+mod test_close_course;
+#[cfg(test)]
 mod test_completion;
 #[cfg(test)]
 mod test_course;
-#[cfg(test)]
-mod test_close_course;
 #[cfg(test)]
 mod test_enrollment;
 #[cfg(test)]
@@ -13,8 +15,8 @@ mod test_initialize;
 #[cfg(test)]
 mod test_kill_switch;
 #[cfg(test)]
-mod test_utils;
+mod test_mint_hardening;
 #[cfg(test)]
 mod test_minter_role;
 #[cfg(test)]
-mod test_achievement;
+mod test_utils;
