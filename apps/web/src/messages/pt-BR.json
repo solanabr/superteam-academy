@@ -481,7 +481,19 @@
     "discordPlaceholder": "user#0000",
     "exportFailed": "Não foi possível exportar seus dados. Tente novamente.",
     "privacyUpdateFailed": "Não foi possível atualizar a configuração de privacidade. Tente novamente.",
-    "walletPermanent": "Permanente — não pode ser alterado"
+    "walletPermanent": "Permanente — não pode ser alterado",
+    "dangerZone": "Zona de perigo",
+    "deleteAccountTitle": "Excluir conta",
+    "deleteAccountDescription": "Solicite a exclusão permanente da sua conta. Seu perfil é anonimizado e ocultado, e você é desconectado. Isso não pode ser desfeito.",
+    "deleteAccountOnChainNotice": "Seu XP on-chain e seus NFTs de credencial são permanentes e ficam na blockchain Solana. Eles estão vinculados à sua carteira e não podem ser apagados ao excluir sua conta.",
+    "deleteAccountButton": "Excluir minha conta",
+    "deleteAccountConfirmTitle": "Excluir sua conta?",
+    "deleteAccountConfirmBody": "Isso anonimiza seu perfil, remove sua bio e avatar, oculta você das páginas públicas e desconecta você. Seu XP on-chain e suas credenciais permanecem permanentemente na blockchain. Esta ação não pode ser desfeita.",
+    "deleteAccountConfirmPrompt": "Digite {word} para confirmar",
+    "deleteAccountConfirmButton": "Excluir permanentemente",
+    "deleteAccountCancel": "Cancelar",
+    "deleteAccountDeleting": "Excluindo…",
+    "deleteAccountFailed": "Não foi possível excluir sua conta. Tente novamente."
   },
   "a11y": {
     "dismiss": "Dispensar",

@@ -6,6 +6,7 @@ import type { UserIdentity } from "@supabase/supabase-js";
 import { ProfileTab } from "./_components/profile-tab";
 import { AccountTab } from "./_components/account-tab";
 import { PrivacyTab } from "./_components/privacy-tab";
+import { DangerTab } from "./_components/danger-tab";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,7 +21,7 @@ interface ProfileData {
   nameRerollsUsed: number;
 }
 
-const VALID_TABS = ["profile", "account", "privacy"] as const;
+const VALID_TABS = ["profile", "account", "privacy", "danger"] as const;
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -172,6 +173,7 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">{t("profileSettings")}</TabsTrigger>
           <TabsTrigger value="account">{t("accountSettings")}</TabsTrigger>
           <TabsTrigger value="privacy">{t("privacy")}</TabsTrigger>
+          <TabsTrigger value="danger">{t("dangerZone")}</TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -210,6 +212,11 @@ export default function SettingsPage() {
         {/* Privacy Tab */}
         <TabsContent value="privacy">
           <PrivacyTab isPublic={isPublic} onPublicChange={setIsPublic} />
+        </TabsContent>
+
+        {/* Danger Zone Tab */}
+        <TabsContent value="danger">
+          <DangerTab />
         </TabsContent>
       </Tabs>
     </div>
