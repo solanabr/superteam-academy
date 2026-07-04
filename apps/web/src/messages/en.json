@@ -46,7 +46,13 @@
       "completions": "Completions",
       "certificates": "Certificates",
       "edit": "Edit course",
-      "back": "Back to courses"
+      "back": "Back to courses",
+      "completionRate": "Completion rate",
+      "xpAwarded": "XP awarded",
+      "recentActivity": "New in {days}d (enroll/complete)",
+      "lessonFunnel": "Lesson completion",
+      "noLessons": "No lessons yet.",
+      "untitledLesson": "Untitled lesson"
     },
     "form": {
       "createHeading": "New course",

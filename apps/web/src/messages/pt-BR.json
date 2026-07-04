@@ -46,7 +46,13 @@
       "completions": "Conclusões",
       "certificates": "Certificados",
       "edit": "Editar curso",
-      "back": "Voltar aos cursos"
+      "back": "Voltar aos cursos",
+      "completionRate": "Taxa de conclusão",
+      "xpAwarded": "XP concedido",
+      "recentActivity": "Novos em {days}d (inscr./concl.)",
+      "lessonFunnel": "Conclusão por aula",
+      "noLessons": "Nenhuma aula ainda.",
+      "untitledLesson": "Aula sem título"
     },
     "form": {
       "createHeading": "Novo curso",
