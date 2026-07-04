@@ -32,6 +32,7 @@ Thumbs.db
 .env.*
 .env*.local
 !.env.example
+!.env.staging.example
 
 # IDE / Editor
 .idea/
