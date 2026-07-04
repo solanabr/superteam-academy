@@ -180,6 +180,8 @@ CREATE UNIQUE INDEX idx_xp_transactions_idempotency
   WHERE idempotency_key IS NOT NULL;
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_certificates_user_id ON certificates(user_id);
+-- Per-course certificate counts (teacher overview, #285) filter by course_id.
+CREATE INDEX idx_certificates_course_id ON certificates(course_id);
 -- One mint tx == one certificate row. Partial so NULL-signature rows
 -- (off-chain / resync) stay allowed while real mint signatures can't collide.
 CREATE UNIQUE INDEX idx_certificates_tx_signature_unique
