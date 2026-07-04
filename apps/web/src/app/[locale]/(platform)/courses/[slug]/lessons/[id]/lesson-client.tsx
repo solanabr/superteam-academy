@@ -161,6 +161,16 @@ interface CompletionResponse {
   signature: string | null;
 }
 
+/** Carries the HTTP status so the caller can map it to a localized reason. */
+class CompletionError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(`Failed to complete lesson (${status})`);
+    this.name = "CompletionError";
+    this.status = status;
+  }
+}
+
 async function completeLessonAPI(
   lessonId: string,
   courseId: string,
@@ -172,7 +182,7 @@ async function completeLessonAPI(
     body: JSON.stringify({ lessonId, courseId, submittedCode }),
   });
   if (!res.ok) {
-    throw new Error("Failed to complete lesson");
+    throw new CompletionError(res.status);
   }
   return res.json() as Promise<CompletionResponse>;
 }
@@ -194,6 +204,7 @@ export function LessonPageClient({
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
@@ -247,6 +258,7 @@ export function LessonPageClient({
       if (isCompleted || isCompleting) return;
       if (hasLinkedWallet === false) return;
       setIsCompleting(true);
+      setCompletionError(null);
       try {
         const result = await completeLessonAPI(
           lesson._id,
@@ -266,9 +278,28 @@ export function LessonPageClient({
           // XP, level-up, achievement, and certificate popups are now triggered
           // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
         }
-      } catch {
-        // Allow retry on failure
+      } catch (err) {
+        // Surface WHY completion failed instead of failing silently. A 403 on a
+        // challenge means the server's full test suite (including hidden tests
+        // the browser never runs) rejected the submission; a 403 on a plain
+        // lesson means no on-chain enrollment was found. Anything else is a
+        // transient/server error the learner can retry.
         setIsCompleting(false);
+        const status = err instanceof CompletionError ? err.status : 0;
+        const message =
+          status === 403 && isChallenge
+            ? t("completionFailedChallenge")
+            : status === 403
+              ? t("completionFailedEnrollment")
+              : t("completionFailedGeneric");
+        setCompletionError(message);
+        // Unstick the challenge editor's "saving" overlay and show the reason
+        // there too (challenge submits originate from ChallengeInterface).
+        window.dispatchEvent(
+          new CustomEvent("superteam:lesson-complete-error", {
+            detail: { lessonId: lesson._id, message },
+          })
+        );
       }
     },
     [
@@ -278,6 +309,8 @@ export function LessonPageClient({
       isCompleted,
       isCompleting,
       hasLinkedWallet,
+      isChallenge,
+      t,
     ]
   );
 
@@ -642,6 +675,18 @@ export function LessonPageClient({
 
       {/* Navigation + completion */}
       <div className="space-y-2">
+        {completionError && (
+          <div
+            role="alert"
+            className="rounded-lg border-[2.5px] px-4 py-3 text-sm text-danger"
+            style={{
+              borderColor: "var(--danger-border)",
+              background: "var(--danger-bg)",
+            }}
+          >
+            {completionError}
+          </div>
+        )}
         <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
           {prevLesson && (
             <Button
