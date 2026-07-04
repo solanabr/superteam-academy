@@ -38,7 +38,15 @@
       "untitled": "Untitled course",
       "statusDraft": "Draft",
       "statusPendingReview": "Pending review",
-      "statusApproved": "Approved"
+      "statusApproved": "Approved",
+      "manage": "Manage"
+    },
+    "overview": {
+      "enrolled": "Enrolled",
+      "completions": "Completions",
+      "certificates": "Certificates",
+      "edit": "Edit course",
+      "back": "Back to courses"
     },
     "form": {
       "createHeading": "New course",

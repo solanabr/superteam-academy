@@ -69,10 +69,10 @@ export default async function TeacherCoursesPage({
                 </p>
               </div>
               <Link
-                href={`/${locale}/teach/courses/${c._id}/edit`}
+                href={`/${locale}/teach/courses/${c._id}`}
                 className="text-sm text-primary underline hover:no-underline"
               >
-                {t("edit")}
+                {t("manage")}
               </Link>
             </li>
           ))}
