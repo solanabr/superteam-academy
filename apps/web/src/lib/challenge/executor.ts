@@ -162,6 +162,58 @@ var __Function__ = Function;
 var __jsonStringify__ = JSON.stringify;
 var __jsonParse__ = JSON.parse;
 
+/* Web-API polyfills QuickJS lacks. TextEncoder/TextDecoder are WHATWG APIs, not
+ * core ECMAScript — the browser worker has them, this engine does not. Solana
+ * byte-parsing challenges (e.g. decoding a username out of account data) use
+ * them routinely, so without these a CORRECT submission throws server-side
+ * ("TextDecoder is not defined") while passing in the browser -> an
+ * un-completable challenge. Pure-JS UTF-8, defined before any user code runs. */
+if (typeof globalThis.TextEncoder === "undefined") {
+  globalThis.TextEncoder = function TextEncoder() {};
+  globalThis.TextEncoder.prototype.encode = function (input) {
+    var str = String(input === undefined ? "" : input);
+    var bytes = [];
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charCodeAt(i);
+      if (c < 0x80) {
+        bytes.push(c);
+      } else if (c < 0x800) {
+        bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+      } else if (c >= 0xd800 && c <= 0xdbff && i + 1 < str.length) {
+        var lo = str.charCodeAt(++i);
+        var cp = 0x10000 + ((c & 0x3ff) << 10) + (lo & 0x3ff);
+        bytes.push(0xf0 | (cp >> 18), 0x80 | ((cp >> 12) & 0x3f), 0x80 | ((cp >> 6) & 0x3f), 0x80 | (cp & 0x3f));
+      } else {
+        bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+      }
+    }
+    return new Uint8Array(bytes);
+  };
+}
+if (typeof globalThis.TextDecoder === "undefined") {
+  globalThis.TextDecoder = function TextDecoder() {};
+  globalThis.TextDecoder.prototype.decode = function (input) {
+    if (input === undefined || input === null) return "";
+    var bytes = input instanceof Uint8Array ? input : new Uint8Array(input.buffer ? input.buffer : input);
+    var out = "";
+    for (var i = 0; i < bytes.length; ) {
+      var c = bytes[i++];
+      if (c < 0x80) {
+        out += String.fromCharCode(c);
+      } else if (c < 0xe0) {
+        out += String.fromCharCode(((c & 0x1f) << 6) | (bytes[i++] & 0x3f));
+      } else if (c < 0xf0) {
+        out += String.fromCharCode(((c & 0x0f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f));
+      } else {
+        var cp2 = ((c & 0x07) << 18) | ((bytes[i++] & 0x3f) << 12) | ((bytes[i++] & 0x3f) << 6) | (bytes[i++] & 0x3f);
+        cp2 -= 0x10000;
+        out += String.fromCharCode(0xd800 + (cp2 >> 10), 0xdc00 + (cp2 & 0x3ff));
+      }
+    }
+    return out;
+  };
+}
+
 var BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 function toBase58(bytes) {
   var result = "";
