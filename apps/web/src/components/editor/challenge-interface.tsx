@@ -74,6 +74,7 @@ export function ChallengeInterface({
   const [isComplete, setIsComplete] = useState(isAlreadyCompleted ?? false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [hiddenHints, setHiddenHints] = useState<Set<number>>(new Set());
 
   // AI help state
@@ -105,6 +106,7 @@ export function ChallengeInterface({
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
+    setServerError(null);
   }, []);
 
   const handleResult = useCallback((result: ExecutionResult) => {
@@ -164,6 +166,7 @@ export function ChallengeInterface({
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
+    setServerError(null);
     setIsSaving(true);
     onComplete?.();
 
@@ -192,6 +195,24 @@ export function ChallengeInterface({
       completeLesson();
     }
   }, [pendingSubmit, isEnrolled, isComplete, completeLesson]);
+
+  // Server-side completion failed (e.g. a hidden test the browser never ran, or
+  // a missing on-chain enrollment). lesson-client.tsx runs the completion API
+  // and fires this with a localized reason; clear the "saving" overlay and show
+  // it so the submit no longer fails silently.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ lessonId: string; message: string }>)
+        .detail;
+      if (detail.lessonId !== lessonId) return;
+      setIsSaving(false);
+      setPendingSubmit(false);
+      setServerError(detail.message);
+    };
+    window.addEventListener("superteam:lesson-complete-error", handler);
+    return () =>
+      window.removeEventListener("superteam:lesson-complete-error", handler);
+  }, [lessonId]);
 
   const handleResizeStart = useCallback(
     (target: "description" | "output") => (e: React.MouseEvent) => {
@@ -590,6 +611,31 @@ export function ChallengeInterface({
             <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
               <div className="sol-spinner" aria-hidden="true" />
               <p className="text-sm text-text-3">{t("savingProgress")}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Failure overlay — the server rejected this submission */}
+        {serverError && !isSaving && !isComplete && (
+          <div
+            role="alert"
+            className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
+          >
+            <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 text-center shadow-card">
+              <X
+                size={28}
+                weight="bold"
+                className="text-danger"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-text-3">{serverError}</p>
+              <Button
+                variant="pushOutline"
+                size="default"
+                onClick={() => setServerError(null)}
+              >
+                {tCommon("retry")}
+              </Button>
             </div>
           </div>
         )}
