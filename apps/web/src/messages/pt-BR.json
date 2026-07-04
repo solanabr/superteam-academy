@@ -38,7 +38,15 @@
       "untitled": "Curso sem título",
       "statusDraft": "Rascunho",
       "statusPendingReview": "Em revisão",
-      "statusApproved": "Aprovado"
+      "statusApproved": "Aprovado",
+      "manage": "Gerenciar"
+    },
+    "overview": {
+      "enrolled": "Inscritos",
+      "completions": "Conclusões",
+      "certificates": "Certificados",
+      "edit": "Editar curso",
+      "back": "Voltar aos cursos"
     },
     "form": {
       "createHeading": "Novo curso",
