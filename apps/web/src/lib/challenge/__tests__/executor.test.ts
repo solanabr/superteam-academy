@@ -35,6 +35,38 @@ const PASSES_VISIBLE_ONLY =
 const WRONG = "function add(a, b) { return a * b; }";
 const EMPTY = "";
 
+// Regression: byte-parsing challenges decode strings with TextDecoder — a WHATWG
+// Web API the browser worker has but QuickJS does NOT. Without the sandbox
+// polyfill this correct submission threw "TextDecoder is not defined" and 403'd
+// server-side while passing in the browser (parse-data-challenge). Uses the
+// "data" fixture: Uint8Array([1, 5,0,0,0, 6,0,0,0, "SolDev"]) => version 1,
+// level 5 (u32 LE), username "SolDev".
+const PARSE_DATA_TEXTDECODER = `function parseAccountData(data) {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const version = view.getUint8(0);
+  const level = view.getUint32(1, true);
+  const len = view.getUint32(5, true);
+  const username = new TextDecoder().decode(data.slice(9, 9 + len));
+  return { version, level, username };
+}`;
+const parseDataTests: AdminTestCase[] = [
+  {
+    id: "shape",
+    description: "returns the expected object shape",
+    input: "data",
+    expectedOutput:
+      "typeof result === 'object' && 'version' in result && 'level' in result && 'username' in result",
+  },
+  {
+    id: "values",
+    description: "parses correct values (hidden)",
+    input: "data",
+    expectedOutput:
+      "result.version === 1 && result.level === 5 && result.username === 'SolDev'",
+    hidden: true,
+  },
+];
+
 // These tests exercise the REAL QuickJS executor (no mocks). They prove the
 // server is authoritative: correctness is judged by running the submission
 // against the server-held tests, so a forged client "passed" cannot produce a
@@ -55,6 +87,16 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
       expect(run.results.every((r) => r.passed)).toBe(true);
       // hidden test was actually executed
       expect(run.results.find((r) => r.id === "hidden-1")?.passed).toBe(true);
+    });
+
+    it("runs Web-API code (TextDecoder/DataView): a byte-parsing submission grades server-side", async () => {
+      const run = await runJsSubmission(PARSE_DATA_TEXTDECODER, parseDataTests);
+      expect(run.available).toBe(true);
+      if (!run.available) return;
+      // Without the TextDecoder polyfill this threw "TextDecoder is not defined"
+      // in QuickJS -> every test failed -> an un-completable challenge.
+      expect(run.passed).toBe(true);
+      expect(run.results.find((r) => r.id === "values")?.passed).toBe(true);
     });
 
     it("rejects a WRONG submission", async () => {
