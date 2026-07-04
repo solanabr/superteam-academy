@@ -46,7 +46,13 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
     );
 
     if bonus_xp > 0 {
-        utils::require_xp_mint(&ctx.accounts.learner_token_account, &config.xp_mint)?;
+        // Bind the bonus ATA to the learner (mint == Config.xp_mint, owner ==
+        // learner) so the bonus can only land in the learner's own account.
+        utils::require_xp_recipient(
+            &ctx.accounts.learner_token_account,
+            &config.xp_mint,
+            &ctx.accounts.learner.key(),
+        )?;
         utils::mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.learner_token_account.to_account_info(),
@@ -66,7 +72,14 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
             course.creator_reward_xp as u64 <= utils::MAX_XP_PER_MINT,
             AcademyError::XpAmountExceedsMax
         );
-        utils::require_xp_mint(&ctx.accounts.creator_token_account, &config.xp_mint)?;
+        // Bind the creator-reward ATA to the creator (mint == Config.xp_mint,
+        // owner == creator) so the reward can only land in the creator's own
+        // account. `creator` is itself pinned to course.creator on the struct.
+        utils::require_xp_recipient(
+            &ctx.accounts.creator_token_account,
+            &config.xp_mint,
+            &ctx.accounts.creator.key(),
+        )?;
         utils::mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.creator_token_account.to_account_info(),
@@ -119,14 +132,18 @@ pub struct FinalizeCourse<'info> {
     /// CHECK: Tied to enrollment PDA via seeds constraint.
     pub learner: AccountInfo<'info>,
 
-    /// CHECK: Token-2022 ATA for learner's XP. Validated by Token-2022 CPI + owner derivation.
+    /// CHECK: Token-2022 ATA for learner's XP bonus. Program-owner checked here;
+    /// its base mint (== Config.xp_mint) and token-account owner (== learner) are
+    /// asserted in the handler via `require_xp_recipient` before minting.
     #[account(
         mut,
         constraint = learner_token_account.owner == &spl_token_2022::id() @ AcademyError::Unauthorized,
     )]
     pub learner_token_account: AccountInfo<'info>,
 
-    /// CHECK: Token-2022 ATA for creator's XP. Validated by Token-2022 CPI + owner derivation.
+    /// CHECK: Token-2022 ATA for creator's XP reward. Program-owner checked here;
+    /// its base mint (== Config.xp_mint) and token-account owner (== creator) are
+    /// asserted in the handler via `require_xp_recipient` before minting.
     #[account(
         mut,
         constraint = creator_token_account.owner == &spl_token_2022::id() @ AcademyError::Unauthorized,

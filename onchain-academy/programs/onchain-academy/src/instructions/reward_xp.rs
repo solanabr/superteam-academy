@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::errors::AcademyError;
 use crate::events::XpRewarded;
 use crate::state::{Config, MinterRole};
-use crate::utils::{mint_xp, require_xp_mint};
+use crate::utils::{mint_xp, require_xp_mint, MAX_XP_PER_MINT};
 
 pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> {
     require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
@@ -12,6 +12,11 @@ pub fn handler(ctx: Context<RewardXp>, amount: u64, memo: String) -> Result<()> 
 
     require!(role.is_active, AcademyError::MinterNotActive);
     require!(amount > 0, AcademyError::InvalidAmount);
+    // Absolute per-call ceiling: this is the only general-purpose XP-mint path,
+    // so an unbounded (or over-generously capped) minter role would otherwise let
+    // a leaked backend_signer mint an arbitrary amount in one call. Bounds the
+    // blast radius; the per-minter cap below still applies on top.
+    require!(amount <= MAX_XP_PER_MINT, AcademyError::XpAmountExceedsMax);
 
     if role.max_xp_per_call > 0 {
         require!(
@@ -84,8 +89,16 @@ pub struct RewardXp<'info> {
     )]
     pub xp_mint: AccountInfo<'info>,
 
-    /// Recipient's Token-2022 ATA for XP
-    /// CHECK: Validated by Token-2022 CPI.
+    /// Recipient's Token-2022 ATA for XP.
+    ///
+    /// reward_xp is address-based by design: the minter passes the destination
+    /// ATA directly and there is no on-chain recipient-identity account to bind
+    /// its owner against (unlike complete_lesson/finalize_course/award_achievement,
+    /// which each own a learner/creator/recipient key). The mint is still pinned
+    /// via `require_xp_mint` (== Config.xp_mint) and the amount is bounded by
+    /// MAX_XP_PER_MINT + the per-minter cap, so the account cannot be an ATA of an
+    /// unrelated mint and the per-call blast radius is bounded.
+    /// CHECK: Validated by require_xp_mint + Token-2022 CPI.
     #[account(mut)]
     pub recipient_token_account: AccountInfo<'info>,
 

@@ -1,7 +1,7 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
-use solana_sdk::pubkey::Pubkey;
 use onchain_academy::state::{Course, MAX_COURSE_ID_LEN};
+use solana_sdk::pubkey::Pubkey;
 
 #[test]
 fn course_size_constant_is_correct() {

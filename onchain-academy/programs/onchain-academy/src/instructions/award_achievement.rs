@@ -10,7 +10,7 @@ use mpl_core::{
 use crate::errors::AcademyError;
 use crate::events::AchievementAwarded;
 use crate::state::{AchievementReceipt, AchievementType, Config, MinterRole};
-use crate::utils::{mint_xp, require_xp_mint, MAX_XP_PER_MINT};
+use crate::utils::{mint_xp, require_xp_recipient, MAX_XP_PER_MINT};
 
 pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
     require!(!ctx.accounts.config.paused, AcademyError::MintingPaused);
@@ -94,9 +94,16 @@ pub fn handler(ctx: Context<AwardAchievement>) -> Result<()> {
         ])
         .invoke_signed(signer_seeds)?;
 
-    // Mint XP if xp_reward > 0
+    // Mint XP if xp_reward > 0. Bind the recipient ATA to the achievement
+    // recipient: mint == Config.xp_mint AND owner == recipient (the same key that
+    // owns the minted NFT and seeds the achievement_receipt PDA), so the XP can
+    // only land in the recipient's own account.
     if achievement.xp_reward > 0 {
-        require_xp_mint(&ctx.accounts.recipient_token_account, &config.xp_mint)?;
+        require_xp_recipient(
+            &ctx.accounts.recipient_token_account,
+            &config.xp_mint,
+            &ctx.accounts.recipient.key(),
+        )?;
         mint_xp(
             &ctx.accounts.xp_mint.to_account_info(),
             &ctx.accounts.recipient_token_account.to_account_info(),
@@ -184,7 +191,9 @@ pub struct AwardAchievement<'info> {
     /// CHECK: Recipient of the achievement NFT.
     pub recipient: AccountInfo<'info>,
 
-    /// CHECK: Recipient's Token-2022 ATA. Only used if xp_reward > 0. Validated by CPI.
+    /// CHECK: Recipient's Token-2022 ATA. Only used if xp_reward > 0. When used,
+    /// its base mint (== Config.xp_mint) and token-account owner (== recipient)
+    /// are asserted in the handler via `require_xp_recipient` before minting.
     #[account(mut)]
     pub recipient_token_account: AccountInfo<'info>,
 

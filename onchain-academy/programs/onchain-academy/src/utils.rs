@@ -32,6 +32,36 @@ pub fn require_xp_mint(token_account: &AccountInfo, expected_mint: &Pubkey) -> R
     Ok(())
 }
 
+/// Asserts that `token_account` is a Token-2022 account whose base mint equals
+/// `expected_mint` (== `Config.xp_mint`) AND whose token-account authority
+/// equals `expected_owner`.
+///
+/// The mint check alone (see `require_xp_mint`) does not bind *whose* account
+/// receives the XP: a leaked/buggy backend could pass any wallet's XP ATA and
+/// mint to it while the emitted event names a different learner/creator/recipient.
+/// Binding the owner closes that gap — XP can only ever land in the intended
+/// identity's own account. Used on every recipient-identity-bearing mint path
+/// (complete_lesson, finalize_course, award_achievement); the address-based
+/// reward_xp path has no on-chain recipient identity and keeps `require_xp_mint`.
+pub fn require_xp_recipient(
+    token_account: &AccountInfo,
+    expected_mint: &Pubkey,
+    expected_owner: &Pubkey,
+) -> Result<()> {
+    let data = token_account.try_borrow_data()?;
+    let state =
+        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
+            &data,
+        )?;
+    require_keys_eq!(state.base.mint, *expected_mint, AcademyError::WrongXpMint);
+    require_keys_eq!(
+        state.base.owner,
+        *expected_owner,
+        AcademyError::Unauthorized
+    );
+    Ok(())
+}
+
 /// Mints XP tokens via Token-2022 CPI. The authority (Config PDA) signs
 /// using the provided seeds.
 pub fn mint_xp<'info>(

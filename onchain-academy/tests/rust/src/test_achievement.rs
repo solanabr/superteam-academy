@@ -1,10 +1,10 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
-use solana_sdk::pubkey::Pubkey;
 use onchain_academy::state::{
     AchievementReceipt, AchievementType, MAX_ACHIEVEMENT_ID_LEN, MAX_ACHIEVEMENT_NAME_LEN,
     MAX_ACHIEVEMENT_URI_LEN,
 };
+use solana_sdk::pubkey::Pubkey;
 
 // --- AchievementType ---
 
@@ -160,28 +160,18 @@ fn achievement_type_reserved_bytes_are_zeroed() {
 #[test]
 fn achievement_type_pda_is_deterministic() {
     let achievement_id = "early-adopter";
-    let (pda1, bump1) = Pubkey::find_program_address(
-        &[b"achievement", achievement_id.as_bytes()],
-        &PROGRAM_ID,
-    );
-    let (pda2, bump2) = Pubkey::find_program_address(
-        &[b"achievement", achievement_id.as_bytes()],
-        &PROGRAM_ID,
-    );
+    let (pda1, bump1) =
+        Pubkey::find_program_address(&[b"achievement", achievement_id.as_bytes()], &PROGRAM_ID);
+    let (pda2, bump2) =
+        Pubkey::find_program_address(&[b"achievement", achievement_id.as_bytes()], &PROGRAM_ID);
     assert_eq!(pda1, pda2);
     assert_eq!(bump1, bump2);
 }
 
 #[test]
 fn different_achievement_ids_yield_different_pdas() {
-    let (pda_a, _) = Pubkey::find_program_address(
-        &[b"achievement", b"badge-a"],
-        &PROGRAM_ID,
-    );
-    let (pda_b, _) = Pubkey::find_program_address(
-        &[b"achievement", b"badge-b"],
-        &PROGRAM_ID,
-    );
+    let (pda_a, _) = Pubkey::find_program_address(&[b"achievement", b"badge-a"], &PROGRAM_ID);
+    let (pda_b, _) = Pubkey::find_program_address(&[b"achievement", b"badge-b"], &PROGRAM_ID);
     assert_ne!(pda_a, pda_b);
 }
 

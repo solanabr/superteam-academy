@@ -10,6 +10,16 @@ pub struct UpdateConfigParams {
     /// Minting kill-switch toggle. `Some(true)` pauses all minting,
     /// `Some(false)` resumes, `None` leaves it unchanged.
     pub paused: Option<bool>,
+    /// Rotate the platform authority (governance handover). `Some(a)` sets
+    /// `Config.authority = a`, `None` leaves it unchanged. The struct's
+    /// `has_one = authority` gate means the CURRENT authority co-signs the
+    /// rotation, so this cannot be used to seize control — only to hand it off
+    /// (e.g. to a Squads multisig) without a program upgrade.
+    // TODO: two-step nominate/accept (store a pending_authority; require the
+    // nominee to sign an accept_authority ix) to guard against handoff to a
+    // mistyped / uncontrolled key. One-step is sufficient for the initial
+    // EOA -> multisig handover this fix unblocks.
+    pub new_authority: Option<Pubkey>,
 }
 
 pub fn handler<'info>(
@@ -48,6 +58,20 @@ pub fn handler<'info>(
         config.paused = paused;
         emit!(MintingPauseSet {
             paused,
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+    }
+
+    if let Some(new_authority) = params.new_authority {
+        // Reject the zero pubkey — an unrecoverable handoff that would brick
+        // governance. The current authority already co-signs (has_one).
+        require!(
+            new_authority != Pubkey::default(),
+            AcademyError::Unauthorized
+        );
+        config.authority = new_authority;
+        emit!(ConfigUpdated {
+            field: "authority".to_string(),
             timestamp: Clock::get()?.unix_timestamp,
         });
     }
