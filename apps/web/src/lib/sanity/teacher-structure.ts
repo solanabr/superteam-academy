@@ -75,6 +75,21 @@ export async function getCourseStructure(
   return result?.modules ?? [];
 }
 
+/** Ordered (module → lesson) list of a course's lessons — id + title only. */
+export async function getCourseLessonList(
+  courseId: string
+): Promise<{ _id: string; title: string | null }[]> {
+  const result = await sanityAdmin.fetch<{
+    modules: { lessons: { _id: string; title: string | null }[] | null }[] | null;
+  } | null>(
+    `*[_type == "course" && _id == $courseId][0]{
+      "modules": modules[]->{ "lessons": lessons[]->{ _id, title } }
+    }`,
+    { courseId }
+  );
+  return (result?.modules ?? []).flatMap((m) => m.lessons ?? []);
+}
+
 /** Flat id sets of the course's current modules + lessons (for the diff). */
 async function getCurrentTreeIds(courseId: string): Promise<CurrentTree> {
   const result = await sanityAdmin.fetch<{
