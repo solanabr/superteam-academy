@@ -1,3 +1,4 @@
+import type { QueryParams } from "next-sanity";
 import type { AdminTestCase } from "@superteam-lms/types";
 import { sanityFetch } from "./client";
 import type { Course, Lesson, LearningPath } from "./types";
@@ -14,9 +15,27 @@ const publicAuthoringGate = `(authoringStatus == "approved" || !defined(authorin
 
 // Shared Next.js cache tag for the public course catalog. Public catalog reads
 // are tagged with this so an admin action that changes what the catalog should
-// show (course sync / deactivate / reactivate) can purge them on demand via
-// `revalidateTag(COURSES_CACHE_TAG)` instead of waiting for the 1h ISR window.
+// show (course sync) can purge them on demand via `revalidateTag(COURSES_CACHE_TAG)`
+// instead of waiting for the 1h ISR window.
 export const COURSES_CACHE_TAG = "courses";
+
+/**
+ * Fetch wrapper for PUBLIC catalog queries. EVERY query gated on
+ * `publicAuthoringGate` (i.e. `onChainStatus.status == "synced" && ...`) MUST go
+ * through this instead of `sanityFetch` directly, so its cache entry is tagged
+ * with COURSES_CACHE_TAG and gets purged as a group by
+ * `revalidateTag(COURSES_CACHE_TAG)` when an admin syncs a course. Centralizing
+ * the tag here is what keeps a newly-synced course from being visible on some
+ * pages but stale/404 on others (issue #312): a gated call site can't silently
+ * opt out of revalidation by forgetting to pass the tag.
+ */
+function catalogFetch<T>(
+  query: string,
+  params?: QueryParams,
+  revalidate = 3600
+): Promise<T> {
+  return sanityFetch<T>(query, params, revalidate, [COURSES_CACHE_TAG]);
+}
 
 const courseFields = `
   _id,
@@ -70,7 +89,7 @@ const moduleWithLessonsFields = `
 // --- Query Functions ---
 
 export async function getAllCourses(): Promise<Course[]> {
-  return sanityFetch<Course[]>(
+  return catalogFetch<Course[]>(
     `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate}] | order(title asc) {
       ${courseFields},
       "modules": modules[]->{
@@ -86,24 +105,19 @@ export async function getAllCourses(): Promise<Course[]> {
           order
         } | order(order asc)
       } | order(order asc)
-    }`,
-    undefined,
-    3600,
-    [COURSES_CACHE_TAG]
+    }`
   );
 }
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
-  return sanityFetch<Course | null>(
+  return catalogFetch<Course | null>(
     `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       ${courseFields},
       "modules": modules[]->{
         ${moduleWithLessonsFields}
       } | order(order asc)
     }`,
-    { slug },
-    3600,
-    [COURSES_CACHE_TAG]
+    { slug }
   );
 }
 
@@ -116,7 +130,7 @@ export async function getLessonBySlug(
   // (GROQ: `hidden != true` matches false/undefined and excludes only true) and
   // re-projects each to drop the `hidden` flag itself. Hidden-test/solution
   // checking lives server-side in /api/lessons/validate-challenge.
-  return sanityFetch<Lesson | null>(
+  return catalogFetch<Lesson | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->{
         _id,
@@ -175,8 +189,10 @@ export async function getChallengeAnswerKey(
   lessonSlug: string
 ): Promise<ChallengeAnswerKey | null> {
   // revalidate=0: always read fresh, never via the public Sanity CDN, so the
-  // answer key is not cached on any edge.
-  return sanityFetch<ChallengeAnswerKey | null>(
+  // answer key is not cached on any edge. catalogFetch (not sanityFetch) only to
+  // keep the "every gated query uses catalogFetch" invariant — the tag is inert
+  // on an uncached read.
+  return catalogFetch<ChallengeAnswerKey | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[slug == $lessonSlug][0]`,
@@ -194,7 +210,7 @@ export async function getChallengeAnswerKeyById(
   courseId: string,
   lessonId: string
 ): Promise<ChallengeAnswerKey | null> {
-  return sanityFetch<ChallengeAnswerKey | null>(
+  return catalogFetch<ChallengeAnswerKey | null>(
     `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[_id == $lessonId][0]`,
@@ -204,7 +220,7 @@ export async function getChallengeAnswerKeyById(
 }
 
 export async function getAllLearningPaths(): Promise<LearningPath[]> {
-  return sanityFetch<LearningPath[]>(
+  return catalogFetch<LearningPath[]>(
     `*[_type == "learningPath"] | order(coalesce(order, 999) asc, title asc) {
       _id,
       title,
@@ -229,10 +245,7 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
           } | order(order asc)
         } | order(order asc)
       }
-    }`,
-    undefined,
-    3600,
-    [COURSES_CACHE_TAG]
+    }`
   );
 }
 
@@ -260,7 +273,7 @@ export async function getCourseById(id: string): Promise<Course | null> {
 export async function getCourseIdBySlug(
   slug: string
 ): Promise<{ _id: string; xpPerLesson: number } | null> {
-  return sanityFetch<{ _id: string; xpPerLesson: number } | null>(
+  return catalogFetch<{ _id: string; xpPerLesson: number } | null>(
     `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       _id,
       "xpPerLesson": coalesce(xpPerLesson, 0)
@@ -275,7 +288,7 @@ export async function getCourseIdBySlug(
 export async function getCourseLessons(
   courseSlug: string
 ): Promise<Pick<Lesson, "_id" | "title" | "slug" | "type">[]> {
-  return sanityFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
+  return catalogFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
       "lessons": modules[]->lessons[]-> {
         _id,
@@ -307,7 +320,7 @@ export interface CourseSummary {
  */
 export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
-  return sanityFetch<CourseSummary[]>(
+  return catalogFetch<CourseSummary[]>(
     `*[_type == "course" && _id in $ids && onChainStatus.status == "synced" && ${publicAuthoringGate}] {
       _id,
       title,
@@ -368,7 +381,7 @@ export interface RecommendedCourse {
 export async function getRecommendedCourses(
   excludeIds: string[]
 ): Promise<RecommendedCourse[]> {
-  return sanityFetch<RecommendedCourse[]>(
+  return catalogFetch<RecommendedCourse[]>(
     `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced" && ${publicAuthoringGate}] | order(title asc) {
       _id,
       title,
@@ -396,7 +409,7 @@ export async function getRecommendedCourses(
 export async function getAllCourseTags(): Promise<
   { _id: string; title: string; tags: string[]; totalLessons: number }[]
 > {
-  return sanityFetch<
+  return catalogFetch<
     { _id: string; title: string; tags: string[]; totalLessons: number }[]
   >(
     `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate} && defined(tags)] {
@@ -415,7 +428,7 @@ export async function getAllCourseTags(): Promise<
 export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
-  return sanityFetch<{ _id: string; totalLessons: number }[]>(
+  return catalogFetch<{ _id: string; totalLessons: number }[]>(
     `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate}] {
       _id,
       "totalLessons": count(modules[]->lessons[])
