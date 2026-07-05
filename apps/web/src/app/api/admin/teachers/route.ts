@@ -18,8 +18,9 @@ const ROLE_BY_ACTION = {
 
 type Action = keyof typeof ROLE_BY_ACTION;
 
-// Solana base58 addresses are 32-44 chars; keep a generous bound.
-const MAX_WALLET_LENGTH = 64;
+// The identifier is a wallet address (base58, 32-44 chars) OR a username; keep a
+// generous bound covering both.
+const MAX_IDENTIFIER_LENGTH = 64;
 
 function isAction(value: unknown): value is Action {
   return value === "grant" || value === "revoke";
@@ -52,7 +53,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 /**
  * POST /api/admin/teachers — grant or revoke the `teacher` role for a user,
- * looked up by wallet address. Admin-only (signed `admin_session` cookie).
+ * looked up by `identifier` (wallet address OR username). Admin-only (signed
+ * `admin_session` cookie).
+ *
+ * Wallet address is the primary identifier, but `wallet_address` is nullable —
+ * Google/GitHub-only accounts never link one. Falling back to username keeps
+ * those wallet-less accounts (and any teacher granted before a wallet was
+ * linked) manageable instead of stranding them (see PR #311 review).
  *
  * The role write goes through the service-role client (`createAdminClient`),
  * which the `enforce_profile_role_write` DB trigger recognizes as privileged;
@@ -67,21 +74,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     throw e;
   }
 
-  let walletAddress: string;
+  let identifier: string;
   let action: Action;
   try {
     const body = (await req.json()) as {
-      walletAddress?: unknown;
+      identifier?: unknown;
       action?: unknown;
     };
 
     if (
-      typeof body.walletAddress !== "string" ||
-      body.walletAddress.trim().length === 0 ||
-      body.walletAddress.trim().length > MAX_WALLET_LENGTH
+      typeof body.identifier !== "string" ||
+      body.identifier.trim().length === 0 ||
+      body.identifier.trim().length > MAX_IDENTIFIER_LENGTH
     ) {
       return NextResponse.json(
-        { error: "walletAddress is required" },
+        { error: "identifier is required (wallet address or username)" },
         { status: 400 }
       );
     }
@@ -92,7 +99,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    walletAddress = body.walletAddress.trim();
+    identifier = body.identifier.trim();
     action = body.action;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -100,19 +107,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const role = ROLE_BY_ACTION[action];
   const supabase = createAdminClient();
+  const profileColumns = "id, username, wallet_address, role";
 
-  const { data: profile, error: lookupError } = await supabase
+  // Resolve the target: wallet address first (the common case), then username.
+  const byWallet = await supabase
     .from("profiles")
-    .select("id, role")
-    .eq("wallet_address", walletAddress)
+    .select(profileColumns)
+    .eq("wallet_address", identifier)
     .maybeSingle();
-
-  if (lookupError) {
+  if (byWallet.error) {
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
+
+  let profile = byWallet.data;
+  if (!profile) {
+    const byUsername = await supabase
+      .from("profiles")
+      .select(profileColumns)
+      .eq("username", identifier)
+      .maybeSingle();
+    if (byUsername.error) {
+      return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
+    }
+    profile = byUsername.data;
+  }
+
   if (!profile) {
     return NextResponse.json(
-      { error: "No user found with that wallet address" },
+      { error: "No user found with that wallet address or username" },
       { status: 404 }
     );
   }
@@ -133,5 +155,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ walletAddress, role });
+  return NextResponse.json({
+    username: profile.username,
+    walletAddress: profile.wallet_address,
+    role,
+  });
 }

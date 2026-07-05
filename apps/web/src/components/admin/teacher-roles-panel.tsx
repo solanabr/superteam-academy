@@ -14,8 +14,20 @@ function shortWallet(w: string | null): string {
   return w.length > 12 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w;
 }
 
+// How to display a teacher: prefer the wallet address, fall back to @username
+// (wallet-less Google/GitHub accounts), then the raw input the admin typed.
+function identityLabel(
+  walletAddress: string | null | undefined,
+  username: string | null | undefined,
+  fallback: string
+): string {
+  if (walletAddress) return shortWallet(walletAddress);
+  if (username) return `@${username}`;
+  return fallback;
+}
+
 export function TeacherRolesPanel() {
-  const [wallet, setWallet] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -36,8 +48,8 @@ export function TeacherRolesPanel() {
     void loadTeachers();
   }, [loadTeachers]);
 
-  async function submit(action: "grant" | "revoke", address?: string) {
-    const trimmed = (address ?? wallet).trim();
+  async function submit(action: "grant" | "revoke", target?: string) {
+    const trimmed = (target ?? identifier).trim();
     if (!trimmed) return;
 
     setLoading(true);
@@ -47,22 +59,24 @@ export function TeacherRolesPanel() {
       const res = await fetch("/api/admin/teachers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: trimmed, action }),
+        body: JSON.stringify({ identifier: trimmed, action }),
       });
       const body = (await res.json().catch(() => ({}))) as {
         error?: string;
-        walletAddress?: string;
+        username?: string | null;
+        walletAddress?: string | null;
       };
       if (!res.ok) {
         setError(body.error ?? `Request failed (${res.status})`);
         return;
       }
+      const label = identityLabel(body.walletAddress, body.username, trimmed);
       setNotice(
         action === "grant"
-          ? `Granted teacher to ${shortWallet(body.walletAddress ?? trimmed)}`
-          : `Revoked teacher from ${shortWallet(body.walletAddress ?? trimmed)}`
+          ? `Granted teacher to ${label}`
+          : `Revoked teacher from ${label}`
       );
-      if (!address) setWallet("");
+      if (!target) setIdentifier("");
       await loadTeachers();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
@@ -75,7 +89,8 @@ export function TeacherRolesPanel() {
     <div className="space-y-4">
       <p className="text-sm text-text-3">
         Grant or revoke the <span className="font-medium">teacher</span> role by
-        wallet address. Teachers can author their own courses under{" "}
+        wallet address (or username for accounts with no linked wallet).
+        Teachers can author their own courses under{" "}
         <span className="font-mono">/teach</span>; publishing on-chain still
         requires admin review. Admin accounts cannot be changed here.
       </p>
@@ -83,16 +98,16 @@ export function TeacherRolesPanel() {
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="text"
-          value={wallet}
-          onChange={(e) => setWallet(e.target.value)}
-          placeholder="wallet address"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          placeholder="wallet address or username"
           className="min-w-64 flex-1 rounded-md border border-border bg-[var(--input)] px-3 py-2 font-mono text-xs text-text"
-          aria-label="Wallet address"
+          aria-label="Wallet address or username"
         />
         <button
           type="button"
           onClick={() => void submit("grant")}
-          disabled={loading || !wallet.trim()}
+          disabled={loading || !identifier.trim()}
           className="rounded-md border border-success bg-success-light px-3 py-2 text-sm font-medium text-success disabled:opacity-50"
         >
           Grant teacher
@@ -100,7 +115,7 @@ export function TeacherRolesPanel() {
         <button
           type="button"
           onClick={() => void submit("revoke")}
-          disabled={loading || !wallet.trim()}
+          disabled={loading || !identifier.trim()}
           className="rounded-md border border-border px-3 py-2 text-sm font-medium text-text disabled:opacity-50"
         >
           Revoke
@@ -131,7 +146,10 @@ export function TeacherRolesPanel() {
                 key={t.id}
                 className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm"
               >
-                <span className="font-mono text-text" title={t.wallet_address ?? ""}>
+                <span
+                  className="font-mono text-text"
+                  title={t.wallet_address ?? ""}
+                >
                   {shortWallet(t.wallet_address)}
                   <span className="ml-2 font-sans text-text-3">
                     @{t.username}
@@ -139,8 +157,10 @@ export function TeacherRolesPanel() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => t.wallet_address && void submit("revoke", t.wallet_address)}
-                  disabled={loading || !t.wallet_address}
+                  onClick={() =>
+                    void submit("revoke", t.wallet_address ?? t.username)
+                  }
+                  disabled={loading}
                   className="text-xs text-danger underline hover:no-underline disabled:opacity-50"
                 >
                   Revoke
