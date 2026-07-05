@@ -12,6 +12,12 @@ import type { Course, Lesson, LearningPath } from "./types";
 // applied ONLY to public queries; admin/Studio queries must keep seeing drafts.
 const publicAuthoringGate = `(authoringStatus == "approved" || !defined(authoringStatus))`;
 
+// Shared Next.js cache tag for the public course catalog. Public catalog reads
+// are tagged with this so an admin action that changes what the catalog should
+// show (course sync / deactivate / reactivate) can purge them on demand via
+// `revalidateTag(COURSES_CACHE_TAG)` instead of waiting for the 1h ISR window.
+export const COURSES_CACHE_TAG = "courses";
+
 const courseFields = `
   _id,
   title,
@@ -80,7 +86,10 @@ export async function getAllCourses(): Promise<Course[]> {
           order
         } | order(order asc)
       } | order(order asc)
-    }`
+    }`,
+    undefined,
+    3600,
+    [COURSES_CACHE_TAG]
   );
 }
 
@@ -92,7 +101,9 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
         ${moduleWithLessonsFields}
       } | order(order asc)
     }`,
-    { slug }
+    { slug },
+    3600,
+    [COURSES_CACHE_TAG]
   );
 }
 
@@ -218,7 +229,10 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
           } | order(order asc)
         } | order(order asc)
       }
-    }`
+    }`,
+    undefined,
+    3600,
+    [COURSES_CACHE_TAG]
   );
 }
 
