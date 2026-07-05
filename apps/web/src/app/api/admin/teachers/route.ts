@@ -18,7 +18,8 @@ const ROLE_BY_ACTION = {
 
 type Action = keyof typeof ROLE_BY_ACTION;
 
-const MAX_USERNAME_LENGTH = 64;
+// Solana base58 addresses are 32-44 chars; keep a generous bound.
+const MAX_WALLET_LENGTH = 64;
 
 function isAction(value: unknown): value is Action {
   return value === "grant" || value === "revoke";
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, role")
+    .select("id, username, wallet_address, role")
     .eq("role", "teacher")
     .order("username");
 
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 /**
  * POST /api/admin/teachers — grant or revoke the `teacher` role for a user,
- * looked up by username. Admin-only (signed `admin_session` cookie).
+ * looked up by wallet address. Admin-only (signed `admin_session` cookie).
  *
  * The role write goes through the service-role client (`createAdminClient`),
  * which the `enforce_profile_role_write` DB trigger recognizes as privileged;
@@ -66,21 +67,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     throw e;
   }
 
-  let username: string;
+  let walletAddress: string;
   let action: Action;
   try {
     const body = (await req.json()) as {
-      username?: unknown;
+      walletAddress?: unknown;
       action?: unknown;
     };
 
     if (
-      typeof body.username !== "string" ||
-      body.username.trim().length === 0 ||
-      body.username.trim().length > MAX_USERNAME_LENGTH
+      typeof body.walletAddress !== "string" ||
+      body.walletAddress.trim().length === 0 ||
+      body.walletAddress.trim().length > MAX_WALLET_LENGTH
     ) {
       return NextResponse.json(
-        { error: "username is required" },
+        { error: "walletAddress is required" },
         { status: 400 }
       );
     }
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    username = body.username.trim();
+    walletAddress = body.walletAddress.trim();
     action = body.action;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -103,14 +104,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { data: profile, error: lookupError } = await supabase
     .from("profiles")
     .select("id, role")
-    .eq("username", username)
+    .eq("wallet_address", walletAddress)
     .maybeSingle();
 
   if (lookupError) {
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
   if (!profile) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "No user found with that wallet address" },
+      { status: 404 }
+    );
   }
   // This endpoint only toggles teacher <-> learner; never touch admin accounts.
   if (profile.role === "admin") {
@@ -129,5 +133,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ username, role });
+  return NextResponse.json({ walletAddress, role });
 }
