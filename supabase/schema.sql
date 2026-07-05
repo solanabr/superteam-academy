@@ -1730,3 +1730,23 @@ $$;
 
 REVOKE ALL ON FUNCTION check_rate_limit(TEXT, INT, INT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION check_rate_limit(TEXT, INT, INT) TO service_role;
+
+-- Per-lesson completion counts for the teacher analytics funnel (#286).
+-- Aggregated in Postgres so it returns one row per lesson (not raw progress
+-- rows, which PostgREST caps at max_rows=1000 and would silently truncate).
+-- SECURITY DEFINER: aggregates across all learners, returns only counts.
+CREATE OR REPLACE FUNCTION course_lesson_completion_counts(p_course_id TEXT)
+RETURNS TABLE (lesson_id TEXT, completed_by BIGINT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT up.lesson_id, COUNT(*)::bigint
+  FROM public.user_progress up
+  WHERE up.course_id = p_course_id AND up.completed = true
+  GROUP BY up.lesson_id;
+$$;
+
+REVOKE ALL ON FUNCTION course_lesson_completion_counts(TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION course_lesson_completion_counts(TEXT) TO service_role;

@@ -41,7 +41,7 @@ export async function getCourseAnalytics(
   const admin = createAdminClient();
   const cutoff = new Date(Date.now() - RECENT_DAYS * 86_400_000).toISOString();
 
-  const [recentEnr, recentComp, progress] = await Promise.all([
+  const [recentEnr, recentComp, counts] = await Promise.all([
     admin
       .from("enrollments")
       .select("id", { count: "exact", head: true })
@@ -52,17 +52,17 @@ export async function getCourseAnalytics(
       .select("id", { count: "exact", head: true })
       .eq("course_id", courseId)
       .gte("completed_at", cutoff),
-    admin
-      .from("user_progress")
-      .select("lesson_id")
-      .eq("course_id", courseId)
-      .eq("completed", true),
+    // Aggregate per-lesson completions IN Postgres (one row per lesson) — a raw
+    // row fetch would be silently capped at max_rows (1000) and under-report the
+    // funnel + XP for busy courses. See course_lesson_completion_counts.
+    admin.rpc("course_lesson_completion_counts", { p_course_id: courseId }),
   ]);
 
-  const rows = (progress.data ?? []) as { lesson_id: string }[];
   const perLesson = new Map<string, number>();
-  for (const r of rows) {
-    perLesson.set(r.lesson_id, (perLesson.get(r.lesson_id) ?? 0) + 1);
+  let totalCompletedLessons = 0;
+  for (const row of counts.data ?? []) {
+    perLesson.set(row.lesson_id, row.completed_by);
+    totalCompletedLessons += row.completed_by;
   }
 
   const funnel: LessonFunnelRow[] = orderedLessons.map((l) => ({
@@ -75,7 +75,7 @@ export async function getCourseAnalytics(
     completionRate: enrolledCount > 0 ? completionCount / enrolledCount : 0,
     recentEnrollments: recentEnr.count ?? 0,
     recentCompletions: recentComp.count ?? 0,
-    xpAwarded: rows.length * (xpPerLesson || 0),
+    xpAwarded: totalCompletedLessons * (xpPerLesson || 0),
     funnel,
     recentWindowDays: RECENT_DAYS,
   };

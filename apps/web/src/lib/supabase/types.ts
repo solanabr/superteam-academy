@@ -885,6 +885,10 @@ export type Database = {
       };
     };
     Functions: {
+      course_lesson_completion_counts: {
+        Args: { p_course_id: string };
+        Returns: { lesson_id: string; completed_by: number }[];
+      };
       award_community_xp: {
         Args: {
           p_amount: number;
