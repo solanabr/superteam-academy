@@ -3,6 +3,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeTeacher } from "@/lib/teacher/authorize";
 import { validateTeacherCourseInput } from "@/lib/teacher/validate";
+import { reportTeacherWriteError } from "@/lib/teacher/errors";
 import {
   getCourseAuthorship,
   patchTeacherCourse,
@@ -66,9 +67,13 @@ export async function PATCH(
   let course;
   try {
     course = await getCourseAuthorship(courseId);
-  } catch {
+  } catch (err) {
+    const reason = reportTeacherWriteError("teacher-course-load", err, {
+      route: "/api/teacher/courses/[id]",
+      courseId,
+    });
     return NextResponse.json(
-      { error: "Failed to load course" },
+      { error: "Failed to load course", reason },
       { status: 500 }
     );
   }
@@ -84,9 +89,14 @@ export async function PATCH(
 
   try {
     await patchTeacherCourse(courseId, validated.value);
-  } catch {
+  } catch (err) {
+    const reason = reportTeacherWriteError("teacher-course-update", err, {
+      route: "/api/teacher/courses/[id]",
+      courseId,
+      userId: auth.caller.userId,
+    });
     return NextResponse.json(
-      { error: "Failed to update course" },
+      { error: "Failed to update course", reason },
       { status: 500 }
     );
   }

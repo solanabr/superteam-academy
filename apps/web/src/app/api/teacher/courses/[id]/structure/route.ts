@@ -8,6 +8,7 @@ import {
   applyCourseStructure,
 } from "@/lib/sanity/teacher-structure";
 import { validateStructure } from "@/lib/teacher/validate-structure";
+import { reportTeacherWriteError } from "@/lib/teacher/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -96,9 +97,13 @@ export async function PUT(
 
   try {
     await applyCourseStructure(id, validated.value);
-  } catch {
+  } catch (err) {
+    const reason = reportTeacherWriteError("teacher-course-structure", err, {
+      route: "/api/teacher/courses/[id]/structure",
+      courseId: id,
+    });
     return NextResponse.json(
-      { error: "Failed to save course structure" },
+      { error: "Failed to save course structure", reason },
       { status: 500 }
     );
   }

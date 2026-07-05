@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorizeTeacher } from "@/lib/teacher/authorize";
 import { validateTeacherCourseInput } from "@/lib/teacher/validate";
 import { slugifyCourseTitle } from "@/lib/teacher/slug";
+import { reportTeacherWriteError } from "@/lib/teacher/errors";
 import {
   createTeacherCourse,
   listAllCourses,
@@ -95,9 +96,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { _id: created._id, slug, authoringStatus: "draft" },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    const reason = reportTeacherWriteError("teacher-course-create", err, {
+      route: "/api/teacher/courses",
+      userId: auth.caller.userId,
+    });
     return NextResponse.json(
-      { error: "Failed to create course" },
+      { error: "Failed to create course", reason },
       { status: 500 }
     );
   }
