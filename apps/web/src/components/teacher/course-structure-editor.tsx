@@ -224,9 +224,13 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
           body: JSON.stringify(payload),
         }
       );
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        reason?: string;
+      };
       if (!res.ok) {
-        setError(data.error ?? "Save failed");
+        const base = data.error ?? "Save failed";
+        setError(data.reason ? `${base}: ${data.reason}` : base);
         return;
       }
       setNotice(t("saved"));

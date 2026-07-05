@@ -96,10 +96,12 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
+        reason?: string;
         _id?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Request failed");
+        const base = data.error ?? "Request failed";
+        setError(data.reason ? `${base}: ${data.reason}` : base);
         return;
       }
       if (which === "submit") {
