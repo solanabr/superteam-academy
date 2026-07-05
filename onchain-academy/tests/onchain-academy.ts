@@ -183,6 +183,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: newSigner.publicKey,
           paused: null,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -200,6 +201,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: authority.publicKey,
           paused: null,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -220,6 +222,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: null,
           paused: null,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -246,6 +249,7 @@ describe("onchain-academy", () => {
           .updateConfig({
             newBackendSigner: imposter.publicKey,
             paused: null,
+            newAuthority: null,
           })
           .accountsPartial({
             config: configPda,
@@ -281,6 +285,7 @@ describe("onchain-academy", () => {
           .updateConfig({
             newBackendSigner: null,
             paused: true,
+            newAuthority: null,
           })
           .accountsPartial({
             config: configPda,
@@ -308,6 +313,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: null,
           paused: true,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -323,6 +329,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: null,
           paused: false,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -4486,6 +4493,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: newSigner.publicKey,
           paused: null,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -4517,6 +4525,7 @@ describe("onchain-academy", () => {
         .updateConfig({
           newBackendSigner: authority.publicKey,
           paused: null,
+          newAuthority: null,
         })
         .accountsPartial({
           config: configPda,
@@ -5494,14 +5503,14 @@ describe("onchain-academy", () => {
 
     const pause = async (): Promise<void> => {
       await program.methods
-        .updateConfig({ newBackendSigner: null, paused: true })
+        .updateConfig({ newBackendSigner: null, paused: true, newAuthority: null })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
         .rpc();
     };
 
     const resume = async (): Promise<void> => {
       await program.methods
-        .updateConfig({ newBackendSigner: null, paused: false })
+        .updateConfig({ newBackendSigner: null, paused: false, newAuthority: null })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
         .rpc();
     };

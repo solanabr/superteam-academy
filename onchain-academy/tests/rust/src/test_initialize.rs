@@ -1,7 +1,7 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
-use solana_sdk::pubkey::Pubkey;
 use onchain_academy::state::Config;
+use solana_sdk::pubkey::Pubkey;
 
 #[test]
 fn config_size_constant_is_correct() {

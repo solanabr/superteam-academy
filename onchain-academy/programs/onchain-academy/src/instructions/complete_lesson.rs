@@ -32,7 +32,13 @@ pub fn handler(ctx: Context<CompleteLesson>, lesson_index: u8) -> Result<()> {
         AcademyError::XpAmountExceedsMax
     );
 
-    utils::require_xp_mint(&ctx.accounts.learner_token_account, &config.xp_mint)?;
+    // Bind the recipient ATA to the learner: mint == Config.xp_mint AND owner ==
+    // learner, so the XP can only land in the learner's own account.
+    utils::require_xp_recipient(
+        &ctx.accounts.learner_token_account,
+        &config.xp_mint,
+        &ctx.accounts.learner.key(),
+    )?;
 
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
 
@@ -81,7 +87,9 @@ pub struct CompleteLesson<'info> {
     /// CHECK: Tied to enrollment PDA via seeds constraint.
     pub learner: AccountInfo<'info>,
 
-    /// CHECK: Token-2022 ATA for learner's XP. Validated by Token-2022 CPI + program owner check.
+    /// CHECK: Token-2022 ATA for learner's XP. Program-owner checked here; its
+    /// base mint (== Config.xp_mint) and token-account owner (== learner) are
+    /// asserted in the handler via `require_xp_recipient` before minting.
     #[account(
         mut,
         constraint = learner_token_account.owner == &spl_token_2022::id() @ AcademyError::Unauthorized,

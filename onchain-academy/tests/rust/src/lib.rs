@@ -3,6 +3,8 @@ pub mod helpers;
 #[cfg(test)]
 mod test_achievement;
 #[cfg(test)]
+mod test_audit_hardening;
+#[cfg(test)]
 mod test_close_course;
 #[cfg(test)]
 mod test_completion;

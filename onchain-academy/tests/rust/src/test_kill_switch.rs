@@ -147,7 +147,10 @@ fn non_authority_cannot_toggle_pause() {
     let attacker = Pubkey::new_unique();
 
     // The real authority is allowed.
-    assert!(update_config_authorized(&config.authority, &config.authority));
+    assert!(update_config_authorized(
+        &config.authority,
+        &config.authority
+    ));
     // A different signer is not — this is the Unauthorized path.
     assert!(!update_config_authorized(&config.authority, &attacker));
     assert_ne!(config.authority, attacker);
@@ -182,6 +185,7 @@ fn update_config_params_serialization_roundtrip() {
     let params = UpdateConfigParams {
         new_backend_signer: Some(Pubkey::new_unique()),
         paused: Some(true),
+        new_authority: None,
     };
     let mut buf = Vec::new();
     params.serialize(&mut buf).unwrap();
@@ -193,6 +197,7 @@ fn update_config_params_serialization_roundtrip() {
     let pause_only = UpdateConfigParams {
         new_backend_signer: None,
         paused: Some(false),
+        new_authority: None,
     };
     let mut buf = Vec::new();
     pause_only.serialize(&mut buf).unwrap();
@@ -200,16 +205,18 @@ fn update_config_params_serialization_roundtrip() {
     assert_eq!(decoded.new_backend_signer, None);
     assert_eq!(decoded.paused, Some(false));
 
-    // Neither field set: a no-op update (both None).
+    // Neither field set: a no-op update (all None).
     let noop = UpdateConfigParams {
         new_backend_signer: None,
         paused: None,
+        new_authority: None,
     };
     let mut buf = Vec::new();
     noop.serialize(&mut buf).unwrap();
     let decoded = UpdateConfigParams::deserialize(&mut buf.as_slice()).unwrap();
     assert_eq!(decoded.new_backend_signer, None);
     assert_eq!(decoded.paused, None);
+    assert_eq!(decoded.new_authority, None);
 }
 
 /// `MintingPauseSet { paused, timestamp }` is emitted whenever the toggle runs.
