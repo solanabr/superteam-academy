@@ -1,5 +1,6 @@
 import "server-only";
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
@@ -9,7 +10,7 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { getAllCoursesAdmin } from "@/lib/sanity/queries";
+import { getAllCoursesAdmin, COURSES_CACHE_TAG } from "@/lib/sanity/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
@@ -214,6 +215,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // The course is now "synced" in Sanity — purge the catalog cache so it
+    // appears immediately instead of after the 1h ISR window.
+    revalidateTag(COURSES_CACHE_TAG);
+
     return NextResponse.json({
       action: "created",
       txSignature: result.signature,
@@ -348,6 +353,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         );
       }
     }
+    revalidateTag(COURSES_CACHE_TAG);
     return NextResponse.json({
       action: "noop",
       message: "Already synced",
@@ -379,6 +385,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
+  revalidateTag(COURSES_CACHE_TAG);
   return NextResponse.json({
     action: "updated",
     txSignature: result.signature,
