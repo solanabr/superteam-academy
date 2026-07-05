@@ -214,6 +214,59 @@ fn call_require_xp_recipient(
     require_xp_recipient(&account_info, expected_mint, expected_owner)
 }
 
+/// Invoke `require_xp_recipient` over ARBITRARY bytes, to exercise the
+/// fail-closed unpack on hostile / malformed accounts (the expected mint+owner
+/// are irrelevant here — the unpack itself must reject before any key compare).
+fn call_require_xp_recipient_raw(mut data: Vec<u8>) -> anchor_lang::Result<()> {
+    let key = Pubkey::new_unique();
+    let program_owner = spl_token_2022::id();
+    let mut lamports: u64 = 1_000_000;
+    let expected_mint = Pubkey::new_unique();
+    let expected_owner = Pubkey::new_unique();
+    let account_info = AccountInfo::new(
+        &key,
+        false,
+        true,
+        &mut lamports,
+        &mut data,
+        &program_owner,
+        false,
+        0,
+    );
+    require_xp_recipient(&account_info, &expected_mint, &expected_owner)
+}
+
+#[test]
+fn require_xp_recipient_rejects_uninitialized_account() {
+    // Correctly sized (165 B) but all-zero => AccountState::Uninitialized.
+    // Pack::unpack rejects it (UninitializedAccount) — no fail-open on a
+    // zeroed, never-initialized token account.
+    let data = vec![0u8; Token2022Account::LEN];
+    assert!(call_require_xp_recipient_raw(data).is_err());
+}
+
+#[test]
+fn require_xp_recipient_rejects_truncated_account() {
+    // Shorter than the 165-byte base Account layout: the length guard rejects it
+    // (InvalidAccountData) rather than reading out of bounds / panicking.
+    assert!(call_require_xp_recipient_raw(vec![0u8; 100]).is_err());
+}
+
+#[test]
+fn require_xp_recipient_rejects_empty_account() {
+    // Zero-length data: try_borrow_data succeeds on the empty slice, the unpack
+    // length check rejects — no panic.
+    assert!(call_require_xp_recipient_raw(vec![]).is_err());
+}
+
+#[test]
+fn require_xp_recipient_rejects_mint_sized_account() {
+    // A bare Mint (82 B) passed where an Account (165 B) is expected: too short
+    // for the Account layout => rejected, never misread as a token account.
+    let data = vec![0u8; spl_token_2022::state::Mint::LEN];
+    assert!(call_require_xp_recipient_raw(data).is_err());
+}
+
 #[test]
 fn require_xp_recipient_accepts_matching_mint_and_owner() {
     let xp_mint = Pubkey::new_unique();
