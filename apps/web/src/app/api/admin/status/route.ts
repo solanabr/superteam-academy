@@ -18,6 +18,7 @@ import {
   findAchievementTypePDA,
   getProgramId,
 } from "@/lib/solana/pda";
+import { fetchCourse } from "@/lib/solana/academy-reads";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -105,6 +106,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const sanityStatus = course.onChainStatus?.status ?? "synced";
       const status = knownPda === pdaAddress ? sanityStatus : "out_of_sync";
 
+      // Authoritative on-chain is_active (the Sanity mirror can lag if a
+      // deactivate write-back failed), so the admin table reflects the real
+      // deactivated state and offers Reactivate. Default true if undecodable.
+      let isActive = true;
+      try {
+        const decoded = (await fetchCourse(
+          course._id,
+          connection,
+          getProgramId()
+        )) as { is_active?: boolean } | null;
+        if (decoded && typeof decoded.is_active === "boolean") {
+          isActive = decoded.is_active;
+        }
+      } catch {
+        // Stale/undecodable account — leave isActive at its default.
+      }
+
       return {
         sanityId: course._id,
         slug: course.slug,
@@ -116,6 +134,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         onChainStatus: status,
         coursePda: pdaAddress,
         differences: [],
+        isActive,
       };
     })
   );

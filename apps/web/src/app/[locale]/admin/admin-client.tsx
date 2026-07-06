@@ -33,6 +33,9 @@ interface CourseStatus {
     | "missing_fields";
   coursePda: string | null;
   differences: DiffEntry[];
+  // Authoritative on-chain is_active. Absent for not-yet-deployed/draft courses
+  // (treated as active). false → deactivated (hidden from the public catalog).
+  isActive?: boolean;
 }
 
 interface AchievementStatus {
