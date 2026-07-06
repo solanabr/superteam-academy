@@ -173,13 +173,12 @@ export async function POST(request: NextRequest) {
     const walletPubkey = new PublicKey(profile.wallet_address);
     const connection = getConnection();
 
-    // Verify on-chain enrollment exists
-    const onChainEnrollment = await fetchEnrollment(
-      courseId,
-      walletPubkey,
-      connection,
-      getProgramId()
-    );
+    // Verify on-chain enrollment exists. The course fetch (for the lesson-count
+    // guard below) is independent, so run both RPC reads in parallel.
+    const [onChainEnrollment, onChainCourse] = await Promise.all([
+      fetchEnrollment(courseId, walletPubkey, connection, getProgramId()),
+      fetchCourse(courseId, connection, getProgramId()),
+    ]);
 
     if (!onChainEnrollment) {
       return NextResponse.json(
@@ -199,11 +198,6 @@ export async function POST(request: NextRequest) {
     // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
     // and return a clear 409 instead of letting the on-chain TX throw a generic
     // 500. fetchCourse uses the raw-IDL BorshCoder → snake_case `lesson_count`.
-    const onChainCourse = await fetchCourse(
-      courseId,
-      connection,
-      getProgramId()
-    );
     const onChainLessonCount = onChainCourse?.lesson_count as
       | number
       | undefined;

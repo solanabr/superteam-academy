@@ -681,6 +681,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -703,6 +704,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -723,6 +725,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -751,6 +754,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: 50,
           newMinCompletionsForReward: 5,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: diffPda,
@@ -810,6 +814,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: firstCollection,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: guardPda,
@@ -831,6 +836,7 @@ describe("onchain-academy", () => {
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
             newCollection: secondCollection,
+            newLessonCount: null,
           })
           .accountsPartial({
             course: guardPda,
@@ -856,6 +862,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: firstCollection,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: guardPda,
@@ -885,6 +892,7 @@ describe("onchain-academy", () => {
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
             newCollection: null,
+            newLessonCount: null,
           })
           .accountsPartial({
             course: coursePda,
@@ -901,6 +909,79 @@ describe("onchain-academy", () => {
           expect(err.toString()).to.contain("Error");
         }
       }
+    });
+
+    it("lesson_count is increase-only (grow ok, equal no-op, shrink rejected)", async () => {
+      const growId = "lesson-count-grow";
+      const [growPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(growId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: growId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 2,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: growPda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const bump = (newLessonCount: number) =>
+        program.methods
+          .updateCourse({
+            newContentTxId: null,
+            newIsActive: null,
+            newXpPerLesson: null,
+            newCreatorRewardXp: null,
+            newMinCompletionsForReward: null,
+            newCollection: null,
+            newLessonCount,
+          })
+          .accountsPartial({
+            course: growPda,
+            config: configPda,
+            authority: authority.publicKey,
+          })
+          .rpc();
+
+      // Increase 2 -> 4: allowed.
+      await bump(4);
+      let course = await program.account.course.fetch(growPda);
+      expect(course.lessonCount).to.equal(4);
+
+      // Equal (4 -> 4): no-op, allowed.
+      await bump(4);
+      course = await program.account.course.fetch(growPda);
+      expect(course.lessonCount).to.equal(4);
+
+      // Decrease 4 -> 3: rejected, count unchanged.
+      try {
+        await bump(3);
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("LessonCountDecrease");
+        } else {
+          expect(err.toString()).to.contain("Error");
+        }
+      }
+      course = await program.account.course.fetch(growPda);
+      expect(course.lessonCount).to.equal(4);
     });
   });
 
@@ -990,6 +1071,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -1043,6 +1125,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
+          newLessonCount: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -5503,14 +5586,22 @@ describe("onchain-academy", () => {
 
     const pause = async (): Promise<void> => {
       await program.methods
-        .updateConfig({ newBackendSigner: null, paused: true, newAuthority: null })
+        .updateConfig({
+          newBackendSigner: null,
+          paused: true,
+          newAuthority: null,
+        })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
         .rpc();
     };
 
     const resume = async (): Promise<void> => {
       await program.methods
-        .updateConfig({ newBackendSigner: null, paused: false, newAuthority: null })
+        .updateConfig({
+          newBackendSigner: null,
+          paused: false,
+          newAuthority: null,
+        })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
         .rpc();
     };
