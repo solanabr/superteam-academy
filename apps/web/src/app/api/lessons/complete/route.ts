@@ -15,7 +15,7 @@ import {
   getConnection,
   getProgramId,
 } from "@/lib/solana/academy-program";
-import { fetchEnrollment } from "@/lib/solana/academy-reads";
+import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { findLessonIndex } from "@/lib/courses/lesson-index";
 
@@ -192,6 +192,33 @@ export async function POST(request: NextRequest) {
 
     // Derive lesson index from Sanity content order
     const lessonIndex = await deriveLessonIndex(courseId, lessonId);
+
+    // Guard: the on-chain complete_lesson reverts when lessonIndex >=
+    // course.lesson_count. That happens when a teacher appended lessons to an
+    // already-deployed course but the Course PDA's lesson_count has not yet been
+    // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
+    // and return a clear 409 instead of letting the on-chain TX throw a generic
+    // 500. fetchCourse uses the raw-IDL BorshCoder → snake_case `lesson_count`.
+    const onChainCourse = await fetchCourse(
+      courseId,
+      connection,
+      getProgramId()
+    );
+    const onChainLessonCount = onChainCourse?.lesson_count as
+      | number
+      | undefined;
+    if (
+      typeof onChainLessonCount === "number" &&
+      lessonIndex >= onChainLessonCount
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "This course was recently extended and is pending an admin re-sync — try again shortly.",
+        },
+        { status: 409 }
+      );
+    }
 
     // Idempotency: skip on-chain TX if lesson already completed in bitmap
     const alreadyOnChain = isLessonComplete(
