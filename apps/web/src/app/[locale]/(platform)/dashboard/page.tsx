@@ -323,19 +323,25 @@ function useDashboardData(
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
-        const currentCourses: CurrentCourse[] = enrolledIds.map((id) => {
-          const sanity = courseMap.get(id);
-          return {
-            courseId: id,
-            title: sanity?.title ?? id,
-            slug: sanity?.slug ?? id,
-            completedLessons: completedPerCourse.get(id) ?? 0,
-            totalLessons: sanity?.totalLessons ?? 0,
-            difficulty: sanity?.difficulty ?? "beginner",
-            learningPath: sanity?.learningPath ?? null,
-            thumbnail: sanity?.thumbnail ?? null,
-          };
-        });
+        // Only surface enrolled courses that still resolve from Sanity. A
+        // deactivated (or unpublished) course is filtered out by getCoursesByIds
+        // (activeGate), so without this its "Continue learning" card would still
+        // render from the Supabase enrollment row with a raw-id title.
+        const currentCourses: CurrentCourse[] = enrolledIds
+          .filter((id) => courseMap.has(id))
+          .map((id) => {
+            const sanity = courseMap.get(id);
+            return {
+              courseId: id,
+              title: sanity?.title ?? id,
+              slug: sanity?.slug ?? id,
+              completedLessons: completedPerCourse.get(id) ?? 0,
+              totalLessons: sanity?.totalLessons ?? 0,
+              difficulty: sanity?.difficulty ?? "beginner",
+              learningPath: sanity?.learningPath ?? null,
+              thumbnail: sanity?.thumbnail ?? null,
+            };
+          });
 
         // Build multi-source activity feed. Each source uses a different timestamp
         // column name; normalise all to `time` before merging and sorting.

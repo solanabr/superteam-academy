@@ -28,6 +28,7 @@ interface CourseStatus {
     | "missing_fields";
   coursePda: string | null;
   differences: DiffEntry[];
+  isActive?: boolean;
 }
 
 interface CourseSyncTableProps {
@@ -80,6 +81,28 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
         setError(data.error ?? "Deactivation failed");
+      } else {
+        onRefresh();
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setSyncing(null);
+    }
+  }
+
+  async function handleReactivate(courseId: string) {
+    setSyncing(courseId);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/courses/reactivate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setError(data.error ?? "Reactivation failed");
       } else {
         onRefresh();
       }
@@ -214,7 +237,15 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                   {course.sanityXpPerLesson ?? "—"}
                 </td>
                 <td className="py-3 pr-4">
-                  <StatusBadge status={course.onChainStatus} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={course.onChainStatus} />
+                    {course.onChainStatus === "synced" &&
+                      course.isActive === false && (
+                        <span className="inline-flex items-center rounded border border-danger bg-danger-light px-2 py-0.5 text-xs font-medium text-danger">
+                          Deactivated
+                        </span>
+                      )}
+                  </div>
                 </td>
                 <td className="py-3">
                   {canSync && (
@@ -226,15 +257,24 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                       {isSyncing ? "..." : actionLabel}
                     </button>
                   )}
-                  {course.onChainStatus === "synced" && (
-                    <button
-                      onClick={() => void handleDeactivate(course.sanityId)}
-                      disabled={isSyncing}
-                      className="ml-2 rounded-md border border-border px-3 py-1 font-display text-xs font-bold text-text-2 shadow-push-sm transition-all hover:border-danger hover:bg-danger-light hover:text-danger active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
-                    >
-                      {isSyncing ? "..." : "Deactivate"}
-                    </button>
-                  )}
+                  {course.onChainStatus === "synced" &&
+                    (course.isActive === false ? (
+                      <button
+                        onClick={() => void handleReactivate(course.sanityId)}
+                        disabled={isSyncing}
+                        className="ml-2 rounded-md border border-success px-3 py-1 font-display text-xs font-bold text-success shadow-push-sm transition-all hover:bg-success-light active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
+                      >
+                        {isSyncing ? "..." : "Reactivate"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => void handleDeactivate(course.sanityId)}
+                        disabled={isSyncing}
+                        className="ml-2 rounded-md border border-border px-3 py-1 font-display text-xs font-bold text-text-2 shadow-push-sm transition-all hover:border-danger hover:bg-danger-light hover:text-danger active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
+                      >
+                        {isSyncing ? "..." : "Deactivate"}
+                      </button>
+                    ))}
                 </td>
               </tr>
             );
