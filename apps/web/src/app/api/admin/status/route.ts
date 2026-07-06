@@ -18,7 +18,7 @@ import {
   findAchievementTypePDA,
   getProgramId,
 } from "@/lib/solana/pda";
-import { fetchCourse } from "@/lib/solana/academy-reads";
+import { decodeCourse } from "@/lib/solana/academy-reads";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -108,15 +108,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // Authoritative on-chain is_active (the Sanity mirror can lag if a
       // deactivate write-back failed), so the admin table reflects the real
-      // deactivated state and offers Reactivate. Default true if undecodable.
+      // deactivated state and offers Reactivate. Decoded from the accountInfo
+      // already fetched above — no extra RPC. Default true if undecodable.
       let isActive = true;
       try {
-        const decoded = (await fetchCourse(
-          course._id,
-          connection,
-          getProgramId()
-        )) as { is_active?: boolean } | null;
-        if (decoded && typeof decoded.is_active === "boolean") {
+        const decoded = decodeCourse(accountInfo.data) as {
+          is_active?: boolean;
+        };
+        if (typeof decoded.is_active === "boolean") {
           isActive = decoded.is_active;
         }
       } catch {
