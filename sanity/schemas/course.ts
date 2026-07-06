@@ -175,6 +175,13 @@ export const course = defineType({
       description: "Managed by the admin dashboard. Do not edit manually.",
       fields: [
         defineField({ name: "status", title: "Status", type: "string" }),
+        defineField({
+          name: "isActive",
+          title: "Active",
+          type: "boolean",
+          description:
+            "Mirrors the on-chain is_active flag. Set false on deactivate to hide the course from the public catalog. Legacy courses without this field are treated as active.",
+        }),
         defineField({ name: "coursePda", title: "Course PDA", type: "string" }),
         defineField({
           name: "trackCollectionAddress",

@@ -28,6 +28,22 @@ export async function writeCourseOnChainStatus(
     .commit();
 }
 
+/**
+ * Mirror a course's on-chain `is_active` flag into Sanity so the public catalog
+ * can hide a deactivated course (issue #321). The catalog gate reads
+ * `onChainStatus.isActive`; the on-chain tx alone doesn't affect Sanity, so the
+ * deactivate/reactivate routes call this after the tx succeeds.
+ */
+export async function writeCourseActive(
+  sanityId: string,
+  isActive: boolean
+): Promise<void> {
+  await sanityAdmin
+    .patch(sanityId)
+    .set({ "onChainStatus.isActive": isActive })
+    .commit();
+}
+
 export async function writeCourseTrackCollection(
   sanityId: string,
   trackCollectionAddress: string
