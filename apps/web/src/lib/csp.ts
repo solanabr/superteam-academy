@@ -131,8 +131,11 @@ export function buildCsp(nonce: string): string {
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
     ].join(" "),
 
-    // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames.
-    "frame-src 'self' https://accounts.google.com",
+    // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames;
+    // lesson videos embed the YouTube and Vimeo players (see getEmbedUrl in the
+    // lesson client). Without these origins the iframe is blocked ("This content
+    // is blocked").
+    "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
 
     // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
     // loads its language workers (ts/json/css/html) directly from jsdelivr.

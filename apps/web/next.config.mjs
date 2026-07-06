@@ -57,8 +57,10 @@ const cspDirectives = [
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
   ].join(" "),
 
-  // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames.
-  "frame-src 'self' https://accounts.google.com",
+  // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames;
+  // lesson videos embed the YouTube and Vimeo players. Keep in sync with the
+  // per-request CSP in src/lib/csp.ts.
+  "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
 
   // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
   // loads its language workers (ts/json/css/html) directly from the jsdelivr CDN.
