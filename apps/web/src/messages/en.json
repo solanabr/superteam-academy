@@ -77,6 +77,19 @@
       "back": "Back to courses",
       "titleRequired": "Title is required"
     },
+    "thumbnail": {
+      "label": "Thumbnail",
+      "choose": "Choose image",
+      "replace": "Replace image",
+      "remove": "Remove",
+      "none": "No image",
+      "hint": "PNG or JPG, up to 5 MB.",
+      "previewAlt": "Course thumbnail preview",
+      "uploading": "Uploading…",
+      "errorNotImage": "File must be an image.",
+      "errorTooLarge": "Image must be at most 5 MB.",
+      "errorUpload": "Upload failed. Please try again."
+    },
     "builder": {
       "heading": "Course content",
       "loadError": "Couldn't load the course content.",

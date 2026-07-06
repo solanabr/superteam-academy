@@ -231,6 +231,37 @@ export async function patchTeacherCourse(
   await sanityAdmin.patch(courseId).set(patch).commit();
 }
 
+/** Result of a successful thumbnail upload — the new asset ref + display URL. */
+export interface UploadedThumbnail {
+  assetRef: string;
+  url: string;
+}
+
+/**
+ * Upload an image to the Sanity asset store and set it as a course thumbnail
+ * (issue #278). Authorization (ownership / admin) MUST already have been checked
+ * by the caller — this mirrors {@link patchTeacherCourse}.
+ *
+ * The privileged token never leaves the server: the bytes are streamed through
+ * the same server-only `sanityAdmin` client, and the resulting asset `_id` is
+ * applied via {@link patchTeacherCourse}, so the thumbnail write stays on the
+ * single-sourced field whitelist (a raw patch object is never constructed here).
+ */
+export async function uploadCourseThumbnail(
+  courseId: string,
+  bytes: Buffer,
+  meta: { filename: string; contentType: string }
+): Promise<UploadedThumbnail> {
+  const asset = await sanityAdmin.assets.upload("image", bytes, {
+    filename: meta.filename,
+    contentType: meta.contentType,
+  });
+
+  await patchTeacherCourse(courseId, { thumbnail: { assetRef: asset._id } });
+
+  return { assetRef: asset._id, url: asset.url };
+}
+
 /** Full editable field set for the course builder (issue #266). */
 export interface TeacherCourseEditable {
   _id: string;
@@ -244,6 +275,8 @@ export interface TeacherCourseEditable {
   tags: string[] | null;
   xpReward: number | null;
   xpPerLesson: number | null;
+  /** Resolved CDN URL of the current thumbnail asset, if any (issue #278). */
+  thumbnailUrl: string | null;
 }
 
 /**
@@ -256,7 +289,8 @@ export async function getTeacherCourseEditable(
   return sanityAdmin.fetch<TeacherCourseEditable | null>(
     `*[_type == "course" && _id == $courseId][0] {
       _id, author, authoringStatus, "onChainStatus": onChainStatus.status,
-      title, description, difficulty, duration, tags, xpReward, xpPerLesson
+      title, description, difficulty, duration, tags, xpReward, xpPerLesson,
+      "thumbnailUrl": thumbnail.asset->url
     }`,
     { courseId }
   );

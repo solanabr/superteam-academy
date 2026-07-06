@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { ThumbnailPicker } from "@/components/teacher/thumbnail-picker";
 
 interface CourseInitial {
   title?: string | null;
@@ -12,6 +13,7 @@ interface CourseInitial {
   tags?: string[] | null;
   xpReward?: number | null;
   xpPerLesson?: number | null;
+  thumbnailUrl?: string | null;
 }
 
 interface CourseFormProps {
@@ -130,7 +132,10 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
       }}
     >
       <div>
-        <label htmlFor="course-title" className="mb-1 block text-sm font-medium">
+        <label
+          htmlFor="course-title"
+          className="mb-1 block text-sm font-medium"
+        >
           {t("title")}
         </label>
         <input
@@ -157,6 +162,13 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
           className={inputClass}
         />
       </div>
+
+      {mode === "edit" && courseId && (
+        <ThumbnailPicker
+          courseId={courseId}
+          initialUrl={initial?.thumbnailUrl}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
