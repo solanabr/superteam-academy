@@ -63,9 +63,20 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
         )?;
     }
 
-    // Mint creator reward if threshold met
+    // Mint creator reward, but only for a bounded WINDOW of completions past the
+    // popularity threshold — [min_completions, min_completions + WINDOW). The
+    // per-completion drip was otherwise unbounded and Sybil-farmable once a
+    // course crossed its threshold. This reuses the existing `total_completions`
+    // counter (no new per-course state, no migration): live courses are bounded
+    // on their next finalize automatically. Total creator XP per course is thus
+    // capped at WINDOW * creator_reward_xp.
+    const CREATOR_REWARD_WINDOW: u32 = 100;
+    let reward_end =
+        (course.min_completions_for_reward as u32).saturating_add(CREATOR_REWARD_WINDOW);
+
     let mut creator_xp: u32 = 0;
     if course.total_completions >= course.min_completions_for_reward as u32
+        && course.total_completions < reward_end
         && course.creator_reward_xp > 0
     {
         require!(
