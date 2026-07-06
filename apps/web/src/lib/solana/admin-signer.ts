@@ -76,6 +76,10 @@ interface UpdateCourseOnChainParams {
   newCreatorRewardXp: number | null;
   newMinCompletionsForReward: number | null;
   newCollection: PublicKey | null;
+  // 7th field — the deployed program's UpdateCourseParams includes it, so it
+  // MUST be serialized (even as null) or every update_course call fails to
+  // deserialize (AnchorError 102). Grows lesson_count when a course is extended.
+  newLessonCount: number | null;
 }
 
 interface CreateAchievementTypeOnChainParams {
@@ -133,6 +137,9 @@ export interface UpdateCourseAdminParams {
   newMinCompletionsForReward?: number;
   /** Base58 address of the Metaplex Core credential collection to set/backfill. */
   newCollection?: string;
+  /** New on-chain lesson_count (increase-only) — grows the completion bitmap
+   * bound when a course is extended after deploy. See #314. */
+  newLessonCount?: number;
 }
 
 export interface CreateAchievementAdminParams {
@@ -323,6 +330,7 @@ export async function updateCoursePda(
         params.newCollection != null
           ? new PublicKey(params.newCollection)
           : null,
+      newLessonCount: params.newLessonCount ?? null,
     };
 
     const methods = _program.methods as unknown as AdminMethods;

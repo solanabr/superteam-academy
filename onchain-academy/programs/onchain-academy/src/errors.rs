@@ -70,4 +70,6 @@ pub enum AcademyError {
     WrongXpMint,
     #[msg("XP amount exceeds the per-mint ceiling")]
     XpAmountExceedsMax,
+    #[msg("Lesson count can only increase")]
+    LessonCountCannotDecrease,
 }

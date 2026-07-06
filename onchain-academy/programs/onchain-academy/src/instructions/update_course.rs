@@ -13,6 +13,11 @@ pub struct UpdateCourseParams {
     pub new_min_completions_for_reward: Option<u16>,
     /// Set/backfill the Metaplex Core credential collection for this course.
     pub new_collection: Option<Pubkey>,
+    /// Grow the lesson count when a course is extended after deploy (e.g. a
+    /// teacher adds lessons). Increase-only: `lesson_count` seeds the enrollment
+    /// completion bitmap position and gates `complete_lesson`, so shrinking it
+    /// would strand already-completed high-index lessons.
+    pub new_lesson_count: Option<u8>,
 }
 
 pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result<()> {
@@ -53,6 +58,14 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
             AcademyError::CollectionMismatch
         );
         course.collection = collection;
+    }
+
+    if let Some(new_lesson_count) = params.new_lesson_count {
+        require!(
+            new_lesson_count >= course.lesson_count,
+            AcademyError::LessonCountCannotDecrease
+        );
+        course.lesson_count = new_lesson_count;
     }
 
     course.updated_at = now;
