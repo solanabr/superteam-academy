@@ -196,12 +196,17 @@ export async function getChallengeAnswerKey(
   courseSlug: string,
   lessonSlug: string
 ): Promise<ChallengeAnswerKey | null> {
-  // revalidate=0: always read fresh, never via the public Sanity CDN, so the
-  // answer key is not cached on any edge. catalogFetch (not sanityFetch) only to
-  // keep the "every gated query uses catalogFetch" invariant — the tag is inert
-  // on an uncached read.
-  return catalogFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
+  // SECURITY: intentionally UNGATED (no synced/active/authoring filter), unlike
+  // the public catalog queries. This is the server-authoritative answer key for
+  // challenge grading — the completion/validation gates treat a `null` result as
+  // "not a challenge lesson" and skip test execution. If visibility state
+  // (deactivation, un-approval, un-sync) could suppress the answer key, a
+  // challenge lesson would silently fall through the gate and grant unvalidated
+  // completions. Grading must be independent of catalog visibility, so we filter
+  // by identity only (like `getCourseById`). Server-only, never sent to clients.
+  // revalidate=0: always fresh, never via the public Sanity CDN.
+  return sanityFetch<ChallengeAnswerKey | null>(
+    `*[_type == "course" && slug.current == $courseSlug][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug },
@@ -218,8 +223,12 @@ export async function getChallengeAnswerKeyById(
   courseId: string,
   lessonId: string
 ): Promise<ChallengeAnswerKey | null> {
-  return catalogFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
+  // SECURITY: UNGATED by design — see getChallengeAnswerKey. This backs the
+  // server-authoritative gate in /api/lessons/complete, where `null` means "not
+  // a challenge lesson" and skips validation. A visibility gate here would let a
+  // deactivated/unapproved course's challenge lesson skip grading and mint XP.
+  return sanityFetch<ChallengeAnswerKey | null>(
+    `*[_type == "course" && _id == $courseId][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[_id == $lessonId][0]`,
     { courseId, lessonId },
