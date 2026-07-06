@@ -58,6 +58,16 @@ export async function fetchCourse(
   return coder.accounts.decode("Course", accountInfo.data);
 }
 
+/**
+ * Decode a Course account from raw account data (BorshCoder → snake_case fields).
+ * Lets a caller that has already fetched the account (e.g. via getAccountInfo)
+ * read Course fields without a second RPC round-trip. Throws on a stale/
+ * size-mismatched layout — callers that just want a field should try/catch.
+ */
+export function decodeCourse(data: Buffer) {
+  return coder.accounts.decode("Course", data);
+}
+
 export async function fetchAchievementType(
   achievementId: string,
   connection: Connection,
