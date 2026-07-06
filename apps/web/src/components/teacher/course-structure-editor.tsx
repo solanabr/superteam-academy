@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { MarkdownField } from "./markdown-field";
+import { MonacoField } from "@/components/editor/monaco-field";
 
 let counter = 0;
 const nextKey = () => `k${++counter}`;
@@ -421,23 +422,19 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
                         <option value="buildable">{t("buildable")}</option>
                       </select>
                     </div>
-                    <textarea
-                      className={`${input} font-mono`}
-                      rows={4}
-                      placeholder={t("starterCode")}
+                    <MonacoField
                       value={l.code}
-                      onChange={(e) =>
-                        setLesson(mi, li, { code: e.target.value })
-                      }
+                      language={l.language}
+                      ariaLabel={t("starterCode")}
+                      placeholder={t("starterCode")}
+                      onChange={(v) => setLesson(mi, li, { code: v })}
                     />
-                    <textarea
-                      className={`${input} font-mono`}
-                      rows={4}
-                      placeholder={t("solution")}
+                    <MonacoField
                       value={l.solution}
-                      onChange={(e) =>
-                        setLesson(mi, li, { solution: e.target.value })
-                      }
+                      language={l.language}
+                      ariaLabel={t("solution")}
+                      placeholder={t("solution")}
+                      onChange={(v) => setLesson(mi, li, { solution: v })}
                     />
                     <textarea
                       className={input}
