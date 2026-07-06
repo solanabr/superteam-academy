@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { MarkdownField } from "./markdown-field";
 
 let counter = 0;
 const nextKey = () => `k${++counter}`;
@@ -168,7 +169,12 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
           : m
       )
     );
-  const setTest = (mi: number, li: number, ti: number, patch: Partial<TestRow>) =>
+  const setTest = (
+    mi: number,
+    li: number,
+    ti: number,
+    patch: Partial<TestRow>
+  ) =>
     setLesson(mi, li, {
       tests: modules[mi]!.lessons[li]!.tests.map((tr, k) =>
         k === ti ? { ...tr, ...patch } : tr
@@ -216,14 +222,11 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
           }),
         })),
       };
-      const res = await fetch(
-        `/api/teacher/courses/${courseId}/structure`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`/api/teacher/courses/${courseId}/structure`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         reason?: string;
@@ -303,9 +306,7 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
             <button
               type="button"
               className={`${iconBtn} text-danger`}
-              onClick={() =>
-                setModules((p) => p.filter((_, i) => i !== mi))
-              }
+              onClick={() => setModules((p) => p.filter((_, i) => i !== mi))}
             >
               {t("remove")}
             </button>
@@ -380,14 +381,10 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
 
                 {l.type === "content" ? (
                   <div className="space-y-2">
-                    <textarea
-                      className={input}
-                      rows={3}
-                      placeholder={t("contentBody")}
+                    <MarkdownField
                       value={l.content}
-                      onChange={(e) =>
-                        setLesson(mi, li, { content: e.target.value })
-                      }
+                      placeholder={t("contentBody")}
+                      onChange={(v) => setLesson(mi, li, { content: v })}
                     />
                     <input
                       className={input}
@@ -499,7 +496,9 @@ export function CourseStructureEditor({ courseId }: { courseId: string }) {
                               type="checkbox"
                               checked={tr.hidden}
                               onChange={(e) =>
-                                setTest(mi, li, ti, { hidden: e.target.checked })
+                                setTest(mi, li, ti, {
+                                  hidden: e.target.checked,
+                                })
                               }
                             />
                             {t("hidden")}
