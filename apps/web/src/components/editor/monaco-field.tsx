@@ -13,7 +13,7 @@ interface MonacoFieldProps {
   language: string;
   ariaLabel: string;
   placeholder?: string;
-  /** Editor height (any CSS length). Defaults to 10rem. */
+  /** Editor height (any CSS length). Defaults to 14rem. */
   height?: string;
   className?: string;
 }
@@ -29,6 +29,18 @@ function toMonacoLanguage(language: string): string {
   }
 }
 
+// Shown while the Monaco chunk loads, so the field doesn't flash the library's
+// default "Loading..." text (parity with the challenge CodeEditor skeleton).
+function FieldSkeleton() {
+  return (
+    <div className="flex h-full w-full flex-col gap-2 bg-[var(--surface)] p-3">
+      <div className="h-3 w-24 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-3 w-40 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-3 w-32 animate-pulse rounded [background:var(--border-default)]" />
+    </div>
+  );
+}
+
 /**
  * Controlled, theme-aware Monaco editor for authoring code (starter code /
  * solution) in the teacher course builder. Deliberately NOT the challenge
@@ -42,7 +54,7 @@ export function MonacoField({
   language,
   ariaLabel,
   placeholder,
-  height = "10rem",
+  height = "14rem",
   className,
 }: MonacoFieldProps) {
   const { resolvedTheme } = useTheme();
@@ -74,6 +86,7 @@ export function MonacoField({
         theme={themeName}
         beforeMount={handleBeforeMount}
         onChange={(v) => onChange(v ?? "")}
+        loading={<FieldSkeleton />}
         options={{
           ariaLabel,
           placeholder,
