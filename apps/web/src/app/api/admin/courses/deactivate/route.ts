@@ -1,5 +1,6 @@
 import "server-only";
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import {
   requireAdminAuth,
@@ -7,6 +8,8 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { deactivateCoursePda } from "@/lib/solana/admin-signer";
+import { writeCourseActive } from "@/lib/sanity/admin-mutations";
+import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -38,5 +41,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  return NextResponse.json({ txSignature: result.signature });
+  // Mirror the on-chain flag into Sanity + purge the catalog cache so the course
+  // disappears from /courses immediately. If this write fails the course stays
+  // visible despite being deactivated on-chain, so surface a warning.
+  let warning: string | undefined;
+  try {
+    await writeCourseActive(courseId, false);
+    revalidateTag(COURSES_CACHE_TAG);
+  } catch (err) {
+    console.error("[admin/courses/deactivate] Sanity write-back failed:", err);
+    warning =
+      "Deactivated on-chain, but the catalog flag didn't update — the course may still show until re-synced.";
+  }
+
+  return NextResponse.json({
+    txSignature: result.signature,
+    ...(warning ? { warning } : {}),
+  });
 }

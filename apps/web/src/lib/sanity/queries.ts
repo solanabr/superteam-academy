@@ -13,6 +13,14 @@ import type { Course, Lesson, LearningPath } from "./types";
 // applied ONLY to public queries; admin/Studio queries must keep seeing drafts.
 const publicAuthoringGate = `(authoringStatus == "approved" || !defined(authoringStatus))`;
 
+// A course drops out of EVERY public surface the moment an admin deactivates it
+// (issue #321). The deactivate/reactivate routes mirror the on-chain is_active
+// flag into `onChainStatus.isActive`; legacy course docs predate the field, so
+// `coalesce(..., true)` keeps them visible. Combined into the shared synced gate
+// so catalog, detail, lesson, and dashboard reads all hide inactive courses
+// consistently (same reasoning as the #313 tag rollout).
+const activeGate = `coalesce(onChainStatus.isActive, true)`;
+
 // Shared Next.js cache tag for the public course catalog. Public catalog reads
 // are tagged with this so an admin action that changes what the catalog should
 // show (course sync) can purge them on demand via `revalidateTag(COURSES_CACHE_TAG)`
@@ -90,7 +98,7 @@ const moduleWithLessonsFields = `
 
 export async function getAllCourses(): Promise<Course[]> {
   return catalogFetch<Course[]>(
-    `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate}] | order(title asc) {
+    `*[_type == "course" && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] | order(title asc) {
       ${courseFields},
       "modules": modules[]->{
         _id,
@@ -111,7 +119,7 @@ export async function getAllCourses(): Promise<Course[]> {
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
   return catalogFetch<Course | null>(
-    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       ${courseFields},
       "modules": modules[]->{
         ${moduleWithLessonsFields}
@@ -131,7 +139,7 @@ export async function getLessonBySlug(
   // re-projects each to drop the `hidden` flag itself. Hidden-test/solution
   // checking lives server-side in /api/lessons/validate-challenge.
   return catalogFetch<Lesson | null>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->{
         _id,
         title,
@@ -193,7 +201,7 @@ export async function getChallengeAnswerKey(
   // keep the "every gated query uses catalogFetch" invariant — the tag is inert
   // on an uncached read.
   return catalogFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug },
@@ -211,7 +219,7 @@ export async function getChallengeAnswerKeyById(
   lessonId: string
 ): Promise<ChallengeAnswerKey | null> {
   return catalogFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && _id == $courseId && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       "allLessons": modules[]->lessons[]->${answerKeyProjection}
     }.allLessons[_id == $lessonId][0]`,
     { courseId, lessonId },
@@ -229,7 +237,7 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
       tag,
       order,
       difficulty,
-      "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced" && ${publicAuthoringGate}] {
+      "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] {
         ${courseFields},
         "modules": modules[]->{
           _id,
@@ -274,7 +282,7 @@ export async function getCourseIdBySlug(
   slug: string
 ): Promise<{ _id: string; xpPerLesson: number } | null> {
   return catalogFetch<{ _id: string; xpPerLesson: number } | null>(
-    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       _id,
       "xpPerLesson": coalesce(xpPerLesson, 0)
     }`,
@@ -289,7 +297,7 @@ export async function getCourseLessons(
   courseSlug: string
 ): Promise<Pick<Lesson, "_id" | "title" | "slug" | "type">[]> {
   return catalogFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
-    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${publicAuthoringGate}][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       "lessons": modules[]->lessons[]-> {
         _id,
         title,
@@ -321,7 +329,7 @@ export interface CourseSummary {
 export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
   return catalogFetch<CourseSummary[]>(
-    `*[_type == "course" && _id in $ids && onChainStatus.status == "synced" && ${publicAuthoringGate}] {
+    `*[_type == "course" && _id in $ids && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] {
       _id,
       title,
       "slug": slug.current,
@@ -382,7 +390,7 @@ export async function getRecommendedCourses(
   excludeIds: string[]
 ): Promise<RecommendedCourse[]> {
   return catalogFetch<RecommendedCourse[]>(
-    `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced" && ${publicAuthoringGate}] | order(title asc) {
+    `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] | order(title asc) {
       _id,
       title,
       "slug": slug.current,
@@ -412,7 +420,7 @@ export async function getAllCourseTags(): Promise<
   return catalogFetch<
     { _id: string; title: string; tags: string[]; totalLessons: number }[]
   >(
-    `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate} && defined(tags)] {
+    `*[_type == "course" && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate} && defined(tags)] {
       _id,
       title,
       tags,
@@ -429,7 +437,7 @@ export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
   return catalogFetch<{ _id: string; totalLessons: number }[]>(
-    `*[_type == "course" && onChainStatus.status == "synced" && ${publicAuthoringGate}] {
+    `*[_type == "course" && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] {
       _id,
       "totalLessons": count(modules[]->lessons[])
     }`
