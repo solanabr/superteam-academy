@@ -18,6 +18,17 @@ interface MarkdownFieldProps {
 
 const ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
 
+function trailingNewlines(str: string): number {
+  let n = 0;
+  for (let i = str.length - 1; i >= 0 && str[i] === "\n"; i--) n++;
+  return n;
+}
+function leadingNewlines(str: string): number {
+  let n = 0;
+  for (let i = 0; i < str.length && str[i] === "\n"; i++) n++;
+  return n;
+}
+
 function ToolbarButton({
   label,
   onClick,
@@ -147,15 +158,26 @@ export function MarkdownField({
     });
   }
 
-  // Wrap the selection in a fenced code block; the language token is selected so
-  // the teacher can immediately type ts/rust/bash/… (or clear it).
+  // Wrap the selection in a fenced code block, padded to a blank line before and
+  // after (canonical Markdown) unless it's at the very start/end. The language
+  // token is selected so the teacher can immediately type ts/rust/bash/… (or
+  // clear it).
   function codeBlock() {
     const lang = "ts";
     applyEdit((v, s, e) => {
-      const lead = s > 0 && v[s - 1] !== "\n" ? "\n" : "";
-      const inserted = `${lead}\`\`\`${lang}\n${v.slice(s, e)}\n\`\`\`\n`;
-      const value = v.slice(0, s) + inserted + v.slice(e);
-      const langStart = s + lead.length + 3;
+      const before = v.slice(0, s);
+      const after = v.slice(e);
+      const leadPad =
+        before.length === 0
+          ? ""
+          : "\n".repeat(Math.max(0, 2 - trailingNewlines(before)));
+      const tailPad =
+        after.length === 0
+          ? ""
+          : "\n".repeat(Math.max(0, 2 - leadingNewlines(after)));
+      const inserted = `${leadPad}\`\`\`${lang}\n${v.slice(s, e)}\n\`\`\`${tailPad}`;
+      const value = before + inserted + after;
+      const langStart = s + leadPad.length + 3;
       return { value, selStart: langStart, selEnd: langStart + lang.length };
     });
   }
@@ -172,7 +194,8 @@ export function MarkdownField({
   }
 
   function onEditorKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (!e.metaKey && !e.ctrlKey) return;
+    // Only the documented Ctrl/Cmd+B/I/K — ignore when Shift/Alt is also held.
+    if ((!e.metaKey && !e.ctrlKey) || e.shiftKey || e.altKey) return;
     const key = e.key.toLowerCase();
     if (key === "b") {
       e.preventDefault();
