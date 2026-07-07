@@ -1,15 +1,27 @@
 import "server-only";
 import dns from "node:dns/promises";
 import net from "node:net";
+import https from "node:https";
+import type { IncomingMessage } from "node:http";
 
 /**
  * Fetch a remote image by URL, safely, so "add image by URL" can pin it into
  * Sanity (→ cdn.sanity.io) rather than embedding a foreign URL the lesson
- * renderer's CSP would block. Guards against SSRF: https-only, no embedded
- * credentials, and the host must resolve to a PUBLIC address (private/loopback/
- * link-local ranges are rejected, and redirects are refused so a 3xx can't
- * bounce to an internal host). Size is capped by streaming, not trust in
- * Content-Length.
+ * renderer's CSP would block.
+ *
+ * SSRF hardening:
+ *  - https-only, no embedded credentials.
+ *  - The hostname is resolved once and every resolved address must be PUBLIC
+ *    (private/loopback/link-local/CGNAT rejected).
+ *  - The connection is then made DIRECTLY to that validated IP (not by hostname),
+ *    with SNI + Host set to the original hostname. This closes the DNS-rebinding
+ *    TOCTOU hole: a plain `fetch(url)` would re-resolve the hostname when opening
+ *    the socket, so an attacker controlling the domain's DNS could return a
+ *    public IP to the pre-flight check and a private one to the real request.
+ *    Pinning the IP means the socket only ever goes to the address we validated.
+ *  - Redirects are NOT followed (a 3xx could point at an internal host).
+ *  - Size is capped by streaming, not by trusting Content-Length; idle sockets
+ *    time out.
  */
 
 export type RemoteImageReason =
@@ -64,7 +76,13 @@ function isPrivateIp(ip: string): boolean {
   return true; // not a recognizable IP → unsafe
 }
 
-async function assertPublicHttpsUrl(raw: string): Promise<URL> {
+/**
+ * Validate the URL and resolve it to a single PUBLIC IP to connect to. Returns
+ * both the parsed URL (for SNI/Host/path) and the pinned address.
+ */
+async function resolvePublicTarget(
+  raw: string
+): Promise<{ url: URL; ip: string }> {
   let url: URL;
   try {
     url = new URL(raw);
@@ -77,18 +95,20 @@ async function assertPublicHttpsUrl(raw: string): Promise<URL> {
   const host = url.hostname;
   if (net.isIP(host)) {
     if (isPrivateIp(host)) throw new RemoteImageError("blocked_host");
-    return url;
+    return { url, ip: host };
   }
+
   let resolved: { address: string }[];
   try {
     resolved = await dns.lookup(host, { all: true });
   } catch {
     throw new RemoteImageError("blocked_host");
   }
-  if (resolved.length === 0 || resolved.some((r) => isPrivateIp(r.address))) {
+  const first = resolved[0];
+  if (!first || resolved.some((r) => isPrivateIp(r.address))) {
     throw new RemoteImageError("blocked_host");
   }
-  return url;
+  return { url, ip: first.address };
 }
 
 export interface FetchedImage {
@@ -105,60 +125,87 @@ export async function fetchRemoteImage(
     timeoutMs?: number;
   }
 ): Promise<FetchedImage> {
-  const url = await assertPublicHttpsUrl(raw);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 10_000);
+  const { url, ip } = await resolvePublicTarget(raw);
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+
+  // Connect straight to the validated IP; keep the real hostname for TLS SNI +
+  // certificate verification and the HTTP Host header. No hostname re-resolution
+  // happens, so DNS rebinding cannot swing the socket to a private address.
+  const res = await new Promise<IncomingMessage>((resolve, reject) => {
+    const request = https.request(
+      {
+        host: ip,
+        servername: url.hostname,
+        port: url.port ? Number(url.port) : 443,
+        path: `${url.pathname}${url.search}`,
+        method: "GET",
+        headers: { host: url.host, accept: "image/*" },
+        rejectUnauthorized: true,
+      },
+      resolve
+    );
+    request.setTimeout(timeoutMs, () => {
+      request.destroy(new RemoteImageError("fetch_failed"));
+    });
+    request.on("error", (err) =>
+      reject(
+        err instanceof RemoteImageError
+          ? err
+          : new RemoteImageError("fetch_failed")
+      )
+    );
+    request.end();
+  });
 
   try {
-    const res = await fetch(url, {
-      // Refuse redirects — a 3xx could bounce to an internal host and bypass the
-      // pre-flight DNS check.
-      redirect: "error",
-      signal: controller.signal,
-      headers: { accept: "image/*" },
-    });
-    if (!res.ok) throw new RemoteImageError("fetch_failed");
-
+    const status = res.statusCode ?? 0;
+    // 3xx is refused, not followed — it could redirect to an internal host.
+    if (status < 200 || status >= 300) {
+      res.destroy();
+      throw new RemoteImageError("fetch_failed");
+    }
     const contentType = (
-      (res.headers.get("content-type") ?? "").split(";")[0] ?? ""
+      (res.headers["content-type"] ?? "").split(";")[0] ?? ""
     )
       .trim()
       .toLowerCase();
     if (!opts.allowedTypes.has(contentType)) {
+      res.destroy();
       throw new RemoteImageError("bad_type");
     }
-    const declared = Number(res.headers.get("content-length") ?? "0");
+    const declared = Number(res.headers["content-length"] ?? "0");
     if (Number.isFinite(declared) && declared > opts.maxBytes) {
+      res.destroy();
       throw new RemoteImageError("too_large");
     }
 
-    // Stream with a hard cap — don't trust Content-Length for the real size.
-    const reader = res.body?.getReader();
-    if (!reader) throw new RemoteImageError("fetch_failed");
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        total += value.byteLength;
+    const buffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let total = 0;
+      res.on("data", (chunk: Buffer) => {
+        total += chunk.byteLength;
         if (total > opts.maxBytes) {
-          await reader.cancel();
-          throw new RemoteImageError("too_large");
+          res.destroy();
+          reject(new RemoteImageError("too_large"));
+          return;
         }
-        chunks.push(value);
-      }
-    }
-    if (total === 0) throw new RemoteImageError("fetch_failed");
+        chunks.push(chunk);
+      });
+      res.on("end", () => resolve(Buffer.concat(chunks)));
+      res.on("error", (err) =>
+        reject(
+          err instanceof RemoteImageError
+            ? err
+            : new RemoteImageError("fetch_failed")
+        )
+      );
+    });
 
-    const buffer = Buffer.concat(chunks.map((c) => Buffer.from(c)));
+    if (buffer.byteLength === 0) throw new RemoteImageError("fetch_failed");
     const filename = url.pathname.split("/").pop() || "image";
     return { buffer, contentType, filename };
   } catch (err) {
     if (err instanceof RemoteImageError) throw err;
-    // Abort/timeout/network/redirect-refused all collapse to a generic failure.
     throw new RemoteImageError("fetch_failed");
-  } finally {
-    clearTimeout(timer);
   }
 }
