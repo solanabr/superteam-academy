@@ -28,12 +28,25 @@ export type ThumbnailValidation =
   | { ok: true; contentType: string; byteLength: number }
   | { ok: false; error: ThumbnailRejection };
 
-/** True for a `image/<subtype>` content-type (the only kind Sanity should get). */
+/**
+ * Allowed thumbnail content-types — raster formats only. SVG is deliberately
+ * excluded: it can carry an inline `<script>`, so a teacher-uploaded SVG served
+ * from its asset URL could execute script (stored-XSS). Raster is all the
+ * course/lesson UI needs. Mirrors the lesson-image upload allowlist.
+ */
+const ALLOWED_THUMBNAIL_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+/** True for an allowed raster image content-type (SVG and non-images rejected). */
 export function isImageContentType(value: string | null | undefined): boolean {
   if (typeof value !== "string") return false;
   // Strip any `; charset=…`/params and normalize before matching.
   const base = value.split(";", 1)[0]?.trim().toLowerCase() ?? "";
-  return /^image\/[a-z0-9][a-z0-9.+-]*$/.test(base);
+  return ALLOWED_THUMBNAIL_TYPES.has(base);
 }
 
 /** The normalized `image/<subtype>` (lowercased, params stripped). */

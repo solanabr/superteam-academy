@@ -8,13 +8,8 @@ import {
 } from "../thumbnail";
 
 describe("isImageContentType", () => {
-  it("accepts common image types", () => {
-    for (const t of [
-      "image/png",
-      "image/jpeg",
-      "image/webp",
-      "image/svg+xml",
-    ]) {
+  it("accepts common raster image types", () => {
+    for (const t of ["image/png", "image/jpeg", "image/webp", "image/gif"]) {
       expect(isImageContentType(t)).toBe(true);
     }
   });
@@ -24,8 +19,10 @@ describe("isImageContentType", () => {
     expect(isImageContentType("IMAGE/PNG")).toBe(true);
   });
 
-  it("rejects non-image and malformed types", () => {
+  it("rejects SVG, non-raster, non-image, and malformed types", () => {
     for (const t of [
+      "image/svg+xml", // can carry inline <script> — stored-XSS risk
+      "image/bmp", // valid image, but not in the raster allowlist
       "application/pdf",
       "text/html",
       "application/octet-stream",
