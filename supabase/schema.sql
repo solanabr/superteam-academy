@@ -1791,7 +1791,8 @@ BEGIN
   RETURNING public.challenge_assists.assists_used INTO v_used;
 
   IF v_used > p_max_paid THEN
-    -- Over the cap: undo the increment so the count can't run away, deny.
+    -- Over the cap: clamp the stored count back to p_max_paid so repeated
+    -- denied calls can't let it run away, and deny.
     UPDATE public.challenge_assists
       SET assists_used = p_max_paid
       WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
