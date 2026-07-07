@@ -77,6 +77,19 @@
       "back": "Volver a los cursos",
       "titleRequired": "El título es obligatorio"
     },
+    "thumbnail": {
+      "label": "Miniatura",
+      "choose": "Elegir imagen",
+      "replace": "Reemplazar imagen",
+      "remove": "Quitar",
+      "none": "Sin imagen",
+      "hint": "PNG o JPG, hasta 5 MB.",
+      "previewAlt": "Vista previa de la miniatura del curso",
+      "uploading": "Subiendo…",
+      "errorNotImage": "El archivo debe ser una imagen.",
+      "errorTooLarge": "La imagen no puede superar los 5 MB.",
+      "errorUpload": "Error al subir. Inténtalo de nuevo."
+    },
     "builder": {
       "heading": "Contenido del curso",
       "loadError": "No se pudo cargar el contenido del curso.",
