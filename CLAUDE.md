@@ -49,15 +49,15 @@ superteam-academy/
 │   ├── programs/
 │   │   └── onchain-academy/    ← On-chain program (Anchor 0.31+)
 │   │       └── src/
-│   │           ├── lib.rs       ← 16 instructions
+│   │           ├── lib.rs       ← 18 instructions
 │   │           ├── state/       ← 6 PDA account structs
 │   │           ├── instructions/← One file per instruction
-│   │           ├── errors.rs    ← 27 error variants
-│   │           ├── events.rs    ← 15 events
+│   │           ├── errors.rs    ← 35 error variants
+│   │           ├── events.rs    ← 18 events
 │   │           └── utils.rs     ← Shared helpers (mint_xp)
 │   ├── tests/
-│   │   ├── onchain-academy.ts  ← 62 TypeScript integration tests
-│   │   └── rust/                ← 77 Rust unit tests
+│   │   ├── onchain-academy.ts  ← 89 TypeScript integration tests
+│   │   └── rust/                ← 128 Rust unit tests
 │   ├── Anchor.toml
 │   ├── Cargo.toml               ← Workspace root
 │   └── package.json
@@ -184,7 +184,7 @@ superteam-academy/
 
 ## Program Overview
 
-16 instructions, 6 PDA types, 27 error variants, 15 events.
+18 instructions, 6 PDA types, 35 error variants, 18 events.
 
 See `docs/ARCHITECTURE.md` for the program specification and frontend integration details (the on-chain program source is under `onchain-academy/programs/`).
 
@@ -335,11 +335,17 @@ SUPABASE_SERVICE_ROLE_KEY=         # PRIVATE — server-only, for admin operatio
 # Required — Sanity
 NEXT_PUBLIC_SANITY_PROJECT_ID=     # From sanity.io/manage
 NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_API_TOKEN=                  # Seed import only (sanity/seed/import.mjs)
+SANITY_ADMIN_TOKEN=                # Write token for admin Sanity mutations (server-only)
+# Standalone Studio/CLI (sanity/ workspace) uses SANITY_STUDIO_PROJECT_ID /
+# SANITY_STUDIO_DATASET — see sanity/.env.example.
 
 # Required — Solana
-NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com   # PUBLIC browser RPC — no privileged key
+SOLANA_RPC_URL=                    # SERVER-ONLY RPC (may carry the Helius key; required at boot)
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_PROGRAM_ID=            # Deployed program ID (used by webhook decoder + frontend)
+NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
 
 # Required — Admin & Backend (server-only, never NEXT_PUBLIC_)
 ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
@@ -347,8 +353,12 @@ BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, pr
 BUILD_SERVER_API_KEY=              # Build server authentication key
 HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
+BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)
 XP_MINT_AUTHORITY_SECRET=          # XP mint authority keypair (JSON array of 64 keypair bytes)
 PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64 keypair bytes)
+
+# Optional — AI lesson assistant (server-only)
+GEMINI_API_KEY=                    # Gemini key for /api/ai/* (omit to disable the assistant)
 
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)
@@ -369,6 +379,9 @@ NEXT_PUBLIC_GA4_MEASUREMENT_ID=
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 NEXT_PUBLIC_SENTRY_DSN=            # Public DSN (safe to expose); drives client+server+edge Sentry
+SENTRY_ORG=                        # Build-time source-map upload (CI/Vercel only)
+SENTRY_PROJECT=
+SENTRY_AUTH_TOKEN=
 
 # Optional — App URL (for sitemap, OG tags)
 NEXT_PUBLIC_APP_URL=http://localhost:3000

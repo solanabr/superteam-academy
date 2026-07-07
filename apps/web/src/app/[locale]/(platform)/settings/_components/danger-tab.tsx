@@ -96,8 +96,7 @@ export function DangerTab() {
         </p>
 
         <Button
-          variant="outline"
-          className="text-danger [border-color:var(--danger-border)] hover:[background:var(--danger-light)]"
+          variant="destructiveOutline"
           onClick={() => setDialogOpen(true)}
         >
           {t("deleteAccountButton")}
@@ -151,7 +150,7 @@ export function DangerTab() {
               {t("deleteAccountCancel")}
             </Button>
             <Button
-              className="hover:bg-danger/90 bg-danger text-white"
+              variant="destructive"
               onClick={handleDelete}
               disabled={!canConfirm || isDeleting}
             >

@@ -71,9 +71,17 @@ const buttonVariants = cva(
         pushAccent:
           "bg-xp text-white shadow-[0_4px_0_0_var(--xp-dark)] hover:opacity-[0.92] active:shadow-[0_1px_0_0_var(--xp-dark)]",
 
-        /** destructive — danger red */
+        /** destructive — danger red (danger focus ring, not the primary one) */
         destructive:
-          "bg-danger text-white shadow-[0_4px_0_0_var(--danger-dark)] hover:opacity-[0.92] active:shadow-[0_1px_0_0_var(--danger-dark)]",
+          "bg-danger text-white shadow-[0_4px_0_0_var(--danger-dark)] hover:opacity-[0.92] active:shadow-[0_1px_0_0_var(--danger-dark)] focus-visible:outline-danger",
+
+        /**
+         * destructiveOutline — danger-tinted secondary for destructive
+         * triggers. Counterpart of `outline`, which turns primary on hover —
+         * wrong for danger actions.
+         */
+        destructiveOutline:
+          "bg-transparent text-danger border-solid border-[1.5px] [border-color:var(--danger-border)] hover:[border-color:var(--danger)] hover:bg-danger-light active:shadow-none focus-visible:outline-danger",
       },
       size: {
         /** Default: padding 11px 22px, font-size 14px */

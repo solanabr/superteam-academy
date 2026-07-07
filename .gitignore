@@ -58,6 +58,9 @@ scripts/.devnet-mint.json
 
 # Claude local settings (user-specific permissions)
 .claude/settings.local.json
+# Claude Code local worktrees (full repo checkouts — can be many GB) + preview config
+.claude/worktrees/
+.claude/launch.json
 
 # Coverage / profiling
 coverage/

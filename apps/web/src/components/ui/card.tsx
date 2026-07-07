@@ -8,7 +8,9 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-[var(--r-lg)] border border-[var(--border-default)] bg-[var(--card)] text-[var(--text)] shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-[3px] hover:border-[var(--border-hover)] hover:bg-[var(--card-hover)] hover:shadow-[var(--shadow-card-hover)]",
+      // Static by design — interactive cards opt into the lift via className
+      // (CARD_STYLES.containerHover / INTERACTIVE_STATES.hoverLift).
+      "rounded-[var(--r-lg)] border border-[var(--border-default)] bg-[var(--card)] text-[var(--text)] shadow-[var(--shadow-card)] transition-all duration-200",
       className
     )}
     {...props}
