@@ -11,6 +11,24 @@ const sanityAdmin = createClient({
   apiVersion: "2024-01-01",
 });
 
+/**
+ * Set the full course membership of a learning path (issue #323). Admin-only —
+ * the calling route must have passed `requireAdminAuth`. `courseIds` should be
+ * de-duplicated by the caller; each becomes a keyed Sanity reference (order
+ * preserved). Passing an empty array clears the path.
+ */
+export async function setLearningPathCourses(
+  pathId: string,
+  courseIds: string[]
+): Promise<void> {
+  const courses = courseIds.map((ref) => ({
+    _type: "reference",
+    _ref: ref,
+    _key: ref,
+  }));
+  await sanityAdmin.patch(pathId).set({ courses }).commit();
+}
+
 export async function writeCourseOnChainStatus(
   sanityId: string,
   status: string,

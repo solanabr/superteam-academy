@@ -9,6 +9,7 @@ import {
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { DataResyncPanel } from "@/components/admin/data-resync-panel";
 import { TeacherRolesPanel } from "@/components/admin/teacher-roles-panel";
+import { LearningPathsPanel } from "@/components/admin/learning-paths-panel";
 
 interface DiffEntry {
   field: string;
@@ -231,6 +232,16 @@ export function AdminClient() {
         </h2>
         <div className="rounded-lg border border-border bg-card p-4 shadow-card">
           <TeacherRolesPanel />
+        </div>
+      </section>
+
+      {/* Learning Paths */}
+      <section>
+        <h2 className="mb-4 font-display text-lg font-bold text-text">
+          Learning Paths
+        </h2>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <LearningPathsPanel />
         </div>
       </section>
     </div>
