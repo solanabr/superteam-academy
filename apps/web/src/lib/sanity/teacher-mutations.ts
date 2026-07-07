@@ -31,6 +31,25 @@ const sanityAdmin = createClient({
   apiVersion: "2024-01-01",
 });
 
+/**
+ * Upload a lesson-content image to Sanity's asset store and return its public
+ * CDN URL (`cdn.sanity.io`, which is allowlisted in the app's `img-src` CSP so
+ * it renders in the preview + on the lesson page). Server-only — the calling
+ * route (`/api/teacher/upload-image`) MUST have passed `authorizeTeacher` and
+ * validated the file (type/size) first.
+ */
+export async function uploadTeacherImage(
+  data: Buffer,
+  filename: string,
+  contentType: string
+): Promise<{ url: string; assetId: string }> {
+  const asset = await sanityAdmin.assets.upload("image", data, {
+    filename,
+    contentType,
+  });
+  return { url: asset.url, assetId: asset._id };
+}
+
 /** Difficulty enum mirrored from the course schema. */
 export const COURSE_DIFFICULTIES = [
   "beginner",
