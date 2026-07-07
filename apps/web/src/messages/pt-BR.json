@@ -98,7 +98,7 @@
       "imageUrl": "Colar URL da imagem",
       "insert": "Inserir",
       "uploading": "Enviando…",
-      "imageHint": "Imagens enviadas ficam hospedadas no site. URLs coladas precisam vir de um host permitido para aparecer.",
+      "imageHint": "As imagens ficam hospedadas no site (uma URL colada também é importada), então sempre aparecem.",
       "imageUploadError": "Falha ao enviar a imagem",
       "imageUrlInvalid": "Informe uma URL de imagem válida",
       "videoUrl": "URL do vídeo",

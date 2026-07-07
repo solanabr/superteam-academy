@@ -98,7 +98,7 @@
       "imageUrl": "Paste image URL",
       "insert": "Insert",
       "uploading": "Uploading…",
-      "imageHint": "Uploaded images are hosted on the site. Pasted URLs must be from an allowed host to display.",
+      "imageHint": "Images are hosted on the site (a pasted URL is imported too), so they always display.",
       "imageUploadError": "Image upload failed",
       "imageUrlInvalid": "Enter a valid image URL",
       "videoUrl": "Video URL",
