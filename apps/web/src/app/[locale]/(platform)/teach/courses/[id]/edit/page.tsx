@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { authorizeTeacher } from "@/lib/teacher/authorize";
 import { getTeacherCourseEditable } from "@/lib/sanity/teacher-mutations";
+import { getManagedCourseTags } from "@/lib/sanity/queries";
 import { CourseForm } from "@/components/teacher/course-form";
 import { CourseStructureEditor } from "@/components/teacher/course-structure-editor";
 
@@ -27,6 +28,7 @@ export default async function EditCoursePage({
   }
 
   const t = await getTranslations("teacher.form");
+  const availableTags = (await getManagedCourseTags()).map((tag) => tag.name);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -39,7 +41,12 @@ export default async function EditCoursePage({
       <h1 className="mb-6 mt-3 font-display text-2xl font-bold text-text">
         {t("editHeading")}
       </h1>
-      <CourseForm mode="edit" courseId={course._id} initial={course} />
+      <CourseForm
+        mode="edit"
+        courseId={course._id}
+        initial={course}
+        availableTags={availableTags}
+      />
 
       <hr className="my-8 border-border" />
 

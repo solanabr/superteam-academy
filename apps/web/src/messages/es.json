@@ -65,7 +65,8 @@
       "advanced": "Avanzado",
       "duration": "Duración (horas)",
       "tags": "Etiquetas",
-      "tagsHint": "Separadas por comas",
+      "tagsHint": "Selecciona las etiquetas que encajan con este curso.",
+      "tagsEmpty": "Aún no hay etiquetas disponibles — un administrador puede añadirlas.",
       "xpReward": "Recompensa XP",
       "xpPerLesson": "XP por lección",
       "saveDraft": "Guardar borrador",
@@ -76,6 +77,19 @@
       "submitted": "Enviado para revisión",
       "back": "Volver a los cursos",
       "titleRequired": "El título es obligatorio"
+    },
+    "thumbnail": {
+      "label": "Miniatura",
+      "choose": "Elegir imagen",
+      "replace": "Reemplazar imagen",
+      "remove": "Quitar",
+      "none": "Sin imagen",
+      "hint": "PNG o JPG, hasta 5 MB.",
+      "previewAlt": "Vista previa de la miniatura del curso",
+      "uploading": "Subiendo…",
+      "errorNotImage": "El archivo debe ser una imagen.",
+      "errorTooLarge": "La imagen no puede superar los 5 MB.",
+      "errorUpload": "Error al subir. Inténtalo de nuevo."
     },
     "builder": {
       "heading": "Contenido del curso",
