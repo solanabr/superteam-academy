@@ -12,6 +12,24 @@ const sanityAdmin = createClient({
 });
 
 /**
+ * Set the full course membership of a learning path (issue #323). Admin-only —
+ * the calling route must have passed `requireAdminAuth`. `courseIds` should be
+ * de-duplicated by the caller; each becomes a keyed Sanity reference (order
+ * preserved). Passing an empty array clears the path.
+ */
+export async function setLearningPathCourses(
+  pathId: string,
+  courseIds: string[]
+): Promise<void> {
+  const courses = courseIds.map((ref) => ({
+    _type: "reference",
+    _ref: ref,
+    _key: ref,
+  }));
+  await sanityAdmin.patch(pathId).set({ courses }).commit();
+}
+
+/**
  * Add a value to the managed course-tag vocabulary (issue #322). Admin-only —
  * the calling route must have passed `requireAdminAuth`. Returns the created
  * doc's id + name. A duplicate name is rejected by the caller (checked first).
