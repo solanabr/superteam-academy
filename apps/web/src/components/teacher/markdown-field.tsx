@@ -106,14 +106,38 @@ export function MarkdownField({
     }
   }
 
-  function handleUrlInsert() {
+  async function handleUrlInsert() {
     const url = urlValue.trim();
-    if (!/^https?:\/\/\S+$/i.test(url)) {
+    if (!/^https:\/\/\S+$/i.test(url)) {
       setImgError(t("imageUrlInvalid"));
       return;
     }
-    insertAtCaret(`![](${url})`);
-    closeMenu();
+    setUploading(true);
+    setImgError(null);
+    try {
+      // Import server-side (fetch + pin to Sanity) so the resulting
+      // cdn.sanity.io URL renders under the lesson CSP — a raw foreign URL
+      // would be blocked.
+      const res = await fetch("/api/teacher/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.url) {
+        setImgError(data.error ?? t("imageUploadError"));
+        return;
+      }
+      insertAtCaret(`![](${data.url})`);
+      closeMenu();
+    } catch {
+      setImgError(t("imageUploadError"));
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -200,7 +224,7 @@ export function MarkdownField({
                   <button
                     type="button"
                     disabled={uploading || !urlValue.trim()}
-                    onClick={handleUrlInsert}
+                    onClick={() => void handleUrlInsert()}
                     className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-text disabled:opacity-50"
                   >
                     {t("insert")}
