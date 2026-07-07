@@ -11,6 +11,7 @@ import { DataResyncPanel } from "@/components/admin/data-resync-panel";
 import { TeacherRolesPanel } from "@/components/admin/teacher-roles-panel";
 import { LearningPathsPanel } from "@/components/admin/learning-paths-panel";
 import { CourseTagsPanel } from "@/components/admin/course-tags-panel";
+import { FlagsPanel } from "@/components/admin/flags-panel";
 
 interface DiffEntry {
   field: string;
@@ -70,6 +71,7 @@ export function AdminClient() {
   const [status, setStatus] = useState<AdminStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [flagCount, setFlagCount] = useState(0);
 
   const fetchStatus = useCallback(async () => {
     setLoading(true);
@@ -171,6 +173,21 @@ export function AdminClient() {
             courses={pendingReviews}
             onRefresh={() => void fetchStatus()}
           />
+        </div>
+      </section>
+
+      {/* Moderation — community flags awaiting review */}
+      <section>
+        <h2 className="mb-4 font-display text-lg font-bold text-text">
+          Moderation
+          {flagCount > 0 && (
+            <span className="ml-2 rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">
+              {flagCount}
+            </span>
+          )}
+        </h2>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <FlagsPanel onCountChange={setFlagCount} />
         </div>
       </section>
 
