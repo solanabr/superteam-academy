@@ -1464,6 +1464,11 @@
       "code": 6033,
       "name": "XpAmountExceedsMax",
       "msg": "XP amount exceeds the per-mint ceiling"
+    },
+    {
+      "code": 6034,
+      "name": "LessonCountCannotDecrease",
+      "msg": "Lesson count can only increase"
     }
   ],
   "types": [
