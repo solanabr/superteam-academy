@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -17,6 +17,30 @@ interface MarkdownFieldProps {
 }
 
 const ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
+
+function ToolbarButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      // Keep the textarea's selection: don't let the mousedown steal focus.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className="min-w-6 rounded px-1.5 py-1 text-center text-xs leading-none text-text-2 hover:bg-subtle hover:text-text"
+    >
+      {children}
+    </button>
+  );
+}
 
 /**
  * Markdown authoring field with a Write / Preview toggle for the teacher course
@@ -71,6 +95,95 @@ export function MarkdownField({
       const pos = start + snippet.length;
       ta.setSelectionRange(pos, pos);
     });
+  }
+
+  // Apply a pure transform of (value, selectionStart, selectionEnd) → new value
+  // + new selection, then restore focus/selection after React re-renders.
+  function applyEdit(
+    fn: (
+      v: string,
+      start: number,
+      end: number
+    ) => { value: string; selStart: number; selEnd: number }
+  ) {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const {
+      value: next,
+      selStart,
+      selEnd,
+    } = fn(value, ta.selectionStart, ta.selectionEnd);
+    onChange(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(selStart, selEnd);
+    });
+  }
+
+  // Wrap the selection with `before`/`after` (bold, italic, inline code). With
+  // no selection the markers are inserted and the caret lands between them.
+  function wrap(before: string, after: string) {
+    applyEdit((v, s, e) => {
+      const selected = v.slice(s, e);
+      const value = v.slice(0, s) + before + selected + after + v.slice(e);
+      const selStart = s + before.length;
+      return { value, selStart, selEnd: selStart + selected.length };
+    });
+  }
+
+  // Prefix every line spanned by the selection (heading, quote, lists).
+  function prefixLines(makePrefix: (index: number) => string) {
+    applyEdit((v, s, e) => {
+      const lineStart = v.lastIndexOf("\n", s - 1) + 1;
+      let lineEnd = v.indexOf("\n", e);
+      if (lineEnd === -1) lineEnd = v.length;
+      const block = v
+        .slice(lineStart, lineEnd)
+        .split("\n")
+        .map((line, i) => makePrefix(i) + line)
+        .join("\n");
+      const value = v.slice(0, lineStart) + block + v.slice(lineEnd);
+      return { value, selStart: lineStart, selEnd: lineStart + block.length };
+    });
+  }
+
+  // Wrap the selection in a fenced code block; the language token is selected so
+  // the teacher can immediately type ts/rust/bash/… (or clear it).
+  function codeBlock() {
+    const lang = "ts";
+    applyEdit((v, s, e) => {
+      const lead = s > 0 && v[s - 1] !== "\n" ? "\n" : "";
+      const inserted = `${lead}\`\`\`${lang}\n${v.slice(s, e)}\n\`\`\`\n`;
+      const value = v.slice(0, s) + inserted + v.slice(e);
+      const langStart = s + lead.length + 3;
+      return { value, selStart: langStart, selEnd: langStart + lang.length };
+    });
+  }
+
+  // Insert a link, selecting the `url` placeholder for a quick replace.
+  function link() {
+    applyEdit((v, s, e) => {
+      const label = v.slice(s, e) || "text";
+      const url = "url";
+      const value = v.slice(0, s) + `[${label}](${url})` + v.slice(e);
+      const urlStart = s + 1 + label.length + 2; // after "[label]("
+      return { value, selStart: urlStart, selEnd: urlStart + url.length };
+    });
+  }
+
+  function onEditorKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!e.metaKey && !e.ctrlKey) return;
+    const key = e.key.toLowerCase();
+    if (key === "b") {
+      e.preventDefault();
+      wrap("**", "**");
+    } else if (key === "i") {
+      e.preventDefault();
+      wrap("*", "*");
+    } else if (key === "k") {
+      e.preventDefault();
+      link();
+    }
   }
 
   function closeMenu() {
@@ -241,6 +354,55 @@ export function MarkdownField({
         )}
       </div>
 
+      {tab === "write" && (
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-[var(--surface)] px-1.5 py-1">
+          <ToolbarButton label={t("fmtBold")} onClick={() => wrap("**", "**")}>
+            <span className="font-bold">B</span>
+          </ToolbarButton>
+          <ToolbarButton label={t("fmtItalic")} onClick={() => wrap("*", "*")}>
+            <span className="italic">I</span>
+          </ToolbarButton>
+          <ToolbarButton
+            label={t("fmtHeading")}
+            onClick={() => prefixLines(() => "## ")}
+          >
+            H
+          </ToolbarButton>
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <ToolbarButton
+            label={t("fmtInlineCode")}
+            onClick={() => wrap("`", "`")}
+          >
+            <span className="font-mono">`</span>
+          </ToolbarButton>
+          <ToolbarButton label={t("fmtCodeBlock")} onClick={codeBlock}>
+            <span className="font-mono">```</span>
+          </ToolbarButton>
+          <ToolbarButton label={t("fmtLink")} onClick={link}>
+            🔗
+          </ToolbarButton>
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <ToolbarButton
+            label={t("fmtBulletList")}
+            onClick={() => prefixLines(() => "- ")}
+          >
+            •
+          </ToolbarButton>
+          <ToolbarButton
+            label={t("fmtNumberedList")}
+            onClick={() => prefixLines((i) => `${i + 1}. `)}
+          >
+            1.
+          </ToolbarButton>
+          <ToolbarButton
+            label={t("fmtQuote")}
+            onClick={() => prefixLines(() => "> ")}
+          >
+            ❝
+          </ToolbarButton>
+        </div>
+      )}
+
       {tab === "write" ? (
         <textarea
           ref={textareaRef}
@@ -249,6 +411,7 @@ export function MarkdownField({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onEditorKeyDown}
         />
       ) : (
         <div className="prose prose-sm max-w-none bg-[var(--surface)] px-3 py-2 text-text dark:prose-invert">
