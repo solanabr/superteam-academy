@@ -13,6 +13,12 @@ pub struct UpdateCourseParams {
     pub new_min_completions_for_reward: Option<u16>,
     /// Set/backfill the Metaplex Core credential collection for this course.
     pub new_collection: Option<Pubkey>,
+    /// Grow the course's lesson count (increase-only) when a teacher appends
+    /// lessons to an already-deployed course. Shrinking is rejected — it would
+    /// strand completed-lesson flags and shift bitmap indices. The enrollment
+    /// bitmap is `[u64; 4]` (256 bits), so any valid `u8` count fits without an
+    /// account resize.
+    pub new_lesson_count: Option<u8>,
 }
 
 pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result<()> {
@@ -42,6 +48,17 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
 
     if let Some(min_completions) = params.new_min_completions_for_reward {
         course.min_completions_for_reward = min_completions;
+    }
+
+    if let Some(new_lesson_count) = params.new_lesson_count {
+        // Increase-only: raising the count lets a re-sync pick up appended
+        // lessons; equal is a no-op. A lower value would strand completed flags
+        // and shift indices, so reject it.
+        require!(
+            new_lesson_count >= course.lesson_count,
+            AcademyError::LessonCountDecrease
+        );
+        course.lesson_count = new_lesson_count;
     }
 
     if let Some(collection) = params.new_collection {

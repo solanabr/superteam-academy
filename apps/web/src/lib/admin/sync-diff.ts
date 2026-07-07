@@ -168,10 +168,11 @@ export function isDraftId(sanityId: string): boolean {
  * Compare a Sanity course document against an on-chain Course PDA.
  *
  * Updateable fields (fixable with `updateCourse`):
- *   xpPerLesson, creatorRewardXp, minCompletionsForReward
+ *   xpPerLesson, creatorRewardXp, minCompletionsForReward, and an INCREASE in
+ *   lessonCount (increase-only via update_course.new_lesson_count)
  *
  * Immutable fields (require PDA recreation if different):
- *   lessonCount, difficulty, trackId, trackLevel, prerequisite
+ *   difficulty, trackId, trackLevel, prerequisite, and a DECREASE in lessonCount
  *
  * Note: `prerequisite` is compared using raw Sanity _id vs on-chain base58
  * pubkey. The caller is responsible for PDA resolution — this function only
@@ -254,11 +255,16 @@ export function diffCourse(
   // --- Immutable fields ---
 
   if (sanityCourse.lessonCount !== onChainCourse.lessonCount) {
+    // lesson_count is increase-only updateable: a re-sync raises the on-chain
+    // count when a teacher appends lessons (update_course.new_lesson_count).
+    // A DECREASE (Sanity has fewer lessons than on-chain) is rejected by the
+    // program (LessonCountDecrease) and stays an immutable mismatch — applying
+    // it would strand completion flags, so it needs PDA recreation.
     differences.push({
       field: "lessonCount",
       sanityValue: sanityCourse.lessonCount,
       onChainValue: onChainCourse.lessonCount,
-      updateable: false,
+      updateable: sanityCourse.lessonCount > onChainCourse.lessonCount,
     });
   }
 

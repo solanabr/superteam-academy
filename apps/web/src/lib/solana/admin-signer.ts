@@ -76,6 +76,7 @@ interface UpdateCourseOnChainParams {
   newCreatorRewardXp: number | null;
   newMinCompletionsForReward: number | null;
   newCollection: PublicKey | null;
+  newLessonCount: number | null;
 }
 
 interface CreateAchievementTypeOnChainParams {
@@ -133,6 +134,12 @@ export interface UpdateCourseAdminParams {
   newMinCompletionsForReward?: number;
   /** Base58 address of the Metaplex Core credential collection to set/backfill. */
   newCollection?: string;
+  /**
+   * Raise the on-chain lesson count (increase-only) after a teacher appends
+   * lessons to an already-deployed course. The program rejects any value below
+   * the current count (LessonCountDecrease).
+   */
+  newLessonCount?: number;
 }
 
 export interface CreateAchievementAdminParams {
@@ -323,6 +330,7 @@ export async function updateCoursePda(
         params.newCollection != null
           ? new PublicKey(params.newCollection)
           : null,
+      newLessonCount: params.newLessonCount ?? null,
     };
 
     const methods = _program.methods as unknown as AdminMethods;

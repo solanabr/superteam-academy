@@ -17,6 +17,8 @@ mod test_initialize;
 #[cfg(test)]
 mod test_kill_switch;
 #[cfg(test)]
+mod test_lesson_count;
+#[cfg(test)]
 mod test_mint_hardening;
 #[cfg(test)]
 mod test_minter_role;
