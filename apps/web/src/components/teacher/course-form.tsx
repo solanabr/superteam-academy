@@ -20,13 +20,20 @@ interface CourseFormProps {
   mode: "create" | "edit";
   courseId?: string;
   initial?: CourseInitial;
+  /** Managed course-tag vocabulary teachers choose from (issue #322). */
+  availableTags?: string[];
 }
 
 const DIFFICULTIES = ["beginner", "intermediate", "advanced"] as const;
 const inputClass =
   "w-full rounded-md border border-border bg-[var(--input)] px-3 py-2 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
-export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
+export function CourseForm({
+  mode,
+  courseId,
+  initial,
+  availableTags = [],
+}: CourseFormProps) {
   const t = useTranslations("teacher.form");
   const router = useRouter();
   const locale = useLocale();
@@ -39,7 +46,23 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
   const [duration, setDuration] = useState(
     initial?.duration != null ? String(initial.duration) : ""
   );
-  const [tags, setTags] = useState((initial?.tags ?? []).join(", "));
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(
+    () => new Set(initial?.tags ?? [])
+  );
+  // Chips to show: the managed vocabulary + any tags already on this course
+  // (so editing an off-list legacy tag doesn't silently drop it), sorted.
+  const tagChoices = Array.from(
+    new Set([...availableTags, ...(initial?.tags ?? [])])
+  ).sort((a, b) => a.localeCompare(b));
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  }
   const [xpReward, setXpReward] = useState(
     initial?.xpReward != null ? String(initial.xpReward) : ""
   );
@@ -54,10 +77,7 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
   function buildBody(extra?: Record<string, unknown>): Record<string, unknown> {
     const body: Record<string, unknown> = { title: title.trim(), difficulty };
     if (description.trim()) body.description = description.trim();
-    const tagList = tags
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const tagList = Array.from(selectedTags);
     if (tagList.length) body.tags = tagList;
     if (duration.trim()) {
       const n = Number(duration);
@@ -210,16 +230,35 @@ export function CourseForm({ mode, courseId, initial }: CourseFormProps) {
       </div>
 
       <div>
-        <label htmlFor="course-tags" className="mb-1 block text-sm font-medium">
-          {t("tags")}
-        </label>
-        <input
-          id="course-tags"
-          type="text"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          className={inputClass}
-        />
+        <span className="mb-1 block text-sm font-medium">{t("tags")}</span>
+        {tagChoices.length === 0 ? (
+          <p className="text-xs text-text-3">{t("tagsEmpty")}</p>
+        ) : (
+          <div
+            className="flex flex-wrap gap-2"
+            role="group"
+            aria-label={t("tags")}
+          >
+            {tagChoices.map((tag) => {
+              const active = selectedTags.has(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleTag(tag)}
+                  className={
+                    active
+                      ? "rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"
+                      : "rounded-full border border-border px-3 py-1 text-xs font-medium text-text-2 hover:border-primary hover:text-text"
+                  }
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <p className="mt-1 text-xs text-text-3">{t("tagsHint")}</p>
       </div>
 

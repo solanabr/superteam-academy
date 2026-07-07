@@ -11,6 +11,33 @@ const sanityAdmin = createClient({
   apiVersion: "2024-01-01",
 });
 
+/**
+ * Add a value to the managed course-tag vocabulary (issue #322). Admin-only —
+ * the calling route must have passed `requireAdminAuth`. Returns the created
+ * doc's id + name. A duplicate name is rejected by the caller (checked first).
+ */
+export async function createCourseTag(
+  name: string
+): Promise<{ _id: string; name: string }> {
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  const created = await sanityAdmin.create({
+    _type: "courseTag",
+    name,
+    slug: { _type: "slug", current: slug || "tag" },
+  });
+  return { _id: created._id, name };
+}
+
+/** Remove a managed course tag by document id. Admin-only. */
+export async function deleteCourseTag(id: string): Promise<void> {
+  await sanityAdmin.delete(id);
+}
+
 export async function writeCourseOnChainStatus(
   sanityId: string,
   status: string,

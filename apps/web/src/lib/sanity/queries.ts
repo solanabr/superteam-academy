@@ -438,6 +438,24 @@ export async function getAllCourseTags(): Promise<
   );
 }
 
+export interface ManagedCourseTag {
+  _id: string;
+  name: string;
+}
+
+/**
+ * The managed course-tag vocabulary (issue #322). Teachers pick course tags
+ * from these values; admins add/remove them. Read fresh (revalidate=0) so a
+ * newly-added tag shows up immediately in the teacher form + admin panel.
+ */
+export async function getManagedCourseTags(): Promise<ManagedCourseTag[]> {
+  return sanityFetch<ManagedCourseTag[]>(
+    `*[_type == "courseTag" && defined(name)] | order(name asc) { _id, name }`,
+    undefined,
+    0
+  );
+}
+
 /**
  * Fetch total lesson count per course (used for accurate course-completion detection).
  * Returns a map-friendly array of { _id, totalLessons }.
