@@ -29,3 +29,6 @@ audit/
 *.profraw
 *.profdata
 coverage/
+
+# Claude Code local worktrees/config (can be many GB — never deploy)
+.claude/

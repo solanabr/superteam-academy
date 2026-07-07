@@ -27,7 +27,7 @@ impl Config {
         Self {
             api_key,
             allowed_origin: env::var("ALLOWED_ORIGIN")
-                .unwrap_or_else(|_| "https://solarium.courses".into()),
+                .unwrap_or_else(|_| "https://superteam-academy-web.vercel.app".into()),
             port: env::var("PORT")
                 .unwrap_or_else(|_| "8080".into())
                 .parse()
