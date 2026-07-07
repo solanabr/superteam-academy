@@ -1,7 +1,9 @@
 // apps/web/src/app/api/community/flags/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/rate-limit";
+import { notifyModeration } from "@/lib/community/moderation-notify";
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,6 +57,26 @@ export async function POST(request: NextRequest) {
         { error: "Failed to submit flag" },
         { status: 500 }
       );
+    }
+
+    // Notify admins on the FIRST flag for this target (one ping per item, not
+    // per report). Count via the service-role client so RLS doesn't limit it to
+    // the reporter's own rows. Non-blocking: never fail the flag on this.
+    try {
+      const admin = createAdminClient();
+      const column = threadId ? "thread_id" : "answer_id";
+      const targetId = threadId || answerId;
+      const { count } = await admin
+        .from("flags")
+        .select("id", { count: "exact", head: true })
+        .eq(column, targetId);
+      if (count === 1) {
+        void notifyModeration(
+          `🚩 New "${reason}" flag on a community ${threadId ? "thread" : "answer"}. Review it in /admin.`
+        );
+      }
+    } catch {
+      // Notification is best-effort; the flag is already recorded.
     }
 
     return NextResponse.json({ success: true }, { status: 201 });

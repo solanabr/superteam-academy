@@ -46,6 +46,10 @@ const serverEnvSchema = z.object({
   // Anchor build-server proxy.
   BUILD_SERVER_URL: optUrl,
   BUILD_SERVER_API_KEY: optStr,
+  // Optional: Slack/Discord-compatible incoming webhook. When set, the first
+  // flag on a community post pings it so admins know to check the moderation
+  // queue. Unset → no notification (the queue is still available in /admin).
+  MODERATION_WEBHOOK_URL: optUrl,
 });
 
 const parsed = serverEnvSchema.safeParse({
@@ -59,6 +63,7 @@ const parsed = serverEnvSchema.safeParse({
   PROGRAM_AUTHORITY_SECRET: process.env.PROGRAM_AUTHORITY_SECRET,
   BUILD_SERVER_URL: process.env.BUILD_SERVER_URL,
   BUILD_SERVER_API_KEY: process.env.BUILD_SERVER_API_KEY,
+  MODERATION_WEBHOOK_URL: process.env.MODERATION_WEBHOOK_URL,
 });
 
 if (!parsed.success) {
