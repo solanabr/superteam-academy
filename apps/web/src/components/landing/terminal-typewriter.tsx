@@ -15,9 +15,6 @@ interface CodeLine {
   tokens: CodeToken[];
 }
 
-/* ── Index of the comment line with animated dots (0-based) ── */
-const ANIMATED_LINE_INDEX = 13;
-
 /* ── A real-looking Anchor program with richer syntax ── */
 const CODE_LINES: CodeLine[] = [
   // 1: use anchor_lang::prelude::*;
@@ -30,14 +27,14 @@ const CODE_LINES: CodeLine[] = [
       { text: "::prelude::*;", className: "text-text-3" },
     ],
   },
-  // 2: declare_id!("So1arium...");
+  // 2: declare_id!("ACAD...");
   {
     lineNum: 2,
     indent: "",
     tokens: [
       { text: "declare_id!", className: "text-accent" },
       { text: "(", className: "text-text-3" },
-      { text: '"So1arium..."', className: "text-success" },
+      { text: '"ACAD..."', className: "text-success" },
       { text: ");", className: "text-text-3" },
     ],
   },
@@ -128,14 +125,22 @@ const CODE_LINES: CodeLine[] = [
     indent: "",
     tokens: [{ text: "}", className: "text-text-3" }],
   },
-  // 14: // You'll build this. And more...
-  {
-    lineNum: 14,
-    indent: "",
-    tokens: [
-      { text: "// You'll build this. And more", className: "text-success" },
-    ],
-  },
+];
+
+/* ── The session after the code: run the tests, get paid ── */
+const TEST_CMD = "anchor test";
+
+interface OutputLine {
+  text: string;
+  className: string;
+  mark?: "pass";
+}
+
+const TEST_OUTPUT: OutputLine[] = [
+  { text: "mints the certificate", className: "text-text-2", mark: "pass" },
+  { text: "rejects a duplicate mint", className: "text-text-2", mark: "pass" },
+  { text: "owner matches the signer", className: "text-text-2", mark: "pass" },
+  { text: "3 passing (0.4s)", className: "text-success" },
 ];
 
 /* ── Precompute total character count (indent + tokens) ── */
@@ -151,34 +156,85 @@ const TOTAL_CHARS = CODE_LINES.reduce(
   0
 );
 
-/* ── Typing speed config ── */
+/* ── The closing beat: the session hands you the next command ── */
+const START_CMD = "academy start";
+
+/* ── Timing config — one continuous beat after the hero copy lands ── */
 const BASE_DELAY = 18;
 const JITTER = 8;
 const LINE_PAUSE = 100;
 const EMPTY_LINE_PAUSE = 60;
-const INITIAL_DELAY = 300;
-const DOT_CYCLE_MS = 600;
+const INITIAL_DELAY = 950;
+const CMD_PAUSE = 450; // rest between finished code and `$ anchor test`
+const CMD_CHAR_DELAY = 55;
+const OUT_LINE_DELAY = 380;
+const XP_DELAY = 320;
+const START_PAUSE = 900; // beat before the terminal types `academy start`
 
-/* ── Animated dots: cycles  .  ..  ...  (blank)  ── */
-const DOT_STATES = [".", "..", "...", ""];
+/* ── Session phases ── */
+type Phase = "code" | "cmd" | "out" | "done";
 
-function AnimatedDots() {
-  const [dotIndex, setDotIndex] = useState(0);
+/* ── Particle burst offsets for the +XP payoff (rough circle, px) ── */
+const XP_PARTICLES = [
+  { px: 46, py: -34, color: "var(--xp)" },
+  { px: 58, py: 6, color: "var(--primary)" },
+  { px: 34, py: 46, color: "var(--xp)" },
+  { px: -2, py: 58, color: "var(--primary)" },
+  { px: -42, py: 38, color: "var(--xp)" },
+  { px: -56, py: -2, color: "var(--primary)" },
+  { px: -34, py: -44, color: "var(--xp)" },
+  { px: 4, py: -58, color: "var(--primary)" },
+];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDotIndex((prev) => (prev + 1) % DOT_STATES.length);
-    }, DOT_CYCLE_MS);
-    return () => clearInterval(interval);
-  }, []);
-
-  return <span className="text-success">{DOT_STATES[dotIndex]}</span>;
-}
-
-export function TerminalTypewriter() {
+export function TerminalTypewriter({
+  replayLabel,
+  replayHint,
+}: {
+  replayLabel: string;
+  replayHint: string;
+}) {
   const [revealed, setRevealed] = useState(0);
   const [started, setStarted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("code");
+  const [cmdChars, setCmdChars] = useState(0);
+  const [outStep, setOutStep] = useState(0);
+  const [showXp, setShowXp] = useState(false);
+  const [startChars, setStartChars] = useState(0);
+  // bumps on every replay so one-shot effects (boot sweep, burst) re-run
+  const [runId, setRunId] = useState(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const jumpToEnd = useCallback(() => {
+    setStarted(true);
+    setRevealed(TOTAL_CHARS);
+    setPhase("done");
+    setCmdChars(TEST_CMD.length);
+    setOutStep(TEST_OUTPUT.length);
+    setShowXp(true);
+    setStartChars(START_CMD.length);
+  }, []);
+
+  const replay = useCallback(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      jumpToEnd();
+      return;
+    }
+    setRevealed(0);
+    setPhase("code");
+    setCmdChars(0);
+    setOutStep(0);
+    setShowXp(false);
+    setStartChars(0);
+    setRunId((r) => r + 1);
+    setStarted(true);
+  }, [jumpToEnd]);
+
+  /* Reduced motion: skip the show, render the finished session. */
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      jumpToEnd();
+    }
+  }, [jumpToEnd]);
 
   /* ── Figure out which line boundary we're at ── */
   const getLineEndPositions = useCallback(() => {
@@ -191,7 +247,7 @@ export function TerminalTypewriter() {
     return positions;
   }, []);
 
-  /* ── Advance one character with realistic timing ── */
+  /* ── Phase: code — advance one character with realistic timing ── */
   useEffect(() => {
     if (!started) {
       timeoutRef.current = setTimeout(() => setStarted(true), INITIAL_DELAY);
@@ -200,7 +256,14 @@ export function TerminalTypewriter() {
       };
     }
 
-    if (revealed >= TOTAL_CHARS) return;
+    if (phase !== "code") return;
+
+    if (revealed >= TOTAL_CHARS) {
+      timeoutRef.current = setTimeout(() => setPhase("cmd"), CMD_PAUSE);
+      return () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      };
+    }
 
     const lineEnds = getLineEndPositions();
     const isAtLineEnd = lineEnds.includes(revealed);
@@ -232,25 +295,57 @@ export function TerminalTypewriter() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [revealed, started, getLineEndPositions]);
+  }, [revealed, started, phase, getLineEndPositions]);
 
-  /* ── Check if a specific code line is fully revealed ── */
-  const isLineFullyRevealed = useCallback(
-    (lineIndex: number) => {
-      let charsBefore = 0;
-      for (let i = 0; i < lineIndex; i++) {
-        const line = CODE_LINES[i];
-        if (line) charsBefore += lineCharCount(line);
-      }
-      const line = CODE_LINES[lineIndex];
-      if (!line) return false;
-      return revealed >= charsBefore + lineCharCount(line);
-    },
-    [revealed]
-  );
+  /* ── Phase: cmd — type `$ anchor test` ── */
+  useEffect(() => {
+    if (phase !== "cmd") return;
+    if (cmdChars >= TEST_CMD.length) {
+      timeoutRef.current = setTimeout(() => setPhase("out"), OUT_LINE_DELAY);
+    } else {
+      timeoutRef.current = setTimeout(
+        () => setCmdChars((c) => c + 1),
+        CMD_CHAR_DELAY
+      );
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [phase, cmdChars]);
+
+  /* ── Phase: out — print test results, then pay the XP ── */
+  useEffect(() => {
+    if (phase !== "out") return;
+    if (outStep >= TEST_OUTPUT.length) {
+      timeoutRef.current = setTimeout(() => {
+        setShowXp(true);
+        setPhase("done");
+      }, XP_DELAY);
+    } else {
+      timeoutRef.current = setTimeout(
+        () => setOutStep((s) => s + 1),
+        OUT_LINE_DELAY
+      );
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [phase, outStep]);
+
+  /* ── Phase: done — the terminal suggests your next move ── */
+  useEffect(() => {
+    if (phase !== "done" || startChars >= START_CMD.length) return;
+    timeoutRef.current = setTimeout(
+      () => setStartChars((c) => c + 1),
+      startChars === 0 ? START_PAUSE : CMD_CHAR_DELAY + 25
+    );
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [phase, startChars]);
 
   /* ── Render a single line with partial reveal ── */
-  function renderLine(line: CodeLine, charsToShow: number, lineIndex: number) {
+  function renderLine(line: CodeLine, charsToShow: number) {
     if (charsToShow <= 0 && line.tokens.length > 0) return null;
 
     let remaining = charsToShow;
@@ -271,18 +366,14 @@ export function TerminalTypewriter() {
             </span>
           );
         })}
-        {/* Animated dots on the comment line after it's fully typed */}
-        {lineIndex === ANIMATED_LINE_INDEX &&
-          isLineFullyRevealed(ANIMATED_LINE_INDEX) && <AnimatedDots />}
       </>
     );
   }
 
-  /* ── Build visible lines (only those that have started typing) ── */
+  /* ── Build visible code lines (only those that have started typing) ── */
   let charsUsed = 0;
   const visibleLines: Array<{
     line: CodeLine;
-    lineIndex: number;
     charsForLine: number;
     isCurrentLine: boolean;
   }> = [];
@@ -296,7 +387,6 @@ export function TerminalTypewriter() {
     if (charsUsed < revealed || charsForLine > 0) {
       visibleLines.push({
         line,
-        lineIndex: idx,
         charsForLine,
         isCurrentLine: revealed < charsUsed + lineLen && revealed >= charsUsed,
       });
@@ -306,41 +396,138 @@ export function TerminalTypewriter() {
     if (charsUsed >= revealed && charsForLine < lineLen) break;
   }
 
-  const isComplete = revealed >= TOTAL_CHARS;
+  const codeDone = revealed >= TOTAL_CHARS;
+  const cmdVisible = phase !== "code";
+  const cursorOnCmd = phase === "cmd" && cmdChars < TEST_CMD.length;
+
+  const titleLabel =
+    phase === "code"
+      ? "lib.rs"
+      : phase === "done"
+        ? "✓ 3 passing · lib.rs"
+        : "anchor test — running…";
 
   return (
-    <div className="min-h-[400px] rounded-lg border-[2.5px] border-border bg-card shadow-card">
-      {/* Terminal title bar */}
-      <div className="flex items-center gap-2 border-b-[2.5px] border-border px-4 py-3">
-        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--danger-bg)] [border-color:var(--danger-border-s)]" />
-        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--accent-bg)] [border-color:var(--accent-border)]" />
-        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--success-bg)] [border-color:var(--success-border-s)]" />
-        <span className="ml-2 font-mono text-xs text-text-3">lib.rs</span>
-      </div>
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={replayLabel}
+      data-phase={phase}
+      onClick={replay}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          replay();
+        }
+      }}
+      className="term-ring relative cursor-pointer rounded-lg p-[2.5px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      {/* +50 XP — the payoff, in Superteam yellow (outside the clipped screen) */}
+      {showXp && (
+        <div
+          className="term-xp-chip absolute -right-3 -top-3 z-20 rounded-md border-[2.5px] border-[var(--accent-border)] bg-card px-3 py-1.5 font-mono text-sm font-black text-xp shadow-card"
+          aria-hidden="true"
+        >
+          +50 XP
+        </div>
+      )}
+      {/* …and its particle burst */}
+      {showXp && (
+        <div key={`burst-${runId}`} aria-hidden="true">
+          {XP_PARTICLES.map((particle, i) => (
+            <span
+              key={i}
+              className="term-particle z-10"
+              style={
+                {
+                  "--px": `${particle.px}px`,
+                  "--py": `${particle.py}px`,
+                  background: particle.color,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
 
-      {/* Code content — grows line by line */}
-      <div className="p-5 font-mono text-[13px] leading-relaxed">
-        {visibleLines.map(
-          ({ line, lineIndex, charsForLine, isCurrentLine }) => (
+      {/* The screen — everything visual lives inside the clipped frame */}
+      <div
+        className="relative min-h-[555px] overflow-hidden rounded-[6px] bg-card"
+        aria-hidden="true"
+      >
+        <div className="term-scan" />
+        <div key={`sweep-${runId}`} className="term-sweep" />
+
+        {/* Terminal title bar */}
+        <div className="flex items-center gap-2 border-b-[2.5px] border-border px-4 py-3">
+          <div className="h-3 w-3 rounded-full border-[2px] [background:var(--danger-bg)] [border-color:var(--danger-border-s)]" />
+          <div className="h-3 w-3 rounded-full border-[2px] [background:var(--accent-bg)] [border-color:var(--accent-border)]" />
+          <div
+            className={`h-3 w-3 rounded-full border-[2px] [background:var(--success-bg)] [border-color:var(--success-border-s)] ${
+              phase === "done" ? "term-dot-live" : ""
+            }`}
+          />
+          <span
+            className={`ml-2 font-mono text-xs ${phase === "done" ? "text-success" : "text-text-3"}`}
+          >
+            {titleLabel}
+          </span>
+        </div>
+
+        {/* Code content — grows line by line */}
+        <div className="p-5 font-mono text-[13px] leading-relaxed">
+          {visibleLines.map(({ line, charsForLine, isCurrentLine }) => (
             <div key={line.lineNum} className="text-text-3">
               <span className="text-text-3 opacity-50">{line.lineNum}</span>
               {"  "}
-              {renderLine(line, charsForLine, lineIndex)}
-              {isCurrentLine && !isComplete && (
+              {renderLine(line, charsForLine)}
+              {isCurrentLine && !codeDone && (
                 <span className="relative ml-px inline-block">
                   <span className="inline-block h-[16px] w-[8px] translate-y-[3px] animate-pulse bg-primary opacity-80" />
                 </span>
               )}
             </div>
-          )
-        )}
+          ))}
 
-        {/* Cursor on next line after all code is typed */}
-        {isComplete && (
-          <div className="text-text-3">
-            <span className="text-text-3 opacity-50">15</span>
-            {"  "}
-            <span className="inline-block h-[18px] w-[9px] animate-pulse bg-primary opacity-70" />
+          {/* The session: run the tests, watch them pass */}
+          {cmdVisible && (
+            <div className="mt-4 border-t-[2.5px] border-border pt-3">
+              <div className="text-text-2">
+                <span className="font-bold text-primary">$ </span>
+                {TEST_CMD.slice(0, cmdChars)}
+                {cursorOnCmd && (
+                  <span className="ml-px inline-block h-[16px] w-[8px] translate-y-[3px] animate-pulse bg-primary opacity-80" />
+                )}
+              </div>
+
+              {TEST_OUTPUT.slice(0, outStep).map((out, i) => (
+                <div key={i} className={`term-out mt-1 ${out.className}`}>
+                  {out.mark === "pass" && (
+                    <span className="font-bold text-success">{"✓ "}</span>
+                  )}
+                  {out.text}
+                </div>
+              ))}
+
+              {/* Session hands you the prompt — and suggests the next move */}
+              {phase === "done" && (
+                <div className="term-out mt-3 text-text-2">
+                  <span className="font-bold text-primary">$ </span>
+                  <span className="font-bold text-xp">
+                    {START_CMD.slice(0, startChars)}
+                  </span>
+                  <span className="ml-px inline-block h-[16px] w-[8px] translate-y-[3px] animate-pulse bg-primary opacity-80" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Replay affordance once the session settles */}
+        {startChars >= START_CMD.length && (
+          <div className="term-replay-hint absolute bottom-3 right-4 font-mono text-[10px] font-bold uppercase tracking-widest text-text-3">
+            {"↻ "}
+            {replayHint}
           </div>
         )}
       </div>
