@@ -98,7 +98,7 @@
       "imageUrl": "Pegar URL de imagen",
       "insert": "Insertar",
       "uploading": "Subiendo…",
-      "imageHint": "Las imágenes subidas se alojan en el sitio. Las URLs pegadas deben ser de un host permitido para mostrarse.",
+      "imageHint": "Las imágenes se alojan en el sitio (una URL pegada también se importa), así que siempre se muestran.",
       "imageUploadError": "Error al subir la imagen",
       "imageUrlInvalid": "Introduce una URL de imagen válida",
       "videoUrl": "URL del vídeo",
