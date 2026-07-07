@@ -44,4 +44,20 @@ describe("assist-budget", () => {
     rpc.mockResolvedValue({ data: null, error: { message: "x" } });
     await expect(getAssistsUsed("u", "l")).resolves.toBe(MAX_PAID_ASSISTS);
   });
+
+  it("FAILS CLOSED on an empty rows array", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    await expect(spendAssist("u", "l")).resolves.toEqual({
+      allowed: false,
+      used: MAX_PAID_ASSISTS,
+    });
+  });
+
+  it("FAILS CLOSED on a malformed row (missing allowed)", async () => {
+    rpc.mockResolvedValue({ data: [{ used: 2 }], error: null });
+    await expect(spendAssist("u", "l")).resolves.toEqual({
+      allowed: false,
+      used: MAX_PAID_ASSISTS,
+    });
+  });
 });

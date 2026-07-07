@@ -18,7 +18,10 @@ export async function spendAssist(
     );
     const row = Array.isArray(data) ? data[0] : data;
     if (error || !row || typeof row.allowed !== "boolean") {
-      console.warn("[assist-budget] spend failed, denying:", error?.message);
+      console.warn(
+        "[assist-budget] spend failed, denying:",
+        error?.message ?? JSON.stringify(data)
+      );
       return { allowed: false, used: MAX_PAID_ASSISTS };
     }
     return { allowed: row.allowed, used: row.used };

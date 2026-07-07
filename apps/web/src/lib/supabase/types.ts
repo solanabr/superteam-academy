@@ -906,6 +906,31 @@ export type Database = {
         };
         Returns: boolean;
       };
+      spend_challenge_assist: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+          p_max_paid: number;
+        };
+        Returns: {
+          allowed: boolean;
+          used: number;
+        }[];
+      };
+      get_challenge_assists: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+        };
+        Returns: number;
+      };
+      reset_challenge_assists: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+        };
+        Returns: undefined;
+      };
       award_xp: {
         Args: {
           p_amount: number;
