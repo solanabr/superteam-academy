@@ -371,7 +371,7 @@ export function LessonPageClient({
       <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
         <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
           {/* Left pane: description + test cases + navigation + discussion */}
-          <div className="contents lg:flex lg:w-1/2 lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border">
+          <div className="contents lg:flex lg:w-2/5 lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border">
             <div className="w-full">
               <div className="space-y-6 p-4 sm:p-6">
                 {/* Lesson top bar */}
@@ -534,10 +534,12 @@ export function LessonPageClient({
           </div>
 
           {/* Right pane: code editor + output only */}
-          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-1/2">
+          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-3/5">
             {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}
+                courseSlug={courseSlug}
+                lessonSlug={lesson.slug}
                 description=""
                 initialCode={lesson.code}
                 language={lesson.language === "rust" ? "rust" : "typescript"}

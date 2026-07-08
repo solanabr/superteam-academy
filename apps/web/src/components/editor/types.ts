@@ -31,7 +31,6 @@ export interface ChallengeState {
   status: "idle" | "running" | "success" | "error";
   executionResult: ExecutionResult | null;
   hintsRevealed: number;
-  solutionRevealed: boolean;
 }
 
 export interface CodeEditorProps {
@@ -61,12 +60,15 @@ export interface ChallengeRunnerProps {
   onSubmit: () => void;
   isComplete: boolean;
   xpReward: number;
-  solutionRevealed: boolean;
   className?: string;
 }
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** Sanity slug of the parent course — threaded to the AI Partner route. */
+  courseSlug: string;
+  /** Sanity slug of this lesson — threaded to the AI Partner route. */
+  lessonSlug: string;
   description: string;
   initialCode: string;
   language: EditorLanguage;
@@ -74,12 +76,6 @@ export interface ChallengeInterfaceProps {
   isDeployable?: boolean;
   tests: TestCase[];
   hints: string[];
-  /**
-   * Reference solution. Optional and omitted in normal lesson delivery — the
-   * solution is the answer key and is no longer shipped to the client (P0-C4).
-   * When undefined, the "Show solution" affordance is hidden.
-   */
-  solution?: string;
   xpReward: number;
   earnedXp?: number | null;
   isAlreadyCompleted?: boolean;
