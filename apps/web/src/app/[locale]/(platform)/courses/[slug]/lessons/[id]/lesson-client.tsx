@@ -421,71 +421,75 @@ export function LessonPageClient({
     );
 
     return (
-      <div className="grid-bg -mx-4 -my-6 min-h-[calc(100vh-60px)] bg-[var(--bg)] md:-mx-8 md:-my-8">
-        {/* Full-width header */}
-        <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
-          <Link
-            href={`/${locale}/courses/${courseSlug}`}
-            className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
-          >
-            <ArrowLeft size={16} weight="bold" />
-            {tCommon("back")}
-          </Link>
-          <h1 className="min-w-0 flex-1 truncate font-display text-base font-black text-text sm:text-lg">
-            {challengeTitle}
-          </h1>
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
-              <Lightning size={14} weight="fill" />+
-              {earnedXp ?? courseXpPerLesson} XP
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs tabular-nums text-text-3">
-                {currentIndex + 1}/{allLessons.length}
+      <div className="grid-bg -mx-4 -my-6 min-h-[calc(100vh-60px)] bg-[var(--bg)] px-4 py-4 md:-mx-8 md:-my-8 md:px-8 md:py-6">
+        {/* Header + workspace share one rounded card; the header's border-b is
+            an internal divider, so there's no stray double line. */}
+        <div className="overflow-hidden rounded-xl border-[2.5px] border-border shadow-card">
+          {/* Header — challenge title, XP, progress */}
+          <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
+            <Link
+              href={`/${locale}/courses/${courseSlug}`}
+              className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
+            >
+              <ArrowLeft size={16} weight="bold" />
+              {tCommon("back")}
+            </Link>
+            <h1 className="min-w-0 flex-1 truncate font-display text-base font-black text-text sm:text-lg">
+              {challengeTitle}
+            </h1>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+                <Lightning size={14} weight="fill" />+
+                {earnedXp ?? courseXpPerLesson} XP
               </span>
-              <ProgressBar
-                value={currentIndex + 1}
-                max={allLessons.length}
-                className="w-16 sm:w-20"
-              />
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs tabular-nums text-text-3">
+                  {currentIndex + 1}/{allLessons.length}
+                </span>
+                <ProgressBar
+                  value={currentIndex + 1}
+                  max={allLessons.length}
+                  className="w-16 sm:w-20"
+                />
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        {/* Workspace — fills the screen below the header at lg; stacks (auto height) below lg */}
-        <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-140px)]">
-          {lesson.code && lesson.tests ? (
-            <ChallengeInterface
-              lessonId={lesson._id}
-              courseSlug={courseSlug}
-              lessonSlug={lesson.slug}
-              taskSlot={taskSlot}
-              description=""
-              initialCode={lesson.code}
-              language={lesson.language === "rust" ? "rust" : "typescript"}
-              buildType={
-                lesson.type === "challenge" ? lesson.buildType : undefined
-              }
-              isDeployable={
-                lesson.type === "challenge" && "deployable" in lesson
-                  ? lesson.deployable
-                  : undefined
-              }
-              tests={lesson.tests}
-              hints={lesson.hints ?? []}
-              xpReward={courseXpPerLesson}
-              earnedXp={earnedXp}
-              isAlreadyCompleted={isCompleted}
-              isEnrolled={isEnrolled}
-              onEnroll={handleEnroll}
-              hideDescription
-              className="h-full"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center [background:var(--input)]">
-              <p className="text-text-3">{t("content")}</p>
-            </div>
-          )}
+          {/* Workspace — fills the screen below the header at lg; stacks (auto height) below lg */}
+          <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-168px)]">
+            {lesson.code && lesson.tests ? (
+              <ChallengeInterface
+                lessonId={lesson._id}
+                courseSlug={courseSlug}
+                lessonSlug={lesson.slug}
+                taskSlot={taskSlot}
+                description=""
+                initialCode={lesson.code}
+                language={lesson.language === "rust" ? "rust" : "typescript"}
+                buildType={
+                  lesson.type === "challenge" ? lesson.buildType : undefined
+                }
+                isDeployable={
+                  lesson.type === "challenge" && "deployable" in lesson
+                    ? lesson.deployable
+                    : undefined
+                }
+                tests={lesson.tests}
+                hints={lesson.hints ?? []}
+                xpReward={courseXpPerLesson}
+                earnedXp={earnedXp}
+                isAlreadyCompleted={isCompleted}
+                isEnrolled={isEnrolled}
+                onEnroll={handleEnroll}
+                hideDescription
+                className="h-full"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center [background:var(--input)]">
+                <p className="text-text-3">{t("content")}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Full-width nav + discussion below (page scrolls to reach) */}
