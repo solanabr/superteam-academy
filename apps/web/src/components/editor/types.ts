@@ -86,12 +86,6 @@ export interface ChallengeInterfaceProps {
   className?: string;
 }
 
-export interface AiSuggestion {
-  line: number;
-  message: string;
-  severity: "error" | "warning" | "info";
-}
-
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
 }

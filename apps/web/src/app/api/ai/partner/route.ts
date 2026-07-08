@@ -17,7 +17,7 @@ import type {
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Input caps mirror /api/ai/suggest (reused per the task-4 brief).
+// Input caps for the AI Partner route.
 const MAX_BODY_CHARS = 50_000;
 const MAX_CODE_CHARS = 20_000;
 const MAX_MESSAGE_CHARS = 4_000;

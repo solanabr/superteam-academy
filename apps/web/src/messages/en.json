@@ -304,15 +304,7 @@
     "askQuestion": "Ask a Question",
     "signInToAsk": "Sign in to ask a question",
     "dismissSuggestion": "Dismiss",
-    "dismissAllSuggestions": "Dismiss All",
-    "askAi": "Ask AI",
-    "aiChat": "AI Tutor",
-    "aiChatPlaceholder": "Ask about this lesson...",
-    "aiChatSend": "Send",
-    "aiChatLimit": "{remaining} of {total} messages left",
-    "aiChatLimitReached": "You've used all {total} AI messages for this lesson.",
-    "aiChatError": "Could not get a response. Try again.",
-    "aiChatThinking": "Thinking..."
+    "dismissAllSuggestions": "Dismiss All"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",

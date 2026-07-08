@@ -304,15 +304,7 @@
     "askQuestion": "Hacer una Pregunta",
     "signInToAsk": "Inicia sesión para hacer una pregunta",
     "dismissSuggestion": "Descartar",
-    "dismissAllSuggestions": "Descartar Todas",
-    "askAi": "Preguntar IA",
-    "aiChat": "Tutor IA",
-    "aiChatPlaceholder": "Pregunta sobre esta leccion...",
-    "aiChatSend": "Enviar",
-    "aiChatLimit": "{remaining} de {total} mensajes restantes",
-    "aiChatLimitReached": "Has usado todos los {total} mensajes de IA para esta leccion.",
-    "aiChatError": "No se pudo obtener una respuesta. Intentalo de nuevo.",
-    "aiChatThinking": "Pensando..."
+    "dismissAllSuggestions": "Descartar Todas"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
