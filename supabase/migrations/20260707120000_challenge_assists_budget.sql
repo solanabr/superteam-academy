@@ -1,5 +1,5 @@
 -- Migration: challenge_assists_budget
--- The AI Partner challenge page (#XXX) meters PAID AI assists per (user, lesson).
+-- The AI Partner challenge page meters PAID AI assists per (user, lesson).
 -- The paid cap is the cost ceiling, so the spend RPC is atomic (one
 -- INSERT..ON CONFLICT) and the TS wrapper (apps/web/src/lib/ai/assist-budget.ts)
 -- treats any error as "deny" — fail CLOSED, the opposite of check_rate_limit.
