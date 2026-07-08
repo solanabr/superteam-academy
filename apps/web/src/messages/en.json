@@ -305,9 +305,9 @@
     "signInToAsk": "Sign in to ask a question",
     "dismissSuggestion": "Dismiss",
     "dismissAllSuggestions": "Dismiss All",
-    "instructions": "Instructions",
-    "collapseBrief": "Collapse instructions",
-    "expandBrief": "Expand instructions"
+    "task": "Task",
+    "toggleTask": "Toggle the task brief",
+    "closeTask": "Close the task brief"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
@@ -832,7 +832,14 @@
   "aiPartner": {
     "title": "AI Partner",
     "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
-    "collapse": "Collapse",
+    "start": {
+      "greeting": "How can I help you build this?",
+      "explain": "Explain this challenge",
+      "explainPrompt": "Explain what this challenge is asking me to build and the approach to take — don't write the full solution for me.",
+      "approach": "How should I get started?",
+      "approachPrompt": "What are the first steps and key concepts I need to solve this challenge?"
+    },
+    "collapse": "Collapse AI Partner",
     "expand": "Expand AI Partner",
     "meter": {
       "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",

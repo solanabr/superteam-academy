@@ -80,13 +80,35 @@ export function AiPartnerPane({
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
       </div>
 
-      <MessageList
-        messages={messages}
-        onApply={onApply}
-        getCode={getCode}
-        onVerify={verifyCheck}
-        className="flex-1"
-      />
+      {messages.length === 0 ? (
+        <div className="flex flex-1 flex-col gap-2 overflow-auto px-4 py-4">
+          <p className="text-sm font-medium text-text">{t("start.greeting")}</p>
+          <button
+            type="button"
+            onClick={() => ask(t("start.explainPrompt"))}
+            disabled={loading || budgetExhausted}
+            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("start.explain")}
+          </button>
+          <button
+            type="button"
+            onClick={() => ask(t("start.approachPrompt"))}
+            disabled={loading || budgetExhausted}
+            className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("start.approach")}
+          </button>
+        </div>
+      ) : (
+        <MessageList
+          messages={messages}
+          onApply={onApply}
+          getCode={getCode}
+          onVerify={verifyCheck}
+          className="flex-1"
+        />
+      )}
 
       {error && (
         <div className="shrink-0 border-t border-border px-4 py-2">

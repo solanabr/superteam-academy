@@ -11,6 +11,7 @@ import {
   X,
   CaretLeft,
   Sparkle,
+  FileText,
 } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
@@ -51,6 +52,8 @@ export function ChallengeInterface({
   lessonId,
   courseSlug,
   lessonSlug,
+  taskOpen,
+  onToggleTask,
   description,
   initialCode,
   language,
@@ -332,17 +335,35 @@ export function ChallengeInterface({
         {/* Toolbar */}
         <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
           <div className="flex items-center justify-between">
-            <ChallengeRunner
-              code={code}
-              tests={tests}
-              language={language}
-              buildType={buildType}
-              isDeployable={isDeployable}
-              onResult={handleResult}
-              onSubmit={handleSubmit}
-              isComplete={isComplete}
-              xpReward={xpReward}
-            />
+            <div className="flex items-center gap-2">
+              {onToggleTask && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleTask}
+                  className={cn(
+                    "hidden gap-1 text-xs lg:inline-flex",
+                    taskOpen && "text-accent [background:var(--accent-bg)]"
+                  )}
+                  aria-label={t("toggleTask")}
+                  aria-pressed={taskOpen}
+                >
+                  <FileText size={16} weight="duotone" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t("task")}</span>
+                </Button>
+              )}
+              <ChallengeRunner
+                code={code}
+                tests={tests}
+                language={language}
+                buildType={buildType}
+                isDeployable={isDeployable}
+                onResult={handleResult}
+                onSubmit={handleSubmit}
+                isComplete={isComplete}
+                xpReward={xpReward}
+              />
+            </div>
 
             <div className="flex items-center gap-1">
               <Button

@@ -68,6 +68,10 @@ export interface ChallengeInterfaceProps {
   courseSlug: string;
   /** Sanity slug of this lesson — threaded to the AI Partner route. */
   lessonSlug: string;
+  /** Whether the task-brief drawer is open (lg+); drives the toolbar toggle. */
+  taskOpen?: boolean;
+  /** Toggle the task-brief drawer from the editor toolbar. */
+  onToggleTask?: () => void;
   description: string;
   initialCode: string;
   language: EditorLanguage;

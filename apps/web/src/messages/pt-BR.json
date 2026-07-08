@@ -305,9 +305,9 @@
     "signInToAsk": "Entre para fazer uma pergunta",
     "dismissSuggestion": "Dispensar",
     "dismissAllSuggestions": "Dispensar Todas",
-    "instructions": "Instruções",
-    "collapseBrief": "Recolher instruções",
-    "expandBrief": "Expandir instruções"
+    "task": "Tarefa",
+    "toggleTask": "Mostrar ou ocultar a tarefa",
+    "closeTask": "Fechar a tarefa"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
@@ -832,7 +832,14 @@
   "aiPartner": {
     "title": "Parceiro de IA",
     "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
-    "collapse": "Recolher",
+    "start": {
+      "greeting": "Como posso te ajudar a construir isto?",
+      "explain": "Explique este desafio",
+      "explainPrompt": "Explique o que este desafio está pedindo para eu construir e qual abordagem seguir — não escreva a solução completa por mim.",
+      "approach": "Por onde eu começo?",
+      "approachPrompt": "Quais são os primeiros passos e os conceitos principais que eu preciso para resolver este desafio?"
+    },
+    "collapse": "Recolher Parceiro de IA",
     "expand": "Expandir Parceiro de IA",
     "meter": {
       "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",

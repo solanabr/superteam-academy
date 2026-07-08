@@ -183,7 +183,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
             fontLigatures: true,
             tabSize: 2,
             insertSpaces: true,
-            wordWrap: "on",
+            wordWrap: "off",
             scrollBeyondLastLine: false,
             automaticLayout: true,
             padding: { top: 16, bottom: 16 },

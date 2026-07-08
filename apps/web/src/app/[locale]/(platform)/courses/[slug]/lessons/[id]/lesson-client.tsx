@@ -20,8 +20,6 @@ import {
   ArrowLeft,
   ChatCircle,
   CaretLeft,
-  CaretRight,
-  BookOpen,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -215,17 +213,20 @@ export function LessonPageClient({
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
   >(null);
-  const [briefCollapsed, setBriefCollapsed] = useState(false);
+  // The task brief is a slide-over drawer at lg+ (below lg it renders inline).
+  // Open by default so a first-time learner sees the task; once they close it
+  // the choice persists. SSR default is `true` (open) so there's no hydration
+  // mismatch — localStorage doesn't exist on the server.
+  const [taskOpen, setTaskOpen] = useState(true);
 
-  // Read persisted collapse state on mount only (SSR default is `false` so
-  // there's no hydration mismatch — localStorage doesn't exist on the server).
   useEffect(() => {
-    setBriefCollapsed(localStorage.getItem("academy:brief-collapsed") === "1");
+    const stored = localStorage.getItem("academy:task-open");
+    if (stored !== null) setTaskOpen(stored === "1");
   }, []);
 
-  const toggleBrief = useCallback((next: boolean) => {
-    setBriefCollapsed(next);
-    localStorage.setItem("academy:brief-collapsed", next ? "1" : "0");
+  const toggleTask = useCallback((next: boolean) => {
+    setTaskOpen(next);
+    localStorage.setItem("academy:task-open", next ? "1" : "0");
   }, []);
 
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
@@ -383,38 +384,23 @@ export function LessonPageClient({
 
     return (
       <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
-        <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+        <div className="flex flex-1 flex-col lg:relative lg:flex-row lg:overflow-hidden">
           {/* Left pane: description + test cases + navigation + discussion.
               Independently collapsible to a thin rail at lg+ (persisted to
               localStorage) so the editor can reclaim the width; collapse
               never applies below lg — `contents` keeps the mobile stacked
               flow untouched. */}
+          {/* Task brief — a slide-over drawer at lg+ (translate off-canvas when
+              closed); below lg `contents` keeps it inline in the stacked flow. */}
           <div
             className={cn(
-              "contents lg:flex lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border lg:transition-[width] lg:duration-200",
-              briefCollapsed ? "lg:w-[48px]" : "lg:w-2/5"
+              "contents lg:absolute lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-full lg:max-w-[480px] lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border lg:shadow-2xl lg:transition-transform lg:duration-300 lg:[background:var(--bg)]",
+              taskOpen
+                ? "lg:translate-x-0"
+                : "lg:pointer-events-none lg:-translate-x-full"
             )}
           >
-            {/* Collapsed rail — lg+ only; below lg this never renders. */}
-            {briefCollapsed && (
-              <button
-                type="button"
-                onClick={() => toggleBrief(false)}
-                aria-label={t("expandBrief")}
-                className="hidden h-full w-full flex-col items-center justify-center gap-3 py-4 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:flex"
-              >
-                <CaretRight size={16} weight="bold" aria-hidden="true" />
-                <BookOpen size={18} weight="duotone" aria-hidden="true" />
-                <span
-                  className="font-display text-xs font-bold uppercase tracking-wide"
-                  style={{ writingMode: "vertical-rl" }}
-                >
-                  {t("instructions")}
-                </span>
-              </button>
-            )}
-
-            <div className={cn("w-full", briefCollapsed && "lg:hidden")}>
+            <div className="w-full">
               <div className="space-y-6 p-4 sm:p-6">
                 {/* Lesson top bar */}
                 <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
@@ -427,8 +413,8 @@ export function LessonPageClient({
                   </Link>
                   <button
                     type="button"
-                    onClick={() => toggleBrief(true)}
-                    aria-label={t("collapseBrief")}
+                    onClick={() => toggleTask(false)}
+                    aria-label={t("closeTask")}
                     className="hidden rounded-md p-1 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:inline-flex"
                   >
                     <CaretLeft size={16} weight="bold" aria-hidden="true" />
@@ -544,12 +530,7 @@ export function LessonPageClient({
             </div>
 
             {/* Discussion — order-last so it appears after code editor on mobile */}
-            <div
-              className={cn(
-                "order-last w-full px-4 pb-12 sm:px-6 lg:order-none",
-                briefCollapsed && "lg:hidden"
-              )}
-            >
+            <div className="order-last w-full px-4 pb-12 sm:px-6 lg:order-none">
               <div className="border-t border-border pt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
@@ -588,14 +569,27 @@ export function LessonPageClient({
             </div>
           </div>
 
-          {/* Right pane: code editor + output only. Flexes to fill whatever
-              width the (independently collapsible) left pane leaves. */}
+          {/* Backdrop — dims the editor while the task drawer is open (lg+
+              only); click anywhere to close and drop back into coding. */}
+          {taskOpen && (
+            <div
+              aria-hidden="true"
+              onClick={() => toggleTask(false)}
+              className="hidden lg:absolute lg:inset-0 lg:z-20 lg:block lg:[background:rgb(0_0_0/0.35)]"
+            />
+          )}
+
+          {/* Right pane: full-width code editor + AI dock. The task brief
+              overlays this rather than shrinking it, so the editor never
+              gets starved into wrapping. */}
           <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:min-w-0 lg:flex-1">
             {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}
                 courseSlug={courseSlug}
                 lessonSlug={lesson.slug}
+                taskOpen={taskOpen}
+                onToggleTask={() => toggleTask(!taskOpen)}
                 description=""
                 initialCode={lesson.code}
                 language={lesson.language === "rust" ? "rust" : "typescript"}
