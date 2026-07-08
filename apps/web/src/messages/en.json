@@ -523,6 +523,7 @@
     "codeEditor": "Code editor",
     "clearOutput": "Clear output",
     "resizeOutputPanel": "Resize output panel",
+    "resizeTaskPanel": "Resize task panel",
     "toggleTheme": "Toggle theme",
     "platformNavigation": "Platform navigation",
     "expandSidebar": "Expand sidebar",

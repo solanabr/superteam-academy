@@ -9,9 +9,6 @@ import {
   Trophy,
   Lightning,
   X,
-  CaretLeft,
-  Sparkle,
-  FileText,
 } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
@@ -52,8 +49,7 @@ export function ChallengeInterface({
   lessonId,
   courseSlug,
   lessonSlug,
-  taskOpen,
-  onToggleTask,
+  taskSlot,
   description,
   initialCode,
   language,
@@ -74,7 +70,6 @@ export function ChallengeInterface({
   const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
   const tA11y = useTranslations("a11y");
-  const tAiPartner = useTranslations("aiPartner");
 
   // Default to true for backwards compatibility
   const isEnrolled = isEnrolledProp ?? true;
@@ -88,20 +83,8 @@ export function ChallengeInterface({
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [aiCollapsed, setAiCollapsed] = useState(false);
 
   const editorHandle = useRef<CodeEditorHandle>(null);
-
-  // Read persisted collapse state on mount only (SSR default is `false` so
-  // there's no hydration mismatch — localStorage doesn't exist on the server).
-  useEffect(() => {
-    setAiCollapsed(localStorage.getItem("academy:ai-collapsed") === "1");
-  }, []);
-
-  const toggleAi = useCallback((next: boolean) => {
-    setAiCollapsed(next);
-    localStorage.setItem("academy:ai-collapsed", next ? "1" : "0");
-  }, []);
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
@@ -117,11 +100,12 @@ export function ChallengeInterface({
   }, [isAlreadyCompleted]);
   const [showDescription, setShowDescription] = useState(true);
   const [descHeight, setDescHeight] = useState(180);
-  const [panelHeight, setPanelHeight] = useState(100);
+  const [panelHeight, setPanelHeight] = useState(200);
+  const [taskHeight, setTaskHeight] = useState(320);
   const resizeRef = useRef<{
     startY: number;
     startHeight: number;
-    target: "description" | "output";
+    target: "description" | "output" | "task";
   } | null>(null);
 
   const handleCodeChange = useCallback((newCode: string) => {
@@ -205,24 +189,34 @@ export function ChallengeInterface({
   }, [lessonId]);
 
   const handleResizeStart = useCallback(
-    (target: "description" | "output") => (e: React.MouseEvent) => {
+    (target: "description" | "output" | "task") => (e: React.MouseEvent) => {
       e.preventDefault();
-      const startHeight = target === "description" ? descHeight : panelHeight;
+      const startHeight =
+        target === "description"
+          ? descHeight
+          : target === "task"
+            ? taskHeight
+            : panelHeight;
       resizeRef.current = { startY: e.clientY, startHeight, target };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (!resizeRef.current) return;
-        // Description: drag down = taller, Output: drag up = taller
+        // Description/task: drag down = taller (resizer sits below the panel).
+        // Output: drag up = taller (resizer sits above the panel).
         const delta =
-          resizeRef.current.target === "description"
-            ? moveEvent.clientY - resizeRef.current.startY
-            : resizeRef.current.startY - moveEvent.clientY;
+          resizeRef.current.target === "output"
+            ? resizeRef.current.startY - moveEvent.clientY
+            : moveEvent.clientY - resizeRef.current.startY;
+        const [min, max] =
+          resizeRef.current.target === "task" ? [140, 600] : [80, 500];
         const newHeight = Math.max(
-          80,
-          Math.min(500, resizeRef.current.startHeight + delta)
+          min,
+          Math.min(max, resizeRef.current.startHeight + delta)
         );
         if (resizeRef.current.target === "description") {
           setDescHeight(newHeight);
+        } else if (resizeRef.current.target === "task") {
+          setTaskHeight(newHeight);
         } else {
           setPanelHeight(newHeight);
         }
@@ -237,7 +231,7 @@ export function ChallengeInterface({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [descHeight, panelHeight]
+    [descHeight, panelHeight, taskHeight]
   );
 
   return (
@@ -247,237 +241,225 @@ export function ChallengeInterface({
         className
       )}
     >
-      {/* Editor column: description/toolbar/hints + editor + output.
-          Majority width at lg+; full width above the AI Partner pane below lg. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:min-w-0">
-        {/* Description toggle + test cases (hidden when rendered externally) */}
-        {!hideDescription && (
-          <>
-            <button
-              onClick={() => setShowDescription(!showDescription)}
-              className="flex w-full shrink-0 items-center gap-2 border-b border-border px-4 py-2 text-left text-sm font-medium hover:[background:var(--card-hover)]"
-              type="button"
-            >
-              <span
-                className="inline-block text-sm transition-transform duration-200"
-                style={{
-                  transform: showDescription ? "rotate(180deg)" : "rotate(0)",
-                }}
-                aria-hidden="true"
+      {/* LEFT workspace: description/toolbar + editor + output. ~62% width at
+          lg+ (rail takes lg:w-2/5); below lg, `contents` flattens this into
+          the root flex-col so its children order alongside the rail's. */}
+      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
+        <div className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1">
+          {/* Description toggle + test cases (hidden when rendered externally) */}
+          {!hideDescription && (
+            <>
+              <button
+                onClick={() => setShowDescription(!showDescription)}
+                className="flex w-full shrink-0 items-center gap-2 border-b border-border px-4 py-2 text-left text-sm font-medium hover:[background:var(--card-hover)]"
+                type="button"
               >
-                ▾
-              </span>
-              {t("challenge")}
-              <span className="ml-auto flex items-center gap-1 font-display text-xs font-black text-xp">
-                <Lightning size={14} weight="duotone" className="text-xp" />
-                {xpReward} XP
-              </span>
-            </button>
-          </>
-        )}
+                <span
+                  className="inline-block text-sm transition-transform duration-200"
+                  style={{
+                    transform: showDescription ? "rotate(180deg)" : "rotate(0)",
+                  }}
+                  aria-hidden="true"
+                >
+                  ▾
+                </span>
+                {t("challenge")}
+                <span className="ml-auto flex items-center gap-1 font-display text-xs font-black text-xp">
+                  <Lightning size={14} weight="duotone" className="text-xp" />
+                  {xpReward} XP
+                </span>
+              </button>
+            </>
+          )}
 
-        {/* Challenge description */}
-        {!hideDescription && showDescription && (
-          <>
-            <div
-              className="shrink-0 overflow-auto px-4 py-3"
-              style={{ height: descHeight, minHeight: 80 }}
-            >
+          {/* Challenge description */}
+          {!hideDescription && showDescription && (
+            <>
               <div
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(description),
-                }}
-              />
+                className="shrink-0 overflow-auto px-4 py-3"
+                style={{ height: descHeight, minHeight: 80 }}
+              >
+                <div
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(description),
+                  }}
+                />
 
-              {/* Visible test cases — hidden tests are already stripped
+                {/* Visible test cases — hidden tests are already stripped
                 server-side (P0-C4), so every test here is safe to show. */}
-              {tests.length > 0 && (
-                <div className="mt-3">
-                  <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
-                    {t("testCases")}
-                  </h4>
-                  <div className="space-y-1.5">
-                    {tests.map((tc) => (
-                      <div
-                        key={tc.id}
-                        className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                      >
-                        <span className="font-medium">{tc.description}</span>
-                        <div className="mt-1 flex gap-4 font-mono text-text-3">
-                          <span>
-                            {t("input")}: <code>{tc.input}</code>
-                          </span>
-                          <span>
-                            {t("expected")}: <code>{tc.expectedOutput}</code>
-                          </span>
+                {tests.length > 0 && (
+                  <div className="mt-3">
+                    <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
+                      {t("testCases")}
+                    </h4>
+                    <div className="space-y-1.5">
+                      {tests.map((tc) => (
+                        <div
+                          key={tc.id}
+                          className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
+                        >
+                          <span className="font-medium">{tc.description}</span>
+                          <div className="mt-1 flex gap-4 font-mono text-text-3">
+                            <span>
+                              {t("input")}: <code>{tc.input}</code>
+                            </span>
+                            <span>
+                              {t("expected")}: <code>{tc.expectedOutput}</code>
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Description resizer */}
-            <div
-              className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
-              onMouseDown={handleResizeStart("description")}
-              role="separator"
-              aria-orientation="horizontal"
-              tabIndex={0}
-            >
-              <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
-            </div>
-          </>
-        )}
+              {/* Description resizer */}
+              <div
+                className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
+                onMouseDown={handleResizeStart("description")}
+                role="separator"
+                aria-orientation="horizontal"
+                tabIndex={0}
+              >
+                <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
+              </div>
+            </>
+          )}
 
-        {/* Toolbar */}
-        <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {onToggleTask && (
+          {/* Toolbar */}
+          <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ChallengeRunner
+                  code={code}
+                  tests={tests}
+                  language={language}
+                  buildType={buildType}
+                  isDeployable={isDeployable}
+                  onResult={handleResult}
+                  onSubmit={handleSubmit}
+                  isComplete={isComplete}
+                  xpReward={xpReward}
+                />
+              </div>
+
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onToggleTask}
-                  className={cn(
-                    "hidden gap-1 text-xs lg:inline-flex",
-                    taskOpen && "text-accent [background:var(--accent-bg)]"
-                  )}
-                  aria-label={t("toggleTask")}
-                  aria-pressed={taskOpen}
+                  onClick={handleReset}
+                  className="gap-1 text-xs"
+                  aria-label={t("resetCode")}
                 >
-                  <FileText size={16} weight="duotone" aria-hidden="true" />
-                  <span className="hidden sm:inline">{t("task")}</span>
+                  <ArrowCounterClockwise
+                    size={16}
+                    weight="duotone"
+                    aria-hidden="true"
+                  />
+                  <span className="hidden sm:inline">{t("resetCode")}</span>
                 </Button>
-              )}
-              <ChallengeRunner
-                code={code}
-                tests={tests}
-                language={language}
-                buildType={buildType}
-                isDeployable={isDeployable}
-                onResult={handleResult}
-                onSubmit={handleSubmit}
-                isComplete={isComplete}
-                xpReward={xpReward}
-              />
+              </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleReset}
-                className="gap-1 text-xs"
-                aria-label={t("resetCode")}
+          {/* Editor */}
+          <div className="relative min-h-0 flex-1">
+            <CodeEditor
+              ref={editorHandle}
+              lessonId={lessonId}
+              initialCode={initialCode}
+              language={language}
+              value={code}
+              onChange={handleCodeChange}
+              className="h-full rounded-none border-0"
+            />
+
+            {/* Enroll overlay — tests passed but not enrolled */}
+            {pendingSubmit && !isEnrolled && !isComplete && (
+              <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
+                <div className="flex flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
+                  <Trophy
+                    size={32}
+                    weight="duotone"
+                    className="text-accent"
+                    aria-hidden="true"
+                  />
+                  <p className="font-display text-lg font-black">
+                    {t("testsPassed")}
+                  </p>
+                  <p className="text-sm text-text-3">
+                    {t("enrollToSaveProgress")}
+                  </p>
+                  <Button variant="push" size="lg" onClick={onEnroll}>
+                    {tCourses("enrollNow")}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Saving overlay — shown while API call is in flight */}
+            {isSaving && !isComplete && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
+                <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
+                  <div className="sol-spinner" aria-hidden="true" />
+                  <p className="text-sm text-text-3">{t("savingProgress")}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Failure overlay — the server rejected this submission */}
+            {serverError && !isSaving && !isComplete && (
+              <div
+                role="alert"
+                className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
               >
-                <ArrowCounterClockwise
-                  size={16}
-                  weight="duotone"
-                  aria-hidden="true"
-                />
-                <span className="hidden sm:inline">{t("resetCode")}</span>
-              </Button>
-            </div>
+                <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 text-center shadow-card">
+                  <X
+                    size={28}
+                    weight="bold"
+                    className="text-danger"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm text-text-3">{serverError}</p>
+                  <Button
+                    variant="pushOutline"
+                    size="default"
+                    onClick={() => setServerError(null)}
+                  >
+                    {tCommon("retry")}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Success overlay */}
+            {isComplete && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
+                <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
+                  <Trophy
+                    size={32}
+                    weight="duotone"
+                    className="text-accent"
+                    aria-hidden="true"
+                  />
+                  <p className="font-display text-lg font-black">
+                    {t("lessonComplete")}
+                  </p>
+                  <p className="text-sm text-success">
+                    {t("xpEarned", { amount: earnedXp ?? xpReward })}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Editor */}
-        <div className="relative min-h-0 flex-1">
-          <CodeEditor
-            ref={editorHandle}
-            lessonId={lessonId}
-            initialCode={initialCode}
-            language={language}
-            value={code}
-            onChange={handleCodeChange}
-            className="h-full rounded-none border-0"
-          />
-
-          {/* Enroll overlay — tests passed but not enrolled */}
-          {pendingSubmit && !isEnrolled && !isComplete && (
-            <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
-              <div className="flex flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
-                <Trophy
-                  size={32}
-                  weight="duotone"
-                  className="text-accent"
-                  aria-hidden="true"
-                />
-                <p className="font-display text-lg font-black">
-                  {t("testsPassed")}
-                </p>
-                <p className="text-sm text-text-3">
-                  {t("enrollToSaveProgress")}
-                </p>
-                <Button variant="push" size="lg" onClick={onEnroll}>
-                  {tCourses("enrollNow")}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Saving overlay — shown while API call is in flight */}
-          {isSaving && !isComplete && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
-              <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
-                <div className="sol-spinner" aria-hidden="true" />
-                <p className="text-sm text-text-3">{t("savingProgress")}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Failure overlay — the server rejected this submission */}
-          {serverError && !isSaving && !isComplete && (
-            <div
-              role="alert"
-              className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]"
-            >
-              <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 text-center shadow-card">
-                <X
-                  size={28}
-                  weight="bold"
-                  className="text-danger"
-                  aria-hidden="true"
-                />
-                <p className="text-sm text-text-3">{serverError}</p>
-                <Button
-                  variant="pushOutline"
-                  size="default"
-                  onClick={() => setServerError(null)}
-                >
-                  {tCommon("retry")}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Success overlay */}
-          {isComplete && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
-              <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
-                <Trophy
-                  size={32}
-                  weight="duotone"
-                  className="text-accent"
-                  aria-hidden="true"
-                />
-                <p className="font-display text-lg font-black">
-                  {t("lessonComplete")}
-                </p>
-                <p className="text-sm text-success">
-                  {t("xpEarned", { amount: earnedXp ?? xpReward })}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Resizable divider */}
+        {/* Editor/output resizer — unchanged mechanism, hidden below lg since
+            the panels stack in natural flow there instead. */}
         <div
-          className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
+          className="lg:group hidden h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
           onMouseDown={handleResizeStart("output")}
           role="separator"
           aria-orientation="horizontal"
@@ -489,7 +471,7 @@ export function ChallengeInterface({
 
         {/* Output panel */}
         <div
-          className="shrink-0"
+          className="order-3 shrink-0 lg:order-none"
           style={{ height: panelHeight, minHeight: 100 }}
         >
           <OutputPanel
@@ -501,49 +483,42 @@ export function ChallengeInterface({
         </div>
       </div>
 
-      {/* AI Partner column — real width at lg+ (chat-centric, not a sidebar
-          sliver); collapses to a stacked bottom sheet below lg since a tab
-          would hide the editor entirely on mobile. Independently collapsible
-          to a thin rail at lg+ (persisted to localStorage) so the editor can
-          reclaim the width; collapse never applies below lg. */}
-      <div
-        className={cn(
-          "flex h-[420px] shrink-0 flex-col border-t-[2.5px] border-border transition-[width] duration-200 lg:h-auto lg:border-l-[2.5px] lg:border-t-0",
-          aiCollapsed ? "lg:w-[48px] xl:w-[48px]" : "lg:w-[380px] xl:w-[420px]"
-        )}
-      >
-        {/* Below lg, aiCollapsed never applies — the bottom sheet always
-            shows the full pane. At lg+, collapsed swaps in the rail. */}
-        {aiCollapsed && (
-          <button
-            type="button"
-            onClick={() => toggleAi(false)}
-            aria-label={tAiPartner("expand")}
-            className="hidden h-full w-full flex-col items-center justify-center gap-3 py-4 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:flex"
-          >
-            <CaretLeft size={16} weight="bold" aria-hidden="true" />
-            <Sparkle size={18} weight="duotone" aria-hidden="true" />
-            <span
-              className="font-display text-xs font-bold uppercase tracking-wide"
-              style={{ writingMode: "vertical-rl" }}
-            >
-              {tAiPartner("title")}
-            </span>
-          </button>
-        )}
-        <AiPartnerPane
-          lessonSlug={lessonSlug}
-          courseSlug={courseSlug}
-          hints={hints}
-          getCode={() => code}
-          getTestSummary={() => summarize(challengeState.executionResult)}
-          onApply={(proposed) => setCode(proposed)}
-          onCollapse={() => toggleAi(true)}
-          className={cn(
-            "h-full rounded-none border-0",
-            aiCollapsed && "lg:hidden"
-          )}
-        />
+      {/* RIGHT rail: task brief on top, AI Partner below, resizable split.
+          ~38% width at lg+; below lg, `contents` flattens this into the root
+          flex-col so task/AI take their `order` slots alongside the workspace. */}
+      <div className="contents lg:flex lg:w-2/5 lg:flex-col lg:overflow-hidden lg:border-l-[2.5px] lg:border-border">
+        {/* Task brief */}
+        <div
+          className="order-1 overflow-auto max-lg:!h-auto lg:order-none lg:shrink-0"
+          style={{ height: taskHeight }}
+        >
+          {taskSlot}
+        </div>
+
+        {/* Task/AI resizer — same drag mechanic as the editor/output one. */}
+        <div
+          className="lg:group hidden h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
+          onMouseDown={handleResizeStart("task")}
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label={tA11y("resizeTaskPanel")}
+          tabIndex={0}
+        >
+          <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
+        </div>
+
+        {/* AI Partner */}
+        <div className="order-4 lg:order-none lg:min-h-0 lg:flex-1">
+          <AiPartnerPane
+            lessonSlug={lessonSlug}
+            courseSlug={courseSlug}
+            hints={hints}
+            getCode={() => code}
+            getTestSummary={() => summarize(challengeState.executionResult)}
+            onApply={(proposed) => setCode(proposed)}
+            className="h-full rounded-none border-0"
+          />
+        </div>
       </div>
     </div>
   );

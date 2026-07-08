@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
 
@@ -68,10 +69,8 @@ export interface ChallengeInterfaceProps {
   courseSlug: string;
   /** Sanity slug of this lesson — threaded to the AI Partner route. */
   lessonSlug: string;
-  /** Whether the task-brief drawer is open (lg+); drives the toolbar toggle. */
-  taskOpen?: boolean;
-  /** Toggle the task-brief drawer from the editor toolbar. */
-  onToggleTask?: () => void;
+  /** Task-brief content rendered in the right rail's top panel (lg+) / first in reading order (below lg). */
+  taskSlot?: ReactNode;
   description: string;
   initialCode: string;
   language: EditorLanguage;

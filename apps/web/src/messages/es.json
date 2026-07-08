@@ -523,6 +523,7 @@
     "codeEditor": "Editor de código",
     "clearOutput": "Limpiar salida",
     "resizeOutputPanel": "Redimensionar panel de salida",
+    "resizeTaskPanel": "Redimensionar panel de tarea",
     "toggleTheme": "Cambiar tema",
     "platformNavigation": "Navegación de la plataforma",
     "expandSidebar": "Expandir barra lateral",
