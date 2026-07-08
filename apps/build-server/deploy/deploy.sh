@@ -24,6 +24,14 @@ echo "==> Deploying to Cloud Run"
 # X-API-Key, not GCP IAM. To gate ingress at the platform edge instead, swap
 # --no-invoker-iam-check for --no-allow-unauthenticated and have the caller mint a
 # Google ID token (see deploy/HARDENING.md).
+# COST: buildable-challenge compiles are sporadic, so the service scales to zero
+# (--min-instances 0) and bills CPU+memory ONLY while a build runs — idle cost is
+# ~$0 instead of ~$300-400/mo for a warm 4vCPU/8GiB instance. Trade-off: a ~10-30s
+# cold start on the first build after an idle period; --cpu-boost gives full CPU
+# during startup to soften it. Do NOT add --no-cpu-throttling (it bills CPU 24/7
+# and undoes the savings). 4vCPU/8GiB is kept: a build copies the pre-built
+# target/ into tmpfs (/tmp, RAM-backed) then runs cargo-build-sbf, so trimming
+# memory risks OOM for a fraction-of-a-cent saving now that you only pay per build.
 gcloud run deploy "${SERVICE_NAME}" \
   --image "${IMAGE}" \
   --region "${REGION}" \
@@ -32,8 +40,9 @@ gcloud run deploy "${SERVICE_NAME}" \
   --memory 8Gi \
   --timeout 300 \
   --concurrency 2 \
-  --min-instances 1 \
-  --max-instances 3 \
+  --min-instances 0 \
+  --max-instances 2 \
+  --cpu-boost \
   --set-env-vars "ACADEMY_API_KEY=${ACADEMY_API_KEY},ALLOWED_ORIGIN=${ALLOWED_ORIGIN:-https://solarium.courses},MAX_CONCURRENT_BUILDS=2,BUILD_TIMEOUT_SECS=300,CACHE_TTL_SECS=1800,LOG_FORMAT=json,RUST_LOG=info" \
   --no-invoker-iam-check
 
