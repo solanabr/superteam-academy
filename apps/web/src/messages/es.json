@@ -840,5 +840,44 @@
       "course": "No hay discusiones sobre este curso aún.",
       "lesson": "No hay preguntas sobre esta lección aún. ¡Haz una!"
     }
+  },
+  "aiPartner": {
+    "title": "Compañero de IA",
+    "subtitle": "¿Atascado? Pide una pista, una corrección propuesta o haz una pregunta.",
+    "meter": {
+      "label": "{free} de 2 pistas gratuitas usadas, {paid} de {max} asistencias pagas usadas",
+      "freeLabel": "Pistas gratuitas",
+      "paidLabel": "Asistencias pagas"
+    },
+    "messages": {
+      "empty": "Pide una pista o una corrección propuesta para empezar.",
+      "you": "Tú",
+      "ai": "Compañero de IA",
+      "loading": "Pensando...",
+      "error": "Algo salió mal. Inténtalo de nuevo."
+    },
+    "actions": {
+      "hint": "Pista",
+      "propose": "Proponer corrección",
+      "askPlaceholder": "Haz una pregunta sobre este desafío...",
+      "askSend": "Enviar",
+      "budgetExhausted": "Ya usaste las {max} asistencias pagas de este desafío."
+    },
+    "diff": {
+      "current": "Actual",
+      "proposed": "Propuesto",
+      "rationale": "Por qué este cambio",
+      "accept": "Aceptar",
+      "reject": "Descartar",
+      "stale": "Tu código cambió — esta propuesta quedó desactualizada.",
+      "checkPrompt": "Una pregunta rápida antes de aplicar:",
+      "checkIncorrect": "No es así.",
+      "lineAdded": "Añadido",
+      "lineRemoved": "Eliminado"
+    },
+    "a11y": {
+      "assistMeter": "Uso de asistencia de IA",
+      "diffCard": "Cambio de código propuesto"
+    }
   }
 }

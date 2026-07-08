@@ -840,5 +840,44 @@
       "course": "Nenhuma discussão sobre este curso ainda.",
       "lesson": "Nenhuma pergunta sobre esta aula ainda. Faça uma!"
     }
+  },
+  "aiPartner": {
+    "title": "Parceiro de IA",
+    "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
+    "meter": {
+      "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",
+      "freeLabel": "Dicas gratuitas",
+      "paidLabel": "Assistências pagas"
+    },
+    "messages": {
+      "empty": "Peça uma dica ou uma correção proposta para começar.",
+      "you": "Você",
+      "ai": "Parceiro de IA",
+      "loading": "Pensando...",
+      "error": "Algo deu errado. Tente novamente."
+    },
+    "actions": {
+      "hint": "Dica",
+      "propose": "Propor correção",
+      "askPlaceholder": "Faça uma pergunta sobre este desafio...",
+      "askSend": "Enviar",
+      "budgetExhausted": "Você já usou todas as {max} assistências pagas deste desafio."
+    },
+    "diff": {
+      "current": "Atual",
+      "proposed": "Proposto",
+      "rationale": "Por que essa mudança",
+      "accept": "Aceitar",
+      "reject": "Descartar",
+      "stale": "Seu código mudou — esta proposta está desatualizada.",
+      "checkPrompt": "Uma pergunta rápida antes de aplicar:",
+      "checkIncorrect": "Quase lá.",
+      "lineAdded": "Adicionado",
+      "lineRemoved": "Removido"
+    },
+    "a11y": {
+      "assistMeter": "Uso de assistência de IA",
+      "diffCard": "Mudança de código proposta"
+    }
   }
 }

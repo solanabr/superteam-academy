@@ -840,5 +840,44 @@
       "course": "No discussions about this course yet.",
       "lesson": "No questions about this lesson yet. Ask one!"
     }
+  },
+  "aiPartner": {
+    "title": "AI Partner",
+    "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
+    "meter": {
+      "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",
+      "freeLabel": "Free hints",
+      "paidLabel": "Paid assists"
+    },
+    "messages": {
+      "empty": "Ask for a hint or a proposed fix to get started.",
+      "you": "You",
+      "ai": "AI Partner",
+      "loading": "Thinking...",
+      "error": "Something went wrong. Try again."
+    },
+    "actions": {
+      "hint": "Hint",
+      "propose": "Propose fix",
+      "askPlaceholder": "Ask a question about this challenge...",
+      "askSend": "Send",
+      "budgetExhausted": "You've used all {max} paid assists for this challenge."
+    },
+    "diff": {
+      "current": "Current",
+      "proposed": "Proposed",
+      "rationale": "Why this change",
+      "accept": "Accept",
+      "reject": "Dismiss",
+      "stale": "Your code changed — this proposal is out of date.",
+      "checkPrompt": "Quick check before applying:",
+      "checkIncorrect": "Not quite.",
+      "lineAdded": "Added",
+      "lineRemoved": "Removed"
+    },
+    "a11y": {
+      "assistMeter": "AI assist usage",
+      "diffCard": "Proposed code change"
+    }
   }
 }
