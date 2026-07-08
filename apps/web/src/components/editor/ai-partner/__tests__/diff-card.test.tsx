@@ -65,6 +65,15 @@ it("gates Accept behind a correct answer and only applies on the Accept click", 
   // the assertion matches a literal backslash-n.
   fireEvent.click(screen.getByRole("button", { name: /accept/i }));
   expect(onAccept).toHaveBeenCalledWith("a\\nb");
+
+  // After applying, the card confirms and retires the action buttons.
+  expect(screen.getByText(/applied to your code/i)).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /accept/i })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /dismiss/i })
+  ).not.toBeInTheDocument();
 });
 
 it("Accept is disabled when stale", () => {

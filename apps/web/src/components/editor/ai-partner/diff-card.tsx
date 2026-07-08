@@ -96,6 +96,7 @@ export function DiffCard({
   const [wrongPick, setWrongPick] = useState<number | null>(null);
   const [wrongExplanation, setWrongExplanation] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const lines = useMemo(
     () => diffLines(current, proposed),
@@ -132,8 +133,9 @@ export function DiffCard({
   // Applying the change is gated on a verified-correct answer — never fires
   // otherwise, so the code only changes on an intentional, earned Accept.
   const handleAccept = () => {
-    if (stale || correctPick === null) return;
+    if (stale || correctPick === null || accepted) return;
     onAccept(proposed);
+    setAccepted(true);
   };
 
   return (
@@ -210,7 +212,7 @@ export function DiffCard({
         </div>
       )}
 
-      {!stale && (
+      {!stale && !accepted && (
         <div className="space-y-2 rounded-md border-[2px] p-3 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]">
           <p className="text-xs font-semibold text-text">
             {t("diff.checkPrompt")}
@@ -264,30 +266,37 @@ export function DiffCard({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          onClick={handleAccept}
-          disabled={stale || correctPick === null}
-          title={correctPick === null ? t("diff.acceptLocked") : undefined}
-          className="gap-1.5"
-        >
-          <Check size={14} weight="bold" aria-hidden="true" />
-          {t("diff.accept")}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onReject}
-          className="gap-1.5"
-        >
-          <X size={14} weight="bold" aria-hidden="true" />
-          {t("diff.reject")}
-        </Button>
-      </div>
+      {accepted ? (
+        <div className="flex items-center gap-1.5 text-sm font-medium text-success">
+          <Check size={16} weight="bold" aria-hidden="true" />
+          {t("diff.applied")}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleAccept}
+            disabled={stale || correctPick === null}
+            title={correctPick === null ? t("diff.acceptLocked") : undefined}
+            className="gap-1.5"
+          >
+            <Check size={14} weight="bold" aria-hidden="true" />
+            {t("diff.accept")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onReject}
+            className="gap-1.5"
+          >
+            <X size={14} weight="bold" aria-hidden="true" />
+            {t("diff.reject")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

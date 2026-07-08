@@ -876,6 +876,7 @@
       "checkVerifyError": "No se pudo verificar tu respuesta. Inténtalo de nuevo.",
       "checkCorrect": "Correcto — ya puedes aplicar el cambio.",
       "acceptLocked": "Responde correctamente para aplicar este cambio.",
+      "applied": "Aplicado a tu código",
       "lineAdded": "Añadido",
       "lineRemoved": "Eliminado"
     },
