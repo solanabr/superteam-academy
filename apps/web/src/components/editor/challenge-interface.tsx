@@ -102,11 +102,15 @@ export function ChallengeInterface({
   const [descHeight, setDescHeight] = useState(180);
   const [panelHeight, setPanelHeight] = useState(200);
   const [taskHeight, setTaskHeight] = useState(320);
+  const [railWidth, setRailWidth] = useState(460);
   const resizeRef = useRef<{
     startY: number;
     startHeight: number;
     target: "description" | "output" | "task";
   } | null>(null);
+  const railResizeRef = useRef<{ startX: number; startWidth: number } | null>(
+    null
+  );
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -232,6 +236,36 @@ export function ChallengeInterface({
       document.addEventListener("mouseup", handleMouseUp);
     },
     [descHeight, panelHeight, taskHeight]
+  );
+
+  // Horizontal (X-axis) drag for the workspace/rail split — the rail is on the
+  // right, so dragging the handle left widens it. Mirrors the vertical
+  // resizers' pattern, just on clientX/width instead of clientY/height.
+  const handleRailResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      railResizeRef.current = { startX: e.clientX, startWidth: railWidth };
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!railResizeRef.current) return;
+        const delta = railResizeRef.current.startX - moveEvent.clientX;
+        const next = Math.max(
+          320,
+          Math.min(720, railResizeRef.current.startWidth + delta)
+        );
+        setRailWidth(next);
+      };
+
+      const handleMouseUp = () => {
+        railResizeRef.current = null;
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [railWidth]
   );
 
   return (
@@ -483,10 +517,26 @@ export function ChallengeInterface({
         </div>
       </div>
 
+      {/* Workspace/rail horizontal resizer — lg+ only; drag to rebalance the
+          editor against the task/AI rail. */}
+      <div
+        className="group hidden w-1.5 shrink-0 cursor-col-resize border-x border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)] lg:relative lg:block"
+        onMouseDown={handleRailResizeStart}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={tA11y("resizeRailPanel")}
+        tabIndex={0}
+      >
+        <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
+      </div>
+
       {/* RIGHT rail: task brief on top, AI Partner below, resizable split.
-          ~38% width at lg+; below lg, `contents` flattens this into the root
-          flex-col so task/AI take their `order` slots alongside the workspace. */}
-      <div className="contents lg:flex lg:w-2/5 lg:flex-col lg:overflow-hidden lg:border-l-[2.5px] lg:border-border">
+          Width is drag-adjustable (railWidth); below lg, `contents` flattens
+          this into the root flex-col so task/AI take their `order` slots. */}
+      <div
+        className="contents lg:flex lg:shrink-0 lg:flex-col lg:overflow-hidden"
+        style={{ width: railWidth }}
+      >
         {/* Task brief */}
         <div
           className="order-1 overflow-auto max-lg:!h-auto lg:order-none lg:shrink-0"

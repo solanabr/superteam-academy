@@ -524,6 +524,7 @@
     "clearOutput": "Clear output",
     "resizeOutputPanel": "Resize output panel",
     "resizeTaskPanel": "Resize task panel",
+    "resizeRailPanel": "Resize the side panel width",
     "toggleTheme": "Toggle theme",
     "platformNavigation": "Platform navigation",
     "expandSidebar": "Expand sidebar",

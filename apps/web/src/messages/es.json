@@ -524,6 +524,7 @@
     "clearOutput": "Limpiar salida",
     "resizeOutputPanel": "Redimensionar panel de salida",
     "resizeTaskPanel": "Redimensionar panel de tarea",
+    "resizeRailPanel": "Redimensionar el ancho del panel lateral",
     "toggleTheme": "Cambiar tema",
     "platformNavigation": "Navegación de la plataforma",
     "expandSidebar": "Expandir barra lateral",
