@@ -45,10 +45,16 @@ steps:
       - '300'
       - '--concurrency'
       - '2'
+      # COST: scale to zero — buildable compiles are sporadic, so bill CPU+memory
+      # only while a build runs (idle ~$0 vs ~$300-400/mo for a warm 4vCPU/8GiB
+      # instance). --cpu-boost softens the ~10-30s cold start on the first build
+      # after idle. Keep 4vCPU/8GiB: the build target/ lives in tmpfs (RAM), so
+      # trimming memory risks OOM. Never add --no-cpu-throttling (bills CPU 24/7).
       - '--min-instances'
-      - '1'
+      - '0'
       - '--max-instances'
-      - '3'
+      - '2'
+      - '--cpu-boost'
       # Egress hardening (P1-8): route ALL outbound traffic through a locked-down
       # VPC so untrusted user-code compilation cannot reach the network. This must
       # be paired with a VPC firewall rule that DENIES egress for the network tag
