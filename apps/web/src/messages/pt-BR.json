@@ -869,6 +869,7 @@
       "rationale": "Por que essa mudança",
       "accept": "Aceitar",
       "reject": "Descartar",
+      "dismissed": "Proposta descartada.",
       "stale": "Seu código mudou — esta proposta está desatualizada.",
       "checkPrompt": "Uma pergunta rápida antes de aplicar:",
       "checkIncorrect": "Quase lá.",

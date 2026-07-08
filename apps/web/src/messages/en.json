@@ -869,6 +869,7 @@
       "rationale": "Why this change",
       "accept": "Accept",
       "reject": "Dismiss",
+      "dismissed": "Proposal dismissed.",
       "stale": "Your code changed — this proposal is out of date.",
       "checkPrompt": "Quick check before applying:",
       "checkIncorrect": "Not quite.",

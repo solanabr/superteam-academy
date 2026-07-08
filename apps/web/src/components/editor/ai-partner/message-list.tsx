@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User, Sparkle, Lightbulb } from "@phosphor-icons/react";
 import { DiffCard } from "./diff-card";
@@ -37,7 +38,7 @@ function MessageBubble({
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
           role === "user"
             ? "text-primary [background:var(--primary-dim)]"
-            : "bg-xp-light text-xp"
+            : "bg-xp-dim text-xp"
         )}
         aria-hidden="true"
       >
@@ -65,6 +66,7 @@ export function MessageList({
   className,
 }: MessageListProps) {
   const t = useTranslations("aiPartner");
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
 
   const lastProposeIndex = messages.reduce(
     (last, message, index) =>
@@ -123,6 +125,21 @@ export function MessageList({
         const { response } = message;
 
         if (response.type === "propose") {
+          if (dismissed.has(index)) {
+            return (
+              <MessageBubble
+                key={index}
+                role="ai"
+                icon={<Sparkle size={14} weight="duotone" aria-hidden="true" />}
+                label={t("messages.ai")}
+              >
+                <p className="text-sm italic text-text-3">
+                  {t("diff.dismissed")}
+                </p>
+              </MessageBubble>
+            );
+          }
+
           return (
             <MessageBubble
               key={index}
@@ -136,7 +153,9 @@ export function MessageList({
                 rationale={response.rationale}
                 check={response.check}
                 onAccept={onApply}
-                onReject={() => {}}
+                onReject={() =>
+                  setDismissed((prev) => new Set(prev).add(index))
+                }
                 stale={index !== lastProposeIndex}
                 className="w-full"
               />

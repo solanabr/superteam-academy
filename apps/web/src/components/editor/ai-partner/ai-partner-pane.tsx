@@ -5,8 +5,8 @@ import { Robot } from "@phosphor-icons/react";
 import { AssistMeter } from "./assist-meter";
 import { MessageList } from "./message-list";
 import { QuickActions } from "./quick-actions";
-import { useAiPartner } from "@/lib/ai/use-ai-partner";
 import { cn } from "@/lib/utils";
+import { useAiPartner } from "@/lib/ai/use-ai-partner";
 
 interface AiPartnerPaneProps {
   lessonSlug: string;
