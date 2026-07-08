@@ -19,8 +19,12 @@ import {
   CheckCircle,
   ArrowLeft,
   ChatCircle,
+  CaretLeft,
+  CaretRight,
+  BookOpen,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
@@ -211,6 +215,19 @@ export function LessonPageClient({
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
   >(null);
+  const [briefCollapsed, setBriefCollapsed] = useState(false);
+
+  // Read persisted collapse state on mount only (SSR default is `false` so
+  // there's no hydration mismatch — localStorage doesn't exist on the server).
+  useEffect(() => {
+    setBriefCollapsed(localStorage.getItem("academy:brief-collapsed") === "1");
+  }, []);
+
+  const toggleBrief = useCallback((next: boolean) => {
+    setBriefCollapsed(next);
+    localStorage.setItem("academy:brief-collapsed", next ? "1" : "0");
+  }, []);
+
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
     courseId,
     userId,
@@ -367,9 +384,37 @@ export function LessonPageClient({
     return (
       <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
         <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
-          {/* Left pane: description + test cases + navigation + discussion */}
-          <div className="contents lg:flex lg:w-2/5 lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border">
-            <div className="w-full">
+          {/* Left pane: description + test cases + navigation + discussion.
+              Independently collapsible to a thin rail at lg+ (persisted to
+              localStorage) so the editor can reclaim the width; collapse
+              never applies below lg — `contents` keeps the mobile stacked
+              flow untouched. */}
+          <div
+            className={cn(
+              "contents lg:flex lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border lg:transition-[width] lg:duration-200",
+              briefCollapsed ? "lg:w-[48px]" : "lg:w-2/5"
+            )}
+          >
+            {/* Collapsed rail — lg+ only; below lg this never renders. */}
+            {briefCollapsed && (
+              <button
+                type="button"
+                onClick={() => toggleBrief(false)}
+                aria-label={t("expandBrief")}
+                className="hidden h-full w-full flex-col items-center justify-center gap-3 py-4 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:flex"
+              >
+                <CaretRight size={16} weight="bold" aria-hidden="true" />
+                <BookOpen size={18} weight="duotone" aria-hidden="true" />
+                <span
+                  className="font-display text-xs font-bold uppercase tracking-wide"
+                  style={{ writingMode: "vertical-rl" }}
+                >
+                  {t("instructions")}
+                </span>
+              </button>
+            )}
+
+            <div className={cn("w-full", briefCollapsed && "lg:hidden")}>
               <div className="space-y-6 p-4 sm:p-6">
                 {/* Lesson top bar */}
                 <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
@@ -380,6 +425,14 @@ export function LessonPageClient({
                     <ArrowLeft size={16} weight="bold" />
                     {tCommon("back")}
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => toggleBrief(true)}
+                    aria-label={t("collapseBrief")}
+                    className="hidden rounded-md p-1 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:inline-flex"
+                  >
+                    <CaretLeft size={16} weight="bold" aria-hidden="true" />
+                  </button>
                   <div className="ml-auto flex items-center gap-2 sm:gap-4">
                     <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
                       <Lightning size={14} weight="fill" />+
@@ -491,7 +544,12 @@ export function LessonPageClient({
             </div>
 
             {/* Discussion — order-last so it appears after code editor on mobile */}
-            <div className="order-last w-full px-4 pb-12 sm:px-6 lg:order-none">
+            <div
+              className={cn(
+                "order-last w-full px-4 pb-12 sm:px-6 lg:order-none",
+                briefCollapsed && "lg:hidden"
+              )}
+            >
               <div className="border-t border-border pt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
@@ -530,8 +588,9 @@ export function LessonPageClient({
             </div>
           </div>
 
-          {/* Right pane: code editor + output only */}
-          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-3/5">
+          {/* Right pane: code editor + output only. Flexes to fill whatever
+              width the (independently collapsible) left pane leaves. */}
+          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:min-w-0 lg:flex-1">
             {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}

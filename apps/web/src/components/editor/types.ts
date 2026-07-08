@@ -30,7 +30,6 @@ export interface ExecutionResult {
 export interface ChallengeState {
   status: "idle" | "running" | "success" | "error";
   executionResult: ExecutionResult | null;
-  hintsRevealed: number;
 }
 
 export interface CodeEditorProps {

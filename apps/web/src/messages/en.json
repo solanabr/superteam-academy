@@ -304,7 +304,10 @@
     "askQuestion": "Ask a Question",
     "signInToAsk": "Sign in to ask a question",
     "dismissSuggestion": "Dismiss",
-    "dismissAllSuggestions": "Dismiss All"
+    "dismissAllSuggestions": "Dismiss All",
+    "instructions": "Instructions",
+    "collapseBrief": "Collapse instructions",
+    "expandBrief": "Expand instructions"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
@@ -829,6 +832,8 @@
   "aiPartner": {
     "title": "AI Partner",
     "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
+    "collapse": "Collapse",
+    "expand": "Expand AI Partner",
     "meter": {
       "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",
       "freeLabel": "Free hints",

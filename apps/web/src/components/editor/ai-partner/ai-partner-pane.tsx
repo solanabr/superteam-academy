@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Robot } from "@phosphor-icons/react";
+import { Robot, CaretRight } from "@phosphor-icons/react";
 import { AssistMeter } from "./assist-meter";
 import { MessageList } from "./message-list";
 import { QuickActions } from "./quick-actions";
@@ -15,6 +15,10 @@ interface AiPartnerPaneProps {
   getCode: () => string;
   getTestSummary: () => string;
   onApply: (proposedCode: string) => void;
+  /** Optional collapse control — when provided, a chevron button renders in
+   * the header (desktop-only rail collapse). Omitting it keeps the pane
+   * exactly as before, so existing callers/tests are unaffected. */
+  onCollapse?: () => void;
   className?: string;
 }
 
@@ -25,6 +29,7 @@ export function AiPartnerPane({
   getCode,
   getTestSummary,
   onApply,
+  onCollapse,
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
@@ -60,6 +65,16 @@ export function AiPartnerPane({
           <h2 className="font-display text-sm font-extrabold text-text">
             {t("title")}
           </h2>
+          {onCollapse && (
+            <button
+              type="button"
+              onClick={onCollapse}
+              aria-label={t("collapse")}
+              className="ml-auto hidden rounded-md p-1 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:inline-flex"
+            >
+              <CaretRight size={16} weight="bold" aria-hidden="true" />
+            </button>
+          )}
         </div>
         <p className="text-xs text-text-3">{t("subtitle")}</p>
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />

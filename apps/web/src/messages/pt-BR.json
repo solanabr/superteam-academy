@@ -304,7 +304,10 @@
     "askQuestion": "Fazer uma Pergunta",
     "signInToAsk": "Entre para fazer uma pergunta",
     "dismissSuggestion": "Dispensar",
-    "dismissAllSuggestions": "Dispensar Todas"
+    "dismissAllSuggestions": "Dispensar Todas",
+    "instructions": "Instruções",
+    "collapseBrief": "Recolher instruções",
+    "expandBrief": "Expandir instruções"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
@@ -829,6 +832,8 @@
   "aiPartner": {
     "title": "Parceiro de IA",
     "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
+    "collapse": "Recolher",
+    "expand": "Expandir Parceiro de IA",
     "meter": {
       "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",
       "freeLabel": "Dicas gratuitas",

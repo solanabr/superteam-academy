@@ -5,11 +5,12 @@ import DOMPurify from "isomorphic-dompurify";
 import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
 import {
-  Lightbulb,
   ArrowCounterClockwise,
   Trophy,
   Lightning,
   X,
+  CaretLeft,
+  Sparkle,
 } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
@@ -70,6 +71,7 @@ export function ChallengeInterface({
   const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
   const tA11y = useTranslations("a11y");
+  const tAiPartner = useTranslations("aiPartner");
 
   // Default to true for backwards compatibility
   const isEnrolled = isEnrolledProp ?? true;
@@ -78,15 +80,25 @@ export function ChallengeInterface({
   const [challengeState, setChallengeState] = useState<ChallengeState>({
     status: "idle",
     executionResult: null,
-    hintsRevealed: 0,
   });
   const [isComplete, setIsComplete] = useState(isAlreadyCompleted ?? false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [hiddenHints, setHiddenHints] = useState<Set<number>>(new Set());
+  const [aiCollapsed, setAiCollapsed] = useState(false);
 
   const editorHandle = useRef<CodeEditorHandle>(null);
+
+  // Read persisted collapse state on mount only (SSR default is `false` so
+  // there's no hydration mismatch — localStorage doesn't exist on the server).
+  useEffect(() => {
+    setAiCollapsed(localStorage.getItem("academy:ai-collapsed") === "1");
+  }, []);
+
+  const toggleAi = useCallback((next: boolean) => {
+    setAiCollapsed(next);
+    localStorage.setItem("academy:ai-collapsed", next ? "1" : "0");
+  }, []);
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
@@ -136,16 +148,8 @@ export function ChallengeInterface({
     setChallengeState({
       status: "idle",
       executionResult: null,
-      hintsRevealed: 0,
     });
   }, [initialCode, lessonId]);
-
-  const handleRevealHint = useCallback(() => {
-    setChallengeState((prev) => ({
-      ...prev,
-      hintsRevealed: Math.min(prev.hintsRevealed + 1, hints.length),
-    }));
-  }, [hints.length]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -233,18 +237,6 @@ export function ChallengeInterface({
     [descHeight, panelHeight]
   );
 
-  const revealedHints = hints
-    .slice(0, challengeState.hintsRevealed)
-    .map((hint, i) => ({ hint, originalIndex: i }));
-  const visibleHints = revealedHints.filter(
-    (h) => !hiddenHints.has(h.originalIndex)
-  );
-  const hasMoreHints = challengeState.hintsRevealed < hints.length;
-
-  const handleDismissHint = useCallback((index: number) => {
-    setHiddenHints((prev) => new Set(prev).add(index));
-  }, []);
-
   return (
     <div
       className={cn(
@@ -294,36 +286,6 @@ export function ChallengeInterface({
                   __html: DOMPurify.sanitize(description),
                 }}
               />
-
-              {/* Hints */}
-              {visibleHints.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {visibleHints.map(({ hint, originalIndex }) => (
-                    <div
-                      key={`hint-${originalIndex}`}
-                      className="flex items-start gap-2 rounded-lg border-[2px] px-3 py-2.5 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
-                    >
-                      <Lightbulb
-                        size={16}
-                        weight="fill"
-                        className="mt-0.5 shrink-0 text-accent"
-                        aria-hidden="true"
-                      />
-                      <span className="flex-1 text-xs leading-relaxed text-text">
-                        {hint}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDismissHint(originalIndex)}
-                        className="mt-0.5 shrink-0 rounded-md p-0.5 text-text-3 transition-colors hover:bg-border hover:text-text"
-                        aria-label={tCommon("close")}
-                      >
-                        <X size={12} weight="bold" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               {/* Visible test cases — hidden tests are already stripped
                 server-side (P0-C4), so every test here is safe to show. */}
@@ -383,22 +345,6 @@ export function ChallengeInterface({
             />
 
             <div className="flex items-center gap-1">
-              {hasMoreHints && challengeState.status !== "success" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRevealHint}
-                  className="gap-1 text-xs"
-                  aria-label={t("showHint")}
-                >
-                  <Lightbulb size={16} weight="duotone" aria-hidden="true" />
-                  <span className="hidden sm:inline">{t("showHint")}</span>
-                  <span className="text-text-3">
-                    ({challengeState.hintsRevealed}/{hints.length})
-                  </span>
-                </Button>
-              )}
-
               <Button
                 variant="ghost"
                 size="sm"
@@ -416,36 +362,6 @@ export function ChallengeInterface({
             </div>
           </div>
         </div>
-
-        {/* Hints (shown inline when description is hidden, i.e. split-panel mode) */}
-        {hideDescription && visibleHints.length > 0 && (
-          <div className="shrink-0 space-y-2 border-b border-border bg-card px-4 py-3">
-            {visibleHints.map(({ hint, originalIndex }) => (
-              <div
-                key={`hint-${originalIndex}`}
-                className="flex items-start gap-2.5 rounded-lg border-[2px] px-3 py-2.5 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
-              >
-                <Lightbulb
-                  size={16}
-                  weight="fill"
-                  className="mt-0.5 shrink-0 text-accent"
-                  aria-hidden="true"
-                />
-                <span className="flex-1 text-xs leading-relaxed text-text">
-                  {hint}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleDismissHint(originalIndex)}
-                  className="mt-0.5 shrink-0 rounded-md p-0.5 text-text-3 transition-colors hover:bg-border hover:text-text"
-                  aria-label={tCommon("close")}
-                >
-                  <X size={12} weight="bold" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Editor */}
         <div className="relative min-h-0 flex-1">
@@ -566,8 +482,34 @@ export function ChallengeInterface({
 
       {/* AI Partner column — real width at lg+ (chat-centric, not a sidebar
           sliver); collapses to a stacked bottom sheet below lg since a tab
-          would hide the editor entirely on mobile. */}
-      <div className="flex h-[420px] shrink-0 flex-col border-t-[2.5px] border-border lg:h-auto lg:w-[380px] lg:border-l-[2.5px] lg:border-t-0 xl:w-[420px]">
+          would hide the editor entirely on mobile. Independently collapsible
+          to a thin rail at lg+ (persisted to localStorage) so the editor can
+          reclaim the width; collapse never applies below lg. */}
+      <div
+        className={cn(
+          "flex h-[420px] shrink-0 flex-col border-t-[2.5px] border-border transition-[width] duration-200 lg:h-auto lg:border-l-[2.5px] lg:border-t-0",
+          aiCollapsed ? "lg:w-[48px] xl:w-[48px]" : "lg:w-[380px] xl:w-[420px]"
+        )}
+      >
+        {/* Below lg, aiCollapsed never applies — the bottom sheet always
+            shows the full pane. At lg+, collapsed swaps in the rail. */}
+        {aiCollapsed && (
+          <button
+            type="button"
+            onClick={() => toggleAi(false)}
+            aria-label={tAiPartner("expand")}
+            className="hidden h-full w-full flex-col items-center justify-center gap-3 py-4 text-text-3 transition-colors hover:bg-subtle hover:text-text lg:flex"
+          >
+            <CaretLeft size={16} weight="bold" aria-hidden="true" />
+            <Sparkle size={18} weight="duotone" aria-hidden="true" />
+            <span
+              className="font-display text-xs font-bold uppercase tracking-wide"
+              style={{ writingMode: "vertical-rl" }}
+            >
+              {tAiPartner("title")}
+            </span>
+          </button>
+        )}
         <AiPartnerPane
           lessonSlug={lessonSlug}
           courseSlug={courseSlug}
@@ -575,7 +517,11 @@ export function ChallengeInterface({
           getCode={() => code}
           getTestSummary={() => summarize(challengeState.executionResult)}
           onApply={(proposed) => setCode(proposed)}
-          className="h-full rounded-none border-0"
+          onCollapse={() => toggleAi(true)}
+          className={cn(
+            "h-full rounded-none border-0",
+            aiCollapsed && "lg:hidden"
+          )}
         />
       </div>
     </div>
