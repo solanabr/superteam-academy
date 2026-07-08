@@ -858,6 +858,7 @@
       "stale": "Your code changed — this proposal is out of date.",
       "checkPrompt": "Quick check before applying:",
       "checkIncorrect": "Not quite.",
+      "checkVerifyError": "Couldn't verify your answer. Please try again.",
       "lineAdded": "Added",
       "lineRemoved": "Removed"
     },

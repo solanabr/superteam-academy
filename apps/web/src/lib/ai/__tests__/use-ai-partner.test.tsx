@@ -137,9 +137,8 @@ describe("useAiPartner", () => {
       check: {
         question: "Why?",
         options: ["A", "B", "C"],
-        correctIndex: 1,
-        explanation: "Because B.",
       },
+      checkToken: "sealed-token",
     };
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse(response));
 
@@ -254,5 +253,49 @@ describe("useAiPartner", () => {
     expect(JSON.parse((init as RequestInit).body as string).action).toBe(
       "hint"
     );
+  });
+
+  describe("verifyCheck", () => {
+    it("POSTs to the verify route and returns the parsed result", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(
+        jsonResponse({ correct: true, explanation: "because B" })
+      );
+
+      const { result } = renderHook(() => useAiPartner(baseProps()));
+
+      const verdict = await result.current.verifyCheck("tok", 1);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/ai/partner/verify",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ checkToken: "tok", pickedIndex: 1 }),
+        })
+      );
+      expect(verdict).toEqual({ correct: true, explanation: "because B" });
+    });
+
+    it("fails SAFE (correct:false) on a non-ok response, never auto-accepting", async () => {
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "invalid check" }),
+      } as Response);
+
+      const { result } = renderHook(() => useAiPartner(baseProps()));
+
+      const verdict = await result.current.verifyCheck("tok", 1);
+
+      expect(verdict).toEqual({ correct: false, explanation: "" });
+    });
+
+    it("fails SAFE (correct:false) when the fetch itself throws", async () => {
+      vi.mocked(global.fetch).mockRejectedValue(new Error("network down"));
+
+      const { result } = renderHook(() => useAiPartner(baseProps()));
+
+      const verdict = await result.current.verifyCheck("tok", 0);
+
+      expect(verdict).toEqual({ correct: false, explanation: "" });
+    });
   });
 });

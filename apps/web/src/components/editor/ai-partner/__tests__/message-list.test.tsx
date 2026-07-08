@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { it, expect } from "vitest";
+import { it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { MessageList } from "../message-list";
@@ -25,9 +25,8 @@ const proposeMessages: PartnerMessage[] = [
       check: {
         question: "Why?",
         options: ["A", "B", "C"],
-        correctIndex: 1,
-        explanation: "because B",
       },
+      checkToken: "tok",
     },
   },
 ];
@@ -38,6 +37,7 @@ it("dismisses a proposal when Dismiss is clicked", () => {
       messages={proposeMessages}
       onApply={() => {}}
       getCode={() => "a"}
+      onVerify={vi.fn()}
     />
   );
 

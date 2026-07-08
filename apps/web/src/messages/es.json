@@ -858,6 +858,7 @@
       "stale": "Tu código cambió — esta propuesta quedó desactualizada.",
       "checkPrompt": "Una pregunta rápida antes de aplicar:",
       "checkIncorrect": "No es así.",
+      "checkVerifyError": "No se pudo verificar tu respuesta. Inténtalo de nuevo.",
       "lineAdded": "Añadido",
       "lineRemoved": "Eliminado"
     },

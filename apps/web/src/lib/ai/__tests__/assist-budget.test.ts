@@ -10,6 +10,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import {
   spendAssist,
   getAssistsUsed,
+  refundAssist,
   MAX_PAID_ASSISTS,
 } from "../assist-budget";
 
@@ -58,6 +59,27 @@ describe("assist-budget", () => {
     await expect(spendAssist("u", "l")).resolves.toEqual({
       allowed: false,
       used: MAX_PAID_ASSISTS,
+    });
+  });
+
+  describe("refundAssist", () => {
+    it("calls the refund RPC with the right args", async () => {
+      rpc.mockResolvedValue({ data: null, error: null });
+      await refundAssist("u", "l");
+      expect(rpc).toHaveBeenCalledWith("refund_challenge_assist", {
+        p_user_id: "u",
+        p_lesson_id: "l",
+      });
+    });
+
+    it("swallows an RPC error without throwing", async () => {
+      rpc.mockResolvedValue({ data: null, error: { message: "db down" } });
+      await expect(refundAssist("u", "l")).resolves.toBeUndefined();
+    });
+
+    it("swallows a thrown RPC without throwing", async () => {
+      rpc.mockRejectedValueOnce(new Error("network"));
+      await expect(refundAssist("u", "l")).resolves.toBeUndefined();
     });
   });
 });

@@ -19,6 +19,10 @@ export interface AnswerResponse {
   text: string;
 }
 
+// The CLIENT shape of a propose response. `check` no longer carries the
+// answer (`correctIndex`/`explanation`) — those are sealed server-side into
+// `checkToken` and verified by POST /api/ai/partner/verify, never shipped to
+// the browser. See `check-seal.ts` and `SealedCheck` below.
 export interface ProposeResponse {
   type: "propose";
   rationale: string;
@@ -26,12 +30,27 @@ export interface ProposeResponse {
   check: {
     question: string;
     options: [string, string, string];
-    correctIndex: 0 | 1 | 2;
-    explanation: string;
   };
+  checkToken: string;
 }
 
 export type PartnerResponse = HintResponse | AnswerResponse | ProposeResponse;
+
+/** The comprehension-check answer, sealed into `checkToken` (never sent to the client in the clear). */
+export interface SealedCheck {
+  correctIndex: 0 | 1 | 2;
+  explanation: string;
+}
+
+export interface VerifyRequest {
+  checkToken: string;
+  pickedIndex: 0 | 1 | 2;
+}
+
+export interface VerifyResponse {
+  correct: boolean;
+  explanation: string;
+}
 
 /**
  * Max PAID AI assists per (learner, challenge). Single source of truth,

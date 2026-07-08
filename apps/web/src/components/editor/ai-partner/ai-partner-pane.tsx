@@ -39,6 +39,7 @@ export function AiPartnerPane({
     requestHint,
     proposeFix,
     ask,
+    verifyCheck,
   } = useAiPartner({ lessonSlug, courseSlug, hints, getCode, getTestSummary });
 
   return (
@@ -68,6 +69,7 @@ export function AiPartnerPane({
         messages={messages}
         onApply={onApply}
         getCode={getCode}
+        onVerify={verifyCheck}
         className="flex-1"
       />
 

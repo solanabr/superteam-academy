@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { getChallengeAnswerKey, getLessonBySlug } from "@/lib/sanity/queries";
-import { spendAssist } from "@/lib/ai/assist-budget";
+import { spendAssist, refundAssist } from "@/lib/ai/assist-budget";
+import { sealCheck } from "@/lib/ai/check-seal";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
@@ -12,7 +13,8 @@ import {
 import type {
   PartnerAction,
   PartnerRequest,
-  PartnerResponse,
+  HintResponse,
+  AnswerResponse,
 } from "@/lib/ai/partner-types";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -37,14 +39,35 @@ function isPartnerAction(value: string): value is PartnerAction {
 // until the runtime checks below narrow them to `PartnerRequest`.
 type PartnerRequestBody = Partial<Record<keyof PartnerRequest, unknown>>;
 
+// Internal shape of a validated Gemini "propose" payload — still carries the
+// answer (`correctIndex`/`explanation`) in-process. This NEVER leaves the
+// route as-is: it's sealed via `sealCheck` into the client-facing
+// `ProposeResponse.checkToken` before the HTTP response is built.
+interface ValidatedProposeResponse {
+  type: "propose";
+  rationale: string;
+  proposedCode: string;
+  question: string;
+  options: [string, string, string];
+  correctIndex: 0 | 1 | 2;
+  explanation: string;
+}
+
+type ValidatedResponse =
+  | HintResponse
+  | AnswerResponse
+  | ValidatedProposeResponse;
+
 /**
- * Runtime validation of the Gemini structured output against the
- * `PartnerResponse` discriminated union. `GEMINI_RESPONSE_SCHEMA` can't
- * hard-require fields conditional on `type` (Gemini's schema dialect has no
- * such constraint), so this is the actual enforcement point — a malformed or
- * incomplete payload is rejected here rather than trusted and forwarded.
+ * Runtime validation of the Gemini structured output against the expected
+ * shape per `type`. `GEMINI_RESPONSE_SCHEMA` can't hard-require fields
+ * conditional on `type` (Gemini's schema dialect has no such constraint), so
+ * this is the actual enforcement point — a malformed or incomplete payload is
+ * rejected here rather than trusted and forwarded. The "propose" branch keeps
+ * `correctIndex`/`explanation` internally (see `ValidatedProposeResponse`) —
+ * the caller is responsible for sealing them before responding to the client.
  */
-function validatePartnerResponse(parsed: unknown): PartnerResponse | null {
+function validatePartnerResponse(parsed: unknown): ValidatedResponse | null {
   if (!parsed || typeof parsed !== "object") return null;
   const obj = parsed as Record<string, unknown>;
 
@@ -84,16 +107,14 @@ function validatePartnerResponse(parsed: unknown): PartnerResponse | null {
       type: "propose",
       rationale: obj.rationale,
       proposedCode: obj.proposedCode,
-      check: {
-        question: c.question,
-        options: [c.options[0], c.options[1], c.options[2]] as [
-          string,
-          string,
-          string,
-        ],
-        correctIndex: c.correctIndex as 0 | 1 | 2,
-        explanation: c.explanation,
-      },
+      question: c.question,
+      options: [c.options[0], c.options[1], c.options[2]] as [
+        string,
+        string,
+        string,
+      ],
+      correctIndex: c.correctIndex as 0 | 1 | 2,
+      explanation: c.explanation,
     };
   }
 
@@ -257,6 +278,10 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini partner API error:", response.status, errorText);
+      // A spend already happened above (spend.allowed was true to reach
+      // here) but Gemini never ran — refund so a failed call doesn't burn
+      // one of the user's 4 paid assists.
+      await refundAssist(user.id, answerKey._id);
       return NextResponse.json(
         { error: "AI service unavailable" },
         { status: 502 }
@@ -271,6 +296,7 @@ export async function POST(request: NextRequest) {
 
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
+      await refundAssist(user.id, answerKey._id);
       return NextResponse.json(
         { error: "AI could not generate a response" },
         { status: 502 }
@@ -282,6 +308,7 @@ export async function POST(request: NextRequest) {
       parsed = JSON.parse(rawText);
     } catch {
       console.error("Gemini partner API returned non-JSON output");
+      await refundAssist(user.id, answerKey._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
@@ -291,15 +318,39 @@ export async function POST(request: NextRequest) {
     const validated = validatePartnerResponse(parsed);
     if (!validated) {
       console.error("Gemini partner API returned a malformed payload");
+      await refundAssist(user.id, answerKey._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
       );
     }
 
+    if (validated.type === "propose") {
+      // Seal the answer server-side — the client only ever sees
+      // {question, options} + an opaque checkToken. Never spread `validated`
+      // here: that would leak `correctIndex`/`explanation` into the response.
+      const checkToken = sealCheck({
+        correctIndex: validated.correctIndex,
+        explanation: validated.explanation,
+      });
+      return NextResponse.json({
+        type: "propose",
+        rationale: validated.rationale,
+        proposedCode: validated.proposedCode,
+        check: {
+          question: validated.question,
+          options: validated.options,
+        },
+        checkToken,
+      });
+    }
+
     return NextResponse.json(validated);
   } catch (error) {
     console.error("AI partner error:", error);
+    // Same reasoning as the other post-spend failure paths: refund the spend
+    // that already happened before this try block.
+    await refundAssist(user.id, answerKey._id);
     return NextResponse.json(
       { error: "Failed to get response" },
       { status: 500 }

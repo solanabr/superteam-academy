@@ -12,6 +12,11 @@ interface MessageListProps {
   onApply: (proposedCode: string) => void;
   /** Live editor code, used as the diff baseline for any `propose` message. */
   getCode: () => string;
+  /** Server-verifies a comprehension-check pick; threaded to each DiffCard. */
+  onVerify: (
+    checkToken: string,
+    pickedIndex: 0 | 1 | 2
+  ) => Promise<{ correct: boolean; explanation: string }>;
   className?: string;
 }
 
@@ -63,6 +68,7 @@ export function MessageList({
   messages,
   onApply,
   getCode,
+  onVerify,
   className,
 }: MessageListProps) {
   const t = useTranslations("aiPartner");
@@ -152,6 +158,8 @@ export function MessageList({
                 proposed={response.proposedCode}
                 rationale={response.rationale}
                 check={response.check}
+                checkToken={response.checkToken}
+                onVerify={onVerify}
                 onAccept={onApply}
                 onReject={() =>
                   setDismissed((prev) => new Set(prev).add(index))

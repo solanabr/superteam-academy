@@ -67,3 +67,28 @@ export async function resetAssists(
     console.warn("[assist-budget] reset failed:", err);
   }
 }
+
+/**
+ * Decrement-by-one refund for a paid assist that was spent but never
+ * delivered (the Gemini call failed/timed out/returned garbage after
+ * `spendAssist` already charged the user). NOT `resetAssists` — that zeroes
+ * the whole lesson and would over-refund every other legitimately-spent
+ * assist. Best-effort: a failed refund just means the user keeps the charge,
+ * not a fail-closed concern, so this never throws.
+ */
+export async function refundAssist(
+  userId: string,
+  lessonId: string
+): Promise<void> {
+  try {
+    const { error } = await createAdminClient().rpc("refund_challenge_assist", {
+      p_user_id: userId,
+      p_lesson_id: lessonId,
+    });
+    if (error) {
+      console.warn("[assist-budget] refund failed:", error.message);
+    }
+  } catch (err) {
+    console.warn("[assist-budget] refund threw:", err);
+  }
+}

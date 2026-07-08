@@ -359,6 +359,9 @@ PROGRAM_AUTHORITY_SECRET=          # Program authority keypair (JSON array of 64
 
 # Optional — AI lesson assistant (server-only)
 GEMINI_API_KEY=                    # Gemini key for /api/ai/* (omit to disable the assistant)
+AI_PARTNER_SEAL_SECRET=            # Optional dedicated key for sealing the comprehension-check
+                                    # token (lib/ai/check-seal.ts); if unset, derived from
+                                    # SUPABASE_SERVICE_ROLE_KEY.
 
 # Optional — Rust playground proxy (server-only)
 RUST_PLAYGROUND_URL=               # /api/rust/execute upstream (default: play.rust-lang.org/execute)

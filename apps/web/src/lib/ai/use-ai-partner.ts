@@ -2,7 +2,11 @@
 
 import { useCallback, useState } from "react";
 import { MAX_PAID_ASSISTS } from "./partner-types";
-import type { PartnerAction, PartnerResponse } from "./partner-types";
+import type {
+  PartnerAction,
+  PartnerResponse,
+  VerifyResponse,
+} from "./partner-types";
 
 // Free authored hints are served locally from the lesson's `hints` ladder —
 // they never hit the network. Once this many have been shown, `requestHint()`
@@ -14,6 +18,7 @@ const FREE_HINT_LIMIT = 2;
 // client-side `paidRemaining` display and resets on refresh (v1 limitation).
 
 const PARTNER_ROUTE = "/api/ai/partner";
+const VERIFY_ROUTE = "/api/ai/partner/verify";
 
 export type PartnerMessage =
   | { role: "user"; text: string }
@@ -39,6 +44,10 @@ interface UseAiPartnerResult {
   requestHint: () => Promise<void>;
   proposeFix: () => Promise<void>;
   ask: (message: string) => Promise<void>;
+  verifyCheck: (
+    checkToken: string,
+    pickedIndex: 0 | 1 | 2
+  ) => Promise<VerifyResponse>;
 }
 
 type PartnerRouteReply =
@@ -132,6 +141,33 @@ export function useAiPartner({
     [callPartnerRoute]
   );
 
+  // Server-verifies a comprehension-check pick against the sealed token from
+  // `propose` (Fix A on PR #346's claude-review finding — the answer never
+  // reaches the browser in the clear, so DiffCard can't grade locally
+  // anymore). Fails SAFE: any non-ok response or thrown fetch returns
+  // `correct:false` so a verify error can never be mistaken for an accept.
+  const verifyCheck = useCallback(
+    async (
+      checkToken: string,
+      pickedIndex: 0 | 1 | 2
+    ): Promise<VerifyResponse> => {
+      try {
+        const res = await fetch(VERIFY_ROUTE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkToken, pickedIndex }),
+        });
+        if (!res.ok) {
+          return { correct: false, explanation: "" };
+        }
+        return (await res.json()) as VerifyResponse;
+      } catch {
+        return { correct: false, explanation: "" };
+      }
+    },
+    []
+  );
+
   return {
     messages,
     freeHintsUsed,
@@ -143,5 +179,6 @@ export function useAiPartner({
     requestHint,
     proposeFix,
     ask,
+    verifyCheck,
   };
 }

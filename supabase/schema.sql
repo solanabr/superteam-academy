@@ -1833,3 +1833,21 @@ $$;
 
 REVOKE ALL ON FUNCTION reset_challenge_assists(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION reset_challenge_assists(UUID, TEXT) TO service_role;
+
+-- Decrement-by-one, floor 0. Refunds a single paid assist that was spent but
+-- never delivered (e.g. the Gemini call failed after spend_challenge_assist
+-- already charged it) — NOT reset_challenge_assists, which zeroes the whole
+-- lesson and would over-refund every other legitimately-spent assist.
+CREATE OR REPLACE FUNCTION refund_challenge_assist(p_user_id UUID, p_lesson_id TEXT)
+RETURNS VOID
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  UPDATE public.challenge_assists
+    SET assists_used = GREATEST(assists_used - 1, 0), updated_at = now()
+    WHERE user_id = p_user_id AND lesson_id = p_lesson_id;
+$$;
+
+REVOKE ALL ON FUNCTION refund_challenge_assist(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION refund_challenge_assist(UUID, TEXT) TO service_role;

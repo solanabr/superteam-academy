@@ -931,6 +931,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      refund_challenge_assist: {
+        Args: {
+          p_user_id: string;
+          p_lesson_id: string;
+        };
+        Returns: undefined;
+      };
       award_xp: {
         Args: {
           p_amount: number;

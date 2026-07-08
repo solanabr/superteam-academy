@@ -68,6 +68,11 @@ interface DiffCardProps {
   proposed: string;
   rationale: string;
   check: ProposeResponse["check"];
+  checkToken: string;
+  onVerify: (
+    checkToken: string,
+    pickedIndex: 0 | 1 | 2
+  ) => Promise<{ correct: boolean; explanation: string }>;
   onAccept: (proposed: string) => void;
   onReject: () => void;
   stale: boolean;
@@ -79,6 +84,8 @@ export function DiffCard({
   proposed,
   rationale,
   check,
+  checkToken,
+  onVerify,
   onAccept,
   onReject,
   stale,
@@ -87,6 +94,8 @@ export function DiffCard({
   const t = useTranslations("aiPartner");
   const [checkRevealed, setCheckRevealed] = useState(false);
   const [wrongPick, setWrongPick] = useState<number | null>(null);
+  const [wrongExplanation, setWrongExplanation] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
   const lines = useMemo(
     () => diffLines(current, proposed),
@@ -98,13 +107,30 @@ export function DiffCard({
     setCheckRevealed(true);
   };
 
-  const handlePick = (index: number) => {
-    if (index === check.correctIndex) {
-      setWrongPick(null);
-      onAccept(proposed);
-      return;
+  // The correct index/explanation are sealed server-side (`checkToken`) and
+  // never shipped to the browser — grading a pick is an async round trip to
+  // /api/ai/partner/verify, never a local compare. `onVerify` fails SAFE (a
+  // network error or non-ok response resolves to `correct:false`), so a
+  // thrown/failed verify can never be mistaken for an accept here either.
+  const handlePick = async (index: 0 | 1 | 2) => {
+    if (checking) return;
+    setChecking(true);
+    setWrongPick(null);
+    setWrongExplanation(null);
+    try {
+      const result = await onVerify(checkToken, index);
+      if (result.correct) {
+        onAccept(proposed);
+        return;
+      }
+      setWrongPick(index);
+      setWrongExplanation(result.explanation || t("diff.checkVerifyError"));
+    } catch {
+      setWrongPick(index);
+      setWrongExplanation(t("diff.checkVerifyError"));
+    } finally {
+      setChecking(false);
     }
-    setWrongPick(index);
   };
 
   return (
@@ -196,13 +222,14 @@ export function DiffCard({
                   wrongPick === index ? "destructiveOutline" : "secondary"
                 }
                 size="sm"
-                onClick={() => handlePick(index)}
+                disabled={checking}
+                onClick={() => void handlePick(index as 0 | 1 | 2)}
               >
                 {option}
               </Button>
             ))}
           </div>
-          {wrongPick !== null && (
+          {wrongPick !== null && wrongExplanation !== null && (
             <div className="flex items-start gap-2 text-xs text-danger">
               <WarningCircle
                 size={14}
@@ -214,7 +241,7 @@ export function DiffCard({
                 <span className="font-semibold">
                   {t("diff.checkIncorrect")}
                 </span>{" "}
-                {check.explanation}
+                {wrongExplanation}
               </span>
             </div>
           )}
