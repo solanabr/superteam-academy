@@ -52,6 +52,8 @@ const cspDirectives = [
     "https://*.supabase.co wss://*.supabase.co",
     "https://api.sanity.io https://cdn.sanity.io https://*.apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
     "https://*.helius-rpc.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com",
+    // web3.js opens a wss:// to the RPC for subscriptions (deploy confirmation).
+    "wss://*.helius-rpc.com wss://api.devnet.solana.com wss://api.mainnet-beta.solana.com",
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",

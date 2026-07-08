@@ -60,6 +60,11 @@ function supabaseSources(): { http: string; ws: string } {
  * `connect-src` to that exact origin instead of the broad `*.helius-rpc.com`
  * wildcard. The two public Solana endpoints stay allowed as fallbacks. If the
  * env var is malformed, keep the Helius wildcard so RPC is never blocked.
+ *
+ * Each https RPC origin is emitted with its `wss://` twin: web3.js's `Connection`
+ * opens a WebSocket to the RPC for subscriptions (e.g. signature confirmation
+ * when deploying a program), so a connect-src without the wss:// origin blocks
+ * the deploy ("violates … connect-src" on `wss://…`).
  */
 function solanaRpcSources(): string[] {
   const origin = originOf(process.env.NEXT_PUBLIC_SOLANA_RPC_URL);
@@ -67,9 +72,14 @@ function solanaRpcSources(): string[] {
     "https://api.devnet.solana.com",
     "https://api.mainnet-beta.solana.com",
   ];
-  if (!origin) return ["https://*.helius-rpc.com", ...base];
-  // Avoid duplicating one of the public endpoints if that's what's configured.
-  return base.includes(origin) ? base : [origin, ...base];
+  const https = !origin
+    ? ["https://*.helius-rpc.com", ...base]
+    : // Avoid duplicating a public endpoint if that's what's configured.
+      base.includes(origin)
+      ? base
+      : [origin, ...base];
+  const wss = https.map((o) => o.replace(/^https:/, "wss:"));
+  return [...https, ...wss];
 }
 
 /**
