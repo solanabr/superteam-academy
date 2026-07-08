@@ -110,13 +110,15 @@ async function confirmTx(
 
 /**
  * BATCH_SIZE controls how many write txs we sign at once via signAllTransactions.
- * Each batch = 1 wallet popup. With parallel sends, all txs dispatch in seconds,
- * so we can use larger batches without blockhash expiry risk.
+ * Each batch = 1 wallet popup. Kept modest (not 50) so a rate-limited devnet RPC
+ * isn't flooded — with rebroadcast (see confirmBatch) the whole batch reliably
+ * confirms inside the blockhash window, and the resend burst stays under the
+ * RPC's per-second limit.
  */
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 20;
 
 /** Small stagger between sends to avoid RPC rate limits. */
-const SEND_DELAY_MS = 30;
+const SEND_DELAY_MS = 50;
 
 /**
  * Confirm multiple transactions in parallel using batch polling.
@@ -127,9 +129,10 @@ const SEND_DELAY_MS = 30;
  */
 async function confirmBatch(
   connection: Connection,
+  serializedTxs: Uint8Array[],
   signatures: string[],
   onConfirmed?: (localIndex: number, sig: string) => void,
-  timeoutMs = 60_000
+  timeoutMs = 90_000
 ): Promise<void> {
   const unconfirmed = new Map<string, number>();
   for (let i = 0; i < signatures.length; i++) {
@@ -137,6 +140,8 @@ async function confirmBatch(
   }
 
   const start = Date.now();
+  // The txs were just sent by the caller; wait a beat before the first resend.
+  let lastResend = Date.now();
 
   while (unconfirmed.size > 0) {
     if (Date.now() - start > timeoutMs) {
@@ -144,6 +149,8 @@ async function confirmBatch(
         `Timed out confirming ${unconfirmed.size}/${signatures.length} chunk transactions`
       );
     }
+
+    await new Promise((r) => setTimeout(r, 700));
 
     const pending = [...unconfirmed.keys()];
     const { value: statuses } = await connection.getSignatureStatuses(pending);
@@ -167,8 +174,23 @@ async function confirmBatch(
       }
     }
 
-    if (unconfirmed.size > 0) {
-      await new Promise((r) => setTimeout(r, 500));
+    // Rebroadcast still-unconfirmed txs every ~4s: devnet drops transactions
+    // under load, and the RPC won't rebroadcast them for us (maxRetries: 0), so
+    // a dropped chunk would otherwise never land and the batch would stall.
+    // Re-sending the same signed tx is safe (idempotent) while its blockhash is
+    // still valid, which the modest BATCH_SIZE keeps us inside.
+    if (unconfirmed.size > 0 && Date.now() - lastResend > 4000) {
+      for (const idx of unconfirmed.values()) {
+        try {
+          await connection.sendRawTransaction(serializedTxs[idx]!, {
+            skipPreflight: true,
+            maxRetries: 0,
+          });
+        } catch {
+          // Ignore — the next poll cycle will resend.
+        }
+      }
+      lastResend = Date.now();
     }
   }
 }
@@ -283,29 +305,37 @@ export async function deployProgram(params: {
     // Batch sign (1 wallet popup per batch)
     const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-    // Send all txs rapidly (parallel fire with small stagger)
+    // Send all txs rapidly (parallel fire with small stagger). Keep each
+    // serialized so confirmBatch can rebroadcast any that get dropped.
     const signatures: string[] = [];
+    const serializedTxs: Uint8Array[] = [];
     for (let j = 0; j < signedBatch.length; j++) {
-      const signedTx = signedBatch[j]!;
-      const sig = await sendWithRetry(connection, signedTx.serialize());
+      const serialized = signedBatch[j]!.serialize();
+      serializedTxs.push(serialized);
+      const sig = await sendWithRetry(connection, serialized);
       signatures.push(sig);
       if (j < signedBatch.length - 1) {
         await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
       }
     }
 
-    // Confirm all in parallel via batch polling (one RPC call checks all sigs)
+    // Confirm all via batch polling; rebroadcasts dropped txs until they land.
     let batchConfirmed = 0;
-    await confirmBatch(connection, signatures, (localIdx, sig) => {
-      batchConfirmed++;
-      const chunkIndex = batchStart + localIdx;
-      callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
-      callbacks.onTransactionConfirmed({
-        signature: sig,
-        step: "upload",
-        message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
-      });
-    });
+    await confirmBatch(
+      connection,
+      serializedTxs,
+      signatures,
+      (localIdx, sig) => {
+        batchConfirmed++;
+        const chunkIndex = batchStart + localIdx;
+        callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
+        callbacks.onTransactionConfirmed({
+          signature: sig,
+          step: "upload",
+          message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
+        });
+      }
+    );
 
     state.lastUploadedChunk = batchEnd - 1;
     callbacks.onStateUpdate(state);
@@ -437,29 +467,37 @@ export async function resumeDeployment(params: {
 
       const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-      // Send all txs rapidly (parallel fire with small stagger)
+      // Send all txs rapidly (parallel fire with small stagger). Keep each
+      // serialized so confirmBatch can rebroadcast any that get dropped.
       const signatures: string[] = [];
+      const serializedTxs: Uint8Array[] = [];
       for (let j = 0; j < signedBatch.length; j++) {
-        const signedTx = signedBatch[j]!;
-        const sig = await sendWithRetry(connection, signedTx.serialize());
+        const serialized = signedBatch[j]!.serialize();
+        serializedTxs.push(serialized);
+        const sig = await sendWithRetry(connection, serialized);
         signatures.push(sig);
         if (j < signedBatch.length - 1) {
           await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
         }
       }
 
-      // Confirm all in parallel via batch polling
+      // Confirm all via batch polling; rebroadcasts dropped txs until they land.
       let batchConfirmed = 0;
-      await confirmBatch(connection, signatures, (localIdx, sig) => {
-        batchConfirmed++;
-        const chunkIndex = batchStart + localIdx;
-        callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
-        callbacks.onTransactionConfirmed({
-          signature: sig,
-          step: "upload",
-          message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
-        });
-      });
+      await confirmBatch(
+        connection,
+        serializedTxs,
+        signatures,
+        (localIdx, sig) => {
+          batchConfirmed++;
+          const chunkIndex = batchStart + localIdx;
+          callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
+          callbacks.onTransactionConfirmed({
+            signature: sig,
+            step: "upload",
+            message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
+          });
+        }
+      );
 
       state.lastUploadedChunk = batchEnd - 1;
       callbacks.onStateUpdate(state);
