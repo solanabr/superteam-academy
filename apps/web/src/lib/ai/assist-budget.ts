@@ -1,7 +1,11 @@
 import "server-only";
+import { MAX_PAID_ASSISTS } from "./partner-types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const MAX_PAID_ASSISTS = 4;
+// Single source of truth lives in partner-types.ts (shared client/server).
+// Re-exported here so existing consumers (the route, tests) keep importing it
+// from `@/lib/ai/assist-budget`.
+export { MAX_PAID_ASSISTS };
 
 export async function spendAssist(
   userId: string,

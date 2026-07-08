@@ -32,3 +32,10 @@ export interface ProposeResponse {
 }
 
 export type PartnerResponse = HintResponse | AnswerResponse | ProposeResponse;
+
+/**
+ * Max PAID AI assists per (learner, challenge). Single source of truth,
+ * imported by both the server budget (`assist-budget.ts`) and the client hook
+ * (`use-ai-partner.ts`). Plain constant — this module is not `server-only`.
+ */
+export const MAX_PAID_ASSISTS = 4;

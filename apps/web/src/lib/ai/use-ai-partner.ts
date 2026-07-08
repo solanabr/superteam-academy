@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { MAX_PAID_ASSISTS } from "./partner-types";
 import type { PartnerAction, PartnerResponse } from "./partner-types";
 
 // Free authored hints are served locally from the lesson's `hints` ladder —
@@ -8,11 +9,9 @@ import type { PartnerAction, PartnerResponse } from "./partner-types";
 // falls through to the paid route (design resolution, Task 3 -> progress.md).
 const FREE_HINT_LIMIT = 2;
 
-// Mirrors `MAX_PAID_ASSISTS` in `assist-budget.ts` (server-only, so it can't
-// be imported into this client hook). The server is the source of truth for
-// enforcement — this constant only drives the client-side `paidRemaining`
-// display and resets on refresh; see the client-meter limitation note below.
-const MAX_PAID_ASSISTS = 4;
+// MAX_PAID_ASSISTS is imported from partner-types.ts (single source of truth,
+// shared with the server budget). The server enforces it; this only drives the
+// client-side `paidRemaining` display and resets on refresh (v1 limitation).
 
 const PARTNER_ROUTE = "/api/ai/partner";
 
