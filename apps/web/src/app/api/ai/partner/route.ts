@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
     task: typeof lesson.content === "string" ? lesson.content : "",
     visibleTests,
     solution: answerKey.solution ?? "",
-    tutorNotes: undefined,
+    tutorNotes: answerKey.tutorNotes ?? undefined,
     language: answerKey.language ?? "",
   });
   const suffix = buildDynamicSuffix({

@@ -171,6 +171,7 @@ describe("validateAgainstAnswerKey — buildable routing", () => {
     buildType: "buildable" as const,
     tests,
     solution: CODE,
+    tutorNotes: null,
   };
 
   it("grades a compiling buildable challenge to validated/passed", async () => {

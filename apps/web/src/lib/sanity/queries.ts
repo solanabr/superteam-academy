@@ -180,6 +180,7 @@ export interface ChallengeAnswerKey {
   buildType: string | null;
   tests: AdminTestCase[];
   solution: string | null;
+  tutorNotes: string | null;
 }
 
 const answerKeyProjection = `{
@@ -189,7 +190,8 @@ const answerKeyProjection = `{
   language,
   buildType,
   "tests": tests[]{ "id": coalesce(id, _key), description, input, expectedOutput, hidden },
-  solution
+  solution,
+  tutorNotes
 }`;
 
 export async function getChallengeAnswerKey(

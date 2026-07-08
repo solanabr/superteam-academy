@@ -211,6 +211,15 @@ export const lesson = defineType({
       hidden: ({ parent }) => parent?.type !== "challenge",
     }),
     defineField({
+      name: "tutorNotes",
+      title: "Tutor Notes",
+      type: "text",
+      description:
+        "Private notes that steer the AI Partner; never shown to learners.",
+      rows: 8,
+      hidden: ({ parent }) => parent?.type !== "challenge",
+    }),
+    defineField({
       name: "order",
       title: "Order",
       type: "number",

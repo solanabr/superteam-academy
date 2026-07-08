@@ -75,6 +75,7 @@
       "A generated keypair from Keypair.generate() is always valid"
     ],
     "solution": "import { Keypair } from '@solana/web3.js';\n\nfunction generateKeypair(): { publicKey: string; isValid: boolean } {\n  const keypair = Keypair.generate();\n  return {\n    publicKey: keypair.publicKey.toBase58(),\n    isValid: true,\n  };\n}",
+    "tutorNotes": "Learners often forget that Keypair.generate() is synchronous and already valid by construction — steer them away from re-deriving or manually checking curve validity with extra crypto calls. If they ask why isValid is always true, explain PublicKey.isOnCurve semantics briefly, but don't hand them the one-liner solution outright.",
     "xpReward": 25,
     "order": 3
   },
@@ -129,6 +130,7 @@
       "The lamports field expects a whole number, so multiply amountInSol * LAMPORTS_PER_SOL"
     ],
     "solution": "import {\n  PublicKey,\n  SystemProgram,\n  Transaction,\n  LAMPORTS_PER_SOL,\n} from '@solana/web3.js';\n\nfunction buildTransferTransaction(\n  sender: PublicKey,\n  recipient: PublicKey,\n  amountInSol: number\n): Transaction {\n  const transaction = new Transaction().add(\n    SystemProgram.transfer({\n      fromPubkey: sender,\n      toPubkey: recipient,\n      lamports: amountInSol * LAMPORTS_PER_SOL,\n    })\n  );\n\n  return transaction;\n}",
+    "tutorNotes": "The most common mistake is passing amountInSol directly as lamports, or rounding incorrectly on fractional SOL amounts. Nudge learners toward LAMPORTS_PER_SOL multiplication rather than confirming the exact numeric assertion in the hidden conversion test — describe the concept, not the checked value.",
     "xpReward": 50,
     "order": 5
   },
@@ -183,6 +185,7 @@
       "The function returns a PublicKey; use .toBase58() to convert to string"
     ],
     "solution": "import { Connection, Keypair } from '@solana/web3.js';\nimport { createMint } from '@solana/spl-token';\n\nasync function createTokenMint(\n  connection: Connection,\n  payer: Keypair\n): Promise<string> {\n  const mint = await createMint(\n    connection,\n    payer,\n    payer.publicKey,\n    payer.publicKey,\n    9\n  );\n\n  return mint.toBase58();\n}",
+    "tutorNotes": "Watch for learners forgetting to `await` createMint() and returning a Promise instead of the resolved string, or passing decimals as a string instead of a number. Encourage them to check the createMint signature themselves rather than dictating the exact 9-decimals argument.",
     "xpReward": 75,
     "order": 7
   },
