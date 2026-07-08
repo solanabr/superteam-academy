@@ -271,7 +271,7 @@ export function ChallengeInterface({
   return (
     <div
       className={cn(
-        "flex h-full flex-col overflow-hidden rounded-xl border-[2.5px] border-border shadow-card lg:flex-row",
+        "flex h-full flex-col overflow-hidden border-b border-border lg:flex-row",
         className
       )}
     >
@@ -566,6 +566,7 @@ export function ChallengeInterface({
             getCode={() => code}
             getTestSummary={() => summarize(challengeState.executionResult)}
             onApply={(proposed) => setCode(proposed)}
+            disabled={isComplete}
             className="h-full rounded-none border-0"
           />
         </div>

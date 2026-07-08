@@ -19,6 +19,9 @@ interface AiPartnerPaneProps {
    * the header (desktop-only rail collapse). Omitting it keeps the pane
    * exactly as before, so existing callers/tests are unaffected. */
   onCollapse?: () => void;
+  /** When true (the lesson is already complete), every AI action is disabled —
+   * the challenge is done, so no more hints / proposals / questions. */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -30,6 +33,7 @@ export function AiPartnerPane({
   getTestSummary,
   onApply,
   onCollapse,
+  disabled = false,
   className,
 }: AiPartnerPaneProps) {
   const t = useTranslations("aiPartner");
@@ -76,7 +80,9 @@ export function AiPartnerPane({
             </button>
           )}
         </div>
-        <p className="text-xs text-text-3">{t("subtitle")}</p>
+        <p className="text-xs text-text-3">
+          {disabled ? t("completed") : t("subtitle")}
+        </p>
         <AssistMeter freeHintsUsed={freeHintsUsed} paidUsed={paidUsed} />
       </div>
 
@@ -86,7 +92,7 @@ export function AiPartnerPane({
           <button
             type="button"
             onClick={() => ask(t("start.explainPrompt"))}
-            disabled={loading || budgetExhausted}
+            disabled={loading || budgetExhausted || disabled}
             className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("start.explain")}
@@ -94,7 +100,7 @@ export function AiPartnerPane({
           <button
             type="button"
             onClick={() => ask(t("start.approachPrompt"))}
-            disabled={loading || budgetExhausted}
+            disabled={loading || budgetExhausted || disabled}
             className="rounded-md border border-border px-3 py-2.5 text-left text-xs text-text transition-colors hover:border-primary hover:[background:var(--accent-bg)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("start.approach")}
@@ -132,7 +138,7 @@ export function AiPartnerPane({
         onHint={requestHint}
         onPropose={proposeFix}
         onAsk={ask}
-        disabled={loading}
+        disabled={loading || disabled}
         budgetExhausted={budgetExhausted}
       />
     </div>

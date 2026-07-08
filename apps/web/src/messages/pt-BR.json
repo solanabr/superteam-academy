@@ -834,6 +834,7 @@
   "aiPartner": {
     "title": "Parceiro de IA",
     "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
+    "completed": "Desafio concluído — mandou bem!",
     "start": {
       "greeting": "Como posso te ajudar a construir isto?",
       "explain": "Explique este desafio",
