@@ -100,7 +100,7 @@ export function ChallengeInterface({
   }, [isAlreadyCompleted]);
   const [showDescription, setShowDescription] = useState(true);
   const [descHeight, setDescHeight] = useState(180);
-  const [panelHeight, setPanelHeight] = useState(64);
+  const [panelHeight, setPanelHeight] = useState(120);
   const [taskHeight, setTaskHeight] = useState(320);
   const [railWidth, setRailWidth] = useState(460);
   const resizeRef = useRef<{
@@ -212,7 +212,7 @@ export function ChallengeInterface({
             ? resizeRef.current.startY - moveEvent.clientY
             : moveEvent.clientY - resizeRef.current.startY;
         const [min, max] =
-          resizeRef.current.target === "task" ? [140, 600] : [48, 500];
+          resizeRef.current.target === "task" ? [140, 600] : [88, 500];
         const newHeight = Math.max(
           min,
           Math.min(max, resizeRef.current.startHeight + delta)
@@ -506,7 +506,7 @@ export function ChallengeInterface({
         {/* Output panel */}
         <div
           className="order-3 shrink-0 lg:order-none"
-          style={{ height: panelHeight, minHeight: 48 }}
+          style={{ height: panelHeight, minHeight: 88 }}
         >
           <OutputPanel
             executionResult={challengeState.executionResult}

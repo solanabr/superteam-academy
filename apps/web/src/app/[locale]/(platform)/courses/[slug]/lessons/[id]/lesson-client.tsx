@@ -424,7 +424,7 @@ export function LessonPageClient({
       <div className="grid-bg -mx-4 -my-6 min-h-[calc(100vh-60px)] bg-[var(--bg)] px-4 py-4 md:-mx-8 md:-my-8 md:px-8 md:py-6">
         {/* Header + workspace share one rounded card; the header's border-b is
             an internal divider, so there's no stray double line. */}
-        <div className="overflow-hidden rounded-xl border-[2.5px] border-border shadow-card">
+        <div className="overflow-hidden rounded-[var(--r-lg)] border-[2.5px] border-border shadow-card">
           {/* Header — challenge title, XP, progress */}
           <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
             <Link
