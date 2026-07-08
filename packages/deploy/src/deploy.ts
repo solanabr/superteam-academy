@@ -44,27 +44,24 @@ export function setCachedBinary(uuid: string, data: Uint8Array): void {
 }
 
 /**
- * Fetch the compiled .so binary from the build server.
- * Checks the global client-side cache first (populated after build).
+ * Retrieve the compiled .so binary cached client-side after build.
+ *
+ * The build server returns the binary INLINE (binaryB64), which is stored in the
+ * global cache via `setCachedBinary` at build time — there is no
+ * `/api/deploy/:uuid` route to re-fetch it from. We intentionally do NOT delete
+ * the cache entry on read: a paused deploy is resumed by reading the binary
+ * again, and deleting it made the resume miss and 404 against the (removed)
+ * fetch route. A genuine miss means the in-memory copy was lost (e.g. a full
+ * page reload mid-deploy), which the caller treats as "expired → rebuild".
  */
-async function fetchBinary(
-  buildServerUrl: string,
-  uuid: string
-): Promise<Uint8Array> {
-  const cache = getGlobalCache();
-  const cached = cache.get(uuid);
-  if (cached) {
-    cache.delete(uuid);
-    return cached;
-  }
-
-  const response = await fetch(`${buildServerUrl}/deploy/${uuid}`);
-  if (!response.ok) {
+function fetchBinary(uuid: string): Uint8Array {
+  const cached = getGlobalCache().get(uuid);
+  if (!cached) {
     throw new Error(
-      `Failed to fetch binary (${response.status}). Build may have expired.`
+      "The compiled program is no longer available in this session (the build expired). Please rebuild it before deploying."
     );
   }
-  return new Uint8Array(await response.arrayBuffer());
+  return cached;
 }
 
 /**
@@ -195,7 +192,9 @@ export async function deployProgram(params: {
   /** Pre-generated program keypair (from build-time declare_id injection). */
   programKeypairSecret?: number[];
 }): Promise<DeployResult> {
-  const { connection, wallet, buildServerUrl, buildUuid, callbacks } = params;
+  // `buildServerUrl` is accepted for API compatibility but no longer used: the
+  // binary is read from the client-side cache, not fetched over HTTP.
+  const { connection, wallet, buildUuid, callbacks } = params;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -203,7 +202,7 @@ export async function deployProgram(params: {
 
   // Fetch the compiled binary
   callbacks.onStepChange("buffer");
-  const binary = await fetchBinary(buildServerUrl, buildUuid);
+  const binary = fetchBinary(buildUuid);
   const programLen = binary.length;
   const totalChunks = Math.ceil(programLen / CHUNK_SIZE);
 
@@ -382,7 +381,8 @@ export async function resumeDeployment(params: {
   state: DeploymentState;
   callbacks: DeploymentCallbacks;
 }): Promise<DeployResult> {
-  const { connection, wallet, buildServerUrl, state, callbacks } = params;
+  // `buildServerUrl` accepted for API compatibility but unused (see deployProgram).
+  const { connection, wallet, state, callbacks } = params;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -403,8 +403,8 @@ export async function resumeDeployment(params: {
     );
   }
 
-  // Fetch binary again
-  const binary = await fetchBinary(buildServerUrl, state.buildUuid);
+  // Read the cached binary again (kept in-cache so resume can re-read it)
+  const binary = fetchBinary(state.buildUuid);
   const programLen = binary.length;
   const totalChunks = state.totalChunks;
   const startChunk = state.lastUploadedChunk + 1;
