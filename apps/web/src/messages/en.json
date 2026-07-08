@@ -873,6 +873,8 @@
       "checkPrompt": "Quick check before applying:",
       "checkIncorrect": "Not quite.",
       "checkVerifyError": "Couldn't verify your answer. Please try again.",
+      "checkCorrect": "Correct — you can apply the change now.",
+      "acceptLocked": "Answer the check correctly to apply this change.",
       "lineAdded": "Added",
       "lineRemoved": "Removed"
     },

@@ -19,7 +19,7 @@ function renderWithIntl(ui: ReactElement) {
   );
 }
 
-it("applies only after the correct check answer is server-verified", async () => {
+it("gates Accept behind a correct answer and only applies on the Accept click", async () => {
   const onAccept = vi.fn();
   const onVerify = vi
     .fn()
@@ -39,21 +39,32 @@ it("applies only after the correct check answer is server-verified", async () =>
       stale={false}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: /accept/i })); // reveals the check
-  fireEvent.click(screen.getByRole("button", { name: "A" })); // wrong
 
+  // The check is shown immediately; Accept starts locked.
+  expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /accept/i })).toBeDisabled();
+
+  // Wrong pick: verified, not applied, explanation shown, Accept stays locked.
+  fireEvent.click(screen.getByRole("button", { name: "A" }));
   await waitFor(() => expect(onVerify).toHaveBeenCalledWith("tok", 0));
   expect(onAccept).not.toHaveBeenCalled();
   await screen.findByText(/because B/);
+  expect(screen.getByRole("button", { name: /accept/i })).toBeDisabled();
 
-  fireEvent.click(screen.getByRole("button", { name: "B" })); // correct
+  // Correct pick: unlocks Accept but does NOT apply the code yet.
+  fireEvent.click(screen.getByRole("button", { name: "B" }));
   await waitFor(() => expect(onVerify).toHaveBeenCalledWith("tok", 1));
-  // NOTE: `proposed="a\nb"` above is a JSX string-literal attribute, which
-  // (unlike a JS string literal) does not interpret `\n` as an escape — the
-  // prop's actual runtime value is the 4-char string a\nb (backslash + n).
-  // onAccept must receive that exact value unmodified, so the assertion
-  // matches it as a literal backslash-n, not a real newline.
-  await waitFor(() => expect(onAccept).toHaveBeenCalledWith("a\\nb"));
+  expect(onAccept).not.toHaveBeenCalled();
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /accept/i })).not.toBeDisabled()
+  );
+
+  // Only the explicit Accept click applies the proposed code.
+  // NOTE: `proposed="a\nb"` is a JSX string-literal attribute, whose runtime
+  // value is the 4-char string a\nb (backslash + n), not a real newline — so
+  // the assertion matches a literal backslash-n.
+  fireEvent.click(screen.getByRole("button", { name: /accept/i }));
+  expect(onAccept).toHaveBeenCalledWith("a\\nb");
 });
 
 it("Accept is disabled when stale", () => {
@@ -74,7 +85,7 @@ it("Accept is disabled when stale", () => {
 });
 
 describe("DiffCard additional behavior", () => {
-  it("does not reveal the check until Accept is clicked", () => {
+  it("shows the comprehension check immediately", () => {
     renderWithIntl(
       <DiffCard
         current="a"
@@ -88,8 +99,8 @@ describe("DiffCard additional behavior", () => {
         stale={false}
       />
     );
-    expect(screen.queryByRole("button", { name: "A" })).not.toBeInTheDocument();
-    expect(screen.queryByText(check.question)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "A" })).toBeInTheDocument();
+    expect(screen.getByText(check.question)).toBeInTheDocument();
   });
 
   it("calls onReject when Dismiss is clicked", () => {
@@ -128,7 +139,7 @@ describe("DiffCard additional behavior", () => {
     expect(screen.getByText("adds b for clarity")).toBeInTheDocument();
   });
 
-  it("does not call onAccept and shows a generic retry when onVerify rejects/throws", async () => {
+  it("does not unlock Accept and stays retryable when onVerify throws", async () => {
     const onAccept = vi.fn();
     const onVerify = vi.fn().mockRejectedValue(new Error("network down"));
     renderWithIntl(
@@ -144,13 +155,12 @@ describe("DiffCard additional behavior", () => {
         stale={false}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /accept/i }));
     fireEvent.click(screen.getByRole("button", { name: "A" }));
 
     await waitFor(() => expect(onVerify).toHaveBeenCalled());
     expect(onAccept).not.toHaveBeenCalled();
-    // The option buttons must still be present/retryable, not stuck disabled
-    // forever on a thrown verify.
+    // Accept stays locked; the options remain retryable (not stuck disabled).
+    expect(screen.getByRole("button", { name: /accept/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: "A" })).not.toBeDisabled();
   });
 
@@ -175,7 +185,6 @@ describe("DiffCard additional behavior", () => {
         stale={false}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /accept/i }));
     fireEvent.click(screen.getByRole("button", { name: "A" }));
 
     await waitFor(() =>

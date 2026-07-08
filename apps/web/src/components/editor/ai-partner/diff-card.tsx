@@ -92,7 +92,7 @@ export function DiffCard({
   className,
 }: DiffCardProps) {
   const t = useTranslations("aiPartner");
-  const [checkRevealed, setCheckRevealed] = useState(false);
+  const [correctPick, setCorrectPick] = useState<number | null>(null);
   const [wrongPick, setWrongPick] = useState<number | null>(null);
   const [wrongExplanation, setWrongExplanation] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -102,25 +102,21 @@ export function DiffCard({
     [current, proposed]
   );
 
-  const handleAcceptClick = () => {
-    if (stale) return;
-    setCheckRevealed(true);
-  };
-
   // The correct index/explanation are sealed server-side (`checkToken`) and
   // never shipped to the browser — grading a pick is an async round trip to
-  // /api/ai/partner/verify, never a local compare. `onVerify` fails SAFE (a
-  // network error or non-ok response resolves to `correct:false`), so a
-  // thrown/failed verify can never be mistaken for an accept here either.
+  // /api/ai/partner/verify, never a local compare. A correct pick UNLOCKS the
+  // Accept button (it does NOT apply the code); the learner then explicitly
+  // clicks Accept. `onVerify` fails SAFE (network/non-ok → correct:false), so a
+  // failed verify can never unlock Accept.
   const handlePick = async (index: 0 | 1 | 2) => {
-    if (checking) return;
+    if (checking || correctPick !== null) return;
     setChecking(true);
     setWrongPick(null);
     setWrongExplanation(null);
     try {
       const result = await onVerify(checkToken, index);
       if (result.correct) {
-        onAccept(proposed);
+        setCorrectPick(index);
         return;
       }
       setWrongPick(index);
@@ -131,6 +127,13 @@ export function DiffCard({
     } finally {
       setChecking(false);
     }
+  };
+
+  // Applying the change is gated on a verified-correct answer — never fires
+  // otherwise, so the code only changes on an intentional, earned Accept.
+  const handleAccept = () => {
+    if (stale || correctPick === null) return;
+    onAccept(proposed);
   };
 
   return (
@@ -207,28 +210,41 @@ export function DiffCard({
         </div>
       )}
 
-      {checkRevealed && !stale && (
+      {!stale && (
         <div className="space-y-2 rounded-md border-[2px] p-3 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]">
           <p className="text-xs font-semibold text-text">
             {t("diff.checkPrompt")}
           </p>
           <p className="text-sm text-text">{check.question}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2">
             {check.options.map((option, index) => (
               <Button
                 key={index}
                 type="button"
                 variant={
-                  wrongPick === index ? "destructiveOutline" : "secondary"
+                  correctPick === index
+                    ? "primary"
+                    : wrongPick === index
+                      ? "destructiveOutline"
+                      : "secondary"
                 }
                 size="sm"
-                disabled={checking}
+                disabled={checking || correctPick !== null}
                 onClick={() => void handlePick(index as 0 | 1 | 2)}
+                className="h-auto justify-start gap-1.5 whitespace-normal py-2 text-left"
               >
+                {correctPick === index && (
+                  <Check size={14} weight="bold" aria-hidden="true" />
+                )}
                 {option}
               </Button>
             ))}
           </div>
+          {correctPick !== null && (
+            <p className="text-xs font-semibold text-success">
+              {t("diff.checkCorrect")}
+            </p>
+          )}
           {wrongPick !== null && wrongExplanation !== null && (
             <div className="flex items-start gap-2 text-xs text-danger">
               <WarningCircle
@@ -253,8 +269,9 @@ export function DiffCard({
           type="button"
           variant="primary"
           size="sm"
-          onClick={handleAcceptClick}
-          disabled={stale}
+          onClick={handleAccept}
+          disabled={stale || correctPick === null}
+          title={correctPick === null ? t("diff.acceptLocked") : undefined}
           className="gap-1.5"
         >
           <Check size={14} weight="bold" aria-hidden="true" />
