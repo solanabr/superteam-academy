@@ -4,3 +4,4 @@ export * from "./capabilities";
 export * from "./blocks/prose";
 export * from "./blocks/video";
 export * from "./blocks/code";
+export * from "./blocks/quiz";
