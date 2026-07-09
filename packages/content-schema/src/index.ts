@@ -4,3 +4,7 @@ export * from "./capabilities";
 export * from "./blocks";
 export * from "./lesson";
 export * from "./course";
+export * from "./achievement";
+export * from "./quest";
+export * from "./path";
+export * from "./instructor";
