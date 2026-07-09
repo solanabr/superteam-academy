@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { SlotsLock, assignSlots } from "../slots";
 
 const lock = {
-  version: 1,
+  version: 1 as const,
   slots: { "lesson-a": 0, "lesson-b": 1 },
   retired: [] as number[],
   next: 2,
