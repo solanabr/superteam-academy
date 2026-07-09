@@ -2,16 +2,17 @@
 
 ## Deployment Strategy Overview
 
-| Environment | Purpose | Commitment | Upgrades |
-|------------|---------|------------|----------|
-| **localnet** | Development | processed | Frequent, no restrictions |
-| **devnet** | Testing | confirmed | Frequent, test multisig |
-| **testnet** | Staging | confirmed | Controlled, production-like |
-| **mainnet** | Production | finalized | Rare, full security review |
+| Environment  | Purpose     | Commitment | Upgrades                    |
+| ------------ | ----------- | ---------- | --------------------------- |
+| **localnet** | Development | processed  | Frequent, no restrictions   |
+| **devnet**   | Testing     | confirmed  | Frequent, test multisig     |
+| **testnet**  | Staging     | confirmed  | Controlled, production-like |
+| **mainnet**  | Production  | finalized  | Rare, full security review  |
 
 ## Pre-Deployment Checklist
 
 ### Code Quality
+
 - [ ] All tests passing (unit, integration, fuzz)
 - [ ] Security audit completed (for mainnet)
 - [ ] Code review approved
@@ -19,12 +20,14 @@
 - [ ] All arithmetic uses checked operations
 
 ### Build Verification
+
 - [ ] Verifiable build successful
 - [ ] Binary hash matches expected
 - [ ] IDL generated and committed
 - [ ] Client SDK generated and tested
 
 ### Security Review
+
 - [ ] All accounts validated
 - [ ] CPI targets hardcoded
 - [ ] PDA bumps stored
@@ -32,6 +35,7 @@
 - [ ] Reentrancy considered
 
 ### Documentation
+
 - [ ] CHANGELOG updated
 - [ ] Migration guide if breaking changes
 - [ ] User-facing documentation updated
@@ -171,7 +175,10 @@ async function createProgramSquad() {
     members: [
       { pubkey: member1.publicKey, permissions: { vote: true, execute: true } },
       { pubkey: member2.publicKey, permissions: { vote: true, execute: true } },
-      { pubkey: member3.publicKey, permissions: { vote: true, execute: false } },
+      {
+        pubkey: member3.publicKey,
+        permissions: { vote: true, execute: false },
+      },
     ],
   });
 
@@ -371,6 +378,7 @@ pub fn some_instruction(ctx: Context<SomeInstruction>) -> Result<()> {
 ## Environment Configuration
 
 ### `.env.development`
+
 ```env
 SOLANA_RPC_URL=http://localhost:8899
 SOLANA_WS_URL=ws://localhost:8900
@@ -378,6 +386,7 @@ PROGRAM_ID=<LOCAL_PROGRAM_ID>
 ```
 
 ### `.env.devnet`
+
 ```env
 SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_WS_URL=wss://api.devnet.solana.com
@@ -385,6 +394,7 @@ PROGRAM_ID=<DEVNET_PROGRAM_ID>
 ```
 
 ### `.env.mainnet`
+
 ```env
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 SOLANA_WS_URL=wss://api.mainnet-beta.solana.com
@@ -399,16 +409,17 @@ PROGRAM_ID=<MAINNET_PROGRAM_ID>
 
 ## Deployment Cost Estimation
 
-| Action | Approximate Cost |
-|--------|------------------|
-| Deploy small program (<100KB) | ~1.5 SOL |
-| Deploy medium program (100-500KB) | ~3-5 SOL |
-| Deploy large program (>500KB) | ~5-10 SOL |
-| Upgrade (buffer write) | Same as deploy |
-| IDL init/upgrade | ~0.01 SOL |
-| Close old buffers | Returns ~90% of rent |
+| Action                            | Approximate Cost     |
+| --------------------------------- | -------------------- |
+| Deploy small program (<100KB)     | ~1.5 SOL             |
+| Deploy medium program (100-500KB) | ~3-5 SOL             |
+| Deploy large program (>500KB)     | ~5-10 SOL            |
+| Upgrade (buffer write)            | Same as deploy       |
+| IDL init/upgrade                  | ~0.01 SOL            |
+| Close old buffers                 | Returns ~90% of rent |
 
 **Tip**: Close unused buffers after upgrades to reclaim SOL:
+
 ```bash
 solana program close --buffers --url mainnet
 ```

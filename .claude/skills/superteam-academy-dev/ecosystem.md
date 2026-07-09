@@ -3,6 +3,7 @@
 ## Token Standards
 
 ### SPL Token (Classic)
+
 The original token program for fungible and non-fungible tokens.
 
 ```rust
@@ -11,6 +12,7 @@ spl_token::ID // TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
 ```
 
 **Key Features:**
+
 - Fungible tokens (FTs)
 - Basic NFT support
 - Transfer, mint, burn operations
@@ -18,6 +20,7 @@ spl_token::ID // TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
 - Decimals (0-9)
 
 ### Token-2022 (Token Extensions)
+
 Enhanced token program with built-in extensions.
 
 ```rust
@@ -38,8 +41,9 @@ spl_token_2022::ID // TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
 | Group/Member | Token grouping |
 
 **Detection Pattern:**
+
 ```typescript
-import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 function getTokenProgramId(mintInfo: AccountInfo): PublicKey {
   if (mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)) {
@@ -52,16 +56,19 @@ function getTokenProgramId(mintInfo: AccountInfo): PublicKey {
 ### Metaplex Token Standards
 
 **Core (Recommended for new NFTs)**
+
 - Lightweight, ~0.003 SOL mint cost
 - Plugin system for royalties, attributes
 - Collection management
 
 **Token Metadata (Legacy)**
+
 - Original NFT standard
 - Higher costs (~0.01 SOL)
 - Wide ecosystem support
 
 **Bubblegum (Compressed NFTs)**
+
 - State compression for massive collections
 - ~$1 per million NFTs
 - Merkle tree verification
@@ -73,24 +80,28 @@ function getTokenProgramId(mintInfo: AccountInfo): PublicKey {
 ### AMM/DEX Programs
 
 **Raydium**
+
 - Concentrated liquidity (CLMM)
 - Standard AMM pools
 - AcceleRaytor launchpad
 
 **Orca**
+
 - Whirlpools (concentrated liquidity)
 - Splash pools (standard)
 - Good SDK/documentation
 
 **Jupiter**
+
 - Aggregator (routes through all DEXs)
 - Limit orders
 - DCA
 - Perpetuals
 
 **Integration Pattern (Jupiter):**
+
 ```typescript
-import { Jupiter } from '@jup-ag/core';
+import { Jupiter } from "@jup-ag/core";
 
 async function getQuote(
   inputMint: PublicKey,
@@ -99,7 +110,7 @@ async function getQuote(
 ) {
   const jupiter = await Jupiter.load({
     connection,
-    cluster: 'mainnet-beta',
+    cluster: "mainnet-beta",
     user: wallet.publicKey,
   });
 
@@ -117,16 +128,19 @@ async function getQuote(
 ### Lending/Borrowing
 
 **Kamino**
+
 - Automated strategies
 - Lending markets
 - Multiply (leverage)
 
 **MarginFi**
+
 - Cross-collateral lending
 - Risk tiers
 - Points system
 
 **Solend**
+
 - Original Solana lending
 - Isolated pools
 - Main pool
@@ -134,17 +148,20 @@ async function getQuote(
 ### Perpetuals
 
 **Drift**
+
 - Perpetual futures
 - Spot trading
 - Insurance fund
 
 **Jupiter Perps**
+
 - Integrated with Jupiter
 - LP-based model
 
 ### Oracles
 
 **Pyth Network**
+
 - High-frequency price feeds
 - Confidence intervals
 - Multiple asset classes
@@ -154,18 +171,19 @@ use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 fn get_price(price_account: &AccountInfo) -> Result<i64> {
     let price_update = PriceUpdateV2::try_from_slice(&price_account.data.borrow())?;
-    
+
     // Validate freshness
     let current_time = Clock::get()?.unix_timestamp;
     if price_update.publish_time < current_time - MAX_STALENESS {
         return Err(ErrorCode::StalePrice.into());
     }
-    
+
     Ok(price_update.price)
 }
 ```
 
 **Switchboard**
+
 - Customizable oracles
 - VRF (randomness)
 - Functions (off-chain compute)
@@ -177,16 +195,19 @@ fn get_price(price_account: &AccountInfo) -> Result<i64> {
 ### Marketplaces
 
 **Magic Eden**
+
 - Largest Solana marketplace
 - Multi-chain support
 - Launchpad
 
 **Tensor**
+
 - Pro trading features
 - Collection offers
 - Advanced analytics
 
 **Exchange Art**
+
 - Curated/art-focused
 - Editions
 - Galleries
@@ -194,19 +215,24 @@ fn get_price(price_account: &AccountInfo) -> Result<i64> {
 ### NFT Infrastructure
 
 **Metaplex**
+
 - Token Metadata standard
 - Candy Machine (minting)
 - Sugar CLI
 - Auction House
 
 **Bubblegum (cNFTs)**
+
 ```typescript
-import { createTree, mintToCollectionV1 } from '@metaplex-foundation/mpl-bubblegum';
+import {
+  createTree,
+  mintToCollectionV1,
+} from "@metaplex-foundation/mpl-bubblegum";
 
 // Create merkle tree for cNFT collection
 const tree = await createTree(umi, {
   merkleTree: generateSigner(umi),
-  maxDepth: 14,        // 2^14 = 16,384 NFTs
+  maxDepth: 14, // 2^14 = 16,384 NFTs
   maxBufferSize: 64,
   public: false,
 });
@@ -217,8 +243,8 @@ await mintToCollectionV1(umi, {
   merkleTree: tree.publicKey,
   collectionMint: collection.publicKey,
   metadata: {
-    name: 'My cNFT',
-    uri: 'https://...',
+    name: "My cNFT",
+    uri: "https://...",
   },
 });
 ```
@@ -230,13 +256,14 @@ await mintToCollectionV1(umi, {
 ### Helius
 
 **Digital Asset Standard API (DAS)**
+
 ```typescript
-const response = await fetch('https://mainnet.helius-rpc.com/?api-key=<KEY>', {
-  method: 'POST',
+const response = await fetch("https://mainnet.helius-rpc.com/?api-key=<KEY>", {
+  method: "POST",
   body: JSON.stringify({
-    jsonrpc: '2.0',
-    id: 'my-id',
-    method: 'getAssetsByOwner',
+    jsonrpc: "2.0",
+    id: "my-id",
+    method: "getAssetsByOwner",
     params: {
       ownerAddress: wallet.publicKey.toString(),
       page: 1,
@@ -247,11 +274,13 @@ const response = await fetch('https://mainnet.helius-rpc.com/?api-key=<KEY>', {
 ```
 
 **Webhooks**
+
 - Transaction notifications
 - Account change alerts
 - NFT events
 
 **Enhanced RPC**
+
 - Transaction history
 - Token balances
 - Priority fee estimates
@@ -259,6 +288,7 @@ const response = await fetch('https://mainnet.helius-rpc.com/?api-key=<KEY>', {
 ### Triton/Yellowstone gRPC
 
 High-performance streaming for:
+
 - Account updates
 - Transaction streams
 - Slot notifications
@@ -279,6 +309,7 @@ let subscription = client.subscribe(SubscribeRequest {
 ### The Graph (Solana)
 
 Subgraph-based indexing:
+
 - Custom schemas
 - GraphQL queries
 - Historical data
@@ -286,11 +317,13 @@ Subgraph-based indexing:
 ### Custom Indexers
 
 **Geyser Plugins**
+
 - Direct validator data
 - Account snapshots
 - Transaction streams
 
 **PostgreSQL Pattern:**
+
 ```rust
 // Geyser plugin for indexing
 impl GeyserPlugin for MyIndexer {
@@ -314,7 +347,7 @@ impl GeyserPlugin for MyIndexer {
 ### Native Staking
 
 ```typescript
-import { StakeProgram } from '@solana/web3.js';
+import { StakeProgram } from "@solana/web3.js";
 
 // Create stake account
 const createStakeIx = StakeProgram.createAccount({
@@ -338,15 +371,18 @@ const delegateIx = StakeProgram.delegate({
 ### Liquid Staking
 
 **Marinade (mSOL)**
+
 - Largest liquid staking
 - Instant unstake
 - Native staking integration
 
 **Jito (JitoSOL)**
+
 - MEV rewards
 - Instant unstake via Jupiter
 
 **LST Integration:**
+
 ```typescript
 // Example: Deposit SOL for mSOL
 const marinade = new Marinade({ connection, wallet });
@@ -360,7 +396,7 @@ const { transaction } = await marinade.deposit(amountInLamports);
 ### Realms (SPL Governance)
 
 ```typescript
-import { withCreateProposal } from '@solana/spl-governance';
+import { withCreateProposal } from "@solana/spl-governance";
 
 // Create governance proposal
 const proposalIx = await withCreateProposal(
@@ -370,15 +406,15 @@ const proposalIx = await withCreateProposal(
   realm,
   governance,
   tokenOwnerRecord,
-  'Proposal Name',
-  'Proposal Description',
+  "Proposal Name",
+  "Proposal Description",
   governingTokenMint,
   wallet.publicKey,
   proposalIndex,
   voteType,
-  ['Approve', 'Deny'],
+  ["Approve", "Deny"],
   useDenyOption,
-  wallet.publicKey,
+  wallet.publicKey
 );
 ```
 
@@ -393,15 +429,15 @@ See `deployment.md` for multisig patterns.
 ### Solana Pay
 
 ```typescript
-import { createQR, encodeURL, TransferRequestURL } from '@solana/pay';
+import { createQR, encodeURL, TransferRequestURL } from "@solana/pay";
 
 // Create payment URL
 const url = encodeURL({
   recipient: merchantWallet,
   amount: new BigNumber(1.5), // SOL
   reference: new Keypair().publicKey, // Unique reference
-  label: 'My Store',
-  message: 'Order #12345',
+  label: "My Store",
+  message: "Order #12345",
 });
 
 // Generate QR code
@@ -418,22 +454,24 @@ See `payments.md` for gasless transaction patterns.
 
 ### RPC Providers
 
-| Provider | Features |
-|----------|----------|
-| **Helius** | DAS API, webhooks, enhanced methods |
-| **QuickNode** | Global endpoints, add-ons |
-| **Triton** | gRPC streaming, high throughput |
-| **Alchemy** | Multi-chain, enhanced APIs |
-| **Shyft** | NFT-focused, webhooks |
+| Provider      | Features                            |
+| ------------- | ----------------------------------- |
+| **Helius**    | DAS API, webhooks, enhanced methods |
+| **QuickNode** | Global endpoints, add-ons           |
+| **Triton**    | gRPC streaming, high throughput     |
+| **Alchemy**   | Multi-chain, enhanced APIs          |
+| **Shyft**     | NFT-focused, webhooks               |
 
 ### Validator Services
 
 **Jito**
+
 - MEV infrastructure
 - Block engine
 - Searcher bundles
 
 **Firedancer**
+
 - Independent validator client
 - High performance
 - Frankendancer (hybrid)
@@ -466,6 +504,7 @@ let ix = append_leaf(
 ```
 
 **Use Cases:**
+
 - Compressed NFTs (Bubblegum)
 - Large game state
 - Social data
@@ -480,7 +519,7 @@ let ix = append_leaf(
 Bridge assets and messages across chains:
 
 ```typescript
-import { getSignedVAAWithRetry } from '@certusone/wormhole-sdk';
+import { getSignedVAAWithRetry } from "@certusone/wormhole-sdk";
 
 // Initiate transfer from Solana
 const tx = await transferFromSolana(
@@ -492,7 +531,7 @@ const tx = await transferFromSolana(
   mintAddress,
   amount,
   targetChain,
-  targetAddress,
+  targetAddress
 );
 ```
 
@@ -507,24 +546,28 @@ const tx = await transferFromSolana(
 ## Best Practices by Category
 
 ### DeFi
+
 - Always use oracle price freshness checks
 - Implement slippage protection
 - Consider flash loan attack vectors
 - Use TWAPs for critical pricing
 
 ### NFTs
+
 - Use Bubblegum for large collections
 - Implement royalty enforcement
 - Consider compression for metadata
 - Use DAS API for queries
 
 ### Payments
+
 - Validate payment references
 - Handle confirmation states
 - Support multiple tokens
 - Consider gasless for UX
 
 ### Infrastructure
+
 - Use multiple RPC providers
 - Implement retry logic
 - Cache where appropriate

@@ -102,7 +102,9 @@ export function ChallengeInterface({
   const [descHeight, setDescHeight] = useState(180);
   const [panelHeight, setPanelHeight] = useState(120);
   const [taskHeight, setTaskHeight] = useState(320);
-  const [railWidth, setRailWidth] = useState(460);
+  // null = default 50/50 (both columns flex-1); a number = user dragged to that
+  // pixel width. Starting null keeps the split half-and-half on any screen.
+  const [railWidth, setRailWidth] = useState<number | null>(null);
   const resizeRef = useRef<{
     startY: number;
     startHeight: number;
@@ -111,6 +113,7 @@ export function ChallengeInterface({
   const railResizeRef = useRef<{ startX: number; startWidth: number } | null>(
     null
   );
+  const railRef = useRef<HTMLDivElement>(null);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
@@ -244,14 +247,19 @@ export function ChallengeInterface({
   const handleRailResizeStart = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      railResizeRef.current = { startX: e.clientX, startWidth: railWidth };
+      // From the flex default (railWidth null) measure the rail's live width;
+      // clamp the max against the container so the editor keeps ≥360px.
+      const startWidth = railWidth ?? railRef.current?.clientWidth ?? 460;
+      const container = railRef.current?.parentElement;
+      const maxW = container ? Math.max(360, container.clientWidth - 360) : 900;
+      railResizeRef.current = { startX: e.clientX, startWidth };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (!railResizeRef.current) return;
         const delta = railResizeRef.current.startX - moveEvent.clientX;
         const next = Math.max(
           320,
-          Math.min(720, railResizeRef.current.startWidth + delta)
+          Math.min(maxW, railResizeRef.current.startWidth + delta)
         );
         setRailWidth(next);
       };
@@ -534,8 +542,12 @@ export function ChallengeInterface({
           Width is drag-adjustable (railWidth); below lg, `contents` flattens
           this into the root flex-col so task/AI take their `order` slots. */}
       <div
-        className="contents lg:flex lg:shrink-0 lg:flex-col lg:overflow-hidden"
-        style={{ width: railWidth }}
+        ref={railRef}
+        className={cn(
+          "contents lg:flex lg:min-w-0 lg:flex-col lg:overflow-hidden",
+          railWidth === null ? "lg:flex-1" : "lg:shrink-0"
+        )}
+        style={railWidth !== null ? { width: railWidth } : undefined}
       >
         {/* Task brief */}
         <div
