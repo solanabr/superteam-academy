@@ -1,15 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import DOMPurify from "isomorphic-dompurify";
 import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
-import {
-  ArrowCounterClockwise,
-  Trophy,
-  Lightning,
-  X,
-} from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Trophy, X } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
@@ -50,7 +44,6 @@ export function ChallengeInterface({
   courseSlug,
   lessonSlug,
   taskSlot,
-  description,
   initialCode,
   language,
   buildType,
@@ -63,7 +56,6 @@ export function ChallengeInterface({
   isEnrolled: isEnrolledProp,
   onEnroll,
   onComplete,
-  hideDescription,
   className,
 }: ChallengeInterfaceProps) {
   const t = useTranslations("lesson");
@@ -98,8 +90,6 @@ export function ChallengeInterface({
     }
     prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
-  const [showDescription, setShowDescription] = useState(true);
-  const [descHeight, setDescHeight] = useState(180);
   const [panelHeight, setPanelHeight] = useState(120);
   const [taskHeight, setTaskHeight] = useState(320);
   // null = default 50/50 (both columns flex-1); a number = user dragged to that
@@ -108,7 +98,7 @@ export function ChallengeInterface({
   const resizeRef = useRef<{
     startY: number;
     startHeight: number;
-    target: "description" | "output" | "task";
+    target: "output" | "task";
   } | null>(null);
   const railResizeRef = useRef<{ startX: number; startWidth: number } | null>(
     null
@@ -196,19 +186,14 @@ export function ChallengeInterface({
   }, [lessonId]);
 
   const handleResizeStart = useCallback(
-    (target: "description" | "output" | "task") => (e: React.MouseEvent) => {
+    (target: "output" | "task") => (e: React.MouseEvent) => {
       e.preventDefault();
-      const startHeight =
-        target === "description"
-          ? descHeight
-          : target === "task"
-            ? taskHeight
-            : panelHeight;
+      const startHeight = target === "task" ? taskHeight : panelHeight;
       resizeRef.current = { startY: e.clientY, startHeight, target };
 
       const handleMouseMove = (moveEvent: MouseEvent) => {
         if (!resizeRef.current) return;
-        // Description/task: drag down = taller (resizer sits below the panel).
+        // Task: drag down = taller (resizer sits below the panel).
         // Output: drag up = taller (resizer sits above the panel).
         const delta =
           resizeRef.current.target === "output"
@@ -220,9 +205,7 @@ export function ChallengeInterface({
           min,
           Math.min(max, resizeRef.current.startHeight + delta)
         );
-        if (resizeRef.current.target === "description") {
-          setDescHeight(newHeight);
-        } else if (resizeRef.current.target === "task") {
+        if (resizeRef.current.target === "task") {
           setTaskHeight(newHeight);
         } else {
           setPanelHeight(newHeight);
@@ -238,7 +221,7 @@ export function ChallengeInterface({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [descHeight, panelHeight, taskHeight]
+    [panelHeight, taskHeight]
   );
 
   // Horizontal (X-axis) drag for the workspace/rail split — the rail is on the
@@ -283,93 +266,12 @@ export function ChallengeInterface({
         className
       )}
     >
-      {/* LEFT workspace: description/toolbar + editor + output. ~62% width at
-          lg+ (rail takes lg:w-2/5); below lg, `contents` flattens this into
-          the root flex-col so its children order alongside the rail's. */}
+      {/* LEFT workspace: toolbar + editor + output. 50/50 with the rail by
+          default (both sides use lg:flex-1); below lg, `contents` flattens
+          this into the root flex-col so its children order alongside the
+          rail's. */}
       <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
         <div className="order-2 flex min-h-0 flex-col overflow-hidden lg:order-none lg:flex-1">
-          {/* Description toggle + test cases (hidden when rendered externally) */}
-          {!hideDescription && (
-            <>
-              <button
-                onClick={() => setShowDescription(!showDescription)}
-                className="flex w-full shrink-0 items-center gap-2 border-b border-border px-4 py-2 text-left text-sm font-medium hover:[background:var(--card-hover)]"
-                type="button"
-              >
-                <span
-                  className="inline-block text-sm transition-transform duration-200"
-                  style={{
-                    transform: showDescription ? "rotate(180deg)" : "rotate(0)",
-                  }}
-                  aria-hidden="true"
-                >
-                  ▾
-                </span>
-                {t("challenge")}
-                <span className="ml-auto flex items-center gap-1 font-display text-xs font-black text-xp">
-                  <Lightning size={14} weight="duotone" className="text-xp" />
-                  {xpReward} XP
-                </span>
-              </button>
-            </>
-          )}
-
-          {/* Challenge description */}
-          {!hideDescription && showDescription && (
-            <>
-              <div
-                className="shrink-0 overflow-auto px-4 py-3"
-                style={{ height: descHeight, minHeight: 80 }}
-              >
-                <div
-                  className="prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(description),
-                  }}
-                />
-
-                {/* Visible test cases — hidden tests are already stripped
-                server-side (P0-C4), so every test here is safe to show. */}
-                {tests.length > 0 && (
-                  <div className="mt-3">
-                    <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
-                      {t("testCases")}
-                    </h4>
-                    <div className="space-y-1.5">
-                      {tests.map((tc) => (
-                        <div
-                          key={tc.id}
-                          className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                        >
-                          <span className="font-medium">{tc.description}</span>
-                          <div className="mt-1 flex gap-4 font-mono text-text-3">
-                            <span>
-                              {t("input")}: <code>{tc.input}</code>
-                            </span>
-                            <span>
-                              {t("expected")}: <code>{tc.expectedOutput}</code>
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Description resizer */}
-              <div
-                className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
-                onMouseDown={handleResizeStart("description")}
-                role="separator"
-                aria-orientation="horizontal"
-                tabIndex={0}
-              >
-                <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
-              </div>
-            </>
-          )}
-
           {/* Toolbar */}
           <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
             <div className="flex items-center justify-between">

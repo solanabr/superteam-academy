@@ -463,7 +463,6 @@ export function LessonPageClient({
                 courseSlug={courseSlug}
                 lessonSlug={lesson.slug}
                 taskSlot={taskSlot}
-                description=""
                 initialCode={lesson.code}
                 language={lesson.language === "rust" ? "rust" : "typescript"}
                 buildType={
@@ -481,7 +480,6 @@ export function LessonPageClient({
                 isAlreadyCompleted={isCompleted}
                 isEnrolled={isEnrolled}
                 onEnroll={handleEnroll}
-                hideDescription
                 className="h-full"
               />
             ) : (

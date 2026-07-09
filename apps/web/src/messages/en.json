@@ -304,10 +304,7 @@
     "askQuestion": "Ask a Question",
     "signInToAsk": "Sign in to ask a question",
     "dismissSuggestion": "Dismiss",
-    "dismissAllSuggestions": "Dismiss All",
-    "task": "Task",
-    "toggleTask": "Toggle the task brief",
-    "closeTask": "Close the task brief"
+    "dismissAllSuggestions": "Dismiss All"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
@@ -842,8 +839,6 @@
       "approach": "How should I get started?",
       "approachPrompt": "What are the first steps and key concepts I need to solve this challenge?"
     },
-    "collapse": "Collapse AI Partner",
-    "expand": "Expand AI Partner",
     "meter": {
       "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",
       "freeLabel": "Free hints",

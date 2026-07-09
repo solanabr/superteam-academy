@@ -304,10 +304,7 @@
     "askQuestion": "Fazer uma Pergunta",
     "signInToAsk": "Entre para fazer uma pergunta",
     "dismissSuggestion": "Dispensar",
-    "dismissAllSuggestions": "Dispensar Todas",
-    "task": "Tarefa",
-    "toggleTask": "Mostrar ou ocultar a tarefa",
-    "closeTask": "Fechar a tarefa"
+    "dismissAllSuggestions": "Dispensar Todas"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
@@ -842,8 +839,6 @@
       "approach": "Por onde eu começo?",
       "approachPrompt": "Quais são os primeiros passos e os conceitos principais que eu preciso para resolver este desafio?"
     },
-    "collapse": "Recolher Parceiro de IA",
-    "expand": "Expandir Parceiro de IA",
     "meter": {
       "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",
       "freeLabel": "Dicas gratuitas",

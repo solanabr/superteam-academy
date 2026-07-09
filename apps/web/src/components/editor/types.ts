@@ -71,7 +71,6 @@ export interface ChallengeInterfaceProps {
   lessonSlug: string;
   /** Task-brief content rendered in the right rail's top panel (lg+) / first in reading order (below lg). */
   taskSlot?: ReactNode;
-  description: string;
   initialCode: string;
   language: EditorLanguage;
   buildType?: BuildType;
@@ -84,7 +83,6 @@ export interface ChallengeInterfaceProps {
   isEnrolled?: boolean;
   onEnroll?: () => void;
   onComplete?: () => void;
-  hideDescription?: boolean;
   className?: string;
 }
 
