@@ -1,5 +1,6 @@
 import {
   Connection,
+  ComputeBudgetProgram,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -119,6 +120,22 @@ const BATCH_SIZE = 20;
 
 /** Small stagger between sends to avoid RPC rate limits. */
 const SEND_DELAY_MS = 50;
+
+/**
+ * Priority fee (compute-unit price, micro-lamports) added to every deploy tx.
+ * Without it, devnet leaders drop the rapid write txs under load — the RPC
+ * accepts them (200) but they never land. A write ix burns only a few thousand
+ * CU, so even this rate costs a tiny fraction of a lamport per tx while making
+ * inclusion far more reliable.
+ */
+const PRIORITY_FEE_MICROLAMPORTS = 100_000;
+
+/** Compute-unit-price instruction prepended to each deploy transaction. */
+function priorityFeeIx() {
+  return ComputeBudgetProgram.setComputeUnitPrice({
+    microLamports: PRIORITY_FEE_MICROLAMPORTS,
+  });
+}
 
 /**
  * Confirm multiple transactions in parallel using batch polling.
@@ -245,6 +262,7 @@ export async function deployProgram(params: {
     await connection.getLatestBlockhash("confirmed");
 
   const createBufferTx = new Transaction().add(
+    priorityFeeIx(),
     SystemProgram.createAccount({
       fromPubkey: payer,
       newAccountPubkey: bufferKeypair.publicKey,
@@ -295,6 +313,7 @@ export async function deployProgram(params: {
       const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
       const writeTx = new Transaction().add(
+        priorityFeeIx(),
         createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
       );
       writeTx.feePayer = payer;
@@ -358,6 +377,7 @@ export async function deployProgram(params: {
     await connection.getLatestBlockhash("confirmed");
 
   const deployTx = new Transaction().add(
+    priorityFeeIx(),
     SystemProgram.createAccount({
       fromPubkey: payer,
       newAccountPubkey: programKeypair.publicKey,
@@ -458,6 +478,7 @@ export async function resumeDeployment(params: {
         const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
         const writeTx = new Transaction().add(
+          priorityFeeIx(),
           createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
         );
         writeTx.feePayer = payer;
@@ -525,6 +546,7 @@ export async function resumeDeployment(params: {
   );
 
   const deployTx = new Transaction();
+  deployTx.add(priorityFeeIx());
 
   if (!existingProgramInfo) {
     deployTx.add(
