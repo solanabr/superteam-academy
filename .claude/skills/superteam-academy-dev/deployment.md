@@ -454,6 +454,75 @@ solana logs <PROGRAM_ID> --url devnet
 
 ---
 
+---
+
+# Superteam Academy — Project-Specific Deployment
+
+## Mandatory On-Chain Workflow
+
+Every program change:
+
+1. **Build**: `anchor build`
+2. **Format**: `cargo fmt`
+3. **Lint**: `cargo clippy -- -W clippy::all`
+4. **Test**: `cargo test --manifest-path tests/rust/Cargo.toml && anchor test`
+5. **Quality**: Remove AI slop (obvious comments, defensive try/catch, verbose errors)
+6. **Deploy**: Devnet first, mainnet with explicit confirmation
+
+## Quick Reference
+
+```bash
+# On-chain: Build + test
+anchor build && cargo fmt && cargo clippy -- -W clippy::all
+cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
+anchor test
+
+# Frontend: Dev server
+cd apps/web && pnpm dev
+
+# Deploy flow
+/deploy  # Always devnet first
+```
+
+## Vanity Keypairs
+
+Keypairs live in `wallets/` (gitignored). Replace placeholders with vanity-ground keys.
+
+| File                           | Purpose                                        |
+| ------------------------------ | ---------------------------------------------- |
+| `wallets/signer.json`          | Authority/payer keypair                        |
+| `wallets/program-keypair.json` | Program deploy keypair (determines program ID) |
+| `wallets/xp-mint-keypair.json` | XP mint keypair (determines mint address)      |
+
+```bash
+# Grind vanity addresses
+solana-keygen grind --starts-with ACAD:1   # program
+solana-keygen grind --starts-with XP:1     # XP mint
+
+# Place keypairs
+cp <program-keypair>.json wallets/program-keypair.json
+cp <xp-mint-keypair>.json wallets/xp-mint-keypair.json
+
+# Update program ID everywhere
+./scripts/update-program-id.sh
+
+# Deploy
+anchor build
+anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypair.json
+```
+
+## Pre-Mainnet Checklist
+
+- [ ] All tests passing (unit + integration + fuzz 10+ min)
+- [ ] Security audit completed
+- [ ] Verifiable build (`anchor build --verifiable`)
+- [ ] CU optimization verified (see ARCHITECTURE.md)
+- [ ] Metaplex Core credential flow tested end-to-end
+- [ ] Devnet testing successful (multiple days)
+- [ ] Frontend Lighthouse: Performance 90+, Accessibility 95+, Best Practices 95+, SEO 90+
+- [ ] AI slop removed from branch
+- [ ] User explicit confirmation received
+
 ## Best Practices Summary
 
 1. **Always use verifiable builds** for production deployments

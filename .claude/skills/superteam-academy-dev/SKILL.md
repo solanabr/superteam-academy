@@ -144,6 +144,7 @@ Always verify:
 ### Deployment
 
 - [deployment.md](deployment.md) — Devnet/mainnet workflows, verifiable builds, multisig
+- [structure.md](structure.md) — Full monorepo tree, nested CLAUDE.md map
 
 ### Ecosystem & Reference
 
@@ -153,16 +154,18 @@ Always verify:
 
 ## Task Routing Guide
 
-| User asks about...               | Primary file(s)    |
+| User asks about... | Primary file(s) |
+| Vanity keypairs, pre-mainnet checklist | deployment.md |
 | -------------------------------- | ------------------ |
-| Anchor program code              | programs-anchor.md |
-| Unit/integration testing         | testing.md         |
-| Fuzz testing (Trident)           | testing.md         |
-| Security review, audit           | security.md        |
-| Deploy to devnet/mainnet         | deployment.md      |
-| Token standards, SPL, Token-2022 | ecosystem.md       |
-| Generated clients, IDL           | idl-codegen.md     |
-| Official docs and resources      | resources.md       |
+| Anchor program code | programs-anchor.md |
+| Where a file lives in the monorepo | structure.md |
+| Unit/integration testing | testing.md |
+| Fuzz testing (Trident) | testing.md |
+| Security review, audit | security.md |
+| Deploy to devnet/mainnet | deployment.md |
+| Token standards, SPL, Token-2022 | ecosystem.md |
+| Generated clients, IDL | idl-codegen.md |
+| Official docs and resources | resources.md |
 
 ## Canonical Docs
 

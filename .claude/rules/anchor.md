@@ -1,6 +1,6 @@
 ---
 paths:
-  - "programs/**/src/**/*.rs"
+  - "**/programs/**/src/**/*.rs"
 ---
 
 # Anchor Program Rules (Comprehensive Reference)
@@ -8,32 +8,37 @@ paths:
 ## Core Macros
 
 ### `declare_id!()`
+
 Declares the onchain program address—unique public key from project keypair.
 
 ### `#[program]`
+
 Marks module containing instruction entrypoints and business logic.
 
 ### `#[derive(Accounts)]`
+
 Lists accounts an instruction requires with automatic constraint enforcement.
 
 ### `#[error_code]`
+
 Enables custom error types with `#[msg(...)]` attributes.
 
 ## Account Types
 
-| Type | Purpose |
-|------|---------|
-| `Signer<'info>` | Verifies account signed the transaction |
-| `SystemAccount<'info>` | Confirms System Program ownership |
-| `Program<'info, T>` | Validates executable program accounts |
-| `Account<'info, T>` | Typed program account with automatic validation |
-| `UncheckedAccount<'info>` | Raw account requiring manual validation |
-| `InterfaceAccount<'info, T>` | SPL/Token2022 compatible typed account |
-| `Interface<'info, T>` | SPL/Token2022 compatible program account |
+| Type                         | Purpose                                         |
+| ---------------------------- | ----------------------------------------------- |
+| `Signer<'info>`              | Verifies account signed the transaction         |
+| `SystemAccount<'info>`       | Confirms System Program ownership               |
+| `Program<'info, T>`          | Validates executable program accounts           |
+| `Account<'info, T>`          | Typed program account with automatic validation |
+| `UncheckedAccount<'info>`    | Raw account requiring manual validation         |
+| `InterfaceAccount<'info, T>` | SPL/Token2022 compatible typed account          |
+| `Interface<'info, T>`        | SPL/Token2022 compatible program account        |
 
 ## Account Constraints
 
 ### Initialization
+
 ```rust
 #[account(
     init,
@@ -46,6 +51,7 @@ pub vault: Account<'info, Vault>,
 ```
 
 ### PDA Validation (with stored bump)
+
 ```rust
 #[account(
     seeds = [b"vault", owner.key().as_ref()],
@@ -55,6 +61,7 @@ pub vault: Account<'info, Vault>,
 ```
 
 ### Ownership and Relationships
+
 ```rust
 #[account(
     mut,
@@ -65,6 +72,7 @@ pub account: Account<'info, CustomAccount>,
 ```
 
 ### Instruction Arguments in Constraints
+
 ```rust
 #[derive(Accounts)]
 #[instruction(amount: u64)]
@@ -79,6 +87,7 @@ pub struct Transfer<'info> {
 ```
 
 ### Reallocation
+
 ```rust
 #[account(
     mut,
@@ -90,6 +99,7 @@ pub account: Account<'info, CustomAccount>,
 ```
 
 ### Closing Accounts
+
 ```rust
 #[account(
     mut,
@@ -102,10 +112,12 @@ pub vault: Account<'info, Vault>,
 ## Account Discriminators (Anchor 0.31+)
 
 Default: `sha256("account:<StructName>")[0..8]`. Custom:
+
 ```rust
 #[account(discriminator = 1)]
 pub struct Escrow { ... }
 ```
+
 **Rules:** Must be unique; `[0]` conflicts with uninitialized accounts; `[1]` prevents `[1, 2, ...]`.
 
 ## PDA Management (CRITICAL)
@@ -149,6 +161,7 @@ pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
 ```
 
 ### Seed Collision Prevention
+
 ```rust
 pub const USER_VAULT_SEED: &[u8] = b"user_vault";
 pub const ADMIN_CONFIG_SEED: &[u8] = b"admin_config";
@@ -221,6 +234,7 @@ let data = ctx.accounts.account.data
 ## Cross-Program Invocations (CPIs)
 
 ### Basic CPI
+
 ```rust
 let cpi_accounts = Transfer {
     from: ctx.accounts.from.to_account_info(),
@@ -234,6 +248,7 @@ token::transfer(cpi_ctx, amount)?;
 ```
 
 ### PDA-Signed CPI
+
 ```rust
 let seeds = &[
     b"vault",
@@ -284,11 +299,13 @@ pub fn complex_operation(ctx: Context<ComplexOp>, amount: u64) -> Result<()> {
 ```
 
 **When to reload:**
+
 - After ANY CPI that modifies an account you hold a reference to
 - Before making decisions based on account state post-CPI
 - When chaining multiple CPIs that affect the same accounts
 
 ### CPI Target Validation
+
 ```rust
 // Use Program<'info, T> to validate CPI targets
 pub token_program: Program<'info, Token>,
@@ -302,6 +319,7 @@ if cpi_program.key() != expected_program_id {
 ## Token Accounts
 
 ### SPL Token
+
 ```rust
 #[account(
     mint::decimals = 9,
@@ -318,6 +336,7 @@ pub token_account: Account<'info, TokenAccount>,
 ```
 
 ### Token2022 Compatibility
+
 ```rust
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
@@ -358,15 +377,18 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 ## Advanced Patterns
 
 ### Zero-Copy Accounts (Large Data)
+
 ```rust
 #[account(zero_copy)]
 pub struct LargeAccount {
     pub data: [u8; 10000],
 }
 ```
+
 Accounts under 10,240 bytes use `init`; larger require external creation then `zero` constraint.
 
 ### LazyAccount (Anchor 0.31+)
+
 ```rust
 // Cargo.toml: anchor-lang = { features = ["lazy-account"] }
 pub account: LazyAccount<'info, CustomAccountType>,
@@ -376,6 +398,7 @@ let value = ctx.accounts.account.get_value()?;
 ```
 
 ### Remaining Accounts
+
 ```rust
 pub fn batch_operation(ctx: Context<BatchOp>, amounts: Vec<u64>) -> Result<()> {
     let remaining = &ctx.remaining_accounts;
@@ -389,6 +412,7 @@ pub fn batch_operation(ctx: Context<BatchOp>, amounts: Vec<u64>) -> Result<()> {
 ```
 
 ### Context Implementation Pattern
+
 ```rust
 impl<'info> Transfer<'info> {
     pub fn transfer_tokens(&mut self, amount: u64) -> Result<()> {
@@ -419,16 +443,16 @@ pub struct LargeAccount { ... }
 
 ## Anti-Patterns to Avoid
 
-| Don't | Do Instead |
-|-------|------------|
-| `unwrap()` in program code | Proper error handling with `?` |
-| Unchecked arithmetic | `checked_add`, `checked_sub`, etc. |
-| Recalculate PDA bumps | Store canonical bump |
-| Skip account validation | Use constraints and manual checks |
-| Forget to reload after CPI | Call `.reload()?` on modified accounts |
+| Don't                            | Do Instead                             |
+| -------------------------------- | -------------------------------------- |
+| `unwrap()` in program code       | Proper error handling with `?`         |
+| Unchecked arithmetic             | `checked_add`, `checked_sub`, etc.     |
+| Recalculate PDA bumps            | Store canonical bump                   |
+| Skip account validation          | Use constraints and manual checks      |
+| Forget to reload after CPI       | Call `.reload()?` on modified accounts |
 | Accept user-provided program IDs | Hardcode or validate against known IDs |
-| Use `msg!()` excessively | Feature-gate debug logs |
-| Use `init_if_needed` | Permits reinitialization attacks |
+| Use `msg!()` excessively         | Feature-gate debug logs                |
+| Use `init_if_needed`             | Permits reinitialization attacks       |
 
 ## Security Checklist (Per Instruction)
 
