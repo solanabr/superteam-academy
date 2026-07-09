@@ -15,7 +15,13 @@
     },
     "type": {
       "type": "string",
-      "enum": ["lesson", "lesson_batch", "challenge", "login_streak", "module"]
+      "enum": [
+        "lesson",
+        "lesson_batch",
+        "challenge",
+        "login_streak",
+        "module"
+      ]
     },
     "icon": {
       "type": "string"
@@ -32,12 +38,22 @@
     },
     "resetType": {
       "type": "string",
-      "enum": ["daily", "multi_day"]
+      "enum": [
+        "daily",
+        "multi_day"
+      ]
     },
     "active": {
       "default": true,
       "type": "boolean"
     }
   },
-  "required": ["id", "name", "type", "xpReward", "targetValue", "resetType"]
+  "required": [
+    "id",
+    "name",
+    "type",
+    "xpReward",
+    "targetValue",
+    "resetType"
+  ]
 }

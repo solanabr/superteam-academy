@@ -12,14 +12,20 @@
     },
     "produces": {
       "type": "string",
-      "enum": ["funded-wallet", "deployed-program"]
+      "enum": [
+        "funded-wallet",
+        "deployed-program"
+      ]
     },
     "consumes": {
       "minItems": 1,
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["funded-wallet", "deployed-program"]
+        "enum": [
+          "funded-wallet",
+          "deployed-program"
+        ]
       }
     },
     "questions": {
@@ -62,7 +68,11 @@
                   "minLength": 1
                 }
               },
-              "required": ["id", "label", "correct"]
+              "required": [
+                "id",
+                "label",
+                "correct"
+              ]
             }
           },
           "explanation": {
@@ -70,9 +80,17 @@
             "minLength": 1
           }
         },
-        "required": ["id", "prompt", "options"]
+        "required": [
+          "id",
+          "prompt",
+          "options"
+        ]
       }
     }
   },
-  "required": ["type", "key", "questions"]
+  "required": [
+    "type",
+    "key",
+    "questions"
+  ]
 }

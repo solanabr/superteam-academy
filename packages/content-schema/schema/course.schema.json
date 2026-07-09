@@ -19,7 +19,11 @@
     },
     "difficulty": {
       "type": "string",
-      "enum": ["beginner", "intermediate", "advanced"]
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
     },
     "duration": {
       "type": "number",
@@ -75,7 +79,9 @@
           "pattern": "^\\d+$"
         }
       },
-      "required": ["githubId"]
+      "required": [
+        "githubId"
+      ]
     },
     "instructor": {
       "type": "string",
@@ -111,7 +117,11 @@
             }
           }
         },
-        "required": ["key", "title", "lessons"]
+        "required": [
+          "key",
+          "title",
+          "lessons"
+        ]
       }
     }
   },

@@ -28,7 +28,11 @@
     },
     "difficulty": {
       "type": "string",
-      "enum": ["beginner", "intermediate", "advanced"]
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
     },
     "draft": {
       "default": false,
@@ -43,5 +47,10 @@
       }
     }
   },
-  "required": ["id", "slug", "title", "difficulty"]
+  "required": [
+    "id",
+    "slug",
+    "title",
+    "difficulty"
+  ]
 }

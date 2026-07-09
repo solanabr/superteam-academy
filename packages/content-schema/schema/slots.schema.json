@@ -33,5 +33,9 @@
       "maximum": 256
     }
   },
-  "required": ["version", "slots", "next"]
+  "required": [
+    "version",
+    "slots",
+    "next"
+  ]
 }

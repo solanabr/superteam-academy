@@ -27,7 +27,13 @@
     },
     "category": {
       "type": "string",
-      "enum": ["progress", "streaks", "skills", "community", "special"]
+      "enum": [
+        "progress",
+        "streaks",
+        "skills",
+        "community",
+        "special"
+      ]
     },
     "xpReward": {
       "type": "integer",
@@ -59,7 +65,10 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["kind", "gte"]
+          "required": [
+            "kind",
+            "gte"
+          ]
         },
         {
           "type": "object",
@@ -78,7 +87,11 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["kind", "course", "gte"]
+          "required": [
+            "kind",
+            "course",
+            "gte"
+          ]
         },
         {
           "type": "object",
@@ -92,7 +105,10 @@
               "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
             }
           },
-          "required": ["kind", "course"]
+          "required": [
+            "kind",
+            "course"
+          ]
         },
         {
           "type": "object",
@@ -106,7 +122,10 @@
               "pattern": "^path-[a-z0-9]+(?:-[a-z0-9]+)*$"
             }
           },
-          "required": ["kind", "path"]
+          "required": [
+            "kind",
+            "path"
+          ]
         },
         {
           "type": "object",
@@ -121,7 +140,10 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["kind", "days"]
+          "required": [
+            "kind",
+            "days"
+          ]
         },
         {
           "type": "object",
@@ -136,7 +158,10 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["kind", "lte"]
+          "required": [
+            "kind",
+            "lte"
+          ]
         },
         {
           "type": "object",
@@ -160,7 +185,11 @@
               "maximum": 9007199254740991
             }
           },
-          "required": ["kind", "stat", "gte"]
+          "required": [
+            "kind",
+            "stat",
+            "gte"
+          ]
         },
         {
           "type": "object",
@@ -170,10 +199,18 @@
               "const": "manual"
             }
           },
-          "required": ["kind"]
+          "required": [
+            "kind"
+          ]
         }
       ]
     }
   },
-  "required": ["id", "name", "category", "xpReward", "award"]
+  "required": [
+    "id",
+    "name",
+    "category",
+    "xpReward",
+    "award"
+  ]
 }
