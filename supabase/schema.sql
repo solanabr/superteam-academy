@@ -700,7 +700,7 @@ CREATE POLICY "Users can update their own deployments"
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'enroll')),
+  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'quest_xp', 'enroll')),
   reference_id   TEXT NOT NULL,
   payload        JSONB NOT NULL,
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -778,6 +778,7 @@ DECLARE
   v_all_done     BOOLEAN;
   v_max_date     DATE;
   v_just_awarded BOOLEAN;
+  v_completed    BOOLEAN;
 BEGIN
   FOR v_quest IN SELECT * FROM jsonb_array_elements(p_quest_definitions)
   LOOP
@@ -850,16 +851,20 @@ BEGIN
         v_period  := CURRENT_DATE;
       END IF;
 
+      -- Completion requires a positive target: a targetValue of 0 must NOT
+      -- auto-complete (that would mint free XP every day for a 0-target quest).
+      v_completed := v_target > 0 AND v_current >= v_target;
+
       -- Upsert the streak row and skip the generic upsert below
       INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
-      VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
+      VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
       ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
         current_value = EXCLUDED.current_value,
         completed     = EXCLUDED.completed,
         completed_at  = EXCLUDED.completed_at;
 
       -- Mark xp_granted on first completion (API route mints on-chain)
-      IF v_current >= v_target THEN
+      IF v_completed THEN
         UPDATE public.user_daily_quests
         SET xp_granted = true
         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
@@ -872,7 +877,7 @@ BEGIN
       v_results := v_results || jsonb_build_object(
         'questId', v_quest_id,
         'currentValue', v_current,
-        'completed', v_current >= v_target,
+        'completed', v_completed,
         'justAwarded', v_just_awarded,
         'xpReward', v_xp
       );
@@ -909,20 +914,29 @@ BEGIN
           END IF;
         END IF;
       END LOOP;
+
+    ELSE
+      -- Unknown quest type: fail loudly rather than silently rendering 0/N
+      -- (a mis-typed quest definition should never quietly evaluate to 0).
+      RAISE EXCEPTION 'get_daily_quest_state: unknown quest type: %', v_type;
     END IF;
 
     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
     v_period := CURRENT_DATE;
 
+    -- Completion requires a positive target: a targetValue of 0 must NOT
+    -- auto-complete (that would mint free XP every day for a 0-target quest).
+    v_completed := v_target > 0 AND v_current >= v_target;
+
     INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
-    VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
+    VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
     ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
       current_value = EXCLUDED.current_value,
       completed     = EXCLUDED.completed,
       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
 
     -- Mark xp_granted on first completion (API route mints on-chain)
-    IF v_current >= v_target THEN
+    IF v_completed THEN
       UPDATE public.user_daily_quests
       SET xp_granted = true
       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
@@ -935,7 +949,7 @@ BEGIN
     v_results := v_results || jsonb_build_object(
       'questId', v_quest_id,
       'currentValue', v_current,
-      'completed', v_current >= v_target,
+      'completed', v_completed,
       'justAwarded', v_just_awarded,
       'xpReward', v_xp
     );

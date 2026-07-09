@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { PublicKey } from "@solana/web3.js";
 import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/sanity/queries";
-import { rewardXp, isOnChainProgramLive } from "@/lib/solana/academy-program";
 import { queueFailedOnchainAction } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
 import { logError } from "@/lib/logging";
@@ -116,14 +114,21 @@ export async function GET() {
       };
     });
 
-    // 6. Mint XP on-chain for newly-completed quests (fire-and-forget)
+    // 6. Durably record the on-chain XP mint intent for newly-completed quests.
+    //
+    // get_daily_quest_state already flipped xp_granted=true ("attempt
+    // authorized"), so a dropped mint is PERMANENT XP loss. The mint therefore
+    // must not be fire-and-forget: on Vercel the lambda freezes once the
+    // response returns, killing any un-awaited work. Instead we write the
+    // pending_onchain_actions row SYNCHRONOUSLY (durable) BEFORE responding;
+    // retryPendingOnchainActions() — driven on the user's next auth — performs
+    // the actual on-chain mint (it resolves the wallet and checks program
+    // liveness itself, so no wallet / program-live gating is needed here).
     const newlyAwarded = progressRows.filter(
       (r) => r.justAwarded && r.xpReward > 0
     );
     if (newlyAwarded.length > 0) {
-      mintQuestXpOnChain(user.id, newlyAwarded, admin).catch(() => {
-        // Errors are logged + queued inside mintQuestXpOnChain
-      });
+      await enqueueQuestXpMints(user.id, newlyAwarded);
     }
 
     return NextResponse.json({
@@ -140,56 +145,43 @@ export async function GET() {
 }
 
 // ---------------------------------------------------------------------------
-// Fire-and-forget: mint quest XP tokens on-chain
+// Durable enqueue: record quest-XP mint intents for the retry queue
 // ---------------------------------------------------------------------------
 
-async function mintQuestXpOnChain(
+async function enqueueQuestXpMints(
   userId: string,
-  awarded: Array<{ questId: string; xpReward: number }>,
-  admin: ReturnType<typeof createAdminClient>
+  awarded: Array<{ questId: string; xpReward: number }>
 ): Promise<void> {
-  // Check if program is live before attempting on-chain calls
-  const programLive = await isOnChainProgramLive();
-  if (!programLive) return;
+  // Reference_id is scoped to the UTC day (matching CURRENT_DATE, which
+  // get_daily_quest_state uses for period_start on the Supabase UTC instance).
+  // Without the day suffix, day-N's enqueue would upsert-collide with a prior
+  // day's already-resolved row and the mint would be silently dropped.
+  const periodKey = new Date().toISOString().slice(0, 10);
 
-  // Resolve the user's wallet address
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("wallet_address")
-    .eq("id", userId)
-    .single();
-
-  if (!profile?.wallet_address) return;
-
-  const wallet = new PublicKey(profile.wallet_address);
-
-  for (const quest of awarded) {
-    const memo = `daily_quest:${quest.questId}`;
-    try {
-      await rewardXp(wallet, quest.xpReward, memo);
-    } catch (err) {
-      logError({
-        errorId: ERROR_IDS.XP_REWARD_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: {
-          handler: "mintQuestXpOnChain",
+  // Enqueue every award; a failed enqueue means the durable intent was NOT
+  // recorded (xp_granted is already true → XP-loss case), so surface it loudly
+  // per-quest rather than letting one failure abort the others.
+  await Promise.all(
+    awarded.map(async (quest) => {
+      try {
+        await queueFailedOnchainAction(
           userId,
-          questId: quest.questId,
-          xpReward: quest.xpReward,
-        },
-      });
-
-      await queueFailedOnchainAction(
-        userId,
-        "quest_xp",
-        quest.questId,
-        {
-          xpAmount: quest.xpReward,
-          memo,
-          walletAddress: profile.wallet_address,
-        },
-        err instanceof Error ? err.message : String(err)
-      );
-    }
-  }
+          "quest_xp",
+          `${quest.questId}:${periodKey}`,
+          { xpAmount: quest.xpReward, memo: `daily_quest:${quest.questId}` }
+        );
+      } catch (err) {
+        logError({
+          errorId: ERROR_IDS.XP_REWARD_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: {
+            handler: "enqueueQuestXpMints",
+            userId,
+            questId: quest.questId,
+            xpReward: quest.xpReward,
+          },
+        });
+      }
+    })
+  );
 }

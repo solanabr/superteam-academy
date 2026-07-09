@@ -56,27 +56,44 @@ export async function queueFailedOnchainAction(
   actionType: OnchainActionType,
   referenceId: string,
   payload: Record<string, unknown>,
-  error: string
+  // Optional. Present → a real failure (records last_error + failed_at).
+  // Absent → a proactive/durable enqueue (row is simply "pending, unattempted").
+  error?: string
 ): Promise<void> {
-  try {
-    const adminClient = createAdminClient();
-    await adminClient.from("pending_onchain_actions").upsert(
+  const adminClient = createAdminClient();
+
+  // supabase-js `.upsert()` RESOLVES with `{ error }` on a constraint
+  // violation instead of throwing — a try/catch never fires. Inspect the
+  // returned error explicitly so a failed enqueue is visible (logged + thrown)
+  // rather than silently dropping a durable on-chain intent.
+  const { error: upsertError } = await adminClient
+    .from("pending_onchain_actions")
+    .upsert(
       {
         user_id: userId,
         action_type: actionType,
         reference_id: referenceId,
         payload: payload as unknown as import("@/lib/supabase/types").Json,
-        last_error: error,
-        failed_at: new Date().toISOString(),
+        last_error: error ?? null,
+        failed_at: error ? new Date().toISOString() : null,
       },
       { onConflict: "user_id,action_type,reference_id" }
     );
-  } catch (err) {
+
+  if (upsertError) {
     logError({
       errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-      error: err instanceof Error ? err : new Error(String(err)),
-      context: { userId, actionType, referenceId },
+      error: new Error(upsertError.message),
+      context: {
+        userId,
+        actionType,
+        referenceId,
+        note: "pending_onchain_actions enqueue failed",
+      },
     });
+    throw new Error(
+      `Failed to enqueue ${actionType} action ${referenceId}: ${upsertError.message}`
+    );
   }
 }
 
