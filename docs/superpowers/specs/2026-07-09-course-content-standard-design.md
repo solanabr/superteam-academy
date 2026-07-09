@@ -1412,11 +1412,17 @@ independent of this work: the `achievement-` prefix instruction (`CMS_GUIDE.md:2
   nothing until their next event, and streak-only users may never fire the right event. Decide
   now: a backfill sweep on content sync ("new achievement ingested → evaluate all users once"),
   or documented forward-only awards. It is a support-ticket generator if left implicit.
-- **Inventory numbers: re-count from live at Phase 1, do not trust the spec constants.** §1/§3
-  cite 108 test objects, 0 with `id`, 26 `hidden:true` — reproduced twice against
-  `4e3i2wwc/production` (a second audit's 153/45/71 did not reproduce and appears to have counted
-  a different dataset). Numbers still drift over time regardless of which count is right today, so
-  Phase 1 extraction must re-inventory from the live dataset rather than hard-code these.
+- **Inventory numbers — settled, not open.** §1/§3's figures (108 test objects, 0 with `id`,
+  39 `hidden` defined, 26 `hidden:true`) are correct and proven against `4e3i2wwc/production`. A
+  second audit's 153/45/84/71 was a **GROQ null-traversal artifact**, not a different dataset:
+  `*[_type=="lesson"].tests[]` emits one `null` for each of the 45 lessons that have no `tests`
+  array (79 lessons − 34 with tests = 45), and `count(tests[defined(id)])` over that flattened
+  list counts the nulls (`defined(id)` on a `null` returns the `null`). Every 153-family figure
+  overcounts by exactly 45; `count(*[_type=="lesson"].tests[defined(id)])` literally returns
+  `[null × 45]`. The per-document sum (`math::sum(*[_type=="lesson"]{"n":coalesce(count(tests[]),0)}.n)`)
+  is the authoritative form and gives 108/0/39/26. **Durable lesson:** never count via flattened
+  GROQ traversals — sum per document. Phase 1 still re-reads live content (it must, to generate
+  the tree), but not because these constants are in doubt.
 - **The teacher-pool cost of D1 is a product call to attribute explicitly.** Moving authoring
   from the `/teach` web UI (built this year) to git + YAML + PR + CI shrinks the effective
   contributor pool to git-literate teachers. The VS Code schema binding and `_template/` mitigate
