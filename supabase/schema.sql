@@ -749,8 +749,12 @@ CREATE POLICY "Users can view their own daily quests"
 -- ── get_daily_quest_state ─────────────────────────────────────
 -- Single-pass function: evaluates all quest progress for a user,
 -- upserts rows, marks first completion via xp_granted flag.
--- XP is minted on-chain by the API route (not in SQL) — the
--- Helius webhook then syncs it to Supabase via award_xp().
+-- On first completion it ALSO enqueues a 'quest_xp' pending_onchain_actions
+-- row in THIS transaction (atomic with the xp_granted flip), so a quest is
+-- never marked granted without a durable delivery record. The XP is then
+-- credited idempotently by retryPendingOnchainActions() -> award_xp()
+-- (reference_id = idempotency key); it is NOT minted on-chain from a retry
+-- path, because rewardXp is non-idempotent and would double-mint soulbound XP.
 -- Called via service_role from /api/quests/daily.
 CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_user_id           UUID,
@@ -863,7 +867,11 @@ BEGIN
         completed     = EXCLUDED.completed,
         completed_at  = EXCLUDED.completed_at;
 
-      -- Mark xp_granted on first completion (API route mints on-chain)
+      -- Mark xp_granted on first completion and durably enqueue the XP credit
+      -- in the SAME transaction (atomic with the flip): a quest is never marked
+      -- granted without a pending_onchain_actions row, so the enqueue can never
+      -- be lost to a swallowed app-side error. retryPendingOnchainActions()
+      -- delivers it idempotently via award_xp (reference_id = idempotency key).
       IF v_completed THEN
         UPDATE public.user_daily_quests
         SET xp_granted = true
@@ -871,6 +879,14 @@ BEGIN
 
         IF FOUND THEN
           v_just_awarded := true;
+          INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+          VALUES (
+            p_user_id,
+            'quest_xp',
+            v_quest_id || ':' || v_period::text,
+            jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+          )
+          ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
         END IF;
       END IF;
 
@@ -916,9 +932,14 @@ BEGIN
       END LOOP;
 
     ELSE
-      -- Unknown quest type: fail loudly rather than silently rendering 0/N
-      -- (a mis-typed quest definition should never quietly evaluate to 0).
-      RAISE EXCEPTION 'get_daily_quest_state: unknown quest type: %', v_type;
+      -- Unknown quest type (e.g. a CMS typo). Skip this ONE quest with a loud
+      -- server-log warning rather than RAISE-ing — a single mis-typed quest
+      -- definition must not 500 the whole daily-quests endpoint for every user
+      -- (and, now that the enqueue is transactional, roll back other quests'
+      -- durable XP rows in the same call). It is not rendered as a silent 0/N:
+      -- it is omitted from the result and flagged in the logs for the operator.
+      RAISE WARNING 'get_daily_quest_state: skipping unknown quest type: %', v_type;
+      CONTINUE;
     END IF;
 
     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
@@ -935,7 +956,8 @@ BEGIN
       completed     = EXCLUDED.completed,
       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
 
-    -- Mark xp_granted on first completion (API route mints on-chain)
+    -- Mark xp_granted on first completion and durably enqueue the XP credit in
+    -- the SAME transaction (atomic with the flip) — see the login_streak branch.
     IF v_completed THEN
       UPDATE public.user_daily_quests
       SET xp_granted = true
@@ -943,6 +965,14 @@ BEGIN
 
       IF FOUND THEN
         v_just_awarded := true;
+        INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+        VALUES (
+          p_user_id,
+          'quest_xp',
+          v_quest_id || ':' || v_period::text,
+          jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+        )
+        ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
       END IF;
     END IF;
 

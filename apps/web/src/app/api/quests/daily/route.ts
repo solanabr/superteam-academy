@@ -3,10 +3,7 @@ import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/sanity/queries";
-import { queueFailedOnchainAction } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
-import { logError } from "@/lib/logging";
-import { ERROR_IDS } from "@/constants/errorIds";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -114,23 +111,12 @@ export async function GET() {
       };
     });
 
-    // 6. Durably record the on-chain XP mint intent for newly-completed quests.
-    //
-    // get_daily_quest_state already flipped xp_granted=true ("attempt
-    // authorized"), so a dropped mint is PERMANENT XP loss. The mint therefore
-    // must not be fire-and-forget: on Vercel the lambda freezes once the
-    // response returns, killing any un-awaited work. Instead we write the
-    // pending_onchain_actions row SYNCHRONOUSLY (durable) BEFORE responding;
-    // retryPendingOnchainActions() — driven on the user's next auth — performs
-    // the actual on-chain mint (it resolves the wallet and checks program
-    // liveness itself, so no wallet / program-live gating is needed here).
-    const newlyAwarded = progressRows.filter(
-      (r) => r.justAwarded && r.xpReward > 0
-    );
-    if (newlyAwarded.length > 0) {
-      await enqueueQuestXpMints(user.id, newlyAwarded);
-    }
-
+    // 6. XP delivery is durable by construction: get_daily_quest_state writes
+    // the pending_onchain_actions row in the SAME transaction that flips
+    // xp_granted=true, so a quest is never marked granted without a durable
+    // pending row. retryPendingOnchainActions() (driven on the user's next auth)
+    // credits it idempotently via award_xp. Nothing to enqueue here — doing it
+    // in the route would leave a window where xp_granted stands without a row.
     return NextResponse.json({
       quests,
       nextResetTime: nextMidnightUtc(),
@@ -142,46 +128,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// Durable enqueue: record quest-XP mint intents for the retry queue
-// ---------------------------------------------------------------------------
-
-async function enqueueQuestXpMints(
-  userId: string,
-  awarded: Array<{ questId: string; xpReward: number }>
-): Promise<void> {
-  // Reference_id is scoped to the UTC day (matching CURRENT_DATE, which
-  // get_daily_quest_state uses for period_start on the Supabase UTC instance).
-  // Without the day suffix, day-N's enqueue would upsert-collide with a prior
-  // day's already-resolved row and the mint would be silently dropped.
-  const periodKey = new Date().toISOString().slice(0, 10);
-
-  // Enqueue every award; a failed enqueue means the durable intent was NOT
-  // recorded (xp_granted is already true → XP-loss case), so surface it loudly
-  // per-quest rather than letting one failure abort the others.
-  await Promise.all(
-    awarded.map(async (quest) => {
-      try {
-        await queueFailedOnchainAction(
-          userId,
-          "quest_xp",
-          `${quest.questId}:${periodKey}`,
-          { xpAmount: quest.xpReward, memo: `daily_quest:${quest.questId}` }
-        );
-      } catch (err) {
-        logError({
-          errorId: ERROR_IDS.XP_REWARD_FAILED,
-          error: err instanceof Error ? err : new Error(String(err)),
-          context: {
-            handler: "enqueueQuestXpMints",
-            userId,
-            questId: quest.questId,
-            xpReward: quest.xpReward,
-          },
-        });
-      }
-    })
-  );
 }

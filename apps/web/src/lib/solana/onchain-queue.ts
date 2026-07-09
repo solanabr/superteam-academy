@@ -7,17 +7,14 @@ import {
   awardAchievement,
   finalizeCourse,
   issueCredential,
-  rewardXp,
 } from "./academy-program";
 import {
   fetchAchievementReceipt,
   fetchEnrollment,
   fetchCourse,
 } from "./academy-reads";
-import { ERROR_IDS } from "@/constants/errorIds";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { logError } from "@/lib/logging";
 import { getCourseById } from "@/lib/sanity/queries";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type OnchainActionType =
   | "achievement"
@@ -48,58 +45,13 @@ export async function withRetry<T>(
 }
 
 // ---------------------------------------------------------------------------
-// 2. Queue a failed on-chain action for later retry
+// 2. Retry all pending on-chain actions for a user
 // ---------------------------------------------------------------------------
-
-export async function queueFailedOnchainAction(
-  userId: string,
-  actionType: OnchainActionType,
-  referenceId: string,
-  payload: Record<string, unknown>,
-  // Optional. Present → a real failure (records last_error + failed_at).
-  // Absent → a proactive/durable enqueue (row is simply "pending, unattempted").
-  error?: string
-): Promise<void> {
-  const adminClient = createAdminClient();
-
-  // supabase-js `.upsert()` RESOLVES with `{ error }` on a constraint
-  // violation instead of throwing — a try/catch never fires. Inspect the
-  // returned error explicitly so a failed enqueue is visible (logged + thrown)
-  // rather than silently dropping a durable on-chain intent.
-  const { error: upsertError } = await adminClient
-    .from("pending_onchain_actions")
-    .upsert(
-      {
-        user_id: userId,
-        action_type: actionType,
-        reference_id: referenceId,
-        payload: payload as unknown as import("@/lib/supabase/types").Json,
-        last_error: error ?? null,
-        failed_at: error ? new Date().toISOString() : null,
-      },
-      { onConflict: "user_id,action_type,reference_id" }
-    );
-
-  if (upsertError) {
-    logError({
-      errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-      error: new Error(upsertError.message),
-      context: {
-        userId,
-        actionType,
-        referenceId,
-        note: "pending_onchain_actions enqueue failed",
-      },
-    });
-    throw new Error(
-      `Failed to enqueue ${actionType} action ${referenceId}: ${upsertError.message}`
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 3. Retry all pending on-chain actions for a user
-// ---------------------------------------------------------------------------
+//
+// NOTE: quest_xp rows are enqueued transactionally inside get_daily_quest_state
+// (atomic with the xp_granted flip), NOT via an app-side helper — a quest can
+// never be marked granted without a durable pending row. See the quest_xp case
+// below for how delivery is made idempotent.
 
 export async function retryPendingOnchainActions(
   userId: string
@@ -116,6 +68,45 @@ export async function retryPendingOnchainActions(
 
   if (fetchError || !rows || rows.length === 0) return;
 
+  // ── Pass 1: DB-only quest_xp credits (no wallet required) ──
+  // award_xp credits by user_id, so wallet-less (e.g. Google-only) users still
+  // receive quest XP. The reference_id is the idempotency key, so a re-sweep of
+  // an already-credited row is a no-op (never a double-award).
+  for (const row of rows) {
+    if (row.action_type !== "quest_xp") continue;
+    try {
+      const payload = row.payload as Record<string, unknown>;
+      const xpAmount = payload.xpAmount as number;
+      const reason =
+        (payload.memo as string) ?? `daily_quest:${row.reference_id}`;
+
+      const { error: xpRpcError } = await adminClient.rpc("award_xp", {
+        p_user_id: userId,
+        p_amount: xpAmount,
+        p_reason: reason,
+        p_idempotency_key: row.reference_id,
+      });
+      if (xpRpcError) throw new Error(xpRpcError.message);
+
+      await adminClient
+        .from("pending_onchain_actions")
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("id", row.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await adminClient
+        .from("pending_onchain_actions")
+        .update({
+          retry_count: (row.retry_count ?? 0) + 1,
+          last_error: message,
+        })
+        .eq("id", row.id);
+    }
+  }
+
+  // ── Pass 2: on-chain actions (all require a linked wallet) ──
+  if (!rows.some((r) => r.action_type !== "quest_xp")) return;
+
   const { data: profile } = await adminClient
     .from("profiles")
     .select("wallet_address")
@@ -127,6 +118,7 @@ export async function retryPendingOnchainActions(
   const wallet = new PublicKey(profile.wallet_address);
 
   for (const row of rows) {
+    if (row.action_type === "quest_xp") continue; // handled in Pass 1
     try {
       const actionType = row.action_type as OnchainActionType;
       const payload = row.payload as Record<string, unknown>;
@@ -331,15 +323,6 @@ export async function retryPendingOnchainActions(
             p_idempotency_key: row.reference_id,
           });
           if (xpRpcError) throw new Error(xpRpcError.message);
-          break;
-        }
-
-        case "quest_xp": {
-          const questId = row.reference_id;
-          const xpAmount = payload.xpAmount as number;
-          const memo = (payload.memo as string) ?? `daily_quest:${questId}`;
-
-          await withRetry(() => rewardXp(wallet, xpAmount, memo));
           break;
         }
 
