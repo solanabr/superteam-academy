@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^lesson-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blocks": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "prose"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "src": {
+                "type": "string"
+              }
+            },
+            "required": ["type", "key", "src"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "video"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": ["type", "key", "url"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "code"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "language": {
+                "type": "string",
+                "enum": ["typescript", "rust"]
+              },
+              "buildType": {
+                "default": "standard",
+                "type": "string",
+                "enum": ["standard", "buildable"]
+              },
+              "deployable": {
+                "default": false,
+                "type": "boolean"
+              },
+              "starter": {
+                "type": "string",
+                "minLength": 1
+              },
+              "solution": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tests": {
+                "type": "string"
+              },
+              "hints": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "type",
+              "key",
+              "language",
+              "starter",
+              "solution",
+              "tests"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "quiz"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "questions": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "multiSelect": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "minItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "correct": {
+                            "type": "boolean"
+                          },
+                          "feedback": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": ["id", "label", "correct"]
+                      }
+                    },
+                    "explanation": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["id", "prompt", "options"]
+                }
+              }
+            },
+            "required": ["type", "key", "questions"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "openEnded"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "prompt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "maxWords": {
+                "default": 200,
+                "type": "integer",
+                "minimum": 20,
+                "maximum": 500
+              }
+            },
+            "required": ["type", "key", "prompt"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "wallet-funding"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "amount": {
+                "default": 2,
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 5
+              },
+              "network": {
+                "default": "devnet",
+                "type": "string",
+                "const": "devnet"
+              }
+            },
+            "required": ["type", "key"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "program-explorer"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              },
+              "idl": {
+                "type": "string"
+              }
+            },
+            "required": ["type", "key", "idl"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "deployed-program-card"
+              },
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "produces": {
+                "type": "string",
+                "enum": ["funded-wallet", "deployed-program"]
+              },
+              "consumes": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["funded-wallet", "deployed-program"]
+                }
+              }
+            },
+            "required": ["type", "key"]
+          }
+        ]
+      }
+    }
+  },
+  "required": ["id", "slug", "title", "blocks"]
+}
