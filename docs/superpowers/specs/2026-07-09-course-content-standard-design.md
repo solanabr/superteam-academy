@@ -262,9 +262,16 @@ Per-option `feedback` and a general `explanation` are separate channels. A naive
 `{question, options, correctIndex}` model has nowhere to put either, cannot express
 multi-select, and silently grades the wrong answer when options are reordered.
 
-Quizzes are open-book: a quiz's answer *is* its content, and the repo is public. Execution-
-graded `code` and AI-fed `openEnded` are the only block types where a public key does not
-hand over the answer. This is an accepted consequence of D4.
+**Everything is open-book (D4), including code.** A quiz's answer is its content; a `code`
+block's answer is `solution.ts`, which is public in the repo and served in the same public
+projection the grader reads (§10.2). A learner can paste the reference solution and pass the
+executor byte-for-byte, earning XP, an on-chain credential, and a leaderboard position. Post-D4
+the XP economy is **honor-system**, by deliberate choice for a free learning platform. The
+one place a public key genuinely reveals nothing is `openEnded` — there is no key, only an
+AI-generated reflection. If anti-cheat ever matters, the cheapest lever is a solution-similarity
+flag at grade time (evadeable, but it prices in effort); the previously-deleted answer-key
+stripping bought nothing here, since the repo is public regardless. See §13 for the honest
+security-posture entry.
 
 ### 4.6 `slots.lock.json`
 
@@ -373,9 +380,17 @@ blocks:
     idl: program.idl.json      # a real file, not a `text` field with a hand-rolled validator
 ```
 
-**CI invariant:** every `consumes: X` must be preceded, by slot order within the same course,
-by a block that `produces: X`. The consuming block resolves the producing lesson's id from the
-manifest — which is exactly the `deployed_programs` lookup key that was missing.
+**CI invariant:** every `consumes: X` must be preceded, by **display order** (the flattened
+`modules[].lessons[]` sequence a learner actually encounters), by a block that `produces: X`.
+**Not slot order** — slots are frozen assignment order, and the moment anyone uses the reorder
+feature (the entire reason for D6/D7) the two diverge, so a slot-order check would pass a course
+that shows `program-explorer` before the deploy lesson on screen. The consuming block resolves
+the producing lesson's id from the manifest — which is exactly the `deployed_programs` lookup
+key that was missing.
+
+**Producer/consumer types are constrained per capability**, so a block cannot bogusly satisfy
+CI: only a `wallet-funding` block may `produces: funded-wallet`, and only a `deployable` `code`
+block may `produces: deployed-program`. Any block may `consumes` either.
 
 `language`, `buildType` and `deployable` move from the lesson onto the `code` block, where
 they belong. `programIdl` stops being a 20-row textarea with a custom JSON validator and
@@ -460,7 +475,8 @@ Add an active-lesson mask to `Course`, mirroring `Enrollment.lesson_flags`:
 
 ```rust
 Course {
-    lesson_count: u8,            // retained for display; XP math uses popcount(active_lessons)
+    // lesson_count is DELETED in v2 (see below). Live-lesson count is
+    // popcount(active_lessons); XP math uses that.
     active_lessons: [u64; 4],    // NEW — 256-bit mask of live slots
     _reserved: [u8; 8],          // preserved
 }
@@ -478,17 +494,43 @@ new_active_lessons: Option<[u64; 4]>
 A learner holding a bit for a since-retired lesson still finalizes; the `AND` ignores it.
 Retiring a slot clears its bit. Insert, delete, reorder and move all become free forever.
 
-**Cost.** `Course._reserved` is only 8 bytes, so a 32-byte mask grows `Course::SIZE`
-224 → 248. Every existing `Course` account must be recreated — 7 on devnet, via one admin
-resync. `Enrollment` is untouched: `lesson_flags` keeps its layout, so no learner's bitmap
-moves. There are **no mainnet Course accounts** (Squads custody handoff is the last
+**`lesson_count` is deleted, not "retained for display."** It is a `u8`
+(`create_course.rs:12`), so it cannot represent a 256-slot course, and `update_course.rs:57`
+requires `new_lesson_count >= course.lesson_count` — monotonic — so after a deletion it can
+never decrease and would *lie* about the live count. Every place that read `lesson_count`
+(the `complete_lesson` bound, the `finalize_course` popcount equality, the XP-bonus
+multiplier) is rewritten to use `active_lessons`: the bound becomes `is_active_slot`,
+equality becomes the mask AND, and the bonus multiplier becomes `popcount(active_lessons)`.
+Removing the field is what makes the monotonic-count problem disappear rather than merely
+move.
+
+**Cost — size derivation.** `Course::SIZE` goes **224 → 255**: −1 for the removed
+`lesson_count` (a `u8`), +32 for `active_lessons: [u64; 4]`. `_reserved: [u8; 8]` is
+**untouched** — the project's "reserved bytes on every account" convention is preserved, not
+consumed. (This is the reconciliation of the earlier draft's contradictory 248/256 figures:
+both were wrong; deleting `lesson_count` and keeping the padding gives 255.) Every existing
+`Course` account must be recreated — 7 on devnet, via one admin resync. `Enrollment` is
+untouched: `lesson_flags` keeps its layout, so no learner's bitmap moves. There are **no
+mainnet Course accounts** (Squads custody handoff is the last
 blocker), so this is the cheapest this change will ever be.
 
-`complete_lesson`, `finalize_course` and `update_course` all change, so the audit sign-off
-and byte-verified deploy for those three instructions must be redone.
+`complete_lesson`, `finalize_course`, `update_course` and `create_course` (which sets the
+initial mask instead of `lesson_count`) all change, so the audit sign-off and byte-verified
+deploy for those instructions must be redone.
 
-Hard ceilings that remain: 256 lifetime slots per course (bitmap width), `lesson_count` is
-`u8`. Largest course today is 16 lessons.
+**The finalize XP invariant, which v2 preserves.** `finalize_course` computes
+`bonus = xp_per_lesson × live_lesson_count / 2` and requires `bonus <= MAX_XP_PER_MINT`
+(5000). So `xpPerLesson × liveLessonCount <= 10 000` is a **hard invariant** — violate it
+and *every* learner's finalize reverts forever (no bonus, no credential,
+`total_completions` never increments, so creator rewards die too). CI must enforce it (§6.2
+gate 5a); the sync must re-check it post-v2 against `popcount(active_lessons)`.
+
+Hard ceilings that remain: **256 slots** per course — the `u8` `lesson_index` spans 0–255, so
+bits 0 through 255 of the 256-bit mask are all usable (256 distinct slots). This is only correct
+*because* `lesson_count` is deleted; while a `u8 lesson_count` existed the effective cap was 255
+(Fable's defect 8), which deleting the field resolves. The other ceiling is the finalize
+invariant above. Largest course today is 16 lessons; worst live `xpPerLesson × count` product is
+480 (limit 10 000).
 
 ### 5.3 XP ceilings that CI must respect
 
@@ -517,8 +559,13 @@ Content shape:
 
 Correctness:
 
+5a. **The finalize XP invariant:** `xpPerLesson × liveLessonCount ≤ 2 × MAX_XP_PER_MINT`
+    (= 10 000). Above it, `finalize_course` reverts forever and no learner can complete the
+    course (§5.2). CI checks it against the repo's lesson count; the sync re-checks it post-v2
+    against `popcount(active_lessons)`.
 6. **For every `code` block:** `solution` passes its `tests.json` **and** `starter` fails
-   them. Reuses `runJsSubmission` / `runRustSubmission`.
+   them. See §6.3 — this **cannot** run in the content repo's CI as first drafted; the Rust
+   and buildable paths run at sync time.
 7. Quiz: option ids unique; ≥1 correct; exactly 1 correct when `multiSelect: false`.
 
 Cross-system invariants (each exists because nothing else enforces it):
@@ -532,12 +579,18 @@ Cross-system invariants (each exists because nothing else enforces it):
     path it references exists. `kind: manual` is explicit, not implicit. Enforceable at compile
     time via `PREDICATES satisfies Record<AwardKind, Predicate>`.
 13. A learning path has ≥1 course, or declares `draft: true`.
-13a. **Capability ordering:** every block declaring `consumes: X` is preceded, by slot order
-    within the same course, by a block declaring `produces: X`.
-13b. A `widget` block's `widget` value is a key in the renderer registry — no more dropdown
-    values that render nothing.
+13a. **Capability ordering:** every block declaring `consumes: X` is preceded, by **display
+    order** (flattened `modules[].lessons[]`), by a block declaring `produces: X`. Not slot
+    order (§4.9). Producer type is constrained per capability: only `wallet-funding` produces
+    `funded-wallet`, only a `deployable` `code` block produces `deployed-program`.
+13b. A widget block type is a key in the renderer registry — structural under Amendment A
+    (the block type *is* the registry key), so a widget that renders nothing cannot exist.
 13c. A `program.idl.json` parses, has a non-empty `instructions` array, and its
     `metadata.name` matches the keypair-storage key the consuming explorer expects.
+13d. **Slot-exhaustion warning:** CI warns when a course's `slots.lock.json` `next` exceeds
+    **200** (of 256). Each lesson replacement burns a slot forever; at exhaustion the course can
+    never add a lesson again without a new id, orphaning all enrollments — a brutal, silent
+    failure worth flagging with 56 slots of headroom.
 
 Governance (CI, in `academy-courses`):
 
@@ -552,9 +605,40 @@ Two further checks need Sanity and Supabase, so they run **server-side at sync t
     prune would orphan a PDA holding live enrollments.
 17. A lesson deletion or slot reassignment reports how many enrolled learners hold that bit,
     from `enrollments.lesson_flags`, and requires the admin to confirm.
+18. Every quest and achievement `xpReward` is `≤ MinterRole.max_xp_per_call` for the backend
+    minter role, when that cap is non-zero. CI cannot see live chain config; the sync route can.
+    Above the cap, `reward_xp` reverts forever (`reward_xp.rs:21-23`) — a value between
+    `max_xp_per_call` and 5000 passes gate 10 (the static 5000 cap) yet still bricks on-chain.
 
 The content repo's CI *may* additionally read the public Sanity dataset unauthenticated to
 warn early on 16 — it is public by design (D4) — but the authoritative check is at sync time.
+
+### 6.2a Where gate 6 actually runs (it is not repo-only)
+
+Gate 6 as first drafted ("run the reference solution, reusing `runJsSubmission` /
+`runRustSubmission`") **cannot fully run in the content repo's CI**, and the "repo and GitHub
+API only" sentence above is wrong for it. Three tiers:
+
+- **JS/TS `code` blocks →** `runJsSubmission` is QuickJS-in-WASM (`executor.ts`), pure Node.
+  Runs in the content repo's CI. ✓
+- **Rust `code` blocks →** `runRustSubmission` POSTs `https://play.rust-lang.org/execute`
+  (`rust-executor.ts:41`, 30 s/test). Hammering the public Playground for every Rust challenge
+  on every PR is rate-limit-flaky and abuses shared infra. **Instead:** install `rustc`/`cargo`
+  on the CI runner and grade locally with the same harness-assembly logic (the anti-cheat nonce
+  is unnecessary here — the "attacker" authored the content). Its `DENYLISTED_MACROS` (`file!`,
+  `env!`, `include!`, …) also apply to reference solutions, so solutions must avoid them.
+- **`buildable` `code` blocks (8 lessons) →** need the Anchor build server + `BUILD_SERVER_API_KEY`,
+  and **secrets do not flow to fork PRs** — external teachers, the whole point of the repo, get
+  no gate 6 on exactly the content that needs it most. **Instead:** `cargo build-sbf` on the
+  runner (the spec's own §5.2 alternative), or defer these to the server-side sync re-validation
+  (§9.2), which has the secrets and the real executors.
+
+**Keep an executor-verbatim check server-side at sync time regardless** (§9.2 re-validation is
+its natural home — it has secrets and the real runtime), so the grader that judges learners is
+the same one that judged the content. Note the inherited weakness: the untracked
+`_exploit-repro.test.ts` in the main checkout shows `globalThis.Function` poisoning can
+force-pass hidden tests in the JS executor — "the same oracle proves the content correct"
+inherits the oracle's flaws. Separate issue, but do not claim more integrity than the oracle has.
 
 ### 6.3 Why gates 8–13 are load-bearing
 
@@ -571,6 +655,21 @@ warn early on 16 — it is public by design (D4) — but the authoritative check
   completion to feed checks that cannot fire. `achievement-perfect-score` is unreachable from
   either construction site. **Three of twelve live achievements cannot be earned.**
 - `path-infrastructure` and `path-security` are live learning paths with zero courses.
+
+**SQL hardening is a launch blocker, not a Zod concern.** Zod validates only repo-sourced
+definitions; the `get_daily_quest_state` RPC accepts whatever the caller passes, so defense in
+depth belongs in the function itself. Before the new quest content goes live, ship a migration
+that adds: (a) a final `ELSE RAISE EXCEPTION` to the quest-type `IF/ELSIF` chain (no more silent
+`0/N` on an unknown type), and (b) a `targetValue > 0` guard in the SQL. These are the runtime
+counterparts to gates 8 and 9, which only protect the write path.
+
+The quest **runtime** stays the most fragile subsystem even after this content standard lands —
+the standard gates quest *definitions* but leaves per-type progress in a ~150-line SQL function
+with an `IF/ELSIF` per type. Adding a quest type after launch is still a hand-kept SQL migration
++ enum change in lockstep — the three-systems-drift pattern D9 eliminated for achievements but
+not for quests. The clean long-term fix (out of scope for v1) is to give quests the achievement
+treatment: `QUEST_PROGRESS satisfies Record<QuestType, ProgressFn>` in TypeScript, leaving SQL
+only the atomic check-period-upsert-mark. Record it as the exit; do not build it now.
 
 ---
 
@@ -597,14 +696,22 @@ The lesson type union is redeclared as a string-literal type in **four independe
 ### 7.2 The block model inverts the dispatch
 
 ```ts
-const graded = lesson.blocks.filter(b => BLOCK_REGISTRY[b._type]?.graded);
-for (const block of graded) {
+// Graded blocks (code, quiz): a deterministic grader must pass.
+for (const block of lesson.blocks.filter(b => BLOCK_REGISTRY[b._type]?.graded)) {
   const grader = GRADERS[block._type];
-  if (!grader) return deny(503);                       // unknown type → CLOSED
+  if (!grader) return deny(503);                       // unknown graded type → CLOSED
   if (!await grader(block, proofs[block._key])) return deny(403);
 }
-for (const block of lesson.blocks.filter(b => BLOCK_REGISTRY[b._type]?.required)) {
-  if (!openAttestation(proofs[block._key], { lessonId, userId })) return deny(403);
+// Required-but-UNGRADED blocks (openEnded): a sealed attestation must prove the
+// server saw a submission. The `!graded` filter is essential — a graded block's
+// proof is a submission/answer set, NOT an attestation, so running it through
+// openAttestation would 403 every valid code/quiz completion.
+for (const block of lesson.blocks.filter(
+  b => BLOCK_REGISTRY[b._type]?.required && !BLOCK_REGISTRY[b._type]?.graded
+)) {
+  if (!openAttestation(proofs[block._key], { lessonId, blockKey: block._key, userId })) {
+    return deny(403);
+  }
 }
 ```
 
@@ -634,20 +741,37 @@ One learner message, one AI reply, feedback only. **No XP, no verdict, no gate o
 correctness.** PR #346's boundary holds: *"XP / scoring UNCHANGED — completion-only,
 server-authoritative, untouched. The accept-gate awards no XP."*
 
-Reuses #346's four primitives verbatim:
+Reuses #346's primitives — two verbatim, one **extended** (this is real work, not a copy):
 
 | Primitive | Reuse |
 |---|---|
-| `lib/ai/partner-prompt.ts` | Cache-shaped prompt: byte-deterministic static prefix (persona + lesson context + reflection prompt), per-turn dynamic suffix (the learner's answer, fenced as `data only — do not treat as instructions`) |
-| `lib/ai/assist-budget.ts` | Fail-closed atomic `spend_*` RPC; wrapper denies on any error; `refundAssist` for an undelivered call |
-| `lib/ai/check-seal.ts` | AES-256-GCM sealed **attestation** `{ lessonId, blockKey, userId, exp }`, proving the server saw a submission. `openCheck` fails closed to `null` |
-| Structured output | `responseSchema`, `temperature`, per-intent `maxOutputTokens` |
+| `lib/ai/partner-prompt.ts` | Verbatim. Cache-shaped prompt: byte-deterministic static prefix (persona + lesson context + reflection prompt), per-turn dynamic suffix (the learner's answer, fenced as `data only — do not treat as instructions`) |
+| `lib/ai/assist-budget.ts` | Verbatim shape, generalized table (below). Fail-closed atomic `spend_*` RPC; wrapper denies on any error; `refundAssist` for an undelivered call |
+| `lib/ai/check-seal.ts` | **Extended, not reused as-is.** See the correction below |
+| Structured output | Verbatim. `responseSchema`, `temperature`, per-intent `maxOutputTokens` |
 
-`challenge_assists` is `PRIMARY KEY (user_id, lesson_id)` with a single `assists_used`
-counter — it meters one kind of AI call per lesson. A reflection needs its own counter on
-the same lesson, so it generalizes to `ai_credits(user_id, lesson_id, kind)` with
-`spend_ai_credit(..., p_kind, p_max)`. Same fail-closed semantics, one extra column. #346 is
-unmerged, so this is a cheap generalization.
+**Correction — `check-seal.ts` does not seal what a completion attestation needs.** Today
+`SealedCheck` is `{ correctIndex: 0..2, explanation: string }` (`check-seal.ts:36-40`), and
+`isValidSealedCheck` **rejects any other shape**. It seals a quiz answer, not a
+"the-server-saw-a-submission" attestation. Reusing it verbatim would mint a token valid for
+*every* `openEnded` block, *every* user, *forever* — capture one, replay it into any lesson's
+completion payload, skip the required block, done. So the primitive must gain a second sealed
+type, `Attestation = { lessonId, blockKey, userId, exp }`, and `/api/lessons/complete` must,
+on `openAttestation`, verify the sealed `userId` equals the session user, the sealed
+`lessonId`/`blockKey` equal the ones being completed, and `exp` has not passed. This is a new
+payload type + a validator + expiry handling — budget it, do not assume it exists.
+
+**Second correction — the key-derivation fallback must not end in `""`.** `deriveKey()` is
+`AI_PARTNER_SEAL_SECRET || SUPABASE_SERVICE_ROLE_KEY || ""`. Once this token gates on-chain XP,
+an all-unset chain yields an HMAC of the empty string — a publicly computable, forgeable key.
+In practice the app cannot boot without the service key, but the fallback chain should end in a
+`throw`, not `""`, so the invariant is enforced rather than assumed.
+
+**Budget table generalization.** `challenge_assists` is `PRIMARY KEY (user_id, lesson_id)`
+with one `assists_used` counter — it meters one kind of AI call per lesson. A reflection needs
+its own counter on the same lesson, so it generalizes to `ai_credits(user_id, lesson_id, kind)`
+with `spend_ai_credit(..., p_kind, p_max)`. Same fail-closed semantics, one extra column.
+#346 is unmerged, so this is a cheap generalization rather than a migration.
 
 Because the reflection is ungraded, prompt-injection risk collapses to "a learner makes the
 AI say something silly to them." Nothing mints.
@@ -660,8 +784,8 @@ AI say something silly to them." Nothing mints.
 
 ```
 academy-courses (git, source of truth)
-   │  PR: Zod validate · two-sided executor gate · slots.lock · id immutability
-   │  merge → GitHub Action builds a content bundle for commit <sha>
+   │  PR: Zod validate · executor gate (§6.2a) · slots.lock · id immutability
+   │  merge to main  (the Action's ONLY job is CI validation — no bundle build)
    ▼
 [1] repo → Sanity          machine, idempotent, full reconcile
    ▼
@@ -670,21 +794,31 @@ Sanity (derived, rebuildable)
 [2] Sanity → on-chain      human-gated, admin panel, fail-closed   ← unchanged
 ```
 
-### 9.2 Secrets stay server-side
+### 9.2 Secrets stay server-side — and the server fetches the repo directly
 
-The GitHub Action does **not** hold `SANITY_ADMIN_TOKEN`. It validates, builds an NDJSON
-bundle plus assets, publishes it as a release artifact for that commit SHA, and notifies the
-app. Everything privileged happens server-side:
+The GitHub Action does **not** hold `SANITY_ADMIN_TOKEN`, and — a change from an earlier draft
+— it does **not** build or publish a content bundle either. The bundle-and-release machinery
+was over-built for ~115 docs under 1 MB: a checksum published *beside* the bundle by the same
+workflow proves nothing, and it adds a format, a build step, and a notify hook for no trust
+gain. **Provenance is GitHub itself.** The server fetches the repo tree at the SHA directly:
 
 ```
-POST /api/admin/content/sync   { sha, bundleUrl }     ← ADMIN_SECRET, human-triggered
-  1. fetch bundle for <sha>, verify checksum
-  2. RE-validate with the same @superteam-lms/content-schema Zod package
+POST /api/admin/content/sync   { sha }                ← ADMIN_SECRET, human-triggered
+  1. GET /repos/solanabr/academy-courses/tarball/<sha>   (GitHub, authenticated)
+  2. RE-validate the whole tree with the same @superteam-lms/content-schema Zod package
   3. write Sanity   (createOrReplace + preserve-list + prune)
-  4. revalidateTag("courses")
+  4. write the content commitment on-chain per changed course (§11.0)
+  5. revalidateTag("courses")
 ```
 
-Step 2 exists because the PR check may not have run against this exact tree.
+Step 2 is the authoritative validation; the PR check is an early warning that may not have run
+against this exact tree. The Action's only job is to gate the merge.
+
+**New env var, on the server only:** `GITHUB_TOKEN` (a fine-grained read token for
+`solanabr/academy-courses`). Needed for the tarball fetch, for HEAD polling in the drift UI,
+and for the Checks API that powers the panel's `blocked` state (§11). Unauthenticated GitHub is
+60 req/hr per IP and on Vercel's shared egress will flake — the token is not optional. No
+existing doc lists it; add it to `apps/web/CLAUDE.md` and `DEPLOYMENT.md`.
 
 ### 9.3 The `createOrReplace` trap
 
@@ -721,6 +855,21 @@ The `contentSync` singleton (§11) is written **last**, carrying the new `sync.r
 prune query never matches it.
 
 Delete-by-query caps at 10,000 documents. We have ~115.
+
+**Why Sanity at all — the honest rationale, and the exit.** §9.3–9.6 is four sections of
+machinery (PRESERVE lists, sync-marker pruning, blast-radius guard, weak references) that exist
+*only* because Sanity has no atomic-replace primitive. We are using a collaborative CMS as a
+materialized view after deleting the collaboration (read-only Studio, Viewer roles) — paying
+complexity for write features D1 just removed. A Postgres projection (we already run Supabase)
+would rebuild transactionally — `BEGIN; DELETE managed; INSERT tree; COMMIT` — and the entire
+prune problem, the partial-write hazard, and the PRESERVE-list CI check would evaporate.
+
+**Sanity is retained in v1 for one reason: to avoid rewriting the read path.** The app has
+dozens of GROQ read sites, the image pipeline, and `revalidateTag` wiring; rewriting all of that
+is a bigger, riskier change than this sync machinery costs. The exit is real and cheap to take
+later: the projection store is swappable precisely because it is rebuildable from git (§15.7).
+The next maintainer should read the prune/PRESERVE complexity as **rent on that deferral**, not
+as essential architecture.
 
 ### 9.5 Weak references
 
@@ -816,16 +965,48 @@ boundary.** Real enforcement is the project role: every human gets **Viewer** in
 
 ## 11. Drift model
 
-Two independent gaps. Today the admin panel sees only the second.
+### 11.0 The keystone: `content_tx_id` is the on-chain content commitment
+
+`Course` already has a 32-byte field, `content_tx_id`, set at `create_course.rs:42` and
+updatable via `update_course`'s `new_content_tx_id` (`update_course.rs:29`, which bumps
+`version`). **It is `Array(32).fill(0)` on every live course** (`admin-signer.ts:267`) — the
+"Arweave immutable content" line in the stack table is vestigial; nothing ever wrote a real
+value. This is the field the new architecture needs, sitting unused at zero.
+
+**At chain sync, write the 20-byte git commit SHA (left-padded to 32) into `content_tx_id`.**
+Then chain drift stops being a field-by-field heuristic (`diffCourse` comparing `xpPerLesson`,
+etc.) and becomes a **provable content-version equality**, per course:
+
+```
+on-chain content_tx_id  ==  repo HEAD sha   →  course is current on-chain
+```
+
+The chain now carries cryptographic provenance of exactly which content version learners were
+graded against, for free, in a field that already exists and already triggers `version += 1`.
+This is strictly better than the Sanity `contentSync` singleton below, which is app-writable,
+non-verifiable state — so the singleton becomes a *convenience cache* of the same fact, and the
+authoritative comparison is against the chain.
+
+Two guards this enables:
+- The sync route asserts the new `active_lessons` mask equals the mask derived from the
+  course's committed `slots.lock.json` **right before signing** — so a panel bug cannot set
+  arbitrary bits. `update_course(new_active_lessons)` trusts the authority blindly (the chain
+  cannot know slots are never reused; the lockfile is the only invariant carrier), so this
+  assertion is where that invariant is enforced.
+- Because `content_tx_id` moves in the same `update_course` call as the mask, provenance and
+  structure can never disagree on-chain.
+
+### 11.1 The two drift gaps
 
 ```
 academy-courses @ <sha>  ──[1] content sync──▶  Sanity  ──[2] chain sync──▶  devnet
-       └──────── contentDrift ────────┘           └──── chainDrift (diffCourse) ────┘
+       └──────── contentDrift ────────┘           └──── chainDrift ─────────────┘
+                                                   (content_tx_id vs HEAD, §11.0)
 ```
 
-**Content drift** is new. A singleton Sanity document `_id: "contentSync"` holds
-`{ sha, syncedAt, counts }`. The panel fetches `academy-courses` HEAD from the GitHub API and
-compares.
+**Content drift** is new. A singleton Sanity document `_id: "contentSync"` caches
+`{ sha, syncedAt, counts }`. The panel fetches `academy-courses` HEAD via the GitHub API
+(authenticated — `GITHUB_TOKEN`, §9.2) and compares.
 
 | State | Meaning | Panel |
 |---|---|---|
@@ -837,16 +1018,17 @@ compares.
 `blocked` matters: the panel **must refuse to sync a commit whose CI is red**, or a human can
 click invalid content past the Zod gate.
 
-**Chain drift** is the existing `SyncStatus`
-(`synced | out_of_sync | not_deployed | draft | missing_fields`) from `diffCourse` /
-`diffAchievement`, unchanged. Note `draft` here means a `drafts.`-prefixed Sanity `_id`
-(`isDraftId`), not `authoringStatus`; a derived dataset written by `createOrReplace` never
-contains draft documents, so the status becomes unreachable rather than retired.
+**Chain drift** becomes the `content_tx_id == HEAD` equality of §11.0, replacing the
+field-by-field `diffCourse` heuristic for the "is this course current" question. `diffCourse`'s
+other states survive for the cases the commitment can't express: `not_deployed` (no PDA yet —
+still drives Phase 4's tooling-free `create_course`), and `missing_fields`. Its `draft` state
+becomes unreachable — a `createOrReplace`-written derived dataset never holds `drafts.`-prefixed
+documents.
 
-Content sync must land before chain sync — the required active-lesson mask cannot be computed
-from a Sanity that has not ingested the new lesson. The panel enforces the ordering.
+Content sync must land before chain sync — the mask and the commitment cannot be computed from
+a Sanity that has not ingested the new lesson. The panel enforces the ordering.
 
-### 11.1 Deletion ordering
+### 11.2 Deletion ordering
 
 ```
 PR removes lessons/rent/ ; slots.lock.json moves slot 1 → retired
@@ -856,13 +1038,18 @@ PR removes lessons/rent/ ; slots.lock.json moves slot 1 → retired
 ```
 
 Between [1] and [2] the app shows N−1 lessons while the chain still requires the retired bit;
-anyone sitting on N−1 completions cannot finalize. So the panel surfaces the pending chain
-delta as required work, and completion percentage is always computed from **live slots**,
-never from `lesson_count`.
+anyone sitting on N−1 completions cannot finalize. **The window is unbounded** — the learner
+stays blocked until a human clicks, and if the admin never clicks, forever. Mitigations, in
+order of strength:
+- Completion percentage is always computed from **live slots** (via the on-chain mask), never
+  from a stored count, so the *display* is never wrong even mid-window.
+- The content sync that retires a slot **refuses to report success** until the admin
+  acknowledges the pending chain delta, and auto-creates the `update_course(new_active_lessons)`
+  for one-click execution — so the window is a deliberate click, not an oversight.
 
-`pending_onchain_actions` cannot carry this: its DDL is `user_id UUID NOT NULL REFERENCES
-auth.users(id)` — learner-scoped. A course-level mask update has no user. The existing
-`diffCourse` output is the mechanism.
+`pending_onchain_actions` cannot carry the pending delta: its DDL is `user_id UUID NOT NULL
+REFERENCES auth.users(id)` — learner-scoped. A course-level mask update has no user. Chain drift
+(§11.0/§11.1, the `content_tx_id` mismatch) is the mechanism; it needs no new table.
 
 ---
 
@@ -912,6 +1099,7 @@ auth.users(id)` — learner-scoped. A course-level mask update has no user. The 
 | `SANITY_ADMIN_TOKEN` in three duplicated write clients | Same token, one shared factory; never in GitHub Actions |
 | Completion gate opt-in on `"challenge"` — new lesson types fail **open** | Gate dispatches on the block registry — unknown types fail **closed** |
 | `queries-answer-leak.test.ts` guards two of the three lesson-body queries | Deleted; there is no answer key to leak |
+| Challenge integrity implied by hidden tests + server-only solutions | **Honor-system.** `solution.ts` is public (§4.5); pasting it passes the executor and earns XP + credential + leaderboard rank. Accepted for a free platform; optional similarity flag if it ever matters |
 
 `docs/SECRET-ROTATION.md:47` currently describes `SANITY_API_TOKEN` as guarding
 "Read content (incl. hidden test answer keys)". It never did — the dataset is public and no
@@ -921,14 +1109,29 @@ token is required. That line must be corrected.
 
 ## 14. Bugs discovered during design (separate issues, not fixed here)
 
-1. **Quest XP silently lost on chain failure.** `OnchainActionType` includes `"quest_xp"`;
-   the table's constraint is
-   `CHECK (action_type IN ('achievement','certificate','course_finalize','xp','enroll'))`.
-   `quests/daily/route.ts:184` queues `"quest_xp"`. `supabase-js` `.upsert()` **returns** the
-   error rather than throwing, and `queueFailedOnchainAction` never inspects the return, so
-   the constraint violation is discarded and the `catch` never fires.
-   `onchain-queue.ts:320`'s `case "quest_xp":` waits for rows that can never exist. The quest
-   is marked complete in Postgres and the XP never reaches the chain.
+1. **Quest XP has no durable delivery intent — it is lost on every failure path and at risk
+   even on success.** A chain of confirmed facts, not one bug:
+   - `get_daily_quest_state` sets `xp_granted = true` **before any mint is attempted**
+     (`schema.sql:110`, comment "API route mints on-chain"). It means "attempt authorized", and
+     `justAwarded` fires exactly once, ever.
+   - The route calls `mintQuestXpOnChain(...).catch(() => {})` **un-awaited**
+     (`quests/daily/route.ts:124`) and returns the response. There is no `waitUntil` / `after()`,
+     so on Vercel the mint races lambda freeze even on the success path.
+   - On throw, the fallback queues `"quest_xp"`, which the table's
+     `CHECK (action_type IN ('achievement','certificate','course_finalize','xp','enroll'))`
+     rejects — no `quest_xp`. `supabase-js` `.upsert()` **returns** the error rather than
+     throwing, `queueFailedOnchainAction` never inspects it, and `onchain-queue.ts:320`'s
+     `case "quest_xp":` waits for rows that can never exist.
+   - Two silent early returns lose XP outright: `if (!programLive) return` (`:153`) and
+     `if (!profile?.wallet_address) return` (`:162`) — a learner who completes a quest before
+     linking a wallet gets nothing, forever, with `xp_granted` already `true`.
+
+   **Fix contract:** quest-XP delivery must have a durable intent record *before the response
+   returns* — either always-queue (write a `pending_onchain_actions` row synchronously, let the
+   processor mint) or `await` the mint and only then set `xp_granted`. Plus the two known legs:
+   add `'quest_xp'` to the CHECK, make `queueFailedOnchainAction` inspect the upsert error, and
+   handle the no-wallet case by queueing rather than returning. This is broader than the CHECK
+   constraint alone, and the new content pipeline pushes more traffic through it.
 2. **Community achievements are dead.** Four `UNLOCK_CHECKS` keys have no Sanity document.
 3. **`achievement-speed-runner`** is deployed on-chain and unearnable.
 4. **`deployed-program-card`** is a Studio dropdown value and a documented widget with no
@@ -954,6 +1157,14 @@ token is required. That line must be corrected.
 12. **`docs/SECRET-ROTATION.md:47`** claims `SANITY_API_TOKEN` guards "Read content (incl.
     hidden test answer keys)". No token is required — the dataset is public. `:9` and `:20`
     also name `solarium.courses` as the canonical production deploy; it is not.
+13. **`quest.resetType` is decorative.** `get_daily_quest_state` reads it into `v_reset_type`
+    (`schema.sql:34`) and never uses it — `daily` vs `multi_day` behaviour actually comes from
+    `type == 'login_streak'` managing its own `period_start`. The app plumbs it through as
+    display metadata. Wire it or drop it — but that is a Supabase + app change, not a
+    content-schema one; the schema keeps the field because the `DailyQuest` type and RPC carry it.
+14. **`apps/web/src/app/api/CLAUDE.md` lists `/api/quests/daily` as GET/POST.** The route exports
+    only `GET` (`quests/daily/route.ts:16`). (This error is in the migrated CLAUDE.md from the
+    2026-07-09 doctor pass — correct it in the same fix as item 7.)
 
 ---
 
@@ -986,7 +1197,7 @@ Its own header:
 > so `create_course` can recreate it (at the new size) in a later tx. Enrollments are separate
 > PDAs keyed by `course_id` and are untouched here."*
 
-This exact resize has been done once already. 224 → 248 follows the same path.
+This exact resize has been done once already. 224 → 255 follows the same path (see §5.2 size derivation).
 
 **What it costs:** `total_completions` and `total_enrollments` reset to zero. Enrollment PDAs
 survive — their seeds are `["enrollment", course_id, user]`, unchanged by the resize. On devnet
@@ -1005,6 +1216,13 @@ Get this wrong and all 13 enrollments point at the wrong lessons. After the lock
 reordering is free forever. We cannot sidestep this by closing the enrollments:
 `close_enrollment` requires `learner: Signer`, and we do not hold those keys.
 
+**Sharper subtlety (Phase 1 step):** bits were set by array position *at completion time*. If a
+lesson's order changed between a completion and today, the live order already mismatches the set
+bits. With only 6 completions this is cheaply verifiable — cross-check each `user_progress`
+completed row against its bit position in the current flattened order **before** freezing the
+lockfile, and reconcile any lesson that moved. Don't assume live order equals completion-time
+order.
+
 ### 15.4 Order of operations
 
 ```
@@ -1012,20 +1230,21 @@ Phase 0  Freeze          disable /teach authoring; no more Studio writes
 Phase 1  Extract         GROQ-export the live dataset → generate the academy-courses tree
                          initial slots.lock.json derived from LIVE lesson order  ← 15.3
 Phase 2  Schema + CI     packages/content-schema (Zod + block registry); validator;
-                         two-sided executor gate. EXPECT FAILURES — see 15.6
+                         executor gate (§6.2a — JS in CI, Rust/buildable at sync). EXPECT FAILURES — see 15.6
 Phase 3  Program v2      active_lessons mask; complete_lesson / finalize_course /
                          update_course; 128 Rust + 89 TS tests; re-audit those 3;
                          deploy devnet via Helius RPC
 Phase 4  Devnet reset    close_course × 7  →  diffCourse reports not_deployed  →
-                         admin clicks Sync  →  create_course recreates at 248 bytes with
+                         admin clicks Sync  →  create_course recreates at 255 bytes with
                          active_lessons = dense mask of lesson_count
 Phase 5  Sanity schema   blocks; module → inline object; weak refs; drop
                          authoringStatus/author/reviewFeedback; read-only Studio;
                          Viewer roles in sanity.io/manage
 Phase 6  App             block registry; invert the completion gate; delete answer-key
                          machinery; declarative achievements; merge the two UserStates;
-                         fix quest couplings
-Phase 7  Sync + drift    POST /api/admin/content/sync; contentSync doc; drift UI
+                         rewrite the two quest GROQ couplings (§15.4a); durable quest-XP path
+Phase 7  Sync + drift    POST /api/admin/content/sync; content_tx_id commitment (§11.0);
+                         contentSync doc; drift UI
 Phase 8  Retire          /teach authoring, import.mjs, backfill-authoring-status.mjs
 ```
 
@@ -1033,17 +1252,40 @@ Phase 4 needs no new tooling: closing the accounts makes `diffCourse` report `no
 and the existing admin sync path calls `create_course`. Phases 3 and 5/6 are independent.
 Phase 7 depends on 1, 2 and 5.
 
+### 15.4a The two quest GROQ couplings (Phase 6), named
+
+`getAllQuests` (`queries.ts:585-586`) feeds `get_daily_quest_state` two inputs that both break
+under the block model, **silently** — each degrades to an empty array and its quest renders
+`0/N` forever (exactly the silent-degradation shape §6.3 warns about):
+
+- `challengeLessonIds: *[_type=="lesson" && type=="challenge"]._id` — `lesson.type` is deleted
+  (D2). Rewrite to graded-block presence:
+  `*[_type=="lesson" && count(blocks[_type=="code"]) > 0]._id`.
+- `moduleLessonMap: *[_type=="module"]{...}` — `module` documents are deleted (§10.1, now inline
+  objects on the course). Rebuild the map from `course.modules[]`.
+
+**Phase 6 verification step:** after migration, assert each of the 5 live quests has
+non-degenerate inputs — `challengeLessonIds` non-empty, `moduleLessonMap` non-empty — before
+declaring Phase 6 done. A silent `0/N` is invisible in tests that only check the happy path.
+
+Note `lesson` and `lesson_batch` are the **same predicate** (identical `user_progress` count,
+`schema.sql:794-806`), differing only by `targetValue`; keep both for SQL compatibility but
+document them as aliases.
+
 ### 15.5 Content decisions this forces
 
 - **`ops2aYkxIM6NMo1gE18U1o` / `xcvxcv-z1pie4`** — draft, never synced, no modules, no lessons.
   Test junk in the production dataset. **Not migrated. Deleted.**
 - **`aD45H1NEbb1bqELwloGCqI` / `solana-101`** — since every Course account is closed and
-  recreated anyway, this is the free moment to give it a real id, `course-solana-101`. Cost:
-  one orphaned devnet Enrollment PDA. Its `xpPerLesson: 100` (the schema maximum, 10× the
-  flagship course) is a policy question, not a technical one.
+  recreated anyway, this is the free moment to give it a real id, `course-solana-101`. But the
+  rename is **not** "one orphaned Enrollment PDA": the Sanity `_id` is stored as `course_id TEXT`
+  (no FK) in **five Postgres tables** — `enrollments`, `user_progress`, `certificates`,
+  `deployed_programs`, `threads` — plus one orphaned devnet Enrollment PDA. The migration must
+  rewrite `course_id` across all five, or explicitly accept losing those devnet rows. `xpPerLesson:
+  100` (schema max, 10× the flagship) is a policy question, not a technical one.
 - **Three UUID lessons and one UUID module**, all Studio-created, get proper ids. Lesson ids
-  feed `user_progress.lesson_id`, so the rewrite must carry those rows or accept losing three
-  devnet lessons' progress records.
+  feed `user_progress.lesson_id` (also FK-less `TEXT`), so the rewrite must carry those rows or
+  accept losing three devnet lessons' progress records.
 - The **four community achievements** enter the repo and their predicates come alive for the
   first time. **`achievement-speed-runner`** gets an `award.kind` or is deleted — CI gate 12
   will not let it stay in limbo. **`achievement-perfect-score`** needs a real
@@ -1122,7 +1364,7 @@ Prose — workflows, rationale, tips — stays hand-written. Field tables never 
 | `docs/ADMIN.md` | Content-sync trigger; three-way drift UI; the `blocked` state |
 | `docs/DEPLOYMENT.md` | Public dataset; no browser token; Viewer roles; no `SANITY_ADMIN_TOKEN` in Actions |
 | `docs/SECRET-ROTATION.md` | `:47` is false; `:9`/`:20` name the wrong production deploy |
-| `docs/DEPLOY-PROGRAM.md` | Program v2; `close_course` → `create_course` at 248 bytes |
+| `docs/DEPLOY-PROGRAM.md` | Program v2; `close_course` → `create_course` at 255 bytes; `content_tx_id` now carries the content SHA |
 | `docs/STAGING.md` | Dataset story under a derived projection |
 | `README.md` | `:53` "15 achievements" → generated |
 | `CLAUDE.md`, `apps/web/CLAUDE.md`, `apps/web/src/app/api/CLAUDE.md`, `packages/types/CLAUDE.md` | Block model; the API table still lists two routes that do not exist |
@@ -1165,3 +1407,18 @@ independent of this work: the `achievement-` prefix instruction (`CMS_GUIDE.md:2
   on cross-dataset asset reuse.
 - **`solana-101-p48pee`** sets `xpPerLesson: 100`, the schema maximum and 10× the flagship
   course. Teacher-set economics need a policy, not just a cap.
+- **Achievement retroactivity.** Predicates run only on events (lesson completion, forum
+  activity). Ship a new `streak, days: 50` achievement and a learner already at day 60 gets
+  nothing until their next event, and streak-only users may never fire the right event. Decide
+  now: a backfill sweep on content sync ("new achievement ingested → evaluate all users once"),
+  or documented forward-only awards. It is a support-ticket generator if left implicit.
+- **Inventory numbers: re-count from live at Phase 1, do not trust the spec constants.** §1/§3
+  cite 108 test objects, 0 with `id`, 26 `hidden:true` — reproduced twice against
+  `4e3i2wwc/production` (a second audit's 153/45/71 did not reproduce and appears to have counted
+  a different dataset). Numbers still drift over time regardless of which count is right today, so
+  Phase 1 extraction must re-inventory from the live dataset rather than hard-code these.
+- **The teacher-pool cost of D1 is a product call to attribute explicitly.** Moving authoring
+  from the `/teach` web UI (built this year) to git + YAML + PR + CI shrinks the effective
+  contributor pool to git-literate teachers. The VS Code schema binding and `_template/` mitigate
+  it, but the spec should record that this trade — and the deletion of `/teach` authoring — was
+  the user's deliberate choice, not an incidental consequence.

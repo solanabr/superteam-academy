@@ -1372,10 +1372,9 @@ describe("Lesson", () => {
     expect("xpReward" in parsed).toBe(false);
   });
 
-  it("rejects a consumes that no earlier block in the lesson produces", () => {
-    // Cross-lesson ordering is checked by the linter (Plan 2); within a lesson,
-    // a consumes with no producer anywhere in this lesson is still legal here,
-    // because the producer may be an earlier lesson.
+  it("accepts a consumes with no in-lesson producer (the producer may be an earlier lesson)", () => {
+    // Cross-lesson/course ordering by DISPLAY order is checked by the linter
+    // (Plan 2), not here — within a single lesson a dangling consumes is legal.
     const ok = { ...base, blocks: [
       { type: "deployed-program-card", key: "card", consumes: ["deployed-program"] },
     ] };
@@ -1434,6 +1433,19 @@ describe("Course", () => {
     const lessons = Array.from({ length: 257 }, (_, i) => `lesson-l${i}`);
     const bad = { ...base, modules: [{ key: "m", title: "M", lessons }] };
     expect(Course.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects a course that can never be finalized (xpPerLesson × lessonCount > 10000)", () => {
+    // 101 lessons × 100 xp = 10100 → bonus 5050 > MAX_XP_PER_MINT → finalize reverts forever
+    const lessons = Array.from({ length: 101 }, (_, i) => `lesson-l${i}`);
+    const bad = { ...base, xpPerLesson: 100, modules: [{ key: "m", title: "M", lessons }] };
+    expect(Course.safeParse(bad).success).toBe(false);
+  });
+
+  it("accepts the boundary (product exactly 10000)", () => {
+    const lessons = Array.from({ length: 100 }, (_, i) => `lesson-l${i}`);
+    const ok = { ...base, xpPerLesson: 100, modules: [{ key: "m", title: "M", lessons }] };
+    expect(Course.safeParse(ok).success).toBe(true);
   });
 });
 ```
@@ -1509,7 +1521,12 @@ export const Course = z
     description: z.string().optional(),
     difficulty: z.enum(DIFFICULTIES),
     duration: z.number().nonnegative(),
-    /** Stored in the Course PDA. `create_course` bounds it 1..100. */
+    /**
+     * Stored in the Course PDA. On-chain, `create_course` does NOT bound this;
+     * the only chain ceiling is `complete_lesson.rs:30` (xp_per_lesson ≤ 5000).
+     * This 1..100 range is a product policy the Zod schema alone enforces —
+     * plus the finalize-invariant refine below (xpPerLesson × lessonCount ≤ 10000).
+     */
     xpPerLesson: z.number().int().min(1).max(100),
     /** Completion bonus is derived on-chain; this is the catalogue display value. */
     xpReward: z.number().int().min(0).max(MAX_XP_PER_MINT),
@@ -1536,6 +1553,18 @@ export const Course = z
     message: `a course may hold at most ${MAX_LESSON_SLOTS} lessons (Enrollment.lesson_flags is [u64; 4])`,
     path: ["modules"],
   })
+  // The finalize XP invariant (spec §5.2 / gate 5a): finalize_course.rs computes
+  // bonus = xp_per_lesson * liveLessonCount / 2 and reverts if bonus > 5000, so
+  // xpPerLesson * lessonCount must be <= 2 * MAX_XP_PER_MINT (10000). Violate it
+  // and EVERY learner's finalize reverts forever — no bonus, no credential,
+  // total_completions frozen, creator rewards dead.
+  .refine(
+    (c) => c.xpPerLesson * c.modules.flatMap((m) => m.lessons).length <= 2 * MAX_XP_PER_MINT,
+    {
+      message: `xpPerLesson × lessonCount must be ≤ ${2 * MAX_XP_PER_MINT} (finalize_course bonus ≤ MAX_XP_PER_MINT); above it, no learner can finalize`,
+      path: ["xpPerLesson"],
+    },
+  )
   .refine((c) => c.prerequisiteCourse !== c.id, {
     message: "a course cannot be its own prerequisite",
     path: ["prerequisiteCourse"],
@@ -1790,6 +1819,11 @@ export const Quest = z.object({
   icon: z.string().optional(),
   xpReward: z.number().int().min(1).max(MAX_XP_PER_MINT),
   targetValue: z.number().int().min(1),
+  // NOTE: get_daily_quest_state assigns v_reset_type (schema.sql:34) but NEVER
+  // reads it — v_period is set by other branches — so this field currently has
+  // no behavioural effect. It is kept because the DailyQuest type and the RPC
+  // signature carry it; wiring or dropping it is a Supabase+app change tracked
+  // as a bug (spec §14.13), not a content-schema change.
   resetType: z.enum(["daily", "multi_day"]),
   active: z.boolean().default(true),
 });
@@ -1969,6 +2003,7 @@ Expected: FAIL — `Cannot find module '../slots'`.
 ```ts
 import { z } from "zod";
 import { MAX_LESSON_SLOTS } from "./constants";
+import { LessonId } from "./ids";
 
 /**
  * A slot is a permanent on-chain bitmap position, decoupled from display order.
@@ -1982,7 +2017,7 @@ const Slot = z.number().int().min(0).max(MAX_LESSON_SLOTS - 1);
 export const SlotsLock = z
   .object({
     version: z.literal(1),
-    slots: z.record(z.string(), Slot),
+    slots: z.record(LessonId, Slot),
     retired: z.array(Slot).default([]),
     next: z.number().int().min(0).max(MAX_LESSON_SLOTS),
   })
