@@ -32,16 +32,18 @@ context degrades as it fills, and a `/goal` run spans many turns.
       one: **fix** the cheap, real, in-scope ones and push (then re-verify); **file** the rest as
       deduped issues; **decline** genuine over-engineering with a one-line reason in the PR. A
       "non-blocking" note left neither fixed nor tracked is lost work — not allowed. Only then:
-    - **SENSITIVE** — any changed path under `supabase/schema.sql`, `onchain-academy/**`,
-      real env/secret files (`.env`, `.env.local`, `.env.*` — but NOT public `*.example`
-      templates), `.github/workflows/**`, or `.claude/**`; OR issue label ∈
-      {`area:security`, `area:onchain`, `area:db`, `area:ci`}: **MANDATORY, never skipped as
-      "redundant"** — dispatch an **independent adversarial reviewer** (a fresh, skeptical agent
-      told to BREAK the security claim, not confirm it). The single `claude[bot]` gate is NOT
-      sufficient: it has OK'd loop PRs that would have broken prod (a CSP that blocked the Monaco
-      CDN app-wide) and shipped a CSRF hole on on-chain-authority routes. **Fix everything it
-      finds and re-verify.** THEN **leave the PR open**, add label `needs-human-review`, comment
-      `needs human review`, and **stop babysitting it**. NEVER self-merge these — a human signs off.
+      - **SENSITIVE** — any changed path under `supabase/schema.sql`, `supabase/migrations/**`,
+        `onchain-academy/**`, real env/secret files (NOT `*.example`), `.github/workflows/**`, or
+        `.claude/**`; OR label ∈ {`area:security`,`area:onchain`,`area:db`,`area:ci`}:
+        **MANDATORY, never skipped** — dispatch an independent adversarial reviewer (fresh skeptical
+        agent told to BREAK it — re-exploit the claim, attack the migration's reversibility). The
+        claude[bot] gate alone has approved PRs that would have broken prod. **Fix everything it
+        finds, re-verify, re-run gates if code changed. Then auto-merge** (owner authorization
+        09-07-2026 — replaces human sign-off). Still human-only, leave open + `needs-human-review`:
+        mainnet, Squads/custody, real secret values.
+    - **Post-merge, same turn:** migration files → `apply_migration` on prod via dbd5cdaf MCP,
+      then `get_advisors` + fix, verify grants; `onchain-academy/**` → full suites green, deploy
+      **devnet via Helius RPC only**, byte-verify. **Mainnet FORBIDDEN.**
     - **SAFE** — everything else (`area:frontend`/`docs`/`testing`/`ops`):
       `gh pr merge <n> --squash --delete-branch`. The issue auto-closes via `Closes #<n>`.
 
@@ -74,8 +76,9 @@ Print one status line so the `/goal` evaluator can judge completion from the tra
 
 ## Hard rules
 
-- **NEVER self-merge** SENSITIVE PRs (step 1). A human signs off on RLS / schema / on-chain /
-  secrets / mainnet / CI-workflow / `.claude` changes.
+- **SENSITIVE PRs merge only through the full step-1 chain** — both gates + the independent
+  adversarial reviewer, all findings fixed and re-verified. Skipping the adversarial pass is never
+  allowed. Human-only, no exceptions: mainnet deploys, Squads/custody, real secret values.
 - **New finding** (from CI, the review, or your own work) → **dedup first**:
   `gh issue list --state open --search "<1-2 distinctive keywords: a table/function name or task code>"`
   (run 2-3 narrow searches — multi-word queries AND-fail and miss matches). Only if none match →
