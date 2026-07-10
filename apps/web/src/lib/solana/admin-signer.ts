@@ -31,6 +31,10 @@ import {
   getProgramId,
 } from "./pda";
 import { serverEnv } from "@/lib/env.server";
+import {
+  padContentTxId,
+  assertMaskMatchesLockfile,
+} from "@/lib/content-sync/content-commit";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
@@ -140,6 +144,51 @@ export interface UpdateCourseAdminParams {
    * the current count (LessonCountDecrease).
    */
   newLessonCount?: number;
+  /**
+   * The 32-byte `content_tx_id` commitment (§11.0), built by `buildCourseCommit`
+   * from the synced git SHA. Written via `update_course.new_content_tx_id`.
+   * Omit to leave the field unchanged.
+   */
+  contentTxId?: number[];
+}
+
+interface SlotsLock {
+  version: number;
+  slots: Record<string, number>;
+  retired: number[];
+  next: number;
+}
+
+/**
+ * Build the on-chain content commitment for a course (§11.0): the 32-byte
+ * content_tx_id (git sha left-padded) and the active_lessons mask. The caller
+ * (the chain-sync route, from the admin panel's pending-sync state) supplies the
+ * mask it intends to send; this ALWAYS asserts it equals the mask derived from
+ * the committed slots.lock.json before returning the signable params — the guard
+ * that stops a panel bug setting arbitrary bits, since update_course trusts the
+ * authority blindly. Because the two masks come from independent sources
+ * (panel state vs the committed lockfile), the assertion is a real cross-check,
+ * not a tautology.
+ *
+ * NOTE: `active_lessons` is written on-chain only once program v2 (CS-3) exposes
+ * `update_course.new_active_lessons`. Until then the returned mask is the
+ * asserted invariant carrier; only `content_tx_id` is threaded into the tx.
+ */
+export function buildCourseCommit(input: {
+  courseId: string;
+  contentSha: string;
+  slotsLock: SlotsLock;
+  activeLessons: [bigint, bigint, bigint, bigint];
+}): { contentTxId: number[]; activeLessons: [bigint, bigint, bigint, bigint] } {
+  assertMaskMatchesLockfile(
+    input.courseId,
+    input.activeLessons,
+    input.slotsLock
+  );
+  return {
+    contentTxId: padContentTxId(input.contentSha),
+    activeLessons: input.activeLessons,
+  };
 }
 
 export interface CreateAchievementAdminParams {
@@ -321,7 +370,7 @@ export async function updateCoursePda(
     const [coursePDA] = findCoursePDA(params.courseId, getProgramId());
 
     const onChainParams: UpdateCourseOnChainParams = {
-      newContentTxId: null,
+      newContentTxId: params.contentTxId ?? null,
       newIsActive: params.newIsActive ?? null,
       newXpPerLesson: params.newXpPerLesson ?? null,
       newCreatorRewardXp: params.newCreatorRewardXp ?? null,

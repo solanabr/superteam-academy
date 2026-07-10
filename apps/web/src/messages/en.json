@@ -902,5 +902,37 @@
       "assistMeter": "AI assist usage",
       "diffCard": "Proposed code change"
     }
+  },
+  "adminContentSync": {
+    "description": "Sync the academy-courses repository into Sanity at a specific commit, then commit the content hash on-chain.",
+    "loading": "Loading drift…",
+    "driftUnavailable": "Drift is unavailable — GitHub could not be reached. Check GITHUB_TOKEN and retry.",
+    "retry": "Retry",
+    "state": {
+      "up_to_date": "Sanity is up to date with the repository HEAD.",
+      "behind": "Sanity is behind HEAD — new content is ready to sync.",
+      "never_synced": "Content has never been synced — run the first sync.",
+      "blocked": "HEAD CI is failing — this commit cannot be synced."
+    },
+    "head": "HEAD {sha}",
+    "synced": "Synced {sha}",
+    "ci": "CI {state}",
+    "syncButton": "Sync content",
+    "syncing": "Syncing…",
+    "syncFailed": "Content sync failed.",
+    "syncSucceeded": "Synced: {written} written, {pruned} pruned.",
+    "coursesHeading": "On-chain content drift",
+    "noCourses": "No courses to show.",
+    "chain": {
+      "content_current": "On-chain content matches HEAD.",
+      "content_stale": "On-chain content is stale — commit the new hash.",
+      "not_deployed": "Not deployed on-chain yet.",
+      "missing_fields": "Missing required fields in Sanity.",
+      "awaiting_content_sync": "Waiting for content sync to land first."
+    },
+    "chainSyncButton": "Commit on-chain",
+    "chainSyncing": "Committing…",
+    "chainSyncFailed": "Chain sync failed.",
+    "chainSyncSucceeded": "Committed {id} on-chain."
   }
 }

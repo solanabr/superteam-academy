@@ -31,6 +31,11 @@ const serverEnvSchema = z.object({
   SOLANA_RPC_URL: z.url(),
   // Optional: only needed for admin Sanity writes.
   SANITY_ADMIN_TOKEN: optStr,
+  // Fine-grained READ token for solanabr/academy-courses. Server-only. Needed by
+  // POST /api/admin/content/sync (tarball fetch), the drift UI (HEAD polling),
+  // and the Checks API (blocked state). Optional at boot; the content routes 503
+  // when unset. Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel.
+  GITHUB_TOKEN: optStr,
   // Admin panel HMAC cookie signing key.
   ADMIN_SECRET: optStr,
   // Helius webhook HMAC verification secret.
@@ -56,6 +61,7 @@ const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
   SANITY_ADMIN_TOKEN: process.env.SANITY_ADMIN_TOKEN,
+  GITHUB_TOKEN: process.env.GITHUB_TOKEN,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,
   BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,

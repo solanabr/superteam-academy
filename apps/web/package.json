@@ -23,6 +23,7 @@
     "@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
     "@monaco-editor/react": "^4.7.0",
     "@noble/hashes": "^1.8.0",
+    "image-size": "^1.2.1",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.0",
@@ -72,6 +73,7 @@
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "tweetnacl": "^1.0.3",
+    "yaml": "^2.8.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {

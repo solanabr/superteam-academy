@@ -902,5 +902,37 @@
       "assistMeter": "Uso de asistencia de IA",
       "diffCard": "Cambio de código propuesto"
     }
+  },
+  "adminContentSync": {
+    "description": "Sincroniza el repositorio academy-courses en Sanity en un commit específico y registra el hash de contenido on-chain.",
+    "loading": "Cargando divergencia…",
+    "driftUnavailable": "Divergencia no disponible — no se pudo acceder a GitHub. Comprueba GITHUB_TOKEN e inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "state": {
+      "up_to_date": "Sanity está al día con el HEAD del repositorio.",
+      "behind": "Sanity está por detrás del HEAD — hay contenido nuevo listo para sincronizar.",
+      "never_synced": "El contenido nunca se ha sincronizado — ejecuta la primera sincronización.",
+      "blocked": "La CI del HEAD está fallando — este commit no se puede sincronizar."
+    },
+    "head": "HEAD {sha}",
+    "synced": "Sincronizado {sha}",
+    "ci": "CI {state}",
+    "syncButton": "Sincronizar contenido",
+    "syncing": "Sincronizando…",
+    "syncFailed": "Error al sincronizar el contenido.",
+    "syncSucceeded": "Sincronizado: {written} escritos, {pruned} eliminados.",
+    "coursesHeading": "Divergencia de contenido on-chain",
+    "noCourses": "No hay cursos para mostrar.",
+    "chain": {
+      "content_current": "El contenido on-chain coincide con HEAD.",
+      "content_stale": "El contenido on-chain está desactualizado — registra el nuevo hash.",
+      "not_deployed": "Aún no desplegado on-chain.",
+      "missing_fields": "Faltan campos obligatorios en Sanity.",
+      "awaiting_content_sync": "Esperando a que se complete la sincronización de contenido."
+    },
+    "chainSyncButton": "Registrar on-chain",
+    "chainSyncing": "Registrando…",
+    "chainSyncFailed": "Error en la sincronización on-chain.",
+    "chainSyncSucceeded": "{id} registrado on-chain."
   }
 }
