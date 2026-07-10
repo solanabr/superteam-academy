@@ -102,4 +102,51 @@ describe("parseAndValidateTree", () => {
       ContentValidationError
     );
   });
+
+  // Parity with content-lint gate 6 (gate6-executor.ts): rust and buildable
+  // blocks are DEFERRED at sync time, not graded. A buildable scaffold that
+  // compiles would "pass" the starter-must-fail check (the grader grades on
+  // compilation), and the build server is off in prod — so grading them here
+  // rejected content that CI accepts. The sync now grades exactly what CI grades.
+  it.each([
+    { language: "rust", buildType: "standard" },
+    { language: "rust", buildType: "buildable" },
+  ])(
+    "defers a $language/$buildType block even when its starter would pass",
+    async ({ language, buildType }) => {
+      const withCode = stringify({
+        id: "lesson-ex",
+        slug: "ex",
+        title: "Ex",
+        blocks: [
+          {
+            key: "ex",
+            type: "code",
+            language,
+            buildType,
+            deployable: buildType === "buildable",
+            starter: "exercise/starter.rs",
+            solution: "exercise/solution.rs",
+            tests: "exercise/tests.json",
+            ...(buildType === "buildable"
+              ? { produces: "deployed-program" }
+              : {}),
+          },
+        ],
+      });
+      const t = tree({
+        "courses/demo/course.yaml": courseYaml,
+        "courses/demo/lessons/ex/lesson.yaml": withCode,
+        // Both "solve" → both would PASS → starter-already-passes would throw
+        // if this block were graded. Deferral means it is not.
+        "courses/demo/lessons/ex/exercise/starter.rs": "// solve",
+        "courses/demo/lessons/ex/exercise/solution.rs": "// solve",
+        "courses/demo/lessons/ex/exercise/tests.json": JSON.stringify([
+          { id: "t", description: "d", input: "", expectedOutput: "1" },
+        ]),
+      });
+      const v = await parseAndValidateTree(t, passGraders);
+      expect(v.lessons.map((l) => l.lesson.id)).toContain("lesson-ex");
+    }
+  );
 });

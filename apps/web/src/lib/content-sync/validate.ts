@@ -103,10 +103,18 @@ export async function parseAndValidateTree(
     }
   }
 
-  // Executor gate on every code block, resolving its files from the tree.
+  // Executor gate on TS-standard code blocks only, in lockstep with content-lint
+  // gate 6 (gate6-executor.ts): rust and buildable blocks are DEFERRED. Grading
+  // them here rejected content that CI accepts — the build server is off in prod,
+  // and the two-sided "starter must fail" rule is incoherent for compile-graded
+  // buildable blocks (a `todo!()` scaffold compiles, so its starter "passes").
+  // Runtime grading is unchanged and stays fail-closed per block.
   for (const { dir, lesson } of v.lessons) {
     for (const block of lesson.blocks) {
       if (block.type !== "code") continue;
+      if (block.language !== "typescript" || block.buildType === "buildable") {
+        continue; // deferred to runtime grading, exactly as CI gate 6 defers it
+      }
       const starter = v.code.get(`${dir}/${block.starter}`);
       const solution = v.code.get(`${dir}/${block.solution}`);
       const testsRaw = tree.get(`${dir}/${block.tests}`);
