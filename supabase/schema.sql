@@ -330,7 +330,14 @@ CREATE OR REPLACE FUNCTION award_xp(
   p_reason TEXT,
   p_idempotency_key TEXT DEFAULT NULL,
   p_tx_signature TEXT DEFAULT NULL
-) RETURNS void
+) RETURNS INTEGER
+-- Returns the amount actually credited (after per-award + daily-cap clamps).
+--   > 0 → XP landed (or, for an idempotency-key duplicate, had already landed —
+--         the previously-credited amount is returned so callers can treat
+--         "already delivered" as delivered).
+--   = 0 → nothing was credited (invalid amount, or the daily cap consumed the
+--         whole award). Queue-style callers MUST NOT mark delivery resolved
+--         on 0 — the credit was dropped, not delivered.
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
@@ -342,6 +349,7 @@ DECLARE
   v_new_streak INTEGER;
   v_new_longest INTEGER;
   v_daily_total INTEGER;
+  v_prev_amount INTEGER;
   -- Hard per-award ceiling. Matches the documented "max 2000 XP per award"
   -- (the largest legitimate single award is a course-completion bonus).
   c_max_award_xp CONSTANT INTEGER := 2000;
@@ -352,7 +360,7 @@ DECLARE
 BEGIN
   -- Reject non-positive awards outright (defensive — callers pass positives).
   IF p_amount IS NULL OR p_amount <= 0 THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   -- Clamp any single award to the hard ceiling.
@@ -376,7 +384,7 @@ BEGIN
     AND reason NOT LIKE 'community:%';
 
   IF v_daily_total >= c_max_daily_award_xp THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   IF v_daily_total + p_amount > c_max_daily_award_xp THEN
@@ -384,7 +392,7 @@ BEGIN
   END IF;
 
   IF p_amount <= 0 THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   IF p_idempotency_key IS NOT NULL THEN
@@ -392,9 +400,16 @@ BEGIN
     VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
 
-    -- If nothing was inserted (duplicate), skip the XP update too
+    -- If nothing was inserted (duplicate), skip the XP update too. Report the
+    -- previously-credited amount (always > 0 — award_xp never records a
+    -- non-positive transaction) so callers see "already delivered", not
+    -- "dropped".
     IF NOT FOUND THEN
-      RETURN;
+      SELECT amount INTO v_prev_amount
+      FROM public.xp_transactions
+      WHERE user_id = p_user_id
+        AND idempotency_key = p_idempotency_key;
+      RETURN COALESCE(v_prev_amount, 0);
     END IF;
   ELSE
     INSERT INTO public.xp_transactions (user_id, amount, reason, tx_signature)
@@ -439,6 +454,8 @@ BEGIN
     last_activity_date = CURRENT_DATE,
     current_streak = v_new_streak,
     longest_streak = v_new_longest;
+
+  RETURN p_amount;
 END;
 $$;
 

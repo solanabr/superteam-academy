@@ -3,6 +3,7 @@ import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/sanity/queries";
+import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
@@ -114,9 +115,21 @@ export async function GET() {
     // 6. XP delivery is durable by construction: get_daily_quest_state writes
     // the pending_onchain_actions row in the SAME transaction that flips
     // xp_granted=true, so a quest is never marked granted without a durable
-    // pending row. retryPendingOnchainActions() (driven on the user's next auth)
-    // credits it idempotently via award_xp. Nothing to enqueue here — doing it
-    // in the route would leave a window where xp_granted stands without a row.
+    // pending row. Nothing to enqueue here — doing it in the route would leave
+    // a window where xp_granted stands without a row.
+    //
+    // 7. Deliver this user's pending quest_xp credits NOW. The auth-time
+    // retryPendingOnchainActions() only runs on re-auth, so a permanently
+    // logged-in session would otherwise never get its enqueued rows swept.
+    // Idempotent (award_xp keyed on reference_id), DB-only, so awaiting is
+    // cheap. Errors never fail the endpoint — rows stay durable for the next
+    // sweep.
+    try {
+      await retryQuestXpForUser(admin, user.id);
+    } catch (err) {
+      console.error("[api/quests/daily] quest_xp sweep failed:", err);
+    }
+
     return NextResponse.json({
       quests,
       nextResetTime: nextMidnightUtc(),
