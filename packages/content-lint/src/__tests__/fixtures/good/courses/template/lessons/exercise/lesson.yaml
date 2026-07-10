@@ -1,0 +1,17 @@
+id: lesson-t-exercise
+slug: exercise
+title: Exercise
+blocks:
+  - key: ts
+    type: code
+    language: typescript
+    starter: ts/starter.ts
+    solution: ts/solution.ts
+    tests: ts/tests.json
+    hints: [Add the two numbers.]
+  - key: rs
+    type: code
+    language: rust
+    starter: rs/starter.rs
+    solution: rs/solution.rs
+    tests: rs/tests.json
