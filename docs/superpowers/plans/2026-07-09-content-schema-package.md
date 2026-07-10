@@ -497,6 +497,15 @@ describe("VideoBlock", () => {
 });
 
 describe("capability keys", () => {
+  it("rejects produces on prose and video — they create nothing", () => {
+    expect(ProseBlock.safeParse({
+      type: "prose", key: "i", src: "i.md", produces: "funded-wallet",
+    }).success).toBe(false);
+    expect(VideoBlock.safeParse({
+      type: "video", key: "v", url: "https://youtu.be/abc", produces: "deployed-program",
+    }).success).toBe(false);
+  });
+
   it("are a closed set", () => {
     const ok = ProseBlock.safeParse({
       type: "prose", key: "i", src: "i.md", consumes: ["funded-wallet"],
@@ -571,6 +580,8 @@ import { blockBase, relativePath } from "./base";
 export const ProseBlock = z.object({
   type: z.literal("prose"),
   ...blockBase,
+  /** Prose can never produce a capability (gate 13a, local half). */
+  produces: z.never().optional(),
   src: relativePath(".md"),
 });
 
@@ -586,6 +597,8 @@ import { blockBase } from "./base";
 export const VideoBlock = z.object({
   type: z.literal("video"),
   ...blockBase,
+  /** Video can never produce a capability (gate 13a, local half). */
+  produces: z.never().optional(),
   /** YouTube or Vimeo. `lesson-client.tsx` resolves the embed via getEmbedUrl. */
   url: z.url().refine((u) => u.startsWith("https://"), { message: "must be https" }),
 });
@@ -604,7 +617,7 @@ export * from "./blocks/video";
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/blocks.test.ts`
-Expected: PASS — 7 tests.
+Expected: PASS — 8 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -917,6 +930,10 @@ describe("QuizBlock", () => {
   it("requires at least one question", () => {
     expect(QuizBlock.safeParse({ type: "quiz", key: "check", questions: [] }).success).toBe(false);
   });
+
+  it("rejects produces — a quiz creates nothing", () => {
+    expect(QuizBlock.safeParse({ ...q(), produces: "funded-wallet" }).success).toBe(false);
+  });
 });
 ```
 
@@ -974,6 +991,8 @@ export const QuizBlock = z
   .object({
     type: z.literal("quiz"),
     ...blockBase,
+    /** A quiz can never produce a capability (gate 13a, local half). */
+    produces: z.never().optional(),
     questions: z.array(QuizQuestion).min(1),
   })
   .refine((b) => unique(b.questions.map((q) => q.id)), {
@@ -993,7 +1012,7 @@ export * from "./blocks/quiz";
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/quiz.test.ts`
-Expected: PASS — 8 tests.
+Expected: PASS — 9 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1048,6 +1067,10 @@ describe("OpenEndedBlock", () => {
 
   it("caps maxWords so one AI reply stays cheap", () => {
     expect(OpenEndedBlock.safeParse({ type: "openEnded", key: "r", prompt: "p", maxWords: 5000 }).success).toBe(false);
+  });
+
+  it("rejects produces — a reflection creates nothing", () => {
+    expect(OpenEndedBlock.safeParse({ type: "openEnded", key: "r", prompt: "p", produces: "funded-wallet" }).success).toBe(false);
   });
 });
 
@@ -1130,6 +1153,8 @@ import { blockBase } from "./base";
 export const OpenEndedBlock = z.object({
   type: z.literal("openEnded"),
   ...blockBase,
+  /** A reflection can never produce a capability (gate 13a, local half). */
+  produces: z.never().optional(),
   prompt: z.string().min(1),
   /** Bounds one cache-shaped Gemini call. */
   maxWords: z.number().int().min(20).max(500).default(200),
@@ -1196,7 +1221,7 @@ export * from "./blocks/widgets";
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/widgets.test.ts`
-Expected: PASS — 10 tests.
+Expected: PASS — 11 tests.
 
 - [ ] **Step 5: Commit**
 
