@@ -1,13 +1,14 @@
-import { redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
-
-/** Teacher area entry point — send authors straight to their course list. */
+/**
+ * Teacher area entry point — placeholder.
+ *
+ * The prior CRUD authoring surface (`/teach/courses/*`) was removed in
+ * PR-2 Task 5. A read-only viewer replaces it in Task 6.
+ */
 export default async function TeachPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  redirect(`/${locale}/teach/courses`);
+  await params;
+  return <></>;
 }
