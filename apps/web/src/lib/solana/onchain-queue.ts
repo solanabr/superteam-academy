@@ -288,16 +288,25 @@ export async function retryPendingOnchainActions(
 
           // The XP bonus is optional: the current producer enqueues
           // course_finalize purely to retry the on-chain finalize (its payload
-          // carries no xpAmount). Only when an amount is genuinely owed do we
-          // route it through the durable-credit path — so a cap-eaten bonus
-          // defers instead of being lost (CS-7 bug class), while an XP-less row
-          // simply resolves on the successful finalize below.
+          // carries no xpAmount). Three cases, kept symmetric with the "xp"
+          // case so a malformed amount can never silently resolve:
+          //   • absent          → no bonus owed → resolve on the finalize.
+          //   • valid, > 0      → durable-credit path (a cap-eaten bonus defers
+          //                       instead of being lost — the CS-7 bug class).
+          //   • present but not a positive finite number → malformed payload →
+          //     throw so the shared catch bumps retry_count (never a silent
+          //     resolve), exactly as the "xp" case does.
           const xpAmount = payload.xpAmount;
-          if (
-            typeof xpAmount === "number" &&
-            Number.isFinite(xpAmount) &&
-            xpAmount > 0
-          ) {
+          if (xpAmount !== undefined) {
+            if (
+              typeof xpAmount !== "number" ||
+              !Number.isFinite(xpAmount) ||
+              xpAmount <= 0
+            ) {
+              throw new Error(
+                `Invalid course_finalize payload: xpAmount=${JSON.stringify(xpAmount)}`
+              );
+            }
             await creditXpAndSettle(
               adminClient,
               userId,

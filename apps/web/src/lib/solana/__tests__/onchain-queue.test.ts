@@ -255,6 +255,35 @@ describe("retryPendingOnchainActions — course_finalize credit-loss (#372)", ()
     expect(patch?.last_error).toBe("daily-cap-deferred");
   });
 
+  it("bumps retry_count on a course_finalize row whose xpAmount is present but not a number (malformed, not silent-resolve)", async () => {
+    h.rows = [
+      {
+        id: "r-cf-bad",
+        action_type: "course_finalize",
+        reference_id: "course-bad",
+        retry_count: 1,
+        payload: {
+          courseId: "course-bad",
+          walletAddress: "W",
+          xpAmount: "2000",
+        },
+      },
+    ];
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cf-bad");
+    expect(patch).toBeDefined();
+    // A malformed amount must NOT silently resolve — it retries, symmetric with
+    // the "xp" case (which throws on an invalid xpAmount).
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBe(2);
+    expect(String(patch?.last_error)).toContain(
+      "Invalid course_finalize payload"
+    );
+    expect(h.awardXp).not.toHaveBeenCalled();
+  });
+
   it("resolves a course_finalize row that owes no XP (real producer payload) without calling award_xp", async () => {
     h.rows = [
       {
