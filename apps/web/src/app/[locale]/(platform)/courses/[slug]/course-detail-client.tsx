@@ -44,6 +44,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     0
   );
 
+  // Map the inline-module course shape onto the accordion's shape, deriving
+  // "is a challenge" from graded-block presence (lesson.type is gone).
+  const accordionModules = modules.map((mod, i) => ({
+    id: mod.key ?? `module-${i}`,
+    title: mod.title,
+    lessons: (mod.lessons ?? []).map((lesson) => ({
+      _id: lesson._id,
+      title: lesson.title,
+      slug: lesson.slug,
+      isChallenge: (lesson.blocks ?? []).some((b) => b._type === "code"),
+    })),
+  }));
+
   const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
   const walletAddress = authProfile?.wallet_address ?? null;
 
@@ -297,7 +310,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           {modules.length} {t("modules")} &middot; {totalLessons} {t("lessons")}
         </p>
         <CurriculumAccordion
-          modules={modules}
+          modules={accordionModules}
           courseSlug={course.slug}
           locale={locale}
           completedLessons={completedLessons}
