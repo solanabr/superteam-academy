@@ -2,10 +2,8 @@ name: CI
 
 # P0-C3 — every PR runs build/test/lint/typecheck/audit and blocks on failure.
 # Required checks (make green before merge): frontend, onchain-rust, build-server.
-# The `anchor-localnet` job runs `anchor test` against a local validator (P1-10).
-# It stays opt-in (skipped, never failed) until the repo variable
-# ENABLE_ANCHOR_TEST=true is set, so it can't break required checks before it's
-# proven green.
+# The `integration` job builds the pinocchio program and replays all instructions
+# against it on LiteSVM.
 
 on:
   push:
@@ -121,7 +119,6 @@ jobs:
         with:
           workspaces: |
             onchain-academy
-            onchain-academy/tests/rust
 
       - name: Format check (program workspace)
         run: cargo fmt --manifest-path onchain-academy/Cargo.toml --all --check
@@ -132,9 +129,11 @@ jobs:
         # Kept in lockstep with the pre-commit hook (.husky/pre-commit).
         run: cargo clippy --manifest-path onchain-academy/Cargo.toml --all-targets -- -D warnings
 
-      # tests/rust is a SEPARATE cargo workspace (own [workspace] table).
-      - name: Rust unit tests
-        run: cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
+      # Host-side pinocchio tests: state layouts, discriminators, error
+      # codes/log lines, and hand-rolled CPI wire bytes are asserted against
+      # real spl/mpl builders.
+      - name: Pinocchio host tests (layouts · discriminators · CPI bytes)
+        run: cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocchio
 
   # ── Build server (apps/build-server): fmt, clippy, tests ────────────────────
   build-server:
@@ -209,18 +208,18 @@ jobs:
         continue-on-error: true
         run: cargo audit --file apps/build-server/Cargo.lock
 
-  # ── Anchor integration tests on localnet (opt-in until P1-10) ───────────────
-  # P1-10: run `anchor test` unattended against a local validator. The CI keypair
-  # is generated below; the test step overrides the cluster to localnet (Anchor.toml
-  # keeps cluster=devnet for real deploys). Enable by setting repo variable
-  # ENABLE_ANCHOR_TEST=true.
-  anchor-localnet:
-    name: Anchor test (localnet)
+  # ── Integration: pinocchio program on LiteSVM (Gate 2) ──────────────────────
+  # Replays all 18 instructions (happy + error paths) against the pinocchio
+  # .so in a single in-process LiteSVM and asserts results, normalized logs
+  # (byte-identical events), and account bytes.
+  integration:
+    name: Integration (pinocchio · LiteSVM)
     runs-on: ubuntu-latest
-    if: ${{ vars.ENABLE_ANCHOR_TEST == 'true' }}
+    if: github.event.action != 'labeled'
     env:
-      SOLANA_VERSION: "2.0.25"
-      ANCHOR_VERSION: "0.31.1"
+      # Matches the local dev toolchain; cargo-build-sbf fetches the pinned
+      # platform-tools (v1.54 = rustc 1.89) the pinocchio crate requires.
+      SOLANA_VERSION: "3.0.15"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -229,64 +228,31 @@ jobs:
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          workspaces: onchain-academy
+          workspaces: |
+            onchain-academy
+            onchain-academy/tests/differential
 
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.anza.xyz/v${SOLANA_VERSION}/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
-      - name: Install Anchor (avm)
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install ${ANCHOR_VERSION}
-          avm use ${ANCHOR_VERSION}
+      - name: Build pinocchio program
+        run: cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate CI keypair
-        # Anchor.toml provider.wallet = "../wallets/signer.json" (repo-root/wallets);
-        # anchor test's local validator funds it before deploy.
-        run: |
-          mkdir -p wallets
-          solana-keygen new --no-bip39-passphrase -s -o wallets/signer.json
-          solana config set --keypair wallets/signer.json
-
-      - name: Anchor test (localnet)
-        # Override the cluster to localnet so anchor test runs against the local
-        # validator it spins up (the tests airdrop heavily, which only works on
-        # localnet) instead of Anchor.toml's devnet default. On failure, dump the
-        # test-validator log so a validator crash (vs. slow startup) is visible.
-        run: |
-          anchor test --provider.cluster localnet || {
-            echo "::group::test-ledger-log.txt"
-            cat .anchor/test-ledger/test-ledger-log.txt 2>/dev/null || echo "(no test-ledger-log found)"
-            echo "::endgroup::"
-            exit 1
-          }
-        working-directory: onchain-academy
+      - name: Integration scenarios
+        run: cargo test --manifest-path onchain-academy/tests/differential/Cargo.toml
 
   # ── Verifiable build + program-hash publishing (P1-4, feeds G-3) ────────────
-  # Produces REPRODUCIBLE bytecode via `anchor build --verifiable` (deterministic
-  # Docker build in solanafoundation/anchor) and publishes the SHA-256 of the
-  # resulting `.so` so the deployed program can be independently verified:
+  # Produces toolchain-reproducible bytecode via `cargo build-sbf` with a pinned
+  # platform-tools version + the committed Cargo.lock, and publishes the SHA-256
+  # of the resulting `.so` so the deployed program can be independently verified:
   #   solana program dump <PROGRAM_ID> onchain.so && sha256sum onchain.so
-  # must match the hash printed below. The verifiable build is the source of the
-  # guarantee; the hash is the comparable artifact.
+  # must match the hash printed below. The build is the source of the guarantee;
+  # the hash is the comparable artifact.
   #
-  # Heavy (pulls a Docker image + cold Rust build), so it is NOT run on every
-  # push. Triggers: push to main, manual dispatch, or a PR carrying the
-  # `verifiable-build` label.
+  # Heavy (cold Rust build), so it is NOT run on every push. Triggers: push to
+  # main, manual dispatch, or a PR carrying the `verifiable-build` label.
   verifiable-build:
     name: Verifiable build (program hash)
     runs-on: ubuntu-latest
@@ -296,11 +262,9 @@ jobs:
       (github.event_name == 'pull_request' &&
         contains(github.event.pull_request.labels.*.name, 'verifiable-build'))
     env:
-      SOLANA_VERSION: "2.0.25"
-      ANCHOR_VERSION: "0.31.1"
-      # `anchor build --verifiable` copies the program to target/verifiable/<lib>.so
-      # on the host (NOT target/deploy/). The IDL still lands in target/idl/.
-      PROGRAM_LIB: onchain_academy # [lib] name -> target/verifiable/onchain_academy.so
+      # Agave 3.x: matches local dev; required for the pinocchio build's
+      # pinned platform-tools (v1.54 = rustc 1.89).
+      SOLANA_VERSION: "3.0.15"
     outputs:
       program_sha256: ${{ steps.hash.outputs.sha256 }}
     steps:
@@ -318,45 +282,40 @@ jobs:
           sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
-      - name: Install Anchor (avm)
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install "${ANCHOR_VERSION}"
-          avm use "${ANCHOR_VERSION}"
-
-      # Deterministic Docker build -> reproducible bytecode. ubuntu-latest ships
-      # with Docker preinstalled; `anchor build --verifiable` drives it.
-      - name: Verifiable build
-        run: anchor build --verifiable
-        working-directory: onchain-academy
+      # Pinocchio artifact hash: cargo-build-sbf with a PINNED platform-tools
+      # version (v1.54) + the committed Cargo.lock is toolchain-reproducible.
+      # (A Docker-deterministic solana-verify pipeline can replace this once a
+      # base image with rustc >= 1.89 is pinned.)
+      - name: Verifiable build (pinocchio)
+        run: cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
 
       - name: Compute program hash
         id: hash
         working-directory: onchain-academy
         run: |
-          SO_PATH="target/verifiable/${PROGRAM_LIB}.so"
+          SO_PATH="target/deploy/onchain_academy_pinocchio.so"
           if [ ! -f "$SO_PATH" ]; then
             echo "::error::Expected program artifact not found at $SO_PATH"
-            ls -la target/verifiable || true
+            ls -la target/deploy || true
             exit 1
           fi
           SHA="$(sha256sum "$SO_PATH" | awk '{print $1}')"
           SIZE="$(wc -c < "$SO_PATH" | tr -d ' ')"
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
           # Plain artifact for downstream comparison / scripting.
-          printf '%s  %s\n' "$SHA" "${PROGRAM_LIB}.so" > program-hash.txt
+          printf '%s  %s\n' "$SHA" "onchain_academy_pinocchio.so" > program-hash.txt
           {
             echo "## Verifiable build — program hash"
             echo ""
-            echo "**Reproducible build** via \`anchor build --verifiable\` (deterministic Docker image)."
+            echo "**Toolchain-reproducible build** via \`cargo build-sbf\` with pinned platform-tools + committed Cargo.lock."
             echo ""
             echo "| Field | Value |"
             echo "| --- | --- |"
-            echo "| Artifact | \`${PROGRAM_LIB}.so\` |"
+            echo "| Artifact | \`onchain_academy_pinocchio.so\` |"
             echo "| Size (bytes) | \`$SIZE\` |"
             echo "| SHA-256 | \`$SHA\` |"
             echo "| Solana | \`$SOLANA_VERSION\` |"
-            echo "| Anchor | \`$ANCHOR_VERSION\` |"
+            echo "| platform-tools | \`v1.54\` |"
             echo ""
             echo "Verify against the deployed program:"
             echo '```bash'
@@ -370,7 +329,7 @@ jobs:
         with:
           name: verifiable-build
           path: |
-            onchain-academy/target/verifiable/${{ env.PROGRAM_LIB }}.so
-            onchain-academy/target/idl/*.json
+            onchain-academy/target/deploy/onchain_academy_pinocchio.so
+            onchain-academy/idl/*.json
             onchain-academy/program-hash.txt
           if-no-files-found: error
