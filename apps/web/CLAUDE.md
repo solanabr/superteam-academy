@@ -70,6 +70,11 @@ NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
 ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
+GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/academy-courses
+                                   # (server-only). Powers POST /api/admin/content/sync (tarball
+                                   # fetch), the drift UI (HEAD polling), and the Checks API
+                                   # (blocked state). Unauthenticated GitHub is 60 req/hr per IP
+                                   # and flakes on Vercel; unset → the /api/admin/content/* routes 503.
 HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)

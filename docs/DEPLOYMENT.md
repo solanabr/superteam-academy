@@ -73,15 +73,18 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Optional Variables
 
-| Variable                         | Type            | Notes                                                      |
-| -------------------------------- | --------------- | ---------------------------------------------------------- |
-| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org) |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                         |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                        |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                       |
-| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)              |
+| Variable                         | Type            | Notes                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org)                                                                                                                                                                                                                                                                  |
+| `GITHUB_TOKEN`                   | **Server-only** | Fine-grained **read** token for `solanabr/academy-courses`. Powers `POST /api/admin/content/sync` (tarball fetch), the drift UI (HEAD polling), and the Checks API (`blocked` state). Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel's shared egress; unset → the `/api/admin/content/*` routes return 503 |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                                                                                                                                                                                                                                                                                          |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                                                                                                                                                                                                                                                                                         |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                                                                                                                                                                                                                                                                                        |
+| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)                                                                                                                                                                                                                                                                               |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
+
+> **Content sync (CS-9) secrets**: The Sanity dataset is **public** (read path uses no browser token). `SANITY_ADMIN_TOKEN` is held only by the content-sync job and `admin-mutations.ts` — it never belongs in GitHub Actions. `GITHUB_TOKEN` is a read-only token for the `academy-courses` repo, used server-side by the content-sync + drift routes; it carries no write scope.
 
 ### 4. Deploy
 

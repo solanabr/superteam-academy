@@ -12,12 +12,13 @@ The admin panel is available at `/{locale}/admin` (e.g., `/en/admin`).
 
 ## Required Environment Variables
 
-| Variable                   | Description                                                                                                                                     |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_SECRET`             | Admin password (min 32 chars, random). Set in `.env.local`.                                                                                     |
-| `PROGRAM_AUTHORITY_SECRET` | Base58 private key of the keypair that is authority on the on-chain `Config` PDA.                                                               |
-| `BACKEND_SIGNER_SECRET`    | Base58 private key of the backend signer registered in `Config.backend_signer`. Used to sign on-chain transactions from API routes.             |
-| `SANITY_ADMIN_TOKEN`       | Sanity write token from [sanity.io/manage](https://sanity.io/manage). Required to sync `onChainStatus` back to Sanity after deploying a course. |
+| Variable                   | Description                                                                                                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_SECRET`             | Admin password (min 32 chars, random). Set in `.env.local`.                                                                                                                                     |
+| `PROGRAM_AUTHORITY_SECRET` | Base58 private key of the keypair that is authority on the on-chain `Config` PDA.                                                                                                               |
+| `BACKEND_SIGNER_SECRET`    | Base58 private key of the backend signer registered in `Config.backend_signer`. Used to sign on-chain transactions from API routes.                                                             |
+| `SANITY_ADMIN_TOKEN`       | Sanity write token from [sanity.io/manage](https://sanity.io/manage). Required to sync `onChainStatus` back to Sanity after deploying a course.                                                 |
+| `GITHUB_TOKEN`             | Fine-grained **read** token for `solanabr/academy-courses`. Required by the Content Sync panel (tarball fetch, HEAD polling, Checks API). Unset → the `/api/admin/content/*` routes return 503. |
 
 ## Course Sync Workflow
 
@@ -63,6 +64,26 @@ Both routes require `ADMIN_SECRET` in the Authorization header.
 ### Resync On-Chain State
 
 `POST /api/admin/resync` re-reads on-chain state and backfills Supabase mirror tables. Use this to recover from Supabase write failures or sync drift.
+
+### Content Sync (repo → Sanity → devnet)
+
+The **Content Sync** panel ingests the `solanabr/academy-courses` repository into Sanity at a chosen commit and then commits the content hash on-chain. It is **always admin-triggered from the panel — never automatic.**
+
+**Content drift** (repo → Sanity), shown as a banner:
+
+- **up_to_date** — Sanity already matches GitHub HEAD; the Sync button is disabled.
+- **behind** — HEAD has new content; click **Sync content** to `POST /api/admin/content/sync { sha: HEAD }`.
+- **never_synced** — first-run banner; the sync writes the initial projection.
+- **blocked** — HEAD's CI is **red**; the commit is **un-syncable** and the button is disabled (the sync re-validates the whole tree with the CS-2 linter and refuses a failing tree, so a red HEAD is never projected).
+
+The sync is idempotent (re-running at the same SHA is a no-op), PRESERVE-safe (`onChainStatus` survives), and prune-guarded: it deletes only its own `sync.source`-marked docs that are absent from the new tree, and **aborts if the prune set exceeds 20%** of managed docs. A blast-radius abort returns 409 with an override hint — inspect the tree before overriding.
+
+**Chain drift** (Sanity → devnet), shown per course:
+
+- **content_current** — the on-chain `content_tx_id` equals the padded HEAD sha (§11.0).
+- **content_stale** — deployed, but `content_tx_id != HEAD`; commit the new hash.
+- **not_deployed** / **missing_fields** — no PDA yet / Sanity incomplete.
+- **awaiting_content_sync** — the **ordering interlock**: chain sync is disabled until content drift is `up_to_date`, because the mask/commitment cannot be computed from a Sanity that has not ingested the new lesson. The chain-sync action re-asserts the intended `active_lessons` mask against the committed `slots.lock.json` before signing (a mismatch is a 409).
 
 ### Troubleshooting
 
