@@ -43,7 +43,7 @@ jobs:
     # Job ceiling above the fuzz window so build + the run both fit.
     timeout-minutes: 40
     env:
-      SOLANA_VERSION: "3.0.15"
+      SOLANA_VERSION: "3.1.10"
       # 600s floor enforced below regardless of the dispatch input.
       FUZZ_DURATION: ${{ github.event.inputs.duration_seconds || '900' }}
       FUZZ_ITERATIONS: ${{ github.event.inputs.iterations || '1000000' }}
@@ -61,10 +61,25 @@ jobs:
             onchain-academy
             onchain-academy/trident-tests
 
+      # Cache the Solana CLI install + the SBF platform-tools (v1.54) so
+      # cargo-build-sbf doesn't re-download them each nightly run.
+      - name: Cache Solana CLI + platform-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/solana/install
+            ~/.cache/solana
+          key: solana-${{ runner.os }}-${{ env.SOLANA_VERSION }}-tools-v1.54
+
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+          if [ ! -x "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then
+            curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install" -o /tmp/solana-install.sh
+            sh /tmp/solana-install.sh
+          fi
+          BIN="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/cargo-build-sbf" --version
 
       # Trident.toml loads ../target/deploy/onchain_academy.so, so the program
       # must be compiled to SBF and installed into that slot first. (Token-2022 /
