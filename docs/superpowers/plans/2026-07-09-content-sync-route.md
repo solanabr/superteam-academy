@@ -14,7 +14,7 @@
 
 - **`ADMIN_SECRET` gate.** The sync and drift routes call `requireAdminAuth(req)` from `@/lib/admin/auth` (HMAC-signed `admin_session` cookie + same-origin CSRF check), exactly like every other `/api/admin/*` route. Catch `AdminAuthError` → `adminUnauthorizedResponse()` (401).
 - **Server-only secrets, never client.** `GITHUB_TOKEN` and `SANITY_ADMIN_TOKEN` are read only through `@/lib/env.server` (which imports `server-only`). Never a `NEXT_PUBLIC_` prefix; never referenced from a `"use client"` module.
-- **New env var:** `GITHUB_TOKEN` — a fine-grained **read** token for `solanabr/academy-courses`. Needed for the tarball fetch, HEAD polling in the drift UI, and the Checks API that powers the `blocked` state. Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel's shared egress, so it is not optional for the feature (the app still boots without it; the routes 503). Document it in `apps/web/CLAUDE.md` (Environment Variables) and `docs/DEPLOYMENT.md`.
+- **New env var:** `GITHUB_TOKEN` — a fine-grained **read** token for `solanabr/academy-courses`. Needed for the tarball fetch, HEAD polling in the drift UI, and the Checks API that powers the `blocked` state. Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel's shared egress, so it is not optional for the feature (the app still boots without it; the routes 503). Document it in the root `CLAUDE.md` (Environment Variables) and `docs/DEPLOYMENT.md`.
 - **Repo constants** (copied verbatim, do not re-derive): repo = `solanabr/academy-courses`, default branch = `main`, tarball endpoint = `GET /repos/solanabr/academy-courses/tarball/<sha>`, sync marker `source` = `"academy-courses"`, `_template/` is excluded from sync.
 - **PRESERVE list** (§9.3): `PRESERVE = { course: ["onChainStatus"], achievement: ["onChainStatus"] }`. Every field of a managed doc is either a pure function of the repo, the `sync` marker, or in PRESERVE. Nothing else exists.
 - **Managed doc types** (carry the `sync` marker, are pruned): `course`, `lesson`, `instructor`, `learningPath`, `achievement`, `quest`.
@@ -2257,6 +2257,7 @@ Order (§9.2, §9.4): (1) refuse red-CI; (2) fetch tarball + extract; (3) author
 
 ```ts
 import { describe, it, expect, vi } from "vitest";
+import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { stringify } from "yaml";
 import { runContentSync } from "../sync";
@@ -2274,8 +2275,9 @@ const graders: GraderSet = {
 };
 
 // A one-course, one-lesson tarball (reuses the Task 2 tar builder — import it in
-// the real suite from a shared fixture; inlined here for brevity).
-import { makeCourseTarball } from "./_fixtures";
+// the real suite from a shared fixture; inlined here for brevity). PNG_1X1 is a
+// real 1x1 PNG (68 bytes) so the image-size probe returns actual dimensions.
+import { makeCourseTarball, PNG_1X1 } from "./_fixtures";
 
 function github(sha: string, checks: "success" | "failure", tarball: Uint8Array): GitHubClient {
   return {
@@ -2349,19 +2351,58 @@ describe("runContentSync", () => {
     expect(gw.deleted).toContain("lesson-gone");
     expect(result.pruned).toBe(1);
   });
+
+  it("computes asset ids from real probed dimensions, so an existing Sanity asset is skipped (§9.6)", async () => {
+    // Sanity's asset _id embeds the REAL dimensions it computes on upload
+    // (image-<sha1>-<w>x<h>-<format>). Seed the gateway with the id Sanity
+    // would hold for PNG_1X1; the sync must probe the same 1x1 dims to match
+    // it and skip the upload. A placeholder probe (0x0) would never match.
+    const sha = "a".repeat(40);
+    const sha1 = createHash("sha1").update(PNG_1X1).digest("hex");
+    const gw = new InMemoryGateway([]);
+    gw.assets.add(`image-${sha1}-1x1-png`);
+    const result = await runContentSync(
+      deps({ gateway: gw, github: github(sha, "success", makeCourseTarball(sha, { withImage: true })) }),
+    );
+    expect(result.assetsUploaded).toBe(0); // dedupe hit — nothing re-uploaded
+  });
+
+  it("uploads a new asset once and reports it", async () => {
+    const sha = "a".repeat(40);
+    const gw = new InMemoryGateway([]);
+    const result = await runContentSync(
+      deps({ gateway: gw, github: github(sha, "success", makeCourseTarball(sha, { withImage: true })) }),
+    );
+    expect(result.assetsUploaded).toBe(1);
+  });
 });
 ```
 
-Also create the shared fixture `apps/web/src/lib/content-sync/__tests__/_fixtures.ts` exporting `makeCourseTarball(sha)` — it reuses the `makeTar` helper from Task 2 and `gzipSync` to build a valid one-course, one-lesson tree (`course.yaml`, `slots.lock.json`, `lesson.yaml`, `intro.md`) so `parseAndValidateTree` accepts it.
+Also create the shared fixture `apps/web/src/lib/content-sync/__tests__/_fixtures.ts` exporting `makeCourseTarball(sha, opts?: { withImage?: boolean })` and `PNG_1X1` — it reuses the `makeTar` helper from Task 2 and `gzipSync` to build a valid one-course, one-lesson tree (`course.yaml`, `slots.lock.json`, `lesson.yaml`, `intro.md`) so `parseAndValidateTree` accepts it. With `withImage: true` the tree also contains `assets/pixel.png` (referenced from `intro.md` as `![pixel](assets/pixel.png)`) whose bytes are `PNG_1X1` — a real, minimal 1x1 PNG inlined as a base64 Buffer:
+
+```ts
+/** A real 1x1 transparent PNG (68 bytes) — the image-size probe reads 1x1 from it. */
+export const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  "base64",
+);
+```
 
 - [ ] **Step 2: Run it to see it fail**
 
 Run: `pnpm --filter web test src/lib/content-sync/__tests__/sync.test.ts`
 Expected: FAIL — `Cannot find module '../sync'`.
 
-- [ ] **Step 3: Implement `src/lib/content-sync/sync.ts`**
+- [ ] **Step 3: Add the `image-size` dependency, then implement `src/lib/content-sync/sync.ts`**
+
+The asset id and CDN url must carry the **real** image dimensions — Sanity computes them on upload and bakes them into the asset `_id` (`image-<sha1>-<w>x<h>-<format>`), so a placeholder would break both the skip-if-exists dedupe and the markdown CDN rewrite. Install the probe into the web app (the sync package lives under `apps/web`):
+
+```bash
+pnpm --filter web add image-size
+```
 
 ```ts
+import { imageSize } from "image-size";
 import { revalidateTag } from "next/cache";
 import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
 import type { GitHubClient } from "./github";
@@ -2386,11 +2427,16 @@ export interface SyncDeps {
   dataset: string;
 }
 
-/** Image dimensions are needed for the content-derived id; a tiny probe keeps
- *  this dependency-free (real impl may swap in `image-size`). Placeholder dims
- *  are acceptable because the SHA-1 is the dedupe key; dims only shape the url. */
-function probeDims(_bytes: Uint8Array): { width: number; height: number } {
-  return { width: 0, height: 0 };
+/** Probe the real image dimensions. Sanity computes width/height on upload and
+ *  bakes them into the asset _id, so `computeAssetId` and `cdnUrl` must use the
+ *  same values — otherwise `assetExists` never matches (every sync re-uploads)
+ *  and the rewritten markdown points at a URL Sanity does not serve. */
+function probeDims(bytes: Uint8Array): { width: number; height: number } {
+  const { width, height } = imageSize(Buffer.from(bytes));
+  if (!width || !height) {
+    throw new Error("could not probe image dimensions");
+  }
+  return { width, height };
 }
 function formatOf(path: string): string {
   const m = /\.(\w+)$/.exec(path);
@@ -2500,15 +2546,16 @@ function countByType(docs: SanityDoc[]): Record<string, number> {
 - [ ] **Step 4: Run it to verify it passes**
 
 Run: `pnpm --filter web test src/lib/content-sync/__tests__/sync.test.ts && pnpm --filter web typecheck`
-Expected: PASS — 5 tests; `tsc` exits 0.
+Expected: PASS — 7 tests; `tsc` exits 0.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/content-sync/sync.ts \
         apps/web/src/lib/content-sync/__tests__/sync.test.ts \
-        apps/web/src/lib/content-sync/__tests__/_fixtures.ts
-git commit -m "feat(sync): runContentSync orchestrator — guards, idempotency, ordering (§9.2/§9.4)"
+        apps/web/src/lib/content-sync/__tests__/_fixtures.ts \
+        apps/web/package.json pnpm-lock.yaml
+git commit -m "feat(sync): runContentSync orchestrator — guards, idempotency, real-dims asset ids (§9.2/§9.4/§9.6)"
 ```
 
 ---
@@ -2521,10 +2568,10 @@ git commit -m "feat(sync): runContentSync orchestrator — guards, idempotency, 
 - Test: `apps/web/src/lib/content-sync/__tests__/signer-commit.test.ts`
 
 **Interfaces:**
-- Consumes: `padContentTxId`, `deriveActiveMask`, `assertMaskMatchesLockfile` from `@/lib/content-sync/content-commit`; program v2's `new_content_tx_id` + `new_active_lessons` (prerequisite).
-- Produces: `deployCoursePda`/`updateCoursePda` accept `contentSha` + `slotsLock`, write `content_tx_id = padContentTxId(sha)`, and set/verify `active_lessons`; a pure helper `buildCourseCommit({ contentSha, slotsLock }): { contentTxId: number[]; activeLessons: [bigint,bigint,bigint,bigint] }` that the route calls and the test drives.
+- Consumes: `padContentTxId`, `assertMaskMatchesLockfile` (which derives the expected mask via `deriveActiveMask` internally) from `@/lib/content-sync/content-commit`; program v2's `new_content_tx_id` + `new_active_lessons` (prerequisite).
+- Produces: `deployCoursePda`/`updateCoursePda` accept `contentSha` + `slotsLock`, write `content_tx_id = padContentTxId(sha)`, and set/verify `active_lessons`; a pure helper `buildCourseCommit({ courseId, contentSha, slotsLock, activeLessons }): { contentTxId: number[]; activeLessons: [bigint,bigint,bigint,bigint] }` that the route calls and the test drives. `activeLessons` is a **required** input — the mask the caller (the admin panel's pending-sync state) intends to send — and the helper **always** asserts it equals `deriveActiveMask(slotsLock)` before returning the signable params.
 
-This is the chain half of §11.0: the git SHA lands in `content_tx_id` (in the same `update_course` call that sets the mask, so provenance and structure can never disagree). The route derives the mask from the committed lockfile and the signer asserts equality **right before signing**.
+This is the chain half of §11.0: the git SHA lands in `content_tx_id` (in the same `update_course` call that sets the mask, so provenance and structure can never disagree). The caller supplies the mask it intends to send (from the panel's pending-sync state), the route supplies the committed lockfile, and the signer asserts the two agree **right before signing** — the assertion compares two independently-sourced values, so a panel bug that mangles the mask is caught rather than signed.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2539,16 +2586,31 @@ const sha = "c".repeat(40);
 const slots = { version: 1, slots: { a: 0, b: 1 }, retired: [], next: 2 };
 
 describe("buildCourseCommit", () => {
-  it("packs the sha into 32 bytes and derives the mask from the lockfile", () => {
-    const commit = buildCourseCommit({ contentSha: sha, slotsLock: slots });
+  it("packs the sha into 32 bytes and passes through a mask that matches the lockfile", () => {
+    const commit = buildCourseCommit({
+      courseId: "course-x",
+      contentSha: sha,
+      slotsLock: slots,
+      activeLessons: [3n, 0n, 0n, 0n], // bits 0 and 1 — matches slots a:0, b:1
+    });
     expect(commit.contentTxId).toHaveLength(32);
-    expect(commit.activeLessons[0]).toBe(3n); // bits 0 and 1 set
+    expect(commit.activeLessons[0]).toBe(3n);
   });
 
-  it("throws if a caller-supplied mask disagrees with the lockfile", () => {
+  it("throws MaskMismatchError naming the course when the caller's mask disagrees with the lockfile", () => {
     expect(() =>
-      buildCourseCommit({ contentSha: sha, slotsLock: slots, assertMask: [1n, 0n, 0n, 0n] }),
+      buildCourseCommit({
+        courseId: "course-x",
+        contentSha: sha,
+        slotsLock: slots,
+        activeLessons: [1n, 0n, 0n, 0n], // bit 1 missing — panel bug
+      }),
     ).toThrow(MaskMismatchError);
+    try {
+      buildCourseCommit({ courseId: "course-x", contentSha: sha, slotsLock: slots, activeLessons: [1n, 0n, 0n, 0n] });
+    } catch (e) {
+      expect((e as Error).message).toContain("course-x"); // reports the course id, not a sha
+    }
   });
 });
 ```
@@ -2561,11 +2623,7 @@ Expected: FAIL — `buildCourseCommit` is not exported.
 - [ ] **Step 3: Add `buildCourseCommit` to `admin-signer.ts`**
 
 ```ts
-import {
-  padContentTxId,
-  deriveActiveMask,
-  assertMaskMatchesLockfile,
-} from "@/lib/content-sync/content-commit";
+import { padContentTxId, assertMaskMatchesLockfile } from "@/lib/content-sync/content-commit";
 
 interface SlotsLock {
   version: number;
@@ -2576,22 +2634,23 @@ interface SlotsLock {
 
 /**
  * Build the on-chain content commitment for a course (§11.0): the 32-byte
- * content_tx_id (git sha left-padded) and the active_lessons mask derived from
- * the committed slots.lock.json. If `assertMask` is supplied (the mask the panel
- * intends to send), verify it matches the lockfile before returning — the guard
+ * content_tx_id (git sha left-padded) and the active_lessons mask. The caller
+ * (the chain-sync route, from the admin panel's pending-sync state) supplies the
+ * mask it intends to send; this ALWAYS asserts it equals the mask derived from
+ * the committed slots.lock.json before returning the signable params — the guard
  * that stops a panel bug setting arbitrary bits, since update_course trusts the
- * authority blindly.
+ * authority blindly. Because the two masks come from independent sources
+ * (panel state vs the committed lockfile), the assertion is a real cross-check,
+ * not a tautology.
  */
 export function buildCourseCommit(input: {
+  courseId: string;
   contentSha: string;
   slotsLock: SlotsLock;
-  assertMask?: [bigint, bigint, bigint, bigint];
+  activeLessons: [bigint, bigint, bigint, bigint];
 }): { contentTxId: number[]; activeLessons: [bigint, bigint, bigint, bigint] } {
-  const activeLessons = deriveActiveMask(input.slotsLock);
-  if (input.assertMask) {
-    assertMaskMatchesLockfile(input.contentSha.slice(0, 8), input.assertMask, input.slotsLock);
-  }
-  return { contentTxId: padContentTxId(input.contentSha), activeLessons };
+  assertMaskMatchesLockfile(input.courseId, input.activeLessons, input.slotsLock);
+  return { contentTxId: padContentTxId(input.contentSha), activeLessons: input.activeLessons };
 }
 ```
 
@@ -2599,7 +2658,56 @@ Then thread `contentTxId`/`activeLessons` into the on-chain params. In `deployCo
 
 - [ ] **Step 4: Call it from the chain-sync route**
 
-In `apps/web/src/app/api/admin/courses/sync/route.ts`, before signing, load the course's committed `slots.lock.json` sha + lockfile (from the drift/sync context — the `contentSync` singleton's sha is HEAD, and the lockfile comes from the last synced tree) and pass `buildCourseCommit({ contentSha, slotsLock })` into `deployCoursePda`/`updateCoursePda`. Enforce the ordering interlock: refuse chain sync (400) when content drift is not `up_to_date` for that course (the mask/commitment cannot be computed from a Sanity that has not ingested the new lesson — §11.1).
+In `apps/web/src/app/api/admin/courses/sync/route.ts`, before signing, load the course's committed `slots.lock.json` sha + lockfile (from the drift/sync context — the `contentSync` singleton's sha is HEAD, and the lockfile comes from the last synced tree). The request body carries the mask the admin panel's pending-sync state intends to send (`activeLessons: string[4]` of u64 decimal strings, computed by the panel when it rendered the chain-drift row). Wire the two independent sources into the helper:
+
+```ts
+import { parse as parseYaml } from "yaml";
+import { readContentSyncSingleton } from "@/lib/sanity/admin-mutations";
+import { createGitHubClient } from "@/lib/content-sync/github";
+import { extractTarball } from "@/lib/content-sync/tarball";
+import { buildCourseCommit } from "@/lib/solana/admin-signer";
+
+/** The committed lockfile for a course, from the last-synced tree. Sourced
+ *  independently of the panel's mask — that independence is what makes the
+ *  buildCourseCommit assertion a real cross-check. */
+async function readCourseSlotsLock(
+  courseId: string,
+): Promise<{ contentSha: string; slotsLock: SlotsLock }> {
+  const singleton = await readContentSyncSingleton();
+  const tree = await extractTarball(await createGitHubClient().fetchTarball(singleton.sha));
+  for (const [path, bytes] of tree) {
+    if (!path.endsWith("/course.yaml")) continue;
+    const { id } = parseYaml(new TextDecoder().decode(bytes)) as { id: string };
+    if (id !== courseId) continue;
+    const raw = tree.get(path.replace(/course\.yaml$/, "slots.lock.json"));
+    if (!raw) throw new Error(`${courseId}: no slots.lock.json next to ${path}`);
+    return {
+      contentSha: singleton.sha,
+      slotsLock: JSON.parse(new TextDecoder().decode(raw)) as SlotsLock,
+    };
+  }
+  throw new Error(`${courseId}: not found in the synced tree at ${singleton.sha}`);
+}
+
+// In the POST handler, before signing —
+// Body: { courseId: string; activeLessons: [string, string, string, string] }
+// activeLessons is the mask the panel's pending-sync state intends to send
+// (u64 words as decimal strings, computed when the chain-drift row rendered).
+const panelMask = body.activeLessons.map(BigInt) as [bigint, bigint, bigint, bigint];
+const { contentSha, slotsLock } = await readCourseSlotsLock(body.courseId);
+
+// Throws MaskMismatchError (→ 409) if the panel's mask disagrees with the lockfile.
+const commit = buildCourseCommit({
+  courseId: body.courseId,
+  contentSha,
+  slotsLock,
+  activeLessons: panelMask,
+});
+
+await updateCoursePda({ ...params, commit }); // or deployCoursePda for a first deploy
+```
+
+Enforce the ordering interlock: refuse chain sync (400) when content drift is not `up_to_date` for that course (the mask/commitment cannot be computed from a Sanity that has not ingested the new lesson — §11.1).
 
 - [ ] **Step 5: Run it to verify it passes**
 
@@ -2853,7 +2961,7 @@ A `"use client"` component fetching `/api/admin/content/drift`, rendering:
 - `up_to_date` → green check, button disabled;
 - `behind` → "Sync content (N commits behind)" + enabled button that `POST`s `{ sha: headSha }` to `/api/admin/content/sync`;
 - `blocked` → red "HEAD CI is failing — cannot sync", button disabled.
-Per-course rows show chain drift; the chain-sync action is disabled unless content is `up_to_date`. All strings via `next-intl` (`useTranslations`), accessible (button `aria-disabled`, focus-visible ring), matching the existing admin table styling. No new secret touches the client — the panel only calls the two admin routes.
+Per-course rows show chain drift; the chain-sync action is disabled unless content is `up_to_date`. The drift response includes each course's intended `activeLessons` mask (u64 words as decimal strings, derived server-side from the synced lockfile), and the chain-sync action POSTs it back with the `courseId` to `/api/admin/courses/sync` — where `buildCourseCommit` (Task 13) re-asserts it against the lockfile loaded at signing time, catching stale panel state or a transport/UI bug mangling the mask. All strings via `next-intl` (`useTranslations`), accessible (button `aria-disabled`, focus-visible ring), matching the existing admin table styling. No new secret touches the client — the panel only calls the two admin routes.
 
 - [ ] **Step 5: Run it to verify it passes**
 
@@ -2875,7 +2983,7 @@ git commit -m "feat(sync): drift route + three-way content-sync admin panel (blo
 ### Task 16: Docs — `GITHUB_TOKEN`, the sync trigger, the drift UI
 
 **Files:**
-- Modify: `apps/web/CLAUDE.md` (Environment Variables + API routes table)
+- Modify: `CLAUDE.md` (root — Environment Variables + Frontend API Routes/Admin table; `apps/web/` has no CLAUDE.md, and this is where `ADMIN_SECRET` etc. live today)
 - Modify: `docs/DEPLOYMENT.md` (env var; public dataset; no `SANITY_ADMIN_TOKEN` in Actions)
 - Modify: `docs/ADMIN.md` (content-sync trigger; three-way drift UI; the `blocked` state)
 
@@ -2885,9 +2993,9 @@ git commit -m "feat(sync): drift route + three-way content-sync admin panel (blo
 
 Docs are a per-phase gate, not a final phase (§16.4) — this task lands with the routes, not after.
 
-- [ ] **Step 1: Document `GITHUB_TOKEN` in `apps/web/CLAUDE.md`**
+- [ ] **Step 1: Document `GITHUB_TOKEN` in the root `CLAUDE.md`**
 
-In the Environment Variables block, under the Admin/Backend section, add:
+In the root `CLAUDE.md` "Environment Variables" block, in the `# Required — Admin & Backend (server-only, never NEXT_PUBLIC_)` section (where `ADMIN_SECRET`, `BUILD_SERVER_URL`, etc. live), add:
 
 ```bash
 # Fine-grained READ token for solanabr/academy-courses (server-only, never
@@ -2898,7 +3006,7 @@ In the Environment Variables block, under the Admin/Backend section, add:
 GITHUB_TOKEN=
 ```
 
-Add the two new routes to the Admin API routes table:
+Add the two new routes to the root `CLAUDE.md` "Frontend API Routes → Admin" table (and bump the routes count in the section heading, 34 → 36):
 
 ```markdown
 | `/api/admin/content/sync`  | POST | ADMIN_SECRET | Sync academy-courses@sha → Sanity (re-validate, PRESERVE, prune, content_tx_id) |
@@ -2915,13 +3023,13 @@ Describe: content sync is admin-triggered from the panel (never automatic, §D8)
 
 - [ ] **Step 4: Verify docs reference reality**
 
-Run: `grep -n "GITHUB_TOKEN" apps/web/CLAUDE.md docs/DEPLOYMENT.md`
+Run: `grep -n "GITHUB_TOKEN" CLAUDE.md docs/DEPLOYMENT.md`
 Expected: matches in both files.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/web/CLAUDE.md docs/DEPLOYMENT.md docs/ADMIN.md
+git add CLAUDE.md docs/DEPLOYMENT.md docs/ADMIN.md
 git commit -m "docs(sync): GITHUB_TOKEN, content-sync trigger, three-way drift UI"
 ```
 
@@ -2952,8 +3060,8 @@ The load-bearing guarantees, each proven by a named test:
 1. **`POST /api/admin/content/sync` (ADMIN_SECRET), §9.2 flow** — Tasks 3 (tarball fetch + `GITHUB_TOKEN`), 5 (re-validate with `@superteam-lms/content-schema`), 6 (write Sanity docs), 12 (orchestrator ties it together + `revalidateTag("courses")`), 13 (`content_tx_id` commitment), 14 (the route). `GITHUB_TOKEN` documented in Task 1 + Task 16.
 2. **Idempotent write + PRESERVE** — Task 6 (deterministic `_id`, `createOrReplace`-shaped docs), Task 8 (`reattachPreserved`, `readManagedDocuments` one-GROQ read via Task 11, the `sanitySchemaFields == projected ∪ PRESERVE` CI assertion), Task 12 (`selectChangedDocs` → zero mutations on same sha).
 3. **Prune guards (§9.4)** — Task 6 (`sync:{source,rev}`, non-`_` field), Task 8 (`prunableQuery`, `selectPrunable` never selects unmarked, `assertBlastRadius` 20%), Task 12 (write-verify-count-then-prune, singleton written last), weak refs from CS-5 prerequisite; 10k delete cap noted in Global Constraints.
-4. **Assets (§9.6)** — Task 7 (`computeAssetId` from SHA-1, skip-if-exists via `assetExists`, `rewriteMarkdownAssetPaths` → CDN), Task 12 (`syncAssets`).
-5. **content_tx_id commitment (§11.0)** — Task 9 (`padContentTxId` 20→32, `deriveActiveMask`, `assertMaskMatchesLockfile`), Task 13 (`buildCourseCommit` wired into `deployCoursePda`/`updateCoursePda` via `new_content_tx_id` + the mask assertion right before signing).
+4. **Assets (§9.6)** — Task 7 (`computeAssetId` from SHA-1, skip-if-exists via `assetExists`, `rewriteMarkdownAssetPaths` → CDN), Task 12 (`syncAssets` with a real dimension probe via `image-size`, so the id/url match what Sanity computes on upload; proven with a real 1x1 PNG fixture).
+5. **content_tx_id commitment (§11.0)** — Task 9 (`padContentTxId` 20→32, `deriveActiveMask`, `assertMaskMatchesLockfile`), Task 13 (`buildCourseCommit` receives the panel's intended mask as a required input and always asserts it against the lockfile-derived mask right before signing — two independent sources, so the guard is actually exercised; wired into `deployCoursePda`/`updateCoursePda` via `new_content_tx_id`).
 6. **Drift UI (§11)** — Task 10 (`computeContentDrift` → up_to_date/behind/never_synced/blocked; `computeChainDrift` → `content_tx_id == HEAD` + surviving `diffCourse` states; `assertCommitSyncable` refuses red CI), Task 15 (drift route + three-way panel; blocked disables sync; content-before-chain ordering interlock).
 7. **Server-side executor gate at sync time (§6.2a)** — Task 4 (`gateCodeBlock`, tiered JS/Rust/buildable, two-sided), Task 5 (runs it during re-validation), Task 14 (`createLiveGraders` wires the real executors).
 
