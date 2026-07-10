@@ -2,6 +2,8 @@ import "server-only";
 import { createClient } from "next-sanity";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
+import type { SanityDoc } from "@/lib/content-sync/types";
+import { MANAGED_TYPES } from "@/lib/content-sync/types";
 
 const sanityAdmin = createClient({
   projectId: env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -10,6 +12,86 @@ const sanityAdmin = createClient({
   useCdn: false,
   apiVersion: "2024-01-01",
 });
+
+/** The shared server-only write client (spec §10.4 — one SANITY_ADMIN_TOKEN
+ *  client, held only by the sync job and admin-mutations). */
+export function getSanityAdminClient(): typeof sanityAdmin {
+  return sanityAdmin;
+}
+
+// ---------------------------------------------------------------------------
+// CS-9 content sync — batched managed-doc read/write/delete + asset upload.
+// The gateway (lib/content-sync/gateway.ts) is the only caller; each function is
+// a thin wrapper over the shared write client so the orchestrator's guards are
+// unit-tested against an in-memory double, never a live Sanity.
+// ---------------------------------------------------------------------------
+
+/** Read every managed document (with onChainStatus + sync marker) for the sync. */
+export async function readManagedDocuments(): Promise<SanityDoc[]> {
+  const query = `*[_type in $types]{ ..., onChainStatus, sync }`;
+  return sanityAdmin.fetch<SanityDoc[]>(query, { types: [...MANAGED_TYPES] });
+}
+
+/** createOrReplace a batch of documents in one transaction. */
+export async function writeDocuments(docs: SanityDoc[]): Promise<void> {
+  if (docs.length === 0) return;
+  let tx = sanityAdmin.transaction();
+  for (const doc of docs) {
+    tx = tx.createOrReplace(doc as unknown as { _id: string; _type: string });
+  }
+  await tx.commit({ visibility: "async" });
+}
+
+/** Delete a batch of documents by id in one transaction (post write-verify). */
+export async function deleteDocuments(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  let tx = sanityAdmin.transaction();
+  for (const id of ids) tx = tx.delete(id);
+  await tx.commit({ visibility: "async" });
+}
+
+/** Write the contentSync singleton LAST (spec §9.4 — never matches the prune). */
+export async function writeContentSyncSingleton(
+  sha: string,
+  counts: Record<string, number>
+): Promise<void> {
+  await sanityAdmin.createOrReplace({
+    _id: "contentSync",
+    _type: "contentSync",
+    sha,
+    syncedAt: new Date().toISOString(),
+    counts,
+  });
+}
+
+/** Read the contentSync singleton's sha (the last-synced commit), or null. */
+export async function readContentSyncSingleton(): Promise<{
+  sha: string;
+} | null> {
+  const found = await sanityAdmin.fetch<{ sha?: string } | null>(
+    `*[_id == "contentSync"][0]{ sha }`
+  );
+  return found?.sha ? { sha: found.sha } : null;
+}
+
+/** True if an image asset with this content-derived id already exists (§9.6). */
+export async function assetExists(assetId: string): Promise<boolean> {
+  const found = await sanityAdmin.fetch<string | null>(`*[_id == $id][0]._id`, {
+    id: assetId,
+  });
+  return found !== null;
+}
+
+/** Upload image bytes; returns the asset _id (content-derived, so idempotent). */
+export async function uploadImageAsset(
+  bytes: Uint8Array,
+  filename: string
+): Promise<string> {
+  const asset = await sanityAdmin.assets.upload("image", Buffer.from(bytes), {
+    filename,
+  });
+  return asset._id;
+}
 
 /**
  * Set the full course membership of a learning path (issue #323). Admin-only —
