@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { syncField } from "./objects/syncField";
 
 export const achievement = defineType({
   name: "achievement",
@@ -78,6 +79,77 @@ export const achievement = defineType({
         "URI for the NFT metadata JSON. Leave blank to use the platform default endpoint.",
     }),
     defineField({
+      name: "award",
+      title: "Unlock Award",
+      type: "object",
+      description:
+        "Declarative unlock rule (spec §4.10, D9). Mirrors content-schema Award; CS-9 sync writes the resolved discriminated union. The app evaluates PREDICATES[award.kind] — unlock logic is content, not TypeScript.",
+      fields: [
+        defineField({
+          name: "kind",
+          title: "Kind",
+          type: "string",
+          options: {
+            list: [
+              "lessons-completed",
+              "lessons-completed-in-course",
+              "course-completed",
+              "path-completed",
+              "streak",
+              "user-number",
+              "community-stat",
+              "manual",
+            ],
+          },
+        }),
+        defineField({
+          name: "gte",
+          title: "Threshold (gte)",
+          type: "number",
+          description:
+            "lessons-completed / lessons-completed-in-course / community-stat.",
+        }),
+        defineField({
+          name: "lte",
+          title: "Threshold (lte)",
+          type: "number",
+          description: "user-number.",
+        }),
+        defineField({
+          name: "days",
+          title: "Days",
+          type: "number",
+          description: "streak.",
+        }),
+        defineField({
+          name: "course",
+          title: "Course id",
+          type: "string",
+          description: "course-completed / lessons-completed-in-course.",
+        }),
+        defineField({
+          name: "path",
+          title: "Path id",
+          type: "string",
+          description: "path-completed.",
+        }),
+        defineField({
+          name: "stat",
+          title: "Community stat",
+          type: "string",
+          description: "community-stat.",
+          options: {
+            list: [
+              "totalThreads",
+              "totalAnswers",
+              "acceptedAnswers",
+              "totalCommunityXp",
+            ],
+          },
+        }),
+      ],
+    }),
+    defineField({
       name: "onChainStatus",
       title: "On-Chain Status",
       type: "object",
@@ -109,6 +181,7 @@ export const achievement = defineType({
         }),
       ],
     }),
+    syncField,
   ],
   preview: {
     select: {

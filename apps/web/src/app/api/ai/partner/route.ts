@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { CodeBlockData, ProseBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
-import { getChallengeAnswerKey, getLessonBySlug } from "@/lib/sanity/queries";
+import { getLessonBySlug } from "@/lib/sanity/queries";
 import { spendAssist, refundAssist } from "@/lib/ai/assist-budget";
 import { sealCheck } from "@/lib/ai/check-seal";
 import {
@@ -206,45 +207,47 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Server-authoritative answer key (solution + full test set, never trust
-  // client-supplied values) plus the public lesson record for the challenge
-  // task/brief text shown in the prompt. Both are looked up by identity
-  // (courseSlug/lessonSlug); getChallengeAnswerKey is intentionally ungated
-  // (same as grading) while getLessonBySlug applies the normal catalog gate —
-  // a lesson not yet live has no partner surface either.
-  const [answerKey, lesson] = await Promise.all([
-    getChallengeAnswerKey(courseSlug, lessonSlug),
-    getLessonBySlug(courseSlug, lessonSlug),
-  ]);
-  if (!answerKey || !lesson) {
+  // The lesson's PUBLIC block projection (post-D4 there is no secret answer key).
+  // The AI Partner surfaces a `code` block; the challenge solution + tests are
+  // read straight from that block (same projection every reader gets, spec
+  // §10.2). getLessonBySlug applies the normal catalog gate — a lesson not yet
+  // live has no partner surface either.
+  const lesson = await getLessonBySlug(courseSlug, lessonSlug);
+  const codeBlock = lesson?.blocks.find(
+    (b): b is CodeBlockData => b._type === "code"
+  );
+  if (!lesson || !codeBlock) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
   // Every request that reaches this route is a PAID action — free authored
-  // hints are served client-side from the lesson's `hints` ladder and never
-  // hit this route (design resolution, Task 3 → progress.md). Spend
-  // atomically before calling Gemini so a denied budget never triggers a
-  // model call.
-  const spend = await spendAssist(user.id, answerKey._id);
+  // hints are served client-side from the block's `hints` ladder and never
+  // hit this route. Spend atomically before calling Gemini so a denied budget
+  // never triggers a model call. Budget is keyed by the lesson id.
+  const spend = await spendAssist(user.id, lesson._id);
   if (!spend.allowed) {
     return NextResponse.json({ budgetExhausted: true, used: spend.used });
   }
 
-  // Hidden tests must NEVER enter the prompt — only visible tests + solution.
-  const visibleTests = answerKey.tests
-    .filter((t) => t.hidden !== true)
-    .map((t) => ({
-      description: t.description,
-      input: t.input,
-      expectedOutput: t.expectedOutput,
-    }));
+  // Post-D4 every test is public; feed them all to the prompt.
+  const visibleTests = codeBlock.tests.map((t) => ({
+    description: t.description,
+    input: t.input,
+    expectedOutput: t.expectedOutput,
+  }));
+
+  // Task brief = the lesson's prose blocks (resolved markdown), joined in order.
+  const task = lesson.blocks
+    .filter((b): b is ProseBlockData => b._type === "prose")
+    .map((b) => b.src)
+    .join("\n\n");
 
   const prefix = buildStaticPrefix({
-    task: typeof lesson.content === "string" ? lesson.content : "",
+    task,
     visibleTests,
-    solution: answerKey.solution ?? "",
-    tutorNotes: answerKey.tutorNotes ?? undefined,
-    language: answerKey.language ?? "",
+    solution: codeBlock.solution,
+    tutorNotes: undefined,
+    language: codeBlock.language,
   });
   const suffix = buildDynamicSuffix({
     lessonSlug,
@@ -281,7 +284,7 @@ export async function POST(request: NextRequest) {
       // A spend already happened above (spend.allowed was true to reach
       // here) but Gemini never ran — refund so a failed call doesn't burn
       // one of the user's 4 paid assists.
-      await refundAssist(user.id, answerKey._id);
+      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI service unavailable" },
         { status: 502 }
@@ -296,7 +299,7 @@ export async function POST(request: NextRequest) {
 
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
-      await refundAssist(user.id, answerKey._id);
+      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI could not generate a response" },
         { status: 502 }
@@ -308,7 +311,7 @@ export async function POST(request: NextRequest) {
       parsed = JSON.parse(rawText);
     } catch {
       console.error("Gemini partner API returned non-JSON output");
-      await refundAssist(user.id, answerKey._id);
+      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
@@ -318,7 +321,7 @@ export async function POST(request: NextRequest) {
     const validated = validatePartnerResponse(parsed);
     if (!validated) {
       console.error("Gemini partner API returned a malformed payload");
-      await refundAssist(user.id, answerKey._id);
+      await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
         { status: 502 }
@@ -350,7 +353,7 @@ export async function POST(request: NextRequest) {
     console.error("AI partner error:", error);
     // Same reasoning as the other post-spend failure paths: refund the spend
     // that already happened before this try block.
-    await refundAssist(user.id, answerKey._id);
+    await refundAssist(user.id, lesson._id);
     return NextResponse.json(
       { error: "Failed to get response" },
       { status: 500 }

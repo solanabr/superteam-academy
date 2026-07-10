@@ -1,32 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { CodeBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
-import { getChallengeAnswerKey } from "@/lib/sanity/queries";
-import {
-  validateAgainstAnswerKey,
-  MAX_SUBMISSION_BYTES,
-} from "@/lib/challenge/validate";
+import { getLessonBySlug } from "@/lib/sanity/queries";
+import { gradeCode, MAX_SUBMISSION_BYTES } from "@/lib/grading/graders/code";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
  * POST /api/lessons/validate-challenge
  *
- * Server-side, authoritative challenge validation. Loads the FULL answer key
- * (hidden tests + reference solution) server-side via getChallengeAnswerKey,
- * runs the submission through the secure QuickJS (WASM) executor against ALL
- * tests (visible + hidden), and returns only pass/fail metadata.
- * The answer key, hidden tests, and reference solution are never serialised
- * into the response (P0-C4).
+ * Server-side, UX-only challenge pre-check. Reads the lesson's `code` block from
+ * the PUBLIC block projection (post-D4 there is no secret answer key) and runs
+ * the submission through the same `gradeCode` engine the completion gate uses.
+ * Returns only pass/fail metadata.
  *
- * `serverValidated` reflects a REAL server-side execution of the submission.
- * If the secure executor is unavailable in this environment, the route reports
- * `serverValidated: false` with reason `server_execution_unavailable` and the
- * completion gate in /api/lessons/complete denies the completion (degrade
- * closed) — a forged client "passed" can never produce a completion record.
- *
- * This route is a UX convenience (gives the editor an authoritative pass/fail).
- * The actual completion gate lives in /api/lessons/complete, which re-runs the
- * same validation server-side; the client is never trusted to assert a pass.
+ * `serverValidated` reflects a REAL server-side execution. If the executor is
+ * unavailable, the route reports `serverValidated: false` and the completion
+ * gate in /api/lessons/complete denies (degrade closed) — a forged client
+ * "passed" can never produce a completion record.
  */
 
 interface ValidateChallengeRequest {
@@ -38,22 +29,24 @@ interface ValidateChallengeRequest {
 interface ValidateChallengeResponse {
   /** Whether the server independently executed and verified the submission. */
   serverValidated: boolean;
-  /** True only when serverValidated and every test (visible + hidden) passed. */
+  /** True only when serverValidated and every (public) test passed. */
   passed: boolean;
-  /** True when the lesson is a challenge. */
+  /** True when the lesson contains a graded `code` block. */
   isChallenge: boolean;
-  /** Authoritative number of hidden tests held server-side. */
-  hiddenTestCount: number;
-  /** Authoritative number of visible tests. */
+  /** Number of public tests (post-D4 no test is hidden). */
   visibleTestCount: number;
   /** Machine-readable reason when serverValidated is false. */
-  reason?:
-    | "server_execution_unavailable"
-    | "not_a_challenge"
-    | "non_js_challenge";
+  reason?: "server_execution_unavailable" | "not_a_challenge";
 }
 
 const MAX_SLUG_LENGTH = 200;
+
+function firstCodeBlock(
+  lesson: { blocks: { _type: string }[] } | null
+): CodeBlockData | null {
+  const block = lesson?.blocks.find((b) => b._type === "code");
+  return (block as CodeBlockData | undefined) ?? null;
+}
 
 export async function POST(
   request: NextRequest
@@ -95,55 +88,49 @@ export async function POST(
       );
     }
 
-    // Answer key is fetched server-side and stays server-side — it is never
-    // serialised into the response below.
-    const answerKey = await getChallengeAnswerKey(courseSlug, lessonSlug);
-
-    if (!answerKey) {
+    const lesson = await getLessonBySlug(courseSlug, lessonSlug);
+    if (!lesson) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    const verdict = await validateAgainstAnswerKey(answerKey, submittedCode);
-
-    switch (verdict.kind) {
-      case "not_a_challenge":
-        return NextResponse.json({
-          serverValidated: false,
-          passed: false,
-          isChallenge: false,
-          hiddenTestCount: 0,
-          visibleTestCount: 0,
-          reason: "not_a_challenge",
-        });
-      case "non_js_challenge":
-        // Rust / buildable challenges are validated by the Rust playground /
-        // build server, not this JS executor.
-        return NextResponse.json({
-          serverValidated: false,
-          passed: false,
-          isChallenge: true,
-          hiddenTestCount: verdict.hiddenTestCount,
-          visibleTestCount: verdict.visibleTestCount,
-          reason: "non_js_challenge",
-        });
-      case "executor_unavailable":
-        return NextResponse.json({
-          serverValidated: false,
-          passed: false,
-          isChallenge: true,
-          hiddenTestCount: verdict.hiddenTestCount,
-          visibleTestCount: verdict.visibleTestCount,
-          reason: "server_execution_unavailable",
-        });
-      case "validated":
-        return NextResponse.json({
-          serverValidated: true,
-          passed: verdict.passed,
-          isChallenge: true,
-          hiddenTestCount: verdict.hiddenTestCount,
-          visibleTestCount: verdict.visibleTestCount,
-        });
+    const codeBlock = firstCodeBlock(lesson);
+    if (!codeBlock) {
+      return NextResponse.json({
+        serverValidated: false,
+        passed: false,
+        isChallenge: false,
+        visibleTestCount: 0,
+        reason: "not_a_challenge",
+      });
     }
+
+    const visibleTestCount = codeBlock.tests?.length ?? 0;
+    const result = await gradeCode(codeBlock, { code: submittedCode });
+
+    if (result.ok) {
+      return NextResponse.json({
+        serverValidated: true,
+        passed: true,
+        isChallenge: true,
+        visibleTestCount,
+      });
+    }
+    if (result.status === 403) {
+      return NextResponse.json({
+        serverValidated: true,
+        passed: false,
+        isChallenge: true,
+        visibleTestCount,
+      });
+    }
+    // 503 → could not judge (executor outage / unrecognised type). Degrade closed.
+    return NextResponse.json({
+      serverValidated: false,
+      passed: false,
+      isChallenge: true,
+      visibleTestCount,
+      reason: "server_execution_unavailable",
+    });
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.CHALLENGE_VALIDATE_FAILED,

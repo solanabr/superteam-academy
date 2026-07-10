@@ -17,12 +17,11 @@ import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { isAllLessonsComplete } from "@/lib/solana/bitmap";
-import { checkNewAchievements } from "@/lib/gamification/achievements";
 import {
-  getCourseById,
-  getDeployedAchievements,
-  getAllCourseLessonCounts,
-} from "@/lib/sanity/queries";
+  checkNewAchievements,
+  buildUserState,
+} from "@/lib/gamification/achievements";
+import { getCourseById, getDeployedAchievements } from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
@@ -68,17 +67,6 @@ async function queueFailedAction(
     });
   }
 }
-
-// ---------------------------------------------------------------------------
-// Solana Dev Path course IDs (for full-stack achievement detection)
-// ---------------------------------------------------------------------------
-
-const SOLANA_DEV_PATH_COURSES = [
-  "course-solana-fundamentals",
-  "course-rust-for-solana",
-  "course-anchor-framework",
-  "course-solana-frontend",
-];
 
 // ---------------------------------------------------------------------------
 // handleEnrolled
@@ -662,110 +650,26 @@ async function checkAndAwardAchievements(
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<void> {
   try {
-    // Fetch user state from Supabase
-    const [
-      { data: xpData },
-      { data: progressRows },
-      { data: existingAchievements },
-      { data: enrollmentRows },
-    ] = await Promise.all([
-      supabase
-        .from("user_xp")
-        .select(
-          "total_xp, level, current_streak, longest_streak, last_activity_date"
-        )
-        .eq("user_id", userId)
-        .single(),
-      supabase
-        .from("user_progress")
-        .select("lesson_id, course_id, completed")
-        .eq("user_id", userId)
-        .eq("completed", true),
-      supabase
-        .from("user_achievements")
-        .select("achievement_id")
-        .eq("user_id", userId),
-      supabase
-        .from("enrollments")
-        .select("course_id, completed_at")
-        .eq("user_id", userId),
-    ]);
+    // ONE fully-populated user state (progress + path completion + community +
+    // streak + user number) drives the declarative predicates — no hardcoded
+    // course/path ids (spec §4.10, D9).
+    const [state, deployedAchievements, { data: existingAchievements }] =
+      await Promise.all([
+        buildUserState(supabase, userId),
+        getDeployedAchievements(),
+        supabase
+          .from("user_achievements")
+          .select("achievement_id")
+          .eq("user_id", userId),
+      ]);
 
     const alreadyUnlocked = (existingAchievements ?? []).map(
       (a) => a.achievement_id
     );
 
-    // Count completed lessons per course
-    const courseLessonCounts = new Map<string, number>();
-    for (const row of progressRows ?? []) {
-      courseLessonCounts.set(
-        row.course_id,
-        (courseLessonCounts.get(row.course_id) ?? 0) + 1
-      );
-    }
-
-    // Fetch real lesson counts from Sanity
-    const [sanityCourseCounts, deployedAchievements] = await Promise.all([
-      getAllCourseLessonCounts(),
-      getDeployedAchievements(),
-    ]);
-
-    const totalLessonsPerCourse = new Map(
-      sanityCourseCounts.map((c) => [c._id, c.totalLessons])
-    );
-
-    // Determine completed courses
-    let completedCourseCount = 0;
-    const completedCourseIds = new Set<string>();
-    for (const [cid, completedCount] of courseLessonCounts) {
-      const total = totalLessonsPerCourse.get(cid);
-      if (total && total > 0 && completedCount >= total) {
-        completedCourseCount++;
-        completedCourseIds.add(cid);
-      }
-    }
-
-    // Also count courses marked complete via enrollments.completed_at
-    for (const row of enrollmentRows ?? []) {
-      if (row.completed_at && !completedCourseIds.has(row.course_id)) {
-        completedCourseCount++;
-        completedCourseIds.add(row.course_id);
-      }
-    }
-
-    // Determine user number for early-adopter check
-    const { data: userProfile } = await supabase
-      .from("profiles")
-      .select("created_at")
-      .eq("id", userId)
-      .single();
-
-    const { count: userNumber } = await supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .lte("created_at", userProfile?.created_at ?? new Date().toISOString());
-
     const newAchievements = checkNewAchievements(
       deployedAchievements,
-      {
-        completedLessons: progressRows?.length ?? 0,
-        completedCourses: completedCourseCount,
-        currentStreak: xpData?.current_streak ?? 0,
-        hasCompletedRustLesson:
-          (courseLessonCounts.get("course-rust-for-solana") ?? 0) >= 1,
-        hasCompletedAnchorCourse: completedCourseIds.has(
-          "course-anchor-framework"
-        ),
-        hasCompletedAllTracks: SOLANA_DEV_PATH_COURSES.every((id) =>
-          completedCourseIds.has(id)
-        ),
-        allTestsPassedFirstTry: false,
-        userNumber: userNumber ?? 999,
-        totalThreads: 0,
-        totalAnswers: 0,
-        acceptedAnswers: 0,
-        totalCommunityXp: 0,
-      },
+      state,
       alreadyUnlocked
     );
 

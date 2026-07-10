@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import type { AdminTestCase } from "@superteam-lms/types";
+
+vi.mock("server-only", () => ({}));
+import type { AdminTestCase, CodeBlockData } from "@superteam-lms/types";
 import { isExecutorAvailable, runJsSubmission } from "../executor";
-import { validateAgainstAnswerKey } from "../validate";
-import type { ChallengeAnswerKey } from "@/lib/sanity/queries";
+import { gradeCode } from "@/lib/grading/graders/code";
 
 // The executor runs on QuickJS compiled to WebAssembly (no native addon), so it
 // loads in every environment — CI, and Vercel serverless. EXECUTOR_AVAILABLE is
@@ -238,119 +239,105 @@ describe.skipIf(!EXECUTOR_AVAILABLE)(
   }
 );
 
-function answerKey(over: Partial<ChallengeAnswerKey> = {}): ChallengeAnswerKey {
+function codeBlock(over: Partial<CodeBlockData> = {}): CodeBlockData {
   return {
-    _id: "lesson-1",
-    type: "challenge",
-    language: null,
-    buildType: null,
-    tests: sumTests,
+    _type: "code",
+    key: "c1",
+    language: "typescript",
+    buildType: "standard",
+    starter: "",
     solution: CORRECT,
-    tutorNotes: null,
+    tests: sumTests,
     ...over,
   };
 }
 
-// Gate logic that DOES exercise the real executor (judging real submissions).
-// Guarded by EXECUTOR_AVAILABLE for the same defensive reason as above; the
-// degrade-closed block below covers the executor-unavailable path deterministically.
-describe.skipIf(!EXECUTOR_AVAILABLE)(
-  "validateAgainstAnswerKey (executor present)",
-  () => {
-    it("returns validated+passed for a correct JS submission", async () => {
-      const verdict = await validateAgainstAnswerKey(answerKey(), CORRECT);
-      expect(verdict.kind).toBe("validated");
-      if (verdict.kind !== "validated") return;
-      expect(verdict.passed).toBe(true);
-      expect(verdict.hiddenTestCount).toBe(1);
-      expect(verdict.visibleTestCount).toBe(1);
+// gradeCode grades REAL submissions through the executor (JS→isolate,
+// rust→Playground, buildable→build server). It replaces validateAgainstAnswerKey;
+// the routing/degrade-closed assertions carry over onto GradeResult.
+describe.skipIf(!EXECUTOR_AVAILABLE)("gradeCode (executor present)", () => {
+  it("ok for a correct JS submission", async () => {
+    expect(await gradeCode(codeBlock(), { code: CORRECT })).toEqual({
+      ok: true,
     });
-
-    it("returns validated+!passed for a wrong submission (gate would 403)", async () => {
-      const verdict = await validateAgainstAnswerKey(answerKey(), WRONG);
-      expect(verdict.kind).toBe("validated");
-      if (verdict.kind !== "validated") return;
-      expect(verdict.passed).toBe(false);
-    });
-
-    it("returns validated+!passed for a forged-visible-only submission", async () => {
-      const verdict = await validateAgainstAnswerKey(
-        answerKey(),
-        PASSES_VISIBLE_ONLY
-      );
-      expect(verdict.kind).toBe("validated");
-      if (verdict.kind !== "validated") return;
-      expect(verdict.passed).toBe(false);
-    });
-  }
-);
-
-// Classification logic that needs NO executor — always runs.
-describe("validateAgainstAnswerKey (classification, no executor)", () => {
-  it("classifies non-challenge lessons as not_a_challenge (gate skipped)", async () => {
-    const verdict = await validateAgainstAnswerKey(
-      answerKey({ type: "content" }),
-      ""
-    );
-    expect(verdict.kind).toBe("not_a_challenge");
   });
 
-  // Plain `language: "rust"` challenges are graded by the Rust executor (see
-  // rust-executor.test.ts); `buildType: "buildable"` by the build server (see
-  // buildable-executor.test.ts). With no build server configured in this test
-  // env, buildable fails closed to executor_unavailable — completion denied,
-  // never a granted pass. (This is the pre-#193 prod posture too.)
-  it("fails a buildable challenge closed when the build server is unconfigured", async () => {
-    const buildable = await validateAgainstAnswerKey(
-      answerKey({ buildType: "buildable" }),
-      "// program"
+  it("403 for a wrong submission (gate would 403)", async () => {
+    expect(await gradeCode(codeBlock(), { code: WRONG })).toEqual({
+      ok: false,
+      status: 403,
+    });
+  });
+
+  it("403 for a forged-visible-only submission", async () => {
+    expect(await gradeCode(codeBlock(), { code: PASSES_VISIBLE_ONLY })).toEqual(
+      {
+        ok: false,
+        status: 403,
+      }
     );
-    expect(buildable.kind).toBe("executor_unavailable");
+  });
+});
+
+// Classification logic that needs NO executor — always runs.
+describe("gradeCode (fail-closed classification, no executor)", () => {
+  // A buildable challenge with no build server configured in this test env
+  // fails closed to 503 — completion denied, never a granted pass. (This is the
+  // pre-#193 prod posture too.)
+  it("503 for a buildable challenge when the build server is unconfigured", async () => {
+    const buildable = await gradeCode(
+      codeBlock({ language: "rust", buildType: "buildable" }),
+      { code: "// program" }
+    );
+    expect(buildable).toEqual({ ok: false, status: 503 });
+  });
+
+  it("403 for a missing/empty submission", async () => {
+    expect(await gradeCode(codeBlock(), { code: "" })).toEqual({
+      ok: false,
+      status: 403,
+    });
   });
 });
 
 // DEGRADE-CLOSED — the contract that keeps the platform safe if the secure
 // executor ever cannot run. The executor module is MOCKED unavailable so this is
-// deterministic regardless of the runtime. The verdict here is what the routes
-// turn into a 503 (POST /api/lessons/complete) — completion is BLOCKED, never
-// silently granted.
+// deterministic regardless of the runtime. The 503 result is what the routes
+// turn into an HTTP 503 (POST /api/lessons/complete) — completion is BLOCKED,
+// never silently granted.
 describe("degrade-closed when executor is unavailable (mocked)", () => {
   afterEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
   });
 
-  it("a JS challenge yields executor_unavailable, NOT a pass — even for the reference solution", async () => {
+  it("a JS challenge yields 503, NOT a pass — even for the reference solution", async () => {
     vi.resetModules();
     vi.doMock("@/lib/challenge/executor", () => ({
       isExecutorAvailable: vi.fn().mockResolvedValue(false),
-      // If this were ever reached it would throw — proving the gate denies
+      // If this were ever reached it would throw — proving the grader denies
       // BEFORE running anything when the executor is unavailable.
       runJsSubmission: vi.fn(async () => {
         throw new Error("executor must not run when unavailable");
       }),
     }));
 
-    const { validateAgainstAnswerKey: validateUnavailable } =
-      await import("../validate");
+    const { gradeCode: gradeUnavailable } =
+      await import("@/lib/grading/graders/code");
 
     // The reference solution would PASS if the executor ran; with the executor
     // down it must still be denied (degrade closed), not waved through.
-    const verdict = await validateUnavailable(answerKey(), CORRECT);
-    expect(verdict.kind).toBe("executor_unavailable");
-    if (verdict.kind !== "executor_unavailable") return;
-    expect(verdict.hiddenTestCount).toBe(1);
-    expect(verdict.visibleTestCount).toBe(1);
-    // Crucially there is no `passed: true` shape on this verdict — the route
-    // maps `executor_unavailable` to HTTP 503, blocking completion.
-    expect("passed" in verdict).toBe(false);
+    expect(await gradeUnavailable(codeBlock(), { code: CORRECT })).toEqual({
+      ok: false,
+      status: 503,
+    });
   });
 
-  it("treats runJsSubmission reporting available:false as a non-pass (deny)", async () => {
+  it("treats runJsSubmission reporting available:false as a 503 (deny)", async () => {
     vi.resetModules();
     vi.doMock("@/lib/challenge/executor", () => ({
       // isExecutorAvailable optimistically true, but the run reports it could
-      // not actually execute — the validator must still degrade closed.
+      // not actually execute — the grader must still degrade closed.
       isExecutorAvailable: vi.fn().mockResolvedValue(true),
       runJsSubmission: vi.fn().mockResolvedValue({
         available: false,
@@ -358,10 +345,11 @@ describe("degrade-closed when executor is unavailable (mocked)", () => {
       }),
     }));
 
-    const { validateAgainstAnswerKey: validateUnavailable } =
-      await import("../validate");
+    const { gradeCode: gradeUnavailable } =
+      await import("@/lib/grading/graders/code");
 
-    const verdict = await validateUnavailable(answerKey(), PASSES_VISIBLE_ONLY);
-    expect(verdict.kind).toBe("executor_unavailable");
+    expect(
+      await gradeUnavailable(codeBlock(), { code: PASSES_VISIBLE_ONLY })
+    ).toEqual({ ok: false, status: 503 });
   });
 });

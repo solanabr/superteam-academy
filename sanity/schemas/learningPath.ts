@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { syncField } from "./objects/syncField";
 
 export const learningPath = defineType({
   name: "learningPath",
@@ -59,8 +60,9 @@ export const learningPath = defineType({
       name: "courses",
       title: "Courses",
       type: "array",
-      of: [{ type: "reference", to: [{ type: "course" }] }],
+      of: [{ type: "reference", to: [{ type: "course" }], weak: true }],
     }),
+    syncField,
   ],
   preview: {
     select: {

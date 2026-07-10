@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
+import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById, getChallengeAnswerKeyById } from "@/lib/sanity/queries";
-import {
-  validateAgainstAnswerKey,
-  MAX_SUBMISSION_BYTES,
-} from "@/lib/challenge/validate";
+import { getCourseById, getLessonByIdForGrading } from "@/lib/sanity/queries";
+import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
+import { openAttestation } from "@/lib/ai/check-seal";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -22,8 +21,12 @@ import { findLessonIndex } from "@/lib/courses/lesson-index";
 interface LessonCompleteRequest {
   lessonId: string;
   courseId: string;
-  /** Required for challenge lessons: the learner's code, validated server-side. */
-  submittedCode?: string;
+  /**
+   * Per-block proofs keyed by the block `key` (spec §7.2). A graded block's
+   * proof is its answer set; a required-but-ungraded block's proof is a sealed
+   * attestation token. Block-level pass/fail is transient — never persisted.
+   */
+  proofs?: Record<string, unknown>;
 }
 
 /**
@@ -69,7 +72,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as LessonCompleteRequest;
-    const { lessonId, courseId, submittedCode } = body;
+    const { lessonId, courseId } = body;
+    const proofs: Record<string, unknown> =
+      body.proofs && typeof body.proofs === "object" ? body.proofs : {};
 
     if (!lessonId || !courseId) {
       return NextResponse.json(
@@ -87,61 +92,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    // ── Server-authoritative challenge gate ───────────────────────────────
-    // For challenge lessons the SERVER must independently verify the
-    // submission passes ALL tests (visible + hidden) before any on-chain
-    // completion is recorded. A forged client "passed" is rejected here. This
-    // re-runs the same validation as /api/lessons/validate-challenge so the
-    // completion path never trusts the client. Non-challenge lessons are
-    // unaffected (answerKey is null -> gate is skipped).
-    const answerKey = await getChallengeAnswerKeyById(courseId, lessonId);
-    if (answerKey && answerKey.type === "challenge") {
-      if (
-        typeof submittedCode !== "string" ||
-        submittedCode.length === 0 ||
-        Buffer.byteLength(submittedCode, "utf8") > MAX_SUBMISSION_BYTES
-      ) {
-        return NextResponse.json(
-          { error: "Challenge submission required" },
-          { status: 400 }
+    // ── Server-authoritative completion gate (block model, spec §7.2) ──────
+    // Inverted from the old fail-OPEN `if (answerKey.type === "challenge")`:
+    // every dispatch below defaults to DENY. An unknown block type, a graded
+    // block with no grader/wrong proof, an executor outage, or a missing/forged
+    // required-block attestation each blocks completion — a forged client
+    // "passed" can never mint XP. Block-level results are transient (never
+    // persisted); the lesson stays the only durable progress unit.
+    const gradedLesson = await getLessonByIdForGrading(courseId, lessonId);
+    if (!gradedLesson) {
+      return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+    }
+
+    const deny = (status: 403 | 404 | 503, error: string) =>
+      NextResponse.json({ error }, { status });
+
+    // 0) Unknown block type → CLOSED. A block whose _type is not in the registry
+    //    cannot be reasoned about, so completion is denied (not silently skipped).
+    for (const block of gradedLesson.blocks) {
+      if (!((block._type as string) in BLOCK_REGISTRY)) {
+        return deny(
+          503,
+          "This lesson has an unrecognized block and cannot be completed yet"
         );
       }
+    }
 
-      const verdict = await validateAgainstAnswerKey(answerKey, submittedCode);
+    // 1) Graded blocks (code, quiz): a deterministic grader MUST pass. A missing
+    //    grader for a graded type is a second, independent fail-closed path.
+    for (const block of gradedLesson.blocks) {
+      const type = block._type as BlockType;
+      if (!BLOCK_REGISTRY[type].graded) continue;
+      const grader = GRADERS[type as GradedBlockType];
+      if (!grader) return deny(503, "No grader for this block type");
+      const result = await grader(block, proofs[block.key]);
+      if (!result.ok) return deny(result.status, "Block did not pass");
+    }
 
-      switch (verdict.kind) {
-        case "validated":
-          if (!verdict.passed) {
-            return NextResponse.json(
-              { error: "Challenge tests did not pass" },
-              { status: 403 }
-            );
-          }
-          break;
-        case "executor_unavailable":
-          // Degrade closed: never grant completion we could not verify. Also the
-          // buildable path when the build server is unreachable OR not configured
-          // (prod, pre-#193) — a buildable submission stays un-gradeable and is
-          // denied here, exactly as before this grader existed.
-          return NextResponse.json(
-            { error: "Challenge validation is temporarily unavailable" },
-            { status: 503 }
-          );
-        case "non_js_challenge":
-          // FAIL CLOSED. Unreachable for the known challenge types now that JS
-          // (isolate), plain Rust (Playground), and buildable (build server) all
-          // resolve to `validated`/`executor_unavailable`. Retained so any future
-          // unrecognised type is denied rather than granted an unverified
-          // completion (and credential eligibility) via a bare fall-through.
-          return NextResponse.json(
-            {
-              error:
-                "Server-side validation for this challenge type is not yet available",
-            },
-            { status: 503 }
-          );
-        case "not_a_challenge":
-          break;
+    // 2) Required-but-UNGRADED blocks (openEnded): a sealed attestation must
+    //    prove the server saw a submission for THIS lesson+block+user. The
+    //    `!graded` filter is essential — a graded block's proof is an answer set,
+    //    not an attestation, so running it through openAttestation would 403
+    //    every valid code/quiz completion.
+    for (const block of gradedLesson.blocks) {
+      const type = block._type as BlockType;
+      if (!(BLOCK_REGISTRY[type].required && !BLOCK_REGISTRY[type].graded)) {
+        continue;
+      }
+      const token = proofs[block.key];
+      if (
+        typeof token !== "string" ||
+        !openAttestation(token, {
+          lessonId,
+          blockKey: block.key,
+          userId: user.id,
+        })
+      ) {
+        return deny(403, "This lesson requires a completed reflection");
       }
     }
 

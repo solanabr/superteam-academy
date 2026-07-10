@@ -9,18 +9,17 @@ interface LessonItem {
   _id: string;
   title: string;
   slug: string;
-  type: "content" | "challenge";
-  order: number;
+  /** Derived from block content: a lesson with a graded `code` block. */
+  isChallenge: boolean;
   completed?: boolean;
   locked?: boolean;
 }
 
 interface ModuleItem {
-  _id: string;
+  /** Stable id — the inline module `key` (namespaced by the caller if needed). */
+  id: string;
   title: string;
-  description: string;
   lessons: LessonItem[];
-  order: number;
 }
 
 interface CurriculumAccordionProps {
@@ -39,7 +38,7 @@ export function CurriculumAccordion({
   const t = useTranslations("courses");
   const tLesson = useTranslations("lesson");
   const [openModules, setOpenModules] = useState<Set<string>>(
-    new Set(modules.length > 0 && modules[0] ? [modules[0]._id] : [])
+    new Set(modules.length > 0 && modules[0] ? [modules[0].id] : [])
   );
 
   function toggleModule(id: string) {
@@ -57,7 +56,7 @@ export function CurriculumAccordion({
   return (
     <div className="space-y-3">
       {modules.map((mod) => {
-        const isOpen = openModules.has(mod._id);
+        const isOpen = openModules.has(mod.id);
         const completedInModule = mod.lessons.filter((l) =>
           completedLessons.includes(l._id)
         ).length;
@@ -66,14 +65,14 @@ export function CurriculumAccordion({
 
         return (
           <div
-            key={mod._id}
+            key={mod.id}
             className={cn(
               "overflow-hidden rounded-xl border-[2.5px] border-border bg-card shadow-card transition-colors",
               allComplete && "border-success/30"
             )}
           >
             <button
-              onClick={() => toggleModule(mod._id)}
+              onClick={() => toggleModule(mod.id)}
               className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-subtle"
               aria-expanded={isOpen}
             >
@@ -98,7 +97,7 @@ export function CurriculumAccordion({
               <div className="border-t border-border">
                 {mod.lessons.map((lesson, lessonIdx) => {
                   const isCompleted = completedLessons.includes(lesson._id);
-                  const isChallenge = lesson.type === "challenge";
+                  const isChallenge = lesson.isChallenge;
                   return (
                     <a
                       key={lesson._id}

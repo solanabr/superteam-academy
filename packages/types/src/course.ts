@@ -8,10 +8,9 @@ export interface Instructor {
 }
 
 /**
- * Client-facing test case. Never includes the `hidden` flag: hidden tests are
- * stripped server-side by the GROQ projection and must never reach the browser
- * (they are part of the challenge answer key). See {@link AdminTestCase} for the
- * full CMS shape used by server-side validation.
+ * A single graded test case, as delivered to the client and read by the server
+ * grader. Post-D4 (open book, spec §4.5/§10.2) every test is public — there is no
+ * `hidden` flag on the client shape.
  */
 export interface TestCase {
   id: string;
@@ -21,57 +20,104 @@ export interface TestCase {
 }
 
 /**
- * Full test case as authored in Sanity, including hidden tests.
- * SERVER-ONLY — must never be projected into a client payload.
+ * Test case shape the challenge executors accept. Retains the optional `hidden`
+ * flag for backward compatibility with the executor signatures; post-D4 no test
+ * is hidden, so a public {@link TestCase} is assignable here.
  */
 export interface AdminTestCase extends TestCase {
   hidden?: boolean;
 }
 
-interface LessonBase {
-  _id: string;
-  title: string;
-  slug: string;
-  order: number;
-  difficulty?: Difficulty;
-  videoUrl?: string;
-}
-
-export interface ContentLesson extends LessonBase {
-  type: "content";
-  content: string;
-  language?: "typescript" | "rust";
-  widgets?: string[];
-  programIdl?: string;
-}
-
 export type BuildType = "standard" | "buildable";
 
-/**
- * Challenge lesson as delivered to the client. Excludes `solution` and hidden
- * tests — those are the answer key and are held server-side only (see
- * {@link AdminChallengeLesson}). `tests` here contains only visible test cases.
- */
-export interface ChallengeLesson extends LessonBase {
-  type: "challenge";
-  content: string;
-  language?: "typescript" | "rust";
-  buildType?: BuildType;
-  deployable?: boolean;
-  code: string;
+/** Capability produced/consumed by a block (spec §4.9). Closed set. */
+export type CapabilityKey = "funded-wallet" | "deployed-program";
+
+interface LessonBlockBase {
+  /** The Sanity array item `_key` (spec §4.4). Stable within the lesson. */
+  key: string;
+  produces?: CapabilityKey | null;
+  consumes?: CapabilityKey[] | null;
+}
+
+export interface ProseBlockData extends LessonBlockBase {
+  _type: "prose";
+  /** Resolved markdown body (CS-9 resolves ProseBlock.src). */
+  src: string;
+}
+
+export interface VideoBlockData extends LessonBlockBase {
+  _type: "video";
+  url: string;
+}
+
+export interface CodeBlockData extends LessonBlockBase {
+  _type: "code";
+  language: "typescript" | "rust";
+  buildType?: BuildType | null;
+  deployable?: boolean | null;
+  starter: string;
+  /** PUBLIC post-D4 — the grader reads it from this same projection. */
+  solution: string;
   tests: TestCase[];
-  hints: string[];
+  hints?: string[] | null;
+}
+
+export interface QuizOptionData {
+  id: string;
+  label: string;
+  correct: boolean;
+  feedback?: string | null;
+}
+
+export interface QuizQuestionData {
+  id: string;
+  prompt: string;
+  multiSelect?: boolean | null;
+  options: QuizOptionData[];
+  explanation?: string | null;
+}
+
+export interface QuizBlockData extends LessonBlockBase {
+  _type: "quiz";
+  questions: QuizQuestionData[];
+}
+
+export interface OpenEndedBlockData extends LessonBlockBase {
+  _type: "openEnded";
+  prompt: string;
+  maxWords?: number | null;
+}
+
+export interface WalletFundingBlockData extends LessonBlockBase {
+  _type: "wallet-funding";
+  amount?: number | null;
+  network?: "devnet" | null;
+}
+
+export interface ProgramExplorerBlockData extends LessonBlockBase {
+  _type: "program-explorer";
+  /** Resolved IDL JSON string (CS-9 resolves ProgramExplorerBlock.idl). */
+  idl: string;
+}
+
+export interface DeployedProgramCardBlockData extends LessonBlockBase {
+  _type: "deployed-program-card";
 }
 
 /**
- * Challenge lesson with the full answer key (solution + hidden tests).
- * SERVER-ONLY — used by server-side challenge validation. Never serialize this
- * into a response sent to the browser.
+ * A projected lesson block (spec §4.4, §10.2). Discriminated on `_type` — the
+ * renderer registry, grader map, and BLOCK_REGISTRY all key on the same string.
  */
-export interface AdminChallengeLesson extends Omit<ChallengeLesson, "tests"> {
-  tests: AdminTestCase[];
-  solution: string;
-}
+export type LessonBlock =
+  | ProseBlockData
+  | VideoBlockData
+  | CodeBlockData
+  | QuizBlockData
+  | OpenEndedBlockData
+  | WalletFundingBlockData
+  | ProgramExplorerBlockData
+  | DeployedProgramCardBlockData;
 
 export interface BuildResult {
   success: boolean;
@@ -86,14 +132,26 @@ export interface BuildFile {
   content: string;
 }
 
-export type Lesson = ContentLesson | ChallengeLesson;
-
-export interface Module {
+/**
+ * A lesson is the atomic completable unit. Its content is an ordered `blocks[]`
+ * page-builder array (spec §4.4, §10). `_id` is the lesson id.
+ */
+export interface Lesson {
   _id: string;
   title: string;
-  description: string;
+  slug: string;
+  blocks: LessonBlock[];
+}
+
+/**
+ * Inline module object on the course (spec §10.1). `key` replaces the former
+ * `module` document `_id`; display order is array position (no `order`).
+ */
+export interface Module {
+  key: string;
+  title: string;
+  description?: string | null;
   lessons: Lesson[];
-  order: number;
 }
 
 export type AuthoringStatus = "draft" | "pending_review" | "approved";
@@ -113,9 +171,12 @@ export interface Course {
   trackCollectionAddress?: string | null;
   trackId?: number;
   trackLevel?: number;
-  /** Supabase user id of the owning teacher (issue #263). Managed by the app. */
+  /**
+   * Supabase user id of the owning teacher (issue #263). Managed by the app.
+   * Retained for the `/teach` authoring surface (retired in spec §15.4 Phase 8).
+   */
   author?: string;
-  /** Authoring workflow state (issue #263). Legacy docs may omit this. */
+  /** Authoring workflow state (issue #263). Legacy/repo-synced docs may omit this. */
   authoringStatus?: AuthoringStatus;
   /**
    * Admin feedback shown to the teacher when a course is rejected (issue #268).

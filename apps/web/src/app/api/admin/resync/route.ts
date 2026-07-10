@@ -149,12 +149,10 @@ export async function POST(req: NextRequest) {
       );
       results.enrollments++;
 
-      // Decode lesson bitmap → sync individual lesson progress
-      const allLessons = (course.modules ?? [])
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        .flatMap((m) =>
-          (m.lessons ?? []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        );
+      // Decode lesson bitmap → sync individual lesson progress. Display order is
+      // the array position now (spec §10.1), so the flattened order IS the
+      // on-chain bitmap order — matching findLessonIndex.
+      const allLessons = (course.modules ?? []).flatMap((m) => m.lessons ?? []);
 
       const lessonCount = enrollment.lesson_count
         ? Number(enrollment.lesson_count)

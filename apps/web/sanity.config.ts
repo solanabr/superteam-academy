@@ -19,4 +19,10 @@ export default defineConfig({
   schema: {
     types: schemaTypes,
   },
+
+  // Read-only Studio (spec §10.4) — mirror of the standalone config.
+  document: {
+    actions: () => [],
+    newDocumentOptions: () => [],
+  },
 });

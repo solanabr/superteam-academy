@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { syncField } from "./objects/syncField";
 
 export const quest = defineType({
   name: "quest",
@@ -73,6 +74,7 @@ export const quest = defineType({
       initialValue: true,
       description: "Whether this quest appears in the daily rotation pool",
     }),
+    syncField,
   ],
   preview: {
     select: {

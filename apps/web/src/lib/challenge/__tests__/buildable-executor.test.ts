@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("server-only", () => ({}));
 import type { AdminTestCase } from "@superteam-lms/types";
 
 // The grader reads BUILD_SERVER_URL / BUILD_SERVER_API_KEY at module load, so
@@ -163,28 +165,29 @@ describe("runBuildableSubmission — build server NOT configured", () => {
   });
 });
 
-describe("validateAgainstAnswerKey — buildable routing", () => {
-  const buildableKey = {
-    _id: "l1",
-    type: "challenge" as const,
+describe("gradeCode — buildable routing", () => {
+  const buildableBlock = {
+    _type: "code" as const,
+    key: "c1",
     language: "rust" as const,
     buildType: "buildable" as const,
+    starter: "",
     tests,
     solution: CODE,
-    tutorNotes: null,
   };
 
-  it("grades a compiling buildable challenge to validated/passed", async () => {
+  it("grades a compiling buildable challenge to ok", async () => {
     process.env.BUILD_SERVER_URL = URL;
     process.env.BUILD_SERVER_API_KEY = KEY;
     mockBuildServer(() => ({ success: true }));
     vi.resetModules();
-    const { validateAgainstAnswerKey } = await import("../validate");
-    const v = await validateAgainstAnswerKey(buildableKey, CODE);
-    expect(v).toMatchObject({ kind: "validated", passed: true });
+    const { gradeCode } = await import("@/lib/grading/graders/code");
+    expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
+      ok: true,
+    });
   });
 
-  it("maps a build-server outage to executor_unavailable (deny completion)", async () => {
+  it("maps a build-server outage to 503 (deny completion)", async () => {
     process.env.BUILD_SERVER_URL = URL;
     process.env.BUILD_SERVER_API_KEY = KEY;
     vi.stubGlobal(
@@ -194,21 +197,24 @@ describe("validateAgainstAnswerKey — buildable routing", () => {
       })
     );
     vi.resetModules();
-    const { validateAgainstAnswerKey } = await import("../validate");
-    const v = await validateAgainstAnswerKey(buildableKey, CODE);
-    expect(v.kind).toBe("executor_unavailable");
+    const { gradeCode } = await import("@/lib/grading/graders/code");
+    expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
+      ok: false,
+      status: 503,
+    });
   });
 
-  it("fails closed (executor_unavailable) when the build server is unset", async () => {
-    // env unset → grader reports unavailable → validate maps to
-    // executor_unavailable (completion route denies with 503). This is what
-    // keeps prod unchanged.
+  it("fails closed (503) when the build server is unset", async () => {
+    // env unset → grader reports unavailable → gradeCode maps to 503 (completion
+    // route denies with 503). This is what keeps prod unchanged.
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
     vi.resetModules();
-    const { validateAgainstAnswerKey } = await import("../validate");
-    const v = await validateAgainstAnswerKey(buildableKey, CODE);
-    expect(v.kind).toBe("executor_unavailable");
+    const { gradeCode } = await import("@/lib/grading/graders/code");
+    expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
+      ok: false,
+      status: 503,
+    });
     expect(spy).not.toHaveBeenCalled();
   });
 });

@@ -44,6 +44,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "@superteam-lms/challenge-executor": "workspace:*",
+    "@superteam-lms/content-schema": "workspace:*",
     "@superteam-lms/deploy": "workspace:*",
     "@superteam-lms/sanity": "workspace:*",
     "@superteam-lms/types": "workspace:*",
@@ -93,6 +94,7 @@
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "groq-js": "^1.17.0"
   }
 }
