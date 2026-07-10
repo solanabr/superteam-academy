@@ -679,9 +679,42 @@ Keep `CreateCourseParams` unchanged — `lesson_count: u8` stays as the initiali
 
 ---
 
+### Task 6a: Migrate the existing TS suite to the new IDL (BEFORE Task 6's new tests)
+
+Renaming `UpdateCourseParams.new_lesson_count` → `new_active_lessons` and deleting
+`Course.lesson_count` breaks the existing 89-test suite in three ways (PR #366 review,
+verified line-by-line against `onchain-academy/tests/onchain-academy.ts`). A worker who
+skips this hits ~15+ compile/assertion failures in `anchor test` with no plan coverage.
+
+**Files:**
+- Edit: `onchain-academy/tests/onchain-academy.ts`
+
+- [ ] **Step 1: Rename all 12 `newLessonCount` call sites to `newActiveLessons`** (lines
+  684, 707, 728, 757, 817, 839, 865, 895, 1074, 1128, plus the helper/param at 944/953),
+  passing `slotsToMask([...])` — define the `slotsToMask(slots: number[]): BN[]` helper
+  here; Task 6 reuses it. Sites that previously grew the count to N pass the dense mask
+  of N slots.
+
+- [ ] **Step 2: Rewrite the 5 `course.lessonCount` assertion reads** (lines 378, 965, 970,
+  984, 5198) against `course.activeLessons` with a TS-side popcount:
+  `const liveCount = (m: BN[]) => m.reduce((n, w) => n + popcountU64(w), 0)`.
+
+- [ ] **Step 3: Replace the `"lesson_count is increase-only (grow ok, equal no-op, shrink rejected)"` test**
+  (lines 914-984, asserting `LessonCountDecrease` at 978) — the monotonic guard it
+  exercises is deleted by Task 4. Its replacement asserts the new semantics: shrinking
+  via `newActiveLessons` (retiring a slot) is LEGAL, and the mask round-trips on read.
+
+- [ ] **Step 4: Run.** `anchor test` — the migrated suite compiles and passes (89 tests:
+  net-zero from this task; the increase-only test is replaced, not removed). Record the
+  actual green count.
+
+- [ ] **Step 5: Commit.** `git commit -m "test(onchain): migrate TS suite to active_lessons IDL (CS-3)"`
+
+---
+
 ### Task 6: TS integration proofs on a real runtime (`anchor test`)
 
-The Rust crate mirrors handler logic; the 89-test `anchor test` suite is the only place a real bank exercises the wired instructions. Add the two behaviors the mask exists to enable, end-to-end.
+The Rust crate mirrors handler logic; the `anchor test` suite is the only place a real bank exercises the wired instructions. Add the two behaviors the mask exists to enable, end-to-end. **Task 6a must be green first.**
 
 **Files:**
 - Edit: `onchain-academy/tests/onchain-academy.ts`
@@ -690,7 +723,7 @@ The Rust crate mirrors handler logic; the 89-test `anchor test` suite is the onl
 
 - [ ] **Step 2: Add a "complete rejects an inactive slot" test.** Create a `lessonCount = 3` course; `update_course({ newActiveLessons: mask{0,2} })`; enroll; assert `complete_lesson(1)` **reverts** with `LessonOutOfBounds` (slot 1 retired), while `complete_lesson(0)` and `complete_lesson(2)` succeed.
 
-- [ ] **Step 3: Run.** `anchor test` — from `onchain-academy/`, the full TS suite (now 91) passes against a local validator.
+- [ ] **Step 3: Run.** `anchor test` — from `onchain-academy/`, the full TS suite (91: 89 migrated by Task 6a, +2 new) passes against a local validator.
 
 - [ ] **Step 4: Commit.** `git commit -m "test(onchain): TS integration proofs for active_lessons finalize + complete (CS-3)"`
 
@@ -704,7 +737,7 @@ Run from `onchain-academy/`, in order (mirrors the "Mandatory On-Chain Workflow"
 2. **Format:** `cargo fmt` — no diff.
 3. **Lint:** `cargo clippy -- -W clippy::all` (the repo's pre-commit uses `-D warnings`) — clean. Confirm the retained `LessonCountDecrease` variant does **not** trip `dead_code` (it will not — `AcademyError` is a `pub enum`).
 4. **Rust unit tests:** `cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml`. The count moves from **128**: `test_lesson_count.rs` (−6) is deleted; `test_active_lessons.rs`, the new `test_course.rs` mask tests, and the reworked `test_completion.rs` finalize tests are added (net roughly +12 → **~140**). Record the exact `cargo test` total in the PR description; do not hardcode a guessed number.
-5. **TS integration tests:** `anchor test` — the suite grows **89 → 91** (Task 6). All pass against the local validator.
+5. **TS integration tests:** `anchor test` — the suite is migrated in place (Task 6a: 12 renames, 5 assertion rewrites, 1 test replaced) then grows **89 → 91** (Task 6). All pass against the local validator.
 6. **Byte-verify + devnet deploy (CS-3 merge-time step, per the goal — NOT part of this plan doc):** after merge, build the verifiable artifact, byte-verify the on-chain program hash, and deploy to devnet **via the Helius RPC** (the public devnet RPC corrupts large deploys — this is a hard-won gotcha, see MEMORY). The 7 existing 224-byte `Course` accounts will fail to deserialize post-deploy until recreated — that recreation is **CS-4**, not this task. Sequence the deploy so CS-4's `close_course` + `create_course` resync runs immediately after.
 
 ## Re-audit required before devnet deploy
