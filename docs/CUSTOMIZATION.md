@@ -476,7 +476,7 @@ interface UserState {
 
 **Deferred signals**: Two fields (`hasCompletedAllTracks`, `allTestsPassedFirstTry`) require cross-course tracking infrastructure that is not yet implemented. Achievements depending on these signals (`full-stack-solana`, `perfect-score`) are currently unearnable.
 
-Achievement IDs in `UNLOCK_CHECKS` must match the Sanity `_id` minus the `achievement-` prefix. For example, Sanity document `achievement-first-steps` maps to key `"first-steps"`.
+Achievement IDs in `UNLOCK_CHECKS` must be the **full** Sanity `_id`, including the `achievement-` prefix. For example, Sanity document `achievement-first-steps` maps to key `"achievement-first-steps"` (NOT `"first-steps"`). Stripping the prefix derives the wrong PDA and the award fails silently.
 
 #### 3. Deploy On-Chain
 

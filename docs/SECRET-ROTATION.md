@@ -12,6 +12,12 @@ secrets** — production data and credentials are **not isolated** from developm
 Before mainnet, every prod secret must be **freshly minted, isolated from dev, and
 stored outside the repo**.
 
+> **Correction (2026-07-09):** the canonical production deploy is
+> **superteam-academy-web.vercel.app** (Vercel `stbr-true`), which auto-deploys from
+> `main` and uses Supabase `obqlljsagzslxarwphxv`. References to `solarium.courses` /
+> `credit-markets-team/lms` in this document are a parallel red herring, not prod — the
+> rotation decisions below still apply, but to the `stbr-true` deploy.
+
 ## Decisions (D-2) — RATIFIED 2026-07-03
 
 1. **Isolate prod from dev — a NEW dedicated production Supabase project.** Stand
@@ -44,7 +50,7 @@ stored outside the repo**.
 | `HELIUS_WEBHOOK_SECRET`     | Verifies Helius webhook signatures               | Forge on-chain events → fake enroll / XP / credential grants | Rotate in Helius webhook config **and** env together                   |
 | `BUILD_SERVER_API_KEY`      | Authenticates `/build` calls to the build server | Submit arbitrary Anchor builds to the compile sandbox        | Rotate on the build server + env                                       |
 | `SANITY_ADMIN_TOKEN`        | Sanity **write** token (course content)          | Modify / delete any course, lesson, answer key               | sanity.io/manage → revoke, issue new write token                       |
-| `SANITY_API_TOKEN`          | Sanity read/API token                            | Read content (incl. hidden test answer keys)                 | sanity.io/manage → rotate                                              |
+| `SANITY_API_TOKEN`          | Sanity read/API token                            | Read/write via the API (NOT required to read course content — the production dataset is public)                 | sanity.io/manage → rotate                                              |
 | `GEMINI_API_KEY`            | AI tutor / challenge suggest                     | Quota abuse, cost                                            | Google AI Studio → rotate                                              |
 
 ### Semi-sensitive (client-exposed, but abuse/quota risk)

@@ -221,7 +221,7 @@ Achievements follow a similar pattern:
 3. Admin panel writes back via `writeAchievementOnChainStatus(sanityId, achievementPda, collectionAddress)` -- sets status to `"synced"`
 4. The achievement becomes mintable. The GROQ query `getDeployedAchievements()` filters to `defined(onChainStatus.achievementPda)`
 
-Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in the `UNLOCK_CHECKS` map. Achievement IDs in this map must match Sanity `_id` values minus the `"achievement-"` prefix.
+Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in the `UNLOCK_CHECKS` map. Achievement IDs in this map must be the **full** Sanity `_id`, including the `achievement-` prefix — e.g. the key for `achievement-first-steps` is `"achievement-first-steps"`, not `"first-steps"`. The lookup is `UNLOCK_CHECKS[def.id]` where `def.id` is the raw Sanity `_id`; stripping the prefix derives the wrong PDA and fails silently in the on-chain queue.
 
 ## Creating a New Course
 
