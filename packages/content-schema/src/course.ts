@@ -34,10 +34,12 @@ export const Course = z
     trackId: z.number().int().min(0).default(0),
     trackLevel: z.number().int().min(0).default(0),
     tags: z.array(z.string().min(1)).default([]),
-    /** Resolved at sync time: github_id → profiles.wallet_address → Course.creator. */
-    creator: z.object({
-      githubId: z.string().regex(/^\d+$/, "must be the numeric GitHub user id"),
-    }),
+    /**
+     * The course's on-chain creator (the creator XP recipient) is resolved from
+     * this instructor's wallet at sync time: `course.instructor ->
+     * instructor.wallet -> Course.creator`. A course with no instructor has no
+     * creator and is rejected by the sync (no platform-authority fallback).
+     */
     instructor: InstructorId.optional(),
     prerequisiteCourse: CourseId.optional(),
     modules: z.array(CourseModule).min(1),

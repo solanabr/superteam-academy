@@ -401,6 +401,12 @@ importers:
 
   packages/content-schema:
     dependencies:
+      '@noble/curves':
+        specifier: 1.9.7
+        version: 1.9.7
+      bs58:
+        specifier: ^6.0.0
+        version: 6.0.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3

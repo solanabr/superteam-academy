@@ -11,7 +11,6 @@ difficulty: beginner
 duration: 1
 xpPerLesson: 10
 xpReward: 100
-creator: { githubId: "1" }
 modules: [{ key: m, title: M, lessons: [lesson-a] }]
 `;
 const explorerLesson = `id: lesson-a

@@ -31,7 +31,6 @@ import {
   writeCourseTrackCollection,
   readContentSyncSingleton,
 } from "@/lib/sanity/admin-mutations";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createGitHubClient } from "@/lib/content-sync/github";
 import { extractTarball } from "@/lib/content-sync/tarball";
 import {
@@ -100,12 +99,6 @@ function parseActiveLessons(
     return null;
   }
 }
-
-// Default creator reward for TEACHER-authored courses (those with a real author
-// wallet) when the fields are unset. Platform/admin courses stay at 0. Starting
-// values — tunable per course by an admin (see #281).
-const DEFAULT_CREATOR_REWARD_XP = 500;
-const DEFAULT_MIN_COMPLETIONS_FOR_REWARD = 5;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -204,29 +197,42 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       prerequisitePda = prereqPda.toBase58();
     }
 
-    // Resolve the on-chain creator: the course author's linked wallet, so the
-    // creator reward (finalize_course) pays the real instructor. Falls back to
-    // the platform authority (deployCoursePda default) when there's no author or
-    // no linked wallet.
-    let creatorWallet: string | undefined;
-    if (course.author) {
-      const supabaseAdmin = createAdminClient();
-      const { data: authorProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("wallet_address")
-        .eq("id", course.author)
-        .maybeSingle();
-      creatorWallet = authorProfile?.wallet_address ?? undefined;
+    // Resolve the on-chain creator directly from the course's instructor wallet
+    // (`course.instructor -> instructor.wallet`, projected by getAllCoursesAdmin).
+    // `Course.creator` is a Pubkey set once at create_course and is immutable, so
+    // this must be a real, on-curve address — an off-curve owner (a PDA) cannot
+    // hold the creator-reward ATA. There is NO platform-authority fallback: a
+    // course with no instructor, or an invalid wallet, fails loudly here rather
+    // than silently deploying rewards to the wrong key.
+    const creatorWallet = course.creatorWallet ?? undefined;
+    if (!creatorWallet) {
+      return NextResponse.json(
+        {
+          error:
+            "Course has no creator wallet — set course.instructor to an instructor with a wallet",
+        },
+        { status: 400 }
+      );
     }
-    // Teacher-authored courses (real creator wallet) earn a default reward when
-    // unset; platform courses stay at 0. An explicit 0 is preserved.
-    const hasCreatorWallet = Boolean(creatorWallet);
-    const creatorRewardXp =
-      course.creatorRewardXp ??
-      (hasCreatorWallet ? DEFAULT_CREATOR_REWARD_XP : 0);
-    const minCompletionsForReward =
-      course.minCompletionsForReward ??
-      (hasCreatorWallet ? DEFAULT_MIN_COMPLETIONS_FOR_REWARD : 0);
+    try {
+      const pk = new PublicKey(creatorWallet);
+      if (!PublicKey.isOnCurve(pk.toBytes())) {
+        throw new Error("off-curve");
+      }
+    } catch {
+      return NextResponse.json(
+        {
+          error: `Instructor wallet "${creatorWallet}" is not a valid on-curve Solana address`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Honor exactly what the content sets (the content-schema and the projector
+    // both default these to 0), so the deploy value and the drift engine's
+    // comparison — which also treats absent as 0 — never disagree.
+    const creatorRewardXp = course.creatorRewardXp ?? 0;
+    const minCompletionsForReward = course.minCompletionsForReward ?? 0;
 
     const result = await deployCoursePda({
       courseId,

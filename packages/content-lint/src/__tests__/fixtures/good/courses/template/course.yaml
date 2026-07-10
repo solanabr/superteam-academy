@@ -5,7 +5,6 @@ difficulty: beginner
 duration: 2
 xpPerLesson: 10
 xpReward: 100
-creator: { githubId: "12345678" }
 instructor: instructor-ana-santos
 modules:
   - key: intro
