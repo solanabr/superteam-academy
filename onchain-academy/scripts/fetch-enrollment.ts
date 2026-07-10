@@ -1,11 +1,12 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BN } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
+import { OnchainAcademy } from "../idl/onchain_academy";
+import { academyProgram } from "./lib/academy";
 import { PublicKey } from "@solana/web3.js";
 
 const provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
+const program = academyProgram();
 
 const courseId = process.argv[2] || "solana-mock-test";
 const learner = new PublicKey(

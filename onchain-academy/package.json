@@ -2,7 +2,15 @@
   "name": "onchain-academy",
   "version": "0.1.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build:pinocchio": "cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54",
+    "build:pinocchio:fresh": "bash scripts/build-pinocchio-deploy.sh",
+    "build:all": "pnpm build:pinocchio",
+    "test:layout": "cargo test -p onchain-academy-pinocchio",
+    "test:integration": "cargo test --manifest-path tests/differential/Cargo.toml",
+    "cu:pinocchio": "bash scripts/select-program.sh && CU_BASELINE_OUT=tests/CU_BASELINE.pinocchio.md pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/cu-measurement.ts",
+    "cu:compare": "pnpm cu:pinocchio && node scripts/cu-compare.mjs"
+  },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@metaplex-foundation/mpl-core": "^1.7.0",
