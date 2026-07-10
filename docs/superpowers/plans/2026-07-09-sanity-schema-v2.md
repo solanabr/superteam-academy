@@ -678,6 +678,19 @@ git commit -m "feat(sanity): lesson document is an ordered blocks[] page builder
 
 Modules are inline objects — never reused across courses (spec §10.1). Display order = array position, so `courseModule` has no `order` field.
 
+**Coupling note (PR #367 review finding).** A live feature is built on the three dropped
+fields: the teacher course builder + admin review queue (`api/teacher/courses/**`,
+`api/admin/courses/review/route.ts`, `lib/sanity/admin-mutations.ts` + `teacher-mutations.ts`,
+`components/admin/course-review-queue.tsx`, `components/teacher/course-form.tsx`, and
+`packages/types/src/course.ts`'s `author`/`authoringStatus`/`reviewFeedback`). These use raw
+GROQ/mutations, not the generated schema types, so this task's typecheck will NOT catch them —
+they keep writing fields the schema no longer declares. **Intentional**: spec D1/§10.1 retires
+the `/teach` authoring surface and CS-10 (Phase 8) deletes the feature; until then it is
+degraded-but-harmless (writes fields Studio no longer shows; Sanity accepts undeclared fields
+on mutation writes). Do NOT rewire it in this plan. Same root cause: `publicAuthoringGate`
+(`lib/sanity/queries.ts:14`) becomes a permanent no-op once `authoringStatus` stops being set —
+tolerated by its own `!defined()` arm, removed in CS-10 with the feature.
+
 - [ ] **Step 1: Write the inline module object**
 
 `sanity/schemas/objects/courseModule.ts`:
@@ -1379,7 +1392,7 @@ This PR changes **schema definitions and the read layer only**. It does not migr
 
 **Spec coverage.** §10.1 six document types / inline module → Task 4. §10.1 drop authoringStatus/author/reviewFeedback → Task 4. §4.4 lesson blocks[] → Tasks 2–3. §4.5 quiz (option id/multiSelect/feedback/explanation) → Task 2. §4.9 capability keys + widget config + program.idl → Task 2. §9.4 sync marker (no leading `_`) → Task 5. §9.5 weak references (instructor, module.lessons, + prerequisiteCourse, learningPath.courses) → Tasks 4–5. §10.2 GROQ collapse + answer-key deletion → Task 7. §10.4 read-only Studio → Task 6. §15.4a quest couplings → Task 7. §16.2/typegen → Task 1. The eight issue items map to: (1) blocks+lesson → T2/T3; (2) module inline + delete doc → T4; (3) weak refs → T4/T5; (4) drop authoring fields → T4; (5) read-only Studio → T6; (6) delete answer-key machinery → T7; (7) GROQ collapse → T7; (8) sync field → T5.
 
-**Deliberately out of scope** (spec §15.4 Phase 6 / other CS issues, named so the executor does not attempt them): the completion-gate inversion and `GRADERS` registry; the grader reading blocks (`validate.ts` rewire) beyond *naming* it as Task 7's coupled change; declarative-achievement predicates; the UserState merge; the durable quest-XP path; the lesson renderer (`lesson-client.tsx`, `challenge-interface.tsx`); the `packages/types` `Lesson`/`Course` reshape; Viewer-role assignment in `sanity.io/manage` (ops); and the CS-9 sync itself.
+**Deliberately out of scope** (spec §15.4 Phase 6 / other CS issues, named so the executor does not attempt them): the completion-gate inversion and `GRADERS` registry; the grader reading blocks (`validate.ts` rewire) beyond *naming* it as Task 7's coupled change; declarative-achievement predicates; the UserState merge; the durable quest-XP path; the lesson renderer (`lesson-client.tsx`, `challenge-interface.tsx`); the `packages/types` `Lesson`/`Course` reshape; Viewer-role assignment in `sanity.io/manage` (ops); the CS-9 sync itself; and the teacher-authoring/admin-review feature built on `author`/`authoringStatus`/`reviewFeedback` (superseded by the repo workflow, deleted in CS-10 — see Task 4's coupling note).
 
 **Placeholder scan.** No `TBD`, no "add validation", no "similar to Task N". Every schema/query step carries complete code.
 
