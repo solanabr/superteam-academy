@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { syncField } from "./objects/syncField";
 
 export const instructor = defineType({
   name: "instructor",
@@ -42,6 +43,7 @@ export const instructor = defineType({
         }),
       ],
     }),
+    syncField,
   ],
   preview: {
     select: {

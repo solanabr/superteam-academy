@@ -15,4 +15,11 @@ export default defineConfig({
   schema: {
     types: schemaTypes,
   },
+
+  // Read-only Studio (spec §10.4). All writes go through the CS-9 sync. UI
+  // dressing only — Viewer roles in sanity.io/manage are the real boundary (ops).
+  document: {
+    actions: () => [],
+    newDocumentOptions: () => [],
+  },
 });

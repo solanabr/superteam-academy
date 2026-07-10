@@ -6,7 +6,9 @@
     "dev": "sanity dev",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "extract-schema": "sanity schema extract --path schema.json",
+    "typegen": "sanity typegen generate"
   },
   "dependencies": {
     "@sanity/client": "^7.14.1",
