@@ -7,7 +7,7 @@ const EXCLUDED = "courses/_template/";
 /**
  * Decompression bounds against a malicious/corrupt tarball (a gzip bomb inflates
  * to gigabytes; a pathological archive packs millions of tiny headers). The
- * academy-courses repo is text + optimised images — well under these — so the
+ * courses-academy repo is text + optimised images — well under these — so the
  * caps only ever fire on abuse. Both are overridable for tests.
  */
 const DEFAULT_MAX_DECOMPRESSED_BYTES = 128 * 1024 * 1024; // 128 MiB

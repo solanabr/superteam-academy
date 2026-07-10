@@ -6,9 +6,9 @@ import { makeTar } from "./_fixtures";
 describe("extractTarball", () => {
   it("strips the generated top dir and keys by repo-relative path", async () => {
     const tar = makeTar({
-      "solanabr-academy-courses-abc123/courses/solana-fundamentals/course.yaml":
+      "solanabr-courses-academy-abc123/courses/solana-fundamentals/course.yaml":
         "id: course-solana-fundamentals\n",
-      "solanabr-academy-courses-abc123/courses/solana-fundamentals/lessons/accounts/intro.md":
+      "solanabr-courses-academy-abc123/courses/solana-fundamentals/lessons/accounts/intro.md":
         "# Accounts\n",
     });
     const tree = await extractTarball(gzipSync(Buffer.from(tar)));
@@ -36,7 +36,7 @@ describe("extractTarball", () => {
     // The generated `owner-repo-<40-char-sha>/` top dir alone is 65 bytes, so any
     // real repo path overflows the 100-byte name field; git archive splits it
     // across name + prefix. A naive reader that ignores prefix would drop this.
-    const top = `solanabr-academy-courses-${"a".repeat(40)}`;
+    const top = `solanabr-courses-academy-${"a".repeat(40)}`;
     const deep = `${top}/courses/solana-fundamentals/lessons/pdas-and-accounts/exercise/solution.ts`;
     expect(deep.length).toBeGreaterThan(100);
     const tar = makeTar({ [deep]: "// solution\n" });

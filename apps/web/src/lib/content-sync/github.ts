@@ -2,7 +2,7 @@ import "server-only";
 import { type ChecksState, GitHubUnavailableError } from "./types";
 import { serverEnv } from "@/lib/env.server";
 
-const REPO = "solanabr/academy-courses";
+const REPO = "solanabr/courses-academy";
 const BRANCH = "main";
 const API = "https://api.github.com";
 

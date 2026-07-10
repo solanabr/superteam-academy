@@ -2,6 +2,7 @@ import type { BlockT } from "@superteam-lms/content-schema";
 import type { ValidatedContent } from "./validate";
 import type { SanityDoc } from "./types";
 import { rewriteMarkdownAssetPaths } from "./assets";
+import { SOURCE } from "./prune";
 
 export interface AssetUpload {
   path: string; // repo-relative image path
@@ -85,7 +86,7 @@ export function projectContent(
   resolveAsset: AssetResolver,
   resolveTests: TestsResolver
 ): { docs: SanityDoc[]; assets: AssetUpload[] } {
-  const marker = { source: "academy-courses", rev: sha } as const;
+  const marker = { source: SOURCE, rev: sha } as const;
   const docs: SanityDoc[] = [];
   const assets: AssetUpload[] = [...v.assets.entries()].map(
     ([path, bytes]) => ({

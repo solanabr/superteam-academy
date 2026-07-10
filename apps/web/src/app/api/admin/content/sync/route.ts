@@ -18,7 +18,7 @@ import {
 } from "@/lib/content-sync/types";
 
 /**
- * POST /api/admin/content/sync — sync academy-courses@sha → Sanity (§9.2).
+ * POST /api/admin/content/sync — sync courses-academy@sha → Sanity (§9.2).
  *
  * Thin handler: auth, parse+guard the body, build the real deps, delegate to
  * `runContentSync`, map its error classes to status codes. The client sends the

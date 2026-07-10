@@ -20,7 +20,7 @@ const handAuthored = (n: number): SanityDoc[] =>
 const managedMarked = (id: string, type: string, rev: string): SanityDoc => ({
   _id: id,
   _type: type,
-  sync: { source: "academy-courses", rev },
+  sync: { source: "courses-academy", rev },
 });
 
 /**
@@ -145,7 +145,7 @@ describe("runContentSync", () => {
     const stale: SanityDoc[] = Array.from({ length: 50 }, (_v, i) => ({
       _id: `lesson-old-${i}`,
       _type: "lesson",
-      sync: { source: "academy-courses", rev: "oldsha" },
+      sync: { source: "courses-academy", rev: "oldsha" },
     }));
     const gw = new InMemoryGateway(stale);
     await expect(runContentSync(deps({ gateway: gw }))).rejects.toBeInstanceOf(
