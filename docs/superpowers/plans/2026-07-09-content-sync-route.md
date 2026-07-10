@@ -984,7 +984,7 @@ git commit -m "feat(sync): authoritative Zod re-validation + executor gate over 
 
 **Interfaces:**
 - Consumes: `ValidatedContent` from `./validate`; `SanityDoc` from `./types`.
-- Produces: `projectContent(v: ValidatedContent, sha: string, resolveAssetRef): { docs: SanityDoc[]; assets: AssetUpload[] }`. Deterministic `_id` (= content id), inline `courseModule` with weak lesson refs, `blocks[]` with `_key = block.key`, prose/code/idl **resolved** (path → body), `code.tests` resolved to a `testCase[]`, and `sync: { source: "academy-courses", rev: sha }` on every managed doc. `resolveAssetRef(mdPath)` maps a relative image path to a Sanity asset ref (from Task 7).
+- Produces: `projectContent(v: ValidatedContent, sha: string, resolveAsset): { docs: SanityDoc[]; assets: AssetUpload[] }`. Deterministic `_id` (= content id), inline `courseModule` with weak lesson refs, `blocks[]` with `_key = block.key`, prose/code/idl **resolved** (path → body), `code.tests` resolved to a `testCase[]`, and `sync: { source: "academy-courses", rev: sha }` on every managed doc. `resolveAsset(mdPath)` maps a relative image path to its resolved CDN url string (from Task 7) — markdown rewriting needs a plain URL, not a Sanity reference.
 
 Every field is a pure function of the repo or the `sync` marker. `lesson.xpReward` is deliberately never emitted (§4.3). Modules are inline objects, not documents (§10.1).
 
