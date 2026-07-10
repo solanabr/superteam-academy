@@ -1,0 +1,5 @@
+id: achievement-first-steps
+name: First Steps
+category: progress
+xpReward: 50
+award: { kind: lessons-completed, gte: 1 }

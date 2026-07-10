@@ -1,0 +1,23 @@
+id: lesson-t-basics
+slug: basics
+title: Basics
+blocks:
+  - { key: intro, type: prose, src: intro.md }
+  - { key: watch, type: video, url: "https://youtu.be/dQw4w9WgXcQ" }
+  - key: check
+    type: quiz
+    questions:
+      - id: q1
+        prompt: Which accounts store state?
+        multiSelect: true
+        options:
+          - { id: a, label: Data accounts, correct: true }
+          - { id: b, label: Program accounts, correct: true }
+          - { id: c, label: Instructions, correct: false, feedback: "Inputs, not accounts." }
+      - id: q2
+        prompt: Pick the base unit.
+        multiSelect: false
+        options:
+          - { id: a, label: Lamport, correct: true }
+          - { id: b, label: Gwei, correct: false }
+  - { key: reflect, type: openEnded, prompt: "What did you learn?", maxWords: 120 }

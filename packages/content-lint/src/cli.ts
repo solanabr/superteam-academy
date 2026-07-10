@@ -1,5 +1,9 @@
 import { runLint } from "./lint";
 import type { Diagnostic } from "./diagnostics";
+// Side-effect import: running `./index` executes every check module's top-level
+// `registerCheck` / `registerSchemaCheck`, so the CLI lints with all gates
+// registered (without it, no gate runs and every repo trivially "passes").
+import "./index";
 
 function normalizeBaseRef(raw: string | undefined): string | undefined {
   if (!raw) return undefined;

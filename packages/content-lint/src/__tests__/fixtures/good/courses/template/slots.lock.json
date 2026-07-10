@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "slots": {
+    "lesson-t-basics": 0,
+    "lesson-t-exercise": 1,
+    "lesson-t-fund": 2,
+    "lesson-t-deploy": 3,
+    "lesson-t-interact": 4
+  },
+  "retired": [],
+  "next": 5
+}
