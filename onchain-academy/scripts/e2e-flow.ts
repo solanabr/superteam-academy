@@ -13,7 +13,8 @@
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BN } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
+import { OnchainAcademy } from "../idl/onchain_academy";
+import { academyProgram } from "./lib/academy";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -25,7 +26,7 @@ import {
 
 const provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
+const program = academyProgram();
 
 const courseId = process.env.COURSE_ID || "solana-mock-test";
 const trackCollection = new PublicKey(
