@@ -1,5 +1,6 @@
 import {
   Connection,
+  ComputeBudgetProgram,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -44,27 +45,24 @@ export function setCachedBinary(uuid: string, data: Uint8Array): void {
 }
 
 /**
- * Fetch the compiled .so binary from the build server.
- * Checks the global client-side cache first (populated after build).
+ * Retrieve the compiled .so binary cached client-side after build.
+ *
+ * The build server returns the binary INLINE (binaryB64), which is stored in the
+ * global cache via `setCachedBinary` at build time — there is no
+ * `/api/deploy/:uuid` route to re-fetch it from. We intentionally do NOT delete
+ * the cache entry on read: a paused deploy is resumed by reading the binary
+ * again, and deleting it made the resume miss and 404 against the (removed)
+ * fetch route. A genuine miss means the in-memory copy was lost (e.g. a full
+ * page reload mid-deploy), which the caller treats as "expired → rebuild".
  */
-async function fetchBinary(
-  buildServerUrl: string,
-  uuid: string
-): Promise<Uint8Array> {
-  const cache = getGlobalCache();
-  const cached = cache.get(uuid);
-  if (cached) {
-    cache.delete(uuid);
-    return cached;
-  }
-
-  const response = await fetch(`${buildServerUrl}/deploy/${uuid}`);
-  if (!response.ok) {
+function fetchBinary(uuid: string): Uint8Array {
+  const cached = getGlobalCache().get(uuid);
+  if (!cached) {
     throw new Error(
-      `Failed to fetch binary (${response.status}). Build may have expired.`
+      "The compiled program is no longer available in this session (the build expired). Please rebuild it before deploying."
     );
   }
-  return new Uint8Array(await response.arrayBuffer());
+  return cached;
 }
 
 /**
@@ -113,13 +111,31 @@ async function confirmTx(
 
 /**
  * BATCH_SIZE controls how many write txs we sign at once via signAllTransactions.
- * Each batch = 1 wallet popup. With parallel sends, all txs dispatch in seconds,
- * so we can use larger batches without blockhash expiry risk.
+ * Each batch = 1 wallet popup. Kept modest (not 50) so a rate-limited devnet RPC
+ * isn't flooded — with rebroadcast (see confirmBatch) the whole batch reliably
+ * confirms inside the blockhash window, and the resend burst stays under the
+ * RPC's per-second limit.
  */
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 20;
 
 /** Small stagger between sends to avoid RPC rate limits. */
-const SEND_DELAY_MS = 30;
+const SEND_DELAY_MS = 50;
+
+/**
+ * Priority fee (compute-unit price, micro-lamports) added to every deploy tx.
+ * Without it, devnet leaders drop the rapid write txs under load — the RPC
+ * accepts them (200) but they never land. A write ix burns only a few thousand
+ * CU, so even this rate costs a tiny fraction of a lamport per tx while making
+ * inclusion far more reliable.
+ */
+const PRIORITY_FEE_MICROLAMPORTS = 100_000;
+
+/** Compute-unit-price instruction prepended to each deploy transaction. */
+function priorityFeeIx() {
+  return ComputeBudgetProgram.setComputeUnitPrice({
+    microLamports: PRIORITY_FEE_MICROLAMPORTS,
+  });
+}
 
 /**
  * Confirm multiple transactions in parallel using batch polling.
@@ -130,9 +146,10 @@ const SEND_DELAY_MS = 30;
  */
 async function confirmBatch(
   connection: Connection,
+  serializedTxs: Uint8Array[],
   signatures: string[],
   onConfirmed?: (localIndex: number, sig: string) => void,
-  timeoutMs = 60_000
+  timeoutMs = 90_000
 ): Promise<void> {
   const unconfirmed = new Map<string, number>();
   for (let i = 0; i < signatures.length; i++) {
@@ -140,6 +157,8 @@ async function confirmBatch(
   }
 
   const start = Date.now();
+  // The txs were just sent by the caller; wait a beat before the first resend.
+  let lastResend = Date.now();
 
   while (unconfirmed.size > 0) {
     if (Date.now() - start > timeoutMs) {
@@ -147,6 +166,8 @@ async function confirmBatch(
         `Timed out confirming ${unconfirmed.size}/${signatures.length} chunk transactions`
       );
     }
+
+    await new Promise((r) => setTimeout(r, 700));
 
     const pending = [...unconfirmed.keys()];
     const { value: statuses } = await connection.getSignatureStatuses(pending);
@@ -170,8 +191,23 @@ async function confirmBatch(
       }
     }
 
-    if (unconfirmed.size > 0) {
-      await new Promise((r) => setTimeout(r, 500));
+    // Rebroadcast still-unconfirmed txs every ~4s: devnet drops transactions
+    // under load, and the RPC won't rebroadcast them for us (maxRetries: 0), so
+    // a dropped chunk would otherwise never land and the batch would stall.
+    // Re-sending the same signed tx is safe (idempotent) while its blockhash is
+    // still valid, which the modest BATCH_SIZE keeps us inside.
+    if (unconfirmed.size > 0 && Date.now() - lastResend > 4000) {
+      for (const idx of unconfirmed.values()) {
+        try {
+          await connection.sendRawTransaction(serializedTxs[idx]!, {
+            skipPreflight: true,
+            maxRetries: 0,
+          });
+        } catch {
+          // Ignore — the next poll cycle will resend.
+        }
+      }
+      lastResend = Date.now();
     }
   }
 }
@@ -195,7 +231,9 @@ export async function deployProgram(params: {
   /** Pre-generated program keypair (from build-time declare_id injection). */
   programKeypairSecret?: number[];
 }): Promise<DeployResult> {
-  const { connection, wallet, buildServerUrl, buildUuid, callbacks } = params;
+  // `buildServerUrl` is accepted for API compatibility but no longer used: the
+  // binary is read from the client-side cache, not fetched over HTTP.
+  const { connection, wallet, buildUuid, callbacks } = params;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -203,7 +241,7 @@ export async function deployProgram(params: {
 
   // Fetch the compiled binary
   callbacks.onStepChange("buffer");
-  const binary = await fetchBinary(buildServerUrl, buildUuid);
+  const binary = fetchBinary(buildUuid);
   const programLen = binary.length;
   const totalChunks = Math.ceil(programLen / CHUNK_SIZE);
 
@@ -224,6 +262,7 @@ export async function deployProgram(params: {
     await connection.getLatestBlockhash("confirmed");
 
   const createBufferTx = new Transaction().add(
+    priorityFeeIx(),
     SystemProgram.createAccount({
       fromPubkey: payer,
       newAccountPubkey: bufferKeypair.publicKey,
@@ -274,6 +313,7 @@ export async function deployProgram(params: {
       const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
       const writeTx = new Transaction().add(
+        priorityFeeIx(),
         createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
       );
       writeTx.feePayer = payer;
@@ -284,29 +324,37 @@ export async function deployProgram(params: {
     // Batch sign (1 wallet popup per batch)
     const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-    // Send all txs rapidly (parallel fire with small stagger)
+    // Send all txs rapidly (parallel fire with small stagger). Keep each
+    // serialized so confirmBatch can rebroadcast any that get dropped.
     const signatures: string[] = [];
+    const serializedTxs: Uint8Array[] = [];
     for (let j = 0; j < signedBatch.length; j++) {
-      const signedTx = signedBatch[j]!;
-      const sig = await sendWithRetry(connection, signedTx.serialize());
+      const serialized = signedBatch[j]!.serialize();
+      serializedTxs.push(serialized);
+      const sig = await sendWithRetry(connection, serialized);
       signatures.push(sig);
       if (j < signedBatch.length - 1) {
         await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
       }
     }
 
-    // Confirm all in parallel via batch polling (one RPC call checks all sigs)
+    // Confirm all via batch polling; rebroadcasts dropped txs until they land.
     let batchConfirmed = 0;
-    await confirmBatch(connection, signatures, (localIdx, sig) => {
-      batchConfirmed++;
-      const chunkIndex = batchStart + localIdx;
-      callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
-      callbacks.onTransactionConfirmed({
-        signature: sig,
-        step: "upload",
-        message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
-      });
-    });
+    await confirmBatch(
+      connection,
+      serializedTxs,
+      signatures,
+      (localIdx, sig) => {
+        batchConfirmed++;
+        const chunkIndex = batchStart + localIdx;
+        callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
+        callbacks.onTransactionConfirmed({
+          signature: sig,
+          step: "upload",
+          message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
+        });
+      }
+    );
 
     state.lastUploadedChunk = batchEnd - 1;
     callbacks.onStateUpdate(state);
@@ -329,6 +377,7 @@ export async function deployProgram(params: {
     await connection.getLatestBlockhash("confirmed");
 
   const deployTx = new Transaction().add(
+    priorityFeeIx(),
     SystemProgram.createAccount({
       fromPubkey: payer,
       newAccountPubkey: programKeypair.publicKey,
@@ -382,7 +431,8 @@ export async function resumeDeployment(params: {
   state: DeploymentState;
   callbacks: DeploymentCallbacks;
 }): Promise<DeployResult> {
-  const { connection, wallet, buildServerUrl, state, callbacks } = params;
+  // `buildServerUrl` accepted for API compatibility but unused (see deployProgram).
+  const { connection, wallet, state, callbacks } = params;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -403,8 +453,8 @@ export async function resumeDeployment(params: {
     );
   }
 
-  // Fetch binary again
-  const binary = await fetchBinary(buildServerUrl, state.buildUuid);
+  // Read the cached binary again (kept in-cache so resume can re-read it)
+  const binary = fetchBinary(state.buildUuid);
   const programLen = binary.length;
   const totalChunks = state.totalChunks;
   const startChunk = state.lastUploadedChunk + 1;
@@ -428,6 +478,7 @@ export async function resumeDeployment(params: {
         const chunk = binary.slice(offset, offset + CHUNK_SIZE);
 
         const writeTx = new Transaction().add(
+          priorityFeeIx(),
           createWriteInstruction(bufferKeypair.publicKey, payer, offset, chunk)
         );
         writeTx.feePayer = payer;
@@ -437,29 +488,37 @@ export async function resumeDeployment(params: {
 
       const signedBatch = await wallet.signAllTransactions(batchTxs);
 
-      // Send all txs rapidly (parallel fire with small stagger)
+      // Send all txs rapidly (parallel fire with small stagger). Keep each
+      // serialized so confirmBatch can rebroadcast any that get dropped.
       const signatures: string[] = [];
+      const serializedTxs: Uint8Array[] = [];
       for (let j = 0; j < signedBatch.length; j++) {
-        const signedTx = signedBatch[j]!;
-        const sig = await sendWithRetry(connection, signedTx.serialize());
+        const serialized = signedBatch[j]!.serialize();
+        serializedTxs.push(serialized);
+        const sig = await sendWithRetry(connection, serialized);
         signatures.push(sig);
         if (j < signedBatch.length - 1) {
           await new Promise((r) => setTimeout(r, SEND_DELAY_MS));
         }
       }
 
-      // Confirm all in parallel via batch polling
+      // Confirm all via batch polling; rebroadcasts dropped txs until they land.
       let batchConfirmed = 0;
-      await confirmBatch(connection, signatures, (localIdx, sig) => {
-        batchConfirmed++;
-        const chunkIndex = batchStart + localIdx;
-        callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
-        callbacks.onTransactionConfirmed({
-          signature: sig,
-          step: "upload",
-          message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
-        });
-      });
+      await confirmBatch(
+        connection,
+        serializedTxs,
+        signatures,
+        (localIdx, sig) => {
+          batchConfirmed++;
+          const chunkIndex = batchStart + localIdx;
+          callbacks.onChunkProgress(batchStart + batchConfirmed, totalChunks);
+          callbacks.onTransactionConfirmed({
+            signature: sig,
+            step: "upload",
+            message: `Chunk ${chunkIndex + 1}/${totalChunks} uploaded`,
+          });
+        }
+      );
 
       state.lastUploadedChunk = batchEnd - 1;
       callbacks.onStateUpdate(state);
@@ -487,6 +546,7 @@ export async function resumeDeployment(params: {
   );
 
   const deployTx = new Transaction();
+  deployTx.add(priorityFeeIx());
 
   if (!existingProgramInfo) {
     deployTx.add(

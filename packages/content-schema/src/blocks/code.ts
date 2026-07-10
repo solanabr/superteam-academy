@@ -50,6 +50,22 @@ export const CodeBlock = z
   .refine((b) => b.solution.endsWith(EXT[b.language]), {
     message: "solution extension must match language",
     path: ["solution"],
+  })
+  // Gate 13a's local half (PR #350 review): a capability may only be produced by
+  // a block type that can actually create it. A code block can only ever produce
+  // `deployed-program`, and only when it is deployable — otherwise a stray
+  // `produces:` satisfies the CI ordering check with a producer that produces
+  // nothing.
+  .refine(
+    (b) => b.produces === undefined || b.produces === "deployed-program",
+    {
+      message: "a code block may only produce 'deployed-program'",
+      path: ["produces"],
+    }
+  )
+  .refine((b) => b.produces !== "deployed-program" || b.deployable, {
+    message: "only a deployable code block may produce 'deployed-program'",
+    path: ["produces"],
   });
 
 export type CodeBlockT = z.infer<typeof CodeBlock>;

@@ -1,0 +1,14 @@
+id: lesson-t-deploy
+slug: deploy
+title: Deploy
+blocks:
+  - key: build
+    type: code
+    language: rust
+    buildType: buildable
+    deployable: true
+    starter: program/starter.rs
+    solution: program/solution.rs
+    tests: program/tests.json
+    consumes: [funded-wallet]
+    produces: deployed-program

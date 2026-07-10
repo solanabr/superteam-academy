@@ -1,0 +1,4 @@
+[
+  { "id": "t1", "input": "2, 3", "expectedOutput": "result === 5" },
+  { "id": "t2", "input": "10, -4", "expectedOutput": "result === 6" }
+]

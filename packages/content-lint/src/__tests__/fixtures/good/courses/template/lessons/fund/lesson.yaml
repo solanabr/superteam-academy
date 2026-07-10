@@ -1,0 +1,5 @@
+id: lesson-t-fund
+slug: fund
+title: Fund
+blocks:
+  - { key: fund, type: wallet-funding, amount: 2, network: devnet, produces: funded-wallet }

@@ -44,6 +44,7 @@
     "@solana/web3.js": "^1.98.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@superteam-lms/challenge-executor": "workspace:*",
     "@superteam-lms/content-schema": "workspace:*",
     "@superteam-lms/deploy": "workspace:*",
     "@superteam-lms/sanity": "workspace:*",
