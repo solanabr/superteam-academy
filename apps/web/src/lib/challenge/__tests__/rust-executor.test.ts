@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import type { AdminTestCase } from "@superteam-lms/types";
+
+vi.mock("server-only", () => ({}));
+import type { AdminTestCase, CodeBlockData } from "@superteam-lms/types";
 import { runRustSubmission } from "../rust-executor";
-import { validateAgainstAnswerKey } from "../validate";
-import type { ChallengeAnswerKey } from "@/lib/sanity/queries";
+import { gradeCode } from "@/lib/grading/graders/code";
 
 const tests: AdminTestCase[] = [
   { id: "v1", description: "visible", input: "2, 3", expectedOutput: "5" },
@@ -132,47 +133,50 @@ describe("runRustSubmission", () => {
   });
 });
 
-describe("validateAgainstAnswerKey — Rust routing", () => {
-  const rustKey: ChallengeAnswerKey = {
-    _id: "l1",
-    type: "challenge",
+describe("gradeCode — Rust routing", () => {
+  const rustBlock: CodeBlockData = {
+    _type: "code",
+    key: "c1",
     language: "rust",
-    buildType: null,
-    tests,
+    buildType: "standard",
+    starter: "",
     solution: CODE,
-    tutorNotes: null,
+    tests,
   };
 
-  it("grades a rust challenge to a validated verdict", async () => {
+  it("grades a rust challenge to ok via the Playground", async () => {
     mockPlayground((n) => ({ stdout: passAll(n) }));
-    const v = await validateAgainstAnswerKey(rustKey, CODE);
-    expect(v).toMatchObject({ kind: "validated", passed: true });
+    expect(await gradeCode(rustBlock, { code: CODE })).toEqual({ ok: true });
   });
 
-  it("maps a Playground outage to executor_unavailable (deny completion)", async () => {
+  it("maps a Playground outage to 503 (deny completion)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
         throw new Error("down");
       })
     );
-    const v = await validateAgainstAnswerKey(rustKey, CODE);
-    expect(v.kind).toBe("executor_unavailable");
+    expect(await gradeCode(rustBlock, { code: CODE })).toEqual({
+      ok: false,
+      status: 503,
+    });
   });
 
   it("routes a buildable challenge to the build server, NOT the Playground", async () => {
     // With no build server configured (env unset here), the buildable grader
-    // fails closed to executor_unavailable — never the Rust Playground, and
-    // never a granted completion. (Grading against a live build server is
-    // covered in buildable-executor.test.ts.)
+    // fails closed to 503 — never the Rust Playground, and never a granted
+    // completion. (Grading against a live build server is covered in
+    // buildable-executor.test.ts.)
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
-    const buildableKey: ChallengeAnswerKey = {
-      ...rustKey,
+    const buildableBlock: CodeBlockData = {
+      ...rustBlock,
       buildType: "buildable",
     };
-    const v = await validateAgainstAnswerKey(buildableKey, CODE);
-    expect(v.kind).toBe("executor_unavailable");
+    expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
+      ok: false,
+      status: 503,
+    });
     expect(spy).not.toHaveBeenCalled();
   });
 });

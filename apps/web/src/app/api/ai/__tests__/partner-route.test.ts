@@ -21,43 +21,51 @@ vi.mock("@/lib/rate-limit", () => ({
   isRateLimited,
 }));
 
-const getChallengeAnswerKey = vi.fn();
 const getLessonBySlug = vi.fn();
 vi.mock("@/lib/sanity/queries", () => ({
-  getChallengeAnswerKey,
   getLessonBySlug,
 }));
 
 const GEMINI_API_KEY = "test-gemini-key";
 
-const ANSWER_KEY = {
-  _id: "lesson-1",
-  type: "challenge",
-  language: "rust",
-  buildType: null,
-  tests: [
-    { id: "v1", description: "visible test", input: "1", expectedOutput: "2" },
-    {
-      id: "h1",
-      description: "hidden test",
-      input: "10",
-      expectedOutput: "20",
-      hidden: true,
-    },
-  ],
-  solution: "fn solve() { /* the answer */ }",
-};
-
+// Post-D4 the AI Partner reads the challenge from the PUBLIC block projection:
+// the code block's solution + (all-public) tests, and the prose blocks for the
+// task brief. There is no separate answer key.
 const LESSON = {
   _id: "lesson-1",
   title: "Solve it",
   slug: "l-slug",
-  type: "challenge",
-  content: "Implement a function that doubles the input.",
-  code: "fn solve() {}",
-  tests: [],
-  hints: [],
-  order: 1,
+  blocks: [
+    {
+      _type: "prose",
+      key: "p1",
+      src: "Implement a function that doubles the input.",
+    },
+    {
+      _type: "code",
+      key: "c1",
+      language: "rust",
+      buildType: "standard",
+      starter: "fn solve() {}",
+      solution: "fn solve() { /* the answer */ }",
+      tests: [
+        {
+          id: "v1",
+          description: "visible test",
+          input: "1",
+          expectedOutput: "2",
+        },
+      ],
+      hints: [],
+    },
+  ],
+};
+
+const LESSON_NO_CODE = {
+  _id: "lesson-2",
+  title: "Reading",
+  slug: "l2",
+  blocks: [{ _type: "prose", key: "p1", src: "Just read." }],
 };
 
 const VALID_BODY = {
@@ -115,17 +123,18 @@ beforeEach(() => {
   // sets up (some tests delete it to exercise the 503 path).
   vi.resetModules();
   process.env.GEMINI_API_KEY = GEMINI_API_KEY;
+  // The propose path seals a check token; deriveKey throws on an all-unset
+  // secret chain, so give it one.
+  process.env.AI_PARTNER_SEAL_SECRET = "test-seal-secret";
   getUser.mockReset();
   spendAssist.mockReset();
   refundAssist.mockReset();
   isRateLimited.mockReset();
-  getChallengeAnswerKey.mockReset();
   getLessonBySlug.mockReset();
 
   // Happy-path defaults; individual tests override as needed.
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   isRateLimited.mockResolvedValue(false);
-  getChallengeAnswerKey.mockResolvedValue(ANSWER_KEY);
   getLessonBySlug.mockResolvedValue(LESSON);
   spendAssist.mockResolvedValue({ allowed: true, used: 1 });
   refundAssist.mockResolvedValue(undefined);
@@ -135,6 +144,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   delete process.env.GEMINI_API_KEY;
+  delete process.env.AI_PARTNER_SEAL_SECRET;
 });
 
 describe("POST /api/ai/partner", () => {
@@ -346,8 +356,8 @@ describe("POST /api/ai/partner", () => {
     expect(res.status).toBe(413);
   });
 
-  it("returns 404 when the answer key is not found", async () => {
-    getChallengeAnswerKey.mockResolvedValue(null);
+  it("returns 404 when the lesson has no code block", async () => {
+    getLessonBySlug.mockResolvedValue(LESSON_NO_CODE);
 
     const { POST } = await import("../partner/route");
     const res = await POST(makeRequest(VALID_BODY));
@@ -366,7 +376,7 @@ describe("POST /api/ai/partner", () => {
     expect(spendAssist).not.toHaveBeenCalled();
   });
 
-  it("never sends hidden tests to Gemini", async () => {
+  it("feeds the code block's public tests + solution + prose task to Gemini", async () => {
     const fetchSpy = vi.fn(async (_url: string, init: { body: string }) => {
       void init;
       return {
@@ -386,11 +396,11 @@ describe("POST /api/ai/partner", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const [, init] = fetchSpy.mock.calls[0]!;
     const sentBody = JSON.stringify(init.body);
-    expect(sentBody).not.toContain("hidden test");
-    expect(sentBody).not.toContain("20"); // hidden test's expectedOutput
+    // Post-D4 every test is public and grounds the model.
     expect(sentBody).toContain("visible test");
-    // The reference solution IS expected in the prompt (by design — the model
-    // needs it to ground hints/proposals), so only assert hidden-test leakage.
+    // The prose block is the task brief; the code block's solution grounds hints.
+    expect(sentBody).toContain("doubles the input");
+    expect(sentBody).toContain("the answer");
   });
 
   it("returns 502 on a malformed (missing required fields) propose payload", async () => {

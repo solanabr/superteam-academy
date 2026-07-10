@@ -42,6 +42,20 @@ export interface SealedCheck {
   explanation: string;
 }
 
+/**
+ * Proof that the server saw a submission for a required-but-ungraded block
+ * (e.g. openEnded, spec §8). Sealed into a token; NOT a correctness verdict.
+ * Bound to lesson+block+user+expiry so a captured token cannot be replayed
+ * into another lesson, block, user, or after expiry.
+ */
+export interface Attestation {
+  lessonId: string;
+  blockKey: string;
+  userId: string;
+  /** epoch ms; openAttestation rejects once passed. */
+  exp: number;
+}
+
 export interface VerifyRequest {
   checkToken: string;
   pickedIndex: 0 | 1 | 2;
