@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
+import { parse as parseYaml } from "yaml";
 import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
@@ -18,6 +19,7 @@ import {
   updateCoursePda,
   deployCourseTrackCollection,
   setCourseCollectionPda,
+  buildCourseCommit,
 } from "@/lib/solana/admin-signer";
 import {
   difficultyToNumber,
@@ -27,8 +29,77 @@ import {
 import {
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
+  readContentSyncSingleton,
 } from "@/lib/sanity/admin-mutations";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createGitHubClient } from "@/lib/content-sync/github";
+import { extractTarball } from "@/lib/content-sync/tarball";
+import {
+  MaskMismatchError,
+  GitHubUnavailableError,
+} from "@/lib/content-sync/types";
+
+interface SlotsLock {
+  version: number;
+  slots: Record<string, number>;
+  retired: number[];
+  next: number;
+}
+
+/**
+ * Load a course's committed `slots.lock.json` from the last-synced tree (§11.0).
+ * Sourced independently of the panel's mask — that independence is what makes
+ * the `buildCourseCommit` assertion a real cross-check rather than a tautology.
+ * Throws when content sync has not yet ingested this course (ordering interlock:
+ * the mask commitment cannot be computed from a Sanity/tree that predates the
+ * course), or when GitHub is unavailable.
+ */
+async function readCourseSlotsLock(
+  courseId: string
+): Promise<{ contentSha: string; slotsLock: SlotsLock }> {
+  const singleton = await readContentSyncSingleton();
+  if (!singleton) {
+    throw new Error(
+      "No content sync has run yet — run content sync before committing the mask on-chain"
+    );
+  }
+  const tree = await extractTarball(
+    await createGitHubClient().fetchTarball(singleton.sha)
+  );
+  for (const [path, bytes] of tree) {
+    if (!path.endsWith("/course.yaml")) continue;
+    const { id } = parseYaml(new TextDecoder().decode(bytes)) as { id: string };
+    if (id !== courseId) continue;
+    const raw = tree.get(path.replace(/course\.yaml$/, "slots.lock.json"));
+    if (!raw)
+      throw new Error(`${courseId}: no slots.lock.json next to ${path}`);
+    return {
+      contentSha: singleton.sha,
+      slotsLock: JSON.parse(new TextDecoder().decode(raw)) as SlotsLock,
+    };
+  }
+  throw new Error(
+    `${courseId}: not found in the synced tree at ${singleton.sha}`
+  );
+}
+
+/** Validate a `[u64, u64, u64, u64]` mask sent as decimal strings. */
+function parseActiveLessons(
+  value: unknown
+): [bigint, bigint, bigint, bigint] | null {
+  if (!Array.isArray(value) || value.length !== 4) return null;
+  try {
+    const words = value.map((w) => {
+      if (typeof w !== "string") throw new Error("not a string");
+      const n = BigInt(w);
+      if (n < 0n) throw new Error("negative");
+      return n;
+    });
+    return [words[0]!, words[1]!, words[2]!, words[3]!];
+  } catch {
+    return null;
+  }
+}
 
 // Default creator reward for TEACHER-authored courses (those with a real author
 // wallet) when the fields are unset. Platform/admin courses stay at 0. Starting
@@ -45,8 +116,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   let courseId: string;
+  // Optional §11.0 commitment: the mask the admin panel's pending-sync state
+  // intends to send (u64 words as decimal strings). When present, the on-chain
+  // content_tx_id is committed in the same update and the mask is cross-checked
+  // against the committed slots.lock.json. Absent → legacy behaviour, unchanged.
+  let activeLessons: [bigint, bigint, bigint, bigint] | null = null;
   try {
-    const body = (await req.json()) as { courseId?: unknown };
+    const body = (await req.json()) as {
+      courseId?: unknown;
+      activeLessons?: unknown;
+    };
     if (typeof body.courseId !== "string" || !body.courseId) {
       return NextResponse.json(
         { error: "courseId is required" },
@@ -54,6 +133,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
     courseId = body.courseId;
+    if (body.activeLessons !== undefined) {
+      activeLessons = parseActiveLessons(body.activeLessons);
+      if (!activeLessons) {
+        return NextResponse.json(
+          {
+            error:
+              "activeLessons must be a [u64,u64,u64,u64] of decimal strings",
+          },
+          { status: 400 }
+        );
+      }
+    }
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -319,8 +410,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     newCreatorRewardXp?: number;
     newMinCompletionsForReward?: number;
     newLessonCount?: number;
+    contentTxId?: number[];
   } = { courseId };
   const updatedFields: string[] = [];
+
+  // §11.0 content commitment. When the panel sends its intended active_lessons
+  // mask, load the committed lockfile INDEPENDENTLY (from the synced tree) and
+  // assert the two agree right before signing — update_course trusts the
+  // authority blindly, so this is where the "slots never reused" invariant is
+  // enforced. The git SHA is committed into content_tx_id in the same update.
+  // (active_lessons itself is written on-chain only once program v2 exposes the
+  // field; until then the assertion + SHA commitment land.)
+  if (activeLessons) {
+    let commit: ReturnType<typeof buildCourseCommit>;
+    try {
+      const { contentSha, slotsLock } = await readCourseSlotsLock(courseId);
+      commit = buildCourseCommit({
+        courseId,
+        contentSha,
+        slotsLock,
+        activeLessons,
+      });
+    } catch (e) {
+      if (e instanceof MaskMismatchError) {
+        return NextResponse.json({ error: e.message }, { status: 409 });
+      }
+      if (e instanceof GitHubUnavailableError) {
+        return NextResponse.json({ error: e.message }, { status: 503 });
+      }
+      return NextResponse.json(
+        {
+          error:
+            e instanceof Error
+              ? e.message
+              : "Failed to load committed lockfile",
+        },
+        { status: 409 }
+      );
+    }
+    updateParams.contentTxId = commit.contentTxId;
+    updatedFields.push("contentTxId");
+  }
 
   if (course.xpPerLesson !== null) {
     updateParams.newXpPerLesson = course.xpPerLesson;
