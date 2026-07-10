@@ -701,6 +701,24 @@ describe("CodeBlock", () => {
     const r = CodeBlock.safeParse({ ...valid, language: "rust" });
     expect(r.success).toBe(false); // .ts files declared as rust
   });
+
+  it("rejects produces on a non-deployable code block", () => {
+    const r = CodeBlock.safeParse({ ...valid, produces: "deployed-program" });
+    expect(r.success).toBe(false); // a standard TS exercise deploys nothing
+  });
+
+  it("rejects a code block producing a capability it cannot create", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      language: "rust",
+      starter: "s.rs",
+      solution: "x.rs",
+      buildType: "buildable",
+      deployable: true,
+      produces: "funded-wallet",
+    });
+    expect(r.success).toBe(false);
+  });
 });
 ```
 
@@ -764,6 +782,19 @@ export const CodeBlock = z
   .refine((b) => b.solution.endsWith(EXT[b.language]), {
     message: "solution extension must match language",
     path: ["solution"],
+  })
+  // Gate 13a's local half (PR #350 review): a capability may only be produced by
+  // a block type that can actually create it. A code block can only ever produce
+  // `deployed-program`, and only when it is deployable — otherwise a stray
+  // `produces:` satisfies the CI ordering check with a producer that produces
+  // nothing.
+  .refine((b) => b.produces === undefined || b.produces === "deployed-program", {
+    message: "a code block may only produce 'deployed-program'",
+    path: ["produces"],
+  })
+  .refine((b) => b.produces !== "deployed-program" || b.deployable, {
+    message: "only a deployable code block may produce 'deployed-program'",
+    path: ["produces"],
   });
 
 export type CodeBlockT = z.infer<typeof CodeBlock>;
@@ -778,7 +809,7 @@ export * from "./blocks/code";
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/code.test.ts`
-Expected: PASS — 8 tests.
+Expected: PASS — 10 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1059,6 +1090,23 @@ describe("DeployedProgramCardBlock", () => {
     expect(b.consumes).toEqual(["deployed-program"]);
   });
 });
+
+describe("per-type produces constraints (gate 13a, local half)", () => {
+  it("rejects wallet-funding producing anything but funded-wallet", () => {
+    expect(WalletFundingBlock.safeParse({
+      type: "wallet-funding", key: "f", produces: "deployed-program",
+    }).success).toBe(false);
+  });
+
+  it("rejects produces on pure consumers", () => {
+    expect(ProgramExplorerBlock.safeParse({
+      type: "program-explorer", key: "e", idl: "program.idl.json", produces: "funded-wallet",
+    }).success).toBe(false);
+    expect(DeployedProgramCardBlock.safeParse({
+      type: "deployed-program-card", key: "c", produces: "deployed-program",
+    }).success).toBe(false);
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1106,6 +1154,8 @@ import { blockBase, relativePath } from "./base";
 export const WalletFundingBlock = z.object({
   type: z.literal("wallet-funding"),
   ...blockBase,
+  /** Gate 13a local half: funding a wallet can only ever produce `funded-wallet`. */
+  produces: z.literal("funded-wallet").optional(),
   /** SOL. Hardcoded to 2 in wallet-funding-card.tsx today. */
   amount: z.number().positive().max(5).default(2),
   network: z.literal("devnet").default("devnet"),
@@ -1114,6 +1164,8 @@ export const WalletFundingBlock = z.object({
 export const ProgramExplorerBlock = z.object({
   type: z.literal("program-explorer"),
   ...blockBase,
+  /** A pure consumer — it can never produce a capability. */
+  produces: z.never().optional(),
   /**
    * A real file, not a textarea. CI asserts it parses, has a non-empty
    * `instructions` array, and that `metadata.name` matches the keypair-storage
@@ -1125,6 +1177,8 @@ export const ProgramExplorerBlock = z.object({
 export const DeployedProgramCardBlock = z.object({
   type: z.literal("deployed-program-card"),
   ...blockBase,
+  /** A pure consumer — it can never produce a capability. */
+  produces: z.never().optional(),
 });
 
 export type WalletFundingBlockT = z.infer<typeof WalletFundingBlock>;
@@ -1142,7 +1196,7 @@ export * from "./blocks/widgets";
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/widgets.test.ts`
-Expected: PASS — 8 tests.
+Expected: PASS — 10 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1584,7 +1638,7 @@ export * from "./course";
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm --filter @superteam-lms/content-schema test src/__tests__/lesson.test.ts src/__tests__/course.test.ts`
-Expected: PASS — 11 tests.
+Expected: PASS — 13 tests.
 
 - [ ] **Step 5: Commit**
 
