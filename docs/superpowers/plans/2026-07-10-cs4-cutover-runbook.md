@@ -62,8 +62,9 @@ Every step's requirements implicitly include this section. Values are copied ver
     **CONFIRM before B1** that this is the live upgrade authority (single-hot-key custody, #305;
     it may instead be the keypair behind `PROGRAM_AUTHORITY_SECRET`). See "Open items".
 - **Content authoring is frozen** for the whole window: `/teach` authoring disabled, no Studio
-  writes (spec §15.4 Phase 0). Nothing of value is at risk — all 13 enrollments and 6 completions
-  are devnet test data (§15.1).
+  writes (spec §15.4 Phase 0). Nothing of value is at risk — all enrollments/completions are devnet
+  test data (§15.1). The count grows as testing continues; the cutover asserts the **Enrollment PDA
+  SET is preserved** (snapshot before == after), not a fixed count.
 - **Rollback is cheap up to mainnet** (§15.7): Sanity is rebuildable from git, the devnet program
   keeps its upgrade authority until the Squads handoff (#305), Course accounts can be closed and
   recreated again. The only irreversible step (mainnet deploy) is out of scope here.
@@ -79,7 +80,12 @@ Every step's requirements implicitly include this section. Values are copied ver
 | `course-rust-for-solana` | 12 | 2 | 2 | 20 | `2DKQYgryi2qGa1ApXLZcUHv81JtqCq3WkyhiEf9Qp5MQ` | `[4095,0,0,0]` |
 | `course-solana-frontend` | 12 | 2 | 1 | 20 | `7t64peSmcbjRGbbUZAnsXC6a1raxEx76qXhpFjFwDv6u` | `[4095,0,0,0]` |
 | `course-solana-fundamentals` | 12 | 2 | 1 | 10 | `8WmT5r1hrd2To28YD99XAaXddufp1m4PJnwRoRSQTP1w` | `[4095,0,0,0]` |
-| **total** | | **13** | **6** | | | |
+| **total** | | **37** | **152** | | | |
+
+> **`enrolled`/`completed` counts are a point-in-time snapshot, informational only** (as of the
+> 2026-07-10 live re-verification: **37 enrollments / 152 completions** — test data keeps growing).
+> The cutover's invariant is **set-preservation** of the Enrollment PDAs (A6 snapshot == C2 snapshot),
+> **not** any fixed number. Do not gate on these totals; gate on the before/after PDA-set diff.
 
 `active_lessons` expectations are `dense_mask(lesson_count)` (bits `0..lesson_count` set): 3 → `2³−1
 = 7`; 12 → `2¹²−1 = 4095`; 16 → `2¹⁶−1 = 65535`. All 7 migrated courses are **dense** (every live
@@ -194,10 +200,12 @@ the enrollment baseline the DONE gate compares against.
   **STOP-if:** you cannot put the platform into a maintenance state; the broken-window will surface
   raw decode errors to live users otherwise.
 
-- [ ] **A6: Snapshot the 13 Enrollment PDAs (baseline for the Phase C DONE gate)**
+- [ ] **A6: Snapshot the full Enrollment PDA set (baseline for the Phase C DONE gate)**
 
   **This is the immediately-preceding action before the window opens.** `close_course` must not
-  touch enrollments; this snapshot is what proves it.
+  touch enrollments; this snapshot is what proves it. Capture the **exact set of Enrollment PDA
+  pubkeys** (whatever the count) — the invariant the cutover preserves is set-equality, not a fixed
+  number (the count grows with ongoing devnet testing; ~37 as of 2026-07-10, informational only).
   **Preconditions:** Helius RPC resolved and confirmed **not** public devnet:
   ```bash
   # From apps/web/.env.local (SOLANA_RPC_URL already carries the Helius key), or construct it:
@@ -215,12 +223,17 @@ the enrollment baseline the DONE gate compares against.
       {"encoding":"base64","filters":[{"memcmp":{"offset":0,"bytes":"inacXgeoHEa"}}]}]
   }' | jq -S '[.result[] | {pubkey, data: .account.data[0], lamports: .account.lamports}] | sort_by(.pubkey)' \
      > /tmp/enrollments-before.json
-  jq 'length' /tmp/enrollments-before.json    # MUST print 13
+  # Capture the enumerated set of Enrollment PDA pubkeys as the BEFORE snapshot (the set is the
+  # invariant — the object count is informational only and grows with ongoing devnet testing):
+  jq -r '.[].pubkey' /tmp/enrollments-before.json | sort > /tmp/enrollment-pubkeys-before.txt
+  wc -l < /tmp/enrollment-pubkeys-before.txt   # informational: how many enrollments exist right now
   ```
-  **Expected:** `/tmp/enrollments-before.json` holds **exactly 13** objects, each with a base64
-  `data` blob and `lamports`. Keep this file for Phase C.
-  **STOP-if:** count ≠ 13. Do not open the window against an enrollment set that doesn't match §15.1
-  — investigate first (a wrong count means the chain state diverged from the migration's assumptions).
+  **Expected:** `/tmp/enrollments-before.json` holds one object per live Enrollment PDA, each with a
+  base64 `data` blob and `lamports`; `/tmp/enrollment-pubkeys-before.txt` is the sorted pubkey set.
+  Keep **both** files for Phase C. (No fixed count is asserted — C2 diffs this set, not a number.)
+  **STOP-if:** the enumeration errors or returns zero accounts (RPC/filter problem — the Enrollment
+  discriminator memcmp must match at least the known enrollments). A non-empty, stable set is all
+  that's required; the exact size is captured, not gated.
 
 ---
 
@@ -459,9 +472,10 @@ All three invariants must hold. **Any failure → STOP the lane, file a P0, roll
   the HEAD SHA (proves §11.0 commitment landed).
   **STOP-if:** any `len ≠ 255`, any mask mismatch, or any `content_tx_id` still all-zero.
 
-- [ ] **C2: All 13 Enrollment PDAs are byte-identical to the A6 snapshot**
+- [ ] **C2: The Enrollment PDA set is preserved and byte-identical to the A6 snapshot**
 
-  `close_course` must not have touched enrollments. Re-enumerate exactly as A6 and diff:
+  `close_course` must not have touched enrollments. Re-enumerate exactly as A6, capture the AFTER
+  set, and assert **set-equality against A6 (no PDA added or missing)** plus byte-identity:
   ```bash
   curl -s "$HELIUS_RPC" -X POST -H 'Content-Type: application/json' -d '{
     "jsonrpc":"2.0","id":1,"method":"getProgramAccounts",
@@ -469,14 +483,20 @@ All three invariants must hold. **Any failure → STOP the lane, file a P0, roll
       {"encoding":"base64","filters":[{"memcmp":{"offset":0,"bytes":"inacXgeoHEa"}}]}]
   }' | jq -S '[.result[] | {pubkey, data: .account.data[0], lamports: .account.lamports}] | sort_by(.pubkey)' \
      > /tmp/enrollments-after.json
-  jq 'length' /tmp/enrollments-after.json                       # MUST print 13
-  diff /tmp/enrollments-before.json /tmp/enrollments-after.json # MUST be empty
+  # AFTER snapshot set of pubkeys:
+  jq -r '.[].pubkey' /tmp/enrollments-after.json | sort > /tmp/enrollment-pubkeys-after.txt
+  # (1) SET-EQUALITY: the sorted pubkey sets must match — any missing/added PDA fails the gate.
+  diff /tmp/enrollment-pubkeys-before.txt /tmp/enrollment-pubkeys-after.txt   # MUST be empty
+  # (2) BYTE-IDENTITY: raw data + lamports of every enrollment unchanged.
+  diff /tmp/enrollments-before.json /tmp/enrollments-after.json               # MUST be empty
   ```
-  **Expected:** count 13; `diff` produces **no output** — every enrollment's raw base64 `data` and
+  **Expected:** both `diff`s produce **no output** — the Enrollment PDA set is exactly the A6 set
+  (nothing dropped or added by `close_course`), and every enrollment's raw base64 `data` and
   `lamports` are byte-for-byte unchanged, which proves `lesson_flags` still map to the right lessons
   via the frozen `slots.lock.json` (the A2 bit-verify guarantees the mapping; C2 guarantees the
-  bitmaps themselves never moved).
-  **STOP-if:** count ≠ 13, or `diff` shows any change. Note the **expected, non-failing** case if
+  bitmaps themselves never moved). The object count is informational (whatever A6 captured).
+  **STOP-if:** the set-equality `diff` is non-empty (any PDA missing or added), or the byte-identity
+  `diff` shows any change. Note the **expected, non-failing** case if
   solana-101 was renamed in B7: the on-chain solana-101 Enrollment PDA (seed
   `aD45H1NEbb1bqELwloGCqI`) is still byte-identical here (we never touched it) — the rename is a
   DB-only rewrite, so C2 still passes for all 13; the DB now points that one row at the new id by
@@ -526,7 +546,7 @@ authoring only if/when the rest of the content migration (Phases 5–8, out of s
 | **G2** | **A2** | **Any of the 6 completions' bit ≠ generated slot** | **STOP whole cutover, file P0** |
 | G3 | A3 | #384 or #389 red / unreviewed / conflicting | Fix PRs; do not open window |
 | G4 | A4 | v2 build fails or IDL still has `lesson_count` | On wrong commit; do not deploy |
-| G5 | A6 | Enrollment count ≠ 13 | Investigate divergence first |
+| G5 | A6 | Enrollment enumeration errors / returns zero accounts | Fix RPC/filter; capture a non-empty set (count informational) |
 | **G6** | **B1** | **Non-Helius RPC used, deploy corrupt, or bytes mismatch** | **Redeploy over Helius** |
 | G7 | B2 | Copied IDL still has `lesson_count` / wrong address | Rebuild + recopy from deploy commit |
 | G8 | B3 | Merge fails or prod deploy not `Ready` | Roll forward; do not leave prod mid-window |
