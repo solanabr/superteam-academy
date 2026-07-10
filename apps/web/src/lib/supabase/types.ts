@@ -914,7 +914,7 @@ export type Database = {
           p_tx_signature?: string;
           p_user_id: string;
         };
-        Returns: undefined;
+        Returns: number;
       };
       create_thread: {
         Args: {

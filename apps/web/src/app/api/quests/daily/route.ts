@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import { PublicKey } from "@solana/web3.js";
 import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/sanity/queries";
-import { rewardXp, isOnChainProgramLive } from "@/lib/solana/academy-program";
-import { queueFailedOnchainAction } from "@/lib/solana/onchain-queue";
+import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
-import { logError } from "@/lib/logging";
-import { ERROR_IDS } from "@/constants/errorIds";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -116,14 +112,22 @@ export async function GET() {
       };
     });
 
-    // 6. Mint XP on-chain for newly-completed quests (fire-and-forget)
-    const newlyAwarded = progressRows.filter(
-      (r) => r.justAwarded && r.xpReward > 0
-    );
-    if (newlyAwarded.length > 0) {
-      mintQuestXpOnChain(user.id, newlyAwarded, admin).catch(() => {
-        // Errors are logged + queued inside mintQuestXpOnChain
-      });
+    // 6. XP delivery is durable by construction: get_daily_quest_state writes
+    // the pending_onchain_actions row in the SAME transaction that flips
+    // xp_granted=true, so a quest is never marked granted without a durable
+    // pending row. Nothing to enqueue here — doing it in the route would leave
+    // a window where xp_granted stands without a row.
+    //
+    // 7. Deliver this user's pending quest_xp credits NOW. The auth-time
+    // retryPendingOnchainActions() only runs on re-auth, so a permanently
+    // logged-in session would otherwise never get its enqueued rows swept.
+    // Idempotent (award_xp keyed on reference_id), DB-only, so awaiting is
+    // cheap. Errors never fail the endpoint — rows stay durable for the next
+    // sweep.
+    try {
+      await retryQuestXpForUser(admin, user.id);
+    } catch (err) {
+      console.error("[api/quests/daily] quest_xp sweep failed:", err);
     }
 
     return NextResponse.json({
@@ -136,60 +140,5 @@ export async function GET() {
       { error: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Fire-and-forget: mint quest XP tokens on-chain
-// ---------------------------------------------------------------------------
-
-async function mintQuestXpOnChain(
-  userId: string,
-  awarded: Array<{ questId: string; xpReward: number }>,
-  admin: ReturnType<typeof createAdminClient>
-): Promise<void> {
-  // Check if program is live before attempting on-chain calls
-  const programLive = await isOnChainProgramLive();
-  if (!programLive) return;
-
-  // Resolve the user's wallet address
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("wallet_address")
-    .eq("id", userId)
-    .single();
-
-  if (!profile?.wallet_address) return;
-
-  const wallet = new PublicKey(profile.wallet_address);
-
-  for (const quest of awarded) {
-    const memo = `daily_quest:${quest.questId}`;
-    try {
-      await rewardXp(wallet, quest.xpReward, memo);
-    } catch (err) {
-      logError({
-        errorId: ERROR_IDS.XP_REWARD_FAILED,
-        error: err instanceof Error ? err : new Error(String(err)),
-        context: {
-          handler: "mintQuestXpOnChain",
-          userId,
-          questId: quest.questId,
-          xpReward: quest.xpReward,
-        },
-      });
-
-      await queueFailedOnchainAction(
-        userId,
-        "quest_xp",
-        quest.questId,
-        {
-          xpAmount: quest.xpReward,
-          memo,
-          walletAddress: profile.wallet_address,
-        },
-        err instanceof Error ? err.message : String(err)
-      );
-    }
   }
 }
