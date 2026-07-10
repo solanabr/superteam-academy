@@ -26,28 +26,45 @@ export function getSanityAdminClient(): typeof sanityAdmin {
 // unit-tested against an in-memory double, never a live Sanity.
 // ---------------------------------------------------------------------------
 
-/** Read every managed document (with onChainStatus + sync marker) for the sync. */
+/**
+ * Read every managed document (with onChainStatus + sync marker) for the sync.
+ * Pinned to the `published` perspective: with a token and no perspective the
+ * client reads raw, returning `drafts.*` documents too. Those would inflate the
+ * blast-radius denominator and — since a draft `_id` (`drafts.course-x`) is
+ * absent from the projected tree — be pruned on every sync, silently deleting an
+ * editor's in-progress draft. Published-only keeps the sync operating solely on
+ * the published dataset it owns.
+ */
 export async function readManagedDocuments(): Promise<SanityDoc[]> {
   const query = `*[_type in $types]{ ..., onChainStatus, sync }`;
-  return sanityAdmin.fetch<SanityDoc[]>(query, { types: [...MANAGED_TYPES] });
+  return sanityAdmin.fetch<SanityDoc[]>(
+    query,
+    { types: [...MANAGED_TYPES] },
+    { perspective: "published" }
+  );
 }
 
-/** createOrReplace a batch of documents in one transaction. */
+/**
+ * createOrReplace a batch of documents in one transaction. Committed with
+ * `visibility:"sync"` so the write is query-visible before the call resolves —
+ * the sync's downstream steps (and any re-sync) get read-your-writes and never
+ * race an async-propagating write.
+ */
 export async function writeDocuments(docs: SanityDoc[]): Promise<void> {
   if (docs.length === 0) return;
   let tx = sanityAdmin.transaction();
   for (const doc of docs) {
     tx = tx.createOrReplace(doc as unknown as { _id: string; _type: string });
   }
-  await tx.commit({ visibility: "async" });
+  await tx.commit({ visibility: "sync" });
 }
 
-/** Delete a batch of documents by id in one transaction (post write-verify). */
+/** Delete a batch of documents by id in one transaction (post-prune). */
 export async function deleteDocuments(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   let tx = sanityAdmin.transaction();
   for (const id of ids) tx = tx.delete(id);
-  await tx.commit({ visibility: "async" });
+  await tx.commit({ visibility: "sync" });
 }
 
 /** Write the contentSync singleton LAST (spec §9.4 — never matches the prune). */
