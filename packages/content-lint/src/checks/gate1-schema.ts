@@ -8,23 +8,15 @@ import {
   LearningPath,
   Instructor,
   SlotsLock,
+  type CourseT,
+  type LessonT,
+  type SlotsLockT,
 } from "@superteam-lms/content-schema";
 import { discover, walkFiles, type DocKind, type RawDoc } from "../loader";
 import { emptyModel, type RepoModel } from "../model";
 import { registerSchemaCheck } from "../lint";
 import { diag, type Diagnostic } from "../diagnostics";
 import { dirname } from "node:path";
-
-const SCHEMA: Record<DocKind, ZodType> = {
-  course: Course,
-  lesson: Lesson,
-  quiz: QuizBlock,
-  achievement: Achievement,
-  quest: Quest,
-  path: LearningPath,
-  instructor: Instructor,
-  slots: SlotsLock,
-};
 
 /** A standalone `*.quiz.yaml` may omit `type:` (spec §4.5 shorthand); inject it. */
 function coerce(kind: DocKind, data: unknown): unknown {
@@ -63,82 +55,95 @@ export function buildModel(root: string, diagnostics: Diagnostic[]): RepoModel {
   // Map each course dir to the files under it, for lesson `files` (gate 5).
   const allFiles = walkFiles(root);
 
-  // First pass: validate everything, collect typed entries.
-  const validLessons: { doc: RawDoc; lesson: unknown }[] = [];
-  const validCourses: { doc: RawDoc; course: unknown }[] = [];
-  const slotsByDir = new Map<string, unknown>();
-
-  for (const doc of docs) {
-    const schema = SCHEMA[doc.kind];
+  // Parse with the CONCRETE schema per kind, so each result carries its real
+  // output type into the RepoModel — no `as never`/`as any` bridging.
+  const parse = <T>(doc: RawDoc & { data: unknown }, schema: ZodType<T>) => {
     const parsed = schema.safeParse(coerce(doc.kind, doc.data));
     if (!parsed.success) {
       diagnostics.push(
         diag("gate-1", "error", doc.path, formatZodIssues(parsed.error))
       );
-      continue;
+      return null;
     }
-    const value = parsed.data;
+    return parsed.data;
+  };
+
+  // First pass: validate everything, collect typed entries.
+  const validLessons: { doc: RawDoc; lesson: LessonT }[] = [];
+  const validCourses: { doc: RawDoc; course: CourseT }[] = [];
+  const slotsByDir = new Map<string, SlotsLockT>();
+
+  for (const doc of docs) {
     switch (doc.kind) {
-      case "course":
-        validCourses.push({ doc, course: value });
+      case "course": {
+        const course = parse(doc, Course);
+        if (course) validCourses.push({ doc, course });
         break;
-      case "lesson":
-        validLessons.push({ doc, lesson: value });
+      }
+      case "lesson": {
+        const lesson = parse(doc, Lesson);
+        if (lesson) validLessons.push({ doc, lesson });
         break;
-      case "slots":
-        slotsByDir.set(dirname(doc.path), value);
+      }
+      case "slots": {
+        const slots = parse(doc, SlotsLock);
+        if (slots) slotsByDir.set(dirname(doc.path), slots);
         break;
-      case "quiz":
-        model.standaloneQuizzes.push({ file: doc.path, quiz: value as never });
+      }
+      case "quiz": {
+        const quiz = parse(doc, QuizBlock);
+        if (quiz) model.standaloneQuizzes.push({ file: doc.path, quiz });
         break;
-      case "achievement":
-        model.achievements.push({
-          file: doc.path,
-          achievement: value as never,
-        });
+      }
+      case "achievement": {
+        const achievement = parse(doc, Achievement);
+        if (achievement)
+          model.achievements.push({ file: doc.path, achievement });
         break;
-      case "quest":
-        model.quests.push({ file: doc.path, quest: value as never });
+      }
+      case "quest": {
+        const quest = parse(doc, Quest);
+        if (quest) model.quests.push({ file: doc.path, quest });
         break;
-      case "path":
-        model.paths.push({ file: doc.path, path: value as never });
+      }
+      case "path": {
+        const path = parse(doc, LearningPath);
+        if (path) model.paths.push({ file: doc.path, path });
         break;
-      case "instructor":
-        model.instructors.push({
-          file: doc.path,
-          instructor: value as never,
-        });
+      }
+      case "instructor": {
+        const instructor = parse(doc, Instructor);
+        if (instructor) model.instructors.push({ file: doc.path, instructor });
         break;
+      }
     }
   }
 
   for (const { doc, lesson } of validLessons) {
     const dir = dirname(doc.path);
-    const l = lesson as { id: string };
     const entry = {
-      id: l.id,
+      id: lesson.id,
       dir,
       file: doc.path,
-      lesson: lesson as never,
+      lesson,
       files: allFiles.filter((f) => f.startsWith(dir + "/")),
     };
     model.lessons.push(entry);
-    model.lessonsById.set(l.id, entry);
+    model.lessonsById.set(lesson.id, entry);
   }
 
   for (const { doc, course } of validCourses) {
     const dir = dirname(doc.path);
-    const c = course as { id: string };
     const slotsPathCandidate = `${dir}/slots.lock.json`;
     model.courses.push({
-      id: c.id,
+      id: course.id,
       dir,
       file: doc.path,
-      course: course as never,
+      course,
       slotsPath: allFiles.includes(slotsPathCandidate)
         ? slotsPathCandidate
         : null,
-      slotsLock: (slotsByDir.get(dir) as never) ?? null,
+      slotsLock: slotsByDir.get(dir) ?? null,
     });
   }
 
