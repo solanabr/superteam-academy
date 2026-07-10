@@ -95,3 +95,33 @@ describe("DeployedProgramCardBlock", () => {
     expect(b.consumes).toEqual(["deployed-program"]);
   });
 });
+
+describe("per-type produces constraints (gate 13a, local half)", () => {
+  it("rejects wallet-funding producing anything but funded-wallet", () => {
+    expect(
+      WalletFundingBlock.safeParse({
+        type: "wallet-funding",
+        key: "f",
+        produces: "deployed-program",
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects produces on pure consumers", () => {
+    expect(
+      ProgramExplorerBlock.safeParse({
+        type: "program-explorer",
+        key: "e",
+        idl: "program.idl.json",
+        produces: "funded-wallet",
+      }).success
+    ).toBe(false);
+    expect(
+      DeployedProgramCardBlock.safeParse({
+        type: "deployed-program-card",
+        key: "c",
+        produces: "deployed-program",
+      }).success
+    ).toBe(false);
+  });
+});
