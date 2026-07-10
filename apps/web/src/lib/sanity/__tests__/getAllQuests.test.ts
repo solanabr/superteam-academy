@@ -28,7 +28,11 @@ describe("getAllQuests (§15.4a block-model couplings)", () => {
     expect(q).not.toContain('type == "challenge"');
     // moduleLessonMap rebuilt from inline course.modules[], NOT module documents.
     expect(q).not.toContain('_type == "module"');
-    expect(q).toContain(".modules[]");
+    // NESTED projection then flatten so `^._id` resolves to the course (a
+    // flattened `.modules[]` traversal would null every composite id).
+    expect(q).toContain('"m": modules[]{');
+    expect(q).toContain("}.m[]");
+    expect(q).toContain('^._id + ":" + key');
   });
 
   it("maps a blocks-shaped fixture: challenge ids present, dangling refs filtered", async () => {

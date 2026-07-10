@@ -40,6 +40,8 @@ describe("CS-5: lesson read path is one literal blocks[] projection", () => {
     // Post-D4 the code grader reads solution + tests from this same public projection.
     expect(q).toContain("solution");
     expect(q).toContain("tests[]{");
+    // The quiz block's only content field — omitting it made every quiz DOA.
+    expect(q).toContain("questions[]{");
     // The old hidden-stripping is gone: no `hidden` predicate anywhere.
     expect(q).not.toContain("hidden");
   });

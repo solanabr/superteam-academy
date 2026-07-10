@@ -89,6 +89,13 @@ const lessonFields = `
     solution,
     tests[]{ id, description, input, expectedOutput },
     hints,
+    questions[]{
+      id,
+      prompt,
+      multiSelect,
+      options[]{ id, label, correct, feedback },
+      explanation
+    },
     prompt,
     maxWords,
     amount,
@@ -535,17 +542,23 @@ export async function getAllQuests(): Promise<QuestData> {
       resetType: string;
     }>;
     challengeLessonIds: string[];
-    moduleLessonMap: Array<{ _id: string; lessonIds: (string | null)[] }>;
+    // The flattened `.m[]` can contain a null element for a module-less course.
+    moduleLessonMap: Array<{
+      _id: string | null;
+      lessonIds: (string | null)[];
+    } | null>;
   }>(
     `{
       "quests": *[_type == "quest" && active == true && !(_id in path("drafts.**"))] {
         _id, name, description, type, icon, xpReward, targetValue, resetType
       },
       "challengeLessonIds": *[_type == "lesson" && count(blocks[_type == "code"]) > 0]._id,
-      "moduleLessonMap": *[_type == "course" && !(_id in path("drafts.**"))].modules[]{
-        "_id": ^._id + ":" + key,
-        "lessonIds": lessons[]->_id
-      }
+      "moduleLessonMap": *[_type == "course" && !(_id in path("drafts.**"))]{
+        "m": modules[]{
+          "_id": ^._id + ":" + key,
+          "lessonIds": lessons[]->_id
+        }
+      }.m[]
     }`
   );
 
@@ -564,9 +577,15 @@ export async function getAllQuests(): Promise<QuestData> {
       Boolean
     ) as string[],
     moduleLessonMap: (raw.moduleLessonMap ?? [])
-      .filter((m) => m.lessonIds && m.lessonIds.length > 0)
+      // Guard the null element a module-less course injects into the flattened
+      // `.m[]` (would otherwise throw and 500 /api/quests/daily), plus modules
+      // with no resolvable lessons.
+      .filter(
+        (m): m is { _id: string | null; lessonIds: (string | null)[] } =>
+          !!m && !!m.lessonIds && m.lessonIds.length > 0
+      )
       .map((m) => ({
-        id: m._id,
+        id: m._id ?? "",
         lessonIds: m.lessonIds.filter(Boolean) as string[],
       })),
   };
