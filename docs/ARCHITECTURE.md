@@ -421,7 +421,7 @@ Derived from the Rust state structs (`onchain-academy/programs/onchain-academy/s
 - **Mint**: Created during `initialize`, owned by Config PDA
 - **Extensions**: NonTransferable (soulbound, cannot be transferred between wallets) + PermanentDelegate (platform can burn/adjust without owner signature)
 - **Decimals**: 0 (1 token = 1 XP)
-- **Minting**: Via CPI in `complete_lesson` (`xp_per_lesson` amount) and `finalize_course` (completion bonus = `floor(xp_per_lesson * lesson_count / 2)`)
+- **Minting**: Via CPI in `complete_lesson` (`xp_per_lesson` amount) and `finalize_course` (completion bonus = `floor(xp_per_lesson * live_lesson_count / 2)Course.active_lessons`)
 - **Creator rewards**: `finalize_course` mints `creator_reward_xp` to the course creator's ATA when `total_completions >= min_completions_for_reward`
 
 ### Metaplex Core Credentials
@@ -661,7 +661,7 @@ XP is dual-tracked: Token-2022 on-chain (source of truth) + Supabase mirror (fas
 | Action                  | XP Range                                  | Enforcement                              |
 | ----------------------- | ----------------------------------------- | ---------------------------------------- |
 | Complete lesson         | 10-50 (by difficulty)                     | `xp_per_lesson` from on-chain Course PDA |
-| Complete course (bonus) | `floor(xp_per_lesson * lesson_count / 2)` | `finalize_course` instruction            |
+| Complete course (bonus) | `floor(xp_per_lesson * live_lesson_count / 2)` (popcount of `active_lessons`) | `finalize_course` instruction            |
 | Creator reward          | `creator_reward_xp` (when threshold met)  | `finalize_course` instruction            |
 
 **Level formula**: `Level = floor(sqrt(totalXP / 100))`
