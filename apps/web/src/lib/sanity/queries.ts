@@ -256,11 +256,14 @@ export async function getCourseLessons(
 ): Promise<Pick<Lesson, "_id" | "title" | "slug">[]> {
   return catalogFetch<Pick<Lesson, "_id" | "title" | "slug">[]>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
-      "lessons": modules[].lessons[]-> {
+      // (...)[defined(_id)] drops unresolvable derefs: a stale cache entry or a
+      // legacy-shaped course doc must degrade to fewer nav items, never emit
+      // nulls that crash every lesson page of the course (issue #405).
+      "lessons": (modules[].lessons[]-> {
         _id,
         title,
         "slug": slug.current
-      }
+      })[defined(_id)]
     }.lessons`,
     { courseSlug }
   );
