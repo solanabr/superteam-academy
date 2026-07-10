@@ -71,18 +71,6 @@
         "minLength": 1
       }
     },
-    "creator": {
-      "type": "object",
-      "properties": {
-        "githubId": {
-          "type": "string",
-          "pattern": "^\\d+$"
-        }
-      },
-      "required": [
-        "githubId"
-      ]
-    },
     "instructor": {
       "type": "string",
       "pattern": "^instructor-[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -133,7 +121,6 @@
     "duration",
     "xpPerLesson",
     "xpReward",
-    "creator",
     "modules"
   ]
 }

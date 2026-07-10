@@ -13,6 +13,17 @@ export const instructor = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "wallet",
+      title: "Wallet",
+      type: "string",
+      description:
+        "On-curve Solana address. Resolved at sync to Course.creator (creator XP recipient) for every course this instructor teaches, and the platform-identity key (profiles.wallet_address).",
+      validation: (rule) =>
+        rule
+          .required()
+          .regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, { name: "base58 address" }),
+    }),
+    defineField({
       name: "avatar",
       title: "Avatar",
       type: "image",

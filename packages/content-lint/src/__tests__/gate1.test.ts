@@ -10,7 +10,6 @@ difficulty: beginner
 duration: 1
 xpPerLesson: 10
 xpReward: 100
-creator: { githubId: "123" }
 modules:
   - key: m
     title: M

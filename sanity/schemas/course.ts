@@ -133,21 +133,6 @@ export const course = defineType({
         "Student completions required before creator reward is paid. 0 = never.",
     }),
     defineField({
-      name: "creator",
-      title: "Creator",
-      type: "object",
-      description:
-        "Resolved at CS-9 sync: creator.githubId → profiles.wallet_address → Course.creator on-chain. Replaces the removed `author` field.",
-      fields: [
-        defineField({
-          name: "githubId",
-          title: "GitHub numeric user id",
-          type: "string",
-          validation: (r) => r.regex(/^\d+$/, { name: "numeric github id" }),
-        }),
-      ],
-    }),
-    defineField({
       name: "onChainStatus",
       title: "On-Chain Status",
       type: "object",

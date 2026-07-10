@@ -600,7 +600,8 @@ export interface AdminCourse {
   title: string;
   slug: string;
   difficulty: string;
-  author: string | null;
+  /** Resolved from `course.instructor -> instructor.wallet`: the on-chain Course.creator. */
+  creatorWallet: string | null;
   xpPerLesson: number | null;
   trackId: number | null;
   trackLevel: number | null;
@@ -653,7 +654,7 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
       },
       creatorRewardXp,
       minCompletionsForReward,
-      author,
+      "creatorWallet": instructor->wallet,
       "lessonCount": count(modules[].lessons[]),
       "trackCollectionAddress": onChainStatus.trackCollectionAddress,
       onChainStatus

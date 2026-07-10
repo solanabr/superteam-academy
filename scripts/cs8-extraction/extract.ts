@@ -19,12 +19,21 @@
  *   pnpm --filter @superteam-lms/web exec tsx scripts/cs8-verify-bits.ts
  */
 
-import { mkdirSync, rmSync, writeFileSync, cpSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+  readFileSync,
+  cpSync,
+  existsSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 
 import YAML from "yaml";
 import {
   assignSlots,
+  SlotsLock,
+  type SlotsLockT,
   Course,
   Lesson,
   Achievement,
@@ -38,8 +47,12 @@ import {
 const PROJECT_ID = "4e3i2wwc";
 const DATASET = "production";
 
-/** Platform-authored mock content. All six courses are owned by the repo owner. */
-const OWNER_GITHUB_ID = "61333600"; // gh api users/thomgabriel --jq .id
+/**
+ * Platform-authored mock content. Every instructor is the repo owner, so all
+ * creator rewards land in one wallet and `wallet -> profiles.wallet_address`
+ * resolves to a real platform user for testing. On-curve (verified).
+ */
+const OWNER_WALLET = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
 
 /**
  * Owner decision: drop `solana-101` (`aD45H1NEbb1bqELwloGCqI`) and the junk draft
@@ -165,6 +178,14 @@ async function main(): Promise<void> {
       .join(", ")})`
   );
 
+  // Snapshot committed slots.lock.json BEFORE the wipe: they pin on-chain bitmap
+  // positions and must survive re-extraction byte-identical (keyed by course slug).
+  const priorLocks = new Map<string, string>();
+  for (const c of courses) {
+    const p = join(out, "courses", slugOf(c), "slots.lock.json");
+    if (existsSync(p)) priorLocks.set(slugOf(c), readFileSync(p, "utf8"));
+  }
+
   // Wipe only the generated trees; leave scaffolding (README, schema/, .github) alone.
   for (const dir of [
     "courses",
@@ -199,7 +220,6 @@ async function main(): Promise<void> {
       trackId: course.trackId,
       trackLevel: course.trackLevel,
       tags: course.tags,
-      creator: { githubId: OWNER_GITHUB_ID },
       instructor: course.instructor ? ref(course.instructor) : undefined,
       modules: modules.map((m) => {
         const lessonIds = (m.lessons as unknown[]).map(ref);
@@ -216,11 +236,25 @@ async function main(): Promise<void> {
     Course.parse(courseYaml);
     writeYaml(join(courseDir, "course.yaml"), courseYaml);
 
-    // Slots frozen from the LIVE flattened order (spec §15.3).
-    writeJson(
-      join(courseDir, "slots.lock.json"),
-      assignSlots(null, flatLessonIds)
-    );
+    // Slots are frozen from the LIVE flattened order (spec §15.3) and pin
+    // on-chain bitmap positions, so a re-run MUST preserve any committed
+    // lockfile byte-for-byte. Load the existing one and pass it as `existing`
+    // (never null on a re-extraction), so already-assigned slots are kept rather
+    // than reassigned. Assert byte-identity as a hard guard.
+    const lockPath = join(courseDir, "slots.lock.json");
+    const priorBytes = priorLocks.get(slugOf(course)) ?? null;
+    const existingLock: SlotsLockT | null =
+      priorBytes !== null ? SlotsLock.parse(JSON.parse(priorBytes)) : null;
+    const lock = assignSlots(existingLock, flatLessonIds);
+    const lockBytes = JSON.stringify(lock, null, 2) + "\n";
+    if (priorBytes !== null && lockBytes !== priorBytes) {
+      throw new Error(
+        `slots.lock.json for ${course._id} would change on re-extraction — the ` +
+          `live lesson order or set diverged from the frozen lockfile. Refusing to overwrite.`
+      );
+    }
+    mkdirSync(dirname(lockPath), { recursive: true });
+    writeFileSync(lockPath, lockBytes, "utf8");
 
     for (const lid of flatLessonIds) {
       const l = byId.get(lid)!;
@@ -390,6 +424,9 @@ async function main(): Promise<void> {
     const doc = compact({
       id: i._id,
       name: i.name,
+      // All mock instructors are the repo owner (see OWNER_WALLET). A real
+      // instructor's wallet would come from the teacher's PR.
+      wallet: OWNER_WALLET,
       bio: i.bio,
       socialLinks: Object.keys(social).length ? compact(social) : undefined,
     });

@@ -9,7 +9,6 @@ const base = {
   duration: 6,
   xpPerLesson: 10,
   xpReward: 600,
-  creator: { githubId: "12345678" },
   modules: [
     { key: "basics", title: "The Basics", lessons: ["lesson-accounts"] },
   ],
@@ -42,10 +41,11 @@ describe("Course", () => {
     expect(Course.safeParse(bad).success).toBe(false);
   });
 
-  it("requires a numeric githubId string", () => {
-    expect(
-      Course.safeParse({ ...base, creator: { githubId: "octocat" } }).success
-    ).toBe(false);
+  it("strips a legacy `creator` field rather than rejecting it", () => {
+    // `creator` was removed when the on-chain creator moved to the instructor's
+    // wallet. Course is non-strict, so a stale field is dropped, not an error.
+    const parsed = Course.parse({ ...base, creator: { githubId: "12345678" } });
+    expect("creator" in parsed).toBe(false);
   });
 
   it("rejects more lessons than the on-chain bitmap can hold", () => {

@@ -10,6 +10,10 @@
       "type": "string",
       "minLength": 1
     },
+    "wallet": {
+      "type": "string",
+      "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"
+    },
     "bio": {
       "type": "string"
     },
@@ -31,6 +35,7 @@
   },
   "required": [
     "id",
-    "name"
+    "name",
+    "wallet"
   ]
 }

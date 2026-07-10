@@ -14,7 +14,6 @@ function fixture(): ValidatedContent {
         duration: 1,
         xpPerLesson: 10,
         xpReward: 100,
-        creator: { githubId: "1" },
         modules: [{ key: "m", title: "M", lessons: ["lesson-accounts"] }],
       } as never,
     ],

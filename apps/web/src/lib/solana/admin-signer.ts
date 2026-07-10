@@ -123,9 +123,9 @@ export interface CreateCourseAdminParams {
   creatorRewardXp: number;
   minCompletionsForReward: number;
   /**
-   * Instructor's linked Solana wallet (base58). When set + parseable it becomes
-   * the on-chain `course.creator` (creator-reward recipient); otherwise the
-   * platform authority is used.
+   * Instructor's on-curve Solana wallet (base58). Becomes the on-chain
+   * `course.creator` (creator-reward recipient). Required — a missing, invalid,
+   * or off-curve value throws; there is no platform-authority fallback.
    */
   creatorWallet?: string;
 }
@@ -296,18 +296,29 @@ export async function deployCoursePda(
         ? new PublicKey(params.prerequisitePda)
         : null;
 
-    // Creator = the instructor's linked wallet when supplied + valid, so the
-    // on-chain creator reward (finalize_course) pays the real teacher. Falls back
-    // to the platform authority for admin/platform courses or an unparseable wallet.
-    let creator = _authority.publicKey;
-    if (params.creatorWallet) {
-      try {
-        creator = new PublicKey(params.creatorWallet);
-      } catch {
-        console.warn(
-          `[admin-signer] deployCoursePda(${params.courseId}): invalid creatorWallet "${params.creatorWallet}" — using platform authority as creator.`
-        );
-      }
+    // Creator = the instructor's wallet (finalize_course pays it the creator
+    // reward). Required, and on-curve: Course.creator is immutable on-chain and
+    // must own the reward ATA, so an off-curve owner (a PDA) is invalid. There is
+    // NO platform-authority fallback — a missing, unparseable, or off-curve wallet
+    // is a hard error, never a silent mis-mint to the platform key. The route
+    // validates this too; this is the defense-in-depth backstop.
+    if (!params.creatorWallet) {
+      throw new Error(
+        `deployCoursePda(${params.courseId}): creatorWallet is required (no platform-authority fallback)`
+      );
+    }
+    let creator: PublicKey;
+    try {
+      creator = new PublicKey(params.creatorWallet);
+    } catch {
+      throw new Error(
+        `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is not a valid address`
+      );
+    }
+    if (!PublicKey.isOnCurve(creator.toBytes())) {
+      throw new Error(
+        `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
+      );
     }
 
     const onChainParams: CreateCourseOnChainParams = {

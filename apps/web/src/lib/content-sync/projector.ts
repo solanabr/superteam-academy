@@ -111,7 +111,6 @@ export function projectContent(
       creatorRewardXp: c.creatorRewardXp ?? 0,
       minCompletionsForReward: c.minCompletionsForReward ?? 0,
       tags: c.tags ?? [],
-      creator: { githubId: c.creator.githubId },
       instructor: c.instructor ? weakRef(c.instructor) : undefined,
       prerequisiteCourse: c.prerequisiteCourse
         ? weakRef(c.prerequisiteCourse)
