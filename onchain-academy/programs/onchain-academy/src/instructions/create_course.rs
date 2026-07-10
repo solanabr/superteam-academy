@@ -41,7 +41,9 @@ pub fn handler(ctx: Context<CreateCourse>, params: CreateCourseParams) -> Result
     course.creator = params.creator;
     course.content_tx_id = params.content_tx_id;
     course.version = 1;
-    course.lesson_count = params.lesson_count;
+    // New courses are dense: bits 0..lesson_count set. Slots are retired later
+    // via update_course(new_active_lessons); create never produces holes.
+    course.active_lessons = Course::dense_mask(params.lesson_count);
     course.difficulty = params.difficulty;
     course.xp_per_lesson = params.xp_per_lesson;
     course.track_id = params.track_id;

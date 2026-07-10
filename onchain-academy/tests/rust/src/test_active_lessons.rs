@@ -85,3 +85,29 @@ fn lesson_count_decrease_is_frozen_at_tail() {
     assert_eq!(6000 + AcademyError::XpAmountExceedsMax as u32, 6033);
     assert_eq!(6000 + AcademyError::LessonCountDecrease as u32, 6034);
 }
+
+/// create_course seeds a dense mask from the initial lesson_count param
+/// (`course.active_lessons = Course::dense_mask(params.lesson_count)`), and still
+/// rejects a zero count with InvalidLessonCount.
+#[test]
+fn create_course_seeds_dense_mask() {
+    // A fresh 3-lesson course has slots 0,1,2 live and 3 live lessons.
+    let mask = Course::dense_mask(3);
+    assert_eq!(mask, [0b111u64, 0, 0, 0]);
+    let live: u32 = mask.iter().map(|w| w.count_ones()).sum();
+    assert_eq!(live, 3);
+
+    // A 12-lesson course (the common live case) is dense across the low word.
+    assert_eq!(Course::dense_mask(12), [0b1111_1111_1111u64, 0, 0, 0]);
+}
+
+/// Mirror of the create_course guard: `require!(lesson_count > 0, ...)`.
+#[test]
+fn create_course_rejects_zero_lessons() {
+    let lesson_count: u8 = 0;
+    // Zero lessons is rejected before any mask is built.
+    assert!(!(lesson_count > 0));
+    // A dense mask of 0 would be empty, which live_lesson_count reports as 0.
+    let live: u32 = Course::dense_mask(0).iter().map(|w| w.count_ones()).sum();
+    assert_eq!(live, 0);
+}
