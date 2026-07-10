@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/course-review-queue";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { DataResyncPanel } from "@/components/admin/data-resync-panel";
+import { ContentSyncPanel } from "@/components/admin/content-sync-panel";
 import { TeacherRolesPanel } from "@/components/admin/teacher-roles-panel";
 import { LearningPathsPanel } from "@/components/admin/learning-paths-panel";
 import { CourseTagsPanel } from "@/components/admin/course-tags-panel";
@@ -211,6 +212,16 @@ export function AdminClient() {
               onRefresh={() => void fetchStatus()}
             />
           )}
+        </div>
+      </section>
+
+      {/* Content Sync (repo → Sanity → devnet) */}
+      <section>
+        <h2 className="mb-4 font-display text-lg font-bold text-text">
+          Content Sync
+        </h2>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <ContentSyncPanel />
         </div>
       </section>
 
