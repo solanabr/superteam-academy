@@ -71,4 +71,22 @@ describe("CodeBlock", () => {
     const r = CodeBlock.safeParse({ ...valid, language: "rust" });
     expect(r.success).toBe(false); // .ts files declared as rust
   });
+
+  it("rejects produces on a non-deployable code block", () => {
+    const r = CodeBlock.safeParse({ ...valid, produces: "deployed-program" });
+    expect(r.success).toBe(false); // a standard TS exercise deploys nothing
+  });
+
+  it("rejects a code block producing a capability it cannot create", () => {
+    const r = CodeBlock.safeParse({
+      ...valid,
+      language: "rust",
+      starter: "s.rs",
+      solution: "x.rs",
+      buildType: "buildable",
+      deployable: true,
+      produces: "funded-wallet",
+    });
+    expect(r.success).toBe(false);
+  });
 });
