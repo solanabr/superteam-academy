@@ -31,4 +31,18 @@ describe("extractTarball", () => {
     const tree = await extractTarball(gzipSync(Buffer.from(tar)));
     expect([...tree.keys()]).toEqual(["courses/real/course.yaml"]);
   });
+
+  it("reconstructs a path longer than 100 bytes from the ustar prefix field", async () => {
+    // The generated `owner-repo-<40-char-sha>/` top dir alone is 65 bytes, so any
+    // real repo path overflows the 100-byte name field; git archive splits it
+    // across name + prefix. A naive reader that ignores prefix would drop this.
+    const top = `solanabr-academy-courses-${"a".repeat(40)}`;
+    const deep = `${top}/courses/solana-fundamentals/lessons/pdas-and-accounts/exercise/solution.ts`;
+    expect(deep.length).toBeGreaterThan(100);
+    const tar = makeTar({ [deep]: "// solution\n" });
+    const tree = await extractTarball(gzipSync(Buffer.from(tar)));
+    expect([...tree.keys()]).toEqual([
+      "courses/solana-fundamentals/lessons/pdas-and-accounts/exercise/solution.ts",
+    ]);
+  });
 });

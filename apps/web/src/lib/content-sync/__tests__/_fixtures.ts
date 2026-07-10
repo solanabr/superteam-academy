@@ -6,19 +6,40 @@ import { stringify } from "yaml";
  * Shared by tarball.test.ts and sync.test.ts so the archive layout stays in one
  * place. Keys are the full tar entry names (including the generated top dir).
  */
+const enc = new TextEncoder();
+const blen = (s: string): number => enc.encode(s).length;
+
+/**
+ * Split a path across the ustar `name` (100) and `prefix` (155) fields at a `/`
+ * boundary, exactly as `git archive` does for a path longer than 100 bytes.
+ * Throws if no boundary yields a valid split (a single component > 100 bytes),
+ * which our fixture paths never hit.
+ */
+function splitUstarName(path: string): { name: string; prefix: string } {
+  if (blen(path) <= 100) return { name: path, prefix: "" };
+  for (let i = path.length - 1; i > 0; i--) {
+    if (path[i] !== "/") continue;
+    const prefix = path.slice(0, i);
+    const name = path.slice(i + 1);
+    if (blen(name) <= 100 && blen(prefix) <= 155) return { name, prefix };
+  }
+  throw new Error(`path too long to encode in ustar: ${path}`);
+}
+
 export function makeTar(
   files: Record<string, string | Uint8Array>
 ): Uint8Array {
-  const enc = new TextEncoder();
   const blocks: Uint8Array[] = [];
   const pad = (b: Uint8Array): Uint8Array => {
     const rem = b.length % 512;
     return rem === 0 ? b : new Uint8Array([...b, ...new Uint8Array(512 - rem)]);
   };
-  for (const [name, raw] of Object.entries(files)) {
+  for (const [path, raw] of Object.entries(files)) {
     const body = typeof raw === "string" ? enc.encode(raw) : raw;
+    const { name, prefix } = splitUstarName(path);
     const header = new Uint8Array(512);
     header.set(enc.encode(name), 0); // name (100)
+    if (prefix) header.set(enc.encode(prefix), 345); // ustar prefix (155)
     header.set(enc.encode("0000644"), 100); // mode
     header.set(enc.encode("0000000"), 108); // uid
     header.set(enc.encode("0000000"), 116); // gid
