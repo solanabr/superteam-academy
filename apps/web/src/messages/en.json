@@ -292,8 +292,6 @@
     "submitSolution": "Submit Solution",
     "resetCode": "Reset Code",
     "showHint": "Show Hint",
-    "showSolution": "Show Solution",
-    "solutionWarning": "Are you sure? Viewing the solution won't award full XP.",
     "testsPassed": "All tests passed!",
     "testsFailed": "Some tests failed. Try again!",
     "testCases": "Test Cases",
@@ -328,21 +326,8 @@
     "discussion": "Discussion",
     "askQuestion": "Ask a Question",
     "signInToAsk": "Sign in to ask a question",
-    "aiHelp": "AI Help",
-    "aiHelpLoading": "Analyzing...",
-    "aiHelpError": "Could not get suggestions. Try again.",
-    "aiHelpRateLimited": "Too many requests. Wait a moment.",
-    "aiHelpRunFirst": "Run your code first to get AI suggestions.",
     "dismissSuggestion": "Dismiss",
-    "dismissAllSuggestions": "Dismiss All",
-    "askAi": "Ask AI",
-    "aiChat": "AI Tutor",
-    "aiChatPlaceholder": "Ask about this lesson...",
-    "aiChatSend": "Send",
-    "aiChatLimit": "{remaining} of {total} messages left",
-    "aiChatLimitReached": "You've used all {total} AI messages for this lesson.",
-    "aiChatError": "Could not get a response. Try again.",
-    "aiChatThinking": "Thinking..."
+    "dismissAllSuggestions": "Dismiss All"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
@@ -558,6 +543,8 @@
     "codeEditor": "Code editor",
     "clearOutput": "Clear output",
     "resizeOutputPanel": "Resize output panel",
+    "resizeTaskPanel": "Resize task panel",
+    "resizeRailPanel": "Resize the side panel width",
     "toggleTheme": "Toggle theme",
     "platformNavigation": "Platform navigation",
     "expandSidebar": "Expand sidebar",
@@ -862,6 +849,58 @@
       "category": "No threads in this category yet.",
       "course": "No discussions about this course yet.",
       "lesson": "No questions about this lesson yet. Ask one!"
+    }
+  },
+  "aiPartner": {
+    "title": "AI Partner",
+    "subtitle": "Stuck? Get a hint, a proposed fix, or ask a question.",
+    "completed": "Challenge complete — nice work!",
+    "start": {
+      "greeting": "How can I help you build this?",
+      "explain": "Explain this challenge",
+      "explainPrompt": "Explain what this challenge is asking me to build and the approach to take — don't write the full solution for me.",
+      "approach": "How should I get started?",
+      "approachPrompt": "What are the first steps and key concepts I need to solve this challenge?"
+    },
+    "meter": {
+      "label": "{free} of 2 free hints used, {paid} of {max} paid assists used",
+      "freeLabel": "Free hints",
+      "paidLabel": "Paid assists"
+    },
+    "messages": {
+      "empty": "Ask for a hint or a proposed fix to get started.",
+      "you": "You",
+      "ai": "AI Partner",
+      "loading": "Thinking...",
+      "error": "Something went wrong. Try again."
+    },
+    "actions": {
+      "hint": "Hint",
+      "propose": "Propose fix",
+      "askPlaceholder": "Ask a question about this challenge...",
+      "askSend": "Send",
+      "budgetExhausted": "You've used all {max} paid assists for this challenge."
+    },
+    "diff": {
+      "current": "Current",
+      "proposed": "Proposed",
+      "rationale": "Why this change",
+      "accept": "Accept",
+      "reject": "Dismiss",
+      "dismissed": "Proposal dismissed.",
+      "stale": "Your code changed — this proposal is out of date.",
+      "checkPrompt": "Quick check before applying:",
+      "checkIncorrect": "Not quite.",
+      "checkVerifyError": "Couldn't verify your answer. Please try again.",
+      "checkCorrect": "Correct — you can apply the change now.",
+      "acceptLocked": "Answer the check correctly to apply this change.",
+      "applied": "Applied to your code",
+      "lineAdded": "Added",
+      "lineRemoved": "Removed"
+    },
+    "a11y": {
+      "assistMeter": "AI assist usage",
+      "diffCard": "Proposed code change"
     }
   }
 }

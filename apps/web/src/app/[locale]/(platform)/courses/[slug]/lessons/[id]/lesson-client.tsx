@@ -19,7 +19,6 @@ import {
   CheckCircle,
   ArrowLeft,
   ChatCircle,
-  Sparkle,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
@@ -30,7 +29,6 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
-import { AiChatSidebar } from "@/components/ai/ai-chat-sidebar";
 import type { Lesson } from "@/lib/sanity/types";
 
 function CodeBlockWithCopy({
@@ -209,11 +207,11 @@ export function LessonPageClient({
   const [isEnrolled, setIsEnrolled] = useState(false);
   const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
-  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
   >(null);
+
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
     courseId,
     userId,
@@ -361,184 +359,110 @@ export function LessonPageClient({
       window.removeEventListener("superteam:build-complete", handler);
   }, [lesson]);
 
-  // Challenge lessons: split panel — content + test cases left, editor right
+  // Challenge lessons: workspace layout — task brief + editor + output + AI
+  // Partner all visible via ChallengeInterface, which owns the resizable
+  // task/AI rail split (it also needs the editor's live code/execution
+  // state, which is local to that component).
   if (isChallenge) {
     // Hidden tests are already excluded server-side (GROQ projection, P0-C4),
     // so every test in the payload is safe to display.
     const visibleTests = lesson.tests ?? [];
 
-    return (
-      <div className="grid-bg -mx-4 -my-6 flex min-h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8 lg:h-[calc(100vh-60px)]">
-        <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
-          {/* Left pane: description + test cases + navigation + discussion */}
-          <div className="contents lg:flex lg:w-1/2 lg:flex-col lg:overflow-auto lg:border-r-[2.5px] lg:border-border">
-            <div className="w-full">
-              <div className="space-y-6 p-4 sm:p-6">
-                {/* Lesson top bar */}
-                <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
-                  <Link
-                    href={`/${locale}/courses/${courseSlug}`}
-                    className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
-                  >
-                    <ArrowLeft size={16} weight="bold" />
-                    {tCommon("back")}
-                  </Link>
-                  <div className="ml-auto flex items-center gap-2 sm:gap-4">
-                    <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
-                      <Lightning size={14} weight="fill" />+
-                      {earnedXp ?? courseXpPerLesson} XP
+    // Pull the H1 out of the markdown so it can headline a full-width header;
+    // the rest is the "Your Task" body shown in the rail.
+    const rawContent = lesson.content ?? "";
+    const h1 = rawContent.match(/^\s*#\s+(.+?)\s*$/m);
+    const challengeTitle = h1?.[1]?.trim() ?? lesson.title;
+    const taskBody = h1 ? rawContent.replace(h1[0], "").trim() : rawContent;
+
+    const taskSlot = (
+      <div className="space-y-5 p-4 sm:p-5">
+        {/* Video embed (if lesson has a video) */}
+        {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
+
+        {/* Markdown content (H1 stripped — headlined by the page header) */}
+        <div className="prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw, rehypeHighlight]}
+            components={markdownComponents}
+          >
+            {taskBody}
+          </ReactMarkdown>
+        </div>
+
+        {/* Test cases */}
+        {visibleTests.length > 0 && (
+          <div>
+            <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
+              {t("testCases")}
+            </h4>
+            <div className="space-y-1.5">
+              {visibleTests.map((tc) => (
+                <div
+                  key={tc.id}
+                  className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
+                >
+                  <span className="font-medium">{tc.description}</span>
+                  <div className="mt-1 flex gap-4 font-mono text-text-3">
+                    <span>
+                      {t("input")}: <code>{tc.input}</code>
                     </span>
-                    <span
-                      className="hidden text-[16px] leading-none text-text-3 sm:inline"
-                      aria-hidden="true"
-                    >
-                      &middot;
+                    <span>
+                      {t("expected")}: <code>{tc.expectedOutput}</code>
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs tabular-nums text-text-3">
-                        {currentIndex + 1}/{allLessons.length}
-                      </span>
-                      <ProgressBar
-                        value={currentIndex + 1}
-                        max={allLessons.length}
-                        className="w-16 sm:w-20"
-                      />
-                    </div>
                   </div>
                 </div>
-
-                {/* Video embed (if lesson has a video) */}
-                {lesson.videoUrl && <VideoEmbed url={lesson.videoUrl} />}
-
-                {/* Markdown content */}
-                <div className="prose max-w-none dark:prose-invert">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
-                    components={markdownComponents}
-                  >
-                    {lesson.content}
-                  </ReactMarkdown>
-                </div>
-
-                {/* Test cases */}
-                {visibleTests.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 text-xs font-semibold uppercase text-text-3">
-                      {t("testCases")}
-                    </h4>
-                    <div className="space-y-1.5">
-                      {visibleTests.map((tc) => (
-                        <div
-                          key={tc.id}
-                          className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
-                        >
-                          <span className="font-medium">{tc.description}</span>
-                          <div className="mt-1 flex gap-4 font-mono text-text-3">
-                            <span>
-                              {t("input")}: <code>{tc.input}</code>
-                            </span>
-                            <span>
-                              {t("expected")}: <code>{tc.expectedOutput}</code>
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation */}
-                <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
-                  {prevLesson && (
-                    <Button
-                      variant="pushOutline"
-                      size="default"
-                      asChild
-                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-                    >
-                      <Link
-                        href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
-                      >
-                        &larr; {tCommon("previous")}
-                      </Link>
-                    </Button>
-                  )}
-                  {nextLesson ? (
-                    <Button
-                      variant="push"
-                      size="default"
-                      asChild
-                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-                    >
-                      <Link
-                        href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
-                      >
-                        {tCommon("next")} &rarr;
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="push"
-                      size="default"
-                      asChild
-                      className="w-full justify-center sm:w-auto sm:min-w-[120px]"
-                    >
-                      <Link href={`/${locale}/courses/${courseSlug}`}>
-                        {t("lessonComplete")}
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Discussion — order-last so it appears after code editor on mobile */}
-            <div className="order-last w-full px-4 pb-12 sm:px-6 lg:order-none">
-              <div className="border-t border-border pt-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
-                    <ChatCircle size={20} weight="duotone" />
-                    {t("discussion")}
-                  </h3>
-                  {userId ? (
-                    <Button
-                      variant="pushOutline"
-                      size="sm"
-                      onClick={() => setIsDiscussionOpen(true)}
-                    >
-                      {t("askQuestion")}
-                    </Button>
-                  ) : (
-                    <AuthModal
-                      trigger={
-                        <Button variant="pushOutline" size="sm">
-                          {t("signInToAsk")}
-                        </Button>
-                      }
-                    />
-                  )}
-                </div>
-                <ThreadList
-                  scope={{ courseId, lessonId: lesson._id }}
-                  showFilters
-                  emptyMessage={tCommunity("empty.lesson")}
-                />
-                <CreateThreadModal
-                  open={isDiscussionOpen}
-                  onOpenChange={setIsDiscussionOpen}
-                  defaultScope={{ courseId, lessonId: lesson._id }}
-                />
-              </div>
+              ))}
             </div>
           </div>
+        )}
+      </div>
+    );
 
-          {/* Right pane: code editor + output only */}
-          <div className="flex h-[calc(100vh-60px)] w-full flex-col overflow-hidden lg:h-auto lg:w-1/2">
+    return (
+      <div className="grid-bg -mx-4 -my-6 min-h-[calc(100vh-60px)] bg-[var(--bg)] px-4 py-4 md:-mx-8 md:-my-8 md:px-8 md:py-6">
+        {/* Header + workspace share one rounded card; the header's border-b is
+            an internal divider, so there's no stray double line. */}
+        <div className="overflow-hidden rounded-[var(--r-lg)] border-[2.5px] border-border shadow-card">
+          {/* Header — challenge title, XP, progress */}
+          <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
+            <Link
+              href={`/${locale}/courses/${courseSlug}`}
+              className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
+            >
+              <ArrowLeft size={16} weight="bold" />
+              {tCommon("back")}
+            </Link>
+            <h1 className="min-w-0 flex-1 truncate font-display text-base font-black text-text sm:text-lg">
+              {challengeTitle}
+            </h1>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+                <Lightning size={14} weight="fill" />+
+                {earnedXp ?? courseXpPerLesson} XP
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs tabular-nums text-text-3">
+                  {currentIndex + 1}/{allLessons.length}
+                </span>
+                <ProgressBar
+                  value={currentIndex + 1}
+                  max={allLessons.length}
+                  className="w-16 sm:w-20"
+                />
+              </div>
+            </div>
+          </header>
+
+          {/* Workspace — fills the screen below the header at lg; stacks (auto height) below lg */}
+          <div className="flex w-full flex-col overflow-hidden lg:h-[calc(100vh-168px)]">
             {lesson.code && lesson.tests ? (
               <ChallengeInterface
                 lessonId={lesson._id}
-                description=""
+                courseSlug={courseSlug}
+                lessonSlug={lesson.slug}
+                taskSlot={taskSlot}
                 initialCode={lesson.code}
                 language={lesson.language === "rust" ? "rust" : "typescript"}
                 buildType={
@@ -556,7 +480,6 @@ export function LessonPageClient({
                 isAlreadyCompleted={isCompleted}
                 isEnrolled={isEnrolled}
                 onEnroll={handleEnroll}
-                hideDescription
                 className="h-full"
               />
             ) : (
@@ -564,45 +487,110 @@ export function LessonPageClient({
                 <p className="text-text-3">{t("content")}</p>
               </div>
             )}
-            {/* Deploy panel for deployable challenge lessons —
-                Always render for deployable lessons so it can load
-                existing deployments from the server on page refresh. */}
-            {lesson.type === "challenge" &&
-              "deployable" in lesson &&
-              lesson.deployable && (
-                <DeployPanel
-                  buildUuid={buildUuid ?? ""}
-                  lessonId={lesson._id}
-                  courseSlug={courseSlug}
-                  courseId={courseId}
-                  programKeypairSecret={programKeypairSecret ?? undefined}
-                  onBuildExpired={() => {
-                    setBuildUuid(null);
-                    setProgramKeypairSecret(null);
-                  }}
-                />
-              )}
           </div>
         </div>
 
-        {/* AI Chat floating button + sidebar */}
-        {!isAiChatOpen && (
-          <button
-            type="button"
-            onClick={() => setIsAiChatOpen(true)}
-            className="fixed right-6 top-20 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-            aria-label={t("askAi")}
-          >
-            <Sparkle size={22} weight="fill" />
-          </button>
-        )}
-        <AiChatSidebar
-          open={isAiChatOpen}
-          onClose={() => setIsAiChatOpen(false)}
-          lessonId={lesson._id}
-          courseSlug={courseSlug}
-          lessonSlug={lesson.slug}
-        />
+        {/* Full-width nav + discussion below (page scrolls to reach) */}
+        <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:px-6">
+          {/* Deploy panel for deployable challenge lessons —
+              Always render for deployable lessons so it can load
+              existing deployments from the server on page refresh. */}
+          {lesson.type === "challenge" &&
+            "deployable" in lesson &&
+            lesson.deployable && (
+              <DeployPanel
+                buildUuid={buildUuid ?? ""}
+                lessonId={lesson._id}
+                courseSlug={courseSlug}
+                courseId={courseId}
+                programKeypairSecret={programKeypairSecret ?? undefined}
+                onBuildExpired={() => {
+                  setBuildUuid(null);
+                  setProgramKeypairSecret(null);
+                }}
+              />
+            )}
+
+          {/* Navigation */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+            {prevLesson && (
+              <Button
+                variant="pushOutline"
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+              >
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+                >
+                  &larr; {tCommon("previous")}
+                </Link>
+              </Button>
+            )}
+            {nextLesson ? (
+              <Button
+                variant="push"
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+              >
+                <Link
+                  href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+                >
+                  {tCommon("next")} &rarr;
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                variant="push"
+                size="default"
+                asChild
+                className="w-full justify-center sm:w-auto sm:min-w-[120px]"
+              >
+                <Link href={`/${locale}/courses/${courseSlug}`}>
+                  {t("lessonComplete")}
+                </Link>
+              </Button>
+            )}
+          </div>
+
+          {/* Discussion */}
+          <div className="border-t border-border pt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 font-display text-lg font-bold text-text">
+                <ChatCircle size={20} weight="duotone" />
+                {t("discussion")}
+              </h3>
+              {userId ? (
+                <Button
+                  variant="pushOutline"
+                  size="sm"
+                  onClick={() => setIsDiscussionOpen(true)}
+                >
+                  {t("askQuestion")}
+                </Button>
+              ) : (
+                <AuthModal
+                  trigger={
+                    <Button variant="pushOutline" size="sm">
+                      {t("signInToAsk")}
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+            <ThreadList
+              scope={{ courseId, lessonId: lesson._id }}
+              showFilters
+              emptyMessage={tCommunity("empty.lesson")}
+            />
+            <CreateThreadModal
+              open={isDiscussionOpen}
+              onOpenChange={setIsDiscussionOpen}
+              defaultScope={{ courseId, lessonId: lesson._id }}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -842,25 +830,6 @@ export function LessonPageClient({
           defaultScope={{ courseId, lessonId: lesson._id }}
         />
       </div>
-
-      {/* AI Chat floating button + sidebar */}
-      {!isAiChatOpen && (
-        <button
-          type="button"
-          onClick={() => setIsAiChatOpen(true)}
-          className="fixed right-6 top-20 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-          aria-label={t("askAi")}
-        >
-          <Sparkle size={22} weight="fill" />
-        </button>
-      )}
-      <AiChatSidebar
-        open={isAiChatOpen}
-        onClose={() => setIsAiChatOpen(false)}
-        lessonId={lesson._id}
-        courseSlug={courseSlug}
-        lessonSlug={lesson.slug}
-      />
     </div>
   );
 }

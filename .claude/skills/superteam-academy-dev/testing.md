@@ -59,8 +59,8 @@ npm i --save-dev litesvm
 ```
 
 ```typescript
-import { LiteSVM } from 'litesvm';
-import { PublicKey, Transaction, Keypair } from '@solana/web3.js';
+import { LiteSVM } from "litesvm";
+import { PublicKey, Transaction, Keypair } from "@solana/web3.js";
 
 const programId = new PublicKey("YourProgramId11111111111111111111111111111");
 const svm = new LiteSVM();
@@ -82,14 +82,17 @@ const result = svm.sendTransaction(tx);
 ### Account Types in LiteSVM
 
 **System Accounts:**
+
 - Payer accounts (contain lamports)
 - Uninitialized accounts (empty, awaiting setup)
 
 **Program Accounts:**
+
 - Serialize with `borsh`, `bincode`, or `solana_program_pack`
 - Calculate rent-exempt minimum balance
 
 **Token Accounts:**
+
 - Use `spl_token::state::Mint` and `spl_token::state::Account`
 - Serialize with Pack trait
 
@@ -247,7 +250,7 @@ surfpool start
 ### Connection Setup
 
 ```typescript
-import { Connection } from '@solana/web3.js';
+import { Connection } from "@solana/web3.js";
 
 const connection = new Connection("http://localhost:8899", "confirmed");
 ```
@@ -256,51 +259,61 @@ const connection = new Connection("http://localhost:8899", "confirmed");
 
 ```typescript
 // Time travel to specific slot
-await connection._rpcRequest('surfnet_timeTravel', [{
-    absoluteSlot: 250000000
-}]);
+await connection._rpcRequest("surfnet_timeTravel", [
+  {
+    absoluteSlot: 250000000,
+  },
+]);
 
 // Pause/resume block production
-await connection._rpcRequest('surfnet_pauseClock', []);
-await connection._rpcRequest('surfnet_resumeClock', []);
+await connection._rpcRequest("surfnet_pauseClock", []);
+await connection._rpcRequest("surfnet_resumeClock", []);
 ```
 
 ### Account Manipulation
 
 ```typescript
 // Set account state
-await connection._rpcRequest('surfnet_setAccount', [{
+await connection._rpcRequest("surfnet_setAccount", [
+  {
     pubkey: accountPubkey.toString(),
     lamports: 1000000000,
-    data: Buffer.from(accountData).toString('base64'),
+    data: Buffer.from(accountData).toString("base64"),
     owner: programId.toString(),
-}]);
+  },
+]);
 
 // Set token account
-await connection._rpcRequest('surfnet_setTokenAccount', [{
+await connection._rpcRequest("surfnet_setTokenAccount", [
+  {
     pubkey: tokenAccountPubkey.toString(),
     mint: mintPubkey.toString(),
     owner: ownerPubkey.toString(),
     amount: "1000000",
-}]);
+  },
+]);
 
 // Clone account from another program
-await connection._rpcRequest('surfnet_cloneProgramAccount', [{
+await connection._rpcRequest("surfnet_cloneProgramAccount", [
+  {
     source: sourceProgramId.toString(),
     destination: destProgramId.toString(),
     account: accountPubkey.toString(),
-}]);
+  },
+]);
 ```
 
 ### SOL Supply Configuration
 
 ```typescript
 // Configure supply for economic edge case testing
-await connection._rpcRequest('surfnet_setSupply', [{
+await connection._rpcRequest("surfnet_setSupply", [
+  {
     circulating: "500000000000000000",
     nonCirculating: "100000000000000000",
     total: "600000000000000000",
-}]);
+  },
+]);
 ```
 
 ## Test Layout Recommendation
@@ -368,10 +381,10 @@ ls hfuzz_workspace/*/crashes/
 
 ### Minimum Requirements
 
-| Phase | Duration |
-|-------|----------|
-| Development | 1-5 minutes |
-| Pre-deploy | 10+ minutes |
+| Phase          | Duration    |
+| -------------- | ----------- |
+| Development    | 1-5 minutes |
+| Pre-deploy     | 10+ minutes |
 | Security audit | 30+ minutes |
 
 ## Code Quality: AI Slop Removal
@@ -386,13 +399,13 @@ git diff main...HEAD
 
 ### Patterns to Remove
 
-| Pattern | Example | Action |
-|---------|---------|--------|
-| **Obvious comments** | `// Add amount to balance` | Remove |
-| **Defensive over-checking** | Try/catch around trusted code | Remove if abnormal |
-| **Verbose errors** | Multi-line where single suffices | Simplify |
-| **Redundant validation** | Re-checking already validated data | Remove |
-| **Inconsistent style** | Different naming/formatting | Align with file |
+| Pattern                     | Example                            | Action             |
+| --------------------------- | ---------------------------------- | ------------------ |
+| **Obvious comments**        | `// Add amount to balance`         | Remove             |
+| **Defensive over-checking** | Try/catch around trusted code      | Remove if abnormal |
+| **Verbose errors**          | Multi-line where single suffices   | Simplify           |
+| **Redundant validation**    | Re-checking already validated data | Remove             |
+| **Inconsistent style**      | Different naming/formatting        | Align with file    |
 
 ### Patterns to Keep
 

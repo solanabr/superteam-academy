@@ -27,6 +27,7 @@ my-program/
 ## Version Management
 
 ### AVM (Anchor Version Manager)
+
 ```bash
 # Install AVM
 cargo install --git https://github.com/coral-xyz/anchor avm
@@ -40,6 +41,7 @@ anchor --version
 ```
 
 ### Anchor.toml Configuration
+
 ```toml
 [toolchain]
 anchor_version = "0.32.0"
@@ -76,6 +78,7 @@ test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 4. **E2E Tests (anchor test)** - Full validator, TypeScript
 
 ### Mollusk (Unit Testing)
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -101,6 +104,7 @@ mod tests {
 ```
 
 ### LiteSVM (Integration Testing)
+
 ```rust
 use litesvm::LiteSVM;
 
@@ -116,6 +120,7 @@ fn test_full_flow() {
 ```
 
 ### Trident (Fuzz Testing)
+
 ```rust
 // trident-tests/fuzz_tests/fuzz_0/fuzz_instructions.rs
 use trident_client::fuzzing::*;
@@ -133,6 +138,7 @@ impl FuzzTestExecutor<FuzzAccounts> for InitializeData {
 ```
 
 ### TypeScript E2E Tests
+
 ```typescript
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
@@ -147,7 +153,9 @@ describe("my-program", () => {
   it("initializes vault", async () => {
     const tx = await program.methods
       .initialize()
-      .accounts({ /* ... */ })
+      .accounts({
+        /* ... */
+      })
       .rpc();
 
     console.log("Transaction signature:", tx);
@@ -158,6 +166,7 @@ describe("my-program", () => {
 ## IDL and Client Generation
 
 ### IDL Generation
+
 ```bash
 # Build generates IDL automatically
 anchor build
@@ -168,6 +177,7 @@ target/types/my_program.ts
 ```
 
 ### IDL Structure
+
 ```json
 {
   "version": "0.1.0",
@@ -182,13 +192,14 @@ target/types/my_program.ts
 
 ### Client Generation Options
 
-| Tool | Output | Best For |
-|------|--------|----------|
-| Anchor TS | TypeScript | Anchor-native apps |
-| Codama | Kit-native | @solana/kit apps |
-| Kinobi | Multiple | Custom requirements |
+| Tool      | Output     | Best For            |
+| --------- | ---------- | ------------------- |
+| Anchor TS | TypeScript | Anchor-native apps  |
+| Codama    | Kit-native | @solana/kit apps    |
+| Kinobi    | Multiple   | Custom requirements |
 
 ### Codama Integration (Recommended for Kit)
+
 ```bash
 # Generate Kit-native client from IDL
 npx codama generate --idl target/idl/my_program.json --out src/generated
@@ -196,13 +207,16 @@ npx codama generate --idl target/idl/my_program.json --out src/generated
 
 ```typescript
 // Usage with @solana/kit
-import { getMyProgramProgram } from './generated';
+import { getMyProgramProgram } from "./generated";
 
 const program = getMyProgramProgram(rpc);
-const ix = program.initialize({ /* ... */ });
+const ix = program.initialize({
+  /* ... */
+});
 ```
 
 ### Anchor TypeScript Client
+
 ```typescript
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { IDL, MyProgram } from "./idl/my_program";
@@ -225,6 +239,7 @@ program.addEventListener("Deposit", (event) => {
 ## Build and Deploy
 
 ### Build Commands
+
 ```bash
 # Standard build
 anchor build
@@ -253,6 +268,7 @@ anchor deploy --provider.cluster mainnet-beta
 ```
 
 ### Upgrade Authority Management
+
 ```bash
 # Check upgrade authority
 solana program show <PROGRAM_ID>
@@ -270,11 +286,13 @@ solana program set-upgrade-authority <PROGRAM_ID> --final
 ### Single Program vs Multi-Program
 
 **Single Program:**
+
 - Simpler deployment
 - All state in one place
 - Better for small-medium apps
 
 **Multi-Program:**
+
 - Separation of concerns
 - Independent upgrades
 - Better for complex protocols
@@ -298,6 +316,7 @@ position = [b"position", pool_pubkey, user_pubkey]
 ```
 
 **Rules:**
+
 - Use unique prefixes per account type
 - Include all identifying keys in seeds
 - Store bump in account data
@@ -305,12 +324,14 @@ position = [b"position", pool_pubkey, user_pubkey]
 ## Security Audit Process
 
 ### Pre-Audit Checklist
+
 - [ ] All tests passing (unit + integration + fuzz)
 - [ ] No compiler warnings
 - [ ] `cargo clippy` clean
 - [ ] Manual review of all instructions
 
 ### Automated Tools
+
 ```bash
 # Clippy with all warnings
 cargo clippy -- -W clippy::all
@@ -327,11 +348,13 @@ For per-instruction security checklist and common anti-patterns, see `.claude/ru
 ## Migration from Legacy
 
 ### web3.js 1.x to Kit
+
 - Use Codama for client generation
 - Wrap Anchor client behind compatibility layer
 - Gradually migrate to Kit-native patterns
 
 ### Native to Anchor
+
 - Start with account structures
 - Add Anchor constraints incrementally
 - Keep business logic, replace boilerplate

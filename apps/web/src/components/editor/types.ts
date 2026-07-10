@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
 
@@ -30,8 +31,6 @@ export interface ExecutionResult {
 export interface ChallengeState {
   status: "idle" | "running" | "success" | "error";
   executionResult: ExecutionResult | null;
-  hintsRevealed: number;
-  solutionRevealed: boolean;
 }
 
 export interface CodeEditorProps {
@@ -61,39 +60,30 @@ export interface ChallengeRunnerProps {
   onSubmit: () => void;
   isComplete: boolean;
   xpReward: number;
-  solutionRevealed: boolean;
   className?: string;
 }
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
-  description: string;
+  /** Sanity slug of the parent course — threaded to the AI Partner route. */
+  courseSlug: string;
+  /** Sanity slug of this lesson — threaded to the AI Partner route. */
+  lessonSlug: string;
+  /** Task-brief content rendered in the right rail's top panel (lg+) / first in reading order (below lg). */
+  taskSlot?: ReactNode;
   initialCode: string;
   language: EditorLanguage;
   buildType?: BuildType;
   isDeployable?: boolean;
   tests: TestCase[];
   hints: string[];
-  /**
-   * Reference solution. Optional and omitted in normal lesson delivery — the
-   * solution is the answer key and is no longer shipped to the client (P0-C4).
-   * When undefined, the "Show solution" affordance is hidden.
-   */
-  solution?: string;
   xpReward: number;
   earnedXp?: number | null;
   isAlreadyCompleted?: boolean;
   isEnrolled?: boolean;
   onEnroll?: () => void;
   onComplete?: () => void;
-  hideDescription?: boolean;
   className?: string;
-}
-
-export interface AiSuggestion {
-  line: number;
-  message: string;
-  severity: "error" | "warning" | "info";
 }
 
 export interface CodeEditorHandle {

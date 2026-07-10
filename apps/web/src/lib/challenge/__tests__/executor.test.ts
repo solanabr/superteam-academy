@@ -246,6 +246,7 @@ function answerKey(over: Partial<ChallengeAnswerKey> = {}): ChallengeAnswerKey {
     buildType: null,
     tests: sumTests,
     solution: CORRECT,
+    tutorNotes: null,
     ...over,
   };
 }

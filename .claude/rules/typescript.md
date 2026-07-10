@@ -1,8 +1,8 @@
 ---
 paths:
-  - "app/**/*.{ts,tsx}"
-  - "src/**/*.{ts,tsx}"
-  - "tests/**/*.ts"
+  - "**/app/**/*.{ts,tsx}"
+  - "**/src/**/*.{ts,tsx}"
+  - "**/tests/**/*.ts"
 exclude:
   - "**/node_modules/**"
   - "**/dist/**"
@@ -16,12 +16,14 @@ These rules apply to frontend and integration test TypeScript code.
 ## Web3.js Versions
 
 Solana has two major web3.js versions:
+
 - **@solana/web3.js 1.x** - Legacy, used with Anchor and most existing code
 - **@solana/kit (web3.js 2.0)** - Modern, tree-shakable, better types
 
 **Recommendation**: Use web3.js 2.0 (`@solana/kit`) for new projects. Use 1.x when working with Anchor or existing codebases.
 
 ### Web3.js 2.0 (@solana/kit)
+
 ```typescript
 // ✅ Modern web3.js 2.0
 import {
@@ -29,35 +31,38 @@ import {
   address,
   getSignatureFromTransaction,
   pipe,
-} from '@solana/kit';
+} from "@solana/kit";
 
-const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const rpc = createSolanaRpc("https://api.mainnet-beta.solana.com");
 
 // Type-safe address handling
-const pubkey = address('11111111111111111111111111111111');
+const pubkey = address("11111111111111111111111111111111");
 ```
 
 ### Web3.js 1.x (Legacy/Anchor)
+
 ```typescript
 // Legacy web3.js 1.x (for Anchor projects)
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 
-const connection = new Connection('https://api.mainnet-beta.solana.com');
-const pubkey = new PublicKey('11111111111111111111111111111111');
+const connection = new Connection("https://api.mainnet-beta.solana.com");
+const pubkey = new PublicKey("11111111111111111111111111111111");
 ```
 
 ### Tree-shakable imports (both versions)
+
 ```typescript
 // ❌ BAD - imports entire library
-import * as web3 from '@solana/web3.js';
+import * as web3 from "@solana/web3.js";
 
 // ✅ GOOD - tree-shakable, smaller bundle
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from "@solana/web3.js";
 ```
 
 ## Type Safety
 
 ### NO any types
+
 ```typescript
 // ❌ BAD
 function process(data: any) {
@@ -75,6 +80,7 @@ function process(data: Data): number {
 ```
 
 ### Explicit return types for functions
+
 ```typescript
 // ❌ BAD
 function calculateBalance(amount) {
@@ -88,26 +94,28 @@ function calculateBalance(amount: number): number {
 ```
 
 ### Use const assertions for readonly data
+
 ```typescript
 // ✅ GOOD
 const PROGRAM_IDS = {
-  TOKEN_PROGRAM: '11111111111111111111111111111111',
-  ASSOCIATED_TOKEN_PROGRAM: '22222222222222222222222222222222',
+  TOKEN_PROGRAM: "11111111111111111111111111111111",
+  ASSOCIATED_TOKEN_PROGRAM: "22222222222222222222222222222222",
 } as const;
 
-type ProgramId = typeof PROGRAM_IDS[keyof typeof PROGRAM_IDS];
+type ProgramId = (typeof PROGRAM_IDS)[keyof typeof PROGRAM_IDS];
 ```
 
 ## Solana Transaction Patterns (Web3.js 1.x / Anchor)
 
 ### Always simulate before sending
+
 ```typescript
 import {
   Connection,
   Transaction,
   ComputeBudgetProgram,
   Keypair,
-} from '@solana/web3.js';
+} from "@solana/web3.js";
 
 async function sendAndConfirmTransaction(
   connection: Connection,
@@ -118,7 +126,9 @@ async function sendAndConfirmTransaction(
   const simulation = await connection.simulateTransaction(transaction);
 
   if (simulation.value.err) {
-    throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    throw new Error(
+      `Simulation failed: ${JSON.stringify(simulation.value.err)}`
+    );
   }
 
   // 2. Set compute budget based on simulation
@@ -132,16 +142,19 @@ async function sendAndConfirmTransaction(
 
   // 3. Sign and send transaction
   transaction.sign(payer);
-  const signature = await connection.sendRawTransaction(transaction.serialize());
+  const signature = await connection.sendRawTransaction(
+    transaction.serialize()
+  );
 
   // 4. Confirm
-  await connection.confirmTransaction(signature, 'confirmed');
+  await connection.confirmTransaction(signature, "confirmed");
 
   return signature;
 }
 ```
 
 ### Use proper BigInt for u64/u128
+
 ```typescript
 // ❌ BAD - JavaScript number (unsafe for large values)
 const amount = 1000000000000;
@@ -150,15 +163,16 @@ const amount = 1000000000000;
 const amount = 1_000_000_000_000n;
 
 // For Anchor/BN.js compatibility
-import BN from 'bn.js';
-const amountBN = new BN('1000000000000');
+import BN from "bn.js";
+const amountBN = new BN("1000000000000");
 ```
 
 ### Type-safe account fetching (Anchor)
+
 ```typescript
-import { Program, AnchorProvider } from '@coral-xyz/anchor';
-import { PublicKey } from '@solana/web3.js';
-import { IDL, YourProgram } from './your_program';
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { IDL, YourProgram } from "./your_program";
 
 interface Vault {
   authority: PublicKey;
@@ -170,7 +184,7 @@ async function getVault(
   authority: PublicKey
 ): Promise<Vault | null> {
   const [vaultPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('vault'), authority.toBuffer()],
+    [Buffer.from("vault"), authority.toBuffer()],
     program.programId
   );
 
@@ -178,7 +192,7 @@ async function getVault(
     const vault = await program.account.vault.fetch(vaultPda);
     return vault as Vault;
   } catch (e) {
-    if (e instanceof Error && e.message.includes('Account does not exist')) {
+    if (e instanceof Error && e.message.includes("Account does not exist")) {
       return null;
     }
     throw e;
@@ -189,25 +203,27 @@ async function getVault(
 ## Async/Await Patterns
 
 ### Always use async/await (not .then())
+
 ```typescript
 // ❌ BAD
 function getData() {
-  return fetch('/api/data')
-    .then(res => res.json())
-    .then(data => process(data));
+  return fetch("/api/data")
+    .then((res) => res.json())
+    .then((data) => process(data));
 }
 
 // ✅ GOOD
 async function getData(): Promise<ProcessedData> {
-  const res = await fetch('/api/data');
+  const res = await fetch("/api/data");
   const data = await res.json();
   return process(data);
 }
 ```
 
 ### Proper error handling
+
 ```typescript
-import { Connection, PublicKey, AccountInfo } from '@solana/web3.js';
+import { Connection, PublicKey, AccountInfo } from "@solana/web3.js";
 
 async function fetchAccount(
   connection: Connection,
@@ -217,13 +233,13 @@ async function fetchAccount(
     const account = await connection.getAccountInfo(pubkey);
 
     if (!account) {
-      throw new Error('Account not found');
+      throw new Error("Account not found");
     }
 
     return account;
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Failed to fetch account:', error.message);
+      console.error("Failed to fetch account:", error.message);
     }
     throw error;
   }
@@ -231,12 +247,13 @@ async function fetchAccount(
 ```
 
 ### Batch requests to avoid overwhelming RPC
+
 ```typescript
-import { Connection, PublicKey, AccountInfo } from '@solana/web3.js';
+import { Connection, PublicKey, AccountInfo } from "@solana/web3.js";
 
 // ❌ BAD - all at once (can overwhelm RPC)
 const accounts = await Promise.all(
-  pubkeys.map(pk => connection.getAccountInfo(pk))
+  pubkeys.map((pk) => connection.getAccountInfo(pk))
 );
 
 // ✅ GOOD - use getMultipleAccountsInfo with batching
@@ -260,6 +277,7 @@ async function getAccountsBatched(
 ## React Patterns (for dApps)
 
 ### Use hooks properly
+
 ```typescript
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useQuery } from '@tanstack/react-query';
@@ -288,6 +306,7 @@ function VaultDisplay() {
 ```
 
 ### Memoize expensive computations
+
 ```typescript
 import { useMemo } from 'react';
 
@@ -308,18 +327,19 @@ function TransactionList({ transactions }: { transactions: Transaction[] }) {
 ## Error Handling
 
 ### Custom error types
+
 ```typescript
 export class WalletNotConnectedError extends Error {
   constructor() {
-    super('Wallet not connected');
-    this.name = 'WalletNotConnectedError';
+    super("Wallet not connected");
+    this.name = "WalletNotConnectedError";
   }
 }
 
 export class InsufficientFundsError extends Error {
   constructor(required: bigint, available: bigint) {
     super(`Insufficient funds: need ${required}, have ${available}`);
-    this.name = 'InsufficientFundsError';
+    this.name = "InsufficientFundsError";
   }
 }
 
@@ -339,15 +359,16 @@ async function withdraw(
   }
 
   // Process withdrawal...
-  return 'signature';
+  return "signature";
 }
 ```
 
 ### User-friendly error messages
+
 ```typescript
 function getUserFriendlyError(error: unknown): string {
   if (error instanceof WalletNotConnectedError) {
-    return 'Please connect your wallet to continue';
+    return "Please connect your wallet to continue";
   }
 
   if (error instanceof InsufficientFundsError) {
@@ -356,21 +377,22 @@ function getUserFriendlyError(error: unknown): string {
 
   if (error instanceof Error) {
     // Map common Solana errors
-    if (error.message.includes('0x1')) {
-      return 'Insufficient funds for transaction fee';
+    if (error.message.includes("0x1")) {
+      return "Insufficient funds for transaction fee";
     }
-    if (error.message.includes('0x0')) {
-      return 'Transaction failed - please try again';
+    if (error.message.includes("0x0")) {
+      return "Transaction failed - please try again";
     }
   }
 
-  return 'An unexpected error occurred';
+  return "An unexpected error occurred";
 }
 ```
 
 ## Wallet Integration
 
 ### Wallet adapter pattern
+
 ```typescript
 import { useMemo } from 'react';
 import {
@@ -404,6 +426,7 @@ function App() {
 ## Code Style
 
 ### Use functional components
+
 ```typescript
 // ✅ GOOD - Functional component
 interface Props {
@@ -417,6 +440,7 @@ export function TransferForm({ amount, onTransfer }: Props) {
 ```
 
 ### Proper naming
+
 ```typescript
 // Components: PascalCase
 function UserVaultDisplay() {}
@@ -435,6 +459,7 @@ let userBalance = 0n;
 ## Performance
 
 ### Lazy load components
+
 ```typescript
 import { lazy, Suspense } from 'react';
 
@@ -451,6 +476,7 @@ function App() {
 ```
 
 ### Debounce user inputs
+
 ```typescript
 import { useMemo, useState } from 'react';
 import { debounce } from 'lodash';
@@ -474,18 +500,19 @@ function SearchComponent() {
 ## Testing
 
 ### Test with proper types
-```typescript
-import { describe, it, expect } from 'vitest';
 
-describe('calculateFee', () => {
-  it('calculates fee correctly', () => {
+```typescript
+import { describe, it, expect } from "vitest";
+
+describe("calculateFee", () => {
+  it("calculates fee correctly", () => {
     const amount = 1000n;
     const fee = calculateFee(amount);
 
     expect(fee).toBe(10n); // 1% fee
   });
 
-  it('handles zero amount', () => {
+  it("handles zero amount", () => {
     const fee = calculateFee(0n);
     expect(fee).toBe(0n);
   });
@@ -495,9 +522,10 @@ describe('calculateFee', () => {
 ## Documentation
 
 ### JSDoc for exported functions
+
 ```typescript
-import { Program } from '@coral-xyz/anchor';
-import { PublicKey } from '@solana/web3.js';
+import { Program } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 
 /**
  * Fetches vault data for a given authority.
@@ -519,18 +547,18 @@ export async function getVault(
 
 ```typescript
 // 1. External libraries (React first, then alphabetical)
-import { useState, useEffect } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { useState, useEffect } from "react";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 // 2. Internal modules
-import { useWallet } from '@/hooks/useWallet';
-import { VaultDisplay } from '@/components/VaultDisplay';
+import { useWallet } from "@/hooks/useWallet";
+import { VaultDisplay } from "@/components/VaultDisplay";
 
 // 3. Types (use 'import type' for type-only imports)
-import type { Vault } from '@/types';
+import type { Vault } from "@/types";
 
 // 4. Styles
-import styles from './Component.module.css';
+import styles from "./Component.module.css";
 ```
 
 ---
@@ -538,6 +566,7 @@ import styles from './Component.module.css';
 **Remember**: Type safety prevents bugs. Simulate before sending. Handle errors gracefully. Choose web3.js version based on your project needs.
 
 **Sources:**
+
 - [Solana Web3.js 2.0](https://www.helius.dev/blog/how-to-start-building-with-the-solana-web3-js-2-0-sdk)
 - [Web3.js 2.0 Best Practices](https://blog.quicknode.com/solana-web3-js-2-0-a-new-chapter-in-solana-development/)
 - [Anchor TypeScript Client](https://www.anchor-lang.com/docs/javascript-anchor-types)

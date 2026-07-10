@@ -292,8 +292,6 @@
     "submitSolution": "Enviar Solução",
     "resetCode": "Resetar Código",
     "showHint": "Mostrar Dica",
-    "showSolution": "Mostrar Solução",
-    "solutionWarning": "Tem certeza? Ver a solução não dará XP completo.",
     "testsPassed": "Todos os testes passaram!",
     "testsFailed": "Alguns testes falharam. Tente novamente!",
     "testCases": "Casos de Teste",
@@ -328,21 +326,8 @@
     "discussion": "Discussão",
     "askQuestion": "Fazer uma Pergunta",
     "signInToAsk": "Entre para fazer uma pergunta",
-    "aiHelp": "Ajuda IA",
-    "aiHelpLoading": "Analisando...",
-    "aiHelpError": "Nao foi possivel obter sugestoes. Tente novamente.",
-    "aiHelpRateLimited": "Muitas solicitacoes. Aguarde um momento.",
-    "aiHelpRunFirst": "Execute seu codigo primeiro para obter sugestoes da IA.",
     "dismissSuggestion": "Dispensar",
-    "dismissAllSuggestions": "Dispensar Todas",
-    "askAi": "Perguntar IA",
-    "aiChat": "Tutor IA",
-    "aiChatPlaceholder": "Pergunte sobre esta aula...",
-    "aiChatSend": "Enviar",
-    "aiChatLimit": "{remaining} de {total} mensagens restantes",
-    "aiChatLimitReached": "Voce usou todas as {total} mensagens de IA para esta aula.",
-    "aiChatError": "Nao foi possivel obter uma resposta. Tente novamente.",
-    "aiChatThinking": "Pensando..."
+    "dismissAllSuggestions": "Dispensar Todas"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
@@ -558,6 +543,8 @@
     "codeEditor": "Editor de código",
     "clearOutput": "Limpar saída",
     "resizeOutputPanel": "Redimensionar painel de saída",
+    "resizeTaskPanel": "Redimensionar painel de tarefa",
+    "resizeRailPanel": "Redimensionar a largura do painel lateral",
     "toggleTheme": "Alternar tema",
     "platformNavigation": "Navegação da plataforma",
     "expandSidebar": "Expandir barra lateral",
@@ -862,6 +849,58 @@
       "category": "Nenhum tópico nesta categoria ainda.",
       "course": "Nenhuma discussão sobre este curso ainda.",
       "lesson": "Nenhuma pergunta sobre esta aula ainda. Faça uma!"
+    }
+  },
+  "aiPartner": {
+    "title": "Parceiro de IA",
+    "subtitle": "Travou? Peça uma dica, uma correção proposta ou faça uma pergunta.",
+    "completed": "Desafio concluído — mandou bem!",
+    "start": {
+      "greeting": "Como posso te ajudar a construir isto?",
+      "explain": "Explique este desafio",
+      "explainPrompt": "Explique o que este desafio está pedindo para eu construir e qual abordagem seguir — não escreva a solução completa por mim.",
+      "approach": "Por onde eu começo?",
+      "approachPrompt": "Quais são os primeiros passos e os conceitos principais que eu preciso para resolver este desafio?"
+    },
+    "meter": {
+      "label": "{free} de 2 dicas gratuitas usadas, {paid} de {max} assistências pagas usadas",
+      "freeLabel": "Dicas gratuitas",
+      "paidLabel": "Assistências pagas"
+    },
+    "messages": {
+      "empty": "Peça uma dica ou uma correção proposta para começar.",
+      "you": "Você",
+      "ai": "Parceiro de IA",
+      "loading": "Pensando...",
+      "error": "Algo deu errado. Tente novamente."
+    },
+    "actions": {
+      "hint": "Dica",
+      "propose": "Propor correção",
+      "askPlaceholder": "Faça uma pergunta sobre este desafio...",
+      "askSend": "Enviar",
+      "budgetExhausted": "Você já usou todas as {max} assistências pagas deste desafio."
+    },
+    "diff": {
+      "current": "Atual",
+      "proposed": "Proposto",
+      "rationale": "Por que essa mudança",
+      "accept": "Aceitar",
+      "reject": "Descartar",
+      "dismissed": "Proposta descartada.",
+      "stale": "Seu código mudou — esta proposta está desatualizada.",
+      "checkPrompt": "Uma pergunta rápida antes de aplicar:",
+      "checkIncorrect": "Quase lá.",
+      "checkVerifyError": "Não foi possível verificar sua resposta. Tente novamente.",
+      "checkCorrect": "Correto — agora você pode aplicar a mudança.",
+      "acceptLocked": "Responda corretamente para aplicar esta mudança.",
+      "applied": "Aplicado ao seu código",
+      "lineAdded": "Adicionado",
+      "lineRemoved": "Removido"
+    },
+    "a11y": {
+      "assistMeter": "Uso de assistência de IA",
+      "diffCard": "Mudança de código proposta"
     }
   }
 }

@@ -9,6 +9,7 @@ user-invocable: true
 ## What this Skill is for
 
 Use this Skill when the user asks for:
+
 - On-chain program development for the Academy platform
 - XP token minting (soulbound Token-2022)
 - Course registry and enrollment logic
@@ -24,25 +25,25 @@ Use this Skill when the user asks for:
 
 ### Account Structure (6 PDAs + Metaplex Core NFTs)
 
-| Account | Seeds | Purpose |
-|---------|-------|---------|
-| Config | `["config"]` | Singleton: authority, backend signer, XP mint |
-| Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps, credential ref (closeable) |
-| MinterRole | `["minter", minter.key()]` | Registered XP minter with optional per-call cap (closeable via revoke_minter) |
-| AchievementType | `["achievement", achievement_id.as_bytes()]` | Achievement definition: name, collection, supply cap, XP reward |
-| AchievementReceipt | `["achievement_receipt", achievement_id.as_bytes(), recipient.key()]` | Proof of award — PDA collision prevents double-awarding |
-| Credential NFT | Metaplex Core asset (1 per learner per track) | Soulbound, wallet-visible, upgradeable via URI + Attributes plugin |
+| Account            | Seeds                                                                 | Purpose                                                                       |
+| ------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Config             | `["config"]`                                                          | Singleton: authority, backend signer, XP mint                                 |
+| Course             | `["course", course_id.as_bytes()]`                                    | Course metadata, creator, track, XP amounts                                   |
+| Enrollment         | `["enrollment", course_id.as_bytes(), user.key()]`                    | Lesson bitmap, completion timestamps, credential ref (closeable)              |
+| MinterRole         | `["minter", minter.key()]`                                            | Registered XP minter with optional per-call cap (closeable via revoke_minter) |
+| AchievementType    | `["achievement", achievement_id.as_bytes()]`                          | Achievement definition: name, collection, supply cap, XP reward               |
+| AchievementReceipt | `["achievement_receipt", achievement_id.as_bytes(), recipient.key()]` | Proof of award — PDA collision prevents double-awarding                       |
+| Credential NFT     | Metaplex Core asset (1 per learner per track)                         | Soulbound, wallet-visible, upgradeable via URI + Attributes plugin            |
 
 ### Instructions (16 Total)
 
-| Category | Instructions |
-|----------|-------------|
-| **Platform Management (2)** | `initialize`, `update_config` |
-| **Courses (2)** | `create_course`, `update_course` |
+| Category                      | Instructions                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Platform Management (2)**   | `initialize`, `update_config`                                                                                |
+| **Courses (2)**               | `create_course`, `update_course`                                                                             |
 | **Enrollment & Progress (6)** | `enroll`, `complete_lesson`, `finalize_course`, `close_enrollment`, `issue_credential`, `upgrade_credential` |
-| **Minter Roles (3)** | `register_minter`, `revoke_minter`, `reward_xp` |
-| **Achievements (3)** | `create_achievement_type`, `award_achievement`, `deactivate_achievement_type` |
+| **Minter Roles (3)**          | `register_minter`, `revoke_minter`, `reward_xp`                                                              |
+| **Achievements (3)**          | `create_achievement_type`, `award_achievement`, `deactivate_achievement_type`                                |
 
 ### Core Learning Loop
 
@@ -62,7 +63,7 @@ ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE E
 - **Credentials = Metaplex Core NFTs** — soulbound via PermanentFreezeDelegate, wallet-visible, upgradeable
 - **Config PDA = update authority** of all track collection NFTs
 - **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI
-- **Completion bonus merged into `finalize_course`** — bonus XP = floor(xp_per_lesson * lesson_count / 2)
+- **Completion bonus merged into `finalize_course`** — bonus XP = floor(xp_per_lesson \* lesson_count / 2)
 - **No LearnerProfile PDA** — XP balance tracked via Token-2022 ATA
 - **Rotatable backend signer** stored in Config
 - **Reserved bytes** on all accounts for future-proofing without migrations
@@ -70,29 +71,29 @@ ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE E
 
 ## Technology Stack
 
-| Layer | Stack |
-|-------|-------|
-| Programs | Anchor 0.31+, Rust 1.82+ |
+| Layer          | Stack                                                                           |
+| -------------- | ------------------------------------------------------------------------------- |
+| Programs       | Anchor 0.31+, Rust 1.82+                                                        |
 | Token Standard | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
-| Credentials | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| Testing | Mollusk, LiteSVM, Trident (fuzz) |
-| Client | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| Frontend | Next.js 14+, React, Tailwind CSS |
-| RPC | Helius (DAS API for XP leaderboard + credential NFT queries) |
-| Content | Arweave (immutable course content) |
-| Multisig | Squads (platform authority) |
+| Credentials    | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate)                      |
+| Testing        | Mollusk, LiteSVM, Trident (fuzz)                                                |
+| Client         | TypeScript, @coral-xyz/anchor, @solana/web3.js                                  |
+| Frontend       | Next.js 14+, React, Tailwind CSS                                                |
+| RPC            | Helius (DAS API for XP leaderboard + credential NFT queries)                    |
+| Content        | Arweave (immutable course content)                                              |
+| Multisig       | Squads (platform authority)                                                     |
 
 ## Compute Budgets
 
-| Instruction | CU Budget |
-|-------------|-----------|
-| initialize | ~50K |
-| create_course | ~15K |
-| complete_lesson | ~30K |
-| finalize_course | ~50K |
-| issue_credential | ~50-100K |
-| upgrade_credential | ~50-100K |
-| award_achievement | ~80K |
+| Instruction        | CU Budget |
+| ------------------ | --------- |
+| initialize         | ~50K      |
+| create_course      | ~15K      |
+| complete_lesson    | ~30K      |
+| finalize_course    | ~50K      |
+| issue_credential   | ~50-100K  |
+| upgrade_credential | ~50-100K  |
+| award_achievement  | ~80K      |
 
 ## Operating Procedure
 
@@ -112,6 +113,7 @@ ENROLL → COMPLETE LESSONS → FINALIZE COURSE → ISSUE CREDENTIAL → CLOSE E
 ### 2. Implementation Checklist
 
 Always verify:
+
 - Account validation (owner, signer, PDA seeds + bump)
 - Backend signer matches `Config.backend_signer`
 - Checked arithmetic throughout (`checked_add`, `checked_sub`, `checked_mul`)
@@ -131,16 +133,21 @@ Always verify:
 ## Progressive Disclosure (read when needed)
 
 ### Programs & Development
+
 - [programs-anchor.md](programs-anchor.md) — Anchor patterns, constraints, testing pyramid, IDL generation
 
 ### Testing & Security
+
 - [testing.md](testing.md) — LiteSVM, Mollusk, Trident, CI guidance
 - [security.md](security.md) — Vulnerability categories, program checklists
 
 ### Deployment
+
 - [deployment.md](deployment.md) — Devnet/mainnet workflows, verifiable builds, multisig
+- [structure.md](structure.md) — Full monorepo tree, nested CLAUDE.md map
 
 ### Ecosystem & Reference
+
 - [ecosystem.md](ecosystem.md) — Token standards, DeFi protocols
 - [idl-codegen.md](idl-codegen.md) — Codama/Shank client generation
 - [resources.md](resources.md) — Official documentation links
@@ -148,8 +155,10 @@ Always verify:
 ## Task Routing Guide
 
 | User asks about... | Primary file(s) |
-|--------------------|-----------------|
+| Vanity keypairs, pre-mainnet checklist | deployment.md |
+| -------------------------------- | ------------------ |
 | Anchor program code | programs-anchor.md |
+| Where a file lives in the monorepo | structure.md |
 | Unit/integration testing | testing.md |
 | Fuzz testing (Trident) | testing.md |
 | Security review, audit | security.md |
@@ -160,8 +169,8 @@ Always verify:
 
 ## Canonical Docs
 
-| Document | Purpose |
-|----------|---------|
-| `docs/SPEC.md` | Source of truth for all program behavior |
-| `docs/ARCHITECTURE.md` | Account maps, data flows, CU budgets |
-| `docs/INTEGRATION.md` | Frontend integration guide |
+| Document               | Purpose                                  |
+| ---------------------- | ---------------------------------------- |
+| `docs/SPEC.md`         | Source of truth for all program behavior |
+| `docs/ARCHITECTURE.md` | Account maps, data flows, CU budgets     |
+| `docs/INTEGRATION.md`  | Frontend integration guide               |

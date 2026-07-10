@@ -140,6 +140,7 @@ describe("validateAgainstAnswerKey — Rust routing", () => {
     buildType: null,
     tests,
     solution: CODE,
+    tutorNotes: null,
   };
 
   it("grades a rust challenge to a validated verdict", async () => {

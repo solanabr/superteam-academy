@@ -39,12 +39,15 @@ beforeEach(() => {
 });
 
 describe("P0-C4: client lesson queries do not leak answers", () => {
-  it("getLessonBySlug never projects `solution`", async () => {
+  it("getLessonBySlug never projects `solution` or `tutorNotes`", async () => {
     await getLessonBySlug("course-x", "lesson-y");
     const query = flatten(capturedQuery(0));
 
-    // No `solution` field is projected anywhere in the lesson selection.
+    // No server-only answer-key field is projected anywhere in the lesson
+    // selection: `solution` is the reference answer, `tutorNotes` is the private
+    // note that steers the AI Partner — both must stay in answerKeyProjection.
     expect(query).not.toMatch(/\bsolution\b/);
+    expect(query).not.toMatch(/\btutorNotes\b/);
   });
 
   it("getLessonBySlug only selects visible tests (hidden != true) and drops the hidden flag", async () => {
@@ -68,6 +71,7 @@ describe("P0-C4: client lesson queries do not leak answers", () => {
     const query = flatten(capturedQuery(0));
 
     expect(query).not.toMatch(/\bsolution\b/);
+    expect(query).not.toMatch(/\btutorNotes\b/);
     expect(query).toContain('"tests": tests[hidden != true]');
   });
 
@@ -91,6 +95,7 @@ describe("P0-C4: client lesson queries do not leak answers", () => {
     const serialized = JSON.stringify(lesson);
 
     expect(serialized).not.toContain("solution");
+    expect(serialized).not.toContain("tutorNotes");
     expect(serialized).not.toContain("hidden");
     // sanity check the payload is otherwise intact
     expect(lesson).toMatchObject({ type: "challenge", code: "// start" });
@@ -107,6 +112,7 @@ describe("P0-C4: client lesson queries do not leak answers", () => {
     // answer key, including hidden tests + solution, and must be fetched fresh
     // (revalidate=0, never via the public CDN).
     expect(flat).toContain("solution");
+    expect(flat).toContain("tutorNotes");
     expect(flat).toContain("hidden");
     expect(revalidate).toBe(0);
   });
