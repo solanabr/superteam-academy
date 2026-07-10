@@ -149,4 +149,32 @@ describe("parseAndValidateTree", () => {
       expect(v.lessons.map((l) => l.lesson.id)).toContain("lesson-ex");
     }
   );
+
+  it("still requires the files of a DEFERRED (rust) block to exist", async () => {
+    const withCode = stringify({
+      id: "lesson-ex",
+      slug: "ex",
+      title: "Ex",
+      blocks: [
+        {
+          key: "ex",
+          type: "code",
+          language: "rust",
+          starter: "exercise/starter.rs",
+          solution: "exercise/solution.rs",
+          tests: "exercise/tests.json",
+        },
+      ],
+    });
+    const t = tree({
+      "courses/demo/course.yaml": courseYaml,
+      "courses/demo/lessons/ex/lesson.yaml": withCode,
+      // solution.rs + tests.json deliberately absent — deferral skips GRADING,
+      // not the file-existence check.
+      "courses/demo/lessons/ex/exercise/starter.rs": "// stub",
+    });
+    await expect(parseAndValidateTree(t, passGraders)).rejects.toBeInstanceOf(
+      ContentValidationError
+    );
+  });
 });

@@ -103,18 +103,17 @@ export async function parseAndValidateTree(
     }
   }
 
-  // Executor gate on TS-standard code blocks only, in lockstep with content-lint
-  // gate 6 (gate6-executor.ts): rust and buildable blocks are DEFERRED. Grading
-  // them here rejected content that CI accepts — the build server is off in prod,
-  // and the two-sided "starter must fail" rule is incoherent for compile-graded
-  // buildable blocks (a `todo!()` scaffold compiles, so its starter "passes").
-  // Runtime grading is unchanged and stays fail-closed per block.
+  // Every code block must have its files present — checked for ALL languages so a
+  // broken lesson can't publish silently. The two-sided EXECUTOR gate then runs on
+  // TS-standard blocks only, in lockstep with content-lint gate 6
+  // (gate6-executor.ts): rust and buildable are DEFERRED. Grading them here
+  // rejected content that CI accepts — the build server is off in prod, and the
+  // "starter must fail" rule is incoherent for compile-graded buildable blocks (a
+  // `todo!()` scaffold compiles, so its starter "passes"). Runtime grading is
+  // unchanged and stays fail-closed per block.
   for (const { dir, lesson } of v.lessons) {
     for (const block of lesson.blocks) {
       if (block.type !== "code") continue;
-      if (block.language !== "typescript" || block.buildType === "buildable") {
-        continue; // deferred to runtime grading, exactly as CI gate 6 defers it
-      }
       const starter = v.code.get(`${dir}/${block.starter}`);
       const solution = v.code.get(`${dir}/${block.solution}`);
       const testsRaw = tree.get(`${dir}/${block.tests}`);
@@ -123,6 +122,9 @@ export async function parseAndValidateTree(
           `lesson ${lesson.id} block ${block.key}: missing starter/solution/tests file`
         );
         continue;
+      }
+      if (block.language !== "typescript" || block.buildType === "buildable") {
+        continue; // grading deferred to runtime, exactly as CI gate 6 defers it
       }
       const tests = JSON.parse(text(testsRaw)) as unknown[];
       const blockIssues = await gateCodeBlock(
