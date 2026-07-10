@@ -110,9 +110,9 @@ const moduleWithLessonsFields = `
   key,
   title,
   description,
-  "lessons": lessons[]->{
+  "lessons": (lessons[]->{
     ${lessonFields}
-  }
+  })[defined(_id)]
 `;
 
 // --- Query Functions ---
@@ -125,11 +125,11 @@ export async function getAllCourses(): Promise<Course[]> {
         key,
         title,
         description,
-        "lessons": lessons[]->{
+        "lessons": (lessons[]->{
           _id,
           title,
           "slug": slug.current
-        }
+        })[defined(_id)]
       }
     }`
   );
@@ -156,9 +156,9 @@ export async function getLessonBySlug(
   // there is no per-_type conditional stripping and no separate answer-key query.
   return catalogFetch<Lesson | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
-      "allLessons": modules[].lessons[]->{
+      "allLessons": (modules[].lessons[]->{
         ${lessonFields}
-      }
+      })[defined(_id)]
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug }
   );
@@ -179,9 +179,9 @@ export async function getLessonByIdForGrading(
 ): Promise<Lesson | null> {
   return sanityFetch<Lesson | null>(
     `*[_type == "course" && _id == $courseId][0] {
-      "allLessons": modules[].lessons[]->{
+      "allLessons": (modules[].lessons[]->{
         ${lessonFields}
-      }
+      })[defined(_id)]
     }.allLessons[_id == $lessonId][0]`,
     { courseId, lessonId },
     0
@@ -204,11 +204,11 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
           key,
           title,
           description,
-          "lessons": lessons[]->{
+          "lessons": (lessons[]->{
             _id,
             title,
             "slug": slug.current
-          }
+          })[defined(_id)]
         }
       }
     }`
