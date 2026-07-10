@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { describe, it, expect } from "vitest";
-import { extractTarball } from "../tarball";
+import { extractTarball, TarballTooLargeError } from "../tarball";
 import { makeTar } from "./_fixtures";
 
 describe("extractTarball", () => {
@@ -44,5 +44,35 @@ describe("extractTarball", () => {
     expect([...tree.keys()]).toEqual([
       "courses/solana-fundamentals/lessons/pdas-and-accounts/exercise/solution.ts",
     ]);
+  });
+
+  it("rejects a tarball that inflates past the decompressed-size cap", async () => {
+    // Guards against a gzip bomb: 4 KiB inflated, capped at 512 bytes.
+    const tar = makeTar({ "r-abc/courses/real/big.md": "x".repeat(4096) });
+    const gz = gzipSync(Buffer.from(tar));
+    await expect(
+      extractTarball(gz, { maxDecompressedBytes: 512 })
+    ).rejects.toBeInstanceOf(TarballTooLargeError);
+  });
+
+  it("rejects a tarball with more entries than the cap", async () => {
+    // Guards against a pathological archive of many tiny headers.
+    const tar = makeTar({
+      "r-abc/courses/real/a.md": "a",
+      "r-abc/courses/real/b.md": "b",
+      "r-abc/courses/real/c.md": "c",
+    });
+    const gz = gzipSync(Buffer.from(tar));
+    await expect(extractTarball(gz, { maxEntries: 2 })).rejects.toBeInstanceOf(
+      TarballTooLargeError
+    );
+  });
+
+  it("extracts normally within default caps", async () => {
+    const tar = makeTar({
+      "r-abc/courses/real/course.yaml": "id: course-real\n",
+    });
+    const tree = await extractTarball(gzipSync(Buffer.from(tar)));
+    expect([...tree.keys()]).toEqual(["courses/real/course.yaml"]);
   });
 });

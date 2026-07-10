@@ -4,6 +4,30 @@ import type { RepoTree } from "./types";
 /** Repo path prefix that is excluded from sync (spec §4.1, §12). */
 const EXCLUDED = "courses/_template/";
 
+/**
+ * Decompression bounds against a malicious/corrupt tarball (a gzip bomb inflates
+ * to gigabytes; a pathological archive packs millions of tiny headers). The
+ * academy-courses repo is text + optimised images — well under these — so the
+ * caps only ever fire on abuse. Both are overridable for tests.
+ */
+const DEFAULT_MAX_DECOMPRESSED_BYTES = 128 * 1024 * 1024; // 128 MiB
+const DEFAULT_MAX_ENTRIES = 20_000;
+
+export interface ExtractOpts {
+  /** Max bytes the gunzip may inflate to before aborting. */
+  maxDecompressedBytes?: number;
+  /** Max number of tar entries (headers) processed before aborting. */
+  maxEntries?: number;
+}
+
+/** Raised when a tarball breaches a decompression bound (§ defensive extraction). */
+export class TarballTooLargeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TarballTooLargeError";
+  }
+}
+
 function decodeStr(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes).replace(/\0.*$/, "");
 }
@@ -34,15 +58,40 @@ function parsePaxPath(data: Uint8Array): string | null {
  * field (offset 345) and from pax extended headers ('x' typeflag) — the two
  * mechanisms `git archive` uses. Ignoring them would silently drop deep files.
  */
-export async function extractTarball(gzipped: Uint8Array): Promise<RepoTree> {
-  const buf = new Uint8Array(gunzipSync(Buffer.from(gzipped)));
+export async function extractTarball(
+  gzipped: Uint8Array,
+  opts: ExtractOpts = {}
+): Promise<RepoTree> {
+  const maxBytes = opts.maxDecompressedBytes ?? DEFAULT_MAX_DECOMPRESSED_BYTES;
+  const maxEntries = opts.maxEntries ?? DEFAULT_MAX_ENTRIES;
+
+  let inflated: Buffer;
+  try {
+    inflated = gunzipSync(Buffer.from(gzipped), { maxOutputLength: maxBytes });
+  } catch (e) {
+    // zlib throws (ERR_BUFFER_TOO_LARGE) once the output would exceed
+    // maxOutputLength; a corrupt stream throws here too. Fail with a clear error.
+    throw new TarballTooLargeError(
+      `content tarball could not be decompressed within the ${maxBytes}-byte cap: ${
+        e instanceof Error ? e.message : String(e)
+      }`
+    );
+  }
+  const buf = new Uint8Array(inflated);
   const tree: RepoTree = new Map();
   let offset = 0;
+  let entries = 0;
   let paxPath: string | null = null; // path override from a preceding 'x' header
   while (offset + 512 <= buf.length) {
     const header = buf.subarray(offset, offset + 512);
     // Two consecutive zero blocks terminate the archive.
     if (header.every((b) => b === 0)) break;
+
+    if (++entries > maxEntries) {
+      throw new TarballTooLargeError(
+        `content tarball exceeds the ${maxEntries}-entry cap`
+      );
+    }
 
     const name = decodeStr(header.subarray(0, 100));
     const size = parseOctal(header.subarray(124, 136));
