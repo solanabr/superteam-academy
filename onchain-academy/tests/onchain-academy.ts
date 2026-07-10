@@ -67,6 +67,38 @@ describe("onchain-academy", () => {
 
   const contentTxId = new Array(32).fill(1);
 
+  // CS-3: the on-chain Course.active_lessons is a 256-bit mask ([u64; 4] in the
+  // camelCase IDL → BN[4]). These helpers build a mask from a set of live slots
+  // and read the live-lesson count (popcount) client-side, since there is no
+  // on-chain helper exposed to the client.
+  const slotsToMask = (slots: number[]): BN[] => {
+    const words = [new BN(0), new BN(0), new BN(0), new BN(0)];
+    for (const slot of slots) {
+      const word = Math.floor(slot / 64);
+      const bit = slot % 64;
+      words[word] = words[word].or(new BN(1).shln(bit));
+    }
+    return words;
+  };
+
+  // Dense mask for the first `n` lesson slots (0..n-1) — mirrors Course::dense_mask.
+  const denseMask = (n: number): BN[] =>
+    slotsToMask(Array.from({ length: n }, (_, i) => i));
+
+  const popcountU64 = (w: BN): number => {
+    let count = 0;
+    let v = w.clone();
+    const one = new BN(1);
+    while (!v.isZero()) {
+      if (!v.and(one).isZero()) count++;
+      v = v.shrn(1);
+    }
+    return count;
+  };
+
+  const liveCount = (mask: BN[]): number =>
+    mask.reduce((n, w) => n + popcountU64(w), 0);
+
   before(async () => {
     [configPda, configBump] = PublicKey.findProgramAddressSync(
       [Buffer.from("config")],
@@ -375,7 +407,7 @@ describe("onchain-academy", () => {
       expect(course.courseId).to.equal(courseId);
       expect(course.creator.toBase58()).to.equal(creator.publicKey.toBase58());
       expect(course.version).to.equal(1);
-      expect(course.lessonCount).to.equal(LESSON_COUNT);
+      expect(liveCount(course.activeLessons)).to.equal(LESSON_COUNT);
       expect(course.difficulty).to.equal(2);
       expect(course.xpPerLesson).to.equal(XP_PER_LESSON);
       expect(course.trackId).to.equal(1);
@@ -681,7 +713,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -704,7 +736,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -725,7 +757,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -754,7 +786,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: 50,
           newMinCompletionsForReward: 5,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: diffPda,
@@ -814,7 +846,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: firstCollection,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: guardPda,
@@ -836,7 +868,7 @@ describe("onchain-academy", () => {
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
             newCollection: secondCollection,
-            newLessonCount: null,
+            newActiveLessons: null,
           })
           .accountsPartial({
             course: guardPda,
@@ -862,7 +894,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: firstCollection,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: guardPda,
@@ -892,7 +924,7 @@ describe("onchain-academy", () => {
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
             newCollection: null,
-            newLessonCount: null,
+            newActiveLessons: null,
           })
           .accountsPartial({
             course: coursePda,
@@ -911,19 +943,23 @@ describe("onchain-academy", () => {
       }
     });
 
-    it("lesson_count is increase-only (grow ok, equal no-op, shrink rejected)", async () => {
-      const growId = "lesson-count-grow";
-      const [growPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("course"), Buffer.from(growId)],
+    it("active_lessons mask can be grown, and retiring a slot (shrink) is now legal", async () => {
+      // CS-3: replaces the v1 "increase-only lesson_count" test. The monotonic
+      // guard (LessonCountDecrease) is deleted — the authority writes an arbitrary
+      // mask (add, remove, reorder, replace all reduce to a new mask), and the
+      // mask round-trips verbatim on read.
+      const rewriteId = "active-lessons-rewrite";
+      const [rewritePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(rewriteId)],
         program.programId
       );
 
       await program.methods
         .createCourse({
-          courseId: growId,
+          courseId: rewriteId,
           creator: creator.publicKey,
           contentTxId: contentTxId,
-          lessonCount: 2,
+          lessonCount: 4,
           difficulty: 1,
           xpPerLesson: 10,
           trackId: 1,
@@ -934,14 +970,18 @@ describe("onchain-academy", () => {
           collection: null,
         })
         .accountsPartial({
-          course: growPda,
+          course: rewritePda,
           config: configPda,
           authority: authority.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
 
-      const bump = (newLessonCount: number) =>
+      // Fresh course is a dense mask of 4 slots {0,1,2,3}.
+      let course = await program.account.course.fetch(rewritePda);
+      expect(liveCount(course.activeLessons)).to.equal(4);
+
+      const setMask = (mask: BN[]) =>
         program.methods
           .updateCourse({
             newContentTxId: null,
@@ -950,38 +990,37 @@ describe("onchain-academy", () => {
             newCreatorRewardXp: null,
             newMinCompletionsForReward: null,
             newCollection: null,
-            newLessonCount,
+            newActiveLessons: mask,
           })
           .accountsPartial({
-            course: growPda,
+            course: rewritePda,
             config: configPda,
             authority: authority.publicKey,
           })
           .rpc();
 
-      // Increase 2 -> 4: allowed.
-      await bump(4);
-      let course = await program.account.course.fetch(growPda);
-      expect(course.lessonCount).to.equal(4);
+      // Grow 4 -> 6 (append slots 4, 5): allowed.
+      await setMask(denseMask(6));
+      course = await program.account.course.fetch(rewritePda);
+      expect(liveCount(course.activeLessons)).to.equal(6);
 
-      // Equal (4 -> 4): no-op, allowed.
-      await bump(4);
-      course = await program.account.course.fetch(growPda);
-      expect(course.lessonCount).to.equal(4);
-
-      // Decrease 4 -> 3: rejected, count unchanged.
-      try {
-        await bump(3);
-        expect.fail("Should have thrown");
-      } catch (err) {
-        if (err instanceof AnchorError) {
-          expect(err.error.errorCode.code).to.equal("LessonCountDecrease");
-        } else {
-          expect(err.toString()).to.contain("Error");
-        }
-      }
-      course = await program.account.course.fetch(growPda);
-      expect(course.lessonCount).to.equal(4);
+      // Retire slot 1 -> {0,2,3,4,5}: shrinking is now LEGAL (no monotonic guard).
+      const retired = slotsToMask([0, 2, 3, 4, 5]);
+      await setMask(retired);
+      course = await program.account.course.fetch(rewritePda);
+      expect(liveCount(course.activeLessons)).to.equal(5);
+      // The mask is stored verbatim (word-for-word).
+      expect(course.activeLessons.map((w) => w.toString())).to.deep.equal(
+        retired.map((w) => w.toString())
+      );
+      // Slot 1 is retired; slots 0 and 5 remain live.
+      expect(course.activeLessons[0].and(new BN(1).shln(1)).isZero()).to.equal(
+        true
+      );
+      expect(course.activeLessons[0].and(new BN(1)).isZero()).to.equal(false);
+      expect(course.activeLessons[0].and(new BN(1).shln(5)).isZero()).to.equal(
+        false
+      );
     });
   });
 
@@ -1071,7 +1110,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -1125,7 +1164,7 @@ describe("onchain-academy", () => {
           newCreatorRewardXp: null,
           newMinCompletionsForReward: null,
           newCollection: null,
-          newLessonCount: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
@@ -5195,7 +5234,7 @@ describe("onchain-academy", () => {
       expect(recreated.courseId).to.equal(migCourseId);
       // Fresh account: version resets to 1, new field values applied.
       expect(recreated.version).to.equal(1);
-      expect(recreated.lessonCount).to.equal(5);
+      expect(liveCount(recreated.activeLessons)).to.equal(5);
       expect(recreated.difficulty).to.equal(3);
       expect(recreated.trackLevel).to.equal(2);
       expect(recreated.totalEnrollments).to.equal(0);
@@ -5777,6 +5816,289 @@ describe("onchain-academy", () => {
       expect((await program.account.config.fetch(configPda)).paused).to.equal(
         false
       );
+    });
+  });
+
+  // ===========================================================================
+  // CS-3. active_lessons mask — end-to-end runtime proofs
+  // ===========================================================================
+  // These are the authoritative runtime proofs of the two behaviors the mask
+  // exists to enable (the Rust crate only mirrors the handler logic):
+  //   1. finalize succeeds when a learner holds a stray bit for a since-retired
+  //      slot (the AND ignores it) — impossible under the v1 popcount-equality.
+  //   2. complete_lesson rejects a retired slot (its bit cleared in the mask).
+  // Self-contained: fresh learners/courses/ATAs, placed last so it cannot skew
+  // any earlier suite's totalCompletions/totalEnrollments/creator-XP assertions.
+  describe("CS-3. active_lessons mask (finalize + complete)", () => {
+    const strayLearner = Keypair.generate();
+    let strayLearnerAta: PublicKey;
+    const strayCourseId = "cs3-stray-bit";
+    let strayCoursePda: PublicKey;
+    let strayEnrollPda: PublicKey;
+
+    const rejectLearner = Keypair.generate();
+    let rejectLearnerAta: PublicKey;
+    const rejectCourseId = "cs3-inactive-slot";
+    let rejectCoursePda: PublicKey;
+    let rejectEnrollPda: PublicKey;
+
+    const CS3_XP = 20;
+
+    before(async () => {
+      for (const kp of [strayLearner, rejectLearner]) {
+        const sig = await provider.connection.requestAirdrop(
+          kp.publicKey,
+          5 * LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sig, "confirmed");
+      }
+
+      [strayCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(strayCourseId)],
+        program.programId
+      );
+      [rejectCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(rejectCourseId)],
+        program.programId
+      );
+      [strayEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(strayCourseId),
+          strayLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      [rejectEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(rejectCourseId),
+          rejectLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const mkAta = async (owner: Keypair): Promise<PublicKey> => {
+        const ata = getAssociatedTokenAddressSync(
+          xpMintKeypair.publicKey,
+          owner.publicKey,
+          false,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        const ix = createAssociatedTokenAccountInstruction(
+          authority.publicKey,
+          ata,
+          owner.publicKey,
+          xpMintKeypair.publicKey,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        await provider.sendAndConfirm(new anchor.web3.Transaction().add(ix));
+        return ata;
+      };
+      strayLearnerAta = await mkAta(strayLearner);
+      rejectLearnerAta = await mkAta(rejectLearner);
+    });
+
+    const retireSlot1 = (coursePda: PublicKey) =>
+      program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: null,
+          newActiveLessons: slotsToMask([0, 2]),
+        })
+        .accountsPartial({
+          course: coursePda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+    it("finalize succeeds with a stray bit for a since-retired slot", async () => {
+      // Dense 3-lesson course: slots {0,1,2} live.
+      await program.methods
+        .createCourse({
+          courseId: strayCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 3,
+          difficulty: 1,
+          xpPerLesson: CS3_XP,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: strayCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await program.methods
+        .enroll(strayCourseId)
+        .accountsPartial({
+          course: strayCoursePda,
+          enrollment: strayEnrollPda,
+          learner: strayLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([strayLearner])
+        .rpc();
+
+      // Complete all three slots (0,1,2) WHILE they are live — the learner earns
+      // slot 1's bit legitimately.
+      for (const i of [0, 1, 2]) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: strayCoursePda,
+            enrollment: strayEnrollPda,
+            learner: strayLearner.publicKey,
+            learnerTokenAccount: strayLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      // Retire slot 1 -> active = {0, 2}. The learner keeps slot 1's stray bit.
+      await retireSlot1(strayCoursePda);
+
+      // Finalize SUCCEEDS: lesson_flags & active == active, despite the stray bit
+      // — exactly the case v1 popcount-equality bricked forever.
+      const finalizeSig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: strayCoursePda,
+          enrollment: strayEnrollPda,
+          learner: strayLearner.publicKey,
+          learnerTokenAccount: strayLearnerAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      // Confirm at "confirmed" before reading the ATA at the same commitment,
+      // so the bonus mint in this tx is visible (matches the suite's pattern).
+      await provider.connection.confirmTransaction(finalizeSig, "confirmed");
+
+      const enrollment = await program.account.enrollment.fetch(strayEnrollPda);
+      expect(enrollment.completedAt).to.not.be.null;
+
+      const course = await program.account.course.fetch(strayCoursePda);
+      expect(course.totalCompletions).to.equal(1);
+      expect(liveCount(course.activeLessons)).to.equal(2);
+
+      // Bonus basis = live_lesson_count (popcount = 2), NOT the learner's
+      // completed count (3): bonus = xpPerLesson * 2 / 2 = 20. Learner XP =
+      // 3 lessons * 20 (minted while live) + 20 bonus = 80.
+      const bonus = Math.floor((CS3_XP * 2) / 2);
+      const ata = await getAccount(
+        provider.connection,
+        strayLearnerAta,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(ata.amount)).to.equal(CS3_XP * 3 + bonus);
+    });
+
+    it("complete rejects an inactive (retired) slot, live slots still complete", async () => {
+      // Dense 3-lesson course, then retire slot 1 BEFORE anyone completes it.
+      await program.methods
+        .createCourse({
+          courseId: rejectCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 3,
+          difficulty: 1,
+          xpPerLesson: CS3_XP,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: rejectCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await retireSlot1(rejectCoursePda);
+
+      await program.methods
+        .enroll(rejectCourseId)
+        .accountsPartial({
+          course: rejectCoursePda,
+          enrollment: rejectEnrollPda,
+          learner: rejectLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([rejectLearner])
+        .rpc();
+
+      // Slot 1 is retired -> complete_lesson(1) reverts with LessonOutOfBounds.
+      try {
+        await program.methods
+          .completeLesson(1)
+          .accountsPartial({
+            config: configPda,
+            course: rejectCoursePda,
+            enrollment: rejectEnrollPda,
+            learner: rejectLearner.publicKey,
+            learnerTokenAccount: rejectLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("LessonOutOfBounds");
+        } else {
+          expect(err.toString()).to.contain("LessonOutOfBounds");
+        }
+      }
+
+      // Live slots 0 and 2 still complete.
+      for (const i of [0, 2]) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: rejectCoursePda,
+            enrollment: rejectEnrollPda,
+            learner: rejectLearner.publicKey,
+            learnerTokenAccount: rejectLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      const enrollment = await program.account.enrollment.fetch(rejectEnrollPda);
+      // Slots 0 and 2 set: 0b101 = 5.
+      expect(enrollment.lessonFlags[0].toNumber() & 0x7).to.equal(0b101);
     });
   });
 });

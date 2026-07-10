@@ -5,18 +5,96 @@ use solana_sdk::pubkey::Pubkey;
 
 #[test]
 fn course_size_constant_is_correct() {
-    // 8 (discriminator) + (4 + 32) (course_id String) + 32 (creator)
-    // + 32 (content_tx_id) + 2 (version) + 1 (lesson_count) + 1 (difficulty)
-    // + 4 (xp_per_lesson) + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
-    // + 4 (creator_reward_xp) + 2 (min_completions_for_reward)
-    // + 4 (total_completions) + 4 (total_enrollments) + 1 (is_active)
-    // + 8 (created_at) + 8 (updated_at) + 32 (collection) + 8 (_reserved) + 1 (bump)
-    assert_eq!(Course::SIZE, 224);
+    // v2 (CS-3): 224 - 1 (deleted lesson_count u8) + 32 (active_lessons [u64;4]) = 255.
+    // 8 (discriminator) + (4 + 32) (course_id) + 32 (creator) + 32 (content_tx_id)
+    // + 2 (version) + 32 (active_lessons: [u64; 4]) + 1 (difficulty) + 4 (xp_per_lesson)
+    // + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
+    // + 4 (creator_reward_xp) + 2 (min_completions_for_reward) + 4 (total_completions)
+    // + 4 (total_enrollments) + 1 (is_active) + 8 (created_at) + 8 (updated_at)
+    // + 32 (collection) + 8 (_reserved) + 1 (bump)
+    assert_eq!(Course::SIZE, 255);
 }
 
 #[test]
 fn max_course_id_len_is_32() {
     assert_eq!(MAX_COURSE_ID_LEN, 32);
+}
+
+/// A minimal valid Course with a caller-chosen live-lesson mask, for exercising
+/// the real `impl Course` mask methods.
+fn course_with_mask(active_lessons: [u64; 4]) -> Course {
+    Course {
+        course_id: "mask-course".to_string(),
+        creator: Pubkey::new_unique(),
+        content_tx_id: [0u8; 32],
+        version: 1,
+        active_lessons,
+        difficulty: 1,
+        xp_per_lesson: 10,
+        track_id: 0,
+        track_level: 0,
+        prerequisite: None,
+        creator_reward_xp: 0,
+        min_completions_for_reward: 0,
+        total_completions: 0,
+        total_enrollments: 0,
+        is_active: true,
+        created_at: 0,
+        updated_at: 0,
+        collection: Pubkey::default(),
+        _reserved: [0u8; 8],
+        bump: 0,
+    }
+}
+
+#[test]
+fn is_active_slot_reads_the_mask() {
+    // slot 0 live and slot 130 live (word 2, bit 2); nothing else.
+    let mut mask = [0u64; 4];
+    mask[0] |= 1;
+    mask[2] |= 1u64 << 2;
+    let course = course_with_mask(mask);
+
+    assert!(course.is_active_slot(0));
+    assert!(course.is_active_slot(130));
+    assert!(!course.is_active_slot(1));
+    assert!(!course.is_active_slot(255)); // reachable index, but not live
+}
+
+#[test]
+fn live_lesson_count_is_popcount() {
+    let mut course = course_with_mask(Course::dense_mask(12));
+    assert_eq!(course.live_lesson_count(), 12);
+
+    // Retiring slot 3 (clearing its bit) drops the live count to 11.
+    course.active_lessons[0] &= !(1u64 << 3);
+    assert_eq!(course.live_lesson_count(), 11);
+}
+
+#[test]
+fn dense_mask_sets_contiguous_low_bits() {
+    assert_eq!(Course::dense_mask(0), [0, 0, 0, 0]);
+    assert_eq!(Course::dense_mask(1), [1, 0, 0, 0]);
+    assert_eq!(Course::dense_mask(64), [u64::MAX, 0, 0, 0]);
+    // 65 bits spans the first word boundary.
+    assert_eq!(Course::dense_mask(65), [u64::MAX, 1, 0, 0]);
+    // u8 ceiling: 255 dense bits (slot 255 is reachable only via update_course).
+    let full: u32 = Course::dense_mask(255).iter().map(|w| w.count_ones()).sum();
+    assert_eq!(full, 255);
+}
+
+#[test]
+fn active_lessons_mask_roundtrip() {
+    let mut mask = [0u64; 4];
+    mask[0] = 0b1011;
+    mask[3] = 1u64 << 63; // slot 255 set — proves the full 256-bit range survives Borsh
+    let course = course_with_mask(mask);
+
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
+    let de = Course::deserialize(&mut buf.as_slice()).unwrap();
+    assert_eq!(de.active_lessons, mask);
+    assert_eq!(de.live_lesson_count(), 4);
 }
 
 #[test]
@@ -26,7 +104,7 @@ fn course_serialization_roundtrip() {
         creator: Pubkey::new_unique(),
         content_tx_id: [42u8; 32],
         version: 3,
-        lesson_count: 10,
+        active_lessons: Course::dense_mask(10),
         difficulty: 2,
         xp_per_lesson: 100,
         track_id: 5,
@@ -54,7 +132,7 @@ fn course_serialization_roundtrip() {
     assert_eq!(deserialized.creator, course.creator);
     assert_eq!(deserialized.content_tx_id, [42u8; 32]);
     assert_eq!(deserialized.version, 3);
-    assert_eq!(deserialized.lesson_count, 10);
+    assert_eq!(deserialized.live_lesson_count(), 10);
     assert_eq!(deserialized.difficulty, 2);
     assert_eq!(deserialized.xp_per_lesson, 100);
     assert_eq!(deserialized.track_id, 5);
@@ -80,7 +158,7 @@ fn course_with_prerequisite_roundtrip() {
         creator: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
         version: 1,
-        lesson_count: 5,
+        active_lessons: Course::dense_mask(5),
         difficulty: 3,
         xp_per_lesson: 200,
         track_id: 1,
@@ -113,7 +191,7 @@ fn course_collection_roundtrip() {
         creator: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
         version: 1,
-        lesson_count: 3,
+        active_lessons: Course::dense_mask(3),
         difficulty: 2,
         xp_per_lesson: 50,
         track_id: 1,
@@ -189,7 +267,7 @@ fn course_serialized_size_with_max_id_and_all_options() {
         creator: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
         version: 1,
-        lesson_count: 1,
+        active_lessons: Course::dense_mask(1),
         difficulty: 1,
         xp_per_lesson: 0,
         track_id: 0,
@@ -221,7 +299,7 @@ fn course_serialized_size_shorter_id_fits_within_allocation() {
         creator: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
         version: 1,
-        lesson_count: 1,
+        active_lessons: Course::dense_mask(1),
         difficulty: 1,
         xp_per_lesson: 0,
         track_id: 0,

@@ -8,8 +8,9 @@ pub struct Enrollment {
     pub enrolled_at: i64,
     /// When course was completed (None if in progress)
     pub completed_at: Option<i64>,
-    /// Lesson completion bitmap: 4 × u64 = 256 bits.
-    /// lesson_count is u8 (max 255), so all valid indices fit within this bitmap.
+    /// Lesson completion bitmap: 4 × u64 = 256 bits, mirroring
+    /// `Course.active_lessons`. Completion is `lesson_flags & active_lessons ==
+    /// active_lessons`, so every valid slot (0..=255) fits within this bitmap.
     pub lesson_flags: [u64; 4],
     /// Credential NFT address for this track (set by issue_credential)
     pub credential_asset: Option<Pubkey>,

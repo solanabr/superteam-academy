@@ -330,7 +330,14 @@ CREATE OR REPLACE FUNCTION award_xp(
   p_reason TEXT,
   p_idempotency_key TEXT DEFAULT NULL,
   p_tx_signature TEXT DEFAULT NULL
-) RETURNS void
+) RETURNS INTEGER
+-- Returns the amount actually credited (after per-award + daily-cap clamps).
+--   > 0 → XP landed (or, for an idempotency-key duplicate, had already landed —
+--         the previously-credited amount is returned so callers can treat
+--         "already delivered" as delivered).
+--   = 0 → nothing was credited (invalid amount, or the daily cap consumed the
+--         whole award). Queue-style callers MUST NOT mark delivery resolved
+--         on 0 — the credit was dropped, not delivered.
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
@@ -342,6 +349,7 @@ DECLARE
   v_new_streak INTEGER;
   v_new_longest INTEGER;
   v_daily_total INTEGER;
+  v_prev_amount INTEGER;
   -- Hard per-award ceiling. Matches the documented "max 2000 XP per award"
   -- (the largest legitimate single award is a course-completion bonus).
   c_max_award_xp CONSTANT INTEGER := 2000;
@@ -352,7 +360,7 @@ DECLARE
 BEGIN
   -- Reject non-positive awards outright (defensive — callers pass positives).
   IF p_amount IS NULL OR p_amount <= 0 THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   -- Clamp any single award to the hard ceiling.
@@ -376,7 +384,7 @@ BEGIN
     AND reason NOT LIKE 'community:%';
 
   IF v_daily_total >= c_max_daily_award_xp THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   IF v_daily_total + p_amount > c_max_daily_award_xp THEN
@@ -384,7 +392,7 @@ BEGIN
   END IF;
 
   IF p_amount <= 0 THEN
-    RETURN;
+    RETURN 0;
   END IF;
 
   IF p_idempotency_key IS NOT NULL THEN
@@ -392,9 +400,16 @@ BEGIN
     VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
 
-    -- If nothing was inserted (duplicate), skip the XP update too
+    -- If nothing was inserted (duplicate), skip the XP update too. Report the
+    -- previously-credited amount (always > 0 — award_xp never records a
+    -- non-positive transaction) so callers see "already delivered", not
+    -- "dropped".
     IF NOT FOUND THEN
-      RETURN;
+      SELECT amount INTO v_prev_amount
+      FROM public.xp_transactions
+      WHERE user_id = p_user_id
+        AND idempotency_key = p_idempotency_key;
+      RETURN COALESCE(v_prev_amount, 0);
     END IF;
   ELSE
     INSERT INTO public.xp_transactions (user_id, amount, reason, tx_signature)
@@ -439,6 +454,8 @@ BEGIN
     last_activity_date = CURRENT_DATE,
     current_streak = v_new_streak,
     longest_streak = v_new_longest;
+
+  RETURN p_amount;
 END;
 $$;
 
@@ -700,7 +717,7 @@ CREATE POLICY "Users can update their own deployments"
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'enroll')),
+  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'quest_xp', 'enroll')),
   reference_id   TEXT NOT NULL,
   payload        JSONB NOT NULL,
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -749,8 +766,12 @@ CREATE POLICY "Users can view their own daily quests"
 -- ── get_daily_quest_state ─────────────────────────────────────
 -- Single-pass function: evaluates all quest progress for a user,
 -- upserts rows, marks first completion via xp_granted flag.
--- XP is minted on-chain by the API route (not in SQL) — the
--- Helius webhook then syncs it to Supabase via award_xp().
+-- On first completion it ALSO enqueues a 'quest_xp' pending_onchain_actions
+-- row in THIS transaction (atomic with the xp_granted flip), so a quest is
+-- never marked granted without a durable delivery record. The XP is then
+-- credited idempotently by retryPendingOnchainActions() -> award_xp()
+-- (reference_id = idempotency key); it is NOT minted on-chain from a retry
+-- path, because rewardXp is non-idempotent and would double-mint soulbound XP.
 -- Called via service_role from /api/quests/daily.
 CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_user_id           UUID,
@@ -778,6 +799,7 @@ DECLARE
   v_all_done     BOOLEAN;
   v_max_date     DATE;
   v_just_awarded BOOLEAN;
+  v_completed    BOOLEAN;
 BEGIN
   FOR v_quest IN SELECT * FROM jsonb_array_elements(p_quest_definitions)
   LOOP
@@ -850,29 +872,45 @@ BEGIN
         v_period  := CURRENT_DATE;
       END IF;
 
+      -- Completion requires a positive target: a targetValue of 0 must NOT
+      -- auto-complete (that would mint free XP every day for a 0-target quest).
+      v_completed := v_target > 0 AND v_current >= v_target;
+
       -- Upsert the streak row and skip the generic upsert below
       INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
-      VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
+      VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
       ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
         current_value = EXCLUDED.current_value,
         completed     = EXCLUDED.completed,
         completed_at  = EXCLUDED.completed_at;
 
-      -- Mark xp_granted on first completion (API route mints on-chain)
-      IF v_current >= v_target THEN
+      -- Mark xp_granted on first completion and durably enqueue the XP credit
+      -- in the SAME transaction (atomic with the flip): a quest is never marked
+      -- granted without a pending_onchain_actions row, so the enqueue can never
+      -- be lost to a swallowed app-side error. retryPendingOnchainActions()
+      -- delivers it idempotently via award_xp (reference_id = idempotency key).
+      IF v_completed THEN
         UPDATE public.user_daily_quests
         SET xp_granted = true
         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
         IF FOUND THEN
           v_just_awarded := true;
+          INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+          VALUES (
+            p_user_id,
+            'quest_xp',
+            v_quest_id || ':' || v_period::text,
+            jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+          )
+          ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
         END IF;
       END IF;
 
       v_results := v_results || jsonb_build_object(
         'questId', v_quest_id,
         'currentValue', v_current,
-        'completed', v_current >= v_target,
+        'completed', v_completed,
         'justAwarded', v_just_awarded,
         'xpReward', v_xp
       );
@@ -909,33 +947,56 @@ BEGIN
           END IF;
         END IF;
       END LOOP;
+
+    ELSE
+      -- Unknown quest type (e.g. a CMS typo). Skip this ONE quest with a loud
+      -- server-log warning rather than RAISE-ing — a single mis-typed quest
+      -- definition must not 500 the whole daily-quests endpoint for every user
+      -- (and, now that the enqueue is transactional, roll back other quests'
+      -- durable XP rows in the same call). It is not rendered as a silent 0/N:
+      -- it is omitted from the result and flagged in the logs for the operator.
+      RAISE WARNING 'get_daily_quest_state: skipping unknown quest type: %', v_type;
+      CONTINUE;
     END IF;
 
     -- ── Generic daily quest upsert (lesson, lesson_batch, challenge, module) ──
     v_period := CURRENT_DATE;
 
+    -- Completion requires a positive target: a targetValue of 0 must NOT
+    -- auto-complete (that would mint free XP every day for a 0-target quest).
+    v_completed := v_target > 0 AND v_current >= v_target;
+
     INSERT INTO public.user_daily_quests (user_id, quest_id, current_value, completed, completed_at, xp_granted, period_start)
-    VALUES (p_user_id, v_quest_id, v_current, v_current >= v_target, CASE WHEN v_current >= v_target THEN NOW() ELSE NULL END, false, v_period)
+    VALUES (p_user_id, v_quest_id, v_current, v_completed, CASE WHEN v_completed THEN NOW() ELSE NULL END, false, v_period)
     ON CONFLICT (user_id, quest_id, period_start) DO UPDATE SET
       current_value = EXCLUDED.current_value,
       completed     = EXCLUDED.completed,
       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
 
-    -- Mark xp_granted on first completion (API route mints on-chain)
-    IF v_current >= v_target THEN
+    -- Mark xp_granted on first completion and durably enqueue the XP credit in
+    -- the SAME transaction (atomic with the flip) — see the login_streak branch.
+    IF v_completed THEN
       UPDATE public.user_daily_quests
       SET xp_granted = true
       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
       IF FOUND THEN
         v_just_awarded := true;
+        INSERT INTO public.pending_onchain_actions (user_id, action_type, reference_id, payload)
+        VALUES (
+          p_user_id,
+          'quest_xp',
+          v_quest_id || ':' || v_period::text,
+          jsonb_build_object('xpAmount', v_xp, 'memo', 'daily_quest:' || v_quest_id)
+        )
+        ON CONFLICT (user_id, action_type, reference_id) DO NOTHING;
       END IF;
     END IF;
 
     v_results := v_results || jsonb_build_object(
       'questId', v_quest_id,
       'currentValue', v_current,
-      'completed', v_current >= v_target,
+      'completed', v_completed,
       'justAwarded', v_just_awarded,
       'xpReward', v_xp
     );
