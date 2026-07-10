@@ -43,8 +43,7 @@ jobs:
     # Job ceiling above the fuzz window so build + the run both fit.
     timeout-minutes: 40
     env:
-      SOLANA_VERSION: "2.0.25"
-      ANCHOR_VERSION: "0.31.1"
+      SOLANA_VERSION: "3.0.15"
       # 600s floor enforced below regardless of the dispatch input.
       FUZZ_DURATION: ${{ github.event.inputs.duration_seconds || '900' }}
       FUZZ_ITERATIONS: ${{ github.event.inputs.iterations || '1000000' }}
@@ -56,8 +55,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          # Cache both the program workspace (for `anchor build`) and the fuzz
-          # workspace (trident-fuzz + trident-svm are a big cold build).
+          # Cache both the program workspace (for the pinocchio build) and the
+          # fuzz workspace (trident-fuzz + trident-svm are a big cold build).
           workspaces: |
             onchain-academy
             onchain-academy/trident-tests
@@ -67,17 +66,13 @@ jobs:
           sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
 
-      - name: Install Anchor (avm)
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install "${ANCHOR_VERSION}"
-          avm use "${ANCHOR_VERSION}"
-
       # Trident.toml loads ../target/deploy/onchain_academy.so, so the program
-      # must be compiled to SBF first. (Token-2022 / ATA / system programs are
-      # bundled by trident-svm — no extra .so needed.)
+      # must be compiled to SBF and installed into that slot first. (Token-2022 /
+      # ATA / system programs are bundled by trident-svm — no extra .so needed.)
       - name: Build program (.so for the fuzz SVM)
-        run: anchor build
+        run: |
+          cargo build-sbf --manifest-path programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
+          bash scripts/select-program.sh
         working-directory: onchain-academy
 
       - name: Build fuzz target
