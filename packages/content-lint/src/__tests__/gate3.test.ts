@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { runLint } from "../lint";
 import "../checks/gate1-schema";
 import "../checks/gate3-slots";
@@ -61,5 +64,44 @@ describe("gate 3 — slots", () => {
     });
     const r = await runLint(makeTempRepo(tree(lock)));
     expect(r.diagnostics.some((d) => d.gate === "gate-3")).toBe(true);
+  });
+
+  it("emits a warning (never silent) when no exact merge-base exists", async () => {
+    const lock = JSON.stringify({
+      version: 1,
+      slots: { "lesson-a": 0, "lesson-b": 1 },
+      retired: [],
+      next: 2,
+    });
+    const root = makeTempRepo(tree(lock));
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: root });
+    git("init", "-q");
+    git("config", "user.email", "t@t.t");
+    git("config", "user.name", "t");
+    git("add", "-A");
+    git("commit", "-qm", "c1");
+    git("branch", "-M", "main");
+
+    // Orphan base: no common ancestor → `git merge-base` fails → degrade.
+    git("checkout", "-q", "--orphan", "unrelated");
+    git("rm", "-r", "-f", ".");
+    writeFileSync(join(root, "readme.txt"), "unrelated\n", "utf8");
+    git("add", "-A");
+    git("commit", "-qm", "orphan");
+    git("checkout", "-q", "main");
+
+    const r = await runLint(root, { baseRef: "unrelated" });
+    expect(
+      r.diagnostics.some(
+        (d) =>
+          d.gate === "gate-3" &&
+          d.severity === "warning" &&
+          /merge-base/i.test(d.message)
+      )
+    ).toBe(true);
+    // A warning must never fail the build.
+    expect(
+      r.diagnostics.filter((d) => d.gate === "gate-3" && d.severity === "error")
+    ).toEqual([]);
   });
 });

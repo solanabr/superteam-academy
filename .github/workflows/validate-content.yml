@@ -22,6 +22,7 @@ jobs:
         with:
           path: content
           fetch-depth: 0
+          persist-credentials: false
 
       # 2. This monorepo, for @superteam-lms/content-lint + content-schema + executor.
       - name: Checkout linter
@@ -30,6 +31,7 @@ jobs:
           repository: solanabr/superteam-academy
           ref: ${{ inputs.linter-ref }}
           path: linter
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -45,12 +47,11 @@ jobs:
         working-directory: linter
         run: pnpm install --frozen-lockfile --filter @superteam-lms/content-lint...
 
-      # 3. Make the PR base fetchable for the in-repo git diffs (gate 2/3).
-      - name: Fetch content base ref
-        if: github.event_name == 'pull_request'
-        working-directory: content
-        run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-
+      # The `fetch-depth: 0` content checkout above already fetched FULL history
+      # for ALL branches, so `origin/<base>` and its parent links are present and
+      # `git merge-base` resolves the true fork point for gates 2/3. (A shallow
+      # `--depth=1` base fetch would have no parent links, so merge-base fails and
+      # the gates degrade — with a warning — to comparing against the base TIP.)
       - name: Run content-lint
         working-directory: linter
         env:

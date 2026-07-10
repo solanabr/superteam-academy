@@ -80,8 +80,22 @@ export function gate2Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   if (ctx.baseRef) {
     const base = mergeBase(ctx.root, ctx.baseRef);
     if (base) {
+      if (!base.exact) {
+        // Degraded to the base tip (e.g. a shallow --depth=1 base fetch). The tip
+        // is not the fork point on a diverged base, so the immutability comparison
+        // below may be wrong — never let that be silent (fetch base with full
+        // history, `fetch-depth: 0`, to restore an exact merge-base).
+        out.push(
+          diag(
+            "gate-2",
+            "warning",
+            "",
+            `could not compute an exact merge-base with "${ctx.baseRef}" (shallow base?) — comparing id immutability against the base TIP instead of the fork point; results may be inaccurate. Fetch the base with full history (fetch-depth: 0).`
+          )
+        );
+      }
       for (const { kind, id, file } of all) {
-        const baseText = gitShow(ctx.root, base, file);
+        const baseText = gitShow(ctx.root, base.ref, file);
         if (baseText === null) continue; // file is new at head — nothing to compare
         const baseId = idFrom(baseText);
         if (baseId !== undefined && baseId !== id) {

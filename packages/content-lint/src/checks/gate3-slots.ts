@@ -20,12 +20,14 @@ function locksEqual(a: SlotsLockT, b: SlotsLockT): boolean {
   return ar === br;
 }
 
-/** The committed lock at the merge-base, or null if new / unavailable. */
-function baseLock(ctx: LintContext, course: CourseEntry): SlotsLockT | null {
-  if (!ctx.baseRef || !course.slotsPath) return null;
-  const base = mergeBase(ctx.root, ctx.baseRef);
-  if (!base) return null;
-  const text = gitShow(ctx.root, base, course.slotsPath);
+/** The committed lock at the given base ref, or null if new / unavailable. */
+function baseLock(
+  ctx: LintContext,
+  course: CourseEntry,
+  baseRef: string | null
+): SlotsLockT | null {
+  if (!baseRef || !course.slotsPath) return null;
+  const text = gitShow(ctx.root, baseRef, course.slotsPath);
   if (text === null) return null;
   const parsed = SlotsLock.safeParse(JSON.parse(text));
   return parsed.success ? parsed.data : null;
@@ -33,6 +35,23 @@ function baseLock(ctx: LintContext, course: CourseEntry): SlotsLockT | null {
 
 export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
   const out: Diagnostic[] = [];
+
+  // Resolve the fork point ONCE (same baseRef for every course). A degrade to the
+  // base tip (e.g. a shallow --depth=1 fetch) makes the slots-lock immutability
+  // comparison inexact, so surface it — never silently — exactly once.
+  const base = ctx.baseRef ? mergeBase(ctx.root, ctx.baseRef) : null;
+  if (base && !base.exact) {
+    out.push(
+      diag(
+        "gate-3",
+        "warning",
+        "",
+        `could not compute an exact merge-base with "${ctx.baseRef}" (shallow base?) — regenerating slots against the base TIP instead of the fork point; results may be inaccurate. Fetch the base with full history (fetch-depth: 0).`
+      )
+    );
+  }
+  const baseRef = base?.ref ?? null;
+
   for (const course of model.courses) {
     const file = course.slotsPath ?? `${course.dir}/slots.lock.json`;
     if (!course.slotsLock) {
@@ -54,7 +73,7 @@ export function gate3Check(model: RepoModel, ctx: LintContext): Diagnostic[] {
     // churn case is the sync-time re-validation's job (spec §9.2).
     let expected: SlotsLockT;
     try {
-      expected = assignSlots(baseLock(ctx, course), displayOrder);
+      expected = assignSlots(baseLock(ctx, course, baseRef), displayOrder);
     } catch (err) {
       out.push(
         diag(
