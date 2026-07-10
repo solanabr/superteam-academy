@@ -12,8 +12,11 @@ pub fn handler(ctx: Context<CompleteLesson>, lesson_index: u8) -> Result<()> {
 
     require!(!config.paused, AcademyError::MintingPaused);
 
+    // The slot must be a live lesson (its bit set in the course's active mask).
+    // Reusing LessonOutOfBounds keeps error codes frozen for the live program;
+    // "not a live slot" is the v2 meaning of an out-of-range lesson index.
     require!(
-        lesson_index < course.lesson_count,
+        course.is_active_slot(lesson_index),
         AcademyError::LessonOutOfBounds
     );
 

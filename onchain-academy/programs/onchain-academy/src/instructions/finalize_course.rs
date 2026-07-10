@@ -19,11 +19,19 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
         AcademyError::CourseAlreadyFinalized
     );
 
+    // Actual lessons the learner completed (and was minted XP for), including any
+    // bit for a since-retired slot. Used only for the emitted total_xp below.
     let completed: u32 = enrollment.lesson_flags.iter().map(|w| w.count_ones()).sum();
-    require!(
-        completed == course.lesson_count as u32,
-        AcademyError::CourseNotCompleted
-    );
+
+    // Completion requires every ACTIVE lesson bit to be set. A learner holding a
+    // stray bit for a since-retired slot still finalizes — the AND ignores it,
+    // which is exactly what the v1 popcount-equality could not do (spec §5.1).
+    let all_active_completed = enrollment
+        .lesson_flags
+        .iter()
+        .zip(course.active_lessons.iter())
+        .all(|(flags, active)| flags & active == *active);
+    require!(all_active_completed, AcademyError::CourseNotCompleted);
 
     enrollment.completed_at = Some(now);
 
@@ -34,9 +42,11 @@ pub fn handler(ctx: Context<FinalizeCourse>) -> Result<()> {
 
     let config_seeds: &[&[u8]] = &[b"config", &[config.bump]];
 
-    // Completion bonus = 50% of total lesson XP (rounded down)
+    // Completion bonus = 50% of total lesson XP (rounded down). The basis is the
+    // live lesson count (popcount of the active mask), NOT the learner's completed
+    // count — a stray retired bit must not inflate it.
     let total_lesson_xp = (course.xp_per_lesson as u64)
-        .checked_mul(course.lesson_count as u64)
+        .checked_mul(course.live_lesson_count() as u64)
         .ok_or(AcademyError::Overflow)?;
     let bonus_xp = total_lesson_xp / 2;
 
