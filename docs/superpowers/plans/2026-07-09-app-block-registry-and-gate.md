@@ -6,7 +6,7 @@
 
 **Architecture:** CS-1 (`@superteam-lms/content-schema`) is the single source of truth for block identity: `BlockType`, the `BLOCK_REGISTRY` metadata map (`{ graded, required }` per type), the `Award` discriminated union, `AWARD_KINDS`, and `AwardKind`. This plan builds two parallel app-side maps keyed by the *same* `BlockType` set, each guarded by `satisfies Record<..., ...>` so an unregistered type is a compile error:
 
-- `RENDERERS: Record<BlockType, Renderer>` (client) — one React component per block type. `lesson-client.tsx` maps `lesson.blocks[]` through it, replacing the `lesson.type` switch, the 16 `lesson.type` branch sites, and the 4 redeclared `"content" | "challenge"` unions.
+- `RENDERERS: Record<BlockType, Renderer>` (client) — one React component per block type. `lesson-client.tsx` maps `lesson.blocks[]` through it, replacing the `lesson.type` switch, the 8 `lesson.type` branch sites, and the 4 redeclared `"content" | "challenge"` unions.
 - `GRADERS: Record<GradedBlockType, Grader>` (server) — one deterministic grader per graded block type (`code`, `quiz`), reading `solution`/`tests`/`questions` from the same **public** projection every reader gets (post-D4, no secret to hide). This replaces `validateAgainstAnswerKey(ChallengeAnswerKey, …)` and the server-only answer-key queries.
 
 The completion gate dispatches on these maps, not on a string literal. `PREDICATES: Record<AwardKind, Predicate>` gives achievements the same treatment: content names an `award.kind`, code implements the closed set of kinds, and one fully-populated `UserState` feeds every predicate.
@@ -95,7 +95,7 @@ packages/types/src/
 └── course.ts                                       MOD  — Lesson becomes { id,title,slug,blocks: BlockT[] }; drop ContentLesson/ChallengeLesson union
 ```
 
-Coupled type-union sites that reference `"content" | "challenge"` and are resolved or flagged in Task 5/6: `packages/types/src/course.ts:41`, `apps/web/src/components/course/curriculum-accordion.tsx:12`, `apps/web/src/lib/teacher/structure.ts:28`, `apps/web/src/components/admin/course-structure-editor.tsx`. The last two belong to the `/teach` authoring surface that spec §15.4 Phase 8 retires; Task 6 either retargets their type reference to the shared `BlockType` or notes them for deletion with `/teach` — it does not expand scope to reimplement the authoring UI.
+Coupled type-union sites that reference `"content" | "challenge"` and are resolved or flagged in Task 5/6: `packages/types/src/course.ts:41`, `apps/web/src/components/course/curriculum-accordion.tsx:12`, `apps/web/src/lib/teacher/structure.ts:28`, `apps/web/src/components/teacher/course-structure-editor.tsx`. The last two belong to the `/teach` authoring surface that spec §15.4 Phase 8 retires; Task 6 either retargets their type reference to the shared `BlockType` or notes them for deletion with `/teach` — it does not expand scope to reimplement the authoring UI.
 
 ---
 
@@ -563,7 +563,7 @@ Run → fail.
 
 ## Task 6 — Block renderer map + `lesson-client.tsx` migration (spec §7.3; item 1 renderer half)
 
-Replace the `lesson.type` switch, the 16 `lesson.type` branch sites, and the 4 redeclared `"content" | "challenge"` unions with a renderer map.
+Replace the `lesson.type` switch, the 8 `lesson.type` branch sites, and the 4 redeclared `"content" | "challenge"` unions with a renderer map.
 
 **Files:**
 - Create: `.../lessons/[id]/blocks/{prose,video,code,quiz,open-ended,wallet-funding,program-explorer,deployed-program-card}-block.tsx` + `blocks/index.ts`.
