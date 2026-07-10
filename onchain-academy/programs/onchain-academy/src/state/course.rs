@@ -9,7 +9,12 @@ pub struct Course {
     pub creator: Pubkey,
     pub content_tx_id: [u8; 32],
     pub version: u16,
-    pub lesson_count: u8,
+    /// 256-bit mask of live lesson slots, mirroring `Enrollment.lesson_flags`.
+    /// Bit `i` set ⇒ slot `i` is a live lesson. Replaces the v1 `lesson_count`
+    /// (u8): the live-lesson count is `live_lesson_count()` (popcount) and
+    /// completion is `lesson_flags & active_lessons == active_lessons`, so
+    /// retiring a slot (clearing its bit) never strands a completed learner.
+    pub active_lessons: [u64; 4],
     pub difficulty: u8,
     pub xp_per_lesson: u32,
     pub track_id: u16,
@@ -30,18 +35,18 @@ pub struct Course {
 }
 
 impl Course {
-    // SIZE grew 192 -> 224 when `collection` was added. Old 192-byte Course
-    // accounts no longer deserialize, so EVERY instruction that resolves
-    // `course: Account<Course>` (enroll, complete_lesson, finalize_course,
-    // issue_credential, ...) fails until the account is recreated. A full
-    // devnet re-sync (recreate via create_course) is required, not just for
-    // credentials.
+    // SIZE grew 224 -> 255 in v2 (CS-3): `lesson_count` (u8, -1) was deleted and
+    // `active_lessons: [u64; 4]` (+32) added; `_reserved: [u8; 8]` is preserved
+    // (the "reserved bytes on every account" convention is kept, not consumed).
+    // Old 224-byte Course accounts no longer deserialize, so EVERY instruction
+    // that resolves `course: Account<Course>` fails until the account is recreated
+    // via close_course + create_course. That recreation is CS-4's execution.
     // 8 (discriminator)
     // + (4 + 32) (course_id)
     // + 32 (creator)
     // + 32 (content_tx_id)
     // + 2 (version)
-    // + 1 (lesson_count)
+    // + 32 (active_lessons: [u64; 4])
     // + 1 (difficulty)
     // + 4 (xp_per_lesson)
     // + 2 (track_id)
@@ -62,7 +67,7 @@ impl Course {
         + 32
         + 32
         + 2
-        + 1
+        + 32
         + 1
         + 4
         + 2
@@ -77,5 +82,35 @@ impl Course {
         + 8
         + 32
         + 8
-        + 1; // 224
+        + 1; // 255
+
+    /// True if `slot` is a live lesson slot (its bit is set in `active_lessons`).
+    /// `slot: u8` spans 0..=255, so every value maps to a valid word/bit of the
+    /// 256-bit mask — no bounds check is needed.
+    pub fn is_active_slot(&self, slot: u8) -> bool {
+        let word = (slot / 64) as usize;
+        let bit = slot % 64;
+        (self.active_lessons[word] >> bit) & 1 == 1
+    }
+
+    /// Number of live lesson slots (popcount of `active_lessons`). Replaces the
+    /// v1 `lesson_count` for XP math and the completion gate.
+    pub fn live_lesson_count(&self) -> u32 {
+        self.active_lessons.iter().map(|w| w.count_ones()).sum()
+    }
+
+    /// Dense mask for a course's initial `lesson_count` lessons: bits
+    /// `0..lesson_count` set. New courses are always dense; slots are retired
+    /// later via `update_course(new_active_lessons)`, never at creation.
+    pub fn dense_mask(lesson_count: u8) -> [u64; 4] {
+        let mut mask = [0u64; 4];
+        // `lesson_count` is u8 (<= 255), so `i` never reaches 255 and cannot
+        // overflow; every `i` maps to a valid word (0..=3) / bit (0..=63).
+        for i in 0..lesson_count {
+            let word = (i / 64) as usize;
+            let bit = i % 64;
+            mask[word] |= 1u64 << bit;
+        }
+        mask
+    }
 }
