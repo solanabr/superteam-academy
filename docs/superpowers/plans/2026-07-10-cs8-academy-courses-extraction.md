@@ -957,7 +957,7 @@ Each decision is flagged **SENSITIVE (human-applied Supabase migration)** or **r
 | 3 UUID lessons → real `lesson-<slug>` ids | **SENSITIVE** (for any carrying `user_progress`) | lesson.yaml gets the real id; **emit** `user_progress.lesson_id` rewrite for affected rows. |
 | 1 UUID module → real `key` | repo-content | Module is an inline `key` in course.yaml; no Postgres row references a module. |
 | 4 community achievements enter repo | repo-content | Write `achievements/{first-comment,curious-mind,helper,top-contributor}.yaml` with `award.kind` (community-stat / manual). |
-| `achievement-speed-runner`: add `award.kind` or delete | repo-content **+ OPEN QUESTION** | Per human decision (§17); default = delete unless a kind is chosen. CI gate 12 forbids limbo. |
+| `achievement-speed-runner`: add `award.kind` or delete | repo-content **+ OPEN QUESTION** | Per human decision (§17); default = delete unless a kind is chosen. (CI gate 12 is the intended backstop but is NOT yet implemented in content-lint — gates 8–12/14/15 are unwritten as of PR #379; until then nothing in CI enforces this, so the human decision is the only guard.) |
 | `achievement-perfect-score`: real `allTestsPassedFirstTry` or delete | repo-content **+ OPEN QUESTION** | Per human decision (§17); default = delete (no first-try signal exists). |
 
 **The 5 FK-less tables holding `course_id` as `TEXT`** (spec §15.5): `enrollments`, `user_progress`, `certificates`, `deployed_programs`, `threads`.
@@ -1273,7 +1273,7 @@ EOF
 ## Open Questions (human must decide — carry into the Task 11 issue)
 
 1. **solana-101 `xpPerLesson: 100`** (§15.5, §17): the schema max, 10× the flagship course. Keep as-is on the migrated `course-solana-101`, or normalize? This is a policy call, not technical — Zod permits it (≤ MAX; finalize invariant `100 × 3 = 300 ≤ 10000` holds). Extraction preserves the live value unless told otherwise.
-2. **`achievement-speed-runner`** (§15.5, §17): give it an `award.kind` (which?) or delete it. CI gate 12 forbids limbo. Default = delete.
+2. **`achievement-speed-runner`** (§15.5, §17): give it an `award.kind` (which?) or delete it. Default = delete. NOTE: CI gate 12 (the intended "no unawardable achievement" backstop) is not yet implemented in content-lint — do not assume the linter will catch a wrong call here.
 3. **`achievement-perfect-score`** (§15.5, §17): implement a real `allTestsPassedFirstTry` signal, or delete. Nothing records first-try passes today. Default = delete.
 4. **solana-101 orphaned Enrollment PDA**: the on-chain seed `["enrollment", "aD45H1NEbb1bqELwloGCqI", wallet]` cannot be rewritten to the new id. Accept losing that 1 devnet enrollment's on-chain record (Supabase rows are rewritten), or leave the PDA discoverable under the old id? Devnet-only, but state the choice.
 5. **`movedSinceCompletion` handling**: if Task 7 assertion (5) trips (a lesson moved between completion and today) the automated lane halts. Confirm the human-reconciliation policy — freeze the lock to the on-chain bit position (historical) and re-run the gate, vs. reorder content. Only a human signs off a hand-reconciled lock.
