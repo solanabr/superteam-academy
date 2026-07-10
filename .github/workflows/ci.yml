@@ -2,8 +2,16 @@ name: CI
 
 # P0-C3 — every PR runs build/test/lint/typecheck/audit and blocks on failure.
 # Required checks (make green before merge): frontend, onchain-rust, build-server.
-# The `integration` job builds the pinocchio program and replays all instructions
-# against it on LiteSVM.
+# The `integration` job builds the pinocchio program (default + fresh-id) and
+# replays all instructions against it on LiteSVM.
+#
+# Path filtering (P3): a `changes` job (dorny/paths-filter) computes which areas
+# a push/PR touched; each job is JOB-LEVEL `if:`-gated on those outputs. A job
+# skipped this way reports a "skipped" conclusion, which branch protection
+# treats as PASSING — so the required-check names stay intact with no
+# branch-protection change. (Do NOT convert this to workflow-level `on.paths`:
+# that leaves required checks stuck "pending" and blocks merges.) A
+# workflow_dispatch always runs everything.
 
 on:
   push:
@@ -28,13 +36,51 @@ env:
   NODE_VERSION: "20"
 
 jobs:
+  # ── Change detection: which areas did this push/PR touch? ───────────────────
+  # Downstream jobs gate on these outputs (see the header note on why this is
+  # job-level `if:` and not workflow-level `on.paths`).
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    if: github.event.action != 'labeled'
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      onchain: ${{ steps.filter.outputs.onchain }}
+      buildserver: ${{ steps.filter.outputs.buildserver }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'apps/web/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'tsconfig*.json'
+              - '.github/workflows/ci.yml'
+            onchain:
+              - 'onchain-academy/**'
+              - '.github/workflows/ci.yml'
+            buildserver:
+              - 'apps/build-server/**'
+              - '.github/workflows/ci.yml'
+
   # ── Frontend / monorepo: prettier, eslint, tsc, vitest ──────────────────────
   frontend:
     name: Frontend (lint · typecheck · test)
     runs-on: ubuntu-latest
+    needs: changes
     # The `labeled` PR event only exists to trigger verifiable-build; skip the
-    # heavy jobs so adding a label doesn't re-run the whole matrix.
-    if: github.event.action != 'labeled'
+    # heavy jobs so adding a label doesn't re-run the whole matrix. Also skip
+    # when no frontend-relevant files changed (workflow_dispatch forces a run).
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -106,7 +152,10 @@ jobs:
   onchain-rust:
     name: On-chain (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
-    if: github.event.action != 'labeled'
+    needs: changes
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.onchain == 'true' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -135,11 +184,20 @@ jobs:
       - name: Pinocchio host tests (layouts · discriminators · CPI bytes)
         run: cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocchio
 
+      # Same tests under the `fresh-id` flavor: proves the self-owned deploy
+      # id / CONFIG_PDA / CONFIG_BUMP triple is internally consistent and the
+      # flavor differs only in identity (the deploy artifact is built with it).
+      - name: Pinocchio host tests (fresh-id flavor)
+        run: cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocchio --features fresh-id
+
   # ── Build server (apps/build-server): fmt, clippy, tests ────────────────────
   build-server:
     name: Build server (fmt · clippy · cargo test)
     runs-on: ubuntu-latest
-    if: github.event.action != 'labeled'
+    needs: changes
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.buildserver == 'true' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -170,7 +228,13 @@ jobs:
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
-    if: github.event.action != 'labeled'
+    needs: changes
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.frontend == 'true' ||
+       needs.changes.outputs.onchain == 'true' ||
+       needs.changes.outputs.buildserver == 'true' ||
+       github.event_name == 'workflow_dispatch')
     # RATCHET: step-level continue-on-error keeps this check GREEN (with warnings)
     # while advisories are triaged. Job-level continue-on-error does NOT — the check
     # still reports red. Remove the per-step flags to make audit a hard gate (G-2).
@@ -196,9 +260,12 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable channel, resolved 2026-06-30
 
+      # Prebuilt binary (taiki-e/install-action) instead of `cargo install
+      # cargo-audit` from source — saves the ~1-2 min compile every run.
       - name: Install cargo-audit
-        continue-on-error: true
-        run: cargo install cargo-audit --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
 
       - name: cargo audit (program)
         continue-on-error: true
@@ -211,20 +278,26 @@ jobs:
   # ── Integration: pinocchio program on LiteSVM (Gate 2) ──────────────────────
   # Replays all 18 instructions (happy + error paths) against the pinocchio
   # .so in a single in-process LiteSVM and asserts results, normalized logs
-  # (byte-identical events), and account bytes.
+  # (byte-identical events), and account bytes. Builds BOTH the default and
+  # fresh-id artifacts so the fresh-id init smoke actually runs.
   integration:
     name: Integration (pinocchio · LiteSVM)
     runs-on: ubuntu-latest
-    if: github.event.action != 'labeled'
+    needs: changes
+    if: >-
+      github.event.action != 'labeled' &&
+      (needs.changes.outputs.onchain == 'true' || github.event_name == 'workflow_dispatch')
     env:
       # Matches the local dev toolchain; cargo-build-sbf fetches the pinned
       # platform-tools (v1.54 = rustc 1.89) the pinocchio crate requires.
-      SOLANA_VERSION: "3.0.15"
+      SOLANA_VERSION: "3.1.10"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable channel, resolved 2026-06-30
+        with:
+          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
@@ -232,13 +305,48 @@ jobs:
             onchain-academy
             onchain-academy/tests/differential
 
+      # Cache the Solana CLI install + the SBF platform-tools (v1.54, hundreds
+      # of MB) so cargo-build-sbf doesn't re-download them every run.
+      - name: Cache Solana CLI + platform-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/solana/install
+            ~/.cache/solana
+          key: solana-${{ runner.os }}-${{ env.SOLANA_VERSION }}-tools-v1.54
+
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.anza.xyz/v${SOLANA_VERSION}/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+          if [ ! -x "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then
+            # Download then run so a bad URL (e.g. a nonexistent version) fails
+            # the step loudly — `sh -c "$(curl ...)"` swallows curl's exit code.
+            curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install" -o /tmp/solana-install.sh
+            sh /tmp/solana-install.sh
+          fi
+          BIN="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$BIN" >> "$GITHUB_PATH"
+          # Sanity-check the toolchain is actually present (explicit path — the
+          # GITHUB_PATH addition only applies to later steps).
+          "$BIN/cargo-build-sbf" --version
 
-      - name: Build pinocchio program
-        run: cargo build-sbf --manifest-path onchain-academy/programs/onchain-academy-pinocchio/Cargo.toml --tools-version v1.54
+      # Lint the integration crate (a separate workspace not covered by
+      # onchain-rust's program-workspace clippy).
+      - name: Format check (integration crate)
+        run: cargo fmt --manifest-path onchain-academy/tests/differential/Cargo.toml --all --check
+
+      - name: Clippy (integration crate)
+        run: cargo clippy --manifest-path onchain-academy/tests/differential/Cargo.toml --all-targets -- -D warnings
+
+      - name: Build pinocchio program (default + fresh-id artifacts)
+        working-directory: onchain-academy
+        run: |
+          M=programs/onchain-academy-pinocchio/Cargo.toml
+          # fresh-id first, copy it aside, then restore the default artifact in
+          # the shared slot (the differential suite loads the default .so; the
+          # fresh_id_smoke test loads the _fresh.so).
+          cargo build-sbf --manifest-path "$M" --tools-version v1.54 --features fresh-id
+          cp target/deploy/onchain_academy_pinocchio.so target/deploy/onchain_academy_pinocchio_fresh.so
+          cargo build-sbf --manifest-path "$M" --tools-version v1.54
 
       - name: Integration scenarios
         run: cargo test --manifest-path onchain-academy/tests/differential/Cargo.toml
@@ -264,7 +372,7 @@ jobs:
     env:
       # Agave 3.x: matches local dev; required for the pinocchio build's
       # pinned platform-tools (v1.54 = rustc 1.89).
-      SOLANA_VERSION: "3.0.15"
+      SOLANA_VERSION: "3.1.10"
     outputs:
       program_sha256: ${{ steps.hash.outputs.sha256 }}
     steps:
@@ -277,10 +385,23 @@ jobs:
         with:
           workspaces: onchain-academy
 
+      - name: Cache Solana CLI + platform-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/solana/install
+            ~/.cache/solana
+          key: solana-${{ runner.os }}-${{ env.SOLANA_VERSION }}-tools-v1.54
+
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install")"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+          if [ ! -x "$HOME/.local/share/solana/install/active_release/bin/solana" ]; then
+            curl -sSfL "https://release.anza.xyz/v${SOLANA_VERSION}/install" -o /tmp/solana-install.sh
+            sh /tmp/solana-install.sh
+          fi
+          BIN="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/cargo-build-sbf" --version
 
       # Pinocchio artifact hash: cargo-build-sbf with a PINNED platform-tools
       # version (v1.54) + the committed Cargo.lock is toolchain-reproducible.
