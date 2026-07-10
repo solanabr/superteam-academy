@@ -16,10 +16,19 @@ const marked = (id: string, rev: string): SanityDoc =>
   doc(id, { sync: { source: "academy-courses", rev } });
 
 describe("selectPrunable", () => {
-  it("selects marked docs whose rev != current sha", () => {
-    const existing = [marked("a", "old"), marked("b", "new"), doc("c")];
-    const prunable = selectPrunable(existing, "new");
+  it("selects marked docs absent from the projected tree (by id, not rev)", () => {
+    // `b` is in the new tree so it is kept even though its rev is stale; `a` is
+    // ours and gone from the tree → pruned; `c` is unmarked → untouchable.
+    const existing = [marked("a", "old"), marked("b", "old"), doc("c")];
+    const prunable = selectPrunable(existing, new Set(["b"]));
     expect(prunable.map((d) => d._id)).toEqual(["a"]);
+  });
+
+  it("keeps a marked doc present in the tree even at a stale rev", () => {
+    // The read-your-writes race: a just-written doc may still read at its OLD
+    // rev, but as long as its id is in the projected set it must never prune.
+    const existing = [marked("a", "old"), marked("b", "old")];
+    expect(selectPrunable(existing, new Set(["a", "b"]))).toEqual([]);
   });
 
   it("NEVER selects an unmarked doc (no sync marker)", () => {
@@ -28,14 +37,14 @@ describe("selectPrunable", () => {
       doc("handCreated"),
       marked("x", "old"),
     ];
-    const prunable = selectPrunable(existing, "new");
+    const prunable = selectPrunable(existing, new Set());
     expect(prunable.map((d) => d._id)).toEqual(["x"]);
     expect(prunable.some((d) => d._id === "imageAsset")).toBe(false);
   });
 
   it("never selects a doc from a different source", () => {
     const foreign = doc("f", { sync: { source: "other-repo", rev: "old" } });
-    expect(selectPrunable([foreign], "new")).toEqual([]);
+    expect(selectPrunable([foreign], new Set())).toEqual([]);
   });
 });
 

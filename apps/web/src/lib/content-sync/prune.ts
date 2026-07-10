@@ -8,16 +8,20 @@ export function prunableQuery(): string {
 }
 
 /**
- * Docs to delete after a full write: ours (matching `sync.source`) and NOT at
- * the current sha. Documents without the marker — image assets, anything
- * hand-created — are untouchable (spec §9.4 guard 2).
+ * Docs to delete after a full write: ours (matching `sync.source`) whose `_id`
+ * is absent from the new tree (`projectedIds`). Computed purely from the
+ * pre-write managed read + the projected id set — never from a post-write
+ * read-back — so an async / lagging managed-read can never place a just-written
+ * doc in the delete set (the read-your-writes race). Documents without our
+ * marker — image assets, hand-created docs, drafts — are untouchable
+ * (spec §9.4 guard 2).
  */
 export function selectPrunable(
   existing: SanityDoc[],
-  sha: string
+  projectedIds: ReadonlySet<string>
 ): SanityDoc[] {
   return existing.filter(
-    (d) => d.sync?.source === SOURCE && d.sync.rev !== sha
+    (d) => d.sync?.source === SOURCE && !projectedIds.has(d._id)
   );
 }
 

@@ -1,13 +1,77 @@
 import { createHash } from "node:crypto";
 import { describe, it, expect, vi } from "vitest";
 import { runContentSync } from "../sync";
-import { InMemoryGateway } from "../gateway";
+import { InMemoryGateway, type SanityGateway } from "../gateway";
 import { BlockedCommitError, BlastRadiusError, type SanityDoc } from "../types";
 import type { GitHubClient } from "../github";
 import type { GraderSet } from "../executor-gate";
 import { makeCourseTarball, PNG_1X1 } from "./_fixtures";
 
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
+
+/** Hand-authored managed docs unrelated to the sync (no marker → never pruned).
+ *  They inflate the managed total the blast-radius guard measures against. */
+const handAuthored = (n: number): SanityDoc[] =>
+  Array.from({ length: n }, (_v, i) => ({
+    _id: `hand-authored-${i}`,
+    _type: "lesson",
+  }));
+
+const managedMarked = (id: string, type: string, rev: string): SanityDoc => ({
+  _id: id,
+  _type: type,
+  sync: { source: "academy-courses", rev },
+});
+
+/**
+ * Models Sanity `visibility:"async"`: `writeDocs` commits durably, but the next
+ * `readManaged` LAGS for a configured subset of ids — they still read at their
+ * pre-write value. This is exactly the read-your-writes window a post-write
+ * read-back prune would race.
+ */
+class AsyncVisibilityGateway implements SanityGateway {
+  written: SanityDoc[] = [];
+  deleted: string[] = [];
+  assets = new Set<string>();
+  singleton: { sha: string; counts: Record<string, number> } | null = null;
+  private visible: Map<string, SanityDoc>;
+
+  constructor(
+    existing: SanityDoc[],
+    private laggingIds: Set<string>
+  ) {
+    this.visible = new Map(existing.map((d) => [d._id, d]));
+  }
+
+  async readManaged(): Promise<SanityDoc[]> {
+    return [...this.visible.values()];
+  }
+  async writeDocs(docs: SanityDoc[]): Promise<void> {
+    this.written.push(...docs);
+    for (const d of docs) {
+      // A lagging id keeps its previously-visible value on the next read.
+      if (!this.laggingIds.has(d._id)) this.visible.set(d._id, d);
+    }
+  }
+  async deleteDocs(ids: string[]): Promise<void> {
+    this.deleted.push(...ids);
+    for (const id of ids) this.visible.delete(id);
+  }
+  async assetExists(id: string): Promise<boolean> {
+    return this.assets.has(id);
+  }
+  async uploadAsset(_bytes: Uint8Array, filename: string): Promise<string> {
+    const id = `image-${filename}`;
+    this.assets.add(id);
+    return id;
+  }
+  async writeSingleton(
+    sha: string,
+    counts: Record<string, number>
+  ): Promise<void> {
+    this.singleton = { sha, counts };
+  }
+}
 
 const graders: GraderSet = {
   js: async () => ({ passed: true, failures: [] }),
@@ -90,21 +154,48 @@ describe("runContentSync", () => {
     expect(gw.deleted).toEqual([]); // never deleted anything
   });
 
-  it("prunes a small stale set and reports the count", async () => {
-    // 9 current-ish + 1 stale → prune 1 of 10 managed (< 20%).
-    const current: SanityDoc[] = Array.from({ length: 9 }, (_v, i) => ({
-      _id: `lesson-keep-${i}`,
-      _type: "lesson",
-      sync: { source: "academy-courses", rev: SHA },
-    }));
-    const stale: SanityDoc = {
-      _id: "lesson-gone",
-      _type: "lesson",
-      sync: { source: "academy-courses", rev: "oldsha" },
-    };
-    const gw = new InMemoryGateway([...current, stale]);
+  it("prunes a managed doc absent from the new tree and reports the count", async () => {
+    // The two tree docs are kept (present in the projected set) even though they
+    // are re-written from a stale rev; `lesson-gone` is ours but no longer in the
+    // tree → pruned. Hand-authored docs pad the managed total so the single
+    // removal stays under the 20% blast radius.
+    const gw = new InMemoryGateway([
+      managedMarked("course-demo", "course", "oldsha"),
+      managedMarked("lesson-accounts", "lesson", "oldsha"),
+      managedMarked("lesson-gone", "lesson", "oldsha"),
+      ...handAuthored(4),
+    ]);
     const result = await runContentSync(deps({ gateway: gw }));
-    expect(gw.deleted).toContain("lesson-gone");
+    expect(gw.deleted).toEqual(["lesson-gone"]);
+    expect(result.pruned).toBe(1);
+  });
+
+  it("async managed-read visibility never prunes a just-written doc; a removed doc still prunes", async () => {
+    // Model Sanity `visibility:"async"`: after the write, the managed read-back
+    // LAGS for `lesson-accounts` (it still reads at its OLD rev). Enough
+    // hand-authored docs exist that a 2-doc stale read-back slips under the 20%
+    // blast radius — so the OLD post-write-read prune would SILENTLY DELETE the
+    // just-written `lesson-accounts`. Computing the prune set from the pre-write
+    // read + projected ids makes that impossible: an id in the new tree is never
+    // pruned, regardless of what the read-back reports.
+    const existing: SanityDoc[] = [
+      managedMarked("course-demo", "course", "oldsha"),
+      managedMarked("lesson-accounts", "lesson", "oldsha"),
+      managedMarked("lesson-removed", "lesson", "oldsha"),
+      ...handAuthored(7),
+    ];
+    const gw = new AsyncVisibilityGateway(
+      existing,
+      new Set(["lesson-accounts"])
+    );
+    const result = await runContentSync(deps({ gateway: gw }));
+
+    // The just-written tree docs are never in the delete set...
+    expect(gw.written.map((d) => d._id)).toContain("lesson-accounts");
+    expect(gw.deleted).not.toContain("lesson-accounts");
+    expect(gw.deleted).not.toContain("course-demo");
+    // ...but a doc genuinely absent from the new tree IS pruned.
+    expect(gw.deleted).toEqual(["lesson-removed"]);
     expect(result.pruned).toBe(1);
   });
 

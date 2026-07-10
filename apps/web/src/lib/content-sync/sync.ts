@@ -113,26 +113,27 @@ export async function runContentSync(deps: SyncDeps): Promise<SyncResult> {
   // 7. Idempotent change set.
   const changed = selectChangedDocs(existing, merged);
 
-  // 8. Write everything first, then verify the count (§9.4 guard 3).
+  // 8. Write the change set in one atomic, read-your-writes transaction.
   await deps.gateway.writeDocs(changed);
-  const afterWrite = await deps.gateway.readManaged();
-  const managed = (d: SanityDoc): boolean =>
-    (MANAGED_TYPES as readonly string[]).includes(d._type);
-  const managedNow = afterWrite.filter(managed);
-  const projectedManaged = merged.filter(managed);
-  if (managedNow.length < projectedManaged.length) {
-    throw new Error(
-      `write-verify failed: ${managedNow.length} managed docs present, expected >= ${projectedManaged.length}`
-    );
-  }
 
-  // 9. Prune stale docs — marker-scoped, blast-radius guarded (§9.4).
-  const prunable = selectPrunable(afterWrite, deps.sha);
-  assertBlastRadius(prunable.length, afterWrite.length);
+  // 9. Prune docs this source previously managed that are absent from the new
+  //    tree (§9.4). The prune set is derived purely from `existing` (the
+  //    pre-write managed read) and `projectedIds` (the ids we just wrote) — it
+  //    is NEVER re-read after writing. A post-write read-back would race Sanity's
+  //    write visibility: a just-written doc that read back at its OLD sync.rev
+  //    would match a stale-rev filter and be silently deleted. Computing from
+  //    in-memory sets makes that impossible: a doc present in the new tree can
+  //    never be in the prune set. Blast-radius is guarded against the managed
+  //    total read at the start.
+  const projectedIds = new Set(merged.map((d) => d._id));
+  const prunable = selectPrunable(existing, projectedIds);
+  assertBlastRadius(prunable.length, existing.length);
   await deps.gateway.deleteDocs(prunable.map((d) => d._id));
 
-  // 10. Write the contentSync singleton LAST (never matches the prune query).
-  const counts = countByType(projectedManaged);
+  // 10. Write the contentSync singleton LAST (never matches the prune set).
+  const managed = (d: SanityDoc): boolean =>
+    (MANAGED_TYPES as readonly string[]).includes(d._type);
+  const counts = countByType(merged.filter(managed));
   await deps.gateway.writeSingleton(deps.sha, counts);
 
   // 11. Purge the catalog cache.
