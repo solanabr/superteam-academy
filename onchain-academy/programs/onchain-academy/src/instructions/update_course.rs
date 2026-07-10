@@ -13,12 +13,13 @@ pub struct UpdateCourseParams {
     pub new_min_completions_for_reward: Option<u16>,
     /// Set/backfill the Metaplex Core credential collection for this course.
     pub new_collection: Option<Pubkey>,
-    /// Grow the course's lesson count (increase-only) when a teacher appends
-    /// lessons to an already-deployed course. Shrinking is rejected — it would
-    /// strand completed-lesson flags and shift bitmap indices. The enrollment
-    /// bitmap is `[u64; 4]` (256 bits), so any valid `u8` count fits without an
-    /// account resize.
-    pub new_lesson_count: Option<u8>,
+    /// Replace the 256-bit live-lesson mask. Add, remove, reorder and replace
+    /// lessons all reduce to writing a new mask: retiring a slot clears its bit,
+    /// adding one sets a fresh bit. The chain cannot know slots are never reused
+    /// — the repo's `slots.lock.json` is the only invariant carrier — so this is
+    /// trusted blindly here; the sync route asserts the mask matches the lockfile
+    /// right before signing (spec §11.0). Replaces v1's `new_lesson_count`.
+    pub new_active_lessons: Option<[u64; 4]>,
 }
 
 pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result<()> {
@@ -50,15 +51,8 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
         course.min_completions_for_reward = min_completions;
     }
 
-    if let Some(new_lesson_count) = params.new_lesson_count {
-        // Increase-only: raising the count lets a re-sync pick up appended
-        // lessons; equal is a no-op. A lower value would strand completed flags
-        // and shift indices, so reject it.
-        require!(
-            new_lesson_count >= course.lesson_count,
-            AcademyError::LessonCountDecrease
-        );
-        course.lesson_count = new_lesson_count;
+    if let Some(active_lessons) = params.new_active_lessons {
+        course.active_lessons = active_lessons;
     }
 
     if let Some(collection) = params.new_collection {
