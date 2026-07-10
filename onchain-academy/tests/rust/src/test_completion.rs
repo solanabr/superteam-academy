@@ -122,21 +122,23 @@ fn lesson_already_completed_detection() {
     assert_ne!(flags[word] & mask, 0);
 }
 
+/// Mirrors the v2 bound in complete_lesson:
+/// `require!(course.is_active_slot(lesson_index), LessonOutOfBounds)`.
+fn is_active_slot(active: &[u64; 4], slot: u8) -> bool {
+    let word = (slot / 64) as usize;
+    let bit = slot % 64;
+    (active[word] >> bit) & 1 == 1
+}
+
 #[test]
-fn lesson_out_of_bounds_check() {
-    // Mirrors: `require!(lesson_index < course.lesson_count, LessonOutOfBounds)`
-    let lesson_count: u8 = 10;
-
-    // Valid indices
-    for i in 0..lesson_count {
-        assert!(i < lesson_count);
-    }
-
-    // Invalid: index == lesson_count
-    assert!(!(lesson_count < lesson_count));
-
-    // Invalid: index > lesson_count
-    assert!(!(lesson_count + 1 < lesson_count));
+fn inactive_slot_is_rejected() {
+    // Course has slots 0 and 2 live; slot 1 was retired.
+    let active = [0b101u64, 0, 0, 0];
+    assert!(is_active_slot(&active, 0));
+    assert!(!is_active_slot(&active, 1)); // retired → complete_lesson reverts
+    assert!(is_active_slot(&active, 2));
+    // An index past the live set (but a valid u8) is also rejected.
+    assert!(!is_active_slot(&active, 200));
 }
 
 #[test]
