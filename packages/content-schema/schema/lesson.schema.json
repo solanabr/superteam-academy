@@ -329,10 +329,7 @@
               },
               "produces": {
                 "type": "string",
-                "enum": [
-                  "funded-wallet",
-                  "deployed-program"
-                ]
+                "const": "funded-wallet"
               },
               "consumes": {
                 "minItems": 1,
@@ -374,11 +371,7 @@
                 "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
               },
               "produces": {
-                "type": "string",
-                "enum": [
-                  "funded-wallet",
-                  "deployed-program"
-                ]
+                "not": {}
               },
               "consumes": {
                 "minItems": 1,
@@ -413,11 +406,7 @@
                 "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
               },
               "produces": {
-                "type": "string",
-                "enum": [
-                  "funded-wallet",
-                  "deployed-program"
-                ]
+                "not": {}
               },
               "consumes": {
                 "minItems": 1,
