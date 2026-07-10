@@ -263,10 +263,17 @@ export async function retryPendingOnchainActions(
         }
 
         case "course_finalize": {
-          const courseId = payload.courseId as string;
-          const xpAmount = payload.xpAmount as number;
+          const courseId =
+            typeof payload.courseId === "string" ? payload.courseId : undefined;
+          if (!courseId) {
+            throw new Error(
+              `Invalid course_finalize payload: courseId=${JSON.stringify(payload.courseId)}`
+            );
+          }
           const reason =
-            (payload.reason as string) ?? `Completed course: ${courseId}`;
+            typeof payload.reason === "string"
+              ? payload.reason
+              : `Completed course: ${courseId}`;
 
           const enrollment = (await fetchEnrollment(
             courseId,
@@ -279,30 +286,60 @@ export async function retryPendingOnchainActions(
             await withRetry(() => finalizeCourse(courseId, wallet));
           }
 
-          const { error: xpRpcError } = await adminClient.rpc("award_xp", {
-            p_user_id: userId,
-            p_amount: xpAmount,
-            p_reason: reason,
-          });
-          if (xpRpcError) throw new Error(xpRpcError.message);
-          break;
+          // The XP bonus is optional: the current producer enqueues
+          // course_finalize purely to retry the on-chain finalize (its payload
+          // carries no xpAmount). Only when an amount is genuinely owed do we
+          // route it through the durable-credit path — so a cap-eaten bonus
+          // defers instead of being lost (CS-7 bug class), while an XP-less row
+          // simply resolves on the successful finalize below.
+          const xpAmount = payload.xpAmount;
+          if (
+            typeof xpAmount === "number" &&
+            Number.isFinite(xpAmount) &&
+            xpAmount > 0
+          ) {
+            await creditXpAndSettle(
+              adminClient,
+              userId,
+              row,
+              xpAmount,
+              reason,
+              row.reference_id
+            );
+            continue; // settlement (resolve / cap-defer / retry) handled inside
+          }
+          break; // no XP owed — resolve on the finalize
         }
 
         case "xp": {
-          const lessonId = payload.lessonId as string;
-          const xpAmount = payload.xpAmount as number;
+          const lessonId =
+            typeof payload.lessonId === "string" ? payload.lessonId : undefined;
+          const xpAmount = payload.xpAmount;
+          if (
+            typeof xpAmount !== "number" ||
+            !Number.isFinite(xpAmount) ||
+            xpAmount <= 0
+          ) {
+            throw new Error(
+              `Invalid xp payload: xpAmount=${JSON.stringify(xpAmount)}`
+            );
+          }
           const reason =
-            (payload.reason as string) ?? `Completed lesson: ${lessonId}`;
+            typeof payload.reason === "string"
+              ? payload.reason
+              : `Completed lesson: ${lessonId ?? row.reference_id}`;
 
-          // DB-level dedup via idempotency_key — ON CONFLICT DO NOTHING if already awarded
-          const { error: xpRpcError } = await adminClient.rpc("award_xp", {
-            p_user_id: userId,
-            p_amount: xpAmount,
-            p_reason: reason,
-            p_idempotency_key: row.reference_id,
-          });
-          if (xpRpcError) throw new Error(xpRpcError.message);
-          break;
+          // reference_id is the idempotency key — a re-sweep of an already
+          // credited award is a no-op, never a double-credit.
+          await creditXpAndSettle(
+            adminClient,
+            userId,
+            row,
+            xpAmount,
+            reason,
+            row.reference_id
+          );
+          continue; // settlement (resolve / cap-defer / retry) handled inside
         }
 
         case "enroll": {
@@ -406,56 +443,105 @@ async function creditQuestXpRows(
   rows: PendingActionRow[]
 ): Promise<void> {
   for (const row of rows) {
-    try {
-      const payload = row.payload as Record<string, unknown>;
-      const xpAmount = payload.xpAmount;
-      if (
-        typeof xpAmount !== "number" ||
-        !Number.isFinite(xpAmount) ||
-        xpAmount <= 0
-      ) {
-        throw new Error(
-          `Invalid quest_xp payload: xpAmount=${JSON.stringify(xpAmount)}`
-        );
-      }
-      const reason =
-        typeof payload.memo === "string"
-          ? payload.memo
-          : `daily_quest:${row.reference_id}`;
-
-      const { data: credited, error: xpRpcError } = await adminClient.rpc(
-        "award_xp",
-        {
-          p_user_id: userId,
-          p_amount: xpAmount,
-          p_reason: reason,
-          p_idempotency_key: row.reference_id,
-        }
+    const payload = row.payload as Record<string, unknown>;
+    const xpAmount = payload.xpAmount;
+    if (
+      typeof xpAmount !== "number" ||
+      !Number.isFinite(xpAmount) ||
+      xpAmount <= 0
+    ) {
+      // Malformed payload — a quest_xp row must always carry a positive amount.
+      // Treat as a transient failure (bump retry) rather than a silent resolve.
+      await bumpRetry(
+        adminClient,
+        row,
+        `Invalid quest_xp payload: xpAmount=${JSON.stringify(xpAmount)}`
       );
-      if (xpRpcError) throw new Error(xpRpcError.message);
+      continue;
+    }
+    const reason =
+      typeof payload.memo === "string"
+        ? payload.memo
+        : `daily_quest:${row.reference_id}`;
 
-      if ((credited ?? 0) > 0) {
-        await adminClient
-          .from("pending_onchain_actions")
-          .update({ resolved_at: new Date().toISOString() })
-          .eq("id", row.id);
-      } else {
-        // Daily cap consumed the whole credit — deferral, not failure: keep
-        // the row unresolved and do NOT increment retry_count.
-        await adminClient
-          .from("pending_onchain_actions")
-          .update({ last_error: "daily-cap-deferred" })
-          .eq("id", row.id);
+    await creditXpAndSettle(
+      adminClient,
+      userId,
+      row,
+      xpAmount,
+      reason,
+      row.reference_id
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. Shared XP-credit settlement (durable-delivery contract)
+// ---------------------------------------------------------------------------
+// Credits one learning-path XP award and settles its queue row. award_xp
+// RETURNS the amount actually credited (see
+// supabase/migrations/20260709130000_award_xp_report_credited.sql), which is
+// the signal used to tell three outcomes apart:
+//   • credited > 0  → XP landed (or an idempotency-key duplicate re-reports the
+//                     already-credited amount) → mark the row resolved.
+//   • credited = 0  → the 5000/day cap ate the whole award. This is a DEFERRAL,
+//                     not a failure: leave the row unresolved and do NOT bump
+//                     retry_count, so it is re-swept once the cap window resets
+//                     instead of silently losing the owed XP (the CS-7 bug).
+//   • RPC error     → transient failure → bump retry_count (backoff), as before.
+// The award MUST carry an idempotency key so a re-sweep is a no-op, never a
+// double-credit — this is what makes deferral safe.
+async function creditXpAndSettle(
+  adminClient: AdminClient,
+  userId: string,
+  row: PendingActionRow,
+  amount: number,
+  reason: string,
+  idempotencyKey: string
+): Promise<void> {
+  try {
+    const { data: credited, error: xpRpcError } = await adminClient.rpc(
+      "award_xp",
+      {
+        p_user_id: userId,
+        p_amount: amount,
+        p_reason: reason,
+        p_idempotency_key: idempotencyKey,
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    );
+    if (xpRpcError) throw new Error(xpRpcError.message);
+
+    if ((credited ?? 0) > 0) {
       await adminClient
         .from("pending_onchain_actions")
-        .update({
-          retry_count: (row.retry_count ?? 0) + 1,
-          last_error: message,
-        })
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("id", row.id);
+    } else {
+      // Daily cap consumed the whole credit — deferral, not failure: keep the
+      // row unresolved and do NOT increment retry_count.
+      await adminClient
+        .from("pending_onchain_actions")
+        .update({ last_error: "daily-cap-deferred" })
         .eq("id", row.id);
     }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await bumpRetry(adminClient, row, message);
   }
+}
+
+// Transient-failure bookkeeping: bump retry_count and record the error so the
+// row is retried under the existing < 5 attempt budget with backoff.
+async function bumpRetry(
+  adminClient: AdminClient,
+  row: PendingActionRow,
+  message: string
+): Promise<void> {
+  await adminClient
+    .from("pending_onchain_actions")
+    .update({
+      retry_count: (row.retry_count ?? 0) + 1,
+      last_error: message,
+    })
+    .eq("id", row.id);
 }
