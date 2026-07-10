@@ -11,7 +11,6 @@ import {
 import {
   getAllCoursesAdmin,
   getAllAchievementsAdmin,
-  getPendingReviewCourses,
 } from "@/lib/sanity/queries";
 import {
   findCoursePDA,
@@ -42,13 +41,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
-  const [courses, achievements, pendingReviews, authorityCheck] =
-    await Promise.all([
-      getAllCoursesAdmin(),
-      getAllAchievementsAdmin(),
-      getPendingReviewCourses(),
-      verifyAuthorityMatchesConfig(),
-    ]);
+  const [courses, achievements, authorityCheck] = await Promise.all([
+    getAllCoursesAdmin(),
+    getAllAchievementsAdmin(),
+    verifyAuthorityMatchesConfig(),
+  ]);
 
   const courseStatuses = await Promise.all(
     courses.map(async (course) => {
@@ -198,6 +195,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     },
     courses: courseStatuses,
     achievements: achievementStatuses,
-    pendingReviews,
   });
 }

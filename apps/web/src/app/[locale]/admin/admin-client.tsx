@@ -2,16 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
-import {
-  CourseReviewQueue,
-  type PendingReviewCourse,
-} from "@/components/admin/course-review-queue";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { DataResyncPanel } from "@/components/admin/data-resync-panel";
 import { ContentSyncPanel } from "@/components/admin/content-sync-panel";
-import { TeacherRolesPanel } from "@/components/admin/teacher-roles-panel";
-import { LearningPathsPanel } from "@/components/admin/learning-paths-panel";
-import { CourseTagsPanel } from "@/components/admin/course-tags-panel";
 import { FlagsPanel } from "@/components/admin/flags-panel";
 
 interface DiffEntry {
@@ -65,7 +58,6 @@ interface AdminStatus {
   };
   courses: CourseStatus[];
   achievements: AchievementStatus[];
-  pendingReviews: PendingReviewCourse[];
 }
 
 export function AdminClient() {
@@ -122,7 +114,6 @@ export function AdminClient() {
   if (!status) return null;
 
   const { program, courses, achievements } = status;
-  const pendingReviews = status.pendingReviews ?? [];
 
   return (
     <div className="space-y-8">
@@ -150,32 +141,6 @@ export function AdminClient() {
           )}
         </div>
       </div>
-
-      {/* Review Queue — teacher-submitted courses awaiting admin approval */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-text">
-            Review Queue
-            {pendingReviews.length > 0 && (
-              <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
-                {pendingReviews.length}
-              </span>
-            )}
-          </h2>
-          <button
-            onClick={() => void fetchStatus()}
-            className="rounded-md border border-border bg-card px-3 py-1 text-xs text-text-2 shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active"
-          >
-            Refresh
-          </button>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-          <CourseReviewQueue
-            courses={pendingReviews}
-            onRefresh={() => void fetchStatus()}
-          />
-        </div>
-      </section>
 
       {/* Moderation — community flags awaiting review */}
       <section>
@@ -251,36 +216,6 @@ export function AdminClient() {
         </h2>
         <div className="rounded-lg border border-border bg-card p-4 shadow-card">
           <DataResyncPanel />
-        </div>
-      </section>
-
-      {/* Teacher Roles */}
-      <section>
-        <h2 className="mb-4 font-display text-lg font-bold text-text">
-          Teacher Roles
-        </h2>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-          <TeacherRolesPanel />
-        </div>
-      </section>
-
-      {/* Course Tags */}
-      <section>
-        <h2 className="mb-4 font-display text-lg font-bold text-text">
-          Course Tags
-        </h2>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-          <CourseTagsPanel />
-        </div>
-      </section>
-
-      {/* Learning Paths */}
-      <section>
-        <h2 className="mb-4 font-display text-lg font-bold text-text">
-          Learning Paths
-        </h2>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-          <LearningPathsPanel />
         </div>
       </section>
     </div>
