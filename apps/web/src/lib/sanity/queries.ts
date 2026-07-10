@@ -728,3 +728,45 @@ export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
     0
   );
 }
+
+// ---------------------------------------------------------------------------
+// Instructor (wallet-keyed, read-only) queries — /teach viewer
+// ---------------------------------------------------------------------------
+
+export interface InstructorCourseSummary {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+/**
+ * Courses owned by an instructor wallet, for the read-only `/teach` viewer.
+ * Deliberately NOT gated by `publicAuthoringGate` / `activeGate` — unlike
+ * every public catalog query above, an instructor must still see their own
+ * deactivated or not-yet-approved courses. Only the on-chain "synced" gate
+ * applies, since a course that never synced has no on-chain stats to view.
+ */
+export async function getInstructorCourses(
+  wallet: string
+): Promise<InstructorCourseSummary[]> {
+  return catalogFetch<InstructorCourseSummary[]>(
+    `*[_type == "course" && instructor->wallet == $wallet && onChainStatus.status == "synced"] {
+      _id,
+      title,
+      "slug": slug.current
+    }`,
+    { wallet }
+  );
+}
+
+/**
+ * Whether a wallet belongs to a known instructor (used to gate the header's
+ * "Teach" nav item — replaces the old `profiles.role == "teacher"` check,
+ * which reads a column the role-removal migration drops).
+ */
+export async function isInstructorWallet(wallet: string): Promise<boolean> {
+  return catalogFetch<boolean>(
+    `count(*[_type == "instructor" && wallet == $wallet]) > 0`,
+    { wallet }
+  );
+}

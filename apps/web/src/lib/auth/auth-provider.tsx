@@ -13,13 +13,10 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
-export type UserRole = "learner" | "teacher" | "admin";
-
 export interface UserProfile {
   username: string;
   avatar_url: string | null;
   wallet_address: string | null;
-  role: UserRole;
 }
 
 interface AuthContextValue {
@@ -32,7 +29,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PROFILE_COLUMNS = "username, avatar_url, wallet_address, role";
+const PROFILE_COLUMNS = "username, avatar_url, wallet_address";
 
 // Single state object — ensures ONE render per state transition.
 // Three separate useState calls would cause three render cycles,

@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
+import { isInstructorWallet } from "@/lib/sanity/queries";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -62,6 +63,26 @@ export function Header() {
   const displayedXpRef = useRef(0);
 
   const { balance: onChainXp } = useXpBalance();
+
+  // Teacher authoring entry is UX-only; the real gate is the server-side
+  // /teach viewer. Replaces the old `profiles.role` check — the role-removal
+  // migration drops that column, so this now checks instructor status by the
+  // profile's linked wallet instead (a course-registry lookup, cache is fine).
+  const [canTeach, setCanTeach] = useState(false);
+  const wallet = profile?.wallet_address ?? null;
+  useEffect(() => {
+    if (!wallet) {
+      setCanTeach(false);
+      return;
+    }
+    let cancelled = false;
+    isInstructorWallet(wallet).then((result) => {
+      if (!cancelled) setCanTeach(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet]);
 
   // Single setter so the ref and the rendered state never drift apart.
   const setDisplayed = useCallback((value: number) => {
@@ -174,9 +195,6 @@ export function Header() {
   }, [fetchXp, animateXpTo]);
 
   const isLoggedIn = !!user && !!profile;
-  // Teacher authoring entry is UX-only; the real gate is the server-side
-  // /teach layout. Show it only to teacher/admin roles.
-  const canTeach = profile?.role === "teacher" || profile?.role === "admin";
   const loggedInNavItems = canTeach
     ? [...navItems, { key: "teach", icon: Chalkboard, href: "/teach" }]
     : navItems;
