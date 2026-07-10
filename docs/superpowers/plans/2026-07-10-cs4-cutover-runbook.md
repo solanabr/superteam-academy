@@ -147,16 +147,16 @@ the enrollment baseline the DONE gate compares against.
 
 - [ ] **A2: The 6-completions bit-verify PASSES (§15.3) — the load-bearing gate**
 
-  **Preconditions:** A1 done. The bit-verify cross-checks, for each of the **6** real completions
-  across the 13 enrollments, that the slot the frozen `slots.lock.json` assigns equals the bit
+  **Preconditions:** A1 done. The bit-verify cross-checks, for **every** on-chain completion (152 as of 2026-07-10, and growing — enumerate live,
+  do not hardcode) across all enrollments, that the slot the frozen `slots.lock.json` assigns equals the bit
   actually set in that learner's on-chain `Enrollment.lesson_flags` **at completion time** (bits
   were set by array position in the flattened `modules[].lessons[]`, and enrollments survive the
   reset — §15.3). This is CS-8's built-in gate (its "bit-verification gate").
   **Command(s):** (run CS-8's verifier, e.g.)
   ```bash
-  pnpm tsx scripts/cs8-extraction/verify-bits.ts   # exact path per PR #388; asserts 6/6 match
+  pnpm tsx scripts/cs8-extraction/verify-bits.ts   # exact path per PR #388; asserts EVERY completion matches (count enumerated live)
   ```
-  **Expected:** `6/6 completions: generated slot == on-chain set bit` (or equivalent all-pass).
+  **Expected:** `N/N completions: generated slot == on-chain set bit` (N = live completion count) (or equivalent all-pass).
   **STOP-if:** **ANY bit mismatches → STOP the entire cutover and file a P0.** Do NOT proceed to a
   destructive reset with an unverified bit mapping: a wrong lockfile makes all 13 surviving
   enrollments point at the wrong lessons *forever* (`close_enrollment` needs `learner: Signer`,
@@ -543,7 +543,7 @@ authoring only if/when the rest of the content migration (Phases 5–8, out of s
 | Gate | Where | Condition to STOP | Action |
 |---|---|---|---|
 | G1 | A1 | `academy-courses` not pushed / lockfile missing or hand-edited | Wait for human push; re-run |
-| **G2** | **A2** | **Any of the 6 completions' bit ≠ generated slot** | **STOP whole cutover, file P0** |
+| **G2** | **A2** | **Any completion's bit ≠ generated slot (all enumerated live, not a fixed count)** | **STOP whole cutover, file P0** |
 | G3 | A3 | #384 or #389 red / unreviewed / conflicting | Fix PRs; do not open window |
 | G4 | A4 | v2 build fails or IDL still has `lesson_count` | On wrong commit; do not deploy |
 | G5 | A6 | Enrollment enumeration errors / returns zero accounts | Fix RPC/filter; capture a non-empty set (count informational) |
