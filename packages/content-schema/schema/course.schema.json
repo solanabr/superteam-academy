@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 0
+    },
+    "xpPerLesson": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "xpReward": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000
+    },
+    "creatorRewardXp": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000
+    },
+    "minCompletionsForReward": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "trackId": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "trackLevel": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "tags": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "creator": {
+      "type": "object",
+      "properties": {
+        "githubId": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        }
+      },
+      "required": [
+        "githubId"
+      ]
+    },
+    "instructor": {
+      "type": "string",
+      "pattern": "^instructor-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "prerequisiteCourse": {
+      "type": "string",
+      "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "modules": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "lessons": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^lesson-[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "lessons"
+        ]
+      }
+    }
+  },
+  "required": [
+    "id",
+    "slug",
+    "title",
+    "difficulty",
+    "duration",
+    "xpPerLesson",
+    "xpReward",
+    "creator",
+    "modules"
+  ]
+}

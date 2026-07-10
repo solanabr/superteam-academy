@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^instructor-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bio": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "socialLinks": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "twitter": {
+          "type": "string"
+        },
+        "github": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "id",
+    "name"
+  ]
+}

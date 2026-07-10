@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^achievement-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "glyph": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2
+    },
+    "solTier": {
+      "default": false,
+      "type": "boolean"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "progress",
+        "streaks",
+        "skills",
+        "community",
+        "special"
+      ]
+    },
+    "xpReward": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000
+    },
+    "maxSupply": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "metadataUri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "award": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "lessons-completed"
+            },
+            "gte": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "gte"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "lessons-completed-in-course"
+            },
+            "course": {
+              "type": "string",
+              "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "gte": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "course",
+            "gte"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "course-completed"
+            },
+            "course": {
+              "type": "string",
+              "pattern": "^course-[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "required": [
+            "kind",
+            "course"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "path-completed"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^path-[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "streak"
+            },
+            "days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "days"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "user-number"
+            },
+            "lte": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "lte"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "community-stat"
+            },
+            "stat": {
+              "type": "string",
+              "enum": [
+                "totalThreads",
+                "totalAnswers",
+                "acceptedAnswers",
+                "totalCommunityXp"
+              ]
+            },
+            "gte": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "stat",
+            "gte"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "manual"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "category",
+    "xpReward",
+    "award"
+  ]
+}
