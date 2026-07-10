@@ -389,24 +389,6 @@ export async function getAllCourseTags(): Promise<
   );
 }
 
-export interface ManagedCourseTag {
-  _id: string;
-  name: string;
-}
-
-/**
- * The managed course-tag vocabulary (issue #322). Teachers pick course tags
- * from these values; admins add/remove them. Read fresh (revalidate=0) so a
- * newly-added tag shows up immediately in the teacher form + admin panel.
- */
-export async function getManagedCourseTags(): Promise<ManagedCourseTag[]> {
-  return sanityFetch<ManagedCourseTag[]>(
-    `*[_type == "courseTag" && defined(name)] | order(name asc) { _id, name }`,
-    undefined,
-    0
-  );
-}
-
 /**
  * Fetch total lesson count per course (used for accurate course-completion detection).
  * Returns a map-friendly array of { _id, totalLessons }.
@@ -683,27 +665,6 @@ export async function getLearningPathsForAdmin(): Promise<AdminLearningPath[]> {
       _id,
       title,
       "courseIds": coalesce(courses[]._ref, [])
-    }`,
-    undefined,
-    0
-  );
-}
-
-export interface PathPickerCourse {
-  _id: string;
-  title: string;
-  slug: string | null;
-}
-
-/**
- * Non-draft courses the admin can assign to a learning path (issue #323).
- */
-export async function getCoursesForPathPicker(): Promise<PathPickerCourse[]> {
-  return sanityFetch<PathPickerCourse[]>(
-    `*[_type == "course" && !(_id in path("drafts.**"))] | order(title asc) {
-      _id,
-      title,
-      "slug": slug.current
     }`,
     undefined,
     0

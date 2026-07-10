@@ -35,7 +35,7 @@ export type {
   LearningPath,
 } from "./course";
 
-export type { UserProfile, UserRole, Achievement, Certificate } from "./user";
+export type { UserProfile, Achievement, Certificate } from "./user";
 
 export type {
   XPMintInfo,

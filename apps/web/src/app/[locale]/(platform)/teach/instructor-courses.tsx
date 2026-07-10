@@ -26,8 +26,8 @@ interface InstructorCoursesProps {
  * replacement for the deleted CRUD authoring surface). `courses` is already
  * scoped server-side to the caller's own wallet via `getInstructorCourses`;
  * this component only handles the expand/collapse UI and the per-course
- * stats fetch, which still goes through `/api/teacher/courses/[id]/stats`
- * (role-gated today — that route becomes wallet-gated in a follow-up task).
+ * stats fetch, which goes through `/api/teacher/courses/[id]/stats`
+ * (instructor-wallet-gated, Task 7).
  */
 export function InstructorCourses({ courses }: InstructorCoursesProps) {
   const t = useTranslations("teach");

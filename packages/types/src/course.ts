@@ -171,18 +171,8 @@ export interface Course {
   trackCollectionAddress?: string | null;
   trackId?: number;
   trackLevel?: number;
-  /**
-   * Supabase user id of the owning teacher (issue #263). Managed by the app.
-   * Retained for the `/teach` authoring surface (retired in spec §15.4 Phase 8).
-   */
-  author?: string;
   /** Authoring workflow state (issue #263). Legacy/repo-synced docs may omit this. */
   authoringStatus?: AuthoringStatus;
-  /**
-   * Admin feedback shown to the teacher when a course is rejected (issue #268).
-   * Admin-managed; cleared on approval.
-   */
-  reviewFeedback?: string;
 }
 
 export interface LearningPath {

@@ -9,12 +9,13 @@ export const dynamic = "force-dynamic";
  * `/teach` — read-only, wallet-keyed analytics viewer (PR-2 Task 6).
  *
  * Replaces the deleted CRUD authoring surface. Resolves the caller's
- * `wallet_address` the same way `authorizeTeacher()` does (own-row Supabase
- * SSR read via RLS) — but deliberately WITHOUT reading `role`: the
- * role-removal migration drops that column, so nothing under `/teach` may
- * depend on it anymore. Middleware already redirects unauthenticated
- * visitors to the landing page, so there is no separate signed-out state
- * here — only "has synced courses" and "does not" (the empty state).
+ * `wallet_address` via an own-row Supabase SSR read (RLS-scoped) — the same
+ * mechanism the stats route (Task 7) uses — but deliberately WITHOUT reading
+ * `role`: the role-removal migration drops that column, so nothing under
+ * `/teach` may depend on it anymore. Middleware already redirects
+ * unauthenticated visitors to the landing page, so there is no separate
+ * signed-out state here — only "has synced courses" and "does not" (the
+ * empty state).
  */
 export default async function TeachPage() {
   const supabase = await createClient();
