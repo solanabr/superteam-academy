@@ -69,6 +69,42 @@ describe("GitHubClient", () => {
     expect(await client.fetchChecksState("s")).toBe("pending");
   });
 
+  it("does NOT read a skipped check as green (a required skipped check must block)", async () => {
+    // GitHub reports a skipped required check as conclusion `skipped`; the Checks
+    // API can't tell us it was required, so a non-`success` terminal conclusion
+    // must never fold to `success` and be waved past the sync gate.
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          check_runs: [{ conclusion: "success" }, { conclusion: "skipped" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("failure");
+  });
+
+  it("does NOT read a neutral check as green", async () => {
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          check_runs: [{ conclusion: "neutral" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("failure");
+  });
+
+  it("is green only when every run concluded success", async () => {
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          check_runs: [{ conclusion: "success" }, { conclusion: "success" }],
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchChecksState("s")).toBe("success");
+  });
+
   it("throws GitHubUnavailableError without a token", async () => {
     const client = createGitHubClient({
       token: undefined,

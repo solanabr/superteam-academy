@@ -76,18 +76,20 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
       };
       const runs = body.check_runs ?? [];
       if (runs.length === 0) return "unknown";
-      const failed = new Set([
-        "failure",
-        "timed_out",
-        "cancelled",
-        "action_required",
-        "stale",
-      ]);
-      const done = new Set(["success", "neutral", "skipped"]);
-      if (runs.some((r) => r.conclusion && failed.has(r.conclusion)))
+      // A run only counts as green when its terminal conclusion is exactly
+      // `success`. Every other terminal conclusion — failure/timed_out/
+      // cancelled/action_required/stale AND neutral/skipped — blocks the sync:
+      // we cannot tell a *required* skipped check (which must block) from an
+      // optional one via the Checks API, so a skipped/neutral required check
+      // must never read green and be waved past the Zod/executor gate. A run
+      // with no conclusion yet is still in progress → pending.
+      const isTerminal = (c: string | null | undefined): c is string =>
+        c != null && c !== "";
+      if (
+        runs.some((r) => isTerminal(r.conclusion) && r.conclusion !== "success")
+      )
         return "failure";
-      if (runs.some((r) => !r.conclusion || !done.has(r.conclusion)))
-        return "pending";
+      if (runs.some((r) => !isTerminal(r.conclusion))) return "pending";
       return "success";
     },
   };
