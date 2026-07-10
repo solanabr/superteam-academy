@@ -1,0 +1,20 @@
+{
+  "name": "@superteam-lms/challenge-executor",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@jitl/quickjs-singlefile-cjs-release-sync": "^0.32.0",
+    "@superteam-lms/types": "workspace:*",
+    "quickjs-emscripten-core": "^0.32.0",
+    "sucrase": "^3.35.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

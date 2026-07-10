@@ -1,0 +1,16 @@
+id: course-template
+slug: template
+title: Template Course
+difficulty: beginner
+duration: 2
+xpPerLesson: 10
+xpReward: 100
+creator: { githubId: "12345678" }
+instructor: instructor-ana-santos
+modules:
+  - key: intro
+    title: Intro
+    lessons: [lesson-t-basics, lesson-t-exercise]
+  - key: chain
+    title: On-chain chain
+    lessons: [lesson-t-fund, lesson-t-deploy, lesson-t-interact]

@@ -128,6 +128,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.95.3
         version: 2.95.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@superteam-lms/challenge-executor':
+        specifier: workspace:*
+        version: link:../../packages/challenge-executor
       '@superteam-lms/deploy':
         specifier: workspace:*
         version: link:../../packages/deploy
@@ -332,7 +335,57 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  packages/challenge-executor:
+    dependencies:
+      '@jitl/quickjs-singlefile-cjs-release-sync':
+        specifier: ^0.32.0
+        version: 0.32.0
+      '@superteam-lms/types':
+        specifier: workspace:*
+        version: link:../types
+      quickjs-emscripten-core:
+        specifier: ^0.32.0
+        version: 0.32.0
+      sucrase:
+        specifier: ^3.35.1
+        version: 3.35.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/config: {}
+
+  packages/content-lint:
+    dependencies:
+      '@superteam-lms/challenge-executor':
+        specifier: workspace:*
+        version: link:../challenge-executor
+      '@superteam-lms/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
+      '@superteam-lms/types':
+        specifier: workspace:*
+        version: link:../types
+      yaml:
+        specifier: ^2.8.2
+        version: 2.8.2
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.19.9
+        version: 22.19.9
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@22.19.9)(jiti@2.6.1)(jsdom@28.0.0(@noble/hashes@1.8.0))(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/content-schema:
     dependencies:

@@ -1,0 +1,6 @@
+id: quest-complete-lesson
+name: Complete a Lesson
+type: lesson
+xpReward: 25
+targetValue: 1
+resetType: daily
