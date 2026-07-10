@@ -25,7 +25,7 @@ describe("GitHubClient", () => {
     expect(Array.from(bytes)).toEqual([1, 2, 3]);
     const [url, init] = fetchImpl.mock.calls[0]!;
     expect(url).toBe(
-      "https://api.github.com/repos/solanabr/academy-courses/tarball/abc123"
+      "https://api.github.com/repos/solanabr/courses-academy/tarball/abc123"
     );
     expect(init?.headers).toMatchObject({
       Authorization: "Bearer ghp_x",

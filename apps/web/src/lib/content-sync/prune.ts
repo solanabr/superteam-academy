@@ -1,10 +1,10 @@
 import { BlastRadiusError, type SanityDoc } from "./types";
 
-const SOURCE = "academy-courses";
+export const SOURCE = "courses-academy";
 
 /** GROQ that selects prunable ids: our marker, a stale rev. Parameterised by $sha. */
 export function prunableQuery(): string {
-  return '*[sync.source == "academy-courses" && sync.rev != $sha]._id';
+  return `*[sync.source == "${SOURCE}" && sync.rev != $sha]._id`;
 }
 
 /**

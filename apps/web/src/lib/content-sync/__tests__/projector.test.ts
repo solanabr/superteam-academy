@@ -73,7 +73,7 @@ describe("projectContent", () => {
   it("stamps the sync marker with the sha on every managed doc", () => {
     const { docs } = projectContent(fixture(), "sha1", noAsset, () => []);
     for (const d of docs) {
-      expect(d.sync).toEqual({ source: "academy-courses", rev: "sha1" });
+      expect(d.sync).toEqual({ source: "courses-academy", rev: "sha1" });
     }
   });
 

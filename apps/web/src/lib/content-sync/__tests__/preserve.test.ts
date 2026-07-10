@@ -13,7 +13,7 @@ describe("reattachPreserved", () => {
       _id: "course-x",
       _type: "course",
       title: "X",
-      sync: { source: "academy-courses", rev: "s" },
+      sync: { source: "courses-academy", rev: "s" },
     };
     const existing: SanityDoc = {
       _id: "course-x",

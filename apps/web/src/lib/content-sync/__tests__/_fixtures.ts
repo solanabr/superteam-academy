@@ -114,7 +114,7 @@ export function makeCourseTarball(
   sha: string,
   opts: { withImage?: boolean } = {}
 ): Uint8Array {
-  const top = `solanabr-academy-courses-${sha}`;
+  const top = `solanabr-courses-academy-${sha}`;
   const lessonDir = `${top}/courses/demo/lessons/accounts`;
   const intro = opts.withImage
     ? "# Accounts\n\nSee ![pixel](assets/pixel.png) here.\n"

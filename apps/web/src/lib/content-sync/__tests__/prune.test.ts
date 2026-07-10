@@ -13,7 +13,7 @@ const doc = (id: string, extra: Partial<SanityDoc> = {}): SanityDoc => ({
   ...extra,
 });
 const marked = (id: string, rev: string): SanityDoc =>
-  doc(id, { sync: { source: "academy-courses", rev } });
+  doc(id, { sync: { source: "courses-academy", rev } });
 
 describe("selectPrunable", () => {
   it("selects marked docs absent from the projected tree (by id, not rev)", () => {
@@ -70,14 +70,14 @@ describe("selectChangedDocs (idempotency)", () => {
       marked("a", "s1"),
       doc("b", {
         title: "old",
-        sync: { source: "academy-courses", rev: "s1" },
+        sync: { source: "courses-academy", rev: "s1" },
       }),
     ];
     const projected = [
       marked("a", "s1"),
       doc("b", {
         title: "new",
-        sync: { source: "academy-courses", rev: "s2" },
+        sync: { source: "courses-academy", rev: "s2" },
       }),
     ];
     expect(selectChangedDocs(existing, projected).map((d) => d._id)).toEqual([
@@ -90,14 +90,14 @@ describe("selectChangedDocs (idempotency)", () => {
       doc("a", {
         _type: "course",
         onChainStatus: { pda: "X" },
-        sync: { source: "academy-courses", rev: "s1" },
+        sync: { source: "courses-academy", rev: "s1" },
       }),
     ];
     const projected = [
       doc("a", {
         _type: "course",
         onChainStatus: { pda: "X" },
-        sync: { source: "academy-courses", rev: "s1" },
+        sync: { source: "courses-academy", rev: "s1" },
       }),
     ];
     expect(selectChangedDocs(existing, projected)).toEqual([]);
@@ -107,7 +107,7 @@ describe("selectChangedDocs (idempotency)", () => {
 describe("prunableQuery", () => {
   it("is marker-scoped and sha-parameterised", () => {
     expect(prunableQuery()).toBe(
-      '*[sync.source == "academy-courses" && sync.rev != $sha]._id'
+      '*[sync.source == "courses-academy" && sync.rev != $sha]._id'
     );
   });
 });
