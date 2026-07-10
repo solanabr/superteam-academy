@@ -158,7 +158,7 @@ the enrollment baseline the DONE gate compares against.
   ```
   **Expected:** `N/N completions: generated slot == on-chain set bit` (N = live completion count) (or equivalent all-pass).
   **STOP-if:** **ANY bit mismatches → STOP the entire cutover and file a P0.** Do NOT proceed to a
-  destructive reset with an unverified bit mapping: a wrong lockfile makes all 13 surviving
+  destructive reset with an unverified bit mapping: a wrong lockfile makes all surviving
   enrollments point at the wrong lessons *forever* (`close_enrollment` needs `learner: Signer`,
   which we do not hold — §15.3). Reconcile any moved lesson in the lockfile and re-run until N/N.
 
