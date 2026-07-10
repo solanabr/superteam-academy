@@ -24,7 +24,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
   return (
     <LessonPageClient
       lesson={lesson}
-      allLessons={allLessons ?? []}
+      allLessons={(allLessons ?? []).filter(Boolean)}
       locale={locale}
       courseSlug={slug}
       courseId={courseInfo?._id ?? slug}
