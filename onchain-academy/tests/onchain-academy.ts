@@ -5818,4 +5818,287 @@ describe("onchain-academy", () => {
       );
     });
   });
+
+  // ===========================================================================
+  // CS-3. active_lessons mask — end-to-end runtime proofs
+  // ===========================================================================
+  // These are the authoritative runtime proofs of the two behaviors the mask
+  // exists to enable (the Rust crate only mirrors the handler logic):
+  //   1. finalize succeeds when a learner holds a stray bit for a since-retired
+  //      slot (the AND ignores it) — impossible under the v1 popcount-equality.
+  //   2. complete_lesson rejects a retired slot (its bit cleared in the mask).
+  // Self-contained: fresh learners/courses/ATAs, placed last so it cannot skew
+  // any earlier suite's totalCompletions/totalEnrollments/creator-XP assertions.
+  describe("CS-3. active_lessons mask (finalize + complete)", () => {
+    const strayLearner = Keypair.generate();
+    let strayLearnerAta: PublicKey;
+    const strayCourseId = "cs3-stray-bit";
+    let strayCoursePda: PublicKey;
+    let strayEnrollPda: PublicKey;
+
+    const rejectLearner = Keypair.generate();
+    let rejectLearnerAta: PublicKey;
+    const rejectCourseId = "cs3-inactive-slot";
+    let rejectCoursePda: PublicKey;
+    let rejectEnrollPda: PublicKey;
+
+    const CS3_XP = 20;
+
+    before(async () => {
+      for (const kp of [strayLearner, rejectLearner]) {
+        const sig = await provider.connection.requestAirdrop(
+          kp.publicKey,
+          5 * LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sig, "confirmed");
+      }
+
+      [strayCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(strayCourseId)],
+        program.programId
+      );
+      [rejectCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(rejectCourseId)],
+        program.programId
+      );
+      [strayEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(strayCourseId),
+          strayLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+      [rejectEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(rejectCourseId),
+          rejectLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const mkAta = async (owner: Keypair): Promise<PublicKey> => {
+        const ata = getAssociatedTokenAddressSync(
+          xpMintKeypair.publicKey,
+          owner.publicKey,
+          false,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        const ix = createAssociatedTokenAccountInstruction(
+          authority.publicKey,
+          ata,
+          owner.publicKey,
+          xpMintKeypair.publicKey,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        await provider.sendAndConfirm(new anchor.web3.Transaction().add(ix));
+        return ata;
+      };
+      strayLearnerAta = await mkAta(strayLearner);
+      rejectLearnerAta = await mkAta(rejectLearner);
+    });
+
+    const retireSlot1 = (coursePda: PublicKey) =>
+      program.methods
+        .updateCourse({
+          newContentTxId: null,
+          newIsActive: null,
+          newXpPerLesson: null,
+          newCreatorRewardXp: null,
+          newMinCompletionsForReward: null,
+          newCollection: null,
+          newActiveLessons: slotsToMask([0, 2]),
+        })
+        .accountsPartial({
+          course: coursePda,
+          config: configPda,
+          authority: authority.publicKey,
+        })
+        .rpc();
+
+    it("finalize succeeds with a stray bit for a since-retired slot", async () => {
+      // Dense 3-lesson course: slots {0,1,2} live.
+      await program.methods
+        .createCourse({
+          courseId: strayCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 3,
+          difficulty: 1,
+          xpPerLesson: CS3_XP,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: strayCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await program.methods
+        .enroll(strayCourseId)
+        .accountsPartial({
+          course: strayCoursePda,
+          enrollment: strayEnrollPda,
+          learner: strayLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([strayLearner])
+        .rpc();
+
+      // Complete all three slots (0,1,2) WHILE they are live — the learner earns
+      // slot 1's bit legitimately.
+      for (const i of [0, 1, 2]) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: strayCoursePda,
+            enrollment: strayEnrollPda,
+            learner: strayLearner.publicKey,
+            learnerTokenAccount: strayLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      // Retire slot 1 -> active = {0, 2}. The learner keeps slot 1's stray bit.
+      await retireSlot1(strayCoursePda);
+
+      // Finalize SUCCEEDS: lesson_flags & active == active, despite the stray bit
+      // — exactly the case v1 popcount-equality bricked forever.
+      const finalizeSig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: strayCoursePda,
+          enrollment: strayEnrollPda,
+          learner: strayLearner.publicKey,
+          learnerTokenAccount: strayLearnerAta,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      // Confirm at "confirmed" before reading the ATA at the same commitment,
+      // so the bonus mint in this tx is visible (matches the suite's pattern).
+      await provider.connection.confirmTransaction(finalizeSig, "confirmed");
+
+      const enrollment = await program.account.enrollment.fetch(strayEnrollPda);
+      expect(enrollment.completedAt).to.not.be.null;
+
+      const course = await program.account.course.fetch(strayCoursePda);
+      expect(course.totalCompletions).to.equal(1);
+      expect(liveCount(course.activeLessons)).to.equal(2);
+
+      // Bonus basis = live_lesson_count (popcount = 2), NOT the learner's
+      // completed count (3): bonus = xpPerLesson * 2 / 2 = 20. Learner XP =
+      // 3 lessons * 20 (minted while live) + 20 bonus = 80.
+      const bonus = Math.floor((CS3_XP * 2) / 2);
+      const ata = await getAccount(
+        provider.connection,
+        strayLearnerAta,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(ata.amount)).to.equal(CS3_XP * 3 + bonus);
+    });
+
+    it("complete rejects an inactive (retired) slot, live slots still complete", async () => {
+      // Dense 3-lesson course, then retire slot 1 BEFORE anyone completes it.
+      await program.methods
+        .createCourse({
+          courseId: rejectCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 3,
+          difficulty: 1,
+          xpPerLesson: CS3_XP,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+          collection: null,
+        })
+        .accountsPartial({
+          course: rejectCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await retireSlot1(rejectCoursePda);
+
+      await program.methods
+        .enroll(rejectCourseId)
+        .accountsPartial({
+          course: rejectCoursePda,
+          enrollment: rejectEnrollPda,
+          learner: rejectLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([rejectLearner])
+        .rpc();
+
+      // Slot 1 is retired -> complete_lesson(1) reverts with LessonOutOfBounds.
+      try {
+        await program.methods
+          .completeLesson(1)
+          .accountsPartial({
+            config: configPda,
+            course: rejectCoursePda,
+            enrollment: rejectEnrollPda,
+            learner: rejectLearner.publicKey,
+            learnerTokenAccount: rejectLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("LessonOutOfBounds");
+        } else {
+          expect(err.toString()).to.contain("LessonOutOfBounds");
+        }
+      }
+
+      // Live slots 0 and 2 still complete.
+      for (const i of [0, 2]) {
+        await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: rejectCoursePda,
+            enrollment: rejectEnrollPda,
+            learner: rejectLearner.publicKey,
+            learnerTokenAccount: rejectLearnerAta,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+      }
+
+      const enrollment = await program.account.enrollment.fetch(rejectEnrollPda);
+      // Slots 0 and 2 set: 0b101 = 5.
+      expect(enrollment.lessonFlags[0].toNumber() & 0x7).to.equal(0b101);
+    });
+  });
 });
