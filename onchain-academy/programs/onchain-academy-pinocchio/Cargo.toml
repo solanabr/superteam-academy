@@ -1,0 +1,44 @@
+[package]
+name = "onchain-academy-pinocchio"
+version = "0.1.0"
+description = "Superteam Academy on-chain program — Pinocchio implementation, wire-compatible with the Anchor build"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "onchain_academy_pinocchio"
+
+[features]
+default = []
+no-entrypoint = []
+# Bakes the self-owned devnet instance id (see consts.rs::ID) instead of the
+# upstream program id. Deploy artifact only — every parity gate (host tests,
+# differential, TS suite) runs the default flavor. Build via
+# `pnpm build:pinocchio:fresh` (scripts/build-pinocchio-deploy.sh).
+fresh-id = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(kani)'] }
+
+# default features (alloc, copy, sha2) are off: the program never allocates
+# (no_allocator!) and PDA derivation on-chain goes through syscalls, not the
+# host sha2 fallback. `cpi` enables InstructionView/invoke_signed; the runtime
+# `account-resize` powers close/realloc paths.
+[dependencies]
+pinocchio = { version = "=0.11.2", default-features = false, features = ["cpi", "account-resize"] }
+pinocchio-system = "=0.6.1"
+
+# On SBF, PDA derivation uses syscalls; on the host (cargo check/test) the
+# same functions need the curve25519 fallback to exist at all.
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+solana-address = { version = "2.2", features = ["curve25519", "sha2"] }
+
+# Host-only oracles (never linked into the .so). Discriminators are recomputed
+# independently (sha256 via `solana-program`'s `hash`), layouts are asserted
+# structurally against the documented offset map, and CPI wire formats come from
+# the real spl-token-2022 / mpl-core builders. `solana-program` also supplies
+# the rent/system_program helpers Anchor used to re-export.
+[dev-dependencies]
+solana-program = "2"
+spl-token-2022 = { version = "5", features = ["no-entrypoint"] }
+mpl-core = "0.9"
