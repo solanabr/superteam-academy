@@ -1,5 +1,6 @@
 import type { QueryParams } from "next-sanity";
-import type { AdminTestCase } from "@superteam-lms/types";
+import type { AwardT } from "@superteam-lms/content-schema";
+import { Award } from "@superteam-lms/content-schema";
 import { sanityFetch } from "./client";
 import type { Course, Lesson, LearningPath } from "./types";
 
@@ -65,33 +66,46 @@ const courseFields = `
   trackLevel
 `;
 
-// SECURITY (P0-C4): `solution` and hidden tests are the challenge answer key and
-// must never reach the client. This projection (shared by getCourseBySlug, which
-// feeds the course-detail client page) sends only visible tests with the `hidden`
-// flag stripped. `tests[hidden != true]` matches false/undefined and excludes
-// only true.
-const moduleWithLessonsFields = `
+// One literal lesson projection (spec §10.2). Post-D4 no block holds a secret and
+// no block holds a reference, so there is NO per-_type conditional stripping — the
+// `code` grader reads `solution`/`tests` from the same public projection everyone
+// gets. `block.key` is the array item `_key`. `sanity typegen` types `blocks[]` as
+// a discriminated union over `_type`.
+const lessonFields = `
   _id,
   title,
-  description,
-  order,
-  lessons[]->{
-    _id,
-    title,
-    "slug": slug.current,
-    type,
+  "slug": slug.current,
+  blocks[]{
+    "key": _key,
+    _type,
+    produces,
+    consumes,
+    src,
+    url,
     language,
     buildType,
     deployable,
-    widgets,
-    programIdl,
-    videoUrl,
-    content,
-    code,
-    "tests": tests[hidden != true]{ "id": coalesce(id, _key), description, input, expectedOutput },
+    starter,
+    solution,
+    tests[]{ id, description, input, expectedOutput },
     hints,
-    order
-  } | order(order asc)
+    prompt,
+    maxWords,
+    amount,
+    network,
+    idl
+  }
+`;
+
+// Inline modules (spec §10.1): array position is display order, so no
+// `| order(order asc)`; lesson refs are weak, dereferenced with `lessons[]->`.
+const moduleWithLessonsFields = `
+  key,
+  title,
+  description,
+  "lessons": lessons[]->{
+    ${lessonFields}
+  }
 `;
 
 // --- Query Functions ---
@@ -100,19 +114,16 @@ export async function getAllCourses(): Promise<Course[]> {
   return catalogFetch<Course[]>(
     `*[_type == "course" && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] | order(title asc) {
       ${courseFields},
-      "modules": modules[]->{
-        _id,
+      "modules": modules[]{
+        key,
         title,
         description,
-        order,
         "lessons": lessons[]->{
           _id,
           title,
-          "slug": slug.current,
-          type,
-          order
-        } | order(order asc)
-      } | order(order asc)
+          "slug": slug.current
+        }
+      }
     }`
   );
 }
@@ -121,9 +132,9 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
   return catalogFetch<Course | null>(
     `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
       ${courseFields},
-      "modules": modules[]->{
+      "modules": modules[]{
         ${moduleWithLessonsFields}
-      } | order(order asc)
+      }
     }`,
     { slug }
   );
@@ -133,29 +144,13 @@ export async function getLessonBySlug(
   courseSlug: string,
   lessonSlug: string
 ): Promise<Lesson | null> {
-  // SECURITY (P0-C4): never project `solution` or hidden tests — they are the
-  // challenge answer key. `tests[hidden != true]` keeps only visible tests
-  // (GROQ: `hidden != true` matches false/undefined and excludes only true) and
-  // re-projects each to drop the `hidden` flag itself. Hidden-test/solution
-  // checking lives server-side in /api/lessons/validate-challenge.
+  // One literal blocks[] projection (spec §10.2). Post-D4 every block is public —
+  // the `code` grader reads `solution`/`tests` from this same projection, so
+  // there is no per-_type conditional stripping and no separate answer-key query.
   return catalogFetch<Lesson | null>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
-      "allLessons": modules[]->lessons[]->{
-        _id,
-        title,
-        "slug": slug.current,
-        type,
-        language,
-        buildType,
-        deployable,
-        widgets,
-        programIdl,
-        videoUrl,
-        content,
-        code,
-        "tests": tests[hidden != true]{ "id": coalesce(id, _key), description, input, expectedOutput },
-        hints,
-        order
+      "allLessons": modules[].lessons[]->{
+        ${lessonFields}
       }
     }.allLessons[slug == $lessonSlug][0]`,
     { courseSlug, lessonSlug }
@@ -163,75 +158,23 @@ export async function getLessonBySlug(
 }
 
 /**
- * Challenge answer key — the FULL test set (including hidden tests) plus the
- * reference solution for a single lesson.
- *
- * SERVER-ONLY. This is the data deliberately withheld from {@link getLessonBySlug}
- * (P0-C4). Call it exclusively from server code (API routes) and never serialize
- * its result into a client response. Used by /api/lessons/validate-challenge to
- * check submissions against hidden tests without shipping them to the browser.
+ * Server-authoritative lesson lookup by Sanity `_id` of the course and lesson
+ * (the identifiers `/api/lessons/complete` uses). Intentionally UNGATED (no
+ * synced/active/authoring filter) — the completion gate must grade a lesson
+ * independent of catalog visibility, so a deactivated/unapproved course's lesson
+ * still resolves for grading. Post-D4 the projection is the same public
+ * `blocks[]` shape every reader gets; there is no secret to withhold.
+ * revalidate=0: always fresh, never via the public Sanity CDN.
  */
-/** Shape of a challenge answer key (server-only). */
-export interface ChallengeAnswerKey {
-  _id: string;
-  type: string;
-  language: string | null;
-  /** "buildable" challenges compile Rust via the build server, not the JS executor. */
-  buildType: string | null;
-  tests: AdminTestCase[];
-  solution: string | null;
-  tutorNotes: string | null;
-}
-
-const answerKeyProjection = `{
-  _id,
-  "slug": slug.current,
-  type,
-  language,
-  buildType,
-  "tests": tests[]{ "id": coalesce(id, _key), description, input, expectedOutput, hidden },
-  solution,
-  tutorNotes
-}`;
-
-export async function getChallengeAnswerKey(
-  courseSlug: string,
-  lessonSlug: string
-): Promise<ChallengeAnswerKey | null> {
-  // SECURITY: intentionally UNGATED (no synced/active/authoring filter), unlike
-  // the public catalog queries. This is the server-authoritative answer key for
-  // challenge grading — the completion/validation gates treat a `null` result as
-  // "not a challenge lesson" and skip test execution. If visibility state
-  // (deactivation, un-approval, un-sync) could suppress the answer key, a
-  // challenge lesson would silently fall through the gate and grant unvalidated
-  // completions. Grading must be independent of catalog visibility, so we filter
-  // by identity only (like `getCourseById`). Server-only, never sent to clients.
-  // revalidate=0: always fresh, never via the public Sanity CDN.
-  return sanityFetch<ChallengeAnswerKey | null>(
-    `*[_type == "course" && slug.current == $courseSlug][0] {
-      "allLessons": modules[]->lessons[]->${answerKeyProjection}
-    }.allLessons[slug == $lessonSlug][0]`,
-    { courseSlug, lessonSlug },
-    0
-  );
-}
-
-/**
- * Same answer key as {@link getChallengeAnswerKey}, but looked up by the Sanity
- * `_id` of the course and lesson (the identifiers `/api/lessons/complete` uses).
- * SERVER-ONLY — never serialize into a client response.
- */
-export async function getChallengeAnswerKeyById(
+export async function getLessonByIdForGrading(
   courseId: string,
   lessonId: string
-): Promise<ChallengeAnswerKey | null> {
-  // SECURITY: UNGATED by design — see getChallengeAnswerKey. This backs the
-  // server-authoritative gate in /api/lessons/complete, where `null` means "not
-  // a challenge lesson" and skips validation. A visibility gate here would let a
-  // deactivated/unapproved course's challenge lesson skip grading and mint XP.
-  return sanityFetch<ChallengeAnswerKey | null>(
+): Promise<Lesson | null> {
+  return sanityFetch<Lesson | null>(
     `*[_type == "course" && _id == $courseId][0] {
-      "allLessons": modules[]->lessons[]->${answerKeyProjection}
+      "allLessons": modules[].lessons[]->{
+        ${lessonFields}
+      }
     }.allLessons[_id == $lessonId][0]`,
     { courseId, lessonId },
     0
@@ -250,19 +193,16 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
       difficulty,
       "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] {
         ${courseFields},
-        "modules": modules[]->{
-          _id,
+        "modules": modules[]{
+          key,
           title,
           description,
-          order,
           "lessons": lessons[]->{
             _id,
             title,
-            "slug": slug.current,
-            type,
-            order
-          } | order(order asc)
-        } | order(order asc)
+            "slug": slug.current
+          }
+        }
       }
     }`
   );
@@ -277,9 +217,9 @@ export async function getCourseById(id: string): Promise<Course | null> {
     `*[_type == "course" && _id == $id][0] {
       ${courseFields},
       "trackCollectionAddress": onChainStatus.trackCollectionAddress,
-      "modules": modules[]->{
+      "modules": modules[]{
         ${moduleWithLessonsFields}
-      } | order(order asc)
+      }
     }`,
     { id }
   );
@@ -306,14 +246,13 @@ export async function getCourseIdBySlug(
  */
 export async function getCourseLessons(
   courseSlug: string
-): Promise<Pick<Lesson, "_id" | "title" | "slug" | "type">[]> {
-  return catalogFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
+): Promise<Pick<Lesson, "_id" | "title" | "slug">[]> {
+  return catalogFetch<Pick<Lesson, "_id" | "title" | "slug">[]>(
     `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}][0] {
-      "lessons": modules[]->lessons[]-> {
+      "lessons": modules[].lessons[]-> {
         _id,
         title,
-        "slug": slug.current,
-        type
+        "slug": slug.current
       }
     }.lessons`,
     { courseSlug }
@@ -347,7 +286,7 @@ export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
       "thumbnail": thumbnail.asset->url,
       tags,
       difficulty,
-      "totalLessons": count(modules[]->lessons[]),
+      "totalLessons": count(modules[].lessons[]),
       "learningPath": *[_type == "learningPath" && references(^._id)][0].title
     }`,
     { ids }
@@ -414,7 +353,7 @@ export async function getRecommendedCourses(
       xpReward,
       trackId,
       trackLevel,
-      "totalLessons": count(modules[]->lessons[]),
+      "totalLessons": count(modules[].lessons[]),
       "learningPath": *[_type == "learningPath" && references(^._id)][0].title
     }`,
     { excludeIds }
@@ -435,7 +374,7 @@ export async function getAllCourseTags(): Promise<
       _id,
       title,
       tags,
-      "totalLessons": count(modules[]->lessons[])
+      "totalLessons": count(modules[].lessons[])
     }`
   );
 }
@@ -468,7 +407,7 @@ export async function getAllCourseLessonCounts(): Promise<
   return catalogFetch<{ _id: string; totalLessons: number }[]>(
     `*[_type == "course" && onChainStatus.status == "synced" && ${activeGate} && ${publicAuthoringGate}] {
       _id,
-      "totalLessons": count(modules[]->lessons[])
+      "totalLessons": count(modules[].lessons[])
     }`
   );
 }
@@ -486,6 +425,48 @@ export interface DeployedAchievement {
   category: string;
   /** XP minted alongside the achievement NFT on-chain (0 = no XP). */
   xpReward: number;
+  /**
+   * Declarative unlock rule (spec §4.10, D9). CS-9 sync writes it from
+   * content-schema. `null` for a pre-sync/legacy doc — such an achievement never
+   * auto-fires (the declarative predicate has nothing to evaluate).
+   */
+  award: AwardT | null;
+}
+
+/** Raw award projection shape, validated into the CS-1 discriminated union. */
+const achievementProjection = `_id, name, description, icon, glyph, solTier, category, xpReward,
+      "award": award{ kind, gte, lte, days, course, path, stat }`;
+
+interface RawAchievement {
+  _id: string;
+  name: string;
+  description: string;
+  icon: string;
+  glyph: string | null;
+  solTier: boolean | null;
+  category: string;
+  xpReward: number;
+  award: unknown;
+}
+
+/** Validate the projected award against CS-1 `Award`; unparseable → null. */
+function parseAward(raw: unknown): AwardT | null {
+  const parsed = Award.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
+function mapAchievement(a: RawAchievement): DeployedAchievement {
+  return {
+    id: a._id,
+    name: a.name,
+    description: a.description,
+    icon: a.icon,
+    glyph: a.glyph ?? a._id.slice(-2).toUpperCase(),
+    solTier: a.solTier ?? false,
+    category: a.category,
+    xpReward: a.xpReward ?? 0,
+    award: parseAward(a.award),
+  };
 }
 
 /**
@@ -496,32 +477,12 @@ export interface DeployedAchievement {
 export async function getDeployedAchievements(): Promise<
   DeployedAchievement[]
 > {
-  const raw = await sanityFetch<
-    Array<{
-      _id: string;
-      name: string;
-      description: string;
-      icon: string;
-      glyph: string | null;
-      solTier: boolean | null;
-      category: string;
-      xpReward: number;
-    }>
-  >(
+  const raw = await sanityFetch<RawAchievement[]>(
     `*[_type == "achievement" && defined(onChainStatus.achievementPda)] | order(name asc) {
-      _id, name, description, icon, glyph, solTier, category, xpReward
+      ${achievementProjection}
     }`
   );
-  return raw.map((a) => ({
-    id: a._id,
-    name: a.name,
-    description: a.description,
-    icon: a.icon,
-    glyph: a.glyph ?? a._id.slice(-2).toUpperCase(),
-    solTier: a.solTier ?? false,
-    category: a.category,
-    xpReward: a.xpReward ?? 0,
-  }));
+  return raw.map(mapAchievement);
 }
 
 /**
@@ -530,32 +491,12 @@ export async function getDeployedAchievements(): Promise<
  * on-chain PDAs are deployed. On-chain minting is attempted separately and is non-fatal.
  */
 export async function getAllAchievements(): Promise<DeployedAchievement[]> {
-  const raw = await sanityFetch<
-    Array<{
-      _id: string;
-      name: string;
-      description: string;
-      icon: string;
-      glyph: string | null;
-      solTier: boolean | null;
-      category: string;
-      xpReward: number;
-    }>
-  >(
+  const raw = await sanityFetch<RawAchievement[]>(
     `*[_type == "achievement"] | order(name asc) {
-      _id, name, description, icon, glyph, solTier, category, xpReward
+      ${achievementProjection}
     }`
   );
-  return raw.map((a) => ({
-    id: a._id,
-    name: a.name,
-    description: a.description,
-    icon: a.icon,
-    glyph: a.glyph ?? a._id.slice(-2).toUpperCase(),
-    solTier: a.solTier ?? false,
-    category: a.category,
-    xpReward: a.xpReward ?? 0,
-  }));
+  return raw.map(mapAchievement);
 }
 
 /* ── Daily Quests ──────────────────────────────────────────────── */
@@ -600,9 +541,9 @@ export async function getAllQuests(): Promise<QuestData> {
       "quests": *[_type == "quest" && active == true && !(_id in path("drafts.**"))] {
         _id, name, description, type, icon, xpReward, targetValue, resetType
       },
-      "challengeLessonIds": *[_type == "lesson" && type == "challenge"]._id,
-      "moduleLessonMap": *[_type == "module"] {
-        "_id": _id,
+      "challengeLessonIds": *[_type == "lesson" && count(blocks[_type == "code"]) > 0]._id,
+      "moduleLessonMap": *[_type == "course" && !(_id in path("drafts.**"))].modules[]{
+        "_id": ^._id + ":" + key,
         "lessonIds": lessons[]->_id
       }
     }`
@@ -694,7 +635,7 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
       creatorRewardXp,
       minCompletionsForReward,
       author,
-      "lessonCount": count(modules[]->lessons[]),
+      "lessonCount": count(modules[].lessons[]),
       "trackCollectionAddress": onChainStatus.trackCollectionAddress,
       onChainStatus
     }`,
