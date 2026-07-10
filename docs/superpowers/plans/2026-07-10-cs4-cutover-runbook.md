@@ -145,7 +145,7 @@ the enrollment baseline the DONE gate compares against.
   **STOP-if:** the tree is not pushed, or any `slots.lock.json` is missing/hand-edited. The chain
   sync (B4/B6) reads these lockfiles as the only carrier of the "slots are never reused" invariant.
 
-- [ ] **A2: The 6-completions bit-verify PASSES (§15.3) — the load-bearing gate**
+- [ ] **A2: The bit-verify PASSES for every completion (§15.3) — the load-bearing gate**
 
   **Preconditions:** A1 done. The bit-verify cross-checks, for **every** on-chain completion (152 as of 2026-07-10, and growing — enumerate live,
   do not hardcode) across all enrollments, that the slot the frozen `slots.lock.json` assigns equals the bit
@@ -160,7 +160,7 @@ the enrollment baseline the DONE gate compares against.
   **STOP-if:** **ANY bit mismatches → STOP the entire cutover and file a P0.** Do NOT proceed to a
   destructive reset with an unverified bit mapping: a wrong lockfile makes all 13 surviving
   enrollments point at the wrong lessons *forever* (`close_enrollment` needs `learner: Signer`,
-  which we do not hold — §15.3). Reconcile any moved lesson in the lockfile and re-run until 6/6.
+  which we do not hold — §15.3). Reconcile any moved lesson in the lockfile and re-run until N/N.
 
 - [ ] **A3: #384 + #389 are green and approved**
 
@@ -499,7 +499,7 @@ All three invariants must hold. **Any failure → STOP the lane, file a P0, roll
   `diff` shows any change. Note the **expected, non-failing** case if
   solana-101 was renamed in B7: the on-chain solana-101 Enrollment PDA (seed
   `aD45H1NEbb1bqELwloGCqI`) is still byte-identical here (we never touched it) — the rename is a
-  DB-only rewrite, so C2 still passes for all 13; the DB now points that one row at the new id by
+  DB-only rewrite, so C2 still passes for the full enrollment set; the DB now points that one row at the new id by
   design (accepted orphan).
 
 - [ ] **C3: Live smoke — v2 frontend reads v2 accounts**
@@ -568,7 +568,7 @@ authoring only if/when the rest of the content migration (Phases 5–8, out of s
    exact diff, and whether the B2 IDL commit belongs inside #384 or as a follow-up PR.
 3. **solana-101 rename go/no-go + `xpPerLesson: 100` (B6/B7).** Policy calls (§15.5, §17). The
    runbook branches on the decision; make it before B6.
-4. **13 Enrollment PDA addresses and the 3 UUID lesson ids / 1 UUID module id.** Not derivable
+4. **the full set of Enrollment PDA addresses and the 3 UUID lesson ids / 1 UUID module id.** Not derivable
    offline (need live Supabase/on-chain reads for the learner pubkeys and UUIDs). A6 enumerates the
    enrollments at runtime via `getProgramAccounts`; B7's 3 lesson-id `UPDATE`s need the actual UUIDs
    filled from `user_progress`.
