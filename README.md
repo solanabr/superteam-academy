@@ -82,7 +82,7 @@ Superteam Academy is an open-source learning management system built on Solana. 
 | Frontend         | Next.js 14 (App Router), React 18, Tailwind CSS, shadcn/ui + Radix UI |
 | Content          | Committed bundle compiled from the `courses-academy` git repo         |
 | Database / Auth  | Supabase (Postgres, RLS, Auth)                                        |
-| On-Chain Program | Solana, Anchor 0.31+ (Rust)                                           |
+| On-Chain Program | Solana, Pinocchio 0.11 (Rust, `cargo build-sbf`)                      |
 | XP Tokens        | Token-2022 (NonTransferable + PermanentDelegate)                      |
 | Credential NFTs  | Metaplex Core (soulbound via PermanentFreezeDelegate)                 |
 | i18n             | next-intl (EN, PT-BR, ES)                                             |
@@ -186,7 +186,7 @@ superteam-academy/
 │   │   ├── scripts/            #   compile-content.ts (repo → committed bundle)
 │   │   └── src/messages/       #   i18n translation files (en, pt-BR, es)
 │   └── build-server/           # Rust/Axum build server (GCP Cloud Run)
-├── onchain-academy/            # Anchor workspace (Solana program)
+├── onchain-academy/            # Pinocchio program workspace (Solana)
 │   ├── programs/               #   On-chain program source (Rust)
 │   └── tests/                  #   Integration + unit tests
 ├── packages/
@@ -230,7 +230,7 @@ only used to poll the content repo's HEAD/CI state for the admin Publish screen.
 | `NEXT_PUBLIC_SOLANA_RPC_URL`  | Client | Browser RPC endpoint. Must carry **no** privileged key (default: `https://api.devnet.solana.com`) |
 | `SOLANA_RPC_URL`              | Server | Server RPC endpoint — **this** is the one that may carry the Helius key. Required at boot.        |
 | `NEXT_PUBLIC_SOLANA_NETWORK`  | Client | Network name (`devnet`)                                                                           |
-| `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `anchor deploy`                                                                   |
+| `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `solana program deploy`                                                           |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS` | Client | XP mint pubkey from `initialize` output                                                           |
 
 ### Admin / Signing (Required for the admin console and on-chain operations)
@@ -287,7 +287,7 @@ only used to poll the content repo's HEAD/CI state for the admin Publish screen.
 Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth) and a Solana on-chain program. Content ships inside the build — there is no CMS to deploy.
 
 - **[Production Deployment Guide](docs/DEPLOYMENT.md)** -- Full instructions for Vercel, Supabase, the content bundle, Google OAuth, GCP Cloud Run (build server), analytics, custom domains, and post-deployment checklist.
-- **[Program Deployment Guide](docs/DEPLOY-PROGRAM.md)** -- On-chain program build, deploy, and initialize workflow (keypair generation, Anchor build, devnet deploy, XP mint creation).
+- **[Program Deployment Guide](docs/DEPLOY-PROGRAM.md)** -- On-chain program build, deploy, and initialize workflow (keypair generation, Pinocchio build via `cargo build-sbf`, devnet deploy, XP mint creation).
 
 ## On-Chain Program
 

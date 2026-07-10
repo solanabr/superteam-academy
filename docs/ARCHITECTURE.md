@@ -60,7 +60,7 @@ solanabr/courses-academy ──► compile-content.ts ──► committed bundle
 | ------------------------------ | --------------------------------------------------------------------------------------- |
 | `apps/web/`                    | Next.js 14 application (pages, API routes, components, services)                        |
 | `apps/build-server/`           | Rust/Axum Solana program compiler on GCP Cloud Run                                      |
-| `onchain-academy/`             | Anchor workspace (program source, IDL, tests)                                           |
+| `onchain-academy/`             | On-chain program workspace (Pinocchio implementation, IDL, tests)                       |
 | `packages/types/`              | Shared TypeScript interfaces (`Course`, `Lesson`, `LessonBlock`, …)                     |
 | `packages/content-schema/`     | Zod schemas for the content standard (course, lesson, blocks, achievement, quest, path) |
 | `packages/content-lint/`       | The content linter — runs in `courses-academy` CI, gating what is publishable           |
@@ -79,7 +79,7 @@ Content itself lives **outside** this repo, in
 | Web app          | Vercel                     | Edge middleware, automatic deploys from `main`                 |
 | Database + Auth  | Supabase (hosted Postgres) | RLS, SECURITY DEFINER functions. Prod project: `<project-ref>` |
 | Content          | **Committed to this repo** | Compiled bundle; no hosted service, no runtime credential      |
-| On-chain program | Solana devnet              | Anchor 0.31+, Token-2022, Metaplex Core                        |
+| On-chain program | Solana devnet              | Pinocchio 0.11 (see docs/SPEC.md), Token-2022, Metaplex Core   |
 | Build server     | GCP Cloud Run              | Docker, no IAM gateway, `X-API-Key` auth                       |
 
 ---
@@ -496,7 +496,7 @@ Used for wallet link/unlink flow, not for lesson completion (which uses on-chain
 
 ### Program Instructions (18 total)
 
-The Solana program (`onchain-academy`) is built with Anchor 0.31+. Instruction names in Rust are snake_case; Anchor's `Program` constructor converts them to camelCase for TypeScript.
+The Solana program (`onchain-academy`) is built with Pinocchio 0.11 (`cargo build-sbf`); the committed IDL is the client contract. Instruction names in Rust are snake_case; the `@coral-xyz/anchor` `Program` client converts them to camelCase for TypeScript.
 
 Source of truth: `onchain-academy/programs/onchain-academy/src/instructions/`.
 
