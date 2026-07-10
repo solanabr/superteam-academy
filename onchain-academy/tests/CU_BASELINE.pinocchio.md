@@ -5,25 +5,25 @@ against a release SBF build. Deterministic; no validator required.
 
 | Instruction                 |    CU |
 | --------------------------- | ----: |
-| initialize                  | 30954 |
-| update_config (pause)       |  3858 |
-| update_config (resume)      |  3858 |
-| create_course               | 12449 |
-| update_course               |  7487 |
-| register_minter             | 11209 |
-| update_minter               |  6474 |
-| revoke_minter               |  6123 |
-| enroll                      | 13886 |
-| complete_lesson             | 14705 |
-| finalize_course             | 21041 |
-| reward_xp                   | 12208 |
-| close_enrollment            |  6530 |
-| create_achievement_type     | 23607 |
-| award_achievement           | 56157 |
-| deactivate_achievement_type |  7734 |
-| issue_credential            | 45394 |
-| upgrade_credential          | 57533 |
-| close_course                |  6160 |
+| initialize                  | 18321 |
+| update_config (pause)       |   729 |
+| update_config (resume)      |   727 |
+| create_course               |  4634 |
+| update_course               |  2821 |
+| register_minter             |  4359 |
+| update_minter               |  2588 |
+| revoke_minter               |  2612 |
+| enroll                      |  6091 |
+| complete_lesson             |  7595 |
+| finalize_course             | 10888 |
+| reward_xp                   |  6002 |
+| close_enrollment            |  4416 |
+| create_achievement_type     | 12729 |
+| award_achievement           | 40172 |
+| deactivate_achievement_type |  2943 |
+| issue_credential            | 34614 |
+| upgrade_credential          | 46552 |
+| close_course                |  2558 |
 
 **Measured 19 transactions across all 18 instructions.**
 `update_config` is measured for both pause and resume; every other

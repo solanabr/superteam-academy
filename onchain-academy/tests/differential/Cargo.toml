@@ -1,0 +1,17 @@
+# Standalone workspace: litesvm pins its own solana-sdk line; keep it out of
+# the program workspace (same isolation pattern as tests/rust and trident-tests).
+[workspace]
+
+[package]
+name = "onchain-academy-differential"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# litesvm 0.12 = agave 3.x runtime line (matches the local Agave 3.0.15 CLI /
+# devnet). No anchor-lang here on purpose: instruction data is hand-rolled from
+# the committed IDL discriminators and account comparisons are raw bytes, so
+# the anchor 0.31 (solana 2.x) crate graph never mixes with this one.
+[dependencies]
+litesvm = "0.12"
+solana-sdk = "3"

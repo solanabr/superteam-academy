@@ -227,6 +227,8 @@ describe("CU measurement (#121)", () => {
       [xpMint]
     );
 
+    // newAuthority was added to UpdateConfigParams in the #303 audit sprint
+    // (after the original baseline); the coder needs every field present.
     await measure(
       "update_config (pause)",
       program.methods
@@ -737,10 +739,13 @@ describe("CU measurement (#121)", () => {
       "  pre-bootstrapped collection whose update authority is the Config PDA.",
       "",
     ];
-    writeFileSync(path.join(ROOT, "tests/CU_BASELINE.md"), lines.join("\n"));
+    // CU_BASELINE_OUT lets the pinocchio runtime write its own table without
+    // clobbering the committed Anchor baseline (see package.json cu:pinocchio).
+    const outFile = process.env.CU_BASELINE_OUT ?? "tests/CU_BASELINE.md";
+    writeFileSync(path.join(ROOT, outFile), lines.join("\n"));
     // eslint-disable-next-line no-console
     console.log(
-      `\nWrote tests/CU_BASELINE.md (${measured.length}/${rows.length} measured)`
+      `\nWrote ${outFile} (${measured.length}/${rows.length} measured)`
     );
 
     // Gate: every attempted instruction must have executed, and each CU must be
