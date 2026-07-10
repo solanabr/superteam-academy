@@ -50,10 +50,10 @@ apps/web/src/
 │       ├── tarball.ts                        new  — gunzip+untar → RepoTree map; exclude _template
 │       ├── validate.ts                       new  — parseAndValidateTree (Zod) + executor gate (§6.2a)
 │       ├── executor-gate.ts                  new  — solution-passes / starter-fails, tiered by language/buildType
-│       ├── projector.ts                      new  — validated content → SanityDoc[] + AssetUpload[]; deterministic _id, blocks[], _key
+│       ├── projector.ts                      new  — validated content → SanityDoc[] + AssetUpload[]; deterministic _id, blocks[], _key; applies the CDN rewrite to prose src
 │       ├── preserve.ts                       new  — PRESERVE, PROJECTED_FIELDS, reattachPreserved, assertSchemaFieldsCovered
 │       ├── prune.ts                          new  — selectPrunable, assertBlastRadius, prunableQuery, selectChangedDocs
-│       ├── assets.ts                         new  — content-derived _id (sha1), skip-if-exists, rewrite md image paths → CDN
+│       ├── assets.ts                         new  — content-derived _id (sha1), skip-if-exists, md image-path → CDN rewriter (applied by projector)
 │       ├── content-commit.ts                 new  — padContentTxId, contentTxIdMatchesHead, deriveActiveMask, assertMaskMatchesLockfile
 │       ├── drift.ts                          new  — computeContentDrift, computeChainDrift, assertCommitSyncable
 │       ├── gateway.ts                        new  — SanityGateway interface + live impl over admin-mutations
@@ -1082,6 +1082,25 @@ describe("projectContent", () => {
     expect(intro.src).toBe("# Accounts");
   });
 
+  it("rewrites repo-relative image paths in prose src to the resolved CDN url (§9.6)", () => {
+    // Regression guard for the gap where projectBlock accepted resolveAsset but never
+    // ran the rewrite: the markdown a learner reads must carry the CDN url, not a
+    // repo path (`assets/pixel.png`) that resolves nowhere once the tree is gone.
+    // Mirrors the shared 1x1 PNG fixture's `![pixel](assets/pixel.png)` reference.
+    const f = fixture();
+    f.prose = new Map([
+      ["courses/demo/lessons/accounts/intro.md", "See ![pixel](assets/pixel.png) here."],
+    ]);
+    const cdn = "https://cdn.sanity.io/images/proj/production/abc123-1x1.png";
+    const resolveAsset = (repoPath: string): string | null =>
+      repoPath === "courses/demo/lessons/accounts/assets/pixel.png" ? cdn : null;
+    const { docs } = projectContent(f, "sha1", resolveAsset, () => []);
+    const lesson = docs.find((d) => d._type === "lesson") as { blocks: { _key: string; src?: string }[] };
+    const intro = lesson.blocks.find((b) => b._key === "intro")!;
+    expect(intro.src).toBe(`See ![pixel](${cdn}) here.`);
+    expect(intro.src).not.toContain("assets/pixel.png");
+  });
+
   it("resolves code.tests → a testCase[] array", () => {
     const { docs } = projectContent(fixture(), "sha1", noAsset, () => [
       { id: "t1", description: "d", input: "", expectedOutput: "1" },
@@ -1117,14 +1136,16 @@ Expected: FAIL — `Cannot find module '../projector'`.
 ```ts
 import type { ValidatedContent } from "./validate";
 import type { SanityDoc } from "./types";
+import { rewriteMarkdownAssetPaths } from "./assets";
 
 export interface AssetUpload {
   path: string; // repo-relative image path
   bytes: Uint8Array;
 }
 
-/** Maps a lesson-relative image path to a Sanity image ref, or null if none. */
-export type AssetResolver = (repoPath: string) => { _type: "image"; asset: { _ref: string } } | null;
+/** Maps a repo-relative image path to its resolved CDN url string, or null if none.
+ *  Markdown rewriting needs a plain url, not a Sanity image reference. */
+export type AssetResolver = (repoRelativePath: string) => string | null;
 
 /** Reads a code block's resolved tests.json array for a given lesson dir + path. */
 export type TestsResolver = (dir: string, testsRelPath: string) => unknown[];
@@ -1146,7 +1167,11 @@ function projectBlock(
   }
   // Resolve repo paths → content (spec §9.6, §10.2).
   if (block.type === "prose") {
-    out.src = v.prose.get(`${dir}/${String(block.src)}`) ?? "";
+    // Rewrite repo-relative image paths (`assets/x.png`) → CDN urls so the markdown
+    // a learner reads resolves once the repo tree is gone (§9.6). `resolveAsset` keys
+    // on the full repo path, so join the lesson dir onto each markdown-relative path.
+    const rawMd = v.prose.get(`${dir}/${String(block.src)}`) ?? "";
+    out.src = rewriteMarkdownAssetPaths(rawMd, (rel) => resolveAsset(`${dir}/${rel}`));
   }
   if (block.type === "code") {
     out.starter = v.code.get(`${dir}/${String(block.starter)}`) ?? "";
@@ -2489,10 +2514,13 @@ export async function runContentSync(deps: SyncDeps): Promise<SyncResult> {
     const raw = tree.get(`${dir}/${rel}`);
     return raw ? (JSON.parse(new TextDecoder().decode(raw)) as unknown[]) : [];
   };
-  const resolveAsset = (repoPath: string) => {
-    const url = urlByPath.get(repoPath);
-    return url ? { _type: "image" as const, asset: { _ref: url } } : null;
-  };
+  // resolveAsset returns the plain CDN url string (an `AssetResolver`) — the markdown
+  // rewrite needs a url, not a Sanity image reference. syncAssets already ran the async
+  // pipeline per asset — computeAssetId → assetExists (skip) or uploadAsset → cdnUrl(id) —
+  // into urlByPath, so this stays a synchronous lookup (rewriteMarkdownAssetPaths runs
+  // inside String.replace and can't await). The content-derived id yields the same url
+  // whether the asset already existed or was just uploaded.
+  const resolveAsset = (repoPath: string): string | null => urlByPath.get(repoPath) ?? null;
   const { docs: projected } = projectContent(validated, deps.sha, resolveAsset, resolveTests);
 
   // 6. Reattach PRESERVE from existing docs.
@@ -2669,7 +2697,10 @@ import { buildCourseCommit } from "@/lib/solana/admin-signer";
 
 /** The committed lockfile for a course, from the last-synced tree. Sourced
  *  independently of the panel's mask — that independence is what makes the
- *  buildCourseCommit assertion a real cross-check. */
+ *  buildCourseCommit assertion a real cross-check.
+ *  OPTIMIZATION (intended): this re-fetches + re-extracts the whole tarball on every
+ *  chain-sync call just to read one course's slots.lock.json. Cache the tree extracted
+ *  by the last content sync (keyed by the singleton sha) and reuse it here instead. */
 async function readCourseSlotsLock(
   courseId: string,
 ): Promise<{ contentSha: string; slotsLock: SlotsLock }> {
@@ -3060,7 +3091,7 @@ The load-bearing guarantees, each proven by a named test:
 1. **`POST /api/admin/content/sync` (ADMIN_SECRET), §9.2 flow** — Tasks 3 (tarball fetch + `GITHUB_TOKEN`), 5 (re-validate with `@superteam-lms/content-schema`), 6 (write Sanity docs), 12 (orchestrator ties it together + `revalidateTag("courses")`), 13 (`content_tx_id` commitment), 14 (the route). `GITHUB_TOKEN` documented in Task 1 + Task 16.
 2. **Idempotent write + PRESERVE** — Task 6 (deterministic `_id`, `createOrReplace`-shaped docs), Task 8 (`reattachPreserved`, `readManagedDocuments` one-GROQ read via Task 11, the `sanitySchemaFields == projected ∪ PRESERVE` CI assertion), Task 12 (`selectChangedDocs` → zero mutations on same sha).
 3. **Prune guards (§9.4)** — Task 6 (`sync:{source,rev}`, non-`_` field), Task 8 (`prunableQuery`, `selectPrunable` never selects unmarked, `assertBlastRadius` 20%), Task 12 (write-verify-count-then-prune, singleton written last), weak refs from CS-5 prerequisite; 10k delete cap noted in Global Constraints.
-4. **Assets (§9.6)** — Task 7 (`computeAssetId` from SHA-1, skip-if-exists via `assetExists`, `rewriteMarkdownAssetPaths` → CDN), Task 12 (`syncAssets` with a real dimension probe via `image-size`, so the id/url match what Sanity computes on upload; proven with a real 1x1 PNG fixture).
+4. **Assets (§9.6)** — Task 7 (`computeAssetId` from SHA-1, skip-if-exists via `assetExists`, `rewriteMarkdownAssetPaths` → CDN url string), Task 6 (`projectBlock` actually **runs** `rewriteMarkdownAssetPaths` on every prose block so the stored `src` carries CDN urls, proven by "rewrites repo-relative image paths in prose src to the resolved CDN url" — it asserts the block body contains the CDN url and **not** `assets/pixel.png`), Task 12 (`syncAssets` with a real dimension probe via `image-size`, so the id/url match what Sanity computes on upload; `resolveAsset` returns the plain CDN url string the rewrite consumes; dedupe count proven with a real 1x1 PNG fixture).
 5. **content_tx_id commitment (§11.0)** — Task 9 (`padContentTxId` 20→32, `deriveActiveMask`, `assertMaskMatchesLockfile`), Task 13 (`buildCourseCommit` receives the panel's intended mask as a required input and always asserts it against the lockfile-derived mask right before signing — two independent sources, so the guard is actually exercised; wired into `deployCoursePda`/`updateCoursePda` via `new_content_tx_id`).
 6. **Drift UI (§11)** — Task 10 (`computeContentDrift` → up_to_date/behind/never_synced/blocked; `computeChainDrift` → `content_tx_id == HEAD` + surviving `diffCourse` states; `assertCommitSyncable` refuses red CI), Task 15 (drift route + three-way panel; blocked disables sync; content-before-chain ordering interlock).
 7. **Server-side executor gate at sync time (§6.2a)** — Task 4 (`gateCodeBlock`, tiered JS/Rust/buildable, two-sided), Task 5 (runs it during re-validation), Task 14 (`createLiveGraders` wires the real executors).
