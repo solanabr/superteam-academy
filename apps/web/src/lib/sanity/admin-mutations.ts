@@ -200,37 +200,6 @@ export async function writeCourseTrackCollection(
     .commit();
 }
 
-/**
- * Approve a teacher-submitted course (issue #268). Admin-only — the calling
- * route (`/api/admin/courses/review`) MUST have passed `requireAdminAuth`
- * first. Sets `authoringStatus = "approved"` and clears any prior
- * `reviewFeedback`. Does NOT run the on-chain sync; the admin UI triggers the
- * existing `/api/admin/courses/sync` separately so the complex sync stays in
- * one place.
- */
-export async function approveCourse(sanityId: string): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({ authoringStatus: "approved", reviewFeedback: null })
-    .commit();
-}
-
-/**
- * Reject a teacher-submitted course (issue #268). Admin-only. Returns the
- * course to `draft` and stores `feedback` in `reviewFeedback` so the teacher
- * can see why it was rejected. Feedback length bounding is the caller's
- * responsibility (enforced in the review route).
- */
-export async function rejectCourse(
-  sanityId: string,
-  feedback: string
-): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({ authoringStatus: "draft", reviewFeedback: feedback })
-    .commit();
-}
-
 export async function writeAchievementOnChainStatus(
   sanityId: string,
   achievementPda: string,
