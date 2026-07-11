@@ -77,6 +77,29 @@ describe("GET /api/content/courses", () => {
 });
 
 describe("GET /api/content/lessons-summary", () => {
+  it("answer-key guard: response shape is LOCKED to {_id,title,slug} — adversarial extras are stripped", async () => {
+    fns.getLessonsByIds.mockResolvedValue([
+      {
+        _id: "lesson-a",
+        title: "A",
+        slug: "a",
+        // If the underlying fn ever regressed into returning full lessons,
+        // the route must not become the leak:
+        blocks: [{ _type: "code", solution: "SECRET", tests: ["hidden"] }],
+        solution: "SECRET",
+      },
+    ]);
+    const res = await getLessons(
+      req("/api/content/lessons-summary?ids=lesson-a")
+    );
+    const body = (await res.json()) as { lessons: Record<string, unknown>[] };
+    expect(body.lessons).toEqual([{ _id: "lesson-a", title: "A", slug: "a" }]);
+    for (const lesson of body.lessons) {
+      expect(Object.keys(lesson).sort()).toEqual(["_id", "slug", "title"]);
+    }
+    expect(JSON.stringify(body)).not.toContain("SECRET");
+  });
+
   it("returns lesson SUMMARIES only", async () => {
     fns.getLessonsByIds.mockResolvedValue([
       { _id: "lesson-a", title: "A", slug: "a" },

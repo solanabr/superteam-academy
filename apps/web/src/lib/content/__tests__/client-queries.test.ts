@@ -82,6 +82,14 @@ describe("client-queries — /api/content fetch wrappers", () => {
     );
   });
 
+  it("answer-key guard: exports NO full-Lesson reader (those stay server-only)", async () => {
+    const clientQueries = await import("../client-queries");
+    expect("getLessonBySlug" in clientQueries).toBe(false);
+    expect("getLessonByIdForGrading" in clientQueries).toBe(false);
+    expect("getCourseBySlug" in clientQueries).toBe(false);
+    expect("getCourseById" in clientQueries).toBe(false);
+  });
+
   it("rejects on a non-OK response (matching the old direct-call semantics)", async () => {
     fetchMock.mockResolvedValue({
       ok: false,
