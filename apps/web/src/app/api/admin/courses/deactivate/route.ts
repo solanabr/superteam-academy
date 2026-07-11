@@ -41,9 +41,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Mirror the on-chain flag into Sanity + purge the catalog cache so the course
-  // disappears from /courses immediately. If this write fails the course stays
-  // visible despite being deactivated on-chain, so surface a warning.
+  // Mirror the on-chain flag into the Supabase `onchain_deployments` row (via
+  // deployment-writes) + purge the catalog cache so the course disappears from
+  // /courses immediately. If this write fails the course stays visible despite
+  // being deactivated on-chain, so surface a warning.
   let warning: string | undefined;
   try {
     await writeCourseActive(courseId, false);
