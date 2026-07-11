@@ -35,13 +35,9 @@ The middleware (`src/middleware.ts`) chains two concerns:
 **Level formula**: `Level = floor(sqrt(totalXP / 100))`
 **Server-side cap**: max 100 XP per lesson completion, max 2000 XP per generic award
 
-### Achievements (14 total)
+### Achievements
 
-- **Progress**: First Steps, Course Completer
-- **Streaks**: Week Warrior (7d), Monthly Master (30d), Consistency King (100d)
-- **Skills**: Rust Rookie, Anchor Expert, Full Stack Solana
-- **Community**: Helper, First Comment, Top Contributor
-- **Special**: Early Adopter, Bug Hunter, Perfect Score
+The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here. Unlock logic maps full Sanity `_id`s in `UNLOCK_CHECKS` (`lib/achievements.ts`).
 
 ## Environment Variables
 
@@ -70,11 +66,12 @@ NEXT_PUBLIC_XP_MINT_ADDRESS=       # XP mint pubkey (from initialize.ts output)
 ADMIN_SECRET=                      # Admin panel authentication secret (HMAC-signed cookies)
 BUILD_SERVER_URL=                  # Cloud Run build server URL (server-only, proxied via /api)
 BUILD_SERVER_API_KEY=              # Build server authentication key
-GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/courses-academy
-                                   # (server-only). Powers POST /api/admin/content/sync (tarball
-                                   # fetch), the drift UI (HEAD polling), and the Checks API
-                                   # (blocked state). Unauthenticated GitHub is 60 req/hr per IP
-                                   # and flakes on Vercel; unset → the /api/admin/content/* routes 503.
+GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/courses-academy (public repo,
+                                   # but the token is still required — unauthenticated GitHub is
+                                   # 60 req/hr per IP and flakes on Vercel). Server-only. Powers
+                                   # POST /api/admin/content/sync (tarball fetch), the drift UI
+                                   # (HEAD polling), and the Checks API (blocked state);
+                                   # unset → the /api/admin/content/* routes 503.
 HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)

@@ -828,5 +828,28 @@
     "chainSyncing": "Registrando…",
     "chainSyncFailed": "Falha na sincronização on-chain.",
     "chainSyncSucceeded": "{id} registrado on-chain."
+  },
+  "admin": {
+    "console": {
+      "title": "Console de Administração",
+      "subtitle": "Superteam Academy — Sincronização do Sanity para a blockchain",
+      "navLabel": "Seções de administração"
+    },
+    "nav": {
+      "publish": "Publicar",
+      "deploy": "Implantar",
+      "moderation": "Moderação",
+      "status": "Status"
+    },
+    "counts": {
+      "courses": "Cursos",
+      "achievements": "Conquistas"
+    },
+    "screens": {
+      "publish": "Publicação de conteúdo",
+      "deploy": "Implantação on-chain",
+      "moderation": "Moderação da comunidade",
+      "status": "Status do programa"
+    }
   }
 }

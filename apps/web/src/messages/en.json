@@ -828,5 +828,28 @@
     "chainSyncing": "Committing…",
     "chainSyncFailed": "Chain sync failed.",
     "chainSyncSucceeded": "Committed {id} on-chain."
+  },
+  "admin": {
+    "console": {
+      "title": "Admin Console",
+      "subtitle": "Superteam Academy — Sanity to On-Chain Sync",
+      "navLabel": "Admin sections"
+    },
+    "nav": {
+      "publish": "Publish",
+      "deploy": "Deploy",
+      "moderation": "Moderation",
+      "status": "Status"
+    },
+    "counts": {
+      "courses": "Courses",
+      "achievements": "Achievements"
+    },
+    "screens": {
+      "publish": "Content Publishing",
+      "deploy": "On-Chain Deploy",
+      "moderation": "Community Moderation",
+      "status": "Program Status"
+    }
   }
 }

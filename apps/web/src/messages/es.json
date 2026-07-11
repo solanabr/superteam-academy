@@ -828,5 +828,28 @@
     "chainSyncing": "Registrando…",
     "chainSyncFailed": "Error en la sincronización on-chain.",
     "chainSyncSucceeded": "{id} registrado on-chain."
+  },
+  "admin": {
+    "console": {
+      "title": "Consola de administración",
+      "subtitle": "Superteam Academy — Sincronización de Sanity con la cadena",
+      "navLabel": "Secciones de administración"
+    },
+    "nav": {
+      "publish": "Publicar",
+      "deploy": "Desplegar",
+      "moderation": "Moderación",
+      "status": "Estado"
+    },
+    "counts": {
+      "courses": "Cursos",
+      "achievements": "Logros"
+    },
+    "screens": {
+      "publish": "Publicación de contenido",
+      "deploy": "Despliegue on-chain",
+      "moderation": "Moderación de la comunidad",
+      "status": "Estado del programa"
+    }
   }
 }

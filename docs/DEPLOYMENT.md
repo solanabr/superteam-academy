@@ -58,7 +58,7 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 | `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                                                                  |
 | `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                                                                       |
 | `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                                                              |
-| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                                                                    |
+| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://superteam-academy-web.vercel.app`)                                                    |
 | `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                        |
 | `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                                                            |
 | `BUILD_SERVER_URL`              | **Server-only** | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                           |
@@ -73,18 +73,18 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Optional Variables
 
-| Variable                         | Type            | Notes                                                                                                                                                                                                                                                                                                                       |
-| -------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org)                                                                                                                                                                                                                                                                  |
-| `GITHUB_TOKEN`                   | **Server-only** | Fine-grained **read** token for `solanabr/academy-courses`. Powers `POST /api/admin/content/sync` (tarball fetch), the drift UI (HEAD polling), and the Checks API (`blocked` state). Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel's shared egress; unset → the `/api/admin/content/*` routes return 503 |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                                                                                                                                                                                                                                                                                          |
-| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                                                                                                                                                                                                                                                                                         |
-| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                                                                                                                                                                                                                                                                                        |
-| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)                                                                                                                                                                                                                                                                               |
+| Variable                         | Type            | Notes                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RUST_PLAYGROUND_URL`            | **Server-only** | `/api/rust/execute` upstream (default: play.rust-lang.org)                                                                                                                                                                                                                                                                                                                                        |
+| `GITHUB_TOKEN`                   | **Server-only** | Fine-grained **read** token for `solanabr/courses-academy` (the repo is public, but the token is still required for rate limits). Powers `POST /api/admin/content/sync` (tarball fetch), the drift UI (HEAD polling), and the Checks API (`blocked` state). Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel's shared egress; unset → the `/api/admin/content/*` routes return 503 |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                                                                                                                                                                                                                                                                                                                                                                                |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                                                                                                                                                                                                                                                                                                                                                                               |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                                                                                                                                                                                                                                                                                                                                                                              |
+| `NEXT_PUBLIC_SENTRY_DSN`         | Public          | Sentry error tracking (DSN is safe to expose)                                                                                                                                                                                                                                                                                                                                                     |
 
 > **Tip**: Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript bundle. All others are server-only and only accessible in API routes and server components.
 
-> **Content sync (CS-9) secrets**: The Sanity dataset is **public** (read path uses no browser token). `SANITY_ADMIN_TOKEN` is held only by the content-sync job and `admin-mutations.ts` — it never belongs in GitHub Actions. `GITHUB_TOKEN` is a read-only token for the `academy-courses` repo, used server-side by the content-sync + drift routes; it carries no write scope.
+> **Content sync (CS-9) secrets**: The Sanity dataset is **public** (read path uses no browser token). `SANITY_ADMIN_TOKEN` is held only by the content-sync job and `admin-mutations.ts` — it never belongs in GitHub Actions. `GITHUB_TOKEN` is a read-only token for the `courses-academy` repo, used server-side by the content-sync + drift routes; it carries no write scope.
 
 ### 4. Deploy
 
@@ -142,8 +142,8 @@ The schema includes:
 ### 2. Auth Redirect URLs
 
 1. Go to **Authentication** → **URL Configuration**
-2. Set **Site URL** to your production URL: `https://solarium.courses`
-3. Add to **Redirect URLs**: `https://solarium.courses/api/auth/callback`
+2. Set **Site URL** to your production URL: `https://superteam-academy-web.vercel.app`
+3. Add to **Redirect URLs**: `https://superteam-academy-web.vercel.app/api/auth/callback`
 
 ### 3. Enable Google OAuth Provider
 
@@ -187,7 +187,7 @@ Supabase automatically creates daily backups on paid plans. On the free tier:
 ### 2. CORS Origins
 
 1. Navigate to **API** → **CORS Origins**
-2. Add your production domain: `https://solarium.courses`
+2. Add your production domain: `https://superteam-academy-web.vercel.app`
 3. Check **Allow credentials**
 4. Also add `http://localhost:3000` for local development
 
@@ -321,7 +321,7 @@ openssl rand -hex 32
 
 ```bash
 export ACADEMY_API_KEY=<your-generated-api-key>
-export ALLOWED_ORIGIN=https://solarium.courses
+export ALLOWED_ORIGIN=https://superteam-academy-web.vercel.app
 
 cd apps/build-server/deploy
 ./deploy.sh <PROJECT_ID> [REGION] [TAG]
@@ -440,14 +440,14 @@ Sign up at [sentry.io](https://sentry.io).
 ### 1. Add Domain in Vercel
 
 1. Go to **Vercel → Project → Settings → Domains**
-2. Add your custom domain (e.g., `solarium.courses`)
+2. Add your custom domain (e.g., `academy.example.com`)
 3. Follow Vercel's DNS instructions (add CNAME or A records)
 
 ### 2. Update Environment Variables
 
-| Variable              | New Value                  |
-| --------------------- | -------------------------- |
-| `NEXT_PUBLIC_APP_URL` | `https://solarium.courses` |
+| Variable              | New Value                     |
+| --------------------- | ----------------------------- |
+| `NEXT_PUBLIC_APP_URL` | `https://academy.example.com` |
 
 ### 3. Update External Services
 
