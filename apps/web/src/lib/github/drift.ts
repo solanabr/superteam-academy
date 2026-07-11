@@ -9,6 +9,15 @@ export type ContentDriftState =
   | "blocked";
 
 /**
+ * The per-course content-drift field carried by `/api/admin/status`: the
+ * repo-wide `ContentDriftState`, or `"unknown"` when courses-academy HEAD could
+ * not be fetched (missing `GITHUB_TOKEN`, rate limit, network). The status route
+ * degrades to `"unknown"` rather than 503-ing — its program/on-chain status is
+ * independent of GitHub, so a drift lookup must never sink the whole route.
+ */
+export type CourseContentDrift = ContentDriftState | "unknown";
+
+/**
  * Content drift (§11.1): the cached contentSync.sha vs GitHub HEAD. `blocked`
  * means HEAD's CI is red — the panel must refuse to sync it, or a human could
  * click invalid content past the Zod gate. `canSync` folds the CI gate in.

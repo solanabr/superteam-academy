@@ -5,6 +5,8 @@
  * from the same endpoint (plan ambiguity 2: no API split in SP3-A).
  */
 
+import type { CourseContentDrift } from "@/lib/github/drift";
+
 export interface DiffEntry {
   field: string;
   sanityValue: unknown;
@@ -13,12 +15,12 @@ export interface DiffEntry {
 }
 
 export interface CourseStatus {
-  sanityId: string;
+  contentId: string;
   slug: string;
   title: string;
   isDraft: boolean;
   lessonCount: number;
-  sanityXpPerLesson: number | null;
+  contentXpPerLesson: number | null;
   missingFields: string[];
   onChainStatus:
     | "synced"
@@ -28,13 +30,17 @@ export interface CourseStatus {
     | "missing_fields";
   coursePda: string | null;
   differences: DiffEntry[];
+  // Repo-wide content drift (SP3-C): the committed bundle's pinned SHA vs
+  // courses-academy HEAD, or "unknown" when HEAD couldn't be fetched. Same value
+  // for every course; the badge only surfaces it on a deployed row.
+  contentDrift: CourseContentDrift;
   // Authoritative on-chain is_active. Absent for not-yet-deployed/draft courses
   // (treated as active). false → deactivated (hidden from the public catalog).
   isActive?: boolean;
 }
 
 export interface AchievementStatus {
-  sanityId: string;
+  contentId: string;
   name: string;
   missingFields: string[];
   onChainStatus: "synced" | "not_deployed" | "missing_fields" | "draft";

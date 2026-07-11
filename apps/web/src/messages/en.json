@@ -906,8 +906,16 @@
     "deployScreen": {
       "coursesHeading": "Courses",
       "achievementsHeading": "Achievements",
-      "noCourses": "No courses found in Sanity.",
-      "noAchievements": "No achievements found in Sanity."
+      "noCourses": "No courses in the content bundle.",
+      "noAchievements": "No achievements in the content bundle.",
+      "contentDrift": {
+        "drifted": "Content drift",
+        "blocked": "Content blocked",
+        "unknown": "Drift unknown",
+        "driftedHint": "Newer course content is published upstream — redeploy to sync the on-chain course.",
+        "blockedHint": "Upstream content changed but its CI is red — it cannot be synced yet.",
+        "unknownHint": "Could not reach GitHub to check for content drift."
+      }
     },
     "resync": {
       "heading": "Data Resync",

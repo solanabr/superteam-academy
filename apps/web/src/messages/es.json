@@ -906,8 +906,16 @@
     "deployScreen": {
       "coursesHeading": "Cursos",
       "achievementsHeading": "Logros",
-      "noCourses": "No se encontraron cursos en Sanity.",
-      "noAchievements": "No se encontraron logros en Sanity."
+      "noCourses": "No hay cursos en el paquete de contenido.",
+      "noAchievements": "No hay logros en el paquete de contenido.",
+      "contentDrift": {
+        "drifted": "Contenido desactualizado",
+        "blocked": "Contenido bloqueado",
+        "unknown": "Divergencia desconocida",
+        "driftedHint": "Hay contenido de curso más reciente publicado en el repositorio — vuelve a desplegar para sincronizar el curso on-chain.",
+        "blockedHint": "El contenido del repositorio cambió pero su CI está en rojo — aún no se puede sincronizar.",
+        "unknownHint": "No se pudo acceder a GitHub para comprobar la divergencia de contenido."
+      }
     },
     "resync": {
       "heading": "Resincronización de datos",

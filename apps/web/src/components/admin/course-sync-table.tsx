@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { StatusBadge } from "./status-badge";
+import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
 import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
+import type { CourseContentDrift } from "@/lib/github/drift";
 
 interface DiffEntry {
   field: string;
@@ -13,12 +14,12 @@ interface DiffEntry {
 }
 
 interface CourseStatus {
-  sanityId: string;
+  contentId: string;
   slug: string;
   title: string;
   isDraft: boolean;
   lessonCount: number;
-  sanityXpPerLesson: number | null;
+  contentXpPerLesson: number | null;
   missingFields: string[];
   onChainStatus:
     | "synced"
@@ -28,6 +29,7 @@ interface CourseStatus {
     | "missing_fields";
   coursePda: string | null;
   differences: DiffEntry[];
+  contentDrift: CourseContentDrift;
   isActive?: boolean;
 }
 
@@ -123,12 +125,12 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
         !c.differences.some((d) => !d.updateable)
     );
     for (const course of syncable) {
-      setSyncing(course.sanityId);
+      setSyncing(course.contentId);
       try {
         const res = await fetch("/api/admin/courses/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseId: course.sanityId }),
+          body: JSON.stringify({ courseId: course.contentId }),
         });
         if (!res.ok) {
           const data = (await res.json()) as { error?: string };
@@ -186,7 +188,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
         </thead>
         <tbody className="divide-y divide-border">
           {courses.map((course) => {
-            const isSyncing = syncing === course.sanityId;
+            const isSyncing = syncing === course.contentId;
             const immutableDiffs = course.differences.filter(
               (d) => !d.updateable
             );
@@ -200,7 +202,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
 
             return (
               <tr
-                key={course.sanityId}
+                key={course.contentId}
                 className="transition-colors hover:bg-subtle"
               >
                 <td className="py-3 pr-4">
@@ -234,11 +236,15 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                   )}
                 </td>
                 <td className="py-3 pr-4 text-center text-text">
-                  {course.sanityXpPerLesson ?? "—"}
+                  {course.contentXpPerLesson ?? "—"}
                 </td>
                 <td className="py-3 pr-4">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <StatusBadge status={course.onChainStatus} />
+                    <ContentDriftBadge
+                      onChainStatus={course.onChainStatus}
+                      contentDrift={course.contentDrift}
+                    />
                     {course.onChainStatus === "synced" &&
                       course.isActive === false && (
                         <span className="inline-flex items-center rounded border border-danger bg-danger-light px-2 py-0.5 text-xs font-medium text-danger">
@@ -250,7 +256,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                 <td className="py-3">
                   {canSync && (
                     <button
-                      onClick={() => void handleSync(course.sanityId)}
+                      onClick={() => void handleSync(course.contentId)}
                       disabled={isSyncing}
                       className="rounded-md bg-primary px-3 py-1 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover active:translate-y-[3px] active:shadow-push-active disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -260,7 +266,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                   {course.onChainStatus === "synced" &&
                     (course.isActive === false ? (
                       <button
-                        onClick={() => void handleReactivate(course.sanityId)}
+                        onClick={() => void handleReactivate(course.contentId)}
                         disabled={isSyncing}
                         className="ml-2 rounded-md border border-success px-3 py-1 font-display text-xs font-bold text-success shadow-push-sm transition-all hover:bg-success-light active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
                       >
@@ -268,7 +274,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                       </button>
                     ) : (
                       <button
-                        onClick={() => void handleDeactivate(course.sanityId)}
+                        onClick={() => void handleDeactivate(course.contentId)}
                         disabled={isSyncing}
                         className="ml-2 rounded-md border border-border px-3 py-1 font-display text-xs font-bold text-text-2 shadow-push-sm transition-all hover:border-danger hover:bg-danger-light hover:text-danger active:translate-y-[2px] active:shadow-push-active disabled:opacity-50"
                       >

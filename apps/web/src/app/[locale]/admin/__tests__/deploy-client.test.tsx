@@ -38,21 +38,22 @@ const status: AdminStatus = {
   },
   courses: [
     {
-      sanityId: "course-rust",
+      contentId: "course-rust",
       slug: "rust",
       title: "Rust",
       isDraft: false,
       lessonCount: 3,
-      sanityXpPerLesson: 50,
+      contentXpPerLesson: 50,
       missingFields: [],
       onChainStatus: "synced",
       coursePda: "Pda111",
       differences: [],
+      contentDrift: "up_to_date",
     },
   ],
   achievements: [
     {
-      sanityId: "achievement-first-steps",
+      contentId: "achievement-first-steps",
       name: "First Steps",
       missingFields: [],
       onChainStatus: "synced",
@@ -100,11 +101,11 @@ describe("DeployClient", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("No courses found in Sanity.")
+        screen.getByText("No courses in the content bundle.")
       ).toBeInTheDocument();
     });
     expect(
-      screen.getByText("No achievements found in Sanity.")
+      screen.getByText("No achievements in the content bundle.")
     ).toBeInTheDocument();
   });
 

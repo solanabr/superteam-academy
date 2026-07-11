@@ -4,7 +4,7 @@ import { useState } from "react";
 import { StatusBadge } from "./status-badge";
 
 interface AchievementStatus {
-  sanityId: string;
+  contentId: string;
   name: string;
   missingFields: string[];
   onChainStatus: "synced" | "not_deployed" | "missing_fields" | "draft";
@@ -57,12 +57,12 @@ export function AchievementSyncTable({
           (a.onChainStatus === "synced" && !a.collectionAddress))
     );
     for (const ach of syncable) {
-      setSyncing(ach.sanityId);
+      setSyncing(ach.contentId);
       try {
         const res = await fetch("/api/admin/achievements/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ achievementId: ach.sanityId }),
+          body: JSON.stringify({ achievementId: ach.contentId }),
         });
         if (!res.ok) {
           const data = (await res.json()) as { error?: string };
@@ -119,7 +119,7 @@ export function AchievementSyncTable({
         </thead>
         <tbody className="divide-y divide-border">
           {achievements.map((ach) => {
-            const isSyncing = syncing === ach.sanityId;
+            const isSyncing = syncing === ach.contentId;
             const canDeploy =
               ach.onChainStatus === "not_deployed" &&
               ach.missingFields.length === 0;
@@ -128,7 +128,7 @@ export function AchievementSyncTable({
 
             return (
               <tr
-                key={ach.sanityId}
+                key={ach.contentId}
                 className="transition-colors hover:bg-subtle"
               >
                 <td className="py-3 pr-4">
@@ -150,7 +150,7 @@ export function AchievementSyncTable({
                 <td className="py-3">
                   {(canDeploy || needsCollectionRecovery) && (
                     <button
-                      onClick={() => void handleSync(ach.sanityId)}
+                      onClick={() => void handleSync(ach.contentId)}
                       disabled={isSyncing}
                       className="rounded-md bg-primary px-3 py-1 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover active:translate-y-[3px] active:shadow-push-active disabled:cursor-not-allowed disabled:opacity-50"
                     >
