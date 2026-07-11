@@ -49,7 +49,6 @@
     "@superteam-lms/challenge-executor": "workspace:*",
     "@superteam-lms/content-schema": "workspace:*",
     "@superteam-lms/deploy": "workspace:*",
-    "@superteam-lms/sanity": "workspace:*",
     "@superteam-lms/types": "workspace:*",
     "bs58": "^6.0.0",
     "canvas-confetti": "^1.9.4",

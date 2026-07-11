@@ -127,7 +127,7 @@ const nextConfig = {
       "@jitl/quickjs-singlefile-cjs-release-sync",
     ],
   },
-  transpilePackages: ["@superteam-lms/types", "@superteam-lms/sanity"],
+  transpilePackages: ["@superteam-lms/types"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.sanity.io" },

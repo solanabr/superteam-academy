@@ -14,11 +14,6 @@ wallets/
 # Audit reports
 audit/
 
-# Sanity Studio deployed separately, but schemas are needed at build time
-# (imported by apps/web via @superteam-lms/sanity workspace package)
-# Only exclude the build output, not the source
-/sanity/dist/
-
 # Docs (not needed for frontend build)
 /docs/
 
