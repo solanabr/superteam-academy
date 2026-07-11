@@ -841,6 +841,10 @@
       "moderation": "Moderación",
       "status": "Estado"
     },
+    "counts": {
+      "courses": "Cursos",
+      "achievements": "Logros"
+    },
     "screens": {
       "publish": "Publicación de contenido",
       "deploy": "Despliegue on-chain",
