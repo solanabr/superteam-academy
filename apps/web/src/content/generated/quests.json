@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "quest-challenge",
+    "_type": "quest",
+    "active": true,
+    "description": "Pass a challenge lesson",
+    "icon": "Code",
+    "name": "Complete a Challenge",
+    "resetType": "daily",
+    "targetValue": 1,
+    "type": "challenge",
+    "xpReward": 35
+  },
+  {
+    "_id": "quest-complete-lesson",
+    "_type": "quest",
+    "active": true,
+    "description": "Finish any lesson today",
+    "icon": "BookOpen",
+    "name": "Complete a Lesson",
+    "resetType": "daily",
+    "targetValue": 1,
+    "type": "lesson",
+    "xpReward": 25
+  },
+  {
+    "_id": "quest-complete-module",
+    "_type": "quest",
+    "active": true,
+    "description": "Finish all lessons in a module",
+    "icon": "Scroll",
+    "name": "Complete a Module",
+    "resetType": "daily",
+    "targetValue": 1,
+    "type": "module",
+    "xpReward": 60
+  },
+  {
+    "_id": "quest-lesson-batch",
+    "_type": "quest",
+    "active": true,
+    "description": "Finish 3 lessons in a single day",
+    "icon": "Lightning",
+    "name": "Complete 3 Lessons",
+    "resetType": "daily",
+    "targetValue": 3,
+    "type": "lesson_batch",
+    "xpReward": 50
+  },
+  {
+    "_id": "quest-login-streak",
+    "_type": "quest",
+    "active": true,
+    "description": "Visit the platform 3 consecutive days",
+    "icon": "Trophy",
+    "name": "Log in 3 Days in a Row",
+    "resetType": "multi_day",
+    "targetValue": 3,
+    "type": "login_streak",
+    "xpReward": 40
+  }
+]

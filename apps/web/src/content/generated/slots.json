@@ -1,0 +1,120 @@
+{
+  "course-anchor-framework": {
+    "next": 12,
+    "retired": [],
+    "slots": {
+      "lesson-anchor-accounts": 2,
+      "lesson-anchor-accounts-challenge": 3,
+      "lesson-anchor-errors": 9,
+      "lesson-anchor-intro": 0,
+      "lesson-anchor-setup-challenge": 1,
+      "lesson-anchor-testing": 8,
+      "lesson-cpi-challenge": 7,
+      "lesson-cpi-overview": 6,
+      "lesson-deployment": 10,
+      "lesson-pda-advanced-challenge": 5,
+      "lesson-pda-deep-dive": 4,
+      "lesson-testing-challenge": 11
+    },
+    "version": 1
+  },
+  "course-building-first-program": {
+    "next": 16,
+    "retired": [],
+    "slots": {
+      "lesson-bfsp-account-constraints": 6,
+      "lesson-bfsp-add-instruction": 3,
+      "lesson-bfsp-adding-instructions": 8,
+      "lesson-bfsp-anatomy-anchor-program": 2,
+      "lesson-bfsp-build-increment": 9,
+      "lesson-bfsp-complete-counter": 10,
+      "lesson-bfsp-define-counter": 5,
+      "lesson-bfsp-deploy-to-devnet": 11,
+      "lesson-bfsp-from-code-to-chain": 0,
+      "lesson-bfsp-m4-airdrop": 12,
+      "lesson-bfsp-m4-capstone": 15,
+      "lesson-bfsp-m4-deploy": 13,
+      "lesson-bfsp-m4-interact": 14,
+      "lesson-bfsp-on-chain-state": 4,
+      "lesson-bfsp-wire-up-initialize": 7,
+      "lesson-bfsp-your-first-build": 1
+    },
+    "version": 1
+  },
+  "course-defi-on-solana": {
+    "next": 12,
+    "retired": [],
+    "slots": {
+      "lesson-amm-challenge": 3,
+      "lesson-amm-concepts": 1,
+      "lesson-defi-overview": 0,
+      "lesson-lending-concepts": 2,
+      "lesson-liquidation-challenge": 11,
+      "lesson-oracle-design": 9,
+      "lesson-orderbook-design": 8,
+      "lesson-staking-challenge": 7,
+      "lesson-staking-mechanisms": 6,
+      "lesson-token-math-challenge": 5,
+      "lesson-token-standards": 4,
+      "lesson-vault-challenge": 10
+    },
+    "version": 1
+  },
+  "course-rust-for-solana": {
+    "next": 12,
+    "retired": [],
+    "slots": {
+      "lesson-error-challenge": 7,
+      "lesson-error-handling": 6,
+      "lesson-ownership-borrowing": 1,
+      "lesson-pda-challenge": 11,
+      "lesson-program-structure": 8,
+      "lesson-rust-basics-challenge": 3,
+      "lesson-rust-program-challenge": 9,
+      "lesson-serialization": 4,
+      "lesson-serialization-challenge": 5,
+      "lesson-state-management": 10,
+      "lesson-structs-enums": 2,
+      "lesson-why-rust": 0
+    },
+    "version": 1
+  },
+  "course-solana-frontend": {
+    "next": 12,
+    "retired": [],
+    "slots": {
+      "lesson-balance-checker-challenge": 5,
+      "lesson-connect-wallet-challenge": 1,
+      "lesson-dapp-challenge": 11,
+      "lesson-notifications": 10,
+      "lesson-parse-data-challenge": 7,
+      "lesson-parsing-data": 6,
+      "lesson-react-patterns": 8,
+      "lesson-rpc-methods": 4,
+      "lesson-sign-message-challenge": 3,
+      "lesson-signing-messages": 2,
+      "lesson-transaction-ui": 9,
+      "lesson-wallet-adapter-intro": 0
+    },
+    "version": 1
+  },
+  "course-solana-fundamentals": {
+    "next": 12,
+    "retired": [],
+    "slots": {
+      "lesson-account-challenge": 9,
+      "lesson-account-model": 8,
+      "lesson-create-token-challenge": 7,
+      "lesson-first-transaction": 4,
+      "lesson-intro-solana": 0,
+      "lesson-keypair-challenge": 3,
+      "lesson-program-challenge": 11,
+      "lesson-programs-overview": 10,
+      "lesson-setup-environment": 1,
+      "lesson-token-overview": 6,
+      "lesson-transfer-challenge": 5,
+      "lesson-wallet-setup": 2
+    },
+    "version": 1
+  }
+}

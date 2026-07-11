@@ -1,0 +1,172 @@
+[
+  {
+    "_id": "achievement-anchor-expert",
+    "_type": "achievement",
+    "award": {
+      "course": "course-anchor-framework",
+      "kind": "course-completed"
+    },
+    "category": "skills",
+    "description": "Complete all Anchor framework lessons",
+    "glyph": "⬡",
+    "icon": "anchor",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-anchor-expert",
+    "name": "Anchor Expert",
+    "solTier": false,
+    "xpReward": 300
+  },
+  {
+    "_id": "achievement-bug-hunter",
+    "_type": "achievement",
+    "award": {
+      "kind": "manual"
+    },
+    "category": "special",
+    "description": "Report a verified bug in the platform",
+    "glyph": "※",
+    "icon": "bug",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-bug-hunter",
+    "name": "Bug Hunter",
+    "solTier": false,
+    "xpReward": 250
+  },
+  {
+    "_id": "achievement-consistency-king",
+    "_type": "achievement",
+    "award": {
+      "days": 100,
+      "kind": "streak"
+    },
+    "category": "streaks",
+    "description": "Maintain a 100-day learning streak",
+    "glyph": "∞",
+    "icon": "trophy",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-consistency-king",
+    "name": "Consistency King",
+    "solTier": true,
+    "xpReward": 500
+  },
+  {
+    "_id": "achievement-course-completer",
+    "_type": "achievement",
+    "award": {
+      "course": "course-solana-fundamentals",
+      "kind": "course-completed"
+    },
+    "category": "progress",
+    "description": "Complete an entire course",
+    "glyph": "✦",
+    "icon": "graduation-cap",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-course-completer",
+    "name": "Course Completer",
+    "solTier": false,
+    "xpReward": 200
+  },
+  {
+    "_id": "achievement-early-adopter",
+    "_type": "achievement",
+    "award": {
+      "kind": "user-number",
+      "lte": 100
+    },
+    "category": "special",
+    "description": "Join the platform during the first month",
+    "glyph": "✩",
+    "icon": "sparkles",
+    "maxSupply": 1000,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-early-adopter",
+    "name": "Early Adopter",
+    "solTier": true,
+    "xpReward": 1000
+  },
+  {
+    "_id": "achievement-first-steps",
+    "_type": "achievement",
+    "award": {
+      "gte": 1,
+      "kind": "lessons-completed"
+    },
+    "category": "progress",
+    "description": "Complete your first lesson",
+    "glyph": "01",
+    "icon": "footprints",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-steps",
+    "name": "First Steps",
+    "solTier": false,
+    "xpReward": 50
+  },
+  {
+    "_id": "achievement-full-stack-solana",
+    "_type": "achievement",
+    "award": {
+      "kind": "path-completed",
+      "path": "path-solana-core"
+    },
+    "category": "skills",
+    "description": "Complete all courses in the Solana Developer Path",
+    "glyph": "◎",
+    "icon": "layers",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-full-stack-solana",
+    "name": "Full Stack Solana",
+    "solTier": true,
+    "xpReward": 500
+  },
+  {
+    "_id": "achievement-monthly-master",
+    "_type": "achievement",
+    "award": {
+      "days": 30,
+      "kind": "streak"
+    },
+    "category": "streaks",
+    "description": "Maintain a 30-day learning streak",
+    "glyph": "30",
+    "icon": "crown",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-monthly-master",
+    "name": "Monthly Master",
+    "solTier": false,
+    "xpReward": 300
+  },
+  {
+    "_id": "achievement-rust-rookie",
+    "_type": "achievement",
+    "award": {
+      "course": "course-rust-for-solana",
+      "gte": 1,
+      "kind": "lessons-completed-in-course"
+    },
+    "category": "skills",
+    "description": "Complete your first Rust challenge",
+    "glyph": "Rs",
+    "icon": "code",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-rust-rookie",
+    "name": "Rust Rookie",
+    "solTier": false,
+    "xpReward": 150
+  },
+  {
+    "_id": "achievement-week-warrior",
+    "_type": "achievement",
+    "award": {
+      "days": 7,
+      "kind": "streak"
+    },
+    "category": "streaks",
+    "description": "Maintain a 7-day learning streak",
+    "glyph": "7×",
+    "icon": "flame",
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-week-warrior",
+    "name": "Week Warrior",
+    "solTier": false,
+    "xpReward": 100
+  }
+]
