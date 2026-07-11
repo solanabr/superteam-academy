@@ -19,6 +19,14 @@ describe("Course", () => {
     expect(Course.parse(base).modules[0]!.key).toBe("basics");
   });
 
+  it("accepts an optional thumbnail path and rejects an empty one", () => {
+    expect(
+      Course.parse({ ...base, thumbnail: "assets/thumbnail.png" }).thumbnail
+    ).toBe("assets/thumbnail.png");
+    expect(Course.parse(base).thumbnail).toBeUndefined();
+    expect(Course.safeParse({ ...base, thumbnail: "" }).success).toBe(false);
+  });
+
   it("enforces the on-chain xpPerLesson range", () => {
     expect(Course.safeParse({ ...base, xpPerLesson: 0 }).success).toBe(false);
     expect(Course.safeParse({ ...base, xpPerLesson: 101 }).success).toBe(false);

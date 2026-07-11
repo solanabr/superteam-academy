@@ -41,6 +41,13 @@ export const Course = z
      * creator and is rejected by the sync (no platform-authority fallback).
      */
     instructor: InstructorId.optional(),
+    /**
+     * Repo-relative path to the course's catalogue thumbnail (e.g.
+     * `assets/thumbnail.png`), resolved against the course folder. Optional in
+     * the schema; the compiler verifies the file exists when set (SP2 — images
+     * are git-sourced, no external image host).
+     */
+    thumbnail: z.string().min(1).optional(),
     prerequisiteCourse: CourseId.optional(),
     modules: z.array(CourseModule).min(1),
   })
