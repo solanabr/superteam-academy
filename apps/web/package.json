@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "compile-content": "tsx scripts/compile-content.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
