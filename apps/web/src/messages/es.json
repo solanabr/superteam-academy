@@ -839,6 +839,7 @@
       "publish": "Publicar",
       "deploy": "Desplegar",
       "moderation": "Moderación",
+      "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
       "status": "Estado"
     },
     "counts": {
@@ -850,6 +851,88 @@
       "deploy": "Despliegue on-chain",
       "moderation": "Moderación de la comunidad",
       "status": "Estado del programa"
+    },
+    "publishPin": {
+      "title": "Fijación de contenido",
+      "description": "El paquete de contenido versionado está fijado a un commit de courses-academy en content.lock. Publicar contenido nuevo es un PR humano de una línea que actualiza la fijación y reconstruye el paquete — aquí no ocurre ninguna escritura en el servidor.",
+      "refresh": "Actualizar",
+      "loading": "Comprobando la fijación de contenido…",
+      "unavailable": "Desfase no disponible — no se pudo contactar con GitHub. Inténtalo de nuevo en un momento.",
+      "pinnedSha": "Commit fijado",
+      "headSha": "HEAD del repositorio",
+      "drift": "Desfase",
+      "upToDate": "Al día — la fijación coincide con el HEAD de courses-academy.",
+      "behind": "{count, plural, one {# commit por detrás del HEAD} other {# commits por detrás del HEAD}}",
+      "behindUnknown": "Por detrás del HEAD (recuento de commits no disponible).",
+      "counts": "Paquete: {courses} cursos, {lessons} lecciones.",
+      "checks": {
+        "success": "CI en verde",
+        "failure": "CI en fallo",
+        "pending": "CI pendiente",
+        "unknown": "CI desconocida"
+      },
+      "copied": "Copiado",
+      "copyCommand": "Copiar comando",
+      "copyBranch": "Copiar rama",
+      "copyTitle": "Copiar título",
+      "copyBody": "Copiar descripción",
+      "viewCompare": "Ver commits",
+      "preparePrLink": "Abrir PR de publicación",
+      "prepare": {
+        "title": "Preparar PR de publicación",
+        "redHeadWarning": "La CI del HEAD no está en verde. No actualices la fijación a contenido no verificado — espera a que la CI pase.",
+        "step1": "1. Aplica este cambio de una línea a content.lock",
+        "step2": "2. Reconstruye el paquete versionado localmente",
+        "step2Hint": "Ejecuta esto tras editar {path}, luego confirma tanto el lock como el paquete regenerado.",
+        "step3": "3. Sube una rama y abre el PR",
+        "branch": "Rama sugerida:"
+      }
+    },
+    "states": {
+      "loading": "Cargando estado on-chain...",
+      "fetchError": "Error al obtener el estado",
+      "networkError": "Error de red",
+      "retry": "Reintentar",
+      "refresh": "Actualizar"
+    },
+    "programBar": {
+      "network": "Red",
+      "program": "Programa",
+      "config": "Config",
+      "found": "Encontrada",
+      "notInitialized": "No inicializada",
+      "authorityMismatch": "Discrepancia de autoridad — verifica PROGRAM_AUTHORITY_SECRET"
+    },
+    "deployScreen": {
+      "coursesHeading": "Cursos",
+      "achievementsHeading": "Logros",
+      "noCourses": "No se encontraron cursos en Sanity.",
+      "noAchievements": "No se encontraron logros en Sanity."
+    },
+    "resync": {
+      "heading": "Resincronización de datos",
+      "description": "Reconstruye los datos del usuario en Supabase a partir del estado on-chain: saldo de XP (ATA Token-2022), inscripciones y progreso de lecciones (PDAs de Enrollment + bitmap), logros (PDAs de AchievementReceipt) y certificados (credential_asset de Enrollment). Úsalo tras fallos de webhook o para migraciones.",
+      "walletPlaceholder": "Dirección de la billetera (base58)",
+      "resync": "Resincronizar",
+      "syncing": "Sincronizando...",
+      "completeFor": "Resincronización completa para",
+      "xp": "XP",
+      "enrollments": "Inscripciones",
+      "lessons": "Lecciones",
+      "coursesCompleted": "Cursos completados",
+      "achievements": "Logros",
+      "certificates": "Certificados"
+    },
+    "flags": {
+      "description": "Publicaciones de la comunidad reportadas por usuarios. Resuelve una vez que hayas actuado sobre el contenido, o descarta si el reporte no es válido.",
+      "noPending": "No hay reportes pendientes.",
+      "reportedBy": "reportado por @{reporter}",
+      "unknownReporter": "desconocido",
+      "targetThread": "hilo",
+      "targetAnswer": "respuesta",
+      "view": "Ver",
+      "resolve": "Resolver",
+      "dismiss": "Descartar"
     }
   }
 }

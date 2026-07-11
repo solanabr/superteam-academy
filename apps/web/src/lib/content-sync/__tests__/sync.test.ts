@@ -92,6 +92,7 @@ function github(
     fetchTarball: async () => tarball,
     fetchHeadSha: async () => sha,
     fetchChecksState: async () => checks,
+    fetchAheadBy: async () => 0,
   };
 }
 
