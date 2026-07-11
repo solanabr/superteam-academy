@@ -61,6 +61,37 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Content bundle freshness
+        # Recompile the committed content bundle from the SHA in content.lock and
+        # fail if it drifts from what is checked in — a hand-edit of the generated
+        # files or a stale bundle after a lock bump is caught here. Fetches the
+        # public courses-academy tarball; GITHUB_TOKEN only raises the rate limit.
+        # If GitHub is unreachable the step fails loudly (acceptable — deploys read
+        # the committed bundle, not this fetch).
+        #
+        # `git status --porcelain` (not `git diff --exit-code`): it stays clean when
+        # public/content-assets is absent (zero live images leave the dir uncreated,
+        # which `git diff` treats as a fatal missing-pathspec) AND it detects newly
+        # emitted, still-untracked asset files that `git diff` would miss.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          pnpm --filter web compile-content
+          drift="$(git status --porcelain -- apps/web/src/content/generated apps/web/public/content-assets)"
+          if [ -n "$drift" ]; then
+            echo "::error::Content bundle is stale — recompile drifted from the committed bundle."
+            echo "$drift"
+            git --no-pager diff -- apps/web/src/content/generated apps/web/public/content-assets
+            exit 1
+          fi
+
+      - name: Content parity (Sanity anchor)
+        # Prove the committed bundle still equals what the live Sanity dataset
+        # serves at the pinned SHA (public dataset, no token). Skips loudly if
+        # Sanity is synced ahead of the pin. TEMPORARY — removed with Sanity at
+        # SP2-C/D. If Sanity is unreachable the step fails loudly.
+        run: pnpm --filter web parity-check
+
       - name: Typecheck
         run: pnpm typecheck
 

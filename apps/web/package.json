@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "compile-content": "tsx scripts/compile-content.ts",
+    "parity-check": "tsx scripts/parity-check.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
