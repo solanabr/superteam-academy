@@ -21,6 +21,25 @@
         ],
         "newlines-between": "never"
       }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@/content/generated/*", "**/content/generated/*"],
+            "message": "The generated content bundle holds quiz answers, code solutions and hidden tests. Import it ONLY through src/lib/content/store.ts (server-only) — never directly, or those secrets leak into the client bundle."
+          }
+        ]
+      }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/content/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }
