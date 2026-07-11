@@ -183,20 +183,19 @@ function PinBody({ data }: { data: PinResponse }): React.ReactElement {
             <ChecksBadge checks={head.checks} />
           </dd>
         </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs uppercase tracking-wide text-text-3">
+            {t("drift")}
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-text">
+            {verdict.state === "up_to_date"
+              ? t("upToDate")
+              : verdict.commitsBehind == null
+                ? t("behindUnknown")
+                : t("behind", { count: verdict.commitsBehind })}
+          </dd>
+        </div>
       </dl>
-
-      <div>
-        <dt className="text-xs uppercase tracking-wide text-text-3">
-          {t("drift")}
-        </dt>
-        <dd className="mt-1 text-sm font-medium text-text">
-          {verdict.state === "up_to_date"
-            ? t("upToDate")
-            : verdict.commitsBehind == null
-              ? t("behindUnknown")
-              : t("behind", { count: verdict.commitsBehind })}
-        </dd>
-      </div>
 
       <p className="text-xs text-text-3">
         {t("counts", {
