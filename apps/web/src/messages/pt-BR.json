@@ -839,6 +839,7 @@
       "publish": "Publicar",
       "deploy": "Implantar",
       "moderation": "Moderação",
+      "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
       "status": "Status"
     },
     "counts": {

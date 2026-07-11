@@ -74,4 +74,19 @@ describe("useAdminStatus", () => {
     expect(result.current.error).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("returns a referentially stable refetch across re-renders", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, json: async () => status } as Response)
+    );
+
+    const { result, rerender } = renderHook(() => useAdminStatus());
+    const first = result.current.refetch;
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    rerender();
+    expect(result.current.refetch).toBe(first);
+  });
 });

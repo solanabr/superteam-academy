@@ -108,6 +108,8 @@ describe("AdminNav", () => {
       const link = screen.getByRole("link", { name: /Moderation/ });
       expect(link).toHaveTextContent("4");
     });
+    // The badge carries a pluralized, i18n'd accessible name.
+    expect(screen.getByLabelText("4 pending flags")).toHaveTextContent("4");
     // The badge is scoped to Moderation, not other sections.
     expect(
       screen.getByRole("link", { name: nav.deploy })

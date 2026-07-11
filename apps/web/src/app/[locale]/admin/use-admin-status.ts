@@ -28,27 +28,29 @@ export function useAdminStatus(): UseAdminStatus {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AdminStatusError | null>(null);
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback((): void => {
     setLoading(true);
     setError(null);
-    try {
-      const res = await fetch("/api/admin/status");
-      if (!res.ok) {
-        setError("fetch");
-        return;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/status");
+        if (!res.ok) {
+          setError("fetch");
+          return;
+        }
+        const data = (await res.json()) as AdminStatus;
+        setStatus(data);
+      } catch {
+        setError("network");
+      } finally {
+        setLoading(false);
       }
-      const data = (await res.json()) as AdminStatus;
-      setStatus(data);
-    } catch {
-      setError("network");
-    } finally {
-      setLoading(false);
-    }
+    })();
   }, []);
 
   useEffect(() => {
-    void refetch();
+    refetch();
   }, [refetch]);
 
-  return { status, loading, error, refetch: () => void refetch() };
+  return { status, loading, error, refetch };
 }

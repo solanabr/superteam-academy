@@ -74,7 +74,10 @@ export function AdminNav() {
               >
                 <span>{t(`nav.${section}`)}</span>
                 {showBadge && (
-                  <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-xs font-bold leading-none text-white">
+                  <span
+                    aria-label={t("nav.pendingFlags", { count: pendingFlags })}
+                    className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-xs font-bold leading-none text-white"
+                  >
                     {pendingFlags}
                   </span>
                 )}

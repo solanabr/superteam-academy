@@ -839,6 +839,7 @@
       "publish": "Publish",
       "deploy": "Deploy",
       "moderation": "Moderation",
+      "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
       "status": "Status"
     },
     "counts": {
