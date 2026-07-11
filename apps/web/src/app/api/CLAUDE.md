@@ -63,7 +63,7 @@
 | `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                                                   |
 | `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain                                   |
 | `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                                               |
-| `/api/admin/content/sync`       | POST   | ADMIN_SECRET | Sync academy-courses@sha → Sanity (re-validate, PRESERVE, prune, content_tx_id) |
+| `/api/admin/content/sync`       | POST   | ADMIN_SECRET | Sync courses-academy@sha → Sanity (re-validate, PRESERVE, prune, content_tx_id) |
 | `/api/admin/content/drift`      | GET    | ADMIN_SECRET | Three-way drift: content (repo→Sanity) + chain (Sanity→devnet)                  |
 
 ## Route Conventions
