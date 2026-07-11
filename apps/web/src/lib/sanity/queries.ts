@@ -389,24 +389,6 @@ export async function getAllCourseTags(): Promise<
   );
 }
 
-export interface ManagedCourseTag {
-  _id: string;
-  name: string;
-}
-
-/**
- * The managed course-tag vocabulary (issue #322). Teachers pick course tags
- * from these values; admins add/remove them. Read fresh (revalidate=0) so a
- * newly-added tag shows up immediately in the teacher form + admin panel.
- */
-export async function getManagedCourseTags(): Promise<ManagedCourseTag[]> {
-  return sanityFetch<ManagedCourseTag[]>(
-    `*[_type == "courseTag" && defined(name)] | order(name asc) { _id, name }`,
-    undefined,
-    0
-  );
-}
-
 /**
  * Fetch total lesson count per course (used for accurate course-completion detection).
  * Returns a map-friendly array of { _id, totalLessons }.
@@ -689,27 +671,6 @@ export async function getLearningPathsForAdmin(): Promise<AdminLearningPath[]> {
   );
 }
 
-export interface PathPickerCourse {
-  _id: string;
-  title: string;
-  slug: string | null;
-}
-
-/**
- * Non-draft courses the admin can assign to a learning path (issue #323).
- */
-export async function getCoursesForPathPicker(): Promise<PathPickerCourse[]> {
-  return sanityFetch<PathPickerCourse[]>(
-    `*[_type == "course" && !(_id in path("drafts.**"))] | order(title asc) {
-      _id,
-      title,
-      "slug": slug.current
-    }`,
-    undefined,
-    0
-  );
-}
-
 /**
  * Fetch all achievements with on-chain sync fields for the admin dashboard.
  */
@@ -726,5 +687,47 @@ export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
     }`,
     undefined,
     0
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Instructor (wallet-keyed, read-only) queries — /teach viewer
+// ---------------------------------------------------------------------------
+
+export interface InstructorCourseSummary {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+/**
+ * Courses owned by an instructor wallet, for the read-only `/teach` viewer.
+ * Deliberately NOT gated by `publicAuthoringGate` / `activeGate` — unlike
+ * every public catalog query above, an instructor must still see their own
+ * deactivated or not-yet-approved courses. Only the on-chain "synced" gate
+ * applies, since a course that never synced has no on-chain stats to view.
+ */
+export async function getInstructorCourses(
+  wallet: string
+): Promise<InstructorCourseSummary[]> {
+  return catalogFetch<InstructorCourseSummary[]>(
+    `*[_type == "course" && instructor->wallet == $wallet && onChainStatus.status == "synced"] {
+      _id,
+      title,
+      "slug": slug.current
+    }`,
+    { wallet }
+  );
+}
+
+/**
+ * Whether a wallet belongs to a known instructor (used to gate the header's
+ * "Teach" nav item — replaces the old `profiles.role == "teacher"` check,
+ * which reads a column the role-removal migration drops).
+ */
+export async function isInstructorWallet(wallet: string): Promise<boolean> {
+  return catalogFetch<boolean>(
+    `count(*[_type == "instructor" && wallet == $wallet]) > 0`,
+    { wallet }
   );
 }
