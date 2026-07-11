@@ -21,8 +21,8 @@ import {
   getAllAchievements,
   getAllCourseTags,
   getCoursesByIds,
-  type DeployedAchievement,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/client-queries";
+import type { DeployedAchievement } from "@/lib/sanity/queries";
 import { truncateAddress } from "@/lib/utils";
 
 interface UserData {
