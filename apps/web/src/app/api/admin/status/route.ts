@@ -57,7 +57,8 @@ async function computeRepoContentDrift(): Promise<CourseContentDrift> {
     const checks = await github.fetchChecksState(headSha);
     return computeContentDrift({ syncedSha: SYNCED_SHA, headSha, checks })
       .state;
-  } catch {
+  } catch (e) {
+    console.warn("[admin/status] content drift unavailable:", e);
     return "unknown";
   }
 }
