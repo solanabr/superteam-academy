@@ -886,6 +886,52 @@
         "step3": "3. Envie uma branch e abra o PR",
         "branch": "Branch sugerida:"
       }
+    },
+    "states": {
+      "loading": "Carregando status on-chain...",
+      "fetchError": "Falha ao buscar o status",
+      "networkError": "Erro de rede",
+      "retry": "Tentar novamente",
+      "refresh": "Atualizar"
+    },
+    "programBar": {
+      "network": "Rede",
+      "program": "Programa",
+      "config": "Config",
+      "found": "Encontrada",
+      "notInitialized": "Não inicializada",
+      "authorityMismatch": "Divergência de autoridade — verifique PROGRAM_AUTHORITY_SECRET"
+    },
+    "deployScreen": {
+      "coursesHeading": "Cursos",
+      "achievementsHeading": "Conquistas",
+      "noCourses": "Nenhum curso encontrado no Sanity.",
+      "noAchievements": "Nenhuma conquista encontrada no Sanity."
+    },
+    "resync": {
+      "heading": "Ressincronização de dados",
+      "description": "Reconstrua os dados do usuário no Supabase a partir do estado on-chain: saldo de XP (ATA Token-2022), matrículas e progresso das lições (PDAs de Enrollment + bitmap), conquistas (PDAs de AchievementReceipt) e certificados (credential_asset da Enrollment). Use após falhas de webhook ou para migração.",
+      "walletPlaceholder": "Endereço da carteira (base58)",
+      "resync": "Ressincronizar",
+      "syncing": "Sincronizando...",
+      "completeFor": "Ressincronização concluída para",
+      "xp": "XP",
+      "enrollments": "Matrículas",
+      "lessons": "Lições",
+      "coursesCompleted": "Cursos concluídos",
+      "achievements": "Conquistas",
+      "certificates": "Certificados"
+    },
+    "flags": {
+      "description": "Publicações da comunidade denunciadas por usuários. Resolva depois de tratar o conteúdo ou descarte se a denúncia não for válida.",
+      "noPending": "Nenhuma denúncia pendente.",
+      "reportedBy": "denunciado por @{reporter}",
+      "unknownReporter": "desconhecido",
+      "targetThread": "tópico",
+      "targetAnswer": "resposta",
+      "view": "Ver",
+      "resolve": "Resolver",
+      "dismiss": "Descartar"
     }
   }
 }
