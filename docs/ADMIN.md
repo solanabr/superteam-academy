@@ -18,7 +18,7 @@ The admin panel is available at `/{locale}/admin` (e.g., `/en/admin`).
 | `PROGRAM_AUTHORITY_SECRET` | Base58 private key of the keypair that is authority on the on-chain `Config` PDA.                                                                                                               |
 | `BACKEND_SIGNER_SECRET`    | Base58 private key of the backend signer registered in `Config.backend_signer`. Used to sign on-chain transactions from API routes.                                                             |
 | `SANITY_ADMIN_TOKEN`       | Sanity write token from [sanity.io/manage](https://sanity.io/manage). Required to sync `onChainStatus` back to Sanity after deploying a course.                                                 |
-| `GITHUB_TOKEN`             | Fine-grained **read** token for `solanabr/academy-courses`. Required by the Content Sync panel (tarball fetch, HEAD polling, Checks API). Unset → the `/api/admin/content/*` routes return 503. |
+| `GITHUB_TOKEN`             | Fine-grained **read** token for `solanabr/courses-academy`. Required by the Content Sync panel (tarball fetch, HEAD polling, Checks API). Unset → the `/api/admin/content/*` routes return 503. |
 
 ## Course Sync Workflow
 
@@ -67,7 +67,7 @@ Both routes require `ADMIN_SECRET` in the Authorization header.
 
 ### Content Sync (repo → Sanity → devnet)
 
-The **Content Sync** panel ingests the `solanabr/academy-courses` repository into Sanity at a chosen commit and then commits the content hash on-chain. It is **always admin-triggered from the panel — never automatic.**
+The **Content Sync** panel ingests the `solanabr/courses-academy` repository into Sanity at a chosen commit and then commits the content hash on-chain. It is **always admin-triggered from the panel — never automatic.**
 
 **Content drift** (repo → Sanity), shown as a banner:
 
