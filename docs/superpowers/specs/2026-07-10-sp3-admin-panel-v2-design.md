@@ -1,12 +1,12 @@
 # SP3 — Admin Panel v2 (Design)
 
-**Date:** 2026-07-10
-**Status:** Approved by owner (in-session). Pending tri-audit before plan execution.
+**Date:** 2026-07-10 · **Rev 2:** 2026-07-11 (post tri-audit + independent second-session validation)
+**Status:** Rev 2 pending owner sign-off before plan execution.
 **Epic context:** Third of three sub-projects (SP1 ✅ → SP2 remove Sanity → **SP3 admin panel v2**). SP3 rebuilds the admin console against the final post-Sanity data model, so it's built once. **Hard dependency: SP2 complete** (Publish screen needs `content.lock`; Deploy screen reads Supabase `onchain_deployments`).
 
 ## Goal
 
-Turn the single stacked `/admin` page into a nav'd multi-screen console organized around what the platform operates: Publish, On-chain Deploy, Moderation, Platform Status. Rebuild the deploy experience with clear state, a change-preview, and fewer wallet prompts.
+Turn the single stacked `/admin` page into a nav'd multi-screen console organized around what the platform operates: Publish, On-chain Deploy, Moderation, Platform Status. Rebuild the deploy experience with clear state and a change-preview.
 
 ## Owner intent
 
@@ -16,12 +16,14 @@ Turn the single stacked `/admin` page into a nav'd multi-screen console organize
 
 ## Screen decomposition
 
-| Route | Absorbs | Job |
-|---|---|---|
-| `/admin/publish` | content-sync-panel + sync-diff | `content.lock` SHA vs courses-academy HEAD, validation status, **bump-pin publish** action (replaces "Sync"). |
-| `/admin/deploy` | course-sync-table + achievement-sync-table + immutable-mismatch-warning | Per-item deploy state (from Supabase), deploy/redeploy, change-preview with immutable-field warnings. |
-| `/admin/moderation` | flags-panel | Community flags queue. |
-| `/admin/status` | status + data-resync-panel | Platform health, deploy counts, resync tools. |
+| Route               | Absorbs                                                                                                                                                                                                                                    | Job                                                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/admin/publish`    | content-sync-panel + sync-diff                                                                                                                                                                                                             | `content.lock` SHA vs courses-academy HEAD, validation status, and a **prefilled publish-PR link** (see below — the bump is a human PR, not a server-side write). |
+| `/admin/deploy`     | course-sync-table + achievement-sync-table + immutable-mismatch-warning                                                                                                                                                                    | Per-item deploy state (from Supabase), deploy/redeploy, change-preview with immutable-field warnings.                                                             |
+| `/admin/moderation` | flags-panel                                                                                                                                                                                                                                | Community flags queue.                                                                                                                                            |
+| `/admin/status`     | status + data-resync-panel + **the inline program-status bar** (network / program ID / config-initialized / authority-mismatch banner, currently rendered inline in `admin-client.tsx` — named here so the SP3-A refactor doesn't drop it) | Platform health, deploy counts, resync tools.                                                                                                                     |
+
+**Publish mechanism (rev 2, locked):** the pin bump is a **one-line human PR** that bumps `content.lock` + regenerates the committed bundle (SP2 decision 1). The Publish screen shows drift/validation and links to a prefilled PR — it does NOT hold a GitHub write token. Today's `GITHUB_TOKEN` is read-only; a server-held repo-write token in an admin route would be a new trust boundary and is explicitly rejected. If a one-click server-side bump is ever wanted, it is a separate SENSITIVE proposal.
 
 Persistent nav (left rail or top tabs) replaces the scroll. Each screen is its own route under the existing HMAC `admin_session` middleware gate — auth unchanged.
 
@@ -31,20 +33,22 @@ Persistent nav (left rail or top tabs) replaces the scroll. Each screen is its o
 2. **Change-preview before deploy** — drift diff of what the transaction will write, with **immutable-field warnings**: creator is set once and permanent. This is where:
    - **#400** (drift engine blind to creator mismatch) surfaces — compare on-chain creator vs `instructor.wallet`, flag mismatch loudly.
    - **#402** (program-ID / platform-authority denylist) surfaces — warn/refuse when a resolved creator is a known program id or the platform authority.
-3. **Fewer wallet prompts** — batch deploy instructions so a single course deploy is one signature, not many (**#349**).
+3. ~~Fewer wallet prompts (#349)~~ — **dropped in rev 2**: #349 is the _learner_ buildable-challenge deploy flow (`packages/deploy`), not admin deploy, which is server-signed with zero wallet prompts. #349 stays open in its own subsystem.
+
+**#400 timing (rev 2):** #400 says the creator-diff must land _before_ any CS-4 course recreate — SP3-C is last in the epic, too late. The creator-mismatch **detection** is pulled forward (SP2-B/standalone); SP3-C only gives it its proper UI surface.
 
 ## Staged PRs (all SAFE-lane — frontend over SP2's model, no migrations)
 
 - **SP3-A** — Nav shell + route split. Move surviving panels into `/admin/{publish,deploy,moderation,status}` behind a nav. Behavior-preserving refactor; each panel renders where it did, just on its own route.
 - **SP3-B** — Publish screen: `content.lock` pin-bump flow (drift vs HEAD, validate, bump). Depends on SP2's `content.lock`.
-- **SP3-C** — Deploy screen v2: the three upgrades above. #400/#402/#349 land here.
+- **SP3-C** — Deploy screen v2: the upgrades above. #400 (UI surface) / #402 land here.
 - **SP3-D** — Moderation + Status screen polish.
 
 ## Verification
 
 - SP3-A: every surviving admin capability reachable via nav; e2e click-through of each route; no capability lost vs the pre-SP3 stacked page.
 - SP3-B: pin bump updates `content.lock` + triggers a rebuild; drift indicator matches courses-academy HEAD.
-- SP3-C: change-preview shows a synthetic creator mismatch (#400) and refuses a denylisted creator (#402); a course deploy issues one signature prompt, not many (#349); immutable-field warning renders.
+- SP3-C: change-preview shows a synthetic creator mismatch (#400) and refuses a denylisted creator (#402); immutable-field warning renders.
 - SP3-D: moderation actions work end-to-end; status counts match Supabase.
 - All strings next-intl en/pt-BR/es parity (the SP1 deep-parity test guards this).
 
@@ -57,7 +61,7 @@ Persistent nav (left rail or top tabs) replaces the scroll. Each screen is its o
 
 ## Issue remapping
 
-- **#400, #402, #349** resolve in SP3-C (deploy screen). Update each when SP3-C lands.
+- **#402** resolves in SP3-C; **#400**'s detection lands earlier (see timing note), its UI in SP3-C. **#349 dropped** — wrong subsystem (learner deploy flow, not admin).
 - SP3 is the "admin restructure" deferred throughout SP1/SP2.
 
 ## Gates
