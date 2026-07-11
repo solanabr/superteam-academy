@@ -71,7 +71,7 @@ vi.mock("../academy-reads", () => ({
   fetchCourse: vi.fn(),
 }));
 
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getCourseById: vi.fn(),
 }));
 

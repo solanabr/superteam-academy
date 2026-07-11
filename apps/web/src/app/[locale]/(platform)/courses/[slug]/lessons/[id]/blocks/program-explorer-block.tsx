@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { ProgramExplorerBlockData } from "@/lib/sanity/types";
+import type { ProgramExplorerBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
 const GenericProgramExplorer = dynamic(

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import type { CodeBlockData } from "@/lib/sanity/types";
+import type { CodeBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
 const ChallengeInterface = dynamic(

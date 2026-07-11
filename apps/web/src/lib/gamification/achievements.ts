@@ -10,7 +10,7 @@ import {
   getAllAchievements,
   getAllCourseLessonCounts,
   getLearningPathsForAdmin,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 type CommunityStat = (typeof COMMUNITY_STATS)[number];
 

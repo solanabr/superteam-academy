@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { CourseDetailClient } from "./course-detail-client";
-import { getCourseBySlug } from "@/lib/sanity/queries";
+import { getCourseBySlug } from "@/lib/content/queries";
 
 interface CourseDetailPageProps {
   params: Promise<{ slug: string }>;

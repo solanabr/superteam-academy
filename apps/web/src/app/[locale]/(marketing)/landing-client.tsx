@@ -11,6 +11,7 @@ import {
   Wallet,
   GoogleLogo,
 } from "@phosphor-icons/react";
+import type { LearningPath } from "@superteam-lms/types";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -22,8 +23,7 @@ import {
 } from "@/components/landing/loop-widgets";
 import { PathsExplorer } from "@/components/landing/paths-explorer";
 import { createClient } from "@/lib/supabase/client";
-import type { LearningPath } from "@/lib/sanity/types";
-import type { DeployedAchievement } from "@/lib/sanity/queries";
+import type { DeployedAchievement } from "@/lib/content/queries";
 
 /** Animate a number from 0 → target when the element scrolls into view. */
 function useCountUp(target: number, duration = 1800) {

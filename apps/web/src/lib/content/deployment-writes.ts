@@ -16,9 +16,8 @@ import type {
  * `onchain_deployments` table (the read side lives in
  * {@link file://./deployments.ts}). These functions KEEP THEIR ORIGINAL
  * SIGNATURES so their call sites (courses/sync, achievements/sync,
- * courses/{deactivate,reactivate}) are untouched; `lib/sanity/admin-mutations.ts`
- * re-exports them so imports of `@/lib/sanity/admin-mutations` stay valid until
- * SP2-C repoints them and deletes the re-export.
+ * courses/{deactivate,reactivate}) are untouched; SP2-C repointed those
+ * imports here and deleted the `lib/sanity/admin-mutations.ts` re-export.
  *
  * All writes go through the service-role client (RLS-bypassing; the base table
  * has RLS on with no policies — service_role only, house pattern). Each upsert

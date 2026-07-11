@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 // The module imports server-only queries at load; stub them (unused by these tests).
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getAllAchievements: vi.fn(),
   getAllCourseLessonCounts: vi.fn(),
   getLearningPathsForAdmin: vi.fn(),

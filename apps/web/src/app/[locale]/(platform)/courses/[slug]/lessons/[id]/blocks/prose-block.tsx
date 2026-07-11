@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
-import type { ProseBlockData } from "@/lib/sanity/types";
+import type { ProseBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
 function CodeBlockWithCopy({

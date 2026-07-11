@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById, getLessonByIdForGrading } from "@/lib/sanity/queries";
+import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { openAttestation } from "@/lib/ai/check-seal";
 import { logError } from "@/lib/logging";

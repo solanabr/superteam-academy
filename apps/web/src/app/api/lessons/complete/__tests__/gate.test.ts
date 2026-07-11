@@ -35,7 +35,7 @@ vi.mock("@/lib/supabase/admin", () => ({
   }),
 }));
 
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getLessonByIdForGrading,
   getCourseById,
 }));

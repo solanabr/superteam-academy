@@ -19,7 +19,7 @@ import {
   fetchAchievementReceiptData,
 } from "@/lib/solana/academy-reads";
 import { decodeLessonBitmap } from "@/lib/solana/bitmap";
-import { getAllCourses, getAllAchievements } from "@/lib/sanity/queries";
+import { getAllCourses, getAllAchievements } from "@/lib/content/queries";
 import { calculateLevel } from "@/lib/gamification/xp";
 
 function isValidBase58(value: string): boolean {

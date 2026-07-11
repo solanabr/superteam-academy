@@ -47,7 +47,7 @@ import {
 import type {
   RecommendedCourse,
   DeployedAchievement,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 function explorerTxUrl(sig: string): string {

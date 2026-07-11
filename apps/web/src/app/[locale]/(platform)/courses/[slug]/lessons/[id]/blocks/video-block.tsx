@@ -1,6 +1,6 @@
 "use client";
 
-import type { VideoBlockData } from "@/lib/sanity/types";
+import type { VideoBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
 function getEmbedUrl(url: string): string | null {

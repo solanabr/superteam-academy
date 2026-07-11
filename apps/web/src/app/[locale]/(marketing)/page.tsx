@@ -3,7 +3,7 @@ import {
   getAllCourses,
   getAllLearningPaths,
   getDeployedAchievements,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // The landing shows live platform stats (courses, enrolled builders, credentials,

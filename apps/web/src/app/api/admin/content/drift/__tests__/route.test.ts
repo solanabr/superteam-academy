@@ -33,7 +33,7 @@ vi.mock("@/lib/content/store", () => ({
     return slots;
   },
 }));
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getAllCoursesAdmin: async () => courses,
   COURSES_CACHE_TAG: "courses",
 }));

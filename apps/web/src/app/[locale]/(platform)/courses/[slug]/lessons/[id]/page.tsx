@@ -4,7 +4,7 @@ import {
   getLessonBySlug,
   getCourseLessons,
   getCourseIdBySlug,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 interface LessonPageProps {
   params: Promise<{ locale: string; slug: string; id: string }>;

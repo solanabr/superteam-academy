@@ -3,13 +3,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import type { Course, LearningPath } from "@superteam-lms/types";
 import { CourseCard } from "@/components/course/course-card";
 import {
   LearningPathSection,
   type PathCourseProgress,
 } from "@/components/course/learning-path-section";
 import { createClient } from "@/lib/supabase/client";
-import type { Course, LearningPath } from "@/lib/sanity/types";
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 type CourseStatus = "enrolled" | "completed";

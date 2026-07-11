@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { DailyQuest } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAllQuests } from "@/lib/sanity/queries";
+import { getAllQuests } from "@/lib/content/queries";
 import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
 

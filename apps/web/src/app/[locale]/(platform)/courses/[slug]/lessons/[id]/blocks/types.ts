@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { Lesson, LessonBlock } from "@/lib/sanity/types";
+import type { Lesson, LessonBlock } from "@superteam-lms/types";
 
 /**
  * Shared context every block renderer receives. Interactive blocks contribute a

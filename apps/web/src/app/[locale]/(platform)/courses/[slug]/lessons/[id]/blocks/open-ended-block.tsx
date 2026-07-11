@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { OpenEndedBlockData } from "@/lib/sanity/types";
+import type { OpenEndedBlockData } from "@superteam-lms/types";
 import type { BlockRenderProps } from "./types";
 
 /**

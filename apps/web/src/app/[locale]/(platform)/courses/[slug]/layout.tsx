@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCourseBySlug } from "@/lib/sanity/queries";
+import { getCourseBySlug } from "@/lib/content/queries";
 
 export async function generateMetadata({
   params,

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCourseById } from "@/lib/sanity/queries";
+import { getCourseById } from "@/lib/content/queries";
 import {
   issueCredential,
   getConnection,

@@ -13,6 +13,7 @@ import {
   ChatCircleDots,
 } from "@phosphor-icons/react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import type { Course } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
@@ -23,7 +24,6 @@ import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
-import type { Course } from "@/lib/sanity/types";
 
 interface CourseDetailClientProps {
   course: Course;

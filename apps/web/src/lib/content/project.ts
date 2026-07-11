@@ -3,6 +3,14 @@ import "server-only";
 import { Award } from "@superteam-lms/content-schema";
 import type { AwardT } from "@superteam-lms/content-schema";
 import type {
+  Course,
+  Instructor,
+  LearningPath,
+  Lesson,
+  LessonBlock,
+  TestCase,
+} from "@superteam-lms/types";
+import type {
   AchievementDoc,
   CourseDoc,
   InstructorDoc,
@@ -10,20 +18,12 @@ import type {
   QuestDoc,
 } from "./types";
 import type {
-  Course,
-  Instructor,
-  LearningPath,
-  Lesson,
-  LessonBlock,
-  TestCase,
-} from "@/lib/sanity/types";
-import type {
   CourseSummary,
   DeployedAchievement,
   QuestData,
   RecommendedCourse,
   SanityQuest,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 /**
  * Content projectors (SP2-B Task 4). Pure functions that reshape a RAW bundle

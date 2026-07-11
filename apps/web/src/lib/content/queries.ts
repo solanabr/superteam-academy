@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AwardT } from "@superteam-lms/content-schema";
+import type { Course, Lesson, LearningPath } from "@superteam-lms/types";
 import {
   getActiveDeployments,
   getDeploymentById,
@@ -32,7 +33,6 @@ import type {
   LearningPathDoc,
   LessonDoc,
 } from "./types";
-import type { Course, Lesson, LearningPath } from "@/lib/sanity/types";
 
 /**
  * The flipped query layer (SP2-B Task 5). Every fn that used to run a GROQ query

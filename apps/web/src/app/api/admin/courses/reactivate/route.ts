@@ -8,8 +8,8 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { updateCoursePda } from "@/lib/solana/admin-signer";
-import { writeCourseActive } from "@/lib/sanity/admin-mutations";
-import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
+import { writeCourseActive } from "@/lib/content/deployment-writes";
+import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {

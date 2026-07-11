@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   ChatCircle,
 } from "@phosphor-icons/react";
+import type { Lesson } from "@superteam-lms/types";
+import { RENDERERS, type BlockContext } from "./blocks";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -18,8 +20,6 @@ import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
-import type { Lesson } from "@/lib/sanity/types";
-import { RENDERERS, type BlockContext } from "./blocks";
 
 interface LessonPageClientProps {
   lesson: Lesson;

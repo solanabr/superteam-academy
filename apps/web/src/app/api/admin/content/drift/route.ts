@@ -7,7 +7,7 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { getAllCoursesAdmin } from "@/lib/sanity/queries";
+import { getAllCoursesAdmin } from "@/lib/content/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import {

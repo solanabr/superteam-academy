@@ -5,8 +5,8 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { CaretDown, Lock, CheckCircle } from "@phosphor-icons/react";
+import type { LearningPath } from "@superteam-lms/types";
 import { cn } from "@/lib/utils";
-import type { LearningPath } from "@/lib/sanity/types";
 
 export interface PathCourseProgress {
   courseId: string;

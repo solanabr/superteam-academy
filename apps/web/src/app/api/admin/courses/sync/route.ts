@@ -11,7 +11,7 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { getAllCoursesAdmin, COURSES_CACHE_TAG } from "@/lib/sanity/queries";
+import { getAllCoursesAdmin, COURSES_CACHE_TAG } from "@/lib/content/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
@@ -29,7 +29,7 @@ import {
 import {
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
-} from "@/lib/sanity/admin-mutations";
+} from "@/lib/content/deployment-writes";
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { MaskMismatchError } from "@/lib/github/types";
