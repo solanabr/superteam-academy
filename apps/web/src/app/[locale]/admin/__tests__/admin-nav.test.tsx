@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactElement } from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { AdminNav } from "../admin-nav";
 import messages from "@/messages/en.json";
@@ -24,9 +24,25 @@ function renderWithIntl(ui: ReactElement) {
 
 const nav = messages.admin.nav;
 
+/** Stub the badge's `GET /api/admin/flags` with a given pending-flag count. */
+function mockFlags(count: number) {
+  const flags = Array.from({ length: count }, (_, i) => ({ id: `f${i}` }));
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue({ ok: true, json: async () => ({ flags }) } as Response);
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 beforeEach(() => {
   usePathnameMock.mockReset();
   usePathnameMock.mockReturnValue("/en/admin/status");
+  mockFlags(0);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("AdminNav", () => {
@@ -82,5 +98,42 @@ describe("AdminNav", () => {
       "aria-current",
       "page"
     );
+  });
+
+  it("shows a pending-flag badge on Moderation once the count fetch resolves", async () => {
+    mockFlags(4);
+    renderWithIntl(<AdminNav />);
+
+    await waitFor(() => {
+      const link = screen.getByRole("link", { name: /Moderation/ });
+      expect(link).toHaveTextContent("4");
+    });
+    // The badge is scoped to Moderation, not other sections.
+    expect(
+      screen.getByRole("link", { name: nav.deploy })
+    ).not.toHaveTextContent("4");
+  });
+
+  it("renders no badge when there are zero pending flags", async () => {
+    mockFlags(0);
+    renderWithIntl(<AdminNav />);
+
+    // Give the async fetch a chance to resolve, then assert nothing appeared.
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    expect(
+      screen.getByRole("link", { name: nav.moderation })
+    ).toBeInTheDocument();
+  });
+
+  it("hides the badge (and never throws) when the count fetch fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    renderWithIntl(<AdminNav />);
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    // Nav still renders its four links; the badge simply never shows.
+    expect(screen.getAllByRole("link")).toHaveLength(4);
+    expect(
+      screen.getByRole("link", { name: nav.moderation })
+    ).toBeInTheDocument();
   });
 });
