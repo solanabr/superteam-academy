@@ -1,8 +1,19 @@
 // @vitest-environment jsdom
+import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import type { AdminStatus } from "../admin-status-types";
 import { DeployClient } from "../deploy/deploy-client";
+import messages from "@/messages/en.json";
+
+function renderWithIntl(ui: ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
+}
 
 // The sync tables carry their own tests and fire on-chain sync requests, so
 // they are stubbed; the stubs surface the props wiring under test.
@@ -72,7 +83,7 @@ afterEach(() => {
 describe("DeployClient", () => {
   it("fetches /api/admin/status and renders both sync tables", async () => {
     const fetchMock = mockStatusFetch();
-    render(<DeployClient />);
+    renderWithIntl(<DeployClient />);
 
     expect(screen.getByText("Loading on-chain status...")).toBeInTheDocument();
 
@@ -85,7 +96,7 @@ describe("DeployClient", () => {
 
   it("shows the empty-state copy when there are no courses/achievements", async () => {
     mockStatusFetch({ ...status, courses: [], achievements: [] });
-    render(<DeployClient />);
+    renderWithIntl(<DeployClient />);
 
     await waitFor(() => {
       expect(
@@ -99,7 +110,7 @@ describe("DeployClient", () => {
 
   it("refetches on the Refresh button and on the table's onRefresh", async () => {
     const fetchMock = mockStatusFetch();
-    render(<DeployClient />);
+    renderWithIntl(<DeployClient />);
 
     await waitFor(() => {
       expect(screen.getByTestId("course-sync-table")).toBeInTheDocument();
@@ -123,7 +134,7 @@ describe("DeployClient", () => {
       .mockResolvedValue({ ok: true, json: async () => status } as Response);
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<DeployClient />);
+    renderWithIntl(<DeployClient />);
     await waitFor(() => {
       expect(screen.getByText("Failed to fetch status")).toBeInTheDocument();
     });

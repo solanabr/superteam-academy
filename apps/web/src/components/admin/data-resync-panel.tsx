@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface ResyncResult {
   synced: boolean;
@@ -14,6 +15,7 @@ interface ResyncResult {
 }
 
 export function DataResyncPanel() {
+  const t = useTranslations("admin.resync");
   const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResyncResult | null>(null);
@@ -52,20 +54,14 @@ export function DataResyncPanel() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-text-3">
-        Rebuild a user&apos;s Supabase data from on-chain state: XP balance
-        (Token-2022 ATA), enrollments &amp; lesson progress (Enrollment PDAs +
-        bitmap), achievements (AchievementReceipt PDAs) &amp; certificates
-        (Enrollment credential_asset). Use after webhook failures or for
-        migration.
-      </p>
+      <p className="text-sm text-text-3">{t("description")}</p>
 
       <div className="flex gap-2">
         <input
           type="text"
           value={walletAddress}
           onChange={(e) => setWalletAddress(e.target.value)}
-          placeholder="Wallet address (base58)"
+          placeholder={t("walletPlaceholder")}
           className="flex-1 rounded-md border border-border bg-subtle px-3 py-2 text-sm text-text placeholder:text-text-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         <button
@@ -73,7 +69,7 @@ export function DataResyncPanel() {
           disabled={loading || !walletAddress.trim()}
           className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active disabled:pointer-events-none disabled:opacity-50"
         >
-          {loading ? "Syncing..." : "Resync"}
+          {loading ? t("syncing") : t("resync")}
         </button>
       </div>
 
@@ -86,44 +82,44 @@ export function DataResyncPanel() {
       {result && (
         <div className="rounded-md border border-success bg-success-light p-3 text-sm">
           <div className="mb-1 font-medium text-success">
-            Resync complete for{" "}
+            {t("completeFor")}{" "}
             <span className="font-mono text-xs">
               {result.wallet.slice(0, 4)}...{result.wallet.slice(-4)}
             </span>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-2">
             <span>
-              XP:{" "}
+              {t("xp")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.xp.toLocaleString()}
               </span>
             </span>
             <span>
-              Enrollments:{" "}
+              {t("enrollments")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.enrollments}
               </span>
             </span>
             <span>
-              Lessons:{" "}
+              {t("lessons")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.lessonsCompleted}
               </span>
             </span>
             <span>
-              Courses completed:{" "}
+              {t("coursesCompleted")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.coursesCompleted}
               </span>
             </span>
             <span>
-              Achievements:{" "}
+              {t("achievements")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.achievements}
               </span>
             </span>
             <span>
-              Certificates:{" "}
+              {t("certificates")}:{" "}
               <span className="font-display font-bold text-text">
                 {result.certificates}
               </span>

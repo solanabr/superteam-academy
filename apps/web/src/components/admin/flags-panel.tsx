@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 interface ModerationFlag {
   id: string;
@@ -18,6 +19,7 @@ export function FlagsPanel({
 }: {
   onCountChange?: (count: number) => void;
 }) {
+  const t = useTranslations("admin.flags");
   const [flags, setFlags] = useState<ModerationFlag[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,10 +69,7 @@ export function FlagsPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-text-3">
-        Community posts reported by users. Resolve once you&apos;ve actioned the
-        content, or dismiss if the report isn&apos;t valid.
-      </p>
+      <p className="text-sm text-text-3">{t("description")}</p>
 
       {error && (
         <div className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
@@ -79,7 +78,7 @@ export function FlagsPanel({
       )}
 
       {flags.length === 0 ? (
-        <p className="text-sm text-text-3">No pending flags.</p>
+        <p className="text-sm text-text-3">{t("noPending")}</p>
       ) : (
         <ul className="space-y-2">
           {flags.map((flag) => (
@@ -92,7 +91,13 @@ export function FlagsPanel({
                   {flag.reason}
                 </span>
                 <span className="text-xs text-text-3">
-                  {flag.targetType} · reported by @{flag.reporter ?? "unknown"}{" "}
+                  {flag.targetType === "thread"
+                    ? t("targetThread")
+                    : t("targetAnswer")}{" "}
+                  ·{" "}
+                  {t("reportedBy", {
+                    reporter: flag.reporter ?? t("unknownReporter"),
+                  })}{" "}
                   · {new Date(flag.createdAt).toLocaleString()}
                 </span>
               </div>
@@ -110,7 +115,7 @@ export function FlagsPanel({
                     rel="noreferrer"
                     className="text-xs text-primary underline hover:no-underline"
                   >
-                    View
+                    {t("view")}
                   </a>
                 )}
                 <button
@@ -119,7 +124,7 @@ export function FlagsPanel({
                   disabled={busyId === flag.id}
                   className="rounded-md border border-success bg-success-light px-2.5 py-1 text-xs font-medium text-success disabled:opacity-50"
                 >
-                  Resolve
+                  {t("resolve")}
                 </button>
                 <button
                   type="button"
@@ -127,7 +132,7 @@ export function FlagsPanel({
                   disabled={busyId === flag.id}
                   className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text-2 disabled:opacity-50"
                 >
-                  Dismiss
+                  {t("dismiss")}
                 </button>
               </div>
             </li>

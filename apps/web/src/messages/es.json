@@ -839,6 +839,7 @@
       "publish": "Publicar",
       "deploy": "Desplegar",
       "moderation": "Moderación",
+      "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
       "status": "Estado"
     },
     "counts": {
@@ -886,6 +887,52 @@
         "step3": "3. Sube una rama y abre el PR",
         "branch": "Rama sugerida:"
       }
+    },
+    "states": {
+      "loading": "Cargando estado on-chain...",
+      "fetchError": "Error al obtener el estado",
+      "networkError": "Error de red",
+      "retry": "Reintentar",
+      "refresh": "Actualizar"
+    },
+    "programBar": {
+      "network": "Red",
+      "program": "Programa",
+      "config": "Config",
+      "found": "Encontrada",
+      "notInitialized": "No inicializada",
+      "authorityMismatch": "Discrepancia de autoridad — verifica PROGRAM_AUTHORITY_SECRET"
+    },
+    "deployScreen": {
+      "coursesHeading": "Cursos",
+      "achievementsHeading": "Logros",
+      "noCourses": "No se encontraron cursos en Sanity.",
+      "noAchievements": "No se encontraron logros en Sanity."
+    },
+    "resync": {
+      "heading": "Resincronización de datos",
+      "description": "Reconstruye los datos del usuario en Supabase a partir del estado on-chain: saldo de XP (ATA Token-2022), inscripciones y progreso de lecciones (PDAs de Enrollment + bitmap), logros (PDAs de AchievementReceipt) y certificados (credential_asset de Enrollment). Úsalo tras fallos de webhook o para migraciones.",
+      "walletPlaceholder": "Dirección de la billetera (base58)",
+      "resync": "Resincronizar",
+      "syncing": "Sincronizando...",
+      "completeFor": "Resincronización completa para",
+      "xp": "XP",
+      "enrollments": "Inscripciones",
+      "lessons": "Lecciones",
+      "coursesCompleted": "Cursos completados",
+      "achievements": "Logros",
+      "certificates": "Certificados"
+    },
+    "flags": {
+      "description": "Publicaciones de la comunidad reportadas por usuarios. Resuelve una vez que hayas actuado sobre el contenido, o descarta si el reporte no es válido.",
+      "noPending": "No hay reportes pendientes.",
+      "reportedBy": "reportado por @{reporter}",
+      "unknownReporter": "desconocido",
+      "targetThread": "hilo",
+      "targetAnswer": "respuesta",
+      "view": "Ver",
+      "resolve": "Resolver",
+      "dismiss": "Descartar"
     }
   }
 }

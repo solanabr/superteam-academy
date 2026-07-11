@@ -839,6 +839,7 @@
       "publish": "Publish",
       "deploy": "Deploy",
       "moderation": "Moderation",
+      "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
       "status": "Status"
     },
     "counts": {
@@ -886,6 +887,52 @@
         "step3": "3. Push a branch and open the PR",
         "branch": "Suggested branch:"
       }
+    },
+    "states": {
+      "loading": "Loading on-chain status...",
+      "fetchError": "Failed to fetch status",
+      "networkError": "Network error",
+      "retry": "Retry",
+      "refresh": "Refresh"
+    },
+    "programBar": {
+      "network": "Network",
+      "program": "Program",
+      "config": "Config",
+      "found": "Found",
+      "notInitialized": "Not initialized",
+      "authorityMismatch": "Authority mismatch — check PROGRAM_AUTHORITY_SECRET"
+    },
+    "deployScreen": {
+      "coursesHeading": "Courses",
+      "achievementsHeading": "Achievements",
+      "noCourses": "No courses found in Sanity.",
+      "noAchievements": "No achievements found in Sanity."
+    },
+    "resync": {
+      "heading": "Data Resync",
+      "description": "Rebuild a user's Supabase data from on-chain state: XP balance (Token-2022 ATA), enrollments & lesson progress (Enrollment PDAs + bitmap), achievements (AchievementReceipt PDAs) & certificates (Enrollment credential_asset). Use after webhook failures or for migration.",
+      "walletPlaceholder": "Wallet address (base58)",
+      "resync": "Resync",
+      "syncing": "Syncing...",
+      "completeFor": "Resync complete for",
+      "xp": "XP",
+      "enrollments": "Enrollments",
+      "lessons": "Lessons",
+      "coursesCompleted": "Courses completed",
+      "achievements": "Achievements",
+      "certificates": "Certificates"
+    },
+    "flags": {
+      "description": "Community posts reported by users. Resolve once you've actioned the content, or dismiss if the report isn't valid.",
+      "noPending": "No pending flags.",
+      "reportedBy": "reported by @{reporter}",
+      "unknownReporter": "unknown",
+      "targetThread": "thread",
+      "targetAnswer": "answer",
+      "view": "View",
+      "resolve": "Resolve",
+      "dismiss": "Dismiss"
     }
   }
 }

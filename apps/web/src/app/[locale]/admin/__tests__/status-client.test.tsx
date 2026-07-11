@@ -138,13 +138,28 @@ describe("StatusClient", () => {
     await waitFor(() => {
       expect(screen.getByTestId("data-resync-panel")).toBeInTheDocument();
     });
-    const counts = screen.getByTestId("deploy-counts");
-    expect(counts).toHaveTextContent(
-      new RegExp(`${messages.admin.counts.courses}:\\s*2`)
+    // No test-id on prod markup: locate the counts by their i18n'd labels.
+    const coursesLabel = screen.getByText(`${messages.admin.counts.courses}:`);
+    expect(coursesLabel.nextElementSibling).toHaveTextContent("2");
+    const achievementsLabel = screen.getByText(
+      `${messages.admin.counts.achievements}:`
     );
-    expect(counts).toHaveTextContent(
-      new RegExp(`${messages.admin.counts.achievements}:\\s*1`)
+    expect(achievementsLabel.nextElementSibling).toHaveTextContent("1");
+  });
+
+  it("refetches on the program-bar Refresh button", async () => {
+    const fetchMock = mockStatusFetch();
+    renderWithIntl(<StatusClient />);
+
+    await waitFor(() => {
+      expect(screen.getByText("devnet")).toBeInTheDocument();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: messages.admin.states.refresh })
     );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
   it("shows the error state and refetches on Retry", async () => {
