@@ -39,7 +39,7 @@ const cspDirectives = [
   // Studio media library, GA4 measurement pixel (doubleclick). data:/blob:
   // cover inline SVGs, canvas-confetti, and wallet QR codes. Supabase stays a
   // wildcard here (Studio/API fallback); the app's middleware CSP pins it.
-  "img-src 'self' data: blob: https://cdn.sanity.io https://media.sanity.io https://lh3.googleusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
+  "img-src 'self' data: blob: https://cdn.sanity.io https://media.sanity.io https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
 
   // Network: Supabase (REST + realtime wss), Sanity (CDN/API + listen wss),
   // Solana/Helius RPC, Google OAuth/identity, and analytics (GA4, PostHog,
@@ -132,6 +132,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "arweave.net" },
       { protocol: "https", hostname: "*.supabase.co" },
     ],

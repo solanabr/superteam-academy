@@ -118,7 +118,7 @@ export function buildCsp(nonce: string): string {
     [
       "img-src 'self' data: blob:",
       "https://cdn.sanity.io https://media.sanity.io",
-      "https://lh3.googleusercontent.com",
+      "https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
       "https://arweave.net https://*.arweave.net",
       supabase.http,
       "https://stats.g.doubleclick.net",
