@@ -921,7 +921,9 @@
       "lessons": "Lessons",
       "coursesCompleted": "Courses completed",
       "achievements": "Achievements",
-      "certificates": "Certificates"
+      "certificates": "Certificates",
+      "errorFetch": "Resync failed. Please try again.",
+      "errorNetwork": "Network error. Please try again."
     },
     "flags": {
       "description": "Community posts reported by users. Resolve once you've actioned the content, or dismiss if the report isn't valid.",
@@ -932,7 +934,9 @@
       "targetAnswer": "answer",
       "view": "View",
       "resolve": "Resolve",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "errorFetch": "Failed to update the flag. Please try again.",
+      "errorNetwork": "Network error. Please try again."
     }
   }
 }

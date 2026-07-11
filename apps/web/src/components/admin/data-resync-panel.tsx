@@ -14,12 +14,15 @@ interface ResyncResult {
   certificates: number;
 }
 
+/** Which failure the last resync hit — mapped to a translated string by the UI. */
+type ActionError = "fetch" | "network";
+
 export function DataResyncPanel() {
   const t = useTranslations("admin.resync");
   const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResyncResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ActionError | null>(null);
 
   async function handleResync() {
     const trimmed = walletAddress.trim();
@@ -38,15 +41,18 @@ export function DataResyncPanel() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(
+        console.error(
+          "Admin resync failed:",
           (body as { error?: string }).error ?? `Request failed (${res.status})`
         );
+        setError("fetch");
         return;
       }
 
       setResult((await res.json()) as ResyncResult);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      console.error("Admin resync failed:", e);
+      setError("network");
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ export function DataResyncPanel() {
 
       {error && (
         <div className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
-          {error}
+          {t(error === "network" ? "errorNetwork" : "errorFetch")}
         </div>
       )}
 

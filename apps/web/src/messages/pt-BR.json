@@ -921,7 +921,9 @@
       "lessons": "Lições",
       "coursesCompleted": "Cursos concluídos",
       "achievements": "Conquistas",
-      "certificates": "Certificados"
+      "certificates": "Certificados",
+      "errorFetch": "Falha na ressincronização. Tente novamente.",
+      "errorNetwork": "Erro de rede. Tente novamente."
     },
     "flags": {
       "description": "Publicações da comunidade denunciadas por usuários. Resolva depois de tratar o conteúdo ou descarte se a denúncia não for válida.",
@@ -932,7 +934,9 @@
       "targetAnswer": "resposta",
       "view": "Ver",
       "resolve": "Resolver",
-      "dismiss": "Descartar"
+      "dismiss": "Descartar",
+      "errorFetch": "Falha ao atualizar a denúncia. Tente novamente.",
+      "errorNetwork": "Erro de rede. Tente novamente."
     }
   }
 }
