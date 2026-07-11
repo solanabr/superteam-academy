@@ -2,7 +2,7 @@
 
 # CMS Guide
 
-Guide for managing course content in Sanity CMS for Superteam Academy (`solarium.courses`), a Solana developer education platform.
+Guide for managing course content in Sanity CMS for Superteam Academy (`superteam-academy-web.vercel.app`), a Solana developer education platform.
 
 ## Overview
 
@@ -228,12 +228,14 @@ Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in th
 ### Step-by-Step
 
 1. **Create the Instructor** (if not already existing):
+
    - Go to the "Instructor" section in Studio
    - Click "Create new"
    - Fill in: name (required), avatar, bio, social links (twitter, github)
    - Publish
 
 2. **Create the Lessons**:
+
    - Go to the "Lesson" section
    - For each lesson, create a new document:
      - Set the title and let the slug auto-generate
@@ -246,6 +248,7 @@ Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in th
    - Publish each lesson
 
 3. **Create the Modules**:
+
    - Go to the "Module" section
    - Create a module for each logical section of the course
    - Add lesson references in the correct order
@@ -253,6 +256,7 @@ Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in th
    - Publish
 
 4. **Create the Course**:
+
    - Go to the "Course" section
    - Fill in: title (required), slug (auto-generated), description, difficulty (required), duration (required)
    - Upload a thumbnail image (recommended 16:9 aspect ratio)
@@ -266,6 +270,7 @@ Unlock logic is defined in `apps/web/src/lib/gamification/achievements.ts` in th
    - Publish
 
 5. **Deploy on-chain** (see [Publishing Workflow](#publishing-workflow)):
+
    - Go to the admin panel
    - Deploy the course and create its track collection
    - The course becomes visible to students once sync completes
@@ -434,11 +439,11 @@ The script:
 
 ### Environment-Specific Datasets
 
-| Environment | Dataset                                    | Purpose                         |
-| ----------- | ------------------------------------------ | ------------------------------- |
-| Development | `production` (or `development` if created) | Local development and testing   |
-| Staging     | `production`                               | Preview deployments on Vercel   |
-| Production  | `production`                               | Live site at `solarium.courses` |
+| Environment | Dataset                                    | Purpose                                         |
+| ----------- | ------------------------------------------ | ----------------------------------------------- |
+| Development | `production` (or `development` if created) | Local development and testing                   |
+| Staging     | `production`                               | Preview deployments on Vercel                   |
+| Production  | `production`                               | Live site at `superteam-academy-web.vercel.app` |
 
 You can create a separate `development` dataset in Sanity for testing content changes without affecting production. Update the `NEXT_PUBLIC_SANITY_DATASET` and `SANITY_STUDIO_DATASET` environment variables accordingly.
 
