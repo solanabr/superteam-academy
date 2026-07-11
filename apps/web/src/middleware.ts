@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { env } from "@/lib/env";
 import { locales, defaultLocale } from "@/lib/i18n/config";
+import { isAdminRoute, isAdminRootPath } from "@/lib/admin/routes";
 import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
 import { buildCsp, generateNonce } from "@/lib/csp";
 
@@ -63,17 +64,6 @@ const intlMiddleware = createIntlMiddleware({
   defaultLocale,
   localePrefix: "always",
 });
-
-function isAdminRoute(pathname: string): boolean {
-  for (const locale of locales) {
-    const prefix = `/${locale}`;
-    if (pathname.startsWith(prefix)) {
-      const rest = pathname.slice(prefix.length);
-      return rest === "/admin" || rest.startsWith("/admin/");
-    }
-  }
-  return false;
-}
 
 function isProtectedRoute(pathname: string): boolean {
   // Only routes that require authentication (personal data)
@@ -162,7 +152,7 @@ export async function middleware(request: NextRequest) {
   // so sub-routes that need protection redirect back to /admin.
   if (isAdminRoute(request.nextUrl.pathname)) {
     const adminSession = request.cookies.get("admin_session");
-    const isAdminRoot = /^\/[a-z-]+\/admin\/?$/.test(request.nextUrl.pathname);
+    const isAdminRoot = isAdminRootPath(request.nextUrl.pathname);
     if (!(await isValidAdminSession(adminSession?.value))) {
       if (!isAdminRoot) {
         const locale =
