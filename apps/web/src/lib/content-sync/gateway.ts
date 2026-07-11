@@ -1,8 +1,8 @@
-import type { SanityDoc } from "./types";
+import type { BundleDoc } from "@/lib/content/compile/types";
 
 export interface SanityGateway {
-  readManaged(): Promise<SanityDoc[]>;
-  writeDocs(docs: SanityDoc[]): Promise<void>;
+  readManaged(): Promise<BundleDoc[]>;
+  writeDocs(docs: BundleDoc[]): Promise<void>;
   deleteDocs(ids: string[]): Promise<void>;
   assetExists(assetId: string): Promise<boolean>;
   uploadAsset(bytes: Uint8Array, filename: string): Promise<string>;
@@ -44,17 +44,17 @@ export function createLiveGateway(): SanityGateway {
 
 /** In-memory double for the orchestrator test — records every mutation. */
 export class InMemoryGateway implements SanityGateway {
-  written: SanityDoc[] = [];
+  written: BundleDoc[] = [];
   deleted: string[] = [];
   assets = new Set<string>();
   singleton: { sha: string; counts: Record<string, number> } | null = null;
 
-  constructor(private existing: SanityDoc[] = []) {}
+  constructor(private existing: BundleDoc[] = []) {}
 
-  async readManaged(): Promise<SanityDoc[]> {
+  async readManaged(): Promise<BundleDoc[]> {
     return this.existing;
   }
-  async writeDocs(docs: SanityDoc[]): Promise<void> {
+  async writeDocs(docs: BundleDoc[]): Promise<void> {
     this.written.push(...docs);
     // Reflect writes so a same-sha re-run sees them as existing.
     const byId = new Map(this.existing.map((d) => [d._id, d]));

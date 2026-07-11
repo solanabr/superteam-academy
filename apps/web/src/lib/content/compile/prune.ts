@@ -1,4 +1,4 @@
-import { BlastRadiusError, type SanityDoc } from "./types";
+import { BlastRadiusError, type BundleDoc } from "./types";
 
 export const SOURCE = "courses-academy";
 
@@ -17,9 +17,9 @@ export function prunableQuery(): string {
  * (spec §9.4 guard 2).
  */
 export function selectPrunable(
-  existing: SanityDoc[],
+  existing: BundleDoc[],
   projectedIds: ReadonlySet<string>
-): SanityDoc[] {
+): BundleDoc[] {
   return existing.filter(
     (d) => d.sync?.source === SOURCE && !projectedIds.has(d._id)
   );
@@ -47,7 +47,7 @@ function sortKeys(value: unknown): unknown {
   return value;
 }
 
-const stable = (d: SanityDoc): string => {
+const stable = (d: BundleDoc): string => {
   const { _rev, _createdAt, _updatedAt, ...rest } = d as Record<
     string,
     unknown
@@ -66,9 +66,9 @@ const stable = (d: SanityDoc): string => {
  * so an unchanged onChainStatus does not register as a diff.
  */
 export function selectChangedDocs(
-  existing: SanityDoc[],
-  projected: SanityDoc[]
-): SanityDoc[] {
+  existing: BundleDoc[],
+  projected: BundleDoc[]
+): BundleDoc[] {
   const byId = new Map(existing.map((d) => [d._id, d]));
   return projected.filter((p) => {
     const cur = byId.get(p._id);

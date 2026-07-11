@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "next-sanity";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
-import type { SanityDoc } from "@/lib/content-sync/types";
+import type { BundleDoc } from "@/lib/content/compile/types";
 import { MANAGED_TYPES } from "@/lib/content-sync/types";
 
 const sanityAdmin = createClient({
@@ -35,9 +35,9 @@ export function getSanityAdminClient(): typeof sanityAdmin {
  * editor's in-progress draft. Published-only keeps the sync operating solely on
  * the published dataset it owns.
  */
-export async function readManagedDocuments(): Promise<SanityDoc[]> {
+export async function readManagedDocuments(): Promise<BundleDoc[]> {
   const query = `*[_type in $types]{ ..., onChainStatus, sync }`;
-  return sanityAdmin.fetch<SanityDoc[]>(
+  return sanityAdmin.fetch<BundleDoc[]>(
     query,
     { types: [...MANAGED_TYPES] },
     { perspective: "published" }
@@ -50,7 +50,7 @@ export async function readManagedDocuments(): Promise<SanityDoc[]> {
  * the sync's downstream steps (and any re-sync) get read-your-writes and never
  * race an async-propagating write.
  */
-export async function writeDocuments(docs: SanityDoc[]): Promise<void> {
+export async function writeDocuments(docs: BundleDoc[]): Promise<void> {
   if (docs.length === 0) return;
   let tx = sanityAdmin.transaction();
   for (const doc of docs) {

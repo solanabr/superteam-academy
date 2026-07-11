@@ -25,7 +25,7 @@ vi.mock("@/lib/content-sync/graders", () => ({
 import { POST } from "../route";
 import { requireAdminAuth } from "@/lib/admin/auth";
 import { BlockedCommitError } from "@/lib/github/types";
-import { ContentValidationError } from "@/lib/content-sync/types";
+import { ContentValidationError } from "@/lib/content/compile/types";
 
 const post = (body: unknown): Promise<Response> =>
   POST(

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { MANAGED_TYPES } from "../types";
 import {
-  MANAGED_TYPES,
   BlastRadiusError,
   ContentValidationError,
-} from "../types";
+} from "@/lib/content/compile/types";
 import { BlockedCommitError } from "@/lib/github/types";
 
 describe("content-sync types", () => {

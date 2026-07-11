@@ -14,7 +14,7 @@ import { BlockedCommitError, GitHubUnavailableError } from "@/lib/github/types";
 import {
   ContentValidationError,
   BlastRadiusError,
-} from "@/lib/content-sync/types";
+} from "@/lib/content/compile/types";
 
 /**
  * POST /api/admin/content/sync — sync courses-academy@sha → Sanity (§9.2).

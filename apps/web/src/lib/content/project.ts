@@ -42,7 +42,7 @@ import type {
  *  - `thumbnail` is `null` unless already a resolved URL string — the bundle
  *    holds no Sanity image assets to resolve (all live thumbnails are null).
  *
- * The raw docs are typed loosely ({@link CourseDoc} et al. extend `SanityDoc`,
+ * The raw docs are typed loosely ({@link CourseDoc} et al. extend `BundleDoc`,
  * every non-discriminant field `unknown`). Reads go through the small coercion
  * helpers below, which preserve GROQ's null-for-absent semantics; the final
  * object is asserted to the declared return type — the same (already-unsound)

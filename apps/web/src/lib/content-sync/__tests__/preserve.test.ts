@@ -5,17 +5,17 @@ import {
   reattachPreserved,
   assertSchemaFieldsCovered,
 } from "../preserve";
-import type { SanityDoc } from "../types";
+import type { BundleDoc } from "@/lib/content/compile/types";
 
 describe("reattachPreserved", () => {
   it("carries onChainStatus from the existing course onto the projected one", () => {
-    const projected: SanityDoc = {
+    const projected: BundleDoc = {
       _id: "course-x",
       _type: "course",
       title: "X",
       sync: { source: "courses-academy", rev: "s" },
     };
-    const existing: SanityDoc = {
+    const existing: BundleDoc = {
       _id: "course-x",
       _type: "course",
       title: "OLD",
@@ -27,7 +27,7 @@ describe("reattachPreserved", () => {
   });
 
   it("is a no-op when there is no existing doc", () => {
-    const projected: SanityDoc = {
+    const projected: BundleDoc = {
       _id: "course-x",
       _type: "course",
       title: "X",
@@ -38,8 +38,8 @@ describe("reattachPreserved", () => {
   });
 
   it("does not preserve onChainStatus for a lesson (not in PRESERVE)", () => {
-    const projected: SanityDoc = { _id: "lesson-x", _type: "lesson" };
-    const existing: SanityDoc = {
+    const projected: BundleDoc = { _id: "lesson-x", _type: "lesson" };
+    const existing: BundleDoc = {
       _id: "lesson-x",
       _type: "lesson",
       onChainStatus: { foo: 1 },

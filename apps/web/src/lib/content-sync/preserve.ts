@@ -1,4 +1,5 @@
-import type { ManagedType, SanityDoc } from "./types";
+import type { ManagedType } from "./types";
+import type { BundleDoc } from "@/lib/content/compile/types";
 
 /** Sanity-owned fields that survive a re-sync (spec §9.3). */
 export const PRESERVE: Record<ManagedType, string[]> = {
@@ -80,12 +81,12 @@ const SYSTEM_FIELDS = new Set([
  * whole-document `createOrReplace` does not erase Sanity-owned state (§9.3).
  */
 export function reattachPreserved(
-  projected: SanityDoc,
-  existing: SanityDoc | undefined
-): SanityDoc {
+  projected: BundleDoc,
+  existing: BundleDoc | undefined
+): BundleDoc {
   if (!existing) return projected;
   const keep = PRESERVE[projected._type as ManagedType] ?? [];
-  const out: SanityDoc = { ...projected };
+  const out: BundleDoc = { ...projected };
   for (const field of keep) {
     if (existing[field] !== undefined) out[field] = existing[field];
   }

@@ -1,15 +1,23 @@
 import { imageSize } from "image-size";
 import { revalidateTag } from "next/cache";
 import type { SanityGateway } from "./gateway";
-import type { GraderSet } from "./executor-gate";
-import type { SanityDoc, SyncResult } from "./types";
+import type { SyncResult } from "./types";
 import { MANAGED_TYPES } from "./types";
-import { extractTarball } from "./tarball";
-import { parseAndValidateTree } from "./validate";
-import { projectContent, type AssetUpload } from "./projector";
 import { reattachPreserved } from "./preserve";
-import { selectChangedDocs, selectPrunable, assertBlastRadius } from "./prune";
-import { computeAssetId, cdnUrl } from "./assets";
+import type { GraderSet } from "@/lib/content/compile/executor-gate";
+import type { BundleDoc } from "@/lib/content/compile/types";
+import { extractTarball } from "@/lib/content/compile/tarball";
+import { parseAndValidateTree } from "@/lib/content/compile/validate";
+import {
+  projectContent,
+  type AssetUpload,
+} from "@/lib/content/compile/projector";
+import {
+  selectChangedDocs,
+  selectPrunable,
+  assertBlastRadius,
+} from "@/lib/content/compile/prune";
+import { computeAssetId, cdnUrl } from "@/lib/content/compile/assets";
 import { assertCommitSyncable } from "@/lib/github/drift";
 import type { GitHubClient } from "@/lib/github/github";
 import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
@@ -131,7 +139,7 @@ export async function runContentSync(deps: SyncDeps): Promise<SyncResult> {
   await deps.gateway.deleteDocs(prunable.map((d) => d._id));
 
   // 10. Write the contentSync singleton LAST (never matches the prune set).
-  const managed = (d: SanityDoc): boolean =>
+  const managed = (d: BundleDoc): boolean =>
     (MANAGED_TYPES as readonly string[]).includes(d._type);
   const counts = countByType(merged.filter(managed));
   await deps.gateway.writeSingleton(deps.sha, counts);
@@ -149,7 +157,7 @@ export async function runContentSync(deps: SyncDeps): Promise<SyncResult> {
   };
 }
 
-function countByType(docs: SanityDoc[]): Record<string, number> {
+function countByType(docs: BundleDoc[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const d of docs) out[d._type] = (out[d._type] ?? 0) + 1;
   return out;

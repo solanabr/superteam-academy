@@ -5,14 +5,14 @@ import {
   assertBlastRadius,
   prunableQuery,
 } from "../prune";
-import { BlastRadiusError, type SanityDoc } from "../types";
+import { BlastRadiusError, type BundleDoc } from "../types";
 
-const doc = (id: string, extra: Partial<SanityDoc> = {}): SanityDoc => ({
+const doc = (id: string, extra: Partial<BundleDoc> = {}): BundleDoc => ({
   _id: id,
   _type: "lesson",
   ...extra,
 });
-const marked = (id: string, rev: string): SanityDoc =>
+const marked = (id: string, rev: string): BundleDoc =>
   doc(id, { sync: { source: "courses-academy", rev } });
 
 describe("selectPrunable", () => {

@@ -45,7 +45,7 @@ export const MANAGED_TYPES = [
 ] as const;
 export type ManagedType = (typeof MANAGED_TYPES)[number];
 
-/** Managed-doc marker: mirrors content-sync/prune.ts `SOURCE`. */
+/** Managed-doc marker: mirrors content/compile/prune.ts `SOURCE`. */
 export const MANAGED_SOURCE = "courses-academy";
 
 /** _type → committed bundle filename under src/content/generated. */

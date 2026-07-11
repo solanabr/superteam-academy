@@ -2,9 +2,12 @@ import { createHash } from "node:crypto";
 import { describe, it, expect, vi } from "vitest";
 import { runContentSync } from "../sync";
 import { InMemoryGateway, type SanityGateway } from "../gateway";
-import { BlastRadiusError, type SanityDoc } from "../types";
-import type { GraderSet } from "../executor-gate";
-import { makeCourseTarball, PNG_1X1 } from "./_fixtures";
+import { BlastRadiusError, type BundleDoc } from "@/lib/content/compile/types";
+import type { GraderSet } from "@/lib/content/compile/executor-gate";
+import {
+  makeCourseTarball,
+  PNG_1X1,
+} from "@/lib/content/compile/__tests__/_fixtures";
 import { BlockedCommitError } from "@/lib/github/types";
 import type { GitHubClient } from "@/lib/github/github";
 
@@ -16,13 +19,13 @@ vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
 
 /** Hand-authored managed docs unrelated to the sync (no marker → never pruned).
  *  They inflate the managed total the blast-radius guard measures against. */
-const handAuthored = (n: number): SanityDoc[] =>
+const handAuthored = (n: number): BundleDoc[] =>
   Array.from({ length: n }, (_v, i) => ({
     _id: `hand-authored-${i}`,
     _type: "lesson",
   }));
 
-const managedMarked = (id: string, type: string, rev: string): SanityDoc => ({
+const managedMarked = (id: string, type: string, rev: string): BundleDoc => ({
   _id: id,
   _type: type,
   sync: { source: "courses-academy", rev },
@@ -35,23 +38,23 @@ const managedMarked = (id: string, type: string, rev: string): SanityDoc => ({
  * read-back prune would race.
  */
 class AsyncVisibilityGateway implements SanityGateway {
-  written: SanityDoc[] = [];
+  written: BundleDoc[] = [];
   deleted: string[] = [];
   assets = new Set<string>();
   singleton: { sha: string; counts: Record<string, number> } | null = null;
-  private visible: Map<string, SanityDoc>;
+  private visible: Map<string, BundleDoc>;
 
   constructor(
-    existing: SanityDoc[],
+    existing: BundleDoc[],
     private laggingIds: Set<string>
   ) {
     this.visible = new Map(existing.map((d) => [d._id, d]));
   }
 
-  async readManaged(): Promise<SanityDoc[]> {
+  async readManaged(): Promise<BundleDoc[]> {
     return [...this.visible.values()];
   }
-  async writeDocs(docs: SanityDoc[]): Promise<void> {
+  async writeDocs(docs: BundleDoc[]): Promise<void> {
     this.written.push(...docs);
     for (const d of docs) {
       // A lagging id keeps its previously-visible value on the next read.
@@ -148,7 +151,7 @@ describe("runContentSync", () => {
   it("aborts before any delete when the prune set exceeds 20%", async () => {
     // Seed the gateway with many stale managed docs from an old sha; the new
     // tree has one course, so nearly all would prune.
-    const stale: SanityDoc[] = Array.from({ length: 50 }, (_v, i) => ({
+    const stale: BundleDoc[] = Array.from({ length: 50 }, (_v, i) => ({
       _id: `lesson-old-${i}`,
       _type: "lesson",
       sync: { source: "courses-academy", rev: "oldsha" },
@@ -184,7 +187,7 @@ describe("runContentSync", () => {
     // just-written `lesson-accounts`. Computing the prune set from the pre-write
     // read + projected ids makes that impossible: an id in the new tree is never
     // pruned, regardless of what the read-back reports.
-    const existing: SanityDoc[] = [
+    const existing: BundleDoc[] = [
       managedMarked("course-demo", "course", "oldsha"),
       managedMarked("lesson-accounts", "lesson", "oldsha"),
       managedMarked("lesson-removed", "lesson", "oldsha"),

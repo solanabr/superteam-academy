@@ -1,6 +1,6 @@
 import type { BlockT } from "@superteam-lms/content-schema";
 import type { ValidatedContent } from "./validate";
-import type { SanityDoc } from "./types";
+import type { BundleDoc } from "./types";
 import { rewriteMarkdownAssetPaths } from "./assets";
 import { SOURCE } from "./prune";
 
@@ -85,9 +85,9 @@ export function projectContent(
   sha: string,
   resolveAsset: AssetResolver,
   resolveTests: TestsResolver
-): { docs: SanityDoc[]; assets: AssetUpload[] } {
+): { docs: BundleDoc[]; assets: AssetUpload[] } {
   const marker = { source: SOURCE, rev: sha } as const;
-  const docs: SanityDoc[] = [];
+  const docs: BundleDoc[] = [];
   const assets: AssetUpload[] = [...v.assets.entries()].map(
     ([path, bytes]) => ({
       path,

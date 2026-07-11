@@ -1,6 +1,6 @@
 import "server-only";
 import type { AdminTestCase } from "@superteam-lms/types";
-import type { GraderSet } from "./executor-gate";
+import type { GraderSet } from "@/lib/content/compile/executor-gate";
 import type { SubmissionRunResult } from "@/lib/challenge/executor";
 import { runJsSubmission } from "@/lib/challenge/executor";
 import { runRustSubmission } from "@/lib/challenge/rust-executor";
