@@ -32,9 +32,9 @@ const serverEnvSchema = z.object({
   // Optional: only needed for admin Sanity writes.
   SANITY_ADMIN_TOKEN: optStr,
   // Fine-grained READ token for solanabr/courses-academy. Server-only. Needed by
-  // POST /api/admin/content/sync (tarball fetch), the drift UI (HEAD polling),
-  // and the Checks API (blocked state). Optional at boot; the content routes 503
-  // when unset. Unauthenticated GitHub is 60 req/hr per IP and flakes on Vercel.
+  // the drift UI (HEAD polling) and the Checks API (blocked state). Optional at
+  // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
+  // per IP and flakes on Vercel.
   GITHUB_TOKEN: optStr,
   // Admin panel HMAC cookie signing key.
   ADMIN_SECRET: optStr,

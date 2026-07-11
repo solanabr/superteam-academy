@@ -3,7 +3,17 @@ import { createClient } from "next-sanity";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
 import type { BundleDoc } from "@/lib/content/compile/types";
-import { MANAGED_TYPES } from "@/lib/content-sync/types";
+
+// Inlined from the deleted lib/content-sync/types.ts (SP2-C Task 3); this
+// whole file is deleted in SP2-C Task 4.
+const MANAGED_TYPES = [
+  "course",
+  "lesson",
+  "instructor",
+  "learningPath",
+  "achievement",
+  "quest",
+] as const;
 
 const sanityAdmin = createClient({
   projectId: env.NEXT_PUBLIC_SANITY_PROJECT_ID,
