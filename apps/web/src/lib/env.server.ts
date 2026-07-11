@@ -29,8 +29,6 @@ const serverEnvSchema = z.object({
   // (`server-only` enforces that). Required so a misconfigured deployment
   // fails loudly here instead of silently falling back to public devnet.
   SOLANA_RPC_URL: z.url(),
-  // Optional: only needed for admin Sanity writes.
-  SANITY_ADMIN_TOKEN: optStr,
   // Fine-grained READ token for solanabr/courses-academy. Server-only. Needed by
   // the drift UI (HEAD polling) and the Checks API (blocked state). Optional at
   // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
@@ -60,7 +58,6 @@ const serverEnvSchema = z.object({
 const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
-  SANITY_ADMIN_TOKEN: process.env.SANITY_ADMIN_TOKEN,
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,

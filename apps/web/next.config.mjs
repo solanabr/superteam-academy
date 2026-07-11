@@ -5,52 +5,50 @@ const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
 
 /**
  * Static Content-Security-Policy FALLBACK for routes the middleware does not
- * run on — namely `/studio/*` (Sanity Studio) and `/api/*`. The user-facing app
- * gets a stricter, per-request nonce CSP built in `middleware.ts` + `lib/csp.ts`
- * (no `'unsafe-inline'` for scripts); middleware response headers override these
- * static ones where both apply, so the nonce policy wins for matched routes.
+ * run on — namely `/api/*`. The user-facing app gets a stricter, per-request
+ * nonce CSP built in `middleware.ts` + `lib/csp.ts` (no `'unsafe-inline'` for
+ * scripts); middleware response headers override these static ones where both
+ * apply, so the nonce policy wins for matched routes.
  *
- * Studio KEEPS `'unsafe-inline'` + `'unsafe-eval'` for scripts: it is a
- * third-party SPA bundle that cannot be nonced and relies on eval. `/api/*`
- * returns JSON/binary (no inline scripts), so the script policy is moot there.
- * Keep the non-script directives here in rough sync with `lib/csp.ts`.
+ * `/api/*` returns JSON/binary (no inline scripts), so the script policy is
+ * moot there — this header is defense-in-depth. Keep the non-script directives
+ * here in rough sync with `lib/csp.ts`.
  *
  * Notable allowances:
- * - `'unsafe-eval'` in script-src — REQUIRED for Studio (and Monaco, on the
- *   middleware path). - Server-only externals (Gemini, Rust Playground, build
- *   server) are NOT listed: the browser only talks to same-origin `/api/*`.
+ * - `'unsafe-eval'` in script-src — REQUIRED for Monaco (on the middleware
+ *   path). - Server-only externals (Gemini, Rust Playground, build server)
+ *   are NOT listed: the browser only talks to same-origin `/api/*`.
  */
 const cspDirectives = [
   "default-src 'self'",
 
-  // Scripts (Studio/API fallback): 'unsafe-inline' is REQUIRED for the Sanity
-  // Studio bundle, which cannot be nonced. The user-facing app does NOT use
-  // this — its middleware CSP replaces 'unsafe-inline' with a per-request nonce.
+  // Scripts (API fallback): the user-facing app does NOT use this — its
+  // middleware CSP replaces 'unsafe-inline' with a per-request nonce. API
+  // responses carry no inline scripts, so this is defense-in-depth only.
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com",
 
-  // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline CSS.
+  // Styles: 'unsafe-inline' required by Next.js inline CSS.
   // fonts.googleapis.com allows the Google Fonts stylesheet (DM Sans) link.
-  "style-src 'self' 'unsafe-inline' https://cdn.sanity.io https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 
   // Fonts: self-hosted via next/font + Google Fonts (gstatic serves the files).
   "font-src 'self' data: https://fonts.gstatic.com",
 
-  // Images: avatars (Google), NFT art (Arweave), Supabase storage, Sanity CDN +
-  // Studio media library, GA4 measurement pixel (doubleclick). data:/blob:
-  // cover inline SVGs, canvas-confetti, and wallet QR codes. Supabase stays a
-  // wildcard here (Studio/API fallback); the app's middleware CSP pins it.
-  "img-src 'self' data: blob: https://cdn.sanity.io https://media.sanity.io https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
+  // Images: avatars (Google), NFT art (Arweave), Supabase storage, GA4
+  // measurement pixel (doubleclick). data:/blob: cover inline SVGs,
+  // canvas-confetti, and wallet QR codes. Supabase stays a wildcard here
+  // (API fallback); the app's middleware CSP pins it.
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://arweave.net https://*.arweave.net https://*.supabase.co https://stats.g.doubleclick.net",
 
-  // Network: Supabase (REST + realtime wss), Sanity (CDN/API + listen wss),
-  // Solana/Helius RPC, Google OAuth/identity, and analytics (GA4, PostHog,
-  // Sentry). Wildcards here because this fallback is build-time and serves
-  // Studio (admin-only); the app's middleware CSP pins Supabase + the Solana
-  // RPC to concrete hosts at request time. Sanity/PostHog/Sentry stay wildcards
-  // in both — regional/multi-subdomain ingest hosts, pinning risks breakage.
+  // Network: Supabase (REST + realtime wss), Solana/Helius RPC, Google
+  // OAuth/identity, and analytics (GA4, PostHog, Sentry). Wildcards here
+  // because this fallback is build-time; the app's middleware CSP pins
+  // Supabase + the Solana RPC to concrete hosts at request time.
+  // PostHog/Sentry stay wildcards in both — regional/multi-subdomain ingest
+  // hosts, pinning risks breakage.
   [
     "connect-src 'self'",
     "https://*.supabase.co wss://*.supabase.co",
-    "https://api.sanity.io https://cdn.sanity.io https://*.apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
     "https://*.helius-rpc.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com",
     // web3.js opens a wss:// to the RPC for subscriptions (deploy confirmation).
     "wss://*.helius-rpc.com wss://api.devnet.solana.com wss://api.mainnet-beta.solana.com",
@@ -59,9 +57,8 @@ const cspDirectives = [
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
   ].join(" "),
 
-  // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames;
-  // lesson videos embed the YouTube and Vimeo players. Keep in sync with the
-  // per-request CSP in src/lib/csp.ts.
+  // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
+  // Vimeo players. Keep in sync with the per-request CSP in src/lib/csp.ts.
   "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
 
   // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also
@@ -83,7 +80,6 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
-    // Studio is a same-origin embed, so SAMEORIGIN (not DENY).
     key: "X-Frame-Options",
     value: "SAMEORIGIN",
   },
@@ -101,9 +97,9 @@ const securityHeaders = [
   },
 ];
 
-// Static CSP header, applied ONLY to routes the middleware skips (`/studio/*`,
-// `/api/*`). Matched app routes get the per-request nonce CSP from middleware,
-// which overrides this where both apply.
+// Static CSP header, applied ONLY to routes the middleware skips (`/api/*`).
+// Matched app routes get the per-request nonce CSP from middleware, which
+// overrides this where both apply.
 const staticCspHeader = {
   key: "Content-Security-Policy",
   value: cspDirectives.join("; "),
@@ -130,7 +126,6 @@ const nextConfig = {
   transpilePackages: ["@superteam-lms/types"],
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "arweave.net" },
@@ -146,13 +141,7 @@ const nextConfig = {
         headers: securityHeaders,
       },
       {
-        // Sanity Studio is excluded from middleware, so apply the static CSP
-        // fallback (keeps 'unsafe-inline'/'unsafe-eval' for the Studio bundle).
-        source: "/studio/:path*",
-        headers: [staticCspHeader],
-      },
-      {
-        // API routes are excluded from middleware too. They serve JSON/binary,
+        // API routes are excluded from middleware. They serve JSON/binary,
         // so the script policy is moot, but keep a CSP for defense-in-depth.
         source: "/api/:path*",
         headers: [staticCspHeader],
