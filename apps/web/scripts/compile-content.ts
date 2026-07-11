@@ -212,30 +212,199 @@ const COUNT_KEY: Record<string, string> = {
   quest: "quests",
 };
 
+// ── asset pipeline (SP2 Task 2) ──────────────────────────────────────────────
+
+/** Only these image formats may enter the app repo (fail-closed on anything else). */
+const ASSET_EXT_ALLOWLIST = new Set(["png", "jpg", "jpeg", "webp", "svg"]);
+/** Per-file cap so a content PR can't bloat the app repo. 1 MiB. */
+const MAX_ASSET_BYTES = 1024 * 1024;
+/** Copied under public/<PREFIX>; the rewritten url is `/<PREFIX>/...`. */
+const ASSET_PUBLIC_PREFIX = "content-assets";
+
+const baseName = (p: string): string => p.slice(p.lastIndexOf("/") + 1);
+const extOf = (p: string): string => {
+  const dot = p.lastIndexOf(".");
+  return dot < 0 ? "" : p.slice(dot + 1).toLowerCase();
+};
+
+/** Relative (non-remote, non-absolute) markdown image targets, in document order.
+ *  Mirrors the projector's rewrite regex so validation and rewrite agree. */
+function markdownImageRefs(markdown: string): string[] {
+  const re = /!\[[^\]]*\]\(([^)]+)\)/g;
+  const out: string[] = [];
+  for (let m = re.exec(markdown); m; m = re.exec(markdown)) {
+    const url = m[1]!;
+    if (/^(https?:)?\/\//.test(url) || url.startsWith("/")) continue;
+    out.push(url);
+  }
+  return out;
+}
+
+interface AssetPlan {
+  /** repo path → public url (`/content-assets/...`), for reference rewriting. */
+  urlByRepoPath: Map<string, string>;
+  /** public rel path (`intro/hello/x.png`) → bytes, for writing under public/. */
+  bytesByPublicPath: Map<string, Uint8Array>;
+}
+
+/**
+ * Copy every file under a recognized `assets/` dir (course-level or lesson-level)
+ * to a slug-mirrored public path, enforcing the extension allowlist and size cap.
+ * Deterministic: the public path is `<courseSlug>[/<lessonSlug>]/<file>` — no hash,
+ * the bundle is pinned per content SHA. Accumulates issues; the caller throws.
+ */
+function planAssets(
+  tree: RepoTree,
+  content: ValidatedContent,
+  courseDirById: Map<string, string>
+): { plan: AssetPlan; issues: string[] } {
+  const issues: string[] = [];
+  const urlByRepoPath = new Map<string, string>();
+  const bytesByPublicPath = new Map<string, Uint8Array>();
+
+  // sourceAssetsDir → public dest dir (slug-based), course-level and lesson-level.
+  const destByAssetsDir = new Map<string, string>();
+  const courseSlugByDir = new Map<string, string>();
+  for (const c of content.courses) {
+    const dir = courseDirById.get(c.id);
+    if (!dir) continue;
+    courseSlugByDir.set(dir, c.slug);
+    destByAssetsDir.set(`${dir}/assets`, c.slug);
+  }
+  for (const { dir, lesson } of content.lessons) {
+    let courseSlug: string | undefined;
+    for (const [cd, slug] of courseSlugByDir) {
+      if (dir === cd || dir.startsWith(`${cd}/`)) {
+        courseSlug = slug;
+        break;
+      }
+    }
+    if (courseSlug === undefined) continue; // orphan lesson — module validation owns this
+    destByAssetsDir.set(`${dir}/assets`, `${courseSlug}/${lesson.slug}`);
+  }
+
+  for (const [p, bytes] of tree) {
+    const dest = destByAssetsDir.get(dirOf(p));
+    if (dest === undefined) continue;
+    const base = baseName(p);
+    const ext = extOf(base);
+    if (!ASSET_EXT_ALLOWLIST.has(ext)) {
+      issues.push(
+        `asset ${p}: extension "${ext || "(none)"}" not allowed (png, jpg, jpeg, webp, svg)`
+      );
+    }
+    if (bytes.byteLength > MAX_ASSET_BYTES) {
+      issues.push(
+        `asset ${p}: ${bytes.byteLength} bytes exceeds the ${MAX_ASSET_BYTES}-byte (1 MiB) cap`
+      );
+    }
+    const publicPath = `${dest}/${base}`;
+    bytesByPublicPath.set(publicPath, bytes);
+    urlByRepoPath.set(p, `/${ASSET_PUBLIC_PREFIX}/${publicPath}`);
+  }
+
+  return { plan: { urlByRepoPath, bytesByPublicPath }, issues };
+}
+
+/**
+ * Every referenced image must resolve to a copied asset: a course `thumbnail:`
+ * (course-folder-relative) and each relative markdown image in a prose block
+ * (lesson-dir-relative). Fail-closed naming the course/lesson and the path.
+ */
+function validateAssetReferences(
+  content: ValidatedContent,
+  courseDirById: Map<string, string>,
+  plan: AssetPlan
+): string[] {
+  const issues: string[] = [];
+  for (const c of content.courses) {
+    if (!c.thumbnail) continue;
+    const dir = courseDirById.get(c.id);
+    if (!dir) continue;
+    if (!plan.urlByRepoPath.has(`${dir}/${c.thumbnail}`)) {
+      issues.push(
+        `course ${c.id}: thumbnail "${c.thumbnail}" is not a copied asset (missing ${dir}/${c.thumbnail})`
+      );
+    }
+  }
+  for (const { dir, lesson } of content.lessons) {
+    for (const block of lesson.blocks) {
+      if (block.type !== "prose") continue;
+      const md = content.prose.get(`${dir}/${block.src}`) ?? "";
+      for (const rel of markdownImageRefs(md)) {
+        if (!plan.urlByRepoPath.has(`${dir}/${rel}`)) {
+          issues.push(
+            `lesson ${lesson.id} block ${block.key}: markdown image "${rel}" is not a copied asset (missing ${dir}/${rel})`
+          );
+        }
+      }
+    }
+  }
+  return issues;
+}
+
 export interface CompileOptions {
   sha: string;
   /** The locked commit's own date (ISO), or null to omit compiledAt. Never wall-clock. */
   compiledAt: string | null;
 }
 
+/** A compiled bundle: JSON modules (filename → contents) plus asset binaries
+ *  (public rel path → bytes) to copy under `public/content-assets`. */
+export interface CompiledBundle {
+  files: Map<string, string>;
+  assets: Map<string, Uint8Array>;
+}
+
 /**
- * Pure compile: tree → { filename → file content }. Throws `ContentValidationError`
- * before emitting anything, so a failed compile never writes a partial bundle.
+ * Pure compile: tree → { files, assets }. Throws `ContentValidationError` before
+ * emitting anything, so a failed compile never writes a partial bundle. Assets under
+ * recognized `assets/` dirs are copied to slug-mirrored public paths and their
+ * references (course thumbnails, markdown images) are rewritten to `/content-assets/...`.
  */
-export function compileContent(
+export function compileBundle(
   tree: RepoTree,
   opts: CompileOptions
-): Map<string, string> {
+): CompiledBundle {
   const { content, courseDirById } = validateTree(tree);
 
+  // Asset pipeline first: copy-and-validate assets, then verify every reference
+  // resolves. Both accumulate into one fail-closed throw before any emit.
+  const { plan, issues: assetIssues } = planAssets(
+    tree,
+    content,
+    courseDirById
+  );
+  const refIssues = validateAssetReferences(content, courseDirById, plan);
+  const issues = [...assetIssues, ...refIssues];
+  if (issues.length > 0) throw new ContentValidationError(issues);
+
   // Reuse the sync's projector so emitted docs match Sanity's shape exactly.
-  // No Sanity here: markdown image paths stay repo-relative (resolveAsset → null,
-  // which rewriteMarkdownAssetPaths leaves untouched); tests.json is read from the tree.
+  // The resolver maps repo-relative markdown image paths → their public url;
+  // unreferenced paths return null (rewriteMarkdownAssetPaths leaves them as-is,
+  // but validateAssetReferences already proved every reference resolves).
+  const resolveAsset = (p: string): string | null =>
+    plan.urlByRepoPath.get(p) ?? null;
   const resolveTests = (dir: string, rel: string): unknown[] => {
     const raw = tree.get(`${dir}/${rel}`);
     return raw ? (JSON.parse(text(raw)) as unknown[]) : [];
   };
-  const { docs } = projectContent(content, opts.sha, () => null, resolveTests);
+  const { docs } = projectContent(
+    content,
+    opts.sha,
+    resolveAsset,
+    resolveTests
+  );
+
+  // Course thumbnails are not projected (repo-relative in the schema); inject the
+  // rewritten public url here, keyed by course id.
+  const thumbUrlByCourseId = new Map<string, string>();
+  for (const c of content.courses) {
+    if (!c.thumbnail) continue;
+    const dir = courseDirById.get(c.id);
+    const url = dir && plan.urlByRepoPath.get(`${dir}/${c.thumbnail}`);
+    if (url) thumbUrlByCourseId.set(c.id, url);
+  }
 
   // Bucket by type, dropping the preserve/overlay markers the sync adds (they are
   // not part of the bundle), and sort each array by _id for a stable, tree-order-
@@ -250,6 +419,10 @@ export function compileContent(
     const kept: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(doc)) {
       if (!OVERLAY_MARKERS.has(k)) kept[k] = val;
+    }
+    if (doc._type === "course") {
+      const thumb = thumbUrlByCourseId.get(String(doc._id));
+      if (thumb !== undefined) kept.thumbnail = thumb;
     }
     bucket.push(kept);
   }
@@ -283,7 +456,15 @@ export function compileContent(
   if (opts.compiledAt !== null) meta.compiledAt = opts.compiledAt;
   files.set("meta.json", stableJson(meta));
 
-  return files;
+  return { files, assets: plan.bytesByPublicPath };
+}
+
+/** JSON-modules-only view of {@link compileBundle} (assets written separately). */
+export function compileContent(
+  tree: RepoTree,
+  opts: CompileOptions
+): Map<string, string> {
+  return compileBundle(tree, opts).files;
 }
 
 // ── GitHub fetch (local, no server-only deps) ────────────────────────────────
@@ -360,6 +541,7 @@ async function main(): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const lockPath = path.resolve(here, "../content.lock");
   const outDir = path.resolve(here, "../src/content/generated");
+  const assetsDir = path.resolve(here, "../public/", ASSET_PUBLIC_PREFIX);
 
   const lock = JSON.parse(fs.readFileSync(lockPath, "utf8")) as Lock;
   console.log(`Compiling ${lock.repo}@${lock.sha}`);
@@ -369,12 +551,21 @@ async function main(): Promise<void> {
     fetchCommitDate(lock),
   ]);
   const tree = await extractTarball(tarball);
-  const files = compileContent(tree, { sha: lock.sha, compiledAt });
+  const { files, assets } = compileBundle(tree, { sha: lock.sha, compiledAt });
 
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "README.md"), README);
   for (const [name, contents] of files) {
     fs.writeFileSync(path.join(outDir, name), contents);
+  }
+
+  // Rebuild the asset tree from scratch so a removed image never lingers. When
+  // there are no assets the dir is left absent — `git diff --exit-code` stays clean.
+  fs.rmSync(assetsDir, { recursive: true, force: true });
+  for (const [rel, bytes] of assets) {
+    const dest = path.join(assetsDir, rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, bytes);
   }
 
   const counts = (
@@ -384,6 +575,11 @@ async function main(): Promise<void> {
     `Emitted ${files.size} modules to ${path.relative(process.cwd(), outDir)}`
   );
   console.log(`Counts: ${JSON.stringify(counts)}`);
+  console.log(
+    assets.size === 0
+      ? "Assets: none"
+      : `Assets: ${assets.size} file(s) → ${path.relative(process.cwd(), assetsDir)}`
+  );
 }
 
 if (

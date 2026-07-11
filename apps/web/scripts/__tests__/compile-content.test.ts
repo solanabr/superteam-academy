@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { ContentValidationError } from "../../src/lib/content-sync/types";
 import type { RepoTree } from "../../src/lib/content-sync/types";
-import { compileContent } from "../compile-content";
+import { compileContent, compileBundle } from "../compile-content";
 
 const WALLET = "BEe3xJDobWhxQ7zNrwaYR4zyEtptgmDuKvaLNZukih5R";
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
+/** 1x1-ish placeholder bytes — only the extension/size matter to the pipeline. */
+const bin = (n = 8): Uint8Array => new Uint8Array(n).fill(0x89);
 
 /** A minimal, schema-valid courses-academy tree: one of every managed type. */
 function validTree(): RepoTree {
@@ -121,6 +123,45 @@ function treeWithCodeBlock(): RepoTree {
       ])
     )
   );
+  return tree;
+}
+
+/**
+ * validTree with a course thumbnail, an in-lesson markdown image, and an
+ * unreferenced-but-present asset — the full asset-pipeline surface.
+ */
+function treeWithAssets(): RepoTree {
+  const tree = validTree();
+  tree.set(
+    "courses/intro/course.yaml",
+    enc(
+      [
+        "id: course-intro",
+        "slug: intro",
+        "title: Intro Course",
+        "difficulty: beginner",
+        "duration: 1",
+        "xpPerLesson: 10",
+        "xpReward: 100",
+        "instructor: instructor-alice",
+        "thumbnail: assets/thumb.png",
+        "modules:",
+        "  - key: mod-one",
+        "    title: Module One",
+        "    lessons:",
+        "      - lesson-intro-hello",
+        "",
+      ].join("\n")
+    )
+  );
+  tree.set(
+    "courses/intro/lessons/hello/intro.md",
+    enc("# Hello\n\n![a diagram](assets/diagram.png)\n")
+  );
+  tree.set("courses/intro/assets/thumb.png", bin());
+  tree.set("courses/intro/lessons/hello/assets/diagram.png", bin());
+  // present but referenced by nothing — still copied (brief: copy every assets/*).
+  tree.set("courses/intro/lessons/hello/assets/extra.svg", enc("<svg/>"));
   return tree;
 }
 
@@ -250,6 +291,110 @@ describe("compileContent", () => {
       expect(e).toBeInstanceOf(ContentValidationError);
       expect((e as ContentValidationError).issues.join("\n")).toContain(
         "course-intro"
+      );
+    }
+  });
+});
+
+describe("compileBundle — asset pipeline", () => {
+  it("emits no assets for a tree with no images", () => {
+    const { assets } = compileBundle(validTree(), opts);
+    expect(assets.size).toBe(0);
+  });
+
+  it("copies every assets/* file to its slug-mirrored public path", () => {
+    const { assets } = compileBundle(treeWithAssets(), opts);
+    expect([...assets.keys()].sort()).toEqual([
+      "intro/hello/diagram.png",
+      "intro/hello/extra.svg",
+      "intro/thumb.png",
+    ]);
+    // bytes are copied verbatim.
+    expect(assets.get("intro/hello/diagram.png")).toEqual(bin());
+  });
+
+  it("rewrites the course thumbnail to its public url", () => {
+    const { files } = compileBundle(treeWithAssets(), opts);
+    const courses = JSON.parse(files.get("courses.json")!) as {
+      thumbnail?: string;
+    }[];
+    expect(courses[0]!.thumbnail).toBe("/content-assets/intro/thumb.png");
+  });
+
+  it("rewrites in-lesson markdown image paths to public urls", () => {
+    const { files } = compileBundle(treeWithAssets(), opts);
+    const lessons = JSON.parse(files.get("lessons.json")!) as {
+      blocks: { src: string }[];
+    }[];
+    expect(lessons[0]!.blocks[0]!.src).toContain(
+      "![a diagram](/content-assets/intro/hello/diagram.png)"
+    );
+  });
+
+  it("is deterministic: same input yields byte-identical files and assets", () => {
+    const a = compileBundle(treeWithAssets(), opts);
+    const b = compileBundle(treeWithAssets(), opts);
+    for (const [name, content] of a.files)
+      expect(b.files.get(name)).toBe(content);
+    for (const [name, bytes] of a.assets)
+      expect(b.assets.get(name)).toEqual(bytes);
+  });
+
+  it("fails closed naming the lesson + path when a markdown image is missing", () => {
+    const tree = treeWithAssets();
+    tree.delete("courses/intro/lessons/hello/assets/diagram.png");
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-intro-hello");
+      expect(joined).toContain("assets/diagram.png");
+    }
+  });
+
+  it("fails closed naming the course when its thumbnail file is missing", () => {
+    const tree = treeWithAssets();
+    tree.delete("courses/intro/assets/thumb.png");
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("course-intro");
+      expect(joined).toContain("assets/thumb.png");
+    }
+  });
+
+  it("rejects an asset with a disallowed extension", () => {
+    const tree = treeWithAssets();
+    tree.set("courses/intro/lessons/hello/assets/anim.gif", bin());
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      expect((e as ContentValidationError).issues.join("\n")).toContain(
+        "anim.gif"
+      );
+    }
+  });
+
+  it("rejects an asset larger than the 1 MiB cap", () => {
+    const tree = treeWithAssets();
+    tree.set(
+      "courses/intro/lessons/hello/assets/huge.png",
+      bin(1024 * 1024 + 1)
+    );
+    try {
+      compileBundle(tree, opts);
+      expect.unreachable("compileBundle should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      expect((e as ContentValidationError).issues.join("\n")).toContain(
+        "huge.png"
       );
     }
   });
