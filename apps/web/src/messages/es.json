@@ -915,6 +915,24 @@
         "driftedHint": "Hay contenido de curso más reciente publicado en el repositorio — vuelve a desplegar para sincronizar el curso on-chain.",
         "blockedHint": "El contenido del repositorio cambió pero su CI está en rojo — aún no se puede sincronizar.",
         "unknownHint": "No se pudo acceder a GitHub para comprobar la divergencia de contenido."
+      },
+      "preview": {
+        "title": "Revisar despliegue — {title}",
+        "firstDeploy": "Este curso aún no está on-chain — el despliegue creará su cuenta on-chain.",
+        "willWrite": "Esta transacción escribirá:",
+        "contentStale": "El compromiso de contenido desplegado está detrás del paquete commiteado — este despliegue lo actualizará al commit del paquete.",
+        "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",
+        "blocked": "El despliegue está bloqueado hasta que se resuelva la divergencia inmutable.",
+        "confirmDeploy": "Desplegar",
+        "confirmSync": "Confirmar sincronización",
+        "confirmRedeploy": "Volver a desplegar",
+        "cancel": "Cancelar"
+      },
+      "immutableWarning": {
+        "heading": "Divergencia en campo inmutable — no se puede corregir automáticamente",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "paquete",
+        "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
       }
     },
     "resync": {

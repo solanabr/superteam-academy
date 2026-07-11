@@ -34,6 +34,7 @@ const status: AdminStatus = {
       coursePda: "Pda111",
       differences: [],
       contentDrift: "up_to_date",
+      chainDrift: "content_current",
     },
     {
       contentId: "course-anchor",
@@ -47,6 +48,7 @@ const status: AdminStatus = {
       coursePda: null,
       differences: [],
       contentDrift: "up_to_date",
+      chainDrift: "not_deployed",
     },
   ],
   achievements: [

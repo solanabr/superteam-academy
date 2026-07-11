@@ -4,34 +4,8 @@ import { useState } from "react";
 import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
 import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
-import type { CourseContentDrift } from "@/lib/github/drift";
-
-interface DiffEntry {
-  field: string;
-  sanityValue: unknown;
-  onChainValue: unknown;
-  updateable: boolean;
-}
-
-interface CourseStatus {
-  contentId: string;
-  slug: string;
-  title: string;
-  isDraft: boolean;
-  lessonCount: number;
-  contentXpPerLesson: number | null;
-  missingFields: string[];
-  onChainStatus:
-    | "synced"
-    | "out_of_sync"
-    | "not_deployed"
-    | "draft"
-    | "missing_fields";
-  coursePda: string | null;
-  differences: DiffEntry[];
-  contentDrift: CourseContentDrift;
-  isActive?: boolean;
-}
+import { DeployChangePreview } from "./deploy-change-preview";
+import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 
 interface CourseSyncTableProps {
   courses: CourseStatus[];
@@ -42,6 +16,9 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Course whose deploy/redeploy is pending confirmation in the change preview
+  // (SP3-C Task 2: per-row deploy opens the preview instead of firing).
+  const [previewCourse, setPreviewCourse] = useState<CourseStatus | null>(null);
 
   async function handleSync(courseId: string) {
     setSyncing(courseId);
@@ -256,7 +233,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                 <td className="py-3">
                   {canSync && (
                     <button
-                      onClick={() => void handleSync(course.contentId)}
+                      onClick={() => setPreviewCourse(course)}
                       disabled={isSyncing}
                       className="rounded-md bg-primary px-3 py-1 font-display text-xs font-bold text-white shadow-push transition-all duration-100 hover:bg-primary-hover active:translate-y-[3px] active:shadow-push-active disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -287,6 +264,17 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
           })}
         </tbody>
       </table>
+      {previewCourse && (
+        <DeployChangePreview
+          course={previewCourse}
+          onConfirm={() => {
+            const id = previewCourse.contentId;
+            setPreviewCourse(null);
+            void handleSync(id);
+          }}
+          onCancel={() => setPreviewCourse(null)}
+        />
+      )}
     </div>
   );
 }

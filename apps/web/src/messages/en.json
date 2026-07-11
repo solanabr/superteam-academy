@@ -915,6 +915,24 @@
         "driftedHint": "Newer course content is published upstream — redeploy to sync the on-chain course.",
         "blockedHint": "Upstream content changed but its CI is red — it cannot be synced yet.",
         "unknownHint": "Could not reach GitHub to check for content drift."
+      },
+      "preview": {
+        "title": "Review deploy — {title}",
+        "firstDeploy": "This course is not on chain yet — deploying will create its on-chain account.",
+        "willWrite": "This transaction will write:",
+        "contentStale": "The deployed content commitment is behind the committed bundle — this deploy will update it to the bundle's commit.",
+        "noChanges": "No changes detected. Redeploy anyway?",
+        "blocked": "Deploy is blocked until the immutable mismatch is resolved.",
+        "confirmDeploy": "Deploy",
+        "confirmSync": "Confirm sync",
+        "confirmRedeploy": "Redeploy",
+        "cancel": "Cancel"
+      },
+      "immutableWarning": {
+        "heading": "Immutable field mismatch — cannot auto-fix",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "bundle",
+        "remediation": "\"{title}\" has immutable on-chain fields that differ from the content bundle; update_course cannot apply them. Options: 1. Fix the value in the courses-academy repo and publish a new bundle PR, or 2. Deactivate this course and deploy a new version."
       }
     },
     "resync": {

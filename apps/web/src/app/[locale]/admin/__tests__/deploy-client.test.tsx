@@ -49,6 +49,7 @@ const status: AdminStatus = {
       coursePda: "Pda111",
       differences: [],
       contentDrift: "up_to_date",
+      chainDrift: "content_current",
     },
   ],
   achievements: [

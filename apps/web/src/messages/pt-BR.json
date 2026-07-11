@@ -915,6 +915,24 @@
         "driftedHint": "Há conteúdo de curso mais recente publicado no repositório — reimplante para sincronizar o curso on-chain.",
         "blockedHint": "O conteúdo do repositório mudou, mas a CI está vermelha — ainda não é possível sincronizar.",
         "unknownHint": "Não foi possível acessar o GitHub para verificar a divergência de conteúdo."
+      },
+      "preview": {
+        "title": "Revisar implantação — {title}",
+        "firstDeploy": "Este curso ainda não está on-chain — a implantação criará a conta on-chain dele.",
+        "willWrite": "Esta transação irá gravar:",
+        "contentStale": "O compromisso de conteúdo implantado está atrás do pacote commitado — esta implantação o atualizará para o commit do pacote.",
+        "noChanges": "Nenhuma mudança detectada. Reimplantar mesmo assim?",
+        "blocked": "A implantação está bloqueada até que a divergência imutável seja resolvida.",
+        "confirmDeploy": "Implantar",
+        "confirmSync": "Confirmar sincronização",
+        "confirmRedeploy": "Reimplantar",
+        "cancel": "Cancelar"
+      },
+      "immutableWarning": {
+        "heading": "Divergência em campo imutável — não pode ser corrigida automaticamente",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "pacote",
+        "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
       }
     },
     "resync": {
