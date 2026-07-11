@@ -850,6 +850,42 @@
       "deploy": "On-Chain Deploy",
       "moderation": "Community Moderation",
       "status": "Program Status"
+    },
+    "publishPin": {
+      "title": "Content pin",
+      "description": "The committed content bundle is pinned to a courses-academy commit in content.lock. Publishing new content is a one-line human PR that bumps the pin and rebuilds the bundle — no server-side write happens here.",
+      "refresh": "Refresh",
+      "loading": "Checking the content pin…",
+      "unavailable": "Drift unavailable — GitHub could not be reached. Try again shortly.",
+      "pinnedSha": "Pinned commit",
+      "headSha": "Repo HEAD",
+      "drift": "Drift",
+      "upToDate": "Up to date — the pin matches courses-academy HEAD.",
+      "behind": "{count, plural, one {# commit behind HEAD} other {# commits behind HEAD}}",
+      "behindUnknown": "Behind HEAD (commit count unavailable).",
+      "counts": "Bundle: {courses} courses, {lessons} lessons.",
+      "checks": {
+        "success": "CI passing",
+        "failure": "CI failing",
+        "pending": "CI pending",
+        "unknown": "CI unknown"
+      },
+      "copied": "Copied",
+      "copyCommand": "Copy command",
+      "copyBranch": "Copy branch",
+      "copyTitle": "Copy title",
+      "copyBody": "Copy body",
+      "viewCompare": "View commits",
+      "preparePrLink": "Open publish PR",
+      "prepare": {
+        "title": "Prepare publish PR",
+        "redHeadWarning": "HEAD's CI is not green. Do not bump the pin to unverified content — wait for CI to pass.",
+        "step1": "1. Apply this one-line change to content.lock",
+        "step2": "2. Rebuild the committed bundle locally",
+        "step2Hint": "Run this after editing {path}, then commit both the lock and the regenerated bundle.",
+        "step3": "3. Push a branch and open the PR",
+        "branch": "Suggested branch:"
+      }
     }
   }
 }
