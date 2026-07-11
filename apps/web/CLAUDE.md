@@ -12,7 +12,7 @@ The middleware (`src/middleware.ts`) chains two concerns:
 **Auth-gated routes** (redirect to landing if unauthenticated): `/dashboard`, `/settings`, `/profile` (exact — own profile only)
 **Public routes** (no auth required): `/` (landing), `/courses`, `/leaderboard`, `/community`, `/certificates`, `/profile/[username]`
 **Admin routes**: Checked against HMAC-signed `admin_session` cookie (separate from Supabase auth). Sub-routes redirect to `/admin` login form if cookie is absent or expired.
-**Excluded from middleware**: `/api/*`, `/_next`, `/_vercel`, `/studio/*` (Sanity Studio embed), static assets
+**Excluded from middleware**: `/api/*`, `/_next`, `/_vercel`, static assets
 
 ## i18n Notes
 
@@ -37,7 +37,7 @@ The middleware (`src/middleware.ts`) chains two concerns:
 
 ### Achievements
 
-The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here. Unlock logic maps full Sanity `_id`s in `UNLOCK_CHECKS` (`lib/achievements.ts`).
+The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here. Unlock logic maps full content-doc `_id`s in `UNLOCK_CHECKS` (`lib/achievements.ts`).
 
 ## Environment Variables
 
@@ -46,14 +46,6 @@ The curated set (currently 10) lives in `solanabr/courses-academy` under `achiev
 NEXT_PUBLIC_SUPABASE_URL=          # Project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Public anon key (safe for browser)
 SUPABASE_SERVICE_ROLE_KEY=         # PRIVATE — server-only, for admin operations
-
-# Required — Sanity
-NEXT_PUBLIC_SANITY_PROJECT_ID=     # From sanity.io/manage
-NEXT_PUBLIC_SANITY_DATASET=production
-SANITY_API_TOKEN=                  # Seed import only (sanity/seed/import.mjs)
-SANITY_ADMIN_TOKEN=                # Write token for admin Sanity mutations (server-only)
-# Standalone Studio/CLI (sanity/ workspace) uses SANITY_STUDIO_PROJECT_ID /
-# SANITY_STUDIO_DATASET — see sanity/.env.example.
 
 # Required — Solana
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com   # PUBLIC browser RPC — no privileged key
@@ -69,9 +61,8 @@ BUILD_SERVER_API_KEY=              # Build server authentication key
 GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/courses-academy (public repo,
                                    # but the token is still required — unauthenticated GitHub is
                                    # 60 req/hr per IP and flakes on Vercel). Server-only. Powers
-                                   # POST /api/admin/content/sync (tarball fetch), the drift UI
-                                   # (HEAD polling), and the Checks API (blocked state);
-                                   # unset → the /api/admin/content/* routes 503.
+                                   # the drift UI (HEAD polling) and the Checks API (blocked
+                                   # state); unset → the /api/admin/content/* routes 503.
 HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)

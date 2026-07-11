@@ -54,16 +54,16 @@
 
 ## Admin
 
-| Route                           | Method | Auth         | Purpose                                                        |
-| ------------------------------- | ------ | ------------ | -------------------------------------------------------------- |
-| `/api/admin/auth`               | POST   | ADMIN_SECRET | Admin authentication                                           |
-| `/api/admin/status`             | GET    | ADMIN_SECRET | Platform status (program liveness, authority match)            |
-| `/api/admin/courses/sync`       | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain                        |
-| `/api/admin/courses/deactivate` | POST   | ADMIN_SECRET | Set course `is_active = false`                                 |
-| `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                                  |
-| `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain                  |
-| `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                              |
-| `/api/admin/content/drift`      | GET    | ADMIN_SECRET | Three-way drift: content (repo→Sanity) + chain (Sanity→devnet) |
+| Route                           | Method | Auth         | Purpose                                                                          |
+| ------------------------------- | ------ | ------------ | -------------------------------------------------------------------------------- |
+| `/api/admin/auth`               | POST   | ADMIN_SECRET | Admin authentication                                                             |
+| `/api/admin/status`             | GET    | ADMIN_SECRET | Platform status (program liveness, authority match)                              |
+| `/api/admin/courses/sync`       | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain                                          |
+| `/api/admin/courses/deactivate` | POST   | ADMIN_SECRET | Set course `is_active = false`                                                   |
+| `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                                                    |
+| `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain                                    |
+| `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                                                |
+| `/api/admin/content/drift`      | GET    | ADMIN_SECRET | Drift: bundle SHA (content.lock) vs courses-academy HEAD + chain (bundle→devnet) |
 
 ## Route Conventions
 

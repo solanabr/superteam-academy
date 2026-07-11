@@ -85,13 +85,6 @@ jobs:
             exit 1
           fi
 
-      - name: Content parity (Sanity anchor)
-        # Prove the committed bundle still equals what the live Sanity dataset
-        # serves at the pinned SHA (public dataset, no token). Skips loudly if
-        # Sanity is synced ahead of the pin. TEMPORARY — removed with Sanity at
-        # SP2-C/D. If Sanity is unreachable the step fails loudly.
-        run: pnpm --filter web parity-check
-
       - name: Typecheck
         run: pnpm typecheck
 
