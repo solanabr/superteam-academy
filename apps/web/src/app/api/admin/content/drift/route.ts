@@ -1,7 +1,6 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
-import { parse as parseYaml } from "yaml";
 import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
@@ -16,18 +15,15 @@ import {
   isDraftId,
   type SyncStatus,
 } from "@/lib/admin/sync-diff";
-import { readContentSyncSingleton } from "@/lib/sanity/admin-mutations";
+import { slotsByCourseId } from "@/lib/content/store";
+import { SYNCED_SHA } from "@/lib/content/meta";
 import { createGitHubClient } from "@/lib/content-sync/github";
-import { extractTarball } from "@/lib/content-sync/tarball";
 import { deriveActiveMask } from "@/lib/content-sync/content-commit";
 import {
   computeContentDrift,
   computeChainDrift,
 } from "@/lib/content-sync/drift";
-import {
-  GitHubUnavailableError,
-  type RepoTree,
-} from "@/lib/content-sync/types";
+import { GitHubUnavailableError } from "@/lib/content-sync/types";
 
 /**
  * The cheap chain-status a course needs for `computeChainDrift`. §11.1 replaces
@@ -45,23 +41,19 @@ function courseDiffStatus(
   return "synced";
 }
 
-/** Map every course id in a synced tree to its committed active_lessons mask. */
-function maskByCourseFromTree(
-  tree: RepoTree
-): Map<string, [bigint, bigint, bigint, bigint]> {
+/**
+ * Map every course id in the committed content bundle to its active_lessons
+ * mask. SP2-B: sourced from `slotsByCourseId` (the pinned bundle's per-course
+ * lockfiles) instead of a request-time GitHub tarball — no download on a drift
+ * poll. A malformed lockfile is skipped, mirroring the prior best-effort.
+ */
+function maskByCourseFromBundle(): Map<
+  string,
+  [bigint, bigint, bigint, bigint]
+> {
   const out = new Map<string, [bigint, bigint, bigint, bigint]>();
-  for (const [path, bytes] of tree) {
-    if (!path.endsWith("/course.yaml")) continue;
-    let id: string;
+  for (const [id, slots] of slotsByCourseId) {
     try {
-      ({ id } = parseYaml(new TextDecoder().decode(bytes)) as { id: string });
-    } catch {
-      continue;
-    }
-    const lockRaw = tree.get(path.replace(/course\.yaml$/, "slots.lock.json"));
-    if (!lockRaw) continue;
-    try {
-      const slots = JSON.parse(new TextDecoder().decode(lockRaw));
       out.set(id, deriveActiveMask(slots));
     } catch {
       // ignore a malformed lockfile — the mask is omitted for that course
@@ -103,26 +95,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     throw e;
   }
 
-  const singleton = await readContentSyncSingleton();
-  const syncedSha = singleton?.sha ?? null;
+  // The synced SHA is now the pinned content bundle's SHA (SP2-B): the committed
+  // bundle IS the synced content, so drift is bundle-SHA vs GitHub HEAD.
+  const syncedSha = SYNCED_SHA;
   const content = computeContentDrift({ syncedSha, headSha, checks });
   const contentUpToDate = content.state === "up_to_date";
 
   const courses = await getAllCoursesAdmin();
 
   // The intended active_lessons mask is only actionable once content is at HEAD
-  // (the ordering interlock). Fetch the synced tree for masks solely in that
-  // case, so a routine drift poll does not download a tarball.
+  // (the ordering interlock). Derive masks from the committed bundle in that
+  // case — no runtime tarball fetch.
   let masks = new Map<string, [bigint, bigint, bigint, bigint]>();
-  if (contentUpToDate && syncedSha && courses.length > 0) {
-    try {
-      const tree = await extractTarball(
-        await createGitHubClient().fetchTarball(syncedSha)
-      );
-      masks = maskByCourseFromTree(tree);
-    } catch {
-      // best-effort — masks omitted, chain sync stays disabled for those rows
-    }
+  if (contentUpToDate && courses.length > 0) {
+    masks = maskByCourseFromBundle();
   }
 
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
