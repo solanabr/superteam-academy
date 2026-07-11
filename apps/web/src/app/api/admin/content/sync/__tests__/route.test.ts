@@ -12,7 +12,7 @@ const runContentSync = vi.fn();
 vi.mock("@/lib/content-sync/sync", () => ({
   runContentSync: (...a: unknown[]) => runContentSync(...a),
 }));
-vi.mock("@/lib/content-sync/github", () => ({
+vi.mock("@/lib/github/github", () => ({
   createGitHubClient: () => ({}),
 }));
 vi.mock("@/lib/content-sync/gateway", () => ({
@@ -24,10 +24,8 @@ vi.mock("@/lib/content-sync/graders", () => ({
 
 import { POST } from "../route";
 import { requireAdminAuth } from "@/lib/admin/auth";
-import {
-  BlockedCommitError,
-  ContentValidationError,
-} from "@/lib/content-sync/types";
+import { BlockedCommitError } from "@/lib/github/types";
+import { ContentValidationError } from "@/lib/content-sync/types";
 
 const post = (body: unknown): Promise<Response> =>
   POST(

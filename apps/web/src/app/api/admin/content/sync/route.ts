@@ -7,14 +7,13 @@ import {
 } from "@/lib/admin/auth";
 import { env } from "@/lib/env";
 import { runContentSync } from "@/lib/content-sync/sync";
-import { createGitHubClient } from "@/lib/content-sync/github";
+import { createGitHubClient } from "@/lib/github/github";
 import { createLiveGateway } from "@/lib/content-sync/gateway";
 import { createLiveGraders } from "@/lib/content-sync/graders";
+import { BlockedCommitError, GitHubUnavailableError } from "@/lib/github/types";
 import {
-  BlockedCommitError,
   ContentValidationError,
   BlastRadiusError,
-  GitHubUnavailableError,
 } from "@/lib/content-sync/types";
 
 /**

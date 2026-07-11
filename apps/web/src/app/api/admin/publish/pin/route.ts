@@ -5,16 +5,13 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { createGitHubClient } from "@/lib/content-sync/github";
-import {
-  GitHubUnavailableError,
-  type ChecksState,
-} from "@/lib/content-sync/types";
+import { createGitHubClient } from "@/lib/github/github";
+import { GitHubUnavailableError, type ChecksState } from "@/lib/github/types";
 import {
   computePublishVerdict,
   CONTENT_REPO,
   APP_REPO,
-} from "@/lib/content-sync/publish-pin";
+} from "@/lib/github/publish-pin";
 import { contentMeta } from "@/lib/content/meta";
 
 /**

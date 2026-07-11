@@ -35,7 +35,7 @@ import {
 import { extractTarball } from "../src/lib/content-sync/tarball";
 import { projectContent } from "../src/lib/content-sync/projector";
 import { ContentValidationError } from "../src/lib/content-sync/types";
-import type { RepoTree } from "../src/lib/content-sync/types";
+import type { RepoTree } from "../src/lib/github/types";
 import type { ValidatedContent } from "../src/lib/content-sync/validate";
 
 // ── deterministic serialization ────────────────────────────────────────────

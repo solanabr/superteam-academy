@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   MANAGED_TYPES,
-  BlockedCommitError,
   BlastRadiusError,
   ContentValidationError,
 } from "../types";
+import { BlockedCommitError } from "@/lib/github/types";
 
 describe("content-sync types", () => {
   it("lists exactly the six managed document types", () => {

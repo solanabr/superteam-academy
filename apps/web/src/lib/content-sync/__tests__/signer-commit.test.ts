@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { MaskMismatchError } from "../types";
+import { MaskMismatchError } from "@/lib/github/types";
 import { buildCourseCommit } from "@/lib/solana/admin-signer";
 
 const sha = "c".repeat(40);

@@ -1,6 +1,5 @@
 import { imageSize } from "image-size";
 import { revalidateTag } from "next/cache";
-import type { GitHubClient } from "./github";
 import type { SanityGateway } from "./gateway";
 import type { GraderSet } from "./executor-gate";
 import type { SanityDoc, SyncResult } from "./types";
@@ -10,8 +9,9 @@ import { parseAndValidateTree } from "./validate";
 import { projectContent, type AssetUpload } from "./projector";
 import { reattachPreserved } from "./preserve";
 import { selectChangedDocs, selectPrunable, assertBlastRadius } from "./prune";
-import { assertCommitSyncable } from "./drift";
 import { computeAssetId, cdnUrl } from "./assets";
+import { assertCommitSyncable } from "@/lib/github/drift";
+import type { GitHubClient } from "@/lib/github/github";
 import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
 
 export interface SyncDeps {

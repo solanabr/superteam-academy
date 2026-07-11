@@ -2,10 +2,11 @@ import { createHash } from "node:crypto";
 import { describe, it, expect, vi } from "vitest";
 import { runContentSync } from "../sync";
 import { InMemoryGateway, type SanityGateway } from "../gateway";
-import { BlockedCommitError, BlastRadiusError, type SanityDoc } from "../types";
-import type { GitHubClient } from "../github";
+import { BlastRadiusError, type SanityDoc } from "../types";
 import type { GraderSet } from "../executor-gate";
 import { makeCourseTarball, PNG_1X1 } from "./_fixtures";
+import { BlockedCommitError } from "@/lib/github/types";
+import type { GitHubClient } from "@/lib/github/github";
 
 // `../sync` imports COURSES_CACHE_TAG from the `@/lib/sanity/queries` barrel,
 // which (post SP2-B flip) re-exports the server-only `@/lib/content/queries`

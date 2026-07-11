@@ -11,7 +11,7 @@ vi.mock("@/lib/admin/auth", () => ({
 const fetchHeadSha = vi.fn();
 const fetchChecksState = vi.fn();
 const fetchAheadBy = vi.fn();
-vi.mock("@/lib/content-sync/github", () => ({
+vi.mock("@/lib/github/github", () => ({
   createGitHubClient: () => ({ fetchHeadSha, fetchChecksState, fetchAheadBy }),
 }));
 
@@ -70,7 +70,7 @@ describe("GET /api/admin/publish/pin", () => {
   });
 
   it("503s when GitHub is unreachable", async () => {
-    const { GitHubUnavailableError } = await import("@/lib/content-sync/types");
+    const { GitHubUnavailableError } = await import("@/lib/github/types");
     fetchHeadSha.mockRejectedValue(new GitHubUnavailableError("no token"));
     const res = await get();
     expect(res.status).toBe(503);

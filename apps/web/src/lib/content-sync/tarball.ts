@@ -1,5 +1,5 @@
 import { gunzipSync } from "node:zlib";
-import type { RepoTree } from "./types";
+import type { RepoTree } from "@/lib/github/types";
 
 /** Repo path prefix that is excluded from sync (spec §4.1, §12). */
 const EXCLUDED = "courses/_template/";

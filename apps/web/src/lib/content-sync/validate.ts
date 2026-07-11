@@ -11,9 +11,9 @@ import {
   type LessonT,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
-import type { RepoTree } from "./types";
 import { ContentValidationError } from "./types";
 import { gateCodeBlock, type GraderSet } from "./executor-gate";
+import type { RepoTree } from "@/lib/github/types";
 
 export interface ValidatedContent {
   courses: CourseT[];

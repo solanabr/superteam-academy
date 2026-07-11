@@ -3,7 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it, expect } from "vitest";
 import { ContentValidationError } from "../../src/lib/content-sync/types";
-import type { RepoTree } from "../../src/lib/content-sync/types";
+import type { RepoTree } from "../../src/lib/github/types";
 import { compileContent, compileBundle, writeBundle } from "../compile-content";
 
 const WALLET = "BEe3xJDobWhxQ7zNrwaYR4zyEtptgmDuKvaLNZukih5R";

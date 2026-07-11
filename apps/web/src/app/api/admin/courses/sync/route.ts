@@ -32,7 +32,7 @@ import {
 } from "@/lib/sanity/admin-mutations";
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
-import { MaskMismatchError } from "@/lib/content-sync/types";
+import { MaskMismatchError } from "@/lib/github/types";
 
 /**
  * Load a course's committed `slots.lock.json` from the pinned content bundle

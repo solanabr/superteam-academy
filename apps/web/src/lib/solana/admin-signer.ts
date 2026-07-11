@@ -34,7 +34,7 @@ import { serverEnv } from "@/lib/env.server";
 import {
   padContentTxId,
   assertMaskMatchesLockfile,
-} from "@/lib/content-sync/content-commit";
+} from "@/lib/github/content-commit";
 
 // ---------------------------------------------------------------------------
 // Anchor method builder types — mirrors the pattern in academy-program.ts
