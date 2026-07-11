@@ -116,3 +116,20 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```bash
 cd apps/web && pnpm dev
 ```
+
+## Content Bundle (compile-content)
+
+Course content ships as a **committed** bundle, not a live fetch. `scripts/compile-content.ts`
+compiles the `solanabr/courses-academy` repo — pinned to the SHA in `apps/web/content.lock` —
+into typed JSON under `src/content/generated/` plus assets under `public/content-assets/`.
+
+```bash
+pnpm --filter web compile-content   # from repo root (or: cd apps/web && pnpm compile-content)
+```
+
+- The generated dir is **committed** and prettier-ignored; output is a pure function of the
+  locked SHA, so a recompile must be **byte-identical** — CI recompiles and `git diff --exit-code`s it.
+- Do **not** hand-edit `src/content/generated/*`; an ESLint rule bans importing it outside
+  `src/lib/content/`.
+- **Publishing new content** = a PR that bumps `content.lock` to the new SHA **and** commits the
+  regenerated bundle in the same change.

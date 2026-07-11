@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "instructor-ana-santos",
+    "_type": "instructor",
+    "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
+    "name": "Ana Santos",
+    "socialLinks": {
+      "github": "https://github.com/anasantos",
+      "twitter": "https://twitter.com/anasantos_sol"
+    },
+    "wallet": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF"
+  },
+  {
+    "_id": "instructor-lucas-oliveira",
+    "_type": "instructor",
+    "bio": "Systems programmer and Rust educator. Former embedded systems engineer who transitioned to blockchain development. Maintains open-source Solana tooling and teaches Rust workshops across Latin America.",
+    "name": "Lucas Oliveira",
+    "socialLinks": {
+      "github": "https://github.com/lucasoliveira",
+      "twitter": "https://twitter.com/lucasoliv_dev"
+    },
+    "wallet": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF"
+  },
+  {
+    "_id": "instructor-mariana-costa",
+    "_type": "instructor",
+    "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
+    "name": "Mariana Costa",
+    "socialLinks": {
+      "github": "https://github.com/marianacosta",
+      "twitter": "https://twitter.com/mari_costa_sol"
+    },
+    "wallet": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF"
+  },
+  {
+    "_id": "instructor-rafael-mendes",
+    "_type": "instructor",
+    "bio": "DeFi researcher and protocol designer. Previously built trading systems at a São Paulo quant fund. Now designs tokenomics and DeFi primitives for Solana protocols.",
+    "name": "Rafael Mendes",
+    "socialLinks": {
+      "github": "https://github.com/rafaelmendes",
+      "twitter": "https://twitter.com/rafamendes_defi"
+    },
+    "wallet": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF"
+  }
+]
