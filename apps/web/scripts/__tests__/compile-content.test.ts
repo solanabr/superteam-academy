@@ -1,7 +1,10 @@
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { describe, it, expect } from "vitest";
 import { ContentValidationError } from "../../src/lib/content-sync/types";
 import type { RepoTree } from "../../src/lib/content-sync/types";
-import { compileContent, compileBundle } from "../compile-content";
+import { compileContent, compileBundle, writeBundle } from "../compile-content";
 
 const WALLET = "BEe3xJDobWhxQ7zNrwaYR4zyEtptgmDuKvaLNZukih5R";
 
@@ -396,6 +399,33 @@ describe("compileBundle — asset pipeline", () => {
       expect((e as ContentValidationError).issues.join("\n")).toContain(
         "huge.png"
       );
+    }
+  });
+});
+
+describe("writeBundle", () => {
+  it("rebuilds the generated dir from scratch, removing stray committed files", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "compile-content-"));
+    const outDir = path.join(root, "generated");
+    const assetsDir = path.join(root, "content-assets");
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, "extra.json"), "{}\n"); // stray module
+    fs.mkdirSync(assetsDir, { recursive: true });
+    fs.writeFileSync(path.join(assetsDir, "stale.png"), "x"); // stray asset
+
+    try {
+      writeBundle(
+        { outDir, assetsDir },
+        { files: new Map([["meta.json", "{}\n"]]), assets: new Map() }
+      );
+
+      expect(fs.existsSync(path.join(outDir, "extra.json"))).toBe(false);
+      expect(fs.existsSync(path.join(outDir, "meta.json"))).toBe(true);
+      expect(fs.existsSync(path.join(outDir, "README.md"))).toBe(true);
+      // No assets → the dir is left absent so `git diff --exit-code` stays clean.
+      expect(fs.existsSync(assetsDir)).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
     }
   });
 });

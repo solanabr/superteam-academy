@@ -537,6 +537,33 @@ courses-academy repo pinned in \`apps/web/content.lock\`. **Do not hand-edit** �
 CI recompiles and \`git diff --exit-code\`s this directory to enforce freshness.
 `;
 
+/**
+ * Write a compiled bundle to disk, rebuilding BOTH the generated dir and the
+ * asset dir from scratch so a stray committed file (a removed module, a renamed
+ * image) never survives a recompile — that would leave `git status` clean while
+ * the tree no longer matches the compiler output, punching a hole in the CI
+ * freshness guarantee. Safe because the compiler always emits every module +
+ * README. When there are no assets the asset dir is left absent.
+ */
+export function writeBundle(
+  dirs: { outDir: string; assetsDir: string },
+  bundle: CompiledBundle
+): void {
+  fs.rmSync(dirs.outDir, { recursive: true, force: true });
+  fs.mkdirSync(dirs.outDir, { recursive: true });
+  fs.writeFileSync(path.join(dirs.outDir, "README.md"), README);
+  for (const [name, contents] of bundle.files) {
+    fs.writeFileSync(path.join(dirs.outDir, name), contents);
+  }
+
+  fs.rmSync(dirs.assetsDir, { recursive: true, force: true });
+  for (const [rel, bytes] of bundle.assets) {
+    const dest = path.join(dirs.assetsDir, rel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, bytes);
+  }
+}
+
 async function main(): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const lockPath = path.resolve(here, "../content.lock");
@@ -553,20 +580,7 @@ async function main(): Promise<void> {
   const tree = await extractTarball(tarball);
   const { files, assets } = compileBundle(tree, { sha: lock.sha, compiledAt });
 
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, "README.md"), README);
-  for (const [name, contents] of files) {
-    fs.writeFileSync(path.join(outDir, name), contents);
-  }
-
-  // Rebuild the asset tree from scratch so a removed image never lingers. When
-  // there are no assets the dir is left absent — `git diff --exit-code` stays clean.
-  fs.rmSync(assetsDir, { recursive: true, force: true });
-  for (const [rel, bytes] of assets) {
-    const dest = path.join(assetsDir, rel);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, bytes);
-  }
+  writeBundle({ outDir, assetsDir }, { files, assets });
 
   const counts = (
     JSON.parse(files.get("meta.json")!) as { counts: Record<string, number> }
