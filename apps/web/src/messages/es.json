@@ -921,7 +921,9 @@
       "lessons": "Lecciones",
       "coursesCompleted": "Cursos completados",
       "achievements": "Logros",
-      "certificates": "Certificados"
+      "certificates": "Certificados",
+      "errorFetch": "Error en la resincronización. Inténtalo de nuevo.",
+      "errorNetwork": "Error de red. Inténtalo de nuevo."
     },
     "flags": {
       "description": "Publicaciones de la comunidad reportadas por usuarios. Resuelve una vez que hayas actuado sobre el contenido, o descarta si el reporte no es válido.",
@@ -932,7 +934,9 @@
       "targetAnswer": "respuesta",
       "view": "Ver",
       "resolve": "Resolver",
-      "dismiss": "Descartar"
+      "dismiss": "Descartar",
+      "errorFetch": "No se pudo actualizar el reporte. Inténtalo de nuevo.",
+      "errorNetwork": "Error de red. Inténtalo de nuevo."
     }
   }
 }

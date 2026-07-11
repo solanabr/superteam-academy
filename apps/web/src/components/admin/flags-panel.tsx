@@ -14,6 +14,9 @@ interface ModerationFlag {
   url: string | null;
 }
 
+/** Which failure the last action hit — mapped to a translated string by the UI. */
+type ActionError = "fetch" | "network";
+
 export function FlagsPanel({
   onCountChange,
 }: {
@@ -22,7 +25,7 @@ export function FlagsPanel({
   const t = useTranslations("admin.flags");
   const [flags, setFlags] = useState<ModerationFlag[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ActionError | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -55,13 +58,18 @@ export function FlagsPanel({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(body.error ?? `Request failed (${res.status})`);
+        console.error(
+          "Admin flag action failed:",
+          body.error ?? `Request failed (${res.status})`
+        );
+        setError("fetch");
         return;
       }
       // Optimistically drop the actioned flag.
       setFlags((prev) => prev.filter((f) => f.id !== flagId));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error");
+      console.error("Admin flag action failed:", e);
+      setError("network");
     } finally {
       setBusyId(null);
     }
@@ -73,7 +81,7 @@ export function FlagsPanel({
 
       {error && (
         <div className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger">
-          {error}
+          {t(error === "network" ? "errorNetwork" : "errorFetch")}
         </div>
       )}
 
