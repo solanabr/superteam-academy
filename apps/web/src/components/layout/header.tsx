@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-provider";
-import { isInstructorWallet } from "@/lib/sanity/queries";
+import { isInstructorWallet } from "@/lib/content/client-queries";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { AuthModal } from "@/components/auth/auth-modal";

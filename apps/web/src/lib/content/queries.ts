@@ -1,0 +1,608 @@
+import "server-only";
+
+import type { AwardT } from "@superteam-lms/content-schema";
+import {
+  getActiveDeployments,
+  getDeploymentById,
+  isSynced,
+} from "./deployments";
+import {
+  countCourseLessons,
+  projectAchievement,
+  projectCourse,
+  projectCourseSummary,
+  projectLearningPath,
+  projectLesson,
+  projectLessonSummary,
+  projectQuestData,
+  projectRecommended,
+} from "./project";
+import {
+  achievementsById,
+  coursesById,
+  coursesBySlug,
+  instructorsById,
+  lessonsById,
+  pathsById,
+  questsById,
+} from "./store";
+import type {
+  CourseDoc,
+  InstructorDoc,
+  LearningPathDoc,
+  LessonDoc,
+} from "./types";
+import type { Course, Lesson, LearningPath } from "@/lib/sanity/types";
+
+/**
+ * The flipped query layer (SP2-B Task 5). Every fn that used to run a GROQ query
+ * against Sanity now composes three server-only seams:
+ *
+ *  - CONTENT comes from the committed bundle store (`./store` maps).
+ *  - ON-CHAIN STATUS comes from Supabase via `./deployments`
+ *    (`getActiveDeployments` for the cached public gate map, `getDeploymentById`
+ *    for the uncached full row on reward/admin paths).
+ *  - SHAPE comes from the Task-4 projectors (`./project`), which reproduce the
+ *    old GROQ projections field-for-field.
+ *
+ * Names and return types are IDENTICAL to the pre-flip `lib/sanity/queries.ts`,
+ * so `lib/sanity/queries.ts` can become a thin re-export barrel and none of its
+ * 33 import sites change (plan §ambiguity 2). The visibility gate that GROQ
+ * expressed as `onChainStatus.status == "synced" && coalesce(isActive, true)`
+ * now lives entirely in `isSynced` (one place).
+ */
+
+// Shared Next.js cache tag for the public course catalog. Canonical home (moved
+// here from `lib/sanity/queries.ts` so the Supabase read seam in `deployments.ts`
+// can depend on it without pulling in the Sanity client graph). The barrel
+// re-exports it; an admin course sync purges the tagged group via
+// `revalidateTag(COURSES_CACHE_TAG)`.
+export const COURSES_CACHE_TAG = "courses";
+
+// --- local coercion helpers (GROQ null-for-absent semantics) ---
+
+function str(v: unknown): string | null {
+  return typeof v === "string" ? v : null;
+}
+
+function num(v: unknown): number | null {
+  return typeof v === "number" ? v : null;
+}
+
+function refId(v: unknown): string | null {
+  if (typeof v === "object" && v !== null && "_ref" in v) {
+    const r = (v as { _ref?: unknown })._ref;
+    return typeof r === "string" ? r : null;
+  }
+  return null;
+}
+
+/**
+ * Code-unit (`<`/`>`) ordering — the house preference standing in for GROQ's
+ * `order(title asc)`. Faithful to GROQ's byte-ordered sort (not locale-aware
+ * collation), and stable/deterministic across runtimes.
+ */
+function byField<T>(pick: (x: T) => string | null) {
+  return (a: T, b: T): number => {
+    const av = pick(a) ?? "";
+    const bv = pick(b) ?? "";
+    return av < bv ? -1 : av > bv ? 1 : 0;
+  };
+}
+
+const byTitle = byField<{ title: string | null }>((x) => x.title);
+const byName = byField<{ name: string | null }>((x) => x.name);
+
+const projectionDeps = { instructorsById, lessonsById };
+
+// --- store traversal helpers ---
+
+/** Instructor doc a course references (or undefined). */
+function courseInstructor(doc: CourseDoc): InstructorDoc | undefined {
+  return instructorsById.get(refId(doc.instructor) ?? "");
+}
+
+/** Raw module objects on a course, in display (array) order. */
+interface RawModule {
+  key?: unknown;
+  lessons?: unknown;
+}
+
+function courseModules(doc: CourseDoc): RawModule[] {
+  return Array.isArray(doc.modules) ? (doc.modules as RawModule[]) : [];
+}
+
+/**
+ * The course's lesson docs, in module→lesson display order, weak refs
+ * dereferenced through the store and unresolvable ones dropped (#405 hardening —
+ * the explicit mirror of GROQ `(modules[].lessons[]->{…})[defined(_id)]`).
+ */
+function courseLessonDocs(doc: CourseDoc): LessonDoc[] {
+  const out: LessonDoc[] = [];
+  for (const m of courseModules(doc)) {
+    const refs = Array.isArray(m.lessons) ? m.lessons : [];
+    for (const ref of refs) {
+      const id = refId(ref);
+      const lesson = id ? lessonsById.get(id) : undefined;
+      if (lesson) out.push(lesson);
+    }
+  }
+  return out;
+}
+
+/** Ref ids of a learning path's `courses[]` (weak refs), preserving GROQ `coalesce(courses[]._ref, [])`. */
+function pathCourseRefIds(doc: LearningPathDoc): string[] {
+  const refs = Array.isArray(doc.courses) ? doc.courses : [];
+  return refs.map((r) => refId(r)).filter((x): x is string => !!x);
+}
+
+/**
+ * Title of the first learning path that references `courseId`, else null —
+ * the `*[_type=="learningPath" && references(^._id)][0].title` cross-doc join.
+ * Iterates the store in doc order so `[0]` picks the same path GROQ would.
+ */
+function learningPathTitleFor(courseId: string): string | null {
+  for (const p of pathsById.values()) {
+    if (pathCourseRefIds(p).includes(courseId)) return str(p.title);
+  }
+  return null;
+}
+
+/** GROQ `order(coalesce(order, 999) asc, title asc)` for learning paths. */
+function byPathOrder(a: LearningPathDoc, b: LearningPathDoc): number {
+  const ao = num(a.order) ?? 999;
+  const bo = num(b.order) ?? 999;
+  if (ao !== bo) return ao - bo;
+  const at = str(a.title) ?? "";
+  const bt = str(b.title) ?? "";
+  return at < bt ? -1 : at > bt ? 1 : 0;
+}
+
+/** All bundle courses that pass the public gate (synced + active). */
+async function gatedCourses(): Promise<CourseDoc[]> {
+  const map = await getActiveDeployments();
+  return [...coursesById.values()].filter((c) => isSynced(map.get(c._id)));
+}
+
+// --- Public / catalog queries (gated: synced + active) ---
+
+export async function getAllCourses(): Promise<Course[]> {
+  const courses = await gatedCourses();
+  return courses.map((c) => projectCourse(c, projectionDeps)).sort(byTitle);
+}
+
+export async function getCourseBySlug(slug: string): Promise<Course | null> {
+  const doc = coursesBySlug.get(slug);
+  if (!doc) return null;
+  const map = await getActiveDeployments();
+  if (!isSynced(map.get(doc._id))) return null;
+  return projectCourse(doc, projectionDeps, { fullLessons: true });
+}
+
+export async function getLessonBySlug(
+  courseSlug: string,
+  lessonSlug: string
+): Promise<Lesson | null> {
+  const course = coursesBySlug.get(courseSlug);
+  if (!course) return null;
+  const map = await getActiveDeployments();
+  if (!isSynced(map.get(course._id))) return null;
+  const lesson = courseLessonDocs(course).find(
+    (l) => l.slug?.current === lessonSlug
+  );
+  return lesson ? projectLesson(lesson) : null;
+}
+
+/**
+ * Server-authoritative lesson lookup by Sanity `_id` of the course and lesson
+ * (the identifiers `/api/lessons/complete` uses). Intentionally UNGATED (no
+ * synced/active filter) — the completion gate must grade a lesson independent of
+ * catalog visibility, so a deactivated course's lesson still resolves for
+ * grading. Bundle-only, uncached (the store read is synchronous).
+ */
+export async function getLessonByIdForGrading(
+  courseId: string,
+  lessonId: string
+): Promise<Lesson | null> {
+  const course = coursesById.get(courseId);
+  if (!course) return null;
+  const inCourse = courseLessonDocs(course).some((l) => l._id === lessonId);
+  if (!inCourse) return null;
+  const lesson = lessonsById.get(lessonId);
+  return lesson ? projectLesson(lesson) : null;
+}
+
+export async function getAllLearningPaths(): Promise<LearningPath[]> {
+  const map = await getActiveDeployments();
+  const paths = [...pathsById.values()].sort(byPathOrder);
+  return paths.map((p) => {
+    const memberIds = new Set(pathCourseRefIds(p));
+    // Iterate the store (doc order) so member ordering matches GROQ's
+    // `*[_type=="course" && _id in ^.courses[]._ref && …]` document order.
+    const members = [...coursesById.values()].filter(
+      (c) => memberIds.has(c._id) && isSynced(map.get(c._id))
+    );
+    return projectLearningPath(p, members, projectionDeps);
+  });
+}
+
+/**
+ * Fetch a course by its Sanity `_id`. UNGATED (API routes pass the raw `_id`).
+ * `trackCollectionAddress` comes from the full Supabase deployment row via
+ * `getDeploymentById` (service-role, uncached) — this is a reward-path read.
+ */
+export async function getCourseById(id: string): Promise<Course | null> {
+  const doc = coursesById.get(id);
+  if (!doc) return null;
+  const dep = await getDeploymentById(id);
+  return projectCourse(doc, projectionDeps, {
+    fullLessons: true,
+    trackCollectionAddress: dep?.track_collection_address ?? null,
+  });
+}
+
+export async function getCourseIdBySlug(
+  slug: string
+): Promise<{ _id: string; xpPerLesson: number } | null> {
+  const doc = coursesBySlug.get(slug);
+  if (!doc) return null;
+  const map = await getActiveDeployments();
+  if (!isSynced(map.get(doc._id))) return null;
+  return { _id: doc._id, xpPerLesson: num(doc.xpPerLesson) ?? 0 };
+}
+
+export async function getCourseLessons(
+  courseSlug: string
+): Promise<Pick<Lesson, "_id" | "title" | "slug">[]> {
+  const doc = coursesBySlug.get(courseSlug);
+  if (!doc) return [];
+  const map = await getActiveDeployments();
+  if (!isSynced(map.get(doc._id))) return [];
+  return courseLessonDocs(doc).map(projectLessonSummary);
+}
+
+// --- Dashboard & Profile Queries ---
+
+export interface CourseSummary {
+  _id: string;
+  title: string;
+  slug: string;
+  thumbnail: string | null;
+  tags: string[] | null;
+  difficulty: string;
+  totalLessons: number;
+  learningPath: string | null;
+}
+
+export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
+  if (ids.length === 0) return [];
+  const idSet = new Set(ids);
+  const map = await getActiveDeployments();
+  return [...coursesById.values()]
+    .filter((c) => idSet.has(c._id) && isSynced(map.get(c._id)))
+    .map((c) => projectCourseSummary(c, learningPathTitleFor(c._id)));
+}
+
+export interface LessonSummary {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+export async function getLessonsByIds(ids: string[]): Promise<LessonSummary[]> {
+  if (ids.length === 0) return [];
+  const idSet = new Set(ids);
+  return [...lessonsById.values()]
+    .filter((l) => idSet.has(l._id))
+    .map(projectLessonSummary);
+}
+
+export interface RecommendedCourse {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  difficulty: string;
+  duration: number;
+  thumbnail: string | null;
+  instructor: { name: string; avatar: string | null } | null;
+  tags: string[] | null;
+  xpReward: number;
+  totalLessons: number;
+  trackId?: number;
+  trackLevel?: number;
+  learningPath: string | null;
+}
+
+export async function getRecommendedCourses(
+  excludeIds: string[]
+): Promise<RecommendedCourse[]> {
+  const exclude = new Set(excludeIds);
+  const map = await getActiveDeployments();
+  return [...coursesById.values()]
+    .filter((c) => !exclude.has(c._id) && isSynced(map.get(c._id)))
+    .map((c) =>
+      projectRecommended(c, { instructorsById }, learningPathTitleFor(c._id))
+    )
+    .sort(byTitle);
+}
+
+export async function getAllCourseTags(): Promise<
+  { _id: string; title: string; tags: string[]; totalLessons: number }[]
+> {
+  const courses = await gatedCourses();
+  return courses
+    .filter((c) => Array.isArray(c.tags))
+    .map((c) => ({
+      _id: c._id,
+      title: str(c.title) as string,
+      tags: c.tags as string[],
+      totalLessons: countCourseLessons(c),
+    }));
+}
+
+export async function getAllCourseLessonCounts(): Promise<
+  { _id: string; totalLessons: number }[]
+> {
+  const courses = await gatedCourses();
+  return courses.map((c) => ({
+    _id: c._id,
+    totalLessons: countCourseLessons(c),
+  }));
+}
+
+export interface DeployedAchievement {
+  /** Full Sanity _id (e.g. "achievement-first-steps"). */
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  /** Short monospace text for octagonal medal display (e.g. "01", "Rs", "A+"). */
+  glyph: string;
+  /** Uses the iridescent Solana-themed visual treatment. */
+  solTier: boolean;
+  category: string;
+  /** XP minted alongside the achievement NFT on-chain (0 = no XP). */
+  xpReward: number;
+  /**
+   * Declarative unlock rule (spec §4.10, D9). `null` for a pre-sync/legacy doc —
+   * such an achievement never auto-fires (the predicate has nothing to evaluate).
+   */
+  award: AwardT | null;
+}
+
+/**
+ * Full achievement definitions for achievements deployed on-chain — those whose
+ * Supabase deployment row carries an `achievement_pda`. Only these can be minted.
+ */
+export async function getDeployedAchievements(): Promise<
+  DeployedAchievement[]
+> {
+  const map = await getActiveDeployments();
+  return [...achievementsById.values()]
+    .filter((a) => !!map.get(a._id)?.achievement_pda)
+    .map(projectAchievement)
+    .sort(byName);
+}
+
+/**
+ * All achievement definitions regardless of on-chain status. Used for unlock
+ * checking — Supabase records achievements even before on-chain PDAs deploy.
+ */
+export async function getAllAchievements(): Promise<DeployedAchievement[]> {
+  return [...achievementsById.values()].map(projectAchievement).sort(byName);
+}
+
+/* ── Daily Quests ──────────────────────────────────────────────── */
+
+export interface SanityQuest {
+  id: string;
+  name: string;
+  description: string;
+  type: "lesson" | "lesson_batch" | "challenge" | "login_streak" | "module";
+  icon: string;
+  xpReward: number;
+  targetValue: number;
+  resetType: "daily" | "multi_day";
+}
+
+export interface QuestData {
+  quests: SanityQuest[];
+  challengeLessonIds: string[];
+  moduleLessonMap: Array<{ id: string; lessonIds: string[] }>;
+}
+
+/**
+ * All active quest definitions, challenge lesson ids, and module→lesson mappings.
+ * Bundle-only (quests, lessons, courses from the store); the projector reproduces
+ * the exact `active == true` filter, code-block lesson detection, and
+ * `"<courseId>:<key>"` module map the old single-round-trip GROQ emitted.
+ */
+export async function getAllQuests(): Promise<QuestData> {
+  return projectQuestData(
+    [...questsById.values()],
+    [...lessonsById.values()],
+    [...coursesById.values()]
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Admin queries (server-side only, includes on-chain status fields)
+// ---------------------------------------------------------------------------
+
+export interface AdminCourse {
+  _id: string;
+  title: string;
+  slug: string;
+  difficulty: string;
+  /** Resolved from `course.instructor -> instructor.wallet`: the on-chain Course.creator. */
+  creatorWallet: string | null;
+  xpPerLesson: number | null;
+  trackId: number | null;
+  trackLevel: number | null;
+  prerequisiteCourse: { _id: string; slug: string; title: string } | null;
+  creatorRewardXp: number | null;
+  minCompletionsForReward: number | null;
+  lessonCount: number;
+  trackCollectionAddress: string | null;
+  onChainStatus: {
+    status: string | null;
+    coursePda: string | null;
+    lastSynced: string | null;
+    txSignature: string | null;
+  } | null;
+}
+
+export interface AdminAchievement {
+  _id: string;
+  name: string;
+  category: string | null;
+  xpReward: number | null;
+  maxSupply: number | null;
+  metadataUri: string | null;
+  onChainStatus: {
+    status: string | null;
+    achievementPda: string | null;
+    collectionAddress: string | null;
+    lastSynced: string | null;
+  } | null;
+}
+
+/** Resolve a course's `prerequisiteCourse` ref to its `{_id, slug, title}` summary. */
+function prerequisiteSummary(
+  doc: CourseDoc
+): { _id: string; slug: string; title: string } | null {
+  const id = refId(doc.prerequisiteCourse);
+  const pre = id ? coursesById.get(id) : undefined;
+  if (!pre) return null;
+  return { _id: pre._id, slug: pre.slug.current, title: str(pre.title) ?? "" };
+}
+
+/**
+ * All courses with on-chain sync fields for the admin dashboard. Bundle content
+ * joined per-course with the full Supabase deployment row (`getDeploymentById`,
+ * service-role, uncached). The bundle carries only managed docs (no drafts).
+ */
+export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
+  const docs = [...coursesById.values()].sort(byField((c) => str(c.title)));
+  return Promise.all(
+    docs.map(async (c) => {
+      const dep = await getDeploymentById(c._id);
+      const instructor = courseInstructor(c);
+      return {
+        _id: c._id,
+        title: str(c.title) as string,
+        slug: c.slug.current,
+        difficulty: str(c.difficulty) as string,
+        creatorWallet: instructor ? str(instructor.wallet) : null,
+        xpPerLesson: num(c.xpPerLesson),
+        trackId: num(c.trackId),
+        trackLevel: num(c.trackLevel),
+        prerequisiteCourse: prerequisiteSummary(c),
+        creatorRewardXp: num(c.creatorRewardXp),
+        minCompletionsForReward: num(c.minCompletionsForReward),
+        lessonCount: countCourseLessons(c),
+        trackCollectionAddress: dep?.track_collection_address ?? null,
+        onChainStatus: dep
+          ? {
+              status: dep.status,
+              coursePda: dep.course_pda,
+              lastSynced: dep.last_synced,
+              txSignature: dep.tx_signature,
+            }
+          : null,
+      };
+    })
+  );
+}
+
+export interface AdminLearningPath {
+  _id: string;
+  title: string;
+  courseIds: string[];
+}
+
+/**
+ * Learning paths + their current course membership, for the admin panel
+ * (issue #323). Bundle-only, uncached (edits reflect on next recompile).
+ */
+export async function getLearningPathsForAdmin(): Promise<AdminLearningPath[]> {
+  return [...pathsById.values()].sort(byPathOrder).map((p) => ({
+    _id: p._id,
+    title: str(p.title) as string,
+    courseIds: pathCourseRefIds(p),
+  }));
+}
+
+/**
+ * All achievements with on-chain sync fields for the admin dashboard. Bundle
+ * content joined per-achievement with the full Supabase deployment row.
+ */
+export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
+  const docs = [...achievementsById.values()].sort(byField((a) => str(a.name)));
+  return Promise.all(
+    docs.map(async (a) => {
+      const dep = await getDeploymentById(a._id);
+      return {
+        _id: a._id,
+        name: str(a.name) as string,
+        category: str(a.category),
+        xpReward: num(a.xpReward),
+        maxSupply: num(a.maxSupply),
+        metadataUri: str(a.metadataUri),
+        onChainStatus: dep
+          ? {
+              status: dep.status,
+              achievementPda: dep.achievement_pda,
+              collectionAddress: dep.collection_address,
+              lastSynced: dep.last_synced,
+            }
+          : null,
+      };
+    })
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Instructor (wallet-keyed, read-only) queries — /teach viewer
+// ---------------------------------------------------------------------------
+
+export interface InstructorCourseSummary {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+/**
+ * Courses owned by an instructor wallet, for the read-only `/teach` viewer.
+ * Deliberately gated ONLY on `status == "synced"` (NOT active) — unlike the
+ * public catalog, an instructor must still see their own deactivated courses;
+ * a course that never synced has no on-chain stats to view.
+ */
+export async function getInstructorCourses(
+  wallet: string
+): Promise<InstructorCourseSummary[]> {
+  const map = await getActiveDeployments();
+  return [...coursesById.values()]
+    .filter((c) => {
+      const instructor = courseInstructor(c);
+      return (
+        !!instructor &&
+        str(instructor.wallet) === wallet &&
+        map.get(c._id)?.status === "synced"
+      );
+    })
+    .map((c) => ({
+      _id: c._id,
+      title: str(c.title) as string,
+      slug: c.slug.current,
+    }));
+}
+
+/**
+ * Whether a wallet belongs to a known instructor (gates the header's "Teach"
+ * nav item). Bundle-only.
+ */
+export async function isInstructorWallet(wallet: string): Promise<boolean> {
+  return [...instructorsById.values()].some((i) => str(i.wallet) === wallet);
+}

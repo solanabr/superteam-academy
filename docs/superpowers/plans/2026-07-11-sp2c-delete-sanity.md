@@ -10,7 +10,7 @@
    - **(A) Compiler subtree — SURVIVES** (consumed by `scripts/compile-content.ts` + `scripts/parity-check.ts`, i.e. the CI freshness/parity anchors, which are NOT Sanity code): `tarball.ts`, `projector.ts`, `validate.ts`, `assets.ts`, `prune.ts`, `executor-gate.ts`.
    - **(B) Publish/deploy-drift subtree — SURVIVES** (consumed by SP3-B publish card + SP3-C deploy screen + admin-signer): `github.ts`, `publish-pin.ts`, `drift.ts`, `content-commit.ts`.
    - **(C) Dead Sanity write engine — DELETE**: `sync.ts`, `gateway.ts`, `graders.ts`, `preserve.ts`. Their ONLY importers are the Sanity content-sync route (`app/api/admin/content/sync/route.ts`) and `lib/sanity/admin-mutations.ts`, both also deleted here. (`executor-gate.ts` is shared by dead `graders.ts` AND live `validate.ts` → survives via the compiler.)
-   So "delete lib/content-sync minus carve-outs" would delete files the compiler and admin still import. The plan RELOCATES A and B to honest homes and deletes only C + the residual dir.
+     So "delete lib/content-sync minus carve-outs" would delete files the compiler and admin still import. The plan RELOCATES A and B to honest homes and deletes only C + the residual dir.
 
 2. **`content-sync/types.ts` splits three ways** (shared leaf — no imports; everything imports it):
    - Compiler home: `RepoTree`, `ContentValidationError`, `BlastRadiusError`, and `SanityDoc` (rename → `BundleDoc`; it's the projector's output = bundle-doc shape, imported by `projector.ts` + `lib/content/types.ts`, NOT Sanity-specific).
@@ -36,47 +36,58 @@
 ## Tasks
 
 ### Task 1 — Relocate the GitHub-drift subtree → `lib/github/` (group B)
+
 **Files:** move `github.ts`, `publish-pin.ts`, `drift.ts`, `content-commit.ts` into `apps/web/src/lib/github/`; create `lib/github/types.ts` with `ChecksState`, `GitHubUnavailableError`, `BlockedCommitError`, `MaskMismatchError`, `RepoTree`. Repoint importers: `app/api/admin/content/drift/route.ts`, `app/api/admin/courses/sync/route.ts` (github HEAD sha), `admin/publish/publish-pin-client.tsx` + `api/admin/publish/pin/route.ts` (SP3-B), `lib/solana/admin-signer.ts` (`content-commit`), `lib/admin/sync-diff.ts` (verify its ChecksState relationship).
 **Verify:** `git grep "content-sync/\(github\|publish-pin\|drift\|content-commit\)"` → zero; typecheck green; publish card + drift route render unchanged.
 
 ### Task 2 — Relocate the compiler subtree → `lib/content/compile/` (group A) + rename `SanityDoc`→`BundleDoc`
+
 **Files:** move `tarball.ts`, `projector.ts`, `validate.ts`, `assets.ts`, `prune.ts`, `executor-gate.ts` into `apps/web/src/lib/content/compile/`; rename `SanityDoc` → `BundleDoc` (update `projector.ts`, `lib/content/types.ts`). Repoint `scripts/compile-content.ts` + `scripts/parity-check.ts` imports.
 **Verify:** `pnpm --filter web compile-content` reproduces the committed bundle byte-for-byte (freshness check still green); `git grep content-sync scripts/` → zero.
 
 ### Task 3 — Delete the dead Sanity write engine (group C) + content-sync route
+
 **Files:** delete `lib/content-sync/{sync,gateway,graders,preserve}.ts` + the now-empty `lib/content-sync/` dir (with its `types.ts` remnant `MANAGED_TYPES`/`SyncResult`); delete `app/api/admin/content/sync/route.ts` + its tests; delete any residual `content-sync-panel.tsx` not removed by SP3-B.
 **Verify:** typecheck + full suite green; deploy/publish/drift admin surfaces still function (they now depend only on `lib/github/*` + `lib/content/*`).
 
 ### Task 4 — Repoint the ~33 query importers + delete the `lib/sanity/` barrels
+
 **Files:** repoint every `@/lib/sanity/queries` importer → `@/lib/content/queries` and every `@/lib/sanity/types` importer → `@superteam-lms/types` (`COURSES_CACHE_TAG` moves to `lib/content/queries` if not already there per SP2-B); fold `admin-mutations.ts` writers into `lib/content/deployments.ts`; delete `lib/sanity/{client,queries,types,admin-mutations}.ts` + `lib/sanity/__tests__/`.
 **Verify (the grep-zero gate):** `git grep -lE "from ['\"](@/lib/sanity|@sanity/|next-sanity)" apps/web/src` → **zero**. `next build` green. Prod-smoke locally: catalog + all lessons render from the bundle.
 
 ### Task 5 — Delete the Sanity Studio workspace
+
 **Files:** remove the `sanity/` dir; drop `"@superteam-lms/sanity": "workspace:*"` from `apps/web/package.json` (or fold into Task 6's single deps commit).
 **Verify:** `pnpm install` clean; no workspace resolves to `sanity/`.
 
 --- SP2-D (config/env/docs sweep) ---
 
 ### Task 6 (SP2-D) — `next.config.mjs` + deps + env
+
 **`next.config.mjs`:** remove the `/studio/*` middleware exclusion + the `/studio/:path*` static-CSP header block; from CSP delete `cdn.sanity.io`/`media.sanity.io`/`*.api.sanity.io`/`*.apicdn.sanity.io` from `style-src`/`img-src`/`connect-src`/`frame-src`; drop `@superteam-lms/sanity` from `transpilePackages` (keep `@superteam-lms/types`); drop the `cdn.sanity.io` `remotePatterns` entry. **DO NOT touch `worker-src`/`script-src` `cdn.jsdelivr.net`** — that's Monaco's language workers (CSP-broke-Monaco regression, #170), unrelated to Sanity.
 **`package.json`:** drop `@sanity/vision`, `sanity`, `next-sanity` (+ the workspace dep if not done in Task 5).
 **env (`lib/env.ts` + `lib/env.server.ts`):** drop `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_ADMIN_TOKEN` (+ wiring). Coordinate with #326/#327 — only the Sanity-env removal lands here.
 **Verify:** `next build`; CSP header on a prod route has zero `sanity.io`; Monaco still loads (open a code lesson); no missing-env throws.
 
 ### Task 7 (SP2-D) — Golden suite replaces the parity anchor + docs
+
 **Files:** delete `scripts/parity-check.ts` + its CI step (spec: replaced by golden-snapshot tests — the SP2-B Task 4 projector goldens; confirm coverage before removing the anchor); delete `docs/CMS_GUIDE.md` + its `CLAUDE.md` reference; fix any residual `academy-courses` doc drift.
 **Verify:** CI green without the parity step; golden suite is the sole content-equivalence gate.
 
 ### Task 8 (SP2-D, OWNER-GATED) — Purge legacy Sanity docs
+
 `scripts/purge-legacy-sanity-docs.ts --live` — deletes the 25 stale Sanity docs incl. the 2 owner-DROPPED legacy achievements. Mutates David's prod Sanity dataset (4e3i2wwc/production). **Human-gated: owner go + dry-run diff captured before `--live`.** Not required for the app to function (nothing reads Sanity post-SP2-C) — hygiene; can trail the code merge.
 
 ## Risky seams (flag to reviewers)
+
 - **Task 4 grep-zero + the 33 repoints** — a missed importer that still resolves `@/lib/sanity/queries` after the barrel is deleted is a build break; run the grep-zero gate BEFORE deleting the barrel.
 - **Task 2 `SanityDoc`→`BundleDoc` rename** touches the compiler's output contract — the freshness check (byte-identical bundle) is the guard.
 - **admin-mutations fold (Task 4 / ambiguity 4)** — verify SP2-B Task 6 left it Sanity-free first.
 
 ## Out of scope
+
 Profile-avatar wiring (SP2-B follow-up); the SP3 admin UX rebuild; #387/CS-4; mainnet.
 
 ## Review gates
+
 Per-task reviewer (deletion completeness via grep-zero + build); whole-branch adversarial review before the PR (the trust question: "did we delete something still load-bearing" — the importer traces above are the checklist). SAFE-lane merge; Task 8 owner-gated separately.

@@ -7,7 +7,7 @@ import { GraduationCap } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/client";
 import { CertificateCard } from "@/components/certificates/certificate-card";
-import { getCoursesByIds } from "@/lib/sanity/queries";
+import { getCoursesByIds } from "@/lib/content/client-queries";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 
 export default function CertificatesPage() {

@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
-import { parse as parseYaml } from "yaml";
+import type { SlotsLockT } from "@superteam-lms/content-schema";
 import { serverEnv } from "@/lib/env.server";
 import {
   requireAdminAuth,
@@ -29,57 +29,31 @@ import {
 import {
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
-  readContentSyncSingleton,
 } from "@/lib/sanity/admin-mutations";
-import { createGitHubClient } from "@/lib/content-sync/github";
-import { extractTarball } from "@/lib/content-sync/tarball";
-import {
-  MaskMismatchError,
-  GitHubUnavailableError,
-} from "@/lib/content-sync/types";
-
-interface SlotsLock {
-  version: number;
-  slots: Record<string, number>;
-  retired: number[];
-  next: number;
-}
+import { slotsByCourseId } from "@/lib/content/store";
+import { SYNCED_SHA } from "@/lib/content/meta";
+import { MaskMismatchError } from "@/lib/content-sync/types";
 
 /**
- * Load a course's committed `slots.lock.json` from the last-synced tree (§11.0).
- * Sourced independently of the panel's mask — that independence is what makes
- * the `buildCourseCommit` assertion a real cross-check rather than a tautology.
- * Throws when content sync has not yet ingested this course (ordering interlock:
- * the mask commitment cannot be computed from a Sanity/tree that predates the
- * course), or when GitHub is unavailable.
+ * Load a course's committed `slots.lock.json` from the pinned content bundle
+ * (§11.0). SP2-B: sourced from `slotsByCourseId` + the bundle SHA rather than a
+ * request-time GitHub tarball of the last-synced tree — the committed bundle IS
+ * the synced content, so the lockfile is the one the drift/deploy panel already
+ * derives its mask from, keeping the `buildCourseCommit` cross-check meaningful.
+ * Throws when the bundle does not carry this course (ordering interlock: a
+ * course absent from the synced bundle cannot have its mask committed on-chain).
  */
-async function readCourseSlotsLock(
-  courseId: string
-): Promise<{ contentSha: string; slotsLock: SlotsLock }> {
-  const singleton = await readContentSyncSingleton();
-  if (!singleton) {
+function readCourseSlotsLock(courseId: string): {
+  contentSha: string;
+  slotsLock: SlotsLockT;
+} {
+  const slotsLock = slotsByCourseId.get(courseId);
+  if (!slotsLock) {
     throw new Error(
-      "No content sync has run yet — run content sync before committing the mask on-chain"
+      `${courseId}: not found in the synced content bundle at ${SYNCED_SHA}`
     );
   }
-  const tree = await extractTarball(
-    await createGitHubClient().fetchTarball(singleton.sha)
-  );
-  for (const [path, bytes] of tree) {
-    if (!path.endsWith("/course.yaml")) continue;
-    const { id } = parseYaml(new TextDecoder().decode(bytes)) as { id: string };
-    if (id !== courseId) continue;
-    const raw = tree.get(path.replace(/course\.yaml$/, "slots.lock.json"));
-    if (!raw)
-      throw new Error(`${courseId}: no slots.lock.json next to ${path}`);
-    return {
-      contentSha: singleton.sha,
-      slotsLock: JSON.parse(new TextDecoder().decode(raw)) as SlotsLock,
-    };
-  }
-  throw new Error(
-    `${courseId}: not found in the synced tree at ${singleton.sha}`
-  );
+  return { contentSha: SYNCED_SHA, slotsLock };
 }
 
 /** Validate a `[u64, u64, u64, u64]` mask sent as decimal strings. */
@@ -430,7 +404,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (activeLessons) {
     let commit: ReturnType<typeof buildCourseCommit>;
     try {
-      const { contentSha, slotsLock } = await readCourseSlotsLock(courseId);
+      const { contentSha, slotsLock } = readCourseSlotsLock(courseId);
       commit = buildCourseCommit({
         courseId,
         contentSha,
@@ -440,9 +414,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch (e) {
       if (e instanceof MaskMismatchError) {
         return NextResponse.json({ error: e.message }, { status: 409 });
-      }
-      if (e instanceof GitHubUnavailableError) {
-        return NextResponse.json({ error: e.message }, { status: 503 });
       }
       return NextResponse.json(
         {

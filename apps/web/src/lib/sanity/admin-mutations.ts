@@ -110,63 +110,18 @@ export async function uploadImageAsset(
   return asset._id;
 }
 
-export async function writeCourseOnChainStatus(
-  sanityId: string,
-  status: string,
-  coursePda: string,
-  txSignature: string
-): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({
-      "onChainStatus.status": status,
-      "onChainStatus.coursePda": coursePda,
-      "onChainStatus.lastSynced": new Date().toISOString(),
-      "onChainStatus.txSignature": txSignature,
-    })
-    .commit();
-}
-
 /**
- * Mirror a course's on-chain `is_active` flag into Sanity so the public catalog
- * can hide a deactivated course (issue #321). The catalog gate reads
- * `onChainStatus.isActive`; the on-chain tx alone doesn't affect Sanity, so the
- * deactivate/reactivate routes call this after the tx succeeds.
+ * SP2-B Task 6: the four on-chain status writers moved to the Supabase write
+ * seam (`@/lib/content/deployment-writes`) — they now upsert the
+ * `onchain_deployments` table instead of patching Sanity's frozen
+ * `onChainStatus` overlay. Their SIGNATURES are unchanged, and they are
+ * re-exported here so `@/lib/sanity/admin-mutations` importers (the sync +
+ * deactivate/reactivate + achievements routes) stay valid. SP2-C repoints those
+ * imports at `@/lib/content/deployment-writes` and deletes this re-export.
  */
-export async function writeCourseActive(
-  sanityId: string,
-  isActive: boolean
-): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({ "onChainStatus.isActive": isActive })
-    .commit();
-}
-
-export async function writeCourseTrackCollection(
-  sanityId: string,
-  trackCollectionAddress: string
-): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({
-      "onChainStatus.trackCollectionAddress": trackCollectionAddress,
-    })
-    .commit();
-}
-
-export async function writeAchievementOnChainStatus(
-  sanityId: string,
-  achievementPda: string,
-  collectionAddress: string
-): Promise<void> {
-  await sanityAdmin
-    .patch(sanityId)
-    .set({
-      "onChainStatus.status": "synced",
-      "onChainStatus.achievementPda": achievementPda,
-      "onChainStatus.collectionAddress": collectionAddress,
-      "onChainStatus.lastSynced": new Date().toISOString(),
-    })
-    .commit();
-}
+export {
+  writeCourseOnChainStatus,
+  writeCourseActive,
+  writeCourseTrackCollection,
+  writeAchievementOnChainStatus,
+} from "@/lib/content/deployment-writes";

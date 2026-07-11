@@ -16,9 +16,17 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-const sanityFetch = vi.fn();
-vi.mock("@/lib/sanity/client", () => ({
-  sanityFetch: (...args: unknown[]) => sanityFetch(...args),
+// SP2-B: the course's instructor wallet is resolved from the committed content
+// bundle (coursesById -> instructorsById) instead of a Sanity fetch.
+let coursesById = new Map<string, { _id: string; instructor?: unknown }>();
+let instructorsById = new Map<string, { _id: string; wallet?: unknown }>();
+vi.mock("@/lib/content/store", () => ({
+  get coursesById() {
+    return coursesById;
+  },
+  get instructorsById() {
+    return instructorsById;
+  },
 }));
 
 const getCourseStats = vi.fn();
@@ -34,23 +42,37 @@ function makeParams(id = "course-1"): { params: Promise<{ id: string }> } {
   return { params: Promise.resolve({ id }) };
 }
 
+/** A bundle where `course-1` derefs to an instructor with the given wallet. */
+function bundleWithWallet(wallet: string | null): void {
+  coursesById = new Map([
+    ["course-1", { _id: "course-1", instructor: { _ref: "instructor-1" } }],
+  ]);
+  instructorsById = new Map([
+    ["instructor-1", { _id: "instructor-1", wallet }],
+  ]);
+}
+
 beforeEach(() => {
   vi.resetModules();
   getUser.mockReset();
   maybeSingle.mockReset();
-  sanityFetch.mockReset();
   getCourseStats.mockReset();
+  from.mockClear();
+  select.mockClear();
+  eq.mockClear();
+  coursesById = new Map();
+  instructorsById = new Map();
 });
 
 describe("GET /api/teacher/courses/[id]/stats", () => {
   it("returns 401 when there is no session", async () => {
     getUser.mockResolvedValue({ data: { user: null }, error: null });
+    bundleWithWallet("WALLET_A");
 
     const { GET } = await import("../route");
     const res = await GET(makeRequest(), makeParams());
 
     expect(res.status).toBe(401);
-    expect(sanityFetch).not.toHaveBeenCalled();
     expect(getCourseStats).not.toHaveBeenCalled();
   });
 
@@ -63,7 +85,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
       data: { wallet_address: "WALLET_A" },
       error: null,
     });
-    sanityFetch.mockResolvedValue({ wallet: "WALLET_A" });
+    bundleWithWallet("WALLET_A");
     const stats = {
       enrolledCount: 3,
       completionCount: 1,
@@ -79,21 +101,10 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
     expect(json).toEqual(stats);
     expect(getCourseStats).toHaveBeenCalledWith("course-1");
 
-    // Session wallet resolution matches the Task-6 viewer mechanism exactly.
+    // Session wallet resolution matches the /teach viewer mechanism exactly.
     expect(from).toHaveBeenCalledWith("profiles");
     expect(select).toHaveBeenCalledWith("wallet_address");
     expect(eq).toHaveBeenCalledWith("id", "user-1");
-
-    const [query, params, revalidate] = sanityFetch.mock.calls[0] as [
-      string,
-      unknown,
-      number,
-    ];
-    expect(query.replace(/\s+/g, " ")).toContain(
-      '*[_type=="course" && _id==$id][0]{"wallet": instructor->wallet}'
-    );
-    expect(params).toEqual({ id: "course-1" });
-    expect(revalidate).toBe(0);
   });
 
   it("returns 403 when the course's instructor wallet differs from the session wallet", async () => {
@@ -105,7 +116,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
       data: { wallet_address: "WALLET_A" },
       error: null,
     });
-    sanityFetch.mockResolvedValue({ wallet: "WALLET_B" });
+    bundleWithWallet("WALLET_B");
 
     const { GET } = await import("../route");
     const res = await GET(makeRequest(), makeParams());
@@ -114,7 +125,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
     expect(getCourseStats).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when the course has no instructor wallet (no fallback, no admin override)", async () => {
+  it("returns 403 when the course's instructor has no wallet (no fallback, no admin override)", async () => {
     getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
@@ -123,10 +134,28 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
       data: { wallet_address: "WALLET_A" },
       error: null,
     });
-    sanityFetch.mockResolvedValue({ wallet: null });
+    bundleWithWallet(null);
 
     const { GET } = await import("../route");
     const res = await GET(makeRequest(), makeParams());
+
+    expect(res.status).toBe(403);
+    expect(getCourseStats).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the course is absent from the bundle", async () => {
+    getUser.mockResolvedValue({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+    maybeSingle.mockResolvedValue({
+      data: { wallet_address: "WALLET_A" },
+      error: null,
+    });
+    // empty bundle — no course, no instructor to resolve a wallet from.
+
+    const { GET } = await import("../route");
+    const res = await GET(makeRequest(), makeParams("course-missing"));
 
     expect(res.status).toBe(403);
     expect(getCourseStats).not.toHaveBeenCalled();
@@ -138,7 +167,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
       error: null,
     });
     maybeSingle.mockResolvedValue({ data: null, error: null });
-    sanityFetch.mockResolvedValue({ wallet: "WALLET_A" });
+    bundleWithWallet("WALLET_A");
 
     const { GET } = await import("../route");
     const res = await GET(makeRequest(), makeParams());

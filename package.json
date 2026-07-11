@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "typecheck": "turbo typecheck",
+    "test:scripts": "./apps/web/node_modules/.bin/vitest run --config vitest.config.ts",
     "clean": "turbo clean",
     "prepare": "husky"
   },

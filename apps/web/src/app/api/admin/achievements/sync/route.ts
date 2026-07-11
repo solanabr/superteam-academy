@@ -1,5 +1,6 @@
 import "server-only";
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { serverEnv } from "@/lib/env.server";
@@ -8,7 +9,10 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { getAllAchievementsAdmin } from "@/lib/sanity/queries";
+import {
+  COURSES_CACHE_TAG,
+  getAllAchievementsAdmin,
+} from "@/lib/sanity/queries";
 import { findAchievementTypePDA, getProgramId } from "@/lib/solana/pda";
 import { fetchAchievementType } from "@/lib/solana/academy-reads";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
@@ -92,6 +96,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             achPda.toBase58(),
             collectionAddr
           );
+          // Purge the cached deployment map so the recovered achievement is
+          // visible to getDeployedAchievements immediately (not after the 1h
+          // ISR window), mirroring the course writers.
+          revalidateTag(COURSES_CACHE_TAG);
           return NextResponse.json({
             action: "recovered",
             message: "Collection address recovered from on-chain data",
@@ -139,6 +147,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         achPda.toBase58(),
         result.collectionAddress
       );
+      // Purge the cached deployment map so the newly deployed achievement is
+      // visible to getDeployedAchievements immediately (not after the 1h ISR
+      // window), mirroring the course writers.
+      revalidateTag(COURSES_CACHE_TAG);
     } catch (mutationErr) {
       console.error(
         "[admin/achievements/sync] Sanity write-back failed:",

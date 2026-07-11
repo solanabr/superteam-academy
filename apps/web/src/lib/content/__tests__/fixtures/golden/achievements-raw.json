@@ -1,0 +1,430 @@
+{
+  "all": [
+    {
+      "_id": "achievement-anchor-expert",
+      "award": {
+        "course": "course-anchor-framework",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete all Anchor framework lessons",
+      "glyph": "⬡",
+      "icon": "anchor",
+      "name": "Anchor Expert",
+      "solTier": false,
+      "xpReward": 300
+    },
+    {
+      "_id": "achievement-bug-hunter",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "manual",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "special",
+      "description": "Report a verified bug in the platform",
+      "glyph": "※",
+      "icon": "bug",
+      "name": "Bug Hunter",
+      "solTier": false,
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-consistency-king",
+      "award": {
+        "course": null,
+        "days": 100,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 100-day learning streak",
+      "glyph": "∞",
+      "icon": "trophy",
+      "name": "Consistency King",
+      "solTier": true,
+      "xpReward": 500
+    },
+    {
+      "_id": "achievement-course-completer",
+      "award": {
+        "course": "course-solana-fundamentals",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete an entire course",
+      "glyph": "✦",
+      "icon": "graduation-cap",
+      "name": "Course Completer",
+      "solTier": false,
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-early-adopter",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "user-number",
+        "lte": 100,
+        "path": null,
+        "stat": null
+      },
+      "category": "special",
+      "description": "Join the platform during the first month",
+      "glyph": "✩",
+      "icon": "sparkles",
+      "name": "Early Adopter",
+      "solTier": true,
+      "xpReward": 1000
+    },
+    {
+      "_id": "achievement-first-steps",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete your first lesson",
+      "glyph": "01",
+      "icon": "footprints",
+      "name": "First Steps",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-full-stack-solana",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "path-completed",
+        "lte": null,
+        "path": "path-solana-core",
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete all courses in the Solana Developer Path",
+      "glyph": "◎",
+      "icon": "layers",
+      "name": "Full Stack Solana",
+      "solTier": true,
+      "xpReward": 500
+    },
+    {
+      "_id": "achievement-monthly-master",
+      "award": {
+        "course": null,
+        "days": 30,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 30-day learning streak",
+      "glyph": "30",
+      "icon": "crown",
+      "name": "Monthly Master",
+      "solTier": false,
+      "xpReward": 300
+    },
+    {
+      "_id": "achievement-perfect-score",
+      "award": null,
+      "category": "special",
+      "description": "Complete all challenges in a course with no wrong attempts",
+      "glyph": "A+",
+      "icon": "star",
+      "name": "Perfect Score",
+      "solTier": false,
+      "xpReward": 100
+    },
+    {
+      "_id": "achievement-rust-rookie",
+      "award": {
+        "course": "course-rust-for-solana",
+        "days": null,
+        "gte": 1,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete your first Rust challenge",
+      "glyph": "Rs",
+      "icon": "code",
+      "name": "Rust Rookie",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-speed-runner",
+      "award": null,
+      "category": "progress",
+      "description": "Complete a course in under 24 hours",
+      "glyph": "»",
+      "icon": "zap",
+      "name": "Speed Runner",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-week-warrior",
+      "award": {
+        "course": null,
+        "days": 7,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 7-day learning streak",
+      "glyph": "7×",
+      "icon": "flame",
+      "name": "Week Warrior",
+      "solTier": false,
+      "xpReward": 100
+    }
+  ],
+  "deployed": [
+    {
+      "_id": "achievement-anchor-expert",
+      "award": {
+        "course": "course-anchor-framework",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete all Anchor framework lessons",
+      "glyph": "⬡",
+      "icon": "anchor",
+      "name": "Anchor Expert",
+      "solTier": false,
+      "xpReward": 300
+    },
+    {
+      "_id": "achievement-bug-hunter",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "manual",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "special",
+      "description": "Report a verified bug in the platform",
+      "glyph": "※",
+      "icon": "bug",
+      "name": "Bug Hunter",
+      "solTier": false,
+      "xpReward": 250
+    },
+    {
+      "_id": "achievement-consistency-king",
+      "award": {
+        "course": null,
+        "days": 100,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 100-day learning streak",
+      "glyph": "∞",
+      "icon": "trophy",
+      "name": "Consistency King",
+      "solTier": true,
+      "xpReward": 500
+    },
+    {
+      "_id": "achievement-course-completer",
+      "award": {
+        "course": "course-solana-fundamentals",
+        "days": null,
+        "gte": null,
+        "kind": "course-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete an entire course",
+      "glyph": "✦",
+      "icon": "graduation-cap",
+      "name": "Course Completer",
+      "solTier": false,
+      "xpReward": 200
+    },
+    {
+      "_id": "achievement-early-adopter",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "user-number",
+        "lte": 100,
+        "path": null,
+        "stat": null
+      },
+      "category": "special",
+      "description": "Join the platform during the first month",
+      "glyph": "✩",
+      "icon": "sparkles",
+      "name": "Early Adopter",
+      "solTier": true,
+      "xpReward": 1000
+    },
+    {
+      "_id": "achievement-first-steps",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": 1,
+        "kind": "lessons-completed",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "progress",
+      "description": "Complete your first lesson",
+      "glyph": "01",
+      "icon": "footprints",
+      "name": "First Steps",
+      "solTier": false,
+      "xpReward": 50
+    },
+    {
+      "_id": "achievement-full-stack-solana",
+      "award": {
+        "course": null,
+        "days": null,
+        "gte": null,
+        "kind": "path-completed",
+        "lte": null,
+        "path": "path-solana-core",
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete all courses in the Solana Developer Path",
+      "glyph": "◎",
+      "icon": "layers",
+      "name": "Full Stack Solana",
+      "solTier": true,
+      "xpReward": 500
+    },
+    {
+      "_id": "achievement-monthly-master",
+      "award": {
+        "course": null,
+        "days": 30,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 30-day learning streak",
+      "glyph": "30",
+      "icon": "crown",
+      "name": "Monthly Master",
+      "solTier": false,
+      "xpReward": 300
+    },
+    {
+      "_id": "achievement-perfect-score",
+      "award": null,
+      "category": "special",
+      "description": "Complete all challenges in a course with no wrong attempts",
+      "glyph": "A+",
+      "icon": "star",
+      "name": "Perfect Score",
+      "solTier": false,
+      "xpReward": 100
+    },
+    {
+      "_id": "achievement-rust-rookie",
+      "award": {
+        "course": "course-rust-for-solana",
+        "days": null,
+        "gte": 1,
+        "kind": "lessons-completed-in-course",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "skills",
+      "description": "Complete your first Rust challenge",
+      "glyph": "Rs",
+      "icon": "code",
+      "name": "Rust Rookie",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-speed-runner",
+      "award": null,
+      "category": "progress",
+      "description": "Complete a course in under 24 hours",
+      "glyph": "»",
+      "icon": "zap",
+      "name": "Speed Runner",
+      "solTier": false,
+      "xpReward": 150
+    },
+    {
+      "_id": "achievement-week-warrior",
+      "award": {
+        "course": null,
+        "days": 7,
+        "gte": null,
+        "kind": "streak",
+        "lte": null,
+        "path": null,
+        "stat": null
+      },
+      "category": "streaks",
+      "description": "Maintain a 7-day learning streak",
+      "glyph": "7×",
+      "icon": "flame",
+      "name": "Week Warrior",
+      "solTier": false,
+      "xpReward": 100
+    }
+  ]
+}

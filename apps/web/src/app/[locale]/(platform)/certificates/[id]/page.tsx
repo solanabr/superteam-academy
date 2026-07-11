@@ -8,7 +8,7 @@ import type { Certificate } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CertificateCard } from "@/components/certificates/certificate-card";
 import { createClient } from "@/lib/supabase/client";
-import { getCoursesByIds } from "@/lib/sanity/queries";
+import { getCoursesByIds } from "@/lib/content/client-queries";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import { truncateAddress } from "@/lib/utils";
 
