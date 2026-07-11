@@ -30,7 +30,6 @@ import {
   Quest,
   LearningPath,
   Instructor,
-  type CourseT,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
 import { extractTarball } from "../src/lib/content-sync/tarball";
@@ -156,10 +155,32 @@ function validateTree(tree: RepoTree): CompileInput {
   }
 
   // Every course needs its slots lockfile — it is emitted verbatim (keyed by id).
-  for (const c of content.courses as CourseT[]) {
+  for (const c of content.courses) {
     const dir = courseDirById.get(c.id);
     if (!dir || !content.slots.has(dir)) {
       issues.push(`course ${c.id}: missing slots.lock.json`);
+    }
+  }
+
+  // Every code block's referenced files must be present. The projector falls
+  // back to "" for a missing starter/solution (projector.ts) and [] for missing
+  // tests, which would bundle a broken challenge instead of failing closed.
+  // Mirrors content-sync/validate.ts's presence check, minus the executor gate.
+  for (const { dir, lesson } of content.lessons) {
+    for (const block of lesson.blocks) {
+      if (block.type !== "code") continue;
+      const missing: string[] = [];
+      if (!content.code.has(`${dir}/${block.starter}`))
+        missing.push(`${dir}/${block.starter}`);
+      if (!content.code.has(`${dir}/${block.solution}`))
+        missing.push(`${dir}/${block.solution}`);
+      if (!tree.has(`${dir}/${block.tests}`))
+        missing.push(`${dir}/${block.tests}`);
+      if (missing.length > 0) {
+        issues.push(
+          `lesson ${lesson.id} block ${block.key}: missing file(s): ${missing.join(", ")}`
+        );
+      }
     }
   }
 
@@ -252,7 +273,7 @@ export function compileContent(
 
   // slots.json: each course's lockfile, keyed by course id.
   const slotsById: Record<string, SlotsLockT> = {};
-  for (const c of content.courses as CourseT[]) {
+  for (const c of content.courses) {
     const dir = courseDirById.get(c.id)!;
     slotsById[c.id] = content.slots.get(dir)!;
   }

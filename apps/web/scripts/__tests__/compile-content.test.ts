@@ -81,6 +81,49 @@ function validTree(): RepoTree {
   return tree;
 }
 
+/** validTree with the lesson carrying a code block whose files are all present. */
+function treeWithCodeBlock(): RepoTree {
+  const tree = validTree();
+  tree.set(
+    "courses/intro/lessons/hello/lesson.yaml",
+    enc(
+      [
+        "id: lesson-intro-hello",
+        "slug: hello",
+        "title: Hello World",
+        "blocks:",
+        "  - type: prose",
+        "    key: intro",
+        "    src: intro.md",
+        "  - type: code",
+        "    key: solve",
+        "    language: typescript",
+        "    starter: starter.ts",
+        "    solution: solution.ts",
+        "    tests: tests.json",
+        "",
+      ].join("\n")
+    )
+  );
+  tree.set(
+    "courses/intro/lessons/hello/starter.ts",
+    enc("export const x = 0;\n")
+  );
+  tree.set(
+    "courses/intro/lessons/hello/solution.ts",
+    enc("export const x = 1;\n")
+  );
+  tree.set(
+    "courses/intro/lessons/hello/tests.json",
+    enc(
+      JSON.stringify([
+        { id: "t1", description: "returns 1", input: "", expectedOutput: "1" },
+      ])
+    )
+  );
+  return tree;
+}
+
 const opts = { sha: "0".repeat(40), compiledAt: "2026-07-10T18:48:30Z" };
 
 describe("compileContent", () => {
@@ -171,6 +214,30 @@ describe("compileContent", () => {
       )
     );
     expect(() => compileContent(tree, opts)).toThrow(ContentValidationError);
+  });
+
+  it("resolves a code block's starter/solution/tests when all files are present", () => {
+    const files = compileContent(treeWithCodeBlock(), opts);
+    const lessons = JSON.parse(files.get("lessons.json")!) as {
+      blocks: { _type: string; starter?: string; tests?: unknown[] }[];
+    }[];
+    const code = lessons[0]!.blocks.find((b) => b._type === "code")!;
+    expect(code.starter).toBe("export const x = 0;\n");
+    expect(Array.isArray(code.tests)).toBe(true);
+  });
+
+  it("fails closed naming the lesson + file when a code block's starter is absent", () => {
+    const tree = treeWithCodeBlock();
+    tree.delete("courses/intro/lessons/hello/starter.ts");
+    try {
+      compileContent(tree, opts);
+      expect.unreachable("compileContent should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-intro-hello");
+      expect(joined).toContain("starter.ts");
+    }
   });
 
   it("errors naming the course when its slots.lock.json is missing", () => {
