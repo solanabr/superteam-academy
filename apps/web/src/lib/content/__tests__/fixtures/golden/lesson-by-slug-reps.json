@@ -1,0 +1,108 @@
+{
+  "codeLesson": {
+    "_id": "lesson-anchor-setup-challenge",
+    "blocks": [
+      {
+        "_type": "prose",
+        "amount": null,
+        "buildType": null,
+        "consumes": null,
+        "deployable": null,
+        "hints": null,
+        "idl": null,
+        "key": "intro",
+        "language": null,
+        "maxWords": null,
+        "network": null,
+        "produces": null,
+        "prompt": null,
+        "questions": null,
+        "solution": null,
+        "src": "# Challenge: Model Anchor Program Structure in Rust\n\nAnchor programs follow a specific pattern: instructions contain account metadata and serialized data. You'll model this structure using Rust structs and enums.\n\n## Your Task\n\nImplement `build_instruction(program_id, user_key, instruction_name)` that constructs an Anchor-style instruction:\n\n1. Encode the instruction name as bytes and compute its length\n2. Build account metadata for two accounts:\n   - User account: signer=true, writable=true\n   - System program (`\"11111111111111111111111111111111\"`): signer=false, writable=false\n3. Return a formatted string: `\"program:<id>,accounts:<count>,data_len:<len>\"`\n\n**This mirrors Anchor's `#[derive(Accounts)]` pattern** where each instruction declares which accounts it needs and how they should be validated.\n\n**Rust Concepts Used:**\n- Structs with boolean fields\n- `Vec` collection\n- String formatting with `format!()`\n- Byte conversion with `.as_bytes()`\n",
+        "starter": null,
+        "tests": null,
+        "url": null
+      },
+      {
+        "_type": "code",
+        "amount": null,
+        "buildType": "standard",
+        "consumes": null,
+        "deployable": false,
+        "hints": [
+          "Get instruction data length with instruction_name.as_bytes().len().",
+          "Create two AccountMeta structs in a Vec: one for the user (signer + writable) and one for the system program (neither).",
+          "Return format!(\"program:{},accounts:{},data_len:{}\", program_id, accounts.len(), data_len)."
+        ],
+        "idl": null,
+        "key": "exercise",
+        "language": "rust",
+        "maxWords": null,
+        "network": null,
+        "produces": null,
+        "prompt": null,
+        "questions": null,
+        "solution": "#[derive(Debug)]\nstruct AccountMeta {\n    pubkey: String,\n    is_signer: bool,\n    is_writable: bool,\n}\n\nfn build_instruction(program_id: &str, user_key: &str, instruction_name: &str) -> String {\n    let data_len = instruction_name.as_bytes().len();\n\n    let accounts = vec![\n        AccountMeta {\n            pubkey: user_key.to_string(),\n            is_signer: true,\n            is_writable: true,\n        },\n        AccountMeta {\n            pubkey: \"11111111111111111111111111111111\".to_string(),\n            is_signer: false,\n            is_writable: false,\n        },\n    ];\n\n    format!(\"program:{},accounts:{},data_len:{}\", program_id, accounts.len(), data_len)\n}\n",
+        "src": null,
+        "starter": "#[derive(Debug)]\nstruct AccountMeta {\n    pubkey: String,\n    is_signer: bool,\n    is_writable: bool,\n}\n\nfn build_instruction(program_id: &str, user_key: &str, instruction_name: &str) -> String {\n    // TODO: Encode instruction_name as bytes and get its length\n\n    // TODO: Build account metas Vec with 2 entries:\n    //   - user_key: signer=true, writable=true\n    //   - system program: signer=false, writable=false\n\n    // TODO: Return \"program:<id>,accounts:<count>,data_len:<len>\"\n    todo!()\n}\n",
+        "tests": [
+          {
+            "description": "Includes the account count",
+            "expectedOutput": "__result__.contains(\"accounts:2\")",
+            "id": "t1",
+            "input": "\"progXYZ\", \"userABC\", \"initialize\""
+          },
+          {
+            "description": "Includes the instruction data length",
+            "expectedOutput": "__result__.contains(\"data_len:10\")",
+            "id": "t2",
+            "input": "\"progXYZ\", \"userABC\", \"initialize\""
+          },
+          {
+            "description": "Starts with the program id",
+            "expectedOutput": "__result__.starts_with(\"program:progXYZ\")",
+            "id": "t3",
+            "input": "\"progXYZ\", \"userABC\", \"initialize\""
+          },
+          {
+            "description": "Exact output for a different instruction",
+            "expectedOutput": "\"program:myProg,accounts:2,data_len:4\".to_string()",
+            "id": "t4",
+            "input": "\"myProg\", \"user1\", \"mint\""
+          }
+        ],
+        "url": null
+      }
+    ],
+    "slug": "anchor-setup-challenge",
+    "title": "Challenge: Anchor Program Structure"
+  },
+  "proseLesson": {
+    "_id": "lesson-anchor-intro",
+    "blocks": [
+      {
+        "_type": "prose",
+        "amount": null,
+        "buildType": null,
+        "consumes": null,
+        "deployable": null,
+        "hints": null,
+        "idl": null,
+        "key": "intro",
+        "language": null,
+        "maxWords": null,
+        "network": null,
+        "produces": null,
+        "prompt": null,
+        "questions": null,
+        "solution": null,
+        "src": "# What is the Anchor Framework?\n\nAnchor is the most popular framework for Solana smart contract development. It provides a Rust-based DSL (domain-specific language) that dramatically reduces boilerplate and makes programs safer, faster to write, and easier to read.\n\n## Why Use Anchor?\n\nWriting native Solana programs in Rust requires:\n- Manual account deserialization and validation\n- Verbose error handling\n- Security checks spread across your code\n- Repetitive boilerplate for common patterns\n\nAnchor handles all of this for you through **macros** and **attributes**.\n\n### Native Solana Program\n\n```rust\n// Manual account deserialization\nlet account_info_iter = &mut accounts.iter();\nlet user_account = next_account_info(account_info_iter)?;\n\n// Manual validation\nif !user_account.is_writable {\n    return Err(ProgramError::InvalidAccountData);\n}\n\n// Manual owner check\nif user_account.owner != program_id {\n    return Err(ProgramError::IncorrectProgramId);\n}\n```\n\n### Anchor Program\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUser<'info> {\n    #[account(mut)]\n    pub user: Account<'info, UserAccount>,\n}\n```\n\nAnchor automatically validates that the account is writable and owned by the program!\n\n## Anchor Project Structure\n\nA typical Anchor project:\n\n```\nmy-anchor-project/\n├── programs/\n│   └── my-program/\n│       └── src/\n│           └── lib.rs      # Your program code\n├── tests/\n│   └── my-program.ts       # TypeScript tests\n├── migrations/\n│   └── deploy.ts           # Deployment scripts\n└── Anchor.toml             # Configuration\n```\n\n## Key Anchor Components\n\n### 1. Program Module\n\n```rust\nuse anchor_lang::prelude::*;\n\ndeclare_id!(\"YourProgramIDHere\");\n\n#[program]\npub mod my_program {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        // Your logic here\n        Ok(())\n    }\n}\n```\n\nThe `#[program]` macro defines your program's instruction handlers.\n\n### 2. Accounts Struct\n\n```rust\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(\n        init,\n        payer = user,\n        space = 8 + 32 + 8\n    )]\n    pub my_account: Account<'info, MyAccount>,\n    #[account(mut)]\n    pub user: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n```\n\nAccounts structs define what accounts your instruction needs and how to validate them.\n\n### 3. Account Data\n\n```rust\n#[account]\npub struct MyAccount {\n    pub authority: Pubkey,\n    pub counter: u64,\n}\n```\n\nThe `#[account]` macro adds serialization/deserialization and a discriminator for account type safety.\n\n## Anchor vs Native: Security Benefits\n\n| Security Check | Native | Anchor |\n|----------------|--------|--------|\n| Account ownership | Manual check | Automatic via Account<'info, T> |\n| Signer verification | Manual check | Automatic via Signer<'info> |\n| Writable validation | Manual check | Automatic via #[account(mut)] |\n| Account initialization | Manual allocation | Automatic via #[account(init)] |\n| Discriminator (type safety) | None | Automatic 8-byte discriminator |\n\nAnchor programs are **harder to exploit** because common security pitfalls are prevented by the framework itself.\n\n## Next Steps\n\nIn the next challenge, you'll build a mock Anchor program structure to understand how programs are organized on Solana.\n",
+        "starter": null,
+        "tests": null,
+        "url": null
+      }
+    ],
+    "slug": "anchor-intro",
+    "title": "What is the Anchor Framework?"
+  }
+}

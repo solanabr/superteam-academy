@@ -1,0 +1,666 @@
+[
+  {
+    "_id": "course-anchor-framework",
+    "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
+    "difficulty": "intermediate",
+    "duration": 14,
+    "instructor": {
+      "avatar": null,
+      "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
+      "name": "Mariana Costa",
+      "socialLinks": {
+        "github": "https://github.com/marianacosta",
+        "twitter": "https://twitter.com/mari_costa_sol"
+      }
+    },
+    "modules": [
+      {
+        "description": "Learn the fundamentals of the Anchor framework, program structure, and account constraints.",
+        "key": "anchor-basics",
+        "lessons": [
+          {
+            "_id": "lesson-anchor-intro",
+            "slug": "anchor-intro",
+            "title": "What is the Anchor Framework?"
+          },
+          {
+            "_id": "lesson-anchor-setup-challenge",
+            "slug": "anchor-setup-challenge",
+            "title": "Challenge: Anchor Program Structure"
+          },
+          {
+            "_id": "lesson-anchor-accounts",
+            "slug": "anchor-accounts",
+            "title": "Anchor Account Constraints"
+          },
+          {
+            "_id": "lesson-anchor-accounts-challenge",
+            "slug": "anchor-accounts-challenge",
+            "title": "Challenge: Account Validation"
+          }
+        ],
+        "title": "Anchor Basics"
+      },
+      {
+        "description": "Master Program Derived Addresses and Cross-Program Invocations for building composable programs.",
+        "key": "pdas-cpis",
+        "lessons": [
+          {
+            "_id": "lesson-pda-deep-dive",
+            "slug": "pda-deep-dive",
+            "title": "PDA Deep Dive"
+          },
+          {
+            "_id": "lesson-pda-advanced-challenge",
+            "slug": "pda-advanced-challenge",
+            "title": "Challenge: Multi-PDA Derivation"
+          },
+          {
+            "_id": "lesson-cpi-overview",
+            "slug": "cpi-overview",
+            "title": "Cross-Program Invocations"
+          },
+          {
+            "_id": "lesson-cpi-challenge",
+            "slug": "cpi-challenge",
+            "title": "Challenge: Simulate a CPI Vault Transfer"
+          }
+        ],
+        "title": "PDAs & CPIs"
+      },
+      {
+        "description": "Learn to test, debug, and deploy production-ready Anchor programs.",
+        "key": "anchor-testing",
+        "lessons": [
+          {
+            "_id": "lesson-anchor-testing",
+            "slug": "anchor-testing",
+            "title": "Testing Anchor Programs"
+          },
+          {
+            "_id": "lesson-anchor-errors",
+            "slug": "anchor-errors",
+            "title": "Custom Errors in Anchor"
+          },
+          {
+            "_id": "lesson-deployment",
+            "slug": "deployment",
+            "title": "Deploying Solana Programs"
+          },
+          {
+            "_id": "lesson-testing-challenge",
+            "slug": "testing-challenge",
+            "title": "Challenge: Test a Transfer Program"
+          }
+        ],
+        "title": "Testing & Deployment"
+      }
+    ],
+    "slug": "anchor-framework",
+    "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+    "thumbnail": null,
+    "title": "Anchor Framework Mastery",
+    "trackId": 3,
+    "trackLevel": 1,
+    "xpReward": 900
+  },
+  {
+    "_id": "course-building-first-program",
+    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "instructor": {
+      "avatar": null,
+      "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
+      "name": "Mariana Costa",
+      "socialLinks": {
+        "github": "https://github.com/marianacosta",
+        "twitter": "https://twitter.com/mari_costa_sol"
+      }
+    },
+    "modules": [
+      {
+        "description": "Understand how Solana programs get compiled and get your first successful build through the Superteam Academy Build Server.",
+        "key": "bfsp-build-pipeline",
+        "lessons": [
+          {
+            "_id": "lesson-bfsp-from-code-to-chain",
+            "slug": "from-code-to-chain",
+            "title": "From Code to Chain"
+          },
+          {
+            "_id": "lesson-bfsp-your-first-build",
+            "slug": "your-first-build",
+            "title": "Your First Build"
+          },
+          {
+            "_id": "lesson-bfsp-anatomy-anchor-program",
+            "slug": "anatomy-anchor-program",
+            "title": "Anatomy of an Anchor Program"
+          },
+          {
+            "_id": "lesson-bfsp-add-instruction",
+            "slug": "add-instruction",
+            "title": "Add an Instruction"
+          }
+        ],
+        "title": "The Build Pipeline"
+      },
+      {
+        "description": "Define on-chain state with account structs, learn account constraints, and debug compiler errors.",
+        "key": "bfsp-state-accounts",
+        "lessons": [
+          {
+            "_id": "lesson-bfsp-on-chain-state",
+            "slug": "on-chain-state",
+            "title": "On-Chain State"
+          },
+          {
+            "_id": "lesson-bfsp-define-counter",
+            "slug": "define-counter-account",
+            "title": "Define a Counter Account"
+          },
+          {
+            "_id": "lesson-bfsp-account-constraints",
+            "slug": "account-constraints-deep-dive",
+            "title": "Account Constraints Deep Dive"
+          },
+          {
+            "_id": "lesson-bfsp-wire-up-initialize",
+            "slug": "wire-up-initialize",
+            "title": "Wire Up Initialize"
+          }
+        ],
+        "title": "State & Accounts"
+      },
+      {
+        "description": "Build the complete counter program with multiple instructions, error handling, and deploy it to Devnet.",
+        "key": "bfsp-full-counter",
+        "lessons": [
+          {
+            "_id": "lesson-bfsp-adding-instructions",
+            "slug": "adding-instructions",
+            "title": "Adding Instructions"
+          },
+          {
+            "_id": "lesson-bfsp-build-increment",
+            "slug": "build-increment",
+            "title": "Build the Increment"
+          },
+          {
+            "_id": "lesson-bfsp-complete-counter",
+            "slug": "complete-counter-program",
+            "title": "Complete Counter Program"
+          },
+          {
+            "_id": "lesson-bfsp-deploy-to-devnet",
+            "slug": "deploy-to-devnet",
+            "title": "Deploy to Devnet"
+          }
+        ],
+        "title": "The Full Counter"
+      },
+      {
+        "description": "Deploy your counter program to Solana Devnet and interact with it on-chain. Fund your wallet, deploy your binary, and call your program's instructions.",
+        "key": "bfsp-deploy-interact",
+        "lessons": [
+          {
+            "_id": "lesson-bfsp-m4-airdrop",
+            "slug": "airdrop-fund-wallet",
+            "title": "Airdrop & Fund Your Wallet"
+          },
+          {
+            "_id": "lesson-bfsp-m4-deploy",
+            "slug": "deploy-program-devnet",
+            "title": "Deploy Your Program to Devnet"
+          },
+          {
+            "_id": "lesson-bfsp-m4-interact",
+            "slug": "interact-with-program",
+            "title": "Interact with Your Program"
+          },
+          {
+            "_id": "lesson-bfsp-m4-capstone",
+            "slug": "what-you-built",
+            "title": "What You've Built"
+          }
+        ],
+        "title": "Deploy & Interact"
+      }
+    ],
+    "slug": "building-your-first-solana-program",
+    "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
+    "thumbnail": null,
+    "title": "Building Your First Solana Program",
+    "trackId": 1,
+    "trackLevel": 2,
+    "xpReward": 850
+  },
+  {
+    "_id": "course-defi-on-solana",
+    "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
+    "difficulty": "advanced",
+    "duration": 16,
+    "instructor": {
+      "avatar": null,
+      "bio": "DeFi researcher and protocol designer. Previously built trading systems at a São Paulo quant fund. Now designs tokenomics and DeFi primitives for Solana protocols.",
+      "name": "Rafael Mendes",
+      "socialLinks": {
+        "github": "https://github.com/rafaelmendes",
+        "twitter": "https://twitter.com/rafamendes_defi"
+      }
+    },
+    "modules": [
+      {
+        "description": "Understand the core concepts of decentralized finance on Solana: AMMs, lending, and market mechanics.",
+        "key": "defi-primitives",
+        "lessons": [
+          {
+            "_id": "lesson-defi-overview",
+            "slug": "defi-overview",
+            "title": "DeFi on Solana Overview"
+          },
+          {
+            "_id": "lesson-amm-concepts",
+            "slug": "amm-concepts",
+            "title": "Automated Market Makers"
+          },
+          {
+            "_id": "lesson-lending-concepts",
+            "slug": "lending-concepts",
+            "title": "Lending & Borrowing Protocols"
+          },
+          {
+            "_id": "lesson-amm-challenge",
+            "slug": "amm-challenge",
+            "title": "Challenge: Constant Product AMM"
+          }
+        ],
+        "title": "DeFi Primitives"
+      },
+      {
+        "description": "Deep dive into SPL Token standards, token math, and staking mechanisms on Solana.",
+        "key": "token-mechanics",
+        "lessons": [
+          {
+            "_id": "lesson-token-standards",
+            "slug": "token-standards",
+            "title": "Solana Token Standards"
+          },
+          {
+            "_id": "lesson-token-math-challenge",
+            "slug": "token-math-challenge",
+            "title": "Token Math Challenge"
+          },
+          {
+            "_id": "lesson-staking-mechanisms",
+            "slug": "staking-mechanisms",
+            "title": "Staking Mechanisms on Solana"
+          },
+          {
+            "_id": "lesson-staking-challenge",
+            "slug": "staking-challenge",
+            "title": "Staking Rewards Calculator"
+          }
+        ],
+        "title": "Token Mechanics"
+      },
+      {
+        "description": "Learn advanced DeFi architecture: orderbooks, oracles, vaults, and liquidation systems.",
+        "key": "building-defi",
+        "lessons": [
+          {
+            "_id": "lesson-orderbook-design",
+            "slug": "orderbook-design",
+            "title": "On-Chain Orderbooks on Solana"
+          },
+          {
+            "_id": "lesson-oracle-design",
+            "slug": "oracle-design",
+            "title": "Price Oracles for DeFi"
+          },
+          {
+            "_id": "lesson-vault-challenge",
+            "slug": "vault-challenge",
+            "title": "DeFi Vault Simulator"
+          },
+          {
+            "_id": "lesson-liquidation-challenge",
+            "slug": "liquidation-challenge",
+            "title": "Liquidation Engine"
+          }
+        ],
+        "title": "Building DeFi Protocols"
+      }
+    ],
+    "slug": "defi-on-solana",
+    "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
+    "thumbnail": null,
+    "title": "DeFi on Solana",
+    "trackId": 5,
+    "trackLevel": 1,
+    "xpReward": 1000
+  },
+  {
+    "_id": "course-rust-for-solana",
+    "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "instructor": {
+      "avatar": null,
+      "bio": "Systems programmer and Rust educator. Former embedded systems engineer who transitioned to blockchain development. Maintains open-source Solana tooling and teaches Rust workshops across Latin America.",
+      "name": "Lucas Oliveira",
+      "socialLinks": {
+        "github": "https://github.com/lucasoliveira",
+        "twitter": "https://twitter.com/lucasoliv_dev"
+      }
+    },
+    "modules": [
+      {
+        "description": "Learn Rust fundamentals essential for Solana development: ownership, borrowing, structs, enums, and pattern matching.",
+        "key": "rust-basics",
+        "lessons": [
+          {
+            "_id": "lesson-why-rust",
+            "slug": "why-rust",
+            "title": "Why Rust for Solana"
+          },
+          {
+            "_id": "lesson-ownership-borrowing",
+            "slug": "ownership-borrowing",
+            "title": "Ownership and Borrowing"
+          },
+          {
+            "_id": "lesson-structs-enums",
+            "slug": "structs-enums",
+            "title": "Structs and Enums for Solana"
+          },
+          {
+            "_id": "lesson-rust-basics-challenge",
+            "slug": "rust-basics-challenge",
+            "title": "Challenge: Rust Structs & Methods"
+          }
+        ],
+        "title": "Rust Basics"
+      },
+      {
+        "description": "Apply Rust skills to blockchain concepts: serialization with Borsh, error handling patterns, and on-chain data management.",
+        "key": "rust-blockchain",
+        "lessons": [
+          {
+            "_id": "lesson-serialization",
+            "slug": "serialization",
+            "title": "Borsh Serialization for Solana"
+          },
+          {
+            "_id": "lesson-serialization-challenge",
+            "slug": "serialization-challenge",
+            "title": "Challenge: Serialize Account Data"
+          },
+          {
+            "_id": "lesson-error-handling",
+            "slug": "error-handling",
+            "title": "Error Handling in Solana Programs"
+          },
+          {
+            "_id": "lesson-error-challenge",
+            "slug": "error-challenge",
+            "title": "Challenge: Transaction Validator"
+          }
+        ],
+        "title": "Rust for Blockchain"
+      },
+      {
+        "description": "Build native Solana programs: program structure, instruction processing, PDAs, and state management.",
+        "key": "rust-programs",
+        "lessons": [
+          {
+            "_id": "lesson-program-structure",
+            "slug": "program-structure",
+            "title": "Solana Program Structure"
+          },
+          {
+            "_id": "lesson-rust-program-challenge",
+            "slug": "rust-program-challenge",
+            "title": "Challenge: Process Transfer Instruction"
+          },
+          {
+            "_id": "lesson-state-management",
+            "slug": "state-management",
+            "title": "PDAs and State Management"
+          },
+          {
+            "_id": "lesson-pda-challenge",
+            "slug": "pda-challenge",
+            "title": "Challenge: Derive PDAs"
+          }
+        ],
+        "title": "Building Solana Programs"
+      }
+    ],
+    "slug": "rust-for-solana",
+    "tags": ["rust", "solana", "programming", "systems", "intermediate"],
+    "thumbnail": null,
+    "title": "Rust for Solana Developers",
+    "trackId": 2,
+    "trackLevel": 1,
+    "xpReward": 800
+  },
+  {
+    "_id": "course-solana-frontend",
+    "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
+    "difficulty": "intermediate",
+    "duration": 10,
+    "instructor": {
+      "avatar": null,
+      "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
+      "name": "Ana Santos",
+      "socialLinks": {
+        "github": "https://github.com/anasantos",
+        "twitter": "https://twitter.com/anasantos_sol"
+      }
+    },
+    "modules": [
+      {
+        "description": "Master Solana wallet integration using the Wallet Adapter. Learn to connect wallets, sign messages, and implement Sign-In With Solana (SIWS) authentication.",
+        "key": "wallet-integration",
+        "lessons": [
+          {
+            "_id": "lesson-wallet-adapter-intro",
+            "slug": "wallet-adapter-intro",
+            "title": "Solana Wallet Adapter Architecture"
+          },
+          {
+            "_id": "lesson-connect-wallet-challenge",
+            "slug": "connect-wallet-challenge",
+            "title": "Challenge: Wallet Connection Flow"
+          },
+          {
+            "_id": "lesson-signing-messages",
+            "slug": "signing-messages",
+            "title": "Sign-In With Solana (SIWS)"
+          },
+          {
+            "_id": "lesson-sign-message-challenge",
+            "slug": "sign-message-challenge",
+            "title": "Challenge: Build a SIWS Message"
+          }
+        ],
+        "title": "Wallet Integration"
+      },
+      {
+        "description": "Learn to read and parse on-chain data using Solana's RPC methods. Master account data deserialization and binary encoding patterns.",
+        "key": "reading-onchain",
+        "lessons": [
+          {
+            "_id": "lesson-rpc-methods",
+            "slug": "rpc-methods",
+            "title": "Solana RPC Methods"
+          },
+          {
+            "_id": "lesson-balance-checker-challenge",
+            "slug": "balance-checker-challenge",
+            "title": "Challenge: Multi-Wallet Balance Checker"
+          },
+          {
+            "_id": "lesson-parsing-data",
+            "slug": "parsing-data",
+            "title": "Parsing Account Data"
+          },
+          {
+            "_id": "lesson-parse-data-challenge",
+            "slug": "parse-data-challenge",
+            "title": "Challenge: Parse Account Data Buffer"
+          }
+        ],
+        "title": "Reading On-Chain Data"
+      },
+      {
+        "description": "Build production-ready dApp user interfaces. Master React patterns, transaction flows, and real-time notifications for Solana applications.",
+        "key": "dapp-ui",
+        "lessons": [
+          {
+            "_id": "lesson-react-patterns",
+            "slug": "react-patterns",
+            "title": "React Patterns for Solana dApps"
+          },
+          {
+            "_id": "lesson-transaction-ui",
+            "slug": "transaction-ui",
+            "title": "Transaction UI Patterns"
+          },
+          {
+            "_id": "lesson-notifications",
+            "slug": "notifications",
+            "title": "Transaction Notifications"
+          },
+          {
+            "_id": "lesson-dapp-challenge",
+            "slug": "dapp-challenge",
+            "title": "Challenge: SOL Transfer Form"
+          }
+        ],
+        "title": "Building dApp UIs"
+      }
+    ],
+    "slug": "solana-frontend",
+    "tags": [
+      "frontend",
+      "react",
+      "nextjs",
+      "wallet-adapter",
+      "typescript",
+      "intermediate"
+    ],
+    "thumbnail": null,
+    "title": "Solana Frontend Development",
+    "trackId": 4,
+    "trackLevel": 1,
+    "xpReward": 700
+  },
+  {
+    "_id": "course-solana-fundamentals",
+    "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
+    "difficulty": "beginner",
+    "duration": 10,
+    "instructor": {
+      "avatar": null,
+      "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
+      "name": "Ana Santos",
+      "socialLinks": {
+        "github": "https://github.com/anasantos",
+        "twitter": "https://twitter.com/anasantos_sol"
+      }
+    },
+    "modules": [
+      {
+        "description": "Learn the fundamentals of Solana blockchain, set up your development environment, and configure your first wallet.",
+        "key": "getting-started",
+        "lessons": [
+          {
+            "_id": "lesson-intro-solana",
+            "slug": "what-is-solana",
+            "title": "What is Solana?"
+          },
+          {
+            "_id": "lesson-setup-environment",
+            "slug": "setup-environment",
+            "title": "Setting Up Your Development Environment"
+          },
+          {
+            "_id": "lesson-wallet-setup",
+            "slug": "wallet-setup",
+            "title": "Setting Up a Solana Wallet"
+          },
+          {
+            "_id": "lesson-keypair-challenge",
+            "slug": "keypair-challenge",
+            "title": "Challenge: Generate a Keypair"
+          }
+        ],
+        "title": "Getting Started with Solana"
+      },
+      {
+        "description": "Master Solana transactions, learn about SPL tokens, and build your first on-chain programs.",
+        "key": "transactions-tokens",
+        "lessons": [
+          {
+            "_id": "lesson-first-transaction",
+            "slug": "first-transaction",
+            "title": "Your First Transaction"
+          },
+          {
+            "_id": "lesson-transfer-challenge",
+            "slug": "transfer-challenge",
+            "title": "Challenge: Build a Transfer Function"
+          },
+          {
+            "_id": "lesson-token-overview",
+            "slug": "token-overview",
+            "title": "Understanding SPL Tokens"
+          },
+          {
+            "_id": "lesson-create-token-challenge",
+            "slug": "create-token-challenge",
+            "title": "Challenge: Create a Token Mint"
+          }
+        ],
+        "title": "Transactions & Tokens"
+      },
+      {
+        "description": "Deep dive into Solana's account model and program architecture. Learn how programs interact with accounts and build custom instructions.",
+        "key": "accounts-programs",
+        "lessons": [
+          {
+            "_id": "lesson-account-model",
+            "slug": "account-model",
+            "title": "Understanding Solana's Account Model"
+          },
+          {
+            "_id": "lesson-account-challenge",
+            "slug": "account-challenge",
+            "title": "Challenge: Explore the Account Model"
+          },
+          {
+            "_id": "lesson-programs-overview",
+            "slug": "programs-overview",
+            "title": "Introduction to Solana Programs"
+          },
+          {
+            "_id": "lesson-program-challenge",
+            "slug": "program-challenge",
+            "title": "Challenge: Build a Custom Instruction"
+          }
+        ],
+        "title": "Accounts & Programs"
+      }
+    ],
+    "slug": "solana-fundamentals",
+    "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
+    "thumbnail": null,
+    "title": "Solana Fundamentals",
+    "trackId": 1,
+    "trackLevel": 1,
+    "xpReward": 600
+  }
+]

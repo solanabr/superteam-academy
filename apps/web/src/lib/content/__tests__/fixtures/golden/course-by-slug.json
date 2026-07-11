@@ -1,0 +1,625 @@
+{
+  "_id": "course-anchor-framework",
+  "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
+  "difficulty": "intermediate",
+  "duration": 14,
+  "instructor": {
+    "avatar": null,
+    "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
+    "name": "Mariana Costa",
+    "socialLinks": {
+      "github": "https://github.com/marianacosta",
+      "twitter": "https://twitter.com/mari_costa_sol"
+    }
+  },
+  "modules": [
+    {
+      "description": "Learn the fundamentals of the Anchor framework, program structure, and account constraints.",
+      "key": "anchor-basics",
+      "lessons": [
+        {
+          "_id": "lesson-anchor-intro",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# What is the Anchor Framework?\n\nAnchor is the most popular framework for Solana smart contract development. It provides a Rust-based DSL (domain-specific language) that dramatically reduces boilerplate and makes programs safer, faster to write, and easier to read.\n\n## Why Use Anchor?\n\nWriting native Solana programs in Rust requires:\n- Manual account deserialization and validation\n- Verbose error handling\n- Security checks spread across your code\n- Repetitive boilerplate for common patterns\n\nAnchor handles all of this for you through **macros** and **attributes**.\n\n### Native Solana Program\n\n```rust\n// Manual account deserialization\nlet account_info_iter = &mut accounts.iter();\nlet user_account = next_account_info(account_info_iter)?;\n\n// Manual validation\nif !user_account.is_writable {\n    return Err(ProgramError::InvalidAccountData);\n}\n\n// Manual owner check\nif user_account.owner != program_id {\n    return Err(ProgramError::IncorrectProgramId);\n}\n```\n\n### Anchor Program\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUser<'info> {\n    #[account(mut)]\n    pub user: Account<'info, UserAccount>,\n}\n```\n\nAnchor automatically validates that the account is writable and owned by the program!\n\n## Anchor Project Structure\n\nA typical Anchor project:\n\n```\nmy-anchor-project/\n├── programs/\n│   └── my-program/\n│       └── src/\n│           └── lib.rs      # Your program code\n├── tests/\n│   └── my-program.ts       # TypeScript tests\n├── migrations/\n│   └── deploy.ts           # Deployment scripts\n└── Anchor.toml             # Configuration\n```\n\n## Key Anchor Components\n\n### 1. Program Module\n\n```rust\nuse anchor_lang::prelude::*;\n\ndeclare_id!(\"YourProgramIDHere\");\n\n#[program]\npub mod my_program {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        // Your logic here\n        Ok(())\n    }\n}\n```\n\nThe `#[program]` macro defines your program's instruction handlers.\n\n### 2. Accounts Struct\n\n```rust\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(\n        init,\n        payer = user,\n        space = 8 + 32 + 8\n    )]\n    pub my_account: Account<'info, MyAccount>,\n    #[account(mut)]\n    pub user: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n```\n\nAccounts structs define what accounts your instruction needs and how to validate them.\n\n### 3. Account Data\n\n```rust\n#[account]\npub struct MyAccount {\n    pub authority: Pubkey,\n    pub counter: u64,\n}\n```\n\nThe `#[account]` macro adds serialization/deserialization and a discriminator for account type safety.\n\n## Anchor vs Native: Security Benefits\n\n| Security Check | Native | Anchor |\n|----------------|--------|--------|\n| Account ownership | Manual check | Automatic via Account<'info, T> |\n| Signer verification | Manual check | Automatic via Signer<'info> |\n| Writable validation | Manual check | Automatic via #[account(mut)] |\n| Account initialization | Manual allocation | Automatic via #[account(init)] |\n| Discriminator (type safety) | None | Automatic 8-byte discriminator |\n\nAnchor programs are **harder to exploit** because common security pitfalls are prevented by the framework itself.\n\n## Next Steps\n\nIn the next challenge, you'll build a mock Anchor program structure to understand how programs are organized on Solana.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "anchor-intro",
+          "title": "What is the Anchor Framework?"
+        },
+        {
+          "_id": "lesson-anchor-setup-challenge",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Challenge: Model Anchor Program Structure in Rust\n\nAnchor programs follow a specific pattern: instructions contain account metadata and serialized data. You'll model this structure using Rust structs and enums.\n\n## Your Task\n\nImplement `build_instruction(program_id, user_key, instruction_name)` that constructs an Anchor-style instruction:\n\n1. Encode the instruction name as bytes and compute its length\n2. Build account metadata for two accounts:\n   - User account: signer=true, writable=true\n   - System program (`\"11111111111111111111111111111111\"`): signer=false, writable=false\n3. Return a formatted string: `\"program:<id>,accounts:<count>,data_len:<len>\"`\n\n**This mirrors Anchor's `#[derive(Accounts)]` pattern** where each instruction declares which accounts it needs and how they should be validated.\n\n**Rust Concepts Used:**\n- Structs with boolean fields\n- `Vec` collection\n- String formatting with `format!()`\n- Byte conversion with `.as_bytes()`\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            },
+            {
+              "_type": "code",
+              "amount": null,
+              "buildType": "standard",
+              "consumes": null,
+              "deployable": false,
+              "hints": [
+                "Get instruction data length with instruction_name.as_bytes().len().",
+                "Create two AccountMeta structs in a Vec: one for the user (signer + writable) and one for the system program (neither).",
+                "Return format!(\"program:{},accounts:{},data_len:{}\", program_id, accounts.len(), data_len)."
+              ],
+              "idl": null,
+              "key": "exercise",
+              "language": "rust",
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": "#[derive(Debug)]\nstruct AccountMeta {\n    pubkey: String,\n    is_signer: bool,\n    is_writable: bool,\n}\n\nfn build_instruction(program_id: &str, user_key: &str, instruction_name: &str) -> String {\n    let data_len = instruction_name.as_bytes().len();\n\n    let accounts = vec![\n        AccountMeta {\n            pubkey: user_key.to_string(),\n            is_signer: true,\n            is_writable: true,\n        },\n        AccountMeta {\n            pubkey: \"11111111111111111111111111111111\".to_string(),\n            is_signer: false,\n            is_writable: false,\n        },\n    ];\n\n    format!(\"program:{},accounts:{},data_len:{}\", program_id, accounts.len(), data_len)\n}\n",
+              "src": null,
+              "starter": "#[derive(Debug)]\nstruct AccountMeta {\n    pubkey: String,\n    is_signer: bool,\n    is_writable: bool,\n}\n\nfn build_instruction(program_id: &str, user_key: &str, instruction_name: &str) -> String {\n    // TODO: Encode instruction_name as bytes and get its length\n\n    // TODO: Build account metas Vec with 2 entries:\n    //   - user_key: signer=true, writable=true\n    //   - system program: signer=false, writable=false\n\n    // TODO: Return \"program:<id>,accounts:<count>,data_len:<len>\"\n    todo!()\n}\n",
+              "tests": [
+                {
+                  "description": "Includes the account count",
+                  "expectedOutput": "__result__.contains(\"accounts:2\")",
+                  "id": "t1",
+                  "input": "\"progXYZ\", \"userABC\", \"initialize\""
+                },
+                {
+                  "description": "Includes the instruction data length",
+                  "expectedOutput": "__result__.contains(\"data_len:10\")",
+                  "id": "t2",
+                  "input": "\"progXYZ\", \"userABC\", \"initialize\""
+                },
+                {
+                  "description": "Starts with the program id",
+                  "expectedOutput": "__result__.starts_with(\"program:progXYZ\")",
+                  "id": "t3",
+                  "input": "\"progXYZ\", \"userABC\", \"initialize\""
+                },
+                {
+                  "description": "Exact output for a different instruction",
+                  "expectedOutput": "\"program:myProg,accounts:2,data_len:4\".to_string()",
+                  "id": "t4",
+                  "input": "\"myProg\", \"user1\", \"mint\""
+                }
+              ],
+              "url": null
+            }
+          ],
+          "slug": "anchor-setup-challenge",
+          "title": "Challenge: Anchor Program Structure"
+        },
+        {
+          "_id": "lesson-anchor-accounts",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Anchor Account Constraints\n\nAnchor's constraint system is one of its most powerful features. Constraints allow you to declaratively specify account validation rules, and Anchor enforces them automatically.\n\n## The #[account] Attribute\n\nThe `#[account(...)]` attribute is used to apply constraints to accounts in your instruction context:\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUserData<'info> {\n    #[account(\n        mut,\n        has_one = authority,\n        constraint = user.data_version < 10 @ ErrorCode::VersionTooHigh\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n## Common Constraints\n\n### 1. init - Initialize a New Account\n\n```rust\n#[account(\n    init,\n    payer = user,\n    space = 8 + 32 + 8\n)]\npub my_account: Account<'info, MyAccount>,\n```\n\n- Allocates space for the account\n- Transfers lamports from payer\n- Assigns account to the program\n- Sets account discriminator\n\n**Space calculation**: `8 (discriminator) + account_data_size`\n\n### 2. mut - Mark Account as Mutable\n\n```rust\n#[account(mut)]\npub user: Account<'info, UserAccount>,\n```\n\nRequires the account to be writable. Anchor will reject the transaction if the account isn't marked as writable.\n\n### 3. has_one - Verify Account Relationship\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,\n    pub counter: u64,\n}\n\n#[derive(Accounts)]\npub struct Increment<'info> {\n    #[account(\n        mut,\n        has_one = authority\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n`has_one = authority` checks that `user.authority == authority.key()`. This prevents unauthorized updates.\n\n### 4. seeds & bump - PDA Derivation\n\n```rust\n#[account(\n    init,\n    payer = user,\n    space = 8 + 32 + 8,\n    seeds = [b\"user\", user.key().as_ref()],\n    bump\n)]\npub user_account: Account<'info, UserAccount>,\n```\n\n- `seeds`: The seeds used to derive the PDA\n- `bump`: Anchor finds the canonical bump automatically\n\nYou can also use a saved bump:\n\n```rust\n#[account(\n    mut,\n    seeds = [b\"user\", authority.key().as_ref()],\n    bump = user_account.bump\n)]\npub user_account: Account<'info, UserAccount>,\n```\n\n### 5. constraint - Custom Constraints\n\n```rust\n#[account(\n    mut,\n    constraint = user.balance >= 100 @ ErrorCode::InsufficientFunds,\n    constraint = user.is_active @ ErrorCode::AccountInactive\n)]\npub user: Account<'info, UserAccount>,\n```\n\nCustom constraints let you enforce arbitrary rules. The `@ ErrorCode::...` syntax specifies which error to return if the constraint fails.\n\n## Space Calculation\n\nWhen using `init`, you must specify the account size:\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,    // 32 bytes\n    pub counter: u64,         // 8 bytes\n    pub name: String,         // 4 + length (max 32) = 36 bytes\n}\n\n// Space = 8 (discriminator) + 32 + 8 + 36 = 84 bytes\n```\n\n**Common sizes**:\n- Pubkey: 32 bytes\n- u64/i64: 8 bytes\n- u32/i32: 4 bytes\n- bool: 1 byte\n- String: 4 (length prefix) + max_length\n- Vec<T>: 4 (length prefix) + (item_size * max_count)\n\n## Constraint Execution Order\n\nAnchor executes constraints in this order:\n1. `init` / `init_if_needed`\n2. `mut`\n3. `seeds` + `bump`\n4. `has_one`\n5. Custom `constraint`s\n\nThis ensures accounts are properly initialized and validated before your instruction logic runs.\n\n## Next Challenge\n\nYou'll implement account validation logic that mimics Anchor's constraint system.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "anchor-accounts",
+          "title": "Anchor Account Constraints"
+        },
+        {
+          "_id": "lesson-anchor-accounts-challenge",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Challenge: Simulate Anchor Account Validation in Rust\n\nAnchor's `#[account]` constraints validate accounts automatically. Here you'll implement the same checks manually — this is exactly what Anchor generates under the hood.\n\n## Your Task\n\nImplement `validate_account(account_owner, expected_owner, is_signer, require_signer, is_writable, require_writable)` that performs Anchor-style validation:\n\n1. Check if `account_owner == expected_owner` → if not, return `Err(\"IncorrectProgramId\")`\n2. Check if signer is required but missing → return `Err(\"MissingRequiredSignature\")`\n3. Check if writable is required but missing → return `Err(\"AccountNotWritable\")`\n4. If all pass, return `Ok(\"Valid\")`\n\n**This mirrors these Anchor constraints:**\n- `#[account(owner = expected_owner)]` → ownership check\n- `Signer<'info>` → signer check\n- `#[account(mut)]` → writable check\n\n**Check order matters** — validate in the order listed above (owner → signer → writable).\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            },
+            {
+              "_type": "code",
+              "amount": null,
+              "buildType": "standard",
+              "consumes": null,
+              "deployable": false,
+              "hints": [
+                "Check owner first: if account_owner != expected_owner { return Err(\"IncorrectProgramId\".to_string()); }",
+                "Then check signer: if require_signer && !is_signer { return Err(...); }",
+                "Same pattern for writable. If all pass, return Ok(\"Valid\".to_string())."
+              ],
+              "idl": null,
+              "key": "exercise",
+              "language": "rust",
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": "fn validate_account(\n    account_owner: &str,\n    expected_owner: &str,\n    is_signer: bool,\n    require_signer: bool,\n    is_writable: bool,\n    require_writable: bool,\n) -> Result<String, String> {\n    if account_owner != expected_owner {\n        return Err(\"IncorrectProgramId\".to_string());\n    }\n    if require_signer && !is_signer {\n        return Err(\"MissingRequiredSignature\".to_string());\n    }\n    if require_writable && !is_writable {\n        return Err(\"AccountNotWritable\".to_string());\n    }\n    Ok(\"Valid\".to_string())\n}\n",
+              "src": null,
+              "starter": "fn validate_account(\n    account_owner: &str,\n    expected_owner: &str,\n    is_signer: bool,\n    require_signer: bool,\n    is_writable: bool,\n    require_writable: bool,\n) -> Result<String, String> {\n    // TODO: Check owner matches expected_owner\n    //       -> Err(\"IncorrectProgramId\")\n\n    // TODO: Check signer requirement\n    //       -> Err(\"MissingRequiredSignature\")\n\n    // TODO: Check writable requirement\n    //       -> Err(\"AccountNotWritable\")\n\n    // TODO: All checks passed -> Ok(\"Valid\")\n    todo!()\n}\n",
+              "tests": [
+                {
+                  "description": "Valid account passes",
+                  "expectedOutput": "__result__.is_ok()",
+                  "id": "t1",
+                  "input": "\"programA\", \"programA\", true, true, true, true"
+                },
+                {
+                  "description": "Wrong owner is rejected",
+                  "expectedOutput": "__result__ == Err(\"IncorrectProgramId\".to_string())",
+                  "id": "t2",
+                  "input": "\"programA\", \"programB\", true, true, true, true"
+                },
+                {
+                  "description": "Missing required signer is rejected",
+                  "expectedOutput": "__result__ == Err(\"MissingRequiredSignature\".to_string())",
+                  "id": "t3",
+                  "input": "\"programA\", \"programA\", false, true, true, true"
+                },
+                {
+                  "description": "Non-writable when writable is required is rejected",
+                  "expectedOutput": "__result__ == Err(\"AccountNotWritable\".to_string())",
+                  "id": "t4",
+                  "input": "\"programA\", \"programA\", true, true, false, true"
+                },
+                {
+                  "description": "Passes when no signer/writable requirements",
+                  "expectedOutput": "__result__.is_ok()",
+                  "id": "t5",
+                  "input": "\"progX\", \"progX\", true, false, true, false"
+                }
+              ],
+              "url": null
+            }
+          ],
+          "slug": "anchor-accounts-challenge",
+          "title": "Challenge: Account Validation"
+        }
+      ],
+      "title": "Anchor Basics"
+    },
+    {
+      "description": "Master Program Derived Addresses and Cross-Program Invocations for building composable programs.",
+      "key": "pdas-cpis",
+      "lessons": [
+        {
+          "_id": "lesson-pda-deep-dive",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Program Derived Addresses (PDAs) Deep Dive\n\nProgram Derived Addresses are one of Solana's most powerful and unique features. They enable programs to \"own\" accounts and sign transactions without needing a private key.\n\n## What Are PDAs?\n\nA PDA is a public key that:\n1. Is derived deterministically from seeds and a program ID\n2. Is **not** on the Ed25519 elliptic curve (no corresponding private key exists)\n3. Can only be \"signed for\" by the program that derived it\n\n```rust\n// In Anchor\nlet (pda, bump) = Pubkey::find_program_address(\n    &[b\"user\", user.key().as_ref()],\n    program_id\n);\n```\n\n## Why PDAs Are Off-Curve\n\nSolana uses Ed25519 for signatures. Ed25519 keys lie on an elliptic curve. PDAs are specifically designed to fall **off** this curve, which means:\n- No private key can exist for a PDA\n- Only the deriving program can sign for the PDA (via CPI with `invoke_signed`)\n\nThis creates **program-controlled accounts** that can't be compromised by key theft.\n\n## PDA Derivation Process\n\n```\nseeds = [b\"user\", user_pubkey.as_ref()]\nprogram_id = your_program_id\n\nfor bump in 255..=0 {\n    candidate = sha256(seeds + [bump] + program_id)\n    if !is_on_curve(candidate) {\n        return (candidate, bump)  // This is your PDA\n    }\n}\n```\n\nThe **canonical bump** is the first bump (starting from 255) that produces an off-curve address.\n\n## Seeds Design Patterns\n\n### Pattern 1: User-Scoped Account\n\n```rust\nseeds = [b\"user\", user.key().as_ref()]\n```\n\nOne account per user. Used for user profiles, settings, etc.\n\n### Pattern 2: User + Resource\n\n```rust\nseeds = [b\"escrow\", user.key().as_ref(), trade_id.to_le_bytes().as_ref()]\n```\n\nMultiple accounts per user, one per resource (escrow, order, etc.).\n\n### Pattern 3: Global Singleton\n\n```rust\nseeds = [b\"config\"]\n```\n\nOne global account for the program (config, authority, etc.).\n\n### Pattern 4: Nested PDAs\n\n```rust\n// User stats PDA\nseeds_stats = [b\"stats\", user.key().as_ref()]\n\n// User vault PDA (derived from stats PDA)\nseeds_vault = [b\"vault\", stats_pda.key().as_ref()]\n```\n\nPDAs can be derived from other PDAs for complex hierarchies.\n\n## Storing the Bump\n\nAlways store the canonical bump in your account data:\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,\n    pub bump: u8,  // Store this!\n    pub data: u64,\n}\n```\n\nWhy? Because recalculating the bump on every instruction is expensive (requires up to 256 hash operations). Storing it makes subsequent operations cheaper.\n\n## PDAs as Signers\n\nPDAs can sign CPIs using `invoke_signed`:\n\n```rust\ninvoke_signed(\n    &transfer_instruction,\n    &[\n        pda_account.to_account_info(),\n        recipient.to_account_info(),\n        system_program.to_account_info(),\n    ],\n    &[&[b\"user\", user.key().as_ref(), &[bump]]], // Signer seeds\n)?;\n```\n\nThe program derives the PDA, verifies it matches, and \"signs\" the CPI.\n\n## Security Considerations\n\n### 1. Seed Collision\n\nBe careful with seed design:\n\n```rust\n// BAD: Can collide if strings contain delimiters\nseeds = [user_name.as_bytes()]  // \"alice\" and \"ali\" + \"ce\" collide!\n\n// GOOD: Use fixed-size data or well-defined separators\nseeds = [b\"user\", user.key().as_ref()]\n```\n\n### 2. Bump Validation\n\nAlways use the canonical bump:\n\n```rust\n// In Anchor, this is automatic:\n#[account(\n    seeds = [b\"user\", authority.key().as_ref()],\n    bump = user.bump  // Validates stored bump is canonical\n)]\n```\n\n## PDA vs Regular Account\n\n| Feature | Regular Account | PDA |\n|---------|----------------|-----|\n| Has private key | Yes | No |\n| Can self-sign | Yes | No (requires program) |\n| Can hold SOL | Yes | Yes |\n| Can own other accounts | Yes | Yes |\n| Deterministic address | No | Yes |\n| On Ed25519 curve | Yes | No |\n\n## Real-World Examples\n\n**Token vaults** (escrow programs):\n```rust\nseeds = [b\"vault\", escrow.key().as_ref()]\n```\n\n**Associated Token Accounts**:\n```rust\nseeds = [wallet.key(), token_program.key(), mint.key()]\n```\n\n**Governance proposal accounts**:\n```rust\nseeds = [b\"proposal\", governance.key(), proposal_id.to_le_bytes()]\n```\n\n## Next Challenge\n\nYou'll derive multiple related PDAs from a common base to understand PDA hierarchies.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "pda-deep-dive",
+          "title": "PDA Deep Dive"
+        },
+        {
+          "_id": "lesson-pda-advanced-challenge",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Challenge: Derive Multiple Related PDAs in Rust\n\nReal Anchor programs often derive multiple PDAs per user — profile, stats, vault, etc. Each uses different seed prefixes but the same user key.\n\nUsing the simulated PDA derivation from earlier, derive 3 related PDAs and return their hashes as a tuple.\n\n## Your Task\n\nImplement `derive_user_pdas(user, program_id)` that:\n\n1. Derives a **user PDA** with seeds `[\"user\", user]`\n2. Derives a **stats PDA** with seeds `[\"stats\", user]`\n3. Derives a **vault PDA** with seeds `[\"vault\", user]`\n4. Returns `(user_hash, stats_hash, vault_hash)` as a `(u64, u64, u64)` tuple\n\nA helper `find_pda` is provided — use it to derive each PDA.\n\n**Requirements:**\n- All three hashes must be off-curve (even)\n- All three must be different from each other\n- Same inputs must always produce same outputs (deterministic)\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            },
+            {
+              "_type": "code",
+              "amount": null,
+              "buildType": "standard",
+              "consumes": null,
+              "deployable": false,
+              "hints": [
+                "Call find_pda with different seed prefixes: find_pda(&[\"user\", user], program_id) for the user PDA.",
+                "Each find_pda returns (hash, bump) — you only need the hash (the .0 field) for the return tuple.",
+                "let (user_h, _) = find_pda(&[\"user\", user], program_id); then same for stats and vault."
+              ],
+              "idl": null,
+              "key": "exercise",
+              "language": "rust",
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": "use std::collections::hash_map::DefaultHasher;\nuse std::hash::{Hash, Hasher};\n\nfn hash_with_bump(seeds: &[&str], bump: u8, program_id: &str) -> u64 {\n    let mut hasher = DefaultHasher::new();\n    for seed in seeds {\n        seed.hash(&mut hasher);\n    }\n    bump.hash(&mut hasher);\n    program_id.hash(&mut hasher);\n    hasher.finish()\n}\n\nfn find_pda(seeds: &[&str], program_id: &str) -> (u64, u8) {\n    for bump in (0..=255u8).rev() {\n        let hash = hash_with_bump(seeds, bump, program_id);\n        if hash % 2 == 0 {\n            return (hash, bump);\n        }\n    }\n    panic!(\"No valid bump found\");\n}\n\nfn derive_user_pdas(user: &str, program_id: &str) -> (u64, u64, u64) {\n    let (user_h, _) = find_pda(&[\"user\", user], program_id);\n    let (stats_h, _) = find_pda(&[\"stats\", user], program_id);\n    let (vault_h, _) = find_pda(&[\"vault\", user], program_id);\n    (user_h, stats_h, vault_h)\n}\n",
+              "src": null,
+              "starter": "use std::collections::hash_map::DefaultHasher;\nuse std::hash::{Hash, Hasher};\n\nfn hash_with_bump(seeds: &[&str], bump: u8, program_id: &str) -> u64 {\n    let mut hasher = DefaultHasher::new();\n    for seed in seeds {\n        seed.hash(&mut hasher);\n    }\n    bump.hash(&mut hasher);\n    program_id.hash(&mut hasher);\n    hasher.finish()\n}\n\nfn find_pda(seeds: &[&str], program_id: &str) -> (u64, u8) {\n    for bump in (0..=255u8).rev() {\n        let hash = hash_with_bump(seeds, bump, program_id);\n        if hash % 2 == 0 {\n            return (hash, bump);\n        }\n    }\n    panic!(\"No valid bump found\");\n}\n\n/// Derive user, stats, and vault PDAs for the given user.\n/// Returns (user_hash, stats_hash, vault_hash).\nfn derive_user_pdas(user: &str, program_id: &str) -> (u64, u64, u64) {\n    // TODO: Derive user PDA with seeds [\"user\", user]\n    // TODO: Derive stats PDA with seeds [\"stats\", user]\n    // TODO: Derive vault PDA with seeds [\"vault\", user]\n    // TODO: Return the three hashes as a tuple\n    todo!()\n}\n",
+              "tests": [
+                {
+                  "description": "All PDAs should be off-curve (even hashes)",
+                  "expectedOutput": "__result__.0 % 2 == 0 && __result__.1 % 2 == 0 && __result__.2 % 2 == 0",
+                  "id": "test-1",
+                  "input": "\"alice\", \"prog1\""
+                },
+                {
+                  "description": "All three PDAs should be different",
+                  "expectedOutput": "__result__.0 != __result__.1 && __result__.1 != __result__.2",
+                  "id": "test-2",
+                  "input": "\"alice\", \"prog1\""
+                },
+                {
+                  "description": "Different users should produce different PDAs",
+                  "expectedOutput": "__result__.0 != derive_user_pdas(\"alice\", \"prog1\").0",
+                  "id": "test-3",
+                  "input": "\"bob\", \"prog1\""
+                }
+              ],
+              "url": null
+            }
+          ],
+          "slug": "pda-advanced-challenge",
+          "title": "Challenge: Multi-PDA Derivation"
+        },
+        {
+          "_id": "lesson-cpi-overview",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Cross-Program Invocations (CPIs)\n\nCross-Program Invocations allow one Solana program to call another program. This is what makes Solana programs **composable** — you can build on top of existing programs like building blocks.\n\n## Why CPIs Matter\n\nCPIs enable:\n- **Token transfers** via the Token Program\n- **NFT minting** via Metaplex programs\n- **Swaps** through DEX programs (Jupiter, Raydium)\n- **Lending** through DeFi protocols (Solend, MarginFi)\n\nWithout CPIs, every program would need to reimplement basic functionality. With CPIs, you compose existing programs.\n\n## How CPIs Work\n\nWhen Program A calls Program B:\n\n```\nUser Transaction\n  |\n  v\nProgram A (your program)\n  |\n  v (CPI)\nProgram B (Token Program, System Program, etc.)\n```\n\nThe Solana runtime tracks the **call stack** and ensures:\n- Account ownership rules are enforced\n- Signers are propagated correctly\n- Programs can't exceed the call depth limit (4 levels)\n\n## invoke vs invoke_signed\n\n### invoke - Regular CPI\n\n```rust\nuse solana_program::program::invoke;\n\ninvoke(\n    &instruction,\n    &[\n        source_account.clone(),\n        destination_account.clone(),\n        authority.clone(),\n    ],\n)?;\n```\n\nUse `invoke` when the required signers are already in your instruction's signer list.\n\n### invoke_signed - CPI with PDA Signer\n\n```rust\nuse solana_program::program::invoke_signed;\n\ninvoke_signed(\n    &instruction,\n    &[\n        pda_account.clone(),\n        destination_account.clone(),\n        system_program.clone(),\n    ],\n    &[&[b\"vault\", &[bump]]], // PDA seeds\n)?;\n```\n\nUse `invoke_signed` when a **PDA** needs to sign. The program derives the PDA and \"signs\" on its behalf.\n\n## CPI in Anchor\n\nAnchor provides a cleaner API for CPIs:\n\n```rust\nuse anchor_lang::prelude::*;\nuse anchor_spl::token::{self, Transfer};\n\npub fn transfer_tokens(ctx: Context<TransferTokens>, amount: u64) -> Result<()> {\n    let cpi_accounts = Transfer {\n        from: ctx.accounts.from.to_account_info(),\n        to: ctx.accounts.to.to_account_info(),\n        authority: ctx.accounts.authority.to_account_info(),\n    };\n\n    let cpi_program = ctx.accounts.token_program.to_account_info();\n    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);\n\n    token::transfer(cpi_ctx, amount)?;\n    Ok(())\n}\n```\n\n### CPI with PDA Signer in Anchor\n\n```rust\npub fn transfer_from_pda(ctx: Context<TransferFromPDA>, amount: u64) -> Result<()> {\n    let seeds = &[\n        b\"vault\",\n        ctx.accounts.authority.key().as_ref(),\n        &[ctx.accounts.vault.bump],\n    ];\n    let signer_seeds = &[&seeds[..]];\n\n    let cpi_accounts = Transfer {\n        from: ctx.accounts.vault_token_account.to_account_info(),\n        to: ctx.accounts.user_token_account.to_account_info(),\n        authority: ctx.accounts.vault.to_account_info(),\n    };\n\n    let cpi_program = ctx.accounts.token_program.to_account_info();\n    let cpi_ctx = CpiContext::new_with_signer(\n        cpi_program,\n        cpi_accounts,\n        signer_seeds,\n    );\n\n    token::transfer(cpi_ctx, amount)?;\n    Ok(())\n}\n```\n\n## Common CPI Patterns\n\n### 1. Token Transfer\n\n```rust\n// Transfer SPL tokens from user to program vault\ntoken::transfer(\n    CpiContext::new(token_program, transfer_accounts),\n    amount,\n)?;\n```\n\n### 2. Minting Tokens\n\n```rust\n// Mint new tokens (requires mint authority)\ntoken::mint_to(\n    CpiContext::new_with_signer(token_program, mint_accounts, signer_seeds),\n    amount,\n)?;\n```\n\n### 3. Creating Accounts\n\n```rust\n// Create a new account (CPI to System Program)\nsystem_program::create_account(\n    CpiContext::new(system_program, create_accounts),\n    lamports,\n    space,\n    program_id,\n)?;\n```\n\n## CPI Security Considerations\n\n### 1. Account Validation\n\nAlways validate accounts before CPI:\n\n```rust\nrequire_keys_eq!(\n    ctx.accounts.token_program.key(),\n    token::ID,\n    ErrorCode::InvalidTokenProgram\n);\n```\n\n### 2. Signer Propagation\n\nSigners in your instruction are automatically propagated to CPIs. But be careful:\n\n```rust\n// BAD: Anyone can call this and spend vault tokens!\npub fn dangerous_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n    token::transfer(\n        CpiContext::new_with_signer(...),\n        amount,\n    )\n}\n\n// GOOD: Check authority first\npub fn safe_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n    require_keys_eq!(\n        ctx.accounts.authority.key(),\n        ctx.accounts.vault.authority,\n        ErrorCode::Unauthorized\n    );\n    token::transfer(...)\n}\n```\n\n### 3. Reentrancy\n\nSolana programs are **not reentrant** by default (a program can't call itself). This prevents classic reentrancy attacks.\n\n## Real-World CPI Examples\n\n**Escrow program**:\n1. User deposits tokens → CPI to Token Program to transfer tokens to escrow PDA\n2. Trade executes → CPI to Token Program to transfer from escrow PDA to recipient\n\n**Staking program**:\n1. User stakes tokens → CPI to Token Program to transfer to staking vault\n2. User claims rewards → CPI to Token Program to mint reward tokens\n3. User unstakes → CPI to Token Program to transfer staked tokens back\n\n**NFT marketplace**:\n1. User lists NFT → CPI to Token Program to transfer NFT to marketplace PDA\n2. Buyer purchases → CPI to System Program (SOL payment) + CPI to Token Program (NFT transfer)\n\n## Next Challenge\n\nYou'll construct a CPI instruction to transfer SOL from a PDA-owned account.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "cpi-overview",
+          "title": "Cross-Program Invocations"
+        },
+        {
+          "_id": "lesson-cpi-challenge",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Challenge: Simulate a CPI Vault Transfer in Rust\n\nCross-Program Invocations (CPIs) let programs transfer SOL from PDA-controlled vaults. You'll simulate this pattern: derive a vault PDA, verify it has funds, and compute the transfer.\n\n## Your Task\n\nImplement `build_vault_transfer(user, vault_balance, recipient_balance, amount)` that:\n\n1. Derives the vault PDA using `find_pda(&[\"vault\", user], \"system\")` to get the bump\n2. Checks the vault has enough balance for the transfer\n3. Returns `Ok((new_vault_balance, new_recipient_balance, bump))` on success\n4. Returns `Err(\"INSUFFICIENT_VAULT_BALANCE\")` if vault can't cover the amount\n\n**This mirrors the real Anchor pattern:**\n```rust\ninvoke_signed(\n    &transfer_instruction,\n    &[vault_pda, recipient, system_program],\n    &[&[b\"vault\", user.key().as_ref(), &[bump]]],\n)?;\n```\n\nThe bump is needed for `invoke_signed` — the program proves it controls the PDA.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            },
+            {
+              "_type": "code",
+              "amount": null,
+              "buildType": "standard",
+              "consumes": null,
+              "deployable": false,
+              "hints": [
+                "First derive the PDA: let (_, bump) = find_pda(&[\"vault\", user], \"system\");",
+                "Then check: if vault_balance < amount { return Err(\"INSUFFICIENT_VAULT_BALANCE\".to_string()); }",
+                "Return Ok((vault_balance - amount, recipient_balance + amount, bump))."
+              ],
+              "idl": null,
+              "key": "exercise",
+              "language": "rust",
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": "use std::collections::hash_map::DefaultHasher;\nuse std::hash::{Hash, Hasher};\n\nfn hash_with_bump(seeds: &[&str], bump: u8, program_id: &str) -> u64 {\n    let mut hasher = DefaultHasher::new();\n    for seed in seeds { seed.hash(&mut hasher); }\n    bump.hash(&mut hasher);\n    program_id.hash(&mut hasher);\n    hasher.finish()\n}\n\nfn find_pda(seeds: &[&str], program_id: &str) -> (u64, u8) {\n    for bump in (0..=255u8).rev() {\n        let hash = hash_with_bump(seeds, bump, program_id);\n        if hash % 2 == 0 { return (hash, bump); }\n    }\n    panic!(\"No valid bump found\");\n}\n\nfn build_vault_transfer(\n    user: &str,\n    vault_balance: u64,\n    recipient_balance: u64,\n    amount: u64,\n) -> Result<(u64, u64, u8), String> {\n    let (_, bump) = find_pda(&[\"vault\", user], \"system\");\n    if vault_balance < amount {\n        return Err(\"INSUFFICIENT_VAULT_BALANCE\".to_string());\n    }\n    Ok((vault_balance - amount, recipient_balance + amount, bump))\n}\n",
+              "src": null,
+              "starter": "use std::collections::hash_map::DefaultHasher;\nuse std::hash::{Hash, Hasher};\n\nfn hash_with_bump(seeds: &[&str], bump: u8, program_id: &str) -> u64 {\n    let mut hasher = DefaultHasher::new();\n    for seed in seeds { seed.hash(&mut hasher); }\n    bump.hash(&mut hasher);\n    program_id.hash(&mut hasher);\n    hasher.finish()\n}\n\nfn find_pda(seeds: &[&str], program_id: &str) -> (u64, u8) {\n    for bump in (0..=255u8).rev() {\n        let hash = hash_with_bump(seeds, bump, program_id);\n        if hash % 2 == 0 { return (hash, bump); }\n    }\n    panic!(\"No valid bump found\");\n}\n\n/// Simulate a CPI transfer from a PDA vault to a recipient.\n/// Returns Ok((new_vault_balance, new_recipient_balance, bump)).\nfn build_vault_transfer(\n    user: &str,\n    vault_balance: u64,\n    recipient_balance: u64,\n    amount: u64,\n) -> Result<(u64, u64, u8), String> {\n    // TODO: Derive the vault PDA to get the bump\n    // TODO: Check vault_balance >= amount\n    // TODO: Return updated balances and the bump\n    todo!()\n}\n",
+              "tests": [
+                {
+                  "description": "Sufficient balance succeeds",
+                  "expectedOutput": "__result__.is_ok()",
+                  "id": "t1",
+                  "input": "\"alice\", 1000, 500, 200"
+                },
+                {
+                  "description": "Insufficient balance fails",
+                  "expectedOutput": "__result__.is_err()",
+                  "id": "t2",
+                  "input": "\"alice\", 100, 500, 200"
+                },
+                {
+                  "description": "Balances update correctly",
+                  "expectedOutput": "{ let r = __result__.unwrap(); r.0 == 800 && r.1 == 700 }",
+                  "id": "t3",
+                  "input": "\"alice\", 1000, 500, 200"
+                },
+                {
+                  "description": "Balances update correctly for a different transfer",
+                  "expectedOutput": "{ let r = __result__.unwrap(); r.0 == 3500 && r.1 == 2500 }",
+                  "id": "t4",
+                  "input": "\"bob\", 5000, 1000, 1500"
+                }
+              ],
+              "url": null
+            }
+          ],
+          "slug": "cpi-challenge",
+          "title": "Challenge: Simulate a CPI Vault Transfer"
+        }
+      ],
+      "title": "PDAs & CPIs"
+    },
+    {
+      "description": "Learn to test, debug, and deploy production-ready Anchor programs.",
+      "key": "anchor-testing",
+      "lessons": [
+        {
+          "_id": "lesson-anchor-testing",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Testing Anchor Programs\n\nTesting is critical for Solana programs. Bugs in smart contracts can lead to loss of funds, so comprehensive testing is non-negotiable.\n\n## Anchor Test Setup\n\nAnchor projects come with a `tests/` folder and pre-configured testing:\n\n```bash\nanchor test\n```\n\nThis command:\n1. Builds your program\n2. Deploys to a local validator\n3. Runs your TypeScript tests\n4. Shuts down the validator\n\n## Basic Test Structure\n\n```typescript\nimport * as anchor from '@coral-xyz/anchor';\nimport { Program } from '@coral-xyz/anchor';\nimport { MyProgram } from '../target/types/my_program';\nimport { expect } from 'chai';\n\ndescribe('my-program', () => {\n  const provider = anchor.AnchorProvider.env();\n  anchor.setProvider(provider);\n\n  const program = anchor.workspace.MyProgram as Program<MyProgram>;\n\n  it('Initializes the program', async () => {\n    const myAccount = anchor.web3.Keypair.generate();\n\n    await program.methods\n      .initialize()\n      .accounts({\n        myAccount: myAccount.publicKey,\n        user: provider.wallet.publicKey,\n        systemProgram: anchor.web3.SystemProgram.programId,\n      })\n      .signers([myAccount])\n      .rpc();\n\n    const account = await program.account.myAccount.fetch(\n      myAccount.publicKey\n    );\n\n    expect(account.data.toNumber()).to.equal(0);\n  });\n});\n```\n\n## Bankrun: Fast Local Testing\n\nBankrun is a lightweight Solana test validator that runs in-process:\n\n```typescript\nimport { BankrunProvider } from 'anchor-bankrun';\nimport { startAnchor } from 'solana-bankrun';\n\ndescribe('fast tests', () => {\n  let context;\n  let provider;\n  let program;\n\n  before(async () => {\n    context = await startAnchor(\n      '',\n      [{ name: 'my_program', programId: PROGRAM_ID }],\n      []\n    );\n\n    provider = new BankrunProvider(context);\n    program = new Program<MyProgram>(IDL, provider);\n  });\n\n  it('runs 10x faster', async () => {\n    // Your test\n  });\n});\n```\n\nBankrun is **much faster** than spinning up a full validator for each test.\n\n## Testing Patterns\n\n### 1. Test Fixtures\n\n```typescript\nconst createUser = async () => {\n  const user = anchor.web3.Keypair.generate();\n\n  // Airdrop SOL\n  await provider.connection.requestAirdrop(\n    user.publicKey,\n    2 * anchor.web3.LAMPORTS_PER_SOL\n  );\n\n  return user;\n};\n\nconst createTokenAccount = async (owner, mint) => {\n  // Create token account for testing\n};\n```\n\n### 2. Account Assertions\n\n```typescript\nconst account = await program.account.userAccount.fetch(userPDA);\n\nexpect(account.authority.toBase58()).to.equal(\n  user.publicKey.toBase58()\n);\nexpect(account.balance.toNumber()).to.equal(1000);\nexpect(account.isActive).to.be.true;\n```\n\n### 3. Error Testing\n\n```typescript\ntry {\n  await program.methods\n    .withdraw(new anchor.BN(10000))\n    .accounts({ user: userPDA })\n    .rpc();\n\n  // Should not reach here\n  expect.fail('Expected error was not thrown');\n} catch (err) {\n  expect(err.error.errorCode.code).to.equal('InsufficientFunds');\n}\n```\n\n### 4. Event Testing\n\nAnchor can emit events:\n\n```rust\n#[event]\npub struct TransferEvent {\n    pub from: Pubkey,\n    pub to: Pubkey,\n    pub amount: u64,\n}\n\nemit!(TransferEvent {\n    from: ctx.accounts.from.key(),\n    to: ctx.accounts.to.key(),\n    amount,\n});\n```\n\nTest events:\n\n```typescript\nconst listener = program.addEventListener('TransferEvent', (event) => {\n  console.log('Transfer:', event);\n  expect(event.amount.toNumber()).to.equal(100);\n});\n\nawait program.methods.transfer(new anchor.BN(100)).rpc();\n\nprogram.removeEventListener(listener);\n```\n\n## Test Organization\n\n```\ntests/\n├── setup.ts              # Shared setup logic\n├── fixtures.ts           # Test data generators\n├── initialize.test.ts    # Initialization tests\n├── transfer.test.ts      # Transfer logic tests\n└── errors.test.ts        # Error condition tests\n```\n\n## Mocking Accounts\n\nFor unit-testing complex logic:\n\n```typescript\nconst mockAccount = {\n  authority: user.publicKey,\n  balance: new anchor.BN(1000),\n  lastUpdate: new anchor.BN(Date.now() / 1000),\n};\n\n// Serialize and write to test validator\nconst accountData = program.coder.accounts.encode(\n  'UserAccount',\n  mockAccount\n);\n```\n\n## Best Practices\n\n1. **Test happy path first**, then edge cases\n2. **Test all error conditions** (unauthorized access, insufficient funds, etc.)\n3. **Use descriptive test names**: `it('rejects withdrawal when balance is insufficient')`\n4. **Clean up state** between tests (or use Bankrun snapshots)\n5. **Test with realistic data** (not just 0s and 1s)\n6. **Measure code coverage** (use `solana-program-test` for Rust unit tests)\n\n## Continuous Integration\n\n```yaml\n# .github/workflows/test.yml\nname: Test\n\non: [push, pull_request]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-node@v3\n      - name: Install Solana\n        run: sh -c \"$(curl -sSfL https://release.anza.xyz/stable/install)\"\n      - name: Install Anchor\n        run: cargo install --git https://github.com/coral-xyz/anchor avm --force\n      - name: Run tests\n        run: anchor test\n```\n\n## Next Lesson\n\nYou'll learn how to define custom errors in Anchor programs.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "anchor-testing",
+          "title": "Testing Anchor Programs"
+        },
+        {
+          "_id": "lesson-anchor-errors",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Custom Errors in Anchor\n\nProperly handling errors is essential for debugging and security. Anchor provides a clean way to define and use custom errors.\n\n## Defining Custom Errors\n\n```rust\nuse anchor_lang::prelude::*;\n\n#[error_code]\npub enum ErrorCode {\n    #[msg(\"Insufficient funds for this operation\")]\n    InsufficientFunds,\n\n    #[msg(\"User is not authorized to perform this action\")]\n    Unauthorized,\n\n    #[msg(\"The provided amount exceeds the maximum allowed\")]\n    AmountTooLarge,\n\n    #[msg(\"Account has already been initialized\")]\n    AlreadyInitialized,\n}\n```\n\nEach error gets:\n- A unique error code (auto-assigned)\n- A human-readable message\n- Integration with Anchor's error handling\n\n## Using the require! Macro\n\nThe `require!` macro is the cleanest way to enforce conditions:\n\n```rust\npub fn transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {\n    let user_account = &mut ctx.accounts.user;\n\n    // Check balance\n    require!(\n        user_account.balance >= amount,\n        ErrorCode::InsufficientFunds\n    );\n\n    // Check authorization\n    require_keys_eq!(\n        ctx.accounts.authority.key(),\n        user_account.authority,\n        ErrorCode::Unauthorized\n    );\n\n    // Check amount limit\n    require!(\n        amount <= 1_000_000,\n        ErrorCode::AmountTooLarge\n    );\n\n    user_account.balance -= amount;\n    Ok(())\n}\n```\n\n## Anchor's Built-in require! Variants\n\n### require_keys_eq!\n\n```rust\nrequire_keys_eq!(\n    ctx.accounts.user.authority,\n    ctx.accounts.signer.key(),\n    ErrorCode::Unauthorized\n);\n```\n\nCompares two public keys.\n\n### require_keys_neq!\n\n```rust\nrequire_keys_neq!(\n    ctx.accounts.from.key(),\n    ctx.accounts.to.key(),\n    ErrorCode::CannotTransferToSelf\n);\n```\n\nEnsures two keys are different.\n\n### require_gt! / require_gte!\n\n```rust\nrequire_gte!(\n    user.balance,\n    MIN_BALANCE,\n    ErrorCode::BalanceTooLow\n);\n```\n\nNumeric comparisons (gt = greater than, gte = greater than or equal).\n\n## Constraint Errors\n\nConstraints in `#[account(...)]` automatically return errors:\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUser<'info> {\n    #[account(\n        mut,\n        has_one = authority @ ErrorCode::Unauthorized,\n        constraint = user.is_active @ ErrorCode::AccountInactive\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\nIf `has_one` or `constraint` fails, Anchor returns your custom error.\n\n## Error Handling in TypeScript Tests\n\nAnchor errors are automatically parsed in TypeScript:\n\n```typescript\ntry {\n  await program.methods\n    .transfer(new anchor.BN(10000))\n    .accounts({ user: userPDA })\n    .rpc();\n\n  throw new Error('Should have failed');\n} catch (err) {\n  // Anchor error structure\n  expect(err.error.errorCode.code).to.equal('InsufficientFunds');\n  expect(err.error.errorCode.number).to.equal(6000); // First custom error\n  expect(err.error.errorMessage).to.include('Insufficient funds');\n}\n```\n\n## Error Codes\n\nAnchor assigns error codes starting at **6000**:\n\n```rust\n#[error_code]\npub enum ErrorCode {\n    InsufficientFunds,    // 6000\n    Unauthorized,         // 6001\n    AmountTooLarge,       // 6002\n}\n```\n\nYou can also manually assign codes:\n\n```rust\n#[error_code]\npub enum ErrorCode {\n    #[msg(\"Insufficient funds\")]\n    InsufficientFunds = 7000,\n}\n```\n\n## Anchor's Built-in Errors\n\nAnchor provides common errors automatically:\n\n- `ErrorCode::ConstraintMut` - Account not marked as mutable\n- `ErrorCode::ConstraintHasOne` - has_one constraint failed\n- `ErrorCode::ConstraintSigner` - Account not a signer\n- `ErrorCode::ConstraintRaw` - Generic constraint failed\n- `ErrorCode::AccountNotInitialized` - Account data is empty\n- `ErrorCode::AccountOwnedByWrongProgram` - Account owned by wrong program\n\n## Best Practices\n\n### 1. Be Specific\n\n```rust\n// BAD: Vague error\n#[msg(\"Invalid input\")]\nInvalidInput,\n\n// GOOD: Specific error\n#[msg(\"Amount must be between 1 and 1,000,000 lamports\")]\nAmountOutOfRange,\n```\n\n### 2. Use Constraints Where Possible\n\nInstead of:\n\n```rust\npub fn update(ctx: Context<Update>) -> Result<()> {\n    require!(\n        ctx.accounts.user.authority == ctx.accounts.signer.key(),\n        ErrorCode::Unauthorized\n    );\n    // ...\n}\n```\n\nUse:\n\n```rust\n#[derive(Accounts)]\npub struct Update<'info> {\n    #[account(\n        mut,\n        has_one = authority @ ErrorCode::Unauthorized\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n### 3. Log Context for Debugging\n\n```rust\nrequire!(\n    amount > 0,\n    ErrorCode::AmountMustBePositive\n);\n\nmsg!(\"Transferring {} lamports\", amount);\n```\n\nUse `msg!()` to log values for debugging.\n\n## Matching Errors in Integration Tests\n\n```typescript\nconst expectError = async (fn, errorCode) => {\n  try {\n    await fn();\n    throw new Error(`Expected ${errorCode} error`);\n  } catch (err) {\n    expect(err.error.errorCode.code).to.equal(errorCode);\n  }\n};\n\nawait expectError(\n  () => program.methods.transfer(tooMuch).rpc(),\n  'InsufficientFunds'\n);\n```\n\n## Next Lesson\n\nYou'll learn how to deploy Anchor programs to devnet and mainnet.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "anchor-errors",
+          "title": "Custom Errors in Anchor"
+        },
+        {
+          "_id": "lesson-deployment",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Deploying Solana Programs\n\nDeploying to Solana is straightforward with Anchor, but there are important considerations for security and upgrades.\n\n## Building Your Program\n\n```bash\nanchor build\n```\n\nThis compiles your program and generates:\n- `target/deploy/my_program.so` - The compiled program\n- `target/idl/my_program.json` - The Interface Definition Language file\n- `target/types/my_program.ts` - TypeScript types for your program\n\n## Deploying to Devnet\n\n1. **Configure your CLI for devnet**:\n\n```bash\nsolana config set --url devnet\n```\n\n2. **Ensure you have SOL**:\n\n```bash\nsolana balance\nsolana airdrop 2  # If needed\n```\n\n3. **Deploy**:\n\n```bash\nanchor deploy\n```\n\nAnchor will:\n- Upload the program binary\n- Create the program account\n- Set you as the upgrade authority\n\n## Understanding Program IDs\n\nYour program ID is declared in `lib.rs`:\n\n```rust\ndeclare_id!(\"YourProgramIDHere\");\n```\n\nThis ID is generated when you run `anchor init` and stored in `target/deploy/my_program-keypair.json`.\n\n**Important**: Once deployed, the program ID is permanent for that deployment. If you want a new ID, you need to create a new keypair.\n\n## The IDL (Interface Definition Language)\n\nThe IDL is a JSON file describing your program's interface:\n\n```json\n{\n  \"version\": \"0.1.0\",\n  \"name\": \"my_program\",\n  \"instructions\": [\n    {\n      \"name\": \"initialize\",\n      \"accounts\": [\n        { \"name\": \"myAccount\", \"isMut\": true, \"isSigner\": true },\n        { \"name\": \"user\", \"isMut\": true, \"isSigner\": true },\n        { \"name\": \"systemProgram\", \"isMut\": false, \"isSigner\": false }\n      ],\n      \"args\": []\n    }\n  ],\n  \"accounts\": [\n    {\n      \"name\": \"MyAccount\",\n      \"type\": {\n        \"kind\": \"struct\",\n        \"fields\": [\n          { \"name\": \"data\", \"type\": \"u64\" }\n        ]\n      }\n    }\n  ]\n}\n```\n\nClients use the IDL to interact with your program.\n\n## Uploading the IDL\n\n```bash\nanchor idl init -f target/idl/my_program.json <PROGRAM_ID>\n```\n\nThis stores the IDL on-chain, making it easier for tools like Anchor Explorer to understand your program.\n\nUpdate an existing IDL:\n\n```bash\nanchor idl upgrade -f target/idl/my_program.json <PROGRAM_ID>\n```\n\n## Program Upgrades\n\nSolana programs are **upgradeable** by default. The upgrade authority can replace the program code:\n\n```bash\nanchor upgrade target/deploy/my_program.so --program-id <PROGRAM_ID>\n```\n\n### Checking Upgrade Authority\n\n```bash\nsolana program show <PROGRAM_ID>\n```\n\nOutput:\n```\nProgram Id: YourProgramID\nOwner: BPFLoaderUpgradeab1e11111111111111111111111\nProgramData Address: ...\nAuthority: YourWalletPublicKey\nLast Deployed In Slot: 123456789\nData Length: 200000 bytes\n```\n\n### Transferring Upgrade Authority\n\n```bash\nsolana program set-upgrade-authority <PROGRAM_ID> --new-upgrade-authority <NEW_AUTHORITY>\n```\n\n### Revoking Upgrade Authority (Immutable Program)\n\nFor maximum security, you can make a program **immutable**:\n\n```bash\nsolana program set-upgrade-authority <PROGRAM_ID> --final\n```\n\n**Warning**: This is irreversible! No one can ever upgrade the program again.\n\n## Multisig Upgrade Authority\n\nFor production programs, use a multisig as the upgrade authority:\n\n```bash\n# Create a multisig with Squads Protocol\n# Set multisig as upgrade authority\nsolana program set-upgrade-authority <PROGRAM_ID> --new-upgrade-authority <MULTISIG_ADDRESS>\n```\n\nThis requires multiple team members to approve upgrades.\n\n## Verifiable Builds\n\nVerifiable builds let anyone verify your deployed program matches your source code:\n\n```bash\nanchor build --verifiable\n```\n\nThis builds your program in a Docker container with a deterministic environment.\n\nVerify a deployed program:\n\n```bash\nanchor verify <PROGRAM_ID>\n```\n\n## Deploying to Mainnet\n\n1. **Switch to mainnet**:\n\n```bash\nsolana config set --url mainnet-beta\n```\n\n2. **Fund your wallet** (deploying costs ~2-5 SOL depending on program size)\n\n3. **Audit your code** (get a professional audit for production programs)\n\n4. **Deploy**:\n\n```bash\nanchor deploy\n```\n\n5. **Upload IDL**:\n\n```bash\nanchor idl init -f target/idl/my_program.json <PROGRAM_ID>\n```\n\n6. **Set up multisig authority** or **revoke authority** if appropriate\n\n## Best Practices\n\n1. **Test on devnet first** - Always deploy and test on devnet before mainnet\n2. **Use verifiable builds** - Builds trust with users\n3. **Store keypairs securely** - Never commit `target/deploy/*-keypair.json` to Git\n4. **Plan your upgrade strategy** - Multisig for most cases, immutable for critical infrastructure\n5. **Monitor program accounts** - Track rent, data size, and usage\n6. **Document your IDL** - Add comments to your Rust code; they appear in the IDL\n\n## Common Deployment Issues\n\n### Insufficient SOL\n\n```\nError: Account <PROGRAM_ID> has insufficient funds\n```\n\nSolution: Airdrop more SOL (devnet) or fund your wallet (mainnet)\n\n### Program Already Deployed\n\n```\nError: Program already exists\n```\n\nSolution: Use `anchor upgrade` instead of `anchor deploy`\n\n### Wrong Upgrade Authority\n\n```\nError: Upgrade authority mismatch\n```\n\nSolution: Ensure the wallet you're using matches the upgrade authority\n\n## Next Challenge\n\nYou'll write a test that simulates a program execution scenario.\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            }
+          ],
+          "slug": "deployment",
+          "title": "Deploying Solana Programs"
+        },
+        {
+          "_id": "lesson-testing-challenge",
+          "blocks": [
+            {
+              "_type": "prose",
+              "amount": null,
+              "buildType": null,
+              "consumes": null,
+              "deployable": null,
+              "hints": null,
+              "idl": null,
+              "key": "intro",
+              "language": null,
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": null,
+              "src": "# Challenge: Simulate a Transfer Test in Rust\n\nTest-driven development is critical for Solana programs. You'll write a function that simulates a complete transfer test scenario — the same logic you'd verify with `anchor test`.\n\n## Your Task\n\nImplement `simulate_transfer_test(sender_initial, transfer_amount, fee)` that:\n\n1. Checks if sender can afford `transfer_amount + fee`\n2. If yes, computes final balances and returns `\"PASS:sender=<final>,receiver=<final>\"`\n3. If no, returns `\"FAIL:insufficient_funds\"`\n\n**Test constants:**\n- Receiver starts with 0 balance\n- Fee is paid by sender and burned (not added to receiver)\n- The function simulates what an Anchor test's `assert` checks would verify\n\n**This mirrors the Anchor test pattern:**\n```typescript\nit('transfers SOL correctly', async () => {\n  const balanceBefore = await connection.getBalance(sender);\n  await program.methods.transfer(amount).rpc();\n  const balanceAfter = await connection.getBalance(sender);\n  expect(balanceAfter).to.equal(balanceBefore - amount - fee);\n});\n```\n",
+              "starter": null,
+              "tests": null,
+              "url": null
+            },
+            {
+              "_type": "code",
+              "amount": null,
+              "buildType": "standard",
+              "consumes": null,
+              "deployable": false,
+              "hints": [
+                "Check if sender_initial >= transfer_amount + fee (use checked_add or just add — small test values won't overflow).",
+                "sender_final = sender_initial - transfer_amount - fee. receiver_final = receiver_initial + transfer_amount.",
+                "Format with: format!(\"PASS:sender={},receiver={}\", sender_final, receiver_final)."
+              ],
+              "idl": null,
+              "key": "exercise",
+              "language": "rust",
+              "maxWords": null,
+              "network": null,
+              "produces": null,
+              "prompt": null,
+              "questions": null,
+              "solution": "fn simulate_transfer_test(\n    sender_initial: u64,\n    transfer_amount: u64,\n    fee: u64,\n) -> String {\n    let receiver_initial: u64 = 0;\n\n    if sender_initial < transfer_amount + fee {\n        return \"FAIL:insufficient_funds\".to_string();\n    }\n\n    let sender_final = sender_initial - transfer_amount - fee;\n    let receiver_final = receiver_initial + transfer_amount;\n\n    format!(\"PASS:sender={},receiver={}\", sender_final, receiver_final)\n}\n",
+              "src": null,
+              "starter": "fn simulate_transfer_test(\n    sender_initial: u64,\n    transfer_amount: u64,\n    fee: u64,\n) -> String {\n    let receiver_initial: u64 = 0;\n\n    // TODO: Check if sender can afford transfer_amount + fee\n\n    // TODO: If yes, compute final balances and return:\n    //   \"PASS:sender=<sender_final>,receiver=<receiver_final>\"\n\n    // TODO: If no, return \"FAIL:insufficient_funds\"\n    todo!()\n}\n",
+              "tests": [
+                {
+                  "description": "Exact balances after a successful transfer",
+                  "expectedOutput": "\"PASS:sender=1499995000,receiver=500000000\".to_string()",
+                  "id": "t1",
+                  "input": "2_000_000_000, 500_000_000, 5000"
+                },
+                {
+                  "description": "Insufficient funds fails",
+                  "expectedOutput": "\"FAIL:insufficient_funds\".to_string()",
+                  "id": "t2",
+                  "input": "100, 200, 5000"
+                },
+                {
+                  "description": "Exact balances for a different transfer",
+                  "expectedOutput": "\"PASS:sender=699000,receiver=300000\".to_string()",
+                  "id": "t3",
+                  "input": "1000000, 300000, 1000"
+                }
+              ],
+              "url": null
+            }
+          ],
+          "slug": "testing-challenge",
+          "title": "Challenge: Test a Transfer Program"
+        }
+      ],
+      "title": "Testing & Deployment"
+    }
+  ],
+  "slug": "anchor-framework",
+  "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+  "thumbnail": null,
+  "title": "Anchor Framework Mastery",
+  "trackId": 3,
+  "trackLevel": 1,
+  "xpReward": 900
+}

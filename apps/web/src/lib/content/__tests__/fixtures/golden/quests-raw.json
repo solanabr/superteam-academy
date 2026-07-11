@@ -1,0 +1,262 @@
+{
+  "challengeLessonIds": [
+    "lesson-account-challenge",
+    "lesson-amm-challenge",
+    "lesson-anchor-accounts-challenge",
+    "lesson-anchor-setup-challenge",
+    "lesson-balance-checker-challenge",
+    "lesson-bfsp-add-instruction",
+    "lesson-bfsp-build-increment",
+    "lesson-bfsp-complete-counter",
+    "lesson-bfsp-define-counter",
+    "lesson-bfsp-deploy-to-devnet",
+    "lesson-bfsp-m4-deploy",
+    "lesson-bfsp-wire-up-initialize",
+    "lesson-bfsp-your-first-build",
+    "lesson-connect-wallet-challenge",
+    "lesson-cpi-challenge",
+    "lesson-create-token-challenge",
+    "lesson-dapp-challenge",
+    "lesson-error-challenge",
+    "lesson-keypair-challenge",
+    "lesson-liquidation-challenge",
+    "lesson-parse-data-challenge",
+    "lesson-pda-advanced-challenge",
+    "lesson-pda-challenge",
+    "lesson-program-challenge",
+    "lesson-rust-basics-challenge",
+    "lesson-rust-program-challenge",
+    "lesson-serialization-challenge",
+    "lesson-sign-message-challenge",
+    "lesson-staking-challenge",
+    "lesson-testing-challenge",
+    "lesson-token-math-challenge",
+    "lesson-transfer-challenge",
+    "lesson-vault-challenge"
+  ],
+  "moduleLessonMap": [
+    {
+      "_id": "course-anchor-framework:anchor-basics",
+      "lessonIds": [
+        "lesson-anchor-intro",
+        "lesson-anchor-setup-challenge",
+        "lesson-anchor-accounts",
+        "lesson-anchor-accounts-challenge"
+      ]
+    },
+    {
+      "_id": "course-anchor-framework:pdas-cpis",
+      "lessonIds": [
+        "lesson-pda-deep-dive",
+        "lesson-pda-advanced-challenge",
+        "lesson-cpi-overview",
+        "lesson-cpi-challenge"
+      ]
+    },
+    {
+      "_id": "course-anchor-framework:anchor-testing",
+      "lessonIds": [
+        "lesson-anchor-testing",
+        "lesson-anchor-errors",
+        "lesson-deployment",
+        "lesson-testing-challenge"
+      ]
+    },
+    {
+      "_id": "course-building-first-program:bfsp-build-pipeline",
+      "lessonIds": [
+        "lesson-bfsp-from-code-to-chain",
+        "lesson-bfsp-your-first-build",
+        "lesson-bfsp-anatomy-anchor-program",
+        "lesson-bfsp-add-instruction"
+      ]
+    },
+    {
+      "_id": "course-building-first-program:bfsp-state-accounts",
+      "lessonIds": [
+        "lesson-bfsp-on-chain-state",
+        "lesson-bfsp-define-counter",
+        "lesson-bfsp-account-constraints",
+        "lesson-bfsp-wire-up-initialize"
+      ]
+    },
+    {
+      "_id": "course-building-first-program:bfsp-full-counter",
+      "lessonIds": [
+        "lesson-bfsp-adding-instructions",
+        "lesson-bfsp-build-increment",
+        "lesson-bfsp-complete-counter",
+        "lesson-bfsp-deploy-to-devnet"
+      ]
+    },
+    {
+      "_id": "course-building-first-program:bfsp-deploy-interact",
+      "lessonIds": [
+        "lesson-bfsp-m4-airdrop",
+        "lesson-bfsp-m4-deploy",
+        "lesson-bfsp-m4-interact",
+        "lesson-bfsp-m4-capstone"
+      ]
+    },
+    {
+      "_id": "course-defi-on-solana:defi-primitives",
+      "lessonIds": [
+        "lesson-defi-overview",
+        "lesson-amm-concepts",
+        "lesson-lending-concepts",
+        "lesson-amm-challenge"
+      ]
+    },
+    {
+      "_id": "course-defi-on-solana:token-mechanics",
+      "lessonIds": [
+        "lesson-token-standards",
+        "lesson-token-math-challenge",
+        "lesson-staking-mechanisms",
+        "lesson-staking-challenge"
+      ]
+    },
+    {
+      "_id": "course-defi-on-solana:building-defi",
+      "lessonIds": [
+        "lesson-orderbook-design",
+        "lesson-oracle-design",
+        "lesson-vault-challenge",
+        "lesson-liquidation-challenge"
+      ]
+    },
+    {
+      "_id": "course-rust-for-solana:rust-basics",
+      "lessonIds": [
+        "lesson-why-rust",
+        "lesson-ownership-borrowing",
+        "lesson-structs-enums",
+        "lesson-rust-basics-challenge"
+      ]
+    },
+    {
+      "_id": "course-rust-for-solana:rust-blockchain",
+      "lessonIds": [
+        "lesson-serialization",
+        "lesson-serialization-challenge",
+        "lesson-error-handling",
+        "lesson-error-challenge"
+      ]
+    },
+    {
+      "_id": "course-rust-for-solana:rust-programs",
+      "lessonIds": [
+        "lesson-program-structure",
+        "lesson-rust-program-challenge",
+        "lesson-state-management",
+        "lesson-pda-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-frontend:wallet-integration",
+      "lessonIds": [
+        "lesson-wallet-adapter-intro",
+        "lesson-connect-wallet-challenge",
+        "lesson-signing-messages",
+        "lesson-sign-message-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-frontend:reading-onchain",
+      "lessonIds": [
+        "lesson-rpc-methods",
+        "lesson-balance-checker-challenge",
+        "lesson-parsing-data",
+        "lesson-parse-data-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-frontend:dapp-ui",
+      "lessonIds": [
+        "lesson-react-patterns",
+        "lesson-transaction-ui",
+        "lesson-notifications",
+        "lesson-dapp-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-fundamentals:getting-started",
+      "lessonIds": [
+        "lesson-intro-solana",
+        "lesson-setup-environment",
+        "lesson-wallet-setup",
+        "lesson-keypair-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-fundamentals:transactions-tokens",
+      "lessonIds": [
+        "lesson-first-transaction",
+        "lesson-transfer-challenge",
+        "lesson-token-overview",
+        "lesson-create-token-challenge"
+      ]
+    },
+    {
+      "_id": "course-solana-fundamentals:accounts-programs",
+      "lessonIds": [
+        "lesson-account-model",
+        "lesson-account-challenge",
+        "lesson-programs-overview",
+        "lesson-program-challenge"
+      ]
+    }
+  ],
+  "quests": [
+    {
+      "_id": "quest-challenge",
+      "description": "Pass a challenge lesson",
+      "icon": "Code",
+      "name": "Complete a Challenge",
+      "resetType": "daily",
+      "targetValue": 1,
+      "type": "challenge",
+      "xpReward": 35
+    },
+    {
+      "_id": "quest-complete-lesson",
+      "description": "Finish any lesson today",
+      "icon": "BookOpen",
+      "name": "Complete a Lesson",
+      "resetType": "daily",
+      "targetValue": 1,
+      "type": "lesson",
+      "xpReward": 25
+    },
+    {
+      "_id": "quest-complete-module",
+      "description": "Finish all lessons in a module",
+      "icon": "Scroll",
+      "name": "Complete a Module",
+      "resetType": "daily",
+      "targetValue": 1,
+      "type": "module",
+      "xpReward": 60
+    },
+    {
+      "_id": "quest-lesson-batch",
+      "description": "Finish 3 lessons in a single day",
+      "icon": "Lightning",
+      "name": "Complete 3 Lessons",
+      "resetType": "daily",
+      "targetValue": 3,
+      "type": "lesson_batch",
+      "xpReward": 50
+    },
+    {
+      "_id": "quest-login-streak",
+      "description": "Visit the platform 3 consecutive days",
+      "icon": "Trophy",
+      "name": "Log in 3 Days in a Row",
+      "resetType": "multi_day",
+      "targetValue": 3,
+      "type": "login_streak",
+      "xpReward": 40
+    }
+  ]
+}
