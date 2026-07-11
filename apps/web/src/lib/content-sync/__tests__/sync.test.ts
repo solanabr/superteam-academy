@@ -7,6 +7,10 @@ import type { GitHubClient } from "../github";
 import type { GraderSet } from "../executor-gate";
 import { makeCourseTarball, PNG_1X1 } from "./_fixtures";
 
+// `../sync` imports COURSES_CACHE_TAG from the `@/lib/sanity/queries` barrel,
+// which (post SP2-B flip) re-exports the server-only `@/lib/content/queries`
+// graph. Stub `server-only` so this pure-Node suite can import that graph.
+vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
 
 /** Hand-authored managed docs unrelated to the sync (no marker → never pruned).

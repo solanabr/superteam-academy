@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
-import { COURSES_CACHE_TAG } from "@/lib/sanity/queries";
+import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 
 /**
  * On-chain deployment read seam (SP2-B Task 3).
@@ -137,20 +137,34 @@ export function isSynced(dep: DeploymentStatus | undefined): boolean {
  * during an outage throws, which the gate treats as "nothing synced" — the
  * catalog degrades to empty rather than leaking unsynced content.
  */
-const fetchActiveDeploymentRows = unstable_cache(
-  async (): Promise<DeploymentStatus[]> => {
-    const client = createCookielessClient();
-    const { data, error } = await client
-      .from("public_onchain_deployments")
-      .select(VIEW_COLUMNS);
-    if (error) {
-      throw new Error(`Failed to load onchain deployments: ${error.message}`);
-    }
-    return data ?? [];
-  },
-  ["onchain-deployments-active"],
-  { tags: [COURSES_CACHE_TAG], revalidate: 3600 }
-);
+async function loadActiveDeploymentRows(): Promise<DeploymentStatus[]> {
+  const client = createCookielessClient();
+  const { data, error } = await client
+    .from("public_onchain_deployments")
+    .select(VIEW_COLUMNS);
+  if (error) {
+    throw new Error(`Failed to load onchain deployments: ${error.message}`);
+  }
+  return data ?? [];
+}
+
+/**
+ * The `unstable_cache` wrapper, created lazily on first use. `COURSES_CACHE_TAG`
+ * now lives in `@/lib/content/queries`, which value-imports this module — reading
+ * the tag at module-eval time would touch it inside the import cycle before it is
+ * initialized (TDZ). Deferring to first call sidesteps the cycle; `unstable_cache`
+ * memoizes by key, so building the wrapper once is equivalent to a module const.
+ */
+let cachedFetch: (() => Promise<DeploymentStatus[]>) | null = null;
+
+function fetchActiveDeploymentRows(): Promise<DeploymentStatus[]> {
+  cachedFetch ??= unstable_cache(
+    loadActiveDeploymentRows,
+    ["onchain-deployments-active"],
+    { tags: [COURSES_CACHE_TAG], revalidate: 3600 }
+  );
+  return cachedFetch();
+}
 
 /** One query → one content-id-keyed `ReadonlyMap` of deployment status. */
 export async function getActiveDeployments(): Promise<

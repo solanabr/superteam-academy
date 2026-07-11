@@ -41,6 +41,10 @@ function bundleCourse(id: string): CourseDoc {
 }
 
 describe("projectCourse — getAllCourses shape (summary module lessons)", () => {
+  it("every bundle course has a golden (bundle → golden coverage)", () => {
+    expect(coursesById.size).toBe(goldenCourses.length);
+  });
+
   it("projects every prod course byte-identically", () => {
     for (const golden of goldenCourses) {
       const projected = projectCourse(bundleCourse(golden._id), deps);
@@ -78,6 +82,10 @@ describe("projectCourse — getCourseBySlug shape (full module lessons)", () => 
 });
 
 describe("projectLesson — full blocks[] projection", () => {
+  it("every bundle lesson has a golden (bundle → golden coverage)", () => {
+    expect(lessonsById.size).toBe(goldenLessons.length);
+  });
+
   it("projects every prod lesson byte-identically", () => {
     for (const golden of goldenLessons) {
       const doc = lessonsById.get(golden._id);
