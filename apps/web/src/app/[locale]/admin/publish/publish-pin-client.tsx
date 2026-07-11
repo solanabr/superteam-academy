@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { ChecksState } from "@/lib/content-sync/types";
+import type { ChecksState } from "@/lib/github/types";
 import {
   computePublishVerdict,
   shortSha,
@@ -16,7 +16,7 @@ import {
   buildPublishPrUrl,
   COMPILE_COMMAND,
   LOCK_PATH,
-} from "@/lib/content-sync/publish-pin";
+} from "@/lib/github/publish-pin";
 
 interface PinResponse {
   pin: { sha: string; counts: Record<string, number>; compiledAt?: string };

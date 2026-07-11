@@ -21,7 +21,7 @@ import {
   checkNewAchievements,
   buildUserState,
 } from "@/lib/gamification/achievements";
-import { getCourseById, getDeployedAchievements } from "@/lib/sanity/queries";
+import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {

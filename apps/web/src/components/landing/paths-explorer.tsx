@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Medal, Lightning } from "@phosphor-icons/react";
-import type { LearningPath } from "@/lib/sanity/types";
+import type { LearningPath } from "@superteam-lms/types";
 
 /* ────────────────────────────────────────────────────────────────────
    Track-select console. Left: the tracks. Right: the selected track's

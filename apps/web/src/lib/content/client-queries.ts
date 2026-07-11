@@ -3,7 +3,7 @@ import type {
   DeployedAchievement,
   LessonSummary,
   RecommendedCourse,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 /**
  * Browser-side content queries (SP2-B). Pre-flip, client components called the

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { CodeBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
-import { getLessonBySlug } from "@/lib/sanity/queries";
+import { getLessonBySlug } from "@/lib/content/queries";
 import { gradeCode, MAX_SUBMISSION_BYTES } from "@/lib/grading/graders/code";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";

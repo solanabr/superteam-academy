@@ -9,10 +9,9 @@ Superteam Academy is a **decentralized learning platform on Solana**. Learners e
 **Docs**:
 
 - `docs/ARCHITECTURE.md` — System architecture, component structure, data flows, service interfaces
-- `docs/DEPLOYMENT.md` — Deployment guide (Vercel, Supabase, Sanity, GCP)
-- `docs/CMS_GUIDE.md` — Sanity CMS content management
+- `docs/DEPLOYMENT.md` — Deployment guide (Vercel, Supabase, GCP)
 - `docs/CUSTOMIZATION.md` — Theming, i18n, and extensibility
-- `docs/ADMIN.md` — Admin panel guide for Sanity-to-on-chain sync
+- `docs/ADMIN.md` — Admin panel guide for content-to-on-chain sync
 - `docs/DEPLOY-PROGRAM.md` — Devnet program deployment guide
 
 ## Communication Style
@@ -37,7 +36,7 @@ Use `/quick-commit` to automate branch creation and commits.
 
 ```
 superteam-academy/
-├── docs/                  ← Architecture, deployment, CMS, admin guides
+├── docs/                  ← Architecture, deployment, admin guides
 ├── onchain-academy/       ← Anchor workspace (programs/, tests/rust/, tests/*.ts)
 ├── apps/
 │   ├── web/               ← Next.js 14 App Router (see apps/web/CLAUDE.md)
@@ -45,7 +44,6 @@ superteam-academy/
 ├── packages/
 │   ├── types/             ← Shared TypeScript interfaces (see packages/types/CLAUDE.md)
 │   └── config/            ← Shared ESLint, TS, Tailwind configs
-├── sanity/                ← Sanity Studio, schemas, seed data
 ├── supabase/schema.sql    ← 19 tables, indexes, RLS, functions, views
 ├── wallets/               ← Keypairs (gitignored)
 ├── scripts/               ← Helper scripts
@@ -56,25 +54,25 @@ Full annotated tree: `structure.md` in the `superteam-academy-dev` skill.
 
 ## Technology Stack
 
-| Layer            | Stack                                                      |
-| ---------------- | ---------------------------------------------------------- |
-| **Programs**     | Anchor 0.31+, Rust 1.82+                                   |
-| **XP Tokens**    | Token-2022 (NonTransferable, PermanentDelegate)            |
-| **Credentials**  | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| **Testing**      | Mollusk, LiteSVM, ts-mocha/Chai                            |
-| **Client**       | TypeScript, @coral-xyz/anchor, @solana/web3.js             |
-| **Frontend**     | Next.js 14, React, Tailwind CSS, shadcn/ui + Radix         |
-| **CMS**          | Sanity v3 (GROQ queries, visual editor)                    |
-| **Backend/DB**   | Supabase (Postgres, RLS, auth helpers)                     |
-| **Auth**         | Solana Wallet Adapter (SIWS) + Google OAuth                |
-| **Code Editor**  | Monaco Editor (JS/TS syntax, challenge runner)             |
-| **Build Server** | Rust/Axum (Docker-based Anchor compilation)                |
-| **Analytics**    | GA4 + PostHog + Sentry                                     |
-| **i18n**         | next-intl (PT-BR, ES, EN)                                  |
-| **RPC**          | Helius (DAS API for credential queries + XP leaderboard)   |
-| **Content**      | Arweave (immutable course content)                         |
-| **Multisig**     | Squads (platform authority)                                |
-| **Deployment**   | Vercel (frontend), Google Cloud Run (build server)         |
+| Layer            | Stack                                                                        |
+| ---------------- | ---------------------------------------------------------------------------- |
+| **Programs**     | Anchor 0.31+, Rust 1.82+                                                     |
+| **XP Tokens**    | Token-2022 (NonTransferable, PermanentDelegate)                              |
+| **Credentials**  | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate)                   |
+| **Testing**      | Mollusk, LiteSVM, ts-mocha/Chai                                              |
+| **Client**       | TypeScript, @coral-xyz/anchor, @solana/web3.js                               |
+| **Frontend**     | Next.js 14, React, Tailwind CSS, shadcn/ui + Radix                           |
+| **Content**      | Committed bundle compiled from `solanabr/courses-academy` (content.lock pin) |
+| **Backend/DB**   | Supabase (Postgres, RLS, auth helpers)                                       |
+| **Auth**         | Solana Wallet Adapter (SIWS) + Google OAuth                                  |
+| **Code Editor**  | Monaco Editor (JS/TS syntax, challenge runner)                               |
+| **Build Server** | Rust/Axum (Docker-based Anchor compilation)                                  |
+| **Analytics**    | GA4 + PostHog + Sentry                                                       |
+| **i18n**         | next-intl (PT-BR, ES, EN)                                                    |
+| **RPC**          | Helius (DAS API for credential queries + XP leaderboard)                     |
+| **Storage**      | Arweave via Irys (permanent credential metadata)                             |
+| **Multisig**     | Squads (platform authority)                                                  |
+| **Deployment**   | Vercel (frontend), Google Cloud Run (build server)                           |
 
 ## Program Overview
 

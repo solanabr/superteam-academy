@@ -1,5 +1,5 @@
 import type { SlotsLockT } from "@superteam-lms/content-schema";
-import type { SanityDoc } from "@/lib/content-sync/types";
+import type { BundleDoc } from "@/lib/content/compile/types";
 
 /**
  * The committed content bundle (`src/content/generated/*.json`) holds RAW
@@ -8,7 +8,7 @@ import type { SanityDoc } from "@/lib/content-sync/types";
  * inlined — minus the sync/onChainStatus/authoringStatus overlays. These are
  * NOT the GROQ-projected `@superteam-lms/types` shapes (`Course`, `Lesson`, …
  * with references resolved and slugs flattened to strings); re-deriving those
- * is SP2-B scope. So the store types below extend {@link SanityDoc} (the same
+ * is SP2-B scope. So the store types below extend {@link BundleDoc} (the same
  * interface the projector emits) and pin only the discriminant plus the field
  * each lookup map keys on. Every other field stays `unknown` via the base
  * index signature — honest about the raw shape, no invented parallel duplicate.
@@ -20,29 +20,29 @@ export interface RawSlug {
   current: string;
 }
 
-export interface CourseDoc extends SanityDoc {
+export interface CourseDoc extends BundleDoc {
   _type: "course";
   slug: RawSlug;
 }
 
-export interface LessonDoc extends SanityDoc {
+export interface LessonDoc extends BundleDoc {
   _type: "lesson";
   slug: RawSlug;
 }
 
-export interface InstructorDoc extends SanityDoc {
+export interface InstructorDoc extends BundleDoc {
   _type: "instructor";
 }
 
-export interface AchievementDoc extends SanityDoc {
+export interface AchievementDoc extends BundleDoc {
   _type: "achievement";
 }
 
-export interface QuestDoc extends SanityDoc {
+export interface QuestDoc extends BundleDoc {
   _type: "quest";
 }
 
-export interface LearningPathDoc extends SanityDoc {
+export interface LearningPathDoc extends BundleDoc {
   _type: "learningPath";
 }
 

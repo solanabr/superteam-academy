@@ -8,12 +8,10 @@
  * scripts (see middleware). Inline analytics are injected programmatically, not
  * as inline `<script>` tags, so they ride the host allowlist below.
  *
- * Scope: this CSP only applies to routes the middleware matches. `/studio/*`
- * (Sanity Studio) and `/api/*` are EXCLUDED from middleware, so they fall back
- * to the static CSP in `next.config.mjs` — keep the two in rough sync when
- * editing the non-script directives. Studio genuinely needs `'unsafe-inline'`/
- * `'unsafe-eval'` for scripts (third-party bundle that can't be nonced), which
- * is why it stays on the static fallback rather than this nonce policy.
+ * Scope: this CSP only applies to routes the middleware matches. `/api/*` is
+ * EXCLUDED from middleware, so it falls back to the static CSP in
+ * `next.config.mjs` — keep the two in rough sync when editing the non-script
+ * directives.
  *
  * Notable script-src allowances:
  * - `'unsafe-eval'` — REQUIRED. The in-browser code-challenge sandbox
@@ -26,8 +24,8 @@
  *   loader). Without it, nonce'd inline scripts and host-allowlisted external
  *   scripts (Monaco CDN, GA4, PostHog) coexist — exactly what we need.
  * - `'unsafe-inline'` is DROPPED for scripts (the point of this change). It is
- *   still present for `style-src` (Next.js + Sanity inject inline CSS that
- *   can't be nonced easily — out of scope).
+ *   still present for `style-src` (Next.js injects inline CSS that can't be
+ *   nonced easily — out of scope).
  */
 
 /** Extracts the `scheme://host[:port]` origin from a URL, or null if invalid. */
@@ -101,23 +99,21 @@ export function buildCsp(nonce: string): string {
     // module docblock).
     `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://www.googletagmanager.com https://*.posthog.com`,
 
-    // Styles: 'unsafe-inline' required by Next.js (and Sanity Studio) inline
-    // CSS — out of scope for nonce'ing. fonts.googleapis.com allows the Google
-    // Fonts stylesheet link; cdn.jsdelivr.net allows Monaco's editor.main.css —
-    // the challenge-runner editor loads its stylesheet from the CDN, so without
+    // Styles: 'unsafe-inline' required by Next.js inline CSS — out of scope
+    // for nonce'ing. fonts.googleapis.com allows the Google Fonts stylesheet
+    // link; cdn.jsdelivr.net allows Monaco's editor.main.css — the
+    // challenge-runner editor loads its stylesheet from the CDN, so without
     // this the editor renders unstyled/broken.
-    "style-src 'self' 'unsafe-inline' https://cdn.sanity.io https://cdn.jsdelivr.net https://fonts.googleapis.com",
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
 
     // Fonts: self-hosted via next/font + Google Fonts (gstatic serves the files).
     "font-src 'self' data: https://fonts.gstatic.com",
 
     // Images: avatars (Google), NFT art (Arweave), Supabase storage (pinned to
-    // the project host), Sanity CDN + Studio media library, GA4 measurement
-    // pixel (doubleclick). data:/blob: cover inline SVGs, canvas-confetti, and
-    // wallet QR codes.
+    // the project host), GA4 measurement pixel (doubleclick). data:/blob:
+    // cover inline SVGs, canvas-confetti, and wallet QR codes.
     [
       "img-src 'self' data: blob:",
-      "https://cdn.sanity.io https://media.sanity.io",
       "https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
       "https://arweave.net https://*.arweave.net",
       supabase.http,
@@ -125,14 +121,12 @@ export function buildCsp(nonce: string): string {
     ].join(" "),
 
     // Network: Supabase (REST + realtime wss, pinned to the project host),
-    // Sanity (CDN/API + listen wss — wildcards kept: regional/multi-subdomain),
     // Solana RPC (pinned to the configured browser endpoint), Google
     // OAuth/identity, and analytics (GA4, PostHog, Sentry — wildcards kept:
     // region-dependent ingest subdomains).
     [
       "connect-src 'self'",
       `${supabase.http} ${supabase.ws}`,
-      "https://api.sanity.io https://cdn.sanity.io https://*.apicdn.sanity.io https://*.api.sanity.io wss://*.api.sanity.io https://media.sanity.io",
       // Monaco fetches its source maps (loader.js.map, vs/*.map) from jsdelivr.
       "https://cdn.jsdelivr.net",
       ...solanaRpcSources(),
@@ -141,10 +135,9 @@ export function buildCsp(nonce: string): string {
       "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
     ].join(" "),
 
-    // Frames: Sanity Studio is a same-origin embed; Google OAuth may use frames;
-    // lesson videos embed the YouTube and Vimeo players (see getEmbedUrl in the
-    // lesson client). Without these origins the iframe is blocked ("This content
-    // is blocked").
+    // Frames: Google OAuth may use frames; lesson videos embed the YouTube and
+    // Vimeo players (see getEmbedUrl in the lesson client). Without these
+    // origins the iframe is blocked ("This content is blocked").
     "frame-src 'self' https://accounts.google.com https://www.youtube.com https://player.vimeo.com",
 
     // Workers: code sandbox + Monaco spawn workers from blob: URLs; Monaco also

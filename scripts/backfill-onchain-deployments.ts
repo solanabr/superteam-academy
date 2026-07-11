@@ -15,7 +15,7 @@
  * and reads Supabase via the PostgREST REST API with the service-role key.
  * NOT shipped in the app.
  *
- * Managed-doc criterion mirrors `apps/web/src/lib/content-sync/prune.ts`:
+ * Managed-doc criterion mirrors `apps/web/src/lib/content/compile/prune.ts`:
  * `sync.source == "courses-academy"`, drafts excluded. Of those, a row is
  * emitted per SYNCED course (`onChainStatus.status == "synced"`) and per
  * achievement that carries a PDA (`defined(onChainStatus.achievementPda)`).

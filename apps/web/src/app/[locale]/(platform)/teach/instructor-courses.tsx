@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { CaretDown } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import type { InstructorCourseSummary } from "@/lib/sanity/queries";
+import type { InstructorCourseSummary } from "@/lib/content/queries";
 
 interface CourseStatsView {
   enrolledCount: number;

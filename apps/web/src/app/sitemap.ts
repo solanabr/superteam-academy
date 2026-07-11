@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { getAllCourses } from "@/lib/sanity/queries";
+import { getAllCourses } from "@/lib/content/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =

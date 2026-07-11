@@ -22,7 +22,7 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 
 const getLessonBySlug = vi.fn();
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getLessonBySlug,
 }));
 

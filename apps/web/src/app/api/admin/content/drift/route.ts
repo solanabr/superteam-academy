@@ -7,7 +7,7 @@ import {
   adminUnauthorizedResponse,
   AdminAuthError,
 } from "@/lib/admin/auth";
-import { getAllCoursesAdmin } from "@/lib/sanity/queries";
+import { getAllCoursesAdmin } from "@/lib/content/queries";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import {
@@ -17,13 +17,10 @@ import {
 } from "@/lib/admin/sync-diff";
 import { slotsByCourseId } from "@/lib/content/store";
 import { SYNCED_SHA } from "@/lib/content/meta";
-import { createGitHubClient } from "@/lib/content-sync/github";
-import { deriveActiveMask } from "@/lib/content-sync/content-commit";
-import {
-  computeContentDrift,
-  computeChainDrift,
-} from "@/lib/content-sync/drift";
-import { GitHubUnavailableError } from "@/lib/content-sync/types";
+import { createGitHubClient } from "@/lib/github/github";
+import { deriveActiveMask } from "@/lib/github/content-commit";
+import { computeContentDrift, computeChainDrift } from "@/lib/github/drift";
+import { GitHubUnavailableError } from "@/lib/github/types";
 
 /**
  * The cheap chain-status a course needs for `computeChainDrift`. §11.1 replaces

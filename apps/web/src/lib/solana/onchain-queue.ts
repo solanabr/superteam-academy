@@ -13,7 +13,7 @@ import {
   fetchEnrollment,
   fetchCourse,
 } from "./academy-reads";
-import { getCourseById } from "@/lib/sanity/queries";
+import { getCourseById } from "@/lib/content/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 

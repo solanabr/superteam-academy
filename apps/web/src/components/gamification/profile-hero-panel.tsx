@@ -6,7 +6,7 @@ import type { Achievement } from "@superteam-lms/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel } from "@/lib/gamification/xp";
-import type { DeployedAchievement } from "@/lib/sanity/queries";
+import type { DeployedAchievement } from "@/lib/content/queries";
 
 interface ProfileHeroPanelProps {
   user: {

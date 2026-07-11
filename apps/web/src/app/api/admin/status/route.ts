@@ -11,7 +11,7 @@ import {
 import {
   getAllCoursesAdmin,
   getAllAchievementsAdmin,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 import {
   findCoursePDA,
   findAchievementTypePDA,

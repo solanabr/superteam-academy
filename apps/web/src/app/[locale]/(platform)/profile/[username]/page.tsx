@@ -22,7 +22,7 @@ import {
   getAllCourseTags,
   getCoursesByIds,
 } from "@/lib/content/client-queries";
-import type { DeployedAchievement } from "@/lib/sanity/queries";
+import type { DeployedAchievement } from "@/lib/content/queries";
 import { truncateAddress } from "@/lib/utils";
 
 interface UserData {

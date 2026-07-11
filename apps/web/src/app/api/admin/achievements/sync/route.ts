@@ -12,12 +12,12 @@ import {
 import {
   COURSES_CACHE_TAG,
   getAllAchievementsAdmin,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 import { findAchievementTypePDA, getProgramId } from "@/lib/solana/pda";
 import { fetchAchievementType } from "@/lib/solana/academy-reads";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
 import { getMissingAchievementFields, isDraftId } from "@/lib/admin/sync-diff";
-import { writeAchievementOnChainStatus } from "@/lib/sanity/admin-mutations";
+import { writeAchievementOnChainStatus } from "@/lib/content/deployment-writes";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {

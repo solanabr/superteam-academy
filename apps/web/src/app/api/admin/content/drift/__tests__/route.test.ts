@@ -8,7 +8,7 @@ vi.mock("@/lib/admin/auth", () => ({
   adminUnauthorizedResponse: () => new Response("{}", { status: 401 }),
   requireAdminAuth: vi.fn(),
 }));
-vi.mock("@/lib/content-sync/github", () => ({
+vi.mock("@/lib/github/github", () => ({
   createGitHubClient: () => ({
     fetchHeadSha: async () => headSha,
     fetchChecksState: async () => "success",
@@ -33,7 +33,7 @@ vi.mock("@/lib/content/store", () => ({
     return slots;
   },
 }));
-vi.mock("@/lib/sanity/queries", () => ({
+vi.mock("@/lib/content/queries", () => ({
   getAllCoursesAdmin: async () => courses,
   COURSES_CACHE_TAG: "courses",
 }));
@@ -76,7 +76,10 @@ describe("GET /api/admin/content/drift", () => {
     headSha = "c".repeat(40);
     courses = [{ _id: "course-x", title: "Course X" }];
     slots = new Map<string, SlotsLockT>([
-      ["course-x", { version: 1, slots: { "lesson-a": 0 }, retired: [], next: 1 }],
+      [
+        "course-x",
+        { version: 1, slots: { "lesson-a": 0 }, retired: [], next: 1 },
+      ],
     ]);
 
     const res = await get();

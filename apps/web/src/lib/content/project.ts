@@ -3,6 +3,14 @@ import "server-only";
 import { Award } from "@superteam-lms/content-schema";
 import type { AwardT } from "@superteam-lms/content-schema";
 import type {
+  Course,
+  Instructor,
+  LearningPath,
+  Lesson,
+  LessonBlock,
+  TestCase,
+} from "@superteam-lms/types";
+import type {
   AchievementDoc,
   CourseDoc,
   InstructorDoc,
@@ -10,20 +18,12 @@ import type {
   QuestDoc,
 } from "./types";
 import type {
-  Course,
-  Instructor,
-  LearningPath,
-  Lesson,
-  LessonBlock,
-  TestCase,
-} from "@/lib/sanity/types";
-import type {
   CourseSummary,
   DeployedAchievement,
   QuestData,
   RecommendedCourse,
   SanityQuest,
-} from "@/lib/sanity/queries";
+} from "@/lib/content/queries";
 
 /**
  * Content projectors (SP2-B Task 4). Pure functions that reshape a RAW bundle
@@ -42,7 +42,7 @@ import type {
  *  - `thumbnail` is `null` unless already a resolved URL string — the bundle
  *    holds no Sanity image assets to resolve (all live thumbnails are null).
  *
- * The raw docs are typed loosely ({@link CourseDoc} et al. extend `SanityDoc`,
+ * The raw docs are typed loosely ({@link CourseDoc} et al. extend `BundleDoc`,
  * every non-discriminant field `unknown`). Reads go through the small coercion
  * helpers below, which preserve GROQ's null-for-absent semantics; the final
  * object is asserted to the declared return type — the same (already-unsound)

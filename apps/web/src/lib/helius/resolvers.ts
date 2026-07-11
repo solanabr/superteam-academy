@@ -89,7 +89,7 @@ export async function resolveLessonId(
   lessonIndex: number
 ): Promise<string | null> {
   // Dynamic import to avoid pulling Sanity client into non-page contexts
-  const { getCourseById } = await import("@/lib/sanity/queries");
+  const { getCourseById } = await import("@/lib/content/queries");
   try {
     const course = await getCourseById(courseId);
     if (!course) {

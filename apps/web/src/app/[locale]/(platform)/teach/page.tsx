@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { InstructorCourses } from "./instructor-courses";
 import { createClient } from "@/lib/supabase/server";
-import { getInstructorCourses } from "@/lib/sanity/queries";
+import { getInstructorCourses } from "@/lib/content/queries";
 
 export const dynamic = "force-dynamic";
 

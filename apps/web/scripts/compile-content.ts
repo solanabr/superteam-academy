@@ -32,11 +32,11 @@ import {
   Instructor,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
-import { extractTarball } from "../src/lib/content-sync/tarball";
-import { projectContent } from "../src/lib/content-sync/projector";
-import { ContentValidationError } from "../src/lib/content-sync/types";
-import type { RepoTree } from "../src/lib/content-sync/types";
-import type { ValidatedContent } from "../src/lib/content-sync/validate";
+import { extractTarball } from "../src/lib/content/compile/tarball";
+import { projectContent } from "../src/lib/content/compile/projector";
+import { ContentValidationError } from "../src/lib/content/compile/types";
+import type { RepoTree } from "../src/lib/github/types";
+import type { ValidatedContent } from "../src/lib/content/compile/validate";
 
 // ── deterministic serialization ────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ interface CompileInput {
 
 /**
  * Re-parse and Zod-validate every YAML/JSON in the tree into the projector's
- * `ValidatedContent`. Mirrors content-sync/validate.ts's classification but is
+ * `ValidatedContent`. Mirrors content/compile/validate.ts's classification but is
  * Zod-only (no executor gate). Accumulates all issues, then throws once.
  */
 function validateTree(tree: RepoTree): CompileInput {
@@ -165,7 +165,7 @@ function validateTree(tree: RepoTree): CompileInput {
   // Every code block's referenced files must be present. The projector falls
   // back to "" for a missing starter/solution (projector.ts) and [] for missing
   // tests, which would bundle a broken challenge instead of failing closed.
-  // Mirrors content-sync/validate.ts's presence check, minus the executor gate.
+  // Mirrors content/compile/validate.ts's presence check, minus the executor gate.
   for (const { dir, lesson } of content.lessons) {
     for (const block of lesson.blocks) {
       if (block.type !== "code") continue;

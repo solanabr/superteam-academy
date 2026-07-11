@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { CodeBlockData, ProseBlockData } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
-import { getLessonBySlug } from "@/lib/sanity/queries";
+import { getLessonBySlug } from "@/lib/content/queries";
 import { spendAssist, refundAssist } from "@/lib/ai/assist-budget";
 import { sealCheck } from "@/lib/ai/check-seal";
 import {

@@ -438,7 +438,7 @@ async function main(): Promise<void> {
   }
 
   // ── _template (verbatim copy of the verified content-lint fixture) ────────
-  // Linted, but excluded from the sync by `content-sync/tarball.ts:5`.
+  // Linted, but excluded from the sync by `content/compile/tarball.ts:5`.
   const fixture = join(
     dirname(new URL(import.meta.url).pathname),
     "..",

@@ -5,7 +5,7 @@
  * Pure functions — no side effects, no RPC calls.
  */
 
-import type { AdminAchievement, AdminCourse } from "@/lib/sanity/queries";
+import type { AdminAchievement, AdminCourse } from "@/lib/content/queries";
 
 // ---------------------------------------------------------------------------
 // On-chain account shapes (deserialized from Anchor)
