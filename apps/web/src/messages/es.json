@@ -850,6 +850,42 @@
       "deploy": "Despliegue on-chain",
       "moderation": "Moderación de la comunidad",
       "status": "Estado del programa"
+    },
+    "publishPin": {
+      "title": "Fijación de contenido",
+      "description": "El paquete de contenido versionado está fijado a un commit de courses-academy en content.lock. Publicar contenido nuevo es un PR humano de una línea que actualiza la fijación y reconstruye el paquete — aquí no ocurre ninguna escritura en el servidor.",
+      "refresh": "Actualizar",
+      "loading": "Comprobando la fijación de contenido…",
+      "unavailable": "Desfase no disponible — no se pudo contactar con GitHub. Inténtalo de nuevo en un momento.",
+      "pinnedSha": "Commit fijado",
+      "headSha": "HEAD del repositorio",
+      "drift": "Desfase",
+      "upToDate": "Al día — la fijación coincide con el HEAD de courses-academy.",
+      "behind": "{count, plural, one {# commit por detrás del HEAD} other {# commits por detrás del HEAD}}",
+      "behindUnknown": "Por detrás del HEAD (recuento de commits no disponible).",
+      "counts": "Paquete: {courses} cursos, {lessons} lecciones.",
+      "checks": {
+        "success": "CI en verde",
+        "failure": "CI en fallo",
+        "pending": "CI pendiente",
+        "unknown": "CI desconocida"
+      },
+      "copied": "Copiado",
+      "copyCommand": "Copiar comando",
+      "copyBranch": "Copiar rama",
+      "copyTitle": "Copiar título",
+      "copyBody": "Copiar descripción",
+      "viewCompare": "Ver commits",
+      "preparePrLink": "Abrir PR de publicación",
+      "prepare": {
+        "title": "Preparar PR de publicación",
+        "redHeadWarning": "La CI del HEAD no está en verde. No actualices la fijación a contenido no verificado — espera a que la CI pase.",
+        "step1": "1. Aplica este cambio de una línea a content.lock",
+        "step2": "2. Reconstruye el paquete versionado localmente",
+        "step2Hint": "Ejecuta esto tras editar {path}, luego confirma tanto el lock como el paquete regenerado.",
+        "step3": "3. Sube una rama y abre el PR",
+        "branch": "Rama sugerida:"
+      }
     }
   }
 }

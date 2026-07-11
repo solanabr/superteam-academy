@@ -850,6 +850,42 @@
       "deploy": "Implantação on-chain",
       "moderation": "Moderação da comunidade",
       "status": "Status do programa"
+    },
+    "publishPin": {
+      "title": "Pin de conteúdo",
+      "description": "O pacote de conteúdo versionado está fixado em um commit do courses-academy no content.lock. Publicar novo conteúdo é um PR humano de uma linha que atualiza o pin e reconstrói o pacote — nenhuma escrita no servidor acontece aqui.",
+      "refresh": "Atualizar",
+      "loading": "Verificando o pin de conteúdo…",
+      "unavailable": "Divergência indisponível — não foi possível acessar o GitHub. Tente novamente em instantes.",
+      "pinnedSha": "Commit fixado",
+      "headSha": "HEAD do repositório",
+      "drift": "Divergência",
+      "upToDate": "Atualizado — o pin corresponde ao HEAD do courses-academy.",
+      "behind": "{count, plural, one {# commit atrás do HEAD} other {# commits atrás do HEAD}}",
+      "behindUnknown": "Atrás do HEAD (contagem de commits indisponível).",
+      "counts": "Pacote: {courses} cursos, {lessons} aulas.",
+      "checks": {
+        "success": "CI aprovada",
+        "failure": "CI falhando",
+        "pending": "CI pendente",
+        "unknown": "CI desconhecida"
+      },
+      "copied": "Copiado",
+      "copyCommand": "Copiar comando",
+      "copyBranch": "Copiar branch",
+      "copyTitle": "Copiar título",
+      "copyBody": "Copiar descrição",
+      "viewCompare": "Ver commits",
+      "preparePrLink": "Abrir PR de publicação",
+      "prepare": {
+        "title": "Preparar PR de publicação",
+        "redHeadWarning": "A CI do HEAD não está verde. Não atualize o pin para conteúdo não verificado — aguarde a CI passar.",
+        "step1": "1. Aplique esta alteração de uma linha ao content.lock",
+        "step2": "2. Reconstrua o pacote versionado localmente",
+        "step2Hint": "Execute isto após editar {path}, então faça o commit do lock e do pacote regenerado.",
+        "step3": "3. Envie uma branch e abra o PR",
+        "branch": "Branch sugerida:"
+      }
     }
   }
 }

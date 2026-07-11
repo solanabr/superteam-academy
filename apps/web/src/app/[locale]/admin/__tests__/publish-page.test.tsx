@@ -4,10 +4,13 @@ import { render, screen } from "@testing-library/react";
 import AdminPublishPage from "../publish/page";
 import messages from "@/messages/en.json";
 
-// Render smoke only — ContentSyncPanel carries its own tests and fetches on
-// mount, so it is stubbed out here.
+// Render smoke only — ContentSyncPanel and the SP3-B PublishPinClient carry
+// their own tests and fetch on mount, so both are stubbed out here.
 vi.mock("@/components/admin/content-sync-panel", () => ({
   ContentSyncPanel: () => <div data-testid="content-sync-panel" />,
+}));
+vi.mock("../publish/publish-pin-client", () => ({
+  PublishPinClient: () => <div data-testid="publish-pin-client" />,
 }));
 
 vi.mock("next-intl/server", () => ({
@@ -27,6 +30,7 @@ describe("AdminPublishPage (smoke)", () => {
     expect(
       screen.getByRole("heading", { name: messages.admin.screens.publish })
     ).toBeInTheDocument();
+    expect(screen.getByTestId("publish-pin-client")).toBeInTheDocument();
     expect(screen.getByTestId("content-sync-panel")).toBeInTheDocument();
   });
 });

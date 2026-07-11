@@ -10,6 +10,8 @@ export interface GitHubClient {
   fetchTarball(sha: string): Promise<Uint8Array>;
   fetchHeadSha(): Promise<string>;
   fetchChecksState(sha: string): Promise<ChecksState>;
+  /** Commits `head` is ahead of `base` (compare API `ahead_by`). */
+  fetchAheadBy(base: string, head: string): Promise<number>;
 }
 
 interface Opts {
@@ -91,6 +93,17 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
         return "failure";
       if (runs.some((r) => !isTerminal(r.conclusion))) return "pending";
       return "success";
+    },
+
+    async fetchAheadBy(base, head) {
+      const res = await call(
+        `/repos/${REPO}/compare/${base}...${head}`,
+        "application/vnd.github+json"
+      );
+      const body = (await res.json()) as { ahead_by?: number };
+      if (typeof body.ahead_by !== "number")
+        throw new GitHubUnavailableError("compare response missing ahead_by");
+      return body.ahead_by;
     },
   };
 }
