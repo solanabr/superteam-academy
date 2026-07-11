@@ -1,9 +1,21 @@
 import { cookies } from "next/headers";
-import { AdminClient } from "./admin-client";
+import { redirect } from "next/navigation";
 import { AdminLoginForm } from "./admin-login-form";
 import { isValidAdminSession } from "@/lib/admin/auth";
 
-export default async function AdminPage() {
+/**
+ * `/admin` root. Unauthenticated → render `<AdminLoginForm/>` (the layout
+ * leaves it unwrapped). Authenticated → redirect to the default console
+ * screen. The session is checked here rather than redirecting
+ * unconditionally: the middleware bounces unauthenticated `/admin/*`
+ * sub-routes back to `/admin`, so an unconditional redirect would loop
+ * (`/admin` → `/admin/status` → middleware → `/admin` → …).
+ */
+export default async function AdminPage({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
 
@@ -14,19 +26,5 @@ export default async function AdminPage() {
     return <AdminLoginForm />;
   }
 
-  return (
-    <div className="min-h-screen bg-bg text-text">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="font-display text-2xl font-bold text-text">
-            Admin Console
-          </h1>
-          <p className="mt-1 text-sm text-text-3">
-            Superteam Academy — Sanity to On-Chain Sync
-          </p>
-        </div>
-        <AdminClient />
-      </div>
-    </div>
-  );
+  redirect(`/${locale}/admin/status`);
 }
