@@ -10,8 +10,6 @@ process.env.NEXT_PUBLIC_PROGRAM_ID ??=
 // per-test override winning.
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://test.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
-process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ??= "testproj";
-process.env.NEXT_PUBLIC_SANITY_DATASET ??= "production";
 process.env.NEXT_PUBLIC_SOLANA_RPC_URL ??= "https://api.devnet.solana.com";
 process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
 process.env.SOLANA_RPC_URL ??= "https://api.devnet.solana.com";
