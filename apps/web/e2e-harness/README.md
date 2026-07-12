@@ -8,16 +8,16 @@ it back / leave it uncommitted afterwards — do not land a renamed copy).
 
 ## `negative-path.harness.ts` — the #427 regression proof
 
-**Rename to `.test.ts` and run this AFTER #427 is merged under this branch — the System-program case
-must now be REFUSED PRE-SEND; before #427 it passed validation and was stopped only by the dead RPC.**
-That is the whole point of the file: on the pre-#427 branch state it recorded three genuine
-pre-send refusals from `admin-signer.deployCoursePda` (missing `creatorWallet`, unparseable
-`creatorWallet`, off-curve `creatorWallet`), while the System-program creator
-(`11111111111111111111111111111111`) sailed past every validation check and failed only with
-`failed to get recent blockhash: fetch failed` — i.e. the network, not the code, is what prevented a
-transaction. Once #427's denylist lands, that fourth case must fail with an explicit refusal
-message from the signer instead. If it still reports a blockhash/network error, the denylist did not
-take effect and the gap is still open.
+**#427 is merged and this branch is rebased onto it — VERIFIED: the System-program case is now
+REFUSED PRE-SEND.** Rename to `.test.ts` to re-run. The file is the standing denylist-regression
+guard: on the pre-#427 state it recorded three genuine pre-send refusals from
+`admin-signer.deployCoursePda` (missing `creatorWallet`, unparseable `creatorWallet`, off-curve
+`creatorWallet`), while the System-program creator (`11111111111111111111111111111111`) sailed past
+every validation check and failed only with `failed to get recent blockhash: fetch failed` — i.e. the
+network, not the code, prevented a transaction. Post-#427 that fourth case fails with the signer's
+denylist message instead, and the test now asserts exactly that (`/denylisted well-known/`, and NOT
+`/blockhash|fetch failed/`). If the denylist ever regresses, this test fails loudly rather than
+passing on the network stop.
 
 It is safe by construction and self-contained: it generates a **throwaway** `Keypair` for
 `PROGRAM_AUTHORITY_SECRET` (never the real authority) and mocks `serverEnv.SOLANA_RPC_URL` to

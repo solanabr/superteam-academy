@@ -1,8 +1,11 @@
 /**
- * SP3-C Task 6 harness (UNCOMMITTED). Negative-path evidence for the #402
- * family on THIS branch: deployCoursePda refusals with a THROWAWAY authority
- * key and an unreachable RPC (127.0.0.1:9) so no transaction can possibly
- * reach devnet regardless of outcome.
+ * SP3-C Task 6 harness (INERT — .harness.ts is excluded from the vitest glob;
+ * rename to .test.ts to run). Negative-path evidence for the #402 family:
+ * deployCoursePda refusals with a THROWAWAY authority key and an unreachable
+ * RPC (127.0.0.1:9) so no transaction can possibly reach devnet regardless of
+ * outcome. Post-#427 (merged to main, this branch rebased onto it) the
+ * System-program case is now REFUSED PRE-SEND by the denylist — the last test
+ * asserts that message, so a denylist regression fails loudly here.
  */
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -69,16 +72,19 @@ describe("#402 negative path — deployCoursePda refusals (branch state)", () =>
     expect(res.error).toMatch(/off-curve/);
   });
 
-  it("DENYLIST GAP PROBE: System program as creator — refused or network-blocked?", async () => {
+  it("#427 REGRESSION: System program as creator is REFUSED PRE-SEND", async () => {
     const { deployCoursePda } = await import("@/lib/solana/admin-signer");
     const res = await deployCoursePda({
       ...base,
       creatorWallet: "11111111111111111111111111111111",
     });
-    // Either way it must fail here (unreachable RPC guarantees no tx), but the
-    // ERROR TEXT tells us whether this branch's validation caught it (a
-    // refusal message) or whether only the network stopped it (#427's gap).
     expect(res.success).toBe(false);
     console.log("SYSTEM-PROGRAM:", res.error);
+    // Post-#427 the denylist catches this BEFORE any transaction is built. A
+    // blockhash/network error here (i.e. it reached the RPC) means the denylist
+    // regressed — the pre-#427 failure mode. Assert the refusal message, not
+    // merely failure, so that regression fails loudly.
+    expect(res.error).toMatch(/denylisted well-known/);
+    expect(res.error).not.toMatch(/blockhash|fetch failed/);
   });
 });
