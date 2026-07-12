@@ -909,7 +909,7 @@
       "noCourses": "No hay cursos en el paquete de contenido.",
       "noAchievements": "No hay logros en el paquete de contenido.",
       "missingFields": "Faltan: {fields}",
-      "syncAllConfirm": "Sincronizar {count} cursos — {changes} cambios de campo. ¿Continuar?",
+      "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# cambio de campo} other {# cambios de campo}}. ¿Continuar?",
       "deactivateConfirm": "¿Desactivar este curso? Los estudiantes no podrán inscribirse hasta que se reactive.",
       "errors": {
         "action": "Acción de despliegue rechazada: {message}",

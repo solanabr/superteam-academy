@@ -136,12 +136,47 @@ describe("CourseSyncTable — Task 5 polish", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Sync All (2)" }));
     expect(confirmMock).toHaveBeenCalledTimes(1);
+    // ICU plural: 2 courses (plural) but 1 field change (singular).
     expect(confirmMock).toHaveBeenCalledWith(
-      "Sync 2 courses — 1 field changes. Continue?"
+      "Sync 2 courses — 1 field change. Continue?"
     );
     // Declined → no requests, no per-course dialogs.
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("pluralizes the bulk confirm for a single course with several changes", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const confirmMock = vi.fn().mockReturnValue(false);
+    vi.stubGlobal("confirm", confirmMock);
+
+    const twoChangeCourse: CourseStatus = {
+      ...driftedCourse,
+      differences: [
+        {
+          field: "xpPerLesson",
+          contentValue: 50,
+          onChainValue: 25,
+          updateable: true,
+        },
+        {
+          field: "creatorRewardXp",
+          contentValue: 100,
+          onChainValue: 0,
+          updateable: true,
+        },
+      ],
+    };
+
+    renderWithIntl(
+      <CourseSyncTable courses={[twoChangeCourse]} onRefresh={vi.fn()} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sync All (1)" }));
+    // 1 course (singular) but 2 field changes (plural).
+    expect(confirmMock).toHaveBeenCalledWith(
+      "Sync 1 course — 2 field changes. Continue?"
+    );
   });
 
   it("Sync All proceeds after the single confirm", async () => {

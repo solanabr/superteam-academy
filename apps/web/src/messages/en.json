@@ -909,7 +909,7 @@
       "noCourses": "No courses in the content bundle.",
       "noAchievements": "No achievements in the content bundle.",
       "missingFields": "Missing: {fields}",
-      "syncAllConfirm": "Sync {count} courses — {changes} field changes. Continue?",
+      "syncAllConfirm": "{count, plural, one {Sync # course} other {Sync # courses}} — {changes, plural, one {# field change} other {# field changes}}. Continue?",
       "deactivateConfirm": "Deactivate this course? Students cannot enroll until reactivated.",
       "errors": {
         "action": "Deploy action refused: {message}",

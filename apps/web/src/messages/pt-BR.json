@@ -909,7 +909,7 @@
       "noCourses": "Nenhum curso no pacote de conteúdo.",
       "noAchievements": "Nenhuma conquista no pacote de conteúdo.",
       "missingFields": "Faltando: {fields}",
-      "syncAllConfirm": "Sincronizar {count} cursos — {changes} mudanças de campo. Continuar?",
+      "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# mudança de campo} other {# mudanças de campo}}. Continuar?",
       "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
       "errors": {
         "action": "Ação de implantação recusada: {message}",
