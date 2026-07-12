@@ -922,7 +922,7 @@
         "drifted": "Conteúdo desatualizado",
         "blocked": "Conteúdo bloqueado",
         "unknown": "Divergência desconhecida",
-        "driftedHint": "Há conteúdo de curso mais recente publicado no repositório — reimplante para sincronizar o curso on-chain.",
+        "driftedHint": "Há conteúdo de curso mais recente no repositório courses-academy. A correção é um PR de publicação que atualiza o content.lock e commita o pacote reconstruído — não uma reimplantação.",
         "blockedHint": "O conteúdo do repositório mudou, mas a CI está vermelha — ainda não é possível sincronizar.",
         "unknownHint": "Não foi possível acessar o GitHub para verificar a divergência de conteúdo."
       },
@@ -930,7 +930,7 @@
         "title": "Revisar implantação — {title}",
         "firstDeploy": "Este curso ainda não está on-chain — a implantação criará a conta on-chain dele.",
         "willWrite": "Esta transação irá gravar:",
-        "contentStale": "O compromisso de conteúdo implantado está atrás do pacote commitado — esta implantação o atualizará para o commit do pacote.",
+        "contentStale": "Informativo: o compromisso de conteúdo on-chain deste curso (content_tx_id) está atrás do pacote commitado. Esta implantação NÃO o alterará — ela grava apenas os campos do curso listados acima. O compromisso é atualizado pela etapa de content-commit na tela de Divergência de Conteúdo.",
         "noChanges": "Nenhuma mudança detectada. Reimplantar mesmo assim?",
         "blocked": "A implantação está bloqueada até que a divergência imutável seja resolvida.",
         "confirmDeploy": "Implantar",

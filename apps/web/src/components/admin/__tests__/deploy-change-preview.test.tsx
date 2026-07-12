@@ -119,21 +119,62 @@ describe("DeployChangePreview", () => {
     expect(screen.getByRole("button", { name: "Deploy" })).toBeTruthy();
   });
 
-  it("surfaces per-course chain drift (content commitment behind the bundle)", () => {
+  it("surfaces per-course chain drift honestly: informational, NOT a promise this deploy fixes it", () => {
+    // The sync route only writes content_tx_id when the caller sends an
+    // `activeLessons` mask; this deploy path posts { courseId } alone. So the
+    // stale note must be purely informational and must NOT claim the deploy
+    // updates the commitment — a promise the confirm cannot keep (the route
+    // would answer "Already synced" and the badge would stay stale forever).
     const c = course({ chainDrift: "content_stale" });
     renderWithIntl(
       <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
     );
+
+    // States the truth: this deploy will NOT change the commitment, and points
+    // at the path that actually does.
+    expect(screen.getByText(/This deploy will NOT change it/)).toBeTruthy();
     expect(
       screen.getByText(
-        /deployed content commitment is behind the committed bundle/
+        /updated by the content-commit step on the Content Drift screen/
       )
     ).toBeTruthy();
-    // A stale commitment IS a change — no "no changes" prompt.
+
+    // Regression guard: never reinstate a promise the deploy doesn't keep.
+    expect(screen.queryByText(/this deploy will update it/i)).toBeNull();
+
+    // With no field diffs, a content-stale course honestly has nothing to write
+    // on THIS path — so it reads as "no changes", not a pending sync.
+    expect(
+      screen.getByText("No changes detected. Redeploy anyway?")
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Redeploy" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Confirm sync" })).toBeNull();
+  });
+
+  it("a content-stale course WITH field diffs still offers the sync (those fields do get written)", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      chainDrift: "content_stale",
+      differences: [
+        {
+          field: "xpPerLesson",
+          contentValue: 50,
+          onChainValue: 25,
+          updateable: true,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    // The field diff is real and IS written → confirm offered…
+    expect(screen.getByText("xpPerLesson:")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirm sync" })).toBeTruthy();
+    // …while the commitment note stays honest about what it will not do.
+    expect(screen.getByText(/This deploy will NOT change it/)).toBeTruthy();
     expect(
       screen.queryByText("No changes detected. Redeploy anyway?")
     ).toBeNull();
-    expect(screen.getByRole("button", { name: "Confirm sync" })).toBeTruthy();
   });
 
   it("wires confirm and cancel", () => {

@@ -922,7 +922,7 @@
         "drifted": "Contenido desactualizado",
         "blocked": "Contenido bloqueado",
         "unknown": "Divergencia desconocida",
-        "driftedHint": "Hay contenido de curso más reciente publicado en el repositorio — vuelve a desplegar para sincronizar el curso on-chain.",
+        "driftedHint": "Hay contenido de curso más reciente en el repositorio courses-academy. La solución es un PR de publicación que actualiza content.lock y commitea el paquete reconstruido — no un redespliegue.",
         "blockedHint": "El contenido del repositorio cambió pero su CI está en rojo — aún no se puede sincronizar.",
         "unknownHint": "No se pudo acceder a GitHub para comprobar la divergencia de contenido."
       },
@@ -930,7 +930,7 @@
         "title": "Revisar despliegue — {title}",
         "firstDeploy": "Este curso aún no está on-chain — el despliegue creará su cuenta on-chain.",
         "willWrite": "Esta transacción escribirá:",
-        "contentStale": "El compromiso de contenido desplegado está detrás del paquete commiteado — este despliegue lo actualizará al commit del paquete.",
+        "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. El compromiso se actualiza mediante el paso de content-commit en la pantalla de Divergencia de Contenido.",
         "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",
         "blocked": "El despliegue está bloqueado hasta que se resuelva la divergencia inmutable.",
         "confirmDeploy": "Desplegar",

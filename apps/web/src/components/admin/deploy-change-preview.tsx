@@ -63,8 +63,14 @@ export function DeployChangePreview({
   const blocked = immutableDiffs.length > 0;
   const firstDeploy = course.onChainStatus === "not_deployed";
   const contentStale = course.chainDrift === "content_stale";
-  const noChanges =
-    !firstDeploy && course.differences.length === 0 && !contentStale;
+  // Content staleness is NOT a change this deploy makes: the sync route only
+  // writes `content_tx_id` when the caller supplies an `activeLessons` mask,
+  // and this path posts `{ courseId }` alone (the mask belongs to the
+  // content-commit flow on the drift screen). So a content-stale course with no
+  // field diffs really is "no changes" here — saying otherwise would promise a
+  // fix the confirm cannot deliver, and the route would answer "Already synced"
+  // while the badge stayed stale. The stale note below is informational only.
+  const noChanges = !firstDeploy && course.differences.length === 0;
 
   return (
     <div

@@ -922,7 +922,7 @@
         "drifted": "Content drift",
         "blocked": "Content blocked",
         "unknown": "Drift unknown",
-        "driftedHint": "Newer course content is published upstream — redeploy to sync the on-chain course.",
+        "driftedHint": "Newer course content exists upstream in courses-academy. The fix is a publish PR that bumps content.lock and commits the rebuilt bundle — not a redeploy.",
         "blockedHint": "Upstream content changed but its CI is red — it cannot be synced yet.",
         "unknownHint": "Could not reach GitHub to check for content drift."
       },
@@ -930,7 +930,7 @@
         "title": "Review deploy — {title}",
         "firstDeploy": "This course is not on chain yet — deploying will create its on-chain account.",
         "willWrite": "This transaction will write:",
-        "contentStale": "The deployed content commitment is behind the committed bundle — this deploy will update it to the bundle's commit.",
+        "contentStale": "For information: this course's on-chain content commitment (content_tx_id) is behind the committed bundle. This deploy will NOT change it — it only writes the course fields listed above. The commitment is updated by the content-commit step on the Content Drift screen.",
         "noChanges": "No changes detected. Redeploy anyway?",
         "blocked": "Deploy is blocked until the immutable mismatch is resolved.",
         "confirmDeploy": "Deploy",
