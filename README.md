@@ -50,7 +50,7 @@ Superteam Academy is an open-source learning management system built on Solana. 
 - XP rewards for lesson completions (10-100 XP based on difficulty)
 - Level progression: `Level = floor(sqrt(totalXP / 100))`
 - Daily streaks tracking consecutive learning days
-- 15 achievements across 5 categories (Progress, Streaks, Skills, Community, Special)
+- Achievements across 5 categories (Progress, Streaks, Skills, Community, Special), with unlock rules declared in content
 - Celebration popups for level-ups, achievements, and certificate minting
 
 **Community Forum**
@@ -80,7 +80,7 @@ Superteam Academy is an open-source learning management system built on Solana. 
 | Layer            | Technology                                                            |
 | ---------------- | --------------------------------------------------------------------- |
 | Frontend         | Next.js 14 (App Router), React 18, Tailwind CSS, shadcn/ui + Radix UI |
-| CMS              | Sanity v3 (GROQ queries)                                              |
+| Content          | Committed bundle compiled from the `courses-academy` git repo         |
 | Database / Auth  | Supabase (Postgres, RLS, Auth)                                        |
 | On-Chain Program | Solana, Anchor 0.31+ (Rust)                                           |
 | XP Tokens        | Token-2022 (NonTransferable + PermanentDelegate)                      |
@@ -107,7 +107,6 @@ Superteam Academy is an open-source learning management system built on Solana. 
 - [Node.js](https://nodejs.org) >= 18
 - [pnpm](https://pnpm.io) >= 9
 - A [Supabase](https://supabase.com) account (free tier works)
-- A [Sanity](https://sanity.io) account (free tier works)
 - A Solana wallet ([Phantom](https://phantom.app) recommended)
 
 For on-chain program development, you also need:
@@ -129,7 +128,7 @@ cp .env.example apps/web/.env.local
 # Replace every placeholder with a real value — .env.example holds illustrative
 # defaults, not working credentials. Minimum to boot (see Environment Variables):
 # NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-# NEXT_PUBLIC_SANITY_PROJECT_ID, NEXT_PUBLIC_SANITY_DATASET.
+# NEXT_PUBLIC_SOLANA_RPC_URL, SOLANA_RPC_URL.
 
 # 3. Set up the database (migrations are the source of truth)
 # Create a Supabase project, install the Supabase CLI, then link and push:
@@ -137,8 +136,11 @@ cp .env.example apps/web/.env.local
 #   supabase db push        # applies supabase/migrations/ in order
 # supabase/schema.sql is a generated snapshot for reference — do not run it directly.
 
-# 4. Import seed content into Sanity
-cd sanity && SANITY_API_TOKEN=<your-token> node seed/import.mjs && cd ..
+# 4. Content — nothing to import.
+# Course content is a COMMITTED bundle (apps/web/src/content/generated/), compiled
+# from solanabr/courses-academy at the SHA pinned in apps/web/content.lock.
+# It is already in the repo. To recompile it after a pin bump:
+#   pnpm --filter web compile-content
 
 # 5. Start the dev server
 pnpm dev
@@ -146,7 +148,12 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-**Minimum variables for basic dev** (no on-chain features): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`.
+**Minimum variables for basic dev** (no on-chain features): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SOLANA_RPC_URL`, `SOLANA_RPC_URL`.
+
+> **Courses won't appear until they're deployed on-chain.** Visibility is gated on
+> the Supabase `onchain_deployments` table (`status = "synced"` and active), which
+> starts empty on a fresh project. Deploy courses from `/en/admin/deploy` — see
+> [docs/ADMIN.md](docs/ADMIN.md).
 
 **Full on-chain features** require: `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_XP_MINT_ADDRESS`, `PROGRAM_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`. See [Program Deployment](docs/DEPLOY-PROGRAM.md) for the deploy and initialize workflow.
 
@@ -173,7 +180,10 @@ superteam-academy/
 │   │   │   │   └── admin/        # Admin panel
 │   │   │   └── api/              # API routes (auth, lessons, achievements, etc.)
 │   │   ├── src/components/     #   UI components (auth, editor, gamification, layout)
-│   │   ├── src/lib/            #   Utilities (supabase, sanity, solana, analytics)
+│   │   ├── src/lib/            #   Utilities (supabase, content, github, solana, analytics)
+│   │   ├── src/content/generated/  # COMMITTED content bundle (do not hand-edit)
+│   │   ├── content.lock        #   The courses-academy commit the bundle is pinned to
+│   │   ├── scripts/            #   compile-content.ts (repo → committed bundle)
 │   │   └── src/messages/       #   i18n translation files (en, pt-BR, es)
 │   └── build-server/           # Rust/Axum build server (GCP Cloud Run)
 ├── onchain-academy/            # Anchor workspace (Solana program)
@@ -181,14 +191,19 @@ superteam-academy/
 │   └── tests/                  #   Integration + unit tests
 ├── packages/
 │   ├── types/                  # Shared TypeScript interfaces
+│   ├── content-schema/         # Zod schemas for the content standard
+│   ├── content-lint/           # Content linter (runs in courses-academy CI)
+│   ├── challenge-executor/     # Sandboxed challenge runner (QuickJS)
 │   ├── deploy/                 # Browser-based Solana program deployment library
 │   └── config/                 # Shared ESLint, TS, Tailwind configs
-├── sanity/                     # Sanity Studio + schemas + seed data
 ├── supabase/                   # Database schema + migrations
 ├── scripts/                    # Helper scripts (init-program, update-program-id)
 ├── wallets/                    # Keypairs (gitignored)
 └── docs/                       # Documentation
 ```
+
+Course **content** lives in a separate repo:
+[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy).
 
 ## Environment Variables
 
@@ -202,32 +217,31 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | Public anon key (safe for browser)                                  |
 | `SUPABASE_SERVICE_ROLE_KEY`     | Server | Service role key for admin operations. **Never expose to browser.** |
 
-### Sanity CMS (Required)
+### Content
 
-| Variable                        | Scope  | Description                                                  |
-| ------------------------------- | ------ | ------------------------------------------------------------ |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Client | Project ID from [sanity.io/manage](https://sanity.io/manage) |
-| `NEXT_PUBLIC_SANITY_DATASET`    | Client | Dataset name (usually `production`)                          |
-| `SANITY_API_TOKEN`              | Server | Editor token for seed import script only                     |
+**No variables required.** Course content is a committed bundle — there is no CMS
+and no content-write credential. `GITHUB_TOKEN` (below) is optional, read-only, and
+only used to poll the content repo's HEAD/CI state for the admin Publish screen.
 
 ### Solana (Required for on-chain features)
 
-| Variable                      | Scope  | Description                                             |
-| ----------------------------- | ------ | ------------------------------------------------------- |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`  | Client | RPC endpoint (default: `https://api.devnet.solana.com`) |
-| `NEXT_PUBLIC_SOLANA_NETWORK`  | Client | Network name (`devnet`)                                 |
-| `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `anchor deploy`                         |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS` | Client | XP mint pubkey from `initialize` output                 |
+| Variable                      | Scope  | Description                                                                                       |
+| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`  | Client | Browser RPC endpoint. Must carry **no** privileged key (default: `https://api.devnet.solana.com`) |
+| `SOLANA_RPC_URL`              | Server | Server RPC endpoint — **this** is the one that may carry the Helius key. Required at boot.        |
+| `NEXT_PUBLIC_SOLANA_NETWORK`  | Client | Network name (`devnet`)                                                                           |
+| `NEXT_PUBLIC_PROGRAM_ID`      | Client | Program ID from `anchor deploy`                                                                   |
+| `NEXT_PUBLIC_XP_MINT_ADDRESS` | Client | XP mint pubkey from `initialize` output                                                           |
 
-### Admin / Signing (Required for admin panel and on-chain operations)
+### Admin / Signing (Required for the admin console and on-chain operations)
 
-| Variable                   | Scope  | Description                                                                                      |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
-| `PROGRAM_AUTHORITY_SECRET` | Server | JSON array of authority keypair bytes (64 elements). The keypair that signed `initialize`.       |
-| `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`.       |
-| `XP_MINT_AUTHORITY_SECRET` | Server | JSON array of XP mint authority keypair bytes. Signs XP token mints; omit to disable XP minting. |
-| `ADMIN_SECRET`             | Server | Admin panel password (min 32 chars, random string)                                               |
-| `SANITY_ADMIN_TOKEN`       | Server | Write-enabled Sanity API token for course sync in admin panel                                    |
+| Variable                   | Scope  | Description                                                                                                                                |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PROGRAM_AUTHORITY_SECRET` | Server | JSON array of authority keypair bytes (64 elements). The keypair that signed `initialize`.                                                 |
+| `BACKEND_SIGNER_SECRET`    | Server | JSON array of backend signer keypair bytes. On devnet, same as `PROGRAM_AUTHORITY_SECRET`.                                                 |
+| `XP_MINT_AUTHORITY_SECRET` | Server | JSON array of XP mint authority keypair bytes. Signs XP token mints; omit to disable XP minting.                                           |
+| `ADMIN_SECRET`             | Server | Admin console secret (min 32 chars, random) — also the HMAC key signing the `admin_session` cookie                                         |
+| `GITHUB_TOKEN`             | Server | Fine-grained **read** token for `solanabr/courses-academy`. Powers the admin Publish screen. Unset → those routes 503. **No write scope.** |
 
 ### Build Server (Optional -- for code compilation features)
 
@@ -239,9 +253,19 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ### AI Lesson Assistant (Optional)
 
-| Variable         | Scope  | Description                                                    |
-| ---------------- | ------ | -------------------------------------------------------------- |
-| `GEMINI_API_KEY` | Server | Google Gemini API key for the in-lesson AI chat/suggest routes |
+| Variable                 | Scope  | Description                                                                             |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`         | Server | Google Gemini API key for the in-lesson AI assistant (`/api/ai/*`). Omit to disable it. |
+| `AI_PARTNER_SEAL_SECRET` | Server | Key sealing the comprehension-check token. Falls back to `SUPABASE_SERVICE_ROLE_KEY`.   |
+
+### Credentials & Moderation (Optional)
+
+| Variable                  | Scope  | Description                                                                                                          |
+| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `ARWEAVE_UPLOADER_SECRET` | Server | Solana keypair funding Irys uploads that pin credential metadata to Arweave. Unset → falls back to the metadata API. |
+| `MODERATION_WEBHOOK_URL`  | Server | Slack/Discord-compatible webhook pinged on the first flag of a post.                                                 |
+| `HELIUS_API_KEY`          | Server | Helius DAS API + webhook management                                                                                  |
+| `HELIUS_WEBHOOK_SECRET`   | Server | Verifies Helius webhook signatures                                                                                   |
 
 ### Analytics (Optional -- platform works without these)
 
@@ -260,9 +284,9 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ## Deployment
 
-Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth), Sanity CMS, and a Solana on-chain program.
+Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth) and a Solana on-chain program. Content ships inside the build — there is no CMS to deploy.
 
-- **[Production Deployment Guide](docs/DEPLOYMENT.md)** -- Full instructions for Vercel, Supabase, Sanity, Google OAuth, GCP Cloud Run (build server), analytics, custom domains, and post-deployment checklist.
+- **[Production Deployment Guide](docs/DEPLOYMENT.md)** -- Full instructions for Vercel, Supabase, the content bundle, Google OAuth, GCP Cloud Run (build server), analytics, custom domains, and post-deployment checklist.
 - **[Program Deployment Guide](docs/DEPLOY-PROGRAM.md)** -- On-chain program build, deploy, and initialize workflow (keypair generation, Anchor build, devnet deploy, XP mint creation).
 
 ## On-Chain Program
@@ -273,44 +297,45 @@ Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Pos
 
 The program manages the full learning lifecycle on-chain:
 
-- **16 instructions**: initialize, create/update/close course, enroll, complete lesson, finalize course, issue/upgrade credential, create achievement type, unlock achievement, register/revoke minter, update config, unenroll, and more
-- **6 PDA account types**: Config, Course, Enrollment, MinterRole, AchievementType, AchievementRecord
+- **18 instructions**: initialize, update config, create/update/close course, enroll, complete lesson, finalize course, close enrollment, issue/upgrade credential, register/update/revoke minter, reward XP, create/deactivate achievement type, award achievement
+- **6 PDA account types**: Config, Course, Enrollment, MinterRole, AchievementType, AchievementReceipt
 - **XP minting**: Token-2022 soulbound tokens minted on lesson completion
 - **Credential issuance**: Metaplex Core NFTs minted on course completion
 
 For deployment instructions, see [docs/DEPLOY-PROGRAM.md](docs/DEPLOY-PROGRAM.md).
 For system architecture, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Admin Panel
+## Admin Console
 
 **URL**: `/{locale}/admin` (e.g., `/en/admin`)
-**Auth**: Enter the `ADMIN_SECRET` environment variable value
+**Auth**: Enter the `ADMIN_SECRET` value — this mints an HMAC-signed `admin_session` cookie
 
-The admin panel bridges Sanity CMS content with the on-chain program:
+Four screens:
 
-- **Deploy courses**: Creates the course on-chain, creates a Metaplex Core collection for the track, and syncs `onChainStatus` back to Sanity
-- **Deploy achievements**: Creates achievement types on-chain with their Metaplex Core collections
-- **View sync status**: See which courses and achievements are deployed on-chain
+- **Publish** (`/admin/publish`): shows the pinned content SHA vs `courses-academy` HEAD and hands you a prefilled PR link. Publishing is a **pull request** that bumps `content.lock` + commits the regenerated bundle — the console holds no write token and cannot mutate content.
+- **Deploy** (`/admin/deploy`): deploy courses and achievements on-chain (Course PDA + Metaplex Core collection), and deactivate/reactivate courses. Recorded in the Supabase `onchain_deployments` table, which **is** the learner-visibility gate.
+- **Moderation** (`/admin/moderation`): the pending community-flag queue.
+- **Status** (`/admin/status`): program liveness, authority match, deploy counts, and on-chain → Supabase resync.
 
 For details, see [docs/ADMIN.md](docs/ADMIN.md).
 
 ## Documentation
 
-| Document                                     | Description                                           |
-| -------------------------------------------- | ----------------------------------------------------- |
-| [Architecture](docs/ARCHITECTURE.md)         | System design, account maps, data flows, CU budgets   |
-| [CMS Guide](docs/CMS_GUIDE.md)               | Sanity schema, GROQ patterns, content workflow        |
-| [Customization](docs/CUSTOMIZATION.md)       | Theming, i18n, gamification, and extending            |
-| [Admin Guide](docs/ADMIN.md)                 | Admin panel usage and course/achievement deployment   |
-| [Program Deployment](docs/DEPLOY-PROGRAM.md) | On-chain program build, deploy, and initialize        |
-| [Developer Reference](CLAUDE.md)             | Full codebase conventions, security model, API routes |
+| Document                                     | Description                                               |
+| -------------------------------------------- | --------------------------------------------------------- |
+| [Architecture](docs/ARCHITECTURE.md)         | System design, account maps, data flows, content pipeline |
+| [Customization](docs/CUSTOMIZATION.md)       | Theming, i18n, gamification, and extending                |
+| [Admin Guide](docs/ADMIN.md)                 | The 4-screen console: publish, deploy, moderate, status   |
+| [Deployment](docs/DEPLOYMENT.md)             | Vercel, Supabase, content bundle, build server            |
+| [Program Deployment](docs/DEPLOY-PROGRAM.md) | On-chain program build, deploy, and initialize            |
+| [Developer Reference](CLAUDE.md)             | Full codebase conventions, security model, API routes     |
 
 ## Known Limitations / Roadmap
 
-The on-chain program is feature-complete with 16 instructions covering the full learning lifecycle. The following items are scoped for future iterations:
+The on-chain program is feature-complete with 18 instructions covering the full learning lifecycle. The following items are scoped for future iterations:
 
 - **Track collection enforcement**: `track_collection` is validated server-side during credential issuance but is not yet enforced on-chain as an account constraint (future program upgrade).
-- **Cross-course achievements**: Three achievement types (Anchor Expert, Full Stack Solana, Rust Rookie) have partial frontend logic but lack proper cross-course tracking infrastructure. `full-stack-solana` is hardcoded to `false`; `anchor-expert` and `rust-rookie` use lesson ID pattern matching instead of course-level completion checks.
+- **`perfect-score` achievement**: dropped, not deferred. Block results are transient by design, so there is no durable "passed on first try" signal to key it on.
 - **Build server**: Compilation features (`buildable` Rust challenges + program deployment) require a separately deployed Rust/Axum build server on GCP Cloud Run. See the [Deployment](#deployment) section for setup details.
 
 ## Code Quality

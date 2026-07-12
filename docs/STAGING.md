@@ -1,7 +1,7 @@
 # Staging Environment Guide
 
 Readiness item **G8**. How to stand up a staging environment for Superteam
-Academy that mirrors production topology (Vercel + Supabase + Sanity + Helius +
+Academy that mirrors production topology (Vercel + Supabase + Helius +
 Cloud Run) without touching prod data, and how to run the read-path load test
 against it.
 
@@ -18,14 +18,14 @@ project/branch.
 
 ## Topology at a glance
 
-| Layer            | Production                         | Staging                                              |
-| ---------------- | ---------------------------------- | ---------------------------------------------------- |
-| Frontend         | Vercel Production deploy (`main`)  | Vercel **Preview** env (staging branch or PR)        |
-| Database         | Supabase prod project              | Supabase **branch** _or_ a separate staging project  |
-| CMS              | Sanity `production` dataset        | Same project; `production` (or a `staging` dataset)  |
-| Chain            | mainnet-beta / devnet              | **devnet** always                                    |
-| RPC + webhooks   | Helius (prod webhook)              | Helius (separate **devnet** webhook → staging URL)   |
-| Build server     | Cloud Run (shared)                 | Same Cloud Run service (stateless) or a staging one  |
+| Layer          | Production                                  | Staging                                             |
+| -------------- | ------------------------------------------- | --------------------------------------------------- |
+| Frontend       | Vercel Production deploy (`main`)           | Vercel **Preview** env (staging branch or PR)       |
+| Database       | Supabase prod (`pywhtmidcrptomrabbrw`)      | Supabase **branch** _or_ a separate staging project |
+| Content        | Committed bundle (whatever the branch pins) | **Identical** — the bundle ships with the code      |
+| Chain          | mainnet-beta / devnet                       | **devnet** always                                   |
+| RPC + webhooks | Helius (prod webhook)                       | Helius (separate **devnet** webhook → staging URL)  |
+| Build server   | Cloud Run (shared)                          | Same Cloud Run service (stateless) or a staging one |
 
 ---
 
@@ -63,17 +63,24 @@ Then, exactly as in [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md) §Supabase Setup:
 - Enable the Google OAuth provider if you're testing sign-in (use a staging
   OAuth client, not the prod one).
 
-> Do **not** copy production user data into staging. Seed with test content
-> (`sanity/seed/`) and test accounts only.
+> Do **not** copy production user data into staging. Use test accounts only.
+
+> **Content visibility on a fresh staging DB**: `onchain_deployments` starts empty,
+> and that table **is** the learner-visibility gate. No courses will be visible
+> until you deploy them from `/admin/deploy` against the staging DB + devnet
+> program. This is expected, not a bug.
 
 ---
 
-## 2. Sanity: dataset
+## 2. Content: nothing to provision
 
-The simplest path is to reuse the existing Sanity project and its `production`
-dataset (content is not user data). If you want editorial isolation, create a
-`staging` dataset and set `NEXT_PUBLIC_SANITY_DATASET=staging`. Add the staging
-Vercel URL to **Sanity → API → CORS origins** either way.
+Content is a **committed bundle** compiled from `solanabr/courses-academy` and
+pinned by `apps/web/content.lock`. It ships with the code, so staging serves
+exactly the content the deployed branch pins — there is no separate content
+service, dataset, CORS origin, or token to configure.
+
+To stage a content change, bump `content.lock` + recompile the bundle on the
+staging branch (see [`docs/ADMIN.md`](./ADMIN.md)); the Preview deploy picks it up.
 
 ---
 
@@ -105,11 +112,11 @@ Staging rides on Vercel's **Preview** environment.
 2. **Set Preview env vars**: Vercel → Project → Settings → Environment
    Variables, scope = **Preview**. Fill in every variable from
    [`.env.staging.example`](../.env.staging.example) with staging-scoped values:
-   - `NEXT_PUBLIC_*` → devnet + the **staging** Supabase/Sanity project.
-   - Server secrets (`SUPABASE_SERVICE_ROLE_KEY`, `*_AUTHORITY_SECRET`,
-     `BACKEND_SIGNER_SECRET`, `XP_MINT_AUTHORITY_SECRET`, `ADMIN_SECRET`,
-     `HELIUS_*`, `BUILD_SERVER_*`, `SANITY_ADMIN_TOKEN`) → staging values,
-     **Preview-scoped so they never bleed into Production**.
+   - `NEXT_PUBLIC_*` → devnet + the **staging** Supabase project.
+   - Server secrets (`SUPABASE_SERVICE_ROLE_KEY`, `SOLANA_RPC_URL`,
+     `*_AUTHORITY_SECRET`, `BACKEND_SIGNER_SECRET`, `XP_MINT_AUTHORITY_SECRET`,
+     `ADMIN_SECRET`, `HELIUS_*`, `BUILD_SERVER_*`, `GITHUB_TOKEN`) → staging
+     values, **Preview-scoped so they never bleed into Production**.
    - `NEXT_PUBLIC_APP_URL` → the staging URL (drives sitemap + OG tags).
    - Leave analytics keys blank on staging to avoid polluting prod dashboards.
 

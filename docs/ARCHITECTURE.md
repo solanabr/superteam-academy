@@ -1,8 +1,12 @@
-> Last synced: 2026-03-02
+> Last synced: 2026-07-12
 
 # Superteam Academy -- Architecture Reference
 
 System architecture, component structure, data flow, and service interfaces for Superteam Academy -- a Solana-native educational LMS.
+
+**There is no CMS.** Course content is authored in a git repo, compiled ahead of
+time, and **committed** to this repo as a typed bundle. Nothing fetches content at
+runtime. See [§3 Data Flow](#3-data-flow).
 
 ---
 
@@ -22,42 +26,61 @@ System architecture, component structure, data flow, and service interfaces for 
 │                                                                      │
 │  Server Components ── API Routes ── Middleware (auth + i18n)         │
 │                                                                      │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  COMMITTED CONTENT BUNDLE  (src/content/generated/*.json)      │  │
+│  │  compiled from solanabr/courses-academy @ content.lock sha     │  │
+│  │  statically imported — no runtime content fetch, no CMS        │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                                                                      │
 │  Holds: BACKEND_SIGNER_SECRET · PROGRAM_AUTHORITY_SECRET             │
-│         SUPABASE_SERVICE_ROLE_KEY · SANITY_ADMIN_TOKEN               │
-└──┬───────────┬──────────────┬──────────────┬─────────────────────────┘
-   │           │              │              │
-   ▼           ▼              ▼              ▼
-┌──────┐  ┌────────┐  ┌───────────┐  ┌──────────────────────────────┐
-│Sanity│  │Supabase│  │  Solana   │  │  Build Server (Rust/Axum)    │
-│(CMS) │  │(DB +   │  │ (Devnet) │  │  on GCP Cloud Run            │
-│      │  │ Auth)  │  │          │  │  cargo-build-sbf --offline   │
-└──────┘  └────────┘  │ Token-2022│  └──────────────────────────────┘
-                      │ Metaplex  │
-                      │   Core    │
-                      └───────────┘
+│         SUPABASE_SERVICE_ROLE_KEY · GITHUB_TOKEN (READ-ONLY)         │
+└──────────────┬──────────────┬──────────────┬─────────────────────────┘
+               │              │              │
+               ▼              ▼              ▼
+        ┌────────────┐  ┌───────────┐  ┌──────────────────────────────┐
+        │  Supabase  │  │  Solana   │  │  Build Server (Rust/Axum)    │
+        │  (DB+Auth) │  │ (Devnet)  │  │  on GCP Cloud Run            │
+        │            │  │           │  │  cargo-build-sbf --offline   │
+        │ user data  │  │ Token-2022│  └──────────────────────────────┘
+        │ +on-chain  │  │ Metaplex  │
+        │  status    │  │   Core    │
+        └────────────┘  └───────────┘
+```
+
+Build-time only (not a runtime dependency):
+
+```
+solanabr/courses-academy ──► compile-content.ts ──► committed bundle
+      (git = source of truth)      (pinned by apps/web/content.lock)
 ```
 
 ### Monorepo Layout
 
-| Directory            | Purpose                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| `apps/web/`          | Next.js 14 application (pages, API routes, components, services)                         |
-| `apps/build-server/` | Rust/Axum Solana program compiler on GCP Cloud Run                                       |
-| `onchain-academy/`   | Anchor workspace (program source, IDL, tests)                                            |
-| `packages/types/`    | Shared TypeScript interfaces (`Course`, `UserProfile`, `Progress`)                       |
-| `packages/config/`   | Shared ESLint, TypeScript, Tailwind configs                                              |
-| `sanity/`            | Sanity Studio schemas (`course`, `module`, `lesson`, `achievement`, `quest`) + seed data |
-| `supabase/`          | Complete Postgres schema (19 tables, indexes, RLS, functions, views)                     |
+| Directory                      | Purpose                                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `apps/web/`                    | Next.js 14 application (pages, API routes, components, services)                        |
+| `apps/build-server/`           | Rust/Axum Solana program compiler on GCP Cloud Run                                      |
+| `onchain-academy/`             | Anchor workspace (program source, IDL, tests)                                           |
+| `packages/types/`              | Shared TypeScript interfaces (`Course`, `Lesson`, `LessonBlock`, …)                     |
+| `packages/content-schema/`     | Zod schemas for the content standard (course, lesson, blocks, achievement, quest, path) |
+| `packages/content-lint/`       | The content linter — runs in `courses-academy` CI, gating what is publishable           |
+| `packages/challenge-executor/` | Challenge runner (QuickJS sandbox) shared by the app and the linter's executor gate     |
+| `packages/deploy/`             | Browser-based Solana program deployment library                                         |
+| `packages/config/`             | Shared ESLint, TypeScript, Tailwind configs                                             |
+| `supabase/`                    | Postgres schema + migrations (21 tables, indexes, RLS, functions, views)                |
+
+Content itself lives **outside** this repo, in
+[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy).
 
 ### Deployment Model
 
-| Service          | Host                       | Notes                                    |
-| ---------------- | -------------------------- | ---------------------------------------- |
-| Web app          | Vercel                     | Edge middleware, automatic deploys       |
-| Database + Auth  | Supabase (hosted Postgres) | RLS, SECURITY DEFINER functions          |
-| CMS              | Sanity (hosted)            | GROQ queries via CDN                     |
-| On-chain program | Solana devnet              | Anchor 0.31+, Token-2022, Metaplex Core  |
-| Build server     | GCP Cloud Run              | Docker, no IAM gateway, `X-API-Key` auth |
+| Service          | Host                       | Notes                                                                 |
+| ---------------- | -------------------------- | --------------------------------------------------------------------- |
+| Web app          | Vercel                     | Edge middleware, automatic deploys from `main`                        |
+| Database + Auth  | Supabase (hosted Postgres) | RLS, SECURITY DEFINER functions. Prod project: `pywhtmidcrptomrabbrw` |
+| Content          | **Committed to this repo** | Compiled bundle; no hosted service, no runtime credential             |
+| On-chain program | Solana devnet              | Anchor 0.31+, Token-2022, Metaplex Core                               |
+| Build server     | GCP Cloud Run              | Docker, no IAM gateway, `X-API-Key` auth                              |
 
 ---
 
@@ -86,8 +109,16 @@ RootLayout (app/layout.tsx)
        │    │    └── [id]/        ← Public: individual certificate
        │    └── settings/         ← Auth-gated: account settings
        │
-       └── admin/                 ← Admin dashboard (admin_session cookie required)
+       └── admin/                 ← Admin console (signed admin_session cookie required)
+            ├── publish/          ← Content pin: bundle SHA vs courses-academy HEAD
+            ├── deploy/           ← Course + achievement on-chain deploy tables
+            ├── moderation/       ← Pending community-flag queue
+            └── status/           ← Default screen: program health + data resync
 ```
+
+`/admin` itself renders the login form when unauthenticated and redirects to
+`/admin/status` when authenticated. A persistent nav rail (rendered by the admin
+`layout.tsx`) links the four screens.
 
 ### Component Groups
 
@@ -100,7 +131,7 @@ RootLayout (app/layout.tsx)
 | `gamification/` | XpPopup, LevelUpOverlay, LevelBadge, StreakDisplay, SkillRadar, AchievementCard, AchievementGrid, AchievementPopup, CertificatePopup, GamificationOverlays                                                       | XP animations, achievement celebrations, streak display    |
 | `certificates/` | CertificateCard, CertificateGrid, CourseCompletionMint                                                                                                                                                           | NFT credential display and minting UI                      |
 | `deploy/`       | DeployPanel, WalletFundingCard, GenericProgramExplorer                                                                                                                                                           | Student program deployment panel                           |
-| `admin/`        | CourseSyncTable, AchievementSyncTable, StatusBadge, SyncDiffView, ImmutableMismatchWarning                                                                                                                       | Admin CMS-to-chain sync UI                                 |
+| `admin/`        | CourseSyncTable, AchievementSyncTable, DataResyncPanel, FlagsPanel, StatusBadge, SyncDiffView                                                                                                                    | Admin console: content-to-chain deploy, resync, moderation |
 | `auth/`         | AuthModal, WalletAuthHandler, UserMenu                                                                                                                                                                           | Wallet + OAuth authentication                              |
 | `layout/`       | Header, Footer, Sidebar, LanguageSwitcher, ThemeProvider, ThemeToggle                                                                                                                                            | Page chrome, navigation, theming                           |
 | `landing/`      | TerminalTypewriter                                                                                                                                                                                               | Landing page animation                                     |
@@ -120,46 +151,99 @@ RootLayout (app/layout.tsx)
 
 ### Four Data Sources
 
-| Source                | Data                                                                | Access Pattern                                                        |
-| --------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| **Sanity CMS**        | Course content (titles, modules, lessons, challenges, achievements) | Read-only via GROQ queries in server components                       |
-| **Supabase Postgres** | User data (profiles, progress, XP, achievements, certificates)      | Client reads via anon key + RLS; writes via API routes + service_role |
-| **Solana Blockchain** | Token-2022 XP balances, Enrollment PDAs, Credential NFTs            | On-chain writes via backend signer; reads via RPC                     |
-| **Build Server**      | Compiled Solana programs (.so binaries)                             | POST source to `/build`, GET binary from `/deploy/{uuid}`             |
+| Source                       | Data                                                                                            | Access Pattern                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Committed content bundle** | Course content (courses, lessons, blocks, achievements, quests, paths)                          | Statically imported at build time by `lib/content/store.ts` (server-only) |
+| **Supabase Postgres**        | User data (profiles, progress, XP, achievements, certificates) **+ on-chain deployment status** | Client reads via anon key + RLS; writes via API routes + service_role     |
+| **Solana Blockchain**        | Token-2022 XP balances, Enrollment PDAs, Credential NFTs                                        | On-chain writes via backend signer; reads via RPC                         |
+| **Build Server**             | Compiled Solana programs (.so binaries)                                                         | POST source to `/build`, GET binary from `/deploy/{uuid}`                 |
 
-### Content Flow (Sanity to Pages)
+### Content Flow (git to pages)
+
+Content is **compiled ahead of time and committed**. Nothing fetches it at
+request time.
 
 ```
-Sanity CMS (content authoring)
-       │
-       ▼ GROQ queries via CDN
-       │
-Next.js Server Components ──► Rendered HTML
+solanabr/courses-academy         ← git repo: course.yaml, lesson.yaml,
+        │                          achievements/, quests/, paths/, instructors/
+        │  pinned to ONE commit by apps/web/content.lock
+        ▼
+apps/web/scripts/compile-content.ts
+        │  fetch tarball @ locked SHA → Zod-validate every doc (fail-closed)
+        │  → project → emit deterministic JSON (sorted keys, no timestamps)
+        ▼
+apps/web/src/content/generated/*.json   ← COMMITTED, prettier-ignored
+apps/web/public/content-assets/*        ← COMMITTED
+        │
+        ▼ static import (server-only)
+lib/content/store.ts  ──►  lib/content/queries.ts  ──►  Server Components
 ```
 
-Courses are only visible to students when their Sanity document has `onChainStatus.status == "synced"`. This filter is applied in every public-facing GROQ query (`getAllCourses`, `getCourseBySlug`, `getLessonBySlug`, etc.). Unpublished or undeployed courses are invisible to the platform but visible in the admin dashboard.
+Properties this buys:
 
-Key queries in `lib/sanity/queries.ts`:
+- **Determinism** — output is a pure function of the locked SHA. CI recompiles and
+  fails on any byte of drift, catching a stale bundle after a lock bump _and_ a
+  hand-edit of the generated files.
+- **No runtime dependency** — a content-repo outage cannot affect the site.
+- **No content-write credential exists.** The app cannot mutate content under any
+  credential. Publishing is a PR that bumps `content.lock` + commits the
+  regenerated bundle. `GITHUB_TOKEN` is **read-only** and only polls HEAD/CI state
+  for the admin Publish screen.
 
-| Function                                  | Returns                                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------ |
-| `getAllCourses()`                         | All synced courses with modules and lesson summaries                           |
-| `getCourseBySlug(slug)`                   | Single course with full module/lesson content                                  |
-| `getLessonBySlug(courseSlug, lessonSlug)` | Single lesson with code, tests, hints, solution                                |
-| `getCourseById(id)`                       | Course by Sanity `_id` (used in API routes), includes `trackCollectionAddress` |
-| `getAllCourseLessonCounts()`              | `{ _id, totalLessons }[]` for course-completion detection                      |
-| `getAllAchievements()`                    | All achievement definitions (for unlock checking)                              |
-| `getDeployedAchievements()`               | Achievements with on-chain PDAs only                                           |
-| `getAllCoursesAdmin()`                    | All courses including drafts and `onChainStatus` fields                        |
-| `getAllAchievementsAdmin()`               | All achievements with `onChainStatus` fields                                   |
+`lib/content/store.ts` is `server-only` **by necessity**: the bundle contains quiz
+answer keys, code solutions, and hidden tests. The `server-only` marker makes a
+client value-import a build error. Client components read the safe subset through
+the public `/api/content/*` routes (via `lib/content/client-queries.ts`, whose fn
+signatures are identical to the server ones).
 
-Sanity admin mutations (`lib/sanity/admin-mutations.ts`):
+### The visibility gate
 
-| Function                                                                     | Purpose                                     |
-| ---------------------------------------------------------------------------- | ------------------------------------------- |
-| `writeCourseOnChainStatus(sanityId, status, coursePda, txSignature)`         | Mark course as synced after on-chain deploy |
-| `writeCourseTrackCollection(sanityId, trackCollectionAddress)`               | Store credential collection address         |
-| `writeAchievementOnChainStatus(sanityId, achievementPda, collectionAddress)` | Mark achievement as synced                  |
+A course is visible to learners **iff its Supabase deployment row says so**:
+
+```
+visible  ⇔  onchain_deployments.status == "synced"  AND  coalesce(is_active, true)
+```
+
+This is the post-SP2 replacement for the old CMS `onChainStatus` field. It lives in
+**exactly one function** — `isSynced()` in `lib/content/deployments.ts` — and is
+applied to every public read. Content with **no** deployment row is **hidden**
+(fail-closed: hidden > leaked). `is_active` is tri-state; `NULL` coalesces to
+`true`, so deactivation is opt-in.
+
+Two read paths into `onchain_deployments`:
+
+| Function                 | Client                                                                                                                    | Used by                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `getActiveDeployments()` | Cookieless **anon** client over the `public_onchain_deployments` view, wrapped in `unstable_cache` (tag `courses`, 3600s) | Public catalog + lesson reads. Cookieless so pages stay static/ISR. |
+| `getDeploymentById(id)`  | **service_role** client, uncached, full row                                                                               | Reward paths + admin reads that need `track_collection_address`     |
+
+Key queries in `lib/content/queries.ts` (server-only):
+
+| Function                                  | Returns                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| `getAllCourses()`                         | All synced+active courses with lesson summaries                          |
+| `getCourseBySlug(slug)`                   | Single course with full lesson content                                   |
+| `getLessonBySlug(courseSlug, lessonSlug)` | Single lesson with its ordered `blocks[]` (code, tests, hints, solution) |
+| `getCourseById(id)`                       | Course by content `_id` (used in API routes)                             |
+| `getAllCourseLessonCounts()`              | `{ _id, totalLessons }[]` for course-completion detection                |
+| `getAllAchievements()`                    | All achievement definitions (for unlock checking)                        |
+| `getDeployedAchievements()`               | Achievements with on-chain PDAs only                                     |
+| `getAllCoursesAdmin()`                    | All courses joined with their full Supabase deployment row               |
+| `getAllAchievementsAdmin()`               | All achievements joined with their full Supabase deployment row          |
+
+Deployment writes (`lib/content/deployment-writes.ts`, service_role only) — these
+kept their original signatures across the CMS removal, so their four call sites
+(`courses/sync`, `achievements/sync`, `courses/{deactivate,reactivate}`) were
+untouched:
+
+| Function                                                               | Purpose                                                    |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `writeCourseOnChainStatus(id, status, coursePda, txSignature)`         | Upsert the course row as `synced` after an on-chain deploy |
+| `writeCourseTrackCollection(id, trackCollectionAddress)`               | Store the credential collection address                    |
+| `writeAchievementOnChainStatus(id, achievementPda, collectionAddress)` | Upsert the achievement row as `synced`                     |
+
+Each upsert is keyed on the `content_id` PK and sets **only the columns that writer
+owns** (`ON CONFLICT DO UPDATE` merge semantics), preserving the rest of the row.
 
 ### Auth Flow
 
@@ -257,29 +341,62 @@ Client: POST /api/lessons/complete { lessonId, courseId }
 2. Learner wallet signs the transaction
 3. On-chain: Enrollment PDA created (lesson_flags = 0, completed_at = None)
 4. If course has prerequisite: verified via remaining accounts
-5. Supabase: enrollment row mirrored via /api/enrollment/sync
+5. Supabase: enrollment row mirrored by the client via the enrollments table
 ```
 
 ### Admin Deployment Flow
 
 ```
-Admin Dashboard → POST /api/admin/courses/sync
+/admin/deploy → POST /api/admin/courses/sync
   │
-  ├── Verify ADMIN_SECRET (Bearer token in Authorization header)
+  ├── requireAdminAuth() — same-origin check + HMAC-signed `admin_session` cookie
   ├── deployCoursePda() via admin-signer.ts → createCourse instruction
   ├── deployCourseTrackCollection() → Metaplex Core collection (UMI)
-  ├── writeCourseOnChainStatus() → Sanity marks course as "synced"
-  └── writeCourseTrackCollection() → Sanity stores collection address
+  ├── writeCourseOnChainStatus()   → Supabase `onchain_deployments` row = "synced"
+  ├── writeCourseTrackCollection() → Supabase stores the collection address
+  └── revalidateTag("courses")     → purge the cached deployment map so the
+                                      catalog picks the new course up
 
 Similarly for achievements:
   POST /api/admin/achievements/sync
   ├── deployAchievementType() → createAchievementType + collection
-  └── writeAchievementOnChainStatus() → Sanity marks as "synced"
+  └── writeAchievementOnChainStatus() → Supabase row = "synced"
 ```
+
+**Admin auth is a signed cookie, not a bearer token.** `requireAdminAuth()`
+(`lib/admin/auth.ts`) requires a same-origin request **and** a valid HMAC-signed
+`admin_session` cookie, minted by `POST /api/admin/auth` when the operator enters
+`ADMIN_SECRET` at the login form. No admin route accepts
+`Authorization: Bearer <ADMIN_SECRET>`.
 
 ---
 
 ## 4. Service Interfaces
+
+### `lib/content/*` -- The Content Read Layer
+
+All server-only. Composes three seams: the committed bundle (content), Supabase
+(on-chain status), and projectors (shape).
+
+| Module                 | Purpose                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `store.ts`             | Statically imports the generated JSON into id/slug-keyed maps. **The `server-only` marker here is load-bearing** — the bundle holds quiz answers, solutions, and hidden tests. |
+| `queries.ts`           | The query API (`getAllCourses`, `getCourseBySlug`, `getLessonBySlug`, …). Owns `COURSES_CACHE_TAG`.                                                                            |
+| `deployments.ts`       | The on-chain status read seam. `getActiveDeployments()` (cached anon view read), `getDeploymentById()` (service_role full row), and `isSynced()` — the entire visibility gate. |
+| `deployment-writes.ts` | The four service_role upserts into `onchain_deployments`.                                                                                                                      |
+| `project.ts`           | Projectors that map raw bundle docs to the app's `Course` / `Lesson` / … types.                                                                                                |
+| `meta.ts`              | `contentMeta` + `SYNCED_SHA` — the pinned SHA, a **build-time constant** (the bundle _is_ the synced content).                                                                 |
+| `client-queries.ts`    | Browser-side fetch wrappers over `/api/content/*`. Same fn names/signatures as the server ones, so swapping a component over is an import-line change.                         |
+| `compile/*`            | The compiler internals (tarball extract, validate, project, assets, prune), shared with `scripts/compile-content.ts`.                                                          |
+
+### `lib/github/*` -- Read-Only GitHub Seam
+
+| Module              | Purpose                                                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github.ts`         | The GitHub client: `fetchHeadSha`, `fetchChecksState`, `fetchAheadBy`. **Read scope only.**                                                       |
+| `publish-pin.ts`    | Pure drift/verdict + PR-link helpers for `/admin/publish`. Builds the one-line `content.lock` diff and a prefilled PR URL. **Performs no write.** |
+| `drift.ts`          | `computeContentDrift` / `computeChainDrift`.                                                                                                      |
+| `content-commit.ts` | `deriveActiveMask` — the `active_lessons` bitmask derived from a course's `slots.lock.json`.                                                      |
 
 ### `academy-program.ts` -- Backend-Signed Instructions
 
@@ -374,9 +491,11 @@ Used for wallet link/unlink flow, not for lesson completion (which uses on-chain
 
 ## 5. On-Chain Integration Points
 
-### Program Instructions (16 total)
+### Program Instructions (18 total)
 
 The Solana program (`onchain-academy`) is built with Anchor 0.31+. Instruction names in Rust are snake_case; Anchor's `Program` constructor converts them to camelCase for TypeScript.
+
+Source of truth: `onchain-academy/programs/onchain-academy/src/instructions/`.
 
 | Instruction (Rust)            | TypeScript Builder (`academy-program.ts`)           | Signer            |
 | ----------------------------- | --------------------------------------------------- | ----------------- |
@@ -384,6 +503,7 @@ The Solana program (`onchain-academy`) is built with Anchor 0.31+. Instruction n
 | `update_config`               | -- (admin CLI)                                      | Authority         |
 | `create_course`               | `deployCoursePda()` in `admin-signer.ts`            | Authority         |
 | `update_course`               | `updateCoursePda()` in `admin-signer.ts`            | Authority         |
+| `close_course`                | -- (admin CLI)                                      | Authority         |
 | `enroll`                      | Client-side via `instructions.ts`                   | Learner wallet    |
 | `complete_lesson`             | `completeLesson()` in `academy-program.ts`          | Backend signer    |
 | `finalize_course`             | `finalizeCourse()` in `academy-program.ts`          | Backend signer    |
@@ -391,6 +511,7 @@ The Solana program (`onchain-academy`) is built with Anchor 0.31+. Instruction n
 | `issue_credential`            | `issueCredential()` in `academy-program.ts`         | Backend signer    |
 | `upgrade_credential`          | -- (not yet used in API routes)                     | Backend signer    |
 | `register_minter`             | -- (admin CLI)                                      | Authority         |
+| `update_minter`               | -- (admin CLI)                                      | Authority         |
 | `revoke_minter`               | -- (admin CLI)                                      | Authority         |
 | `reward_xp`                   | `rewardXp()` in `academy-program.ts` (daily quests) | Registered minter |
 | `create_achievement_type`     | `deployAchievementType()` in `admin-signer.ts`      | Authority         |
@@ -536,7 +657,17 @@ Community data (categories, threads, answers, votes) has public SELECT policies.
 
 ### Admin Auth
 
-Admin routes use a separate `ADMIN_SECRET` environment variable. The admin page renders a login form; successful authentication sets an `admin_session` cookie. Sub-routes under `/admin/` redirect to the admin login page if the cookie is absent.
+Admin auth is separate from Supabase auth. `/admin` renders a login form; entering
+`ADMIN_SECRET` mints an **HMAC-signed `admin_session` cookie** (`POST /api/admin/auth`).
+`ADMIN_SECRET` is both the login secret and the HMAC signing key — rotating it
+invalidates every session.
+
+- Middleware redirects `/admin/*` sub-routes back to `/admin` when the cookie is
+  absent or expired.
+- Every `/api/admin/*` route calls `requireAdminAuth()`, which enforces a
+  **same-origin check plus the signed cookie**. There is no bearer-token path.
+- `ADMIN_SECRET` is never read in a page component, so it cannot be serialized into
+  a client payload.
 
 ### Middleware
 
@@ -557,9 +688,10 @@ The middleware (`src/middleware.ts`) chains two concerns in order:
 - `/leaderboard`, `/certificates`, `/certificates/[id]`
 - `/profile/[username]` (viewing other users)
 
-**Admin routes**: Checked against `admin_session` cookie, separate from Supabase auth.
+**Admin routes**: Checked against the signed `admin_session` cookie, separate from Supabase auth.
 
-The middleware matcher excludes API routes, `_next`, `_vercel`, `/studio`, and static assets.
+The middleware matcher excludes API routes, `_next`, `_vercel`, and static assets
+(`matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"]`).
 
 ---
 
@@ -679,27 +811,52 @@ Handled entirely in the `award_xp()` SQL function:
 
 ### Achievements
 
-Achievement metadata (name, description, icon, category) lives in **Sanity CMS**. Unlock logic lives in `lib/gamification/achievements.ts` as `UNLOCK_CHECKS`:
+**Unlock logic is content, not TypeScript.** Each achievement doc in
+`courses-academy` carries a declarative `award` rule (a Zod discriminated union,
+`packages/content-schema/src/achievement.ts`). The app holds one predicate per
+award _kind_ — not per achievement — in `PREDICATES`
+(`lib/gamification/achievements.ts`):
 
-| Achievement ID      | Condition                      |
-| ------------------- | ------------------------------ |
-| `first-steps`       | 1+ lesson completed            |
-| `course-completer`  | 1+ course completed            |
-| `week-warrior`      | 7-day streak                   |
-| `monthly-master`    | 30-day streak                  |
-| `consistency-king`  | 100-day streak                 |
-| `rust-rookie`       | Completed a Rust lesson        |
-| `anchor-expert`     | Completed an Anchor course     |
-| `full-stack-solana` | Completed all tracks           |
-| `early-adopter`     | Among first 100 users          |
-| `perfect-score`     | All tests passed first try     |
+```ts
+export const PREDICATES = { ... } satisfies Record<AwardKind, Predicate>;
+```
 
-Achievements without an `UNLOCK_CHECKS` entry (e.g., `bug-hunter`, `helper`) are admin-granted manually.
+The `satisfies` makes a missing kind a **compile error**, and no course or path id
+is hardcoded anywhere — every target is named by content.
+
+The eight award kinds:
+
+| `award.kind`                  | Unlocks when                                              |
+| ----------------------------- | --------------------------------------------------------- |
+| `lessons-completed`           | `completedLessons >= gte`                                 |
+| `lessons-completed-in-course` | completed lessons in `course` >= `gte`                    |
+| `course-completed`            | `course` is fully completed                               |
+| `path-completed`              | every course in learning path `path` is completed         |
+| `streak`                      | `currentStreak >= days`                                   |
+| `user-number`                 | `userNumber <= lte` (early-adopter style)                 |
+| `community-stat`              | a community stat (threads/answers/accepted) >= `gte`      |
+| `manual`                      | never auto-fires — admin-granted only (e.g. `bug-hunter`) |
+
+`checkNewAchievements(deployed, state, alreadyUnlocked)` evaluates the rule on each
+not-yet-unlocked achievement against one fully-populated `UserState` (lessons,
+courses, paths, streak, user number, community stats) built in a single pass by
+`buildUserState()`.
+
+The bundle currently carries **10** achievements. Their conditions are defined in
+the content repo, not here — do not enumerate them in this doc.
+
+> `perfect-score` was **dropped**: block results are transient by design, so there
+> is no durable "passed on first try" signal to key it on.
 
 The check runs after every lesson completion. New achievements are:
 
-1. Recorded in Supabase via `unlock_achievement()` SECURITY DEFINER function
+1. Recorded in Supabase via the `unlock_achievement()` SECURITY DEFINER function
 2. Minted on-chain as Metaplex Core NFTs via `awardAchievement()` (non-fatal)
+
+> **ID convention**: the achievement's full content `_id` (e.g.
+> `achievement-first-steps`) is used **verbatim** as the on-chain PDA seed. Never
+> strip the `achievement-` prefix — doing so derives the wrong PDA and the award
+> fails silently.
 
 ### Celebration Popups (Event Bus Pattern)
 
@@ -725,62 +882,114 @@ GamificationOverlays
 
 ## 9. API Routes
 
-All routes are in `apps/web/src/app/api/`.
+All routes are in `apps/web/src/app/api/`. The authoritative, always-current list
+lives in `apps/web/src/app/api/CLAUDE.md`.
 
-| Route                                | Method   | Auth                  | Purpose                                                                            |
-| ------------------------------------ | -------- | --------------------- | ---------------------------------------------------------------------------------- |
-| `/api/auth/nonce`                    | GET      | None                  | Generate SIWS nonce (stored in `siws_nonces` table)                                |
-| `/api/auth/wallet`                   | POST     | None                  | SIWS authentication (nonce + Ed25519 verification)                                 |
-| `/api/auth/callback`                 | GET      | None                  | Google/GitHub OAuth callback (code exchange)                                       |
-| `/api/auth/link-wallet`              | POST     | Required              | Link wallet to existing account                                                    |
-| `/api/auth/unlink`                   | POST     | Required              | Unlink auth method (wallet/Google/GitHub)                                          |
-| `/api/lessons/complete`              | POST     | Required              | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements |
-| `/api/leaderboard`                   | GET      | None                  | XP rankings (alltime/weekly/monthly)                                               |
-| `/api/certificates/metadata`         | GET      | None                  | Serve NFT metadata JSON by UUID                                                    |
-| `/api/certificates/mint`             | POST     | Required              | Manual credential mint with retry queue                                            |
-| `/api/build-program`                 | POST     | Required              | Proxy Anchor build to build server                                                 |
-| `/api/deploy/save`                   | POST     | Required              | Save deployed program record                                                       |
-| `/api/deploy/[uuid]`                 | GET      | Required              | Download compiled .so binary                                                       |
-| `/api/rust/execute`                  | POST     | Required              | Proxy basic Rust execution to Rust Playground                                      |
-| `/api/quests/daily`                  | GET/POST | Required              | Get daily quest state / award quest XP (on-chain minting via `reward_xp`)          |
-| `/api/community/threads`             | GET/POST | Varies                | List threads (cursor pagination) / create thread                                   |
-| `/api/community/threads/[id]`        | GET      | None                  | Thread detail with answers                                                         |
-| `/api/community/answers`             | POST     | Required              | Post answer to a thread                                                            |
-| `/api/community/answers/[id]/accept` | POST     | Required              | Accept an answer (thread author only)                                              |
-| `/api/community/votes`               | POST     | Required              | Upvote/downvote thread or answer                                                   |
-| `/api/community/flags`               | POST     | Required              | Flag content for moderation                                                        |
-| `/api/community/search`              | GET      | None                  | Full-text search across threads                                                    |
-| `/api/webhooks/helius`               | POST     | HELIUS_WEBHOOK_SECRET | Process on-chain events (XP, achievements)                                         |
-| `/api/admin/auth`                    | POST     | ADMIN_SECRET          | Admin authentication                                                               |
-| `/api/admin/status`                  | GET      | ADMIN_SECRET          | Platform status (program liveness, authority match)                                |
-| `/api/admin/courses/sync`            | POST     | ADMIN_SECRET          | Deploy course PDA + collection on-chain                                            |
-| `/api/admin/courses/deactivate`      | POST     | ADMIN_SECRET          | Set course `is_active = false`                                                     |
-| `/api/admin/courses/reactivate`      | POST     | ADMIN_SECRET          | Set course `is_active = true`                                                      |
-| `/api/admin/achievements/sync`       | POST     | ADMIN_SECRET          | Deploy achievement type + collection on-chain                                      |
-| `/api/admin/resync`                  | POST     | ADMIN_SECRET          | Resync on-chain state to Supabase                                                  |
+"Admin" auth below means the same-origin + signed-`admin_session`-cookie check
+(`requireAdminAuth`), **not** a bearer token.
+
+### Content (public, serve the bundle to client components)
+
+These exist because `lib/content/*` is `server-only` (the bundle holds answer keys
+and solutions). They expose only summary-safe shapes — there is deliberately **no**
+client-side route for a full lesson read.
+
+| Route                            | Method | Auth | Purpose                                          |
+| -------------------------------- | ------ | ---- | ------------------------------------------------ |
+| `/api/content/courses`           | GET    | None | Course summaries by id                           |
+| `/api/content/lessons-summary`   | GET    | None | Lesson summaries by id                           |
+| `/api/content/recommended`       | GET    | None | Recommended courses (excluding given ids)        |
+| `/api/content/tags`              | GET    | None | Course tags (cached, revalidated hourly)         |
+| `/api/content/achievements`      | GET    | None | Achievement catalog (cached, revalidated hourly) |
+| `/api/content/instructor-wallet` | GET    | None | Is this wallet an instructor?                    |
+
+### Auth / core / community
+
+| Route                             | Method   | Auth                  | Purpose                                                                            |
+| --------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------- |
+| `/api/auth/nonce`                 | GET      | None                  | Generate SIWS nonce (stored in `siws_nonces` table)                                |
+| `/api/auth/wallet`                | POST     | None                  | SIWS authentication (nonce + Ed25519 verification)                                 |
+| `/api/auth/callback`              | GET      | None                  | Google/GitHub OAuth callback (code exchange)                                       |
+| `/api/auth/link-wallet`           | POST     | Required              | Link wallet to existing account                                                    |
+| `/api/auth/unlink`                | POST     | Required              | Unlink auth method (wallet/Google/GitHub)                                          |
+| `/api/account/delete`             | POST     | Required              | Account deletion                                                                   |
+| `/api/lessons/complete`           | POST     | Required              | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements |
+| `/api/lessons/validate-challenge` | POST     | Required              | Server-side challenge validation (UX pass/fail)                                    |
+| `/api/leaderboard`                | GET      | None                  | XP rankings (alltime/weekly/monthly)                                               |
+| `/api/certificates/metadata`      | GET      | None                  | Serve NFT metadata JSON by UUID                                                    |
+| `/api/certificates/mint`          | POST     | Required              | Manual credential mint with retry queue                                            |
+| `/api/build-program`              | POST     | Required              | Proxy Anchor build to build server                                                 |
+| `/api/deploy/save`                | POST     | Required              | Save deployed program record                                                       |
+| `/api/deploy/[uuid]`              | GET      | Required              | Download compiled .so binary                                                       |
+| `/api/rust/execute`               | POST     | Required              | Proxy basic Rust execution to Rust Playground                                      |
+| `/api/quests/daily`               | GET/POST | Required              | Get daily quest state / award quest XP (on-chain minting via `reward_xp`)          |
+| `/api/ai/partner`                 | POST     | Required              | AI lesson assistant (Gemini); rate-limited + input-capped                          |
+| `/api/ai/partner/verify`          | POST     | Required              | Verify the sealed comprehension-check token                                        |
+| `/api/community/*`                | Varies   | Varies                | Threads, answers, votes, flags, search (see §7)                                    |
+| `/api/webhooks/helius`            | POST     | HELIUS_WEBHOOK_SECRET | Process on-chain events (XP, achievements)                                         |
+
+### Admin
+
+| Route                           | Method   | Auth  | Purpose                                                                     |
+| ------------------------------- | -------- | ----- | --------------------------------------------------------------------------- |
+| `/api/admin/auth`               | POST     | None  | Exchange `ADMIN_SECRET` for the signed `admin_session` cookie               |
+| `/api/admin/status`             | GET      | Admin | Program liveness, authority match, per-item deploy state (drives 2 screens) |
+| `/api/admin/publish/pin`        | GET      | Admin | Pinned bundle SHA vs `courses-academy` HEAD + CI checks + drift verdict     |
+| `/api/admin/content/drift`      | GET      | Admin | Bundle SHA vs HEAD, plus per-course chain drift (`content_tx_id == HEAD`)   |
+| `/api/admin/courses/sync`       | POST     | Admin | Deploy course PDA + track collection on-chain, record it in Supabase        |
+| `/api/admin/courses/deactivate` | POST     | Admin | Set course `is_active = false` (hides it from learners)                     |
+| `/api/admin/courses/reactivate` | POST     | Admin | Set course `is_active = true`                                               |
+| `/api/admin/achievements/sync`  | POST     | Admin | Deploy achievement type + collection on-chain                               |
+| `/api/admin/flags`              | GET/POST | Admin | Pending moderation queue / resolve+dismiss a flag                           |
+| `/api/admin/resync`             | POST     | Admin | Re-read on-chain state and backfill the Supabase mirror                     |
+
+No admin route holds a content- or repo-write credential. `GITHUB_TOKEN` is
+read-only; the publish flow's output is a **prefilled PR link**, not a write.
 
 ---
 
 ## 10. Database Schema
 
-### Tables (17)
+### Tables (21)
 
-#### Core Tables (10)
+#### Core Tables (11)
 
-| Table               | Purpose                     | Key Columns                                                        |
-| ------------------- | --------------------------- | ------------------------------------------------------------------ |
-| `profiles`          | User identity               | `id` (FK auth.users), `wallet_address`, `username`, `is_public`    |
-| `enrollments`       | Course enrollment records   | `user_id`, `course_id`, `completed_at`, `tx_signature`             |
-| `user_progress`     | Per-lesson completion       | `user_id`, `lesson_id`, `completed`, `lesson_index`                |
-| `user_xp`           | XP totals and streaks       | `user_id`, `total_xp`, `level`, `current_streak`, `longest_streak` |
-| `xp_transactions`   | XP award history            | `user_id`, `amount`, `reason`, `tx_signature`                      |
-| `user_achievements` | Achievement unlock records  | `user_id`, `achievement_id`, `asset_address`                       |
-| `certificates`      | Credential NFT records      | `user_id`, `course_id`, `mint_address`, `credential_type`          |
-| `nft_metadata`      | Full Metaplex metadata JSON | `id`, `data` (JSONB)                                               |
-| `siws_nonces`       | Nonce replay protection     | `nonce`, `status`, `ip_address`, TTL-based cleanup                 |
-| `deployed_programs` | Student program deployments | `user_id`, `program_id`, `network`                                 |
+| Table                 | Purpose                                  | Key Columns                                                        |
+| --------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| `profiles`            | User identity                            | `id` (FK auth.users), `wallet_address`, `username`, `is_public`    |
+| `enrollments`         | Course enrollment records                | `user_id`, `course_id`, `completed_at`, `tx_signature`             |
+| `user_progress`       | Per-lesson completion                    | `user_id`, `lesson_id`, `completed`, `lesson_index`                |
+| `user_xp`             | XP totals and streaks                    | `user_id`, `total_xp`, `level`, `current_streak`, `longest_streak` |
+| `xp_transactions`     | XP award history                         | `user_id`, `amount`, `reason`, `tx_signature`                      |
+| `user_achievements`   | Achievement unlock records               | `user_id`, `achievement_id`, `asset_address`                       |
+| `certificates`        | Credential NFT records                   | `user_id`, `course_id`, `mint_address`, `credential_type`          |
+| `nft_metadata`        | Full Metaplex metadata JSON              | `id`, `data` (JSONB)                                               |
+| `siws_nonces`         | Nonce replay protection                  | `nonce`, `status`, `ip_address`, TTL-based cleanup                 |
+| `deployed_programs`   | **Learner** practice program deployments | `user_id`, `program_id`, `network`                                 |
+| `onchain_deployments` | **Platform** content → chain state       | `content_id` (PK), `kind`, `status`, `course_pda`, `is_active`, …  |
 
-#### Community Tables (5)
+#### `onchain_deployments` — the visibility gate
+
+The post-SP2 home of what used to be a CMS `onChainStatus` field. One row per synced
+course (`course-*`) or achievement (`achievement-*`), keyed by the content `_id`
+**used verbatim as the on-chain PDA seed**.
+
+It is deliberately **not** `deployed_programs`: that table is per-learner practice
+deploys (UUID pk, `user_id` FK, own-row RLS). This one is per-content platform
+state (TEXT pk, no user). They never mix.
+
+Security follows the house `public_user_xp` pattern — RLS is row-level, not
+column-level, so the minimal public surface is a **view**:
+
+- Base table: **RLS enabled, zero policies** → service_role only (which bypasses
+  RLS). All four writer sites use `createAdminClient()`.
+- `public_onchain_deployments` view: `SELECT` granted to `anon` + `authenticated`,
+  exposing **only** `content_id, kind, status, is_active, achievement_pda`.
+- **Invariant**: never add a raw pubkey, tx signature, or
+  `track_collection_address` to that view — those are reward-path reads served via
+  service_role only.
+
+#### Community Tables (6)
 
 | Table              | Purpose                  | Key Columns                                                                   |
 | ------------------ | ------------------------ | ----------------------------------------------------------------------------- |
@@ -788,20 +997,25 @@ All routes are in `apps/web/src/app/api/`.
 | `threads`          | Discussion threads       | `author_id`, `category_id`, `title`, `body`, `course_id`, `lesson_id`, `tags` |
 | `answers`          | Thread replies           | `thread_id`, `author_id`, `body`, `is_accepted`                               |
 | `votes`            | Upvotes/downvotes        | `user_id`, `thread_id` or `answer_id`, `value` (+1/-1)                        |
-| `flags`            | Content moderation flags | `user_id`, `thread_id` or `answer_id`, `reason`                               |
+| `flags`            | Content moderation flags | `reporter_id`, `thread_id` or `answer_id`, `reason`, `status`                 |
+| `thread_views`     | Per-user view dedup      | `user_id`, `thread_id`                                                        |
 
-#### Queue / Quest Tables (2)
+#### Queue / Quest / Infra Tables (4)
 
 | Table                     | Purpose                             | Key Columns                                                         |
 | ------------------------- | ----------------------------------- | ------------------------------------------------------------------- |
 | `pending_onchain_actions` | On-chain retry queue for failed TXs | `user_id`, `action_type`, `payload`, `attempts`, `status`           |
 | `user_daily_quests`       | Daily quest completion tracking     | `user_id`, `quest_id`, `current_value`, `completed`, `period_start` |
+| `challenge_assists`       | Per-user AI-assist budget           | `user_id`, `lesson_id`, assist counters                             |
+| `rate_limits`             | Cross-instance API rate limiter     | key, window, count                                                  |
 
-#### Views
+#### Views (3)
 
-| View              | Purpose                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| `community_stats` | Aggregated thread/answer/accepted counts per user (for profile display) |
+| View                         | Purpose                                                                      |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `community_stats`            | Aggregated thread/answer/accepted counts per user (for profile display)      |
+| `public_user_xp`             | Non-sensitive `user_id`/`total_xp`/`level` for public profiles + leaderboard |
+| `public_onchain_deployments` | The 5-column public read surface of `onchain_deployments` (see above)        |
 
 ### Auto-Provisioning
 
@@ -869,9 +1083,27 @@ On-chain state (Token-2022 XP, enrollment bitmap, Metaplex Core credentials) is 
 
 The backend server holds a rotatable keypair (`BACKEND_SIGNER_SECRET`, stored in Config PDA). Lesson completion, course finalization, and credential issuance are all backend-signed to prevent gaming. Enrollment and enrollment closure are learner-signed (personal commitment, no anti-cheat concern).
 
-### Sanity Content Gate
+### Content as a Committed Artifact (no CMS)
 
-Courses become visible to students only when `onChainStatus.status == "synced"` in Sanity. This ensures courses are deployed on-chain before students can access them. The admin dashboard shows all courses regardless of status.
+Course content is authored in git (`solanabr/courses-academy`), compiled by
+`compile-content.ts` at a SHA pinned in `apps/web/content.lock`, and **committed**
+to this repo as typed JSON. The app never fetches content at runtime.
+
+Why: content changes become reviewable diffs with CI gates; the read path has zero
+network hops and cannot be broken by a third-party outage; and — because no
+server-side content-write token exists anywhere in the app — there is no runtime
+path by which content can be mutated. Publishing is a pull request. The cost is
+that publishing requires a deploy, which is the intended trade.
+
+### Content Gate (Supabase, not content)
+
+Courses become visible to learners only when their `onchain_deployments` row is
+`status == "synced"` **and** `coalesce(is_active, true)`. This keeps courses hidden
+until they are actually deployed on-chain, and lets an admin hide one again without
+destroying the PDA. Content with no row at all is hidden (fail-closed).
+
+The gate is one function — `isSynced()` in `lib/content/deployments.ts`. The admin
+console shows all content regardless of status.
 
 ### Browser-Side Code Execution
 
@@ -883,4 +1115,4 @@ Solana brand colors (#9945FF, #14F195) contrast best against dark backgrounds. D
 
 ---
 
-_Last updated: 2026-03-02_
+_Last updated: 2026-07-12_
