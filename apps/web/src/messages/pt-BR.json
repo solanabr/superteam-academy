@@ -832,12 +832,11 @@
   "admin": {
     "console": {
       "title": "Console de Administração",
-      "subtitle": "Superteam Academy — Sincronização do Sanity para a blockchain",
+      "subtitle": "Publique o conteúdo dos cursos, implante os cursos on-chain, modere a comunidade.",
       "navLabel": "Seções de administração"
     },
     "nav": {
-      "publish": "Publicar",
-      "deploy": "Implantar",
+      "courses": "Cursos",
       "moderation": "Moderação",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
       "status": "Status"
@@ -847,10 +846,37 @@
       "achievements": "Conquistas"
     },
     "screens": {
-      "publish": "Publicação de conteúdo",
-      "deploy": "Implantação on-chain",
+      "courses": "Cursos",
       "moderation": "Moderação da comunidade",
       "status": "Status do programa"
+    },
+    "coursesScreen": {
+      "intro": {
+        "lede": "Levar um curso até os alunos exige duas etapas separadas, nesta ordem. Esta tela reúne as duas: publicação em cima, implantação embaixo.",
+        "step1Title": "1. Publicar — o app já tem este curso?",
+        "step1Body": "O conteúdo dos cursos vive no repositório courses-academy. O app distribui uma cópia compilada dele, fixada em um único commit no content.lock. Publicar é um pull request humano que atualiza esse pin e reconstrói o pacote; assim que ele é mesclado, a Vercel faz o redeploy e o conteúdo passa a estar no app. Esta tela não escreve nada — ela mostra a divergência e entrega um PR pré-preenchido.",
+        "step2Title": "2. Implantar — o curso está on-chain e visível para os alunos?",
+        "step2Body": "O conteúdo que está no pacote permanece invisível até o curso ter uma conta on-chain e estar ativo. Implantar cria ou atualiza essa conta. Só os campos on-chain importam aqui: XP por lição, recompensa do criador, mínimo de conclusões, número de lições e o conjunto imutável (criador, dificuldade, trilha, nível da trilha, pré-requisito).",
+        "contentOnlyNote": "Editar o conteúdo de uma lição — texto, código, quizzes, o título, as tags — não é on-chain. Essas edições entram no ar só com a publicação e, corretamente, não aparecem como nada a implantar abaixo. Um curso continuar marcado como \"Sincronizado\" depois de você reescrever uma lição não é um bug."
+      },
+      "step1Eyebrow": "Etapa 1 — Publicar: levar o conteúdo até o app",
+      "step2Eyebrow": "Etapa 2 — Implantar: colocar o curso on-chain",
+      "legend": {
+        "title": "O que cada estado significa",
+        "description": "Toda linha de curso carrega um estado on-chain e — uma vez implantado — um estado de divergência de conteúdo. Os dois são independentes.",
+        "onChainHeading": "Estado on-chain",
+        "driftHeading": "Divergência de conteúdo — repositório vs pin",
+        "not_deployed": "Nunca implantado. O curso está no pacote, mas não tem conta on-chain, então os alunos não o veem. Implantar cria a conta.",
+        "synced": "Está on-chain e seus campos on-chain batem com o pacote. Nada a fazer.",
+        "out_of_sync": "Está on-chain, mas algum campo on-chain (XP por lição, recompensa do criador, mínimo de conclusões, número de lições) difere do pacote. Implante de novo para atualizá-lo.",
+        "draft": "Marcado como rascunho no repositório de conteúdo. Não é implantável enquanto continuar como rascunho.",
+        "missing_fields": "Faltam no pacote campos on-chain de que este curso precisa antes de ser implantado. A linha indica quais.",
+        "drifted": "O repositório de conteúdo avançou além do commit fixado. A correção é um PR de publicação (etapa 1), não uma implantação.",
+        "blocked": "Existe conteúdo mais novo lá em cima, mas o CI dele está vermelho. Não publique até o CI ficar verde.",
+        "unknown": "Não foi possível acessar o GitHub, então a divergência não pôde ser verificada. O estado on-chain continua correto.",
+        "immutableTitle": "Divergência imutável (sem selo — a linha exibe um aviso)",
+        "immutableBody": "Criador, dificuldade, trilha, nível da trilha e pré-requisito são gravados uma única vez, na primeira implantação, e nunca podem ser alterados. Se um deles diferir do pacote, o botão Deploy desaparece — uma atualização não resolve. As únicas saídas são restaurar o valor no repositório de conteúdo ou desativar este curso e implantar um novo."
+      }
     },
     "publishPin": {
       "title": "Pin de conteúdo",

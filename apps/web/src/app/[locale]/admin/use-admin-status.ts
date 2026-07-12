@@ -16,7 +16,7 @@ export interface UseAdminStatus {
 }
 
 /**
- * Shared data layer for the `/admin/deploy` and `/admin/status` screens: a
+ * Shared data layer for the `/admin/courses` and `/admin/status` screens: a
  * single `GET /api/admin/status` fetch (authorized via the httpOnly
  * `admin_session` cookie) with loading/error state and a `refetch`. Extracted
  * from the two clients, which held byte-identical copies of this block before

@@ -46,18 +46,14 @@ afterEach(() => {
 });
 
 describe("AdminNav", () => {
-  it("renders exactly the four section links pointing at locale-prefixed routes", () => {
+  it("renders exactly the three section links pointing at locale-prefixed routes", () => {
     renderWithIntl(<AdminNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(3);
 
-    expect(screen.getByRole("link", { name: nav.publish })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "href",
-      "/en/admin/publish"
-    );
-    expect(screen.getByRole("link", { name: nav.deploy })).toHaveAttribute(
-      "href",
-      "/en/admin/deploy"
+      "/en/admin/courses"
     );
     expect(screen.getByRole("link", { name: nav.moderation })).toHaveAttribute(
       "href",
@@ -69,6 +65,15 @@ describe("AdminNav", () => {
     );
   });
 
+  it("no longer offers the retired Publish / Deploy entries", () => {
+    renderWithIntl(<AdminNav />);
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(hrefs).not.toContain("/en/admin/publish");
+    expect(hrefs).not.toContain("/en/admin/deploy");
+  });
+
   it("labels the nav landmark from the admin namespace", () => {
     renderWithIntl(<AdminNav />);
     expect(
@@ -77,14 +82,14 @@ describe("AdminNav", () => {
   });
 
   it("marks only the active route with aria-current=page", () => {
-    usePathnameMock.mockReturnValue("/en/admin/deploy");
+    usePathnameMock.mockReturnValue("/en/admin/courses");
     renderWithIntl(<AdminNav />);
 
-    expect(screen.getByRole("link", { name: nav.deploy })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "aria-current",
       "page"
     );
-    for (const label of [nav.publish, nav.moderation, nav.status]) {
+    for (const label of [nav.moderation, nav.status]) {
       expect(screen.getByRole("link", { name: label })).not.toHaveAttribute(
         "aria-current"
       );
@@ -92,9 +97,9 @@ describe("AdminNav", () => {
   });
 
   it("keeps a sub-path of a section active (startsWith match)", () => {
-    usePathnameMock.mockReturnValue("/en/admin/deploy/some-detail");
+    usePathnameMock.mockReturnValue("/en/admin/courses/some-detail");
     renderWithIntl(<AdminNav />);
-    expect(screen.getByRole("link", { name: nav.deploy })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "aria-current",
       "page"
     );
@@ -112,7 +117,7 @@ describe("AdminNav", () => {
     expect(screen.getByLabelText("4 pending flags")).toHaveTextContent("4");
     // The badge is scoped to Moderation, not other sections.
     expect(
-      screen.getByRole("link", { name: nav.deploy })
+      screen.getByRole("link", { name: nav.courses })
     ).not.toHaveTextContent("4");
   });
 
@@ -132,8 +137,8 @@ describe("AdminNav", () => {
     renderWithIntl(<AdminNav />);
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    // Nav still renders its four links; the badge simply never shows.
-    expect(screen.getAllByRole("link")).toHaveLength(4);
+    // Nav still renders its three links; the badge simply never shows.
+    expect(screen.getAllByRole("link")).toHaveLength(3);
     expect(
       screen.getByRole("link", { name: nav.moderation })
     ).toBeInTheDocument();

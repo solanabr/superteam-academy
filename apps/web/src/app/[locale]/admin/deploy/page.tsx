@@ -1,19 +1,14 @@
-import { getTranslations } from "next-intl/server";
-import { DeployClient } from "./deploy-client";
+import { redirect } from "next/navigation";
 
 /**
- * `/admin/deploy` — the on-chain deploy surface (course + achievement sync
- * tables), moved from the stacked admin page (SP3-A Task 3).
+ * `/admin/deploy` was folded into `/admin/courses` (deploy is step 2 of that
+ * screen, not a screen of its own). Kept as a redirect so bookmarks, docs and
+ * muscle memory land on the merged screen instead of a 404.
  */
-export default async function AdminDeployPage() {
-  const t = await getTranslations("admin");
-
-  return (
-    <section>
-      <h2 className="mb-4 font-display text-lg font-bold text-text">
-        {t("screens.deploy")}
-      </h2>
-      <DeployClient />
-    </section>
-  );
+export default function AdminDeployRedirect({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
+  redirect(`/${locale}/admin/courses`);
 }

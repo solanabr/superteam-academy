@@ -164,7 +164,7 @@ Plus three views: `community_stats`, `public_user_xp`, and
 > post-SP2 home of the on-chain sync status that gates which courses learners can
 > see (`status == "synced" AND coalesce(is_active, true)`). A fresh project starts
 > with zero rows, so **no courses are visible until you deploy them from
-> `/admin/deploy`** — see [ADMIN.md](./ADMIN.md). The base table is service_role
+> `/admin/courses`** — see [ADMIN.md](./ADMIN.md). The base table is service_role
 > only (RLS on, no policies); anon/authenticated read the narrow
 > `public_onchain_deployments` view.
 
@@ -272,12 +272,12 @@ Publishing is a **pull request**, not a deploy step and not a button:
 4. Commit `content.lock` **and** the regenerated bundle together.
 5. Merge → Vercel redeploys with the new content.
 
-The `/admin/publish` screen shows the pin-vs-HEAD drift and hands you a prefilled
+The `/admin/courses` screen shows the pin-vs-HEAD drift and hands you a prefilled
 PR link. It holds **no write token** and performs no repo write. See
 [ADMIN.md](./ADMIN.md).
 
 > New courses are still **invisible to learners** until they are deployed on-chain
-> from `/admin/deploy` — compiling the bundle is necessary but not sufficient.
+> from `/admin/courses` — compiling the bundle is necessary but not sufficient.
 
 ---
 
