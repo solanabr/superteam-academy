@@ -15,11 +15,16 @@ interface DeployChangePreviewProps {
 /**
  * Pre-deploy change preview (SP3-C Task 2): before any transaction, show what
  * the deploy will write — the updateable field diffs from the existing diff
- * engine (`diffCourse`, carried on the status payload), the loud
- * `ImmutableMismatchWarning` (which BLOCKS confirm — those need a recreate),
- * and the per-course content commitment drift (`chainDrift`: does this deploy
- * update the on-chain `content_tx_id` to the bundle SHA). No diff engine of
- * its own — pure render over the status record.
+ * engine (`diffCourse`, carried on the status payload) and the loud
+ * `ImmutableMismatchWarning` (which BLOCKS confirm — those need a recreate).
+ * No diff engine of its own — pure render over the status record.
+ *
+ * `chainDrift: "content_stale"` is shown as an INFORMATIONAL note, never as a
+ * pending change: this path posts `{ courseId }` alone, and the sync route only
+ * writes `content_tx_id` when given an `activeLessons` mask (the content-commit
+ * flow on the drift screen). Confirming here would not move the commitment —
+ * the route would answer "Already synced" and the badge would stay stale — so
+ * the copy must not promise otherwise.
  */
 export function DeployChangePreview({
   course,
