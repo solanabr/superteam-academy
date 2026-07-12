@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import type { JSX, ReactNode } from "react";
 import type { Lesson, LessonBlock } from "@superteam-lms/types";
 
 /**
@@ -24,6 +24,13 @@ export interface BlockContext {
   programKeypairSecret: number[] | null;
   /** Clear the current build (deploy panel `onBuildExpired`). */
   resetBuild: () => void;
+  /**
+   * Challenge lessons only: the non-code "instructions" blocks (prose, etc.),
+   * pre-rendered by `lesson-client` and threaded into the code block so the
+   * description renders inside the IDE's side rail alongside the test cases,
+   * rather than stacked full-width above a squeezed editor.
+   */
+  instructionsSlot?: ReactNode;
 }
 
 export interface BlockRenderProps {

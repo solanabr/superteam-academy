@@ -266,8 +266,28 @@ export function LessonPageClient({
     ]
   );
 
+  // Challenge lessons get a wide, editor-dominant layout: the non-code blocks
+  // (the description/instructions) render inside the IDE's side rail next to the
+  // test cases, and only the code block(s) occupy the main area — restoring the
+  // dedicated coding-challenge experience the unified block renderer flattened.
+  const instructionBlocks = lesson.blocks.filter((b) => b._type !== "code");
+  const codeBlocks = lesson.blocks.filter((b) => b._type === "code");
+  const instructionsSlot = hasCodeBlock ? (
+    <div className="space-y-6">
+      {instructionBlocks.map((block) => {
+        const Renderer = RENDERERS[block._type];
+        return <Renderer key={block.key} block={block} ctx={ctx} />;
+      })}
+    </div>
+  ) : null;
+  const codeCtx: BlockContext = { ...ctx, instructionsSlot };
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div
+      className={`mx-auto space-y-6 ${
+        hasCodeBlock ? "max-w-[1600px] px-1 sm:px-2" : "max-w-3xl"
+      }`}
+    >
       {/* Lesson top bar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 sm:gap-3">
         <Link
@@ -298,13 +318,23 @@ export function LessonPageClient({
         </div>
       </div>
 
-      {/* Blocks */}
-      <div className="space-y-6">
-        {lesson.blocks.map((block) => {
-          const Renderer = RENDERERS[block._type];
-          return <Renderer key={block.key} block={block} ctx={ctx} />;
-        })}
-      </div>
+      {/* Blocks — challenges render only the code block(s) here (the wide IDE);
+          the instructions ride in the IDE rail via ctx.instructionsSlot. */}
+      {hasCodeBlock ? (
+        <div className="space-y-4">
+          {codeBlocks.map((block) => {
+            const Renderer = RENDERERS[block._type];
+            return <Renderer key={block.key} block={block} ctx={codeCtx} />;
+          })}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {lesson.blocks.map((block) => {
+            const Renderer = RENDERERS[block._type];
+            return <Renderer key={block.key} block={block} ctx={ctx} />;
+          })}
+        </div>
+      )}
 
       {/* Completion + navigation */}
       <div className="space-y-2">
