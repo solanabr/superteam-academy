@@ -908,6 +908,16 @@
       "achievementsHeading": "Conquistas",
       "noCourses": "Nenhum curso no pacote de conteúdo.",
       "noAchievements": "Nenhuma conquista no pacote de conteúdo.",
+      "missingFields": "Faltando: {fields}",
+      "syncAllConfirm": "Sincronizar {count} cursos — {changes} mudanças de campo. Continuar?",
+      "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
+      "errors": {
+        "action": "Ação de implantação recusada: {message}",
+        "sync": "Falha na sincronização",
+        "deactivate": "Falha na desativação",
+        "reactivate": "Falha na reativação",
+        "syncFor": "Falha na sincronização de {title}"
+      },
       "contentDrift": {
         "drifted": "Conteúdo desatualizado",
         "blocked": "Conteúdo bloqueado",
@@ -935,6 +945,13 @@
         "bundleLabel": "pacote",
         "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
       }
+    },
+    "statusBadge": {
+      "synced": "Sincronizado",
+      "out_of_sync": "Fora de sincronia",
+      "not_deployed": "Não está on-chain",
+      "draft": "Rascunho",
+      "missing_fields": "Campos faltando"
     },
     "resync": {
       "heading": "Ressincronização de dados",

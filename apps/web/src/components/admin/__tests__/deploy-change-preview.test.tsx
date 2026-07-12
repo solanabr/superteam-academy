@@ -165,6 +165,27 @@ describe("DeployChangePreview", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
+  it("traps Tab focus inside the dialog (both directions)", () => {
+    renderWithIntl(
+      <DeployChangePreview
+        course={course()}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    const redeploy = screen.getByRole("button", { name: "Redeploy" });
+
+    // Tab on the last focusable wraps to the first…
+    redeploy.focus();
+    fireEvent.keyDown(redeploy, { key: "Tab" });
+    expect(document.activeElement).toBe(cancel);
+
+    // …and Shift+Tab on the first wraps to the last.
+    fireEvent.keyDown(cancel, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(redeploy);
+  });
+
   it("#400: a creator mismatch renders the loud dedicated emphasis and blocks confirm", () => {
     const c = course({
       onChainStatus: "out_of_sync",

@@ -908,6 +908,16 @@
       "achievementsHeading": "Logros",
       "noCourses": "No hay cursos en el paquete de contenido.",
       "noAchievements": "No hay logros en el paquete de contenido.",
+      "missingFields": "Faltan: {fields}",
+      "syncAllConfirm": "Sincronizar {count} cursos — {changes} cambios de campo. ¿Continuar?",
+      "deactivateConfirm": "¿Desactivar este curso? Los estudiantes no podrán inscribirse hasta que se reactive.",
+      "errors": {
+        "action": "Acción de despliegue rechazada: {message}",
+        "sync": "Falló la sincronización",
+        "deactivate": "Falló la desactivación",
+        "reactivate": "Falló la reactivación",
+        "syncFor": "Falló la sincronización de {title}"
+      },
       "contentDrift": {
         "drifted": "Contenido desactualizado",
         "blocked": "Contenido bloqueado",
@@ -935,6 +945,13 @@
         "bundleLabel": "paquete",
         "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
       }
+    },
+    "statusBadge": {
+      "synced": "Sincronizado",
+      "out_of_sync": "Fuera de sincronía",
+      "not_deployed": "No está on-chain",
+      "draft": "Borrador",
+      "missing_fields": "Campos faltantes"
     },
     "resync": {
       "heading": "Resincronización de datos",

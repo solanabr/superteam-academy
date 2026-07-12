@@ -28,11 +28,35 @@ export function DeployChangePreview({
 }: DeployChangePreviewProps) {
   const t = useTranslations("admin.deployScreen.preview");
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Focus lands on a real control when the dialog opens (keyboard/SR users).
   useEffect(() => {
     cancelRef.current?.focus();
   }, []);
+
+  // Modal focus trap: Tab cycles within the dialog so focus can never escape
+  // to the page behind it (which would also strand the Escape handler).
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+    if (e.key === "Escape") {
+      onCancel();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0]!;
+    const last = focusables[focusables.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 
   const updateableDiffs = course.differences.filter((d) => d.updateable);
   const immutableDiffs = course.differences.filter((d) => !d.updateable);
@@ -46,11 +70,10 @@ export function DeployChangePreview({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       role="presentation"
-      onKeyDown={(e) => {
-        if (e.key === "Escape") onCancel();
-      }}
+      onKeyDown={handleKeyDown}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={t("title", { title: course.title })}

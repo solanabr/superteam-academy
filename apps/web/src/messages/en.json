@@ -908,6 +908,16 @@
       "achievementsHeading": "Achievements",
       "noCourses": "No courses in the content bundle.",
       "noAchievements": "No achievements in the content bundle.",
+      "missingFields": "Missing: {fields}",
+      "syncAllConfirm": "Sync {count} courses — {changes} field changes. Continue?",
+      "deactivateConfirm": "Deactivate this course? Students cannot enroll until reactivated.",
+      "errors": {
+        "action": "Deploy action refused: {message}",
+        "sync": "Sync failed",
+        "deactivate": "Deactivation failed",
+        "reactivate": "Reactivation failed",
+        "syncFor": "Sync failed for {title}"
+      },
       "contentDrift": {
         "drifted": "Content drift",
         "blocked": "Content blocked",
@@ -935,6 +945,13 @@
         "bundleLabel": "bundle",
         "remediation": "\"{title}\" has immutable on-chain fields that differ from the content bundle; update_course cannot apply them. Options: 1. Fix the value in the courses-academy repo and publish a new bundle PR, or 2. Deactivate this course and deploy a new version."
       }
+    },
+    "statusBadge": {
+      "synced": "Synced",
+      "out_of_sync": "Out of sync",
+      "not_deployed": "Not on chain",
+      "draft": "Draft",
+      "missing_fields": "Missing fields"
     },
     "resync": {
       "heading": "Data Resync",

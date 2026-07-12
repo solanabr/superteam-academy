@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
 import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
@@ -12,13 +13,34 @@ interface CourseSyncTableProps {
   onRefresh: () => void;
 }
 
+/** Deploy/redeploy candidates: not draft, complete, no immutable mismatch. */
+function syncableCourses(courses: CourseStatus[]): CourseStatus[] {
+  return courses.filter(
+    (c) =>
+      !c.isDraft &&
+      c.missingFields.length === 0 &&
+      !c.differences.some((d) => !d.updateable)
+  );
+}
+
 export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
+  const t = useTranslations("admin.deployScreen");
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Course whose deploy/redeploy is pending confirmation in the change preview
   // (SP3-C Task 2: per-row deploy opens the preview instead of firing).
   const [previewCourse, setPreviewCourse] = useState<CourseStatus | null>(null);
+
+  // Route errors carry cleanly-worded refusals (e.g. the #402 denylist / #400
+  // on-curve messages, pubkey included) — surface them verbatim under a
+  // localized label instead of raw, with a localized fallback when the route
+  // gave no message.
+  function actionError(message: string | undefined, fallbackKey: string): void {
+    setError(
+      message ? t("errors.action", { message }) : t(`errors.${fallbackKey}`)
+    );
+  }
 
   async function handleSync(courseId: string) {
     setSyncing(courseId);
@@ -31,24 +53,19 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Sync failed");
+        actionError(data.error, "sync");
       } else {
         onRefresh();
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Sync failed");
+      actionError(e instanceof Error ? e.message : undefined, "sync");
     } finally {
       setSyncing(null);
     }
   }
 
   async function handleDeactivate(courseId: string) {
-    if (
-      !confirm(
-        "Deactivate this course? Students cannot enroll until reactivated."
-      )
-    )
-      return;
+    if (!confirm(t("deactivateConfirm"))) return;
     setSyncing(courseId);
     setError(null);
     try {
@@ -59,12 +76,12 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Deactivation failed");
+        actionError(data.error, "deactivate");
       } else {
         onRefresh();
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      actionError(e instanceof Error ? e.message : undefined, "deactivate");
     } finally {
       setSyncing(null);
     }
@@ -81,26 +98,26 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Reactivation failed");
+        actionError(data.error, "reactivate");
       } else {
         onRefresh();
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      actionError(e instanceof Error ? e.message : undefined, "reactivate");
     } finally {
       setSyncing(null);
     }
   }
 
   async function handleSyncAll() {
+    const syncable = syncableCourses(courses);
+    // One-line bulk confirm ("Sync N courses — M field changes"), not N modals.
+    const changes = syncable.reduce((n, c) => n + c.differences.length, 0);
+    if (!confirm(t("syncAllConfirm", { count: syncable.length, changes }))) {
+      return;
+    }
     setSyncingAll(true);
     setError(null);
-    const syncable = courses.filter(
-      (c) =>
-        !c.isDraft &&
-        c.missingFields.length === 0 &&
-        !c.differences.some((d) => !d.updateable)
-    );
     for (const course of syncable) {
       setSyncing(course.contentId);
       try {
@@ -111,13 +128,19 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
         });
         if (!res.ok) {
           const data = (await res.json()) as { error?: string };
-          setError(data.error ?? `Sync failed for ${course.title}`);
+          setError(
+            data.error
+              ? t("errors.action", { message: data.error })
+              : t("errors.syncFor", { title: course.title })
+          );
           onRefresh();
           break;
         }
       } catch (e) {
         setError(
-          e instanceof Error ? e.message : `Sync failed for ${course.title}`
+          e instanceof Error
+            ? t("errors.action", { message: e.message })
+            : t("errors.syncFor", { title: course.title })
         );
         onRefresh();
         break;
@@ -128,12 +151,7 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
     onRefresh();
   }
 
-  const syncableCount = courses.filter(
-    (c) =>
-      !c.isDraft &&
-      c.missingFields.length === 0 &&
-      !c.differences.some((d) => !d.updateable)
-  ).length;
+  const syncableCount = syncableCourses(courses).length;
 
   return (
     <div>
@@ -189,7 +207,9 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                   </div>
                   {course.missingFields.length > 0 && (
                     <div className="mt-1 text-xs text-streak">
-                      Missing: {course.missingFields.join(", ")}
+                      {t("missingFields", {
+                        fields: course.missingFields.join(", "),
+                      })}
                     </div>
                   )}
                   {course.differences.length > 0 && (
