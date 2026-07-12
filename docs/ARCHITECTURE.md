@@ -717,15 +717,17 @@ User action → API route → Supabase (RLS/service_role)
                        ↘ on-chain reward_xp (for thread/answer/accept XP)
 ```
 
-### API Routes (7)
+### API Routes (9)
 
 | Route                                | Method | Auth     | Rate Limit | Purpose                                                                                            |
 | ------------------------------------ | ------ | -------- | ---------- | -------------------------------------------------------------------------------------------------- |
 | `/api/community/threads`             | GET    | None     | —          | List threads with cursor pagination, category/course/lesson filters                                |
 | `/api/community/threads`             | POST   | Required | 10/hr      | Create thread (5 XP, awards via `award_xp()`)                                                      |
 | `/api/community/threads/[id]`        | GET    | None     | —          | Thread detail with answers, increments view count                                                  |
+| `/api/community/threads/[id]/delete` | POST   | Required | —          | Soft-delete own thread (author only)                                                               |
 | `/api/community/answers`             | POST   | Required | 30/hr      | Post answer to thread (10 XP)                                                                      |
 | `/api/community/answers/[id]/accept` | POST   | Required | —          | Accept answer (thread author only, 25 XP to answerer). Re-accept revokes previous XP.              |
+| `/api/community/answers/[id]/delete` | POST   | Required | —          | Soft-delete own answer (author only)                                                               |
 | `/api/community/votes`               | POST   | Required | 60/hr      | Three-state vote (+1/0/-1). Self-vote prevented by DB trigger.                                     |
 | `/api/community/flags`               | POST   | Required | 20/hr      | Flag content for moderation. Dedup index prevents duplicate flags. Self-flag prevented by trigger. |
 | `/api/community/search`              | GET    | None     | —          | Full-text search (tsvector on title + body)                                                        |
@@ -882,8 +884,17 @@ GamificationOverlays
 
 ## 9. API Routes
 
-All routes are in `apps/web/src/app/api/`. The authoritative, always-current list
-lives in `apps/web/src/app/api/CLAUDE.md`.
+All routes are in `apps/web/src/app/api/`. **44 routes** as of the last sync.
+
+> **How to re-derive this list** (do this rather than trusting the table):
+>
+> ```bash
+> find apps/web/src/app/api -name route.ts \
+>   | sed 's|apps/web/src/app/api/||; s|/route.ts||' | sort
+> ```
+>
+> A route exists iff it has a `route.ts`. Anything in this table with no
+> corresponding file is a doc bug — `/api/deploy/[uuid]` was exactly that.
 
 "Admin" auth below means the same-origin + signed-`admin_session`-cookie check
 (`requireAdminAuth`), **not** a bearer token.
@@ -905,28 +916,28 @@ client-side route for a full lesson read.
 
 ### Auth / core / community
 
-| Route                             | Method   | Auth                  | Purpose                                                                            |
-| --------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------- |
-| `/api/auth/nonce`                 | GET      | None                  | Generate SIWS nonce (stored in `siws_nonces` table)                                |
-| `/api/auth/wallet`                | POST     | None                  | SIWS authentication (nonce + Ed25519 verification)                                 |
-| `/api/auth/callback`              | GET      | None                  | Google/GitHub OAuth callback (code exchange)                                       |
-| `/api/auth/link-wallet`           | POST     | Required              | Link wallet to existing account                                                    |
-| `/api/auth/unlink`                | POST     | Required              | Unlink auth method (wallet/Google/GitHub)                                          |
-| `/api/account/delete`             | POST     | Required              | Account deletion                                                                   |
-| `/api/lessons/complete`           | POST     | Required              | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements |
-| `/api/lessons/validate-challenge` | POST     | Required              | Server-side challenge validation (UX pass/fail)                                    |
-| `/api/leaderboard`                | GET      | None                  | XP rankings (alltime/weekly/monthly)                                               |
-| `/api/certificates/metadata`      | GET      | None                  | Serve NFT metadata JSON by UUID                                                    |
-| `/api/certificates/mint`          | POST     | Required              | Manual credential mint with retry queue                                            |
-| `/api/build-program`              | POST     | Required              | Proxy Anchor build to build server                                                 |
-| `/api/deploy/save`                | POST     | Required              | Save deployed program record                                                       |
-| `/api/deploy/[uuid]`              | GET      | Required              | Download compiled .so binary                                                       |
-| `/api/rust/execute`               | POST     | Required              | Proxy basic Rust execution to Rust Playground                                      |
-| `/api/quests/daily`               | GET/POST | Required              | Get daily quest state / award quest XP (on-chain minting via `reward_xp`)          |
-| `/api/ai/partner`                 | POST     | Required              | AI lesson assistant (Gemini); rate-limited + input-capped                          |
-| `/api/ai/partner/verify`          | POST     | Required              | Verify the sealed comprehension-check token                                        |
-| `/api/community/*`                | Varies   | Varies                | Threads, answers, votes, flags, search (see §7)                                    |
-| `/api/webhooks/helius`            | POST     | HELIUS_WEBHOOK_SECRET | Process on-chain events (XP, achievements)                                         |
+| Route                             | Method   | Auth                  | Purpose                                                                                                                                                                             |
+| --------------------------------- | -------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/auth/nonce`                 | GET      | None                  | Generate SIWS nonce (stored in `siws_nonces` table)                                                                                                                                 |
+| `/api/auth/wallet`                | POST     | None                  | SIWS authentication (nonce + Ed25519 verification)                                                                                                                                  |
+| `/api/auth/callback`              | GET      | None                  | Google/GitHub OAuth callback (code exchange)                                                                                                                                        |
+| `/api/auth/link-wallet`           | POST     | Required              | Link wallet to existing account                                                                                                                                                     |
+| `/api/auth/unlink`                | POST     | Required              | Unlink auth method (wallet/Google/GitHub)                                                                                                                                           |
+| `/api/account/delete`             | POST     | Required              | Account deletion                                                                                                                                                                    |
+| `/api/lessons/complete`           | POST     | Required              | Mark lesson complete, award XP, auto-finalize, auto-credential, check achievements                                                                                                  |
+| `/api/lessons/validate-challenge` | POST     | Required              | Server-side challenge validation (UX pass/fail)                                                                                                                                     |
+| `/api/leaderboard`                | GET      | None                  | XP rankings (alltime/weekly/monthly)                                                                                                                                                |
+| `/api/certificates/metadata`      | GET      | None                  | Serve NFT metadata JSON by UUID                                                                                                                                                     |
+| `/api/certificates/mint`          | POST     | Required              | Manual credential mint with retry queue                                                                                                                                             |
+| `/api/build-program`              | POST     | Required              | Proxy Anchor build to build server                                                                                                                                                  |
+| `/api/deploy/save`                | POST     | Required              | Save deployed program record. **The only route under `/api/deploy`** — the compiled `.so` comes back inline (base64) from `/api/build-program`, not from a separate download route. |
+| `/api/rust/execute`               | POST     | Required              | Proxy basic Rust execution to Rust Playground                                                                                                                                       |
+| `/api/quests/daily`               | GET/POST | Required              | Get daily quest state / award quest XP (on-chain minting via `reward_xp`)                                                                                                           |
+| `/api/ai/partner`                 | POST     | Required              | AI lesson assistant (Gemini); rate-limited + input-capped                                                                                                                           |
+| `/api/ai/partner/verify`          | POST     | Required              | Verify the sealed comprehension-check token                                                                                                                                         |
+| `/api/teacher/courses/[id]/stats` | GET      | Required              | Read-only per-course stats for the instructor (`/teach`) viewer                                                                                                                     |
+| `/api/community/*`                | Varies   | Varies                | 9 routes: threads (+delete), answers (+accept, +delete), votes, flags, search — see §7                                                                                              |
+| `/api/webhooks/helius`            | POST     | HELIUS_WEBHOOK_SECRET | Process on-chain events (XP, achievements)                                                                                                                                          |
 
 ### Admin
 
