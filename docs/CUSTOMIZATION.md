@@ -428,78 +428,97 @@ To switch to mainnet, update the environment variable and set `NEXT_PUBLIC_SOLAN
 
 3. Call the XP award from the appropriate API route. XP is awarded server-side via the Supabase `award_xp()` function (SECURITY DEFINER, called with service_role key from API routes).
 
-**Server-side XP cap**: The on-chain `xpPerLesson` field has a max of 100 (enforced in the Sanity schema: `rule.min(1).max(100)`). The Supabase `award_xp()` function itself has no cap -- the API route controls the amount.
+**Server-side XP cap**: `xpReward` is capped by the content schema (`MAX_XP_PER_MINT`, `packages/content-schema/src/constants.ts`), and the API routes cap awards independently (max 100 XP per lesson completion, max 2000 per generic award). The Supabase `award_xp()` function does enforce a daily community-XP cap but does not cap the per-call amount — the API route controls it.
 
 ### Adding New Achievements
 
-Adding a new achievement requires changes in three places: Sanity (metadata), TypeScript (unlock logic), and on-chain (deployment via admin panel).
+**Unlock logic is content, not TypeScript.** Since the content-standard cutover,
+each achievement carries a declarative `award` rule, and the app holds one
+predicate **per award kind** — not per achievement. Adding a normal achievement
+therefore requires **no app code change at all**.
 
-#### 1. Create the Achievement in Sanity
+#### 1. Add the achievement doc (in `solanabr/courses-academy`)
 
-Create a new Achievement document in Sanity Studio with:
+Create `achievements/<slug>.yaml`:
 
-- **name** (required): Display name (e.g., "Decathlon")
-- **description**: What the learner did to earn it (e.g., "Complete 10 courses")
-- **icon**: Icon identifier (e.g., `trophy`)
-- **category** (required): One of `progress`, `streaks`, `skills`, `community`, `special`
-- **xpReward** (required): XP awarded on unlock (default: 50)
-- **maxSupply**: Maximum awards (0 = unlimited)
-
-Use the `_id` convention: `achievement-{slug}` (e.g., `achievement-ten-courses`).
-
-#### 2. Add Unlock Logic
-
-Add the check condition to the `UNLOCK_CHECKS` map in `apps/web/src/lib/gamification/achievements.ts`:
-
-```typescript
-const UNLOCK_CHECKS: Record<string, (state: UserState) => boolean> = {
-  // ...existing checks...
-  "ten-courses": (s) => s.completedCourses >= 10,
-};
+```yaml
+id: achievement-ten-courses
+name: Decathlon
+description: Complete 10 courses
+icon: trophy
+glyph: "10"
+category: progress # progress | streaks | skills | community | special
+xpReward: 50
+maxSupply: 0 # 0 = unlimited
+award:
+  kind: lessons-completed
+  gte: 10
 ```
 
-The function receives a `UserState` object with these fields:
+The `id` convention is `achievement-{slug}` and it is validated by
+`packages/content-schema/src/achievement.ts` (Zod). `award` is **required** — an
+achievement with no award rule can never be earned.
+
+Available `award.kind` values:
+
+| `kind`                        | Params          | Unlocks when                                    |
+| ----------------------------- | --------------- | ----------------------------------------------- |
+| `lessons-completed`           | `gte`           | total completed lessons >= `gte`                |
+| `lessons-completed-in-course` | `course`, `gte` | completed lessons in that course >= `gte`       |
+| `course-completed`            | `course`        | that course is fully completed                  |
+| `path-completed`              | `path`          | every course in that learning path is completed |
+| `streak`                      | `days`          | current streak >= `days`                        |
+| `user-number`                 | `lte`           | signup order <= `lte` (early-adopter style)     |
+| `community-stat`              | `stat`, `gte`   | that community stat >= `gte`                    |
+| `manual`                      | —               | never auto-fires; admin-granted only            |
+
+No course or path id is hardcoded in the app — `course` and `path` name real
+content docs and are validated by the linter.
+
+#### 2. Publish it
+
+Merge in `courses-academy`, then bump `apps/web/content.lock` and recompile the
+bundle (see [ADMIN.md](./ADMIN.md)). The achievement now exists in the app.
+
+#### 3. Deploy on-chain
+
+From `/admin/deploy`, deploy the achievement. This creates the AchievementType PDA
+and its Metaplex Core collection, and records `achievement_pda` +
+`collection_address` in the Supabase `onchain_deployments` table.
+
+> **ID convention**: the full content `_id` (e.g. `achievement-first-steps`) is the
+> on-chain PDA seed, used **verbatim**. Never strip the `achievement-` prefix —
+> stripping it derives a different PDA and the award fails silently.
+
+#### When you DO need app code
+
+Only when you need a genuinely new **kind** of condition. Then:
+
+1. Add the variant to the `Award` discriminated union in
+   `packages/content-schema/src/achievement.ts` (and to `AWARD_KINDS`).
+2. Add the matching predicate to `PREDICATES` in
+   `apps/web/src/lib/gamification/achievements.ts`. It is declared
+   `satisfies Record<AwardKind, Predicate>`, so a missing kind is a **compile
+   error** — you cannot forget this step.
+3. If the predicate needs a new signal, add the field to `UserState` and populate
+   it in `buildUserState()`.
+
+The current `UserState`:
 
 ```typescript
 interface UserState {
-  completedLessons: number; // Total lessons completed across all courses
-  completedCourses: number; // Number of fully completed courses
-  currentStreak: number; // Current consecutive-day streak
-  hasCompletedRustLesson: boolean;
-  hasCompletedAnchorCourse: boolean;
-  hasCompletedAllTracks: boolean; // Deferred (always false currently)
-  courseCompletionTimeHours: number | null; // Deferred (always null currently)
-  allTestsPassedFirstTry: boolean; // Deferred (always false currently)
-  userNumber: number; // User's signup order (1 = first user)
+  completedLessons: number;
+  completedLessonsByCourse: Record<string, number>; // courseId → count
+  completedCourseIds: ReadonlySet<string>;
+  completedPathIds: ReadonlySet<string>;
+  currentStreak: number;
+  userNumber: number; // signup order (1 = first user)
+  community: Record<CommunityStat, number>;
 }
 ```
 
-**Deferred signals**: Two fields (`hasCompletedAllTracks`, `allTestsPassedFirstTry`) require cross-course tracking infrastructure that is not yet implemented. Achievements depending on these signals (`full-stack-solana`, `perfect-score`) are currently unearnable.
-
-Achievement IDs in `UNLOCK_CHECKS` must be the **full** Sanity `_id`, including the `achievement-` prefix. For example, Sanity document `achievement-first-steps` maps to key `"achievement-first-steps"` (NOT `"first-steps"`). Stripping the prefix derives the wrong PDA and the award fails silently.
-
-#### 3. Deploy On-Chain
-
-Use the admin panel to deploy the achievement on-chain. This creates an AchievementType PDA and a Metaplex Core collection. The admin panel writes back `achievementPda` and `collectionAddress` to Sanity, setting the status to `"synced"`.
-
-#### Current Achievement Catalog
-
-The 14 built-in achievements and their unlock conditions:
-
-| ID                  | Condition                                      |
-| ------------------- | ---------------------------------------------- |
-| `first-steps`       | Complete 1 lesson                              |
-| `course-completer`  | Complete 1 course                              |
-| `week-warrior`      | 7-day streak                                   |
-| `monthly-master`    | 30-day streak                                  |
-| `consistency-king`  | 100-day streak                                 |
-| `rust-rookie`       | Complete a Rust lesson                         |
-| `anchor-expert`     | Complete an Anchor course                      |
-| `full-stack-solana` | Complete all tracks (deferred)                 |
-| `early-adopter`     | Be among the first 100 users                   |
-| `perfect-score`     | Pass all tests on first try (deferred)         |
-
-Achievements without a `UNLOCK_CHECKS` entry (e.g., `bug-hunter`, `helper`, `first-comment`, `top-contributor`) are admin-granted and not automatically checked.
+> `perfect-score` was **dropped**, not deferred: block results are transient by
+> design, so there is no durable "passed on first try" signal to key it on.
 
 ### Adding New Streak Milestones
 
@@ -514,7 +533,9 @@ export const STREAK_MILESTONES = [
 ] as const;
 ```
 
-Then add a corresponding achievement definition in Sanity and an `UNLOCK_CHECKS` entry for the new milestone.
+Then add a matching achievement doc in `courses-academy` with
+`award: { kind: streak, days: 365 }`. No predicate change is needed — `streak` is
+already a supported kind.
 
 ### Streak Logic
 
@@ -585,83 +606,69 @@ Gamification popups use a custom event bus pattern. Components dispatch browser 
 2. Add the component to `GamificationOverlays`
 3. Call the dispatch function from the relevant API response handler or client action
 
-## Creating New Course Types
+## Adding a New Lesson Block Type
 
-The current lesson types are `content` and `challenge`, defined as a discriminated union in `packages/types/src/course.ts`. To add a new type:
+A lesson is **not** typed `content` vs `challenge` any more. A lesson is an ordered
+`blocks[]` array — a page builder. Adding a new capability means adding a new
+**block type**, not a new lesson type.
 
-### 1. Update the Sanity Schema
+The current block types (`packages/content-schema/src/blocks/`):
 
-In `sanity/schemas/lesson.ts`, add the new type to the options list:
+| `type`                  | Graded  | Required | Purpose                                   |
+| ----------------------- | ------- | -------- | ----------------------------------------- |
+| `prose`                 | no      | no       | Markdown body                             |
+| `video`                 | no      | no       | Embedded video                            |
+| `code`                  | **yes** | **yes**  | Monaco challenge (starter/solution/tests) |
+| `quiz`                  | **yes** | **yes**  | Multiple-choice questions                 |
+| `openEnded`             | no      | **yes**  | Free-text reflection prompt               |
+| `wallet-funding`        | no      | no       | Devnet airdrop widget                     |
+| `program-explorer`      | no      | no       | IDL-driven program explorer               |
+| `deployed-program-card` | no      | no       | Shows the learner's deployed program      |
 
-```typescript
-defineField({
-  name: "type",
-  title: "Lesson Type",
-  type: "string",
-  options: {
-    list: [
-      { title: "Content", value: "content" },
-      { title: "Challenge", value: "challenge" },
-      { title: "Quiz", value: "quiz" },  // new
-    ],
-    layout: "radio",
-  },
-}),
-```
+### 1. Define the schema
 
-### 2. Add Type-Specific Fields
+Add the Zod schema in `packages/content-schema/src/blocks/<name>.ts` and register
+it in the `Block` discriminated union in `blocks/index.ts`.
 
-Add fields that are conditionally shown based on the new type:
+### 2. Register it
 
-```typescript
-defineField({
-  name: "questions",
-  title: "Quiz Questions",
-  type: "array",
-  hidden: ({ parent }) => parent?.type !== "quiz",
-  of: [
-    {
-      type: "object",
-      fields: [
-        defineField({ name: "question", type: "string" }),
-        defineField({ name: "options", type: "array", of: [{ type: "string" }] }),
-        defineField({ name: "correctIndex", type: "number" }),
-      ],
-    },
-  ],
-}),
-```
-
-### 3. Update TypeScript Types
-
-In `packages/types/src/course.ts`, add a new variant to the discriminated union. The existing types use a `LessonBase` interface with `ContentLesson` and `ChallengeLesson` extending it:
+Add an entry to `BLOCK_REGISTRY` in the same file:
 
 ```typescript
-export interface QuizLesson extends LessonBase {
-  type: "quiz";
-  content: string;
-  questions: QuizQuestion[];
-}
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-
-export type Lesson = ContentLesson | ChallengeLesson | QuizLesson;
+export const BLOCK_REGISTRY = {
+  // ...existing...
+  myBlock: { graded: false, required: true },
+} satisfies Record<BlockType, BlockMeta>;
 ```
 
-### 4. Create the UI Component
+`satisfies Record<BlockType, BlockMeta>` makes an unregistered block type a
+**compile error**. This is the fail-closed seam: the lesson-completion gate
+dispatches on this registry, and a block type with no registered grader is
+**DENIED** — an unknown type can never silently pass a lesson.
 
-Build a component to render the new lesson type in `apps/web/src/components/course/` or `apps/web/src/components/editor/`.
+- `graded: true` → the block returns pass/fail, and failing it blocks lesson completion.
+- `required: true` → the learner must interact with it before the lesson can complete.
 
-### 5. Update the Lesson Page
+### 3. Add the projected type
 
-In the lesson page component, add rendering logic for the new type:
+Add the matching variant to the `LessonBlock` union in
+`packages/types/src/course.ts` (discriminated on `_type`), and project it in
+`apps/web/src/lib/content/project.ts`.
 
-```typescript
-if (lesson.type === "quiz") {
-  return <QuizInterface lesson={lesson} />;
-}
-```
+### 4. Create the renderer
+
+Add the component and register it in the lesson page's block renderer registry —
+which keys on the same `_type` string as the schema and `BLOCK_REGISTRY`.
+
+### 5. Grade it (if `graded: true`)
+
+Add the grader to the grader map. All three maps — renderer, grader, and
+`BLOCK_REGISTRY` — key on the same discriminant, so a missing one is caught at
+compile time or fails closed at runtime.
+
+### 6. Lint + publish
+
+The content linter (`packages/content-lint`) validates every block in
+`courses-academy` CI. Once your block ships in a released version of the schema,
+content authors can use it; the change reaches the app via a `content.lock` bump
+(see [ADMIN.md](./ADMIN.md)).

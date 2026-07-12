@@ -1,99 +1,254 @@
-> Last synced: 2026-03-02
+> Last synced: 2026-07-12
 
-# Admin Panel Guide
+# Admin Console Guide
 
-The Superteam Academy admin panel provides tools for syncing Sanity CMS content to the on-chain program.
+The admin console is a four-screen panel for operating the platform: publishing
+content, deploying it on-chain, moderating the community forum, and checking
+platform status.
 
-## Accessing the Admin Panel
+It is **not** a CMS. Course content is authored in the
+[`solanabr/courses-academy`](https://github.com/solanabr/courses-academy) git
+repo and ships to the app as a **committed, compiled bundle**. The console holds
+**no content-write token** and cannot mutate content — publishing is a pull
+request. See [Publishing content](#1-publish--pin-the-content-bundle).
 
-The admin panel is available at `/{locale}/admin` (e.g., `/en/admin`).
+## Accessing the console
 
-**Authentication**: The panel is protected by a shared secret. On the login page, enter the value of `ADMIN_SECRET` from your environment variables.
+The console lives at `/{locale}/admin` (e.g. `/en/admin`).
 
-## Required Environment Variables
+**Authentication**: `/admin` renders a login form. Enter the value of
+`ADMIN_SECRET`. On success the server sets an **HMAC-signed `admin_session`
+cookie**, and `/admin` redirects to `/admin/status` (the default screen).
 
-| Variable                   | Description                                                                                                                                                                                     |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ADMIN_SECRET`             | Admin password (min 32 chars, random). Set in `.env.local`.                                                                                                                                     |
-| `PROGRAM_AUTHORITY_SECRET` | Base58 private key of the keypair that is authority on the on-chain `Config` PDA.                                                                                                               |
-| `BACKEND_SIGNER_SECRET`    | Base58 private key of the backend signer registered in `Config.backend_signer`. Used to sign on-chain transactions from API routes.                                                             |
-| `SANITY_ADMIN_TOKEN`       | Sanity write token from [sanity.io/manage](https://sanity.io/manage). Required to sync `onChainStatus` back to Sanity after deploying a course.                                                 |
-| `GITHUB_TOKEN`             | Fine-grained **read** token for `solanabr/courses-academy`. Required by the Content Sync panel (tarball fetch, HEAD polling, Checks API). Unset → the `/api/admin/content/*` routes return 503. |
+- The middleware bounces unauthenticated `/admin/*` sub-routes back to `/admin`.
+- Every `/api/admin/*` route authorizes on that **signed cookie plus a
+  same-origin check** (`requireAdminAuth`, `lib/admin/auth.ts`). There is no
+  `Authorization: Bearer <ADMIN_SECRET>` header path — the secret is only ever
+  submitted once, at login, and is never read in a page component (so it cannot
+  leak into a client payload).
 
-## Course Sync Workflow
+## Required environment variables
 
-### Overview
+| Variable                    | Required for                                                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ADMIN_SECRET`              | Console login + the HMAC key that signs `admin_session`. Min 32 random chars. Unset → the console cannot be logged into and admin routes 401.                                                          |
+| `PROGRAM_AUTHORITY_SECRET`  | The `Config.authority` keypair. Signs `create_course`, `update_course`, `create_achievement_type` from the **Deploy** screen.                                                                          |
+| `BACKEND_SIGNER_SECRET`     | The keypair registered in `Config.backend_signer`. Signs lesson/credential instructions from the learner-facing API routes.                                                                            |
+| `SOLANA_RPC_URL`            | Server-only RPC (may carry the Helius key). Required at boot — every admin screen reads chain state through it.                                                                                        |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role writes to `onchain_deployments` (deploy status) and reads of the moderation queue.                                                                                                        |
+| `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/courses-academy`. Powers the Publish screen's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
 
-Course content lives in Sanity CMS. On-chain course state lives in the Solana program. The admin panel bridges these two.
+`GITHUB_TOKEN` is read-only by design. **No admin route holds a GitHub write
+token** — nothing in the app can push a commit or open a PR on your behalf.
 
-A course must be in `onChainStatus.status == "synced"` before it appears to learners.
+---
 
-### Steps to deploy a new course
+## The four screens
 
-1. **Create the course in Sanity Studio** (`/studio`) with all modules, lessons, and metadata.
-2. **Open the admin panel** at `/en/admin`.
-3. **Select "Deploy Course"** and choose the course from the Sanity course list.
-4. The admin panel will:
-   - Call `create_course` on-chain (via `PROGRAM_AUTHORITY_SECRET`)
-   - Create a Metaplex Core collection for the course track (via `deployCourseTrackCollection`)
-   - Update `onChainStatus` in Sanity to `{ status: "synced", ... }` (via `SANITY_ADMIN_TOKEN`)
-5. The course is now visible in the learner-facing platform.
+| Screen         | Route               | What it does                                                                 |
+| -------------- | ------------------- | ---------------------------------------------------------------------------- |
+| **Publish**    | `/admin/publish`    | Shows the pinned content SHA vs `courses-academy` HEAD; links a prefilled PR |
+| **Deploy**     | `/admin/deploy`     | Per-course / per-achievement on-chain state + deploy, deactivate, reactivate |
+| **Moderation** | `/admin/moderation` | The pending community-flag queue (resolve / dismiss)                         |
+| **Status**     | `/admin/status`     | Program liveness, authority match, deploy counts, on-chain → Supabase resync |
 
-### Steps to deploy achievements
+The nav rail is persistent (left rail on desktop, tabs on mobile). The
+**Moderation** tab carries a badge with the pending-flag count.
 
-1. Open the admin panel at `/en/admin`.
-2. Select "Deploy Achievement".
-3. The admin panel calls `create_achievement_type` on-chain and creates the Metaplex Core collection.
+---
 
-### Course Deactivation / Reactivation
+## 1. Publish — pin the content bundle
 
-Courses can be toggled on/off without deleting the on-chain PDA:
+### How content actually ships
 
-- **Deactivate**: `POST /api/admin/courses/deactivate` — sets the on-chain Course PDA `is_active = false`
-- **Reactivate**: `POST /api/admin/courses/reactivate` — sets `is_active = true`
+```
+solanabr/courses-academy  (git = source of truth: course.yaml, lesson.yaml, achievements/, …)
+        │
+        │  pinned to ONE commit by apps/web/content.lock
+        ▼
+apps/web/scripts/compile-content.ts   (fetch tarball @ SHA → Zod-validate → project → emit)
+        │
+        ▼
+apps/web/src/content/generated/*.json   (COMMITTED bundle)
+apps/web/public/content-assets/*        (COMMITTED assets)
+        │
+        ▼
+the running app reads the bundle at build time — no runtime CMS fetch
+```
 
-Both routes require `ADMIN_SECRET` in the Authorization header.
+Publishing new content is therefore **a pull request against this repo**, not a
+button. The Publish screen exists to tell you _whether_ a bump is needed and to
+hand you the exact diff.
 
-### Platform Status Check
+### The "Content pin" card
 
-`GET /api/admin/status` returns:
+`GET /api/admin/publish/pin` returns the pinned SHA (read from the committed
+bundle's `meta.json`, which the compiler writes from `content.lock`), the
+`courses-academy` HEAD SHA, HEAD's combined CI state, and a drift verdict:
 
-- Whether the on-chain program is live (Config PDA exists)
-- Whether the local `PROGRAM_AUTHORITY_SECRET` matches the on-chain `Config.authority`
+| Verdict      | Meaning                                                                 |
+| ------------ | ----------------------------------------------------------------------- |
+| `up_to_date` | Pin == HEAD. Nothing to publish.                                        |
+| `behind`     | HEAD has moved. The card shows **N commits behind** and a compare link. |
+| `unknown`    | GitHub unreachable (503) — the card degrades to "drift unavailable".    |
 
-### Resync On-Chain State
+When drifted **and HEAD's CI is not green**, the card raises `warnRedHead` and
+discourages the bump. Bumping to a red HEAD is possible but is a bad idea: the
+`courses-academy` CI gate (the content linter + executor gate) is what certifies
+that a tree is publishable, and `compile-content` does **not** re-run the
+executor gate.
 
-`POST /api/admin/resync` re-reads on-chain state and backfills Supabase mirror tables. Use this to recover from Supabase write failures or sync drift.
+### Bumping the pin (the actual workflow)
 
-### Content Sync (repo → Sanity → devnet)
+1. Open `/admin/publish` and confirm the verdict is `behind` with a green HEAD.
+2. Create a branch (the card suggests `chore/content-pin-<short-sha>`).
+3. Edit `apps/web/content.lock` — set `"sha"` to the new HEAD.
+4. Regenerate the bundle:
+   ```bash
+   pnpm --filter web compile-content
+   ```
+5. Commit **both** `apps/web/content.lock` **and** the regenerated
+   `apps/web/src/content/generated/` (and `apps/web/public/content-assets/` if
+   assets changed).
+6. Push and open the PR — the card's button opens GitHub's PR form with the
+   title and body prefilled. **The button performs no write**; it just opens the
+   form.
+7. Merge. Vercel redeploys from `main` with the new bundle.
 
-The **Content Sync** panel ingests the `solanabr/courses-academy` repository into Sanity at a chosen commit and then commits the content hash on-chain. It is **always admin-triggered from the panel — never automatic.**
+### Why CI catches a bad bump
 
-**Content drift** (repo → Sanity), shown as a banner:
+`compile-content` output is a **pure function of the locked SHA** — sorted keys,
+no wall-clock timestamps, assets left as repo-relative paths. CI recompiles the
+bundle and fails if the result differs by a single byte from what is committed
+(the "Content bundle freshness" step in `.github/workflows/ci.yml`). That catches
+both a stale bundle after a lock bump _and_ a hand-edit of the generated files.
 
-- **up_to_date** — Sanity already matches GitHub HEAD; the Sync button is disabled.
-- **behind** — HEAD has new content; click **Sync content** to `POST /api/admin/content/sync { sha: HEAD }`.
-- **never_synced** — first-run banner; the sync writes the initial projection.
-- **blocked** — HEAD's CI is **red**; the commit is **un-syncable** and the button is disabled (the sync re-validates the whole tree with the CS-2 linter and refuses a failing tree, so a red HEAD is never projected).
+> Never hand-edit `apps/web/src/content/generated/*`. An ESLint rule also bans
+> importing it anywhere outside `src/lib/content/`.
 
-The sync is idempotent (re-running at the same SHA is a no-op), PRESERVE-safe (`onChainStatus` survives), and prune-guarded: it deletes only its own `sync.source`-marked docs that are absent from the new tree, and **aborts if the prune set exceeds 20%** of managed docs. A blast-radius abort returns 409 with an override hint — inspect the tree before overriding.
+---
 
-**Chain drift** (Sanity → devnet), shown per course:
+## 2. Deploy — put content on-chain
 
-- **content_current** — the on-chain `content_tx_id` equals the padded HEAD sha (§11.0).
-- **content_stale** — deployed, but `content_tx_id != HEAD`; commit the new hash.
-- **not_deployed** / **missing_fields** — no PDA yet / Sanity incomplete.
-- **awaiting_content_sync** — the **ordering interlock**: chain sync is disabled until content drift is `up_to_date`, because the mask/commitment cannot be computed from a Sanity that has not ingested the new lesson. The chain-sync action re-asserts the intended `active_lessons` mask against the committed `slots.lock.json` before signing (a mismatch is a 409).
+A course is **invisible to learners** until it is deployed. The visibility gate
+is a Supabase row, not a content field:
 
-### Troubleshooting
+```
+visible  ⇔  onchain_deployments.status == "synced"  AND  coalesce(is_active, true)
+```
 
-- **"Unauthorized"**: Check that `ADMIN_SECRET` is set and matches the value used at login.
-- **"Transaction failed"**: Verify `PROGRAM_AUTHORITY_SECRET` is the correct authority keypair and has SOL for fees.
-- **"Sanity update failed"**: Verify `SANITY_ADMIN_TOKEN` has write access to the dataset.
-- **Course not appearing to learners**: Check `onChainStatus.status` in Sanity Studio — it must be `"synced"`.
+That gate lives in exactly one function — `isSynced()` in
+`lib/content/deployments.ts` — and is applied to every public read. Content that
+has no deployment row is **hidden** (fail-closed).
 
-## Security Notes
+### Course table
 
-- `ADMIN_SECRET` should be at least 32 random characters. Never commit it to version control.
-- `PROGRAM_AUTHORITY_SECRET` and `BACKEND_SIGNER_SECRET` must never be exposed to the browser — all admin API routes use `import "server-only"`.
-- The admin panel is for internal use only. Do not expose it publicly without additional authentication.
+Each row joins the bundle's course doc to its `onchain_deployments` row and to
+live chain state, and shows one of:
+
+| State            | Meaning                                                          |
+| ---------------- | ---------------------------------------------------------------- |
+| `missing_fields` | The content doc lacks a field the on-chain `create_course` needs |
+| `not_deployed`   | No Course PDA on chain yet                                       |
+| `synced`         | PDA exists and matches the recorded `course_pda`                 |
+| `out_of_sync`    | A PDA exists but differs from the recorded one                   |
+
+Actions:
+
+- **Deploy** — `POST /api/admin/courses/sync`. Signs `create_course` with
+  `PROGRAM_AUTHORITY_SECRET`, creates the course's Metaplex Core track
+  collection, then upserts `onchain_deployments` (status `synced`, `course_pda`,
+  `tx_signature`, `track_collection_address`) and purges the `courses` cache tag
+  so the catalog picks the course up.
+- **Deactivate** — `POST /api/admin/courses/deactivate`. Sets the on-chain
+  Course `is_active = false` and mirrors it to `onchain_deployments.is_active`,
+  which hides the course from learners without deleting the PDA.
+- **Reactivate** — `POST /api/admin/courses/reactivate`. The inverse.
+
+The `is_active` column is deliberately **tri-state**: `NULL` means "no explicit
+flag" and the gate coalesces it to `true`. Deactivation is opt-in.
+
+The table shows the **authoritative on-chain `is_active`** (decoded from the
+account it already fetched), not the Supabase mirror — so a failed write-back
+still surfaces the real deactivated state and offers Reactivate.
+
+### Achievement table
+
+Same shape. **Deploy** (`POST /api/admin/achievements/sync`) signs
+`create_achievement_type` and creates the achievement's Metaplex Core collection,
+then records `achievement_pda` + `collection_address` in `onchain_deployments`.
+
+> **ID convention**: the content `_id` (`course-*`, `achievement-*`) is used
+> **verbatim** as the on-chain PDA seed. Never strip the prefix anywhere —
+> stripping it derives a different PDA and the award/deploy silently targets a
+> non-existent account.
+
+---
+
+## 3. Moderation — the flag queue
+
+`/admin/moderation` lists **pending** community flags (`GET /api/admin/flags`),
+each resolved to a preview of the flagged thread/answer and a link to it.
+
+`POST /api/admin/flags { flagId, action }` takes one of:
+
+- `resolve` — the flag was valid; the content is actioned.
+- `dismiss` — the flag was not valid.
+
+Both transition the flag out of `pending`, which drops it from the queue and
+decrements the nav badge.
+
+If `MODERATION_WEBHOOK_URL` is set, the **first** flag on a post pings that
+Slack/Discord-compatible webhook so admins know to check the queue. Unset → no
+notification; the queue still fills normally.
+
+---
+
+## 4. Status — platform health
+
+`GET /api/admin/status` drives this screen (and the Deploy screen — they share
+the `useAdminStatus` hook, so it is one fetch).
+
+**Program status bar**
+
+- Whether the on-chain program is live (the Config PDA resolves).
+- Whether the local `PROGRAM_AUTHORITY_SECRET` matches the on-chain
+  `Config.authority` (`verifyAuthorityMatchesConfig`). A mismatch here is why a
+  deploy will fail with a constraint error.
+- Whether the admin signer loaded at all (`isAdminSignerReady`).
+
+**Deploy counts** — how many courses/achievements are in each state.
+
+**Data resync** — `POST /api/admin/resync` re-reads on-chain state (enrollment
+bitmaps, Token-2022 XP balances, achievement receipts) and backfills the Supabase
+mirror tables. Use it after a Supabase mirror write failed behind a successful
+on-chain transaction. On-chain is the source of truth; the mirror is rebuildable.
+
+---
+
+## Troubleshooting
+
+| Symptom                                       | Check                                                                                                                                    |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **"Unauthorized" / 401 on every admin route** | `ADMIN_SECRET` unset, or the `admin_session` cookie expired — log in again. Cross-origin requests are rejected by design.                |
+| **Publish card says "drift unavailable"**     | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.             |
+| **Course not visible to learners**            | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/deploy`.                   |
+| **New lesson not showing up**                 | The bundle is pinned. Bump `content.lock` and recompile — merging content to `courses-academy` alone changes nothing in the app.         |
+| **"Transaction failed" on Deploy**            | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL. |
+| **CI fails with "Content bundle is stale"**   | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.  |
+
+---
+
+## Security notes
+
+- `ADMIN_SECRET` must be at least 32 random characters and is never committed. It
+  is the HMAC key for the session cookie — rotating it invalidates all sessions.
+- `PROGRAM_AUTHORITY_SECRET` and `BACKEND_SIGNER_SECRET` must never reach the
+  browser. Every admin route and signer module is `import "server-only"`.
+- The `onchain_deployments` base table has **RLS on with no policies** —
+  service_role only. Public reads go through the `public_onchain_deployments`
+  view, which exposes only `content_id, kind, status, is_active,
+achievement_pda`. Raw pubkeys, signatures, and `track_collection_address` are
+  never in the public surface.
+- The console is for internal use. Do not expose it publicly without additional
+  authentication in front of it.
