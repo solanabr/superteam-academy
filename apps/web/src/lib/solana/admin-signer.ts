@@ -128,6 +128,14 @@ export interface CreateCourseAdminParams {
    * or off-curve value throws; there is no platform-authority fallback.
    */
   creatorWallet?: string;
+  /**
+   * Escape hatch for the deliberate case where `creatorWallet` is a denylisted
+   * well-known address or equals the platform authority (see
+   * {@link assertCreatorAllowed}). Default false → those cases hard-throw. When
+   * true, the guard logs loudly and proceeds. No caller sets this today; it
+   * exists for a future admin-UI "I know what I'm doing" override.
+   */
+  allowUnusualCreator?: boolean;
 }
 
 export interface UpdateCourseAdminParams {
@@ -268,6 +276,113 @@ export function isAdminSignerReady(): boolean {
   return ready;
 }
 
+// ---------------------------------------------------------------------------
+// Creator-wallet guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Well-known program / sysvar addresses that are structurally valid Ed25519
+ * points (so they PASS the upstream `isOnCurve` check in `deployCoursePda`) yet
+ * are never a legitimate creator-reward recipient. Setting one of these as a
+ * course `creator` would mint the creator reward to an address no human
+ * controls — an irreversible mis-mint.
+ *
+ * Every entry here was verified ON-CURVE with `PublicKey.isOnCurve`. Off-curve
+ * well-knowns are deliberately EXCLUDED — the upstream off-curve check already
+ * rejects them, so listing them would be dead code. Confirmed off-curve and
+ * omitted for exactly that reason: Compute Budget, Vote, BPFLoaderUpgradeable,
+ * Ed25519 SigVerify, Secp256k1, and the Incinerator.
+ */
+export const CREATOR_DENYLIST: ReadonlyArray<{
+  address: string;
+  label: string;
+}> = [
+  // System program === the all-zero default Pubkey. The single most likely
+  // accidental value (an uninitialized / empty field decodes to this). On-curve.
+  { address: "11111111111111111111111111111111", label: "System program" },
+  // SPL Token program. On-curve.
+  {
+    address: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    label: "SPL Token program",
+  },
+  // SPL Token-2022 program. On-curve.
+  {
+    address: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    label: "SPL Token-2022 program",
+  },
+  // Associated Token Account program. On-curve.
+  {
+    address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+    label: "Associated Token Account program",
+  },
+  // SPL Memo program. On-curve.
+  {
+    address: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+    label: "SPL Memo program",
+  },
+  // Stake program. On-curve.
+  {
+    address: "Stake11111111111111111111111111111111111111",
+    label: "Stake program",
+  },
+  // Rent sysvar. On-curve.
+  {
+    address: "SysvarRent111111111111111111111111111111111",
+    label: "Rent sysvar",
+  },
+  // Clock sysvar. On-curve.
+  {
+    address: "SysvarC1ock11111111111111111111111111111111",
+    label: "Clock sysvar",
+  },
+];
+
+/**
+ * Defense-in-depth guard for the on-chain course `creator`, run AFTER the
+ * caller has parsed `creatorWallet` and confirmed it is on-curve. Refuses two
+ * on-curve-but-wrong cases that the off-curve check cannot catch:
+ *
+ *  1. `creator` is a {@link CREATOR_DENYLIST} well-known (a program/sysvar).
+ *  2. `creator` equals the platform authority — the authority signs and pays
+ *     for the deploy; it must not also be the creator-reward recipient.
+ *
+ * Throws a clear, pubkey-naming error (surfaced in the admin deploy UI) unless
+ * `allowUnusualCreator` is set, in which case it logs loudly and returns.
+ */
+export function assertCreatorAllowed(
+  creator: PublicKey,
+  authority: PublicKey,
+  courseId: string,
+  allowUnusualCreator: boolean
+): void {
+  const creator58 = creator.toBase58();
+
+  const denied = CREATOR_DENYLIST.find((e) => e.address === creator58);
+  if (denied) {
+    if (allowUnusualCreator) {
+      console.warn(
+        `[admin-signer] deployCoursePda(${courseId}): OVERRIDE — creatorWallet ${creator58} is a denylisted well-known (${denied.label}); proceeding because allowUnusualCreator=true`
+      );
+    } else {
+      throw new Error(
+        `deployCoursePda(${courseId}): creatorWallet ${creator58} is a denylisted well-known address (${denied.label}) and cannot receive creator rewards. Pass allowUnusualCreator to override.`
+      );
+    }
+  }
+
+  if (creator.equals(authority)) {
+    if (allowUnusualCreator) {
+      console.warn(
+        `[admin-signer] deployCoursePda(${courseId}): OVERRIDE — creatorWallet ${creator58} equals the platform authority; proceeding because allowUnusualCreator=true`
+      );
+    } else {
+      throw new Error(
+        `deployCoursePda(${courseId}): creatorWallet ${creator58} equals the platform authority, which must not be the creator-reward recipient. Pass allowUnusualCreator to override.`
+      );
+    }
+  }
+}
+
 /**
  * Deploy a new Course PDA on-chain.
  *
@@ -320,6 +435,15 @@ export async function deployCoursePda(
         `deployCoursePda(${params.courseId}): creatorWallet "${params.creatorWallet}" is off-curve`
       );
     }
+    // On-curve but still wrong: reject denylisted well-knowns and the platform
+    // authority itself (both would mis-mint the creator reward). Opt-out via
+    // params.allowUnusualCreator for the deliberate case.
+    assertCreatorAllowed(
+      creator,
+      _authority.publicKey,
+      params.courseId,
+      params.allowUnusualCreator ?? false
+    );
 
     const onChainParams: CreateCourseOnChainParams = {
       courseId: params.courseId,
