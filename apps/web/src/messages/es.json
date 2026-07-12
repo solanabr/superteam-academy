@@ -832,12 +832,11 @@
   "admin": {
     "console": {
       "title": "Consola de administración",
-      "subtitle": "Superteam Academy — Sincronización de Sanity con la cadena",
+      "subtitle": "Publica el contenido de los cursos, despliega los cursos on-chain, modera la comunidad.",
       "navLabel": "Secciones de administración"
     },
     "nav": {
-      "publish": "Publicar",
-      "deploy": "Desplegar",
+      "courses": "Cursos",
       "moderation": "Moderación",
       "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
       "status": "Estado"
@@ -847,10 +846,37 @@
       "achievements": "Logros"
     },
     "screens": {
-      "publish": "Publicación de contenido",
-      "deploy": "Despliegue on-chain",
+      "courses": "Cursos",
       "moderation": "Moderación de la comunidad",
       "status": "Estado del programa"
+    },
+    "coursesScreen": {
+      "intro": {
+        "lede": "Llevar un curso hasta los estudiantes requiere dos pasos separados, en este orden. Esta pantalla reúne los dos: publicación arriba, despliegue abajo.",
+        "step1Title": "1. Publicar — ¿la app ya tiene este curso?",
+        "step1Body": "El contenido de los cursos vive en el repositorio courses-academy. La app distribuye una copia compilada de él, fijada a un único commit en content.lock. Publicar es un pull request humano que actualiza esa fijación y reconstruye el paquete; en cuanto se fusiona, Vercel vuelve a desplegar y el contenido queda en la app. Esta pantalla no escribe nada: muestra la divergencia y te entrega un PR ya rellenado.",
+        "step2Title": "2. Desplegar — ¿el curso está on-chain y pueden verlo los estudiantes?",
+        "step2Body": "El contenido que está en el paquete permanece invisible hasta que el curso tenga una cuenta on-chain y esté activo. Desplegar crea o actualiza esa cuenta. Aquí solo importan los campos on-chain: XP por lección, recompensa del creador, mínimo de finalizaciones, número de lecciones y el conjunto inmutable (creador, dificultad, ruta, nivel de la ruta, prerrequisito).",
+        "contentOnlyNote": "Editar el contenido de una lección —texto, código, cuestionarios, el título, las etiquetas— no es on-chain. Esas ediciones se publican solo con el PR de publicación y, correctamente, no aparecen como nada que desplegar abajo. Que un curso siga marcado como «Sincronizado» después de reescribir una lección no es un error."
+      },
+      "step1Eyebrow": "Paso 1 — Publicar: llevar el contenido a la app",
+      "step2Eyebrow": "Paso 2 — Desplegar: poner el curso on-chain",
+      "legend": {
+        "title": "Qué significa cada estado",
+        "description": "Cada fila de curso lleva un estado on-chain y —una vez desplegado— un estado de divergencia de contenido. Son independientes.",
+        "onChainHeading": "Estado on-chain",
+        "driftHeading": "Divergencia de contenido — repositorio vs fijación",
+        "not_deployed": "Nunca desplegado. El curso está en el paquete pero no tiene cuenta on-chain, así que los estudiantes no lo ven. Desplegar la crea.",
+        "synced": "Está on-chain y sus campos on-chain coinciden con el paquete. No hay nada que hacer.",
+        "out_of_sync": "Está on-chain, pero algún campo on-chain (XP por lección, recompensa del creador, mínimo de finalizaciones, número de lecciones) difiere del paquete. Vuelve a desplegar para actualizarlo.",
+        "draft": "Marcado como borrador en el repositorio de contenido. No se puede desplegar mientras siga siendo borrador.",
+        "missing_fields": "Al paquete le faltan campos on-chain que este curso necesita antes de poder desplegarse. La fila indica cuáles.",
+        "drifted": "El repositorio de contenido avanzó más allá del commit fijado. La solución es un PR de publicación (paso 1), no un despliegue.",
+        "blocked": "Hay contenido más nuevo arriba, pero su CI está en rojo. No lo publiques hasta que el CI esté en verde.",
+        "unknown": "No se pudo contactar con GitHub, así que no se pudo comprobar la divergencia. El estado on-chain sigue siendo correcto.",
+        "immutableTitle": "Discrepancia inmutable (sin distintivo: la fila muestra una advertencia)",
+        "immutableBody": "Creador, dificultad, ruta, nivel de la ruta y prerrequisito se escriben una sola vez, en el primer despliegue, y nunca pueden cambiarse. Si uno de ellos difiere del paquete, el botón Deploy desaparece: una actualización no puede arreglarlo. Las únicas salidas son restaurar el valor en el repositorio de contenido, o desactivar este curso y desplegar uno nuevo."
+      }
     },
     "publishPin": {
       "title": "Fijación de contenido",
