@@ -49,6 +49,7 @@ interface MethodBuilder {
 interface AdminMethods {
   createCourse(params: CreateCourseOnChainParams): MethodBuilder;
   updateCourse(params: UpdateCourseOnChainParams): MethodBuilder;
+  closeCourse(courseId: string): MethodBuilder;
   createAchievementType(
     params: CreateAchievementTypeOnChainParams
   ): MethodBuilder;
@@ -274,6 +275,21 @@ function initialize(): { ready: boolean } {
 export function isAdminSignerReady(): boolean {
   const { ready } = initialize();
   return ready;
+}
+
+/**
+ * The loaded platform-authority pubkey, or `null` when the signer is not
+ * configured.
+ *
+ * Exposed so a caller can run {@link assertCreatorAllowed} — which needs the
+ * authority to reject `creator == authority` — during a PRE-FLIGHT phase,
+ * BEFORE it takes any destructive on-chain action. `deployCoursePda` runs the
+ * same guard internally as a backstop, but that is far too late for the
+ * recreate flow: by then the old Course PDA is already closed.
+ */
+export function getAuthorityPublicKey(): PublicKey | null {
+  const { ready } = initialize();
+  return ready && _authority ? _authority.publicKey : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -534,6 +550,70 @@ export async function updateCoursePda(
     console.error(
       `[admin-signer] updateCoursePda(${params.courseId}): ${message}`
     );
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * DESTRUCTIVE. Close a Course PDA: drains its lamports to the authority, zeroes
+ * its data and hands the address back to the System Program.
+ *
+ * The ONLY caller is the recreate orchestrator (`lib/admin/recreate-course.ts`),
+ * which exists to rewrite the create-only fields (`creator`, `difficulty`,
+ * `trackId`, `trackLevel`, `prerequisite`) that `update_course` cannot touch.
+ * Do not call this on its own: `create_course` CANNOT run in the same
+ * transaction (a 0-lamport account is not garbage-collected until the tx ends,
+ * so the `init` fails), so between this call and a successful `deployCoursePda`
+ * the Course PDA DOES NOT EXIST and `enroll` / `complete_lesson` have no account
+ * to read. See the orchestrator for the pre-flight + retry that bound that window.
+ *
+ * What survives (verified against the program, not just its doc comment):
+ *   - Enrollment PDAs are seeded `["enrollment", course_id, learner]` and are
+ *     never passed to `close_course` — they are physically untouched. Their
+ *     stored `enrollment.course` is the Course PDA, which is derived from
+ *     `course_id` alone, so recreating under the SAME course_id reproduces the
+ *     IDENTICAL address and the `enrollment.course == course.key()` constraint
+ *     in `complete_lesson` / `finalize_course` still holds. Learner lesson_flags,
+ *     completed_at and already-minted XP all survive.
+ *
+ * What does NOT survive (`create_course` hard-resets these — no instruction can
+ * restore them):
+ *   - `total_completions` / `total_enrollments` → 0. This RE-OPENS the bounded
+ *     creator-reward window in `finalize_course`, which is the only anti-Sybil
+ *     cap on creator XP. The orchestrator reads and reports both counters.
+ *   - `is_active` → true, `collection` → default, `content_tx_id` → zeroes.
+ *     The orchestrator restores the first two; a re-sync restores the third.
+ */
+export async function closeCoursePda(
+  courseId: string
+): Promise<AdminSignerResult> {
+  const { ready } = initialize();
+  if (!ready || !_program || !_authority) {
+    return {
+      success: false,
+      error: "Admin signer not configured (PROGRAM_AUTHORITY_SECRET missing)",
+    };
+  }
+
+  try {
+    const [configPDA] = findConfigPDA(getProgramId());
+    const [coursePDA] = findCoursePDA(courseId, getProgramId());
+
+    const methods = _program.methods as unknown as AdminMethods;
+
+    const signature = await methods
+      .closeCourse(courseId)
+      .accountsPartial({
+        config: configPDA,
+        course: coursePDA,
+        authority: _authority.publicKey,
+      })
+      .rpc();
+
+    return { success: true, signature };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[admin-signer] closeCoursePda(${courseId}): ${message}`);
     return { success: false, error: message };
   }
 }
