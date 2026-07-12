@@ -482,7 +482,7 @@ bundle (see [ADMIN.md](./ADMIN.md)). The achievement now exists in the app.
 
 #### 3. Deploy on-chain
 
-From `/admin/deploy`, deploy the achievement. This creates the AchievementType PDA
+From `/admin/courses`, deploy the achievement. This creates the AchievementType PDA
 and its Metaplex Core collection, and records `achievement_pda` +
 `collection_address` in the Supabase `onchain_deployments` table.
 

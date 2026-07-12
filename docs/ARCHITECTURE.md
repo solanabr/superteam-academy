@@ -110,15 +110,18 @@ RootLayout (app/layout.tsx)
        │    └── settings/         ← Auth-gated: account settings
        │
        └── admin/                 ← Admin console (signed admin_session cookie required)
-            ├── publish/          ← Content pin: bundle SHA vs courses-academy HEAD
-            ├── deploy/           ← Course + achievement on-chain deploy tables
+            ├── courses/          ← Default screen. Step 1 publish (content pin: bundle
+            │                       SHA vs courses-academy HEAD) + step 2 deploy (course
+            │                       & achievement on-chain tables), with a state legend
+            ├── publish/          ← Redirect → courses/ (retired screen, kept for bookmarks)
+            ├── deploy/           ← Redirect → courses/ (retired screen, kept for bookmarks)
             ├── moderation/       ← Pending community-flag queue
-            └── status/           ← Default screen: program health + data resync
+            └── status/           ← Program health + data resync
 ```
 
 `/admin` itself renders the login form when unauthenticated and redirects to
-`/admin/status` when authenticated. A persistent nav rail (rendered by the admin
-`layout.tsx`) links the four screens.
+`/admin/courses` when authenticated. A persistent nav rail (rendered by the
+admin `layout.tsx`) links the three screens.
 
 ### Component Groups
 
@@ -347,7 +350,7 @@ Client: POST /api/lessons/complete { lessonId, courseId }
 ### Admin Deployment Flow
 
 ```
-/admin/deploy → POST /api/admin/courses/sync
+/admin/courses → POST /api/admin/courses/sync
   │
   ├── requireAdminAuth() — same-origin check + HMAC-signed `admin_session` cookie
   ├── deployCoursePda() via admin-signer.ts → createCourse instruction
@@ -394,7 +397,7 @@ All server-only. Composes three seams: the committed bundle (content), Supabase
 | Module              | Purpose                                                                                                                                           |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github.ts`         | The GitHub client: `fetchHeadSha`, `fetchChecksState`, `fetchAheadBy`. **Read scope only.**                                                       |
-| `publish-pin.ts`    | Pure drift/verdict + PR-link helpers for `/admin/publish`. Builds the one-line `content.lock` diff and a prefilled PR URL. **Performs no write.** |
+| `publish-pin.ts`    | Pure drift/verdict + PR-link helpers for `/admin/courses`. Builds the one-line `content.lock` diff and a prefilled PR URL. **Performs no write.** |
 | `drift.ts`          | `computeContentDrift` / `computeChainDrift`.                                                                                                      |
 | `content-commit.ts` | `deriveActiveMask` — the `active_lessons` bitmask derived from a course's `slots.lock.json`.                                                      |
 

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { AdminStatus } from "../admin-status-types";
-import { DeployClient } from "../deploy/deploy-client";
+import { DeployClient } from "../courses/deploy-client";
 import messages from "@/messages/en.json";
 
 function renderWithIntl(ui: ReactElement) {

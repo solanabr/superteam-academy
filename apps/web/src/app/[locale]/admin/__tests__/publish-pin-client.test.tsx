@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { PublishPinClient } from "../publish/publish-pin-client";
+import { PublishPinClient } from "../courses/publish-pin-client";
 import messages from "@/messages/en.json";
 
 interface PinResponse {

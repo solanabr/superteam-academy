@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 
-const SECTIONS = ["publish", "deploy", "moderation", "status"] as const;
+// "Courses" is the merged Publish + Deploy screen (the two used to be separate
+// entries, which hid the fact that they are two steps of one flow).
+const SECTIONS = ["courses", "moderation", "status"] as const;
 
 /**
  * Best-effort pending-flags count for the "Moderation" nav badge. Reuses the
