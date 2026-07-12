@@ -26,8 +26,6 @@ env:
   NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
   SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key"
-  NEXT_PUBLIC_SANITY_PROJECT_ID: "placeholder"
-  NEXT_PUBLIC_SANITY_DATASET: "production"
   NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com"
   NEXT_PUBLIC_SOLANA_NETWORK: "devnet"
   NEXT_PUBLIC_PROGRAM_ID: "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V"
