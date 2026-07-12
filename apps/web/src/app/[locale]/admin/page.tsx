@@ -6,10 +6,11 @@ import { isValidAdminSession } from "@/lib/admin/auth";
 /**
  * `/admin` root. Unauthenticated → render `<AdminLoginForm/>` (the layout
  * leaves it unwrapped). Authenticated → redirect to the default console
- * screen. The session is checked here rather than redirecting
- * unconditionally: the middleware bounces unauthenticated `/admin/*`
- * sub-routes back to `/admin`, so an unconditional redirect would loop
- * (`/admin` → `/admin/status` → middleware → `/admin` → …).
+ * screen, which is Courses: the console exists to get courses published and
+ * deployed, so that is what it opens on. The session is checked here rather
+ * than redirecting unconditionally: the middleware bounces unauthenticated
+ * `/admin/*` sub-routes back to `/admin`, so an unconditional redirect would
+ * loop (`/admin` → `/admin/courses` → middleware → `/admin` → …).
  */
 export default async function AdminPage({
   params: { locale },
@@ -26,5 +27,5 @@ export default async function AdminPage({
     return <AdminLoginForm />;
   }
 
-  redirect(`/${locale}/admin/status`);
+  redirect(`/${locale}/admin/courses`);
 }

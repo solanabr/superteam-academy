@@ -832,12 +832,11 @@
   "admin": {
     "console": {
       "title": "Admin Console",
-      "subtitle": "Superteam Academy — Sanity to On-Chain Sync",
+      "subtitle": "Publish course content, deploy courses on chain, moderate the community.",
       "navLabel": "Admin sections"
     },
     "nav": {
-      "publish": "Publish",
-      "deploy": "Deploy",
+      "courses": "Courses",
       "moderation": "Moderation",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
       "status": "Status"
@@ -847,10 +846,37 @@
       "achievements": "Achievements"
     },
     "screens": {
-      "publish": "Content Publishing",
-      "deploy": "On-Chain Deploy",
+      "courses": "Courses",
       "moderation": "Community Moderation",
       "status": "Program Status"
+    },
+    "coursesScreen": {
+      "intro": {
+        "lede": "Getting a course to learners takes two separate steps, in order. This screen holds both: publish on top, deploy below.",
+        "step1Title": "1. Publish — does the app have this course?",
+        "step1Body": "Course content lives in the courses-academy repo. The app ships a compiled copy of it, pinned to one commit in content.lock. Publishing is a human pull request that bumps that pin and rebuilds the bundle; once it merges, Vercel redeploys and the content is in the app. This screen writes nothing — it shows the drift and hands you a prefilled PR.",
+        "step2Title": "2. Deploy — is the course on chain, and can learners see it?",
+        "step2Body": "Content sitting in the bundle stays invisible until the course has an on-chain account and is active. Deploying creates or updates that account. Only on-chain fields matter here: XP per lesson, creator reward, minimum completions, lesson count, and the immutable set (creator, difficulty, track, track level, prerequisite).",
+        "contentOnlyNote": "Editing lesson content — prose, code, quizzes, the title, tags — is not on chain. Those edits go live on publish alone, and correctly show nothing to deploy below. A course still reading \"Synced\" after you rewrote a lesson is not a bug."
+      },
+      "step1Eyebrow": "Step 1 — Publish: get the content into the app",
+      "step2Eyebrow": "Step 2 — Deploy: put the course on chain",
+      "legend": {
+        "title": "What the states mean",
+        "description": "Every course row carries an on-chain state, and — once deployed — a content-drift state. They are independent.",
+        "onChainHeading": "On-chain state",
+        "driftHeading": "Content drift — repo vs pin",
+        "not_deployed": "Never deployed. The course is in the bundle but has no on-chain account, so learners cannot see it. Deploy creates it.",
+        "synced": "On chain, and its on-chain fields match the bundle. Nothing to do.",
+        "out_of_sync": "On chain, but an on-chain field (XP per lesson, creator reward, minimum completions, lesson count) differs from the bundle. Deploy again to update it.",
+        "draft": "Marked as a draft in the content repo. Not deployable until it is no longer a draft.",
+        "missing_fields": "The bundle is missing on-chain fields this course needs before it can be deployed. The row lists which ones.",
+        "drifted": "The content repo has moved ahead of the pinned commit. The fix is a publish PR (step 1), not a deploy.",
+        "blocked": "Newer content exists upstream, but its CI is red. Do not publish it until CI is green.",
+        "unknown": "GitHub could not be reached, so drift could not be checked. The on-chain state is still accurate.",
+        "immutableTitle": "Immutable mismatch (no badge — the row shows a warning instead)",
+        "immutableBody": "Creator, difficulty, track, track level and prerequisite are written once, at first deploy, and can never be changed. If one of them differs from the bundle, the Deploy button disappears — an update cannot fix it. The only remedies are to restore the value in the content repo, or deactivate this course and deploy a new one."
+      }
     },
     "publishPin": {
       "title": "Content pin",

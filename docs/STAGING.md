@@ -67,7 +67,7 @@ Then, exactly as in [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md) §Supabase Setup:
 
 > **Content visibility on a fresh staging DB**: `onchain_deployments` starts empty,
 > and that table **is** the learner-visibility gate. No courses will be visible
-> until you deploy them from `/admin/deploy` against the staging DB + devnet
+> until you deploy them from `/admin/courses` against the staging DB + devnet
 > program. This is expected, not a bug.
 
 ---

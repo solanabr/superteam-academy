@@ -6,10 +6,10 @@ import { CourseSyncTable } from "@/components/admin/course-sync-table";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 
 /**
- * `/admin/deploy` client: the Courses + Achievements sync tables relocated
- * from the deleted stacked `admin-client.tsx` (SP3-A Task 3). The
- * `/api/admin/status` fetch + loading/error/refetch now live in the shared
- * `useAdminStatus` hook (SP3-D), which the status screen consumes too.
+ * The deploy half of `/admin/courses` (step 2): the Courses + Achievements
+ * sync tables. Unchanged from the retired `/admin/deploy` screen apart from
+ * this move — the `/api/admin/status` fetch + loading/error/refetch live in
+ * the shared `useAdminStatus` hook (SP3-D), which the status screen uses too.
  */
 export function DeployClient() {
   const t = useTranslations("admin");

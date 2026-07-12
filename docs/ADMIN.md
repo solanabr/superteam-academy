@@ -2,9 +2,9 @@
 
 # Admin Console Guide
 
-The admin console is a four-screen panel for operating the platform: publishing
-content, deploying it on-chain, moderating the community forum, and checking
-platform status.
+The admin console is a three-screen panel for operating the platform: the
+**Courses** screen (publish content, then deploy it on-chain — two steps, one
+screen), **Moderation** of the community forum, and platform **Status**.
 
 It is **not** a CMS. Course content is authored in the
 [`solanabr/courses-academy`](https://github.com/solanabr/courses-academy) git
@@ -18,7 +18,7 @@ The console lives at `/{locale}/admin` (e.g. `/en/admin`).
 
 **Authentication**: `/admin` renders a login form. Enter the value of
 `ADMIN_SECRET`. On success the server sets an **HMAC-signed `admin_session`
-cookie**, and `/admin` redirects to `/admin/status` (the default screen).
+cookie**, and `/admin` redirects to `/admin/courses` (the default screen).
 
 - The middleware bounces unauthenticated `/admin/*` sub-routes back to `/admin`.
 - Every `/api/admin/*` route authorizes on that **signed cookie plus a
@@ -29,31 +29,55 @@ cookie**, and `/admin` redirects to `/admin/status` (the default screen).
 
 ## Required environment variables
 
-| Variable                    | Required for                                                                                                                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ADMIN_SECRET`              | Console login + the HMAC key that signs `admin_session`. Min 32 random chars. Unset → the console cannot be logged into and admin routes 401.                                                          |
-| `PROGRAM_AUTHORITY_SECRET`  | The `Config.authority` keypair. Signs `create_course`, `update_course`, `create_achievement_type` from the **Deploy** screen.                                                                          |
-| `BACKEND_SIGNER_SECRET`     | The keypair registered in `Config.backend_signer`. Signs lesson/credential instructions from the learner-facing API routes.                                                                            |
-| `SOLANA_RPC_URL`            | Server-only RPC (may carry the Helius key). Required at boot — every admin screen reads chain state through it.                                                                                        |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service-role writes to `onchain_deployments` (deploy status) and reads of the moderation queue.                                                                                                        |
-| `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/courses-academy`. Powers the Publish screen's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
+| Variable                    | Required for                                                                                                                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_SECRET`              | Console login + the HMAC key that signs `admin_session`. Min 32 random chars. Unset → the console cannot be logged into and admin routes 401.                                                        |
+| `PROGRAM_AUTHORITY_SECRET`  | The `Config.authority` keypair. Signs `create_course`, `update_course`, `create_achievement_type` from the **Courses** screen.                                                                       |
+| `BACKEND_SIGNER_SECRET`     | The keypair registered in `Config.backend_signer`. Signs lesson/credential instructions from the learner-facing API routes.                                                                          |
+| `SOLANA_RPC_URL`            | Server-only RPC (may carry the Helius key). Required at boot — every admin screen reads chain state through it.                                                                                      |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role writes to `onchain_deployments` (deploy status) and reads of the moderation queue.                                                                                                      |
+| `GITHUB_TOKEN`              | Fine-grained **read** token for `solanabr/courses-academy`. Powers the publish card's HEAD polling + CI-checks lookup. Unset → Publish shows "drift unavailable" (503); everything else still works. |
 
 `GITHUB_TOKEN` is read-only by design. **No admin route holds a GitHub write
 token** — nothing in the app can push a commit or open a PR on your behalf.
 
 ---
 
-## The four screens
+## The three screens
 
 | Screen         | Route               | What it does                                                                 |
 | -------------- | ------------------- | ---------------------------------------------------------------------------- |
-| **Publish**    | `/admin/publish`    | Shows the pinned content SHA vs `courses-academy` HEAD; links a prefilled PR |
-| **Deploy**     | `/admin/deploy`     | Per-course / per-achievement on-chain state + deploy, deactivate, reactivate |
+| **Courses**    | `/admin/courses`    | Publish (step 1) **and** deploy (step 2) in one screen — see below           |
 | **Moderation** | `/admin/moderation` | The pending community-flag queue (resolve / dismiss)                         |
 | **Status**     | `/admin/status`     | Program liveness, authority match, deploy counts, on-chain → Supabase resync |
 
 The nav rail is persistent (left rail on desktop, tabs on mobile). The
 **Moderation** tab carries a badge with the pending-flag count.
+
+`/admin/publish` and `/admin/deploy` were the first two screens; they are now
+one screen and both old routes redirect to `/admin/courses`.
+
+### Publish vs deploy — they are not the same step
+
+Getting a course to learners takes **two** steps, in order:
+
+1. **Publish — does the app _have_ this course?** Content lives in
+   `solanabr/courses-academy`; the app ships a compiled bundle pinned to one
+   commit in `apps/web/content.lock`. Publishing is a **human PR** that bumps
+   the pin and commits the rebuilt bundle. The screen writes nothing — it shows
+   pin-vs-HEAD drift and hands you a prefilled PR link (no GitHub write token,
+   deliberately).
+2. **Deploy — is the course _on chain_, and can learners see it?** Bundled
+   content stays invisible until the course has a Course PDA and its
+   `onchain_deployments` row is `synced` + `is_active`. Deploy creates/updates
+   that.
+
+**Editing lesson content does not require a deploy.** Lesson prose, code,
+quizzes, the title and tags are not on-chain fields: they ship with the publish
+PR alone and correctly show nothing to deploy. Only `xpPerLesson`,
+`creatorRewardXp`, `minCompletionsForReward`, `lessonCount` and the immutable
+set (creator, difficulty, track, track level, prerequisite) move the deploy
+side. The screen carries a legend for every badge state.
 
 ---
 
@@ -77,7 +101,7 @@ the running app reads the bundle at build time — no runtime CMS fetch
 ```
 
 Publishing new content is therefore **a pull request against this repo**, not a
-button. The Publish screen exists to tell you _whether_ a bump is needed and to
+button. The publish card exists to tell you _whether_ a bump is needed and to
 hand you the exact diff.
 
 ### The "Content pin" card
@@ -100,7 +124,7 @@ executor gate.
 
 ### Bumping the pin (the actual workflow)
 
-1. Open `/admin/publish` and confirm the verdict is `behind` with a green HEAD.
+1. Open `/admin/courses` and confirm the publish verdict is `behind` with a green HEAD.
 2. Create a branch (the card suggests `chore/content-pin-<short-sha>`).
 3. Edit `apps/web/content.lock` — set `"sha"` to the new HEAD.
 4. Regenerate the bundle:
@@ -206,7 +230,7 @@ notification; the queue still fills normally.
 
 ## 4. Status — platform health
 
-`GET /api/admin/status` drives this screen (and the Deploy screen — they share
+`GET /api/admin/status` drives this screen (and the Courses screen — they share
 the `useAdminStatus` hook, so it is one fetch).
 
 **Program status bar**
@@ -232,7 +256,7 @@ on-chain transaction. On-chain is the source of truth; the mirror is rebuildable
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **"Unauthorized" / 401 on every admin route** | `ADMIN_SECRET` unset, or the `admin_session` cookie expired — log in again. Cross-origin requests are rejected by design.                |
 | **Publish card says "drift unavailable"**     | `GITHUB_TOKEN` unset or GitHub unreachable. The route 503s rather than crashing. Unauthenticated GitHub is 60 req/hr per IP.             |
-| **Course not visible to learners**            | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/deploy`.                   |
+| **Course not visible to learners**            | Its `onchain_deployments` row must be `status = "synced"` and `is_active` not `false`. Deploy it from `/admin/courses`.                  |
 | **New lesson not showing up**                 | The bundle is pinned. Bump `content.lock` and recompile — merging content to `courses-academy` alone changes nothing in the app.         |
 | **"Transaction failed" on Deploy**            | Verify `PROGRAM_AUTHORITY_SECRET` is the real `Config.authority` (the Status screen's authority match tells you) and is funded with SOL. |
 | **CI fails with "Content bundle is stale"**   | You bumped `content.lock` without recompiling, or hand-edited the generated bundle. Run `pnpm --filter web compile-content` and commit.  |
