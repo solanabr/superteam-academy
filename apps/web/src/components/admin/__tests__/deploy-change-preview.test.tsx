@@ -164,4 +164,30 @@ describe("DeployChangePreview", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it("#400: a creator mismatch renders the loud dedicated emphasis and blocks confirm", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "creator",
+          contentValue: "CreatorWa11et" + "1".repeat(31),
+          onChainValue: "WrongWa11et" + "1".repeat(33),
+          updateable: false,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    // The creator-specific emphasized copy, beyond the generic immutable warning.
+    expect(
+      screen.getByText(/every future creator reward would pay the wrong wallet/)
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/Recreating the course is the only fix/)
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Confirm sync" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Deploy" })).toBeNull();
+  });
 });

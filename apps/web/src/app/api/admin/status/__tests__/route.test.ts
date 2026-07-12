@@ -14,8 +14,12 @@ vi.mock("@/lib/admin/auth", () => ({
 // course-a: deployed, matches its on-chain account. course-b: never deployed.
 // course-c: deployed, on-chain xpPerLesson differs (updateable) and its
 // content_tx_id is zeroed (content commitment behind the bundle).
+// course-d: deployed, on-chain creator ≠ instructor wallet (#400, immutable).
+const INSTRUCTOR_WALLET = "CreatorWa11et" + "1".repeat(31);
+const WRONG_CREATOR = "WrongWa11et" + "1".repeat(33);
 const baseCourse = {
   difficulty: "beginner",
+  creatorWallet: INSTRUCTOR_WALLET,
   xpPerLesson: 50,
   trackId: 0,
   trackLevel: 0,
@@ -47,6 +51,13 @@ vi.mock("@/lib/content/queries", () => ({
       ...baseCourse,
       onChainStatus: { status: "synced", coursePda: "PDA_C" },
     },
+    {
+      _id: "course-d",
+      slug: "d",
+      title: "Course D",
+      ...baseCourse,
+      onChainStatus: { status: "synced", coursePda: "PDA_D" },
+    },
   ],
   getAllAchievementsAdmin: async () => [],
 }));
@@ -70,32 +81,29 @@ const MATCHING_TX_ID = [
 vi.mock("@/lib/content/meta", () => ({ SYNCED_SHA: "a".repeat(40) }));
 
 // Raw snake_case decodes keyed by which account was fetched.
+const matchingRaw = {
+  creator: { toBase58: () => INSTRUCTOR_WALLET },
+  content_tx_id: MATCHING_TX_ID,
+  lesson_count: 3,
+  difficulty: 1,
+  xp_per_lesson: 50,
+  track_id: 0,
+  track_level: 0,
+  prerequisite: null,
+  creator_reward_xp: 0,
+  min_completions_for_reward: 0,
+  is_active: true,
+};
 const rawByMarker: Record<string, unknown> = {
-  A: {
-    creator: { toBase58: () => "Creator111" },
-    content_tx_id: MATCHING_TX_ID,
-    lesson_count: 3,
-    difficulty: 1,
-    xp_per_lesson: 50,
-    track_id: 0,
-    track_level: 0,
-    prerequisite: null,
-    creator_reward_xp: 0,
-    min_completions_for_reward: 0,
-    is_active: true,
-  },
+  A: matchingRaw,
   C: {
-    creator: { toBase58: () => "Creator111" },
+    ...matchingRaw,
     content_tx_id: Array<number>(32).fill(0),
-    lesson_count: 3,
-    difficulty: 1,
     xp_per_lesson: 25, // differs from the bundle's 50 — updateable diff
-    track_id: 0,
-    track_level: 0,
-    prerequisite: null,
-    creator_reward_xp: 0,
-    min_completions_for_reward: 0,
-    is_active: true,
+  },
+  D: {
+    ...matchingRaw,
+    creator: { toBase58: () => WRONG_CREATOR }, // #400
   },
 };
 vi.mock("@/lib/solana/academy-reads", () => ({
@@ -119,6 +127,7 @@ vi.mock("@solana/web3.js", () => ({
       const addr = pda.toBase58();
       if (addr === "PDA_A") return { data: Buffer.from("A") };
       if (addr === "PDA_C") return { data: Buffer.from("C") };
+      if (addr === "PDA_D") return { data: Buffer.from("D") };
       return null;
     }
   },
@@ -166,7 +175,7 @@ describe("GET /api/admin/status — content drift", () => {
   it("folds repo-wide content drift into every course record", async () => {
     const courses = await getCourses();
     // bundle sha a…, HEAD b…, CI green → behind, on every row
-    expect(courses).toHaveLength(3);
+    expect(courses).toHaveLength(4);
     for (const c of courses) expect(c.contentDrift).toBe("behind");
   });
 
@@ -207,5 +216,18 @@ describe("GET /api/admin/status — per-course diff + chain drift (SP3-C Task 2)
       },
     ]);
     expect(c?.chainDrift).toBe("content_stale");
+  });
+
+  it("#400: on-chain creator ≠ instructor wallet → immutable creator diff", async () => {
+    const d = (await getCourses()).find((r) => r.contentId === "course-d");
+    expect(d?.onChainStatus).toBe("out_of_sync");
+    expect(d?.differences).toEqual([
+      {
+        field: "creator",
+        contentValue: INSTRUCTOR_WALLET,
+        onChainValue: WRONG_CREATOR,
+        updateable: false,
+      },
+    ]);
   });
 });

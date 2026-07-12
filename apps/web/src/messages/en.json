@@ -930,6 +930,7 @@
       },
       "immutableWarning": {
         "heading": "Immutable field mismatch — cannot auto-fix",
+        "creatorEmphasis": "Creator mismatch: the on-chain reward recipient does not match the instructor wallet. Course.creator is set once at deploy and can never be changed — every future creator reward would pay the wrong wallet. Recreating the course is the only fix.",
         "onChainLabel": "on-chain",
         "bundleLabel": "bundle",
         "remediation": "\"{title}\" has immutable on-chain fields that differ from the content bundle; update_course cannot apply them. Options: 1. Fix the value in the courses-academy repo and publish a new bundle PR, or 2. Deactivate this course and deploy a new version."

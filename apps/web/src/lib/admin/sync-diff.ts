@@ -111,8 +111,23 @@ export function difficultyToString(difficulty: number): string {
 // ---------------------------------------------------------------------------
 
 /**
+ * Shape check for a base58-encoded 32-byte pubkey (Solana address): base58
+ * charset, 32-44 chars. Deliberately dependency-free — this module is
+ * imported (type-only today, but keep it light) by client components, so no
+ * `@solana/web3.js` here. Full parseability, on-curve, and denylist
+ * enforcement live at the server seam (`/api/admin/courses/sync` +
+ * `admin-signer.ts`, issue #402).
+ */
+const BASE58_PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/**
  * Returns the list of field names required in the bundle before a course can be
  * deployed on-chain. An empty array means the course is ready to deploy.
+ *
+ * `creatorWallet` (issue #400): the on-chain `Course.creator` — the immutable
+ * XP-reward recipient — is set from the instructor wallet at create_course. A
+ * course with no instructor wallet, or one that is not even shaped like a
+ * pubkey, must never reach the deploy button.
  */
 export function getMissingCourseFields(course: AdminCourse): string[] {
   const missing: string[] = [];
@@ -127,6 +142,10 @@ export function getMissingCourseFields(course: AdminCourse): string[] {
 
   if (course.lessonCount === 0) {
     missing.push("lessons");
+  }
+
+  if (!course.creatorWallet || !BASE58_PUBKEY_RE.test(course.creatorWallet)) {
+    missing.push("creatorWallet");
   }
 
   return missing;
@@ -172,6 +191,7 @@ export function isDraftId(id: string): boolean {
  *   lessonCount (increase-only via update_course.new_lesson_count)
  *
  * Immutable fields (require PDA recreation if different):
+ *   creator (#400 — the XP-reward recipient, set once at create_course),
  *   difficulty, trackId, trackLevel, prerequisite, and a DECREASE in lessonCount
  *
  * Note on `prerequisite`: pass `resolvedPrerequisitePda` (the bundle
@@ -258,6 +278,21 @@ export function diffCourse(
   }
 
   // --- Immutable fields ---
+
+  // creator (#400): the on-chain XP-reward recipient vs the instructor wallet.
+  // Both sides are base58 (base58 is canonical per byte array, so a string
+  // compare is exact). Set once at create_course and never updateable — a
+  // mismatch means every future creator reward pays the wrong wallet, so it
+  // must read as an immutable (recreate-only) mismatch. A missing/invalid
+  // creatorWallet never reaches here (getMissingCourseFields gates first).
+  if (course.creatorWallet && course.creatorWallet !== onChainCourse.creator) {
+    differences.push({
+      field: "creator",
+      contentValue: course.creatorWallet,
+      onChainValue: onChainCourse.creator,
+      updateable: false,
+    });
+  }
 
   if (course.lessonCount !== onChainCourse.lessonCount) {
     // lesson_count is increase-only updateable: a re-sync raises the on-chain

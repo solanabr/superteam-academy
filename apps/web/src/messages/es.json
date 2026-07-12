@@ -930,6 +930,7 @@
       },
       "immutableWarning": {
         "heading": "Divergencia en campo inmutable — no se puede corregir automáticamente",
+        "creatorEmphasis": "Divergencia de creador: el destinatario de recompensas on-chain no coincide con la billetera del instructor. Course.creator se define una sola vez en el despliegue y nunca puede cambiarse — toda recompensa futura de creador pagaría a la billetera equivocada. Recrear el curso es la única solución.",
         "onChainLabel": "on-chain",
         "bundleLabel": "paquete",
         "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."

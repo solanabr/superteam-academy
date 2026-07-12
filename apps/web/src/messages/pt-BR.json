@@ -930,6 +930,7 @@
       },
       "immutableWarning": {
         "heading": "Divergência em campo imutável — não pode ser corrigida automaticamente",
+        "creatorEmphasis": "Divergência de criador: o destinatário de recompensas on-chain não corresponde à carteira do instrutor. Course.creator é definido uma única vez no deploy e nunca pode ser alterado — toda recompensa futura de criador pagaria a carteira errada. Recriar o curso é a única correção.",
         "onChainLabel": "on-chain",
         "bundleLabel": "pacote",
         "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."

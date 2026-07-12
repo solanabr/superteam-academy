@@ -22,9 +22,19 @@ export function ImmutableMismatchWarning({
 
   if (immutableDiffs.length === 0) return null;
 
+  // #400: a creator mismatch is the one immutable diff that silently misroutes
+  // money — every future creator reward pays the wrong wallet — so it gets its
+  // own emphasized line on top of the generic remediation.
+  const hasCreatorMismatch = immutableDiffs.some((d) => d.field === "creator");
+
   return (
     <div className="mt-3 rounded-md border border-danger bg-danger-light p-3 text-sm">
       <p className="mb-2 font-semibold text-danger">{t("heading")}</p>
+      {hasCreatorMismatch && (
+        <p className="mb-2 rounded border border-danger bg-card p-2 text-xs font-semibold text-danger">
+          {t("creatorEmphasis")}
+        </p>
+      )}
       <ul className="space-y-1 font-mono text-xs text-danger">
         {immutableDiffs.map((d) => (
           <li key={d.field}>
