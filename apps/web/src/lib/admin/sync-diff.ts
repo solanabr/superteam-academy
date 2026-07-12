@@ -1,5 +1,5 @@
 /**
- * Diff engine: compares Sanity document data against on-chain PDA state.
+ * Diff engine: compares committed-bundle course data against on-chain PDA state.
  *
  * Used by the admin dashboard and API routes to determine what needs syncing.
  * Pure functions — no side effects, no RPC calls.
@@ -53,7 +53,7 @@ export type SyncStatus =
 
 export interface DiffEntry {
   field: string;
-  sanityValue: unknown;
+  contentValue: unknown;
   onChainValue: unknown;
   /** true = can be fixed with updateCourse/updateAchievement. false = immutable. */
   updateable: boolean;
@@ -61,7 +61,7 @@ export interface DiffEntry {
 
 export interface SyncDiff {
   status: SyncStatus;
-  /** Fields present in Sanity but required for on-chain create that are null/undefined */
+  /** Fields present in the content bundle but required for on-chain create that are null/undefined */
   missingFields: string[];
   differences: DiffEntry[];
   /** true if any immutable field differs (requires PDA recreation) */
@@ -73,7 +73,7 @@ export interface SyncDiff {
 // ---------------------------------------------------------------------------
 
 /**
- * Convert a Sanity difficulty string to its on-chain numeric representation.
+ * Convert a bundle difficulty string to its on-chain numeric representation.
  * Defaults to 1 (beginner) for unrecognized values.
  */
 export function difficultyToNumber(difficulty: string): number {
@@ -90,7 +90,7 @@ export function difficultyToNumber(difficulty: string): number {
 }
 
 /**
- * Convert an on-chain numeric difficulty to its Sanity string representation.
+ * Convert an on-chain numeric difficulty to its bundle string representation.
  * Defaults to "beginner" for unrecognized values.
  */
 export function difficultyToString(difficulty: number): string {
@@ -111,41 +111,60 @@ export function difficultyToString(difficulty: number): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the list of field names required in Sanity before a course can be
- * deployed on-chain. An empty array means the course is ready to deploy.
+ * Shape check for a base58-encoded 32-byte pubkey (Solana address): base58
+ * charset, 32-44 chars. Deliberately dependency-free — this module is
+ * imported (type-only today, but keep it light) by client components, so no
+ * `@solana/web3.js` here. Full parseability, on-curve, and denylist
+ * enforcement live at the server seam (`/api/admin/courses/sync` +
+ * `admin-signer.ts`, issue #402).
  */
-export function getMissingCourseFields(sanityCourse: AdminCourse): string[] {
+const BASE58_PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/**
+ * Returns the list of field names required in the bundle before a course can be
+ * deployed on-chain. An empty array means the course is ready to deploy.
+ *
+ * `creatorWallet` (issue #400): the on-chain `Course.creator` — the immutable
+ * XP-reward recipient — is set from the instructor wallet at create_course. A
+ * course with no instructor wallet, or one that is not even shaped like a
+ * pubkey, must never reach the deploy button.
+ */
+export function getMissingCourseFields(course: AdminCourse): string[] {
   const missing: string[] = [];
 
-  if (sanityCourse.xpPerLesson === null || sanityCourse.xpPerLesson <= 0) {
+  if (course.xpPerLesson === null || course.xpPerLesson <= 0) {
     missing.push("xpPerLesson");
   }
 
-  if (!sanityCourse.difficulty) {
+  if (!course.difficulty) {
     missing.push("difficulty");
   }
 
-  if (sanityCourse.lessonCount === 0) {
+  if (course.lessonCount === 0) {
     missing.push("lessons");
+  }
+
+  if (!course.creatorWallet || !BASE58_PUBKEY_RE.test(course.creatorWallet)) {
+    missing.push("creatorWallet");
   }
 
   return missing;
 }
 
 /**
- * Returns the list of field names required in Sanity before an achievement can
+ * Returns the list of field names required in the bundle before an achievement can
  * be deployed on-chain. An empty array means the achievement is ready to deploy.
  */
 export function getMissingAchievementFields(
-  sanityAchievement: AdminAchievement
+  achievement: AdminAchievement
 ): string[] {
   const missing: string[] = [];
 
-  if (!sanityAchievement.name || sanityAchievement.name.trim() === "") {
+  if (!achievement.name || achievement.name.trim() === "") {
     missing.push("name");
   }
 
-  if (sanityAchievement.xpReward === null || sanityAchievement.xpReward <= 0) {
+  if (achievement.xpReward === null || achievement.xpReward <= 0) {
     missing.push("xpReward");
   }
 
@@ -153,11 +172,11 @@ export function getMissingAchievementFields(
 }
 
 /**
- * Returns true if the given Sanity document _id represents an unpublished draft.
+ * Returns true if the given content document _id represents an unpublished draft.
  * Draft documents cannot be deployed on-chain.
  */
-export function isDraftId(sanityId: string): boolean {
-  return sanityId.startsWith("drafts.");
+export function isDraftId(id: string): boolean {
+  return id.startsWith("drafts.");
 }
 
 // ---------------------------------------------------------------------------
@@ -165,29 +184,35 @@ export function isDraftId(sanityId: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Compare a Sanity course document against an on-chain Course PDA.
+ * Compare a bundle course document against an on-chain Course PDA.
  *
  * Updateable fields (fixable with `updateCourse`):
  *   xpPerLesson, creatorRewardXp, minCompletionsForReward, and an INCREASE in
  *   lessonCount (increase-only via update_course.new_lesson_count)
  *
  * Immutable fields (require PDA recreation if different):
+ *   creator (#400 — the XP-reward recipient, set once at create_course),
  *   difficulty, trackId, trackLevel, prerequisite, and a DECREASE in lessonCount
  *
- * Note: `prerequisite` is compared using raw Sanity _id vs on-chain base58
- * pubkey. The caller is responsible for PDA resolution — this function only
- * surfaces the mismatch for display purposes.
+ * Note on `prerequisite`: pass `resolvedPrerequisitePda` (the bundle
+ * prerequisite's Course PDA, base58) so the comparison is pubkey-to-pubkey.
+ * Without it the raw content _id is compared against the on-chain base58
+ * pubkey, which can only surface a string-level mismatch for display — every
+ * configured prerequisite would read as different.
  *
- * @param sanityCourse - From getAllCoursesAdmin()
+ * @param course - From getAllCoursesAdmin()
  * @param onChainCourse - Deserialized on-chain account, or null if not deployed
+ * @param resolvedPrerequisitePda - The prerequisite course's PDA (base58) when
+ *   the caller has derived it; null/undefined falls back to the raw-id compare
  * @returns SyncDiff describing the current state
  */
 export function diffCourse(
-  sanityCourse: AdminCourse,
-  onChainCourse: OnChainCourse | null
+  course: AdminCourse,
+  onChainCourse: OnChainCourse | null,
+  resolvedPrerequisitePda?: string | null
 ): SyncDiff {
   // 1. Draft check — drafts can never be deployed
-  if (isDraftId(sanityCourse._id)) {
+  if (isDraftId(course._id)) {
     return {
       status: "draft",
       missingFields: [],
@@ -197,7 +222,7 @@ export function diffCourse(
   }
 
   // 2. Required field check — must pass before on-chain create
-  const missingFields = getMissingCourseFields(sanityCourse);
+  const missingFields = getMissingCourseFields(course);
   if (missingFields.length > 0) {
     return {
       status: "missing_fields",
@@ -222,31 +247,31 @@ export function diffCourse(
 
   // --- Updateable fields ---
 
-  const sanityXpPerLesson = sanityCourse.xpPerLesson ?? 10;
-  if (sanityXpPerLesson !== onChainCourse.xpPerLesson) {
+  const contentXpPerLesson = course.xpPerLesson ?? 10;
+  if (contentXpPerLesson !== onChainCourse.xpPerLesson) {
     differences.push({
       field: "xpPerLesson",
-      sanityValue: sanityXpPerLesson,
+      contentValue: contentXpPerLesson,
       onChainValue: onChainCourse.xpPerLesson,
       updateable: true,
     });
   }
 
-  const sanityCreatorRewardXp = sanityCourse.creatorRewardXp ?? 0;
-  if (sanityCreatorRewardXp !== onChainCourse.creatorRewardXp) {
+  const contentCreatorRewardXp = course.creatorRewardXp ?? 0;
+  if (contentCreatorRewardXp !== onChainCourse.creatorRewardXp) {
     differences.push({
       field: "creatorRewardXp",
-      sanityValue: sanityCreatorRewardXp,
+      contentValue: contentCreatorRewardXp,
       onChainValue: onChainCourse.creatorRewardXp,
       updateable: true,
     });
   }
 
-  const sanityMinCompletions = sanityCourse.minCompletionsForReward ?? 0;
-  if (sanityMinCompletions !== onChainCourse.minCompletionsForReward) {
+  const contentMinCompletions = course.minCompletionsForReward ?? 0;
+  if (contentMinCompletions !== onChainCourse.minCompletionsForReward) {
     differences.push({
       field: "minCompletionsForReward",
-      sanityValue: sanityMinCompletions,
+      contentValue: contentMinCompletions,
       onChainValue: onChainCourse.minCompletionsForReward,
       updateable: true,
     });
@@ -254,58 +279,77 @@ export function diffCourse(
 
   // --- Immutable fields ---
 
-  if (sanityCourse.lessonCount !== onChainCourse.lessonCount) {
+  // creator (#400): the on-chain XP-reward recipient vs the instructor wallet.
+  // Both sides are base58 (base58 is canonical per byte array, so a string
+  // compare is exact). Set once at create_course and never updateable — a
+  // mismatch means every future creator reward pays the wrong wallet, so it
+  // must read as an immutable (recreate-only) mismatch. A missing/invalid
+  // creatorWallet never reaches here (getMissingCourseFields gates first).
+  if (course.creatorWallet && course.creatorWallet !== onChainCourse.creator) {
+    differences.push({
+      field: "creator",
+      contentValue: course.creatorWallet,
+      onChainValue: onChainCourse.creator,
+      updateable: false,
+    });
+  }
+
+  if (course.lessonCount !== onChainCourse.lessonCount) {
     // lesson_count is increase-only updateable: a re-sync raises the on-chain
     // count when a teacher appends lessons (update_course.new_lesson_count).
-    // A DECREASE (Sanity has fewer lessons than on-chain) is rejected by the
+    // A DECREASE (the bundle has fewer lessons than on-chain) is rejected by the
     // program (LessonCountDecrease) and stays an immutable mismatch — applying
     // it would strand completion flags, so it needs PDA recreation.
     differences.push({
       field: "lessonCount",
-      sanityValue: sanityCourse.lessonCount,
+      contentValue: course.lessonCount,
       onChainValue: onChainCourse.lessonCount,
-      updateable: sanityCourse.lessonCount > onChainCourse.lessonCount,
+      updateable: course.lessonCount > onChainCourse.lessonCount,
     });
   }
 
-  const sanityDifficulty = difficultyToNumber(sanityCourse.difficulty);
-  if (sanityDifficulty !== onChainCourse.difficulty) {
+  const contentDifficulty = difficultyToNumber(course.difficulty);
+  if (contentDifficulty !== onChainCourse.difficulty) {
     differences.push({
       field: "difficulty",
-      sanityValue: sanityCourse.difficulty,
+      contentValue: course.difficulty,
       onChainValue: difficultyToString(onChainCourse.difficulty),
       updateable: false,
     });
   }
 
-  const sanityTrackId = sanityCourse.trackId ?? 0;
-  if (sanityTrackId !== onChainCourse.trackId) {
+  const contentTrackId = course.trackId ?? 0;
+  if (contentTrackId !== onChainCourse.trackId) {
     differences.push({
       field: "trackId",
-      sanityValue: sanityTrackId,
+      contentValue: contentTrackId,
       onChainValue: onChainCourse.trackId,
       updateable: false,
     });
   }
 
-  const sanityTrackLevel = sanityCourse.trackLevel ?? 0;
-  if (sanityTrackLevel !== onChainCourse.trackLevel) {
+  const contentTrackLevel = course.trackLevel ?? 0;
+  if (contentTrackLevel !== onChainCourse.trackLevel) {
     differences.push({
       field: "trackLevel",
-      sanityValue: sanityTrackLevel,
+      contentValue: contentTrackLevel,
       onChainValue: onChainCourse.trackLevel,
       updateable: false,
     });
   }
 
-  // prerequisite: compare raw Sanity _id vs on-chain base58 pubkey.
-  // PDA resolution is intentionally deferred to the caller — this pure
-  // function only surfaces whether the values differ at the string level.
-  const sanityPrerequisiteId = sanityCourse.prerequisiteCourse?._id ?? null;
-  if (sanityPrerequisiteId !== onChainCourse.prerequisite) {
+  // prerequisite: compare the resolved PDA (base58) against the on-chain
+  // pubkey when the caller derived it; otherwise fall back to the raw content
+  // _id vs base58 string compare (display-only, always differs when set).
+  const contentPrerequisiteId = course.prerequisiteCourse?._id ?? null;
+  const contentPrerequisite =
+    contentPrerequisiteId === null
+      ? null
+      : (resolvedPrerequisitePda ?? contentPrerequisiteId);
+  if (contentPrerequisite !== onChainCourse.prerequisite) {
     differences.push({
       field: "prerequisite",
-      sanityValue: sanityPrerequisiteId,
+      contentValue: contentPrerequisite,
       onChainValue: onChainCourse.prerequisite,
       updateable: false,
     });
@@ -326,22 +370,22 @@ export function diffCourse(
 // ---------------------------------------------------------------------------
 
 /**
- * Compare a Sanity achievement document against an on-chain AchievementType PDA.
+ * Compare a bundle achievement document against an on-chain AchievementType PDA.
  *
  * There is no `updateAchievementType` instruction in the program, so ALL
  * diffed fields are marked `updateable: false`. Any mismatch requires PDA
  * recreation (deregister + re-register).
  *
- * @param sanityAchievement - From getAllAchievementsAdmin()
+ * @param achievement - From getAllAchievementsAdmin()
  * @param onChainAchievement - Deserialized on-chain account, or null if not deployed
  * @returns SyncDiff describing the current state
  */
 export function diffAchievement(
-  sanityAchievement: AdminAchievement,
+  achievement: AdminAchievement,
   onChainAchievement: OnChainAchievement | null
 ): SyncDiff {
   // 1. Draft check
-  if (isDraftId(sanityAchievement._id)) {
+  if (isDraftId(achievement._id)) {
     return {
       status: "draft",
       missingFields: [],
@@ -351,7 +395,7 @@ export function diffAchievement(
   }
 
   // 2. Required field check
-  const missingFields = getMissingAchievementFields(sanityAchievement);
+  const missingFields = getMissingAchievementFields(achievement);
   if (missingFields.length > 0) {
     return {
       status: "missing_fields",
@@ -375,31 +419,31 @@ export function diffAchievement(
   // All fields are immutable — no updateAchievementType instruction exists.
   const differences: DiffEntry[] = [];
 
-  if (sanityAchievement.name !== onChainAchievement.name) {
+  if (achievement.name !== onChainAchievement.name) {
     differences.push({
       field: "name",
-      sanityValue: sanityAchievement.name,
+      contentValue: achievement.name,
       onChainValue: onChainAchievement.name,
       updateable: false,
     });
   }
 
-  const sanityXpReward = sanityAchievement.xpReward ?? 0;
-  if (sanityXpReward !== onChainAchievement.xpReward) {
+  const contentXpReward = achievement.xpReward ?? 0;
+  if (contentXpReward !== onChainAchievement.xpReward) {
     differences.push({
       field: "xpReward",
-      sanityValue: sanityXpReward,
+      contentValue: contentXpReward,
       onChainValue: onChainAchievement.xpReward,
       updateable: false,
     });
   }
 
   // maxSupply: 0 = unlimited supply on-chain
-  const sanityMaxSupply = sanityAchievement.maxSupply ?? 0;
-  if (sanityMaxSupply !== onChainAchievement.maxSupply) {
+  const contentMaxSupply = achievement.maxSupply ?? 0;
+  if (contentMaxSupply !== onChainAchievement.maxSupply) {
     differences.push({
       field: "maxSupply",
-      sanityValue: sanityMaxSupply,
+      contentValue: contentMaxSupply,
       onChainValue: onChainAchievement.maxSupply,
       updateable: false,
     });

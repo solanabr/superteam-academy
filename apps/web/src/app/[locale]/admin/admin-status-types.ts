@@ -1,24 +1,24 @@
 /**
- * Response shape of the UNCHANGED `/api/admin/status` route, relocated
- * verbatim from the deleted stacked `admin-client.tsx` (SP3-A Task 3).
- * Shared by the deploy and status screens, which each fetch what they need
- * from the same endpoint (plan ambiguity 2: no API split in SP3-A).
+ * Response shape of the `/api/admin/status` route (relocated from the deleted
+ * stacked `admin-client.tsx` in SP3-A; extended with per-course drift fields
+ * in SP3-C). Shared by the deploy and status screens, which each fetch what
+ * they need from the same endpoint (plan ambiguity 2: no API split).
  */
 
-export interface DiffEntry {
-  field: string;
-  sanityValue: unknown;
-  onChainValue: unknown;
-  updateable: boolean;
-}
+import type { DiffEntry } from "@/lib/admin/sync-diff";
+import type { ChainDriftState, CourseContentDrift } from "@/lib/github/drift";
+
+// Re-exported so UI components share the diff engine's entry shape instead of
+// carrying duplicate local copies (SP3-C Task 2 consolidation).
+export type { DiffEntry };
 
 export interface CourseStatus {
-  sanityId: string;
+  contentId: string;
   slug: string;
   title: string;
   isDraft: boolean;
   lessonCount: number;
-  sanityXpPerLesson: number | null;
+  contentXpPerLesson: number | null;
   missingFields: string[];
   onChainStatus:
     | "synced"
@@ -28,13 +28,22 @@ export interface CourseStatus {
     | "missing_fields";
   coursePda: string | null;
   differences: DiffEntry[];
+  // Repo-wide content drift (SP3-C): the committed bundle's pinned SHA vs
+  // courses-academy HEAD, or "unknown" when HEAD couldn't be fetched. Same value
+  // for every course; the badge only surfaces it on a deployed row.
+  contentDrift: CourseContentDrift;
+  // Per-course chain drift (SP3-C Task 2): the deployed Course.content_tx_id
+  // vs the BUNDLE sha (not HEAD) — "does deploying now change the on-chain
+  // content commitment for THIS course". null for drafts or when the on-chain
+  // account could not be decoded.
+  chainDrift: ChainDriftState | null;
   // Authoritative on-chain is_active. Absent for not-yet-deployed/draft courses
   // (treated as active). false → deactivated (hidden from the public catalog).
   isActive?: boolean;
 }
 
 export interface AchievementStatus {
-  sanityId: string;
+  contentId: string;
   name: string;
   missingFields: string[];
   onChainStatus: "synced" | "not_deployed" | "missing_fields" | "draft";

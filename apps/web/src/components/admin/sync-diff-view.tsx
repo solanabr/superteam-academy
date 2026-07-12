@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-interface DiffEntry {
-  field: string;
-  sanityValue: unknown;
-  onChainValue: unknown;
-  updateable: boolean;
-}
+import type { DiffEntry } from "@/lib/admin/sync-diff";
 
 interface SyncDiffViewProps {
   differences: DiffEntry[];
@@ -38,8 +32,8 @@ export function SyncDiffView({ differences, title }: SyncDiffViewProps) {
               <span className="text-text-3">on-chain:</span>{" "}
               <span className="text-danger">{String(d.onChainValue)}</span>
               {"  "}
-              <span className="text-text-3">sanity:</span>{" "}
-              <span className="text-success">{String(d.sanityValue)}</span>{" "}
+              <span className="text-text-3">bundle:</span>{" "}
+              <span className="text-success">{String(d.contentValue)}</span>{" "}
               {d.updateable ? (
                 <span className="text-text-3">[updateable]</span>
               ) : (

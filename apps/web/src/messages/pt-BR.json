@@ -906,8 +906,52 @@
     "deployScreen": {
       "coursesHeading": "Cursos",
       "achievementsHeading": "Conquistas",
-      "noCourses": "Nenhum curso encontrado no Sanity.",
-      "noAchievements": "Nenhuma conquista encontrada no Sanity."
+      "noCourses": "Nenhum curso no pacote de conteúdo.",
+      "noAchievements": "Nenhuma conquista no pacote de conteúdo.",
+      "missingFields": "Faltando: {fields}",
+      "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# mudança de campo} other {# mudanças de campo}}. Continuar?",
+      "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
+      "errors": {
+        "action": "Ação de implantação recusada: {message}",
+        "sync": "Falha na sincronização",
+        "deactivate": "Falha na desativação",
+        "reactivate": "Falha na reativação",
+        "syncFor": "Falha na sincronização de {title}"
+      },
+      "contentDrift": {
+        "drifted": "Conteúdo desatualizado",
+        "blocked": "Conteúdo bloqueado",
+        "unknown": "Divergência desconhecida",
+        "driftedHint": "Há conteúdo de curso mais recente no repositório courses-academy. A correção é um PR de publicação que atualiza o content.lock e commita o pacote reconstruído — não uma reimplantação.",
+        "blockedHint": "O conteúdo do repositório mudou, mas a CI está vermelha — ainda não é possível sincronizar.",
+        "unknownHint": "Não foi possível acessar o GitHub para verificar a divergência de conteúdo."
+      },
+      "preview": {
+        "title": "Revisar implantação — {title}",
+        "firstDeploy": "Este curso ainda não está on-chain — a implantação criará a conta on-chain dele.",
+        "willWrite": "Esta transação irá gravar:",
+        "contentStale": "Informativo: o compromisso de conteúdo on-chain deste curso (content_tx_id) está atrás do pacote commitado. Esta implantação NÃO o alterará — ela grava apenas os campos do curso listados acima. O compromisso é atualizado pela etapa de content-commit na tela de Divergência de Conteúdo.",
+        "noChanges": "Nenhuma mudança detectada. Reimplantar mesmo assim?",
+        "blocked": "A implantação está bloqueada até que a divergência imutável seja resolvida.",
+        "confirmDeploy": "Implantar",
+        "confirmSync": "Confirmar sincronização",
+        "confirmRedeploy": "Reimplantar",
+        "cancel": "Cancelar"
+      },
+      "immutableWarning": {
+        "heading": "Divergência em campo imutável — não pode ser corrigida automaticamente",
+        "creatorEmphasis": "Divergência de criador: o destinatário de recompensas on-chain não corresponde à carteira do instrutor. Course.creator é definido uma única vez no deploy e nunca pode ser alterado — toda recompensa futura de criador pagaria a carteira errada. Recriar o curso é a única correção.",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "pacote",
+        "remediation": "\"{title}\" tem campos on-chain imutáveis que diferem do pacote de conteúdo; update_course não pode aplicá-los. Opções: 1. Corrija o valor no repositório courses-academy e publique um novo PR de pacote, ou 2. Desative este curso e implante uma nova versão."
+      }
+    },
+    "statusBadge": {
+      "synced": "Sincronizado",
+      "out_of_sync": "Fora de sincronia",
+      "not_deployed": "Não está on-chain",
+      "draft": "Rascunho",
+      "missing_fields": "Campos faltando"
     },
     "resync": {
       "heading": "Ressincronização de dados",

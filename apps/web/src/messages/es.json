@@ -906,8 +906,52 @@
     "deployScreen": {
       "coursesHeading": "Cursos",
       "achievementsHeading": "Logros",
-      "noCourses": "No se encontraron cursos en Sanity.",
-      "noAchievements": "No se encontraron logros en Sanity."
+      "noCourses": "No hay cursos en el paquete de contenido.",
+      "noAchievements": "No hay logros en el paquete de contenido.",
+      "missingFields": "Faltan: {fields}",
+      "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# cambio de campo} other {# cambios de campo}}. ¿Continuar?",
+      "deactivateConfirm": "¿Desactivar este curso? Los estudiantes no podrán inscribirse hasta que se reactive.",
+      "errors": {
+        "action": "Acción de despliegue rechazada: {message}",
+        "sync": "Falló la sincronización",
+        "deactivate": "Falló la desactivación",
+        "reactivate": "Falló la reactivación",
+        "syncFor": "Falló la sincronización de {title}"
+      },
+      "contentDrift": {
+        "drifted": "Contenido desactualizado",
+        "blocked": "Contenido bloqueado",
+        "unknown": "Divergencia desconocida",
+        "driftedHint": "Hay contenido de curso más reciente en el repositorio courses-academy. La solución es un PR de publicación que actualiza content.lock y commitea el paquete reconstruido — no un redespliegue.",
+        "blockedHint": "El contenido del repositorio cambió pero su CI está en rojo — aún no se puede sincronizar.",
+        "unknownHint": "No se pudo acceder a GitHub para comprobar la divergencia de contenido."
+      },
+      "preview": {
+        "title": "Revisar despliegue — {title}",
+        "firstDeploy": "Este curso aún no está on-chain — el despliegue creará su cuenta on-chain.",
+        "willWrite": "Esta transacción escribirá:",
+        "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. El compromiso se actualiza mediante el paso de content-commit en la pantalla de Divergencia de Contenido.",
+        "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",
+        "blocked": "El despliegue está bloqueado hasta que se resuelva la divergencia inmutable.",
+        "confirmDeploy": "Desplegar",
+        "confirmSync": "Confirmar sincronización",
+        "confirmRedeploy": "Volver a desplegar",
+        "cancel": "Cancelar"
+      },
+      "immutableWarning": {
+        "heading": "Divergencia en campo inmutable — no se puede corregir automáticamente",
+        "creatorEmphasis": "Divergencia de creador: el destinatario de recompensas on-chain no coincide con la billetera del instructor. Course.creator se define una sola vez en el despliegue y nunca puede cambiarse — toda recompensa futura de creador pagaría a la billetera equivocada. Recrear el curso es la única solución.",
+        "onChainLabel": "on-chain",
+        "bundleLabel": "paquete",
+        "remediation": "\"{title}\" tiene campos on-chain inmutables que difieren del paquete de contenido; update_course no puede aplicarlos. Opciones: 1. Corrige el valor en el repositorio courses-academy y publica un nuevo PR de paquete, o 2. Desactiva este curso y despliega una nueva versión."
+      }
+    },
+    "statusBadge": {
+      "synced": "Sincronizado",
+      "out_of_sync": "Fuera de sincronía",
+      "not_deployed": "No está on-chain",
+      "draft": "Borrador",
+      "missing_fields": "Campos faltantes"
     },
     "resync": {
       "heading": "Resincronización de datos",
