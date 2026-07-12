@@ -37,7 +37,9 @@ The middleware (`src/middleware.ts`) chains two concerns:
 
 ### Achievements
 
-The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here. Unlock logic maps full content-doc `_id`s in `UNLOCK_CHECKS` (`lib/achievements.ts`).
+The curated set (currently 10) lives in `solanabr/courses-academy` under `achievements/` — git is the source of truth; do not enumerate them here.
+
+**Unlock logic is declarative, not a per-achievement map.** Each achievement doc carries an `award` rule (a discriminated union of `AwardKind`); `lib/gamification/achievements.ts` holds `PREDICATES satisfies Record<AwardKind, Predicate>` — one predicate per *kind*, so adding a kind without a predicate is a compile error, and no course/path id is ever hardcoded. Adding an achievement means adding a content doc, not code.
 
 ## Environment Variables
 
@@ -61,8 +63,8 @@ BUILD_SERVER_API_KEY=              # Build server authentication key
 GITHUB_TOKEN=                      # Fine-grained READ token for solanabr/courses-academy (public repo,
                                    # but the token is still required — unauthenticated GitHub is
                                    # 60 req/hr per IP and flakes on Vercel). Server-only. Powers
-                                   # the drift UI (HEAD polling) and the Checks API (blocked
-                                   # state); unset → the /api/admin/content/* routes 503.
+                                   # the publish-pin card (HEAD polling + ahead-by) and the
+                                   # Checks API (blocked state); unset → those admin reads 503.
 HELIUS_API_KEY=                    # Helius key for webhook management + DAS API (lib/helius)
 HELIUS_WEBHOOK_SECRET=             # Helius webhook signature verification
 BACKEND_SIGNER_SECRET=             # Rotatable backend co-signer keypair (completeLesson etc.)
