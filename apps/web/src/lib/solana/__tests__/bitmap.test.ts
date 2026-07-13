@@ -79,3 +79,39 @@ describe("decodeLessonBitmap edge cases", () => {
     );
   });
 });
+
+// A non-finite lessonCount is not hypothetical: callers derive it from a chain
+// read (`Number(course.lesson_count)`), so a Course layout the coder cannot see
+// — e.g. any client/program version skew (#449) — yields NaN. Every guard in
+// these functions is a comparison, and every comparison against NaN is false,
+// so NaN used to sail straight through. These pin the fail-CLOSED behaviour.
+describe("non-finite lessonCount fails closed", () => {
+  const noneComplete = [new BN(0), new BN(0), new BN(0), new BN(0)];
+
+  it.each([
+    ["NaN", NaN],
+    ["Infinity", Infinity],
+    ["-Infinity", -Infinity],
+  ])(
+    "isAllLessonsComplete returns false for %s (not true via loop fall-through)",
+    (_label, count) => {
+      expect(isAllLessonsComplete(noneComplete, count)).toBe(false);
+    }
+  );
+
+  it("isAllLessonsComplete returns false for a negative count", () => {
+    expect(isAllLessonsComplete(noneComplete, -1)).toBe(false);
+  });
+
+  it.each([
+    ["NaN", NaN],
+    ["Infinity", Infinity],
+  ])(
+    "decodeLessonBitmap throws for %s instead of returning []",
+    (_l, count) => {
+      expect(() => decodeLessonBitmap(noneComplete, count)).toThrow(
+        "invalid lessonCount"
+      );
+    }
+  );
+});

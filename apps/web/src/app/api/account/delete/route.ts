@@ -64,6 +64,12 @@ export async function POST(): Promise<NextResponse> {
       bio: null,
       avatar_url: null,
       social_links: null,
+      // wallet_address carries a UNIQUE constraint, so a retained one keeps the
+      // wallet bound to a tombstoned row forever — the owner could never link it
+      // to a new account, and no one else could either. It is also the strongest
+      // identifier on the row, so leaving it behind undoes the anonymisation
+      // (#410).
+      wallet_address: null,
       is_public: false,
       deleted_at: now,
       deletion_requested_at: now,

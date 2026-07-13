@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCourseById, getLessonByIdForGrading } from "@/lib/content/queries";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { openAttestation } from "@/lib/ai/check-seal";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -90,6 +91,49 @@ export async function POST(request: NextRequest) {
       courseId.length > 100
     ) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    // ── Volume gate (#459) ────────────────────────────────────────────────
+    // This route is the single chokepoint for every platform-funded on-chain
+    // write: the backend keypair is `payer` AND `backendSigner` on the resulting
+    // complete_lesson tx, and the LessonCompleted webhook cascades from it into
+    // finalize_course (learner bonus + creator reward) and issue_credential
+    // (permanent Core-asset rent). The learner signs, and pays, nothing.
+    //
+    // The gate below this proves answers are CORRECT; it cannot prove a person
+    // produced them. Answers are identical for every learner, so one honest
+    // playthrough yields a `proofs` payload replayable from any number of free
+    // SIWS accounts. These limits bound the resulting spend.
+    //
+    // Both keys are needed. Per-user bounds one account hammering the route;
+    // it does nothing against Sybils, where every fresh account is a fresh key.
+    // Per-IP is the only one that bounds an actor — set high enough that a real
+    // cohort behind one NAT (an IRL bootcamp) never trips it. Neither stops a
+    // determined farmer with proxies; they bound the burn rate, and that is the
+    // honest claim. Runs before grading so a throttled caller never reaches the
+    // code executors.
+    if (
+      await isRateLimited("lessons:complete", user.id, {
+        maxTokens: 40,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Too many lesson completions. Please slow down." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+
+    if (
+      await isRateLimited("lessons:complete:ip", getClientIp(request.headers), {
+        maxTokens: 300,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Too many lesson completions from this network." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
     }
 
     // ── Server-authoritative completion gate (block model, spec §7.2) ──────

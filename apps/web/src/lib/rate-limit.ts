@@ -17,6 +17,22 @@ interface RateLimiterOptions {
   refillIntervalMs: number;
 }
 
+/**
+ * Client IP from the proxy headers Vercel sets, for limiters that must bound an
+ * actor rather than an account — a per-user key alone cannot bound Sybils,
+ * since every fresh account is a fresh key.
+ *
+ * Falls back to "unknown", which buckets all header-less callers together. That
+ * is deliberate: it degrades to a shared global limit rather than to no limit.
+ */
+export function getClientIp(headers: Headers): string {
+  return (
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
 export async function isRateLimited(
   namespace: string,
   key: string,

@@ -71,7 +71,9 @@ const cspDirectives = [
   // Hardening directives.
   "base-uri 'self'",
   "object-src 'none'",
-  "frame-ancestors 'self'",
+  // 'none', not 'self' (#437): nothing frames this app. `frame-src` above is the
+  // separate, still-needed allowance for US framing YouTube/Vimeo/Google.
+  "frame-ancestors 'none'",
 ];
 
 const securityHeaders = [
@@ -80,8 +82,13 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
+    // DENY, not SAMEORIGIN (#437). SAMEORIGIN existed for the Sanity Studio
+    // iframe embed, deleted in #429; nothing frames this app now. Kept in step
+    // with `frame-ancestors 'none'` in the CSP above — that directive is what
+    // modern browsers actually enforce, and this header is the fallback for the
+    // ones that do not. Tightening only one of the two would be cosmetic.
     key: "X-Frame-Options",
-    value: "SAMEORIGIN",
+    value: "DENY",
   },
   {
     key: "X-Content-Type-Options",

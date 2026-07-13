@@ -14,6 +14,7 @@ import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { capCredentialName } from "@/lib/solana/credential-metadata";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -41,6 +42,37 @@ export async function POST(request: NextRequest) {
       );
     }
     const courseId = body.courseId;
+
+    // Volume gate (#459). A successful mint is already one-per-enrollment — the
+    // on-chain `credential_asset` field makes a second one impossible — so this
+    // does not bound credential supply. What it bounds is the FAILED path: each
+    // attempt costs an Arweave upload and a platform-funded tx (the backend
+    // keypair is `payer`), and every rejection above returns before either, so
+    // an unthrottled caller can loop this route for free at the platform's cost.
+    if (
+      await isRateLimited("certificates:mint", user.id, {
+        maxTokens: 10,
+        refillIntervalMs: 3_600_000,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Too many mint attempts. Please try again later." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+
+    if (
+      await isRateLimited(
+        "certificates:mint:ip",
+        getClientIp(request.headers),
+        { maxTokens: 60, refillIntervalMs: 3_600_000 }
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Too many mint attempts from this network." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
 
     // Get wallet address from profile
     const adminClient = createAdminClient();

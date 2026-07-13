@@ -46,9 +46,9 @@ export const dynamic = "force-dynamic";
  * Repo-wide content drift (SP3-C): the committed bundle's pinned SHA
  * (`content.lock` → `SYNCED_SHA`) vs courses-academy HEAD, folded into every
  * course record so a deployed-but-content-drifted course reads distinctly from
- * an in-sync one. Reuses the same GitHub client as `/api/admin/content/drift`.
+ * an in-sync one.
  *
- * Unlike that route (which 503s when GitHub is unreachable), the status route
+ * Where a GitHub outage would 503 a dedicated drift route, the status route
  * also serves program liveness + on-chain course state, all independent of
  * GitHub — so a HEAD-fetch failure degrades this one field to an explicit
  * `"unknown"` and the route still returns 200. Any error here (unconfigured

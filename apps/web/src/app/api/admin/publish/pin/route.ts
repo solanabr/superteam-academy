@@ -22,7 +22,7 @@ import { contentMeta } from "@/lib/content/meta";
  * checks, and a drift verdict. This route holds NO GitHub write token and never
  * writes the repo — the pin bump is a one-line human PR (spec rev-2, locked).
  * GitHub unreachable is a 503 so the card shows "drift unavailable" instead of
- * crashing, mirroring `/api/admin/content/drift`.
+ * crashing.
  */
 export const dynamic = "force-dynamic";
 

@@ -29,7 +29,7 @@ export const contentMeta: ContentMeta = metaJson;
  * pinned to a single SHA (`apps/web/content.lock`, mirrored into
  * `src/content/generated/meta.json`), so the synced SHA is now a build-time
  * constant: the bundle *is* the synced content. The deploy (`courses/sync`) and
- * drift (`content/drift`) routes read this instead of fetching the singleton +
+ * status (`admin/status`) routes read this instead of fetching the singleton +
  * a runtime GitHub tarball.
  */
 export const SYNCED_SHA: string = contentMeta.sha;
