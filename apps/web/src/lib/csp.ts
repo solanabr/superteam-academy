@@ -150,7 +150,7 @@ export function buildCsp(nonce: string): string {
     // Hardening directives.
     "base-uri 'self'",
     "object-src 'none'",
-    "frame-ancestors 'self'",
+    "frame-ancestors 'none'",
   ];
 
   return directives.join("; ");

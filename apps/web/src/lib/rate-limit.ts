@@ -18,19 +18,66 @@ interface RateLimiterOptions {
 }
 
 /**
- * Client IP from the proxy headers Vercel sets, for limiters that must bound an
- * actor rather than an account — a per-user key alone cannot bound Sybils,
- * since every fresh account is a fresh key.
+ * Collapse an address to the block one actor plausibly controls, so the rate
+ * key bounds an ACTOR and not an address.
  *
- * Falls back to "unknown", which buckets all header-less callers together. That
- * is deliberate: it degrades to a shared global limit rather than to no limit.
+ * IPv6 is the whole point. A single VPS is routinely handed a routed /64 —
+ * 2^64 source addresses — so keying on the full address gives one attacker an
+ * unbounded supply of fresh buckets and the per-IP limit degrades to no limit
+ * at all. Truncating to the /64 makes the bucket the thing that costs money to
+ * acquire. IPv4 has no equivalent slack, so it keys on the full address.
+ */
+function normalizeIp(raw: string): string {
+  // Strip the [..] form and any %zone suffix.
+  const addr = (raw.replace(/^\[|\]$/g, "").split("%")[0] ?? raw).trim();
+  if (!addr.includes(":")) return addr; // IPv4 → full address.
+
+  // IPv4-mapped IPv6 (::ffff:203.0.113.7): the real client is the IPv4.
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(addr);
+  if (mapped) return mapped[1]!;
+
+  // Expand the "::" run so the first four hextets are positional, then keep them.
+  let hextets: string[];
+  if (addr.includes("::")) {
+    const [head = "", tail = ""] = addr.split("::");
+    const headParts = head ? head.split(":") : [];
+    const tailParts = tail ? tail.split(":") : [];
+    const zeros = Math.max(0, 8 - headParts.length - tailParts.length);
+    hextets = [...headParts, ...Array(zeros).fill("0"), ...tailParts];
+  } else {
+    hextets = addr.split(":");
+  }
+
+  const prefix = hextets
+    .slice(0, 4)
+    .map((h) => (h || "0").toLowerCase())
+    .join(":");
+  return `${prefix}::/64`;
+}
+
+/**
+ * Client IP, for limiters that must bound an actor rather than an account — a
+ * per-user key alone cannot bound Sybils, since every fresh account is a fresh
+ * key.
+ *
+ * Header order is a trust order, not a preference. `x-vercel-forwarded-for` is
+ * set by Vercel's edge and cannot be overwritten by the client. Plain
+ * `x-forwarded-for` IS overwritten by Vercel today (their edge replaces it
+ * rather than appending, precisely to stop spoofing) — but that guarantee is
+ * void if a proxy is ever placed in front of Vercel, at which point the FIRST
+ * comma-separated entry becomes the attacker-supplied one. So it is the last
+ * resort, not the first choice.
+ *
+ * Falls back to "unknown", which buckets all header-less callers together —
+ * deliberately degrading to one shared global limit rather than to no limit.
  */
 export function getClientIp(headers: Headers): string {
-  return (
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headers.get("x-real-ip") ||
-    "unknown"
-  );
+  const raw =
+    headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip")?.trim() ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+
+  return raw ? normalizeIp(raw) : "unknown";
 }
 
 export async function isRateLimited(

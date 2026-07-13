@@ -169,7 +169,13 @@ export function LessonPageClient({
           ? t("completionFailedChallenge")
           : status === 403
             ? t("completionFailedEnrollment")
-            : t("completionFailedGeneric");
+            : // A throttle is not a failure, and must not read like one. Without
+              // this the 429 fell through to the generic "something went wrong",
+              // so a whole cohort sharing one NAT would see an outage and retry
+              // — each retry burning another token and extending the window.
+              status === 429
+              ? t("completionRateLimited")
+              : t("completionFailedGeneric");
       setCompletionError(message);
       // Unstick the challenge editor's "saving" overlay and show the reason
       // there too (code submits originate from ChallengeInterface).

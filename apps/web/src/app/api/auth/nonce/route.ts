@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateNonce } from "@/lib/solana/wallet-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -30,10 +31,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      request.headers.get("x-real-ip") ??
-      "unknown";
+    // Shared helper: prefers the edge-set header the client cannot forge, and
+    // collapses an IPv6 /64 to one key so a routed /64 is not 2^64 free buckets.
+    const ip = getClientIp(request.headers);
 
     const supabaseAdmin = createAdminClient();
 

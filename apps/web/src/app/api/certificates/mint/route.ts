@@ -61,11 +61,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sized like the completions ceiling: a whole cohort finishing a course in
+    // one window mints once each, so this must clear a classroom, not a person.
     if (
       await isRateLimited(
         "certificates:mint:ip",
         getClientIp(request.headers),
-        { maxTokens: 60, refillIntervalMs: 3_600_000 }
+        { maxTokens: 200, refillIntervalMs: 3_600_000 }
       )
     ) {
       return NextResponse.json(

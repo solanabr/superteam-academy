@@ -6,8 +6,10 @@ vi.mock("server-only", () => ({}));
 const { getUser, signOut, update, eq, isRateLimited } = vi.hoisted(() => ({
   getUser: vi.fn<() => Promise<unknown>>(),
   signOut: vi.fn(),
-  update: vi.fn(),
-  eq: vi.fn<() => Promise<{ error: null }>>(),
+  // (table, payload) — the route now writes two tables, and WHICH table gets
+  // which payload is the property under test.
+  update: vi.fn<(table: string, payload: unknown) => void>(),
+  eq: vi.fn<() => Promise<{ error: unknown }>>(),
   isRateLimited: vi.fn<() => Promise<boolean>>(),
 }));
 
@@ -17,9 +19,9 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => ({
+    from: (table: string) => ({
       update: (payload: unknown) => {
-        update(payload);
+        update(table, payload);
         return { eq };
       },
     }),
@@ -31,8 +33,9 @@ vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
 
 import { POST } from "../route";
 
-type ProfileUpdate = Record<string, unknown>;
-const payload = (): ProfileUpdate => update.mock.calls[0]![0] as ProfileUpdate;
+type Payload = Record<string, unknown>;
+const payloadFor = (table: string): Payload =>
+  update.mock.calls.find((c) => c[0] === table)![1] as Payload;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -42,22 +45,31 @@ beforeEach(() => {
 });
 
 describe("account deletion anonymises the profile", () => {
-  it("nulls wallet_address (#410)", async () => {
+  it("nulls every external identifier, not just the display fields (#410)", async () => {
     const res = await POST();
-
     expect(res.status).toBe(200);
-    // wallet_address has a UNIQUE constraint. Retaining it on a tombstoned row
-    // would strand the wallet forever — unlinkable by its owner (the row is
-    // soft-deleted) and unclaimable by anyone else (the constraint still holds).
-    // It is also the strongest identifier on the row, so keeping it would defeat
-    // the anonymisation the rest of this payload performs.
-    expect(payload()).toHaveProperty("wallet_address", null);
+
+    const p = payloadFor("profiles");
+    // These three are what actually re-identify a person. wallet_address also
+    // carries a UNIQUE constraint, so retaining it pins the wallet to a
+    // tombstoned row. Scrubbing bio/avatar while keeping these anonymises nothing.
+    expect(p).toHaveProperty("wallet_address", null);
+    expect(p).toHaveProperty("google_id", null);
+    expect(p).toHaveProperty("github_id", null);
   });
 
-  it("scrubs every identifying column and tombstones the row", async () => {
+  it("scrubs the wallet from enrollments too, not just profiles", async () => {
+    await POST();
+    // enrollments carries its own wallet_address copy. Scrubbing only `profiles`
+    // would leave the wallet→user_id join intact one table over — the deletion
+    // would be cosmetic.
+    expect(payloadFor("enrollments")).toEqual({ wallet_address: null });
+  });
+
+  it("scrubs the display fields and tombstones the row", async () => {
     await POST();
 
-    const p = payload();
+    const p = payloadFor("profiles");
     expect(p.bio).toBeNull();
     expect(p.avatar_url).toBeNull();
     expect(p.social_links).toBeNull();
@@ -66,9 +78,22 @@ describe("account deletion anonymises the profile", () => {
     expect(p.username).toMatch(/^deleted-user-[0-9a-f]{8}$/);
   });
 
-  it("scopes the write to the session-derived id, never client input", async () => {
+  it("scopes both writes to the session-derived id, never client input", async () => {
     await POST();
     expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(eq).toHaveBeenCalledWith("user_id", "user-1");
+  });
+
+  it("reports a failed enrollment scrub instead of claiming success", async () => {
+    // The profile write lands, the enrollment scrub fails. Returning 200 here
+    // would tell the user their wallet is gone while it is still joinable.
+    eq.mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({
+      error: { message: "boom" },
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBe(500);
   });
 
   it("does not write when unauthenticated", async () => {

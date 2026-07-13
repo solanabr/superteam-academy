@@ -105,13 +105,19 @@ export async function POST(request: NextRequest) {
     // playthrough yields a `proofs` payload replayable from any number of free
     // SIWS accounts. These limits bound the resulting spend.
     //
-    // Both keys are needed. Per-user bounds one account hammering the route;
-    // it does nothing against Sybils, where every fresh account is a fresh key.
-    // Per-IP is the only one that bounds an actor — set high enough that a real
-    // cohort behind one NAT (an IRL bootcamp) never trips it. Neither stops a
-    // determined farmer with proxies; they bound the burn rate, and that is the
-    // honest claim. Runs before grading so a throttled caller never reaches the
-    // code executors.
+    // Both keys are needed. Per-user bounds one account hammering the route; it
+    // does nothing against Sybils, where every fresh account is a fresh key.
+    // Per-IP is the only one that bounds an actor. Neither stops a determined
+    // farmer with proxies — they bound the BURN RATE, and that is the honest
+    // claim. Runs before grading, so a throttled caller never reaches the code
+    // executors.
+    //
+    // The per-IP ceiling is sized off the worst legitimate case, not a round
+    // number: an IRL bootcamp behind one NAT (or a CGNAT'd mobile carrier, which
+    // is common in BR). Courses in the bundle run 12–16 lessons, so a 60-person
+    // cohort working through a 16-lesson course in one window is ~960 requests.
+    // 1200 clears that; a fixed-window counter is a cliff, not a throttle, so
+    // undershooting here 429s an entire classroom at once.
     if (
       await isRateLimited("lessons:complete", user.id, {
         maxTokens: 40,
@@ -126,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     if (
       await isRateLimited("lessons:complete:ip", getClientIp(request.headers), {
-        maxTokens: 300,
+        maxTokens: 1200,
         refillIntervalMs: 3_600_000,
       })
     ) {
