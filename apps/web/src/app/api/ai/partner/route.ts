@@ -285,8 +285,11 @@ export async function POST(request: NextRequest) {
       // here) but Gemini never ran — refund so a failed call doesn't burn
       // one of the user's 4 paid assists.
       await refundAssist(user.id, lesson._id);
+      // Surface the upstream status (not Gemini's raw body) so a config-side
+      // failure (403 API-not-enabled / key-restricted, 404 model, 429 quota)
+      // is diagnosable from the Network tab, not just the server logs.
       return NextResponse.json(
-        { error: "AI service unavailable" },
+        { error: "AI service unavailable", upstreamStatus: response.status },
         { status: 502 }
       );
     }
