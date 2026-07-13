@@ -84,13 +84,17 @@ export function buildDynamicSuffix(req: PartnerRequest): string {
   return sections.join("\n\n");
 }
 
+// Per-intent output token cap. These must comfortably fit the JSON payload the
+// model produces for that intent — if the response hits the cap mid-generation,
+// the JSON is truncated and JSON.parse fails (surfacing as a 502). `hint` is a
+// short sentence, but `ask` returns a full answer and `propose` returns the
+// ENTIRE updated file plus a 3-option check, so those need real headroom.
 const MAX_TOKENS: Record<PartnerAction, number> = {
-  hint: 160,
-  ask: 240,
-  propose: 500,
+  hint: 256,
+  ask: 1536,
+  propose: 4096,
 };
 
-/** Tight, per-intent output token cap — not a flat 1024. */
 export function maxTokensFor(action: PartnerAction): number {
   return MAX_TOKENS[action];
 }
