@@ -76,6 +76,27 @@ describe("getClientIp — IPv6 collapses to a /64 bucket", () => {
     expect(getClientIp(h({ "x-real-ip": "::1" }))).toBe("0:0:0:0::/64");
   });
 
+  it("keys on the ADDRESS, not on how it was spelled", () => {
+    // Same /64, three spellings: compressed, fully expanded, and zero-padded.
+    // Lowercasing a hextet without canonicalising it would emit "0db8" and
+    // "db8" as different keys — re-opening, via zero-padding alone, the very
+    // multi-bucket bypass the /64 collapse exists to close.
+    const key = (ip: string) => getClientIp(h({ "x-real-ip": ip }));
+
+    const compressed = key("2001:db8:85a3::8a2e:370:7334");
+    const expanded = key("2001:0db8:85a3:0000:0000:8a2e:0370:7334");
+    const padded = key("2001:0db8:85a3:0::1");
+
+    expect(expanded).toBe(compressed);
+    expect(padded).toBe(compressed);
+    expect(compressed).toBe("2001:db8:85a3:0::/64");
+  });
+
+  it("uppercase hex is the same bucket as lowercase", () => {
+    const key = (ip: string) => getClientIp(h({ "x-real-ip": ip }));
+    expect(key("2001:DB8:ABCD:1234::1")).toBe(key("2001:db8:abcd:1234::1"));
+  });
+
   it("unwraps an IPv4-mapped IPv6 address to the real IPv4", () => {
     expect(getClientIp(h({ "x-real-ip": "::ffff:203.0.113.7" }))).toBe(
       "203.0.113.7"

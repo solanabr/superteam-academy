@@ -48,9 +48,18 @@ function normalizeIp(raw: string): string {
     hextets = addr.split(":");
   }
 
+  // Canonicalise each hextet, don't just lowercase it. "0db8" and "db8" are the
+  // same 16 bits, so emitting them verbatim would key the SAME /64 into two
+  // different buckets depending only on how the address was spelled — handing
+  // back, through zero-padding, exactly the multi-bucket bypass this collapse
+  // exists to close. Parsing to a number and re-emitting makes the key a
+  // function of the address rather than of its formatting.
   const prefix = hextets
     .slice(0, 4)
-    .map((h) => (h || "0").toLowerCase())
+    .map((h) => {
+      const value = parseInt(h || "0", 16);
+      return Number.isNaN(value) ? "0" : value.toString(16);
+    })
     .join(":");
   return `${prefix}::/64`;
 }
