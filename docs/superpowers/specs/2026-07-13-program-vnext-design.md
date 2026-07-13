@@ -1,8 +1,20 @@
 # WS-1 — Program v-next: reward simplification, IDL cutover, devnet reset
 
-**Status:** design — no code. Gets a tri-audit before implementation starts.
+**Status:** design — no code. **rev-2**, post-tri-audit.
 **Parent:** `2026-07-12-launch-readiness-epic-design.md` (§WS-1), merged as `af658f4`.
+
+> **rev-2 changelog.** The tri-audit confirmed every on-chain claim field-by-field and found three HIGH defects, all on the client side, all of which rev-1 asserted away:
+>
+> - **H1 (§3.1)** — rev-1 said "migrate all seven consumers to `liveLessonCount`." Correct for six; **silently broken for the finalize trigger**, which mirrors an on-chain _subset_ test and must read the real `activeLessons` mask. This also settles the "is the synthesised mask gold-plating?" question: **keep it — it has exactly one reader, and that reader must never be wrong.**
+> - **H2 (§Phase 3)** — rev-1 said "leave the admin course routes open." They must be **BLOCKED**: they speak the v1 IDL against a v-next program, so even a one-click "deactivate" corrupts course state **under the authority key**.
+> - **H3 (§Phase 4)** — rev-1 said "learner progress survives." It survives **only if** each course is recreated with its _original_ on-chain lesson count. A larger one silently un-completes every mid-course learner.
+>
+> Corrected factual errors in rev-1: `/api/quests/daily` is **not** a queue-drain site (it calls `retryQuestXpForUser`, which is DB-only); **#432 is smaller than claimed** — `slots.json` already exists and is fully wired, so do not rebuild it; and the schema-sequencing rationale ("removing the schema field first breaks the compile gate") is **false** — Zod strips unknown keys.
+>
+> Unchanged and load-bearing: decoder-first ordering, the Arweave-XP migration priority, gating **inside** `retryPendingOnchainActions`, and the two-transaction close/create.
+
 **Closes on completion:** #449, #450, #332, #440, #432, #140, #141. Unblocks the G-2 launch gate (#139) → Squads custody (#305, WS-4).
+
 **Owner decisions already locked:** creator-reward cap removed entirely (accepted, insider-only risk — compensating control #459 shipped in `7809d2e`); Anchor-forward, #387 stays parked.
 
 ---
@@ -56,12 +68,48 @@ decode(accountInfo):
   anything else → throw (loudly — an unknown layout must never decode)
 ```
 
-v1's `lesson_count` is synthesised **up** into a dense mask; v-next's mask is read directly. Callers only ever see `activeLessons` / `liveLessonCount`. The consequences:
+v1's `lesson_count` is synthesised **up** into a dense mask; v-next's mask is read directly. The consequences:
 
-- All seven consumers migrate to `liveLessonCount` **once**, and are correct against both layouts. There is no second migration after the deploy.
 - The `|| 1` and `?? 0` fallbacks disappear, because the field they were defending against can no longer be absent.
 - The whole silent-garble class dies **structurally**, not by careful sequencing.
 - PR-1 becomes **behaviour-neutral on today's chain** (every live account is 224 bytes and takes the v1 branch), which makes it a safe, independently-mergeable change rather than part of a knife-edge cutover.
+
+### 3.1 Six consumers want the count. One wants the mask. (rev-2 — H1)
+
+**Rev-1 of this spec said "migrate all seven consumers to `liveLessonCount`." That was wrong, and it was wrong in the exact way an implementer would be.** It is correct for six of them and silently broken for the seventh.
+
+The seventh is the **finalize trigger** — `event-handlers.ts:453`, the webhook that decides whether a learner has finished a course and fires `finalize_course`. It calls `isAllLessonsComplete(lessonFlags, lessonCount)`, which is a **dense-prefix** test: it walks bits `0..count-1` and demands every one be set.
+
+The chain does something different. `finalize_course` gates on a **subset** test:
+
+```rust
+.all(|(flags, active)| flags & active == *active)   // finalize_course.rs:32
+```
+
+These two are equal **only while the mask is dense**. Today it always is, so nothing is broken _yet_. But **Phase 6 of this very spec introduces the ability to retire a lesson slot** (`update_course(new_active_lessons)` — that is the entire point of the v2 mask). The moment any course has a sparse mask, the prefix test and the subset test disagree, in both directions:
+
+- **Learner stranded.** A learner completes every _live_ slot — say the mask is `{0,1,2,4}` after slot 3 is retired. Their flags are `{0,1,2,4}`. `liveLessonCount` is 4, so the client checks bits `0..3` — and demands bit **3**, the retired slot they were never asked to do. It returns `false`, the webhook never fires, and a learner who genuinely finished **never gets their XP or their credential**.
+- **Doomed transaction.** A learner holds bits `{0,1,2,3}` (a dense prefix, including the retired slot) but has not done live slot 4. The client's prefix check passes, the webhook fires `finalize_course`, and the chain rejects it with `CourseNotCompleted` — a platform-funded transaction that can never succeed, re-queued forever.
+
+The program's own comment says this out loud, and rev-1 walked straight past it:
+
+> _"which is exactly what the v1 popcount-equality could not do (spec §5.1)"_ — `finalize_course.rs:29`
+
+**So `activeLessons` is not a fictional field.** It has exactly one legitimate reader, and that reader is the one that must never be wrong. The resolution:
+
+| Consumers                                          | Read                                       | Why                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| The six XP/display/admin sites                     | `liveLessonCount`                          | They genuinely want a scalar (XP math, "12 lessons", diff display).                                                               |
+| **The finalize trigger** (`event-handlers.ts:453`) | **`activeLessons`**, via a **subset test** | It is a _client-side mirror of an on-chain gate_. It must be bit-identical to the chain's, or it strands learners and burns fees. |
+
+`isAllLessonsComplete(flags, count)` should be **replaced**, not kept alongside — it has exactly one caller (verified: `event-handlers.ts:453` is the only one), and that caller is the one that needs the subset test. The new primitive mirrors the chain directly:
+
+```ts
+isCourseComplete(lessonFlags, activeLessons) =>
+  activeLessons.every((active, i) => (lessonFlags[i] & active) === active)
+```
+
+**The general rule this is an instance of:** any client-side predicate that decides whether to _fire an on-chain instruction_ must mirror the on-chain gate exactly. Approximating it with a cheaper scalar is how you get stranded users and doomed, fee-burning transactions — and both failures are silent.
 
 ### Why byte length is the only available signal
 
@@ -113,7 +161,15 @@ This is **cross-repo**, and the epic under-stated it:
 - All six course docs in `solanabr/courses-academy` set `minCompletionsForReward: 10`.
 - So it needs a **content-repo PR + a `content.lock` bump + a bundle recompile**, sequenced with the program deploy — not a program-only change.
 
-`minCompletionsForReward` should become optional-and-ignored in the schema first (so the content repo does not break the instant the program drops it), then be removed from the content docs in a follow-up. Sequencing the schema removal _before_ the content PR would break the compile gate.
+Remove `minCompletionsForReward` from the schema first, then from the content docs. **Rev-1 justified that ordering by claiming the reverse "would break the compile gate." That is false** — the Zod schema is not `.strict()` and the JSON Schema does not set `additionalProperties: false`, so `schema.parse` silently strips unknown keys. Either order works. Keep the two-step because it is tidy, not because it is load-bearing — and do not let anyone spend time defending a constraint that does not exist.
+
+### Test and CI surface (rev-2)
+
+Removing the field breaks fixtures and assertions that rev-1 did not enumerate. All of these must move in the same wave, or CI goes red for reasons unrelated to the actual change:
+
+- `onchain-academy/tests/rust/src/test_course.rs` — asserts `Course::SIZE == 255`. Becomes **253**.
+- The TS integration tests (`tests/onchain-academy.ts`) and the CU harness (`tests/cu-measurement.ts`) both pass `min_completions_for_reward` in `CreateCourseParams`.
+- **`onchain-academy/trident-tests/fuzz_0/types.rs:66-77` hand-copies the `Course` layout** for the fuzzer. It is **already stale against the in-tree v2** — so today the fuzzer is fuzzing a struct that does not exist. It must be regenerated, and it is worth asking why a hand-mirrored layout was allowed to drift silently in the first place (a mirror that can rot is a mirror that will).
 
 ---
 
@@ -145,21 +201,38 @@ Reproducible build, record the program hash, re-measure CU. These gate the deplo
 
 Every path that signs an on-chain write:
 
-| Path                                                         | Signer    | During the window                             |
-| ------------------------------------------------------------ | --------- | --------------------------------------------- |
-| `/api/lessons/complete`                                      | backend   | **BLOCK**                                     |
-| `/api/certificates/mint`                                     | backend   | **BLOCK**                                     |
-| `/api/webhooks/helius` → `event-handlers.ts`                 | backend   | **BLOCK** (finalize, credential, achievement) |
-| `lib/solana/onchain-queue.ts` → `retryPendingOnchainActions` | backend   | **BLOCK — see below**                         |
-| `/api/admin/courses/sync`                                    | authority | leave open (operator needs it)                |
-| `/api/admin/courses/{deactivate,reactivate}`                 | authority | leave open                                    |
-| `/api/admin/achievements/sync`                               | authority | leave open                                    |
+| Path                                                         | Signer        | During the window                             |
+| ------------------------------------------------------------ | ------------- | --------------------------------------------- |
+| `/api/lessons/complete`                                      | backend       | **BLOCK**                                     |
+| `/api/certificates/mint`                                     | backend       | **BLOCK**                                     |
+| `/api/webhooks/helius` → `event-handlers.ts`                 | backend       | **BLOCK** (finalize, credential, achievement) |
+| `lib/solana/onchain-queue.ts` → `retryPendingOnchainActions` | backend       | **BLOCK** — and _not_ at the route (§below)   |
+| `/api/admin/courses/sync`                                    | **authority** | **BLOCK** (rev-2 — H2)                        |
+| `/api/admin/courses/{deactivate,reactivate}`                 | **authority** | **BLOCK** (rev-2 — H2)                        |
+| `/api/admin/achievements/sync`                               | authority     | leave open — the only one that is safe        |
+| `/api/quests/daily` → `retryQuestXpForUser`                  | — (DB only)   | leave open (rev-2 — corrects rev-1)           |
 
-**The retry queue is drained from the login routes.** `retryPendingOnchainActions` is called from `/api/auth/wallet`, `/api/auth/callback`, and `/api/quests/daily` — _not_ from a cron. So **every user login replays queued on-chain writes**. A route-level gate on the four obvious write endpoints would leave login wide open, and each sign-in would fire backend-signed transactions at a half-migrated chain, burning platform fees and re-queueing failures that cannot succeed.
+#### The queue drain is not an endpoint — it fires on login
 
-The gate therefore has to live **inside** `retryPendingOnchainActions`, not only in front of routes.
+`retryPendingOnchainActions` is called from `/api/auth/wallet` and `/api/auth/callback` — _not_ from a cron. So **every user login replays queued backend-signed on-chain writes**. A route-level gate on the obvious write endpoints leaves sign-in wide open, and each login would fire transactions at a half-migrated chain, burning platform fees (the backend keypair is `payer`) and re-queueing failures that cannot succeed.
 
-Learner _reads_ stay up throughout: the catalog renders from the committed bundle, so browsing, lessons and content are unaffected. Only on-chain writes pause.
+**The gate must live _inside_ `retryPendingOnchainActions`, not in front of routes.** Nobody thinks of login as a write path.
+
+> **rev-1 error, corrected:** rev-1 also listed `/api/quests/daily` as a third drain site. It is not. That route calls `retryQuestXpForUser`, which settles `quest_xp` rows through the `award_xp` DB function and **signs nothing on chain**. Gating it would have paused quest XP for no reason. Quest XP keeps flowing through the window.
+
+#### The admin course routes must be blocked too (H2)
+
+Rev-1 said "leave the admin routes open — the operator needs them." **That is wrong, and it is the more dangerous half of the gate.**
+
+`/api/admin/courses/{sync,deactivate,reactivate}` all route through `create_course` / `update_course`, and `admin-signer.ts:26,261` binds the **v1 IDL** until Phase 6 ships. So during Phase 4–6 — v-next program live, client still v1 — those routes serialise **v1-layout instruction params against a v-next program**. `UpdateCourseParams` loses a field, so even a bare `{ newIsActive: true }` misaligns: the arg struct has a different _field count_, and Borsh is positional. The result is a corrupted `update_course` **signed with the platform authority key**.
+
+A one-click "deactivate this course" in the admin UI is enough to trigger it. These routes must be **blocked**, and the operator performs the migration with **scripts** (`onchain-academy/scripts/`) that speak the v-next IDL directly — which was always the plan for Phase 4 anyway.
+
+`/api/admin/achievements/sync` calls `create_achievement_type`, whose layout is untouched by this migration. It is the only admin route that is genuinely safe to leave open.
+
+#### What stays up
+
+Learner **reads** are unaffected throughout: the catalog renders from the committed bundle, so browsing, lessons, and content all keep working. Quest XP keeps flowing (DB-only). Only on-chain **writes** pause.
 
 ### Phase 4 — deploy + reset (the irreversible part)
 
@@ -180,13 +253,27 @@ Recreate each course with:
 
 - `creator` = the **instructor wallet** (#440 — `creator` is immutable, set once at `create_course`; all six currently carry the platform authority, so this is the only chance to fix it)
 - `creator_reward_xp` = **30**
-- `lesson_count` → dense mask (12, 16, 12, 12, 12, 12)
+- `lesson_count` = **the course's ORIGINAL on-chain v1 count** — see the precondition below
 - `collection`, `is_active`, `content_tx_id` restored
 - `min_completions_for_reward` — **gone**
 
-**Learner progress survives this.** Enrollments are separate PDAs keyed by `course_id`, untouched by `close_course`. The recreated Course lands at the _same address_ (seeds are `["course", course_id]`), so the `enrollment.course == course.key()` constraint still holds and `lesson_flags` are preserved. A learner mid-course keeps their completed lessons.
+#### Learner progress survives — but only if the recreate count is right (rev-2 — H3)
 
-**One thing does not survive, and it is not in the epic:** `create_course` sets `total_enrollments = 0` and `total_completions = 0`. The enrollment PDAs still exist, so **`total_enrollments` will under-report** — permanently, with no instruction to correct it. On devnet with test data this is noise; it is called out here so it is a decision and not a surprise. (`total_completions = 0` is now harmless — that reset is precisely what #450 was about, and with the reward window gone it has no economic consequence. **#450 dies here.**)
+Enrollments are separate PDAs keyed by `course_id`, untouched by `close_course`. The recreated Course lands at the _same address_ (seeds are `["course", course_id]`, and `declare_id!` is unchanged — this is an upgrade-in-place, same program ID), so `enrollment.course == course.key()` still holds and `lesson_flags` are preserved.
+
+**Rev-1 asserted that survival unconditionally. It is conditional.**
+
+`create_course` builds a **dense** mask from `lesson_count`, and `finalize_course` gates on the subset test (`flags & active == active`). So if a course is recreated with a **larger** `lesson_count` than the one its current learners enrolled under, the new mask demands bits those learners were never asked to set — and every mid-course learner **silently reverts from complete to incomplete**. They lose nothing on chain, but they can no longer finalize, and nothing surfaces the fact.
+
+**Precondition for Phase 4 — verify, do not assume:** read each of the six live Course accounts with the v1 coder and record its actual on-chain `lesson_count`. Recreate with **exactly that value**. Do **not** take the counts from the content bundle (12/16/12/12/12/12) on faith — the bundle is what the content _says today_; the chain is what learners _enrolled under_. If they differ, the chain wins for the recreate, and the difference is then reconciled through a normal `update_course(new_active_lessons)` **after** the migration, where the mask can grow deliberately rather than by accident.
+
+This makes `lesson_count`-at-recreate a **set-once value for anyone mid-course**, exactly like `creator`. Two irreversible values, one transaction.
+
+#### What does not survive
+
+`create_course` sets `total_enrollments = 0` and `total_completions = 0`, and `version` rewinds to `1`. The enrollment PDAs still exist, so **`total_enrollments` will under-report** permanently — there is no instruction that can write it back. On devnet with test data this is noise; it is called out so it is a decision, not a surprise.
+
+`total_completions = 0` is the reset #450 was about. With the reward window gone it has no _bounded-window_ consequence — **#450 dies here**. It is not quite "harmless," though, and rev-1 overstated that: under the accepted uncapped-reward model, zeroing the counter erases the only on-chain record of how much a course has already paid its creator. It does not enable anything the accepted risk does not already permit (the reward is uncapped either way), but it does remove the audit trail. Worth stating; not worth blocking on.
 
 ### Phase 5 — verify
 
@@ -194,9 +281,14 @@ Byte-verify the deployed program against the recorded hash (#355). Decode all si
 
 ### Phase 6 — client: write-path cutover
 
-Regenerated IDL becomes the only IDL for writes. Drop `min_completions_for_reward` from the create/update param builders. **Send the mask** (`new_active_lessons`), not `new_lesson_count`.
+Regenerated IDL becomes the only IDL for writes. Drop `min_completions_for_reward` from the create/update param builders. **Send the mask** (`new_active_lessons`), not `new_lesson_count`. Unblock the admin course routes that Phase 3 blocked — they are safe again the moment the client speaks v-next.
 
-This is where **#432** lives: today `admin-signer.ts:517` still sends `newLessonCount`, and the sync route's diff engine still models `lessonCount` as _increase-only_ (a v1 semantic — under a mask, removing a lesson is a routine bit-clear, not the "immutable decrease → recreate" the engine currently reports). The mask-writer is only partly built: there is mask plumbing at `admin-signer.ts:189-198`, but the write path is still v1-shaped, and `slots.lock.json` — which the program comment names as the invariant carrier the sync route must assert the mask against — exists **only as a content-lint test fixture**, not in the content repo. That gap is real WS-1 work and was not budgeted in the epic.
+**#432 is smaller than rev-1 claimed.** Rev-1 said `slots.lock.json` — the invariant carrier the program comment names — "exists only as a content-lint test fixture, not in the content repo," and budgeted building it. **That was wrong**, and the error was a too-literal filename grep: the compiled artifact is `src/content/generated/slots.json`. It is real content, emitted by the compiler, imported at `lib/content/store.ts:19`, and already cross-checked in the signer (`admin-signer.ts:175-191` — "asserts the mask matches the committed slots.lock before returning the signable params"). **The invariant carrier already exists and is already wired.** Do not rebuild it.
+
+What genuinely remains in #432 is two items:
+
+1. **The mask-writer.** `admin-signer.ts:517` still sends `newLessonCount`. It must send `newActiveLessons`, derived from `slots.json` and asserted against it before signing.
+2. **The diff engine.** `sync-diff.ts:190-195,297-307` still models `lessonCount` as _increase-only_ — a v1 semantic. Under a mask, retiring a lesson is a routine bit-clear, not the "immutable decrease → recreate" the engine currently reports. Left as-is, the admin would be told to close-and-recreate a course every time a lesson is removed, which is exactly the destructive operation this migration exists to avoid needing.
 
 Keep the v1 branch of the decoder until mainnet. Post-migration devnet is all-253, and a fresh mainnet will be all-253 — at that point the v1 branch is dead code and should be deleted, not left to rot.
 
@@ -210,9 +302,9 @@ PR #453 (recreate server path) carries a creator-reward-window pre-flight. Post-
 
 ## 6. Decisions needed before implementation
 
-1. **Instructor wallet pubkeys for all six courses.** This is a hard blocker on Phase 4, and it is the entire point of #440 — `creator` is immutable, so a recreate with the wrong value is not recoverable without _another_ close/recreate. Six real pubkeys are needed. If instructors are not yet assigned, the honest options are (a) delay Phase 4, or (b) recreate with placeholder wallets the platform controls and accept a second reset later — which is only acceptable on devnet, never on mainnet.
+1. **Instructor wallet pubkeys for all six courses.** The long-lead blocker on Phase 4, and the entire point of #440 — `creator` is immutable, so a recreate with the wrong value is not recoverable without _another_ close/recreate. Six real pubkeys are needed. If instructors are not yet assigned, the honest options are (a) delay Phase 4, or (b) recreate with placeholder wallets the platform controls and accept a second reset later — acceptable on devnet, **never** on mainnet. This decision is independent of the spec, so it can be chased in parallel with implementation.
 2. **`total_enrollments` reset to 0.** Accept the under-count on devnet, or add a backfill? (There is no instruction to write it; a backfill would mean a program change.)
-3. **Devnet downtime window.** Learner on-chain writes pause for the length of Phase 4. Reads stay up. When?
+3. **The downtime window — wider than rev-1 said (H2).** Learner on-chain **writes** pause, and so do the **web-admin course toggles** (activate/deactivate/sync), because those routes speak the v1 IDL until Phase 6. Reads, browsing, lessons, and quest XP all stay up. The operator drives the migration with scripts, not the admin UI. When?
 
 ---
 
@@ -226,16 +318,20 @@ PR #453 (recreate server path) carries a creator-reward-window pre-flight. Post-
 
 ## 8. Risk register
 
-| Risk                                                         | Severity         | Mitigation                                                                                |
-| ------------------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------- | --- | ---------------------------------------- |
-| v1 client silently garbles v-next accounts                   | **CRITICAL**     | Phase 1 ships the normalising decoder first, behaviour-neutral. Ordering stops mattering. |
-| Credential NFTs minted with wrong XP → Arweave-permanent     | **CRITICAL**     | Same. The three `                                                                         |     | 1` sites are the top migration priority. |
-| `close_course` cannot touch stale accounts → courses bricked | **was CRITICAL** | **Retired.** Verified: `close_course` uses `UncheckedAccount` by design.                  |
-| Login-triggered queue drain fires at a half-migrated chain   | **HIGH**         | Gate inside `retryPendingOnchainActions`, not just at routes. Not in the epic's plan.     |
-| Deploy corrupted by public devnet RPC                        | **HIGH**         | Helius RPC only.                                                                          |
-| Wrong/placeholder `creator` baked in immutably               | **HIGH**         | Decision 1 above. Blocks Phase 4.                                                         |
-| Mask-writer + `slots.lock.json` unbuilt (#432)               | **MEDIUM**       | Scoped into Phase 6. Do not discover it there.                                            |
-| `total_enrollments` under-reports after reset                | **LOW**          | Decision 2 above.                                                                         |
+| Risk                                                                                                            | Severity             | Mitigation                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| v1 client silently garbles v-next accounts                                                                      | **CRITICAL**         | Phase 1 ships the normalising decoder first, behaviour-neutral. Ordering stops mattering.                           |
+| Credential NFTs minted with wrong XP → Arweave-permanent                                                        | **CRITICAL**         | Same. The three `\|\| 1` sites are the top migration priority — the only irreversible consequence in the migration. |
+| Finalize trigger uses a count, not the mask → learners stranded / doomed fee-burning txs once a slot is retired | **HIGH** (rev-2, H1) | §3.1. Wire the finalize trigger to `activeLessons` + the subset test. Replace `isAllLessonsComplete`.               |
+| Admin course routes speak v1 IDL to a v-next program → authority-signed layout corruption                       | **HIGH** (rev-2, H2) | Phase 3. **Block** `/api/admin/courses/*`. Operator migrates with scripts.                                          |
+| Recreate with a larger lesson count → mid-course learners silently un-completed                                 | **HIGH** (rev-2, H3) | Phase 4 precondition: read each course's **original on-chain** count and reuse it exactly.                          |
+| Login-triggered queue drain fires at a half-migrated chain                                                      | **HIGH**             | Gate **inside** `retryPendingOnchainActions`, not at routes. Not in the epic's plan.                                |
+| Deploy corrupted by public devnet RPC                                                                           | **HIGH**             | Helius RPC only.                                                                                                    |
+| Wrong/placeholder `creator` baked in immutably                                                                  | **HIGH**             | Decision 1. Blocks Phase 4.                                                                                         |
+| Trident fuzz mirror hand-copies a stale `Course` layout                                                         | **MEDIUM**           | Regenerate. It is _already_ stale against v2 — the fuzzer is currently fuzzing a struct that does not exist.        |
+| Mask-writer + increase-only diff engine (#432)                                                                  | **MEDIUM**           | Scoped into Phase 6. Smaller than rev-1 thought — `slots.json` already exists and is wired.                         |
+| `close_course` cannot touch stale accounts → courses bricked                                                    | ~~CRITICAL~~         | **Retired.** Verified: `close_course` takes an `UncheckedAccount` by design.                                        |
+| `total_enrollments` under-reports after reset                                                                   | **LOW**              | Decision 2.                                                                                                         |
 
 ---
 
@@ -243,10 +339,13 @@ PR #453 (recreate server path) carries a creator-reward-window pre-flight. Post-
 
 - [ ] Program v-next deployed to devnet via Helius, byte-verified against a recorded reproducible-build hash.
 - [ ] IDL in the client regenerated from the **final v-next source**, not the in-tree v2.
-- [ ] All seven `lesson_count` consumers read `liveLessonCount`; no `|| 1` or `?? 0` fallback on a chain-read count survives anywhere.
+- [ ] **Six** count-consumers read `liveLessonCount`; no `|| 1` or `?? 0` fallback on a chain-read count survives anywhere.
+- [ ] **The finalize trigger reads `activeLessons` and applies the subset test** (`flags & active == active`), bit-identical to `finalize_course`. `isAllLessonsComplete` (dense-prefix) is **gone**, not merely unused. **(H1)**
+- [ ] A test proves the finalize trigger is correct against a **sparse** mask — a learner who completed every live slot finalizes, and one who is missing a live slot does not. Without this, H1 regresses the first time a lesson is retired.
 - [ ] Six Course accounts live at 253 bytes with instructor `creator`s and `creator_reward_xp = 30`.
-- [ ] A learner enrolled before the reset can still complete their course and finalize.
-- [ ] `min_completions_for_reward` is gone from the program, the IDL, the client, `packages/content-schema`, and the content repo.
+- [ ] **Each recreated course's `lesson_count` equals the value read off its original on-chain account**, not the bundle's. **(H3)**
+- [ ] A learner enrolled before the reset can still complete their course and finalize — **verified on devnet against a real pre-reset enrollment**, not asserted.
+- [ ] `min_completions_for_reward` is gone from the program, the IDL, the client, `packages/content-schema`, the content repo, the Rust/TS/CU tests, and the Trident fuzz mirror.
 - [ ] The deploy path writes the mask; the diff engine no longer models a lesson removal as an immutable-decrease recreate.
 - [ ] #453's reward-window pre-flight is deleted.
-- [ ] Maintenance gate lifted; queue drain confirmed healthy.
+- [ ] Maintenance gate lifted — including the admin course routes blocked in Phase 3 **(H2)** — and the queue drain confirmed healthy.
