@@ -63,7 +63,6 @@ describe("onchain-academy", () => {
   // Completion bonus is now 50% of total lesson XP = (XP_PER_LESSON * LESSON_COUNT) / 2
   const EXPECTED_BONUS_XP = Math.floor((XP_PER_LESSON * LESSON_COUNT) / 2);
   const CREATOR_REWARD_XP = 50;
-  const MIN_COMPLETIONS_FOR_REWARD = 1;
 
   const contentTxId = new Array(32).fill(1);
 
@@ -391,7 +390,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: CREATOR_REWARD_XP,
-          minCompletionsForReward: MIN_COMPLETIONS_FOR_REWARD,
           collection: null,
         })
         .accountsPartial({
@@ -414,9 +412,6 @@ describe("onchain-academy", () => {
       expect(course.trackLevel).to.equal(1);
       expect(course.prerequisite).to.be.null;
       expect(course.creatorRewardXp).to.equal(CREATOR_REWARD_XP);
-      expect(course.minCompletionsForReward).to.equal(
-        MIN_COMPLETIONS_FOR_REWARD
-      );
       expect(course.totalCompletions).to.equal(0);
       expect(course.totalEnrollments).to.equal(0);
       expect(course.isActive).to.equal(true);
@@ -444,7 +439,6 @@ describe("onchain-academy", () => {
             trackLevel: 1,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -485,7 +479,6 @@ describe("onchain-academy", () => {
             trackLevel: 1,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -526,7 +519,6 @@ describe("onchain-academy", () => {
             trackLevel: 1,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -566,7 +558,6 @@ describe("onchain-academy", () => {
             trackLevel: 1,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -606,7 +597,6 @@ describe("onchain-academy", () => {
             trackLevel: 1,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -645,7 +635,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -681,7 +670,6 @@ describe("onchain-academy", () => {
             trackLevel: difficulty,
             prerequisite: null,
             creatorRewardXp: 0,
-            minCompletionsForReward: 0,
             collection: null,
           })
           .accountsPartial({
@@ -711,7 +699,6 @@ describe("onchain-academy", () => {
           newIsActive: null,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -734,7 +721,6 @@ describe("onchain-academy", () => {
           newIsActive: false,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -755,7 +741,6 @@ describe("onchain-academy", () => {
           newIsActive: true,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -784,7 +769,6 @@ describe("onchain-academy", () => {
           newIsActive: null,
           newXpPerLesson: 200,
           newCreatorRewardXp: 50,
-          newMinCompletionsForReward: 5,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -798,7 +782,6 @@ describe("onchain-academy", () => {
       const course = await program.account.course.fetch(diffPda);
       expect(course.xpPerLesson).to.equal(200);
       expect(course.creatorRewardXp).to.equal(50);
-      expect(course.minCompletionsForReward).to.equal(5);
       expect(Array.from(course.contentTxId)).to.deep.equal(newContent);
       expect(course.version).to.equal(2);
     });
@@ -823,7 +806,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -844,7 +826,6 @@ describe("onchain-academy", () => {
           newIsActive: null,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: firstCollection,
           newActiveLessons: null,
         })
@@ -866,7 +847,6 @@ describe("onchain-academy", () => {
             newIsActive: null,
             newXpPerLesson: null,
             newCreatorRewardXp: null,
-            newMinCompletionsForReward: null,
             newCollection: secondCollection,
             newActiveLessons: null,
           })
@@ -892,7 +872,6 @@ describe("onchain-academy", () => {
           newIsActive: null,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: firstCollection,
           newActiveLessons: null,
         })
@@ -922,7 +901,6 @@ describe("onchain-academy", () => {
             newIsActive: false,
             newXpPerLesson: null,
             newCreatorRewardXp: null,
-            newMinCompletionsForReward: null,
             newCollection: null,
             newActiveLessons: null,
           })
@@ -966,7 +944,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -988,7 +965,6 @@ describe("onchain-academy", () => {
             newIsActive: null,
             newXpPerLesson: null,
             newCreatorRewardXp: null,
-            newMinCompletionsForReward: null,
             newCollection: null,
             newActiveLessons: mask,
           })
@@ -1108,7 +1084,6 @@ describe("onchain-academy", () => {
           newIsActive: false,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -1162,7 +1137,6 @@ describe("onchain-academy", () => {
           newIsActive: true,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: null,
         })
@@ -1377,7 +1351,8 @@ describe("onchain-academy", () => {
         XP_PER_LESSON * LESSON_COUNT + EXPECTED_BONUS_XP
       );
 
-      // Creator XP: 50 (reward met since totalCompletions=1 >= minCompletionsForReward=1)
+      // Creator XP: 50 (creator reward is flat/unconditional whenever
+      // creator_reward_xp > 0 — WS-1: no threshold, no window).
       const creatorAta = await getAccount(
         provider.connection,
         creatorTokenAccount,
@@ -1433,7 +1408,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 10,
-          minCompletionsForReward: 1,
           collection: null,
         })
         .accountsPartial({
@@ -1558,7 +1532,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -1818,7 +1791,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -1907,9 +1879,9 @@ describe("onchain-academy", () => {
   });
 
   // ===========================================================================
-  // 11. Finalize without creator reward (below threshold)
+  // 11. Creator reward is flat and unconditional (WS-1: threshold/window removed)
   // ===========================================================================
-  describe("11. Creator reward threshold", () => {
+  describe("11. Creator reward (flat, no threshold)", () => {
     const threshId = "threshold-test";
     let threshCoursePda: PublicKey;
     const threshLearner = Keypair.generate();
@@ -1932,7 +1904,9 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      // Course with min_completions_for_reward = 10 (high threshold)
+      // WS-1: there is no min_completions_for_reward field anymore — the
+      // creator reward now pays on every completion whenever creator_reward_xp
+      // > 0, starting with the very first one.
       await program.methods
         .createCourse({
           courseId: threshId,
@@ -1945,7 +1919,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 100,
-          minCompletionsForReward: 10,
           collection: null,
         })
         .accountsPartial({
@@ -2031,7 +2004,7 @@ describe("onchain-academy", () => {
       await provider.connection.confirmTransaction(clSig, "confirmed");
     });
 
-    it("creator gets no reward when below threshold", async () => {
+    it("creator gets the reward on the very first completion (no threshold)", async () => {
       const sig = await program.methods
         .finalizeCourse()
         .accountsPartial({
@@ -2062,14 +2035,16 @@ describe("onchain-academy", () => {
       );
       expect(Number(learnerAta.amount)).to.equal(50 + 25);
 
-      // Creator gets 0 (totalCompletions=1 < minCompletionsForReward=10)
+      // Creator gets 100 (== creator_reward_xp): WS-1 pays on every completion,
+      // no threshold to cross — the old "below threshold => 0" case no longer
+      // exists in the program.
       const creatorAta = await getAccount(
         provider.connection,
         threshCreatorTokenAccount,
         "confirmed",
         TOKEN_2022_PROGRAM_ID
       );
-      expect(Number(creatorAta.amount)).to.equal(0);
+      expect(Number(creatorAta.amount)).to.equal(100);
     });
   });
 
@@ -2107,7 +2082,6 @@ describe("onchain-academy", () => {
           trackLevel: 2,
           prerequisite: coursePda, // requires solana-101
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -2378,7 +2352,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: collectionAddress,
         })
         .accountsPartial({
@@ -2967,7 +2940,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -3124,7 +3096,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -3251,7 +3222,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 10,
-          minCompletionsForReward: 1,
           collection: null,
         })
         .accountsPartial({
@@ -3317,7 +3287,7 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(clSig, "confirmed");
 
-      // Finalize: creator gets reward since minCompletionsForReward=1
+      // Finalize: creator gets the flat per-completion reward (WS-1: no threshold)
       // Need a dedicated creator ATA for this course's creator (reuse existing)
       const fsig = await program.methods
         .finalizeCourse()
@@ -4303,7 +4273,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -4442,7 +4411,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -5053,7 +5021,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -5219,7 +5186,6 @@ describe("onchain-academy", () => {
           trackLevel: 2,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -5422,7 +5388,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: ksCollection,
         })
         .accountsPartial({
@@ -5908,7 +5873,6 @@ describe("onchain-academy", () => {
           newIsActive: null,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
           newActiveLessons: slotsToMask([0, 2]),
         })
@@ -5933,7 +5897,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -6031,7 +5994,6 @@ describe("onchain-academy", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -6096,7 +6058,8 @@ describe("onchain-academy", () => {
           .rpc();
       }
 
-      const enrollment = await program.account.enrollment.fetch(rejectEnrollPda);
+      const enrollment =
+        await program.account.enrollment.fetch(rejectEnrollPda);
       // Slots 0 and 2 set: 0b101 = 5.
       expect(enrollment.lessonFlags[0].toNumber() & 0x7).to.equal(0b101);
     });

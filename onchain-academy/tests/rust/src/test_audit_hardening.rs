@@ -335,39 +335,16 @@ fn audit_fixes_reuse_existing_codes_without_shifting_them() {
     assert_eq!(6000 + AcademyError::XpAmountExceedsMax as u32, 6033);
 }
 
-// --- Fix 5: creator-reward window (bound the per-completion drip) ---
+// --- WS-1: creator reward is flat and unbounded (window removed) ---
 
-const CREATOR_REWARD_WINDOW: u32 = 100;
-
-/// Mirrors the finalize_course gate: the creator reward is paid only for
-/// completions in [min_completions, min_completions + WINDOW) — bounding the
-/// per-completion drip by reusing the existing total_completions counter, so
-/// aggregate creator XP can't run away (Sybil-farmable) once popular.
-fn creator_reward_paid(total_completions: u32, min_completions: u32, reward_xp: u32) -> bool {
-    let reward_end = min_completions.saturating_add(CREATOR_REWARD_WINDOW);
-    reward_xp > 0 && total_completions >= min_completions && total_completions < reward_end
+// Mirrors the finalize_course gate post-WS-1: pay iff reward_xp > 0. These pin
+// the new gate so a reintroduced cap fails CI instead of landing silently.
+fn creator_reward_paid(reward_xp: u32) -> bool {
+    reward_xp > 0
 }
 
 #[test]
-fn creator_reward_only_within_the_window() {
-    let min = 10u32;
-    assert!(!creator_reward_paid(9, min, 750)); // below threshold: nothing
-    assert!(creator_reward_paid(10, min, 750)); // first qualifying completion
-    assert!(creator_reward_paid(109, min, 750)); // last in-window (min + WINDOW - 1)
-    assert!(!creator_reward_paid(110, min, 750)); // window closed — drip stops
-    assert!(!creator_reward_paid(10_000, min, 750)); // ...stays closed forever
-    assert!(!creator_reward_paid(50, min, 0)); // reward_xp == 0 never pays
-}
-
-#[test]
-fn creator_reward_total_is_capped_regardless_of_completions() {
-    // No matter how many (potentially Sybil) completions occur, the creator is
-    // paid at most WINDOW times => WINDOW * creator_reward_xp total.
-    let min = 10u32;
-    let reward_xp: u64 = 750;
-    let payouts = (min..)
-        .take_while(|&c| creator_reward_paid(c, min, reward_xp as u32))
-        .count() as u64;
-    assert_eq!(payouts, CREATOR_REWARD_WINDOW as u64);
-    assert_eq!(payouts * reward_xp, 75_000);
+fn creator_reward_paid_on_every_completion_when_set() {
+    assert!(creator_reward_paid(30));
+    assert!(!creator_reward_paid(0));
 }

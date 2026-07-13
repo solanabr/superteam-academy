@@ -74,7 +74,6 @@ pub struct CreateCourseParams {
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
-    pub min_completions_for_reward: u16,
     pub collection: Option<Pubkey>,
 }
 
@@ -195,20 +194,22 @@ pub struct EnrollmentAccount {
 }
 
 /// Borsh body of the `Course` account (after the 8-byte discriminator).
+///
+/// `active_lessons` (CS-3) replaced the v1 `lesson_count: u8` — a 256-bit mask
+/// ([u64; 4]) of live lesson slots, mirroring `Enrollment.lesson_flags`.
 #[derive(BorshDeserialize, Debug, Clone)]
 pub struct CourseAccount {
     pub course_id: String,
     pub creator: Pubkey,
     pub content_tx_id: [u8; 32],
     pub version: u16,
-    pub lesson_count: u8,
+    pub active_lessons: [u64; 4],
     pub difficulty: u8,
     pub xp_per_lesson: u32,
     pub track_id: u16,
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
-    pub min_completions_for_reward: u16,
     pub total_completions: u32,
     pub total_enrollments: u32,
     pub is_active: bool,

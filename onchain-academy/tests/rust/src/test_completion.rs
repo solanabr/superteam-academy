@@ -124,8 +124,6 @@ fn completion_bonus_xp_is_50_percent_of_total() {
     let xp_per_lesson: u32 = 100;
     let live_lesson_count: u8 = 5;
     let creator_reward_xp: u32 = 50;
-    let min_completions_for_reward: u16 = 3;
-    let total_completions: u32 = 3;
 
     let total_lesson_xp = (xp_per_lesson as u64) * (live_lesson_count as u64);
     assert_eq!(total_lesson_xp, 500);
@@ -133,13 +131,12 @@ fn completion_bonus_xp_is_50_percent_of_total() {
     let bonus_xp = total_lesson_xp / 2;
     assert_eq!(bonus_xp, 250);
 
-    // Creator reward is minted if threshold met
-    assert!(total_completions >= min_completions_for_reward as u32);
     let total_xp_to_learner = total_lesson_xp + bonus_xp;
     assert_eq!(total_xp_to_learner, 750);
 
-    // Creator gets their reward
-    assert_eq!(creator_reward_xp, 50);
+    // Creator reward is now unconditional on completion (WS-1: no threshold, no
+    // window) whenever creator_reward_xp > 0.
+    assert!(creator_reward_xp > 0);
 }
 
 #[test]
@@ -153,15 +150,14 @@ fn completion_bonus_zero_when_xp_per_lesson_is_one() {
 }
 
 #[test]
-fn creator_reward_below_threshold_means_no_mint() {
-    let min_completions_for_reward: u16 = 5;
-    let total_completions: u32 = 4; // below threshold
-    let creator_reward_xp: u32 = 100;
+fn creator_reward_gate_is_reward_xp_only() {
+    // WS-1: the `total_completions >= min_completions` threshold and the window
+    // are gone. finalize_course now mints the creator reward iff reward_xp > 0,
+    // on the first completion and every one after.
+    let mint = |reward_xp: u32| reward_xp > 0;
 
-    // finalize_course: `if total_completions >= min_completions && creator_reward_xp > 0`
-    let should_mint =
-        total_completions >= min_completions_for_reward as u32 && creator_reward_xp > 0;
-    assert!(!should_mint);
+    assert!(mint(100)); // first completion pays — no threshold to cross
+    assert!(!mint(0)); // reward_xp == 0 is the only thing that suppresses it
 }
 
 #[test]

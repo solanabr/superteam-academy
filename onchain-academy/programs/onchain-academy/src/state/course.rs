@@ -20,8 +20,8 @@ pub struct Course {
     pub track_id: u16,
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
+    /// Flat XP to the creator per completion; intentionally uncapped on chain.
     pub creator_reward_xp: u32,
-    pub min_completions_for_reward: u16,
     pub total_completions: u32,
     pub total_enrollments: u32,
     pub is_active: bool,
@@ -35,12 +35,9 @@ pub struct Course {
 }
 
 impl Course {
-    // SIZE grew 224 -> 255 in v2 (CS-3): `lesson_count` (u8, -1) was deleted and
-    // `active_lessons: [u64; 4]` (+32) added; `_reserved: [u8; 8]` is preserved
-    // (the "reserved bytes on every account" convention is kept, not consumed).
-    // Old 224-byte Course accounts no longer deserialize, so EVERY instruction
-    // that resolves `course: Account<Course>` fails until the account is recreated
-    // via close_course + create_course. That recreation is CS-4's execution.
+    // SIZE = 253. The client decoder dispatches on account length, so this must
+    // not drift to 255 (the never-deployed v2 layout) — do not grow _reserved to
+    // reclaim the 2 bytes freed by dropping min_completions_for_reward.
     // 8 (discriminator)
     // + (4 + 32) (course_id)
     // + 32 (creator)
@@ -53,7 +50,6 @@ impl Course {
     // + 1 (track_level)
     // + (1 + 32) (prerequisite)
     // + 4 (creator_reward_xp)
-    // + 2 (min_completions_for_reward)
     // + 4 (total_completions)
     // + 4 (total_enrollments)
     // + 1 (is_active)
@@ -74,7 +70,6 @@ impl Course {
         + 1
         + (1 + 32)
         + 4
-        + 2
         + 4
         + 4
         + 1
@@ -82,7 +77,7 @@ impl Course {
         + 8
         + 32
         + 8
-        + 1; // 255
+        + 1; // 253
 
     /// True if `slot` is a live lesson slot (its bit is set in `active_lessons`).
     /// `slot: u8` spans 0..=255, so every value maps to a valid word/bit of the

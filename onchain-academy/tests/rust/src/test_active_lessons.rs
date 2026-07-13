@@ -51,7 +51,6 @@ fn update_course_params_new_active_lessons_roundtrip() {
         new_is_active: None,
         new_xp_per_lesson: None,
         new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
         new_collection: None,
         new_active_lessons: Some(target),
     };
@@ -68,7 +67,6 @@ fn update_course_params_new_active_lessons_roundtrip() {
         new_is_active: None,
         new_xp_per_lesson: None,
         new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
         new_collection: None,
         new_active_lessons: None,
     };
