@@ -58,8 +58,12 @@ describe("partner-prompt", () => {
     expect(buildStaticPrefix(ctx)).not.toContain("let x = 1;");
   });
 
-  it("token caps are tight per intent", () => {
-    expect(maxTokensFor("hint")).toBeLessThanOrEqual(160);
-    expect(maxTokensFor("propose")).toBeLessThanOrEqual(500);
+  it("token caps grow with intent and stay within the model ceiling", () => {
+    // Ordered by how much output each intent needs — hint (a sentence) <
+    // ask (a full answer) < propose (the entire updated file + a 3-option
+    // check) — and every cap fits Flash-Lite's 8192-token output ceiling.
+    expect(maxTokensFor("hint")).toBeLessThan(maxTokensFor("ask"));
+    expect(maxTokensFor("ask")).toBeLessThan(maxTokensFor("propose"));
+    expect(maxTokensFor("propose")).toBeLessThanOrEqual(8192);
   });
 });
