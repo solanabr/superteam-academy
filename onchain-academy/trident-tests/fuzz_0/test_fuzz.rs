@@ -265,10 +265,9 @@ impl FuzzTest {
         let enrollment = self.derive_enrollment(&learner);
         let learner_token_account = self.derive_ata(&learner, &xp_mint);
 
-        // How many lessons does this course actually have? CS-3/WS-1: the account
-        // no longer stores a raw lesson_count — derive it as the popcount of the
-        // active_lessons mask. `start` never retires a slot, so the course stays
-        // dense and this popcount equals the fuzzed lesson_count used at creation.
+        // The account stores no raw lesson_count — derive it as the popcount of
+        // the active_lessons mask. `start` never retires a slot, so the course
+        // stays dense and this popcount equals the lesson_count used at creation.
         let lesson_count: u32 = match self
             .trident
             .get_account_with_type::<CourseAccount>(&course, 8)

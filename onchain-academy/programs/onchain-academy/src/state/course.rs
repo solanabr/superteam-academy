@@ -20,7 +20,8 @@ pub struct Course {
     pub track_id: u16,
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
-    /// Flat XP to the creator per completion; intentionally uncapped on chain.
+    /// XP minted to the creator on every completion; no completion-count
+    /// threshold or window (still bounded per mint by MAX_XP_PER_MINT).
     pub creator_reward_xp: u32,
     pub total_completions: u32,
     pub total_enrollments: u32,

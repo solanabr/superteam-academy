@@ -5,7 +5,7 @@ use solana_sdk::pubkey::Pubkey;
 
 #[test]
 fn course_size_constant_is_correct() {
-    // v-next (WS-1): v2's 255 - 2 (deleted min_completions_for_reward u16) = 253.
+    // 253 = prior 255 - 2 (deleted min_completions_for_reward u16).
     // 8 (discriminator) + (4 + 32) (course_id) + 32 (creator) + 32 (content_tx_id)
     // + 2 (version) + 32 (active_lessons: [u64; 4]) + 1 (difficulty) + 4 (xp_per_lesson)
     // + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)

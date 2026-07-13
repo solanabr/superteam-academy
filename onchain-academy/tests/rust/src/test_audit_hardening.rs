@@ -334,17 +334,3 @@ fn audit_fixes_reuse_existing_codes_without_shifting_them() {
     assert_eq!(6000 + AcademyError::WrongXpMint as u32, 6032);
     assert_eq!(6000 + AcademyError::XpAmountExceedsMax as u32, 6033);
 }
-
-// --- WS-1: creator reward is flat and unbounded (window removed) ---
-
-// Mirrors the finalize_course gate post-WS-1: pay iff reward_xp > 0. These pin
-// the new gate so a reintroduced cap fails CI instead of landing silently.
-fn creator_reward_paid(reward_xp: u32) -> bool {
-    reward_xp > 0
-}
-
-#[test]
-fn creator_reward_paid_on_every_completion_when_set() {
-    assert!(creator_reward_paid(30));
-    assert!(!creator_reward_paid(0));
-}
