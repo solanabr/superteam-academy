@@ -137,8 +137,9 @@ export const GEMINI_RESPONSE_SCHEMA = {
         },
         correctIndex: {
           type: "integer",
-          minimum: 0,
-          maximum: 2,
+          // NOTE: no `minimum`/`maximum` — Gemini's structured-output schema
+          // dialect rejects those numeric-constraint keywords with a 400. The
+          // 0–2 range is enforced at runtime in `validatePartnerResponse`.
           description: "Index (0-2) of the single correct option.",
         },
         explanation: {
