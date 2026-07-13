@@ -27,8 +27,11 @@ const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
 
+// gemini-2.5-flash-lite is no longer available to new API keys (404
+// "no longer available to new users"). Use the GA flagship flash model, which
+// is available to new keys and supports structured output (responseSchema).
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 const VALID_ACTIONS: readonly PartnerAction[] = ["hint", "propose", "ask"];
 
