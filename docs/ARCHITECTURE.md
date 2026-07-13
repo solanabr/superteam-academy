@@ -949,7 +949,6 @@ client-side route for a full lesson read.
 | `/api/admin/auth`               | POST     | None  | Exchange `ADMIN_SECRET` for the signed `admin_session` cookie               |
 | `/api/admin/status`             | GET      | Admin | Program liveness, authority match, per-item deploy state (drives 2 screens) |
 | `/api/admin/publish/pin`        | GET      | Admin | Pinned bundle SHA vs `courses-academy` HEAD + CI checks + drift verdict     |
-| `/api/admin/content/drift`      | GET      | Admin | Bundle SHA vs HEAD, plus per-course chain drift (`content_tx_id == HEAD`)   |
 | `/api/admin/courses/sync`       | POST     | Admin | Deploy course PDA + track collection on-chain, record it in Supabase        |
 | `/api/admin/courses/deactivate` | POST     | Admin | Set course `is_active = false` (hides it from learners)                     |
 | `/api/admin/courses/reactivate` | POST     | Admin | Set course `is_active = true`                                               |

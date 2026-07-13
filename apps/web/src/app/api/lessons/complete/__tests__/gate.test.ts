@@ -13,6 +13,7 @@ const {
   codeGrader,
   openAttestation,
   isOnChainProgramLive,
+  isRateLimited,
 } = vi.hoisted(() => ({
   getUser: vi.fn<() => Promise<unknown>>(),
   singleProfile: vi.fn<() => Promise<unknown>>(),
@@ -21,6 +22,12 @@ const {
   codeGrader: vi.fn<() => Promise<GradeResult>>(),
   openAttestation: vi.fn<() => boolean>(),
   isOnChainProgramLive: vi.fn<() => Promise<boolean>>(),
+  isRateLimited: vi.fn<(ns: string) => Promise<boolean>>(),
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  isRateLimited: (ns: string) => isRateLimited(ns),
+  getClientIp: () => "203.0.113.7",
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -84,6 +91,56 @@ beforeEach(() => {
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   singleProfile.mockResolvedValue({ data: { wallet_address: "wallet-1" } });
   isOnChainProgramLive.mockResolvedValue(false);
+  isRateLimited.mockResolvedValue(false);
+});
+
+// This route is the chokepoint for every platform-funded on-chain write: the
+// backend keypair is payer AND signer, and the LessonCompleted webhook cascades
+// from it into finalize_course and issue_credential. The gate below proves
+// answers are correct, not that a person produced them — so volume is bounded
+// here (#459).
+describe("volume gate (#459)", () => {
+  const lesson = { blocks: [{ _type: "code", key: "c1" }] };
+
+  it("per-user limit → 429, and grading never runs", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    isRateLimited.mockImplementation(async (ns) => ns === "lessons:complete");
+
+    const res = await call({ c1: { code: "correct" } });
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("3600");
+    // Throttling must short-circuit BEFORE the graders — otherwise a throttled
+    // caller still burns a code-executor run per request.
+    expect(codeGrader).not.toHaveBeenCalled();
+    expect(isOnChainProgramLive).not.toHaveBeenCalled();
+  });
+
+  it("per-IP limit → 429 even when the per-user limit is clear", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    // The per-IP key is the only one that bounds a Sybil farm: every fresh
+    // account is a fresh per-user key, so per-user alone would never trip.
+    isRateLimited.mockImplementation(
+      async (ns) => ns === "lessons:complete:ip"
+    );
+
+    const res = await call({ c1: { code: "correct" } });
+
+    expect(res.status).toBe(429);
+    expect(codeGrader).not.toHaveBeenCalled();
+    expect(isOnChainProgramLive).not.toHaveBeenCalled();
+  });
+
+  it("both limits clear → the request proceeds to the completion gate", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    codeGrader.mockResolvedValue({ ok: false, status: 403 });
+
+    const res = await call({ c1: { code: "wrong" } });
+
+    expect(res.status).toBe(403); // reached grading, not 429
+    expect(isRateLimited).toHaveBeenCalledWith("lessons:complete");
+    expect(isRateLimited).toHaveBeenCalledWith("lessons:complete:ip");
+  });
 });
 
 describe("completion gate (block model, fail-closed)", () => {

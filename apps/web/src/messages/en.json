@@ -199,6 +199,7 @@
     "completionFailedChallenge": "Your code passed the sample tests, but the server's full test suite — including hidden edge cases the browser doesn't run — didn't pass. Revisit your solution and submit again.",
     "completionFailedEnrollment": "We couldn't verify your on-chain enrollment for this course. Please re-enroll and try again.",
     "completionFailedGeneric": "We couldn't complete this lesson. Please try again in a moment.",
+    "completionRateLimited": "You're completing lessons very quickly. Please wait a little while and try again — your progress is safe.",
     "xpEarned": "+{amount} XP earned",
     "noOutput": "No console output. Check the Test Cases tab for results.",
     "runCodePrompt": "Run your code to see output here.",

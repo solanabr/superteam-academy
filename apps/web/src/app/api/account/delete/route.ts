@@ -59,11 +59,18 @@ export async function POST(): Promise<NextResponse> {
     const now = new Date().toISOString();
     const anonUsername = `deleted-user-${crypto.randomBytes(4).toString("hex")}`;
 
+    // Every external identifier goes, not just the display fields (#410). These
+    // three are what actually re-identify a person: the wallet is a public
+    // on-chain handle, and google_id/github_id are stable provider subject ids.
+    // Scrubbing bio/avatar while keeping them anonymises nothing.
     const update: Database["public"]["Tables"]["profiles"]["Update"] = {
       username: anonUsername,
       bio: null,
       avatar_url: null,
       social_links: null,
+      wallet_address: null,
+      google_id: null,
+      github_id: null,
       is_public: false,
       deleted_at: now,
       deletion_requested_at: now,
@@ -79,6 +86,31 @@ export async function POST(): Promise<NextResponse> {
         errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
         error: new Error(updateError.message),
         context: { route: "/api/account/delete", stage: "anonymize" },
+      });
+      return NextResponse.json(
+        { error: "Failed to process deletion" },
+        { status: 500 }
+      );
+    }
+
+    // enrollments carries its own copy of wallet_address (written by the Helius
+    // webhook and by admin resync). Scrubbing only `profiles` would leave the
+    // wallet→user_id join intact one table over, so the deletion would be
+    // cosmetic. Nothing reads this column — it has writers only — so nulling it
+    // is safe. Enrollment rows themselves are kept: on-chain XP and credentials
+    // are immutable and reference them.
+    const { error: enrollmentError } = await admin
+      .from("enrollments")
+      .update({ wallet_address: null })
+      .eq("user_id", user.id);
+
+    if (enrollmentError) {
+      // The profile is already anonymised; report the failure rather than
+      // pretending the deletion was complete, so it can be retried.
+      logError({
+        errorId: ERROR_IDS.ACCOUNT_DELETE_FAILED,
+        error: new Error(enrollmentError.message),
+        context: { route: "/api/account/delete", stage: "scrub_enrollments" },
       });
       return NextResponse.json(
         { error: "Failed to process deletion" },

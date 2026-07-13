@@ -1,4 +1,7 @@
-# Frontend API Routes (36 routes)
+# Frontend API Routes
+
+<!-- No route count here: it drifted (claimed 36 against 43 route.ts files) and
+     the tables below have never been exhaustive. Trust the tree, not a number. -->
 
 ## Auth
 
@@ -54,16 +57,20 @@
 
 ## Admin
 
-| Route                           | Method | Auth         | Purpose                                                                          |
-| ------------------------------- | ------ | ------------ | -------------------------------------------------------------------------------- |
-| `/api/admin/auth`               | POST   | ADMIN_SECRET | Admin authentication                                                             |
-| `/api/admin/status`             | GET    | ADMIN_SECRET | Platform status (program liveness, authority match)                              |
-| `/api/admin/courses/sync`       | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain                                          |
-| `/api/admin/courses/deactivate` | POST   | ADMIN_SECRET | Set course `is_active = false`                                                   |
-| `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                                                    |
-| `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain                                    |
-| `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                                                |
-| `/api/admin/content/drift`      | GET    | ADMIN_SECRET | Drift: bundle SHA (content.lock) vs courses-academy HEAD + chain (bundle→devnet) |
+| Route                           | Method | Auth         | Purpose                                             |
+| ------------------------------- | ------ | ------------ | --------------------------------------------------- |
+| `/api/admin/auth`               | POST   | ADMIN_SECRET | Admin authentication                                |
+| `/api/admin/status`             | GET    | ADMIN_SECRET | Platform status (program liveness, authority match) |
+| `/api/admin/courses/sync`       | POST   | ADMIN_SECRET | Deploy course PDA + collection on-chain             |
+| `/api/admin/courses/deactivate` | POST   | ADMIN_SECRET | Set course `is_active = false`                      |
+| `/api/admin/courses/reactivate` | POST   | ADMIN_SECRET | Set course `is_active = true`                       |
+| `/api/admin/achievements/sync`  | POST   | ADMIN_SECRET | Deploy achievement type + collection on-chain       |
+| `/api/admin/resync`             | POST   | ADMIN_SECRET | Resync on-chain state to Supabase                   |
+
+Content drift (bundle SHA vs `courses-academy` HEAD) and chain drift are folded
+into `/api/admin/status`; the publish card reads `/api/admin/publish/pin`. There
+is no separate drift route — one existed, was never wired to a UI, and was
+deleted in #444.
 
 ## Route Conventions
 

@@ -2,16 +2,16 @@ import "server-only";
 
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Brute-force protection: throttle admin-login attempts per client IP. The
     // admin secret gates authority-signed on-chain writes, so cap guessing.
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
+    // getClientIp collapses an IPv6 /64 to one key — keying on the full address
+    // would hand anyone with a routed /64 (i.e. any VPS) 2^64 fresh buckets and
+    // therefore an unthrottled guessing budget against this secret.
+    const ip = getClientIp(req.headers);
     if (
       await isRateLimited("admin-auth", ip, {
         maxTokens: 10,
