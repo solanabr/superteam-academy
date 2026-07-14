@@ -5,6 +5,8 @@ import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
 import { serverEnv } from "@/lib/env.server";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
+import { logError } from "@/lib/logging";
+import { ERROR_IDS } from "@/constants/errorIds";
 
 /**
  * On-chain deployment read seam (SP2-B Task 3).
@@ -133,9 +135,12 @@ export function isSynced(dep: DeploymentStatus | undefined): boolean {
  * the Map — `unstable_cache` cannot round-trip a `Map`) and build the Map per
  * call; construction is O(n) over a handful of rows.
  *
- * Outage behaviour: a warm cache keeps serving the last-good rows. A cold cache
- * during an outage throws, which the gate treats as "nothing synced" — the
- * catalog degrades to empty rather than leaking unsynced content.
+ * Outage behaviour: a warm cache keeps serving the last-good rows. A cold
+ * cache during an outage throws — nothing is written to the cache on a
+ * throw, so the next request retries rather than getting stuck on a stale
+ * failure. {@link getActiveDeployments} catches that throw and degrades to an
+ * empty map ("nothing synced") so the catalog renders empty rather than
+ * leaking unsynced content or 500ing.
  */
 async function loadActiveDeploymentRows(): Promise<DeploymentStatus[]> {
   const client = createCookielessClient();
@@ -166,11 +171,27 @@ function fetchActiveDeploymentRows(): Promise<DeploymentStatus[]> {
   return cachedFetch();
 }
 
-/** One query → one content-id-keyed `ReadonlyMap` of deployment status. */
+/**
+ * One query → one content-id-keyed `ReadonlyMap` of deployment status.
+ *
+ * Degrades to an empty map on a read failure (logged, not thrown) — see the
+ * "Outage behaviour" note on {@link loadActiveDeploymentRows}. Every public
+ * caller (`isSynced` gate) treats a missing entry as "not synced", so an
+ * empty map is equivalent to "nothing is visible right now", not corrupt data.
+ */
 export async function getActiveDeployments(): Promise<
   ReadonlyMap<string, DeploymentStatus>
 > {
-  return toDeploymentMap(await fetchActiveDeploymentRows());
+  try {
+    return toDeploymentMap(await fetchActiveDeploymentRows());
+  } catch (err) {
+    logError({
+      errorId: ERROR_IDS.ACTIVE_DEPLOYMENTS_LOAD_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { note: "getActiveDeployments degraded to empty map" },
+    });
+    return new Map();
+  }
 }
 
 /**
