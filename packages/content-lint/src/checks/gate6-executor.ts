@@ -121,7 +121,7 @@ export async function gate6Check(model: RepoModel): Promise<Diagnostic[]> {
             "gate-6",
             "notice",
             entry.file,
-            `block "${block.key}" (${block.language}${buildable ? ", buildable" : ""}) is DEFERRED to sync-time grading (spec §6.2a) — not verified in repo CI`
+            `block "${block.key}" (${block.language}${buildable ? ", buildable" : ""}) is DEFERRED to runtime grading (fail-closed per block) — not verified in repo CI`
           )
         );
       }

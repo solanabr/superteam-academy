@@ -80,9 +80,16 @@ describe("gate 6 — two-sided JS executor", () => {
       "courses/x/lessons/a/exercise/tests.json": tests,
     });
     const r = await runLint(root);
-    expect(
-      r.diagnostics.some((d) => d.gate === "gate-6" && d.severity === "notice")
-    ).toBe(true);
+    const notice = r.diagnostics.find(
+      (d) => d.gate === "gate-6" && d.severity === "notice"
+    );
+    expect(notice).toBeDefined();
+    // #404: deferred rust/buildable blocks grade at RUNTIME (fail-closed per
+    // block), not at content-sync time — the notice text must say so, or a
+    // future reader could reintroduce sync-time grading to match a stale
+    // comment.
+    expect(notice?.message).toMatch(/DEFERRED to runtime grading/);
+    expect(notice?.message).not.toMatch(/sync-time/);
     expect(
       r.diagnostics.filter((d) => d.gate === "gate-6" && d.severity === "error")
     ).toEqual([]);
