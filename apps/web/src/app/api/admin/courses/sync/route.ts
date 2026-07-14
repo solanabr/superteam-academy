@@ -449,6 +449,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // normalised `liveLessonCount`. The program rejects any decrease
   // (LessonCountDecrease), so we only send the field when Sanity is strictly
   // higher; equal/lower is left untouched.
+  // Count-based and only correct while masks are dense (today). Once a
+  // sparse-mask course can exist, this must become a per-slot bit test
+  // against `activeLessons` instead of a count comparison.
   const onChainLessonCount = onChainCourse?.liveLessonCount;
   if (
     typeof course.lessonCount === "number" &&

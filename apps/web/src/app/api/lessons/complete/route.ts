@@ -255,6 +255,9 @@ export async function POST(request: NextRequest) {
     // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
     // and return a clear 409 instead of letting the on-chain TX throw a generic
     // 500. fetchCourse returns the normalised `liveLessonCount`.
+    // Count-based and only correct while masks are dense (today). Once a
+    // sparse-mask course can exist, this must become a per-slot bit test
+    // against `activeLessons` instead of a count comparison.
     const onChainLessonCount = onChainCourse?.liveLessonCount;
     if (
       typeof onChainLessonCount === "number" &&
