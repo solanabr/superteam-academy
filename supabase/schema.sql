@@ -652,6 +652,24 @@ CREATE OR REPLACE VIEW public_user_xp AS
 REVOKE ALL ON public_user_xp FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public_user_xp TO anon, authenticated;
 
+-- public_profiles (#478): by-wallet public read of the four non-sensitive
+-- profile fields, so instructor identity can be resolved from a course's creator
+-- wallet. Mirrors the public_user_xp pattern — an owner-rights view over the
+-- RLS-locked profiles table whose SELECT LIST is the column filter, so
+-- google_id/github_id/deleted_at/deletion_requested_at are never exposed and
+-- profiles stays own-row-only for direct access (no broad RLS policy added).
+-- INVARIANT: the SELECT list and the is_public + deleted_at filters are the sole
+-- guards. Never add a sensitive column to the SELECT; never drop a filter.
+CREATE OR REPLACE VIEW public_profiles AS
+  SELECT p.wallet_address, p.username, p.avatar_url, p.bio, p.social_links
+  FROM profiles p
+  WHERE p.is_public = true
+    AND p.deleted_at IS NULL
+    AND p.wallet_address IS NOT NULL;
+
+REVOKE ALL ON public_profiles FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public_profiles TO anon, authenticated;
+
 -- ─────────────────────────────────────────────
 -- 6. RESTRICT SECURITY DEFINER FUNCTIONS
 -- ─────────────────────────────────────────────
