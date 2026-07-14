@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   isSynced,
   toDeploymentMap,
@@ -6,6 +6,32 @@ import {
 } from "../deployments";
 
 vi.mock("server-only", () => ({}));
+
+// `unstable_cache` needs a request-scoped incremental cache that only exists
+// inside a real Next.js request; outside one it throws
+// "Invariant: incrementalCache missing" unconditionally. Stub it as a
+// passthrough so these tests exercise `loadActiveDeploymentRows` itself
+// rather than that unrelated environment invariant.
+vi.mock("next/cache", () => ({
+  unstable_cache:
+    <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
+    (...args: Args) =>
+      fn(...args),
+  revalidateTag: vi.fn(),
+}));
+
+function supabaseSelectResult(result: {
+  data: DeploymentStatus[] | null;
+  error: { message: string } | null;
+}) {
+  return {
+    createClient: () => ({
+      from: () => ({
+        select: () => Promise.resolve(result),
+      }),
+    }),
+  };
+}
 
 function row(over: Partial<DeploymentStatus>): DeploymentStatus {
   return {
@@ -74,5 +100,36 @@ describe("toDeploymentMap — shaping the flat rows", () => {
       row({ content_id: "dup", status: "synced" }),
     ]);
     expect(map.get("dup")?.status).toBe("synced");
+  });
+});
+
+describe("getActiveDeployments — degrades to empty on a Supabase read failure", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doUnmock("@supabase/supabase-js");
+  });
+
+  it("Supabase error → resolves to an empty map instead of throwing (#426)", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseSelectResult({
+        data: null,
+        error: { message: "connection refused" },
+      })
+    );
+    const { getActiveDeployments } = await import("../deployments");
+    await expect(getActiveDeployments()).resolves.toEqual(new Map());
+  });
+
+  it("successful read → populates the map keyed by content_id", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseSelectResult({
+        data: [row({ content_id: "course-a" })],
+        error: null,
+      })
+    );
+    const { getActiveDeployments } = await import("../deployments");
+    const map = await getActiveDeployments();
+    expect(map.size).toBe(1);
+    expect(map.get("course-a")?.status).toBe("synced");
   });
 });
