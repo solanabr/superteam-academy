@@ -110,13 +110,38 @@ async function confirmTx(
 }
 
 /**
- * BATCH_SIZE controls how many write txs we sign at once via signAllTransactions.
- * Each batch = 1 wallet popup. Kept modest (not 50) so a rate-limited devnet RPC
- * isn't flooded — with rebroadcast (see confirmBatch) the whole batch reliably
- * confirms inside the blockhash window, and the resend burst stays under the
- * RPC's per-second limit.
+ * BATCH_SIZE controls how many write txs are signed at once via
+ * signAllTransactions. Each batch = 1 wallet popup, so this is the main lever
+ * for the "too many prompts" complaint (#349) — without giving up the
+ * reliability work in #348 (priority fees + poll-and-rebroadcast, both
+ * unchanged below).
+ *
+ * Raised 20 -> 50 (#349). A typical buildable-challenge .so is roughly
+ * 100-250 KB, i.e. ~110-280 chunks at CHUNK_SIZE=900B: BATCH_SIZE=50 turns
+ * that into ~3-6 upload-batch prompts (+2 for buffer-create/finalize)
+ * instead of ~6-14, with SEND_DELAY_MS and the rebroadcast cadence untouched.
+ *
+ * Blockhash-window budget per batch (a recent blockhash is valid ~150 slots,
+ * ~60-90s on devnet) at BATCH_SIZE=50:
+ *   - stagger to send all 50:                     49 * SEND_DELAY_MS ≈ 2.5s
+ *   - typical confirm (priority fee lands most on the first send): ≈ 1-2s
+ *   - pessimistic confirm (a few chunks dropped, 1-2 rebroadcast
+ *     cycles at the ~4s cadence in confirmBatch):                  ≈ 8-12s
+ *   realistic worst case total                                     ≈ 15-25s
+ * — comfortably inside the ~90s window, with room left over for the time the
+ * user takes to see the wallet popup and click Approve (that delay counts
+ * against the same blockhash, since it's fetched just before signing).
+ *
+ * Why not go straight to 100+ (the issue's outer bound): confirmBatch's
+ * rebroadcast loop resends the still-unconfirmed set sequentially (one
+ * awaited sendRawTransaction after another, no concurrency). At 50, a
+ * full-batch resend pass is still just tens of RPC round trips; at 100+ a
+ * bad pass (e.g. an RPC hiccup that drops most of the batch) could itself
+ * burn a large fraction of the 90s budget, leaving no margin for a second
+ * pass. 50 is the largest size where a full-batch resend still fits
+ * comfortably inside the window.
  */
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 50;
 
 /** Small stagger between sends to avoid RPC rate limits. */
 const SEND_DELAY_MS = 50;
@@ -195,7 +220,8 @@ async function confirmBatch(
     // under load, and the RPC won't rebroadcast them for us (maxRetries: 0), so
     // a dropped chunk would otherwise never land and the batch would stall.
     // Re-sending the same signed tx is safe (idempotent) while its blockhash is
-    // still valid, which the modest BATCH_SIZE keeps us inside.
+    // still valid, which the BATCH_SIZE tuning above (see its comment) keeps
+    // us inside even in the pessimistic case.
     if (unconfirmed.size > 0 && Date.now() - lastResend > 4000) {
       for (const idx of unconfirmed.values()) {
         try {
@@ -320,6 +346,13 @@ export async function deployProgram(params: {
       writeTx.recentBlockhash = blockhash;
       batchTxs.push(writeTx);
     }
+
+    // Let the UI know which batch (of how many) is about to prompt the
+    // wallet, before the popup actually appears.
+    callbacks.onBatchStart({
+      batchNumber: Math.floor(batchStart / BATCH_SIZE) + 1,
+      totalBatches: Math.ceil(totalChunks / BATCH_SIZE),
+    });
 
     // Batch sign (1 wallet popup per batch)
     const signedBatch = await wallet.signAllTransactions(batchTxs);
@@ -485,6 +518,13 @@ export async function resumeDeployment(params: {
         writeTx.recentBlockhash = blockhash;
         batchTxs.push(writeTx);
       }
+
+      // Let the UI know which batch (of how many) is about to prompt the
+      // wallet, before the popup actually appears.
+      callbacks.onBatchStart({
+        batchNumber: Math.floor(batchStart / BATCH_SIZE) + 1,
+        totalBatches: Math.ceil(totalChunks / BATCH_SIZE),
+      });
 
       const signedBatch = await wallet.signAllTransactions(batchTxs);
 
