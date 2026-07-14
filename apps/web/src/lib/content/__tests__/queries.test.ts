@@ -228,16 +228,27 @@ vi.mock("../store", () => {
 
 vi.mock("../deployments", () => {
   const deployMap = new Map(h.deploymentRows.map((r) => [r.content_id, r]));
+  const getDeploymentById = vi.fn(
+    async (id: string) =>
+      (h.fullRows[id] as OnchainDeploymentRow | undefined) ?? null
+  );
   return {
     isSynced: (dep: DeploymentStatus | undefined): boolean =>
       dep?.status === "synced" && (dep?.is_active ?? true),
     toDeploymentMap: (rows: readonly DeploymentStatus[]) =>
       new Map(rows.map((r) => [r.content_id, r])),
     getActiveDeployments: vi.fn(async () => deployMap),
-    getDeploymentById: vi.fn(
-      async (id: string) =>
-        (h.fullRows[id] as OnchainDeploymentRow | undefined) ?? null
-    ),
+    getDeploymentById,
+    // Mirrors the real getDeploymentByIdSafe (#436): catches whatever
+    // getDeploymentById does (including a test-injected rejection) and
+    // degrades to `{ row: null, failed: true }` instead of throwing.
+    getDeploymentByIdSafe: vi.fn(async (id: string) => {
+      try {
+        return { row: await getDeploymentById(id), failed: false };
+      } catch {
+        return { row: null, failed: true };
+      }
+    }),
   };
 });
 
@@ -417,6 +428,53 @@ describe("admin fns — full deployment row join", () => {
     ]);
     // no full row stubbed for achievements → onChainStatus null
     expect(res[0]?.onChainStatus).toBeNull();
+  });
+});
+
+describe("#436 — Safe variants degrade a Supabase read failure instead of throwing", () => {
+  it("getAllCoursesAdminSafe flags the failing course, leaves the rest intact", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    const res = await q.getAllCoursesAdminSafe();
+    expect(res).toHaveLength(4);
+    const failed = res.filter((c) => c.deploymentReadFailed);
+    expect(failed).toHaveLength(1);
+    expect(failed[0]?.onChainStatus).toBeNull();
+    // Every other course reads exactly as the healthy-path test above.
+    const untouched = res.filter((c) => !c.deploymentReadFailed);
+    expect(untouched).toHaveLength(3);
+  });
+
+  it("getAllCoursesAdmin (mutating-route variant) still throws — fail-closed unchanged", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    await expect(q.getAllCoursesAdmin()).rejects.toThrow("connection refused");
+  });
+
+  it("getAllAchievementsAdminSafe flags the failing achievement, leaves the rest intact", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    const res = await q.getAllAchievementsAdminSafe();
+    expect(res).toHaveLength(2);
+    const failed = res.filter((a) => a.deploymentReadFailed);
+    expect(failed).toHaveLength(1);
+    expect(failed[0]?.onChainStatus).toBeNull();
+  });
+
+  it("getAllAchievementsAdmin (mutating-route variant) still throws — fail-closed unchanged", async () => {
+    const deployments = await import("../deployments");
+    vi.mocked(deployments.getDeploymentById).mockRejectedValueOnce(
+      new Error("connection refused")
+    );
+    await expect(q.getAllAchievementsAdmin()).rejects.toThrow(
+      "connection refused"
+    );
   });
 });
 
