@@ -2,13 +2,15 @@
 
 **Status:** plan. Design lives in the Launch-Readiness epic (§Recreate-UI); this is the ordered execution, folding in every decision made since that design.
 **Foundation:** #453 (close+recreate **server path** — route + `recreate-course.ts` + `admin-signer`, open). This plan adds the **UI** on top and reconciles the accumulated decisions.
-**Depends on:** WS-1 v-next **deployed** (the recreate closes+recreates real on-chain `Course` accounts). Per the mainnet-via-Pinocchio decision, the devnet deploy is a *test* of this flow; the real use is at mainnet creation. So WS-2 is buildable now against the merged v-next client, but its execute path is only exercised once a v-next program is live.
+**Depends on:** #453's server path, and a deployed program to act on — but NOT specifically v-next. `close_course`/`create_course` exist in both v1 and v-next, so the recreate works against the *current* v1 devnet program. The reason to sequence the **execute** step after the v-next deploy is to avoid recreating each course **twice** (v1 now, then v-next at deploy) — a deliberate choice, not a hard dependency. Everything except pressing "execute" is buildable now against the merged v-next client. Per the mainnet-via-Pinocchio decision, the devnet run is a *test* of this flow; the real, immutable use is at mainnet creation.
 
 ---
 
 ## 1. What
 
 On the Courses admin screen, an **immutable-field mismatch** (`creator` / `difficulty` / `trackId` / `trackLevel` / `prerequisite` between content and chain) currently shows a red "cannot auto-fix" card. Replace that dead-end with an honest, actionable **Recreate** action (authority-gated, same `admin_session`) that closes the stale PDA and recreates it at the same address with the new immutable values — the on-chain analogue of "this field can only be set at creation."
+
+**Single audited recreate path — WS-2 and WS-1 Phase-4 share ONE code path.** `close_course → create_course` is the platform's most destructive on-chain operation, and both this UI *and* the WS-1 Phase-4 devnet reset need it. They MUST call the **same** function — `recreate-course.ts` (#453): the WS-2 UI is a thin front-end over it, and any Phase-4 bulk-reset script loops that same function. One audited path, never two implementations of "delete a course." **The entry scenario is concrete:** once **B4 activates** the creator-wallet content, the 6 devnet courses will show a `creator` mismatch (content `B7o8…` vs chain platform-authority) — that mismatch *is* this UI's trigger, and recreating is exactly the **#440** fix. So WS-2 is not a hypothetical feature; it's the mechanism that reconciles the courses after the content wave activates.
 
 ## 2. The flow (server path exists — #453; this plan builds the UI + hardens it)
 
@@ -39,12 +41,21 @@ close+recreate expands the hot-key blast radius from "update fields" to "delete 
 4. **Window gating in execute** — wire the finalize/complete gate for the affected course during the close→create window (§2.3), reusing WS-1's maintenance-gate mechanism.
 5. **Mainnet Squads assertion** (§5) — hard precondition in the execute path, gated on network.
 6. **i18n** — the recreate/confirm-modal strings (en/es/pt-BR); coordinate with the #452/#448 i18n sweep so it isn't done twice.
+7. **Status-route correctness fixes** (same admin surface — the epic's WS-2 bundle): **#433** (show the creator wallet in the first-deploy change-preview), **#434** (an undecodable on-chain account gets its own status/badge instead of reading green — **mostly done already**: the Phase-1 length-aware decoder now *throws* on an unknown byte length instead of silently garbling, so the only remaining work is the `admin/status` `catch` presenting that throw honestly), **#436** (a Supabase read failure degrades the admin screen instead of 500ing the whole thing). SAFE-lane.
 
-## 7. Gates
+## 7. Testing
+
+The execute path is the most destructive on-chain operation the platform has, so it is tested before it is trusted:
+- **Devnet dry-run against a throwaway course** — create a scratch course, recreate it end-to-end (close → create at the same PDA), decode the result, and assert the correct `creator` + immutable set.
+- **The finalize gate actually holds during the absent window** — a test that completes a learner's last lesson *while the course PDA is absent* (mid-recreate) and asserts the finalize/complete path is gated (queued, not silently dropped). The §2.3 gap must be proven closed, not assumed.
+- **The H3 constraint** (§4) — recreate with a `lesson_count` whose mask is a *superset* of a mid-course learner's flags; assert the preflight catches/warns rather than silently un-completing them.
+- **One suite, both callers** — because the WS-2 UI and any Phase-4 script call the identical `recreate-course.ts`, a single test suite covers both.
+
+## 8. Gates
 - **SENSITIVE** (on-chain close/recreate + authority-key signing): full adversarial review + owner sign-off, same discipline as WS-1. The Squads assertion (§5) is a hard, tested precondition, not a comment. Mainnet forbidden without explicit confirmation.
 - The cert-version stamp + i18n are SAFE-lane (bot + CI + verify).
 
-## 8. Non-goals
+## 9. Non-goals
 - The **Publish half** is already coherent (Courses screen shows drift + a prefilled publish-PR link, #456); this plan doesn't change it.
 - Not a durable-nonce one-prompt deploy (that's the #349 later-nicety, out of scope).
 - Real instructor wallets are a mainnet-content concern (#440), not this plan.
