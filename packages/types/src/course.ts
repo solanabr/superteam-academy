@@ -1,12 +1,5 @@
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 
-export interface Instructor {
-  name: string;
-  avatar: string;
-  bio: string;
-  socialLinks?: { twitter?: string; github?: string };
-}
-
 /**
  * A single graded test case, as delivered to the client and read by the server
  * grader. Post-D4 (open book, spec §4.5/§10.2) every test is public — there is no
@@ -164,7 +157,13 @@ export interface Course {
   difficulty: Difficulty;
   duration: number;
   thumbnail: string;
-  instructor: Instructor;
+  /**
+   * The on-chain `Course.creator` wallet (issue #478) — replaces the retired
+   * `Instructor` reference. `null`/absent for content that predates this field;
+   * B4 resolves it to a display profile, so consumers show the wallet or omit
+   * this section rather than dereferencing an instructor object.
+   */
+  creator?: string | null;
   tags: string[];
   xpReward: number;
   modules: Module[];

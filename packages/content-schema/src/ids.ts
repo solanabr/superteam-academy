@@ -38,7 +38,6 @@ export const LessonId = prefixedId("lesson", MAX_LESSON_ID_BYTES);
 /** Note the `path-` prefix, which deliberately does not match the type name. */
 export const PathId = prefixedId("path", MAX_LESSON_ID_BYTES);
 
-export const InstructorId = prefixedId("instructor", MAX_LESSON_ID_BYTES);
 export const QuestId = prefixedId("quest", MAX_LESSON_ID_BYTES);
 
 /** Stable within a lesson; becomes the Sanity array item `_key`. */

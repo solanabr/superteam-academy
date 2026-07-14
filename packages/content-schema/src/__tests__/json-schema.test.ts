@@ -18,7 +18,6 @@ describe("JSON Schema generation", () => {
       [
         "achievement",
         "course",
-        "instructor",
         "lesson",
         "path",
         "quest",

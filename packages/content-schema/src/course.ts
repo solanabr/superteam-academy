@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { CourseId, LessonId, InstructorId, ModuleKey } from "./ids";
+import { CourseId, LessonId, ModuleKey } from "./ids";
 import { DIFFICULTIES, MAX_LESSON_SLOTS, MAX_XP_PER_MINT } from "./constants";
+import { SolanaAddress } from "./wallet";
 
 const unique = <T>(xs: readonly T[]) => new Set(xs).size === xs.length;
 
@@ -35,12 +36,16 @@ export const Course = z
     trackLevel: z.number().int().min(0).default(0),
     tags: z.array(z.string().min(1)).default([]),
     /**
-     * The course's on-chain creator (the creator XP recipient) is resolved from
-     * this instructor's wallet at sync time: `course.instructor ->
-     * instructor.wallet -> Course.creator`. A course with no instructor has no
-     * creator and is rejected by the sync (no platform-authority fallback).
+     * The course's on-chain `Course.creator` (the creator XP recipient) —
+     * authored directly on the course as a wallet, no longer resolved through a
+     * separate instructor document (issue #478). OPTIONAL for now: today's
+     * content predates this field (it still carries the retired `instructor`
+     * ref, which this schema no longer recognizes and Zod silently strips). A
+     * later activation PR tightens this to required once content is migrated —
+     * until then, the sync rejects a course with no creator wallet at deploy
+     * time, not at schema validation.
      */
-    instructor: InstructorId.optional(),
+    creator: SolanaAddress.optional(),
     /**
      * Repo-relative path to the course's catalogue thumbnail (e.g.
      * `assets/thumbnail.png`), resolved against the course folder. Optional in

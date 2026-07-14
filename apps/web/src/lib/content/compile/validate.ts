@@ -6,7 +6,6 @@ import {
   Achievement,
   Quest,
   LearningPath,
-  Instructor,
   SkillsTaxonomy,
   type CourseT,
   type LessonT,
@@ -23,7 +22,6 @@ export interface ValidatedContent {
   achievements: unknown[];
   quests: unknown[];
   paths: unknown[];
-  instructors: unknown[];
   slots: Map<string, SlotsLockT>; // course dir → lockfile
   /**
    * The canonical skill vocabulary from a repo-root `skills.yaml`, or `[]` if
@@ -57,7 +55,6 @@ export async function parseAndValidateTree(
     achievements: [],
     quests: [],
     paths: [],
-    instructors: [],
     slots: new Map(),
     skills: [],
     prose: new Map(),
@@ -105,9 +102,6 @@ export async function parseAndValidateTree(
     } else if (path.startsWith("paths/") && path.endsWith(".yaml")) {
       const p = zod(LearningPath, parseYaml(text(bytes)), path);
       if (p) v.paths.push(p);
-    } else if (path.startsWith("instructors/") && path.endsWith(".yaml")) {
-      const i = zod(Instructor, parseYaml(text(bytes)), path);
-      if (i) v.instructors.push(i);
     } else if (path.endsWith(".md")) {
       v.prose.set(path, text(bytes));
     } else if (path.endsWith(".ts") || path.endsWith(".rs")) {

@@ -49,11 +49,27 @@ describe("Course", () => {
     expect(Course.safeParse(bad).success).toBe(false);
   });
 
-  it("strips a legacy `creator` field rather than rejecting it", () => {
-    // `creator` was removed when the on-chain creator moved to the instructor's
-    // wallet. Course is non-strict, so a stale field is dropped, not an error.
-    const parsed = Course.parse({ ...base, creator: { githubId: "12345678" } });
-    expect("creator" in parsed).toBe(false);
+  it("accepts an optional on-curve `creator` wallet", () => {
+    const wallet = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
+    expect(Course.parse({ ...base, creator: wallet }).creator).toBe(wallet);
+    expect(Course.parse(base).creator).toBeUndefined();
+  });
+
+  it("rejects a malformed `creator` (not a valid on-curve wallet)", () => {
+    expect(
+      Course.safeParse({ ...base, creator: { githubId: "12345678" } }).success
+    ).toBe(false);
+    expect(Course.safeParse({ ...base, creator: "not-a-wallet" }).success).toBe(
+      false
+    );
+  });
+
+  it("strips a legacy `instructor` field rather than rejecting it", () => {
+    // `instructor` was removed in favor of `creator` (issue #478). Course is
+    // non-strict, so a stale field from pre-migration content is dropped, not
+    // an error — the schema-first rollout tolerates today's content.
+    const parsed = Course.parse({ ...base, instructor: "instructor-ana" });
+    expect("instructor" in parsed).toBe(false);
   });
 
   it("rejects more lessons than the on-chain bitmap can hold", () => {

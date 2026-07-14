@@ -16,16 +16,13 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-// SP2-B: the course's instructor wallet is resolved from the committed content
-// bundle (coursesById -> instructorsById) instead of a Sanity fetch.
-let coursesById = new Map<string, { _id: string; instructor?: unknown }>();
-let instructorsById = new Map<string, { _id: string; wallet?: unknown }>();
+// Issue #478: the course's creator wallet is resolved directly off the
+// committed content bundle's `coursesById` (`course.creator`), no separate
+// instructor document to deref.
+let coursesById = new Map<string, { _id: string; creator?: unknown }>();
 vi.mock("@/lib/content/store", () => ({
   get coursesById() {
     return coursesById;
-  },
-  get instructorsById() {
-    return instructorsById;
   },
 }));
 
@@ -42,13 +39,10 @@ function makeParams(id = "course-1"): { params: Promise<{ id: string }> } {
   return { params: Promise.resolve({ id }) };
 }
 
-/** A bundle where `course-1` derefs to an instructor with the given wallet. */
+/** A bundle where `course-1` carries the given creator wallet. */
 function bundleWithWallet(wallet: string | null): void {
   coursesById = new Map([
-    ["course-1", { _id: "course-1", instructor: { _ref: "instructor-1" } }],
-  ]);
-  instructorsById = new Map([
-    ["instructor-1", { _id: "instructor-1", wallet }],
+    ["course-1", { _id: "course-1", creator: wallet ?? undefined }],
   ]);
 }
 
@@ -61,7 +55,6 @@ beforeEach(() => {
   select.mockClear();
   eq.mockClear();
   coursesById = new Map();
-  instructorsById = new Map();
 });
 
 describe("GET /api/teacher/courses/[id]/stats", () => {
@@ -76,7 +69,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
     expect(getCourseStats).not.toHaveBeenCalled();
   });
 
-  it("returns 200 with stats when the course's instructor wallet matches the session wallet", async () => {
+  it("returns 200 with stats when the course's creator wallet matches the session wallet", async () => {
     getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
@@ -107,7 +100,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
     expect(eq).toHaveBeenCalledWith("id", "user-1");
   });
 
-  it("returns 403 when the course's instructor wallet differs from the session wallet", async () => {
+  it("returns 403 when the course's creator wallet differs from the session wallet", async () => {
     getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
@@ -125,7 +118,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
     expect(getCourseStats).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when the course's instructor has no wallet (no fallback, no admin override)", async () => {
+  it("returns 403 when the course has no creator wallet (no fallback, no admin override)", async () => {
     getUser.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
@@ -152,7 +145,7 @@ describe("GET /api/teacher/courses/[id]/stats", () => {
       data: { wallet_address: "WALLET_A" },
       error: null,
     });
-    // empty bundle — no course, no instructor to resolve a wallet from.
+    // empty bundle — no course to resolve a creator wallet from.
 
     const { GET } = await import("../route");
     const res = await GET(makeRequest(), makeParams("course-missing"));

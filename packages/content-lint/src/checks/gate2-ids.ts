@@ -23,11 +23,6 @@ function idsOf(model: RepoModel): { kind: string; id: string; file: string }[] {
       file: q.file,
     })),
     ...model.paths.map((p) => ({ kind: "path", id: p.path.id, file: p.file })),
-    ...model.instructors.map((i) => ({
-      kind: "instructor",
-      id: i.instructor.id,
-      file: i.file,
-    })),
   ];
 }
 

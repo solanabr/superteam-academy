@@ -1,28 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Instructor } from "../instructor";
 import { SolanaAddress } from "../wallet";
-
-const base = {
-  id: "instructor-ana-santos",
-  name: "Ana Santos",
-  wallet: "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF", // real on-curve wallet
-};
-
-describe("Instructor", () => {
-  it("accepts a minimal instructor with an on-curve wallet", () => {
-    expect(Instructor.parse(base).wallet).toBe(base.wallet);
-  });
-
-  it("requires a wallet", () => {
-    const { wallet, ...noWallet } = base;
-    void wallet;
-    expect(Instructor.safeParse(noWallet).success).toBe(false);
-  });
-
-  it("defaults socialLinks to an empty object", () => {
-    expect(Instructor.parse(base).socialLinks).toEqual({});
-  });
-});
 
 describe("SolanaAddress", () => {
   it("accepts an on-curve ed25519 address", () => {

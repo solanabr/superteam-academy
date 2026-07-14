@@ -14,6 +14,7 @@ function fixture(): ValidatedContent {
         duration: 1,
         xpPerLesson: 10,
         xpReward: 100,
+        creator: "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
         modules: [{ key: "m", title: "M", lessons: ["lesson-accounts"] }],
       } as never,
     ],
@@ -44,7 +45,6 @@ function fixture(): ValidatedContent {
     achievements: [],
     quests: [],
     paths: [],
-    instructors: [],
     slots: new Map(),
     skills: [],
     prose: new Map([["courses/demo/lessons/accounts/intro.md", "# Accounts"]]),
@@ -133,6 +133,29 @@ describe("projectContent", () => {
       _ref: "lesson-accounts",
       _weak: true,
     });
+  });
+
+  it("projects course.creator as a plain wallet string, not a weak ref (issue #478)", () => {
+    const { docs } = projectContent(fixture(), "sha1", noAsset, () => []);
+    const course = docs.find((d) => d._type === "course") as unknown as {
+      creator?: string;
+      instructor?: unknown;
+    };
+    expect(course.creator).toBe("B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF");
+    expect("instructor" in course).toBe(false);
+  });
+
+  it("projects creator as undefined when the course has none", () => {
+    const f = fixture();
+    (f.courses[0] as unknown as { creator?: string }).creator = undefined;
+    const { docs } = projectContent(f, "sha1", noAsset, () => []);
+    const course = docs.find((d) => d._type === "course") as unknown as {
+      creator?: string;
+    };
+    // The final committed bundle drops undefined keys entirely (compile-
+    // content.ts's stableJson); projectContent itself only guarantees the
+    // value is absent, matching the existing prerequisiteCourse pattern.
+    expect(course.creator).toBeUndefined();
   });
 
   it("is deterministic — same input yields deep-equal output", () => {

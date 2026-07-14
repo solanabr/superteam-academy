@@ -411,7 +411,7 @@ export async function deployCoursePda(
         ? new PublicKey(params.prerequisitePda)
         : null;
 
-    // Creator = the instructor's wallet (finalize_course pays it the creator
+    // Creator = course.creator (issue #478; finalize_course pays it the creator
     // reward). Required, and on-curve: Course.creator is immutable on-chain and
     // must own the reward ATA, so an off-curve owner (a PDA) is invalid. There is
     // NO platform-authority fallback — a missing, unparseable, or off-curve wallet

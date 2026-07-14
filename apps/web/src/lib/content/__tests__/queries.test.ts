@@ -21,11 +21,6 @@ const h = vi.hoisted(() => {
   const slug = (current: string) => ({ _type: "slug" as const, current });
   const ref = (id: string) => ({ _ref: id, _type: "reference", _weak: true });
 
-  const instructors = [
-    { _id: "instructor-a", _type: "instructor", name: "Ada", wallet: WALLET_A },
-    { _id: "instructor-b", _type: "instructor", name: "Bob", wallet: WALLET_B },
-  ];
-
   const lessons = [
     {
       _id: "lesson-live-1",
@@ -60,7 +55,7 @@ const h = vi.hoisted(() => {
       difficulty: "beginner",
       tags: ["z"],
       xpPerLesson: 20,
-      instructor: ref("instructor-a"),
+      creator: WALLET_A,
       modules: [{ key: "m1", title: "M1", lessons: [ref("lesson-live-1")] }],
     },
     {
@@ -71,11 +66,11 @@ const h = vi.hoisted(() => {
       difficulty: "beginner",
       tags: ["a"],
       xpPerLesson: 10,
-      instructor: ref("instructor-a"),
+      creator: WALLET_A,
       modules: [{ key: "m1", title: "M1", lessons: [ref("lesson-live-2")] }],
     },
     {
-      // synced but DEACTIVATED — hidden from public gate, visible to grading + instructor.
+      // synced but DEACTIVATED — hidden from public gate, visible to grading + creator.
       _id: "course-off",
       _type: "course",
       slug: slug("off"),
@@ -83,11 +78,11 @@ const h = vi.hoisted(() => {
       difficulty: "beginner",
       tags: ["o"],
       xpPerLesson: 30,
-      instructor: ref("instructor-b"),
+      creator: WALLET_B,
       modules: [{ key: "m1", title: "M1", lessons: [ref("lesson-off-1")] }],
     },
     {
-      // never synced — hidden everywhere public + instructor.
+      // never synced — hidden everywhere public + creator.
       _id: "course-pending",
       _type: "course",
       slug: slug("pending"),
@@ -95,7 +90,7 @@ const h = vi.hoisted(() => {
       difficulty: "beginner",
       tags: ["p"],
       xpPerLesson: 5,
-      instructor: ref("instructor-b"),
+      creator: WALLET_B,
       modules: [],
     },
   ];
@@ -207,7 +202,6 @@ const h = vi.hoisted(() => {
   };
 
   return {
-    instructors,
     lessons,
     courses,
     achievements,
@@ -225,7 +219,6 @@ vi.mock("../store", () => {
     coursesBySlug: new Map(h.courses.map((c) => [c.slug.current, c])),
     lessonsById: new Map(h.lessons.map((l) => [l._id, l])),
     lessonsBySlug: new Map(h.lessons.map((l) => [l.slug.current, l])),
-    instructorsById: byId(h.instructors),
     achievementsById: byId(h.achievements),
     questsById: byId(h.quests),
     pathsById: byId(h.paths),
@@ -427,7 +420,7 @@ describe("admin fns — full deployment row join", () => {
   });
 });
 
-describe("instructor fns — wallet-keyed", () => {
+describe("creator-wallet fns (issue #478) — /teach viewer", () => {
   it("getInstructorCourses filters by wallet + synced (incl. deactivated)", async () => {
     // Wallet B owns course-off (synced+inactive) and course-pending (not synced).
     // Only the synced one shows — deactivation does NOT hide it from its owner.

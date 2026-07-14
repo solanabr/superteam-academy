@@ -111,10 +111,10 @@ const BASE58_PUBKEY_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
  * Returns the list of field names required in the bundle before a course can be
  * deployed on-chain. An empty array means the course is ready to deploy.
  *
- * `creatorWallet` (issue #400): the on-chain `Course.creator` — the immutable
- * XP-reward recipient — is set from the instructor wallet at create_course. A
- * course with no instructor wallet, or one that is not even shaped like a
- * pubkey, must never reach the deploy button.
+ * `creatorWallet` (issue #400, #478): the on-chain `Course.creator` — the
+ * immutable XP-reward recipient — is set from `course.creator` at
+ * create_course. A course with no creator wallet, or one that is not even
+ * shaped like a pubkey, must never reach the deploy button.
  */
 export function getMissingCourseFields(course: AdminCourse): string[] {
   const missing: string[] = [];
@@ -256,7 +256,7 @@ export function diffCourse(
 
   // --- Immutable fields ---
 
-  // creator (#400): the on-chain XP-reward recipient vs the instructor wallet.
+  // creator (#400, #478): the on-chain XP-reward recipient vs course.creator.
   // Both sides are base58 (base58 is canonical per byte array, so a string
   // compare is exact). Set once at create_course and never updateable — a
   // mismatch means every future creator reward pays the wrong wallet, so it

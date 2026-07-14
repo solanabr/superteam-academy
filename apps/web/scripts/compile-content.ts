@@ -29,7 +29,6 @@ import {
   Achievement,
   Quest,
   LearningPath,
-  Instructor,
   SkillsTaxonomy,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
@@ -97,7 +96,6 @@ function validateTree(tree: RepoTree): CompileInput {
     achievements: [],
     quests: [],
     paths: [],
-    instructors: [],
     slots: new Map(),
     skills: [],
     prose: new Map(),
@@ -149,9 +147,6 @@ function validateTree(tree: RepoTree): CompileInput {
     } else if (p.startsWith("paths/") && p.endsWith(".yaml")) {
       const lp = zod(LearningPath, parseYaml(text(bytes)), p);
       if (lp) content.paths.push(lp);
-    } else if (p.startsWith("instructors/") && p.endsWith(".yaml")) {
-      const i = zod(Instructor, parseYaml(text(bytes)), p);
-      if (i) content.instructors.push(i);
     } else if (p.endsWith(".md")) {
       content.prose.set(p, text(bytes));
     } else if (p.endsWith(".ts") || p.endsWith(".rs")) {
@@ -203,7 +198,6 @@ function validateTree(tree: RepoTree): CompileInput {
 const FILE_BY_TYPE: Record<string, string> = {
   course: "courses.json",
   lesson: "lessons.json",
-  instructor: "instructors.json",
   learningPath: "paths.json",
   achievement: "achievements.json",
   quest: "quests.json",
@@ -215,7 +209,6 @@ const OVERLAY_MARKERS = new Set(["sync", "onChainStatus", "authoringStatus"]);
 const COUNT_KEY: Record<string, string> = {
   course: "courses",
   lesson: "lessons",
-  instructor: "instructors",
   learningPath: "learningPaths",
   achievement: "achievements",
   quest: "quests",

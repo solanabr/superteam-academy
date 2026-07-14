@@ -171,19 +171,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       prerequisitePda = prereqPda.toBase58();
     }
 
-    // Resolve the on-chain creator directly from the course's instructor wallet
-    // (`course.instructor -> instructor.wallet`, projected by getAllCoursesAdmin).
-    // `Course.creator` is a Pubkey set once at create_course and is immutable, so
-    // this must be a real, on-curve address — an off-curve owner (a PDA) cannot
-    // hold the creator-reward ATA. There is NO platform-authority fallback: a
-    // course with no instructor, or an invalid wallet, fails loudly here rather
-    // than silently deploying rewards to the wrong key.
+    // Resolve the on-chain creator directly from the course's `creator` wallet
+    // (issue #478 — `course.creator`, projected by getAllCoursesAdmin). `Course.
+    // creator` is a Pubkey set once at create_course and is immutable, so this
+    // must be a real, on-curve address — an off-curve owner (a PDA) cannot hold
+    // the creator-reward ATA. There is NO platform-authority fallback: a course
+    // with no creator, or an invalid wallet, fails loudly here rather than
+    // silently deploying rewards to the wrong key.
     const creatorWallet = course.creatorWallet ?? undefined;
     if (!creatorWallet) {
       return NextResponse.json(
         {
           error:
-            "Course has no creator wallet — set course.instructor to an instructor with a wallet",
+            "Course has no creator wallet — set course.creator to a wallet",
         },
         { status: 400 }
       );

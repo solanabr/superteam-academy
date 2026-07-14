@@ -22,17 +22,11 @@ import {
   achievementsById,
   coursesById,
   coursesBySlug,
-  instructorsById,
   lessonsById,
   pathsById,
   questsById,
 } from "./store";
-import type {
-  CourseDoc,
-  InstructorDoc,
-  LearningPathDoc,
-  LessonDoc,
-} from "./types";
+import type { CourseDoc, LearningPathDoc, LessonDoc } from "./types";
 
 /**
  * The flipped query layer (SP2-B Task 5). Every fn that used to run a GROQ query
@@ -93,13 +87,13 @@ function byField<T>(pick: (x: T) => string | null) {
 const byTitle = byField<{ title: string | null }>((x) => x.title);
 const byName = byField<{ name: string | null }>((x) => x.name);
 
-const projectionDeps = { instructorsById, lessonsById };
+const projectionDeps = { lessonsById };
 
 // --- store traversal helpers ---
 
-/** Instructor doc a course references (or undefined). */
-function courseInstructor(doc: CourseDoc): InstructorDoc | undefined {
-  return instructorsById.get(refId(doc.instructor) ?? "");
+/** A course doc's `creator` wallet (issue #478), or null when unset. */
+function courseCreatorWallet(doc: CourseDoc): string | null {
+  return str(doc.creator);
 }
 
 /** Raw module objects on a course, in display (array) order. */
@@ -305,7 +299,8 @@ export interface RecommendedCourse {
   difficulty: string;
   duration: number;
   thumbnail: string | null;
-  instructor: { name: string; avatar: string | null } | null;
+  /** The on-chain `Course.creator` wallet (issue #478), or null when unset. */
+  creator: string | null;
   tags: string[] | null;
   xpReward: number;
   totalLessons: number;
@@ -321,9 +316,7 @@ export async function getRecommendedCourses(
   const map = await getActiveDeployments();
   return [...coursesById.values()]
     .filter((c) => !exclude.has(c._id) && isSynced(map.get(c._id)))
-    .map((c) =>
-      projectRecommended(c, { instructorsById }, learningPathTitleFor(c._id))
-    )
+    .map((c) => projectRecommended(c, learningPathTitleFor(c._id)))
     .sort(byTitle);
 }
 
@@ -435,7 +428,7 @@ export interface AdminCourse {
   title: string;
   slug: string;
   difficulty: string;
-  /** Resolved from `course.instructor -> instructor.wallet`: the on-chain Course.creator. */
+  /** `course.creator` (issue #478): the on-chain Course.creator wallet. */
   creatorWallet: string | null;
   xpPerLesson: number | null;
   trackId: number | null;
@@ -488,13 +481,12 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
   return Promise.all(
     docs.map(async (c) => {
       const dep = await getDeploymentById(c._id);
-      const instructor = courseInstructor(c);
       return {
         _id: c._id,
         title: str(c.title) as string,
         slug: c.slug.current,
         difficulty: str(c.difficulty) as string,
-        creatorWallet: instructor ? str(instructor.wallet) : null,
+        creatorWallet: courseCreatorWallet(c),
         xpPerLesson: num(c.xpPerLesson),
         trackId: num(c.trackId),
         trackLevel: num(c.trackLevel),
@@ -574,24 +566,21 @@ export interface InstructorCourseSummary {
 }
 
 /**
- * Courses owned by an instructor wallet, for the read-only `/teach` viewer.
- * Deliberately gated ONLY on `status == "synced"` (NOT active) — unlike the
- * public catalog, an instructor must still see their own deactivated courses;
- * a course that never synced has no on-chain stats to view.
+ * Courses whose `creator` wallet (issue #478) matches, for the read-only
+ * `/teach` viewer. Deliberately gated ONLY on `status == "synced"` (NOT
+ * active) — unlike the public catalog, a creator must still see their own
+ * deactivated courses; a course that never synced has no on-chain stats to
+ * view.
  */
 export async function getInstructorCourses(
   wallet: string
 ): Promise<InstructorCourseSummary[]> {
   const map = await getActiveDeployments();
   return [...coursesById.values()]
-    .filter((c) => {
-      const instructor = courseInstructor(c);
-      return (
-        !!instructor &&
-        str(instructor.wallet) === wallet &&
-        map.get(c._id)?.status === "synced"
-      );
-    })
+    .filter(
+      (c) =>
+        courseCreatorWallet(c) === wallet && map.get(c._id)?.status === "synced"
+    )
     .map((c) => ({
       _id: c._id,
       title: str(c.title) as string,
@@ -600,9 +589,11 @@ export async function getInstructorCourses(
 }
 
 /**
- * Whether a wallet belongs to a known instructor (gates the header's "Teach"
+ * Whether a wallet is the `creator` of any course (gates the header's "Teach"
  * nav item). Bundle-only.
  */
 export async function isInstructorWallet(wallet: string): Promise<boolean> {
-  return [...instructorsById.values()].some((i) => str(i.wallet) === wallet);
+  return [...coursesById.values()].some(
+    (c) => courseCreatorWallet(c) === wallet
+  );
 }

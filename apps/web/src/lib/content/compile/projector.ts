@@ -111,7 +111,9 @@ export function projectContent(
       creatorRewardXp: c.creatorRewardXp ?? 0,
       minCompletionsForReward: c.minCompletionsForReward ?? 0,
       tags: c.tags ?? [],
-      instructor: c.instructor ? weakRef(c.instructor) : undefined,
+      // A wallet, not a reference — no weakRef (issue #478: creator replaces
+      // the retired instructor doc/ref).
+      creator: c.creator ?? undefined,
       prerequisiteCourse: c.prerequisiteCourse
         ? weakRef(c.prerequisiteCourse)
         : undefined,
@@ -140,9 +142,6 @@ export function projectContent(
     });
   }
 
-  for (const i of v.instructors as { id: string; [k: string]: unknown }[]) {
-    docs.push({ _id: i.id, _type: "instructor", ...stripId(i), sync: marker });
-  }
   for (const p of v.paths as {
     id: string;
     courses?: string[];

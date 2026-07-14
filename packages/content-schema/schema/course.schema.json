@@ -71,9 +71,9 @@
         "minLength": 1
       }
     },
-    "instructor": {
+    "creator": {
       "type": "string",
-      "pattern": "^instructor-[a-z0-9]+(?:-[a-z0-9]+)*$"
+      "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"
     },
     "thumbnail": {
       "type": "string",
