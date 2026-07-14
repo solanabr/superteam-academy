@@ -104,15 +104,21 @@ describe("gate 13c — symlink escape (#381)", () => {
     const root = makeTempRepo({
       "courses/x/course.yaml": course,
       "courses/x/lessons/a/lesson.yaml": explorerLesson,
-      // Malformed JSON; Node's JSON.parse error text embeds a slice of the input.
-      "courses/x/lessons/a/program.idl.json": '{"TOP_SECRET_MARKER_5678": ',
+      // Malformed JSON chosen so Node's JSON.parse error text embeds a slice
+      // of the source (e.g. `Unexpected token '@', "{"SECRET_abc": @bad}" is
+      // not valid JSON`) — unlike a bare truncation error (`Unexpected end of
+      // JSON input`), which contains no source bytes and wouldn't catch a
+      // regression that interpolates `err.message` into the diagnostic.
+      "courses/x/lessons/a/program.idl.json": '{"SECRET_abc": @bad}',
     });
 
     const r = await runLint(root);
     const idlDiags = r.diagnostics.filter((d) => d.gate === "gate-13c");
     expect(idlDiags.some((d) => d.severity === "error")).toBe(true);
     expect(
-      r.diagnostics.some((d) => d.message.includes("TOP_SECRET_MARKER_5678"))
+      r.diagnostics.some(
+        (d) => d.message.includes("SECRET_abc") || d.message.includes("@bad")
+      )
     ).toBe(false);
   });
 });
