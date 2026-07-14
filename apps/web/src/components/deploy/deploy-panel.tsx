@@ -140,6 +140,10 @@ export function DeployPanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedState, setSavedState] = useState<DeploymentState | null>(null);
+  const [batchInfo, setBatchInfo] = useState<{
+    batchNumber: number;
+    totalBatches: number;
+  } | null>(null);
 
   // Timing
   const startTimeRef = useRef<number>(0);
@@ -269,6 +273,9 @@ export function DeployPanel({
         savePersistentState(buildUuid, state);
         setSavedState(state);
       },
+      onBatchStart: (info) => {
+        setBatchInfo(info);
+      },
     };
   }, [buildUuid]);
 
@@ -341,6 +348,7 @@ export function DeployPanel({
     setChunkTotal(0);
     setErrorMessage(null);
     setResult(null);
+    setBatchInfo(null);
     startTimeRef.current = Date.now();
 
     const callbacks = buildCallbacks();
@@ -387,6 +395,7 @@ export function DeployPanel({
 
     setPanelState("deploying");
     setErrorMessage(null);
+    setBatchInfo(null);
     startTimeRef.current = Date.now();
 
     // Restore chunk progress from saved state
@@ -429,6 +438,7 @@ export function DeployPanel({
     setChunkTotal(0);
     setErrorMessage(null);
     setResult(null);
+    setBatchInfo(null);
     setCurrentStep("buffer");
   }, [buildUuid]);
 
@@ -683,12 +693,12 @@ export function DeployPanel({
             </div>
           )}
 
-          {/* Batch signing prompt */}
+          {/* Batch signing prompt — tied to the real signAllTransactions
+              batch (via onBatchStart), so it's only shown while there's
+              actually more than one upload batch to approve. */}
           {currentStep === "upload" &&
-            chunkTotal > 0 &&
-            chunkCurrent > 0 &&
-            chunkCurrent < chunkTotal &&
-            chunkCurrent % 30 === 0 && (
+            batchInfo &&
+            batchInfo.totalBatches > 1 && (
               <div className="flex items-center gap-2 rounded-md bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
                 <svg
                   className="h-4 w-4 shrink-0"
@@ -703,7 +713,10 @@ export function DeployPanel({
                     d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
                   />
                 </svg>
-                {t("batchSigning")}
+                {t("approvingBatch", {
+                  current: String(batchInfo.batchNumber),
+                  total: String(batchInfo.totalBatches),
+                })}
               </div>
             )}
 
@@ -869,6 +882,7 @@ export function DeployPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("description")}</p>
+        <p className="text-xs text-muted-foreground">{t("batchExplainer")}</p>
 
         {/* Build UUID */}
         <div className="bg-muted/30 rounded-md px-3 py-2">

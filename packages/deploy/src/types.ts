@@ -13,6 +13,12 @@ export interface DeploymentCallbacks {
   onError: (error: DeploymentError) => void;
   /** Called after each state mutation so callers can persist for resume. */
   onStateUpdate: (state: DeploymentState) => void;
+  /**
+   * Called right before `signAllTransactions` is requested for the next
+   * upload batch (i.e. right before the wallet popup appears), so the UI can
+   * show which batch — of how many total — the learner is about to approve.
+   */
+  onBatchStart: (info: { batchNumber: number; totalBatches: number }) => void;
 }
 
 export interface DeploymentError {
