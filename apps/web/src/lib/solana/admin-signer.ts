@@ -335,6 +335,47 @@ export const CREATOR_DENYLIST: ReadonlyArray<{
     address: "SysvarC1ock11111111111111111111111111111111",
     label: "Clock sysvar",
   },
+  // Wrapped SOL mint. On-curve — a real (vanity-grinded) keypair address, not
+  // a PDA, so it is NOT rejected by the upstream off-curve check. #447.
+  {
+    address: "So11111111111111111111111111111111111111112",
+    label: "Wrapped SOL mint",
+  },
+  // Recent Blockhashes sysvar. On-curve. #447.
+  {
+    address: "SysvarRecentB1ockHashes11111111111111111111",
+    label: "Recent Blockhashes sysvar",
+  },
+  // Slot Hashes sysvar. On-curve. #447.
+  {
+    address: "SysvarS1otHashes111111111111111111111111111",
+    label: "Slot Hashes sysvar",
+  },
+  // Slot History sysvar. On-curve. #447.
+  {
+    address: "SysvarS1otHistory11111111111111111111111111",
+    label: "Slot History sysvar",
+  },
+  // Config native program. On-curve. #447.
+  {
+    address: "Config1111111111111111111111111111111111111",
+    label: "Config program",
+  },
+  // Feature native program. On-curve. #447.
+  {
+    address: "Feature111111111111111111111111111111111111",
+    label: "Feature program",
+  },
+  // Metaplex Token Metadata program. On-curve. #447.
+  {
+    address: "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+    label: "Metaplex Token Metadata program",
+  },
+  // Metaplex Core program — same id as MPL_CORE_PROGRAM_ID above. On-curve. #447.
+  {
+    address: "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+    label: "Metaplex Core program",
+  },
 ];
 
 /**

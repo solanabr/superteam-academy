@@ -28,6 +28,25 @@ describe("CREATOR_DENYLIST", () => {
     expect(addrs).toContain("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"); // Token-2022
     expect(addrs).toContain("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"); // ATA
   });
+
+  // #447: extend coverage beyond System/Token well-knowns to the remaining
+  // on-curve sysvars/programs the adversarial review flagged as unlisted.
+  it("includes the #447 additions", () => {
+    const addrs = CREATOR_DENYLIST.map((e) => e.address);
+    expect(addrs).toContain("So11111111111111111111111111111111111111112"); // Wrapped SOL mint
+    expect(addrs).toContain("SysvarRecentB1ockHashes11111111111111111111"); // Recent Blockhashes sysvar
+    expect(addrs).toContain("SysvarS1otHashes111111111111111111111111111"); // Slot Hashes sysvar
+    expect(addrs).toContain("SysvarS1otHistory11111111111111111111111111"); // Slot History sysvar
+    expect(addrs).toContain("Config1111111111111111111111111111111111111"); // Config program
+    expect(addrs).toContain("Feature111111111111111111111111111111111111"); // Feature program
+    expect(addrs).toContain("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"); // Metaplex Token Metadata
+    expect(addrs).toContain("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"); // Metaplex Core
+  });
+
+  it("has no duplicate addresses", () => {
+    const addrs = CREATOR_DENYLIST.map((e) => e.address);
+    expect(new Set(addrs).size).toBe(addrs.length);
+  });
 });
 
 describe("assertCreatorAllowed", () => {
