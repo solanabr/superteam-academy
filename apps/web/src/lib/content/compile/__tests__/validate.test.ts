@@ -62,6 +62,41 @@ describe("parseAndValidateTree", () => {
     );
   });
 
+  // #466 C1: skills.yaml doesn't exist in courses-academy yet — tolerate its
+  // absence, and load it into `v.skills` when a repo-root copy is present.
+  it("defaults skills to [] when skills.yaml is absent", async () => {
+    const t = tree({
+      "courses/demo/course.yaml": courseYaml,
+      "courses/demo/slots.lock.json": JSON.stringify({
+        version: 1,
+        slots: { "lesson-accounts": 0 },
+        retired: [],
+        next: 1,
+      }),
+      "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
+      "courses/demo/lessons/accounts/intro.md": "# Accounts",
+    });
+    const v = await parseAndValidateTree(t, passGraders);
+    expect(v.skills).toEqual([]);
+  });
+
+  it("loads the canonical skill vocabulary from a root skills.yaml", async () => {
+    const t = tree({
+      "courses/demo/course.yaml": courseYaml,
+      "courses/demo/slots.lock.json": JSON.stringify({
+        version: 1,
+        slots: { "lesson-accounts": 0 },
+        retired: [],
+        next: 1,
+      }),
+      "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
+      "courses/demo/lessons/accounts/intro.md": "# Accounts",
+      "skills.yaml": stringify([{ slug: "pdas", label: "PDAs" }]),
+    });
+    const v = await parseAndValidateTree(t, passGraders);
+    expect(v.skills).toEqual([{ slug: "pdas", label: "PDAs" }]);
+  });
+
   it("throws with the Zod issue when a course is malformed", async () => {
     const t = tree({
       "courses/demo/course.yaml": stringify({ id: "NOT-a-course-id" }),
