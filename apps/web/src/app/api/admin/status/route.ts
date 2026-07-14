@@ -9,8 +9,8 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import {
-  getAllCoursesAdmin,
-  getAllAchievementsAdmin,
+  getAllCoursesAdminSafe,
+  getAllAchievementsAdminSafe,
 } from "@/lib/content/queries";
 import {
   findCoursePDA,
@@ -105,8 +105,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const [courses, achievements, authorityCheck, contentDrift] =
     await Promise.all([
-      getAllCoursesAdmin(),
-      getAllAchievementsAdmin(),
+      getAllCoursesAdminSafe(),
+      getAllAchievementsAdminSafe(),
       verifyAuthorityMatchesConfig(),
       computeRepoContentDrift(),
     ]);
@@ -181,6 +181,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       let isActive = true;
       let differences: DiffEntry[] = [];
       let chainDrift: ChainDriftState | null = null;
+      // #434: an unrecognized account length THROWS (post-Phase-1) instead of
+      // returning garbage. Track that distinctly so it can't fall through to
+      // the green "synced" badge below — the admin needs to see the account
+      // couldn't be read, not a false-healthy status.
+      let undecodable = false;
       try {
         const raw = decodeCourse(accountInfo.data);
         isActive = raw.is_active;
@@ -210,13 +215,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         });
       } catch (e) {
         // Stale/undecodable account — defaults above; log for diagnosis.
+        undecodable = true;
         console.warn(`[admin/status] could not decode ${course._id}:`, e);
       }
 
-      const status =
-        knownPda !== pdaAddress || differences.length > 0
-          ? "out_of_sync"
-          : recordedStatus;
+      // #436: the Supabase deployment-row read failed for this course — we
+      // cannot tell recorded/synced state apart from out-of-sync (both
+      // `knownPda`/`recordedStatus` below are unreliable), so surface that
+      // distinctly instead of guessing "out_of_sync". #434 (undecodable)
+      // takes priority since it is a direct, certain fact about the RPC read
+      // just performed, independent of Supabase.
+      const status = undecodable
+        ? ("undecodable" as const)
+        : course.deploymentReadFailed
+          ? ("db_unavailable" as const)
+          : knownPda !== pdaAddress || differences.length > 0
+            ? "out_of_sync"
+            : recordedStatus;
 
       return {
         contentId: course._id,
@@ -275,11 +290,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         };
       }
 
+      // #436: the account exists on-chain (fact, independent of Supabase),
+      // but the deployment-row read failed — don't claim "synced" when we
+      // couldn't verify it against the recorded row.
       return {
         contentId: ach._id,
         name: ach.name,
         missingFields: [],
-        onChainStatus: "synced" as const,
+        onChainStatus: ach.deploymentReadFailed
+          ? ("db_unavailable" as const)
+          : ("synced" as const),
         achievementPda: achPda.toBase58(),
         collectionAddress: ach.onChainStatus?.collectionAddress ?? null,
       };

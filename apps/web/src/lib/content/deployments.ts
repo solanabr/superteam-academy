@@ -216,3 +216,27 @@ export async function getDeploymentById(
   }
   return data ?? null;
 }
+
+/**
+ * Same as {@link getDeploymentById}, but never throws (#436) — a Supabase
+ * outage degrades to `{ row: null, failed: true }` instead of propagating.
+ * For display-only admin reads (the `/api/admin/status` route) where a DB
+ * blip should surface as a distinct "can't tell" state rather than 500ing
+ * the whole screen. Mutating routes (course/achievement sync) keep calling
+ * {@link getDeploymentById} directly — fail-closed is correct before writing
+ * on-chain.
+ */
+export async function getDeploymentByIdSafe(
+  contentId: string
+): Promise<{ row: OnchainDeploymentRow | null; failed: boolean }> {
+  try {
+    return { row: await getDeploymentById(contentId), failed: false };
+  } catch (err) {
+    logError({
+      errorId: ERROR_IDS.DEPLOYMENT_READ_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { contentId, note: "getDeploymentByIdSafe degraded to null" },
+    });
+    return { row: null, failed: true };
+  }
+}

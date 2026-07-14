@@ -8,7 +8,13 @@ type SyncStatus =
   | "out_of_sync"
   | "not_deployed"
   | "draft"
-  | "missing_fields";
+  | "missing_fields"
+  // #434: on-chain account exists but couldn't be decoded — must never
+  // collapse into the green "synced" badge.
+  | "undecodable"
+  // #436: Supabase deployment-row read failed — distinct from "out_of_sync"
+  // (which implies a real, confirmed content mismatch).
+  | "db_unavailable";
 
 interface StatusBadgeProps {
   status: SyncStatus;
@@ -22,6 +28,8 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     not_deployed: "bg-danger-light border-danger text-danger",
     draft: "bg-subtle border-border text-text-3",
     missing_fields: "bg-streak-light border-streak text-streak",
+    undecodable: "bg-primary-bg border-primary text-primary-dark",
+    db_unavailable: "bg-subtle border-solana-purple text-solana-purple",
   };
 
   return (

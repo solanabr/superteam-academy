@@ -980,7 +980,9 @@
       "out_of_sync": "Out of sync",
       "not_deployed": "Not on chain",
       "draft": "Draft",
-      "missing_fields": "Missing fields"
+      "missing_fields": "Missing fields",
+      "undecodable": "Undecodable",
+      "db_unavailable": "DB unavailable"
     },
     "resync": {
       "heading": "Data Resync",

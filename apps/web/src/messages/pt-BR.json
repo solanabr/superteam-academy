@@ -980,7 +980,9 @@
       "out_of_sync": "Fora de sincronia",
       "not_deployed": "Não está on-chain",
       "draft": "Rascunho",
-      "missing_fields": "Campos faltando"
+      "missing_fields": "Campos faltando",
+      "undecodable": "Não decodificável",
+      "db_unavailable": "BD indisponível"
     },
     "resync": {
       "heading": "Ressincronização de dados",

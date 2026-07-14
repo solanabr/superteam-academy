@@ -7,7 +7,14 @@ interface AchievementStatus {
   contentId: string;
   name: string;
   missingFields: string[];
-  onChainStatus: "synced" | "not_deployed" | "missing_fields" | "draft";
+  onChainStatus:
+    | "synced"
+    | "not_deployed"
+    | "missing_fields"
+    | "draft"
+    // #436: Supabase deployment-row read failed — StatusBadge renders it
+    // distinctly (never falls back to "synced").
+    | "db_unavailable";
   achievementPda: string | null;
   collectionAddress: string | null;
 }
