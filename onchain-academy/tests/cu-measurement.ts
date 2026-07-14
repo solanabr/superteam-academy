@@ -230,13 +230,21 @@ describe("CU measurement (#121)", () => {
     await measure(
       "update_config (pause)",
       program.methods
-        .updateConfig({ newBackendSigner: null, paused: true })
+        .updateConfig({
+          newBackendSigner: null,
+          paused: true,
+          newAuthority: null,
+        })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
     );
     await measure(
       "update_config (resume)",
       program.methods
-        .updateConfig({ newBackendSigner: null, paused: false })
+        .updateConfig({
+          newBackendSigner: null,
+          paused: false,
+          newAuthority: null,
+        })
         .accountsPartial({ config: configPda, authority: authority.publicKey })
     );
 
@@ -274,6 +282,7 @@ describe("CU measurement (#121)", () => {
           newXpPerLesson: null,
           newCreatorRewardXp: null,
           newCollection: null,
+          newActiveLessons: null,
         })
         .accountsPartial({
           course: coursePda,
