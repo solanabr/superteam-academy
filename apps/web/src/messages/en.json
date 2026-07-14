@@ -56,6 +56,7 @@
     "dismissBanner": "Dismiss"
   },
   "auth": {
+    "accountDeleted": "This account has been deleted and can't sign in.",
     "authFailed": "Wallet authentication failed. Please try again or use a different sign-in method.",
     "chooseWallet": "Choose a wallet",
     "connectSolanaWallet": "Connect Solana Wallet",

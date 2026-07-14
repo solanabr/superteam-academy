@@ -5,6 +5,10 @@ import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
+import {
+  isAccountDeleted,
+  DELETED_ACCOUNT_REASON,
+} from "@/lib/auth/account-status";
 import type { Database } from "@/lib/supabase/types";
 
 function sanitizeRedirect(raw: string, fallback: string): string {
@@ -95,8 +99,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For new users, replace the placeholder username with a fun generated name
     const userId = sessionData.session.user.id;
+
+    // #461 — refuse login for a soft-deleted (tombstoned) account. Check
+    // FIRST, before any profile read/write, so a deleted user's session never
+    // reaches an authenticated response. Sign out (revokes the just-issued
+    // session server-side) and redirect with a fresh response — we deliberately
+    // do NOT return `response`, so the Set-Cookie headers queued onto it by
+    // exchangeCodeForSession() above are never sent to the browser either.
+    if (await isAccountDeleted(userId)) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(
+        `${origin}/${locale}?error=auth&reason=${DELETED_ACCOUNT_REASON}`
+      );
+    }
+
+    // For new users, replace the placeholder username with a fun generated name
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, avatar_url")
