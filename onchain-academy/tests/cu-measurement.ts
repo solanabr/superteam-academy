@@ -254,7 +254,6 @@ describe("CU measurement (#121)", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 50,
-          minCompletionsForReward: 1,
           collection: null,
         })
         .accountsPartial({
@@ -274,7 +273,6 @@ describe("CU measurement (#121)", () => {
           newIsActive: null,
           newXpPerLesson: null,
           newCreatorRewardXp: null,
-          newMinCompletionsForReward: null,
           newCollection: null,
         })
         .accountsPartial({
@@ -433,7 +431,6 @@ describe("CU measurement (#121)", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: null,
         })
         .accountsPartial({
@@ -570,7 +567,6 @@ describe("CU measurement (#121)", () => {
           trackLevel: 1,
           prerequisite: null,
           creatorRewardXp: 0,
-          minCompletionsForReward: 0,
           collection: credCollection.publicKey,
         })
         .accountsPartial({

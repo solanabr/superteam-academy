@@ -10,7 +10,6 @@ pub struct UpdateCourseParams {
     pub new_is_active: Option<bool>,
     pub new_xp_per_lesson: Option<u32>,
     pub new_creator_reward_xp: Option<u32>,
-    pub new_min_completions_for_reward: Option<u16>,
     /// Set/backfill the Metaplex Core credential collection for this course.
     pub new_collection: Option<Pubkey>,
     /// Replace the 256-bit live-lesson mask. Add, remove, reorder and replace
@@ -45,10 +44,6 @@ pub fn handler(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> Result
 
     if let Some(creator_reward_xp) = params.new_creator_reward_xp {
         course.creator_reward_xp = creator_reward_xp;
-    }
-
-    if let Some(min_completions) = params.new_min_completions_for_reward {
-        course.min_completions_for_reward = min_completions;
     }
 
     if let Some(active_lessons) = params.new_active_lessons {

@@ -115,7 +115,6 @@ impl FuzzTest {
         let difficulty: u8 = self.trident.random_from_range(1..=3u8);
         let xp_per_lesson: u32 = self.trident.random_from_range(0..=5_000u32);
         let creator_reward_xp: u32 = self.trident.random_from_range(0..=10_000u32);
-        let min_completions_for_reward: u16 = self.trident.random_from_range(1..=3u16);
 
         let course = self.fuzz_accounts.course.insert(
             &mut self.trident,
@@ -136,7 +135,6 @@ impl FuzzTest {
             track_level: self.trident.random_from_range(0..=u8::MAX),
             prerequisite: None,
             creator_reward_xp,
-            min_completions_for_reward,
             collection: None,
         };
 
@@ -267,18 +265,20 @@ impl FuzzTest {
         let enrollment = self.derive_enrollment(&learner);
         let learner_token_account = self.derive_ata(&learner, &xp_mint);
 
-        // How many lessons does this course actually have?
-        let lesson_count = match self
+        // The account stores no raw lesson_count — derive it as the popcount of
+        // the active_lessons mask. `start` never retires a slot, so the course
+        // stays dense and this popcount equals the lesson_count used at creation.
+        let lesson_count: u32 = match self
             .trident
             .get_account_with_type::<CourseAccount>(&course, 8)
         {
-            Some(c) => c.lesson_count,
+            Some(c) => c.active_lessons.iter().map(|w| w.count_ones()).sum(),
             None => return,
         };
 
         // Mark all lessons (ignore per-call results: already-complete / not-enrolled
         // are valid rejections; we just want to reach a finalizable state).
-        for idx in 0..lesson_count {
+        for idx in 0..(lesson_count as u8) {
             let _ = self.trident.process_transaction(
                 &[complete_lesson_ix(
                     &CompleteLessonAccounts {
@@ -324,7 +324,7 @@ impl FuzzTest {
                 );
                 let completed: u32 = enr.lesson_flags.iter().map(|w| w.count_ones()).sum();
                 assert_eq!(
-                    completed, lesson_count as u32,
+                    completed, lesson_count,
                     "finalize succeeded with {} lessons completed, expected {}",
                     completed, lesson_count
                 );

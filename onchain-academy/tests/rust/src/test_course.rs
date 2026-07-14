@@ -5,14 +5,16 @@ use solana_sdk::pubkey::Pubkey;
 
 #[test]
 fn course_size_constant_is_correct() {
-    // v2 (CS-3): 224 - 1 (deleted lesson_count u8) + 32 (active_lessons [u64;4]) = 255.
+    // 253 = prior 255 - 2 (deleted min_completions_for_reward u16).
     // 8 (discriminator) + (4 + 32) (course_id) + 32 (creator) + 32 (content_tx_id)
     // + 2 (version) + 32 (active_lessons: [u64; 4]) + 1 (difficulty) + 4 (xp_per_lesson)
     // + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
-    // + 4 (creator_reward_xp) + 2 (min_completions_for_reward) + 4 (total_completions)
+    // + 4 (creator_reward_xp) + 4 (total_completions)
     // + 4 (total_enrollments) + 1 (is_active) + 8 (created_at) + 8 (updated_at)
     // + 32 (collection) + 8 (_reserved) + 1 (bump)
-    assert_eq!(Course::SIZE, 255);
+    // 253 must NOT drift back to 255 — the client decoder dispatches on length,
+    // and 255 is the never-deployed v2 layout.
+    assert_eq!(Course::SIZE, 253);
 }
 
 #[test]
@@ -35,7 +37,6 @@ fn course_with_mask(active_lessons: [u64; 4]) -> Course {
         track_level: 0,
         prerequisite: None,
         creator_reward_xp: 0,
-        min_completions_for_reward: 0,
         total_completions: 0,
         total_enrollments: 0,
         is_active: true,
@@ -111,7 +112,6 @@ fn course_serialization_roundtrip() {
         track_level: 2,
         prerequisite: None,
         creator_reward_xp: 50,
-        min_completions_for_reward: 10,
         total_completions: 7,
         total_enrollments: 25,
         is_active: true,
@@ -139,7 +139,6 @@ fn course_serialization_roundtrip() {
     assert_eq!(deserialized.track_level, 2);
     assert_eq!(deserialized.prerequisite, None);
     assert_eq!(deserialized.creator_reward_xp, 50);
-    assert_eq!(deserialized.min_completions_for_reward, 10);
     assert_eq!(deserialized.total_completions, 7);
     assert_eq!(deserialized.total_enrollments, 25);
     assert!(deserialized.is_active);
@@ -165,7 +164,6 @@ fn course_with_prerequisite_roundtrip() {
         track_level: 2,
         prerequisite: Some(prereq),
         creator_reward_xp: 20,
-        min_completions_for_reward: 5,
         total_completions: 0,
         total_enrollments: 0,
         is_active: true,
@@ -198,7 +196,6 @@ fn course_collection_roundtrip() {
         track_level: 1,
         prerequisite: None,
         creator_reward_xp: 0,
-        min_completions_for_reward: 0,
         total_completions: 0,
         total_enrollments: 0,
         is_active: true,
@@ -274,7 +271,6 @@ fn course_serialized_size_with_max_id_and_all_options() {
         track_level: 0,
         prerequisite: Some(Pubkey::new_unique()),
         creator_reward_xp: 0,
-        min_completions_for_reward: 0,
         total_completions: 0,
         total_enrollments: 0,
         is_active: true,
@@ -306,7 +302,6 @@ fn course_serialized_size_shorter_id_fits_within_allocation() {
         track_level: 0,
         prerequisite: None,
         creator_reward_xp: 0,
-        min_completions_for_reward: 0,
         total_completions: 0,
         total_enrollments: 0,
         is_active: true,

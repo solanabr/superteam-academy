@@ -123,9 +123,6 @@ fn completion_bonus_xp_is_50_percent_of_total() {
     // finalize_course: bonus = (xp_per_lesson * live_lesson_count) / 2
     let xp_per_lesson: u32 = 100;
     let live_lesson_count: u8 = 5;
-    let creator_reward_xp: u32 = 50;
-    let min_completions_for_reward: u16 = 3;
-    let total_completions: u32 = 3;
 
     let total_lesson_xp = (xp_per_lesson as u64) * (live_lesson_count as u64);
     assert_eq!(total_lesson_xp, 500);
@@ -133,13 +130,8 @@ fn completion_bonus_xp_is_50_percent_of_total() {
     let bonus_xp = total_lesson_xp / 2;
     assert_eq!(bonus_xp, 250);
 
-    // Creator reward is minted if threshold met
-    assert!(total_completions >= min_completions_for_reward as u32);
     let total_xp_to_learner = total_lesson_xp + bonus_xp;
     assert_eq!(total_xp_to_learner, 750);
-
-    // Creator gets their reward
-    assert_eq!(creator_reward_xp, 50);
 }
 
 #[test]
@@ -150,18 +142,6 @@ fn completion_bonus_zero_when_xp_per_lesson_is_one() {
     let total_lesson_xp = (xp_per_lesson as u64) * (live_lesson_count as u64);
     let bonus_xp = total_lesson_xp / 2;
     assert_eq!(bonus_xp, 0);
-}
-
-#[test]
-fn creator_reward_below_threshold_means_no_mint() {
-    let min_completions_for_reward: u16 = 5;
-    let total_completions: u32 = 4; // below threshold
-    let creator_reward_xp: u32 = 100;
-
-    // finalize_course: `if total_completions >= min_completions && creator_reward_xp > 0`
-    let should_mint =
-        total_completions >= min_completions_for_reward as u32 && creator_reward_xp > 0;
-    assert!(!should_mint);
 }
 
 #[test]

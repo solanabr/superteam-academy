@@ -16,7 +16,6 @@ pub struct CreateCourseParams {
     pub track_level: u8,
     pub prerequisite: Option<Pubkey>,
     pub creator_reward_xp: u32,
-    pub min_completions_for_reward: u16,
     /// Metaplex Core collection for credential NFTs. `None` defers to a later
     /// `update_course` (the per-course collection is created after the PDA).
     pub collection: Option<Pubkey>,
@@ -50,7 +49,6 @@ pub fn handler(ctx: Context<CreateCourse>, params: CreateCourseParams) -> Result
     course.track_level = params.track_level;
     course.prerequisite = params.prerequisite;
     course.creator_reward_xp = params.creator_reward_xp;
-    course.min_completions_for_reward = params.min_completions_for_reward;
     course.total_completions = 0;
     course.total_enrollments = 0;
     course.is_active = true;
