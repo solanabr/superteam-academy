@@ -8,6 +8,7 @@ import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import { serverEnv } from "@/lib/env.server";
+import { isAccountDeleted } from "@/lib/auth/account-status";
 import type { Database } from "@/lib/supabase/types";
 
 interface WalletAuthRequest {
@@ -158,6 +159,25 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = sessionData.session.user.id;
+
+    // #489 — refuse a soft-deleted (tombstoned) account. Must run BEFORE the
+    // wallet_address write below, or a deleted user re-authenticating with
+    // the SAME wallet re-writes wallet_address onto the tombstoned row,
+    // partially reversing the #410 anonymization (which nulled it on
+    // deletion). This is the earliest point userId is authoritatively known
+    // for every resolution path above: wallet_address is nulled on deletion,
+    // so the existingProfile lookup by wallet_address never matches a
+    // deleted account — the deleted-reauth path always falls through to
+    // magic-link + verifyOtp, which is what resolves userId here.
+    //
+    // Sign out via the SAME cookie-bound client used for verifyOtp() above,
+    // so the clearing Set-Cookie headers overwrite the session cookies
+    // verifyOtp() just queued onto cookieStore — the browser never ends up
+    // holding a usable session for a deleted account.
+    if (await isAccountDeleted(userId)) {
+      await supabaseAnon.auth.signOut();
+      return NextResponse.json({ error: "accountDeleted" }, { status: 403 });
+    }
 
     // Wallet links are permanent — reject if a different wallet is already linked.
     // Same wallet re-authenticating (e.g. after session expiry) is allowed.
