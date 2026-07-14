@@ -196,6 +196,10 @@ export async function POST(request: NextRequest) {
           value: profile.username ?? profile.wallet_address,
         },
         { trait_type: "Platform", value: "Superteam Academy" },
+        // Course.version rewinds to 1 on a close+recreate (WS-2). Stamping the
+        // live on-chain version at mint time lets a credential's provenance
+        // survive a later recreate of the same course_id.
+        { trait_type: "Course Version", value: onChainCourse.version },
       ],
       properties: { category: "certificate", creators: [] },
       external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
