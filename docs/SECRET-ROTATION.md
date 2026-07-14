@@ -19,9 +19,9 @@ stored outside the repo**.
 > apply, but to the `stbr-true` deploy.
 >
 > **Update (2026-07-12):** the dedicated production Supabase project (D-2 item 1) is
-> **live: `pywhtmidcrptomrabbrw`**. The previously shared project
-> (`obqlljsagzslxarwphxv`) is **retired as a prod source** — do not point anything
-> new at it. The remaining D-2 work is credential minting + on-chain custody.
+> **live** (project ref `<project-ref>`). The previously shared project is
+> **retired as a prod source** — do not point anything new at it. The remaining D-2
+> work is credential minting + on-chain custody.
 
 ## Decisions (D-2) — RATIFIED 2026-07-03
 
@@ -153,7 +153,7 @@ dashboard (Authentication → Providers → Google).
 
 ## Definition of done
 
-- [x] New dedicated prod Supabase live (`pywhtmidcrptomrabbrw`); `service_role` isolated from dev.
+- [x] New dedicated prod Supabase live (`<project-ref>`); `service_role` isolated from dev.
 - [ ] Helius (`HELIUS_API_KEY` **+ `SOLANA_RPC_URL` together**), Gemini, `GITHUB_TOKEN`, `ADMIN_SECRET`, `BUILD_SERVER_API_KEY`, `SENTRY_AUTH_TOKEN`, `MODERATION_WEBHOOK_URL` all freshly minted for prod.
 - [ ] `AI_PARTNER_SEAL_SECRET` set explicitly in prod (not derived from `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key doesn't silently invalidate live check tokens).
 - [ ] `ARWEAVE_UPLOADER_SECRET` is a dedicated, funded keypair — never reused as a signer.

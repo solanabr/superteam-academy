@@ -21,7 +21,7 @@ project/branch.
 | Layer          | Production                                  | Staging                                             |
 | -------------- | ------------------------------------------- | --------------------------------------------------- |
 | Frontend       | Vercel Production deploy (`main`)           | Vercel **Preview** env (staging branch or PR)       |
-| Database       | Supabase prod (`pywhtmidcrptomrabbrw`)      | Supabase **branch** _or_ a separate staging project |
+| Database       | Supabase prod (`<project-ref>`)             | Supabase **branch** _or_ a separate staging project |
 | Content        | Committed bundle (whatever the branch pins) | **Identical** — the bundle ships with the code      |
 | Chain          | mainnet-beta / devnet                       | **devnet** always                                   |
 | RPC + webhooks | Helius (prod webhook)                       | Helius (separate **devnet** webhook → staging URL)  |
