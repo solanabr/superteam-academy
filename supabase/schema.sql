@@ -214,6 +214,22 @@ CREATE POLICY "Users can insert their own profile"
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE USING (auth.uid() = id);
 
+-- Column-restrict the anon SELECT (#486). The "public profiles" policy above
+-- grants ROW visibility of public rows, and Supabase's default grant gives anon
+-- whole-table SELECT (every column) — so anon could read google_id/github_id
+-- (OAuth subject IDs) of any public profile. RLS gates rows, not columns; and a
+-- column-level REVOKE cannot carve a subset out of a table-level grant, so drop
+-- the table SELECT and re-grant only the non-sensitive columns. Withholds
+-- google_id, github_id, deleted_at, deletion_requested_at from anon.
+-- (authenticated keeps whole-table SELECT — it needs own-row google_id for
+-- settings; the authenticated-reads-others-public-rows residual is tracked as a
+-- view-routing follow-up.)
+REVOKE SELECT ON profiles FROM anon;
+GRANT SELECT (
+  id, wallet_address, username, bio, avatar_url, social_links,
+  is_public, name_rerolls_used, wallet_xp_synced_at, created_at
+) ON profiles TO anon;
+
 -- enrollments
 CREATE POLICY "Users can view their own enrollments"
   ON enrollments FOR SELECT USING (auth.uid() = user_id);
