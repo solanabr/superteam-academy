@@ -1,12 +1,8 @@
 import "server-only";
 
 import { Connection, PublicKey } from "@solana/web3.js";
-import { BorshCoder, Idl } from "@coral-xyz/anchor";
 import { createAdminClient } from "@/lib/supabase/admin";
-import IDL from "@/lib/solana/idl/superteam_academy.json";
-
-// Double cast: JSON import lacks Anchor's Idl type shape at compile time
-const coder = new BorshCoder(IDL as unknown as Idl);
+import { decodeCourse } from "@/lib/solana/academy-reads";
 
 /**
  * Resolve a wallet address to a Supabase user_id.
@@ -66,9 +62,8 @@ export async function resolveCourseId(
       return null;
     }
 
-    const decoded = coder.accounts.decode("Course", accountInfo.data);
-    // Anchor 0.31+ IDL preserves snake_case field names
-    const courseId = (decoded.course_id ?? decoded.courseId) as string;
+    const decoded = decodeCourse(accountInfo.data);
+    const courseId = decoded.course_id;
     coursePdaCache.set(coursePda, courseId);
     return courseId;
   } catch (err) {

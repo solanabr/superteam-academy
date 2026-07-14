@@ -131,15 +131,6 @@ export interface DecodedCourse {
   activeLessons: bigint[];
   /** popcount(activeLessons); for v1 this equals the old `lesson_count`. */
   liveLessonCount: number;
-  // NOTE: `lesson_count` is intentionally NOT part of this type or the
-  // decoded object — every consumer that still reads `.lesson_count` off a
-  // decoded Course (pre-existing #449 drift; tracked for Tasks 1b/1c/1d) is
-  // left alone per this task's brief. TypeScript would otherwise refuse to
-  // compile that dead-field access now that Course has a real type instead of
-  // `any`, so it's declared here as a type-only, always-`undefined` compat
-  // shim — it is never assigned, so it never appears on the actual decoded
-  // object (`"lesson_count" in course` is false).
-  lesson_count?: undefined;
 }
 
 /** Popcount of a single 64-bit word via Brian Kernighan's algorithm. */

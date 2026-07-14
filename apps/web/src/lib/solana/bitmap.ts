@@ -8,8 +8,9 @@ export function decodeLessonBitmap(
 ): boolean[] {
   // Throw rather than silently returning [] — a NaN count would otherwise skip
   // the words check (`x < NaN` is false) and skip the loop (`i < NaN` is false),
-  // decoding every enrollment as "no lessons complete". Same NaN-from-a-chain-read
-  // hazard guarded in isAllLessonsComplete; here the honest answer is an error.
+  // decoding every enrollment as "no lessons complete". The honest answer here
+  // is an error (this is a count-derived read; the mask-based completion check
+  // in isCourseComplete has no count and needs no such guard).
   if (!Number.isFinite(lessonCount) || lessonCount < 0) {
     throw new Error(`decodeLessonBitmap: invalid lessonCount=${lessonCount}`);
   }
@@ -41,25 +42,23 @@ export function isLessonComplete(
   return (word & (1n << BigInt(bitIndex))) !== 0n;
 }
 
-export function isAllLessonsComplete(
+// Mirrors the on-chain `finalize_course` gate exactly:
+//   enrollment.lesson_flags.iter().zip(course.active_lessons.iter())
+//       .all(|(flags, active)| flags & active == *active)
+// This is a SUBSET test over the live-lesson mask, not a dense-prefix check —
+// a retired (non-live) lesson slot never blocks completion, and a learner who
+// finished every live slot is complete even if a retired slot's bit is unset
+// (or, symmetrically, set — the AND against `active` ignores stray bits in
+// retired slots either way).
+export function isCourseComplete(
   lessonFlags: BitValue[],
-  lessonCount: number
+  activeLessons: bigint[]
 ): boolean {
-  // Fail CLOSED on a non-finite count. Callers derive this from a chain read
-  // (`Number(course.lesson_count)`), so a field the coder cannot see yields NaN
-  // — and NaN sails through every guard below: `NaN === 0` is false, `x < NaN`
-  // is false, and `i < NaN` is false on the first iteration, so the loop never
-  // runs and the function falls through to `return true`. "Nobody has completed
-  // anything" would then read as "everybody has completed everything".
-  if (!Number.isFinite(lessonCount) || lessonCount <= 0) return false;
-  const wordsNeeded = Math.ceil(lessonCount / 64);
-  if (lessonFlags.length < wordsNeeded) return false;
-  for (let i = 0; i < lessonCount; i++) {
-    const wordIndex = Math.floor(i / 64);
-    const bitIndex = i % 64;
-    const flagWord = lessonFlags[wordIndex] as BitValue;
-    const word = BigInt(flagWord.toString());
-    if ((word & (1n << BigInt(bitIndex))) === 0n) return false;
+  for (let i = 0; i < activeLessons.length; i++) {
+    const active = activeLessons[i] ?? 0n;
+    const flagWord = lessonFlags[i];
+    const flags = flagWord === undefined ? 0n : BigInt(flagWord.toString());
+    if ((flags & active) !== active) return false;
   }
   return true;
 }

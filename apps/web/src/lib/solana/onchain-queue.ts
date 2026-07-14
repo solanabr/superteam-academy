@@ -178,7 +178,7 @@ export async function retryPendingOnchainActions(
           );
           const totalXp = onChainCourse
             ? Number(onChainCourse.xp_per_lesson) *
-              (Number(onChainCourse.lesson_count) || 1)
+              onChainCourse.liveLessonCount
             : 0;
 
           const { count: existingCerts } = await adminClient
