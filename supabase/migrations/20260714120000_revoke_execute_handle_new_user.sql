@@ -1,0 +1,20 @@
+-- #377: handle_new_user is a SECURITY DEFINER trigger function (fires on
+-- auth.users INSERT to seed public.profiles + public.user_xp). Postgres grants
+-- EXECUTE to PUBLIC by default on function creation, exposing it directly at
+-- /rest/v1/rpc/handle_new_user to anon + authenticated. A trigger function must
+-- never be client-callable — revoke it.
+--
+-- Trigger execution is unaffected: a trigger runs its function regardless of the
+-- invoking role's EXECUTE privilege; EXECUTE only gates direct RPC calls.
+-- postgres (owner) + service_role retain EXECUTE.
+--
+-- Verified against prod (pywhtmidcrptomrabbrw): before, proacl held the PUBLIC
+-- grant (=X/postgres) and anon/authenticated could execute; after, the ACL is
+-- {postgres=X/postgres,service_role=X/postgres} and anon/authenticated/public
+-- cannot.
+--
+-- Scope note: the security advisor also flags get_leaderboard, which is
+-- intentionally public (leaderboard API) and is deliberately NOT revoked here.
+-- The originating issue also named rls_auto_enable, which does NOT exist on this
+-- database (confirmed via pg_proc introspection) — no action for it.
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon, authenticated, PUBLIC;

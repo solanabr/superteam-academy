@@ -503,6 +503,13 @@ BEGIN
 END;
 $$;
 
+-- handle_new_user is a trigger function; it must never be callable directly via
+-- PostgREST (#377). Postgres grants EXECUTE to PUBLIC by default on function
+-- creation, which exposes it at /rest/v1/rpc/handle_new_user — revoke that. The
+-- trigger below still fires (triggers run their function regardless of the
+-- caller's EXECUTE grant); only direct RPC calls are blocked.
+REVOKE EXECUTE ON FUNCTION handle_new_user() FROM anon, authenticated, PUBLIC;
+
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
