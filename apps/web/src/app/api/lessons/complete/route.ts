@@ -254,10 +254,8 @@ export async function POST(request: NextRequest) {
     // already-deployed course but the Course PDA's lesson_count has not yet been
     // raised by an admin re-sync (update_course.new_lesson_count). Detect it here
     // and return a clear 409 instead of letting the on-chain TX throw a generic
-    // 500. fetchCourse uses the raw-IDL BorshCoder → snake_case `lesson_count`.
-    const onChainLessonCount = onChainCourse?.lesson_count as
-      | number
-      | undefined;
+    // 500. fetchCourse returns the normalised `liveLessonCount`.
+    const onChainLessonCount = onChainCourse?.liveLessonCount;
     if (
       typeof onChainLessonCount === "number" &&
       lessonIndex >= onChainLessonCount

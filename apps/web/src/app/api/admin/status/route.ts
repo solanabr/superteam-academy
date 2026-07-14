@@ -76,7 +76,7 @@ async function computeRepoContentDrift(): Promise<CourseContentDrift> {
 interface RawCourse {
   creator?: { toBase58(): string };
   content_tx_id?: number[] | Uint8Array;
-  lesson_count?: number;
+  liveLessonCount: number;
   difficulty?: number;
   xp_per_lesson?: number;
   track_id?: number;
@@ -95,7 +95,7 @@ function toOnChainCourse(courseId: string, raw: RawCourse): OnChainCourse {
   return {
     courseId,
     creator: raw.creator?.toBase58() ?? "",
-    lessonCount: raw.lesson_count ?? 0,
+    lessonCount: raw.liveLessonCount,
     difficulty: raw.difficulty ?? 1,
     xpPerLesson: raw.xp_per_lesson ?? 0,
     trackId: raw.track_id ?? 0,

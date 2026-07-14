@@ -16,7 +16,7 @@ import {
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
-import { isAllLessonsComplete } from "@/lib/solana/bitmap";
+import { isCourseComplete } from "@/lib/solana/bitmap";
 import {
   checkNewAchievements,
   buildUserState,
@@ -447,10 +447,9 @@ async function tryFinalizeCourse(
     const course = await fetchCourse(courseId, connection, getProgramId());
     if (!course) return;
 
-    const lessonCount = Number(course.lesson_count);
     const lessonFlags = enrollment.lesson_flags as (bigint | number)[];
 
-    if (!isAllLessonsComplete(lessonFlags, lessonCount)) return;
+    if (!isCourseComplete(lessonFlags, course.activeLessons)) return;
 
     await onChainFinalizeCourse(courseId, learnerPk);
   } catch (err) {
@@ -524,8 +523,7 @@ async function tryIssueCredential(
       );
     }
     const totalXp =
-      Number(onChainCourse.xp_per_lesson) *
-      (Number(onChainCourse.lesson_count) || 1);
+      Number(onChainCourse.xp_per_lesson) * onChainCourse.liveLessonCount;
 
     // Fetch user profile for metadata
     const supabase = createAdminClient();
