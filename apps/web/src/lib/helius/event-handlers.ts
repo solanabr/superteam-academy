@@ -22,6 +22,7 @@ import {
   buildUserState,
 } from "@/lib/gamification/achievements";
 import { getCourseById, getDeployedAchievements } from "@/lib/content/queries";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import type {
@@ -424,7 +425,7 @@ export async function handleXpRewarded(
 // Internal: try to finalize a course on-chain if all lessons are complete
 // ---------------------------------------------------------------------------
 
-async function tryFinalizeCourse(
+export async function tryFinalizeCourse(
   userId: string,
   courseId: string,
   walletAddress: string,
@@ -433,6 +434,16 @@ async function tryFinalizeCourse(
   const learnerPk = new PublicKey(walletAddress);
 
   try {
+    // WS-2 #453 rail 3 — a close+recreate briefly removes the Course PDA
+    // (close_course + create_course cannot be atomic). Check the per-course
+    // maintenance gate FIRST: if a recreate is in flight, queue for retry
+    // instead of reading a PDA that may not exist yet/anymore.
+    if (await isCourseInMaintenance(courseId)) {
+      throw new Error(
+        `Course "${courseId}" is under maintenance (on-chain recreate in progress) — deferring finalize`
+      );
+    }
+
     const enrollment = await fetchEnrollment(
       courseId,
       learnerPk,
@@ -445,7 +456,15 @@ async function tryFinalizeCourse(
     if (enrollment.completed_at) return;
 
     const course = await fetchCourse(courseId, connection, getProgramId());
-    if (!course) return;
+    if (!course) {
+      // The Course PDA is unexpectedly absent — e.g. a close+recreate window the
+      // maintenance gate above did not catch (a lost/racing gate write), or any
+      // other transient absence. Queue rather than silently dropping: a learner
+      // finishing their last lesson here must not permanently lose auto-finalize.
+      throw new Error(
+        `Course "${courseId}" has no on-chain account — deferring finalize`
+      );
+    }
 
     const lessonFlags = enrollment.lesson_flags as (bigint | number)[];
 

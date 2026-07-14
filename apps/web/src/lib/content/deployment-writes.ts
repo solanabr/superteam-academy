@@ -43,6 +43,7 @@ type DeploymentUpsert = {
   is_active?: boolean | null;
   last_synced?: string | null;
   updated_at?: string | null;
+  in_maintenance?: boolean;
 };
 
 /**
@@ -138,6 +139,25 @@ export async function writeCourseActive(
     content_id: sanityId,
     kind: "course",
     is_active: isActive,
+  });
+}
+
+/**
+ * Set/clear the per-course maintenance gate (WS-2 #453 rail 3). The recreate
+ * orchestrator (`lib/admin/recreate-course.ts`) calls this with `true` BEFORE
+ * `close_course` and `false` after `create_course` lands, so on-chain write
+ * paths for this course (`isCourseInMaintenance`, `lib/content/deployments.ts`)
+ * refuse/queue rather than racing the window where the Course PDA briefly does
+ * not exist.
+ */
+export async function writeCourseMaintenanceFlag(
+  sanityId: string,
+  inMaintenance: boolean
+): Promise<void> {
+  await upsertDeployment({
+    content_id: sanityId,
+    kind: "course",
+    in_maintenance: inMaintenance,
   });
 }
 

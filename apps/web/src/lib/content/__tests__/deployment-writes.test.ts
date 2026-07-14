@@ -10,11 +10,13 @@ let lastRow: Record<string, unknown> | null = null;
 let lastOptions: Record<string, unknown> | null = null;
 let upsertError: { message: string } | null = null;
 
-const upsert = vi.fn((row: Record<string, unknown>, options: Record<string, unknown>) => {
-  lastRow = row;
-  lastOptions = options;
-  return Promise.resolve({ error: upsertError });
-});
+const upsert = vi.fn(
+  (row: Record<string, unknown>, options: Record<string, unknown>) => {
+    lastRow = row;
+    lastOptions = options;
+    return Promise.resolve({ error: upsertError });
+  }
+);
 const fromFn = vi.fn((table: string) => {
   lastTable = table;
   return { upsert };
@@ -29,6 +31,7 @@ import {
   writeCourseActive,
   writeCourseTrackCollection,
   writeAchievementOnChainStatus,
+  writeCourseMaintenanceFlag,
 } from "../deployment-writes";
 
 beforeEach(() => {
@@ -95,6 +98,23 @@ describe("deployment-writes (SP2-B on-chain status → Supabase)", () => {
       collection_address: "ACH_COLL",
     });
     expect(typeof lastRow?.last_synced).toBe("string");
+  });
+
+  it("writeCourseMaintenanceFlag upserts only the in_maintenance flag (WS-2 #453 rail 3)", async () => {
+    await writeCourseMaintenanceFlag("course-x", true);
+
+    expect(lastRow).toMatchObject({
+      content_id: "course-x",
+      kind: "course",
+      in_maintenance: true,
+    });
+    expect(lastRow).not.toHaveProperty("status");
+    expect(lastRow).not.toHaveProperty("course_pda");
+  });
+
+  it("writeCourseMaintenanceFlag(false) clears the flag", async () => {
+    await writeCourseMaintenanceFlag("course-x", false);
+    expect(lastRow).toMatchObject({ in_maintenance: false });
   });
 
   it("throws when the upsert fails (fail-loud, so callers' best-effort catch fires)", async () => {

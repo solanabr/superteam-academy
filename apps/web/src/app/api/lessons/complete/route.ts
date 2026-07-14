@@ -19,6 +19,7 @@ import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { findLessonIndex } from "@/lib/courses/lesson-index";
 import { serverEnv } from "@/lib/env.server";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
 
 interface LessonCompleteRequest {
   lessonId: string;
@@ -225,6 +226,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "On-chain program not available" },
         { status: 503 }
+      );
+    }
+
+    // WS-2 #453 rail 3 — the affected course is mid close+recreate (the Course
+    // PDA is briefly absent, non-atomically). Refuse rather than racing that
+    // window; the learner's proofs/grading above are already validated and
+    // durable client-side, so a retry shortly after is lossless.
+    if (await isCourseInMaintenance(courseId)) {
+      return NextResponse.json(
+        {
+          error:
+            "This course is undergoing maintenance. Please try again in a few minutes.",
+        },
+        { status: 503, headers: { "Retry-After": "60" } }
       );
     }
 
