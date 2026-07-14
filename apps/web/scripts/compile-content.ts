@@ -29,6 +29,7 @@ import {
   Achievement,
   Quest,
   LearningPath,
+  SkillsTaxonomy,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
 import { extractTarball } from "../src/lib/content/compile/tarball";
@@ -96,6 +97,7 @@ function validateTree(tree: RepoTree): CompileInput {
     quests: [],
     paths: [],
     slots: new Map(),
+    skills: [],
     prose: new Map(),
     code: new Map(),
     idl: new Map(),
@@ -117,7 +119,14 @@ function validateTree(tree: RepoTree): CompileInput {
   };
 
   for (const [p, bytes] of tree) {
-    if (p.endsWith("/course.yaml")) {
+    if (p === "skills.yaml") {
+      // The only content type at the repo root, not nested under a course/
+      // collection dir — a single canonical skill vocabulary, not one doc per
+      // file. Optional: courses-academy doesn't ship it yet (#466 C2 adds it),
+      // so absence is not an error and `content.skills` stays `[]`.
+      const s = zod(SkillsTaxonomy, parseYaml(text(bytes)), p);
+      if (s) content.skills = s;
+    } else if (p.endsWith("/course.yaml")) {
       const c = zod(Course, parseYaml(text(bytes)), p);
       if (c) {
         content.courses.push(c);
@@ -444,6 +453,11 @@ export function compileBundle(
     slotsById[c.id] = content.slots.get(dir)!;
   }
   files.set("slots.json", stableJson(slotsById));
+
+  // skills.json: the canonical skill vocabulary from a repo-root skills.yaml,
+  // or [] when the file is absent (it is, today — see the loader above and
+  // #466 C1/C2). No enforcement against lesson `skills` here (#466 C3).
+  files.set("skills.json", stableJson(content.skills));
 
   const meta: Record<string, unknown> = { sha: opts.sha, counts };
   if (opts.compiledAt !== null) meta.compiledAt = opts.compiledAt;

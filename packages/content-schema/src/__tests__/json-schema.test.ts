@@ -22,6 +22,7 @@ describe("JSON Schema generation", () => {
         "path",
         "quest",
         "quiz",
+        "skills",
         "slots",
       ].sort()
     );

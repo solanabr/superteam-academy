@@ -10,6 +10,7 @@ import { Achievement } from "../src/achievement";
 import { Quest } from "../src/quest";
 import { LearningPath } from "../src/path";
 import { SlotsLock } from "../src/slots";
+import { SkillsTaxonomy } from "../src/skills";
 
 /** One entry per file kind an author writes (or a tool generates). */
 export const SCHEMA_TARGETS = {
@@ -20,6 +21,7 @@ export const SCHEMA_TARGETS = {
   quest: Quest,
   path: LearningPath,
   slots: SlotsLock,
+  skills: SkillsTaxonomy,
 } as const;
 
 function main(): void {

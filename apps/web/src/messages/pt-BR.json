@@ -56,6 +56,7 @@
     "dismissBanner": "Fechar"
   },
   "auth": {
+    "accountDeleted": "Esta conta foi excluída e não pode mais fazer login.",
     "authFailed": "A autenticação da carteira falhou. Tente novamente ou use outro método de login.",
     "chooseWallet": "Escolha uma carteira",
     "connectSolanaWallet": "Conectar Carteira Solana",

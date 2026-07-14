@@ -6,9 +6,11 @@ import {
   Achievement,
   Quest,
   LearningPath,
+  SkillsTaxonomy,
   type CourseT,
   type LessonT,
   type SlotsLockT,
+  type SkillsTaxonomyT,
 } from "@superteam-lms/content-schema";
 import { ContentValidationError } from "./types";
 import { gateCodeBlock, type GraderSet } from "./executor-gate";
@@ -21,6 +23,12 @@ export interface ValidatedContent {
   quests: unknown[];
   paths: unknown[];
   slots: Map<string, SlotsLockT>; // course dir → lockfile
+  /**
+   * The canonical skill vocabulary from a repo-root `skills.yaml`, or `[]` if
+   * the file is absent (it is, today — courses-academy doesn't have it yet).
+   * Not cross-checked against lesson `skills` here; that is #466 C3.
+   */
+  skills: SkillsTaxonomyT;
   prose: Map<string, string>; // md path → body
   code: Map<string, string>; // ts/rs path → body
   idl: Map<string, string>; // idl path → json
@@ -48,6 +56,7 @@ export async function parseAndValidateTree(
     quests: [],
     paths: [],
     slots: new Map(),
+    skills: [],
     prose: new Map(),
     code: new Map(),
     idl: new Map(),
@@ -68,7 +77,14 @@ export async function parseAndValidateTree(
   };
 
   for (const [path, bytes] of tree) {
-    if (path.endsWith("/course.yaml")) {
+    if (path === "skills.yaml") {
+      // The only content type at the repo root, not nested under a course/
+      // collection dir — a single canonical skill vocabulary, not one doc per
+      // file. Optional: courses-academy doesn't ship it yet (#466 C2 adds it),
+      // so absence is not an error and `v.skills` stays `[]`.
+      const s = zod(SkillsTaxonomy, parseYaml(text(bytes)), path);
+      if (s) v.skills = s;
+    } else if (path.endsWith("/course.yaml")) {
       const c = zod(Course, parseYaml(text(bytes)), path);
       if (c) v.courses.push(c);
     } else if (path.endsWith("/slots.lock.json")) {

@@ -6,6 +6,10 @@ import { locales, defaultLocale } from "@/lib/i18n/config";
 import { isAdminRoute, isAdminRootPath } from "@/lib/admin/routes";
 import { ADMIN_SESSION_MAX_AGE_MS } from "@/lib/admin/session-format";
 import { buildCsp, generateNonce } from "@/lib/csp";
+import {
+  isAccountDeleted,
+  DELETED_ACCOUNT_REASON,
+} from "@/lib/auth/account-status";
 
 // NOTE: This Edge-runtime `isValidAdminSession` (Web Crypto) must stay in sync
 // with the Node-runtime implementation in `lib/admin/auth.ts` (Node `crypto`).
@@ -132,6 +136,32 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // #461 — refuse a soft-deleted (tombstoned) account, on every request that
+  // carries a session, not just protected routes. This is the backstop for
+  // the SIWS/wallet login path (which never touches /api/auth/callback) and
+  // for any Supabase session cookie that outlived an account deletion. Cheap:
+  // a single primary-key lookup, gated on `user` already being non-null so
+  // anonymous requests never pay for it.
+  if (user && (await isAccountDeleted(user.id))) {
+    // Sign out via the SAME cookie-bound client used for getUser() above, so
+    // the clearing Set-Cookie headers land on supabaseResponse and get
+    // relayed onto the redirect below.
+    await supabase.auth.signOut();
+
+    const locale =
+      locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
+      defaultLocale;
+    const redirectUrl = new URL(`/${locale}`, request.url);
+    redirectUrl.searchParams.set("error", "auth");
+    redirectUrl.searchParams.set("reason", DELETED_ACCOUNT_REASON);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.headers.set("Content-Security-Policy", csp);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
+  }
 
   // Now run intl middleware (after Supabase may have modified request cookies).
   // next-intl forwards request.headers (incl. the nonce + CSP set above) to the

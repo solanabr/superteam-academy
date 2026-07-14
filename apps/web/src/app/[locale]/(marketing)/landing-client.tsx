@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +15,7 @@ import type { LearningPath } from "@superteam-lms/types";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { AuthErrorToast } from "@/components/auth/auth-error-toast";
 import { HeroShowcase } from "@/components/landing/hero-showcase";
 import {
   BuildWidget,
@@ -379,6 +380,14 @@ export function LandingPageClient({
 
   return (
     <div className="flex min-h-screen flex-col">
+      {/* Surfaces ?error=auth&reason=... from a refused OAuth callback or the
+          middleware deleted-account backstop (#461). Isolated behind its own
+          Suspense boundary so useSearchParams() doesn't force the rest of this
+          ISR'd landing page into per-request dynamic rendering. */}
+      <Suspense fallback={null}>
+        <AuthErrorToast />
+      </Suspense>
+
       <div className="flex-1">
         {/* ── Hero — the stage reacts to the cursor (parallax halo + tilt) ── */}
         <section

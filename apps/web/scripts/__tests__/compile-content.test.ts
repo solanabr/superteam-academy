@@ -177,6 +177,7 @@ describe("compileContent", () => {
       "quests.json",
       "paths.json",
       "slots.json",
+      "skills.json",
       "meta.json",
     ];
     for (const n of names) expect(files.has(n)).toBe(true);
@@ -235,6 +236,33 @@ describe("compileContent", () => {
       retired: [],
       next: 1,
     });
+  });
+
+  // #466 C1: skills.yaml is a repo-root file courses-academy doesn't ship yet.
+  // The compiler must tolerate its absence and, when present, load it into the
+  // bundle — with no cross-check against lesson `skills` (that's C3).
+  it("emits an empty skills.json when skills.yaml is absent", () => {
+    const files = compileContent(validTree(), opts);
+    expect(JSON.parse(files.get("skills.json")!)).toEqual([]);
+  });
+
+  it("loads and emits the canonical skill vocabulary from a root skills.yaml", () => {
+    const tree = validTree();
+    tree.set(
+      "skills.yaml",
+      enc("- slug: pdas\n  label: PDAs\n- slug: cpi\n  label: CPIs\n")
+    );
+    const files = compileContent(tree, opts);
+    expect(JSON.parse(files.get("skills.json")!)).toEqual([
+      { slug: "pdas", label: "PDAs" },
+      { slug: "cpi", label: "CPIs" },
+    ]);
+  });
+
+  it("fails closed on a malformed skills.yaml", () => {
+    const tree = validTree();
+    tree.set("skills.yaml", enc("- slug: Not A Slug\n"));
+    expect(() => compileContent(tree, opts)).toThrow(ContentValidationError);
   });
 
   it("is deterministic: same input yields byte-identical output", () => {
