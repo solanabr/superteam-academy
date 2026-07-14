@@ -90,9 +90,9 @@ export function buildDynamicSuffix(req: PartnerRequest): string {
 // short sentence, but `ask` returns a full answer and `propose` returns the
 // ENTIRE updated file plus a 3-option check, so those need real headroom.
 const MAX_TOKENS: Record<PartnerAction, number> = {
-  hint: 256,
-  ask: 1536,
-  propose: 4096,
+  hint: 512,
+  ask: 4096,
+  propose: 8192,
 };
 
 export function maxTokensFor(action: PartnerAction): number {
