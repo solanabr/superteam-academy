@@ -48,4 +48,19 @@ describe("Lesson", () => {
     };
     expect(Lesson.safeParse(ok).success).toBe(true);
   });
+
+  it("has no skills field when omitted — today's skill-less lessons validate unchanged (#466 C1)", () => {
+    const parsed = Lesson.parse(base);
+    expect("skills" in parsed).toBe(false);
+  });
+
+  it("accepts a lesson tagged with skill slugs", () => {
+    const parsed = Lesson.parse({ ...base, skills: ["pdas", "cpi"] });
+    expect(parsed.skills).toEqual(["pdas", "cpi"]);
+  });
+
+  it("rejects a skill tag that is not a kebab-case slug", () => {
+    const bad = { ...base, skills: ["Not_A_Slug"] };
+    expect(Lesson.safeParse(bad).success).toBe(false);
+  });
 });

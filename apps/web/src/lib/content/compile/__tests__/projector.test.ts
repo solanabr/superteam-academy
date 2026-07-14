@@ -46,6 +46,7 @@ function fixture(): ValidatedContent {
     paths: [],
     instructors: [],
     slots: new Map(),
+    skills: [],
     prose: new Map([["courses/demo/lessons/accounts/intro.md", "# Accounts"]]),
     code: new Map([
       ["courses/demo/lessons/accounts/exercise/starter.ts", "// starter"],

@@ -2,6 +2,7 @@ export * from "./constants";
 export * from "./ids";
 export * from "./wallet";
 export * from "./capabilities";
+export * from "./skills";
 export * from "./blocks";
 export * from "./lesson";
 export * from "./course";
