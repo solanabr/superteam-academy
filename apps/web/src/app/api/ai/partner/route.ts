@@ -312,8 +312,12 @@ export async function POST(request: NextRequest) {
       data?.usageMetadata?.cachedContentTokenCount ?? 0
     );
 
+    const finishReason = data?.candidates?.[0]?.finishReason;
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
+      // finishReason === "MAX_TOKENS" here means the budget was spent before any
+      // visible output (raise maxTokensFor(action)); log it so it's diagnosable.
+      console.error("[ai/partner] empty output", { action, finishReason });
       await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI could not generate a response" },
@@ -325,7 +329,13 @@ export async function POST(request: NextRequest) {
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      console.error("Gemini partner API returned non-JSON output");
+      // Usually a truncated payload (finishReason "MAX_TOKENS"): the JSON is cut
+      // off mid-string. Log the reason + a snippet so the cap can be tuned.
+      console.error("[ai/partner] non-JSON output", {
+        action,
+        finishReason,
+        snippet: rawText.slice(0, 200),
+      });
       await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },
