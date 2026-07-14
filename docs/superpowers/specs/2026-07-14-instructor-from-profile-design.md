@@ -59,5 +59,5 @@ course.yaml:  creator: <SolanaAddress>          (the wallet — no instructor re
 - No course-level display override — the profile is the single source of truth (that's the point). Revisit only if a curated display name is ever needed.
 - Not editing instructor profiles from the course flow — instructors manage their own academy profile.
 
-## 8. Open question for the owner
-- **Public profile fields:** default exposure is `username`, `avatar_url`, `bio`, `social_links` (wallet already public on-chain). Anything to exclude or add?
+## 8. Public profile fields — DECIDED (owner, 2026-07-14)
+The `public_profiles` view exposes exactly: `wallet_address` (lookup key), `username`, `avatar_url`, `bio`, `social_links` — filtered to `is_public = true` AND not-deleted rows. Every sensitive/internal column is excluded: `id` (auth key), `google_id`, `github_id`, `name_rerolls_used`, `wallet_xp_synced_at`, `role`. Build the view against the **live** `profiles` columns (schema.sql may be stale on `role`/`deleted_at`) — introspect-first, per §6.
