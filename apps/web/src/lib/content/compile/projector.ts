@@ -95,6 +95,26 @@ export function projectContent(
     })
   );
 
+  // #466 C3: course.tags is DERIVED, not authored — the sorted, deduplicated
+  // union of its lessons' `skills`. Built once from the validated lesson set
+  // (schema requires every lesson to carry >=1 skill) keyed by lesson id, so a
+  // dangling module lesson ref (no matching lesson doc) just contributes no
+  // skills rather than crashing.
+  const skillsByLessonId = new Map<string, readonly string[]>(
+    v.lessons.map(({ lesson }) => [lesson.id, lesson.skills])
+  );
+  const courseTags = (c: ValidatedContent["courses"][number]): string[] => {
+    const tags = new Set<string>();
+    for (const m of c.modules) {
+      for (const lessonId of m.lessons) {
+        for (const skill of skillsByLessonId.get(lessonId) ?? []) {
+          tags.add(skill);
+        }
+      }
+    }
+    return [...tags].sort();
+  };
+
   for (const c of v.courses) {
     docs.push({
       _id: c.id,
@@ -110,7 +130,7 @@ export function projectContent(
       trackLevel: c.trackLevel ?? 0,
       creatorRewardXp: c.creatorRewardXp ?? 0,
       minCompletionsForReward: c.minCompletionsForReward ?? 0,
-      tags: c.tags ?? [],
+      tags: courseTags(c),
       // A wallet, not a reference — no weakRef (issue #478: creator replaces
       // the retired instructor doc/ref).
       creator: c.creator ?? undefined,
@@ -135,6 +155,7 @@ export function projectContent(
       _type: "lesson",
       title: lesson.title,
       slug: { _type: "slug", current: lesson.slug },
+      skills: lesson.skills,
       blocks: lesson.blocks.map((b) =>
         projectBlock(b, dir, v, resolveAsset, resolveTests)
       ),

@@ -28,8 +28,10 @@ const baseCourse = {
   minCompletionsForReward: 0,
   lessonCount: 3,
 };
+// course-e: deployed, but its account fails to decode (#434). course-f:
+// deployed + matches, but its Supabase deployment-row read failed (#436).
 vi.mock("@/lib/content/queries", () => ({
-  getAllCoursesAdmin: async () => [
+  getAllCoursesAdminSafe: async () => [
     {
       _id: "course-a",
       slug: "a",
@@ -58,15 +60,35 @@ vi.mock("@/lib/content/queries", () => ({
       ...baseCourse,
       onChainStatus: { status: "synced", coursePda: "PDA_D" },
     },
+    {
+      _id: "course-e",
+      slug: "e",
+      title: "Course E",
+      ...baseCourse,
+      onChainStatus: { status: "synced", coursePda: "PDA_E" },
+    },
+    {
+      _id: "course-f",
+      slug: "f",
+      title: "Course F",
+      ...baseCourse,
+      onChainStatus: { status: "synced", coursePda: "PDA_F" },
+      deploymentReadFailed: true,
+    },
   ],
-  getAllAchievementsAdmin: async () => [],
+  getAllAchievementsAdminSafe: async () => [
+    { _id: "achievement-x", name: "Ach X" },
+    { _id: "achievement-y", name: "Ach Y", deploymentReadFailed: true },
+  ],
 }));
 
 vi.mock("@/lib/solana/pda", () => ({
   findCoursePDA: (id: string) => [
     { toBase58: () => `PDA_${id.slice(-1).toUpperCase()}` },
   ],
-  findAchievementTypePDA: () => [{ toBase58: () => "ACH" }],
+  findAchievementTypePDA: (id: string) => [
+    { toBase58: () => `ACH_${id.slice(-1).toUpperCase()}` },
+  ],
   getProgramId: () => ({
     toBase58: () => "Prog11111111111111111111111111111111111111",
   }),
@@ -107,6 +129,8 @@ const rawByMarker: Record<string, unknown> = {
     ...matchingRaw,
     creator: { toBase58: () => WRONG_CREATOR }, // #400
   },
+  // E deliberately has no entry — decodeCourse throws for it (#434).
+  F: matchingRaw,
 };
 vi.mock("@/lib/solana/academy-reads", () => ({
   decodeCourse: (data: Buffer) => {
@@ -130,6 +154,9 @@ vi.mock("@solana/web3.js", () => ({
       if (addr === "PDA_A") return { data: Buffer.from("A") };
       if (addr === "PDA_C") return { data: Buffer.from("C") };
       if (addr === "PDA_D") return { data: Buffer.from("D") };
+      if (addr === "PDA_E") return { data: Buffer.from("E") };
+      if (addr === "PDA_F") return { data: Buffer.from("F") };
+      if (addr.startsWith("ACH_")) return { data: Buffer.from("ach") };
       return null;
     }
   },
@@ -177,7 +204,7 @@ describe("GET /api/admin/status — content drift", () => {
   it("folds repo-wide content drift into every course record", async () => {
     const courses = await getCourses();
     // bundle sha a…, HEAD b…, CI green → behind, on every row
-    expect(courses).toHaveLength(4);
+    expect(courses).toHaveLength(6);
     for (const c of courses) expect(c.contentDrift).toBe("behind");
   });
 
@@ -231,5 +258,50 @@ describe("GET /api/admin/status — per-course diff + chain drift (SP3-C Task 2)
         updateable: false,
       },
     ]);
+  });
+});
+
+describe("GET /api/admin/status — #434 undecodable on-chain account", () => {
+  it("an account decodeCourse throws on reports 'undecodable', never the green 'synced'", async () => {
+    const e = (await getCourses()).find((r) => r.contentId === "course-e");
+    expect(e?.onChainStatus).toBe("undecodable");
+    expect(e?.onChainStatus).not.toBe("synced");
+  });
+});
+
+describe("GET /api/admin/status — #436 Supabase deployment-read failure", () => {
+  it("a course whose deployment-row read failed reports 'db_unavailable' — the route still 200s", async () => {
+    const res = await get();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { courses: CourseRow[] };
+    const f = body.courses.find((r) => r.contentId === "course-f");
+    expect(f?.onChainStatus).toBe("db_unavailable");
+    // Not misreported as a real content mismatch, and not silently "synced".
+    expect(f?.onChainStatus).not.toBe("out_of_sync");
+    expect(f?.onChainStatus).not.toBe("synced");
+  });
+
+  it("does not 500 the rest of the response — other courses/achievements are unaffected", async () => {
+    const res = await get();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      program: { deployed: boolean };
+      courses: CourseRow[];
+      achievements: { contentId: string; onChainStatus: string }[];
+    };
+    expect(body.program.deployed).toBe(true);
+    const a = body.courses.find((r) => r.contentId === "course-a");
+    expect(a?.onChainStatus).toBe("synced");
+    const x = body.achievements.find((r) => r.contentId === "achievement-x");
+    expect(x?.onChainStatus).toBe("synced");
+  });
+
+  it("an achievement whose deployment-row read failed reports 'db_unavailable', not 'synced'", async () => {
+    const res = await get();
+    const body = (await res.json()) as {
+      achievements: { contentId: string; onChainStatus: string }[];
+    };
+    const y = body.achievements.find((r) => r.contentId === "achievement-y");
+    expect(y?.onChainStatus).toBe("db_unavailable");
   });
 });

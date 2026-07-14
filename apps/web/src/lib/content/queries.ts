@@ -5,7 +5,9 @@ import type { Course, Lesson, LearningPath } from "@superteam-lms/types";
 import {
   getActiveDeployments,
   getDeploymentById,
+  getDeploymentByIdSafe,
   isSynced,
+  type OnchainDeploymentRow,
 } from "./deployments";
 import {
   countCourseLessons,
@@ -26,7 +28,12 @@ import {
   pathsById,
   questsById,
 } from "./store";
-import type { CourseDoc, LearningPathDoc, LessonDoc } from "./types";
+import type {
+  AchievementDoc,
+  CourseDoc,
+  LearningPathDoc,
+  LessonDoc,
+} from "./types";
 
 /**
  * The flipped query layer (SP2-B Task 5). Every fn that used to run a GROQ query
@@ -61,6 +68,12 @@ function str(v: unknown): string | null {
 
 function num(v: unknown): number | null {
   return typeof v === "number" ? v : null;
+}
+
+function strArr(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === "string")
+    : [];
 }
 
 function refId(v: unknown): string | null {
@@ -334,6 +347,29 @@ export async function getAllCourseTags(): Promise<
     }));
 }
 
+/**
+ * Per-lesson skill tags across all gated (synced + active) courses, keyed by
+ * lesson id — the per-lesson attribution the profile Skills radar tallies
+ * against completed `user_progress.lesson_id` rows (#466 C3). Replaces the old
+ * course-tag smear, where a single completed lesson credited ALL of its
+ * course's tags equally instead of just the skills it actually taught.
+ */
+export async function getAllLessonSkills(): Promise<
+  { _id: string; skills: string[] }[]
+> {
+  const courses = await gatedCourses();
+  const seen = new Set<string>();
+  const out: { _id: string; skills: string[] }[] = [];
+  for (const c of courses) {
+    for (const lesson of courseLessonDocs(c)) {
+      if (seen.has(lesson._id)) continue;
+      seen.add(lesson._id);
+      out.push({ _id: lesson._id, skills: strArr(lesson.skills) });
+    }
+  }
+  return out;
+}
+
 export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
@@ -444,6 +480,14 @@ export interface AdminCourse {
     lastSynced: string | null;
     txSignature: string | null;
   } | null;
+  /**
+   * True when the Supabase deployment-row read for this course failed (#436 —
+   * network/DB outage), as opposed to a genuinely absent row (never deployed,
+   * which also reads `onChainStatus: null` but `deploymentReadFailed: false`).
+   * Only ever set by {@link getAllCoursesAdminSafe}; {@link getAllCoursesAdmin}
+   * throws instead (fail-closed, for mutating callers).
+   */
+  deploymentReadFailed?: boolean;
 }
 
 export interface AdminAchievement {
@@ -459,6 +503,8 @@ export interface AdminAchievement {
     collectionAddress: string | null;
     lastSynced: string | null;
   } | null;
+  /** See {@link AdminCourse.deploymentReadFailed}. */
+  deploymentReadFailed?: boolean;
 }
 
 /** Resolve a course's `prerequisiteCourse` ref to its `{_id, slug, title}` summary. */
@@ -471,39 +517,65 @@ function prerequisiteSummary(
   return { _id: pre._id, slug: pre.slug.current, title: str(pre.title) ?? "" };
 }
 
+function toAdminCourse(
+  c: CourseDoc,
+  dep: OnchainDeploymentRow | null,
+  deploymentReadFailed: boolean
+): AdminCourse {
+  return {
+    _id: c._id,
+    title: str(c.title) as string,
+    slug: c.slug.current,
+    difficulty: str(c.difficulty) as string,
+    creatorWallet: courseCreatorWallet(c),
+    xpPerLesson: num(c.xpPerLesson),
+    trackId: num(c.trackId),
+    trackLevel: num(c.trackLevel),
+    prerequisiteCourse: prerequisiteSummary(c),
+    creatorRewardXp: num(c.creatorRewardXp),
+    minCompletionsForReward: num(c.minCompletionsForReward),
+    lessonCount: countCourseLessons(c),
+    trackCollectionAddress: dep?.track_collection_address ?? null,
+    onChainStatus: dep
+      ? {
+          status: dep.status,
+          coursePda: dep.course_pda,
+          lastSynced: dep.last_synced,
+          txSignature: dep.tx_signature,
+        }
+      : null,
+    deploymentReadFailed,
+  };
+}
+
 /**
  * All courses with on-chain sync fields for the admin dashboard. Bundle content
  * joined per-course with the full Supabase deployment row (`getDeploymentById`,
  * service-role, uncached). The bundle carries only managed docs (no drafts).
+ * Fail-closed: a Supabase read failure throws (mutating admin routes — e.g.
+ * course sync — should not silently proceed on stale/absent deployment data).
  */
 export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
   const docs = [...coursesById.values()].sort(byField((c) => str(c.title)));
   return Promise.all(
+    docs.map(async (c) =>
+      toAdminCourse(c, await getDeploymentById(c._id), false)
+    )
+  );
+}
+
+/**
+ * Same as {@link getAllCoursesAdmin}, but never throws (#436) — a per-course
+ * Supabase read failure degrades that course's `deploymentReadFailed: true`
+ * (onChainStatus null) instead of rejecting the whole batch. For the
+ * display-only `/api/admin/status` route.
+ */
+export async function getAllCoursesAdminSafe(): Promise<AdminCourse[]> {
+  const docs = [...coursesById.values()].sort(byField((c) => str(c.title)));
+  return Promise.all(
     docs.map(async (c) => {
-      const dep = await getDeploymentById(c._id);
-      return {
-        _id: c._id,
-        title: str(c.title) as string,
-        slug: c.slug.current,
-        difficulty: str(c.difficulty) as string,
-        creatorWallet: courseCreatorWallet(c),
-        xpPerLesson: num(c.xpPerLesson),
-        trackId: num(c.trackId),
-        trackLevel: num(c.trackLevel),
-        prerequisiteCourse: prerequisiteSummary(c),
-        creatorRewardXp: num(c.creatorRewardXp),
-        minCompletionsForReward: num(c.minCompletionsForReward),
-        lessonCount: countCourseLessons(c),
-        trackCollectionAddress: dep?.track_collection_address ?? null,
-        onChainStatus: dep
-          ? {
-              status: dep.status,
-              coursePda: dep.course_pda,
-              lastSynced: dep.last_synced,
-              txSignature: dep.tx_signature,
-            }
-          : null,
-      };
+      const { row, failed } = await getDeploymentByIdSafe(c._id);
+      return toAdminCourse(c, row, failed);
     })
   );
 }
@@ -526,31 +598,58 @@ export async function getLearningPathsForAdmin(): Promise<AdminLearningPath[]> {
   }));
 }
 
+function toAdminAchievement(
+  a: AchievementDoc,
+  dep: OnchainDeploymentRow | null,
+  deploymentReadFailed: boolean
+): AdminAchievement {
+  return {
+    _id: a._id,
+    name: str(a.name) as string,
+    category: str(a.category),
+    xpReward: num(a.xpReward),
+    maxSupply: num(a.maxSupply),
+    metadataUri: str(a.metadataUri),
+    onChainStatus: dep
+      ? {
+          status: dep.status,
+          achievementPda: dep.achievement_pda,
+          collectionAddress: dep.collection_address,
+          lastSynced: dep.last_synced,
+        }
+      : null,
+    deploymentReadFailed,
+  };
+}
+
 /**
  * All achievements with on-chain sync fields for the admin dashboard. Bundle
  * content joined per-achievement with the full Supabase deployment row.
+ * Fail-closed: a Supabase read failure throws (mutating admin routes should
+ * not silently proceed on stale/absent deployment data).
  */
 export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
   const docs = [...achievementsById.values()].sort(byField((a) => str(a.name)));
   return Promise.all(
+    docs.map(async (a) =>
+      toAdminAchievement(a, await getDeploymentById(a._id), false)
+    )
+  );
+}
+
+/**
+ * Same as {@link getAllAchievementsAdmin}, but never throws (#436) — see
+ * {@link getAllCoursesAdminSafe}. For the display-only `/api/admin/status`
+ * route.
+ */
+export async function getAllAchievementsAdminSafe(): Promise<
+  AdminAchievement[]
+> {
+  const docs = [...achievementsById.values()].sort(byField((a) => str(a.name)));
+  return Promise.all(
     docs.map(async (a) => {
-      const dep = await getDeploymentById(a._id);
-      return {
-        _id: a._id,
-        name: str(a.name) as string,
-        category: str(a.category),
-        xpReward: num(a.xpReward),
-        maxSupply: num(a.maxSupply),
-        metadataUri: str(a.metadataUri),
-        onChainStatus: dep
-          ? {
-              status: dep.status,
-              achievementPda: dep.achievement_pda,
-              collectionAddress: dep.collection_address,
-              lastSynced: dep.last_synced,
-            }
-          : null,
-      };
+      const { row, failed } = await getDeploymentByIdSafe(a._id);
+      return toAdminAchievement(a, row, failed);
     })
   );
 }

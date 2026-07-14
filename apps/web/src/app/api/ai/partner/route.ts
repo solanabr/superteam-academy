@@ -28,12 +28,15 @@ const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
 
-// The entire gemini-2.5 flash family (flash + flash-lite) is gated to existing
-// users — a new API key gets 404 "no longer available to new users". gemini-2.0-flash
-// IS available to new keys (verified: it returns 429 RESOURCE_EXHAUSTED, not 404)
-// and supports structured output (responseSchema).
+// Model history: gemini-2.5-flash(-lite) are gated for new keys (404 "not
+// available to new users") and gemini-2.0-flash is now fully retired (404 "no
+// longer available"). gemini-3.5-flash is available and supports structured
+// output. NOTE it's a *thinking* model — thinking tokens draw from the
+// maxOutputTokens budget — so thinking is disabled in generationConfig
+// (thinkingBudget: 0) to keep the whole budget for the response (esp. `propose`,
+// which returns the entire updated file).
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
 
 const VALID_ACTIONS: readonly PartnerAction[] = ["hint", "propose", "ask"];
 
@@ -277,6 +280,10 @@ export async function POST(request: NextRequest) {
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: maxTokensFor(action),
+          // gemini-3.5-flash is a thinking model and thinking tokens share the
+          // maxOutputTokens budget; disable it so the full budget goes to the
+          // structured response (and to cut latency/cost).
+          thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: "application/json",
           responseSchema: GEMINI_RESPONSE_SCHEMA,
         },
@@ -305,8 +312,12 @@ export async function POST(request: NextRequest) {
       data?.usageMetadata?.cachedContentTokenCount ?? 0
     );
 
+    const finishReason = data?.candidates?.[0]?.finishReason;
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
+      // finishReason === "MAX_TOKENS" here means the budget was spent before any
+      // visible output (raise maxTokensFor(action)); log it so it's diagnosable.
+      console.error("[ai/partner] empty output", { action, finishReason });
       await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI could not generate a response" },
@@ -318,7 +329,13 @@ export async function POST(request: NextRequest) {
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      console.error("Gemini partner API returned non-JSON output");
+      // Usually a truncated payload (finishReason "MAX_TOKENS"): the JSON is cut
+      // off mid-string. Log the reason + a snippet so the cap can be tuned.
+      console.error("[ai/partner] non-JSON output", {
+        action,
+        finishReason,
+        snippet: rawText.slice(0, 200),
+      });
       await refundAssist(user.id, lesson._id);
       return NextResponse.json(
         { error: "AI returned an invalid response" },

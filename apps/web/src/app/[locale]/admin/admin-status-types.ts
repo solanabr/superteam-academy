@@ -25,7 +25,14 @@ export interface CourseStatus {
     | "out_of_sync"
     | "not_deployed"
     | "draft"
-    | "missing_fields";
+    | "missing_fields"
+    // #434: the on-chain account exists but couldn't be decoded (post-Phase-1
+    // layout mismatch) — distinct from "synced" so a broken read never shows
+    // as green.
+    | "undecodable"
+    // #436: the Supabase deployment-row read failed — distinct from
+    // "out_of_sync" so a DB blip isn't reported as a real content mismatch.
+    | "db_unavailable";
   coursePda: string | null;
   differences: DiffEntry[];
   // Repo-wide content drift (SP3-C): the committed bundle's pinned SHA vs
@@ -46,7 +53,14 @@ export interface AchievementStatus {
   contentId: string;
   name: string;
   missingFields: string[];
-  onChainStatus: "synced" | "not_deployed" | "missing_fields" | "draft";
+  // #436: "db_unavailable" — the account exists on-chain but the Supabase
+  // deployment-row read failed, so it can't be confirmed as "synced".
+  onChainStatus:
+    | "synced"
+    | "not_deployed"
+    | "missing_fields"
+    | "draft"
+    | "db_unavailable";
   achievementPda: string | null;
   collectionAddress: string | null;
 }

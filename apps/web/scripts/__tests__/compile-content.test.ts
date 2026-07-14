@@ -49,6 +49,8 @@ function validTree(): RepoTree {
         "id: lesson-intro-hello",
         "slug: hello",
         "title: Hello World",
+        "skills:",
+        "  - pdas",
         "blocks:",
         "  - type: prose",
         "    key: intro",
@@ -61,6 +63,7 @@ function validTree(): RepoTree {
     "courses/intro/lessons/hello/intro.md",
     enc("# Hello\n\nWelcome.\n")
   );
+  tree.set("skills.yaml", enc("- slug: pdas\n  label: PDAs\n"));
   tree.set(
     "achievements/first.yaml",
     enc(
@@ -92,6 +95,8 @@ function treeWithCodeBlock(): RepoTree {
         "id: lesson-intro-hello",
         "slug: hello",
         "title: Hello World",
+        "skills:",
+        "  - pdas",
         "blocks:",
         "  - type: prose",
         "    key: intro",
@@ -238,11 +243,14 @@ describe("compileContent", () => {
     });
   });
 
-  // #466 C1: skills.yaml is a repo-root file courses-academy doesn't ship yet.
-  // The compiler must tolerate its absence and, when present, load it into the
-  // bundle — with no cross-check against lesson `skills` (that's C3).
-  it("emits an empty skills.json when skills.yaml is absent", () => {
-    const files = compileContent(validTree(), opts);
+  // skills.yaml is a repo-root file — the compiler tolerates its absence
+  // (content.skills stays []), but that is only a legal end state for a tree
+  // with no tagged lessons: schema requires every lesson to carry >=1 skill
+  // (#466 C3), so a real content tree with lessons always ships this file. Use
+  // an empty tree (no courses/lessons at all) to isolate "absent → []" from
+  // the vocabulary-enforcement concern, which has its own tests below.
+  it("emits an empty skills.json when skills.yaml is absent (and no lesson references a skill)", () => {
+    const files = compileContent(new Map(), opts);
     expect(JSON.parse(files.get("skills.json")!)).toEqual([]);
   });
 
@@ -263,6 +271,47 @@ describe("compileContent", () => {
     const tree = validTree();
     tree.set("skills.yaml", enc("- slug: Not A Slug\n"));
     expect(() => compileContent(tree, opts)).toThrow(ContentValidationError);
+  });
+
+  // #466 C3: the allowlist guarantee — a lesson skill slug that is not in the
+  // vocabulary fails the compile closed, naming both the lesson and the slug.
+  it("fails closed naming the lesson and the bad slug when a skill is not in the vocabulary", () => {
+    const tree = validTree();
+    tree.set(
+      "courses/intro/lessons/hello/lesson.yaml",
+      enc(
+        [
+          "id: lesson-intro-hello",
+          "slug: hello",
+          "title: Hello World",
+          "skills:",
+          "  - pdas",
+          "  - not-a-real-skill",
+          "blocks:",
+          "  - type: prose",
+          "    key: intro",
+          "    src: intro.md",
+          "",
+        ].join("\n")
+      )
+    );
+    try {
+      compileContent(tree, opts);
+      expect.unreachable("compileContent should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-intro-hello");
+      expect(joined).toContain("not-a-real-skill");
+    }
+  });
+
+  it("derives course.tags as the sorted, deduplicated union of its lessons' skills", () => {
+    const files = compileContent(validTree(), opts);
+    const courses = JSON.parse(files.get("courses.json")!) as {
+      tags: string[];
+    }[];
+    expect(courses[0]!.tags).toEqual(["pdas"]);
   });
 
   it("is deterministic: same input yields byte-identical output", () => {

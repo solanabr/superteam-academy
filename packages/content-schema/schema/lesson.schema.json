@@ -429,6 +429,7 @@
       }
     },
     "skills": {
+      "minItems": 1,
       "type": "array",
       "items": {
         "type": "string",
@@ -440,6 +441,7 @@
     "id",
     "slug",
     "title",
-    "blocks"
+    "blocks",
+    "skills"
   ]
 }

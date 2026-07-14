@@ -7,6 +7,7 @@ import {
   Quest,
   LearningPath,
   SkillsTaxonomy,
+  checkSkillVocabulary,
   type CourseT,
   type LessonT,
   type SlotsLockT,
@@ -25,8 +26,9 @@ export interface ValidatedContent {
   slots: Map<string, SlotsLockT>; // course dir → lockfile
   /**
    * The canonical skill vocabulary from a repo-root `skills.yaml`, or `[]` if
-   * the file is absent (it is, today — courses-academy doesn't have it yet).
-   * Not cross-checked against lesson `skills` here; that is #466 C3.
+   * the file is absent. Every lesson `skills` slug is cross-checked against
+   * this vocabulary below (#466 C3, `checkSkillVocabulary`) — an absent file
+   * with any tagged lesson (schema requires >=1 skill per lesson) fails closed.
    */
   skills: SkillsTaxonomyT;
   prose: Map<string, string>; // md path → body
@@ -80,8 +82,8 @@ export async function parseAndValidateTree(
     if (path === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per
-      // file. Optional: courses-academy doesn't ship it yet (#466 C2 adds it),
-      // so absence is not an error and `v.skills` stays `[]`.
+      // file. The compiler tolerates its absence (`v.skills` stays `[]`), but
+      // every lesson `skills` slug is checked against it below (#466 C3).
       const s = zod(SkillsTaxonomy, parseYaml(text(bytes)), path);
       if (s) v.skills = s;
     } else if (path.endsWith("/course.yaml")) {
@@ -112,6 +114,19 @@ export async function parseAndValidateTree(
       v.assets.set(path, bytes);
     }
   }
+
+  // #466 C3: every lesson `skills` slug must be a member of the canonical
+  // vocabulary — the allowlist guarantee, kept in sync with the offline
+  // compiler's `validateTree` (scripts/compile-content.ts).
+  issues.push(
+    ...checkSkillVocabulary(
+      v.lessons.map(({ lesson }) => ({
+        id: lesson.id,
+        skills: lesson.skills,
+      })),
+      v.skills
+    )
+  );
 
   // Every code block must have its files present — checked for ALL languages so a
   // broken lesson can't publish silently. The two-sided EXECUTOR gate then runs on

@@ -30,10 +30,17 @@ vi.mock("server-only", () => ({}));
 // from prod Sanity (public dataset 4e3i2wwc/production). Each projector, fed the
 // committed bundle doc, must deep-equal the captured GROQ shape. Divergences
 // here mean the locked bundle SHA and prod Sanity have drifted (report, do not
-// fudge the fixture) — EXCEPT the documented `instructor` → `creator` delta
-// (issue #478): the fixtures were captured pre-migration and hand-edited to
-// drop `instructor` / add `creator: null`, since the retired instructor deref
-// no longer exists and the bundle carries no `creator` data yet.
+// fudge the fixture) — EXCEPT two documented content-wave deltas, hand-edited
+// into the fixtures because the golden capture predates them:
+//
+//  - `instructor` → `creator` (issue #478): the retired instructor deref no
+//    longer exists. RESOLVED by #399/B3 — every course now carries a real
+//    `creator` wallet (see below), so the fixtures carry that wallet too, not
+//    the original `null` placeholder.
+//  - authored → derived `tags` (#466 C3): course `tags` is no longer authored
+//    content: it's the sorted, deduplicated union of the course's lessons'
+//    `skills`. The fixtures carry the DERIVED tags computed from each course's
+//    real lesson `skills`, not the original authored (now-retired) tag list.
 const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
@@ -54,9 +61,9 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     }
   });
 
-  it("creator is null; thumbnail is null (documented deltas)", () => {
+  it("creator is a real wallet (#399/B3); thumbnail is null (documented deltas)", () => {
     const c = projectCourse(bundleCourse(goldenCourses[0]!._id), deps);
-    expect(c.creator).toBeNull();
+    expect(c.creator).toBe("B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF");
     expect(c.thumbnail).toBeNull();
   });
 });

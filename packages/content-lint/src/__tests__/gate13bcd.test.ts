@@ -19,6 +19,7 @@ modules: [{ key: m, title: M, lessons: [lesson-a] }]
 const explorerLesson = `id: lesson-a
 slug: a
 title: A
+skills: [program-interaction]
 blocks:
   - { key: explore, type: program-explorer, idl: program.idl.json, consumes: [deployed-program] }
 `;

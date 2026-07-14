@@ -73,6 +73,15 @@ export async function getAllCourseTags(): Promise<
   return data.tags;
 }
 
+export async function getAllLessonSkills(): Promise<
+  { _id: string; skills: string[] }[]
+> {
+  const data = await getJson<{ skills: { _id: string; skills: string[] }[] }>(
+    "/api/content/lesson-skills"
+  );
+  return data.skills;
+}
+
 export async function getAllAchievements(): Promise<DeployedAchievement[]> {
   const data = await getJson<{ achievements: DeployedAchievement[] }>(
     "/api/content/achievements"
@@ -82,7 +91,7 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
 
 export async function isInstructorWallet(wallet: string): Promise<boolean> {
   const data = await getJson<{ isInstructor: boolean }>(
-    `/api/content/instructor-wallet?wallet=${encodeURIComponent(wallet)}`
+    `/api/content/is-instructor?wallet=${encodeURIComponent(wallet)}`
   );
   return data.isInstructor;
 }

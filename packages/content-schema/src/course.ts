@@ -34,7 +34,6 @@ export const Course = z
     minCompletionsForReward: z.number().int().min(0).default(0),
     trackId: z.number().int().min(0).default(0),
     trackLevel: z.number().int().min(0).default(0),
-    tags: z.array(z.string().min(1)).default([]),
     /**
      * The course's on-chain `Course.creator` (the creator XP recipient) —
      * authored directly on the course as a wallet, no longer resolved through a
@@ -55,6 +54,11 @@ export const Course = z
     thumbnail: z.string().min(1).optional(),
     prerequisiteCourse: CourseId.optional(),
     modules: z.array(CourseModule).min(1),
+    // No authored `tags` field (#466 C3): a course's catalogue tags are
+    // DERIVED — the compiler's projector computes them as the sorted,
+    // deduplicated union of its lessons' `skills` (see
+    // apps/web/src/lib/content/compile/projector.ts). Authoring a `tags:` key
+    // on a course.yaml is silently stripped, not an error.
   })
   .refine((c) => unique(c.modules.map((m) => m.key)), {
     message: "module keys must be unique within a course",

@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { SkillTag, SkillDef, SkillsTaxonomy } from "../skills";
+import {
+  SkillTag,
+  SkillDef,
+  SkillsTaxonomy,
+  checkSkillVocabulary,
+} from "../skills";
 
 describe("SkillTag", () => {
   it("accepts a kebab-case slug", () => {
@@ -49,5 +54,38 @@ describe("SkillsTaxonomy", () => {
   it("rejects duplicate slugs", () => {
     const bad = [{ slug: "pdas" }, { slug: "pdas" }];
     expect(SkillsTaxonomy.safeParse(bad).success).toBe(false);
+  });
+});
+
+describe("checkSkillVocabulary (#466 C3 — the allowlist guarantee)", () => {
+  const vocabulary = SkillsTaxonomy.parse([{ slug: "pdas" }, { slug: "cpi" }]);
+
+  it("returns no issues when every lesson skill is a known vocabulary member", () => {
+    const lessons = [
+      { id: "lesson-a", skills: ["pdas"] },
+      { id: "lesson-b", skills: ["pdas", "cpi"] },
+    ];
+    expect(checkSkillVocabulary(lessons, vocabulary)).toEqual([]);
+  });
+
+  it("names the lesson and the bad slug for an unknown skill", () => {
+    const lessons = [{ id: "lesson-a", skills: ["not-a-real-skill"] }];
+    const issues = checkSkillVocabulary(lessons, vocabulary);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toContain("lesson-a");
+    expect(issues[0]).toContain("not-a-real-skill");
+  });
+
+  it("reports one issue per unknown slug across multiple lessons", () => {
+    const lessons = [
+      { id: "lesson-a", skills: ["pdas", "bogus-one"] },
+      { id: "lesson-b", skills: ["bogus-two"] },
+    ];
+    expect(checkSkillVocabulary(lessons, vocabulary)).toHaveLength(2);
+  });
+
+  it("fails closed against an empty (absent skills.yaml) vocabulary", () => {
+    const lessons = [{ id: "lesson-a", skills: ["pdas"] }];
+    expect(checkSkillVocabulary(lessons, [])).toHaveLength(1);
   });
 });

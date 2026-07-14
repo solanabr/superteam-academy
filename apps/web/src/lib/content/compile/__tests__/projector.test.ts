@@ -25,6 +25,7 @@ function fixture(): ValidatedContent {
           id: "lesson-accounts",
           slug: "accounts",
           title: "Accounts",
+          skills: ["accounts"],
           blocks: [
             { key: "intro", type: "prose", src: "intro.md" },
             {
@@ -162,5 +163,65 @@ describe("projectContent", () => {
     const a = projectContent(fixture(), "sha1", noAsset, () => []);
     const b = projectContent(fixture(), "sha1", noAsset, () => []);
     expect(a.docs).toEqual(b.docs);
+  });
+
+  it("carries a lesson's skills onto the projected lesson doc (#466 C3)", () => {
+    const { docs } = projectContent(fixture(), "sha1", noAsset, () => []);
+    const lesson = docs.find((d) => d._type === "lesson") as unknown as {
+      skills: string[];
+    };
+    expect(lesson.skills).toEqual(["accounts"]);
+  });
+
+  it("derives course.tags as the sorted, deduplicated union of its lessons' skills, not an authored field (#466 C3)", () => {
+    const f = fixture();
+    (f.lessons[0]!.lesson as unknown as { skills: string[] }).skills = [
+      "cpi",
+      "accounts",
+    ];
+    const { docs } = projectContent(f, "sha1", noAsset, () => []);
+    const course = docs.find((d) => d._type === "course") as unknown as {
+      tags: string[];
+    };
+    expect(course.tags).toEqual(["accounts", "cpi"]);
+  });
+
+  it("unions and deduplicates skills across every lesson in a course", () => {
+    const f = fixture();
+    f.courses[0]!.modules = [
+      {
+        key: "m",
+        title: "M",
+        lessons: ["lesson-accounts", "lesson-pdas"],
+      },
+    ] as never;
+    f.lessons.push({
+      dir: "courses/demo/lessons/pdas",
+      lesson: {
+        id: "lesson-pdas",
+        slug: "pdas",
+        title: "PDAs",
+        skills: ["pdas", "accounts"],
+        blocks: [{ key: "intro", type: "prose", src: "intro.md" }],
+      } as never,
+    });
+    f.prose.set("courses/demo/lessons/pdas/intro.md", "# PDAs");
+    const { docs } = projectContent(f, "sha1", noAsset, () => []);
+    const course = docs.find((d) => d._type === "course") as unknown as {
+      tags: string[];
+    };
+    expect(course.tags).toEqual(["accounts", "pdas"]);
+  });
+
+  it("derives an empty tags array when a course's lessons carry no skills (dangling module ref)", () => {
+    const f = fixture();
+    f.courses[0]!.modules = [
+      { key: "m", title: "M", lessons: ["lesson-missing"] },
+    ] as never;
+    const { docs } = projectContent(f, "sha1", noAsset, () => []);
+    const course = docs.find((d) => d._type === "course") as unknown as {
+      tags: string[];
+    };
+    expect(course.tags).toEqual([]);
   });
 });

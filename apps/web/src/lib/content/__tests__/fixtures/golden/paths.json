@@ -4,8 +4,8 @@
     "courses": [
       {
         "_id": "course-building-first-program",
-        "creator": null,
-        "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server \u2014 no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+        "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
         "difficulty": "intermediate",
         "duration": 12,
         "modules": [
@@ -119,7 +119,14 @@
           }
         ],
         "slug": "building-your-first-solana-program",
-        "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
+        "tags": [
+          "account-model",
+          "anchor",
+          "keypairs-wallets",
+          "program-deployment",
+          "solana-programs",
+          "transactions"
+        ],
         "thumbnail": null,
         "title": "Building Your First Solana Program",
         "trackId": 1,
@@ -128,7 +135,7 @@
       },
       {
         "_id": "course-solana-fundamentals",
-        "creator": null,
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
         "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
         "difficulty": "beginner",
         "duration": 10,
@@ -216,7 +223,14 @@
           }
         ],
         "slug": "solana-fundamentals",
-        "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
+        "tags": [
+          "account-model",
+          "keypairs-wallets",
+          "solana-fundamentals",
+          "solana-programs",
+          "spl-tokens",
+          "transactions"
+        ],
         "thumbnail": null,
         "title": "Solana Fundamentals",
         "trackId": 1,
@@ -236,8 +250,8 @@
     "courses": [
       {
         "_id": "course-anchor-framework",
-        "creator": null,
-        "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment \u2014 build production-ready programs with confidence.",
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+        "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
         "difficulty": "intermediate",
         "duration": 14,
         "modules": [
@@ -324,7 +338,15 @@
           }
         ],
         "slug": "anchor-framework",
-        "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+        "tags": [
+          "account-model",
+          "anchor",
+          "cpi",
+          "pdas",
+          "program-deployment",
+          "program-testing",
+          "solana-programs"
+        ],
         "thumbnail": null,
         "title": "Anchor Framework Mastery",
         "trackId": 3,
@@ -333,8 +355,8 @@
       },
       {
         "_id": "course-rust-for-solana",
-        "creator": null,
-        "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture \u2014 build the skills to write native Solana programs.",
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
+        "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
         "difficulty": "intermediate",
         "duration": 12,
         "modules": [
@@ -421,7 +443,7 @@
           }
         ],
         "slug": "rust-for-solana",
-        "tags": ["rust", "solana", "programming", "systems", "intermediate"],
+        "tags": ["borsh-serialization", "pdas", "rust", "solana-programs"],
         "thumbnail": null,
         "title": "Rust for Solana Developers",
         "trackId": 2,
@@ -441,7 +463,7 @@
     "courses": [
       {
         "_id": "course-solana-frontend",
-        "creator": null,
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
         "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
         "difficulty": "intermediate",
         "duration": 10,
@@ -530,12 +552,15 @@
         ],
         "slug": "solana-frontend",
         "tags": [
-          "frontend",
+          "account-model",
+          "borsh-serialization",
           "react",
-          "nextjs",
-          "wallet-adapter",
+          "rpc",
+          "siws",
+          "transactions",
           "typescript",
-          "intermediate"
+          "wallet-adapter",
+          "web3-frontend"
         ],
         "thumbnail": null,
         "title": "Solana Frontend Development",
@@ -556,7 +581,7 @@
     "courses": [
       {
         "_id": "course-defi-on-solana",
-        "creator": null,
+        "creator": "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
         "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
         "difficulty": "advanced",
         "duration": 16,
@@ -644,7 +669,7 @@
           }
         ],
         "slug": "defi-on-solana",
-        "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
+        "tags": ["amm", "defi", "lending", "oracles", "spl-tokens", "staking"],
         "thumbnail": null,
         "title": "DeFi on Solana",
         "trackId": 5,
@@ -662,7 +687,7 @@
   {
     "_id": "path-infrastructure",
     "courses": [],
-    "description": "Learn to build and maintain Solana infrastructure \u2014 validators, RPCs, indexers, and developer tooling.",
+    "description": "Learn to build and maintain Solana infrastructure — validators, RPCs, indexers, and developer tooling.",
     "difficulty": "advanced",
     "order": 5,
     "slug": null,
