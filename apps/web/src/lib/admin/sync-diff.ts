@@ -27,18 +27,6 @@ export interface OnChainCourse {
   version: number;
 }
 
-export interface OnChainAchievement {
-  achievementId: string;
-  name: string;
-  metadataUri: string;
-  collection: string; // base58
-  creator: string; // base58
-  maxSupply: number;
-  currentSupply: number;
-  xpReward: number;
-  isActive: boolean;
-}
-
 // ---------------------------------------------------------------------------
 // Diff types
 // ---------------------------------------------------------------------------
@@ -340,100 +328,6 @@ export function diffCourse(
       field: "prerequisite",
       contentValue: contentPrerequisite,
       onChainValue: onChainCourse.prerequisite,
-      updateable: false,
-    });
-  }
-
-  const hasImmutableMismatch = differences.some((d) => !d.updateable);
-
-  return {
-    status: differences.length === 0 ? "synced" : "out_of_sync",
-    missingFields: [],
-    differences,
-    hasImmutableMismatch,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Achievement diff
-// ---------------------------------------------------------------------------
-
-/**
- * Compare a bundle achievement document against an on-chain AchievementType PDA.
- *
- * There is no `updateAchievementType` instruction in the program, so ALL
- * diffed fields are marked `updateable: false`. Any mismatch requires PDA
- * recreation (deregister + re-register).
- *
- * @param achievement - From getAllAchievementsAdmin()
- * @param onChainAchievement - Deserialized on-chain account, or null if not deployed
- * @returns SyncDiff describing the current state
- */
-export function diffAchievement(
-  achievement: AdminAchievement,
-  onChainAchievement: OnChainAchievement | null
-): SyncDiff {
-  // 1. Draft check
-  if (isDraftId(achievement._id)) {
-    return {
-      status: "draft",
-      missingFields: [],
-      differences: [],
-      hasImmutableMismatch: false,
-    };
-  }
-
-  // 2. Required field check
-  const missingFields = getMissingAchievementFields(achievement);
-  if (missingFields.length > 0) {
-    return {
-      status: "missing_fields",
-      missingFields,
-      differences: [],
-      hasImmutableMismatch: false,
-    };
-  }
-
-  // 3. Not yet deployed
-  if (onChainAchievement === null) {
-    return {
-      status: "not_deployed",
-      missingFields: [],
-      differences: [],
-      hasImmutableMismatch: false,
-    };
-  }
-
-  // 4. Compute field-level differences
-  // All fields are immutable — no updateAchievementType instruction exists.
-  const differences: DiffEntry[] = [];
-
-  if (achievement.name !== onChainAchievement.name) {
-    differences.push({
-      field: "name",
-      contentValue: achievement.name,
-      onChainValue: onChainAchievement.name,
-      updateable: false,
-    });
-  }
-
-  const contentXpReward = achievement.xpReward ?? 0;
-  if (contentXpReward !== onChainAchievement.xpReward) {
-    differences.push({
-      field: "xpReward",
-      contentValue: contentXpReward,
-      onChainValue: onChainAchievement.xpReward,
-      updateable: false,
-    });
-  }
-
-  // maxSupply: 0 = unlimited supply on-chain
-  const contentMaxSupply = achievement.maxSupply ?? 0;
-  if (contentMaxSupply !== onChainAchievement.maxSupply) {
-    differences.push({
-      field: "maxSupply",
-      contentValue: contentMaxSupply,
-      onChainValue: onChainAchievement.maxSupply,
       updateable: false,
     });
   }

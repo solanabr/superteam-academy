@@ -115,8 +115,8 @@ Subsequent pushes to `main` trigger automatic deployments. Pull requests get pre
 
 ### 1. Create Project & Apply Migrations
 
-> **Production project**: `pywhtmidcrptomrabbrw`. The previously used project is
-> **retired** — do not point a new deploy at it.
+> **Production project**: refers to the current production Supabase project. The
+> previously used project is **retired** — do not point a new deploy at it.
 
 1. Create a new project at [supabase.com/dashboard](https://supabase.com/dashboard)
 2. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and link the project:

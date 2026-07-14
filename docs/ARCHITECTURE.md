@@ -74,13 +74,13 @@ Content itself lives **outside** this repo, in
 
 ### Deployment Model
 
-| Service          | Host                       | Notes                                                                 |
-| ---------------- | -------------------------- | --------------------------------------------------------------------- |
-| Web app          | Vercel                     | Edge middleware, automatic deploys from `main`                        |
-| Database + Auth  | Supabase (hosted Postgres) | RLS, SECURITY DEFINER functions. Prod project: `pywhtmidcrptomrabbrw` |
-| Content          | **Committed to this repo** | Compiled bundle; no hosted service, no runtime credential             |
-| On-chain program | Solana devnet              | Anchor 0.31+, Token-2022, Metaplex Core                               |
-| Build server     | GCP Cloud Run              | Docker, no IAM gateway, `X-API-Key` auth                              |
+| Service          | Host                       | Notes                                                          |
+| ---------------- | -------------------------- | -------------------------------------------------------------- |
+| Web app          | Vercel                     | Edge middleware, automatic deploys from `main`                 |
+| Database + Auth  | Supabase (hosted Postgres) | RLS, SECURITY DEFINER functions. Prod project: `<project-ref>` |
+| Content          | **Committed to this repo** | Compiled bundle; no hosted service, no runtime credential      |
+| On-chain program | Solana devnet              | Anchor 0.31+, Token-2022, Metaplex Core                        |
+| Build server     | GCP Cloud Run              | Docker, no IAM gateway, `X-API-Key` auth                       |
 
 ---
 
