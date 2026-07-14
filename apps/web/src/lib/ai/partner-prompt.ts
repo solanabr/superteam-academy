@@ -105,54 +105,67 @@ export function maxTokensFor(action: PartnerAction): number {
  * Paired with `responseMimeType: "application/json"` in the generation
  * config at the call site.
  */
-export const GEMINI_RESPONSE_SCHEMA = {
+const CHECK_SCHEMA = {
+  type: "object",
+  description: "Comprehension check for the 'propose' variant.",
+  properties: {
+    question: { type: "string" },
+    options: {
+      type: "array",
+      items: { type: "string" },
+      minItems: 3,
+      maxItems: 3,
+      description: "Exactly 3 answer options.",
+    },
+    correctIndex: {
+      type: "integer",
+      // NOTE: no `minimum`/`maximum` — Gemini's structured-output schema dialect
+      // rejects those with a 400. The 0–2 range is enforced at runtime in
+      // `validatePartnerResponse`.
+      description: "Index (0-2) of the single correct option.",
+    },
+    explanation: { type: "string" },
+  },
+  required: ["question", "options", "correctIndex", "explanation"],
+} as const;
+
+// Schema for the `hint` and `answer` variants — a single `text` body.
+const TEXT_RESPONSE_SCHEMA = {
   type: "object",
   properties: {
-    type: {
-      type: "string",
-      enum: ["hint", "answer", "propose"],
-    },
-    text: {
-      type: "string",
-      description:
-        "Response body for the 'hint' or 'answer' variants ONLY. Omit entirely for 'propose' (which uses rationale/proposedCode/check).",
-    },
+    type: { type: "string", enum: ["hint", "answer"] },
+    text: { type: "string", description: "The hint or answer body." },
+  },
+  required: ["type", "text"],
+} as const;
+
+// Schema for the `propose` variant. Deliberately has NO `text` field, so the
+// model physically cannot emit a prose narrative that burns the output budget
+// and truncates before producing proposedCode/check (the failure a shared
+// schema + prompt instructions could not prevent). All four fields required.
+const PROPOSE_RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    type: { type: "string", enum: ["propose"] },
     rationale: {
       type: "string",
-      description: "One-line rationale for the 'propose' variant.",
+      description: "ONE short sentence — the only prose in a propose response.",
     },
     proposedCode: {
       type: "string",
-      description:
-        "Full updated file contents for the 'propose' variant (client computes the diff).",
+      description: "Full updated file contents (client computes the diff).",
     },
-    check: {
-      type: "object",
-      description: "Comprehension check, required for the 'propose' variant.",
-      properties: {
-        question: {
-          type: "string",
-        },
-        options: {
-          type: "array",
-          items: { type: "string" },
-          minItems: 3,
-          maxItems: 3,
-          description: "Exactly 3 answer options.",
-        },
-        correctIndex: {
-          type: "integer",
-          // NOTE: no `minimum`/`maximum` — Gemini's structured-output schema
-          // dialect rejects those numeric-constraint keywords with a 400. The
-          // 0–2 range is enforced at runtime in `validatePartnerResponse`.
-          description: "Index (0-2) of the single correct option.",
-        },
-        explanation: {
-          type: "string",
-        },
-      },
-      required: ["question", "options", "correctIndex", "explanation"],
-    },
+    check: CHECK_SCHEMA,
   },
-  required: ["type"],
+  required: ["type", "rationale", "proposedCode", "check"],
 } as const;
+
+/**
+ * The Gemini `responseSchema` for a given action. `propose` gets a schema with
+ * no `text` field (forcing the structured fields and preventing a runaway
+ * narrative); `hint`/`ask` get the text-body schema. Paired with
+ * `responseMimeType: "application/json"` at the call site.
+ */
+export function responseSchemaFor(action: PartnerAction) {
+  return action === "propose" ? PROPOSE_RESPONSE_SCHEMA : TEXT_RESPONSE_SCHEMA;
+}

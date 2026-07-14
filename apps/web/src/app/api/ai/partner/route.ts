@@ -9,7 +9,7 @@ import {
   buildStaticPrefix,
   buildDynamicSuffix,
   maxTokensFor,
-  GEMINI_RESPONSE_SCHEMA,
+  responseSchemaFor,
 } from "@/lib/ai/partner-prompt";
 import type {
   PartnerAction,
@@ -69,10 +69,10 @@ type ValidatedResponse =
 
 /**
  * Runtime validation of the Gemini structured output against the expected
- * shape per `type`. `GEMINI_RESPONSE_SCHEMA` can't hard-require fields
- * conditional on `type` (Gemini's schema dialect has no such constraint), so
- * this is the actual enforcement point — a malformed or incomplete payload is
- * rejected here rather than trusted and forwarded. The "propose" branch keeps
+ * shape per `type`. The per-action `responseSchemaFor` already constrains the
+ * fields at the model, but this remains the authoritative enforcement point —
+ * a malformed or truncated payload is rejected here rather than trusted and
+ * forwarded. The "propose" branch keeps
  * `correctIndex`/`explanation` internally (see `ValidatedProposeResponse`) —
  * the caller is responsible for sealing them before responding to the client.
  */
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
           // structured response (and to cut latency/cost).
           thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: "application/json",
-          responseSchema: GEMINI_RESPONSE_SCHEMA,
+          responseSchema: responseSchemaFor(action),
         },
       }),
     });
