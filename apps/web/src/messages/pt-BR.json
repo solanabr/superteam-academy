@@ -958,6 +958,8 @@
       "preview": {
         "title": "Revisar implantação — {title}",
         "firstDeploy": "Este curso ainda não está on-chain — a implantação criará a conta on-chain dele.",
+        "creatorWalletLabel": "Carteira do criador — este curso será atribuído permanentemente a:",
+        "creatorWalletImmutable": "Definida uma única vez — não pode ser alterada após a implantação.",
         "willWrite": "Esta transação irá gravar:",
         "contentStale": "Informativo: o compromisso de conteúdo on-chain deste curso (content_tx_id) está atrás do pacote commitado. Esta implantação NÃO o alterará — ela grava apenas os campos do curso listados acima. O compromisso é atualizado pela etapa de content-commit na tela de Divergência de Conteúdo.",
         "noChanges": "Nenhuma mudança detectada. Reimplantar mesmo assim?",

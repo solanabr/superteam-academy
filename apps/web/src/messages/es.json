@@ -958,6 +958,8 @@
       "preview": {
         "title": "Revisar despliegue — {title}",
         "firstDeploy": "Este curso aún no está on-chain — el despliegue creará su cuenta on-chain.",
+        "creatorWalletLabel": "Wallet del creador — este curso quedará atribuido permanentemente a:",
+        "creatorWalletImmutable": "Se establece una sola vez — no se puede cambiar después del despliegue.",
         "willWrite": "Esta transacción escribirá:",
         "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. El compromiso se actualiza mediante el paso de content-commit en la pantalla de Divergencia de Contenido.",
         "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",

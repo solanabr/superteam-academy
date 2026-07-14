@@ -29,6 +29,7 @@ function course(overrides: Partial<CourseStatus> = {}): CourseStatus {
     differences: [],
     contentDrift: "up_to_date",
     chainDrift: "content_current",
+    creatorWallet: "CreatorWa11et" + "1".repeat(31),
     ...overrides,
   };
 }
@@ -117,6 +118,34 @@ describe("DeployChangePreview", () => {
       screen.getByText(/deploying will create its on-chain account/)
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Deploy" })).toBeTruthy();
+  });
+
+  it("#433: a first deploy shows the resolved creator wallet, labeled immutable", () => {
+    const wallet = "CreatorWa11et" + "1".repeat(31);
+    const c = course({
+      onChainStatus: "not_deployed",
+      coursePda: null,
+      chainDrift: "not_deployed",
+      creatorWallet: wallet,
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(screen.getByText(/permanently attributed to/)).toBeTruthy();
+    expect(screen.getByText(wallet)).toBeTruthy();
+    expect(screen.getByText(/cannot be changed after deploy/)).toBeTruthy();
+  });
+
+  it("#433: a redeploy/update (already on chain) does not show the creator wallet line", () => {
+    // Same creatorWallet as the first-deploy fixture, but onChainStatus is
+    // already "synced" — the creator is on chain and any mismatch there is
+    // handled by ImmutableMismatchWarning, not this block.
+    const c = course({ creatorWallet: "CreatorWa11et" + "1".repeat(31) });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(screen.queryByText(/permanently attributed to/)).toBeNull();
+    expect(screen.queryByText(/cannot be changed after deploy/)).toBeNull();
   });
 
   it("surfaces per-course chain drift honestly: informational, NOT a promise this deploy fixes it", () => {
