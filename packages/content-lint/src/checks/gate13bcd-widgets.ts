@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, realpathSync } from "node:fs";
+import { join, sep } from "node:path";
 import { BLOCK_REGISTRY } from "@superteam-lms/content-schema";
 import { registerCheck } from "../lint";
 import { type RepoModel } from "../model";
@@ -8,16 +8,58 @@ import { diag, type Diagnostic } from "../diagnostics";
 const SLOT_WARN_THRESHOLD = 200; // of 256 (spec §6.2 gate 13d)
 
 function checkIdl(root: string, dir: string, idlRel: string): Diagnostic[] {
-  let idl: unknown;
+  const label = `${dir}/${idlRel}`;
+  const lessonDir = join(root, dir);
+  const requested = join(lessonDir, idlRel);
+
+  // The schema's `relativePath` check (packages/content-schema/src/blocks/base.ts)
+  // only inspects the STRING (no leading "/", no ".." segment) — it has no idea
+  // what's actually on disk at that path. A symlink named e.g. "program.idl.json"
+  // satisfies that string check while resolving anywhere on the filesystem. Resolve
+  // every symlink in the chain (lesson dir included, since /tmp itself can be a
+  // symlink) and reject — without reading — anything that escapes the lesson dir.
+  let resolvedLessonDir: string;
+  let resolvedRequested: string;
   try {
-    idl = JSON.parse(readFileSync(join(root, dir, idlRel), "utf8"));
-  } catch (err) {
+    resolvedLessonDir = realpathSync(lessonDir);
+    resolvedRequested = realpathSync(requested);
+  } catch {
     return [
       diag(
         "gate-13c",
         "error",
-        `${dir}/${idlRel}`,
-        `program.idl.json does not parse: ${err instanceof Error ? err.message : String(err)}`
+        label,
+        "program.idl.json does not exist or could not be resolved"
+      ),
+    ];
+  }
+  const escapesLessonDir =
+    resolvedRequested !== resolvedLessonDir &&
+    !resolvedRequested.startsWith(resolvedLessonDir + sep);
+  if (escapesLessonDir) {
+    return [
+      diag(
+        "gate-13c",
+        "error",
+        label,
+        "program.idl.json resolves outside the lesson directory (symlink escape) — refusing to read it"
+      ),
+    ];
+  }
+
+  let idl: unknown;
+  try {
+    // Belt and suspenders: never interpolate the parser's error message into a
+    // diagnostic. It can echo fragments of the file it just failed to parse —
+    // and this diagnostic reaches the world-readable CI log.
+    idl = JSON.parse(readFileSync(resolvedRequested, "utf8"));
+  } catch {
+    return [
+      diag(
+        "gate-13c",
+        "error",
+        label,
+        "program.idl.json does not parse as valid JSON"
       ),
     ];
   }
