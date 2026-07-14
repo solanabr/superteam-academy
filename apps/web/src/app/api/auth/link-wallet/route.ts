@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { mintXpToWallet } from "@/lib/solana/xp-mint";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { serverEnv } from "@/lib/env.server";
 import type { Database } from "@/lib/supabase/types";
 
 interface LinkWalletRequest {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
       !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       console.error("Missing required Supabase environment variables");
       return NextResponse.json(

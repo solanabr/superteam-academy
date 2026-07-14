@@ -50,7 +50,7 @@ function initialize(): { ready: boolean } {
   }
   _xpMint = new PublicKey(mintAddress);
 
-  const authoritySecret = process.env.XP_MINT_AUTHORITY_SECRET;
+  const authoritySecret = serverEnv.XP_MINT_AUTHORITY_SECRET;
   if (!authoritySecret) {
     console.warn(
       "[xp-mint] XP_MINT_AUTHORITY_SECRET not set. On-chain XP minting disabled."

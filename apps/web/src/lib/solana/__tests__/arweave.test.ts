@@ -7,8 +7,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // the validated server env. Stub all three so the unit under test is just the
 // secret parsing + graceful-fallback logic — no network, no env boot.
 vi.mock("server-only", () => ({}));
+// `serverEnv.ARWEAVE_UPLOADER_SECRET` is read live via a getter (not a frozen
+// property) so each test's direct `process.env.ARWEAVE_UPLOADER_SECRET`
+// mutation below is reflected — this file never calls `resetModules()`.
 vi.mock("@/lib/env.server", () => ({
-  serverEnv: { SOLANA_RPC_URL: "https://api.devnet.solana.com" },
+  serverEnv: {
+    SOLANA_RPC_URL: "https://api.devnet.solana.com",
+    get ARWEAVE_UPLOADER_SECRET() {
+      return process.env.ARWEAVE_UPLOADER_SECRET;
+    },
+  },
 }));
 // If a test ever reaches the uploader, fail loudly: the fallback paths must
 // return BEFORE constructing UMI / hitting Irys.

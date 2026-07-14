@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getAllQuests } from "@/lib/content/queries";
 import { retryQuestXpForUser } from "@/lib/solana/onchain-queue";
 import { nextMidnightUtc } from "@/lib/gamification/daily-reset";
+import { serverEnv } from "@/lib/env.server";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function GET() {
   try {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       return NextResponse.json(
         { error: "Server configuration error" },

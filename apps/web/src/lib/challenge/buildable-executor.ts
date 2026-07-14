@@ -53,9 +53,10 @@
 
 import type { AdminTestCase } from "@superteam-lms/types";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
+import { serverEnv } from "@/lib/env.server";
 
-const BUILD_SERVER_URL = process.env.BUILD_SERVER_URL;
-const BUILD_SERVER_API_KEY = process.env.BUILD_SERVER_API_KEY;
+const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
+const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
 
 /**
  * Upper bound on the RAW submission we are willing to compile. Matches the

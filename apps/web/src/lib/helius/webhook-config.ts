@@ -1,8 +1,9 @@
 import "server-only";
+import { serverEnv } from "@/lib/env.server";
 
-const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const HELIUS_API_KEY = serverEnv.HELIUS_API_KEY;
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID;
-const WEBHOOK_SECRET = process.env.HELIUS_WEBHOOK_SECRET;
+const WEBHOOK_SECRET = serverEnv.HELIUS_WEBHOOK_SECRET;
 const NETWORK = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
 
 interface HeliusWebhookResponse {

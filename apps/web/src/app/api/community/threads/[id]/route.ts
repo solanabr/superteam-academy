@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
+import { serverEnv } from "@/lib/env.server";
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
 export const dynamic = "force-dynamic";
@@ -98,7 +99,7 @@ export async function GET(
     // Increment view count (fire-and-forget via admin client)
     if (
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       const admin = createAdminClient();
       admin

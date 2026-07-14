@@ -23,8 +23,9 @@ import type {
   AchievementAwardedEvent,
   XpRewardedEvent,
 } from "@/lib/helius/types";
+import { serverEnv } from "@/lib/env.server";
 
-const WEBHOOK_SECRET = process.env.HELIUS_WEBHOOK_SECRET;
+const WEBHOOK_SECRET = serverEnv.HELIUS_WEBHOOK_SECRET;
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 MB
 
 function verifyBearerToken(header: string | null, secret: string): boolean {

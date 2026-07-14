@@ -4,12 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkCommunityAchievements } from "@/lib/gamification/achievements";
 import { isRateLimited } from "@/lib/rate-limit";
+import { serverEnv } from "@/lib/env.server";
 
 export async function POST(request: NextRequest) {
   try {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       return NextResponse.json(
         { error: "Server configuration error" },

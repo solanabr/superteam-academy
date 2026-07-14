@@ -17,8 +17,9 @@ import type {
   HintResponse,
   AnswerResponse,
 } from "@/lib/ai/partner-types";
+import { serverEnv } from "@/lib/env.server";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = serverEnv.GEMINI_API_KEY;
 
 // Input caps for the AI Partner route.
 const MAX_BODY_CHARS = 50_000;

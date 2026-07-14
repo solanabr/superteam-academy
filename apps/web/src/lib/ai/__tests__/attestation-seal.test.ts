@@ -1,6 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
+// check-seal.ts derives its HMAC key from serverEnv, not raw process.env.
+// serverEnv.SUPABASE_SERVICE_ROLE_KEY is REQUIRED (non-optional) in the real
+// schema, so deleting it and letting the real env.server.ts re-parse would
+// crash the module import instead of exercising check-seal's own graceful
+// fallback/throw logic (see the "THROWS when no seal secret" test below).
+// Getters keep this mock live against each test's direct process.env mutation
+// without that crash.
+vi.mock("@/lib/env.server", () => ({
+  serverEnv: {
+    get AI_PARTNER_SEAL_SECRET() {
+      return process.env.AI_PARTNER_SEAL_SECRET;
+    },
+    get SUPABASE_SERVICE_ROLE_KEY() {
+      return process.env.SUPABASE_SERVICE_ROLE_KEY;
+    },
+  },
+}));
 
 const ORIG_SEAL = process.env.AI_PARTNER_SEAL_SECRET;
 const ORIG_SRK = process.env.SUPABASE_SERVICE_ROLE_KEY;
