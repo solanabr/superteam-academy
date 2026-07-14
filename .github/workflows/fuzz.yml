@@ -49,12 +49,12 @@ jobs:
       FUZZ_DURATION: ${{ github.event.inputs.duration_seconds || '900' }}
       FUZZ_ITERATIONS: ${{ github.event.inputs.iterations || '1000000' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable channel, resolved 2026-06-30
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2.9.1
         with:
           # Cache both the program workspace (for `anchor build`) and the fuzz
           # workspace (trident-fuzz + trident-svm are a big cold build).
@@ -127,7 +127,7 @@ jobs:
 
       - name: Upload fuzz artifacts (metrics + crash corpus)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: trident-fuzz-artifacts
           path: |

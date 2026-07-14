@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, lstatSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parse as parseYaml } from "yaml";
 
@@ -36,7 +36,12 @@ export function walkFiles(root: string, dir = root): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir)) {
     const abs = join(dir, entry);
-    const st = statSync(abs);
+    // lstat (not stat): never follow a symlink. A symlinked file or directory
+    // could point outside `root` — reading through it would let content
+    // outside the lesson tree get parsed and echoed into diagnostics via a
+    // path that still looks repo-relative.
+    const st = lstatSync(abs);
+    if (st.isSymbolicLink()) continue;
     if (st.isDirectory()) {
       if (SKIP_DIRS.has(entry)) continue;
       out.push(...walkFiles(root, abs));

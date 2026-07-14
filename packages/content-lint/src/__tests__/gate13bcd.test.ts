@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { symlinkSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { runLint } from "../lint";
 import "../checks/gate1-schema";
 import "../checks/gate13bcd-widgets";
@@ -49,6 +52,68 @@ describe("gate 13c — program.idl.json", () => {
     });
     const r = await runLint(root);
     expect(r.diagnostics.filter((d) => d.gate === "gate-13c")).toEqual([]);
+  });
+});
+
+describe("gate 13c — symlink escape (#381)", () => {
+  it("rejects (without reading) a program.idl.json symlink pointing outside the repo", async () => {
+    // A file OUTSIDE the content repo entirely. The exploit: a symlink named
+    // "program.idl.json" that satisfies the schema's string-only relativePath
+    // check while resolving here, hoping its contents leak into a diagnostic.
+    const secretDir = mkdtempSync(join(tmpdir(), "content-lint-secret-"));
+    const secretPath = join(secretDir, "secret.json");
+    writeFileSync(secretPath, '{"leak": "TOP_SECRET_MARKER_1234"}', "utf8");
+
+    const root = makeTempRepo({
+      "courses/x/course.yaml": course,
+      "courses/x/lessons/a/lesson.yaml": explorerLesson,
+    });
+    symlinkSync(secretPath, join(root, "courses/x/lessons/a/program.idl.json"));
+
+    const r = await runLint(root);
+    const idlDiags = r.diagnostics.filter((d) => d.gate === "gate-13c");
+    expect(idlDiags.some((d) => d.severity === "error")).toBe(true);
+    expect(/escape/i.test(idlDiags.map((d) => d.message).join(" "))).toBe(true);
+    // The secret must never surface anywhere in the diagnostics.
+    expect(
+      r.diagnostics.some((d) => d.message.includes("TOP_SECRET_MARKER_1234"))
+    ).toBe(false);
+  });
+
+  it("rejects a program.idl.json symlink escaping to a sibling lesson dir (still in-repo)", async () => {
+    const root = makeTempRepo({
+      "courses/x/course.yaml": course,
+      "courses/x/lessons/a/lesson.yaml": explorerLesson,
+      "courses/x/lessons/b/program.idl.json": JSON.stringify({
+        instructions: [{ name: "init" }],
+        metadata: { name: "sibling" },
+      }),
+    });
+    symlinkSync(
+      join(root, "courses/x/lessons/b/program.idl.json"),
+      join(root, "courses/x/lessons/a/program.idl.json")
+    );
+
+    const r = await runLint(root);
+    expect(
+      r.diagnostics.some((d) => d.gate === "gate-13c" && d.severity === "error")
+    ).toBe(true);
+  });
+
+  it("emits a generic parse-failure diagnostic that never echoes the parser's error message", async () => {
+    const root = makeTempRepo({
+      "courses/x/course.yaml": course,
+      "courses/x/lessons/a/lesson.yaml": explorerLesson,
+      // Malformed JSON; Node's JSON.parse error text embeds a slice of the input.
+      "courses/x/lessons/a/program.idl.json": '{"TOP_SECRET_MARKER_5678": ',
+    });
+
+    const r = await runLint(root);
+    const idlDiags = r.diagnostics.filter((d) => d.gate === "gate-13c");
+    expect(idlDiags.some((d) => d.severity === "error")).toBe(true);
+    expect(
+      r.diagnostics.some((d) => d.message.includes("TOP_SECRET_MARKER_5678"))
+    ).toBe(false);
   });
 });
 
