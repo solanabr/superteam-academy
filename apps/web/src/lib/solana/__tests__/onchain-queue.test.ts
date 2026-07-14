@@ -43,6 +43,9 @@ const h = vi.hoisted(() => ({
   finalizeCourse: vi.fn(),
   isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
   getCourseById: vi.fn(),
+  // F5 — simulate the maintenance-defer marker WRITE itself failing (a
+  // transient DB error), independent of any other update in the sweep.
+  deferWriteShouldError: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -119,10 +122,28 @@ vi.mock("@/lib/supabase/admin", () => {
       });
     }
     then(
-      onFulfilled?: (value: { data: null; error: null }) => unknown
+      onFulfilled?: (value: {
+        data: null;
+        error: { message: string } | null;
+      }) => unknown
     ): Promise<unknown> {
       if (this.isUpdate && this.patch) {
         h.updates.push({ id: this.updateId, patch: this.patch });
+        // F5 — the maintenance-defer marker is the ONLY update that sets
+        // `last_error` to a "course-in-maintenance:" value without also
+        // touching `retry_count`. Simulating a DB error on exactly that
+        // write (and no other) lets the test isolate the defer-write's own
+        // failure from every other update in the sweep.
+        const isDeferMarker =
+          typeof this.patch.last_error === "string" &&
+          this.patch.last_error.startsWith("course-in-maintenance:") &&
+          this.patch.retry_count === undefined;
+        if (isDeferMarker && h.deferWriteShouldError) {
+          return Promise.resolve({
+            data: null,
+            error: { message: "supabase down" },
+          }).then(onFulfilled);
+        }
       }
       return Promise.resolve({ data: null, error: null }).then(onFulfilled);
     }
@@ -155,6 +176,7 @@ beforeEach(() => {
   h.finalizeCourse.mockReset();
   h.isCourseInMaintenance.mockReset();
   h.getCourseById.mockReset();
+  h.deferWriteShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
@@ -418,6 +440,46 @@ describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-
     expect(String(patch?.last_error)).toContain("course-in-maintenance");
     // Deferred before any of the certificate-mint machinery runs.
     expect(h.getCourseById).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // F5 — a transient DB error writing the defer marker must not fall through
+  // to the outer catch's bumpRetry path. Before the fix, this write was
+  // unwrapped: a throw here escaped past the `continue` and into the switch's
+  // shared catch, which bumps retry_count exactly like an ordinary on-chain
+  // failure — reintroducing the abandonment vector (a login during a
+  // recreate, hitting a flaky DB write, burning a retry attempt instead of
+  // deferring).
+  // -------------------------------------------------------------------------
+  it("F5: a defer-write failure skips the on-chain action WITHOUT bumping retry_count", async () => {
+    h.rows = [
+      {
+        id: "r-cf-gated-dbfail",
+        action_type: "course_finalize",
+        reference_id: "course-gated",
+        retry_count: 1,
+        payload: { courseId: "course-gated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+    h.deferWriteShouldError = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Exactly ONE update was attempted for this row — the defer marker write
+    // itself (which failed). No SECOND update (a bumpRetry-style patch with
+    // retry_count) was made for it.
+    const rowUpdates = h.updates.filter((u) => u.id === "r-cf-gated-dbfail");
+    expect(rowUpdates).toHaveLength(1);
+    const patch = patchFor("r-cf-gated-dbfail");
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    // The on-chain finalize must still never be attempted while gated, even
+    // though the defer marker write failed.
+    expect(h.finalizeCourse).not.toHaveBeenCalled();
     expect(h.fetchEnrollment).not.toHaveBeenCalled();
   });
 });

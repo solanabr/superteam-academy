@@ -11,6 +11,7 @@ import { getAllCoursesAdmin } from "@/lib/content/queries";
 import {
   writeCourseOnChainStatus,
   writeCourseMaintenanceFlag,
+  acquireCourseMaintenanceGate,
 } from "@/lib/content/deployment-writes";
 import { fetchCourse } from "@/lib/solana/academy-reads";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
@@ -49,12 +50,20 @@ import {
  *      (below) — BEFORE the close is sent. It must be impossible to close a
  *      course and only then discover the create params were bad. This ordering
  *      IS the safety property; it is asserted directly in the unit tests.
- *   2. THE MAINTENANCE GATE (`writeCourseMaintenanceFlag`). Set BEFORE the
- *      close, cleared after the create lands. The on-chain write paths that can
+ *   2. THE MAINTENANCE GATE. Conditionally ACQUIRED
+ *      (`acquireCourseMaintenanceGate`) before the close and cleared
+ *      (`writeCourseMaintenanceFlag`) after the create lands. The acquire is
+ *      a mutual-exclusion primitive, not a plain write: a SECOND concurrent
+ *      recreate for the same course (a UI double-click) fails to acquire and
+ *      aborts before ever closing anything, so it can never clear the FIRST
+ *      recreate's gate out from under it. The on-chain write paths that can
  *      race the absent-PDA window (`/api/lessons/complete`,
  *      `/api/certificates/mint`, the webhook finalize path in
- *      `lib/helius/event-handlers.ts`) check it and refuse/queue instead of
- *      reading a course that may not exist yet.
+ *      `lib/helius/event-handlers.ts`) check the gate and refuse/queue
+ *      instead of reading a course that may not exist yet. A gate stuck open
+ *      by a failed recreate also clears the next time the course transitions
+ *      to `"synced"` (e.g. via the ordinary Deploy path) — see
+ *      `writeCourseOnChainStatus`.
  *   3. RETRY THE CREATE HARD. {@link CREATE_ATTEMPTS} attempts, each a fresh
  *      `.rpc()` (Anchor fetches a new blockhash per call, so a retry is never a
  *      resend of an expired tx).
@@ -95,6 +104,16 @@ const CREATE_ATTEMPTS = 4;
 
 /** Backoff between create attempts (ms). */
 const CREATE_RETRY_DELAY_MS = 1_000;
+
+/**
+ * Solana devnet's genesis hash (public, stable — devnet has never been
+ * re-genesised). F3 — `NEXT_PUBLIC_SOLANA_NETWORK` is a display label with NO
+ * relationship to which RPC `SOLANA_RPC_URL` actually points at; a `"devnet"`
+ * label paired with a misconfigured mainnet RPC would otherwise sail past the
+ * label check below and close a REAL mainnet course. This authenticates the
+ * connection itself, not just the label.
+ */
+const DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 
 /** The phase a failure happened in — decides whether the course is still intact. */
 export type RecreatePhase = "preflight" | "close" | "create";
@@ -223,6 +242,31 @@ export async function preflightRecreate(
     refuse(
       `Recreate is unavailable on network "${network ?? "unset"}" until Squads custody (#305) lands — ` +
         `close+recreate is hard-restricted to devnet in the meantime.`
+    );
+  }
+
+  // F3 — belt AND suspenders: the label check above says "devnet", but
+  // `SOLANA_RPC_URL` (the var the close/create transactions actually target)
+  // is a completely independent env var and could be misconfigured to point
+  // at mainnet. Authenticate the ACTUAL connection by its genesis hash before
+  // doing anything else. Fail-safe: refuse on a mismatch OR on any failure to
+  // fetch it at all — "couldn't verify" must never be treated as "assume
+  // devnet" for the platform's single most destructive on-chain operation.
+  let genesisHash: string;
+  try {
+    genesisHash = await connection.getGenesisHash();
+  } catch (err) {
+    refuse(
+      `Could not verify the RPC's genesis hash (${err instanceof Error ? err.message : String(err)}) — ` +
+        `refusing to recreate. The "devnet" network label alone is not sufficient authentication for ` +
+        `this destructive operation.`
+    );
+  }
+  if (genesisHash! !== DEVNET_GENESIS_HASH) {
+    refuse(
+      `SOLANA_RPC_URL's genesis hash ("${genesisHash!}") does not match devnet's (${DEVNET_GENESIS_HASH}) — ` +
+        `the configured RPC does not actually point at devnet, even though NEXT_PUBLIC_SOLANA_NETWORK ` +
+        `says "devnet". Refusing to recreate.`
     );
   }
 
@@ -424,37 +468,62 @@ async function restoreAfterCreate(plan: RecreatePlan): Promise<string[]> {
 }
 
 /**
- * Set/clear the per-course maintenance gate (rail 3). Never throws — returns
- * whether the write succeeded and lets the caller decide what to do with a
- * failure, because SET and CLEAR have different safety consequences:
- *
- *   - SET (turning the gate ON, before the close) is load-bearing: the entire
- *     point of this rail is that on-chain write paths refuse/queue instead of
- *     racing the absent-PDA window. A LOST set leaves that window completely
- *     unprotected — so `recreateCourse` treats `false` here as fatal and
- *     ABORTS before the close ever runs (see below).
- *   - CLEAR (turning the gate OFF — after a successful create, or immediately
- *     after a close that never landed) is best-effort: a lost clear just
- *     leaves the gate on longer than necessary, which is safe by construction
- *     (`isCourseInMaintenance` fails CLOSED on its own read errors too, so
- *     write paths never trust an unconfirmed state either way).
- *
- * Errors are logged loudly either way since a lost write degrades the safety
- * net for the window.
+ * CLEAR the per-course maintenance gate (rail 3). Never throws — returns
+ * whether the write succeeded. Best-effort: a lost clear just leaves the gate
+ * on longer than necessary, which is safe by construction
+ * (`isCourseInMaintenance` fails CLOSED on its own read errors too, so write
+ * paths never trust an unconfirmed state either way) — and F1(a) gives a
+ * stuck gate a second, independent recovery path via the next `synced` write.
+ * Errors are still logged loudly since a lost clear degrades the operator
+ * experience (the gate stays on until the next sync).
  */
-async function setMaintenanceGate(
-  courseId: string,
-  inMaintenance: boolean
-): Promise<boolean> {
+async function clearMaintenanceGate(courseId: string): Promise<boolean> {
   try {
-    await writeCourseMaintenanceFlag(courseId, inMaintenance);
+    await writeCourseMaintenanceFlag(courseId, false);
     return true;
   } catch (err) {
     console.error(
-      `[recreate-course] ${courseId}: failed to ${inMaintenance ? "set" : "clear"} the maintenance gate:`,
+      `[recreate-course] ${courseId}: failed to clear the maintenance gate:`,
       err
     );
     return false;
+  }
+}
+
+/** Why an acquire attempt did not result in holding the gate. */
+type AcquireFailureReason = "held" | "error";
+
+/**
+ * ACQUIRE the per-course maintenance gate (rail 3 + F2 mutual exclusion).
+ * This is the FIRST gate operation `recreateCourse` performs, strictly before
+ * `close_course` — so a caller that does not acquire NEVER reaches close or
+ * any clear. That ordering is what makes every subsequent clear in this
+ * module safe to be unconditional: only the acquirer gets far enough to call
+ * one.
+ *
+ * Two distinct failure reasons, because they need different messages (but
+ * are both fatal — ABORT before the close ever runs either way):
+ *   - `"held"`  — a DIFFERENT recreate already holds the gate
+ *     ({@link acquireCourseMaintenanceGate} returned `false`). Nothing is
+ *     wrong; this caller must simply not proceed concurrently.
+ *   - `"error"` — the acquire attempt itself failed (DB error). A LOST
+ *     acquire must not be treated as "proceed anyway": the entire point of
+ *     this rail is that on-chain write paths refuse/queue instead of racing
+ *     the absent-PDA window, so an unconfirmed gate state means we cannot
+ *     safely close.
+ */
+async function tryAcquireMaintenanceGate(
+  courseId: string
+): Promise<{ ok: true } | { ok: false; reason: AcquireFailureReason }> {
+  try {
+    const acquired = await acquireCourseMaintenanceGate(courseId);
+    return acquired ? { ok: true } : { ok: false, reason: "held" };
+  } catch (err) {
+    console.error(
+      `[recreate-course] ${courseId}: failed to acquire the maintenance gate:`,
+      err
+    );
+    return { ok: false, reason: "error" };
   }
 }
 
@@ -479,28 +548,34 @@ export async function recreateCourse(
     allowUnusualCreator
   );
 
-  // 2. MAINTENANCE GATE ON. From here, on-chain write paths for this course
-  //    (lessons/complete, certificates/mint, the webhook finalize path) must
-  //    refuse/queue rather than race the absent-PDA window that starts with
-  //    the very next step. A LOST set leaves that window unprotected, so a
-  //    failure here ABORTS before the close ever runs — better to not start
-  //    than to close the course without the guard in place.
-  const gateSet = await setMaintenanceGate(courseId, true);
-  if (!gateSet) {
-    throw new RecreateCourseError(
-      `Could not set the maintenance gate for course "${courseId}" — refusing to close. ` +
-        `The course is UNCHANGED and still deployed; retry once the gate write succeeds.`,
-      "preflight",
-      true
-    );
+  // 2. MAINTENANCE GATE ON — a CONDITIONAL ACQUIRE (F2 mutual exclusion). From
+  //    here, on-chain write paths for this course (lessons/complete,
+  //    certificates/mint, the webhook finalize path) must refuse/queue rather
+  //    than race the absent-PDA window that starts with the very next step. A
+  //    LOST or CONTENDED acquire ABORTS before the close ever runs — this is
+  //    the FIRST gate operation in the function, and short-circuits BEFORE
+  //    close_course, so a caller that loses the race here never reaches close
+  //    or clear at all. That ordering is what makes two concurrent recreates
+  //    for the same course safe: only one of them can ever hold the gate, so
+  //    only one of them can ever close/clear it.
+  const acquired = await tryAcquireMaintenanceGate(courseId);
+  if (!acquired.ok) {
+    const message =
+      acquired.reason === "held"
+        ? `A recreate is already in progress for course "${courseId}" — refusing to start a second one ` +
+          `concurrently. The course is UNCHANGED and still deployed.`
+        : `Could not set the maintenance gate for course "${courseId}" — refusing to close. ` +
+          `The course is UNCHANGED and still deployed; retry once the gate write succeeds.`;
+    throw new RecreateCourseError(message, "preflight", true);
   }
 
   // 3. CLOSE. From here the course is DOWN until the create lands.
   const closed = await closeCoursePda(courseId);
   if (!closed.success) {
     // The close never landed, so the old PDA is still there, untouched — clear
-    // the gate immediately, nothing was destroyed.
-    await setMaintenanceGate(courseId, false);
+    // the gate immediately, nothing was destroyed. Safe unconditionally: step 2
+    // guarantees only the acquirer ever reaches this line.
+    await clearMaintenanceGate(courseId);
     throw new RecreateCourseError(
       `Failed to close course "${courseId}": ${closed.error ?? "unknown error"}. The course is UNCHANGED and still deployed — nothing was destroyed.`,
       "close",
@@ -567,18 +642,32 @@ export async function recreateCourse(
   // 5. RESTORE the fields create_course reset. Non-fatal.
   const warnings = await restoreAfterCreate(plan);
 
-  // 6. PERSIST, exactly as the deploy path does.
-  await writeCourseOnChainStatus(
-    courseId,
-    "synced",
-    plan.coursePda.toBase58(),
-    createSignature
-  );
+  // 6. PERSIST, exactly as the deploy path does. F1(b) — swallow-and-log
+  //    (matching the not_deployed persist above) rather than letting a throw
+  //    here escape: the create already landed and the course IS genuinely
+  //    fine, so a transient DB blip on this write must not be able to skip
+  //    step 7 below. (The write's own success also clears in_maintenance as
+  //    part of the same upsert — see writeCourseOnChainStatus — so this is a
+  //    defense-in-depth backstop specifically for the case where the write
+  //    itself fails.)
+  try {
+    await writeCourseOnChainStatus(
+      courseId,
+      "synced",
+      plan.coursePda.toBase58(),
+      createSignature
+    );
+  } catch (dbErr) {
+    console.error(
+      `[recreate-course] ${courseId}: FAILED to persist synced status:`,
+      dbErr
+    );
+  }
 
   // 7. MAINTENANCE GATE OFF. The course is back and correct — on-chain write
   //    paths can resume immediately rather than waiting for the operator to do
-  //    it manually.
-  await setMaintenanceGate(courseId, false);
+  //    it manually. Unconditionally reached even if step 6 threw (see above).
+  await clearMaintenanceGate(courseId);
 
   return {
     action: "recreated",

@@ -19,6 +19,10 @@ const INSTRUCTOR = Keypair.generate().publicKey.toBase58();
 const COLLECTION = Keypair.generate().publicKey.toBase58();
 const COURSE_ID = "course-solana-101";
 
+// F3 — devnet's real, public genesis hash. The mocked Connection returns this
+// by default so every existing test exercises the "authenticated" path.
+const DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
+
 // Mutable mock state, reset per test.
 let authority: PublicKey | null = AUTHORITY;
 let courses: unknown[] = [];
@@ -34,6 +38,10 @@ let createResults: Array<{
 let bindResult = { success: true, signature: "bind-sig" };
 let updateResult = { success: true, signature: "update-sig" };
 let dbThrows = false;
+// F3 mock controls — the connection's own genesis hash, independent of the
+// NEXT_PUBLIC_SOLANA_NETWORK label.
+let genesisHash = DEVNET_GENESIS_HASH;
+let genesisHashThrows = false;
 
 // The REAL #427 guard (assertCreatorAllowed + CREATOR_DENYLIST) is kept via
 // importOriginal — mocking it would test the mock, not the guard. Only the
@@ -83,6 +91,15 @@ vi.mock("@/lib/content/deployment-writes", () => ({
   writeCourseMaintenanceFlag: vi.fn(async (_id: string, on: boolean) => {
     calls.push(on ? "gate:on" : "gate:off");
   }),
+  // F2 — the conditional acquire. Default: always succeeds (this call holds
+  // the gate), matching the pre-F2 unconditional-SET behaviour for every
+  // existing test. Individual tests override via `vi.mocked(...)` to
+  // exercise contention (`mockResolvedValueOnce(false)`) or a DB error
+  // (`mockRejectedValueOnce(...)`).
+  acquireCourseMaintenanceGate: vi.fn(async (_id: string) => {
+    calls.push("gate:on");
+    return true;
+  }),
 }));
 
 vi.mock("@solana/web3.js", async (importOriginal) => {
@@ -93,6 +110,10 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
       async getAccountInfo(pk: PublicKey) {
         return accounts.get(pk.toBase58()) ?? null;
       }
+      async getGenesisHash() {
+        if (genesisHashThrows) throw new Error("RPC unreachable");
+        return genesisHash;
+      }
     },
   };
 });
@@ -100,7 +121,10 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
 import { recreateCourse, RecreateCourseError } from "../recreate-course";
 import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import { closeCoursePda, deployCoursePda } from "@/lib/solana/admin-signer";
-import { writeCourseMaintenanceFlag } from "@/lib/content/deployment-writes";
+import {
+  writeCourseMaintenanceFlag,
+  acquireCourseMaintenanceGate,
+} from "@/lib/content/deployment-writes";
 
 const coursePda = (id: string) =>
   findCoursePDA(id, getProgramId())[0].toBase58();
@@ -164,6 +188,8 @@ beforeEach(() => {
   bindResult = { success: true, signature: "bind-sig" };
   updateResult = { success: true, signature: "update-sig" };
   dbThrows = false;
+  genesisHash = DEVNET_GENESIS_HASH;
+  genesisHashThrows = false;
   vi.clearAllMocks();
 });
 
@@ -228,6 +254,61 @@ describe("rail 4 — mainnet is hard-refused until Squads custody (#305)", () =>
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
     expect(closeCoursePda).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F3 — authenticate the ACTUAL RPC (genesis hash), not just the display
+// label. NEXT_PUBLIC_SOLANA_NETWORK and SOLANA_RPC_URL are independent env
+// vars; a "devnet" label paired with a misconfigured mainnet RPC must still
+// be refused.
+// ---------------------------------------------------------------------------
+describe("F3 — the RPC's genesis hash must ALSO match devnet, not just the label", () => {
+  it('refuses even with an explicit "devnet" label when the RPC genesis hash does not match devnet', async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    // A mainnet-beta-shaped genesis hash, paired with the "devnet" label.
+    genesisHash = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
+
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.phase).toBe("preflight");
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/genesis hash/i);
+    expect(thrown!.message).toMatch(/does not match devnet/i);
+    // Nothing was touched — refused before the close.
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
+  it("fail-safe: refuses when the genesis hash cannot be fetched at all", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    genesisHashThrows = true;
+
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.phase).toBe("preflight");
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/could not verify/i);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
+  it("proceeds when the label AND the genesis hash both say devnet", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+    genesisHash = DEVNET_GENESIS_HASH;
+    const result = await recreateCourse(COURSE_ID);
+    expect(result.action).toBe("recreated");
   });
 });
 
@@ -509,12 +590,12 @@ describe("rail 3 — the maintenance gate", () => {
     expect(calls).not.toContain("gate:off");
   });
 
-  it("ABORTS before the close when the maintenance gate SET write fails — never closes unguarded", async () => {
-    // The FIRST writeCourseMaintenanceFlag call is the SET (gate:on), before
-    // the close. A lost SET must not be silently swallowed: closing without
-    // the guard in place would leave the absent-PDA window completely
-    // unprotected. Better to not start than to close unguarded.
-    vi.mocked(writeCourseMaintenanceFlag).mockRejectedValueOnce(
+  it("ABORTS before the close when the maintenance gate ACQUIRE write fails — never closes unguarded", async () => {
+    // The acquire is the FIRST gate operation, before the close. A lost
+    // acquire must not be silently swallowed: closing without the guard in
+    // place would leave the absent-PDA window completely unprotected. Better
+    // to not start than to close unguarded.
+    vi.mocked(acquireCourseMaintenanceGate).mockRejectedValueOnce(
       new Error("supabase down")
     );
 
@@ -529,26 +610,77 @@ describe("rail 3 — the maintenance gate", () => {
     expect(thrown!.message).toMatch(/maintenance gate/i);
     expect(closeCoursePda).not.toHaveBeenCalled();
     expect(deployCoursePda).not.toHaveBeenCalled();
-    // The rejected SET call never recorded "gate:on" (the mock's real
+    // The rejected acquire call never recorded "gate:on" (the mock's real
     // implementation, which pushes to `calls`, was overridden for this one
     // call) — nothing else should have run either.
     expect(calls).toEqual([]);
   });
 
+  // ---------------------------------------------------------------------------
+  // F2 — mutual exclusion. A concurrent recreate (a UI double-click) must not
+  // both proceed: the SECOND caller's acquire fails (0 rows / already held)
+  // and it must abort BEFORE ever closing anything — so it can never clear the
+  // FIRST caller's gate out from under it (the exact bug this fix closes).
+  // ---------------------------------------------------------------------------
+  it("F2: ABORTS before the close when a concurrent recreate already holds the gate", async () => {
+    vi.mocked(acquireCourseMaintenanceGate).mockResolvedValueOnce(false);
+
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.phase).toBe("preflight");
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/already in progress/i);
+    // The losing caller never reaches close — and therefore never reaches a
+    // clear either, so it cannot touch whatever gate state the WINNER is
+    // relying on for its own in-flight recreate.
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
   it("a maintenance-flag CLEAR write failure does not block an otherwise-successful recreate", async () => {
-    // CLEAR (turning the gate back off) is best-effort, unlike SET: the course
-    // is already correctly recreated by the time the CLEAR at the very end
-    // runs, so a lost clear only means the gate stays on a little longer, not
-    // that anything is unprotected.
-    vi.mocked(writeCourseMaintenanceFlag)
-      .mockImplementationOnce(async (_id: string, on: boolean) => {
-        calls.push(on ? "gate:on" : "gate:off");
-      })
-      .mockRejectedValueOnce(new Error("supabase down"));
+    // CLEAR (turning the gate back off, at the very end) is best-effort: the
+    // course is already correctly recreated by the time it runs, so a lost
+    // clear only means the gate stays on a little longer, not that anything
+    // is unprotected. `writeCourseMaintenanceFlag` is only ever called for the
+    // CLEAR half now (the SET half is `acquireCourseMaintenanceGate`), so
+    // there is exactly one call to reject here.
+    vi.mocked(writeCourseMaintenanceFlag).mockRejectedValueOnce(
+      new Error("supabase down")
+    );
 
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
     expect(closeCoursePda).toHaveBeenCalled();
+  });
+
+  // ---------------------------------------------------------------------------
+  // F1(b) — the success-path gate clear must survive a THROWING status write.
+  // ---------------------------------------------------------------------------
+  it("F1(b): the success-clear survives a throwing status write — the gate still comes off", async () => {
+    // dbThrows makes writeCourseOnChainStatus throw for EVERY status,
+    // including the success path's "synced" write.
+    dbThrows = true;
+
+    const result = await recreateCourse(COURSE_ID);
+
+    expect(result.action).toBe("recreated");
+    // The DB write was attempted (and threw, swallowed internally), but the
+    // gate clear still ran right after it — never skipped by the throw.
+    expect(calls).toEqual([
+      "gate:on",
+      "close",
+      "create",
+      "bind",
+      "db:synced",
+      "gate:off",
+    ]);
   });
 });
 

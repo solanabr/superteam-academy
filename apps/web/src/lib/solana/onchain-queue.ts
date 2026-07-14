@@ -591,13 +591,33 @@ async function bumpRetry(
 // unresolved, record why, and do NOT touch retry_count, so the next drain
 // (another login, or the narrower quest sweep's sibling paths) retries once
 // the gate clears.
+//
+// F5 — this write itself must not become a NEW abandonment vector. Before this
+// fix, a transient DB error writing the defer marker threw out of this
+// function, past the caller's `continue`, and into the switch's outer
+// try/catch — which bumps retry_count exactly like an ordinary on-chain
+// failure. That reintroduces the bug this deferral exists to close: a login
+// during a recreate, hitting a flaky DB write, would burn a retry attempt
+// instead of deferring. So the write is wrapped here: log and swallow on
+// failure, and the caller's `continue` right after this call still skips the
+// on-chain action for this sweep either way — retry_count is left untouched
+// whether the marker write succeeds or not, so the next drain gets a fresh
+// look once the gate clears.
 async function deferForCourseMaintenance(
   adminClient: AdminClient,
   row: PendingActionRow,
   courseId: string
 ): Promise<void> {
-  await adminClient
-    .from("pending_onchain_actions")
-    .update({ last_error: `course-in-maintenance:${courseId}` })
-    .eq("id", row.id);
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: `course-in-maintenance:${courseId}` })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] ${courseId}: failed to write maintenance-defer marker for row ${row.id}: ${message}`
+    );
+  }
 }

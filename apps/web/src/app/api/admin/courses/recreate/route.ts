@@ -29,9 +29,16 @@ import {
  *      CSRF-ish or fat-fingered call that merely reaches this route cannot
  *      destroy a course without naming it exactly. Checked before any on-chain
  *      call is made.
- *   3. `recreateCourse` itself refuses (mainnet, missing signer, bad creator,
- *      a lesson-count superset, ...) before anything is touched — see
- *      `preflightRecreate`.
+ *   3. F4 — `allowUnusualCreator` re-opens the #427/#440 creator-denylist guard
+ *      inside `preflightRecreate`. A bare request-body boolean is too easy to
+ *      flip by accident (or by a naive client bug) for a guard whose entire
+ *      purpose is catching exactly this kind of mistake — so honoring it also
+ *      requires `acknowledgeUnusualCreator` to equal the `courseId`, a SECOND,
+ *      independent field naming the same course, mirroring the `confirm` gate
+ *      above. Checked before any on-chain call is made.
+ *   4. `recreateCourse` itself refuses (mainnet, missing signer, bad creator,
+ *      a lesson-count superset, a concurrent recreate already in progress, ...)
+ *      before anything is touched — see `preflightRecreate`.
  *
  * No UI wires this yet — the confirmation button lands with the /admin/courses
  * screen in a follow-up (WS-2).
@@ -52,6 +59,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       courseId?: unknown;
       confirm?: unknown;
       allowUnusualCreator?: unknown;
+      acknowledgeUnusualCreator?: unknown;
     };
     if (typeof body.courseId !== "string" || !body.courseId) {
       return NextResponse.json(
@@ -70,7 +78,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     courseId = body.courseId;
     confirm = body.confirm;
-    allowUnusualCreator = body.allowUnusualCreator === true;
+
+    // F4 — do not honor a bare `allowUnusualCreator: true`. It bypasses the
+    // #427/#440 creator-denylist guard, so re-opening it must be a deliberate,
+    // explicit choice naming the exact course — not a flag a naive client
+    // could set (or leave set) by accident. Mirrors the `confirm` gate: a
+    // SECOND field that must equal the courseId, distinct from `confirm`.
+    const wantsUnusualCreator = body.allowUnusualCreator === true;
+    if (wantsUnusualCreator && body.acknowledgeUnusualCreator !== courseId) {
+      return NextResponse.json(
+        {
+          error:
+            "allowUnusualCreator requires acknowledgeUnusualCreator to equal the courseId — " +
+            "this bypasses the creator-denylist guard (#427/#440) and must be an explicit, deliberate choice",
+        },
+        { status: 400 }
+      );
+    }
+    allowUnusualCreator = wantsUnusualCreator;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -82,6 +107,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         error: `confirm "${confirm}" does not match courseId "${courseId}" — refusing to close the course`,
       },
       { status: 400 }
+    );
+  }
+
+  if (allowUnusualCreator) {
+    console.warn(
+      `[admin/courses/recreate] ${courseId}: allowUnusualCreator=true acknowledged — bypassing the creator-denylist guard for this recreate.`
     );
   }
 
