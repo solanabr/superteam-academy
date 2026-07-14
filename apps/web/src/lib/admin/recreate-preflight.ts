@@ -59,10 +59,21 @@ export interface RecreatePreflightData {
   lostCounters: { totalCompletions: number; totalEnrollments: number };
 }
 
+/**
+ * Stable, locale-agnostic discriminator for the two refusals THIS helper adds
+ * (the "no immutable field differs" / "could not confirm a mismatch" gate). The
+ * client maps these to translated copy; the English {@link
+ * RecreatePreflightRefusal.reason} stays as the server-side/telemetry fallback.
+ * Absent for pass-through `preflightRecreate` reasons (already free English).
+ */
+export type RecreatePreflightRefusalCode = "noImmutableDiff" | "unconfirmed";
+
 /** The recreate is refused — a dead-end, but now with a reason. */
 export interface RecreatePreflightRefusal {
   canRecreate: false;
   reason: string;
+  /** Present only for the no-op / unconfirmed gate so the client can i18n it. */
+  reasonCode?: RecreatePreflightRefusalCode;
 }
 
 export type RecreatePreflightResponse =
@@ -166,7 +177,52 @@ export async function buildRecreatePreflight(
   // `createParams.creatorWallet` is typed optional, but `preflightRecreate`
   // validates it (required, parseable, on-curve) and refuses otherwise before
   // ever returning a plan — so by here it is a resolved base58 string.
-  const creatorResolved = plan.createParams.creatorWallet ?? creatorOnChain ?? "";
+  const creatorResolved =
+    plan.createParams.creatorWallet ?? creatorOnChain ?? "";
+
+  // ---- POSITIVE requirement: a recreate must actually fix an immutable field.
+  // `preflightRecreate` only proves the create PARAMS are valid — it never
+  // asserts the on-chain account is genuinely wrong. Without this gate a stale
+  // tab or a second sequential recreate would close+recreate an already-correct
+  // course, irreversibly zeroing completion/enrollment counters and causing
+  // downtime while fixing nothing. So allow ONLY on positive evidence of a real
+  // immutable mismatch:
+  //   - `immutableDiffs` is non-empty (the pure diff engine — which already
+  //     excludes updateable fields and the H3-preserved lessonCount — found a
+  //     create-only field that differs, creator included), OR
+  //   - the creator provably differs from chain (both sides read and unequal).
+  // A confirmed creator difference ALSO shows up in `immutableDiffs`, but the
+  // creator check is kept independent so a diff-engine hiccup can't mask it.
+  const creatorDiffers =
+    creatorOnChain !== null &&
+    creatorResolved !== "" &&
+    creatorOnChain !== creatorResolved;
+  const hasRealImmutableDiff = immutableDiffs.length > 0 || creatorDiffers;
+
+  if (!hasRealImmutableDiff) {
+    // Distinguish "confirmed no-op" from "couldn't confirm". When the on-chain
+    // account could not be read/decoded (`creatorOnChain` is null → the diff
+    // engine also had no data, so `immutableDiffs` is empty for LACK OF DATA,
+    // not lack of difference), refuse on unconfirmed state rather than assert a
+    // no-op. Otherwise chain and bundle agree on every immutable field.
+    if (creatorOnChain === null) {
+      return {
+        canRecreate: false,
+        reasonCode: "unconfirmed",
+        reason:
+          "Could not read the on-chain account to confirm an immutable mismatch — " +
+          "refresh the status screen and retry; refusing to recreate on unconfirmed state.",
+      };
+    }
+    return {
+      canRecreate: false,
+      reasonCode: "noImmutableDiff",
+      reason:
+        "No immutable field differs between the content bundle and the on-chain account — " +
+        "a recreate would fix nothing and would irreversibly reset completion/enrollment " +
+        "counters and cause downtime.",
+    };
+  }
 
   return {
     canRecreate: true,

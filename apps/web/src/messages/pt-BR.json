@@ -984,6 +984,10 @@
         "loading": "Verificando…",
         "refusedHeading": "Recriação indisponível",
         "loadErrorHeading": "Não foi possível verificar a pré-verificação de recriação",
+        "refusalReason": {
+          "noImmutableDiff": "Nenhum campo imutável difere entre o pacote de conteúdo e a conta on-chain — recriar não corrigiria nada e zeraria de forma irreversível os contadores de conclusão/matrícula e causaria indisponibilidade.",
+          "unconfirmed": "Não foi possível ler a conta on-chain para confirmar uma divergência imutável — atualize a tela de status e tente novamente; recusando recriar sobre um estado não confirmado."
+        },
         "modal": {
           "title": "Recriar “{title}”",
           "intro": "Isto fecha a conta on-chain do curso e a cria novamente para reescrever os campos imutáveis abaixo. É a operação on-chain mais destrutiva da plataforma.",
@@ -1017,6 +1021,7 @@
         "execError": {
           "heading": "A recriação falhou",
           "downRecovery": "Um curso sem PDA aparece como not_deployed — use o botão normal de Deploy para recriá-lo.",
+          "indeterminateRecovery": "A recriação falhou antes de um resultado ser confirmado — o curso pode estar intacto ou no meio da recriação. NÃO tente novamente às cegas. Atualize a tela de status do admin para verificar se o PDA do curso existe antes de agir.",
           "close": "Fechar"
         }
       }

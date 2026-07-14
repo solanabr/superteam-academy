@@ -3,7 +3,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { DiffEntry } from "@/lib/admin/sync-diff";
-import type { RecreatePreflightData } from "@/lib/admin/recreate-preflight";
+import type {
+  RecreatePreflightData,
+  RecreatePreflightRefusal,
+} from "@/lib/admin/recreate-preflight";
 import type { RecreateCourseResult } from "@/lib/admin/recreate-course";
 
 interface RecreateCourseFlowProps {
@@ -38,8 +41,10 @@ export function RecreateCourseFlow({
 }: RecreateCourseFlowProps) {
   const t = useTranslations("admin.deployScreen.recreate");
   const [phase, setPhase] = useState<Phase>("idle");
-  const [preflight, setPreflight] = useState<RecreatePreflightData | null>(null);
-  const [refusal, setRefusal] = useState<string | null>(null);
+  const [preflight, setPreflight] = useState<RecreatePreflightData | null>(
+    null
+  );
+  const [refusal, setRefusal] = useState<RecreatePreflightRefusal | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [result, setResult] = useState<RecreateCourseResult | null>(null);
   const [execError, setExecError] = useState<ExecuteError | null>(null);
@@ -62,9 +67,9 @@ export function RecreateCourseFlow({
       }
       const data = (await res.json()) as
         | RecreatePreflightData
-        | { canRecreate: false; reason: string };
+        | RecreatePreflightRefusal;
       if (!data.canRecreate) {
-        setRefusal(data.reason);
+        setRefusal(data);
         setPhase("idle");
         return;
       }
@@ -165,6 +170,11 @@ export function RecreateCourseFlow({
             {t("execError.downRecovery")}
           </p>
         )}
+        {execError.courseIntact === undefined && (
+          <p className="mt-2 rounded border border-danger bg-card p-2 text-xs font-medium text-danger">
+            {t("execError.indeterminateRecovery")}
+          </p>
+        )}
         <button
           onClick={() => {
             setExecError(null);
@@ -206,7 +216,13 @@ export function RecreateCourseFlow({
       {refusal && (
         <div className="mt-2 rounded border border-streak bg-streak-light p-2 text-xs text-streak">
           <p className="font-semibold">{t("refusedHeading")}</p>
-          <p className="mt-1">{refusal}</p>
+          <p className="mt-1">
+            {refusal.reasonCode === "noImmutableDiff"
+              ? t("refusalReason.noImmutableDiff")
+              : refusal.reasonCode === "unconfirmed"
+                ? t("refusalReason.unconfirmed")
+                : refusal.reason}
+          </p>
         </div>
       )}
 
@@ -392,7 +408,9 @@ function RecreateConfirmModal({
             <p className="text-xs font-semibold text-danger">
               {t("unusualHeading")}
             </p>
-            <p className="mt-1 text-xs text-text-2">{t("unusualDescription")}</p>
+            <p className="mt-1 text-xs text-text-2">
+              {t("unusualDescription")}
+            </p>
             <label className="mt-2 flex items-start gap-2 text-xs text-danger">
               <input
                 type="checkbox"

@@ -107,6 +107,41 @@ describe("GET /api/admin/courses/recreate/preflight — a refusal is data, not a
   });
 });
 
+describe("GET /api/admin/courses/recreate/preflight — reason is scrubbed of secrets", () => {
+  it("redacts an api-keyed RPC URL and secret env identifiers from a refusal reason", async () => {
+    buildRecreatePreflight.mockResolvedValue({
+      canRecreate: false,
+      reason:
+        "boom at https://rpc.example/?api-key=SECRET and PROGRAM_AUTHORITY_SECRET missing",
+    });
+    const res = await get(`?courseId=${COURSE_ID}`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { canRecreate: boolean; reason: string };
+    expect(body.canRecreate).toBe(false);
+    // The whole URL (with the leaked key) and the env identifiers are gone.
+    expect(body.reason).not.toMatch(/rpc\.example/);
+    expect(body.reason).not.toMatch(/api-key/);
+    expect(body.reason).not.toMatch(/SECRET/);
+    expect(body.reason).not.toMatch(/PROGRAM_AUTHORITY_SECRET/);
+    expect(body.reason).toContain("[redacted-url]");
+    expect(body.reason).toContain("[redacted-env]");
+  });
+
+  it("scrubs a leaked RPC URL from an unexpected-failure (500) error message", async () => {
+    buildRecreatePreflight.mockRejectedValue(
+      new Error(
+        "getGenesisHash failed at https://mainnet.helius/?api-key=abc123"
+      )
+    );
+    const res = await get(`?courseId=${COURSE_ID}`);
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).not.toMatch(/helius/);
+    expect(body.error).not.toMatch(/abc123/);
+    expect(body.error).toContain("[redacted-url]");
+  });
+});
+
 describe("GET /api/admin/courses/recreate/preflight — unexpected failure", () => {
   it("500s only when the helper itself throws (RPC/DB), not on a refusal", async () => {
     buildRecreatePreflight.mockRejectedValue(new Error("RPC down"));

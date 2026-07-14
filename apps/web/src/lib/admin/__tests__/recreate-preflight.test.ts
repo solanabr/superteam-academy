@@ -147,6 +147,80 @@ describe("buildRecreatePreflight — F4 unusual creator", () => {
   });
 });
 
+describe("buildRecreatePreflight — FIX 1 no-op / unconfirmed gate", () => {
+  it("refuses with the 'fixes nothing' reason + code when no immutable field differs and the creator matches", async () => {
+    h.preflightRecreate.mockResolvedValueOnce(plan());
+    // On-chain creator equals the resolved (bundle) creator → no creator diff.
+    h.fetchCourse.mockResolvedValue({
+      creator: { toBase58: () => "CREATOR111" },
+    });
+    // Only an UPDATEABLE diff remains — must not count as "something to fix".
+    h.diffCourse.mockReturnValue({
+      differences: [
+        {
+          field: "xpPerLesson",
+          onChainValue: 10,
+          contentValue: 25,
+          updateable: true,
+        },
+      ],
+    });
+    const res = await buildRecreatePreflight(COURSE_ID);
+    expect(res.canRecreate).toBe(false);
+    if (res.canRecreate) throw new Error("unreachable");
+    expect(res.reasonCode).toBe("noImmutableDiff");
+    expect(res.reason).toMatch(/fix nothing/i);
+  });
+
+  it("refuses with the 'could not read' reason + code when the on-chain account is unavailable/undecodable", async () => {
+    h.preflightRecreate.mockResolvedValueOnce(plan());
+    // fetchCourse returns null → creatorOnChain stays null, immutableDiffs empty
+    // for LACK OF DATA (diffCourse is never reached).
+    h.fetchCourse.mockResolvedValue(null);
+    const res = await buildRecreatePreflight(COURSE_ID);
+    expect(res.canRecreate).toBe(false);
+    if (res.canRecreate) throw new Error("unreachable");
+    expect(res.reasonCode).toBe("unconfirmed");
+    expect(res.reason).toMatch(/could not read the on-chain account/i);
+    // diffCourse must NOT run when there is no on-chain account to diff against.
+    expect(h.diffCourse).not.toHaveBeenCalled();
+  });
+});
+
+describe("buildRecreatePreflight — FIX 1 over-refusal guard (a real mismatch still allows)", () => {
+  it("allows when the creator genuinely differs on-chain vs bundle", async () => {
+    // Default beforeEach: on-chain AUTH1111 vs resolved CREATOR111 + a creator
+    // immutable diff — a REAL mismatch that must NOT be over-refused.
+    h.preflightRecreate.mockResolvedValueOnce(plan());
+    const res = await buildRecreatePreflight(COURSE_ID);
+    expect(res.canRecreate).toBe(true);
+    if (!res.canRecreate) throw new Error("unreachable");
+    expect(res.immutableDiffs.map((d) => d.field)).toContain("creator");
+  });
+
+  it("allows when the creator matches but a non-creator immutable field (difficulty) differs", async () => {
+    h.preflightRecreate.mockResolvedValueOnce(plan());
+    // Creator matches → refusal must NOT hook onto creator-equality alone.
+    h.fetchCourse.mockResolvedValue({
+      creator: { toBase58: () => "CREATOR111" },
+    });
+    h.diffCourse.mockReturnValue({
+      differences: [
+        {
+          field: "difficulty",
+          onChainValue: "beginner",
+          contentValue: "advanced",
+          updateable: false,
+        },
+      ],
+    });
+    const res = await buildRecreatePreflight(COURSE_ID);
+    expect(res.canRecreate).toBe(true);
+    if (!res.canRecreate) throw new Error("unreachable");
+    expect(res.immutableDiffs.map((d) => d.field)).toEqual(["difficulty"]);
+  });
+});
+
 describe("buildRecreatePreflight — genuine refusal", () => {
   it("returns { canRecreate: false, reason } when even allow=true refuses, using the allow=true message", async () => {
     h.preflightRecreate

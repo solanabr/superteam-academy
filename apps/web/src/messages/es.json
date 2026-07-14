@@ -984,6 +984,10 @@
         "loading": "Comprobando…",
         "refusedHeading": "Recrear no disponible",
         "loadErrorHeading": "No se pudo comprobar la verificación previa de recreación",
+        "refusalReason": {
+          "noImmutableDiff": "Ningún campo inmutable difiere entre el paquete de contenido y la cuenta on-chain — recrear no arreglaría nada y reiniciaría de forma irreversible los contadores de finalización/inscripción y causaría tiempo de inactividad.",
+          "unconfirmed": "No se pudo leer la cuenta on-chain para confirmar una discrepancia inmutable — actualiza la pantalla de estado y reinténtalo; se rechaza recrear sobre un estado no confirmado."
+        },
         "modal": {
           "title": "Recrear «{title}»",
           "intro": "Esto cierra la cuenta on-chain del curso y la vuelve a crear para reescribir los campos inmutables de abajo. Es la operación on-chain más destructiva de la plataforma.",
@@ -1017,6 +1021,7 @@
         "execError": {
           "heading": "La recreación falló",
           "downRecovery": "Un curso sin PDA aparece como not_deployed — usa el botón normal de Desplegar para recrearlo.",
+          "indeterminateRecovery": "La recreación falló antes de confirmar un resultado — el curso puede estar intacto o a medio recrear. NO reintentes a ciegas. Actualiza la pantalla de estado de administración para comprobar si el PDA del curso existe antes de actuar.",
           "close": "Cerrar"
         }
       }

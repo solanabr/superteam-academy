@@ -984,6 +984,10 @@
         "loading": "Checking…",
         "refusedHeading": "Recreate unavailable",
         "loadErrorHeading": "Could not check the recreate preflight",
+        "refusalReason": {
+          "noImmutableDiff": "No immutable field differs between the content bundle and the on-chain account — a recreate would fix nothing and would irreversibly reset completion/enrollment counters and cause downtime.",
+          "unconfirmed": "Could not read the on-chain account to confirm an immutable mismatch — refresh the status screen and retry; refusing to recreate on unconfirmed state."
+        },
         "modal": {
           "title": "Recreate “{title}”",
           "intro": "This closes the on-chain course account and creates it again to rewrite the immutable fields below. It is the platform's most destructive on-chain operation.",
@@ -1017,6 +1021,7 @@
         "execError": {
           "heading": "Recreate failed",
           "downRecovery": "A course with no PDA reads as not_deployed — use the normal Deploy button to recreate it.",
+          "indeterminateRecovery": "The recreate failed before a result was confirmed — the course may be intact or mid-recreate. Do NOT retry blindly. Refresh the admin status screen to check whether the course PDA exists before acting.",
           "close": "Close"
         }
       }

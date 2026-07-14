@@ -28,7 +28,11 @@ function preflightDto(unusualCreator: boolean) {
     liveLessonCount: 3,
     unusualCreator,
     immutableDiffs: [
-      { field: "creator", onChainValue: "AUTH1111", contentValue: "CREATOR111" },
+      {
+        field: "creator",
+        onChainValue: "AUTH1111",
+        contentValue: "CREATOR111",
+      },
     ],
     lostCounters: { totalCompletions: 42, totalEnrollments: 100 },
   };
@@ -70,6 +74,46 @@ function mockFetch(unusualCreator: boolean) {
   );
   global.fetch = fetchMock as unknown as typeof fetch;
   return fetchMock;
+}
+
+/** GET → preflight DTO (normal creator); POST → the supplied responder. */
+function mockFetchCustomPost(post: () => Promise<Response>) {
+  const fetchMock = vi.fn(
+    (_url: string, init?: { method?: string; body?: string }) => {
+      if (!init || !init.method || init.method === "GET") {
+        return Promise.resolve(
+          new Response(JSON.stringify(preflightDto(false)), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          })
+        );
+      }
+      return post();
+    }
+  );
+  global.fetch = fetchMock as unknown as typeof fetch;
+  return fetchMock;
+}
+
+/** Render, open the modal, type the id, and click Confirm with a POST responder. */
+async function executeWith(post: () => Promise<Response>) {
+  const onRecreated = vi.fn();
+  const fetchMock = mockFetchCustomPost(post);
+  renderWithIntl(
+    <RecreateCourseFlow
+      courseId={COURSE_ID}
+      courseTitle="Solana 101"
+      immutableDiffs={IMMUTABLE_DIFFS}
+      onRecreated={onRecreated}
+    />
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Recreate course…/ }));
+  await screen.findByRole("dialog");
+  fireEvent.change(screen.getByRole("textbox"), {
+    target: { value: COURSE_ID },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Recreate course" }));
+  return { fetchMock, onRecreated };
 }
 
 async function openModal(unusualCreator: boolean) {
@@ -194,5 +238,39 @@ describe("RecreateCourseFlow — F4 unusual-creator acknowledgement (c)", () => 
     expect(sent.confirm).toBe(COURSE_ID);
     expect("allowUnusualCreator" in sent).toBe(false);
     expect("acknowledgeUnusualCreator" in sent).toBe(false);
+  });
+});
+
+describe("RecreateCourseFlow — FIX 2 honest execute-failure recovery", () => {
+  const INDETERMINATE =
+    messages.admin.deployScreen.recreate.execError.indeterminateRecovery;
+  const DOWN = messages.admin.deployScreen.recreate.execError.downRecovery;
+
+  it("shows the 'refresh and check' message and NOT the Deploy banner on a network/indeterminate reject (no courseIntact)", async () => {
+    await executeWith(() => Promise.reject(new Error("Failed to fetch")));
+
+    // The indeterminate banner appears; the definitive "use Deploy" banner does not.
+    await screen.findByText(INDETERMINATE);
+    expect(screen.queryByText(DOWN)).toBeNull();
+    // The raw network error is still surfaced.
+    expect(screen.getByText("Failed to fetch")).toBeTruthy();
+  });
+
+  it("still shows the Deploy banner (and not the indeterminate one) when the server reports courseIntact:false", async () => {
+    await executeWith(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error: "close landed, create did not",
+            phase: "create",
+            courseIntact: false,
+          }),
+          { status: 500, headers: { "content-type": "application/json" } }
+        )
+      )
+    );
+
+    await screen.findByText(DOWN);
+    expect(screen.queryByText(INDETERMINATE)).toBeNull();
   });
 });
