@@ -78,7 +78,7 @@ describe("client-queries — /api/content fetch wrappers", () => {
     fetchMock.mockResolvedValue(ok({ isInstructor: true }));
     expect(await isInstructorWallet("Wal1et")).toBe(true);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/content/instructor-wallet?wallet=Wal1et"
+      "/api/content/is-instructor?wallet=Wal1et"
     );
   });
 

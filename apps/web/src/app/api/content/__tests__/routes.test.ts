@@ -20,7 +20,7 @@ import { GET as getLessons } from "../lessons-summary/route";
 import { GET as getRecommended } from "../recommended/route";
 import { GET as getTags } from "../tags/route";
 import { GET as getAchievements } from "../achievements/route";
-import { GET as getInstructorWallet } from "../instructor-wallet/route";
+import { GET as getIsInstructor } from "../is-instructor/route";
 import { MAX_IDS } from "../params";
 
 function req(path: string): NextRequest {
@@ -165,11 +165,11 @@ describe("GET /api/content/achievements", () => {
   });
 });
 
-describe("GET /api/content/instructor-wallet", () => {
+describe("GET /api/content/is-instructor", () => {
   it("returns the boolean for a valid base58 wallet", async () => {
     fns.isInstructorWallet.mockResolvedValue(true);
-    const res = await getInstructorWallet(
-      req(`/api/content/instructor-wallet?wallet=${WALLET}`)
+    const res = await getIsInstructor(
+      req(`/api/content/is-instructor?wallet=${WALLET}`)
     );
     expect(await res.json()).toEqual({ isInstructor: true });
     expect(fns.isInstructorWallet).toHaveBeenCalledWith(WALLET);
@@ -177,12 +177,12 @@ describe("GET /api/content/instructor-wallet", () => {
 
   it("400s on a missing or non-base58 wallet", async () => {
     expect(
-      (await getInstructorWallet(req("/api/content/instructor-wallet"))).status
+      (await getIsInstructor(req("/api/content/is-instructor"))).status
     ).toBe(400);
     expect(
       (
-        await getInstructorWallet(
-          req("/api/content/instructor-wallet?wallet=not-a-wallet-0OIl")
+        await getIsInstructor(
+          req("/api/content/is-instructor?wallet=not-a-wallet-0OIl")
         )
       ).status
     ).toBe(400);
