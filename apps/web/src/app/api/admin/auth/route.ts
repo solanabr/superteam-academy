@@ -3,6 +3,7 @@ import "server-only";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { serverEnv } from "@/lib/env.server";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const body = (await req.json()) as { password?: unknown };
     const { password } = body;
 
-    const adminSecret = process.env.ADMIN_SECRET;
+    const adminSecret = serverEnv.ADMIN_SECRET;
     if (!adminSecret) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }

@@ -53,6 +53,18 @@ const serverEnvSchema = z.object({
   // flag on a community post pings it so admins know to check the moderation
   // queue. Unset → no notification (the queue is still available in /admin).
   MODERATION_WEBHOOK_URL: optUrl,
+  // Gemini key for /api/ai/* (omit to disable the AI lesson assistant).
+  GEMINI_API_KEY: optStr,
+  // Funds Irys uploads that pin credential metadata to Arweave at mint
+  // (lib/solana/arweave.ts). Unset → mint falls back to the app-served
+  // metadata URL.
+  ARWEAVE_UPLOADER_SECRET: optStr,
+  // Helius key for webhook management + DAS API (lib/helius).
+  HELIUS_API_KEY: optStr,
+  // Optional dedicated key for sealing the AI Partner's comprehension-check /
+  // attestation tokens (lib/ai/check-seal.ts). Falls back to
+  // SUPABASE_SERVICE_ROLE_KEY when unset.
+  AI_PARTNER_SEAL_SECRET: optStr,
 });
 
 const parsed = serverEnvSchema.safeParse({
@@ -67,6 +79,10 @@ const parsed = serverEnvSchema.safeParse({
   BUILD_SERVER_URL: process.env.BUILD_SERVER_URL,
   BUILD_SERVER_API_KEY: process.env.BUILD_SERVER_API_KEY,
   MODERATION_WEBHOOK_URL: process.env.MODERATION_WEBHOOK_URL,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  ARWEAVE_UPLOADER_SECRET: process.env.ARWEAVE_UPLOADER_SECRET,
+  HELIUS_API_KEY: process.env.HELIUS_API_KEY,
+  AI_PARTNER_SEAL_SECRET: process.env.AI_PARTNER_SEAL_SECRET,
 });
 
 if (!parsed.success) {

@@ -57,7 +57,7 @@ const IRYS_DEVNET_NODE = "https://devnet.irys.xyz";
  *     mint AND orphan the already-inserted `nft_metadata` row.
  */
 function getUploaderKeypair(): Keypair | null {
-  const secret = process.env.ARWEAVE_UPLOADER_SECRET;
+  const secret = serverEnv.ARWEAVE_UPLOADER_SECRET;
   if (!secret) return null;
 
   try {
@@ -102,7 +102,7 @@ export async function uploadCertificateMetadata(
   // not deduplicate this warning — it is cheap and useful on each invocation.)
   const keypair = getUploaderKeypair();
   if (!keypair) {
-    if (!process.env.ARWEAVE_UPLOADER_SECRET) {
+    if (!serverEnv.ARWEAVE_UPLOADER_SECRET) {
       console.warn(
         "[arweave] ARWEAVE_UPLOADER_SECRET not set — credential metadata will " +
           "be served from the app (/api/certificates/metadata) instead of " +

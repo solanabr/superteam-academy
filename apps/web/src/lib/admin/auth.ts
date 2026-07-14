@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { ADMIN_SESSION_MAX_AGE_MS } from "./session-format";
+import { serverEnv } from "@/lib/env.server";
 
 export class AdminAuthError extends Error {
   constructor() {
@@ -109,7 +110,7 @@ export function adminUnauthorizedResponse(): NextResponse {
 
 export function isValidAdminSession(cookieValue: string | undefined): boolean {
   if (!cookieValue) return false;
-  const secret = process.env.ADMIN_SECRET;
+  const secret = serverEnv.ADMIN_SECRET;
   if (!secret) return false;
 
   const dotIndex = cookieValue.indexOf(".");

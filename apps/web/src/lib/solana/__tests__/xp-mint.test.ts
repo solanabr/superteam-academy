@@ -10,8 +10,16 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+// `serverEnv.XP_MINT_AUTHORITY_SECRET` is read live via a getter (not a frozen
+// property) so `loadXpMint`'s per-test `process.env` mutation + `resetModules()`
+// is reflected regardless of whether vitest re-invokes this factory on reimport.
 vi.mock("@/lib/env.server", () => ({
-  serverEnv: { SOLANA_RPC_URL: "https://rpc.test" },
+  serverEnv: {
+    SOLANA_RPC_URL: "https://rpc.test",
+    get XP_MINT_AUTHORITY_SECRET() {
+      return process.env.XP_MINT_AUTHORITY_SECRET;
+    },
+  },
 }));
 vi.mock("@solana/web3.js", () => ({
   // Classes so `new Connection(...)` / `new PublicKey(...)` are constructable

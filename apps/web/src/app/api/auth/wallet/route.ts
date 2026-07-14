@@ -7,6 +7,7 @@ import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
+import { serverEnv } from "@/lib/env.server";
 import type { Database } from "@/lib/supabase/types";
 
 interface WalletAuthRequest {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Env var guards
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY ||
       !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ) {
       console.error("Missing required Supabase environment variables");
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Admin client for user management (no cookies needed)
     const supabaseAdmin = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      serverEnv.SUPABASE_SERVICE_ROLE_KEY,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 

@@ -232,7 +232,7 @@ function initialize(): { ready: boolean } {
 
   _connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
-  const authoritySecret = process.env.PROGRAM_AUTHORITY_SECRET;
+  const authoritySecret = serverEnv.PROGRAM_AUTHORITY_SECRET;
   if (!authoritySecret) {
     console.warn(
       "[admin-signer] PROGRAM_AUTHORITY_SECRET not set. Admin on-chain operations disabled."

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { serverEnv } from "@/lib/env.server";
 
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_PENDING_PER_IP = 10;
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       return NextResponse.json(
         { error: "Server configuration error" },

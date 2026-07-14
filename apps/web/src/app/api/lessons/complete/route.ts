@@ -18,6 +18,7 @@ import {
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { findLessonIndex } from "@/lib/courses/lesson-index";
+import { serverEnv } from "@/lib/env.server";
 
 interface LessonCompleteRequest {
   lessonId: string;
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       return NextResponse.json(
         { error: "Server configuration error" },

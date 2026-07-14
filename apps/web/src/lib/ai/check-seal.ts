@@ -1,6 +1,7 @@
 import "server-only";
 import crypto from "crypto";
 import type { SealedCheck, Attestation } from "./partner-types";
+import { serverEnv } from "@/lib/env.server";
 
 // Seals opaque, authenticated + encrypted tokens so answer/attestation state is
 // never readable or forgeable client-side. Stateless by design (no DB row, no
@@ -19,7 +20,7 @@ const AUTH_TAG_LENGTH = 16;
 
 function deriveKey(label: string): Buffer {
   const base =
-    process.env.AI_PARTNER_SEAL_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    serverEnv.AI_PARTNER_SEAL_SECRET || serverEnv.SUPABASE_SERVICE_ROLE_KEY;
   if (!base) {
     // Enforce the invariant rather than assume it: an all-unset chain must never
     // HMAC the empty string — that would be a publicly-computable, forgeable key,

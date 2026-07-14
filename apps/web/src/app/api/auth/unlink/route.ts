@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { serverEnv } from "@/lib/env.server";
 
 type UnlinkProvider = "wallet" | "google" | "github";
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     // Env var guards
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
+      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
     ) {
       console.error(
         "[auth/unlink] Missing required Supabase environment variables"

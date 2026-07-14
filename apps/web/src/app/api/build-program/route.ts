@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { isRateLimited } from "@/lib/rate-limit";
+import { serverEnv } from "@/lib/env.server";
 
 // Rate limit: 5 builds/min per user (shared cross-instance store — see P1-7).
 const MAX_TOKENS = 5;
@@ -34,8 +35,8 @@ interface BuildProgramResponse {
 
 // --- Config ------------------------------------------------------------------
 
-const BUILD_SERVER_URL = process.env.BUILD_SERVER_URL;
-const BUILD_SERVER_API_KEY = process.env.BUILD_SERVER_API_KEY;
+const BUILD_SERVER_URL = serverEnv.BUILD_SERVER_URL;
+const BUILD_SERVER_API_KEY = serverEnv.BUILD_SERVER_API_KEY;
 const UPSTREAM_TIMEOUT_MS = 130_000; // slightly above the 120s build timeout
 const MAX_TOTAL_SIZE = 500 * 1024; // 500KB, matches build server limit
 
