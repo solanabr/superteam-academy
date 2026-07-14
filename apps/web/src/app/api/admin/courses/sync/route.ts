@@ -27,6 +27,7 @@ import {
   isDraftId,
 } from "@/lib/admin/sync-diff";
 import {
+  writeCourseMaintenanceFlag,
   writeCourseOnChainStatus,
   writeCourseTrackCollection,
 } from "@/lib/content/deployment-writes";
@@ -477,6 +478,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       } catch (mutationErr) {
         console.error(
           "[admin/courses/sync] Sanity PDA write-back failed:",
+          mutationErr
+        );
+      }
+    } else {
+      // PDA already recorded and correct — the course is fully synced. The
+      // `synced` write above clears the maintenance gate in the other branch;
+      // here there is no status change, so clear it directly so a stale gate
+      // from a prior interrupted recreate can never strand this course
+      // write-dead. (WS-2 F1 defense-in-depth — closes the stuck-gate residual
+      // even if the compile projector's reward-field defaults ever change.)
+      try {
+        await writeCourseMaintenanceFlag(courseId, false);
+      } catch (mutationErr) {
+        console.error(
+          "[admin/courses/sync] maintenance-gate clear failed:",
           mutationErr
         );
       }

@@ -14,6 +14,7 @@ const {
   openAttestation,
   isOnChainProgramLive,
   isRateLimited,
+  isCourseInMaintenance,
 } = vi.hoisted(() => ({
   getUser: vi.fn<() => Promise<unknown>>(),
   singleProfile: vi.fn<() => Promise<unknown>>(),
@@ -23,6 +24,7 @@ const {
   openAttestation: vi.fn<() => boolean>(),
   isOnChainProgramLive: vi.fn<() => Promise<boolean>>(),
   isRateLimited: vi.fn<(ns: string) => Promise<boolean>>(),
+  isCourseInMaintenance: vi.fn<() => Promise<boolean>>(),
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -70,8 +72,10 @@ vi.mock("@/lib/solana/academy-reads", () => ({
 vi.mock("@/lib/solana/bitmap", () => ({ isLessonComplete: vi.fn() }));
 vi.mock("@/lib/courses/lesson-index", () => ({ findLessonIndex: () => 0 }));
 vi.mock("@/lib/logging", () => ({ logError: vi.fn() }));
+vi.mock("@/lib/content/deployments", () => ({ isCourseInMaintenance }));
 
 import { POST } from "../route";
+import { fetchEnrollment } from "@/lib/solana/academy-reads";
 
 function req(body: unknown): NextRequest {
   return new NextRequest("http://localhost/api/lessons/complete", {
@@ -92,6 +96,7 @@ beforeEach(() => {
   singleProfile.mockResolvedValue({ data: { wallet_address: "wallet-1" } });
   isOnChainProgramLive.mockResolvedValue(false);
   isRateLimited.mockResolvedValue(false);
+  isCourseInMaintenance.mockResolvedValue(false);
 });
 
 // This route is the chokepoint for every platform-funded on-chain write: the
@@ -140,6 +145,44 @@ describe("volume gate (#459)", () => {
     expect(res.status).toBe(403); // reached grading, not 429
     expect(isRateLimited).toHaveBeenCalledWith("lessons:complete");
     expect(isRateLimited).toHaveBeenCalledWith("lessons:complete:ip");
+  });
+});
+
+describe("maintenance gate (WS-2 #453 rail 3)", () => {
+  const lesson = { blocks: [{ _type: "code", key: "c1" }] };
+
+  it("503s and never reads on-chain enrollment when the course is gated", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    codeGrader.mockResolvedValue({ ok: true });
+    isOnChainProgramLive.mockResolvedValue(true);
+    isCourseInMaintenance.mockResolvedValue(true);
+
+    const res = await call({ c1: { code: "correct" } });
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toMatch(/maintenance/i);
+    expect(fetchEnrollment).not.toHaveBeenCalled();
+  });
+
+  it("proceeds past the gate when the course is not under maintenance", async () => {
+    getLessonByIdForGrading.mockResolvedValue(lesson);
+    codeGrader.mockResolvedValue({ ok: true });
+    isOnChainProgramLive.mockResolvedValue(true);
+    isCourseInMaintenance.mockResolvedValue(false);
+    // A syntactically valid base58 pubkey (System Program) — the default
+    // "wallet-1" fixture is never decoded by the earlier-gated tests, but this
+    // one runs far enough to reach `new PublicKey(...)`.
+    singleProfile.mockResolvedValue({
+      data: { wallet_address: "11111111111111111111111111111111" },
+    });
+    vi.mocked(fetchEnrollment).mockResolvedValue(null);
+
+    await call({ c1: { code: "correct" } });
+
+    expect(isCourseInMaintenance).toHaveBeenCalledWith("course-1");
+    expect(fetchEnrollment).toHaveBeenCalled();
   });
 });
 

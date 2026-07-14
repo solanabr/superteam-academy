@@ -43,6 +43,7 @@ type DeploymentUpsert = {
   is_active?: boolean | null;
   last_synced?: string | null;
   updated_at?: string | null;
+  in_maintenance?: boolean;
 };
 
 /**
@@ -108,6 +109,17 @@ async function upsertDeployment(row: DeploymentUpsert): Promise<void> {
   }
 }
 
+/**
+ * F1(a) — the ONLY reachable recovery path for a maintenance gate stuck open
+ * by a failed/interrupted recreate (`lib/admin/recreate-course.ts`). A course
+ * that is `synced` is, by definition, not mid-recreate — the Course PDA
+ * exists and is correct — so every write that marks a course `synced` also
+ * clears `in_maintenance` in the SAME upsert. This makes re-running the
+ * ordinary Deploy/sync path on a stuck `not_deployed` course the documented
+ * recovery: once the deploy lands and this function is called with
+ * `"synced"`, the gate comes off even if `recreateCourse`'s own clear was
+ * skipped by an earlier throw.
+ */
 export async function writeCourseOnChainStatus(
   sanityId: string,
   status: string,
@@ -121,6 +133,7 @@ export async function writeCourseOnChainStatus(
     course_pda: coursePda,
     tx_signature: txSignature,
     last_synced: new Date().toISOString(),
+    ...(status === "synced" ? { in_maintenance: false } : {}),
   });
 }
 
@@ -139,6 +152,101 @@ export async function writeCourseActive(
     kind: "course",
     is_active: isActive,
   });
+}
+
+/**
+ * Set/clear the per-course maintenance gate (WS-2 #453 rail 3). On-chain
+ * write paths for this course (`isCourseInMaintenance`,
+ * `lib/content/deployments.ts`) refuse/queue rather than racing the window
+ * where the Course PDA briefly does not exist while `in_maintenance` is true.
+ *
+ * `recreateCourse` (`lib/admin/recreate-course.ts`) only ever calls this with
+ * `false` — the CLEAR half. The SET/acquire half is
+ * {@link acquireCourseMaintenanceGate}: an unconditional overwrite here would
+ * defeat that function's mutual exclusion (F2), since turning the gate ON
+ * must be a conditional acquire, not a last-writer-wins upsert, or a second
+ * concurrent recreate could silently re-open a window the first recreate is
+ * still relying on. Clearing has no such hazard — by the time either caller
+ * reaches a clear, ordering already guarantees it is the gate's own acquirer
+ * (see the call sites in `recreateCourse`), and clearing an already-clear gate
+ * is a no-op. The `boolean` parameter (rather than a `false` literal) is kept
+ * so this remains usable as a general manual override (e.g. an operator
+ * script) independent of the acquire/release protocol.
+ */
+export async function writeCourseMaintenanceFlag(
+  sanityId: string,
+  inMaintenance: boolean
+): Promise<void> {
+  await upsertDeployment({
+    content_id: sanityId,
+    kind: "course",
+    in_maintenance: inMaintenance,
+  });
+}
+
+/**
+ * Conditionally ACQUIRE the per-course maintenance gate (F2 — mutual
+ * exclusion). Returns `true` iff THIS call flipped the gate from
+ * unset/`false` to `true`; `false` means another recreate already holds it.
+ * Never silently overwrites an existing lock — that is what makes this an
+ * acquire rather than a last-writer-wins `SET`.
+ *
+ * Two steps because the row keyed on `content_id` may not exist yet (a
+ * course whose deploy predates this gate, or one never mirrored into
+ * `onchain_deployments`):
+ *
+ *   1. Try to flip an EXISTING, unlocked row:
+ *      `UPDATE ... SET in_maintenance = true WHERE content_id = ? AND
+ *      in_maintenance = false`. If this touches a row, we hold the gate.
+ *   2. Zero rows touched means either "no row yet" or "row exists and is
+ *      already locked" — a plain `INSERT` distinguishes them: it fails on
+ *      the `content_id` primary-key conflict if a row already exists (locked
+ *      or not — either way we did NOT acquire it), and succeeds (meaning we
+ *      just created the row, gate held) if none existed. A unique-violation
+ *      (`23505`) therefore maps to `false`, not a thrown error; any OTHER
+ *      Postgres error still throws, matching this module's other writers.
+ *
+ * Both steps are individually atomic in Postgres, so two concurrent callers
+ * can never both observe "acquired" for the same course.
+ */
+export async function acquireCourseMaintenanceGate(
+  courseId: string
+): Promise<boolean> {
+  const client = createServiceClient();
+  const nowIso = new Date().toISOString();
+
+  const { data: flipped, error: updateErr } = await client
+    .from("onchain_deployments")
+    .update({ in_maintenance: true, updated_at: nowIso })
+    .eq("content_id", courseId)
+    .eq("in_maintenance", false)
+    .select("content_id");
+  if (updateErr) {
+    throw new Error(
+      `maintenance gate acquire (update) failed for ${courseId}: ${updateErr.message}`
+    );
+  }
+  if (flipped && flipped.length > 0) {
+    return true;
+  }
+
+  const { error: insertErr } = await client.from("onchain_deployments").insert({
+    content_id: courseId,
+    kind: "course",
+    in_maintenance: true,
+    updated_at: nowIso,
+  });
+  if (!insertErr) {
+    return true;
+  }
+  if (insertErr.code === "23505") {
+    // PK conflict — a concurrent acquirer (or an already-locked existing row)
+    // won the race between our UPDATE and this INSERT. Not our lock.
+    return false;
+  }
+  throw new Error(
+    `maintenance gate acquire (insert) failed for ${courseId}: ${insertErr.message}`
+  );
 }
 
 export async function writeCourseTrackCollection(

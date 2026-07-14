@@ -15,6 +15,7 @@ import { getProgramId } from "@/lib/solana/pda";
 import { uploadCertificateMetadata } from "@/lib/solana/arweave";
 import { capCredentialName } from "@/lib/solana/credential-metadata";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -42,6 +43,20 @@ export async function POST(request: NextRequest) {
       );
     }
     const courseId = body.courseId;
+
+    // WS-2 #453 rail 3 — the affected course is mid close+recreate (the Course
+    // PDA is briefly absent, non-atomically). Refuse before doing any
+    // rate-limited/paid work (Arweave upload, platform-funded tx) rather than
+    // racing that window; retrying shortly after is lossless.
+    if (await isCourseInMaintenance(courseId)) {
+      return NextResponse.json(
+        {
+          error:
+            "This course is undergoing maintenance. Please try again in a few minutes.",
+        },
+        { status: 503, headers: { "Retry-After": "60" } }
+      );
+    }
 
     // Volume gate (#459). A successful mint is already one-per-enrollment — the
     // on-chain `credential_asset` field makes a second one impossible — so this

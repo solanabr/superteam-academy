@@ -41,6 +41,11 @@ const h = vi.hoisted(() => ({
   >(),
   fetchEnrollment: vi.fn(),
   finalizeCourse: vi.fn(),
+  isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
+  getCourseById: vi.fn(),
+  // F5 — simulate the maintenance-defer marker WRITE itself failing (a
+  // transient DB error), independent of any other update in the sweep.
+  deferWriteShouldError: false,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -72,7 +77,12 @@ vi.mock("../academy-reads", () => ({
 }));
 
 vi.mock("@/lib/content/queries", () => ({
-  getCourseById: vi.fn(),
+  getCourseById: (...args: unknown[]) => h.getCourseById(...args),
+}));
+
+vi.mock("@/lib/content/deployments", () => ({
+  isCourseInMaintenance: (...args: [string]) =>
+    h.isCourseInMaintenance(...args),
 }));
 
 vi.mock("@/lib/supabase/admin", () => {
@@ -112,10 +122,28 @@ vi.mock("@/lib/supabase/admin", () => {
       });
     }
     then(
-      onFulfilled?: (value: { data: null; error: null }) => unknown
+      onFulfilled?: (value: {
+        data: null;
+        error: { message: string } | null;
+      }) => unknown
     ): Promise<unknown> {
       if (this.isUpdate && this.patch) {
         h.updates.push({ id: this.updateId, patch: this.patch });
+        // F5 — the maintenance-defer marker is the ONLY update that sets
+        // `last_error` to a "course-in-maintenance:" value without also
+        // touching `retry_count`. Simulating a DB error on exactly that
+        // write (and no other) lets the test isolate the defer-write's own
+        // failure from every other update in the sweep.
+        const isDeferMarker =
+          typeof this.patch.last_error === "string" &&
+          this.patch.last_error.startsWith("course-in-maintenance:") &&
+          this.patch.retry_count === undefined;
+        if (isDeferMarker && h.deferWriteShouldError) {
+          return Promise.resolve({
+            data: null,
+            error: { message: "supabase down" },
+          }).then(onFulfilled);
+        }
       }
       return Promise.resolve({ data: null, error: null }).then(onFulfilled);
     }
@@ -146,9 +174,15 @@ beforeEach(() => {
   h.awardXp.mockReset();
   h.fetchEnrollment.mockReset();
   h.finalizeCourse.mockReset();
+  h.isCourseInMaintenance.mockReset();
+  h.getCourseById.mockReset();
+  h.deferWriteShouldError = false;
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
+  // Default: no course is under maintenance — existing tests exercise the
+  // ordinary on-chain path unless a test explicitly gates a course.
+  h.isCourseInMaintenance.mockResolvedValue(false);
 });
 
 describe("retryPendingOnchainActions — xp credit-loss (#372)", () => {
@@ -321,5 +355,131 @@ describe("retryPendingOnchainActions — course_finalize credit-loss (#372)", ()
     expect(h.awardXp).toHaveBeenCalledWith(
       expect.objectContaining({ p_idempotency_key: "course-3", p_amount: 1500 })
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Regression suite for the adversarial-review Fix 1 — the maintenance gate was
+// not wired into this login-triggered drain. During a close+recreate's
+// absent-PDA window (lib/admin/recreate-course.ts), a login could drain a
+// gated course's queued finalize/certificate, hit the on-chain revert, and
+// bump retry_count. Repeated drains across an extended outage could push
+// retry_count to 5, at which point the `.lt("retry_count", 5)` fetch filter
+// EXCLUDES the row forever — abandoning it even after the operator redeploys.
+// The fix: check the gate FIRST and DEFER (skip, leave the row, do not touch
+// retry_count) exactly like the daily-cap deferral already does for XP.
+// ---------------------------------------------------------------------------
+describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-review fix 1)", () => {
+  it("defers a course_finalize row for a course under maintenance, WITHOUT bumping retry_count or resolving it", async () => {
+    h.rows = [
+      {
+        id: "r-cf-gated",
+        action_type: "course_finalize",
+        reference_id: "course-gated",
+        retry_count: 1,
+        payload: { courseId: "course-gated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cf-gated");
+    expect(patch).toBeDefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("course-in-maintenance");
+    // The on-chain finalize must never even be attempted while gated.
+    expect(h.finalizeCourse).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
+  });
+
+  it("proceeds as before with a course_finalize row for an UNGATED course", async () => {
+    h.rows = [
+      {
+        id: "r-cf-ungated",
+        action_type: "course_finalize",
+        reference_id: "course-ungated",
+        retry_count: 0,
+        payload: { courseId: "course-ungated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockResolvedValue(false);
+    // Already finalized on-chain (beforeEach default) — no xpAmount owed, so
+    // this resolves purely on the finalize check.
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.isCourseInMaintenance).toHaveBeenCalledWith("course-ungated");
+    const patch = patchFor("r-cf-ungated");
+    expect(typeof patch?.resolved_at).toBe("string");
+  });
+
+  it("defers a certificate row for a course under maintenance, WITHOUT bumping retry_count", async () => {
+    h.rows = [
+      {
+        id: "r-cert-gated",
+        action_type: "certificate",
+        reference_id: "course-gated",
+        retry_count: 2,
+        payload: { courseId: "course-gated" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cert-gated");
+    expect(patch).toBeDefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("course-in-maintenance");
+    // Deferred before any of the certificate-mint machinery runs.
+    expect(h.getCourseById).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // F5 — a transient DB error writing the defer marker must not fall through
+  // to the outer catch's bumpRetry path. Before the fix, this write was
+  // unwrapped: a throw here escaped past the `continue` and into the switch's
+  // shared catch, which bumps retry_count exactly like an ordinary on-chain
+  // failure — reintroducing the abandonment vector (a login during a
+  // recreate, hitting a flaky DB write, burning a retry attempt instead of
+  // deferring).
+  // -------------------------------------------------------------------------
+  it("F5: a defer-write failure skips the on-chain action WITHOUT bumping retry_count", async () => {
+    h.rows = [
+      {
+        id: "r-cf-gated-dbfail",
+        action_type: "course_finalize",
+        reference_id: "course-gated",
+        retry_count: 1,
+        payload: { courseId: "course-gated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+    h.deferWriteShouldError = true;
+
+    await retryPendingOnchainActions(USER_ID);
+
+    // Exactly ONE update was attempted for this row — the defer marker write
+    // itself (which failed). No SECOND update (a bumpRetry-style patch with
+    // retry_count) was made for it.
+    const rowUpdates = h.updates.filter((u) => u.id === "r-cf-gated-dbfail");
+    expect(rowUpdates).toHaveLength(1);
+    const patch = patchFor("r-cf-gated-dbfail");
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    // The on-chain finalize must still never be attempted while gated, even
+    // though the defer marker write failed.
+    expect(h.finalizeCourse).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
   });
 });

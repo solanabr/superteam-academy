@@ -133,3 +133,68 @@ describe("getActiveDeployments — degrades to empty on a Supabase read failure"
     expect(map.get("course-a")?.status).toBe("synced");
   });
 });
+
+function supabaseMaintenanceResult(result: {
+  data: { in_maintenance: boolean } | null;
+  error: { message: string } | null;
+}) {
+  return {
+    createClient: () => ({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve(result),
+          }),
+        }),
+      }),
+    }),
+  };
+}
+
+describe("isCourseInMaintenance — the per-course maintenance gate (WS-2 #453 rail 3)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doUnmock("@supabase/supabase-js");
+  });
+
+  it("true when the row's in_maintenance flag is set", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({
+        data: { in_maintenance: true },
+        error: null,
+      })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(true);
+  });
+
+  it("false when the row's in_maintenance flag is false", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({
+        data: { in_maintenance: false },
+        error: null,
+      })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(false);
+  });
+
+  it("false when there is no row at all (never gated)", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({ data: null, error: null })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(false);
+  });
+
+  it("fails CLOSED (true) on a Supabase read error — an unreadable gate is treated as gated", async () => {
+    vi.doMock("@supabase/supabase-js", () =>
+      supabaseMaintenanceResult({
+        data: null,
+        error: { message: "connection refused" },
+      })
+    );
+    const { isCourseInMaintenance } = await import("../deployments");
+    await expect(isCourseInMaintenance("course-x")).resolves.toBe(true);
+  });
+});

@@ -50,6 +50,15 @@ export interface OnchainDeploymentRow {
   is_active: boolean | null;
   last_synced: string | null;
   updated_at: string | null;
+  /**
+   * Per-course maintenance gate (WS-2 #453 rail 3). `true` while a close+recreate
+   * is in flight for this course — the Course PDA may be transiently absent.
+   * NOT NULL DEFAULT false on the table; see
+   * `20260714150000_course_maintenance_gate.sql`. Never exposed through
+   * `public_onchain_deployments` — it's an operational flag for server-side
+   * write paths ({@link isCourseInMaintenance}), not a public catalog signal.
+   */
+  in_maintenance: boolean;
 }
 
 const VIEW_COLUMNS = "content_id, kind, status, is_active, achievement_pda";
@@ -215,6 +224,39 @@ export async function getDeploymentById(
     );
   }
   return data ?? null;
+}
+
+/**
+ * The per-course maintenance gate (WS-2 #453 rail 3): `true` while a
+ * close+recreate is in flight for `courseId` (set by
+ * `lib/admin/recreate-course.ts`, BEFORE the close, cleared after the create
+ * lands). On-chain write paths for that course must refuse/queue rather than
+ * proceed — see the column doc on {@link OnchainDeploymentRow.in_maintenance}.
+ *
+ * Uncached (unlike {@link getActiveDeployments}) — this gates real-time writes,
+ * so a stale "not gated" read defeats the whole point. A single indexed PK read.
+ *
+ * Fails CLOSED: a Supabase read failure returns `true` (treat as gated), the
+ * same safety-over-availability posture as this module's other outage path
+ * ({@link getActiveDeployments} degrades to "nothing visible"). The caller
+ * queues/refuses rather than risking a write against a course whose state it
+ * could not confirm — a queued retry is cheap; a silently-dropped finalize or a
+ * write that races an absent PDA is not.
+ */
+export async function isCourseInMaintenance(
+  courseId: string
+): Promise<boolean> {
+  try {
+    const row = await getDeploymentById(courseId);
+    return row?.in_maintenance === true;
+  } catch (err) {
+    logError({
+      errorId: ERROR_IDS.COURSE_MAINTENANCE_CHECK_FAILED,
+      error: err instanceof Error ? err : new Error(String(err)),
+      context: { courseId, note: "isCourseInMaintenance failed closed (true)" },
+    });
+    return true;
+  }
 }
 
 /**
