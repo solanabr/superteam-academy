@@ -5,24 +5,24 @@ against a release SBF build. Deterministic; no validator required.
 
 | Instruction                 |    CU |
 | --------------------------- | ----: |
-| initialize                  | 27954 |
-| update_config (pause)       |  3826 |
-| update_config (resume)      |  3826 |
-| create_course               | 12449 |
-| update_course               |  7487 |
-| register_minter             | 12709 |
+| initialize                  | 30954 |
+| update_config (pause)       |  3858 |
+| update_config (resume)      |  3858 |
+| create_course               | 12555 |
+| update_course               |  7626 |
+| register_minter             | 11209 |
 | update_minter               |  6474 |
-| revoke_minter               |  6116 |
-| enroll                      | 12386 |
-| complete_lesson             | 14298 |
-| finalize_course             | 20257 |
-| reward_xp                   | 11877 |
-| close_enrollment            |  6530 |
+| revoke_minter               |  6123 |
+| enroll                      | 15519 |
+| complete_lesson             | 14729 |
+| finalize_course             | 21249 |
+| reward_xp                   | 12208 |
+| close_enrollment            |  6554 |
 | create_achievement_type     | 23607 |
-| award_achievement           | 55756 |
+| award_achievement           | 56157 |
 | deactivate_achievement_type |  7734 |
-| issue_credential            | 45394 |
-| upgrade_credential          | 57545 |
+| issue_credential            | 45414 |
+| upgrade_credential          | 57553 |
 | close_course                |  6160 |
 
 **Measured 19 transactions across all 18 instructions.**
