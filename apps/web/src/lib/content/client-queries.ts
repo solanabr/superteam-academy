@@ -91,7 +91,7 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
 
 export async function isInstructorWallet(wallet: string): Promise<boolean> {
   const data = await getJson<{ isInstructor: boolean }>(
-    `/api/content/instructor-wallet?wallet=${encodeURIComponent(wallet)}`
+    `/api/content/is-instructor?wallet=${encodeURIComponent(wallet)}`
   );
   return data.isInstructor;
 }

@@ -872,6 +872,16 @@ export type Database = {
         };
         Relationships: [];
       };
+      public_profiles: {
+        Row: {
+          avatar_url: string | null;
+          bio: string | null;
+          social_links: Json | null;
+          username: string | null;
+          wallet_address: string | null;
+        };
+        Relationships: [];
+      };
       public_user_xp: {
         Row: {
           level: number | null;

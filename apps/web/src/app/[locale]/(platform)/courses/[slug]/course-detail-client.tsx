@@ -8,7 +8,6 @@ import {
   Clock,
   BookOpen,
   Lightning,
-  User,
   Wallet,
   ChatCircleDots,
 } from "@phosphor-icons/react";
@@ -17,6 +16,7 @@ import type { Course } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
+import { InstructorCard } from "@/components/course/instructor-card";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -24,12 +24,22 @@ import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { ThreadList } from "@/components/community/thread-list";
 import { CreateThreadModal } from "@/components/community/create-thread-modal";
+import type { PublicProfile } from "@/lib/profiles/public-profile";
 
 interface CourseDetailClientProps {
   course: Course;
+  /**
+   * The creator wallet's resolved public academy profile (issue #478, B4),
+   * or `null` when there isn't one — resolved server-side (see `page.tsx`)
+   * so the instructor section never has to fetch client-side.
+   */
+  instructorProfile: PublicProfile | null;
 }
 
-export function CourseDetailClient({ course }: CourseDetailClientProps) {
+export function CourseDetailClient({
+  course,
+  instructorProfile,
+}: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
   const locale = useLocale();
@@ -165,26 +175,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             {course.description}
           </p>
 
-          {/* Creator (issue #478 — wallet only for now; B4 resolves a display profile) */}
+          {/* Instructor identity (issue #478) — resolved public profile, or a
+              truncated-wallet fallback (B4). */}
           {course.creator && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-subtle">
-                <User
-                  size={18}
-                  weight="duotone"
-                  className="text-text-3"
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <p className="font-display text-[13px] font-bold">
-                  {t("courseBy")}{" "}
-                  <span className="font-mono text-text-3">
-                    {course.creator}
-                  </span>
-                </p>
-              </div>
-            </div>
+            <InstructorCard
+              creatorWallet={course.creator}
+              profile={instructorProfile}
+            />
           )}
 
           {/* XP + Tags row */}
