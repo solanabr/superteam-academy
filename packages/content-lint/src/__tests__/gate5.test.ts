@@ -27,6 +27,7 @@ describe("gate 5 — orphans", () => {
       "courses/x/lessons/a/lesson.yaml": `id: lesson-a
 slug: a
 title: A
+skills: [general]
 blocks: [{ type: prose, key: intro, src: intro.md }]
 `,
       "courses/x/lessons/a/intro.md": "# a",
@@ -52,6 +53,7 @@ blocks: [{ type: prose, key: intro, src: intro.md }]
       "courses/x/lessons/a/lesson.yaml": `id: lesson-a
 slug: a
 title: A
+skills: [general]
 blocks: [{ type: prose, key: intro, src: intro.md }]
 `,
       "courses/x/lessons/a/intro.md":

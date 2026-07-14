@@ -49,6 +49,10 @@
         ]
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "account-model"
+    ],
     "slug": {
       "_type": "slug",
       "current": "account-challenge"
@@ -64,6 +68,10 @@
         "_type": "prose",
         "src": "# Understanding Solana's Account Model\n\nSolana's account model is fundamentally different from Ethereum's contract-based approach. Understanding this model is crucial for building efficient Solana programs.\n\n## Everything is an Account\n\nIn Solana, **everything is an account**. Unlike Ethereum where contracts hold state, Solana separates code (programs) from data (accounts):\n\n- **Programs**: Executable code (stateless)\n- **Accounts**: Store data and SOL balance\n\n```typescript\ninterface Account {\n  publicKey: PublicKey;     // Account address\n  owner: PublicKey;         // Program that owns this account\n  lamports: number;         // SOL balance (1 SOL = 1B lamports)\n  data: Uint8Array;         // Raw account data\n  executable: boolean;      // Is this a program?\n  rentEpoch: number;        // Rent collection tracking\n}\n```\n\n## The Owner-Account Relationship\n\nEvery account has an **owner** (a program). Only the owner program can:\n- Modify the account's data\n- Deduct lamports from the account\n\nFor example:\n- Your wallet is owned by the **System Program**\n- Token accounts are owned by the **Token Program**\n- Your custom program owns its data accounts\n\n```typescript\nconst accountInfo = await connection.getAccountInfo(publicKey);\nconsole.log('Owner:', accountInfo.owner.toBase58());\n// System Program: 11111111111111111111111111111111\n// Token Program: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\n```\n\n## Rent and Account Lifetime\n\nSolana accounts must maintain a minimum SOL balance to remain active (called **rent exemption**). The required balance depends on the account's data size:\n\n```typescript\nconst rentExemption = await connection.getMinimumBalanceForRentExemption(\n  dataSize // bytes\n);\n```\n\n**Best Practice**: Always create accounts with enough SOL to be rent-exempt. Rent-exempt accounts never expire.\n\n## System Accounts vs Program Accounts\n\n### System Accounts\n- Owned by the System Program (`11111111111111111111111111111111`)\n- Hold SOL but no custom data\n- Your wallet is a system account\n\n### Program Accounts\n- Owned by custom programs\n- Store structured data (game state, user profiles, DeFi positions, etc.)\n- Created via CPI (Cross-Program Invocation) to the System Program\n\n## Real-World Example: Jupiter Aggregator\n\nJupiter, the leading Solana DEX aggregator, uses accounts to store:\n- User token accounts (owned by Token Program)\n- Swap routing data (owned by Jupiter Program)\n- Price feed data (owned by Pyth oracle program)\n\nEach account has a specific owner and purpose, creating a composable ecosystem.\n\n## Key Takeaways\n\n1. Programs are stateless; accounts hold all data\n2. Only the owner program can modify an account's data\n3. Accounts must be rent-exempt to persist\n4. The account model enables Solana's parallel processing\n"
       }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "account-model"
     ],
     "slug": {
       "_type": "slug",
@@ -121,6 +129,10 @@
         ]
       }
     ],
+    "skills": [
+      "defi",
+      "amm"
+    ],
     "slug": {
       "_type": "slug",
       "current": "amm-challenge"
@@ -137,6 +149,10 @@
         "src": "# Automated Market Makers (AMMs)\n\nAutomated Market Makers revolutionized DeFi by replacing traditional orderbooks with mathematical formulas. Let's understand how they work.\n\n## The Constant Product Formula\n\nThe most popular AMM design uses the **constant product formula**:\n\n```\nx * y = k\n```\n\nWhere:\n- `x` = reserves of token A\n- `y` = reserves of token B\n- `k` = constant (product of reserves)\n\n### Example\n\n```\nPool: 100 SOL × 10,000 USDC = 1,000,000 (k)\nPrice: 10,000 / 100 = 100 USDC per SOL\n```\n\n## How Swaps Work\n\nWhen someone swaps, they add to one reserve and remove from the other, keeping `k` constant.\n\n**User wants to buy 10 SOL:**\n\n```\nBefore: 100 SOL × 10,000 USDC = 1,000,000\nAfter: 90 SOL × y USDC = 1,000,000\ny = 1,000,000 / 90 = 11,111.11 USDC\n\nUser pays: 11,111.11 - 10,000 = 1,111.11 USDC\nEffective price: 1,111.11 / 10 = 111.11 USDC per SOL\n```\n\nNotice the price increased from 100 to 111.11 - this is **slippage**.\n\n## Slippage\n\nSlippage is the difference between expected and executed price:\n\n```\nExpected price: 100 USDC/SOL\nActual price: 111.11 USDC/SOL\nSlippage: (111.11 - 100) / 100 = 11.11%\n```\n\n**Larger trades = more slippage**. This is why AMMs work best for smaller trades relative to pool size.\n\n## Providing Liquidity\n\nLiquidity providers (LPs) deposit both tokens in proportion to current reserves:\n\n```\nPool: 100 SOL × 10,000 USDC\nLP deposits: 10 SOL + 1,000 USDC\n\nLP share: 10 / (100 + 10) = 9.09%\n```\n\nLPs receive **LP tokens** representing their share. When they withdraw, they burn LP tokens and receive their share of the pool.\n\n### LP Rewards\n\nLPs earn fees from swaps:\n\n```\nSwap fee: 0.3%\nSwap volume: $1,000,000/day\nDaily fees: $3,000\n\nLP with 9.09% share earns: $3,000 × 9.09% = $272.70/day\n```\n\n## Impermanent Loss\n\nImpermanent loss (IL) occurs when token prices diverge.\n\n**Example:**\n\nLP deposits when 1 SOL = 100 USDC:\n- 10 SOL + 1,000 USDC = $2,000 total value\n\nSOL price doubles to 200 USDC:\n- Arbitrageurs rebalance pool\n- New pool: 7.07 SOL × 1,414.21 USDC\n- LP share: 7.07 SOL × 200 USDC = $1,414.21 + $1,414.21 = $2,828.42\n\nIf LP had just held:\n- 10 SOL × 200 = $2,000 + $1,000 = $3,000\n\nImpermanent loss: $3,000 - $2,828.42 = **$171.58 (5.7%)**\n\n### IL Formula\n\n```\nIL = (2 × sqrt(price_ratio)) / (1 + price_ratio) - 1\n\nPrice 2x: IL = 5.7%\nPrice 3x: IL = 13.4%\nPrice 5x: IL = 25.5%\n```\n\nIL is \"impermanent\" because it only realizes if you withdraw. If price returns to original, IL disappears.\n\n## Fee Structures\n\n### Uniswap v2 Style (Raydium Standard Pools)\n\n- **0.3%** swap fee\n- All fees go to LPs\n- Simple, battle-tested\n\n### Uniswap v3 Style (Raydium CLMM, Orca Whirlpools)\n\n- **0.01%, 0.05%, 0.3%, 1%** fee tiers\n- Different tiers for different volatility pairs\n- Stable pairs (USDC/USDT): 0.01%\n- Volatile pairs (SOL/BONK): 1%\n\n## Concentrated Liquidity\n\nStandard AMMs spread liquidity across the entire price curve (0 → ∞). Concentrated liquidity lets LPs choose a range:\n\n```\nStandard AMM: $10,000 spread across $0 - $∞\nConcentrated: $10,000 focused on $95 - $105\n\nResult: In the $95-$105 range, concentrated liquidity acts like $100,000+\n```\n\n### Benefits\n\n- **Capital efficiency**: Same liquidity with less capital\n- **Higher LP rewards**: More fees per dollar\n\n### Risks\n\n- **Out of range**: If price exits your range, you stop earning fees\n- **More IL**: Concentrated positions amplify impermanent loss\n- **Active management**: Need to rebalance ranges\n\n## AMM Variants\n\n### StableSwap (for stablecoins)\n\nRaydium and Orca use StableSwap for USDC/USDT pairs:\n\n```\nA × x × y = k (for prices near 1:1)\n\nResult: Much lower slippage for stable pairs\n```\n\n### Weighted Pools (Balancer Style)\n\nPools with custom weights:\n\n```\n80% SOL / 20% USDC\n\nProvides more SOL exposure with less IL\n```\n\n## Price Impact Calculation\n\nPrice impact is the slippage from your trade:\n\n```javascript\nfunction calculatePriceImpact(inputAmount, reserveIn, reserveOut) {\n  const constantProduct = reserveIn * reserveOut;\n  const newReserveIn = reserveIn + inputAmount;\n  const newReserveOut = constantProduct / newReserveIn;\n  const outputAmount = reserveOut - newReserveOut;\n\n  const executionPrice = inputAmount / outputAmount;\n  const spotPrice = reserveOut / reserveIn;\n\n  const priceImpact = (executionPrice / spotPrice) - 1;\n  return priceImpact * 100; // As percentage\n}\n```\n\n## MEV and AMMs\n\nAMMs are vulnerable to MEV (Maximal Extractable Value):\n\n### Sandwich Attacks\n\n1. Bot sees your large buy order in mempool\n2. Bot front-runs with a buy (pushes price up)\n3. Your transaction executes (at worse price)\n4. Bot back-runs with a sell (profits from price increase)\n\n**Mitigation**: Slippage tolerance, private RPCs (Jito), batch auctions\n\n### Just-in-Time (JIT) Liquidity\n\n1. LP sees large swap incoming\n2. LP adds concentrated liquidity in that block\n3. LP earns most of the swap fee\n4. LP withdraws liquidity immediately\n\nThis is actually beneficial (provides liquidity when needed), but can be seen as unfair to long-term LPs.\n\n## Real-World AMM Strategies\n\n### Passive LP\n\n- Deposit to stable pairs (USDC/USDT)\n- Wide range or full-range\n- Low IL, steady fees\n\n### Active LP\n\n- Concentrated positions on volatile pairs\n- Rebalance ranges frequently\n- Higher risk, higher reward\n\n### Liquidity Mining\n\n- Provide liquidity to incentivized pools\n- Earn swap fees + token rewards\n- Watch for impermanent loss vs. rewards\n\n## Next Challenge\n\nYou'll implement the constant product AMM formula and calculate swaps, liquidity, and price impact.\n"
       }
     ],
+    "skills": [
+      "defi",
+      "amm"
+    ],
     "slug": {
       "_type": "slug",
       "current": "amm-concepts"
@@ -152,6 +168,10 @@
         "_type": "prose",
         "src": "# Anchor Account Constraints\n\nAnchor's constraint system is one of its most powerful features. Constraints allow you to declaratively specify account validation rules, and Anchor enforces them automatically.\n\n## The #[account] Attribute\n\nThe `#[account(...)]` attribute is used to apply constraints to accounts in your instruction context:\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUserData<'info> {\n    #[account(\n        mut,\n        has_one = authority,\n        constraint = user.data_version < 10 @ ErrorCode::VersionTooHigh\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n## Common Constraints\n\n### 1. init - Initialize a New Account\n\n```rust\n#[account(\n    init,\n    payer = user,\n    space = 8 + 32 + 8\n)]\npub my_account: Account<'info, MyAccount>,\n```\n\n- Allocates space for the account\n- Transfers lamports from payer\n- Assigns account to the program\n- Sets account discriminator\n\n**Space calculation**: `8 (discriminator) + account_data_size`\n\n### 2. mut - Mark Account as Mutable\n\n```rust\n#[account(mut)]\npub user: Account<'info, UserAccount>,\n```\n\nRequires the account to be writable. Anchor will reject the transaction if the account isn't marked as writable.\n\n### 3. has_one - Verify Account Relationship\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,\n    pub counter: u64,\n}\n\n#[derive(Accounts)]\npub struct Increment<'info> {\n    #[account(\n        mut,\n        has_one = authority\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n`has_one = authority` checks that `user.authority == authority.key()`. This prevents unauthorized updates.\n\n### 4. seeds & bump - PDA Derivation\n\n```rust\n#[account(\n    init,\n    payer = user,\n    space = 8 + 32 + 8,\n    seeds = [b\"user\", user.key().as_ref()],\n    bump\n)]\npub user_account: Account<'info, UserAccount>,\n```\n\n- `seeds`: The seeds used to derive the PDA\n- `bump`: Anchor finds the canonical bump automatically\n\nYou can also use a saved bump:\n\n```rust\n#[account(\n    mut,\n    seeds = [b\"user\", authority.key().as_ref()],\n    bump = user_account.bump\n)]\npub user_account: Account<'info, UserAccount>,\n```\n\n### 5. constraint - Custom Constraints\n\n```rust\n#[account(\n    mut,\n    constraint = user.balance >= 100 @ ErrorCode::InsufficientFunds,\n    constraint = user.is_active @ ErrorCode::AccountInactive\n)]\npub user: Account<'info, UserAccount>,\n```\n\nCustom constraints let you enforce arbitrary rules. The `@ ErrorCode::...` syntax specifies which error to return if the constraint fails.\n\n## Space Calculation\n\nWhen using `init`, you must specify the account size:\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,    // 32 bytes\n    pub counter: u64,         // 8 bytes\n    pub name: String,         // 4 + length (max 32) = 36 bytes\n}\n\n// Space = 8 (discriminator) + 32 + 8 + 36 = 84 bytes\n```\n\n**Common sizes**:\n- Pubkey: 32 bytes\n- u64/i64: 8 bytes\n- u32/i32: 4 bytes\n- bool: 1 byte\n- String: 4 (length prefix) + max_length\n- Vec<T>: 4 (length prefix) + (item_size * max_count)\n\n## Constraint Execution Order\n\nAnchor executes constraints in this order:\n1. `init` / `init_if_needed`\n2. `mut`\n3. `seeds` + `bump`\n4. `has_one`\n5. Custom `constraint`s\n\nThis ensures accounts are properly initialized and validated before your instruction logic runs.\n\n## Next Challenge\n\nYou'll implement account validation logic that mimics Anchor's constraint system.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "account-model"
     ],
     "slug": {
       "_type": "slug",
@@ -215,6 +235,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "account-model"
+    ],
     "slug": {
       "_type": "slug",
       "current": "anchor-accounts-challenge"
@@ -231,6 +255,10 @@
         "src": "# Custom Errors in Anchor\n\nProperly handling errors is essential for debugging and security. Anchor provides a clean way to define and use custom errors.\n\n## Defining Custom Errors\n\n```rust\nuse anchor_lang::prelude::*;\n\n#[error_code]\npub enum ErrorCode {\n    #[msg(\"Insufficient funds for this operation\")]\n    InsufficientFunds,\n\n    #[msg(\"User is not authorized to perform this action\")]\n    Unauthorized,\n\n    #[msg(\"The provided amount exceeds the maximum allowed\")]\n    AmountTooLarge,\n\n    #[msg(\"Account has already been initialized\")]\n    AlreadyInitialized,\n}\n```\n\nEach error gets:\n- A unique error code (auto-assigned)\n- A human-readable message\n- Integration with Anchor's error handling\n\n## Using the require! Macro\n\nThe `require!` macro is the cleanest way to enforce conditions:\n\n```rust\npub fn transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {\n    let user_account = &mut ctx.accounts.user;\n\n    // Check balance\n    require!(\n        user_account.balance >= amount,\n        ErrorCode::InsufficientFunds\n    );\n\n    // Check authorization\n    require_keys_eq!(\n        ctx.accounts.authority.key(),\n        user_account.authority,\n        ErrorCode::Unauthorized\n    );\n\n    // Check amount limit\n    require!(\n        amount <= 1_000_000,\n        ErrorCode::AmountTooLarge\n    );\n\n    user_account.balance -= amount;\n    Ok(())\n}\n```\n\n## Anchor's Built-in require! Variants\n\n### require_keys_eq!\n\n```rust\nrequire_keys_eq!(\n    ctx.accounts.user.authority,\n    ctx.accounts.signer.key(),\n    ErrorCode::Unauthorized\n);\n```\n\nCompares two public keys.\n\n### require_keys_neq!\n\n```rust\nrequire_keys_neq!(\n    ctx.accounts.from.key(),\n    ctx.accounts.to.key(),\n    ErrorCode::CannotTransferToSelf\n);\n```\n\nEnsures two keys are different.\n\n### require_gt! / require_gte!\n\n```rust\nrequire_gte!(\n    user.balance,\n    MIN_BALANCE,\n    ErrorCode::BalanceTooLow\n);\n```\n\nNumeric comparisons (gt = greater than, gte = greater than or equal).\n\n## Constraint Errors\n\nConstraints in `#[account(...)]` automatically return errors:\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUser<'info> {\n    #[account(\n        mut,\n        has_one = authority @ ErrorCode::Unauthorized,\n        constraint = user.is_active @ ErrorCode::AccountInactive\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\nIf `has_one` or `constraint` fails, Anchor returns your custom error.\n\n## Error Handling in TypeScript Tests\n\nAnchor errors are automatically parsed in TypeScript:\n\n```typescript\ntry {\n  await program.methods\n    .transfer(new anchor.BN(10000))\n    .accounts({ user: userPDA })\n    .rpc();\n\n  throw new Error('Should have failed');\n} catch (err) {\n  // Anchor error structure\n  expect(err.error.errorCode.code).to.equal('InsufficientFunds');\n  expect(err.error.errorCode.number).to.equal(6000); // First custom error\n  expect(err.error.errorMessage).to.include('Insufficient funds');\n}\n```\n\n## Error Codes\n\nAnchor assigns error codes starting at **6000**:\n\n```rust\n#[error_code]\npub enum ErrorCode {\n    InsufficientFunds,    // 6000\n    Unauthorized,         // 6001\n    AmountTooLarge,       // 6002\n}\n```\n\nYou can also manually assign codes:\n\n```rust\n#[error_code]\npub enum ErrorCode {\n    #[msg(\"Insufficient funds\")]\n    InsufficientFunds = 7000,\n}\n```\n\n## Anchor's Built-in Errors\n\nAnchor provides common errors automatically:\n\n- `ErrorCode::ConstraintMut` - Account not marked as mutable\n- `ErrorCode::ConstraintHasOne` - has_one constraint failed\n- `ErrorCode::ConstraintSigner` - Account not a signer\n- `ErrorCode::ConstraintRaw` - Generic constraint failed\n- `ErrorCode::AccountNotInitialized` - Account data is empty\n- `ErrorCode::AccountOwnedByWrongProgram` - Account owned by wrong program\n\n## Best Practices\n\n### 1. Be Specific\n\n```rust\n// BAD: Vague error\n#[msg(\"Invalid input\")]\nInvalidInput,\n\n// GOOD: Specific error\n#[msg(\"Amount must be between 1 and 1,000,000 lamports\")]\nAmountOutOfRange,\n```\n\n### 2. Use Constraints Where Possible\n\nInstead of:\n\n```rust\npub fn update(ctx: Context<Update>) -> Result<()> {\n    require!(\n        ctx.accounts.user.authority == ctx.accounts.signer.key(),\n        ErrorCode::Unauthorized\n    );\n    // ...\n}\n```\n\nUse:\n\n```rust\n#[derive(Accounts)]\npub struct Update<'info> {\n    #[account(\n        mut,\n        has_one = authority @ ErrorCode::Unauthorized\n    )]\n    pub user: Account<'info, UserAccount>,\n    pub authority: Signer<'info>,\n}\n```\n\n### 3. Log Context for Debugging\n\n```rust\nrequire!(\n    amount > 0,\n    ErrorCode::AmountMustBePositive\n);\n\nmsg!(\"Transferring {} lamports\", amount);\n```\n\nUse `msg!()` to log values for debugging.\n\n## Matching Errors in Integration Tests\n\n```typescript\nconst expectError = async (fn, errorCode) => {\n  try {\n    await fn();\n    throw new Error(`Expected ${errorCode} error`);\n  } catch (err) {\n    expect(err.error.errorCode.code).to.equal(errorCode);\n  }\n};\n\nawait expectError(\n  () => program.methods.transfer(tooMuch).rpc(),\n  'InsufficientFunds'\n);\n```\n\n## Next Lesson\n\nYou'll learn how to deploy Anchor programs to devnet and mainnet.\n"
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "anchor-errors"
@@ -246,6 +274,10 @@
         "_type": "prose",
         "src": "# What is the Anchor Framework?\n\nAnchor is the most popular framework for Solana smart contract development. It provides a Rust-based DSL (domain-specific language) that dramatically reduces boilerplate and makes programs safer, faster to write, and easier to read.\n\n## Why Use Anchor?\n\nWriting native Solana programs in Rust requires:\n- Manual account deserialization and validation\n- Verbose error handling\n- Security checks spread across your code\n- Repetitive boilerplate for common patterns\n\nAnchor handles all of this for you through **macros** and **attributes**.\n\n### Native Solana Program\n\n```rust\n// Manual account deserialization\nlet account_info_iter = &mut accounts.iter();\nlet user_account = next_account_info(account_info_iter)?;\n\n// Manual validation\nif !user_account.is_writable {\n    return Err(ProgramError::InvalidAccountData);\n}\n\n// Manual owner check\nif user_account.owner != program_id {\n    return Err(ProgramError::IncorrectProgramId);\n}\n```\n\n### Anchor Program\n\n```rust\n#[derive(Accounts)]\npub struct UpdateUser<'info> {\n    #[account(mut)]\n    pub user: Account<'info, UserAccount>,\n}\n```\n\nAnchor automatically validates that the account is writable and owned by the program!\n\n## Anchor Project Structure\n\nA typical Anchor project:\n\n```\nmy-anchor-project/\n├── programs/\n│   └── my-program/\n│       └── src/\n│           └── lib.rs      # Your program code\n├── tests/\n│   └── my-program.ts       # TypeScript tests\n├── migrations/\n│   └── deploy.ts           # Deployment scripts\n└── Anchor.toml             # Configuration\n```\n\n## Key Anchor Components\n\n### 1. Program Module\n\n```rust\nuse anchor_lang::prelude::*;\n\ndeclare_id!(\"YourProgramIDHere\");\n\n#[program]\npub mod my_program {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        // Your logic here\n        Ok(())\n    }\n}\n```\n\nThe `#[program]` macro defines your program's instruction handlers.\n\n### 2. Accounts Struct\n\n```rust\n#[derive(Accounts)]\npub struct Initialize<'info> {\n    #[account(\n        init,\n        payer = user,\n        space = 8 + 32 + 8\n    )]\n    pub my_account: Account<'info, MyAccount>,\n    #[account(mut)]\n    pub user: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}\n```\n\nAccounts structs define what accounts your instruction needs and how to validate them.\n\n### 3. Account Data\n\n```rust\n#[account]\npub struct MyAccount {\n    pub authority: Pubkey,\n    pub counter: u64,\n}\n```\n\nThe `#[account]` macro adds serialization/deserialization and a discriminator for account type safety.\n\n## Anchor vs Native: Security Benefits\n\n| Security Check | Native | Anchor |\n|----------------|--------|--------|\n| Account ownership | Manual check | Automatic via Account<'info, T> |\n| Signer verification | Manual check | Automatic via Signer<'info> |\n| Writable validation | Manual check | Automatic via #[account(mut)] |\n| Account initialization | Manual allocation | Automatic via #[account(init)] |\n| Discriminator (type safety) | None | Automatic 8-byte discriminator |\n\nAnchor programs are **harder to exploit** because common security pitfalls are prevented by the framework itself.\n\n## Next Steps\n\nIn the next challenge, you'll build a mock Anchor program structure to understand how programs are organized on Solana.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -303,6 +335,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "anchor-setup-challenge"
@@ -318,6 +354,10 @@
         "_type": "prose",
         "src": "# Testing Anchor Programs\n\nTesting is critical for Solana programs. Bugs in smart contracts can lead to loss of funds, so comprehensive testing is non-negotiable.\n\n## Anchor Test Setup\n\nAnchor projects come with a `tests/` folder and pre-configured testing:\n\n```bash\nanchor test\n```\n\nThis command:\n1. Builds your program\n2. Deploys to a local validator\n3. Runs your TypeScript tests\n4. Shuts down the validator\n\n## Basic Test Structure\n\n```typescript\nimport * as anchor from '@coral-xyz/anchor';\nimport { Program } from '@coral-xyz/anchor';\nimport { MyProgram } from '../target/types/my_program';\nimport { expect } from 'chai';\n\ndescribe('my-program', () => {\n  const provider = anchor.AnchorProvider.env();\n  anchor.setProvider(provider);\n\n  const program = anchor.workspace.MyProgram as Program<MyProgram>;\n\n  it('Initializes the program', async () => {\n    const myAccount = anchor.web3.Keypair.generate();\n\n    await program.methods\n      .initialize()\n      .accounts({\n        myAccount: myAccount.publicKey,\n        user: provider.wallet.publicKey,\n        systemProgram: anchor.web3.SystemProgram.programId,\n      })\n      .signers([myAccount])\n      .rpc();\n\n    const account = await program.account.myAccount.fetch(\n      myAccount.publicKey\n    );\n\n    expect(account.data.toNumber()).to.equal(0);\n  });\n});\n```\n\n## Bankrun: Fast Local Testing\n\nBankrun is a lightweight Solana test validator that runs in-process:\n\n```typescript\nimport { BankrunProvider } from 'anchor-bankrun';\nimport { startAnchor } from 'solana-bankrun';\n\ndescribe('fast tests', () => {\n  let context;\n  let provider;\n  let program;\n\n  before(async () => {\n    context = await startAnchor(\n      '',\n      [{ name: 'my_program', programId: PROGRAM_ID }],\n      []\n    );\n\n    provider = new BankrunProvider(context);\n    program = new Program<MyProgram>(IDL, provider);\n  });\n\n  it('runs 10x faster', async () => {\n    // Your test\n  });\n});\n```\n\nBankrun is **much faster** than spinning up a full validator for each test.\n\n## Testing Patterns\n\n### 1. Test Fixtures\n\n```typescript\nconst createUser = async () => {\n  const user = anchor.web3.Keypair.generate();\n\n  // Airdrop SOL\n  await provider.connection.requestAirdrop(\n    user.publicKey,\n    2 * anchor.web3.LAMPORTS_PER_SOL\n  );\n\n  return user;\n};\n\nconst createTokenAccount = async (owner, mint) => {\n  // Create token account for testing\n};\n```\n\n### 2. Account Assertions\n\n```typescript\nconst account = await program.account.userAccount.fetch(userPDA);\n\nexpect(account.authority.toBase58()).to.equal(\n  user.publicKey.toBase58()\n);\nexpect(account.balance.toNumber()).to.equal(1000);\nexpect(account.isActive).to.be.true;\n```\n\n### 3. Error Testing\n\n```typescript\ntry {\n  await program.methods\n    .withdraw(new anchor.BN(10000))\n    .accounts({ user: userPDA })\n    .rpc();\n\n  // Should not reach here\n  expect.fail('Expected error was not thrown');\n} catch (err) {\n  expect(err.error.errorCode.code).to.equal('InsufficientFunds');\n}\n```\n\n### 4. Event Testing\n\nAnchor can emit events:\n\n```rust\n#[event]\npub struct TransferEvent {\n    pub from: Pubkey,\n    pub to: Pubkey,\n    pub amount: u64,\n}\n\nemit!(TransferEvent {\n    from: ctx.accounts.from.key(),\n    to: ctx.accounts.to.key(),\n    amount,\n});\n```\n\nTest events:\n\n```typescript\nconst listener = program.addEventListener('TransferEvent', (event) => {\n  console.log('Transfer:', event);\n  expect(event.amount.toNumber()).to.equal(100);\n});\n\nawait program.methods.transfer(new anchor.BN(100)).rpc();\n\nprogram.removeEventListener(listener);\n```\n\n## Test Organization\n\n```\ntests/\n├── setup.ts              # Shared setup logic\n├── fixtures.ts           # Test data generators\n├── initialize.test.ts    # Initialization tests\n├── transfer.test.ts      # Transfer logic tests\n└── errors.test.ts        # Error condition tests\n```\n\n## Mocking Accounts\n\nFor unit-testing complex logic:\n\n```typescript\nconst mockAccount = {\n  authority: user.publicKey,\n  balance: new anchor.BN(1000),\n  lastUpdate: new anchor.BN(Date.now() / 1000),\n};\n\n// Serialize and write to test validator\nconst accountData = program.coder.accounts.encode(\n  'UserAccount',\n  mockAccount\n);\n```\n\n## Best Practices\n\n1. **Test happy path first**, then edge cases\n2. **Test all error conditions** (unauthorized access, insufficient funds, etc.)\n3. **Use descriptive test names**: `it('rejects withdrawal when balance is insufficient')`\n4. **Clean up state** between tests (or use Bankrun snapshots)\n5. **Test with realistic data** (not just 0s and 1s)\n6. **Measure code coverage** (use `solana-program-test` for Rust unit tests)\n\n## Continuous Integration\n\n```yaml\n# .github/workflows/test.yml\nname: Test\n\non: [push, pull_request]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-node@v3\n      - name: Install Solana\n        run: sh -c \"$(curl -sSfL https://release.anza.xyz/stable/install)\"\n      - name: Install Anchor\n        run: cargo install --git https://github.com/coral-xyz/anchor avm --force\n      - name: Run tests\n        run: anchor test\n```\n\n## Next Lesson\n\nYou'll learn how to define custom errors in Anchor programs.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "program-testing"
     ],
     "slug": {
       "_type": "slug",
@@ -369,6 +409,11 @@
         ]
       }
     ],
+    "skills": [
+      "web3-frontend",
+      "rpc",
+      "typescript"
+    ],
     "slug": {
       "_type": "slug",
       "current": "balance-checker-challenge"
@@ -384,6 +429,10 @@
         "_type": "prose",
         "src": "# Account Constraints Deep Dive\n\nAnchor's account constraints are the guard rails of Solana development. They validate accounts before your instruction logic runs, preventing entire classes of bugs.\n\n## Essential Constraints\n\n### `#[account(init, payer = X, space = N)]`\nCreates a new account. The `payer` funds the rent-exempt deposit. `space` sets the data size in bytes. Can only be used once per account.\n\n### `#[account(mut)]`\nMarks an account as mutable. Required for any account whose data or lamport balance changes. Forgetting `mut` gives you:\n```\nerror: A mut constraint was expected but not found.\n```\n\n### `Signer<'info>`\nThe account must have signed the transaction. Used for authorization — proving the caller owns the account. Signers automatically have their signature verified by the runtime.\n\n### `Program<'info, System>`\nReferences a program account. `System` is the System Program (`11111111...`), which handles account creation and SOL transfers.\n\n## Account Types\n\n| Type | Use Case | Mutable Data? |\n|------|----------|---------------|\n| `Account<'info, T>` | Typed data account | Yes |\n| `Signer<'info>` | Must have signed tx | No data |\n| `SystemAccount<'info>` | Any system-owned account | No |\n| `Program<'info, T>` | A program account | No |\n| `UncheckedAccount<'info>` | No validation (dangerous) | Depends |\n\n## Common Errors\n\n### Missing `system_program`\nIf your instruction creates an account (`init`), you **must** include the System Program:\n```rust\npub system_program: Program<'info, System>,\n```\nWithout it, the compiler error is:\n```\nerror[E0277]: the trait bound `Initialize<'_>: anchor_lang::Accounts<'_>` is not satisfied\n```\n\nThis error is cryptic because Anchor generates the account validation code via macros. The fix is always: add the missing account.\n\n### Missing `mut` on payer\nThe payer's balance decreases (pays rent), so it must be `#[account(mut)]`:\n```rust\n#[account(mut)]\npub user: Signer<'info>,\n```\n\n### Wrong `space` calculation\nIf `space` is too small, the account can't hold your data. If too large, the payer overpays for rent. Always calculate: `8 (discriminator) + field sizes`.\n\n## In the Next Challenge\n\nYou'll encounter a deliberate compiler error — a program with a missing account. Your job is to read the error output and fix it.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "account-model"
     ],
     "slug": {
       "_type": "slug",
@@ -435,6 +484,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "add-instruction"
@@ -451,6 +504,10 @@
         "src": "# Adding Instructions\n\nA program with just `initialize` isn't very useful. Real programs have multiple instructions that modify state.\n\n## The Pattern\n\nEvery new instruction follows the same pattern:\n\n1. Add a `pub fn` inside `#[program]`\n2. Create a corresponding accounts struct with `#[derive(Accounts)]`\n3. Define which accounts the instruction needs and their constraints\n\n## Increment: Modifying State\n\nTo increment a counter, we need:\n\n```rust\npub fn increment(ctx: Context<Increment>) -> Result<()> {\n    let counter = &mut ctx.accounts.counter;\n    counter.count += 1;\n    Ok(())\n}\n```\n\nThe `Increment` accounts struct needs the counter PDA and the user (to derive the PDA seeds):\n\n```rust\n#[derive(Accounts)]\npub struct Increment<'info> {\n    #[account(\n        mut,\n        seeds = [b\"counter\", user.key().as_ref()],\n        bump\n    )]\n    pub counter: Account<'info, Counter>,\n    pub user: Signer<'info>,\n}\n```\n\nNote: `mut` is required because we're modifying `count`. The `seeds` and `bump` tell Anchor to verify the PDA address matches. The `user` provides the wallet pubkey used in the seeds.\n\n## Decrement with Safety\n\nWhat happens if someone tries to decrement a counter that's already at 0? With `u64`, subtraction would underflow and panic.\n\nAnchor provides `require!` for safe checks:\n\n```rust\npub fn decrement(ctx: Context<Decrement>) -> Result<()> {\n    let counter = &mut ctx.accounts.counter;\n    require!(counter.count > 0, ErrorCode::Underflow);\n    counter.count -= 1;\n    Ok(())\n}\n```\n\n## Custom Errors\n\nThe `ErrorCode::Underflow` needs to be defined:\n\n```rust\n#[error_code]\npub enum ErrorCode {\n    #[msg(\"Cannot decrement below zero\")]\n    Underflow,\n}\n```\n\n`#[error_code]` generates Anchor-compatible error types. The `#[msg]` attribute provides a human-readable error message visible in transaction logs.\n\n## Coming Up\n\nYou'll build the increment instruction first, then combine everything into the complete counter program with error handling.\n"
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "adding-instructions"
@@ -466,6 +523,10 @@
         "_type": "prose",
         "src": "# Anatomy of an Anchor Program\n\nBefore we start adding features, let's break down every line of the program you just compiled.\n\n## The Import\n\n```rust\nuse anchor_lang::prelude::*;\n```\n\nThis single import brings in everything Anchor needs: the `#[program]` macro, `Context`, `Account`, `Signer`, `Result`, error types, and more.\n\n## Program ID\n\n```rust\ndeclare_id!(\"Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS\");\n```\n\nEvery Solana program has a unique address (public key). The `declare_id!` macro hardcodes this address into the binary. When you deploy, Solana verifies the binary matches this ID.\n\nFor development, you can use any valid base58 public key. For production, you'd generate one with `solana-keygen grind`.\n\n## The Program Module\n\n```rust\n#[program]\npub mod academy_program {\n    use super::*;\n\n    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {\n        msg!(\"Superteam Academy default program\");\n        Ok(())\n    }\n}\n```\n\nThe `#[program]` attribute tells Anchor this module contains your instruction handlers. Each `pub fn` inside becomes a callable instruction on-chain.\n\n**Key rules:**\n- First parameter is always `Context<T>` where `T` is an accounts struct\n- Return type is always `Result<()>`\n- `msg!()` logs to the transaction log (visible in explorers)\n\n## Accounts Structs\n\n```rust\n#[derive(Accounts)]\npub struct Initialize {}\n```\n\nEvery instruction needs an accounts struct that defines which accounts the instruction reads/writes. This empty struct means `initialize` doesn't need any accounts.\n\nIn the next lesson, you'll add your first real instruction with a non-empty accounts struct.\n\n## What the Compiler Checks\n\nWhen you hit Build, `cargo-build-sbf` validates:\n- Rust syntax and type safety\n- Anchor macro expansion (accounts, constraints, errors)\n- SBF compatibility (no system calls, no heap abuse)\n\nIf any of these fail, you get a compiler error with the exact line number.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -517,6 +578,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "build-increment"
@@ -566,6 +631,10 @@
           }
         ]
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -617,6 +686,11 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs",
+      "account-model"
+    ],
     "slug": {
       "_type": "slug",
       "current": "define-counter-account"
@@ -655,6 +729,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "program-deployment"
+    ],
     "slug": {
       "_type": "slug",
       "current": "deploy-to-devnet"
@@ -670,6 +748,11 @@
         "_type": "prose",
         "src": "# From Code to Chain\n\nYou've written Anchor programs in the previous courses. Now it's time to compile and deploy them for real.\n\n## The Build Pipeline\n\nWhen you write an Anchor program, it goes through several stages before it reaches the Solana blockchain:\n\n1. **Rust source code** — what you write in your editor\n2. **`cargo-build-sbf`** — the Solana compiler that transforms Rust into Solana Bytecode Format (SBF)\n3. **`.so` binary** — the compiled program, an ELF shared object file\n4. **`solana program deploy`** — uploads the binary to a Solana cluster\n\n## What is SBF?\n\nSolana Bytecode Format (SBF) is a variant of eBPF (extended Berkeley Packet Filter) adapted for the Solana runtime. It's a register-based instruction set designed for:\n\n- **Safety**: Programs run in a sandboxed VM with no access to the host system\n- **Performance**: Near-native execution speed\n- **Determinism**: Same inputs always produce the same outputs\n\n## The Build Server\n\nIn this course, you won't need a local Rust toolchain. The **Superteam Academy Build Server** handles compilation in the cloud:\n\n1. You write Anchor code in the browser editor\n2. Click **Build** to submit your code\n3. The build server runs `cargo-build-sbf` on your code\n4. You get back either compiler errors or a compiled binary UUID\n\nThe build server uses the same Anchor 0.32 and Solana SDK that you'd use locally. Think of it as a cloud-hosted `anchor build`.\n\n## What Gets Compiled\n\nYour `lib.rs` file is placed into a pre-configured Anchor project with:\n- `anchor-lang` 0.32.1 (with `init-if-needed` feature)\n- `anchor-spl` 0.32.1\n- `solana-program` via the Agave 3.0 toolchain\n\nThe build server rejects dangerous patterns (`std::process`, `std::fs`, `std::net`) to keep the sandbox secure.\n\n## Ready to Build?\n\nIn the next lesson, you'll hit the **Build** button for the first time. Your only job: see the green checkmark.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs",
+      "program-deployment"
     ],
     "slug": {
       "_type": "slug",
@@ -694,6 +777,10 @@
         "produces": "funded-wallet"
       }
     ],
+    "skills": [
+      "keypairs-wallets",
+      "program-deployment"
+    ],
     "slug": {
       "_type": "slug",
       "current": "airdrop-fund-wallet"
@@ -716,6 +803,10 @@
           "deployed-program"
         ]
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -759,6 +850,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "program-deployment"
+    ],
     "slug": {
       "_type": "slug",
       "current": "deploy-program-devnet"
@@ -783,6 +878,11 @@
         "idl": "{\"address\":\"11111111111111111111111111111111\",\"metadata\":{\"name\":\"counter\",\"version\":\"0.1.0\",\"spec\":\"0.1.0\"},\"instructions\":[{\"name\":\"initialize\",\"discriminator\":[175,175,109,31,13,152,155,237],\"accounts\":[{\"name\":\"counter\",\"writable\":true,\"pda\":{\"seeds\":[{\"kind\":\"const\",\"value\":[99,111,117,110,116,101,114]},{\"kind\":\"account\",\"path\":\"user\"}]}},{\"name\":\"user\",\"writable\":true,\"signer\":true},{\"name\":\"system_program\",\"address\":\"11111111111111111111111111111111\"}],\"args\":[]},{\"name\":\"increment\",\"discriminator\":[11,18,104,9,104,174,59,33],\"accounts\":[{\"name\":\"counter\",\"writable\":true,\"pda\":{\"seeds\":[{\"kind\":\"const\",\"value\":[99,111,117,110,116,101,114]},{\"kind\":\"account\",\"path\":\"user\"}]}},{\"name\":\"user\",\"signer\":true}],\"args\":[]},{\"name\":\"decrement\",\"discriminator\":[106,227,168,59,248,27,150,101],\"accounts\":[{\"name\":\"counter\",\"writable\":true,\"pda\":{\"seeds\":[{\"kind\":\"const\",\"value\":[99,111,117,110,116,101,114]},{\"kind\":\"account\",\"path\":\"user\"}]}},{\"name\":\"user\",\"signer\":true}],\"args\":[]}],\"accounts\":[{\"name\":\"Counter\",\"discriminator\":[255,176,4,245,188,253,124,25]}],\"types\":[{\"name\":\"Counter\",\"type\":{\"kind\":\"struct\",\"fields\":[{\"name\":\"count\",\"type\":\"u64\"},{\"name\":\"authority\",\"type\":\"publicKey\"}]}}],\"errors\":[{\"code\":6000,\"name\":\"Underflow\",\"msg\":\"Cannot decrement below zero\"}]}\n"
       }
     ],
+    "skills": [
+      "solana-programs",
+      "transactions",
+      "account-model"
+    ],
     "slug": {
       "_type": "slug",
       "current": "interact-with-program"
@@ -798,6 +898,10 @@
         "_type": "prose",
         "src": "# On-Chain State\n\nSo far, our program doesn't store any data. Every instruction just logs a message and exits. To build anything useful, you need **on-chain state** — data that persists between transactions.\n\n## Accounts = Storage\n\nOn Solana, all state lives in **accounts**. An account is a buffer of bytes owned by a program. Think of it like a row in a database, but on-chain.\n\nEvery account has:\n- **Address** (public key) — how you find it\n- **Owner** (program ID) — which program can modify it\n- **Data** (byte array) — the actual state\n- **Lamports** (balance) — rent deposit to keep it alive\n\n## The Discriminator\n\nAnchor adds an 8-byte **discriminator** at the start of every account's data. This is a hash of the account type name, used to prevent account type confusion attacks.\n\n```\n[8 bytes discriminator][...your data...]\n```\n\nYou never read or write the discriminator directly — Anchor handles it.\n\n## Space Calculation\n\nWhen you create an account, you must specify its size upfront (accounts can't be resized after creation). The formula:\n\n```\nspace = 8 (discriminator) + sum of field sizes\n```\n\nCommon field sizes:\n- `u8` / `i8` / `bool` = 1 byte\n- `u16` / `i16` = 2 bytes\n- `u32` / `i32` = 4 bytes\n- `u64` / `i64` = 8 bytes\n- `u128` / `i128` = 16 bytes\n- `Pubkey` = 32 bytes\n- `String` = 4 (length prefix) + content bytes\n- `Vec<T>` = 4 (length prefix) + (count * size_of::<T>())\n\n## Example: A Counter\n\nA simple counter needs one `u64` field:\n\n```rust\n#[account]\npub struct Counter {\n    pub count: u64,  // 8 bytes\n}\n// Total space = 8 (discriminator) + 8 (u64) = 16 bytes\n```\n\nThe `#[account]` attribute tells Anchor to:\n1. Add serialization/deserialization (Borsh)\n2. Add the 8-byte discriminator\n3. Implement account validation traits\n\nIn the next challenge, you'll define this Counter account and wire it into your program.\n"
       }
+    ],
+    "skills": [
+      "solana-programs",
+      "account-model"
     ],
     "slug": {
       "_type": "slug",
@@ -849,6 +953,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "wire-up-initialize"
@@ -886,6 +994,10 @@
           }
         ]
       }
+    ],
+    "skills": [
+      "anchor",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -936,6 +1048,10 @@
           }
         ]
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "wallet-adapter"
     ],
     "slug": {
       "_type": "slug",
@@ -993,6 +1109,11 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "cpi",
+      "pdas"
+    ],
     "slug": {
       "_type": "slug",
       "current": "cpi-challenge"
@@ -1008,6 +1129,10 @@
         "_type": "prose",
         "src": "# Cross-Program Invocations (CPIs)\n\nCross-Program Invocations allow one Solana program to call another program. This is what makes Solana programs **composable** — you can build on top of existing programs like building blocks.\n\n## Why CPIs Matter\n\nCPIs enable:\n- **Token transfers** via the Token Program\n- **NFT minting** via Metaplex programs\n- **Swaps** through DEX programs (Jupiter, Raydium)\n- **Lending** through DeFi protocols (Solend, MarginFi)\n\nWithout CPIs, every program would need to reimplement basic functionality. With CPIs, you compose existing programs.\n\n## How CPIs Work\n\nWhen Program A calls Program B:\n\n```\nUser Transaction\n  |\n  v\nProgram A (your program)\n  |\n  v (CPI)\nProgram B (Token Program, System Program, etc.)\n```\n\nThe Solana runtime tracks the **call stack** and ensures:\n- Account ownership rules are enforced\n- Signers are propagated correctly\n- Programs can't exceed the call depth limit (4 levels)\n\n## invoke vs invoke_signed\n\n### invoke - Regular CPI\n\n```rust\nuse solana_program::program::invoke;\n\ninvoke(\n    &instruction,\n    &[\n        source_account.clone(),\n        destination_account.clone(),\n        authority.clone(),\n    ],\n)?;\n```\n\nUse `invoke` when the required signers are already in your instruction's signer list.\n\n### invoke_signed - CPI with PDA Signer\n\n```rust\nuse solana_program::program::invoke_signed;\n\ninvoke_signed(\n    &instruction,\n    &[\n        pda_account.clone(),\n        destination_account.clone(),\n        system_program.clone(),\n    ],\n    &[&[b\"vault\", &[bump]]], // PDA seeds\n)?;\n```\n\nUse `invoke_signed` when a **PDA** needs to sign. The program derives the PDA and \"signs\" on its behalf.\n\n## CPI in Anchor\n\nAnchor provides a cleaner API for CPIs:\n\n```rust\nuse anchor_lang::prelude::*;\nuse anchor_spl::token::{self, Transfer};\n\npub fn transfer_tokens(ctx: Context<TransferTokens>, amount: u64) -> Result<()> {\n    let cpi_accounts = Transfer {\n        from: ctx.accounts.from.to_account_info(),\n        to: ctx.accounts.to.to_account_info(),\n        authority: ctx.accounts.authority.to_account_info(),\n    };\n\n    let cpi_program = ctx.accounts.token_program.to_account_info();\n    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);\n\n    token::transfer(cpi_ctx, amount)?;\n    Ok(())\n}\n```\n\n### CPI with PDA Signer in Anchor\n\n```rust\npub fn transfer_from_pda(ctx: Context<TransferFromPDA>, amount: u64) -> Result<()> {\n    let seeds = &[\n        b\"vault\",\n        ctx.accounts.authority.key().as_ref(),\n        &[ctx.accounts.vault.bump],\n    ];\n    let signer_seeds = &[&seeds[..]];\n\n    let cpi_accounts = Transfer {\n        from: ctx.accounts.vault_token_account.to_account_info(),\n        to: ctx.accounts.user_token_account.to_account_info(),\n        authority: ctx.accounts.vault.to_account_info(),\n    };\n\n    let cpi_program = ctx.accounts.token_program.to_account_info();\n    let cpi_ctx = CpiContext::new_with_signer(\n        cpi_program,\n        cpi_accounts,\n        signer_seeds,\n    );\n\n    token::transfer(cpi_ctx, amount)?;\n    Ok(())\n}\n```\n\n## Common CPI Patterns\n\n### 1. Token Transfer\n\n```rust\n// Transfer SPL tokens from user to program vault\ntoken::transfer(\n    CpiContext::new(token_program, transfer_accounts),\n    amount,\n)?;\n```\n\n### 2. Minting Tokens\n\n```rust\n// Mint new tokens (requires mint authority)\ntoken::mint_to(\n    CpiContext::new_with_signer(token_program, mint_accounts, signer_seeds),\n    amount,\n)?;\n```\n\n### 3. Creating Accounts\n\n```rust\n// Create a new account (CPI to System Program)\nsystem_program::create_account(\n    CpiContext::new(system_program, create_accounts),\n    lamports,\n    space,\n    program_id,\n)?;\n```\n\n## CPI Security Considerations\n\n### 1. Account Validation\n\nAlways validate accounts before CPI:\n\n```rust\nrequire_keys_eq!(\n    ctx.accounts.token_program.key(),\n    token::ID,\n    ErrorCode::InvalidTokenProgram\n);\n```\n\n### 2. Signer Propagation\n\nSigners in your instruction are automatically propagated to CPIs. But be careful:\n\n```rust\n// BAD: Anyone can call this and spend vault tokens!\npub fn dangerous_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n    token::transfer(\n        CpiContext::new_with_signer(...),\n        amount,\n    )\n}\n\n// GOOD: Check authority first\npub fn safe_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n    require_keys_eq!(\n        ctx.accounts.authority.key(),\n        ctx.accounts.vault.authority,\n        ErrorCode::Unauthorized\n    );\n    token::transfer(...)\n}\n```\n\n### 3. Reentrancy\n\nSolana programs are **not reentrant** by default (a program can't call itself). This prevents classic reentrancy attacks.\n\n## Real-World CPI Examples\n\n**Escrow program**:\n1. User deposits tokens → CPI to Token Program to transfer tokens to escrow PDA\n2. Trade executes → CPI to Token Program to transfer from escrow PDA to recipient\n\n**Staking program**:\n1. User stakes tokens → CPI to Token Program to transfer to staking vault\n2. User claims rewards → CPI to Token Program to mint reward tokens\n3. User unstakes → CPI to Token Program to transfer staked tokens back\n\n**NFT marketplace**:\n1. User lists NFT → CPI to Token Program to transfer NFT to marketplace PDA\n2. Buyer purchases → CPI to System Program (SOL payment) + CPI to Token Program (NFT transfer)\n\n## Next Challenge\n\nYou'll construct a CPI instruction to transfer SOL from a PDA-owned account.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "cpi"
     ],
     "slug": {
       "_type": "slug",
@@ -1046,6 +1171,10 @@
           }
         ]
       }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "spl-tokens"
     ],
     "slug": {
       "_type": "slug",
@@ -1097,6 +1226,11 @@
         ]
       }
     ],
+    "skills": [
+      "web3-frontend",
+      "transactions",
+      "typescript"
+    ],
     "slug": {
       "_type": "slug",
       "current": "dapp-challenge"
@@ -1113,6 +1247,10 @@
         "src": "# DeFi on Solana Overview\n\nDecentralized Finance (DeFi) on Solana has exploded in growth thanks to the chain's speed, low costs, and composability. Let's explore the landscape.\n\n## Why Solana for DeFi?\n\n### Speed\n- **400ms block time** - Near-instant transaction finality\n- **65,000+ TPS** - Handles high-frequency trading\n- **Parallel execution** - Multiple programs run simultaneously\n\n### Cost\n- **$0.00025 average transaction** - Makes micro-transactions viable\n- **No gas wars** - Predictable fees even during congestion\n\n### Composability\n- **Single global state** - All programs share the same state\n- **Atomic composability** - Multi-program transactions are atomic\n- **No bridges needed** - Everything is native\n\n## The Solana DeFi Ecosystem\n\n### Decentralized Exchanges (DEXs)\n\n**Jupiter** - Aggregates liquidity from all Solana DEXs\n- Routes trades through multiple DEXs for best price\n- 15+ DEX integrations\n- Limit orders, DCA, perpetuals\n\n**Raydium** - Automated Market Maker (AMM)\n- Concentrated liquidity (like Uniswap v3)\n- OpenBook integration (hybrid AMM/orderbook)\n- Top 3 by volume on Solana\n\n**Orca** - User-friendly AMM\n- Whirlpools (concentrated liquidity)\n- Clean UX, popular for beginners\n\n**Phoenix** - Central Limit Order Book (CLOB)\n- Fully on-chain orderbook\n- Sub-second matching\n- Successor to Serum\n\n### Lending Protocols\n\n**Solend** - Algorithmic lending/borrowing\n- Supply assets, earn yield\n- Borrow against collateral\n- Isolated pools for risk management\n\n**MarginFi** - Decentralized margin trading\n- Leveraged positions\n- Portfolio margin\n- Integrated with major DEXs\n\n**Kamino Finance** - Automated liquidity strategies\n- Vaults for concentrated liquidity\n- Leveraged yield farming\n- Risk-adjusted returns\n\n### Liquid Staking\n\n**Marinade (mSOL)** - Largest liquid staking protocol\n- Stake SOL, receive mSOL\n- mSOL accrues staking rewards\n- Can use mSOL in DeFi while earning staking yield\n\n**Jito (jitoSOL)** - MEV-enhanced staking\n- Distributes MEV rewards to stakers\n- Higher APY than native staking\n\n**BlazeStake (bSOL)** - Focuses on decentralization\n- Delegates to smaller validators\n- Supports Solana decentralization\n\n### Perpetuals & Derivatives\n\n**Drift Protocol** - Decentralized perpetuals\n- Up to 10x leverage\n- Virtual AMM design\n- Insurance fund for trader protection\n\n**Zeta Markets** - Options and futures\n- Undercollateralized DeFi options\n- On-chain orderbook\n\n## Total Value Locked (TVL)\n\nAs of 2025, Solana DeFi TVL:\n- **Total**: ~$7B USD\n- **Jito**: $2.5B (liquid staking)\n- **Kamino**: $1.8B (lending/vaults)\n- **Marinade**: $1.2B (liquid staking)\n- **Raydium**: $1.5B (DEX)\n\nSolana is the 4th largest DeFi ecosystem after Ethereum, Tron, and BNB Chain.\n\n## DeFi Primitives on Solana\n\n### 1. Automated Market Makers (AMMs)\n\nConstant product formula: `x * y = k`\n\n```\nPool: 1000 SOL × 100,000 USDC = 100,000,000\nPrice: 100,000 / 1000 = 100 USDC per SOL\n```\n\n### 2. Concentrated Liquidity\n\nLiquidity providers choose a price range:\n\n```\nStandard AMM: Capital spread across 0 → ∞\nConcentrated: Capital focused on $95-$105 range\nResult: 10-100x capital efficiency\n```\n\n### 3. Lending Pools\n\nSupply rate = Borrow rate × Utilization × (1 - Reserve factor)\n\n```\nTotal supplied: 1000 SOL\nTotal borrowed: 700 SOL\nUtilization: 70%\nBorrow APY: 8%\nSupply APY: 8% × 70% × 90% = 5.04%\n```\n\n### 4. Liquidations\n\n```\nHealth Factor = Collateral Value / (Debt Value / LTV)\nIf Health Factor < 1.0 → Liquidatable\n```\n\n## Composability in Action\n\n**Example: Leveraged Yield Farming**\n\n1. Deposit SOL to Kamino\n2. Borrow USDC against SOL collateral\n3. Swap USDC → SOL on Jupiter\n4. Deposit SOL to liquidity pool on Raydium\n5. Earn swap fees + USDC rewards\n\nAll of this can happen in **one atomic transaction**.\n\n## Security Considerations\n\n### Smart Contract Risk\n- Programs can have bugs (test thoroughly, get audits)\n- Upgradeable programs can be changed by authority\n- Check if program authority is a multisig or revoked\n\n### Oracle Risk\n- Price feeds can be manipulated or go stale\n- Use multiple oracles (Pyth, Switchboard)\n- Implement staleness checks and circuit breakers\n\n### Liquidation Risk\n- Solana's speed helps (faster liquidations = less bad debt)\n- But volatility can still cause cascading liquidations\n\n### Protocol Composability Risk\n- A bug in one protocol can cascade to others\n- Isolated pools mitigate this\n\n## The Future of Solana DeFi\n\n**Token Extensions (Token-2022)**\n- Transfer hooks (fees, restrictions)\n- Confidential transfers (privacy)\n- Interest-bearing tokens\n\n**Firedancer**\n- New validator client → 1M+ TPS\n- Even faster DeFi execution\n\n**Cross-chain**\n- Wormhole, Allbridge for bridging\n- But Solana's goal is to be self-contained\n\n## Next Lessons\n\nYou'll dive deep into AMM mechanics, lending protocols, and build DeFi primitives yourself.\n"
       }
     ],
+    "skills": [
+      "defi",
+      "spl-tokens"
+    ],
     "slug": {
       "_type": "slug",
       "current": "defi-overview"
@@ -1128,6 +1266,10 @@
         "_type": "prose",
         "src": "# Deploying Solana Programs\n\nDeploying to Solana is straightforward with Anchor, but there are important considerations for security and upgrades.\n\n## Building Your Program\n\n```bash\nanchor build\n```\n\nThis compiles your program and generates:\n- `target/deploy/my_program.so` - The compiled program\n- `target/idl/my_program.json` - The Interface Definition Language file\n- `target/types/my_program.ts` - TypeScript types for your program\n\n## Deploying to Devnet\n\n1. **Configure your CLI for devnet**:\n\n```bash\nsolana config set --url devnet\n```\n\n2. **Ensure you have SOL**:\n\n```bash\nsolana balance\nsolana airdrop 2  # If needed\n```\n\n3. **Deploy**:\n\n```bash\nanchor deploy\n```\n\nAnchor will:\n- Upload the program binary\n- Create the program account\n- Set you as the upgrade authority\n\n## Understanding Program IDs\n\nYour program ID is declared in `lib.rs`:\n\n```rust\ndeclare_id!(\"YourProgramIDHere\");\n```\n\nThis ID is generated when you run `anchor init` and stored in `target/deploy/my_program-keypair.json`.\n\n**Important**: Once deployed, the program ID is permanent for that deployment. If you want a new ID, you need to create a new keypair.\n\n## The IDL (Interface Definition Language)\n\nThe IDL is a JSON file describing your program's interface:\n\n```json\n{\n  \"version\": \"0.1.0\",\n  \"name\": \"my_program\",\n  \"instructions\": [\n    {\n      \"name\": \"initialize\",\n      \"accounts\": [\n        { \"name\": \"myAccount\", \"isMut\": true, \"isSigner\": true },\n        { \"name\": \"user\", \"isMut\": true, \"isSigner\": true },\n        { \"name\": \"systemProgram\", \"isMut\": false, \"isSigner\": false }\n      ],\n      \"args\": []\n    }\n  ],\n  \"accounts\": [\n    {\n      \"name\": \"MyAccount\",\n      \"type\": {\n        \"kind\": \"struct\",\n        \"fields\": [\n          { \"name\": \"data\", \"type\": \"u64\" }\n        ]\n      }\n    }\n  ]\n}\n```\n\nClients use the IDL to interact with your program.\n\n## Uploading the IDL\n\n```bash\nanchor idl init -f target/idl/my_program.json <PROGRAM_ID>\n```\n\nThis stores the IDL on-chain, making it easier for tools like Anchor Explorer to understand your program.\n\nUpdate an existing IDL:\n\n```bash\nanchor idl upgrade -f target/idl/my_program.json <PROGRAM_ID>\n```\n\n## Program Upgrades\n\nSolana programs are **upgradeable** by default. The upgrade authority can replace the program code:\n\n```bash\nanchor upgrade target/deploy/my_program.so --program-id <PROGRAM_ID>\n```\n\n### Checking Upgrade Authority\n\n```bash\nsolana program show <PROGRAM_ID>\n```\n\nOutput:\n```\nProgram Id: YourProgramID\nOwner: BPFLoaderUpgradeab1e11111111111111111111111\nProgramData Address: ...\nAuthority: YourWalletPublicKey\nLast Deployed In Slot: 123456789\nData Length: 200000 bytes\n```\n\n### Transferring Upgrade Authority\n\n```bash\nsolana program set-upgrade-authority <PROGRAM_ID> --new-upgrade-authority <NEW_AUTHORITY>\n```\n\n### Revoking Upgrade Authority (Immutable Program)\n\nFor maximum security, you can make a program **immutable**:\n\n```bash\nsolana program set-upgrade-authority <PROGRAM_ID> --final\n```\n\n**Warning**: This is irreversible! No one can ever upgrade the program again.\n\n## Multisig Upgrade Authority\n\nFor production programs, use a multisig as the upgrade authority:\n\n```bash\n# Create a multisig with Squads Protocol\n# Set multisig as upgrade authority\nsolana program set-upgrade-authority <PROGRAM_ID> --new-upgrade-authority <MULTISIG_ADDRESS>\n```\n\nThis requires multiple team members to approve upgrades.\n\n## Verifiable Builds\n\nVerifiable builds let anyone verify your deployed program matches your source code:\n\n```bash\nanchor build --verifiable\n```\n\nThis builds your program in a Docker container with a deterministic environment.\n\nVerify a deployed program:\n\n```bash\nanchor verify <PROGRAM_ID>\n```\n\n## Deploying to Mainnet\n\n1. **Switch to mainnet**:\n\n```bash\nsolana config set --url mainnet-beta\n```\n\n2. **Fund your wallet** (deploying costs ~2-5 SOL depending on program size)\n\n3. **Audit your code** (get a professional audit for production programs)\n\n4. **Deploy**:\n\n```bash\nanchor deploy\n```\n\n5. **Upload IDL**:\n\n```bash\nanchor idl init -f target/idl/my_program.json <PROGRAM_ID>\n```\n\n6. **Set up multisig authority** or **revoke authority** if appropriate\n\n## Best Practices\n\n1. **Test on devnet first** - Always deploy and test on devnet before mainnet\n2. **Use verifiable builds** - Builds trust with users\n3. **Store keypairs securely** - Never commit `target/deploy/*-keypair.json` to Git\n4. **Plan your upgrade strategy** - Multisig for most cases, immutable for critical infrastructure\n5. **Monitor program accounts** - Track rent, data size, and usage\n6. **Document your IDL** - Add comments to your Rust code; they appear in the IDL\n\n## Common Deployment Issues\n\n### Insufficient SOL\n\n```\nError: Account <PROGRAM_ID> has insufficient funds\n```\n\nSolution: Airdrop more SOL (devnet) or fund your wallet (mainnet)\n\n### Program Already Deployed\n\n```\nError: Program already exists\n```\n\nSolution: Use `anchor upgrade` instead of `anchor deploy`\n\n### Wrong Upgrade Authority\n\n```\nError: Upgrade authority mismatch\n```\n\nSolution: Ensure the wallet you're using matches the upgrade authority\n\n## Next Challenge\n\nYou'll write a test that simulates a program execution scenario.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "program-deployment"
     ],
     "slug": {
       "_type": "slug",
@@ -1191,6 +1333,10 @@
         ]
       }
     ],
+    "skills": [
+      "rust",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "error-challenge"
@@ -1206,6 +1352,10 @@
         "_type": "prose",
         "src": "# Error Handling in Solana Programs\n\nRobust error handling is critical for secure Solana programs. Rust's `Result` type and pattern matching make it impossible to accidentally ignore errors, unlike languages with exceptions.\n\n## The Result Type\n\nEvery fallible operation in Rust returns a `Result<T, E>`:\n- `Ok(value)`: Success, contains the result\n- `Err(error)`: Failure, contains the error\n\n```rust\npub fn divide(a: u64, b: u64) -> Result<u64, String> {\n    if b == 0 {\n        Err(\"Division by zero\".to_string())\n    } else {\n        Ok(a / b)\n    }\n}\n\nmatch divide(10, 2) {\n    Ok(result) => println!(\"Result: {}\", result),\n    Err(e) => println!(\"Error: {}\", e),\n}\n```\n\n## Error Propagation with `?`\n\nThe `?` operator automatically returns an error if the operation fails, or unwraps the value if it succeeds:\n\n```rust\npub fn process_transfer(\n    accounts: &[AccountInfo],\n    amount: u64,\n) -> ProgramResult {\n    let sender = next_account_info(&mut accounts.iter())?; // Returns early if fails\n    let recipient = next_account_info(&mut accounts.iter())?;\n    \n    if sender.lamports() < amount {\n        return Err(ProgramError::InsufficientFunds);\n    }\n    \n    **sender.lamports.borrow_mut() -= amount;\n    **recipient.lamports.borrow_mut() += amount;\n    \n    Ok(())\n}\n```\n\nThis is much cleaner than manual error checking:\n\n```rust\n// Without ?\nlet sender = match next_account_info(&mut accounts.iter()) {\n    Ok(acc) => acc,\n    Err(e) => return Err(e),\n};\n```\n\n## ProgramError Enum\n\nSolana provides a standard `ProgramError` enum for common failures:\n\n```rust\npub enum ProgramError {\n    InvalidArgument,\n    InsufficientFunds,\n    IncorrectProgramId,\n    MissingRequiredSignature,\n    AccountAlreadyInitialized,\n    UninitializedAccount,\n    // ... and 20+ more variants\n}\n```\n\nReturn these from your `process_instruction` function:\n\n```rust\nif !sender.is_signer {\n    return Err(ProgramError::MissingRequiredSignature);\n}\n```\n\n## Custom Error Types\n\nFor domain-specific errors, define your own enum:\n\n```rust\nuse num_derive::FromPrimitive;\nuse thiserror::Error;\n\n#[derive(Error, Debug, Copy, Clone, FromPrimitive)]\npub enum TokenError {\n    #[error(\"Insufficient token balance\")]\n    InsufficientBalance,\n    \n    #[error(\"Account is frozen\")]\n    AccountFrozen,\n    \n    #[error(\"Invalid mint authority\")]\n    InvalidMintAuthority,\n}\n\nimpl From<TokenError> for ProgramError {\n    fn from(e: TokenError) -> Self {\n        ProgramError::Custom(e as u32)\n    }\n}\n```\n\nNow you can return custom errors that convert to `ProgramError::Custom`:\n\n```rust\nif account.frozen {\n    return Err(TokenError::AccountFrozen.into());\n}\n```\n\n## Validation Patterns\n\nAlways validate inputs at the start of your instruction handler:\n\n```rust\npub fn process_transfer(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    amount: u64,\n) -> ProgramResult {\n    // 1. Validate account count\n    if accounts.len() < 2 {\n        return Err(ProgramError::NotEnoughAccountKeys);\n    }\n    \n    let account_iter = &mut accounts.iter();\n    let sender = next_account_info(account_iter)?;\n    let recipient = next_account_info(account_iter)?;\n    \n    // 2. Validate ownership\n    if sender.owner != program_id {\n        return Err(ProgramError::IncorrectProgramId);\n    }\n    \n    // 3. Validate signer\n    if !sender.is_signer {\n        return Err(ProgramError::MissingRequiredSignature);\n    }\n    \n    // 4. Validate amount\n    if amount == 0 {\n        return Err(ProgramError::InvalidArgument);\n    }\n    \n    // 5. Validate balance\n    if sender.lamports() < amount {\n        return Err(ProgramError::InsufficientFunds);\n    }\n    \n    // Now perform the transfer\n    **sender.lamports.borrow_mut() -= amount;\n    **recipient.lamports.borrow_mut() += amount;\n    \n    Ok(())\n}\n```\n\n## Error Messages\n\nUse the `msg!` macro to log errors for debugging (visible in transaction logs):\n\n```rust\nmsg!(\"Transfer failed: insufficient balance ({} < {})\", sender.lamports(), amount);\nreturn Err(ProgramError::InsufficientFunds);\n```\n\n**Important**: Never log sensitive data like private keys or user PII.\n\n## Key Takeaways\n\n1. **Always use `Result`**: Never use `unwrap()` or `expect()` in production programs\n2. **Validate early**: Check all preconditions before mutating state\n3. **Use `?` for propagation**: Cleaner than manual error handling\n4. **Return specific errors**: Help clients diagnose failures\n5. **Log for debugging**: Use `msg!` to provide context in transaction logs\n"
       }
+    ],
+    "skills": [
+      "rust",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -1223,6 +1373,10 @@
         "src": "# Your First Transaction\n\nLet's send your first transaction on Solana devnet!\n\n## Understanding Transactions\n\nA Solana transaction consists of:\n- **Instructions**: The operations to perform\n- **Signers**: The accounts that must sign the transaction\n- **Recent Blockhash**: Prevents duplicate transactions\n\n## Sending SOL\n\n```typescript\nimport {\n  Connection,\n  Keypair,\n  LAMPORTS_PER_SOL,\n  SystemProgram,\n  Transaction,\n  sendAndConfirmTransaction,\n} from '@solana/web3.js';\n\nasync function sendSol() {\n  // Connect to devnet\n  const connection = new Connection('https://api.devnet.solana.com', 'confirmed');\n\n  // Create sender keypair (in production, use wallet adapter)\n  const sender = Keypair.generate();\n\n  // Airdrop SOL to sender\n  const airdropSig = await connection.requestAirdrop(\n    sender.publicKey,\n    2 * LAMPORTS_PER_SOL\n  );\n  await connection.confirmTransaction(airdropSig);\n\n  // Create recipient\n  const recipient = Keypair.generate();\n\n  // Create transfer instruction\n  const transaction = new Transaction().add(\n    SystemProgram.transfer({\n      fromPubkey: sender.publicKey,\n      toPubkey: recipient.publicKey,\n      lamports: 0.5 * LAMPORTS_PER_SOL,\n    })\n  );\n\n  // Send and confirm\n  const signature = await sendAndConfirmTransaction(\n    connection,\n    transaction,\n    [sender]\n  );\n\n  console.log('Transaction signature:', signature);\n}\n```\n\n## Key Concepts\n\n- **Lamports**: The smallest unit of SOL (1 SOL = 1,000,000,000 lamports)\n- **Connection**: Connects your code to a Solana cluster\n- **SystemProgram**: Built-in program for basic operations like transfers\n\n## Viewing Your Transaction\n\nAfter sending, view your transaction on [Solana Explorer](https://explorer.solana.com/?cluster=devnet).\n"
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "transactions"
+    ],
     "slug": {
       "_type": "slug",
       "current": "first-transaction"
@@ -1238,6 +1392,9 @@
         "_type": "prose",
         "src": "# What is Solana?\n\nSolana is a high-performance blockchain supporting builders around the world creating crypto apps that scale.\n\n## Key Features\n\n- **Speed**: Solana can process 65,000+ transactions per second\n- **Low Cost**: Average transaction cost is $0.00025\n- **Energy Efficient**: Solana uses a Proof-of-Stake consensus mechanism\n- **Developer Friendly**: Programs can be written in Rust, C, or C++\n\n## How Solana Works\n\nSolana uses a unique combination of **Proof of History (PoH)** and **Proof of Stake (PoS)** to achieve high throughput.\n\n### Proof of History\n\nPoH creates a historical record that proves events occurred at a specific moment in time. Think of it as a cryptographic clock that helps the network agree on the order of transactions without waiting for other validators.\n\n### The Solana Runtime\n\nSolana programs (smart contracts) run inside the **Sealevel** runtime, which allows thousands of smart contracts to run in parallel. This is one of the key innovations that enables Solana's speed.\n\n## The Solana Ecosystem\n\nThe Solana ecosystem includes:\n- **DeFi**: Jupiter, Raydium, Marinade\n- **NFTs**: Magic Eden, Tensor\n- **Payments**: Solana Pay\n- **Infrastructure**: Helius, Jito\n\n## Why Learn Solana?\n\n1. Growing developer demand\n2. Active grants and bounty programs (like Superteam!)\n3. Fast iteration cycles due to quick finality\n4. Strong community support\n"
       }
+    ],
+    "skills": [
+      "solana-fundamentals"
     ],
     "slug": {
       "_type": "slug",
@@ -1289,6 +1446,10 @@
         ]
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "keypairs-wallets"
+    ],
     "slug": {
       "_type": "slug",
       "current": "keypair-challenge"
@@ -1304,6 +1465,10 @@
         "_type": "prose",
         "src": "# Lending & Borrowing Protocols\n\nLending protocols are core DeFi primitives that enable users to earn yield on deposits and borrow against collateral.\n\n## How Lending Works\n\n### Supplying (Lending)\n\n1. User deposits tokens into a lending pool\n2. User receives **pool tokens** (e.g., deposit SOL, receive cSOL)\n3. Pool tokens earn interest (redeem for more SOL over time)\n4. Can withdraw anytime (if liquidity available)\n\n### Borrowing\n\n1. User deposits collateral (e.g., SOL)\n2. User borrows against collateral (e.g., borrow USDC)\n3. User pays interest on borrowed amount\n4. Must maintain **collateralization ratio** or face liquidation\n\n## Interest Rates\n\nInterest rates are **algorithmic** (set by supply/demand, not by humans).\n\n### Utilization Rate\n\n```\nUtilization = Total Borrowed / Total Supplied\n\nExample:\nTotal Supplied: 1,000 SOL\nTotal Borrowed: 700 SOL\nUtilization: 70%\n```\n\nHigh utilization → higher borrow rates (to incentivize more supply)\n\n### Interest Rate Model\n\nTypical model has two slopes:\n\n```\nif Utilization < 80%:\n  Borrow APY = Base + (Utilization × Multiplier)\nelse:\n  Borrow APY = Base + (80% × Multiplier) + ((Utilization - 80%) × JumpMultiplier)\n\nExample parameters:\nBase = 2%\nMultiplier = 5%\nJumpMultiplier = 100%\n\nAt 70% utilization:\n  Borrow APY = 2% + (70% × 5%) = 5.5%\n\nAt 90% utilization:\n  Borrow APY = 2% + (80% × 5%) + (10% × 100%) = 16%\n```\n\nThe \"kink\" at 80% prevents the pool from running out of liquidity.\n\n### Supply APY Calculation\n\n```\nSupply APY = Borrow APY × Utilization × (1 - Reserve Factor)\n\nReserve Factor = 10% (protocol fee)\nUtilization = 70%\nBorrow APY = 8%\n\nSupply APY = 8% × 70% × 90% = 5.04%\n```\n\n## Overcollateralization\n\nCrypto lending requires **overcollateralization** (you can't borrow more than your collateral value).\n\n```\nUser deposits: 10 SOL @ $100 = $1,000\nMax LTV (Loan-to-Value): 75%\nMax borrow: $1,000 × 75% = $750 USDC\n```\n\nWhy overcollateralization?\n- No credit scores in DeFi\n- Instant liquidation if collateral drops\n- Protects lenders from bad debt\n\n## Collateralization Ratios\n\n### LTV (Loan-to-Value)\n\nMaximum you can borrow against collateral:\n\n```\nSOL LTV: 75%\nMeans: For every $100 SOL, borrow up to $75\n```\n\n### Liquidation Threshold\n\nWhen your position can be liquidated:\n\n```\nSOL Liquidation Threshold: 80%\nMeans: If debt reaches 80% of collateral value → liquidation\n```\n\nLiquidation threshold > LTV provides a safety buffer.\n\n### Health Factor\n\n```\nHealth Factor = (Collateral Value × Liquidation Threshold) / Debt Value\n\nExample:\nCollateral: 10 SOL @ $100 = $1,000\nLiquidation Threshold: 80%\nDebt: $750 USDC\n\nHealth Factor = ($1,000 × 0.8) / $750 = 1.067\n\nIf Health Factor < 1.0 → Liquidatable\n```\n\n## Liquidations\n\nWhen a position becomes undercollateralized, liquidators can repay the debt and seize collateral.\n\n### Liquidation Process\n\n1. Health factor drops below 1.0\n2. Liquidator repays portion of debt (close factor)\n3. Liquidator receives collateral + bonus\n4. Remaining position (if any) is healthier\n\n### Example\n\n```\nBorrower:\nCollateral: 10 SOL @ $90 = $900\nDebt: $750 USDC\nLiquidation Threshold: 80%\nHealth Factor: ($900 × 0.8) / $750 = 0.96 ❌\n\nLiquidation:\nClose Factor: 50% (can liquidate up to 50% of debt)\nLiquidator repays: $375 USDC\nCollateral seized: $375 / $90 = 4.17 SOL\nLiquidation Bonus: 5%\nActual seized: 4.17 × 1.05 = 4.38 SOL\n\nAfter liquidation:\nBorrower has: 5.62 SOL, $375 debt\nHealth Factor: ($506 × 0.8) / $375 = 1.08 ✅\n```\n\n### Close Factor\n\nLimits how much of a position can be liquidated at once:\n\n```\nClose Factor = 50%\nMeans: Max 50% of debt can be repaid in one liquidation\n\nPrevents: Liquidating entire position when only slightly undercollateralized\n```\n\n## Risk Parameters\n\nEach asset has custom risk parameters:\n\n| Asset | LTV | Liq Threshold | Liq Bonus |\n|-------|-----|---------------|----------|\n| SOL | 75% | 80% | 5% |\n| USDC | 80% | 85% | 4% |\n| BONK | 50% | 60% | 15% |\n\nMore volatile/risky assets → lower LTV, higher liquidation bonus.\n\n## Isolated Pools\n\nTo manage risk, protocols create **isolated pools**:\n\n```\nMain Pool: SOL, USDC, USDT, ETH (blue-chip assets)\nIsolated Pool 1: SOL + New Token X\nIsolated Pool 2: USDC + Experimental Asset Y\n```\n\nIf one isolated pool has bad debt, it doesn't affect others.\n\n## Borrowing Strategies\n\n### Leveraged Long\n\n1. Deposit 10 SOL as collateral\n2. Borrow 7 SOL worth of USDC\n3. Buy 7 more SOL with USDC\n4. Now have 17 SOL exposure with 10 SOL capital\n5. If SOL ↑ 10%, profit is 17% (minus borrow costs)\n\n### Yield Farming\n\n1. Deposit stablecoins, borrow SOL\n2. Use SOL in high-APY liquidity pool\n3. Earn more from LP fees than borrow cost\n4. Profit = LP APY - Borrow APY\n\n### Short Position\n\n1. Deposit USDC collateral\n2. Borrow SOL\n3. Sell SOL for USDC\n4. If SOL drops, buy back cheaper and repay\n\n## Oracle Dependency\n\nLending protocols rely on **oracles** for price feeds:\n\n### Pyth Network\n\n- Pull-based oracle (request price on-demand)\n- Sub-second updates\n- 350+ price feeds\n\n### Switchboard\n\n- Decentralized oracle network\n- Customizable feeds\n- TEE (Trusted Execution Environment) support\n\n### Oracle Risks\n\n- **Stale prices**: If oracle doesn't update, liquidations may fail or be unfair\n- **Manipulation**: Flash loan attacks can manipulate some oracles\n- **Downtime**: If oracle is down, protocol may pause\n\nMitigation: Use multiple oracles, TWAP (Time-Weighted Average Price), circuit breakers.\n\n## Protocol Revenue\n\n```\nReserve Factor: 10%\nTotal Interest Paid: $100,000\nTo Suppliers: $90,000\nTo Protocol: $10,000\n```\n\nProtocols earn from the spread between borrow and supply rates.\n\n## Real-World Examples\n\n### Solend\n\n- TVL: ~$300M\n- Main pool + multiple isolated pools\n- Pyth oracles\n- SLND token rewards\n\n### MarginFi\n\n- TVL: ~$600M\n- Risk-adjusted portfolio margin\n- Integrated with DEXs for leveraged trading\n\n### Kamino Finance\n\n- TVL: ~$1.8B\n- Focuses on automated liquidity strategies\n- Multiply (leveraged yield vaults)\n\n## Next Challenge\n\nYou'll implement the constant product AMM formula with fees, price impact, and liquidity calculations.\n"
       }
+    ],
+    "skills": [
+      "defi",
+      "lending"
     ],
     "slug": {
       "_type": "slug",
@@ -1361,6 +1526,10 @@
         ]
       }
     ],
+    "skills": [
+      "defi",
+      "lending"
+    ],
     "slug": {
       "_type": "slug",
       "current": "liquidation-challenge"
@@ -1376,6 +1545,10 @@
         "_type": "prose",
         "src": "# Transaction Notifications\n\nReal-time notifications keep users informed about transaction status without requiring them to poll or refresh. Let's build a robust notification system.\n\n## Toast Notifications\n\nToasts are perfect for transaction feedback. Use libraries like `react-hot-toast` or `sonner`:\n\n```typescript\nimport toast from 'react-hot-toast';\nimport { ExternalLink } from 'lucide-react';\n\nfunction useTransactionToast() {\n  const cluster = 'mainnet-beta';\n\n  function toastSignature(signature: string) {\n    const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;\n    \n    toast.success(\n      <div className=\"flex items-center gap-2\">\n        <span>Transaction confirmed!</span>\n        <a\n          href={explorerUrl}\n          target=\"_blank\"\n          rel=\"noopener noreferrer\"\n          className=\"text-purple-600 hover:underline flex items-center gap-1\"\n        >\n          View <ExternalLink className=\"w-3 h-3\" />\n        </a>\n      </div>,\n      { duration: 8000 }\n    );\n  }\n\n  function toastError(message: string) {\n    toast.error(message, { duration: 5000 });\n  }\n\n  return { toastSignature, toastError };\n}\n\n// Usage\nasync function handleTransfer() {\n  const { toastSignature, toastError } = useTransactionToast();\n\n  try {\n    toast.loading('Sending transaction...');\n    const signature = await sendTransaction(tx, connection);\n    \n    toast.loading('Confirming...');\n    await connection.confirmTransaction(signature);\n    \n    toast.dismiss();\n    toastSignature(signature);\n  } catch (err) {\n    toast.dismiss();\n    toastError('Transaction failed. Please try again.');\n  }\n}\n```\n\n## WebSocket Subscriptions for Real-Time Updates\n\nMonitor accounts for changes without polling:\n\n```typescript\nfunction useAccountChangeNotifications(publicKey: PublicKey | null) {\n  const { connection } = useConnection();\n  const previousBalance = useRef<number | null>(null);\n\n  useEffect(() => {\n    if (!publicKey) return;\n\n    const subscriptionId = connection.onAccountChange(\n      publicKey,\n      (accountInfo) => {\n        const newBalance = accountInfo.lamports / LAMPORTS_PER_SOL;\n\n        if (previousBalance.current !== null) {\n          const change = newBalance - previousBalance.current;\n\n          if (change > 0) {\n            toast.success(`Received ${change.toFixed(4)} SOL`);\n          } else if (change < 0) {\n            toast.info(`Sent ${Math.abs(change).toFixed(4)} SOL`);\n          }\n        }\n\n        previousBalance.current = newBalance;\n      },\n      'confirmed'\n    );\n\n    return () => {\n      connection.removeAccountChangeListener(subscriptionId);\n    };\n  }, [publicKey, connection]);\n}\n```\n\n## Transaction Status Polling\n\nFor critical operations, poll transaction status:\n\n```typescript\nasync function waitForConfirmation(\n  connection: Connection,\n  signature: string,\n  commitment: Commitment = 'confirmed',\n  timeout = 60000\n): Promise<boolean> {\n  const start = Date.now();\n\n  while (Date.now() - start < timeout) {\n    const status = await connection.getSignatureStatus(signature);\n\n    if (status.value?.confirmationStatus === commitment) {\n      return true;\n    }\n\n    if (status.value?.err) {\n      throw new Error('Transaction failed');\n    }\n\n    // Wait 1s before next check\n    await new Promise(resolve => setTimeout(resolve, 1000));\n  }\n\n  throw new Error('Transaction confirmation timeout');\n}\n\n// Usage with notifications\nasync function sendWithNotifications(tx: Transaction) {\n  const toastId = toast.loading('Sending transaction...');\n\n  try {\n    const signature = await sendTransaction(tx, connection);\n    \n    toast.loading('Confirming on-chain...', { id: toastId });\n    \n    await waitForConfirmation(connection, signature);\n    \n    toast.success(\n      <span>\n        Transaction confirmed!\n        <a href={`https://explorer.solana.com/tx/${signature}`}>View</a>\n      </span>,\n      { id: toastId }\n    );\n  } catch (err) {\n    toast.error('Transaction failed', { id: toastId });\n  }\n}\n```\n\n## Notification Permission (Browser Notifications)\n\nFor background notifications when tab isn't focused:\n\n```typescript\nfunction useNotificationPermission() {\n  const [permission, setPermission] = useState<NotificationPermission>(\n    typeof Notification !== 'undefined' ? Notification.permission : 'default'\n  );\n\n  async function requestPermission() {\n    if (typeof Notification === 'undefined') return;\n    \n    const result = await Notification.requestPermission();\n    setPermission(result);\n  }\n\n  function notify(title: string, body: string) {\n    if (permission !== 'granted') return;\n    \n    new Notification(title, {\n      body,\n      icon: '/solana-logo.png',\n      badge: '/notification-badge.png',\n    });\n  }\n\n  return { permission, requestPermission, notify };\n}\n\n// Usage\nfunction TransactionMonitor() {\n  const { notify } = useNotificationPermission();\n  const { publicKey } = useWallet();\n  const { connection } = useConnection();\n\n  useEffect(() => {\n    if (!publicKey) return;\n\n    const sub = connection.onAccountChange(\n      publicKey,\n      () => {\n        if (!document.hasFocus()) {\n          notify('Solana Transaction', 'Your wallet balance changed');\n        }\n      },\n      'confirmed'\n    );\n\n    return () => connection.removeAccountChangeListener(sub);\n  }, [publicKey, connection, notify]);\n\n  return null;\n}\n```\n\n## Notification Sound\n\nAdd audio feedback for important events:\n\n```typescript\nfunction useTransactionSound() {\n  const successSound = useRef<HTMLAudioElement | null>(null);\n  const errorSound = useRef<HTMLAudioElement | null>(null);\n\n  useEffect(() => {\n    successSound.current = new Audio('/sounds/success.mp3');\n    errorSound.current = new Audio('/sounds/error.mp3');\n  }, []);\n\n  function playSuccess() {\n    successSound.current?.play();\n  }\n\n  function playError() {\n    errorSound.current?.play();\n  }\n\n  return { playSuccess, playError };\n}\n```\n\n## Notification Queue\n\nManage multiple notifications without overwhelming the UI:\n\n```typescript\nfunction NotificationQueue() {\n  const [queue, setQueue] = useState<Notification[]>([]);\n  const maxVisible = 3;\n\n  function addNotification(notification: Notification) {\n    setQueue(prev => [...prev, notification]);\n\n    setTimeout(() => {\n      setQueue(prev => prev.filter(n => n.id !== notification.id));\n    }, notification.duration || 5000);\n  }\n\n  return (\n    <div className=\"fixed bottom-4 right-4 space-y-2 z-50\">\n      {queue.slice(-maxVisible).map(notification => (\n        <NotificationCard key={notification.id} {...notification} />\n      ))}\n    </div>\n  );\n}\n```\n\n## Real-World Examples\n\n### Phantom Wallet\n- Shows in-app toast when transaction is signed\n- Browser notification when transaction confirms (if tab not focused)\n- Sound effect on success/failure\n\n### Jupiter Aggregator\n- Loading toast while routing\n- Progress indicator during swap\n- Success toast with explorer link\n- Error toast with retry button\n\n## Best Practices\n\n1. Use toast notifications for transaction updates\n2. Include explorer links in success notifications\n3. Implement WebSocket subscriptions for real-time balance changes\n4. Request browser notification permission for background updates\n5. Add sound effects for important events (success, error)\n6. Limit visible notifications to avoid UI clutter\n7. Auto-dismiss notifications after 5-8 seconds\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "transactions"
     ],
     "slug": {
       "_type": "slug",
@@ -1393,6 +1566,10 @@
         "src": "# Price Oracles for DeFi\n\nDeFi protocols need reliable asset prices to function. Lending platforms must know collateral values, DEXs need reference prices for limit orders, and derivatives require settlement prices. Price oracles solve this problem by bringing off-chain price data on-chain.\n\n## Oracle Mechanisms\n\n**Push oracles** proactively write price updates to on-chain accounts on a schedule (e.g., every 60 seconds) or when prices deviate beyond a threshold. Protocols simply read the latest price from the oracle account. Switchboard uses this model with validator-operated data feeds.\n\n**Pull oracles** store signed price attestations off-chain. Protocols fetch the latest attestation when needed and submit it with their transaction. The oracle program verifies the signature before allowing the price to be used. Pyth Network pioneered this model for Solana.\n\n## Pyth Network\n\nPyth aggregates price data from over 90 first-party sources including exchanges, market makers, and trading firms. Each data provider signs their price contribution, and the on-chain program computes a confidence-weighted median.\n\n**Key features**:\n- Sub-second price updates for major assets\n- Confidence intervals indicating price uncertainty\n- Exponentially-weighted moving average (EMA) for smooth prices\n- Publisher attribution for transparency\n\nPyth's pull model reduces costs by only updating on-chain prices when transactions need them, rather than constantly pushing updates.\n\n## Time-Weighted Average Price (TWAP)\n\nTWAP oracles compute the average price over a time window, making price manipulation expensive. An attacker would need to sustain artificial prices for the entire window, not just a single block.\n\nProtocols can construct TWAP from Pyth EMA prices or compute it directly from DEX swap observations. TWAP is essential for lending protocols to prevent flash loan attacks that temporarily spike prices.\n\n## Oracle Safety\n\nRobust oracle integration requires:\n- **Staleness checks**: Reject prices older than acceptable threshold (e.g., 60 seconds)\n- **Confidence intervals**: Only use prices with acceptable confidence (low uncertainty)\n- **Circuit breakers**: Halt operations if price deviates too far from recent values\n- **Multi-oracle redundancy**: Compare prices from multiple sources\n\nPoor oracle design has caused hundreds of millions in DeFi exploits. Always validate oracle data before using it in critical logic.\n"
       }
     ],
+    "skills": [
+      "defi",
+      "oracles"
+    ],
     "slug": {
       "_type": "slug",
       "current": "oracle-design"
@@ -1409,6 +1586,10 @@
         "src": "# On-Chain Orderbooks on Solana\n\nOrderbook-based decentralized exchanges (DEXs) bring the familiar trading experience of centralized exchanges to DeFi. Solana's high throughput and low latency make it uniquely suited for on-chain orderbooks.\n\n## Central Limit Order Books (CLOBs)\n\nA CLOB maintains separate bid (buy) and ask (sell) order lists sorted by price. When a new order arrives, the matching engine searches for counterparty orders at compatible prices. Matching happens on a price-time priority basis: the best price gets filled first, and among orders at the same price, earlier orders have priority.\n\n**Key protocols**:\n- **Phoenix**: Next-generation CLOB with optimized matching and reduced memory footprint\n- **OpenBook**: Community fork of Serum's original CLOB implementation\n- **Zeta Markets**: Options and futures orderbook specialized for derivatives\n\n## Orderbooks vs AMMs\n\nAutomated Market Makers (AMMs) like Raydium and Orca use liquidity pools with algorithmic pricing (x*y=k). Orderbooks offer several advantages:\n\n**Capital efficiency**: Liquidity providers can specify exact prices instead of providing liquidity across the entire price curve. A market maker can place tight bid-ask spreads at current market price without locking capital in extreme price ranges.\n\n**Price discovery**: Order flow directly determines market price rather than relying on arbitrageurs to rebalance pools. This enables better price discovery, especially for less liquid assets.\n\n**Professional trading tools**: Limit orders, stop losses, fill-or-kill orders, and post-only orders give traders precise execution control.\n\n## Solana's Advantages\n\nTraditional blockchain throughput (15-30 TPS) makes on-chain orderbooks impractical due to slow settlement and high fees. Solana's 400ms block times and 65,000 TPS capacity enable:\n\n- Real-time order updates visible to all participants\n- Sub-second trade settlement and confirmation\n- Low fees enabling profitable market making with tight spreads\n- Atomic order matching preventing front-running\n\nOrderbooks represent the future of professional DeFi trading, combining CEX user experience with DEX trustlessness.\n"
       }
     ],
+    "skills": [
+      "defi",
+      "amm"
+    ],
     "slug": {
       "_type": "slug",
       "current": "orderbook-design"
@@ -1424,6 +1605,9 @@
         "_type": "prose",
         "src": "# Ownership and Borrowing in Rust\n\nRust's ownership system is its most distinctive feature. Understanding it is essential for writing Solana programs, as it directly maps to how accounts are passed to your program.\n\n## The Three Rules of Ownership\n\n1. **Each value has a single owner**: Only one variable owns a piece of data at any time\n2. **When the owner goes out of scope, the value is dropped**: Automatic cleanup, no memory leaks\n3. **Ownership can be transferred (moved)**: Passing a value to a function or assigning it to another variable moves ownership\n\n```rust\nlet account_data = vec![1, 2, 3, 4];\nlet moved_data = account_data; // Ownership transferred\n// println!(\":{?}\", account_data); // Error: value moved\n```\n\n## Borrowing: Using Data Without Taking Ownership\n\nBorrowing lets you reference data without taking ownership. There are two types:\n\n### Immutable Borrowing (`&T`)\n\nYou can have **multiple** immutable borrows simultaneously:\n\n```rust\nfn calculate_balance(accounts: &[AccountInfo]) -> u64 {\n    accounts.iter().map(|a| a.lamports).sum()\n}\n\nlet accounts = vec![/* ... */];\nlet total = calculate_balance(&accounts);\n// accounts still valid here\n```\n\n### Mutable Borrowing (`&mut T`)\n\nYou can have **only ONE** mutable borrow at a time, and no immutable borrows can exist simultaneously:\n\n```rust\nfn debit_account(account: &mut AccountInfo, amount: u64) {\n    account.lamports -= amount;\n}\n\nlet mut account = /* ... */;\ndebit_account(&mut account);\n```\n\n## How This Maps to Solana\n\nWhen you write a Solana program, accounts are passed as `&[AccountInfo]` (immutable borrow) or extracted as `&mut AccountInfo` (mutable borrow):\n\n```rust\npub fn process_instruction(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo], // immutable borrow of the slice\n    instruction_data: &[u8],\n) -> ProgramResult {\n    let account_iter = &mut accounts.iter();\n    let sender = next_account_info(account_iter)?; // immutable borrow\n    let recipient = next_account_info(account_iter)?;\n    \n    // To modify, you need mutable access:\n    **sender.lamports.borrow_mut() -= amount;\n    **recipient.lamports.borrow_mut() += amount;\n    Ok(())\n}\n```\n\n## Key Insight\n\nSolana's runtime enforces similar rules:\n- Multiple programs can read an account simultaneously (immutable borrows)\n- Only ONE program can write to an account in a transaction (mutable borrow)\n- The runtime prevents data races at the transaction level, and Rust prevents them at compile time\n\nThis alignment makes Rust the perfect fit for Solana development.\n"
       }
+    ],
+    "skills": [
+      "rust"
     ],
     "slug": {
       "_type": "slug",
@@ -1475,6 +1659,11 @@
         ]
       }
     ],
+    "skills": [
+      "web3-frontend",
+      "borsh-serialization",
+      "account-model"
+    ],
     "slug": {
       "_type": "slug",
       "current": "parse-data-challenge"
@@ -1490,6 +1679,11 @@
         "_type": "prose",
         "src": "# Parsing Account Data\n\nAccount data on Solana is stored as raw bytes (`Uint8Array`). To use this data in your application, you must **deserialize** it into structured JavaScript objects.\n\n## Why Binary Encoding?\n\nSolana stores data as compact binary to:\n- **Minimize storage costs** (rent is based on account size)\n- **Maximize throughput** (smaller data = faster network transmission)\n- **Enable cross-language compatibility** (Rust programs, JS clients, Python bots all read the same bytes)\n\n## Borsh Encoding Standard\n\nMost Solana programs use **Borsh** (Binary Object Representation Serializer for Hashing):\n\n```typescript\nimport { serialize, deserialize, Schema } from 'borsh';\n\n// Define schema\nclass UserProfile {\n  username: string = '';\n  level: number = 0;\n  xp: bigint = 0n;\n\n  constructor(fields: { username: string; level: number; xp: bigint }) {\n    Object.assign(this, fields);\n  }\n}\n\nconst schema: Schema = {\n  struct: {\n    username: 'string',\n    level: 'u8',\n    xp: 'u64',\n  },\n};\n\n// Deserialize\nconst accountData = await connection.getAccountInfo(profilePubkey);\nconst profile = deserialize(schema, UserProfile, accountData.data);\n\nconsole.log(profile.username); // \"SolDev123\"\nconsole.log(profile.level);    // 5\nconsole.log(profile.xp);       // 1200n\n```\n\n## Manual Parsing with DataView\n\nFor simple data structures, you can parse manually:\n\n```typescript\nfunction parseTokenAccount(data: Uint8Array) {\n  const view = new DataView(data.buffer);\n\n  return {\n    mint: new PublicKey(data.slice(0, 32)),\n    owner: new PublicKey(data.slice(32, 64)),\n    amount: view.getBigUint64(64, true), // little-endian\n    delegateOption: view.getUint32(72, true),\n    state: view.getUint8(108),\n  };\n}\n```\n\n## Common Data Types\n\n| Borsh Type | JavaScript | Bytes | Range |\n|------------|------------|-------|-------|\n| `u8` | number | 1 | 0 to 255 |\n| `u32` | number | 4 | 0 to 4,294,967,295 |\n| `u64` | bigint | 8 | 0 to 2^64-1 |\n| `string` | string | variable | Length prefix + UTF-8 |\n| `[u8; 32]` | Uint8Array | 32 | Fixed-size byte array |\n| `Vec<T>` | Array<T> | variable | Length prefix + items |\n\n## String Encoding\n\nStrings are encoded as:\n1. **4-byte length prefix** (u32, little-endian)\n2. **UTF-8 bytes**\n\n```typescript\nfunction parseString(data: Uint8Array, offset: number): [string, number] {\n  const view = new DataView(data.buffer);\n  const length = view.getUint32(offset, true); // little-endian\n  \n  const stringBytes = data.slice(offset + 4, offset + 4 + length);\n  const str = new TextDecoder().decode(stringBytes);\n  \n  return [str, offset + 4 + length]; // [parsed string, new offset]\n}\n```\n\n## Real-World Example: Metaplex NFT Metadata\n\nMetaplex stores NFT metadata on-chain:\n\n```typescript\nimport { Metadata } from '@metaplex-foundation/mpl-token-metadata';\n\nconst metadataPDA = await Metadata.getPDA(mintPublicKey);\nconst accountInfo = await connection.getAccountInfo(metadataPDA);\n\nconst metadata = Metadata.deserialize(accountInfo.data);\n\nconsole.log('Name:', metadata[0].data.name);\nconsole.log('Symbol:', metadata[0].data.symbol);\nconsole.log('URI:', metadata[0].data.uri);\n```\n\n## Anchor Discriminators\n\nAnchor programs use an 8-byte **discriminator** at the start of each account:\n\n```typescript\nconst discriminator = data.slice(0, 8);\n// Hash of \"account:YourAccountName\"\n```\n\nThis helps identify the account type. Anchor's TypeScript client automatically handles discriminators.\n\n## Debugging Tips\n\n### View Raw Bytes\n\n```typescript\nconsole.log('Raw bytes:', Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '));\n// 01 00 00 00 0a 00 00 00 48 65 6c 6c 6f ...\n```\n\n### Use Solana Explorer\n\nPaste your account address into [Solana Explorer](https://explorer.solana.com) → \"Account Data\" tab to view hex dump.\n\n## Best Practices\n\n1. **Use existing parsers** when available (Metaplex, SPL Token, Anchor)\n2. **Handle endianness** consistently (Solana uses little-endian)\n3. **Validate data length** before parsing to avoid out-of-bounds errors\n4. **Cache parsed data** (parsing is CPU-intensive; don't re-parse on every render)\n\n## Next Steps\n\nIn the next challenge, you'll manually parse a binary data buffer into structured fields.\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "borsh-serialization",
+      "account-model"
     ],
     "slug": {
       "_type": "slug",
@@ -1541,6 +1735,10 @@
         ]
       }
     ],
+    "skills": [
+      "anchor",
+      "pdas"
+    ],
     "slug": {
       "_type": "slug",
       "current": "pda-advanced-challenge"
@@ -1591,6 +1789,10 @@
         ]
       }
     ],
+    "skills": [
+      "rust",
+      "pdas"
+    ],
     "slug": {
       "_type": "slug",
       "current": "pda-challenge"
@@ -1606,6 +1808,10 @@
         "_type": "prose",
         "src": "# Program Derived Addresses (PDAs) Deep Dive\n\nProgram Derived Addresses are one of Solana's most powerful and unique features. They enable programs to \"own\" accounts and sign transactions without needing a private key.\n\n## What Are PDAs?\n\nA PDA is a public key that:\n1. Is derived deterministically from seeds and a program ID\n2. Is **not** on the Ed25519 elliptic curve (no corresponding private key exists)\n3. Can only be \"signed for\" by the program that derived it\n\n```rust\n// In Anchor\nlet (pda, bump) = Pubkey::find_program_address(\n    &[b\"user\", user.key().as_ref()],\n    program_id\n);\n```\n\n## Why PDAs Are Off-Curve\n\nSolana uses Ed25519 for signatures. Ed25519 keys lie on an elliptic curve. PDAs are specifically designed to fall **off** this curve, which means:\n- No private key can exist for a PDA\n- Only the deriving program can sign for the PDA (via CPI with `invoke_signed`)\n\nThis creates **program-controlled accounts** that can't be compromised by key theft.\n\n## PDA Derivation Process\n\n```\nseeds = [b\"user\", user_pubkey.as_ref()]\nprogram_id = your_program_id\n\nfor bump in 255..=0 {\n    candidate = sha256(seeds + [bump] + program_id)\n    if !is_on_curve(candidate) {\n        return (candidate, bump)  // This is your PDA\n    }\n}\n```\n\nThe **canonical bump** is the first bump (starting from 255) that produces an off-curve address.\n\n## Seeds Design Patterns\n\n### Pattern 1: User-Scoped Account\n\n```rust\nseeds = [b\"user\", user.key().as_ref()]\n```\n\nOne account per user. Used for user profiles, settings, etc.\n\n### Pattern 2: User + Resource\n\n```rust\nseeds = [b\"escrow\", user.key().as_ref(), trade_id.to_le_bytes().as_ref()]\n```\n\nMultiple accounts per user, one per resource (escrow, order, etc.).\n\n### Pattern 3: Global Singleton\n\n```rust\nseeds = [b\"config\"]\n```\n\nOne global account for the program (config, authority, etc.).\n\n### Pattern 4: Nested PDAs\n\n```rust\n// User stats PDA\nseeds_stats = [b\"stats\", user.key().as_ref()]\n\n// User vault PDA (derived from stats PDA)\nseeds_vault = [b\"vault\", stats_pda.key().as_ref()]\n```\n\nPDAs can be derived from other PDAs for complex hierarchies.\n\n## Storing the Bump\n\nAlways store the canonical bump in your account data:\n\n```rust\n#[account]\npub struct UserAccount {\n    pub authority: Pubkey,\n    pub bump: u8,  // Store this!\n    pub data: u64,\n}\n```\n\nWhy? Because recalculating the bump on every instruction is expensive (requires up to 256 hash operations). Storing it makes subsequent operations cheaper.\n\n## PDAs as Signers\n\nPDAs can sign CPIs using `invoke_signed`:\n\n```rust\ninvoke_signed(\n    &transfer_instruction,\n    &[\n        pda_account.to_account_info(),\n        recipient.to_account_info(),\n        system_program.to_account_info(),\n    ],\n    &[&[b\"user\", user.key().as_ref(), &[bump]]], // Signer seeds\n)?;\n```\n\nThe program derives the PDA, verifies it matches, and \"signs\" the CPI.\n\n## Security Considerations\n\n### 1. Seed Collision\n\nBe careful with seed design:\n\n```rust\n// BAD: Can collide if strings contain delimiters\nseeds = [user_name.as_bytes()]  // \"alice\" and \"ali\" + \"ce\" collide!\n\n// GOOD: Use fixed-size data or well-defined separators\nseeds = [b\"user\", user.key().as_ref()]\n```\n\n### 2. Bump Validation\n\nAlways use the canonical bump:\n\n```rust\n// In Anchor, this is automatic:\n#[account(\n    seeds = [b\"user\", authority.key().as_ref()],\n    bump = user.bump  // Validates stored bump is canonical\n)]\n```\n\n## PDA vs Regular Account\n\n| Feature | Regular Account | PDA |\n|---------|----------------|-----|\n| Has private key | Yes | No |\n| Can self-sign | Yes | No (requires program) |\n| Can hold SOL | Yes | Yes |\n| Can own other accounts | Yes | Yes |\n| Deterministic address | No | Yes |\n| On Ed25519 curve | Yes | No |\n\n## Real-World Examples\n\n**Token vaults** (escrow programs):\n```rust\nseeds = [b\"vault\", escrow.key().as_ref()]\n```\n\n**Associated Token Accounts**:\n```rust\nseeds = [wallet.key(), token_program.key(), mint.key()]\n```\n\n**Governance proposal accounts**:\n```rust\nseeds = [b\"proposal\", governance.key(), proposal_id.to_le_bytes()]\n```\n\n## Next Challenge\n\nYou'll derive multiple related PDAs from a common base to understand PDA hierarchies.\n"
       }
+    ],
+    "skills": [
+      "anchor",
+      "pdas"
     ],
     "slug": {
       "_type": "slug",
@@ -1663,6 +1869,10 @@
         ]
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "program-challenge"
@@ -1678,6 +1888,10 @@
         "_type": "prose",
         "src": "# Solana Program Structure\n\nSolana programs (smart contracts) follow a specific structure. Understanding this architecture is essential before writing your first program.\n\n## The Entrypoint Macro\n\nEvery Solana program starts with the `entrypoint!` macro, which defines the entry function the runtime calls:\n\n```rust\nuse solana_program::{\n    account_info::AccountInfo,\n    entrypoint,\n    entrypoint::ProgramResult,\n    pubkey::Pubkey,\n};\n\nentrypoint!(process_instruction);\n\npub fn process_instruction(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    instruction_data: &[u8],\n) -> ProgramResult {\n    // Your program logic here\n    Ok(())\n}\n```\n\n## The Three Parameters\n\n### 1. `program_id: &Pubkey`\n\nThe public key (address) of your deployed program. Use this to:\n- Verify that accounts are owned by your program\n- Derive PDAs (Program Derived Addresses)\n- Check that the correct program was called\n\n```rust\nif account.owner != program_id {\n    return Err(ProgramError::IncorrectProgramId);\n}\n```\n\n### 2. `accounts: &[AccountInfo]`\n\nA slice of all accounts passed to the instruction. Each `AccountInfo` contains:\n\n```rust\npub struct AccountInfo<'a> {\n    pub key: &'a Pubkey,           // Account's public key\n    pub lamports: Rc<RefCell<&'a mut u64>>, // Balance in lamports\n    pub data: Rc<RefCell<&'a mut [u8]>>,    // Raw account data\n    pub owner: &'a Pubkey,         // Program that owns this account\n    pub rent_epoch: u64,           // When rent is next due\n    pub is_signer: bool,           // True if account signed the transaction\n    pub is_writable: bool,         // True if account is mutable\n    pub executable: bool,          // True if account is a program\n}\n```\n\nAccess accounts using an iterator:\n\n```rust\nlet account_iter = &mut accounts.iter();\nlet sender = next_account_info(account_iter)?;\nlet recipient = next_account_info(account_iter)?;\nlet system_program = next_account_info(account_iter)?;\n```\n\n### 3. `instruction_data: &[u8]`\n\nRaw bytes representing the instruction. Deserialize to determine what action to perform:\n\n```rust\nlet instruction = MyInstruction::try_from_slice(instruction_data)?;\n\nmatch instruction {\n    MyInstruction::Initialize { amount } => process_initialize(accounts, amount),\n    MyInstruction::Transfer { amount } => process_transfer(accounts, amount),\n    MyInstruction::Close => process_close(accounts),\n}\n```\n\n## Account Validation\n\n**Critical**: Always validate accounts before using them. Attackers can pass malicious accounts to exploit your program.\n\n```rust\npub fn process_transfer(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    amount: u64,\n) -> ProgramResult {\n    let account_iter = &mut accounts.iter();\n    let sender = next_account_info(account_iter)?;\n    let recipient = next_account_info(account_iter)?;\n    \n    // 1. Verify sender signed the transaction\n    if !sender.is_signer {\n        return Err(ProgramError::MissingRequiredSignature);\n    }\n    \n    // 2. Verify sender is writable (we'll modify balance)\n    if !sender.is_writable {\n        return Err(ProgramError::InvalidAccountData);\n    }\n    \n    // 3. Verify sender is owned by this program\n    if sender.owner != program_id {\n        return Err(ProgramError::IncorrectProgramId);\n    }\n    \n    // 4. Verify recipient is writable\n    if !recipient.is_writable {\n        return Err(ProgramError::InvalidAccountData);\n    }\n    \n    // Now safe to proceed\n    // ...\n    Ok(())\n}\n```\n\n## Common Validation Checks\n\n| Check | Prevents |\n|-------|----------|\n| `!is_signer` | Unauthorized access |\n| `!is_writable` | Mutating read-only accounts |\n| `owner != program_id` | Cross-program account hijacking |\n| `accounts.len() < N` | Index out of bounds |\n| `data.len() < expected` | Uninitialized accounts |\n| `key != expected_key` | Account substitution attacks |\n\n## Program Flow\n\n```rust\nentrypoint!(process_instruction);\n\npub fn process_instruction(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    instruction_data: &[u8],\n) -> ProgramResult {\n    // 1. Parse instruction\n    let instruction = MyInstruction::try_from_slice(instruction_data)\n        .map_err(|_| ProgramError::InvalidInstructionData)?;\n    \n    // 2. Route to handler based on instruction type\n    match instruction {\n        MyInstruction::Initialize { amount } => {\n            msg!(\"Instruction: Initialize\");\n            process_initialize(program_id, accounts, amount)\n        }\n        MyInstruction::Transfer { amount } => {\n            msg!(\"Instruction: Transfer\");\n            process_transfer(program_id, accounts, amount)\n        }\n    }\n}\n\nfn process_initialize(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    amount: u64,\n) -> ProgramResult {\n    // 3. Validate accounts\n    // 4. Deserialize account data\n    // 5. Perform business logic\n    // 6. Serialize account data back\n    Ok(())\n}\n```\n\n## Key Principles\n\n1. **Validate everything**: Never trust input data or accounts\n2. **Fail early**: Return errors before mutating state\n3. **Log actions**: Use `msg!()` to help debug transactions\n4. **Minimize compute**: Solana charges for compute units used\n5. **Test thoroughly**: Write unit tests for all code paths\n\nIn the next challenge, you'll build a complete instruction handler that validates accounts and processes a transfer!\n"
       }
+    ],
+    "skills": [
+      "rust",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -1695,6 +1909,10 @@
         "src": "# Introduction to Solana Programs\n\nSolana programs (often called \"smart contracts\" on other blockchains) are the executable code that runs on the Solana network. Understanding how they work is essential for building decentralized applications.\n\n## Programs are Stateless\n\nUnlike Ethereum smart contracts that store state internally, **Solana programs are completely stateless**. They only contain executable code. All state is stored in separate accounts.\n\n```\n┌─────────────────┐         ┌──────────────┐\n│  Your Program   │ ────>   │ Account Data │\n│  (Stateless)    │         │  (Stateful)  │\n└─────────────────┘         └──────────────┘\n```\n\nThis separation enables:\n- **Parallel execution**: Multiple transactions can run simultaneously\n- **Composability**: Programs can easily interact with each other\n- **Upgradability**: Update code without migrating state\n\n## Instruction Anatomy\n\nPrograms are invoked via **instructions**. Each instruction contains:\n\n```typescript\ninterface Instruction {\n  programId: PublicKey;           // Which program to call\n  keys: AccountMeta[];            // Which accounts to pass\n  data: Uint8Array;               // Instruction-specific data\n}\n\ninterface AccountMeta {\n  pubkey: PublicKey;              // Account address\n  isSigner: boolean;              // Must sign transaction?\n  isWritable: boolean;            // Program will modify?\n}\n```\n\n### Example: Transfer Instruction\n\n```typescript\nimport { SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';\n\nconst instruction = SystemProgram.transfer({\n  fromPubkey: sender,             // Signer, writable\n  toPubkey: recipient,            // Writable\n  lamports: 0.5 * LAMPORTS_PER_SOL\n});\n\nconsole.log('Program ID:', instruction.programId.toBase58());\n// 11111111111111111111111111111111 (System Program)\nconsole.log('Keys:', instruction.keys);\n// [{ pubkey: sender, isSigner: true, isWritable: true },\n//  { pubkey: recipient, isSigner: false, isWritable: true }]\n```\n\n## Built-in Programs vs Custom Programs\n\n### System Program\n- **ID**: `11111111111111111111111111111111`\n- **Purpose**: Account creation, SOL transfers, account assignment\n- **Used by**: Every Solana transaction\n\n### Token Program\n- **ID**: `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`\n- **Purpose**: SPL token minting, transfers, account management\n- **Used by**: All DeFi protocols, NFT platforms, token projects\n\n### Custom Programs\n- Deployed by developers\n- Written in Rust, C, or C++ (compiled to BPF bytecode)\n- Examples: Raydium AMM, Magic Eden marketplace, Jupiter aggregator\n\n## The BPF Runtime (Sealevel)\n\nSolana programs run in the **BPF (Berkeley Packet Filter)** virtual machine called **Sealevel**. Key features:\n\n- **Deterministic**: Same input always produces same output\n- **Metered**: Compute units prevent infinite loops\n- **Sandboxed**: Programs cannot access system resources\n- **Parallel**: Thousands of programs run simultaneously\n\n```typescript\n// Programs have a compute budget\nconst COMPUTE_UNITS_PER_INSTRUCTION = 200_000;\nconst MAX_COMPUTE_UNITS_PER_TX = 1_400_000;\n```\n\n## Cross-Program Invocation (CPI)\n\nPrograms can call other programs via **CPI**. This is how Solana achieves composability:\n\n```rust\n// Your program calling the Token Program (Rust example)\ninvoke(\n    &transfer_instruction,\n    &[\n        token_account.clone(),\n        destination.clone(),\n        authority.clone(),\n    ],\n)?;\n```\n\nReal example: Jupiter aggregates multiple DEXs by making CPIs to Raydium, Orca, and other AMM programs in a single transaction.\n\n## Next Steps\n\nIn the next challenge, you'll construct a custom instruction from scratch, understanding how programs receive and process data.\n"
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "programs-overview"
@@ -1711,6 +1929,10 @@
         "src": "# React Patterns for Solana dApps\n\nBuilding Solana frontends requires handling asynchronous blockchain operations gracefully. Let's explore essential React patterns for production-ready dApps.\n\n## Loading States\n\nBlockchain operations are async and can take seconds. Always show loading feedback:\n\n```typescript\nfunction BalanceDisplay() {\n  const { publicKey } = useWallet();\n  const { connection } = useConnection();\n  const [balance, setBalance] = useState<number | null>(null);\n  const [loading, setLoading] = useState(true);\n\n  useEffect(() => {\n    if (!publicKey) {\n      setBalance(null);\n      setLoading(false);\n      return;\n    }\n\n    setLoading(true);\n    connection.getBalance(publicKey)\n      .then(lamports => setBalance(lamports / LAMPORTS_PER_SOL))\n      .catch(err => console.error(err))\n      .finally(() => setLoading(false));\n  }, [publicKey, connection]);\n\n  if (loading) return <Spinner />;\n  if (!publicKey) return <p>Connect your wallet</p>;\n  \n  return <p>Balance: {balance?.toFixed(4)} SOL</p>;\n}\n```\n\n## Error Handling\n\nNetwork errors, rejected transactions, and insufficient funds are common. Handle them explicitly:\n\n```typescript\nfunction TransferForm() {\n  const [error, setError] = useState<string | null>(null);\n  const [sending, setSending] = useState(false);\n\n  async function handleTransfer() {\n    setError(null);\n    setSending(true);\n\n    try {\n      const signature = await sendTransaction(transaction, connection);\n      await connection.confirmTransaction(signature);\n      toast.success(`Transfer successful! ${signature}`);\n    } catch (err) {\n      if (err instanceof Error) {\n        if (err.message.includes('insufficient')) {\n          setError('Insufficient SOL balance for this transaction');\n        } else if (err.message.includes('rejected')) {\n          setError('Transaction rejected by wallet');\n        } else {\n          setError('Transaction failed. Please try again.');\n        }\n      }\n    } finally {\n      setSending(false);\n    }\n  }\n\n  return (\n    <div>\n      <button onClick={handleTransfer} disabled={sending}>\n        {sending ? 'Sending...' : 'Send SOL'}\n      </button>\n      {error && <ErrorAlert>{error}</ErrorAlert>}\n    </div>\n  );\n}\n```\n\n## Optimistic Updates\n\nUpdate UI immediately while the transaction confirms in the background:\n\n```typescript\nfunction LikeButton({ postId }: { postId: string }) {\n  const [likes, setLikes] = useState(42);\n  const [hasLiked, setHasLiked] = useState(false);\n\n  async function handleLike() {\n    // Optimistic update\n    setLikes(prev => prev + 1);\n    setHasLiked(true);\n\n    try {\n      // Send transaction\n      const signature = await sendLikeTransaction(postId);\n      await connection.confirmTransaction(signature);\n    } catch (err) {\n      // Revert on error\n      setLikes(prev => prev - 1);\n      setHasLiked(false);\n      toast.error('Failed to like post');\n    }\n  }\n\n  return (\n    <button onClick={handleLike} disabled={hasLiked}>\n      {hasLiked ? 'Liked!' : 'Like'} ({likes})\n    </button>\n  );\n}\n```\n\n## Data Fetching with React Query\n\n`@tanstack/react-query` is perfect for caching blockchain data:\n\n```typescript\nimport { useQuery } from '@tanstack/react-query';\n\nfunction useWalletBalance(publicKey: PublicKey | null) {\n  const { connection } = useConnection();\n\n  return useQuery({\n    queryKey: ['balance', publicKey?.toBase58()],\n    queryFn: async () => {\n      if (!publicKey) return null;\n      const lamports = await connection.getBalance(publicKey);\n      return lamports / LAMPORTS_PER_SOL;\n    },\n    enabled: !!publicKey,\n    staleTime: 30_000, // Consider fresh for 30s\n    refetchInterval: 60_000, // Auto-refresh every 60s\n  });\n}\n\n// Usage\nfunction BalanceCard() {\n  const { publicKey } = useWallet();\n  const { data: balance, isLoading, error } = useWalletBalance(publicKey);\n\n  if (isLoading) return <Skeleton />;\n  if (error) return <ErrorState />;\n  \n  return <p>{balance?.toFixed(4)} SOL</p>;\n}\n```\n\n## Subscription Pattern for Real-Time Updates\n\nUse WebSocket subscriptions for instant updates:\n\n```typescript\nfunction useAccountSubscription(publicKey: PublicKey | null) {\n  const { connection } = useConnection();\n  const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);\n\n  useEffect(() => {\n    if (!publicKey) return;\n\n    const subscriptionId = connection.onAccountChange(\n      publicKey,\n      (updatedAccountInfo) => {\n        setAccountInfo(updatedAccountInfo);\n      },\n      'confirmed'\n    );\n\n    // Cleanup on unmount\n    return () => {\n      connection.removeAccountChangeListener(subscriptionId);\n    };\n  }, [publicKey, connection]);\n\n  return accountInfo;\n}\n```\n\n## Debouncing User Input\n\nValidate addresses without overwhelming the RPC:\n\n```typescript\nimport { useDebouncedValue } from '@/hooks/useDebouncedValue';\n\nfunction RecipientInput() {\n  const [address, setAddress] = useState('');\n  const debouncedAddress = useDebouncedValue(address, 500);\n  const [isValid, setIsValid] = useState<boolean | null>(null);\n\n  useEffect(() => {\n    if (!debouncedAddress) {\n      setIsValid(null);\n      return;\n    }\n\n    try {\n      new PublicKey(debouncedAddress);\n      setIsValid(true);\n    } catch {\n      setIsValid(false);\n    }\n  }, [debouncedAddress]);\n\n  return (\n    <div>\n      <input\n        value={address}\n        onChange={(e) => setAddress(e.target.value)}\n        placeholder=\"Recipient address\"\n      />\n      {isValid === false && <Error>Invalid Solana address</Error>}\n      {isValid === true && <Success>Valid address</Success>}\n    </div>\n  );\n}\n```\n\n## Best Practices Summary\n\n1. Always show loading states for async operations\n2. Handle errors gracefully with user-friendly messages\n3. Use optimistic updates for instant UX feedback\n4. Cache blockchain data to reduce RPC calls\n5. Debounce user input validation\n6. Use WebSocket subscriptions for real-time updates\n7. Clean up subscriptions on component unmount\n"
       }
     ],
+    "skills": [
+      "web3-frontend",
+      "react"
+    ],
     "slug": {
       "_type": "slug",
       "current": "react-patterns"
@@ -1726,6 +1948,10 @@
         "_type": "prose",
         "src": "# Solana RPC Methods\n\nThe Solana JSON-RPC API is how your frontend communicates with the blockchain. Understanding RPC methods is essential for reading on-chain data.\n\n## What is JSON-RPC?\n\nJSON-RPC is a lightweight remote procedure call protocol. You send a JSON request to a Solana validator node and get a JSON response:\n\n```javascript\n// Request\n{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getBalance\",\n  \"params\": [\"7C4jsPZpht42Tw6MjXWF56Q5RQUocjBBmciEjDa8HRtp\"]\n}\n\n// Response\n{\n  \"jsonrpc\": \"2.0\",\n  \"result\": { \"value\": 1000000000 },\n  \"id\": 1\n}\n```\n\nThe `@solana/web3.js` library wraps these RPC calls in convenient JavaScript methods.\n\n## The Connection Object\n\n```typescript\nimport { Connection, clusterApiUrl } from '@solana/web3.js';\n\nconst connection = new Connection(\n  clusterApiUrl('devnet'),\n  'confirmed' // commitment level\n);\n```\n\n**RPC Endpoints**:\n- **Devnet**: `https://api.devnet.solana.com`\n- **Mainnet**: `https://api.mainnet-beta.solana.com`\n- **Custom**: Helius, QuickNode, Alchemy (faster, more reliable)\n\n## Essential RPC Methods\n\n### getBalance()\n\nGet SOL balance in lamports:\n\n```typescript\nconst balance = await connection.getBalance(publicKey);\nconsole.log(`Balance: ${balance / LAMPORTS_PER_SOL} SOL`);\n```\n\n### getAccountInfo()\n\nGet full account details:\n\n```typescript\nconst accountInfo = await connection.getAccountInfo(publicKey);\n\nif (accountInfo) {\n  console.log('Owner:', accountInfo.owner.toBase58());\n  console.log('Lamports:', accountInfo.lamports);\n  console.log('Data:', accountInfo.data);\n  console.log('Executable:', accountInfo.executable);\n}\n```\n\n### getTransaction()\n\nFetch a transaction by signature:\n\n```typescript\nconst tx = await connection.getTransaction(signature, {\n  maxSupportedTransactionVersion: 0,\n});\n\nif (tx) {\n  console.log('Slot:', tx.slot);\n  console.log('Block Time:', new Date(tx.blockTime! * 1000));\n  console.log('Fee:', tx.meta?.fee);\n}\n```\n\n### getLatestBlockhash()\n\nRequired for constructing transactions:\n\n```typescript\nconst { blockhash } = await connection.getLatestBlockhash();\ntransaction.recentBlockhash = blockhash;\n```\n\n## Commitment Levels\n\nCommitment levels define how finalized a transaction must be:\n\n| Level | Finalized? | Use Case |\n|-------|-----------|----------|\n| **processed** | No | Real-time updates (may be rolled back) |\n| **confirmed** | Partially | Most dApp reads (balance checks, etc.) |\n| **finalized** | Yes | High-value transactions, withdrawals |\n\n```typescript\nconst balance = await connection.getBalance(\n  publicKey,\n  'confirmed' // commitment level\n);\n```\n\n**Best Practice**: Use `'confirmed'` for UI updates, `'finalized'` for critical operations.\n\n## Advanced: getProgramAccounts()\n\nFetch all accounts owned by a program:\n\n```typescript\nconst TOKEN_PROGRAM_ID = new PublicKey(\n  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'\n);\n\nconst tokenAccounts = await connection.getProgramAccounts(\n  TOKEN_PROGRAM_ID,\n  {\n    filters: [\n      { dataSize: 165 }, // Token account size\n      {\n        memcmp: {\n          offset: 32, // Owner field offset\n          bytes: userPublicKey.toBase58(),\n        },\n      },\n    ],\n  }\n);\n\nconsole.log(`Found ${tokenAccounts.length} token accounts`);\n```\n\n## Rate Limits and Best Practices\n\nPublic RPC endpoints have strict rate limits:\n- **Devnet**: ~100 requests/10 seconds\n- **Mainnet**: ~40 requests/10 seconds\n\n**Solutions**:\n1. Use premium RPC providers (Helius, QuickNode)\n2. Implement request caching (React Query, SWR)\n3. Batch requests where possible\n4. Use WebSocket subscriptions for real-time data\n\n## WebSocket Subscriptions\n\nFor real-time updates, use subscriptions instead of polling:\n\n```typescript\nconst subscriptionId = connection.onAccountChange(\n  publicKey,\n  (accountInfo) => {\n    console.log('Account changed!', accountInfo);\n  },\n  'confirmed'\n);\n\n// Cleanup\nconnection.removeAccountChangeListener(subscriptionId);\n```\n\n## Next Steps\n\nIn the next challenge, you'll use `getBalance()` to build a multi-wallet balance checker.\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "rpc"
     ],
     "slug": {
       "_type": "slug",
@@ -1783,6 +2009,9 @@
         ]
       }
     ],
+    "skills": [
+      "rust"
+    ],
     "slug": {
       "_type": "slug",
       "current": "rust-basics-challenge"
@@ -1839,6 +2068,10 @@
         ]
       }
     ],
+    "skills": [
+      "rust",
+      "solana-programs"
+    ],
     "slug": {
       "_type": "slug",
       "current": "rust-program-challenge"
@@ -1854,6 +2087,10 @@
         "_type": "prose",
         "src": "# Borsh Serialization for Solana\n\nSolana programs store data in accounts as raw bytes. To work with structured data (structs, enums), you need a serialization format. Solana uses **Borsh** (Binary Object Representation Serializer for Hashing).\n\n## Why Borsh?\n\nBorsh was designed specifically for blockchain use cases and offers several advantages over alternatives like JSON or MessagePack:\n\n### 1. Deterministic Serialization\n\nThe same data **always** produces the same byte sequence. This is critical for:\n- **Consensus**: All validators must agree on account state\n- **Hashing**: Content-addressed storage requires consistent hashes\n- **Merkle proofs**: Deterministic encoding enables efficient proofs\n\n```rust\n// JSON is NOT deterministic (field order can vary):\n{\"balance\": 100, \"owner\": \"abc\"} vs {\"owner\": \"abc\", \"balance\": 100}\n\n// Borsh IS deterministic:\nstruct { balance: 100, owner: \"abc\" } → always [100, 0, 0, 0, 3, 0, 0, 0, 97, 98, 99]\n```\n\n### 2. Compact Encoding\n\nBorsh doesn't include field names or type metadata in the output:\n\n```json\n// JSON: 42 bytes\n{\"balance\":1000000,\"frozen\":false}\n\n// Borsh: 9 bytes (4 for u64 + 4 for length prefix + 1 for bool)\n```\n\nSolana charges rent based on account size, so smaller serialization = lower costs.\n\n### 3. Fixed vs Variable-Size Data\n\n**Fixed-size types** (primitives) have a known byte length:\n- `u8`: 1 byte\n- `u32`, `i32`: 4 bytes\n- `u64`, `i64`: 8 bytes\n- `bool`: 1 byte (0 or 1)\n- `[u8; 32]`: 32 bytes (fixed array)\n\n**Variable-size types** include a 4-byte length prefix:\n- `String`: 4-byte length + UTF-8 bytes\n- `Vec<T>`: 4-byte length + serialized elements\n- `Option<T>`: 1-byte discriminant (0 or 1) + value if Some\n\n```rust\n// Example encoding:\nlet name = \"Alice\"; // Borsh: [5, 0, 0, 0, 65, 108, 105, 99, 101]\n                    //         ^^^^len=5  ^^^^UTF-8 bytes\n\nlet numbers = vec![1u32, 2, 3]; // [3, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0]\n                                //  ^^^^len=3  ^^^^^^^^^^ three u32s\n```\n\n## How Solana Uses Borsh\n\n### Account Data\n\nPrograms deserialize account data at the start of `process_instruction`:\n\n```rust\nlet user_account = UserAccount::try_from_slice(&account.data.borrow())?;\n```\n\nAfter modifying the struct, serialize it back:\n\n```rust\nuser_account.balance += amount;\nuser_account.serialize(&mut &mut account.data.borrow_mut()[..])?;\n```\n\n### Instruction Data\n\nClients serialize instructions before sending transactions:\n\n```rust\nlet instruction = TokenInstruction::Transfer { amount: 1000 };\nlet data = instruction.try_to_vec()?; // Serialize to bytes\n```\n\nThe program deserializes it to determine which function to call:\n\n```rust\nlet instruction = TokenInstruction::try_from_slice(instruction_data)?;\nmatch instruction { /* ... */ }\n```\n\n## Comparison with JSON\n\n| Feature | Borsh | JSON |\n|---------|-------|------|\n| Deterministic | ✅ Yes | ❌ No (field order) |\n| Size | Small (no field names) | Large (verbose) |\n| Speed | Fast (binary) | Slow (text parsing) |\n| Human-readable | ❌ No | ✅ Yes |\n| Schema required | ✅ Yes (Rust structs) | ❌ No |\n\nJSON is great for APIs and config files, but Borsh is the clear winner for on-chain data.\n\n## Next Steps\n\nIn the next challenge, you'll manually serialize and deserialize data using JavaScript's `DataView` and `TextEncoder` to understand how Borsh encoding works under the hood.\n"
       }
+    ],
+    "skills": [
+      "rust",
+      "borsh-serialization"
     ],
     "slug": {
       "_type": "slug",
@@ -1911,6 +2148,10 @@
         ]
       }
     ],
+    "skills": [
+      "rust",
+      "borsh-serialization"
+    ],
     "slug": {
       "_type": "slug",
       "current": "serialization-challenge"
@@ -1926,6 +2167,10 @@
         "_type": "prose",
         "src": "# Setting Up Your Development Environment\n\nBefore you can start building on Solana, you need to set up your development environment.\n\n## Prerequisites\n\n- **Node.js** (v18 or later)\n- **Rust** (latest stable)\n- **Git**\n\n## Install the Solana CLI\n\n```bash\nsh -c \"$(curl -sSfL https://release.anza.xyz/stable/install)\"\n```\n\nAfter installation, verify:\n\n```bash\nsolana --version\n```\n\n## Configure Solana CLI for Devnet\n\n```bash\nsolana config set --url devnet\n```\n\n## Create a Keypair\n\n```bash\nsolana-keygen new --outfile ~/.config/solana/devnet.json\n```\n\nThis creates a new keypair that you will use for development on devnet.\n\n## Get Devnet SOL\n\n```bash\nsolana airdrop 2\n```\n\nYou can request up to 2 SOL per airdrop on devnet.\n\n## Install Anchor Framework\n\nAnchor is the most popular framework for Solana development:\n\n```bash\ncargo install --git https://github.com/coral-xyz/anchor avm --force\navm install latest\navm use latest\n```\n\nVerify the installation:\n\n```bash\nanchor --version\n```\n\n## Recommended IDE Setup\n\n- **VS Code** with the following extensions:\n  - rust-analyzer\n  - Solana (by Solana Labs)\n  - Better TOML\n"
       }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "keypairs-wallets"
     ],
     "slug": {
       "_type": "slug",
@@ -1983,6 +2228,10 @@
         ]
       }
     ],
+    "skills": [
+      "web3-frontend",
+      "siws"
+    ],
     "slug": {
       "_type": "slug",
       "current": "sign-message-challenge"
@@ -1998,6 +2247,10 @@
         "_type": "prose",
         "src": "# Sign-In With Solana (SIWS)\n\nSign-In With Solana (SIWS) is a standard for authenticating users using their Solana wallet, similar to \"Sign-In With Ethereum\" (SIWE).\n\n## Why Message Signing?\n\nTraditional web apps use passwords. Web3 apps use **cryptographic signatures**:\n\n1. Server generates a unique message\n2. User signs the message with their wallet\n3. Server verifies the signature matches the public key\n4. User is authenticated without ever sharing a password\n\n**Benefits**:\n- No password management\n- Wallet handles all cryptography\n- Cannot be phished (signature is specific to the message)\n- Works across all Solana dApps\n\n## SIWS Message Format\n\nA SIWS message typically includes:\n\n```\nacademy.courses wants you to sign in with your Solana account:\n7C4jsPZpht42Tw6MjXWF56Q5RQUocjBBmciEjDa8HRtp\n\nSign in to Superteam Academy to access your courses and track your progress.\n\nURI: https://academy.courses\nVersion: 1\nNonce: k3j2n4k5j6h7g8f9d\nIssued At: 2025-02-09T15:30:00.000Z\nExpiration Time: 2025-02-09T15:45:00.000Z\n```\n\n**Key Components**:\n- **Domain**: Which site is requesting the signature\n- **Address**: User's public key\n- **Statement**: Human-readable purpose\n- **Nonce**: Prevents replay attacks (must be unique)\n- **Issued At/Expiration**: Time-bound authentication\n\n## Signing Flow\n\n```typescript\nimport { useWallet } from '@solana/wallet-adapter-react';\nimport bs58 from 'bs58';\n\nasync function signInWithSolana() {\n  const { publicKey, signMessage } = useWallet();\n  if (!publicKey || !signMessage) throw new Error('Wallet not connected');\n\n  // 1. Get nonce from server\n  const { nonce } = await fetch('/api/auth/nonce').then(r => r.json());\n\n  // 2. Build message\n  const message = `\nacademy.courses wants you to sign in with your Solana account:\n${publicKey.toBase58()}\n\nSign in to Superteam Academy.\n\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}\n  `.trim();\n\n  // 3. Sign message\n  const encodedMessage = new TextEncoder().encode(message);\n  const signature = await signMessage(encodedMessage);\n\n  // 4. Send to server for verification\n  await fetch('/api/auth/verify', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      message,\n      signature: bs58.encode(signature),\n      publicKey: publicKey.toBase58(),\n    }),\n  });\n}\n```\n\n## Server-Side Verification\n\nThe server verifies the signature using the Ed25519 algorithm:\n\n```typescript\nimport { PublicKey } from '@solana/web3.js';\nimport nacl from 'tweetnacl';\nimport bs58 from 'bs58';\n\nfunction verifySignature(\n  message: string,\n  signature: string,\n  publicKey: string\n): boolean {\n  const messageBytes = new TextEncoder().encode(message);\n  const signatureBytes = bs58.decode(signature);\n  const publicKeyBytes = new PublicKey(publicKey).toBytes();\n\n  return nacl.sign.detached.verify(\n    messageBytes,\n    signatureBytes,\n    publicKeyBytes\n  );\n}\n```\n\n## Security Considerations\n\n### Nonce Management\n- Generate cryptographically random nonces (use `crypto.randomBytes(32)`)\n- Store nonces in Redis/memory with TTL (5-15 minutes)\n- Delete nonce after successful verification (prevent replay)\n\n### Message Validation\n- Verify message format matches expected structure\n- Check `Issued At` is recent (within 5 minutes)\n- Verify domain matches your application\n- Ensure `Expiration Time` hasn't passed\n\n### Example: Nonce Replay Attack\n\nWithout nonce verification:\n```\nAttacker intercepts a valid signature\nAttacker replays it multiple times\nServer accepts each replay as valid ❌\n```\n\nWith nonce verification:\n```\nAttacker intercepts a valid signature\nServer marks nonce as used\nAttacker replays signature\nServer rejects (nonce already used) ✅\n```\n\n## Real-World Implementation\n\nMost Solana dApps use SIWS for:\n- Gating premium content (Dialect, Squads)\n- Personalized dashboards (Jupiter, Raydium)\n- User settings and preferences\n- Subscription verification\n\n## Next Steps\n\nIn the next challenge, you'll construct a SIWS message with all required fields.\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "siws"
     ],
     "slug": {
       "_type": "slug",
@@ -2055,6 +2308,10 @@
         ]
       }
     ],
+    "skills": [
+      "defi",
+      "staking"
+    ],
     "slug": {
       "_type": "slug",
       "current": "staking-challenge"
@@ -2070,6 +2327,10 @@
         "_type": "prose",
         "src": "# Staking Mechanisms on Solana\n\nStaking is fundamental to Solana's proof-of-stake consensus and DeFi ecosystem. Understanding staking mechanisms is essential for building yield-generating applications.\n\n## Native Staking\n\nSolana's native staking allows SOL holders to delegate their tokens to validators. Validators process transactions and secure the network, earning rewards that are shared with delegators. Staking requires locking SOL for the duration of an epoch (approximately 2-3 days), during which it cannot be transferred.\n\n**Key mechanics**:\n- **Delegation**: Users create a stake account and delegate to a validator\n- **Activation**: Stakes activate at the next epoch boundary\n- **Deactivation**: Unstaking requires waiting for the current epoch to end\n- **Rewards**: Automatically compounded into the stake account\n\n## Liquid Staking Tokens\n\nLiquid staking protocols like Marinade (mSOL) and Jito (jitoSOL) solve the liquidity problem. Users deposit SOL and receive liquid staking tokens (LSTs) that represent their staked position plus accrued rewards. LSTs can be traded, used as collateral, or deployed in DeFi while still earning staking yields.\n\n**Advantages**:\n- Instant liquidity without waiting for epoch changes\n- Automatic validator diversification across multiple validators\n- Compound staking rewards with DeFi yields\n- Exchange rate appreciation as rewards accrue\n\n## Stake Pools\n\nThe Solana Program Library includes the Stake Pool program, which enables permissionless creation of staking pools. Pool managers can add validators, set fees, and manage pool operations. The pool issues pool tokens that track the stake account value.\n\n**Rewards calculation**: Staking APY varies by validator commission (typically 5-10%) and network inflation rate. Effective APY = (1 + epoch_rate)^epochs_per_year - 1, accounting for compound interest.\n\nUnderstanding these mechanisms is critical for building staking UIs, yield aggregators, and advanced DeFi protocols that leverage staked SOL as collateral.\n"
       }
+    ],
+    "skills": [
+      "defi",
+      "staking"
     ],
     "slug": {
       "_type": "slug",
@@ -2087,6 +2348,10 @@
         "src": "# PDAs and State Management\n\nProgram Derived Addresses (PDAs) are one of Solana's most powerful features. They enable programs to \"own\" accounts and sign transactions programmatically, unlocking patterns impossible in other blockchains.\n\n## What Are PDAs?\n\nA PDA is a public key that:\n1. **Has no private key**: It's derived from seeds, not generated randomly\n2. **Is off the Ed25519 curve**: Cannot be signed by a regular keypair\n3. **Can only be signed by the program** that derives it: Using `invoke_signed`\n\nThink of PDAs as accounts controlled by code, not by a person holding a private key.\n\n## Deriving PDAs\n\nUse `Pubkey::find_program_address()` (or `findProgramAddressSync()` in JS) to derive a PDA:\n\n```rust\nlet (pda, bump) = Pubkey::find_program_address(\n    &[\n        b\"user\",                    // Static seed\n        user_pubkey.as_ref(),      // Dynamic seed (user's pubkey)\n    ],\n    program_id,\n);\n```\n\nThe function returns:\n- **`pda`**: The derived public key\n- **`bump`**: A single byte (0-255) that ensures the PDA is off-curve\n\n### How It Works\n\nInternally, Solana:\n1. Concatenates the seeds + program_id\n2. Hashes them with SHA-256\n3. Checks if the result is on the Ed25519 curve\n4. If yes, decrements the bump (starting at 255) and tries again\n5. Returns the first off-curve result (the \"canonical bump\")\n\n```rust\n// Pseudocode\nfor bump in (0..=255).rev() {\n    let hash = sha256(seeds + [bump] + program_id);\n    if !is_on_curve(hash) {\n        return (PublicKey(hash), bump);\n    }\n}\n```\n\n## Why PDAs?\n\n### 1. Deterministic Account Addresses\n\nYou can calculate account addresses before they're created:\n\n```rust\n// Client-side: Calculate where the user's token account will be\nlet (token_account_pda, _) = Pubkey::find_program_address(\n    &[b\"token\", user_pubkey.as_ref(), mint_pubkey.as_ref()],\n    &token_program_id,\n);\n\n// No need to store this address—just recompute it when needed!\n```\n\n### 2. Program-Controlled Signing\n\nPrograms can sign transactions on behalf of PDAs using `invoke_signed`:\n\n```rust\n// Transfer tokens FROM a PDA (not from the user)\ninvoke_signed(\n    &transfer_instruction,\n    &[source_pda, destination, token_program],\n    &[&[b\"vault\", user_pubkey.as_ref(), &[bump]]], // Signer seeds\n)?;\n```\n\nThis enables:\n- **Escrow contracts**: Lock tokens until conditions are met\n- **Vaults**: Store user funds under program control\n- **Proxies**: Programs calling other programs\n\n### 3. One Account Per User (No Collisions)\n\nBy including the user's pubkey in the seeds, each user gets a unique PDA:\n\n```rust\nlet (user_account, _) = Pubkey::find_program_address(\n    &[b\"account\", user_pubkey.as_ref()],\n    program_id,\n);\n```\n\nNo two users will ever get the same PDA, even if millions of users exist.\n\n## Canonical Bumps\n\n**Always use the canonical bump** (the first one returned by `find_program_address`). Storing non-canonical bumps enables bump seed attacks where an attacker creates multiple PDAs with different bumps.\n\n```rust\n// Good: Store the canonical bump\nlet (pda, bump) = Pubkey::find_program_address(seeds, program_id);\naccount.bump = bump; // Save this for later\n\n// Bad: Never recompute with a different bump\nlet pda = Pubkey::create_program_address(&[seeds, &[wrong_bump]], program_id)?;\n```\n\n## Common PDA Patterns\n\n### Pattern 1: Global State (One PDA per Program)\n\n```rust\nlet (config_pda, _) = Pubkey::find_program_address(\n    &[b\"config\"],\n    program_id,\n);\n```\n\n### Pattern 2: User-Specific Accounts\n\n```rust\nlet (user_account, _) = Pubkey::find_program_address(\n    &[b\"user\", user_pubkey.as_ref()],\n    program_id,\n);\n```\n\n### Pattern 3: Associated Accounts (Multiple PDAs per User)\n\n```rust\n// User's stats PDA\nlet (stats_pda, _) = Pubkey::find_program_address(\n    &[b\"stats\", user_pubkey.as_ref()],\n    program_id,\n);\n\n// User's vault PDA\nlet (vault_pda, _) = Pubkey::find_program_address(\n    &[b\"vault\", user_pubkey.as_ref()],\n    program_id,\n);\n```\n\n### Pattern 4: Indexed PDAs (Lists)\n\n```rust\n// 10th post by this user\nlet (post_pda, _) = Pubkey::find_program_address(\n    &[b\"post\", user_pubkey.as_ref(), &10u64.to_le_bytes()],\n    program_id,\n);\n```\n\n## PDA Validation\n\nAlways verify that a passed PDA matches the expected derivation:\n\n```rust\nlet expected_pda = Pubkey::create_program_address(\n    &[b\"user\", user_pubkey.as_ref(), &[bump]],\n    program_id,\n)?;\n\nif account.key != &expected_pda {\n    return Err(ProgramError::InvalidAccountData);\n}\n```\n\nThis prevents attackers from passing malicious accounts.\n\n## Next Challenge\n\nYou'll derive multiple PDAs using different seed patterns and verify they're off-curve using the `PublicKey.isOnCurve()` mock method!\n"
       }
     ],
+    "skills": [
+      "rust",
+      "pdas"
+    ],
     "slug": {
       "_type": "slug",
       "current": "state-management"
@@ -2102,6 +2367,10 @@
         "_type": "prose",
         "src": "# Structs and Enums for Solana Programs\n\nSolana programs store data in accounts and process instructions. Rust's `struct` and `enum` types are perfect for modeling both.\n\n## Structs for Account Data\n\nA `struct` groups related data together. In Solana, you'll use structs to define the layout of account data:\n\n```rust\nuse borsh::{BorshDeserialize, BorshSerialize};\n\n#[derive(BorshSerialize, BorshDeserialize, Debug)]\npub struct UserAccount {\n    pub owner: Pubkey,\n    pub balance: u64,\n    pub last_login: i64,\n    pub is_frozen: bool,\n}\n```\n\n### Derive Macros\n\n`#[derive(...)]` automatically implements common traits:\n- `BorshSerialize`: Converts the struct to bytes for storage\n- `BorshDeserialize`: Reconstructs the struct from bytes\n- `Debug`: Enables `println!(\"{:?}\", user)` for debugging\n- `Clone`, `Copy`, `PartialEq`: Other useful traits\n\n## Enums for Instruction Types\n\nAn `enum` represents a value that can be one of several variants. Use enums to define the different instructions your program accepts:\n\n```rust\n#[derive(BorshSerialize, BorshDeserialize, Debug)]\npub enum TokenInstruction {\n    /// Initialize a new token mint\n    InitializeMint { decimals: u8 },\n    \n    /// Transfer tokens from one account to another\n    Transfer { amount: u64 },\n    \n    /// Burn tokens from an account\n    Burn { amount: u64 },\n}\n```\n\nEach variant can hold different data types, making enums incredibly flexible.\n\n## Pattern Matching\n\nUse `match` to handle different enum variants. Rust's compiler ensures you handle ALL cases:\n\n```rust\npub fn process_instruction(\n    program_id: &Pubkey,\n    accounts: &[AccountInfo],\n    instruction_data: &[u8],\n) -> ProgramResult {\n    let instruction = TokenInstruction::try_from_slice(instruction_data)?;\n    \n    match instruction {\n        TokenInstruction::InitializeMint { decimals } => {\n            msg!(\"Initializing mint with {} decimals\", decimals);\n            process_init_mint(accounts, decimals)\n        }\n        TokenInstruction::Transfer { amount } => {\n            msg!(\"Transferring {} tokens\", amount);\n            process_transfer(accounts, amount)\n        }\n        TokenInstruction::Burn { amount } => {\n            msg!(\"Burning {} tokens\", amount);\n            process_burn(accounts, amount)\n        }\n    }\n}\n```\n\n## Borsh Serialization\n\nBorsh (Binary Object Representation Serializer for Hashing) is Solana's preferred serialization format:\n- **Deterministic**: Same data always serializes to the same bytes\n- **Compact**: No field names or type tags in the output\n- **Fast**: Optimized for blockchain use cases\n\n```rust\nlet user = UserAccount {\n    owner: pubkey,\n    balance: 1000,\n    last_login: 1640000000,\n    is_frozen: false,\n};\n\n// Serialize to bytes\nlet bytes = user.try_to_vec()?;\n\n// Deserialize from bytes\nlet restored = UserAccount::try_from_slice(&bytes)?;\n```\n\nIn the next lessons, we'll dive deeper into Borsh and see how to manually serialize data when needed.\n"
       }
+    ],
+    "skills": [
+      "rust",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",
@@ -2152,6 +2421,10 @@
           }
         ]
       }
+    ],
+    "skills": [
+      "anchor",
+      "program-testing"
     ],
     "slug": {
       "_type": "slug",
@@ -2209,6 +2482,10 @@
         ]
       }
     ],
+    "skills": [
+      "spl-tokens",
+      "defi"
+    ],
     "slug": {
       "_type": "slug",
       "current": "token-math-challenge"
@@ -2224,6 +2501,10 @@
         "_type": "prose",
         "src": "# Understanding SPL Tokens\n\nSPL Tokens are the token standard on Solana, similar to ERC-20 on Ethereum but with key differences.\n\n## How SPL Tokens Work\n\nOn Solana, tokens are managed by the **Token Program**:\n\n1. **Mint Account**: Defines the token (supply, decimals, mint authority)\n2. **Token Account**: Holds tokens for a specific owner\n3. **Associated Token Account (ATA)**: A deterministically derived token account for a given wallet and mint\n\n```\nMint Account (Token Definition)\n  ├── Token Account (User A's balance)\n  ├── Token Account (User B's balance)\n  └── Token Account (User C's balance)\n```\n\n## Key Differences from Ethereum\n\n| Feature | Solana (SPL) | Ethereum (ERC-20) |\n|---------|-------------|-------------------|\n| Token balances | Separate accounts | Single contract |\n| Creating tokens | Token Program | Deploy new contract |\n| Account model | Account-based | Contract storage |\n| Cost | ~0.002 SOL per account | Gas fees vary |\n\n## The Token Program\n\n```typescript\nimport { createMint } from '@solana/spl-token';\n\nconst mint = await createMint(\n  connection,      // Connection\n  payer,           // Fee payer\n  mintAuthority,   // Who can mint new tokens\n  freezeAuthority, // Who can freeze accounts (null = no one)\n  9                // Decimals (9 = standard for SOL-like tokens)\n);\n\nconsole.log('Mint address:', mint.toBase58());\n```\n\n## Creating Token Accounts\n\n```typescript\nimport { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';\n\nconst tokenAccount = await getOrCreateAssociatedTokenAccount(\n  connection,\n  payer,\n  mint,\n  owner.publicKey\n);\n```\n\n## Next Steps\n\nIn the next lesson, you will create your own SPL token on devnet!\n"
       }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "spl-tokens"
     ],
     "slug": {
       "_type": "slug",
@@ -2241,6 +2522,10 @@
         "src": "# Solana Token Standards\n\nSolana has two token programs: the original **SPL Token** and the newer **Token-2022** with advanced extensions.\n\n## SPL Token Program\n\nThe original token standard (still used by 99% of tokens):\n\n```\nProgram ID: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\n```\n\n### Account Structure\n\n**Mint Account** (defines the token):\n```\n- Mint Authority: Can mint new tokens\n- Supply: Total tokens in circulation\n- Decimals: Number of decimal places (9 for SOL-like)\n- Freeze Authority: Can freeze token accounts\n```\n\n**Token Account** (holds tokens for an owner):\n```\n- Mint: Which token this account holds\n- Owner: Who owns these tokens\n- Amount: Token balance\n- Delegate: Optional account that can spend on behalf of owner\n- State: Normal, Frozen, or Uninitialized\n```\n\n### Associated Token Account (ATA)\n\nA deterministic token account address:\n\n```typescript\nimport { getAssociatedTokenAddress } from '@solana/spl-token';\n\nconst ata = await getAssociatedTokenAddress(\n  mint,         // Token mint address\n  owner,        // Wallet address\n);\n\n// Derivation: PDA with seeds [owner, TOKEN_PROGRAM_ID, mint]\n```\n\nATAs simplify token transfers (one account per mint per wallet).\n\n## Token-2022 (Token Extensions)\n\nThe new token program with powerful extensions:\n\n```\nProgram ID: TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb\n```\n\n### Why Token-2022?\n\n- **Backwards compatible** with SPL Token\n- **Extensions** add features without changing core program\n- **Future-proof** (can add new extensions)\n\n### Available Extensions\n\n#### 1. Transfer Hooks\n\nExecute custom logic on every transfer:\n\n```rust\n// Example: Charge a fee on every transfer\npub fn transfer_hook(\n    ctx: Context<TransferHook>,\n    amount: u64,\n) -> Result<()> {\n    let fee = amount / 100;  // 1% fee\n    // Deduct fee, send to treasury\n    Ok(())\n}\n```\n\nUse cases:\n- Transaction fees\n- Blacklist/whitelist enforcement\n- Royalties on token transfers\n\n#### 2. Confidential Transfers\n\nPrivacy via zero-knowledge proofs:\n\n```\nNormal transfer: \"Alice sent 100 USDC to Bob\" (public)\nConfidential transfer: \"Alice sent ??? USDC to Bob\" (amount hidden)\n```\n\nBalances are encrypted, but the network verifies the math is correct.\n\n#### 3. Transfer Fees\n\nBuilt-in transfer fee without hooks:\n\n```\nTransfer 1000 tokens with 1% fee:\nRecipient receives: 990 tokens\nFee account receives: 10 tokens\n```\n\n#### 4. Interest-Bearing Tokens\n\nTokens that accrue interest:\n\n```\nRate: 5% APY\nYou hold: 1000 tokens\nAfter 1 year: Balance shows 1050 tokens (automatically)\n```\n\nImplemented via an exchange rate that updates over time.\n\n#### 5. Non-Transferable Tokens\n\nSoulbound tokens (can't be transferred):\n\n```\nUse cases:\n- Credentials (diplomas, certificates)\n- Achievements (non-tradeable NFTs)\n- Identity tokens\n```\n\n#### 6. Permanent Delegate\n\nA delegate that can't be revoked:\n\n```\nUse case: Staking program that needs permanent control\n```\n\n#### 7. Metadata Pointer\n\nStore metadata on-chain (no external JSON):\n\n```json\n{\n  \"name\": \"My Token\",\n  \"symbol\": \"MTK\",\n  \"uri\": \"https://example.com/metadata.json\"\n}\n```\n\nMetaplex Token Metadata is still more common, but metadata pointer is simpler.\n\n### Creating a Token-2022 Mint\n\n```typescript\nimport { createMint } from '@solana/spl-token';\nimport { TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';\n\nconst mint = await createMint(\n  connection,\n  payer,\n  mintAuthority,\n  freezeAuthority,\n  decimals,\n  undefined,  // keypair (optional)\n  undefined,  // confirm options\n  TOKEN_2022_PROGRAM_ID  // Use Token-2022 instead of SPL Token\n);\n```\n\n### Adding Extensions\n\n```typescript\nimport {\n  createInitializeTransferFeeConfigInstruction,\n  createInitializeMintInstruction,\n} from '@solana/spl-token';\n\n// 1. Calculate space needed\nconst extensions = [ExtensionType.TransferFeeConfig];\nconst mintLen = getMintLen(extensions);\n\n// 2. Create account\nconst createAccountIx = SystemProgram.createAccount({\n  fromPubkey: payer.publicKey,\n  newAccountPubkey: mint.publicKey,\n  space: mintLen,\n  lamports: await connection.getMinimumBalanceForRentExemption(mintLen),\n  programId: TOKEN_2022_PROGRAM_ID,\n});\n\n// 3. Initialize extension\nconst initTransferFeeIx = createInitializeTransferFeeConfigInstruction(\n  mint.publicKey,\n  feeAuthority.publicKey,\n  withdrawAuthority.publicKey,\n  feeBasisPoints,  // 100 = 1%\n  maxFee,\n  TOKEN_2022_PROGRAM_ID\n);\n\n// 4. Initialize mint\nconst initMintIx = createInitializeMintInstruction(\n  mint.publicKey,\n  decimals,\n  mintAuthority.publicKey,\n  freezeAuthority.publicKey,\n  TOKEN_2022_PROGRAM_ID\n);\n\n// Send transaction with all 3 instructions\n```\n\n## Token Metadata (Metaplex)\n\nMetaplex Token Metadata is the standard for NFT metadata:\n\n```\nMetadata Account (PDA):\n- Name: \"Solana Monkey #1234\"\n- Symbol: \"SMB\"\n- URI: \"https://arweave.net/...\"\n- Creators: [{ address, verified, share }]\n- Seller Fee Basis Points: 500 (5% royalty)\n- Primary Sale Happened: true/false\n```\n\nThe URI points to JSON:\n\n```json\n{\n  \"name\": \"Solana Monkey #1234\",\n  \"description\": \"A cool monkey\",\n  \"image\": \"https://arweave.net/image.png\",\n  \"attributes\": [\n    { \"trait_type\": \"Background\", \"value\": \"Blue\" },\n    { \"trait_type\": \"Hat\", \"value\": \"Crown\" }\n  ]\n}\n```\n\n## Choosing the Right Standard\n\n| Feature | SPL Token | Token-2022 |\n|---------|-----------|------------|\n| Mature ecosystem | ✅ | ❌ (newer) |\n| DEX support | ✅ All DEXs | ⚠️ Limited |\n| Transfer fees | ❌ | ✅ |\n| Transfer hooks | ❌ | ✅ |\n| Confidential transfers | ❌ | ✅ |\n| Interest-bearing | ❌ | ✅ |\n\n**Use SPL Token** for:\n- General purpose tokens\n- Maximum compatibility\n- Production DeFi\n\n**Use Token-2022** for:\n- Compliance requirements (transfer hooks for KYC)\n- Privacy (confidential transfers)\n- Novel token mechanics (interest-bearing, non-transferable)\n\n## Token Account Rent\n\nToken accounts require rent (~0.002 SOL):\n\n```\nCreate 100 token accounts = 0.2 SOL locked\n```\n\nYou can close accounts to reclaim rent:\n\n```typescript\nimport { closeAccount } from '@solana/spl-token';\n\nawait closeAccount(\n  connection,\n  payer,\n  tokenAccount,\n  destination,  // Where to send reclaimed SOL\n  owner\n);\n```\n\n## Best Practices\n\n1. **Use ATAs** for user-facing wallets (simplifies UX)\n2. **Close unused accounts** to reclaim rent\n3. **Validate token mint** before accepting transfers (prevent spam)\n4. **Check program ID** (SPL Token vs Token-2022 vs fake programs)\n5. **Handle decimals** correctly (9 decimals = 1.0 = 1_000_000_000 base units)\n\n## Next Challenge\n\nYou'll implement token math functions for handling decimals, price calculations, and LP token formulas.\n"
       }
     ],
+    "skills": [
+      "spl-tokens",
+      "defi"
+    ],
     "slug": {
       "_type": "slug",
       "current": "token-standards"
@@ -2256,6 +2541,11 @@
         "_type": "prose",
         "src": "# Transaction UI Patterns\n\nSending transactions is the core interaction in any Solana dApp. Great UX requires clear transaction flows, status tracking, and helpful feedback.\n\n## Multi-Step Confirmation Flow\n\nBreak complex transactions into clear steps:\n\n```typescript\nenum TxStep {\n  IDLE = 'idle',\n  CONFIRMING = 'confirming',\n  SIGNING = 'signing',\n  SENDING = 'sending',\n  CONFIRMING_TX = 'confirming_tx',\n  SUCCESS = 'success',\n  ERROR = 'error',\n}\n\nfunction SwapInterface() {\n  const [step, setStep] = useState<TxStep>(TxStep.IDLE);\n  const [signature, setSignature] = useState<string>('');\n\n  async function handleSwap() {\n    try {\n      setStep(TxStep.CONFIRMING);\n      // User reviews swap details\n\n      setStep(TxStep.SIGNING);\n      const { signature } = await sendTransaction(tx, connection);\n      setSignature(signature);\n\n      setStep(TxStep.SENDING);\n      // Transaction sent to network\n\n      setStep(TxStep.CONFIRMING_TX);\n      await connection.confirmTransaction(signature, 'confirmed');\n\n      setStep(TxStep.SUCCESS);\n    } catch (err) {\n      setStep(TxStep.ERROR);\n    }\n  }\n\n  return (\n    <div>\n      {step === TxStep.CONFIRMING && <ReviewModal />}\n      {step === TxStep.SIGNING && <WalletSigningPrompt />}\n      {step === TxStep.SENDING && <SendingAnimation />}\n      {step === TxStep.CONFIRMING_TX && <ConfirmingAnimation signature={signature} />}\n      {step === TxStep.SUCCESS && <SuccessMessage signature={signature} />}\n      {step === TxStep.ERROR && <ErrorMessage />}\n    </div>\n  );\n}\n```\n\n## Status Indicators\n\nShow clear visual feedback for each stage:\n\n```typescript\nfunction TransactionStatus({ step }: { step: TxStep }) {\n  const stages = [\n    { label: 'Review', step: TxStep.CONFIRMING },\n    { label: 'Sign', step: TxStep.SIGNING },\n    { label: 'Send', step: TxStep.SENDING },\n    { label: 'Confirm', step: TxStep.CONFIRMING_TX },\n  ];\n\n  return (\n    <div className=\"flex gap-2\">\n      {stages.map((stage, idx) => (\n        <div key={idx} className=\"flex items-center\">\n          <div className={cn(\n            \"w-8 h-8 rounded-full flex items-center justify-center\",\n            step === stage.step && \"bg-purple-600 text-white\",\n            idx < stages.findIndex(s => s.step === step) && \"bg-green-600\",\n          )}>\n            {idx < stages.findIndex(s => s.step === step) ? '✓' : idx + 1}\n          </div>\n          <span className=\"ml-2\">{stage.label}</span>\n        </div>\n      ))}\n    </div>\n  );\n}\n```\n\n## Explorer Links\n\nAlways provide links to view transactions on-chain:\n\n```typescript\nfunction ExplorerLink({\n  signature,\n  cluster = 'mainnet-beta',\n}: {\n  signature: string;\n  cluster?: string;\n}) {\n  const url = `https://explorer.solana.com/tx/${signature}${cluster !== 'mainnet-beta' ? `?cluster=${cluster}` : ''}`;\n\n  return (\n    <a\n      href={url}\n      target=\"_blank\"\n      rel=\"noopener noreferrer\"\n      className=\"text-purple-600 hover:underline flex items-center gap-1\"\n    >\n      View on Solana Explorer\n      <ExternalLinkIcon className=\"w-4 h-4\" />\n    </a>\n  );\n}\n```\n\n## Estimated Cost Display\n\nShow users the transaction cost before signing:\n\n```typescript\nasync function estimateTransactionCost(\n  transaction: Transaction,\n  connection: Connection\n): Promise<number> {\n  const { blockhash } = await connection.getLatestBlockhash();\n  transaction.recentBlockhash = blockhash;\n  \n  // Estimate fee\n  const fee = await transaction.getEstimatedFee(connection);\n  return fee || 5000; // Default fallback\n}\n\nfunction TransactionPreview({ transaction }: { transaction: Transaction }) {\n  const { connection } = useConnection();\n  const [fee, setFee] = useState<number | null>(null);\n\n  useEffect(() => {\n    estimateTransactionCost(transaction, connection).then(setFee);\n  }, [transaction, connection]);\n\n  return (\n    <div className=\"bg-gray-100 p-4 rounded\">\n      <p className=\"text-sm text-gray-600\">Estimated network fee</p>\n      <p className=\"text-lg font-bold\">\n        {fee ? `${(fee / LAMPORTS_PER_SOL).toFixed(6)} SOL` : 'Calculating...'}\n      </p>\n    </div>\n  );\n}\n```\n\n## Retry Logic\n\nHandle failed transactions gracefully:\n\n```typescript\nfunction useTransactionSender() {\n  const { connection } = useConnection();\n  const { sendTransaction } = useWallet();\n  const [attempts, setAttempts] = useState(0);\n\n  async function sendWithRetry(\n    transaction: Transaction,\n    maxRetries = 3\n  ): Promise<string> {\n    for (let i = 0; i < maxRetries; i++) {\n      setAttempts(i + 1);\n\n      try {\n        const signature = await sendTransaction(transaction, connection);\n        await connection.confirmTransaction(signature, 'confirmed');\n        return signature;\n      } catch (err) {\n        if (i === maxRetries - 1) throw err;\n        \n        // Wait before retry (exponential backoff)\n        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));\n      }\n    }\n\n    throw new Error('Transaction failed after retries');\n  }\n\n  return { sendWithRetry, attempts };\n}\n```\n\n## Transaction History\n\nShow users their past transactions:\n\n```typescript\nfunction TransactionHistory() {\n  const { publicKey } = useWallet();\n  const { connection } = useConnection();\n  const [txs, setTxs] = useState<ParsedTransactionWithMeta[]>([]);\n\n  useEffect(() => {\n    if (!publicKey) return;\n\n    connection.getSignaturesForAddress(publicKey, { limit: 10 })\n      .then(async (sigs) => {\n        const txPromises = sigs.map(sig => \n          connection.getParsedTransaction(sig.signature, {\n            maxSupportedTransactionVersion: 0,\n          })\n        );\n        const txs = await Promise.all(txPromises);\n        setTxs(txs.filter(tx => tx !== null));\n      });\n  }, [publicKey, connection]);\n\n  return (\n    <div>\n      {txs.map((tx, idx) => (\n        <TransactionCard key={idx} tx={tx} />\n      ))}\n    </div>\n  );\n}\n```\n\n## Real-World Examples\n\n### Jupiter Swap Flow\n1. Review swap (token amounts, slippage, price impact)\n2. Approve transaction in wallet\n3. Show \"Swapping...\" animation with explorer link\n4. Confirm on-chain (with retry logic)\n5. Show success with new token balance\n\n### Magic Eden NFT Purchase\n1. Show NFT details and price\n2. Check buyer has sufficient SOL\n3. Request wallet signature\n4. Stream transaction status updates\n5. Display purchase confirmation with NFT preview\n\n## Best Practices\n\n1. Always show transaction cost before signing\n2. Provide explorer links for every transaction\n3. Use optimistic updates for instant feedback\n4. Implement retry logic for network hiccups\n5. Clear error messages (insufficient funds, rejected, timeout)\n6. Show multi-step progress for complex flows\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "transactions",
+      "react"
     ],
     "slug": {
       "_type": "slug",
@@ -2313,6 +2603,10 @@
         ]
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "transactions"
+    ],
     "slug": {
       "_type": "slug",
       "current": "transfer-challenge"
@@ -2363,6 +2657,10 @@
         ]
       }
     ],
+    "skills": [
+      "defi",
+      "spl-tokens"
+    ],
     "slug": {
       "_type": "slug",
       "current": "vault-challenge"
@@ -2378,6 +2676,10 @@
         "_type": "prose",
         "src": "# Solana Wallet Adapter Architecture\n\nThe Solana Wallet Adapter is the standard library for integrating wallet connections in Solana dApps. It provides a unified interface for multiple wallet providers.\n\n## Why Wallet Adapter?\n\nWithout Wallet Adapter, you would need to write custom integration code for each wallet:\n- Phantom has its own API\n- Solflare has different methods\n- Backpack uses a different connection flow\n\nWallet Adapter **abstracts all of this** into a single, consistent API.\n\n## Core Architecture\n\n```\n┌──────────────────────┐\n│   Your React App     │\n└──────────┬───────────┘\n           │\n┌──────────▼───────────┐\n│  Wallet Adapter      │  ← Hooks: useWallet, useConnection\n│  Context Provider    │\n└──────────┬───────────┘\n           │\n    ┌──────┴──────┐\n    │             │\n┌───▼────┐   ┌───▼────┐   ┌─────────┐\n│Phantom │   │Solflare│   │Backpack │  ← Wallet Implementations\n└────────┘   └────────┘   └─────────┘\n```\n\n## Setting Up the Provider\n\n```typescript\nimport { WalletAdapterNetwork } from '@solana/wallet-adapter-base';\nimport { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';\nimport { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';\nimport { WalletModalProvider } from '@solana/wallet-adapter-react-ui';\nimport { clusterApiUrl } from '@solana/web3.js';\n\nfunction App() {\n  const network = WalletAdapterNetwork.Devnet;\n  const endpoint = clusterApiUrl(network);\n  \n  const wallets = [\n    new PhantomWalletAdapter(),\n    new SolflareWalletAdapter({ network }),\n  ];\n\n  return (\n    <ConnectionProvider endpoint={endpoint}>\n      <WalletProvider wallets={wallets} autoConnect>\n        <WalletModalProvider>\n          <YourApp />\n        </WalletModalProvider>\n      </WalletProvider>\n    </ConnectionProvider>\n  );\n}\n```\n\n## Key Hooks\n\n### useWallet()\n\nAccess wallet state and methods:\n\n```typescript\nimport { useWallet } from '@solana/wallet-adapter-react';\n\nfunction ConnectButton() {\n  const { publicKey, connected, connect, disconnect, signMessage } = useWallet();\n\n  if (connected && publicKey) {\n    return (\n      <div>\n        <p>Connected: {publicKey.toBase58().slice(0, 8)}...</p>\n        <button onClick={disconnect}>Disconnect</button>\n      </div>\n    );\n  }\n\n  return <button onClick={connect}>Connect Wallet</button>;\n}\n```\n\n### useConnection()\n\nAccess the RPC connection:\n\n```typescript\nimport { useConnection } from '@solana/wallet-adapter-react';\nimport { LAMPORTS_PER_SOL } from '@solana/web3.js';\n\nfunction BalanceDisplay() {\n  const { connection } = useConnection();\n  const { publicKey } = useWallet();\n  const [balance, setBalance] = useState(0);\n\n  useEffect(() => {\n    if (!publicKey) return;\n\n    connection.getBalance(publicKey).then(lamports => {\n      setBalance(lamports / LAMPORTS_PER_SOL);\n    });\n  }, [publicKey, connection]);\n\n  return <p>Balance: {balance.toFixed(2)} SOL</p>;\n}\n```\n\n## Supported Wallets\n\nThe adapter supports all major Solana wallets:\n- **Phantom**: Most popular, mobile + extension\n- **Solflare**: Advanced features, built-in swap\n- **Backpack**: xNFT platform, mobile-first\n- **Ledger**: Hardware wallet support\n- **Glow**: Focused on validator staking\n\n## Auto-Connect and Persistence\n\nThe `autoConnect` prop attempts to reconnect on page load:\n\n```typescript\n<WalletProvider wallets={wallets} autoConnect>\n  {/* ... */}\n</WalletProvider>\n```\n\nWallet Adapter automatically saves the last connected wallet to localStorage and restores it on refresh.\n\n## Next Steps\n\nIn the next challenge, you'll implement a wallet connection flow and extract the user's public key.\n"
       }
+    ],
+    "skills": [
+      "web3-frontend",
+      "wallet-adapter"
     ],
     "slug": {
       "_type": "slug",
@@ -2395,6 +2697,10 @@
         "src": "# Setting Up a Solana Wallet\n\nA wallet is your gateway to the Solana ecosystem. It stores your private keys and lets you sign transactions.\n\n## Phantom Wallet (Recommended)\n\n1. Visit [phantom.app](https://phantom.app) and install the browser extension\n2. Click \"Create a new wallet\"\n3. **Write down your recovery phrase** and store it safely\n4. Set a password for your wallet\n\n## Understanding Keypairs\n\nIn Solana, a **keypair** consists of:\n- **Public Key**: Your wallet address (safe to share)\n- **Private Key**: Used to sign transactions (NEVER share this)\n\n```typescript\nimport { Keypair } from '@solana/web3.js';\n\n// Generate a new keypair\nconst keypair = Keypair.generate();\n\nconsole.log('Public Key:', keypair.publicKey.toBase58());\n// Example: 7C4jsPZpht42Tw6MjXWF56Q5RQUocjBBmciEjDa8HRtp\n```\n\n## Connecting to Devnet\n\nSwitch your Phantom wallet to Devnet:\n1. Open Phantom settings\n2. Go to \"Developer Settings\"\n3. Change network to \"Devnet\"\n\n## Getting Devnet SOL\n\nYou can get free devnet SOL from:\n- Solana CLI: `solana airdrop 2`\n- [Sol Faucet](https://faucet.solana.com)\n\nDevnet SOL has no real value and is only for testing.\n"
       }
     ],
+    "skills": [
+      "solana-fundamentals",
+      "keypairs-wallets"
+    ],
     "slug": {
       "_type": "slug",
       "current": "wallet-setup"
@@ -2410,6 +2716,10 @@
         "_type": "prose",
         "src": "# Why Rust for Solana\n\nSolana chose Rust as its primary programming language for smart contracts (called \"programs\" in Solana) for several compelling reasons that directly impact security, performance, and developer experience.\n\n## Memory Safety Without Garbage Collection\n\nRust's ownership system guarantees memory safety at compile time without needing a garbage collector. This is critical for blockchain programs where:\n- **Predictable performance**: No GC pauses that could cause transaction timeouts\n- **Low resource usage**: Programs run in a constrained environment with limited compute units\n- **Security**: Buffer overflows and use-after-free bugs are prevented at compile time\n\n```rust\n// Rust prevents this at compile time:\nlet data = vec![1, 2, 3];\nlet reference = &data[0];\ndrop(data); // Error: cannot drop while borrowed\nprintln!(\"{}\", reference);\n```\n\n## Zero-Cost Abstractions\n\nRust allows you to write high-level code that compiles down to the same performance as hand-written assembly. Abstractions like iterators, generics, and trait objects have no runtime overhead:\n\n```rust\n// This iterator chain compiles to the same code as a manual loop:\nlet sum: u64 = accounts.iter()\n    .filter(|a| a.lamports > 0)\n    .map(|a| a.lamports)\n    .sum();\n```\n\n## Ownership Model Maps to Solana's Account Model\n\nSolana's account model and Rust's ownership system align perfectly:\n- **Mutable XOR shared**: An account can be passed as mutable to only ONE program at a time, just like Rust's `&mut` borrows\n- **Explicit transfers**: Ownership transfers are explicit in both systems\n- **Lifetime tracking**: Rust ensures references don't outlive the data they point to, preventing dangling account references\n\n## Comparison with Other Languages\n\n**C/C++**: Similar performance, but no memory safety guarantees. Vulnerabilities like reentrancy attacks and buffer overflows are common.\n\n**JavaScript/Python**: Easy to write but interpreted, slow, and unsuitable for blockchain's performance constraints.\n\n**Go**: Has garbage collection which introduces unpredictable pauses.\n\nRust gives you C-level performance with Python-level safety guarantees—the perfect balance for blockchain development.\n"
       }
+    ],
+    "skills": [
+      "rust",
+      "solana-programs"
     ],
     "slug": {
       "_type": "slug",

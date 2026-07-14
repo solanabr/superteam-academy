@@ -63,14 +63,6 @@
       "minimum": 0,
       "maximum": 9007199254740991
     },
-    "tags": {
-      "default": [],
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
     "creator": {
       "type": "string",
       "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"

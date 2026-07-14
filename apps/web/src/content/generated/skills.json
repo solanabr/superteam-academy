@@ -1,1 +1,98 @@
-[]
+[
+  {
+    "label": "Solana Fundamentals",
+    "slug": "solana-fundamentals"
+  },
+  {
+    "label": "Account Model",
+    "slug": "account-model"
+  },
+  {
+    "label": "Transactions",
+    "slug": "transactions"
+  },
+  {
+    "label": "Keypairs & Wallets",
+    "slug": "keypairs-wallets"
+  },
+  {
+    "label": "RPC & Networking",
+    "slug": "rpc"
+  },
+  {
+    "label": "Rust",
+    "slug": "rust"
+  },
+  {
+    "label": "Borsh Serialization",
+    "slug": "borsh-serialization"
+  },
+  {
+    "label": "Program Development",
+    "slug": "solana-programs"
+  },
+  {
+    "label": "Anchor Framework",
+    "slug": "anchor"
+  },
+  {
+    "label": "Program-Derived Addresses",
+    "slug": "pdas"
+  },
+  {
+    "label": "Cross-Program Invocation",
+    "slug": "cpi"
+  },
+  {
+    "label": "Program Testing",
+    "slug": "program-testing"
+  },
+  {
+    "label": "Deployment & Devnet",
+    "slug": "program-deployment"
+  },
+  {
+    "label": "SPL Tokens",
+    "slug": "spl-tokens"
+  },
+  {
+    "label": "DeFi",
+    "slug": "defi"
+  },
+  {
+    "label": "Automated Market Makers",
+    "slug": "amm"
+  },
+  {
+    "label": "Lending & Borrowing",
+    "slug": "lending"
+  },
+  {
+    "label": "Staking",
+    "slug": "staking"
+  },
+  {
+    "label": "Oracles",
+    "slug": "oracles"
+  },
+  {
+    "label": "Wallet Adapter",
+    "slug": "wallet-adapter"
+  },
+  {
+    "label": "React",
+    "slug": "react"
+  },
+  {
+    "label": "Web3 Frontend",
+    "slug": "web3-frontend"
+  },
+  {
+    "label": "Sign-In With Solana",
+    "slug": "siws"
+  },
+  {
+    "label": "TypeScript",
+    "slug": "typescript"
+  }
+]

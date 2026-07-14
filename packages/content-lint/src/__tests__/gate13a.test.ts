@@ -18,12 +18,14 @@ modules: [{ key: m, title: M, lessons: [${lessonOrder.join(", ")}] }]
     "courses/x/lessons/fund/lesson.yaml": `id: lesson-fund
 slug: fund
 title: Fund
+skills: [wallet-funding]
 blocks:
   - { key: fund, type: wallet-funding, amount: 2, network: devnet, produces: funded-wallet }
 `,
     "courses/x/lessons/explore/lesson.yaml": `id: lesson-explore
 slug: explore
 title: Explore
+skills: [program-interaction]
 blocks:
   - { key: explore, type: program-explorer, idl: program.idl.json, consumes: [funded-wallet] }
 `,
