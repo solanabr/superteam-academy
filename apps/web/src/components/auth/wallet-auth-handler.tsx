@@ -111,9 +111,16 @@ export function WalletAuthHandler() {
 
       if (!response.ok) {
         let errorMsg = t("authFailed");
+        // #489 — a deleted account is refused with a stable key ("accountDeleted",
+        // matching the auth.accountDeleted message #461 already added) rather
+        // than a raw server string, and can't be fixed by retrying.
+        let canRetry = true;
         try {
           const body = (await response.json()) as { error?: string };
-          if (body.error) {
+          if (body.error === "accountDeleted") {
+            errorMsg = t("accountDeleted");
+            canRetry = false;
+          } else if (body.error) {
             errorMsg = body.error;
           }
         } catch {
@@ -123,7 +130,7 @@ export function WalletAuthHandler() {
         setOverlayState({
           status: "error",
           message: errorMsg,
-          canRetry: true,
+          canRetry,
         });
         isAuthenticating.current = false;
         return;
