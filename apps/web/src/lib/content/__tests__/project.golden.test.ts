@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import {
   coursesById,
   lessonsById,
-  instructorsById,
   achievementsById,
   questsById,
 } from "../store";
@@ -31,8 +30,11 @@ vi.mock("server-only", () => ({}));
 // from prod Sanity (public dataset 4e3i2wwc/production). Each projector, fed the
 // committed bundle doc, must deep-equal the captured GROQ shape. Divergences
 // here mean the locked bundle SHA and prod Sanity have drifted (report, do not
-// fudge the fixture).
-const deps = { instructorsById, lessonsById };
+// fudge the fixture) — EXCEPT the documented `instructor` → `creator` delta
+// (issue #478): the fixtures were captured pre-migration and hand-edited to
+// drop `instructor` / add `creator: null`, since the retired instructor deref
+// no longer exists and the bundle carries no `creator` data yet.
+const deps = { lessonsById };
 
 function bundleCourse(id: string): CourseDoc {
   const doc = coursesById.get(id);
@@ -52,9 +54,9 @@ describe("projectCourse — getAllCourses shape (summary module lessons)", () =>
     }
   });
 
-  it("instructor avatar is null; thumbnail is null (documented deltas)", () => {
+  it("creator is null; thumbnail is null (documented deltas)", () => {
     const c = projectCourse(bundleCourse(goldenCourses[0]!._id), deps);
-    expect(c.instructor.avatar).toBeNull();
+    expect(c.creator).toBeNull();
     expect(c.thumbnail).toBeNull();
   });
 });
@@ -238,7 +240,6 @@ describe("projectCourseSummary / projectRecommended / countCourseLessons", () =>
     for (const golden of goldenSummaries.recommended) {
       const projected = projectRecommended(
         bundleCourse(golden._id),
-        { instructorsById },
         golden.learningPath
       );
       expect(projected).toEqual(golden);

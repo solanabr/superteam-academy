@@ -9,7 +9,6 @@ import { QuizBlock } from "../src/blocks/quiz";
 import { Achievement } from "../src/achievement";
 import { Quest } from "../src/quest";
 import { LearningPath } from "../src/path";
-import { Instructor } from "../src/instructor";
 import { SlotsLock } from "../src/slots";
 
 /** One entry per file kind an author writes (or a tool generates). */
@@ -20,7 +19,6 @@ export const SCHEMA_TARGETS = {
   achievement: Achievement,
   quest: Quest,
   path: LearningPath,
-  instructor: Instructor,
   slots: SlotsLock,
 } as const;
 

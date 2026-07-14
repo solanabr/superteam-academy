@@ -19,7 +19,6 @@ describe("discover", () => {
       "achievements/first-steps.yaml": "id: achievement-first-steps\n",
       "quests/complete-lesson.yaml": "id: quest-complete-lesson\n",
       "paths/solana-core.yaml": "id: path-solana-core\n",
-      "instructors/ana-santos.yaml": "id: instructor-ana-santos\n",
       "README.md": "# ignored\n",
     });
     const kinds = discover(root)
@@ -29,7 +28,6 @@ describe("discover", () => {
       [
         "achievement",
         "course",
-        "instructor",
         "lesson",
         "path",
         "quest",
@@ -41,9 +39,9 @@ describe("discover", () => {
 
   it("reports a YAML parse error rather than throwing", () => {
     const root = makeTempRepo({
-      "instructors/x.yaml": "id: : : broken\n  - [\n",
+      "achievements/x.yaml": "id: : : broken\n  - [\n",
     });
-    const doc = discover(root).find((d) => d.kind === "instructor");
+    const doc = discover(root).find((d) => d.kind === "achievement");
     expect(doc?.parseError).toBeTruthy();
   });
 });
@@ -51,36 +49,36 @@ describe("discover", () => {
 describe("walkFiles — symlink safety (#381)", () => {
   it("skips a symlinked file even when its target resolves inside root", () => {
     const root = makeTempRepo({
-      "instructors/real.yaml": "id: instructor-real\n",
+      "achievements/real.yaml": "id: achievement-real\n",
     });
     symlinkSync(
-      join(root, "instructors", "real.yaml"),
-      join(root, "instructors", "linked.yaml")
+      join(root, "achievements", "real.yaml"),
+      join(root, "achievements", "linked.yaml")
     );
 
     const files = walkFiles(root);
-    expect(files).toContain("instructors/real.yaml");
-    expect(files).not.toContain("instructors/linked.yaml");
+    expect(files).toContain("achievements/real.yaml");
+    expect(files).not.toContain("achievements/linked.yaml");
 
     const docs = discover(root);
-    expect(docs.some((d) => d.path === "instructors/linked.yaml")).toBe(false);
+    expect(docs.some((d) => d.path === "achievements/linked.yaml")).toBe(false);
   });
 
   it("does not follow a symlinked file whose target lives outside root", () => {
     const secretDir = mkdtempSync(join(tmpdir(), "content-lint-secret-"));
     const secretPath = join(secretDir, "secret.yaml");
-    writeFileSync(secretPath, "id: instructor-leaked\n", "utf8");
+    writeFileSync(secretPath, "id: achievement-leaked\n", "utf8");
 
     const root = makeTempRepo({
-      "instructors/placeholder.yaml": "id: instructor-placeholder\n",
+      "achievements/placeholder.yaml": "id: achievement-placeholder\n",
     });
-    symlinkSync(secretPath, join(root, "instructors", "evil.yaml"));
+    symlinkSync(secretPath, join(root, "achievements", "evil.yaml"));
 
     const files = walkFiles(root);
-    expect(files).not.toContain("instructors/evil.yaml");
+    expect(files).not.toContain("achievements/evil.yaml");
 
     const docs = discover(root);
-    expect(docs.some((d) => d.path === "instructors/evil.yaml")).toBe(false);
+    expect(docs.some((d) => d.path === "achievements/evil.yaml")).toBe(false);
   });
 
   it("does not descend into a symlinked directory", () => {
@@ -93,7 +91,7 @@ describe("walkFiles — symlink safety (#381)", () => {
     );
 
     const root = makeTempRepo({
-      "instructors/placeholder.yaml": "id: instructor-placeholder\n",
+      "achievements/placeholder.yaml": "id: achievement-placeholder\n",
     });
     symlinkSync(outsideDir, join(root, "quests"));
 

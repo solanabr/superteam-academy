@@ -6,7 +6,6 @@ import {
   Achievement,
   Quest,
   LearningPath,
-  Instructor,
   SlotsLock,
   type CourseT,
   type LessonT,
@@ -109,11 +108,6 @@ export function buildModel(root: string, diagnostics: Diagnostic[]): RepoModel {
       case "path": {
         const path = parse(doc, LearningPath);
         if (path) model.paths.push({ file: doc.path, path });
-        break;
-      }
-      case "instructor": {
-        const instructor = parse(doc, Instructor);
-        if (instructor) model.instructors.push({ file: doc.path, instructor });
         break;
       }
     }

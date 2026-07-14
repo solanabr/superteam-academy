@@ -2,7 +2,7 @@
 
 Located in `packages/types/src/`. Key types:
 
-- `Course`, `Module`, `Lesson`, `Instructor`, `LearningPath` — CMS content
+- `Course`, `Module`, `Lesson`, `LearningPath` — CMS content (`Course.creator` is a wallet, issue #478 — no separate `Instructor` type)
 - `TestCase` — challenge test cases (input, expectedOutput, hidden flag)
 - `UserProfile`, `Achievement`, `Certificate` — user data
 - `Progress`, `StreakData`, `LeaderboardEntry`, `XpTransaction` — gamification

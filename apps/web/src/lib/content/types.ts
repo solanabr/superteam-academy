@@ -30,10 +30,6 @@ export interface LessonDoc extends BundleDoc {
   slug: RawSlug;
 }
 
-export interface InstructorDoc extends BundleDoc {
-  _type: "instructor";
-}
-
 export interface AchievementDoc extends BundleDoc {
   _type: "achievement";
 }
@@ -51,7 +47,6 @@ export interface LearningPathDoc extends BundleDoc {
 export interface RawBundle {
   courses: CourseDoc[];
   lessons: LessonDoc[];
-  instructors: InstructorDoc[];
   achievements: AchievementDoc[];
   quests: QuestDoc[];
   paths: LearningPathDoc[];
@@ -65,7 +60,6 @@ export interface ContentStore {
   coursesBySlug: ReadonlyMap<string, CourseDoc>;
   lessonsById: ReadonlyMap<string, LessonDoc>;
   lessonsBySlug: ReadonlyMap<string, LessonDoc>;
-  instructorsById: ReadonlyMap<string, InstructorDoc>;
   achievementsById: ReadonlyMap<string, AchievementDoc>;
   questsById: ReadonlyMap<string, QuestDoc>;
   pathsById: ReadonlyMap<string, LearningPathDoc>;

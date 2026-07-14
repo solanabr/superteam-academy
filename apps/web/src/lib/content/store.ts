@@ -5,14 +5,12 @@ import { buildStore } from "./build-store";
 import type {
   AchievementDoc,
   CourseDoc,
-  InstructorDoc,
   LearningPathDoc,
   LessonDoc,
   QuestDoc,
 } from "./types";
 import achievementsJson from "@/content/generated/achievements.json";
 import coursesJson from "@/content/generated/courses.json";
-import instructorsJson from "@/content/generated/instructors.json";
 import lessonsJson from "@/content/generated/lessons.json";
 import pathsJson from "@/content/generated/paths.json";
 import questsJson from "@/content/generated/quests.json";
@@ -39,7 +37,6 @@ import slotsJson from "@/content/generated/slots.json";
 const store = buildStore({
   courses: coursesJson as unknown as CourseDoc[],
   lessons: lessonsJson as unknown as LessonDoc[],
-  instructors: instructorsJson as unknown as InstructorDoc[],
   achievements: achievementsJson as unknown as AchievementDoc[],
   quests: questsJson as unknown as QuestDoc[],
   paths: pathsJson as unknown as LearningPathDoc[],
@@ -51,7 +48,6 @@ export const {
   coursesBySlug,
   lessonsById,
   lessonsBySlug,
-  instructorsById,
   achievementsById,
   questsById,
   pathsById,

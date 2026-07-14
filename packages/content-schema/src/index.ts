@@ -8,5 +8,4 @@ export * from "./course";
 export * from "./achievement";
 export * from "./quest";
 export * from "./path";
-export * from "./instructor";
 export * from "./slots";

@@ -5,7 +5,6 @@ import type {
   AchievementT,
   QuestT,
   LearningPathT,
-  InstructorT,
   SlotsLockT,
 } from "@superteam-lms/content-schema";
 
@@ -39,7 +38,6 @@ export interface RepoModel {
   achievements: { file: string; achievement: AchievementT }[];
   quests: { file: string; quest: QuestT }[];
   paths: { file: string; path: LearningPathT }[];
-  instructors: { file: string; instructor: InstructorT }[];
 }
 
 /** The typed collections start empty; Gate 1 (checks/gate1-schema.ts) fills them. */
@@ -53,6 +51,5 @@ export function emptyModel(root: string): RepoModel {
     achievements: [],
     quests: [],
     paths: [],
-    instructors: [],
   };
 }

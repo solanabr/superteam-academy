@@ -9,7 +9,6 @@ export type DocKind =
   | "achievement"
   | "quest"
   | "path"
-  | "instructor"
   | "slots";
 
 export interface RawDoc {
@@ -65,7 +64,6 @@ function classify(path: string): DocKind | null {
   if (/^achievements\/[^/]+\.yaml$/.test(path)) return "achievement";
   if (/^quests\/[^/]+\.yaml$/.test(path)) return "quest";
   if (/^paths\/[^/]+\.yaml$/.test(path)) return "path";
-  if (/^instructors\/[^/]+\.yaml$/.test(path)) return "instructor";
   return null;
 }
 

@@ -17,10 +17,7 @@ describe("buildStore", () => {
     expect(store.lessonsBySlug.get("deep-dive")?._id).toBe("lesson-deep-dive");
   });
 
-  it("indexes instructors, achievements, quests and paths by id", () => {
-    expect(store.instructorsById.get("instructor-ada")?._type).toBe(
-      "instructor"
-    );
+  it("indexes achievements, quests and paths by id", () => {
     expect(store.achievementsById.get("achievement-first")?._type).toBe(
       "achievement"
     );
@@ -40,7 +37,6 @@ describe("buildStore", () => {
     expect(store.coursesBySlug.get("nope")).toBeUndefined();
     expect(store.lessonsById.get("nope")).toBeUndefined();
     expect(store.lessonsBySlug.get("nope")).toBeUndefined();
-    expect(store.instructorsById.get("nope")).toBeUndefined();
     expect(store.slotsByCourseId.get("nope")).toBeUndefined();
   });
 

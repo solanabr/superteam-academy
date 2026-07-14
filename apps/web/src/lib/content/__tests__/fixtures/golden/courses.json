@@ -1,18 +1,10 @@
 [
   {
     "_id": "course-anchor-framework",
-    "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
+    "creator": null,
+    "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment \u2014 build production-ready programs with confidence.",
     "difficulty": "intermediate",
     "duration": 14,
-    "instructor": {
-      "avatar": null,
-      "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
-      "name": "Mariana Costa",
-      "socialLinks": {
-        "github": "https://github.com/marianacosta",
-        "twitter": "https://twitter.com/mari_costa_sol"
-      }
-    },
     "modules": [
       {
         "description": "Learn the fundamentals of the Anchor framework, program structure, and account constraints.",
@@ -106,18 +98,10 @@
   },
   {
     "_id": "course-building-first-program",
-    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+    "creator": null,
+    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server \u2014 no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
     "difficulty": "intermediate",
     "duration": 12,
-    "instructor": {
-      "avatar": null,
-      "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
-      "name": "Mariana Costa",
-      "socialLinks": {
-        "github": "https://github.com/marianacosta",
-        "twitter": "https://twitter.com/mari_costa_sol"
-      }
-    },
     "modules": [
       {
         "description": "Understand how Solana programs get compiled and get your first successful build through the Superteam Academy Build Server.",
@@ -238,18 +222,10 @@
   },
   {
     "_id": "course-defi-on-solana",
+    "creator": null,
     "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
     "difficulty": "advanced",
     "duration": 16,
-    "instructor": {
-      "avatar": null,
-      "bio": "DeFi researcher and protocol designer. Previously built trading systems at a São Paulo quant fund. Now designs tokenomics and DeFi primitives for Solana protocols.",
-      "name": "Rafael Mendes",
-      "socialLinks": {
-        "github": "https://github.com/rafaelmendes",
-        "twitter": "https://twitter.com/rafamendes_defi"
-      }
-    },
     "modules": [
       {
         "description": "Understand the core concepts of decentralized finance on Solana: AMMs, lending, and market mechanics.",
@@ -343,18 +319,10 @@
   },
   {
     "_id": "course-rust-for-solana",
-    "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
+    "creator": null,
+    "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture \u2014 build the skills to write native Solana programs.",
     "difficulty": "intermediate",
     "duration": 12,
-    "instructor": {
-      "avatar": null,
-      "bio": "Systems programmer and Rust educator. Former embedded systems engineer who transitioned to blockchain development. Maintains open-source Solana tooling and teaches Rust workshops across Latin America.",
-      "name": "Lucas Oliveira",
-      "socialLinks": {
-        "github": "https://github.com/lucasoliveira",
-        "twitter": "https://twitter.com/lucasoliv_dev"
-      }
-    },
     "modules": [
       {
         "description": "Learn Rust fundamentals essential for Solana development: ownership, borrowing, structs, enums, and pattern matching.",
@@ -448,18 +416,10 @@
   },
   {
     "_id": "course-solana-frontend",
+    "creator": null,
     "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
     "difficulty": "intermediate",
     "duration": 10,
-    "instructor": {
-      "avatar": null,
-      "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
-      "name": "Ana Santos",
-      "socialLinks": {
-        "github": "https://github.com/anasantos",
-        "twitter": "https://twitter.com/anasantos_sol"
-      }
-    },
     "modules": [
       {
         "description": "Master Solana wallet integration using the Wallet Adapter. Learn to connect wallets, sign messages, and implement Sign-In With Solana (SIWS) authentication.",
@@ -560,18 +520,10 @@
   },
   {
     "_id": "course-solana-fundamentals",
+    "creator": null,
     "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
     "difficulty": "beginner",
     "duration": 10,
-    "instructor": {
-      "avatar": null,
-      "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
-      "name": "Ana Santos",
-      "socialLinks": {
-        "github": "https://github.com/anasantos",
-        "twitter": "https://twitter.com/anasantos_sol"
-      }
-    },
     "modules": [
       {
         "description": "Learn the fundamentals of Solana blockchain, set up your development environment, and configure your first wallet.",

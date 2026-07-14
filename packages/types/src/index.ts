@@ -10,7 +10,6 @@ export type {
 
 export type {
   Difficulty,
-  Instructor,
   TestCase,
   AdminTestCase,
   BuildType,

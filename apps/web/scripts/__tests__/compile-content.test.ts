@@ -16,10 +16,6 @@ const bin = (n = 8): Uint8Array => new Uint8Array(n).fill(0x89);
 function validTree(): RepoTree {
   const tree: RepoTree = new Map();
   tree.set(
-    "instructors/alice.yaml",
-    enc(`id: instructor-alice\nname: Alice\nwallet: ${WALLET}\n`)
-  );
-  tree.set(
     "courses/intro/course.yaml",
     enc(
       [
@@ -30,7 +26,7 @@ function validTree(): RepoTree {
         "duration: 1",
         "xpPerLesson: 10",
         "xpReward: 100",
-        "instructor: instructor-alice",
+        `creator: ${WALLET}`,
         "modules:",
         "  - key: mod-one",
         "    title: Module One",
@@ -146,7 +142,7 @@ function treeWithAssets(): RepoTree {
         "duration: 1",
         "xpPerLesson: 10",
         "xpReward: 100",
-        "instructor: instructor-alice",
+        `creator: ${WALLET}`,
         "thumbnail: assets/thumb.png",
         "modules:",
         "  - key: mod-one",
@@ -177,7 +173,6 @@ describe("compileContent", () => {
     const names = [
       "courses.json",
       "lessons.json",
-      "instructors.json",
       "achievements.json",
       "quests.json",
       "paths.json",
@@ -185,6 +180,7 @@ describe("compileContent", () => {
       "meta.json",
     ];
     for (const n of names) expect(files.has(n)).toBe(true);
+    expect(files.has("instructors.json")).toBe(false);
 
     const meta = JSON.parse(files.get("meta.json")!) as {
       sha: string;
@@ -196,7 +192,6 @@ describe("compileContent", () => {
     expect(meta.counts).toEqual({
       courses: 1,
       lessons: 1,
-      instructors: 1,
       achievements: 1,
       quests: 1,
       learningPaths: 1,
@@ -219,6 +214,8 @@ describe("compileContent", () => {
     expect(courses[0]!._id).toBe("course-intro");
     expect(courses[0]!.sync).toBeUndefined();
     expect(courses[0]!.onChainStatus).toBeUndefined();
+    expect(courses[0]!.creator).toBe(WALLET);
+    expect("instructor" in courses[0]!).toBe(false);
 
     const lessons = JSON.parse(files.get("lessons.json")!) as {
       blocks: { src: string }[];

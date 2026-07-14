@@ -4,19 +4,12 @@ import { Award } from "@superteam-lms/content-schema";
 import type { AwardT } from "@superteam-lms/content-schema";
 import type {
   Course,
-  Instructor,
   LearningPath,
   Lesson,
   LessonBlock,
   TestCase,
 } from "@superteam-lms/types";
-import type {
-  AchievementDoc,
-  CourseDoc,
-  InstructorDoc,
-  LessonDoc,
-  QuestDoc,
-} from "./types";
+import type { AchievementDoc, CourseDoc, LessonDoc, QuestDoc } from "./types";
 import type {
   CourseSummary,
   DeployedAchievement,
@@ -32,15 +25,17 @@ import type {
  * the app already consumes (`Course`, `Lesson`, …).
  *
  * Each projector reproduces the exact projection its pre-flip GROQ query emitted
- * (slug flatten, thumbnail path, instructor deref, `blocks[]` shape, `award{…}`),
- * byte-for-byte — golden tests in `__tests__/project.golden.test.ts` deep-equal
- * these outputs against a live capture of the old GROQ. Two deliberate,
- * documented deltas from GROQ:
- *  - instructor `avatar` is always `null` (spec decision 2 / plan §ambiguity 1:
- *    the bundle carries no avatars and live content has none; wiring real
- *    `profiles.avatar_url` is a follow-up).
+ * (slug flatten, thumbnail path, `blocks[]` shape, `award{…}`), byte-for-byte —
+ * golden tests in `__tests__/project.golden.test.ts` deep-equal these outputs
+ * against a live capture of the old GROQ. Documented deltas from GROQ:
  *  - `thumbnail` is `null` unless already a resolved URL string — the bundle
  *    holds no Sanity image assets to resolve (all live thumbnails are null).
+ *  - `course.creator` (issue #478) replaces the retired `instructor` deref
+ *    entirely — no separate instructor document exists anymore, so there is no
+ *    `avatar`/`bio`/`socialLinks` projection to reproduce. `creator` is read
+ *    straight off the course doc (a wallet string, or `null` for the
+ *    pre-migration content this schema-first PR still has to tolerate). The
+ *    wallet→profile DISPLAY is a later PR (B4).
  *
  * The raw docs are typed loosely ({@link CourseDoc} et al. extend `BundleDoc`,
  * every non-discriminant field `unknown`). Reads go through the small coercion
@@ -89,33 +84,6 @@ function flatSlug(v: unknown): string | null {
     if (typeof c === "string") return c;
   }
   return null;
-}
-
-// --- instructor ---
-
-/**
- * `instructor->{ name, "avatar": avatar.asset->url, bio, socialLinks }`.
- * `avatar` is projected null by design (see module header). Returns `null` when
- * the reference does not resolve — matching GROQ `->` on an unresolvable ref.
- */
-export function projectInstructor(
-  doc: InstructorDoc | undefined
-): Instructor | null {
-  if (!doc) return null;
-  return {
-    name: optString(doc.name),
-    avatar: null,
-    bio: optString(doc.bio),
-    socialLinks: (doc.socialLinks ?? null) as Instructor["socialLinks"],
-  } as unknown as Instructor;
-}
-
-/** `instructor->{ name, "avatar": avatar.asset->url }` — the 2-field recommended shape. */
-function projectInstructorMini(
-  doc: InstructorDoc | undefined
-): RecommendedCourse["instructor"] {
-  if (!doc) return null;
-  return { name: optString(doc.name) as string, avatar: null };
 }
 
 // --- lesson blocks ---
@@ -255,7 +223,6 @@ function projectModule<T>(
 // --- course ---
 
 export interface CourseProjectionDeps {
-  instructorsById: ReadonlyMap<string, InstructorDoc>;
   lessonsById: ReadonlyMap<string, LessonDoc>;
 }
 
@@ -278,7 +245,6 @@ export function projectCourse(
   deps: CourseProjectionDeps,
   opts: CourseProjectionOptions = {}
 ): Course {
-  const instructor = deps.instructorsById.get(refId(doc.instructor) ?? "");
   const rawModules: RawModule[] = Array.isArray(doc.modules)
     ? (doc.modules as RawModule[])
     : [];
@@ -294,7 +260,7 @@ export function projectCourse(
     difficulty: optString(doc.difficulty),
     duration: optNumber(doc.duration),
     thumbnail: optString(doc.thumbnail),
-    instructor: projectInstructor(instructor),
+    creator: optString(doc.creator),
     tags: (doc.tags ?? null) as string[] | null,
     xpReward: optNumber(doc.xpReward),
     trackId: optNumber(doc.trackId),
@@ -344,15 +310,13 @@ export function projectCourseSummary(
 }
 
 /**
- * getRecommendedCourses projection. Instructor is the 2-field mini deref
- * `{ name, "avatar": … }`. `learningPath` injected as in {@link projectCourseSummary}.
+ * getRecommendedCourses projection. `learningPath` injected as in
+ * {@link projectCourseSummary}.
  */
 export function projectRecommended(
   doc: CourseDoc,
-  deps: Pick<CourseProjectionDeps, "instructorsById">,
   learningPath: string | null
 ): RecommendedCourse {
-  const instructor = deps.instructorsById.get(refId(doc.instructor) ?? "");
   return {
     _id: doc._id,
     title: optString(doc.title) as string,
@@ -361,7 +325,7 @@ export function projectRecommended(
     difficulty: optString(doc.difficulty) as string,
     duration: optNumber(doc.duration) as number,
     thumbnail: optString(doc.thumbnail),
-    instructor: projectInstructorMini(instructor),
+    creator: optString(doc.creator),
     tags: (doc.tags ?? null) as string[] | null,
     xpReward: optNumber(doc.xpReward) as number,
     totalLessons: countCourseLessons(doc),

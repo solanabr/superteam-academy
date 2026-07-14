@@ -165,8 +165,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             {course.description}
           </p>
 
-          {/* Instructor */}
-          {course.instructor && (
+          {/* Creator (issue #478 — wallet only for now; B4 resolves a display profile) */}
+          {course.creator && (
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-subtle">
                 <User
@@ -178,13 +178,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               </div>
               <div>
                 <p className="font-display text-[13px] font-bold">
-                  {t("courseBy")} {course.instructor.name}
+                  {t("courseBy")}{" "}
+                  <span className="font-mono text-text-3">
+                    {course.creator}
+                  </span>
                 </p>
-                {course.instructor.bio && (
-                  <p className="text-xs leading-snug text-text-3">
-                    {course.instructor.bio}
-                  </p>
-                )}
               </div>
             </div>
           )}

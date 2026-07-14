@@ -1,4 +1,49 @@
 {
+  "courseTags": [
+    {
+      "_id": "course-anchor-framework",
+      "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+      "title": "Anchor Framework Mastery",
+      "totalLessons": 12
+    },
+    {
+      "_id": "course-building-first-program",
+      "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
+      "title": "Building Your First Solana Program",
+      "totalLessons": 16
+    },
+    {
+      "_id": "course-defi-on-solana",
+      "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
+      "title": "DeFi on Solana",
+      "totalLessons": 12
+    },
+    {
+      "_id": "course-rust-for-solana",
+      "tags": ["rust", "solana", "programming", "systems", "intermediate"],
+      "title": "Rust for Solana Developers",
+      "totalLessons": 12
+    },
+    {
+      "_id": "course-solana-frontend",
+      "tags": [
+        "frontend",
+        "react",
+        "nextjs",
+        "wallet-adapter",
+        "typescript",
+        "intermediate"
+      ],
+      "title": "Solana Frontend Development",
+      "totalLessons": 12
+    },
+    {
+      "_id": "course-solana-fundamentals",
+      "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
+      "title": "Solana Fundamentals",
+      "totalLessons": 12
+    }
+  ],
   "coursesByIds": [
     {
       "_id": "course-anchor-framework",
@@ -68,174 +113,6 @@
       "totalLessons": 12
     }
   ],
-  "recommended": [
-    {
-      "_id": "course-anchor-framework",
-      "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
-      "difficulty": "intermediate",
-      "duration": 14,
-      "instructor": {
-        "avatar": null,
-        "name": "Mariana Costa"
-      },
-      "learningPath": "Rust & Programs",
-      "slug": "anchor-framework",
-      "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
-      "thumbnail": null,
-      "title": "Anchor Framework Mastery",
-      "totalLessons": 12,
-      "trackId": 3,
-      "trackLevel": 1,
-      "xpReward": 900
-    },
-    {
-      "_id": "course-building-first-program",
-      "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
-      "difficulty": "intermediate",
-      "duration": 12,
-      "instructor": {
-        "avatar": null,
-        "name": "Mariana Costa"
-      },
-      "learningPath": "Solana Core",
-      "slug": "building-your-first-solana-program",
-      "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
-      "thumbnail": null,
-      "title": "Building Your First Solana Program",
-      "totalLessons": 16,
-      "trackId": 1,
-      "trackLevel": 2,
-      "xpReward": 850
-    },
-    {
-      "_id": "course-defi-on-solana",
-      "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
-      "difficulty": "advanced",
-      "duration": 16,
-      "instructor": {
-        "avatar": null,
-        "name": "Rafael Mendes"
-      },
-      "learningPath": "DeFi",
-      "slug": "defi-on-solana",
-      "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
-      "thumbnail": null,
-      "title": "DeFi on Solana",
-      "totalLessons": 12,
-      "trackId": 5,
-      "trackLevel": 1,
-      "xpReward": 1000
-    },
-    {
-      "_id": "course-rust-for-solana",
-      "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
-      "difficulty": "intermediate",
-      "duration": 12,
-      "instructor": {
-        "avatar": null,
-        "name": "Lucas Oliveira"
-      },
-      "learningPath": "Rust & Programs",
-      "slug": "rust-for-solana",
-      "tags": ["rust", "solana", "programming", "systems", "intermediate"],
-      "thumbnail": null,
-      "title": "Rust for Solana Developers",
-      "totalLessons": 12,
-      "trackId": 2,
-      "trackLevel": 1,
-      "xpReward": 800
-    },
-    {
-      "_id": "course-solana-frontend",
-      "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
-      "difficulty": "intermediate",
-      "duration": 10,
-      "instructor": {
-        "avatar": null,
-        "name": "Ana Santos"
-      },
-      "learningPath": "Frontend",
-      "slug": "solana-frontend",
-      "tags": [
-        "frontend",
-        "react",
-        "nextjs",
-        "wallet-adapter",
-        "typescript",
-        "intermediate"
-      ],
-      "thumbnail": null,
-      "title": "Solana Frontend Development",
-      "totalLessons": 12,
-      "trackId": 4,
-      "trackLevel": 1,
-      "xpReward": 700
-    },
-    {
-      "_id": "course-solana-fundamentals",
-      "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
-      "difficulty": "beginner",
-      "duration": 10,
-      "instructor": {
-        "avatar": null,
-        "name": "Ana Santos"
-      },
-      "learningPath": "Solana Core",
-      "slug": "solana-fundamentals",
-      "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
-      "thumbnail": null,
-      "title": "Solana Fundamentals",
-      "totalLessons": 12,
-      "trackId": 1,
-      "trackLevel": 1,
-      "xpReward": 600
-    }
-  ],
-  "courseTags": [
-    {
-      "_id": "course-anchor-framework",
-      "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
-      "title": "Anchor Framework Mastery",
-      "totalLessons": 12
-    },
-    {
-      "_id": "course-building-first-program",
-      "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
-      "title": "Building Your First Solana Program",
-      "totalLessons": 16
-    },
-    {
-      "_id": "course-defi-on-solana",
-      "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
-      "title": "DeFi on Solana",
-      "totalLessons": 12
-    },
-    {
-      "_id": "course-rust-for-solana",
-      "tags": ["rust", "solana", "programming", "systems", "intermediate"],
-      "title": "Rust for Solana Developers",
-      "totalLessons": 12
-    },
-    {
-      "_id": "course-solana-frontend",
-      "tags": [
-        "frontend",
-        "react",
-        "nextjs",
-        "wallet-adapter",
-        "typescript",
-        "intermediate"
-      ],
-      "title": "Solana Frontend Development",
-      "totalLessons": 12
-    },
-    {
-      "_id": "course-solana-fundamentals",
-      "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
-      "title": "Solana Fundamentals",
-      "totalLessons": 12
-    }
-  ],
   "lessonCounts": [
     {
       "_id": "course-anchor-framework",
@@ -260,6 +137,111 @@
     {
       "_id": "course-solana-fundamentals",
       "totalLessons": 12
+    }
+  ],
+  "recommended": [
+    {
+      "_id": "course-anchor-framework",
+      "creator": null,
+      "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment \u2014 build production-ready programs with confidence.",
+      "difficulty": "intermediate",
+      "duration": 14,
+      "learningPath": "Rust & Programs",
+      "slug": "anchor-framework",
+      "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+      "thumbnail": null,
+      "title": "Anchor Framework Mastery",
+      "totalLessons": 12,
+      "trackId": 3,
+      "trackLevel": 1,
+      "xpReward": 900
+    },
+    {
+      "_id": "course-building-first-program",
+      "creator": null,
+      "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server \u2014 no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+      "difficulty": "intermediate",
+      "duration": 12,
+      "learningPath": "Solana Core",
+      "slug": "building-your-first-solana-program",
+      "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
+      "thumbnail": null,
+      "title": "Building Your First Solana Program",
+      "totalLessons": 16,
+      "trackId": 1,
+      "trackLevel": 2,
+      "xpReward": 850
+    },
+    {
+      "_id": "course-defi-on-solana",
+      "creator": null,
+      "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
+      "difficulty": "advanced",
+      "duration": 16,
+      "learningPath": "DeFi",
+      "slug": "defi-on-solana",
+      "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
+      "thumbnail": null,
+      "title": "DeFi on Solana",
+      "totalLessons": 12,
+      "trackId": 5,
+      "trackLevel": 1,
+      "xpReward": 1000
+    },
+    {
+      "_id": "course-rust-for-solana",
+      "creator": null,
+      "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture \u2014 build the skills to write native Solana programs.",
+      "difficulty": "intermediate",
+      "duration": 12,
+      "learningPath": "Rust & Programs",
+      "slug": "rust-for-solana",
+      "tags": ["rust", "solana", "programming", "systems", "intermediate"],
+      "thumbnail": null,
+      "title": "Rust for Solana Developers",
+      "totalLessons": 12,
+      "trackId": 2,
+      "trackLevel": 1,
+      "xpReward": 800
+    },
+    {
+      "_id": "course-solana-frontend",
+      "creator": null,
+      "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
+      "difficulty": "intermediate",
+      "duration": 10,
+      "learningPath": "Frontend",
+      "slug": "solana-frontend",
+      "tags": [
+        "frontend",
+        "react",
+        "nextjs",
+        "wallet-adapter",
+        "typescript",
+        "intermediate"
+      ],
+      "thumbnail": null,
+      "title": "Solana Frontend Development",
+      "totalLessons": 12,
+      "trackId": 4,
+      "trackLevel": 1,
+      "xpReward": 700
+    },
+    {
+      "_id": "course-solana-fundamentals",
+      "creator": null,
+      "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
+      "difficulty": "beginner",
+      "duration": 10,
+      "learningPath": "Solana Core",
+      "slug": "solana-fundamentals",
+      "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
+      "thumbnail": null,
+      "title": "Solana Fundamentals",
+      "totalLessons": 12,
+      "trackId": 1,
+      "trackLevel": 1,
+      "xpReward": 600
     }
   ]
 }

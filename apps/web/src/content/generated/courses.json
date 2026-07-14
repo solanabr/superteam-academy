@@ -6,12 +6,6 @@
     "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
     "difficulty": "intermediate",
     "duration": 14,
-    "instructor": {
-      "_key": "instructor-mariana-costa",
-      "_ref": "instructor-mariana-costa",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {
@@ -138,12 +132,6 @@
     "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
     "difficulty": "intermediate",
     "duration": 12,
-    "instructor": {
-      "_key": "instructor-mariana-costa",
-      "_ref": "instructor-mariana-costa",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {
@@ -304,12 +292,6 @@
     "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
     "difficulty": "advanced",
     "duration": 16,
-    "instructor": {
-      "_key": "instructor-rafael-mendes",
-      "_ref": "instructor-rafael-mendes",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {
@@ -437,12 +419,6 @@
     "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
     "difficulty": "intermediate",
     "duration": 12,
-    "instructor": {
-      "_key": "instructor-lucas-oliveira",
-      "_ref": "instructor-lucas-oliveira",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {
@@ -569,12 +545,6 @@
     "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
     "difficulty": "intermediate",
     "duration": 10,
-    "instructor": {
-      "_key": "instructor-ana-santos",
-      "_ref": "instructor-ana-santos",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {
@@ -702,12 +672,6 @@
     "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
     "difficulty": "beginner",
     "duration": 10,
-    "instructor": {
-      "_key": "instructor-ana-santos",
-      "_ref": "instructor-ana-santos",
-      "_type": "reference",
-      "_weak": true
-    },
     "minCompletionsForReward": 10,
     "modules": [
       {

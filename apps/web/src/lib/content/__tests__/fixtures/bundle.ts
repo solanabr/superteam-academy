@@ -34,7 +34,6 @@ export const fixtureBundle: RawBundle = {
       title: "Deep Dive",
     },
   ],
-  instructors: [{ _id: "instructor-ada", _type: "instructor", name: "Ada" }],
   achievements: [
     { _id: "achievement-first", _type: "achievement", name: "First Steps" },
   ],
