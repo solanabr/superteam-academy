@@ -84,15 +84,17 @@ vi.mock("@/lib/content/meta", () => ({ SYNCED_SHA: "a".repeat(40) }));
 const matchingRaw = {
   creator: { toBase58: () => INSTRUCTOR_WALLET },
   content_tx_id: MATCHING_TX_ID,
-  lesson_count: 3,
+  liveLessonCount: 3,
   difficulty: 1,
   xp_per_lesson: 50,
   track_id: 0,
   track_level: 0,
   prerequisite: null,
   creator_reward_xp: 0,
-  min_completions_for_reward: 0,
+  total_completions: 0,
+  total_enrollments: 0,
   is_active: true,
+  version: 1,
 };
 const rawByMarker: Record<string, unknown> = {
   A: matchingRaw,

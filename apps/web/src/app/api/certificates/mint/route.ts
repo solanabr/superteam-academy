@@ -177,8 +177,7 @@ export async function POST(request: NextRequest) {
     }
 
     const totalXp =
-      Number(onChainCourse.xp_per_lesson) *
-      (Number(onChainCourse.lesson_count) || 1);
+      Number(onChainCourse.xp_per_lesson) * onChainCourse.liveLessonCount;
 
     // Build metadata
     const metadataJson = {

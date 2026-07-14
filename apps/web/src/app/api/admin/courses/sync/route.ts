@@ -445,11 +445,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Grow the on-chain lesson count when a teacher has appended lessons to an
   // already-deployed course. Increase-only: without this, a new lesson's index
   // is >= course.lesson_count and complete_lesson reverts (LessonOutOfBounds,
-  // surfaced as a 409 in /api/lessons/complete). fetchCourse uses the raw-IDL
-  // BorshCoder → snake_case `lesson_count`. The program rejects any decrease
+  // surfaced as a 409 in /api/lessons/complete). fetchCourse returns the
+  // normalised `liveLessonCount`. The program rejects any decrease
   // (LessonCountDecrease), so we only send the field when Sanity is strictly
   // higher; equal/lower is left untouched.
-  const onChainLessonCount = onChainCourse?.lesson_count as number | undefined;
+  // Count-based and only correct while masks are dense (today). Once a
+  // sparse-mask course can exist, this must become a per-slot bit test
+  // against `activeLessons` instead of a count comparison.
+  const onChainLessonCount = onChainCourse?.liveLessonCount;
   if (
     typeof course.lessonCount === "number" &&
     typeof onChainLessonCount === "number" &&
