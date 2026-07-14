@@ -63,6 +63,12 @@ function num(v: unknown): number | null {
   return typeof v === "number" ? v : null;
 }
 
+function strArr(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === "string")
+    : [];
+}
+
 function refId(v: unknown): string | null {
   if (typeof v === "object" && v !== null && "_ref" in v) {
     const r = (v as { _ref?: unknown })._ref;
@@ -332,6 +338,29 @@ export async function getAllCourseTags(): Promise<
       tags: c.tags as string[],
       totalLessons: countCourseLessons(c),
     }));
+}
+
+/**
+ * Per-lesson skill tags across all gated (synced + active) courses, keyed by
+ * lesson id — the per-lesson attribution the profile Skills radar tallies
+ * against completed `user_progress.lesson_id` rows (#466 C3). Replaces the old
+ * course-tag smear, where a single completed lesson credited ALL of its
+ * course's tags equally instead of just the skills it actually taught.
+ */
+export async function getAllLessonSkills(): Promise<
+  { _id: string; skills: string[] }[]
+> {
+  const courses = await gatedCourses();
+  const seen = new Set<string>();
+  const out: { _id: string; skills: string[] }[] = [];
+  for (const c of courses) {
+    for (const lesson of courseLessonDocs(c)) {
+      if (seen.has(lesson._id)) continue;
+      seen.add(lesson._id);
+      out.push({ _id: lesson._id, skills: strArr(lesson.skills) });
+    }
+  }
+  return out;
 }
 
 export async function getAllCourseLessonCounts(): Promise<

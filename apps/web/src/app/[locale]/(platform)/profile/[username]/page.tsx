@@ -19,9 +19,10 @@ import { createClient } from "@/lib/supabase/client";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import {
   getAllAchievements,
-  getAllCourseTags,
+  getAllLessonSkills,
   getCoursesByIds,
 } from "@/lib/content/client-queries";
+import { completedLessonsToRadar } from "@/lib/gamification";
 import type { DeployedAchievement } from "@/lib/content/queries";
 import { truncateAddress } from "@/lib/utils";
 
@@ -166,7 +167,7 @@ export default function PublicProfilePage() {
           supabase.from("certificates").select("*").eq("user_id", userId),
           supabase
             .from("user_progress")
-            .select("course_id, completed")
+            .select("course_id, lesson_id, completed")
             .eq("user_id", userId)
             .eq("completed", true),
           supabase
@@ -216,12 +217,12 @@ export default function PublicProfilePage() {
         const enrolledIds = (enrollmentResult.data ?? []).map(
           (e) => e.course_id
         );
-        const [courseSummaries, allCourseTags, allAchievements] =
+        const [courseSummaries, allLessonSkills, allAchievements] =
           await Promise.all([
             enrolledIds.length > 0
               ? getCoursesByIds(enrolledIds)
               : Promise.resolve([]),
-            getAllCourseTags(),
+            getAllLessonSkills(),
             getAllAchievements(),
           ]);
 
@@ -271,33 +272,20 @@ export default function PublicProfilePage() {
           }
         }
 
-        // Compute skill radar — raw completed lessons per tag, normalized
-        // so the strongest tag = 100 and others scale proportionally.
-        const tagCompletedLessons = new Map<string, number>();
-        for (const course of allCourseTags) {
-          const done = courseProgressMap.get(course._id) ?? 0;
-          for (const tag of course.tags ?? []) {
-            tagCompletedLessons.set(
-              tag,
-              (tagCompletedLessons.get(tag) ?? 0) + done
-            );
-          }
-        }
-
-        const rawSkills = Array.from(tagCompletedLessons.entries())
-          .filter(([, count]) => count > 0)
-          .map(([tag, count]) => ({
-            label: tag.charAt(0).toUpperCase() + tag.slice(1),
-            lessonCount: count,
-          }))
-          .sort((a, b) => b.lessonCount - a.lessonCount)
-          .slice(0, 8);
-
-        const maxLessons = rawSkills[0]?.lessonCount ?? 1;
-        const skills: SkillItem[] = rawSkills.map((s) => ({
-          ...s,
-          value: Math.round((s.lessonCount / maxLessons) * 100),
-        }));
+        // Compute skill radar — per-lesson attribution (#466 C3): a completed
+        // lesson credits ONLY its own skills, not every tag its course
+        // carries. A learner who did the PDA lessons but not the token
+        // lessons shows PDA skill, not a course-average smear.
+        const completedLessonIds = (progressResult.data ?? []).map(
+          (r) => r.lesson_id
+        );
+        const lessonSkillsMap = new Map(
+          allLessonSkills.map((l) => [l._id, l.skills])
+        );
+        const skills: SkillItem[] = completedLessonsToRadar(
+          completedLessonIds,
+          lessonSkillsMap
+        );
 
         setData({
           user: userData,

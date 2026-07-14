@@ -22,12 +22,12 @@ export const Lesson = z
     title: z.string().min(1),
     blocks: z.array(Block).min(1),
     /**
-     * Per-lesson skill tags (slugs). Optional — today's lessons carry none.
-     * Membership against the canonical vocabulary (the future courses-academy
-     * `skills.yaml`, see `skills.ts`) is NOT enforced here; that is #466 C3.
-     * This is schema-only plumbing (#466 C1).
+     * Per-lesson skill tags (slugs). Required, non-empty — every lesson
+     * carries at least one skill (#466 C3). Membership against the canonical
+     * vocabulary (`skills.yaml`, see `skills.ts`) is enforced by the compiler
+     * via `checkSkillVocabulary`, not by this Zod schema (slug shape only).
      */
-    skills: z.array(SkillTag).optional(),
+    skills: z.array(SkillTag).min(1),
   })
   .refine((l) => unique(l.blocks.map((b) => b.key)), {
     message: "block keys must be unique within a lesson",

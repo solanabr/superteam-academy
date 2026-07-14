@@ -30,6 +30,7 @@ import {
   Quest,
   LearningPath,
   SkillsTaxonomy,
+  checkSkillVocabulary,
   type SlotsLockT,
 } from "@superteam-lms/content-schema";
 import { extractTarball } from "../src/lib/content/compile/tarball";
@@ -122,8 +123,8 @@ function validateTree(tree: RepoTree): CompileInput {
     if (p === "skills.yaml") {
       // The only content type at the repo root, not nested under a course/
       // collection dir — a single canonical skill vocabulary, not one doc per
-      // file. Optional: courses-academy doesn't ship it yet (#466 C2 adds it),
-      // so absence is not an error and `content.skills` stays `[]`.
+      // file. The compiler tolerates its absence (`content.skills` stays `[]`),
+      // but every lesson `skills` slug is checked against it below (#466 C3).
       const s = zod(SkillsTaxonomy, parseYaml(text(bytes)), p);
       if (s) content.skills = s;
     } else if (p.endsWith("/course.yaml")) {
@@ -157,6 +158,19 @@ function validateTree(tree: RepoTree): CompileInput {
       content.assets.set(p, bytes);
     }
   }
+
+  // #466 C3: every lesson `skills` slug must be a member of the canonical
+  // vocabulary — the allowlist guarantee, kept in sync with the admin-sync
+  // validator's `parseAndValidateTree` (src/lib/content/compile/validate.ts).
+  issues.push(
+    ...checkSkillVocabulary(
+      content.lessons.map(({ lesson }) => ({
+        id: lesson.id,
+        skills: lesson.skills,
+      })),
+      content.skills
+    )
+  );
 
   // Every course needs its slots lockfile — it is emitted verbatim (keyed by id).
   for (const c of content.courses) {
@@ -455,8 +469,9 @@ export function compileBundle(
   files.set("slots.json", stableJson(slotsById));
 
   // skills.json: the canonical skill vocabulary from a repo-root skills.yaml,
-  // or [] when the file is absent (it is, today — see the loader above and
-  // #466 C1/C2). No enforcement against lesson `skills` here (#466 C3).
+  // or [] when the file is absent. Every lesson `skills` slug is checked
+  // against this vocabulary in `validateTree` above (#466 C3) — an unknown
+  // slug fails the compile, naming the lesson and the bad slug.
   files.set("skills.json", stableJson(content.skills));
 
   const meta: Record<string, unknown> = { sha: opts.sha, counts };

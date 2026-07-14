@@ -6,6 +6,7 @@ const base = {
   slug: "accounts",
   title: "Accounts",
   blocks: [{ type: "prose", key: "intro", src: "intro.md" }],
+  skills: ["accounts"],
 };
 
 describe("Lesson", () => {
@@ -49,9 +50,10 @@ describe("Lesson", () => {
     expect(Lesson.safeParse(ok).success).toBe(true);
   });
 
-  it("has no skills field when omitted — today's skill-less lessons validate unchanged (#466 C1)", () => {
-    const parsed = Lesson.parse(base);
-    expect("skills" in parsed).toBe(false);
+  it("requires at least one skill — every lesson carries skill tags (#466 C3)", () => {
+    const { skills: _skills, ...noSkills } = base;
+    expect(Lesson.safeParse(noSkills).success).toBe(false);
+    expect(Lesson.safeParse({ ...noSkills, skills: [] }).success).toBe(false);
   });
 
   it("accepts a lesson tagged with skill slugs", () => {

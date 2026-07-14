@@ -39,8 +39,10 @@ const lessonYaml = stringify({
   id: "lesson-accounts",
   slug: "accounts",
   title: "Accounts",
+  skills: ["pdas"],
   blocks: [{ key: "intro", type: "prose", src: "intro.md" }],
 });
+const skillsYaml = stringify([{ slug: "pdas", label: "PDAs" }]);
 
 describe("parseAndValidateTree", () => {
   it("validates a well-formed single-course tree", async () => {
@@ -54,6 +56,7 @@ describe("parseAndValidateTree", () => {
       }),
       "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
       "courses/demo/lessons/accounts/intro.md": "# Accounts",
+      "skills.yaml": skillsYaml,
     });
     const v = await parseAndValidateTree(t, passGraders);
     expect(v.courses.map((c) => c.id)).toEqual(["course-demo"]);
@@ -62,21 +65,12 @@ describe("parseAndValidateTree", () => {
     );
   });
 
-  // #466 C1: skills.yaml doesn't exist in courses-academy yet — tolerate its
-  // absence, and load it into `v.skills` when a repo-root copy is present.
-  it("defaults skills to [] when skills.yaml is absent", async () => {
-    const t = tree({
-      "courses/demo/course.yaml": courseYaml,
-      "courses/demo/slots.lock.json": JSON.stringify({
-        version: 1,
-        slots: { "lesson-accounts": 0 },
-        retired: [],
-        next: 1,
-      }),
-      "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
-      "courses/demo/lessons/accounts/intro.md": "# Accounts",
-    });
-    const v = await parseAndValidateTree(t, passGraders);
+  // skills.yaml is a repo-root file; the compiler tolerates its absence. That
+  // is only a legal end state for a tree with no tagged lessons — schema
+  // requires every lesson to carry >=1 skill (#466 C3) — so this test uses an
+  // empty tree to isolate "absent → []" from vocabulary enforcement.
+  it("defaults skills to [] when skills.yaml is absent (and no lesson references a skill)", async () => {
+    const v = await parseAndValidateTree(tree({}), passGraders);
     expect(v.skills).toEqual([]);
   });
 
@@ -97,6 +91,30 @@ describe("parseAndValidateTree", () => {
     expect(v.skills).toEqual([{ slug: "pdas", label: "PDAs" }]);
   });
 
+  it("fails closed naming the lesson and the bad slug when a skill is not in the vocabulary", async () => {
+    const t = tree({
+      "courses/demo/course.yaml": courseYaml,
+      "courses/demo/slots.lock.json": JSON.stringify({
+        version: 1,
+        slots: { "lesson-accounts": 0 },
+        retired: [],
+        next: 1,
+      }),
+      "courses/demo/lessons/accounts/lesson.yaml": lessonYaml,
+      "courses/demo/lessons/accounts/intro.md": "# Accounts",
+      // No skills.yaml at all — "pdas" (lessonYaml's skill) is unknown.
+    });
+    try {
+      await parseAndValidateTree(t, passGraders);
+      expect.unreachable("parseAndValidateTree should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ContentValidationError);
+      const joined = (e as ContentValidationError).issues.join("\n");
+      expect(joined).toContain("lesson-accounts");
+      expect(joined).toContain("pdas");
+    }
+  });
+
   it("throws with the Zod issue when a course is malformed", async () => {
     const t = tree({
       "courses/demo/course.yaml": stringify({ id: "NOT-a-course-id" }),
@@ -111,6 +129,7 @@ describe("parseAndValidateTree", () => {
       id: "lesson-ex",
       slug: "ex",
       title: "Ex",
+      skills: ["pdas"],
       blocks: [
         {
           key: "ex",
@@ -131,6 +150,7 @@ describe("parseAndValidateTree", () => {
       "courses/demo/lessons/ex/exercise/tests.json": JSON.stringify([
         { id: "t", description: "d", input: "", expectedOutput: "1" },
       ]),
+      "skills.yaml": skillsYaml,
     });
     // The executor gate rejects because the reference solution does not "solve".
     await expect(parseAndValidateTree(t, passGraders)).rejects.toBeInstanceOf(
@@ -153,6 +173,7 @@ describe("parseAndValidateTree", () => {
         id: "lesson-ex",
         slug: "ex",
         title: "Ex",
+        skills: ["pdas"],
         blocks: [
           {
             key: "ex",
@@ -179,6 +200,7 @@ describe("parseAndValidateTree", () => {
         "courses/demo/lessons/ex/exercise/tests.json": JSON.stringify([
           { id: "t", description: "d", input: "", expectedOutput: "1" },
         ]),
+        "skills.yaml": skillsYaml,
       });
       const v = await parseAndValidateTree(t, passGraders);
       expect(v.lessons.map((l) => l.lesson.id)).toContain("lesson-ex");
@@ -190,6 +212,7 @@ describe("parseAndValidateTree", () => {
       id: "lesson-ex",
       slug: "ex",
       title: "Ex",
+      skills: ["pdas"],
       blocks: [
         {
           key: "ex",
@@ -207,6 +230,7 @@ describe("parseAndValidateTree", () => {
       // solution.rs + tests.json deliberately absent — deferral skips GRADING,
       // not the file-existence check.
       "courses/demo/lessons/ex/exercise/starter.rs": "// stub",
+      "skills.yaml": skillsYaml,
     });
     await expect(parseAndValidateTree(t, passGraders)).rejects.toBeInstanceOf(
       ContentValidationError

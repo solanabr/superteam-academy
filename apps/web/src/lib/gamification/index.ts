@@ -22,3 +22,6 @@ export {
 
 export { checkNewAchievements } from "./achievements";
 export type { AchievementDefinition } from "./achievements";
+
+export { completedLessonsToRadar } from "./skill-radar";
+export type { SkillRadarPoint } from "./skill-radar";

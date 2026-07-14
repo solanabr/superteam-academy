@@ -16,6 +16,7 @@ modules: [{ key: m, title: M, lessons: [lesson-a] }]
 const lessonYaml = `id: lesson-a
 slug: a
 title: A
+skills: [general]
 blocks:
   - key: exercise
     type: code
