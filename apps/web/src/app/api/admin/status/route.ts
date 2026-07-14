@@ -17,7 +17,7 @@ import {
   findAchievementTypePDA,
   getProgramId,
 } from "@/lib/solana/pda";
-import { decodeCourse } from "@/lib/solana/academy-reads";
+import { decodeCourse, type DecodedCourse } from "@/lib/solana/academy-reads";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -69,44 +69,27 @@ async function computeRepoContentDrift(): Promise<CourseContentDrift> {
 }
 
 /**
- * The raw BorshCoder decode of a Course account (snake_case — `decodeCourse`
- * bypasses Anchor's camelCase IDL conversion). Pubkeys decode to objects with
- * `toBase58()`; `prerequisite` is `option<pubkey>` → object or null.
+ * Map the normalised `DecodedCourse` (snake_case — `decodeCourse` bypasses
+ * Anchor's camelCase IDL conversion) to the diff engine's `OnChainCourse`.
+ * Takes `DecodedCourse` directly (no shadow interface, no cast) so that a
+ * field dropped from `DecodedCourse` fails `tsc`, not silently reads as
+ * `undefined`.
  */
-interface RawCourse {
-  creator?: { toBase58(): string };
-  content_tx_id?: number[] | Uint8Array;
-  liveLessonCount: number;
-  difficulty?: number;
-  xp_per_lesson?: number;
-  track_id?: number;
-  track_level?: number;
-  prerequisite?: { toBase58(): string } | null;
-  creator_reward_xp?: number;
-  min_completions_for_reward?: number;
-  total_completions?: number;
-  total_enrollments?: number;
-  is_active?: boolean;
-  version?: number;
-}
-
-/** Map the raw snake_case decode to the diff engine's `OnChainCourse`. */
-function toOnChainCourse(courseId: string, raw: RawCourse): OnChainCourse {
+function toOnChainCourse(courseId: string, raw: DecodedCourse): OnChainCourse {
   return {
     courseId,
-    creator: raw.creator?.toBase58() ?? "",
+    creator: raw.creator.toBase58(),
     lessonCount: raw.liveLessonCount,
-    difficulty: raw.difficulty ?? 1,
-    xpPerLesson: raw.xp_per_lesson ?? 0,
-    trackId: raw.track_id ?? 0,
-    trackLevel: raw.track_level ?? 0,
+    difficulty: raw.difficulty,
+    xpPerLesson: raw.xp_per_lesson,
+    trackId: raw.track_id,
+    trackLevel: raw.track_level,
     prerequisite: raw.prerequisite ? raw.prerequisite.toBase58() : null,
-    creatorRewardXp: raw.creator_reward_xp ?? 0,
-    minCompletionsForReward: raw.min_completions_for_reward ?? 0,
-    totalCompletions: raw.total_completions ?? 0,
-    totalEnrollments: raw.total_enrollments ?? 0,
-    isActive: raw.is_active ?? true,
-    version: raw.version ?? 0,
+    creatorRewardXp: raw.creator_reward_xp,
+    totalCompletions: raw.total_completions,
+    totalEnrollments: raw.total_enrollments,
+    isActive: raw.is_active,
+    version: raw.version,
   };
 }
 
@@ -199,10 +182,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       let differences: DiffEntry[] = [];
       let chainDrift: ChainDriftState | null = null;
       try {
-        const raw = decodeCourse(accountInfo.data) as RawCourse;
-        if (typeof raw.is_active === "boolean") {
-          isActive = raw.is_active;
-        }
+        const raw = decodeCourse(accountInfo.data);
+        isActive = raw.is_active;
         // Resolve the bundle prerequisite to its Course PDA so the diff is
         // pubkey-to-pubkey (sync derivation, no RPC).
         const prerequisitePda = course.prerequisiteCourse
@@ -222,7 +203,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         // headSha here is the bundle pin, not GitHub HEAD): content_stale means
         // deploying now would update this course's on-chain content commitment.
         chainDrift = computeChainDrift({
-          onChainContentTxId: raw.content_tx_id ?? null,
+          onChainContentTxId: raw.content_tx_id,
           headSha: SYNCED_SHA,
           diffStatus: diff.status,
           contentUpToDate: true,

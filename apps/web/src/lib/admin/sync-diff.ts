@@ -21,7 +21,6 @@ export interface OnChainCourse {
   trackLevel: number;
   prerequisite: string | null; // base58 pubkey or null
   creatorRewardXp: number;
-  minCompletionsForReward: number;
   totalCompletions: number;
   totalEnrollments: number;
   isActive: boolean;
@@ -187,8 +186,8 @@ export function isDraftId(id: string): boolean {
  * Compare a bundle course document against an on-chain Course PDA.
  *
  * Updateable fields (fixable with `updateCourse`):
- *   xpPerLesson, creatorRewardXp, minCompletionsForReward, and an INCREASE in
- *   lessonCount (increase-only via update_course.new_lesson_count)
+ *   xpPerLesson, creatorRewardXp, and an INCREASE in lessonCount (increase-only
+ *   via update_course.new_lesson_count)
  *
  * Immutable fields (require PDA recreation if different):
  *   creator (#400 — the XP-reward recipient, set once at create_course),
@@ -263,16 +262,6 @@ export function diffCourse(
       field: "creatorRewardXp",
       contentValue: contentCreatorRewardXp,
       onChainValue: onChainCourse.creatorRewardXp,
-      updateable: true,
-    });
-  }
-
-  const contentMinCompletions = course.minCompletionsForReward ?? 0;
-  if (contentMinCompletions !== onChainCourse.minCompletionsForReward) {
-    differences.push({
-      field: "minCompletionsForReward",
-      contentValue: contentMinCompletions,
-      onChainValue: onChainCourse.minCompletionsForReward,
       updateable: true,
     });
   }

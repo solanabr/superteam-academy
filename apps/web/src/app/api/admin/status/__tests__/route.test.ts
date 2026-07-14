@@ -91,8 +91,10 @@ const matchingRaw = {
   track_level: 0,
   prerequisite: null,
   creator_reward_xp: 0,
-  min_completions_for_reward: 0,
+  total_completions: 0,
+  total_enrollments: 0,
   is_active: true,
+  version: 1,
 };
 const rawByMarker: Record<string, unknown> = {
   A: matchingRaw,

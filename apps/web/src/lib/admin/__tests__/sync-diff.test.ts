@@ -41,7 +41,6 @@ function onChain(overrides: Partial<OnChainCourse> = {}): OnChainCourse {
     trackLevel: 0,
     prerequisite: null,
     creatorRewardXp: 0,
-    minCompletionsForReward: 0,
     totalCompletions: 0,
     totalEnrollments: 0,
     isActive: true,
