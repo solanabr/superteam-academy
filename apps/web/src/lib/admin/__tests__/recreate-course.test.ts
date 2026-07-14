@@ -206,13 +206,24 @@ describe("rail 4 — mainnet is hard-refused until Squads custody (#305)", () =>
 
   it("refuses on an unset/misconfigured network value (default-deny, not default-allow)", async () => {
     delete process.env.NEXT_PUBLIC_SOLANA_NETWORK;
-    // The implementation's own fallback is "devnet" when unset — assert that
-    // explicitly, since default-ALLOW-on-unset would be the dangerous reading.
-    const result = await recreateCourse(COURSE_ID);
-    expect(result.action).toBe("recreated");
+    // Unset must FAIL SAFE — refuse — never silently behave as if it were
+    // devnet. This is the platform's single most destructive on-chain
+    // operation; a default-ALLOW-on-unset reading would be dangerous.
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.phase).toBe("preflight");
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/Squads custody \(#305\)/i);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
   });
 
-  it("allows the recreate to proceed on devnet", async () => {
+  it('proceeds when NEXT_PUBLIC_SOLANA_NETWORK is explicitly "devnet"', async () => {
     process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
@@ -395,15 +406,55 @@ describe("rail 2 (H3) — lesson_count defaults to the live on-chain value", () 
     );
   });
 
-  it("falls back to the content bundle's lessonCount when the live account is undecodable", async () => {
+  it("refuses (rather than falling back to the content bundle's lessonCount) when the live account exists but is undecodable", async () => {
     fetchCourseThrows = true;
     courses = [validCourse({ lessonCount: 5 })];
 
-    await recreateCourse(COURSE_ID);
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.phase).toBe("preflight");
+    // Nothing was destroyed — the refusal happens before the close.
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/could not be decoded/i);
+    expect(thrown!.message).toMatch(/cannot verify the on-chain lesson count/i);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
 
-    expect(deployCoursePda).toHaveBeenCalledWith(
-      expect.objectContaining({ lessonCount: 5 })
+  it("still refuses when the content bundle's lessonCount would have matched the on-chain value (undecodable blocks ANY recreate, not just supersets)", async () => {
+    // Distinguishes "refuse because we can't verify" from "refuse because the
+    // bundle wants a superset" — this case has no superset, only an
+    // undecodable account, and must still refuse.
+    fetchCourseThrows = true;
+    courses = [validCourse({ lessonCount: 3 })];
+
+    await expect(recreateCourse(COURSE_ID)).rejects.toBeInstanceOf(
+      RecreateCourseError
     );
+    expect(closeCoursePda).not.toHaveBeenCalled();
+  });
+
+  it("the course-not-yet-deployed case is unaffected — that still refuses earlier with its own message, never reaching the decode try/catch", async () => {
+    accounts = new Map(); // no account at all — a genuinely different case from "exists but corrupt"
+    fetchCourseThrows = true; // would blow up if the code ever reached fetchCourse for this course
+    courses = [validCourse({ lessonCount: 5 })];
+
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown!.message).toMatch(
+      /not deployed on-chain.*nothing to recreate/is
+    );
+    expect(closeCoursePda).not.toHaveBeenCalled();
   });
 });
 
@@ -458,10 +509,43 @@ describe("rail 3 — the maintenance gate", () => {
     expect(calls).not.toContain("gate:off");
   });
 
-  it("a maintenance-flag WRITE failure does not block a preflight-validated recreate", async () => {
+  it("ABORTS before the close when the maintenance gate SET write fails — never closes unguarded", async () => {
+    // The FIRST writeCourseMaintenanceFlag call is the SET (gate:on), before
+    // the close. A lost SET must not be silently swallowed: closing without
+    // the guard in place would leave the absent-PDA window completely
+    // unprotected. Better to not start than to close unguarded.
     vi.mocked(writeCourseMaintenanceFlag).mockRejectedValueOnce(
       new Error("supabase down")
     );
+
+    let thrown: RecreateCourseError | undefined;
+    try {
+      await recreateCourse(COURSE_ID);
+    } catch (e) {
+      thrown = e as RecreateCourseError;
+    }
+    expect(thrown).toBeInstanceOf(RecreateCourseError);
+    expect(thrown!.courseIntact).toBe(true);
+    expect(thrown!.message).toMatch(/maintenance gate/i);
+    expect(closeCoursePda).not.toHaveBeenCalled();
+    expect(deployCoursePda).not.toHaveBeenCalled();
+    // The rejected SET call never recorded "gate:on" (the mock's real
+    // implementation, which pushes to `calls`, was overridden for this one
+    // call) — nothing else should have run either.
+    expect(calls).toEqual([]);
+  });
+
+  it("a maintenance-flag CLEAR write failure does not block an otherwise-successful recreate", async () => {
+    // CLEAR (turning the gate back off) is best-effort, unlike SET: the course
+    // is already correctly recreated by the time the CLEAR at the very end
+    // runs, so a lost clear only means the gate stays on a little longer, not
+    // that anything is unprotected.
+    vi.mocked(writeCourseMaintenanceFlag)
+      .mockImplementationOnce(async (_id: string, on: boolean) => {
+        calls.push(on ? "gate:on" : "gate:off");
+      })
+      .mockRejectedValueOnce(new Error("supabase down"));
+
     const result = await recreateCourse(COURSE_ID);
     expect(result.action).toBe("recreated");
     expect(closeCoursePda).toHaveBeenCalled();

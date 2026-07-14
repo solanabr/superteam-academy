@@ -213,12 +213,15 @@ export async function preflightRecreate(
   // on-chain operation. Un-bypassable: this is the FIRST statement in the
   // function, reads the network fresh (not a module-level cache) every call,
   // and default-DENIES anything that is not literally "devnet" — including
-  // "mainnet", "mainnet-beta", an unset/misconfigured value, or a typo. Remove
-  // only once #305 ships a Squads-vault assertion to replace it.
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
+  // "mainnet", "mainnet-beta", an UNSET/empty value, or a typo. Deliberately NO
+  // `?? "devnet"` fallback: an unset env var must FAIL SAFE (refuse), not
+  // silently behave as if it were devnet — this is the platform's single most
+  // destructive on-chain operation. Remove only once #305 ships a Squads-vault
+  // assertion to replace it.
+  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK;
   if (network !== "devnet") {
     refuse(
-      `Recreate is unavailable on network "${network}" until Squads custody (#305) lands — ` +
+      `Recreate is unavailable on network "${network ?? "unset"}" until Squads custody (#305) lands — ` +
         `close+recreate is hard-restricted to devnet in the meantime.`
     );
   }
@@ -306,9 +309,14 @@ export async function preflightRecreate(
 
   // Snapshot the live account so we can restore is_active/collection after the
   // create, report the counters the recreate will destroy, and (H3) read the
-  // CURRENT on-chain lesson count. A stale/undecodable account is fine to close
-  // (close_course takes an UncheckedAccount and only checks the discriminator)
-  // — we just cannot snapshot it, so we degrade to defaults rather than refuse.
+  // CURRENT on-chain lesson count. The account is already confirmed to EXIST
+  // (the check just above) — so a throw here means the bytes are undecodable
+  // (stale/corrupt layout), NOT "not deployed yet" (that case already refused
+  // earlier with courseIntact: true). We do NOT degrade to the content
+  // bundle's lesson_count in that case: we cannot verify what is currently
+  // live, and defaulting to the bundle could silently WIDEN the mask and
+  // un-complete mid-course learners — exactly the hole H3 exists to close.
+  // Refuse outright rather than guess.
   let snapshot: PreCloseSnapshot = {
     totalCompletions: 0,
     totalEnrollments: 0,
@@ -327,20 +335,20 @@ export async function preflightRecreate(
       };
       onChainLessonCount = onChain.liveLessonCount;
     }
-  } catch {
-    // Undecodable (stale layout). Fall back to the content bundle's collection so
-    // we can still re-bind it, and leave the counters at 0 — they are already lost.
-    // `onChainLessonCount` stays undefined; see the H3 fallback below.
-    snapshot.collection = course!.trackCollectionAddress ?? null;
+  } catch (err) {
+    refuse(
+      `Course "${courseId}" exists on-chain but its account data could not be decoded ` +
+        `(${err instanceof Error ? err.message : String(err)}) — cannot verify the on-chain ` +
+        `lesson count; refusing to recreate. Nothing was closed.`
+    );
   }
   snapshot.collection ??= course!.trackCollectionAddress ?? null;
 
   // H3 — never widen lesson_count relative to what is currently live. Default
-  // to the on-chain value; refuse if the content bundle wants more. When the
-  // live account could not be decoded (fallback above), there is nothing to
-  // compare against — degrade to the content bundle's count, same as the
-  // collection fallback, rather than blocking every recreate on a decode edge
-  // case the #449/WS-1 decoder migration is tracking separately.
+  // to the on-chain value; refuse if the content bundle wants more. An
+  // undecodable account is refused above, so `onChainLessonCount` reaching
+  // here as `undefined` only happens when `fetchCourse` resolves falsy without
+  // throwing — treated the same as "nothing to compare against yet".
   let lessonCount = course!.lessonCount;
   if (onChainLessonCount != null && lessonCount > onChainLessonCount) {
     refuse(
@@ -416,23 +424,37 @@ async function restoreAfterCreate(plan: RecreatePlan): Promise<string[]> {
 }
 
 /**
- * Best-effort set/clear of the per-course maintenance gate (rail 3). Never
- * throws — a Supabase write failure here must not block a preflight-validated
- * recreate; `isCourseInMaintenance` fails CLOSED on its own read errors, so the
- * consuming write paths stay safe even if this particular write is lost. Errors
- * are logged loudly since a lost "set" degrades the safety net for the window.
+ * Set/clear the per-course maintenance gate (rail 3). Never throws — returns
+ * whether the write succeeded and lets the caller decide what to do with a
+ * failure, because SET and CLEAR have different safety consequences:
+ *
+ *   - SET (turning the gate ON, before the close) is load-bearing: the entire
+ *     point of this rail is that on-chain write paths refuse/queue instead of
+ *     racing the absent-PDA window. A LOST set leaves that window completely
+ *     unprotected — so `recreateCourse` treats `false` here as fatal and
+ *     ABORTS before the close ever runs (see below).
+ *   - CLEAR (turning the gate OFF — after a successful create, or immediately
+ *     after a close that never landed) is best-effort: a lost clear just
+ *     leaves the gate on longer than necessary, which is safe by construction
+ *     (`isCourseInMaintenance` fails CLOSED on its own read errors too, so
+ *     write paths never trust an unconfirmed state either way).
+ *
+ * Errors are logged loudly either way since a lost write degrades the safety
+ * net for the window.
  */
 async function setMaintenanceGate(
   courseId: string,
   inMaintenance: boolean
-): Promise<void> {
+): Promise<boolean> {
   try {
     await writeCourseMaintenanceFlag(courseId, inMaintenance);
+    return true;
   } catch (err) {
     console.error(
       `[recreate-course] ${courseId}: failed to ${inMaintenance ? "set" : "clear"} the maintenance gate:`,
       err
     );
+    return false;
   }
 }
 
@@ -460,8 +482,18 @@ export async function recreateCourse(
   // 2. MAINTENANCE GATE ON. From here, on-chain write paths for this course
   //    (lessons/complete, certificates/mint, the webhook finalize path) must
   //    refuse/queue rather than race the absent-PDA window that starts with
-  //    the very next step.
-  await setMaintenanceGate(courseId, true);
+  //    the very next step. A LOST set leaves that window unprotected, so a
+  //    failure here ABORTS before the close ever runs — better to not start
+  //    than to close the course without the guard in place.
+  const gateSet = await setMaintenanceGate(courseId, true);
+  if (!gateSet) {
+    throw new RecreateCourseError(
+      `Could not set the maintenance gate for course "${courseId}" — refusing to close. ` +
+        `The course is UNCHANGED and still deployed; retry once the gate write succeeds.`,
+      "preflight",
+      true
+    );
+  }
 
   // 3. CLOSE. From here the course is DOWN until the create lands.
   const closed = await closeCoursePda(courseId);

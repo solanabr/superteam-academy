@@ -41,6 +41,8 @@ const h = vi.hoisted(() => ({
   >(),
   fetchEnrollment: vi.fn(),
   finalizeCourse: vi.fn(),
+  isCourseInMaintenance: vi.fn<(courseId: string) => Promise<boolean>>(),
+  getCourseById: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -72,7 +74,12 @@ vi.mock("../academy-reads", () => ({
 }));
 
 vi.mock("@/lib/content/queries", () => ({
-  getCourseById: vi.fn(),
+  getCourseById: (...args: unknown[]) => h.getCourseById(...args),
+}));
+
+vi.mock("@/lib/content/deployments", () => ({
+  isCourseInMaintenance: (...args: [string]) =>
+    h.isCourseInMaintenance(...args),
 }));
 
 vi.mock("@/lib/supabase/admin", () => {
@@ -146,9 +153,14 @@ beforeEach(() => {
   h.awardXp.mockReset();
   h.fetchEnrollment.mockReset();
   h.finalizeCourse.mockReset();
+  h.isCourseInMaintenance.mockReset();
+  h.getCourseById.mockReset();
   // Default: course already finalized on-chain, so finalizeCourse is skipped
   // and each test exercises the XP-settlement path in isolation.
   h.fetchEnrollment.mockResolvedValue({ completed_at: 1_700_000_000 });
+  // Default: no course is under maintenance — existing tests exercise the
+  // ordinary on-chain path unless a test explicitly gates a course.
+  h.isCourseInMaintenance.mockResolvedValue(false);
 });
 
 describe("retryPendingOnchainActions — xp credit-loss (#372)", () => {
@@ -321,5 +333,91 @@ describe("retryPendingOnchainActions — course_finalize credit-loss (#372)", ()
     expect(h.awardXp).toHaveBeenCalledWith(
       expect.objectContaining({ p_idempotency_key: "course-3", p_amount: 1500 })
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Regression suite for the adversarial-review Fix 1 — the maintenance gate was
+// not wired into this login-triggered drain. During a close+recreate's
+// absent-PDA window (lib/admin/recreate-course.ts), a login could drain a
+// gated course's queued finalize/certificate, hit the on-chain revert, and
+// bump retry_count. Repeated drains across an extended outage could push
+// retry_count to 5, at which point the `.lt("retry_count", 5)` fetch filter
+// EXCLUDES the row forever — abandoning it even after the operator redeploys.
+// The fix: check the gate FIRST and DEFER (skip, leave the row, do not touch
+// retry_count) exactly like the daily-cap deferral already does for XP.
+// ---------------------------------------------------------------------------
+describe("retryPendingOnchainActions — maintenance-gate deferral (adversarial-review fix 1)", () => {
+  it("defers a course_finalize row for a course under maintenance, WITHOUT bumping retry_count or resolving it", async () => {
+    h.rows = [
+      {
+        id: "r-cf-gated",
+        action_type: "course_finalize",
+        reference_id: "course-gated",
+        retry_count: 1,
+        payload: { courseId: "course-gated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cf-gated");
+    expect(patch).toBeDefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("course-in-maintenance");
+    // The on-chain finalize must never even be attempted while gated.
+    expect(h.finalizeCourse).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
+  });
+
+  it("proceeds as before with a course_finalize row for an UNGATED course", async () => {
+    h.rows = [
+      {
+        id: "r-cf-ungated",
+        action_type: "course_finalize",
+        reference_id: "course-ungated",
+        retry_count: 0,
+        payload: { courseId: "course-ungated", walletAddress: "W" },
+      },
+    ];
+    h.isCourseInMaintenance.mockResolvedValue(false);
+    // Already finalized on-chain (beforeEach default) — no xpAmount owed, so
+    // this resolves purely on the finalize check.
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.isCourseInMaintenance).toHaveBeenCalledWith("course-ungated");
+    const patch = patchFor("r-cf-ungated");
+    expect(typeof patch?.resolved_at).toBe("string");
+  });
+
+  it("defers a certificate row for a course under maintenance, WITHOUT bumping retry_count", async () => {
+    h.rows = [
+      {
+        id: "r-cert-gated",
+        action_type: "certificate",
+        reference_id: "course-gated",
+        retry_count: 2,
+        payload: { courseId: "course-gated" },
+      },
+    ];
+    h.isCourseInMaintenance.mockImplementation(
+      async (courseId: string) => courseId === "course-gated"
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    const patch = patchFor("r-cert-gated");
+    expect(patch).toBeDefined();
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(String(patch?.last_error)).toContain("course-in-maintenance");
+    // Deferred before any of the certificate-mint machinery runs.
+    expect(h.getCourseById).not.toHaveBeenCalled();
+    expect(h.fetchEnrollment).not.toHaveBeenCalled();
   });
 });

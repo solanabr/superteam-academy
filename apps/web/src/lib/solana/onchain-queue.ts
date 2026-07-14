@@ -14,6 +14,7 @@ import {
   fetchCourse,
 } from "./academy-reads";
 import { getCourseById } from "@/lib/content/queries";
+import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 
@@ -137,6 +138,18 @@ export async function retryPendingOnchainActions(
 
         case "certificate": {
           const courseId = payload.courseId as string;
+
+          // WS-2 #453 rail 3 — a close+recreate briefly removes the Course PDA
+          // (see lib/admin/recreate-course.ts). A login-triggered drain must
+          // not treat "in the middle of a recreate" as a transient failure:
+          // bumping retry_count on every login could push a genuinely-owed
+          // credential past the < 5 retry budget and abandon it forever, even
+          // after the operator redeploys. DEFER instead — mirrors the
+          // daily-cap deferral in creditXpAndSettle below.
+          if (await isCourseInMaintenance(courseId)) {
+            await deferForCourseMaintenance(adminClient, row, courseId);
+            continue;
+          }
 
           const enrollment = (await fetchEnrollment(
             courseId,
@@ -270,6 +283,14 @@ export async function retryPendingOnchainActions(
               `Invalid course_finalize payload: courseId=${JSON.stringify(payload.courseId)}`
             );
           }
+
+          // WS-2 #453 rail 3 — see the identical guard + comment on the
+          // "certificate" case above.
+          if (await isCourseInMaintenance(courseId)) {
+            await deferForCourseMaintenance(adminClient, row, courseId);
+            continue;
+          }
+
           const reason =
             typeof payload.reason === "string"
               ? payload.reason
@@ -552,5 +573,31 @@ async function bumpRetry(
       retry_count: (row.retry_count ?? 0) + 1,
       last_error: message,
     })
+    .eq("id", row.id);
+}
+
+// ---------------------------------------------------------------------------
+// Maintenance-gate deferral (WS-2 #453 rail 3 / adversarial-review fix)
+// ---------------------------------------------------------------------------
+// A close+recreate (lib/admin/recreate-course.ts) briefly removes the Course
+// PDA — `enroll` / `complete_lesson` / `finalize_course` all revert during that
+// window because there is no account to read. Before this fix, a login-
+// triggered drain treated that revert as an ordinary transient failure and
+// bumped retry_count; a login during an extended outage (or several logins
+// across one) could push retry_count to 5, at which point the fetch filter
+// `.lt("retry_count", 5)` excludes the row FOREVER — the queued
+// finalize/credential is abandoned even after the operator redeploys the
+// course. Mirrors the daily-cap deferral in `creditXpAndSettle`: leave the row
+// unresolved, record why, and do NOT touch retry_count, so the next drain
+// (another login, or the narrower quest sweep's sibling paths) retries once
+// the gate clears.
+async function deferForCourseMaintenance(
+  adminClient: AdminClient,
+  row: PendingActionRow,
+  courseId: string
+): Promise<void> {
+  await adminClient
+    .from("pending_onchain_actions")
+    .update({ last_error: `course-in-maintenance:${courseId}` })
     .eq("id", row.id);
 }
