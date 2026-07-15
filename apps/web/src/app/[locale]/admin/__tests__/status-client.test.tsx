@@ -59,6 +59,7 @@ const status: AdminStatus = {
       onChainStatus: "synced",
       achievementPda: "Pda222",
       collectionAddress: "Coll111",
+      award: null,
     },
   ],
 };

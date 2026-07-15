@@ -842,7 +842,8 @@
       "courses": "Cursos",
       "moderation": "Moderação",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
-      "status": "Status"
+      "status": "Status",
+      "content": "Conteúdo"
     },
     "counts": {
       "courses": "Cursos",
@@ -851,7 +852,8 @@
     "screens": {
       "courses": "Cursos",
       "moderation": "Moderação da comunidade",
-      "status": "Status do programa"
+      "status": "Status do programa",
+      "content": "Conteúdo"
     },
     "coursesScreen": {
       "intro": {
@@ -945,9 +947,7 @@
     },
     "deployScreen": {
       "coursesHeading": "Cursos",
-      "achievementsHeading": "Conquistas",
       "noCourses": "Nenhum curso no pacote de conteúdo.",
-      "noAchievements": "Nenhuma conquista no pacote de conteúdo.",
       "missingFields": "Faltando: {fields}",
       "table": {
         "course": "Curso",
@@ -1055,6 +1055,82 @@
           "indeterminateRecovery": "A recriação falhou antes de um resultado ser confirmado — o curso pode estar intacto ou no meio da recriação. NÃO tente novamente às cegas. Atualize a tela de status do admin para verificar se o PDA do curso existe antes de agir.",
           "close": "Fechar"
         }
+      }
+    },
+    "contentScreen": {
+      "intro": "Visões somente leitura sobre o pacote de conteúdo: missões, conquistas e trilhas de aprendizagem. Conquistas é a única superfície aqui com uma ação de sincronização on-chain.",
+      "tabs": {
+        "quests": "Missões",
+        "achievements": "Conquistas",
+        "paths": "Trilhas"
+      },
+      "pin": {
+        "pinned": "Pacote fixado",
+        "drifted": "Pacote desatualizado",
+        "unknown": "Divergência desconhecida",
+        "unavailable": "Status do pin indisponível",
+        "behind": "{count, plural, one {# commit atrás} other {# commits atrás}}"
+      },
+      "quests": {
+        "heading": "Missões",
+        "description": "Configuração de recompensas das missões diárias a partir do pacote de conteúdo. Somente leitura — missões não têm componente on-chain.",
+        "empty": "Nenhuma missão no pacote de conteúdo.",
+        "table": {
+          "quest": "Missão",
+          "type": "Tipo",
+          "xpReward": "XP",
+          "targetValue": "Meta",
+          "resetType": "Reinício",
+          "icon": "Ícone"
+        },
+        "type": {
+          "lesson": "Lição",
+          "lesson_batch": "Lote de lições",
+          "challenge": "Desafio",
+          "login_streak": "Sequência de login",
+          "module": "Módulo"
+        },
+        "resetType": {
+          "daily": "Diário",
+          "multi_day": "Multidias"
+        }
+      },
+      "achievements": {
+        "heading": "Conquistas",
+        "empty": "Nenhuma conquista no pacote de conteúdo.",
+        "table": {
+          "achievement": "Conquista",
+          "status": "Status",
+          "collection": "Coleção",
+          "action": "Ação"
+        },
+        "missingFields": "Faltando: {fields}",
+        "actions": {
+          "deploy": "Implantar",
+          "sync": "Sincronizar",
+          "working": "…",
+          "syncAll": "Sincronizar tudo ({count})",
+          "syncAllBusy": "Sincronizando…"
+        },
+        "errors": {
+          "sync": "Falha na sincronização",
+          "syncFor": "Falha na sincronização de {name}"
+        },
+        "awardCourse": "Desbloqueia com o curso: {title}",
+        "awardPath": "Desbloqueia com a trilha: {title}",
+        "awardMissingBadge": "faltando",
+        "awardMissingRef": "Referência não resolvida: {id}"
+      },
+      "paths": {
+        "heading": "Trilhas",
+        "empty": "Nenhuma trilha de aprendizagem no pacote de conteúdo.",
+        "table": {
+          "path": "Trilha",
+          "courses": "Sequência de cursos"
+        },
+        "noCourses": "Esta trilha não tem cursos.",
+        "danglingBadge": "faltando",
+        "danglingCount": "{count, plural, one {# referência de curso quebrada} other {# referências de curso quebradas}}"
       }
     },
     "statusBadge": {

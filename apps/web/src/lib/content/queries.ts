@@ -11,6 +11,7 @@ import {
 } from "./deployments";
 import {
   countCourseLessons,
+  parseAward,
   projectAchievement,
   projectCourse,
   projectCourseSummary,
@@ -20,6 +21,7 @@ import {
   projectQuestData,
   projectRecommended,
 } from "./project";
+import { resolveRefs } from "./resolve-refs";
 import {
   achievementsById,
   coursesById,
@@ -505,6 +507,13 @@ export interface AdminAchievement {
   } | null;
   /** See {@link AdminCourse.deploymentReadFailed}. */
   deploymentReadFailed?: boolean;
+  /**
+   * The achievement's declarative unlock rule (#513 WS-C) — lets the admin
+   * Content tab optionally surface `award.course`/`award.path` next to the
+   * achievement, instead of only its own status. `null` for a pre-sync/legacy
+   * doc, same as {@link DeployedAchievement.award}.
+   */
+  award: AwardT | null;
 }
 
 /** Resolve a course's `prerequisiteCourse` ref to its `{_id, slug, title}` summary. */
@@ -598,6 +607,49 @@ export async function getLearningPathsForAdmin(): Promise<AdminLearningPath[]> {
   }));
 }
 
+export interface AdminLearningPathCourseRef {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+export interface AdminLearningPathWithRefs extends AdminLearningPath {
+  /** `courseIds` resolved to display info, in path order. */
+  resolvedCourses: AdminLearningPathCourseRef[];
+  /**
+   * `courseIds` entries that matched no course in the bundle (#513 WS-C). The
+   * plain `courseIds` array from {@link getLearningPathsForAdmin} already
+   * includes these — `pathCourseRefIds` only drops malformed ref *objects*,
+   * not refs that point at a nonexistent course — so without this the admin
+   * Paths view would render them as blanks instead of flagging the break.
+   */
+  danglingCourseIds: string[];
+}
+
+/**
+ * {@link getLearningPathsForAdmin}, with each path's course refs resolved
+ * against the bundle via {@link resolveRefs} instead of silently dropped. The
+ * admin Paths view (#513 WS-C) needs course titles to display, and needs to
+ * flag loudly — not drop — any ref a path carries that no longer resolves.
+ */
+export async function getLearningPathsForAdminWithRefs(): Promise<
+  AdminLearningPathWithRefs[]
+> {
+  const paths = await getLearningPathsForAdmin();
+  return paths.map((p) => {
+    const { resolved, dangling } = resolveRefs(p.courseIds, coursesById);
+    return {
+      ...p,
+      resolvedCourses: resolved.map((c) => ({
+        _id: c._id,
+        title: str(c.title) as string,
+        slug: c.slug.current,
+      })),
+      danglingCourseIds: dangling,
+    };
+  });
+}
+
 function toAdminAchievement(
   a: AchievementDoc,
   dep: OnchainDeploymentRow | null,
@@ -619,6 +671,7 @@ function toAdminAchievement(
         }
       : null,
     deploymentReadFailed,
+    award: parseAward(a.award),
   };
 }
 

@@ -842,7 +842,8 @@
       "courses": "Cursos",
       "moderation": "Moderación",
       "pendingFlags": "{count, plural, one {# reporte pendiente} other {# reportes pendientes}}",
-      "status": "Estado"
+      "status": "Estado",
+      "content": "Contenido"
     },
     "counts": {
       "courses": "Cursos",
@@ -851,7 +852,8 @@
     "screens": {
       "courses": "Cursos",
       "moderation": "Moderación de la comunidad",
-      "status": "Estado del programa"
+      "status": "Estado del programa",
+      "content": "Contenido"
     },
     "coursesScreen": {
       "intro": {
@@ -945,9 +947,7 @@
     },
     "deployScreen": {
       "coursesHeading": "Cursos",
-      "achievementsHeading": "Logros",
       "noCourses": "No hay cursos en el paquete de contenido.",
-      "noAchievements": "No hay logros en el paquete de contenido.",
       "missingFields": "Faltan: {fields}",
       "table": {
         "course": "Curso",
@@ -1055,6 +1055,82 @@
           "indeterminateRecovery": "La recreación falló antes de confirmar un resultado — el curso puede estar intacto o a medio recrear. NO reintentes a ciegas. Actualiza la pantalla de estado de administración para comprobar si el PDA del curso existe antes de actuar.",
           "close": "Cerrar"
         }
+      }
+    },
+    "contentScreen": {
+      "intro": "Vistas de solo lectura sobre el paquete de contenido: misiones, logros y rutas de aprendizaje. Logros es la única superficie aquí con una acción de sincronización on-chain.",
+      "tabs": {
+        "quests": "Misiones",
+        "achievements": "Logros",
+        "paths": "Rutas"
+      },
+      "pin": {
+        "pinned": "Paquete fijado",
+        "drifted": "Paquete desactualizado",
+        "unknown": "Desfase desconocido",
+        "unavailable": "Estado de fijación no disponible",
+        "behind": "{count, plural, one {# commit por detrás} other {# commits por detrás}}"
+      },
+      "quests": {
+        "heading": "Misiones",
+        "description": "Configuración de recompensas de misiones diarias desde el paquete de contenido. Solo lectura — las misiones no tienen componente on-chain.",
+        "empty": "No hay misiones en el paquete de contenido.",
+        "table": {
+          "quest": "Misión",
+          "type": "Tipo",
+          "xpReward": "XP",
+          "targetValue": "Objetivo",
+          "resetType": "Reinicio",
+          "icon": "Icono"
+        },
+        "type": {
+          "lesson": "Lección",
+          "lesson_batch": "Lote de lecciones",
+          "challenge": "Desafío",
+          "login_streak": "Racha de inicio de sesión",
+          "module": "Módulo"
+        },
+        "resetType": {
+          "daily": "Diario",
+          "multi_day": "Multidía"
+        }
+      },
+      "achievements": {
+        "heading": "Logros",
+        "empty": "No hay logros en el paquete de contenido.",
+        "table": {
+          "achievement": "Logro",
+          "status": "Estado",
+          "collection": "Colección",
+          "action": "Acción"
+        },
+        "missingFields": "Faltan: {fields}",
+        "actions": {
+          "deploy": "Desplegar",
+          "sync": "Sincronizar",
+          "working": "…",
+          "syncAll": "Sincronizar todo ({count})",
+          "syncAllBusy": "Sincronizando…"
+        },
+        "errors": {
+          "sync": "Falló la sincronización",
+          "syncFor": "Falló la sincronización de {name}"
+        },
+        "awardCourse": "Se desbloquea con el curso: {title}",
+        "awardPath": "Se desbloquea con la ruta: {title}",
+        "awardMissingBadge": "falta",
+        "awardMissingRef": "Referencia no resuelta: {id}"
+      },
+      "paths": {
+        "heading": "Rutas",
+        "empty": "No hay rutas de aprendizaje en el paquete de contenido.",
+        "table": {
+          "path": "Ruta",
+          "courses": "Secuencia de cursos"
+        },
+        "noCourses": "Esta ruta no tiene cursos.",
+        "danglingBadge": "falta",
+        "danglingCount": "{count, plural, one {# referencia de curso rota} other {# referencias de curso rotas}}"
       }
     },
     "statusBadge": {

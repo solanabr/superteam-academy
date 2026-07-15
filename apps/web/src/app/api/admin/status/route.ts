@@ -265,6 +265,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "draft" as const,
           achievementPda: null,
           collectionAddress: null,
+          award: ach.award ?? null,
         };
       }
 
@@ -277,6 +278,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "missing_fields" as const,
           achievementPda: null,
           collectionAddress: null,
+          award: ach.award ?? null,
         };
       }
 
@@ -291,6 +293,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "not_deployed" as const,
           achievementPda: null,
           collectionAddress: null,
+          award: ach.award ?? null,
         };
       }
 
@@ -306,6 +309,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           : ("synced" as const),
         achievementPda: achPda.toBase58(),
         collectionAddress: ach.onChainStatus?.collectionAddress ?? null,
+        award: ach.award ?? null,
       };
     })
   );

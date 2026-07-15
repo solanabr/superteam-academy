@@ -3,14 +3,18 @@
 import { useTranslations } from "next-intl";
 import { useAdminStatus } from "../use-admin-status";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
-import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
 import { AdminCard } from "@/components/admin/admin-card";
 
 /**
- * The deploy half of `/admin/courses` (step 2): the Courses + Achievements
- * sync tables. Unchanged from the retired `/admin/deploy` screen apart from
- * this move — the `/api/admin/status` fetch + loading/error/refetch live in
- * the shared `useAdminStatus` hook (SP3-D), which the status screen uses too.
+ * The deploy half of `/admin/courses` (step 2): the Courses sync table.
+ * Unchanged from the retired `/admin/deploy` screen apart from this move — the
+ * `/api/admin/status` fetch + loading/error/refetch live in the shared
+ * `useAdminStatus` hook (SP3-D), which the status screen uses too.
+ *
+ * The Achievements sync table used to render as a second section here; #513
+ * WS-C relocated it into the new Content tab's Achievements sub-view
+ * (`admin/content/achievements-subview.tsx`), which reuses this same
+ * `useAdminStatus()` hook — same data, same sync behavior, different screen.
  */
 export function DeployClient() {
   const t = useTranslations("admin");
@@ -42,50 +46,28 @@ export function DeployClient() {
 
   if (!status) return null;
 
-  const { courses, achievements } = status;
+  const { courses } = status;
 
   return (
-    <div className="space-y-8">
-      {/* Courses */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold text-text">
-            {t("deployScreen.coursesHeading")}
-          </h3>
-          <button
-            onClick={refetch}
-            className="rounded-md border border-border bg-card px-3 py-1 text-xs text-text-2 shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active"
-          >
-            {t("states.refresh")}
-          </button>
-        </div>
-        <AdminCard>
-          {courses.length === 0 ? (
-            <p className="text-sm text-text-3">{t("deployScreen.noCourses")}</p>
-          ) : (
-            <CourseSyncTable courses={courses} onRefresh={refetch} />
-          )}
-        </AdminCard>
-      </section>
-
-      {/* Achievements */}
-      <section>
-        <h3 className="mb-4 font-display text-lg font-bold text-text">
-          {t("deployScreen.achievementsHeading")}
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-display text-lg font-bold text-text">
+          {t("deployScreen.coursesHeading")}
         </h3>
-        <AdminCard>
-          {achievements.length === 0 ? (
-            <p className="text-sm text-text-3">
-              {t("deployScreen.noAchievements")}
-            </p>
-          ) : (
-            <AchievementSyncTable
-              achievements={achievements}
-              onRefresh={refetch}
-            />
-          )}
-        </AdminCard>
-      </section>
-    </div>
+        <button
+          onClick={refetch}
+          className="rounded-md border border-border bg-card px-3 py-1 text-xs text-text-2 shadow-push-sm transition-all hover:bg-subtle active:translate-y-[2px] active:shadow-push-active"
+        >
+          {t("states.refresh")}
+        </button>
+      </div>
+      <AdminCard>
+        {courses.length === 0 ? (
+          <p className="text-sm text-text-3">{t("deployScreen.noCourses")}</p>
+        ) : (
+          <CourseSyncTable courses={courses} onRefresh={refetch} />
+        )}
+      </AdminCard>
+    </section>
   );
 }

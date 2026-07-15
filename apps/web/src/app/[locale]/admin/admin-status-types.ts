@@ -5,6 +5,7 @@
  * they need from the same endpoint (plan ambiguity 2: no API split).
  */
 
+import type { AwardT } from "@superteam-lms/content-schema";
 import type { DiffEntry } from "@/lib/admin/sync-diff";
 import type { ChainDriftState, CourseContentDrift } from "@/lib/github/drift";
 
@@ -74,6 +75,13 @@ export interface AchievementStatus {
     | "db_unavailable";
   achievementPda: string | null;
   collectionAddress: string | null;
+  /**
+   * The achievement's declarative unlock rule (#513 WS-C), passed through
+   * unmodified from {@link AdminAchievement.award} so the relocated Content
+   * tab can optionally show `award.course`/`award.path`. `null` for a
+   * pre-sync/legacy doc.
+   */
+  award: AwardT | null;
 }
 
 export interface AdminStatus {

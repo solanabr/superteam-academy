@@ -46,10 +46,10 @@ afterEach(() => {
 });
 
 describe("AdminNav", () => {
-  it("renders exactly the three section links pointing at locale-prefixed routes", () => {
+  it("renders exactly the four section links pointing at locale-prefixed routes", () => {
     renderWithIntl(<AdminNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(4);
 
     expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "href",
@@ -62,6 +62,10 @@ describe("AdminNav", () => {
     expect(screen.getByRole("link", { name: nav.status })).toHaveAttribute(
       "href",
       "/en/admin/status"
+    );
+    expect(screen.getByRole("link", { name: nav.content })).toHaveAttribute(
+      "href",
+      "/en/admin/content"
     );
   });
 
@@ -89,7 +93,7 @@ describe("AdminNav", () => {
       "aria-current",
       "page"
     );
-    for (const label of [nav.moderation, nav.status]) {
+    for (const label of [nav.moderation, nav.status, nav.content]) {
       expect(screen.getByRole("link", { name: label })).not.toHaveAttribute(
         "aria-current"
       );
@@ -137,8 +141,8 @@ describe("AdminNav", () => {
     renderWithIntl(<AdminNav />);
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    // Nav still renders its three links; the badge simply never shows.
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    // Nav still renders its four links; the badge simply never shows.
+    expect(screen.getAllByRole("link")).toHaveLength(4);
     expect(
       screen.getByRole("link", { name: nav.moderation })
     ).toBeInTheDocument();
