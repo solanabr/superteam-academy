@@ -908,7 +908,7 @@
       "copyTitle": "Copiar título",
       "copyBody": "Copiar descripción",
       "viewCompare": "Ver commits",
-      "preparePrLink": "Abrir PR de publicación",
+      "preparePrLink": "Abrir formulario de PR",
       "prepare": {
         "title": "Preparar PR de publicación",
         "redHeadWarning": "La CI del HEAD no está en verde. No actualices la fijación a contenido no verificado — espera a que la CI pase.",
@@ -917,6 +917,17 @@
         "step2Hint": "Ejecuta esto tras editar {path}, luego confirma tanto el lock como el paquete regenerado.",
         "step3": "3. Sube una rama y abre el PR",
         "branch": "Rama sugerida:"
+      },
+      "oneClick": {
+        "button": "Abrir PR de publicación",
+        "opening": "Abriendo PR…",
+        "hint": "Compila el paquete y abre el PR por ti. La verificación de bytes de la CI se ejecuta en la rama antes de fusionar.",
+        "openedTitle": "PR de publicación abierto",
+        "viewPr": "Ver PR n.º {number}",
+        "blocked": "Espera a que la CI de courses-academy pase antes de publicar.",
+        "unavailable": "La publicación con un clic no está disponible en este despliegue — usa los pasos manuales de abajo.",
+        "error": "Error al publicar: {reason}",
+        "networkError": "No se pudo contactar con el servidor. Inténtalo de nuevo."
       }
     },
     "states": {

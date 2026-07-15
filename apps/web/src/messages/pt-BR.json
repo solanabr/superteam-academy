@@ -908,7 +908,7 @@
       "copyTitle": "Copiar título",
       "copyBody": "Copiar descrição",
       "viewCompare": "Ver commits",
-      "preparePrLink": "Abrir PR de publicação",
+      "preparePrLink": "Abrir formulário de PR",
       "prepare": {
         "title": "Preparar PR de publicação",
         "redHeadWarning": "A CI do HEAD não está verde. Não atualize o pin para conteúdo não verificado — aguarde a CI passar.",
@@ -917,6 +917,17 @@
         "step2Hint": "Execute isto após editar {path}, então faça o commit do lock e do pacote regenerado.",
         "step3": "3. Envie uma branch e abra o PR",
         "branch": "Branch sugerida:"
+      },
+      "oneClick": {
+        "button": "Abrir PR de publicação",
+        "opening": "Abrindo PR…",
+        "hint": "Compila o pacote e abre o PR para você. A verificação de bytes da CI roda na branch antes do merge.",
+        "openedTitle": "PR de publicação aberto",
+        "viewPr": "Ver PR nº {number}",
+        "blocked": "Aguarde a CI do courses-academy passar antes de publicar.",
+        "unavailable": "A publicação com um clique está indisponível neste ambiente — use os passos manuais abaixo.",
+        "error": "Falha ao publicar: {reason}",
+        "networkError": "Não foi possível acessar o servidor. Tente novamente."
       }
     },
     "states": {

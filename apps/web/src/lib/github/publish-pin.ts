@@ -75,9 +75,13 @@ export function contentCompareUrl(pinnedSha: string, headSha: string): string {
   return `https://github.com/${CONTENT_REPO}/compare/${pinnedSha}...${headSha}`;
 }
 
-/** Suggested branch name for the bump PR, e.g. `chore/content-pin-a1b2c3d`. */
+/**
+ * Suggested branch name for the bump PR, e.g. `chore/content-pin-a1b2c3d4e5f6`.
+ * Uses a 12-hex-char prefix (wider than the 7-char display `shortSha`) so two
+ * distinct HEADs cannot collide onto the same branch and dead-409 each other.
+ */
 export function suggestBranchName(headSha: string): string {
-  return `chore/content-pin-${shortSha(headSha)}`;
+  return `chore/content-pin-${headSha.slice(0, 12)}`;
 }
 
 /** The exact one-line `content.lock` edit the human PR makes (old → new sha). */
@@ -116,6 +120,30 @@ export function buildPrBody(input: {
     `1. Edit \`${LOCK_PATH}\`: set \`"sha"\` to \`${input.headSha}\`.\n` +
     `2. Run \`${COMPILE_COMMAND}\`.\n` +
     `3. Commit both \`${LOCK_PATH}\` and \`apps/web/src/content/generated/\`.\n\n` +
+    `Compare: ${contentCompareUrl(input.pinnedSha, input.headSha)}`
+  );
+}
+
+/**
+ * PR body for the one-click publish route: the bundle is ALREADY bumped +
+ * regenerated in the branch's single commit (unlike `buildPrBody`, which lists
+ * manual steps). States the pin transition and links the content compare.
+ */
+export function buildOpenPrBody(input: {
+  pinnedSha: string;
+  headSha: string;
+  commitsBehind: number | null;
+}): string {
+  const behind =
+    input.commitsBehind == null
+      ? ""
+      : ` (${input.commitsBehind} commit(s) from ${CONTENT_REPO})`;
+  return (
+    `Automated content pin bump: \`${LOCK_PATH}\` \`${shortSha(input.pinnedSha)}\` → ` +
+    `\`${shortSha(input.headSha)}\`${behind}, with the committed bundle ` +
+    `regenerated in the same commit.\n\n` +
+    `The CI "Content bundle freshness" check recompiles and diffs the bundle on ` +
+    `this branch; merge only once it is green.\n\n` +
     `Compare: ${contentCompareUrl(input.pinnedSha, input.headSha)}`
   );
 }

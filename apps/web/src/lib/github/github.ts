@@ -1,5 +1,11 @@
 import "server-only";
-import { type ChecksState, GitHubUnavailableError } from "./types";
+import {
+  type ChecksState,
+  GitHubUnavailableError,
+  RefExistsError,
+  TreeTruncatedError,
+} from "./types";
+import { APP_REPO } from "./publish-pin";
 import { serverEnv } from "@/lib/env.server";
 
 const REPO = "solanabr/courses-academy";
@@ -12,6 +18,8 @@ export interface GitHubClient {
   fetchChecksState(sha: string): Promise<ChecksState>;
   /** Commits `head` is ahead of `base` (compare API `ahead_by`). */
   fetchAheadBy(base: string, head: string): Promise<number>;
+  /** The commit's own committer date (ISO) — the deterministic `meta.compiledAt`. */
+  fetchCommitDate(sha: string): Promise<string>;
 }
 
 interface Opts {
@@ -104,6 +112,251 @@ export function createGitHubClient(opts: Opts = {}): GitHubClient {
       if (typeof body.ahead_by !== "number")
         throw new GitHubUnavailableError("compare response missing ahead_by");
       return body.ahead_by;
+    },
+
+    async fetchCommitDate(sha) {
+      const res = await call(
+        `/repos/${REPO}/commits/${sha}`,
+        "application/vnd.github+json"
+      );
+      const body = (await res.json()) as {
+        commit?: { committer?: { date?: string } };
+      };
+      const date = body.commit?.committer?.date;
+      if (!date)
+        throw new GitHubUnavailableError(`commit ${sha} has no committer date`);
+      return date;
+    },
+  };
+}
+
+// ── write client (APP monorepo, GITHUB_PUBLISH_TOKEN) ────────────────────────
+
+/** A leaf/subtree entry in a git tree POST (blob file, commit gitlink, subtree). */
+export interface GitTreeEntry {
+  path: string;
+  mode: string;
+  type: "blob" | "tree" | "commit";
+  sha: string;
+}
+
+/**
+ * Write-scoped GitHub client for the APP monorepo. Powers the one-click publish
+ * route ONLY: it can create blobs/trees/commits, a `chore/content-pin-<sha>`
+ * branch, and a PR — it is structurally incapable of writing `main` (no
+ * update-ref / force-push method exists). `main` branch protection is the
+ * backstop; the PAT-created ref fires the `push` CI event so the byte-check runs
+ * pre-merge. Uses `GITHUB_PUBLISH_TOKEN`, never the read-scoped `GITHUB_TOKEN`.
+ */
+export interface GitHubWriteClient {
+  /** The branch tip's commit sha + its tree sha (one call). */
+  branchHead(branch: string): Promise<{ commitSha: string; treeSha: string }>;
+  /** Every entry of a tree, recursively. Throws `TreeTruncatedError` if the API
+   *  truncated the read — a partial list would silently drop repo files. */
+  recursiveTree(treeSha: string): Promise<GitTreeEntry[]>;
+  /** Read a blob's UTF-8 text by sha (git blobs API; base64 on the wire). Used to
+   *  fetch the CURRENT content.lock so a bump preserves every other byte. */
+  readBlob(sha: string): Promise<string>;
+  /** Upload a blob (bytes, base64-encoded on the wire); returns its sha. */
+  createBlob(bytes: Uint8Array): Promise<string>;
+  /** Create a brand-new tree from an explicit entry list (NO base_tree). */
+  createTree(entries: GitTreeEntry[]): Promise<string>;
+  createCommit(input: {
+    message: string;
+    tree: string;
+    parents: string[];
+  }): Promise<string>;
+  /** True if `refs/heads/<branch>` already exists (idempotency pre-check). */
+  branchExists(branch: string): Promise<boolean>;
+  /** The OPEN PR whose head is `<owner>:<branch>`, or null if none is open.
+   *  Read-only — lets a re-click on a pre-existing branch return its PR. */
+  findOpenPrByHead(
+    branch: string
+  ): Promise<{ url: string; number: number } | null>;
+  /** Create `refs/heads/<branch>` → sha. Throws `RefExistsError` on 422. */
+  createBranch(branch: string, sha: string): Promise<void>;
+  openPullRequest(input: {
+    title: string;
+    head: string;
+    base: string;
+    body: string;
+  }): Promise<{ url: string; number: number }>;
+}
+
+interface WriteOpts {
+  token?: string;
+  fetchImpl?: typeof fetch;
+  repo?: string;
+}
+
+export function createGitHubWriteClient(
+  opts: WriteOpts = {}
+): GitHubWriteClient {
+  const token = "token" in opts ? opts.token : serverEnv.GITHUB_PUBLISH_TOKEN;
+  const doFetch = opts.fetchImpl ?? fetch;
+  const repo = opts.repo ?? APP_REPO;
+
+  async function call(path: string, init: RequestInit = {}): Promise<Response> {
+    if (!token) {
+      throw new GitHubUnavailableError(
+        "GITHUB_PUBLISH_TOKEN is not configured"
+      );
+    }
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+    if (init.body !== undefined) headers["Content-Type"] = "application/json";
+    try {
+      return await doFetch(`${API}${path}`, { ...init, headers });
+    } catch (e) {
+      throw new GitHubUnavailableError(
+        e instanceof Error ? e.message : String(e)
+      );
+    }
+  }
+
+  /** Throw a scrub-safe error (status + path only, no token, no body) on non-2xx. */
+  function unavailable(method: string, path: string, status: number): never {
+    throw new GitHubUnavailableError(`GitHub ${method} ${path} → ${status}`);
+  }
+
+  return {
+    async branchHead(branch) {
+      const path = `/repos/${repo}/commits/${branch}`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as {
+        sha?: string;
+        commit?: { tree?: { sha?: string } };
+      };
+      const commitSha = body.sha;
+      const treeSha = body.commit?.tree?.sha;
+      if (!commitSha || !treeSha) {
+        throw new GitHubUnavailableError(
+          `branch ${branch} response missing commit/tree sha`
+        );
+      }
+      return { commitSha, treeSha };
+    },
+
+    async recursiveTree(treeSha) {
+      const path = `/repos/${repo}/git/trees/${treeSha}?recursive=1`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as {
+        tree?: GitTreeEntry[];
+        truncated?: boolean;
+      };
+      if (body.truncated) throw new TreeTruncatedError();
+      return body.tree ?? [];
+    },
+
+    async readBlob(sha) {
+      const path = `/repos/${repo}/git/blobs/${sha}`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as { content?: string };
+      if (typeof body.content !== "string") {
+        throw new GitHubUnavailableError("blob response missing content");
+      }
+      // git blobs are always base64 (with embedded newlines Buffer ignores).
+      return Buffer.from(body.content, "base64").toString("utf-8");
+    },
+
+    async createBlob(bytes) {
+      const path = `/repos/${repo}/git/blobs`;
+      const res = await call(path, {
+        method: "POST",
+        body: JSON.stringify({
+          content: Buffer.from(bytes).toString("base64"),
+          encoding: "base64",
+        }),
+      });
+      if (!res.ok) unavailable("POST", path, res.status);
+      const body = (await res.json()) as { sha?: string };
+      if (!body.sha)
+        throw new GitHubUnavailableError("blob response missing sha");
+      return body.sha;
+    },
+
+    async createTree(entries) {
+      const path = `/repos/${repo}/git/trees`;
+      const res = await call(path, {
+        method: "POST",
+        body: JSON.stringify({ tree: entries }),
+      });
+      if (!res.ok) unavailable("POST", path, res.status);
+      const body = (await res.json()) as { sha?: string };
+      if (!body.sha)
+        throw new GitHubUnavailableError("tree response missing sha");
+      return body.sha;
+    },
+
+    async createCommit(input) {
+      const path = `/repos/${repo}/git/commits`;
+      const res = await call(path, {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) unavailable("POST", path, res.status);
+      const body = (await res.json()) as { sha?: string };
+      if (!body.sha)
+        throw new GitHubUnavailableError("commit response missing sha");
+      return body.sha;
+    },
+
+    async branchExists(branch) {
+      const path = `/repos/${repo}/git/ref/heads/${branch}`;
+      const res = await call(path);
+      if (res.status === 404) return false;
+      if (!res.ok) unavailable("GET", path, res.status);
+      return true;
+    },
+
+    async findOpenPrByHead(branch) {
+      const owner = repo.split("/")[0];
+      const path = `/repos/${repo}/pulls?state=open&head=${owner}:${branch}`;
+      const res = await call(path);
+      if (!res.ok) unavailable("GET", path, res.status);
+      const body = (await res.json()) as {
+        html_url?: string;
+        number?: number;
+      }[];
+      const pr = body[0];
+      if (!pr || !pr.html_url || typeof pr.number !== "number") return null;
+      return { url: pr.html_url, number: pr.number };
+    },
+
+    async createBranch(branch, sha) {
+      const path = `/repos/${repo}/git/refs`;
+      const res = await call(path, {
+        method: "POST",
+        body: JSON.stringify({ ref: `refs/heads/${branch}`, sha }),
+      });
+      // 422 = ref already exists → idempotent 409-degrade, never a force-push.
+      if (res.status === 422) throw new RefExistsError(branch);
+      if (!res.ok) unavailable("POST", path, res.status);
+    },
+
+    async openPullRequest(input) {
+      const path = `/repos/${repo}/pulls`;
+      const res = await call(path, {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) unavailable("POST", path, res.status);
+      const body = (await res.json()) as {
+        html_url?: string;
+        number?: number;
+      };
+      if (!body.html_url || typeof body.number !== "number") {
+        throw new GitHubUnavailableError(
+          "pull request response missing fields"
+        );
+      }
+      return { url: body.html_url, number: body.number };
     },
   };
 }

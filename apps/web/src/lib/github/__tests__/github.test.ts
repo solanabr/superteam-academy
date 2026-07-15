@@ -2,8 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { createGitHubClient } from "../github";
-import { GitHubUnavailableError } from "../types";
+import { createGitHubClient, createGitHubWriteClient } from "../github";
+import {
+  GitHubUnavailableError,
+  RefExistsError,
+  TreeTruncatedError,
+} from "../types";
 
 const okJson = (body: unknown): Response =>
   new Response(JSON.stringify(body), {
@@ -126,5 +130,196 @@ describe("GitHubClient", () => {
     await expect(client.fetchHeadSha()).rejects.toBeInstanceOf(
       GitHubUnavailableError
     );
+  });
+
+  it("reads the commit's committer date", async () => {
+    const client = createGitHubClient({
+      token: "t",
+      fetchImpl: (async () =>
+        okJson({
+          commit: { committer: { date: "2026-07-14T16:55:35Z" } },
+        })) as unknown as typeof fetch,
+    });
+    expect(await client.fetchCommitDate("s")).toBe("2026-07-14T16:55:35Z");
+  });
+});
+
+describe("GitHubWriteClient", () => {
+  it("targets the APP monorepo, not the content repo", async () => {
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) =>
+      okJson({ sha: "c1", commit: { tree: { sha: "t1" } } })
+    );
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const head = await client.branchHead("main");
+    expect(head).toEqual({ commitSha: "c1", treeSha: "t1" });
+    const [url, init] = fetchImpl.mock.calls[0]!;
+    expect(url).toBe(
+      "https://api.github.com/repos/solanabr/superteam-academy/commits/main"
+    );
+    expect((init?.headers as Record<string, string>).Authorization).toBe(
+      "Bearer wt"
+    );
+  });
+
+  it("base64-encodes blob bytes and returns the sha", async () => {
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as {
+        content: string;
+        encoding: string;
+      };
+      expect(body.encoding).toBe("base64");
+      expect(Buffer.from(body.content, "base64")).toEqual(
+        Buffer.from([1, 2, 3])
+      );
+      return okJson({ sha: "blobsha" });
+    });
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(await client.createBlob(new Uint8Array([1, 2, 3]))).toBe("blobsha");
+  });
+
+  it("creates a tree WITHOUT a base_tree (rebuild-from-scratch)", async () => {
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      expect(body).not.toHaveProperty("base_tree");
+      expect(body).toHaveProperty("tree");
+      return okJson({ sha: "newtree" });
+    });
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const sha = await client.createTree([
+      { path: "a", mode: "100644", type: "blob", sha: "x" },
+    ]);
+    expect(sha).toBe("newtree");
+  });
+
+  it("readBlob base64-decodes a blob to UTF-8 text", async () => {
+    const lock = `{\n  "repo": "solanabr/courses-academy",\n  "sha": "abc"\n}\n`;
+    // GitHub returns base64 with embedded newlines; Buffer decode ignores them.
+    const content = Buffer.from(lock)
+      .toString("base64")
+      .replace(/(.{4})/g, "$1\n");
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) =>
+      okJson({ content, encoding: "base64" })
+    );
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    expect(await client.readBlob("blobsha")).toBe(lock);
+    expect(fetchImpl.mock.calls[0]![0]).toBe(
+      "https://api.github.com/repos/solanabr/superteam-academy/git/blobs/blobsha"
+    );
+  });
+
+  it("findOpenPrByHead returns the open PR (owner:branch query), or null when none", async () => {
+    const withPr = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async (url: string) => {
+        expect(url).toContain(
+          "/repos/solanabr/superteam-academy/pulls?state=open&head=solanabr:chore/content-pin-abc"
+        );
+        return okJson([{ html_url: "https://gh/pr/5", number: 5 }]);
+      }) as unknown as typeof fetch,
+    });
+    expect(await withPr.findOpenPrByHead("chore/content-pin-abc")).toEqual({
+      url: "https://gh/pr/5",
+      number: 5,
+    });
+
+    const none = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () => okJson([])) as unknown as typeof fetch,
+    });
+    expect(await none.findOpenPrByHead("chore/content-pin-abc")).toBeNull();
+  });
+
+  it("throws TreeTruncatedError on a truncated recursive tree", async () => {
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        okJson({ tree: [], truncated: true })) as unknown as typeof fetch,
+    });
+    await expect(client.recursiveTree("t")).rejects.toBeInstanceOf(
+      TreeTruncatedError
+    );
+  });
+
+  it("maps createBranch 422 to RefExistsError (idempotency, no force-push)", async () => {
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        new Response("{}", { status: 422 })) as unknown as typeof fetch,
+    });
+    await expect(
+      client.createBranch("chore/content-pin-abc", "c1")
+    ).rejects.toBeInstanceOf(RefExistsError);
+  });
+
+  it("branchExists is false on 404, true on 200", async () => {
+    const missing = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        new Response("{}", { status: 404 })) as unknown as typeof fetch,
+    });
+    expect(await missing.branchExists("b")).toBe(false);
+    const present = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        okJson({ ref: "refs/heads/b" })) as unknown as typeof fetch,
+    });
+    expect(await present.branchExists("b")).toBe(true);
+  });
+
+  it("opens a PR and returns url + number", async () => {
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        okJson({
+          html_url: "https://gh/pr/7",
+          number: 7,
+        })) as unknown as typeof fetch,
+    });
+    expect(
+      await client.openPullRequest({
+        title: "t",
+        head: "b",
+        base: "main",
+        body: "x",
+      })
+    ).toEqual({ url: "https://gh/pr/7", number: 7 });
+  });
+
+  it("throws GitHubUnavailableError when the write token is unset", async () => {
+    const client = createGitHubWriteClient({
+      token: undefined,
+      fetchImpl: (async () => new Response()) as unknown as typeof fetch,
+    });
+    await expect(client.branchHead("main")).rejects.toBeInstanceOf(
+      GitHubUnavailableError
+    );
+  });
+
+  it("surfaces a scrub-safe status/path error (no token, no body) on non-2xx", async () => {
+    const client = createGitHubWriteClient({
+      token: "wt",
+      fetchImpl: (async () =>
+        new Response("secret-bearing body", {
+          status: 500,
+        })) as unknown as typeof fetch,
+    });
+    await client.createTree([]).catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e);
+      expect(msg).not.toContain("wt");
+      expect(msg).not.toContain("secret-bearing body");
+      expect(msg).toContain("→ 500");
+    });
   });
 });

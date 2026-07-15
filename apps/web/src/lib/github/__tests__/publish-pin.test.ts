@@ -97,8 +97,8 @@ describe("links", () => {
     );
   });
 
-  it("suggests a branch name from the short HEAD sha", () => {
-    expect(suggestBranchName(HEAD)).toBe("chore/content-pin-bbbbbbb");
+  it("suggests a branch name from a 12-char HEAD prefix (no short-prefix collision)", () => {
+    expect(suggestBranchName(HEAD)).toBe("chore/content-pin-bbbbbbbbbbbb");
   });
 
   it("builds a prefilled app-repo PR link with encoded title/body", () => {

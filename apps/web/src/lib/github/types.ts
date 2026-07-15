@@ -20,6 +20,31 @@ export class GitHubUnavailableError extends Error {
   }
 }
 
+/**
+ * The target branch already exists (createRef → 422). The one-click publish
+ * route maps this to a 409-degrade instead of a 500/force-push: a re-click at
+ * the same content SHA is idempotent, never destructive.
+ */
+export class RefExistsError extends Error {
+  constructor(public readonly branch: string) {
+    super(`ref refs/heads/${branch} already exists`);
+    this.name = "RefExistsError";
+  }
+}
+
+/**
+ * The base tree came back truncated (too many entries for one recursive read).
+ * The rebuild-from-scratch tree lists every retained path explicitly, so a
+ * truncated read would silently DROP repo files from the commit — refuse rather
+ * than open a destructive PR.
+ */
+export class TreeTruncatedError extends Error {
+  constructor() {
+    super("repo tree too large to rebuild safely (truncated)");
+    this.name = "TreeTruncatedError";
+  }
+}
+
 /** The active_lessons mask does not match the committed slots.lock.json (§11.0). */
 export class MaskMismatchError extends Error {
   constructor(public readonly courseId: string) {

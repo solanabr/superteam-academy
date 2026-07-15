@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { sanitizeReason } from "@/lib/admin/sanitize-reason";
 import { AdminCard } from "@/components/admin/admin-card";
 import {
   AdminBadge,
@@ -36,6 +37,9 @@ const LINK_CLASSES =
 
 const BUTTON_CLASSES =
   "rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-text shadow-push-sm transition-all hover:bg-subtle active:translate-y-[1px] active:shadow-push-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50";
+
+const PRIMARY_BUTTON_CLASSES =
+  "inline-flex items-center rounded-md border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-push-sm transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50";
 
 function ChecksBadge({ checks }: { checks: ChecksState }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
@@ -215,6 +219,19 @@ function PinBody({ data }: { data: PinResponse }): React.ReactElement {
   );
 }
 
+interface OpenPrResponse {
+  pr: { url: string; number: number; branch: string };
+  pinnedFrom: string;
+  pinnedTo: string;
+}
+
+type OneClickState =
+  | { status: "idle" }
+  | { status: "opening" }
+  | { status: "opened"; pr: OpenPrResponse["pr"] }
+  | { status: "error"; message: string }
+  | { status: "unavailable" };
+
 function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const t = useTranslations("admin.publishPin");
   const { pin, head, verdict } = data;
@@ -228,8 +245,100 @@ function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
   const branch = suggestBranchName(head.sha);
   const prUrl = buildPublishPrUrl({ pinnedSha: pin.sha, headSha: head.sha });
 
+  const [oneClick, setOneClick] = useState<OneClickState>({ status: "idle" });
+  const checksGreen = head.checks === "success";
+
+  const openPr = useCallback(async () => {
+    setOneClick({ status: "opening" });
+    try {
+      const res = await fetch("/api/admin/publish/pin/open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ headSha: head.sha }),
+      });
+      // Token unset server-side — degrade silently to the manual card below.
+      if (res.status === 501) {
+        setOneClick({ status: "unavailable" });
+        return;
+      }
+      const payload = (await res.json().catch(() => null)) as
+        | (OpenPrResponse & { error?: string })
+        | null;
+      if (res.ok && payload?.pr) {
+        setOneClick({ status: "opened", pr: payload.pr });
+        return;
+      }
+      // Belt-and-suspenders: the server already scrubs, scrub again before render.
+      const reason = sanitizeReason(payload?.error ?? `HTTP ${res.status}`);
+      setOneClick({
+        status: "error",
+        message: t("oneClick.error", { reason }),
+      });
+    } catch {
+      setOneClick({ status: "error", message: t("oneClick.networkError") });
+    }
+  }, [head.sha, t]);
+
+  // 501 degrade: hide the one-click affordance entirely, leave only the manual
+  // fallback (rendered below, expanded on request as before).
+  const showOneClick = oneClick.status !== "unavailable";
+
   return (
-    <div className="border-t border-border pt-4">
+    <div className="space-y-4 border-t border-border pt-4">
+      {showOneClick && (
+        <div className="space-y-2">
+          {oneClick.status === "opened" ? (
+            <div
+              role="status"
+              className="rounded-md border border-success bg-success-light p-3 text-sm text-success"
+            >
+              <p className="font-medium">{t("oneClick.openedTitle")}</p>
+              <a
+                href={oneClick.pr.url}
+                target="_blank"
+                rel="noreferrer"
+                className={`${LINK_CLASSES} mt-1 inline-block`}
+              >
+                {t("oneClick.viewPr", { number: oneClick.pr.number })}
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void openPr()}
+                  disabled={oneClick.status === "opening" || !checksGreen}
+                  className={PRIMARY_BUTTON_CLASSES}
+                >
+                  {oneClick.status === "opening"
+                    ? t("oneClick.opening")
+                    : t("oneClick.button")}
+                </button>
+                {!checksGreen && (
+                  <span className="text-xs text-text-3">
+                    {t("oneClick.blocked")}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-text-3">{t("oneClick.hint")}</p>
+              {oneClick.status === "error" && (
+                <div
+                  role="alert"
+                  className="rounded-md border border-danger bg-danger-light p-3 text-sm text-danger"
+                >
+                  {oneClick.message}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {oneClick.status === "unavailable" && (
+        <p className="text-sm text-streak">{t("oneClick.unavailable")}</p>
+      )}
+
       <AdminDisclosure
         headingLevel={4}
         summary={
@@ -298,7 +407,7 @@ function PreparePr({ data }: { data: PinResponse }): React.ReactElement {
               href={prUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-md border border-primary bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-push-sm transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:translate-y-[1px]"
+              className={`${BUTTON_CLASSES} inline-flex items-center`}
             >
               {t("preparePrLink")}
             </a>
