@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "compile-content": "tsx scripts/compile-content.ts",
+    "reset-verify": "tsx scripts/reset-verify.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
