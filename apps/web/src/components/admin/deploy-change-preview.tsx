@@ -25,6 +25,14 @@ interface DeployChangePreviewProps {
  * flow on the drift screen). Confirming here would not move the commitment —
  * the route would answer "Already synced" and the badge would stay stale — so
  * the copy must not promise otherwise.
+ *
+ * #433: on a FIRST deploy, `course.creatorWallet` is surfaced prominently —
+ * the SAME value `/api/admin/courses/sync` resolves as `Course.creator` (no
+ * independent re-derivation here). `Course.creator` is set once at
+ * `create_course` and can never change, so this is the operator's only chance
+ * to catch a wrong wallet before it's permanent. Redeploys/updates never show
+ * it — the creator is already on chain and a mismatch there is handled by
+ * `ImmutableMismatchWarning` instead.
  */
 export function DeployChangePreview({
   course,
@@ -96,6 +104,18 @@ export function DeployChangePreview({
 
         {firstDeploy && (
           <p className="mt-3 text-sm text-text-2">{t("firstDeploy")}</p>
+        )}
+
+        {firstDeploy && course.creatorWallet && (
+          <div className="mt-3 rounded-md border border-accent bg-accent-bg p-2.5 text-xs">
+            <p className="font-medium text-text">{t("creatorWalletLabel")}</p>
+            <p className="mt-1 break-all font-mono text-text-2">
+              {course.creatorWallet}
+            </p>
+            <p className="mt-1 font-semibold text-accent-dark dark:text-accent">
+              {t("creatorWalletImmutable")}
+            </p>
+          </div>
         )}
 
         {updateableDiffs.length > 0 && (

@@ -47,6 +47,17 @@ export interface CourseStatus {
   // Authoritative on-chain is_active. Absent for not-yet-deployed/draft courses
   // (treated as active). false → deactivated (hidden from the public catalog).
   isActive?: boolean;
+  // The resolved `course.creator` wallet (#433, #478) — the SAME value the
+  // deploy path (`/api/admin/courses/sync`) uses as `Course.creator`. On a
+  // first deploy this is the wallet the course will be PERMANENTLY attributed
+  // to (`Course.creator` is set once at `create_course` and is immutable), so
+  // the change-preview surfaces it before the operator confirms. Optional
+  // (like `isActive`) so existing fixtures/tests unrelated to #433 don't need
+  // updating; every branch of `/api/admin/status` sets it. null only when the
+  // content bundle has no creator wallet set (blocks deploy earlier via
+  // `missingFields`, so in practice this is non-null by the time a course
+  // reaches `not_deployed`).
+  creatorWallet?: string | null;
 }
 
 export interface AchievementStatus {

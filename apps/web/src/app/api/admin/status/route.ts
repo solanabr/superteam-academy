@@ -127,6 +127,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "draft" as const,
           coursePda: null,
           differences: [],
+          creatorWallet: course.creatorWallet,
         };
       }
 
@@ -145,6 +146,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "missing_fields" as const,
           coursePda: null,
           differences: [],
+          creatorWallet: course.creatorWallet,
         };
       }
 
@@ -165,6 +167,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           onChainStatus: "not_deployed" as const,
           coursePda: null,
           differences: [],
+          creatorWallet: course.creatorWallet,
         };
       }
 
@@ -247,6 +250,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         coursePda: pdaAddress,
         differences,
         isActive,
+        creatorWallet: course.creatorWallet,
       };
     })
   );

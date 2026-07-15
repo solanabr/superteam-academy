@@ -958,6 +958,8 @@
       "preview": {
         "title": "Review deploy — {title}",
         "firstDeploy": "This course is not on chain yet — deploying will create its on-chain account.",
+        "creatorWalletLabel": "Creator wallet — this course will be permanently attributed to:",
+        "creatorWalletImmutable": "Set once — cannot be changed after deploy.",
         "willWrite": "This transaction will write:",
         "contentStale": "For information: this course's on-chain content commitment (content_tx_id) is behind the committed bundle. This deploy will NOT change it — it only writes the course fields listed above. The commitment is updated by the content-commit step on the Content Drift screen.",
         "noChanges": "No changes detected. Redeploy anyway?",
